@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using System;
 using System.Text;
@@ -137,91 +137,91 @@ public static class PrintfFormatter
         {
             case 'd':
             case 'i':
-            {
-                var val = Convert.ToInt64(arg ?? 0);
-                var s = Math.Abs(val).ToString();
-                if (val < 0) return "-" + s;
-                if (forceSign) return "+" + s;
-                if (spaceSign) return " " + s;
-                return s;
-            }
+                {
+                    var val = Convert.ToInt64(arg ?? 0);
+                    var s = Math.Abs(val).ToString();
+                    if (val < 0) return "-" + s;
+                    if (forceSign) return "+" + s;
+                    if (spaceSign) return " " + s;
+                    return s;
+                }
             case 'u':
-            {
-                var val = Convert.ToUInt64(arg ?? 0UL);
-                return val.ToString();
-            }
+                {
+                    var val = Convert.ToUInt64(arg ?? 0UL);
+                    return val.ToString();
+                }
             case 'o':
-            {
-                var val = Convert.ToUInt64(arg ?? 0UL);
-                var s = Convert.ToString((long)val, 8);
-                return altForm && val != 0 ? "0" + s : s;
-            }
+                {
+                    var val = Convert.ToUInt64(arg ?? 0UL);
+                    var s = Convert.ToString((long)val, 8);
+                    return altForm && val != 0 ? "0" + s : s;
+                }
             case 'x':
-            {
-                var val = Convert.ToUInt64(arg ?? 0UL);
-                var s = val.ToString("x");
-                return altForm && val != 0 ? "0x" + s : s;
-            }
+                {
+                    var val = Convert.ToUInt64(arg ?? 0UL);
+                    var s = val.ToString("x");
+                    return altForm && val != 0 ? "0x" + s : s;
+                }
             case 'X':
-            {
-                var val = Convert.ToUInt64(arg ?? 0UL);
-                var s = val.ToString("X");
-                return altForm && val != 0 ? "0X" + s : s;
-            }
+                {
+                    var val = Convert.ToUInt64(arg ?? 0UL);
+                    var s = val.ToString("X");
+                    return altForm && val != 0 ? "0X" + s : s;
+                }
             case 'f':
             case 'F':
-            {
-                var val = Convert.ToDouble(arg ?? 0.0);
-                var prec = precision >= 0 ? precision : 6;
-                var s = Math.Abs(val).ToString("F" + prec);
-                if (val < 0) return "-" + s;
-                if (forceSign) return "+" + s;
-                if (spaceSign) return " " + s;
-                return s;
-            }
+                {
+                    var val = Convert.ToDouble(arg ?? 0.0);
+                    var prec = precision >= 0 ? precision : 6;
+                    var s = Math.Abs(val).ToString("F" + prec);
+                    if (val < 0) return "-" + s;
+                    if (forceSign) return "+" + s;
+                    if (spaceSign) return " " + s;
+                    return s;
+                }
             case 'e':
-            {
-                var val = Convert.ToDouble(arg ?? 0.0);
-                var prec = precision >= 0 ? precision : 6;
-                var s = val.ToString("e" + prec);
-                if (forceSign && val >= 0) return "+" + s;
-                if (spaceSign && val >= 0) return " " + s;
-                return s;
-            }
+                {
+                    var val = Convert.ToDouble(arg ?? 0.0);
+                    var prec = precision >= 0 ? precision : 6;
+                    var s = val.ToString("e" + prec);
+                    if (forceSign && val >= 0) return "+" + s;
+                    if (spaceSign && val >= 0) return " " + s;
+                    return s;
+                }
             case 'E':
-            {
-                var val = Convert.ToDouble(arg ?? 0.0);
-                var prec = precision >= 0 ? precision : 6;
-                var s = val.ToString("E" + prec);
-                if (forceSign && val >= 0) return "+" + s;
-                if (spaceSign && val >= 0) return " " + s;
-                return s;
-            }
+                {
+                    var val = Convert.ToDouble(arg ?? 0.0);
+                    var prec = precision >= 0 ? precision : 6;
+                    var s = val.ToString("E" + prec);
+                    if (forceSign && val >= 0) return "+" + s;
+                    if (spaceSign && val >= 0) return " " + s;
+                    return s;
+                }
             case 'g':
             case 'G':
-            {
-                var val = Convert.ToDouble(arg ?? 0.0);
-                var prec = precision > 0 ? precision : 6;
-                var fmt = specifier == 'g' ? "g" : "G";
-                var s = val.ToString(fmt + prec);
-                if (forceSign && val >= 0) return "+" + s;
-                if (spaceSign && val >= 0) return " " + s;
-                return s;
-            }
-            case 'c':
-            {
-                if (arg is char c) return c.ToString();
-                return ((char)Convert.ToInt32(arg ?? 0)).ToString();
-            }
-            case 's':
-            {
-                var s = arg?.ToString() ?? string.Empty;
-                if (precision >= 0 && s.Length > precision)
                 {
-                    s = s[..precision];
+                    var val = Convert.ToDouble(arg ?? 0.0);
+                    var prec = precision > 0 ? precision : 6;
+                    var fmt = specifier == 'g' ? "g" : "G";
+                    var s = val.ToString(fmt + prec);
+                    if (forceSign && val >= 0) return "+" + s;
+                    if (spaceSign && val >= 0) return " " + s;
+                    return s;
                 }
-                return s;
-            }
+            case 'c':
+                {
+                    if (arg is char c) return c.ToString();
+                    return ((char)Convert.ToInt32(arg ?? 0)).ToString();
+                }
+            case 's':
+                {
+                    var s = arg?.ToString() ?? string.Empty;
+                    if (precision >= 0 && s.Length > precision)
+                    {
+                        s = s[..precision];
+                    }
+                    return s;
+                }
             default:
                 return "%" + specifier;
         }
