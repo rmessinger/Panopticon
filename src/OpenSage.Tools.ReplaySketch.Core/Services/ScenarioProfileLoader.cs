@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
@@ -12,7 +12,7 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 /// </summary>
 public static class ScenarioProfileLoader
 {
-    private static readonly JsonSerializerOptions s_options = new()
+    private static readonly JsonSerializerOptions SerializationOptions = new()
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
@@ -37,7 +37,7 @@ public static class ScenarioProfileLoader
                 $"Embedded profile '{fullName}' not found. " +
                 $"Available resources: {string.Join(", ", assembly.GetManifestResourceNames())}");
 
-        var scenario = JsonSerializer.Deserialize<ReplayScenario>(stream, s_options)
+        var scenario = JsonSerializer.Deserialize<ReplayScenario>(stream, SerializationOptions)
             ?? throw new InvalidOperationException($"Deserialization of '{fullName}' returned null.");
 
         return scenario;
@@ -50,7 +50,7 @@ public static class ScenarioProfileLoader
     public static ReplayScenario LoadFromFile(string filePath)
     {
         using var stream = File.OpenRead(filePath);
-        return JsonSerializer.Deserialize<ReplayScenario>(stream, s_options)
+        return JsonSerializer.Deserialize<ReplayScenario>(stream, SerializationOptions)
             ?? throw new InvalidOperationException($"Deserialization of '{filePath}' returned null.");
     }
 }
