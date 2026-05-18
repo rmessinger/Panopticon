@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using OpenSage.Logic;
 
 namespace OpenSage.Logic.Orders;
