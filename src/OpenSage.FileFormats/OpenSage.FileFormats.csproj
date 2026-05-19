@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Encoding.CodePages" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\OpenSage.Mathematics\OpenSage.Mathematics.csproj" />
   </ItemGroup>
 

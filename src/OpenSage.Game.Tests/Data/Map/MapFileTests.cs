@@ -747,7 +747,7 @@ public class MapFileTests
         Assert.Equal("MountainSnow", mapFile.SkyboxSettings.TextureScheme);
     }
 
-    private static MapFile GetMapFile([CallerMemberName] string testName = null)
+    private static MapFile GetMapFile([CallerMemberName] string? testName = null)
     {
         var fileName = Path.Combine("Data", "Map", "Assets", testName + ".map");
 

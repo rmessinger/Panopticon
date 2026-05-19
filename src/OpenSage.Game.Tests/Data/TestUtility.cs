@@ -20,7 +20,7 @@ internal static class TestUtility
             originalUncompressedBytes = originalUncompressedStream.ToArray();
         }
 
-        T parsedFile = default;
+        T parsedFile = default!;
         try
         {
             using (var entryStream = new MemoryStream(originalUncompressedBytes, false))

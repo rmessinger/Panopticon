@@ -473,9 +473,9 @@ public sealed class Game : DisposableBase, IGame
 
             InputMessageBuffer = new InputMessageBuffer();
 
-            // Add input logger handler
-            _inputLoggerHandler = new InputLoggerMessageHandler();
-            InputMessageBuffer.Handlers.Add(_inputLoggerHandler);
+            // TODO: Re-enable input logging when a cross-platform log path is configured.
+            // _inputLoggerHandler = new InputLoggerMessageHandler();
+            // InputMessageBuffer.Handlers.Add(_inputLoggerHandler);
 
             InputMessageBuffer.Handlers.Add(
                 new CallbackMessageHandler(

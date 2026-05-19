@@ -59,7 +59,7 @@ public class BigArchiveTests
         {
             var entry = bigArchive.GetEntry(@"Art\W3D\ABBarracks_AC.W3D");
 
-            Assert.Equal(@"Art\W3D\ABBarracks_AC.W3D", entry.FullName);
+            Assert.Equal(@"Art\W3D\ABBarracks_AC.W3D", entry!.FullName);
             Assert.Equal(9334u, entry.Length);
         }
     }

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- On macOS arm64, the Veldrid.Sdl2 NuGet only ships an x86_64 dylib.
+       Copy the arm64 dylib from Homebrew directly into the output directory so
+       NativeLibraryLoader (used by Veldrid.Sdl2) can find it alongside the executable. -->
+  <Target Name="CopyArm64Sdl2" AfterTargets="Build"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">
+    <PropertyGroup>
+      <_Sdl2Arm64Source>/opt/homebrew/lib/libSDL2.dylib</_Sdl2Arm64Source>
+    </PropertyGroup>
+    <Copy SourceFiles="$(_Sdl2Arm64Source)" DestinationFiles="$(OutputPath)libsdl2.dylib"
+          Condition="Exists('$(_Sdl2Arm64Source)')" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="ScenarioOrchestrator.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenSage.Game\OpenSage.Game.csproj" />
+    <ProjectReference Include="..\OpenSage.Mods.BuiltIn\OpenSage.Mods.BuiltIn.csproj" />
+    <ProjectReference Include="..\OpenSage.Tools.ReplaySketch.Core\OpenSage.Tools.ReplaySketch.Core.csproj" />
+  </ItemGroup>
+
+</Project>

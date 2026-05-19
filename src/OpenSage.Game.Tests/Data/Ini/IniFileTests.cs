@@ -90,7 +90,7 @@ public class IniFileTests
                     case SageGame.Bfme:
                     case SageGame.Bfme2:
                     case SageGame.Bfme2Rotwk:
-                        LoadIniFile(fileSystem.GetFile(@"Data\INI\GameData.ini"));
+                        LoadIniFile(fileSystem.GetFile(@"Data\INI\GameData.ini")!);
                         break;
                 }
 

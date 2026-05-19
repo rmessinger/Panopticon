@@ -14,6 +14,10 @@ internal static class ShaderCrossCompiler
 {
     private const string EntryPoint = "main";
 
+    // Increment this whenever the cross-compilation logic changes (e.g. FixMetalMslBindings)
+    // so that stale cached shader files are automatically invalidated.
+    private const int CrossCompilerVersion = 2;
+
 #if DEBUG
     private const bool UseDebugCompilation = true;
 #else
@@ -143,6 +147,7 @@ internal static class ShaderCrossCompiler
 
         sha256.AppendData(vsBytes);
         sha256.AppendData(fsBytes);
+        sha256.AppendData(BitConverter.GetBytes(CrossCompilerVersion));
 
         var hash = sha256.GetCurrentHash();
 

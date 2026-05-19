@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
-using OpenSage.Graphics;
+using System.Linq;
+using OpenSage.Input;
 using OpenSage.IO;
+using OpenSage.Mathematics;
 using OpenSage.Tests.Data;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
@@ -82,6 +84,7 @@ public class ReplaySketchTests
     /// <summary>
     /// Exports the default Alpine Assault scenario as a replay and runs it through
     /// the full game engine from startup to the last replay frame.
+    /// Runs headlessly (no window, no SDL2) using an offscreen graphics device.
     /// Uncomment <see cref="LocalOnlySkip"/> to run locally with game files installed.
     /// </summary>
     [GameFact(SageGame.CncGenerals, Skip = LocalOnlySkip)]
@@ -97,48 +100,44 @@ public class ReplaySketchTests
             var exportError = ReplayExporter.Export(scenario, map, outputPath);
             Assert.Null(exportError);
 
-            Platform.Start();
-            try
+            // Run headlessly: pass null for window so the engine creates an offscreen
+            // graphics device (Metal on macOS, Vulkan on Linux, D3D11 on Windows).
+            // This avoids SDL2's macOS main-thread requirement entirely.
+            using var game = new Game(installation, null, new Configuration { NoAudio = true }, null);
+
+            // Speed the replay up so that the 1 050-frame scenario (≈ 210 game-seconds
+            // at 5 Hz) completes in a few real-world seconds instead of three minutes.
+            game.LogicUpdateScaleFactor = 50f;
+
+            using var repFileSystem = new DiskFileSystem(Path.GetDirectoryName(outputPath)!);
+            var repEntry = repFileSystem.GetFile(Path.GetFileName(outputPath));
+
+            game.LoadReplayFile(repEntry);
+            game.StartRun();
+
+            var dispatchedCount = 0;
+            var totalExpectedDispatches = scenario.Players.Sum(p => p.Actions.Count);
+
+            using var monitor = new ReplayActionMonitor(game);
+            monitor.ActionDispatched += (_, e) =>
             {
-                using var window = new GameWindow("OpenSAGE - ReplaySketch functional test", 100, 100, 1024, 768, false);
-                using var game = new Game(installation, null, new Configuration { NoAudio = true }, window);
-                using var textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
+                Console.WriteLine($"Action dispatched: {e.ActionType} (player: {e.Player?.Name ?? "?"})");
+                dispatchedCount++;
+            };
+            monitor.ActionCompleted += (_, e) =>
+                Console.WriteLine($"Action completed:  {e.ActionType} (player: {e.Player?.Name ?? "?"})");
 
-                using var repFileSystem = new DiskFileSystem(Path.GetDirectoryName(outputPath)!);
-                var repEntry = repFileSystem.GetFile(Path.GetFileName(outputPath));
+            var frame = new Rectangle(0, 0, 1024, 768);
+            var deadline = DateTime.UtcNow.AddSeconds(60);
 
-                game.LoadReplayFile(repEntry);
-                game.StartRun();
-
-                using var monitor = new ReplayActionMonitor(game);
-                monitor.ActionDispatched += (_, e) =>
-                    Console.WriteLine($"Action dispatched: {e.ActionType} (player: {e.Player?.Name ?? "?"})");
-                monitor.ActionCompleted += (_, e) =>
-                    Console.WriteLine($"Action completed:  {e.ActionType} (player: {e.Player?.Name ?? "?"})");
-
-                while (game.IsRunning)
-                {
-                    if (!window.PumpEvents())
-                    {
-                        break;
-                    }
-
-                    game.Update(window.MessageQueue);
-                    game.Panel.EnsureFrame(window.ClientBounds);
-                    game.Render();
-                    textureCopier.Execute(
-                        game.Panel.Framebuffer.ColorTargets[0].Target,
-                        window.Swapchain.Framebuffer);
-                    window.MessageQueue.Clear();
-                    game.GraphicsDevice.SwapBuffers(window.Swapchain);
-                }
-
-                // No assertion needed — reaching here without an exception is the success condition.
-            }
-            finally
+            while (game.IsRunning && dispatchedCount < totalExpectedDispatches && DateTime.UtcNow < deadline)
             {
-                Platform.Stop();
+                game.Update(Array.Empty<InputMessage>());
+                game.Panel.EnsureFrame(frame);
+                game.Render();
             }
+
+            Assert.Equal(totalExpectedDispatches, dispatchedCount);
         }
         finally
         {

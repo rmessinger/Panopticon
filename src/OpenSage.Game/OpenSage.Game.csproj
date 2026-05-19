@@ -8,7 +8,6 @@
   <ItemGroup>
     <PackageReference Include="FixedMath.NET" />
     <PackageReference Include="LiteNetLib" />
-    <PackageReference Include="Microsoft.Win32.Registry" />
     <PackageReference Include="MoonSharp" />
     <PackageReference Include="Open.NAT.Core" />
     <PackageReference Include="OptimizedPriorityQueue" />
@@ -17,7 +16,7 @@
     <PackageReference Include="SharpAudio" />
     <PackageReference Include="SharpAudio.Codec" />
 
-    <PackageReference Include="System.Text.Encoding.CodePages" />
+
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Veldrid" />
     <PackageReference Include="Veldrid.RenderDoc" />

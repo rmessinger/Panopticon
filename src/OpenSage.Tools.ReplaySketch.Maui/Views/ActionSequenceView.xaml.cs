@@ -64,12 +64,12 @@ public partial class ActionSequenceView : ContentView
     private View BuildActionCard(ActionEntry action, int actionIdx, PlayerSlotConfig player)
     {
         // Outer card frame
-        var card = new Frame
+        var card = new Border
         {
-            BorderColor = Color.FromArgb("#555"),
+            Stroke = Color.FromArgb("#555"),
             BackgroundColor = Color.FromArgb("#2D2D2D"),
             Padding = new Thickness(8),
-            CornerRadius = 4,
+            StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(4) },
         };
 
         var content = new VerticalStackLayout { Spacing = 4 };

@@ -167,7 +167,7 @@ public class W3dFileTests
             var entry = bigArchive.GetEntry(@"Art\W3D\ABBarracks_AC.W3D");
 
             W3dFile w3dFile;
-            using (var entryStream = entry.Open())
+            using (var entryStream = entry!.Open())
             {
                 w3dFile = W3dFile.FromStream(entryStream, entry.FullName);
             }

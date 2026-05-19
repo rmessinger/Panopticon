@@ -158,12 +158,12 @@ public class PhysicsBehaviorTests : UpdateModuleTest<PhysicsBehavior, PhysicsBeh
         Assert.Equal(new Vector3(1, 2, 3), gameObject.Translation);
     }
 
-    private PhysicsBehavior SampleModule(PhysicsBehaviorModuleData moduleData = null)
+    private PhysicsBehavior SampleModule(PhysicsBehaviorModuleData? moduleData = null)
     {
         return SampleModule(out _, moduleData);
     }
 
-    private PhysicsBehavior SampleModule(out GameObject gameObject, PhysicsBehaviorModuleData moduleData = null)
+    private PhysicsBehavior SampleModule(out GameObject gameObject, PhysicsBehaviorModuleData? moduleData = null)
     {
         // TODO: Simplify test setup.
 

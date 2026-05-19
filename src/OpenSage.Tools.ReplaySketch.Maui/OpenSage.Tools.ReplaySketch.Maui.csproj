@@ -17,6 +17,7 @@
     <RootNamespace>OpenSage.Tools.ReplaySketch.Maui</RootNamespace>
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
 
     <!-- Application identity -->
     <ApplicationTitle>OpenSAGE Replay Sketch</ApplicationTitle>
@@ -46,5 +47,13 @@
   <ItemGroup>
     <ProjectReference Include="..\OpenSage.Tools.ReplaySketch.Core\OpenSage.Tools.ReplaySketch.Core.csproj" />
   </ItemGroup>
+  <Target Name="_FixFontFallbackPublishFolderType" BeforeTargets="_ComputePublishLocation">
+    <ItemGroup>
+      <!-- Exclude this desktop-only config file from the MAUI app bundle -->
+      <ResolvedFileToPublish Condition="'%(FileName)%(Extension)' == 'FontFallbackSettings.json'">
+        <PublishFolderType>None</PublishFolderType>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>

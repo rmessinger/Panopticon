@@ -14,7 +14,7 @@ public class QuadtreeTests
     public class MockQuadtreeItem : ICollidable
     {
         public readonly int Id;
-        public Collider Collider { get; set; }
+        public Collider? Collider { get; set; }
 
         public Collider RoughCollider { get; }
 

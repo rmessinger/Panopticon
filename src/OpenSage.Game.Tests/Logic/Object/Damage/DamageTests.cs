@@ -245,7 +245,7 @@ public class DamageTests : StatePersisterTest
         Assert.Equal(DamageType.Unresistable, data.DamageFXOverride);
         Assert.Equal(DeathType.Normal, data.DeathType);
         Assert.Equal(40, data.Amount, 0.01);
-        Assert.Equal("AmericaInfantryMissileDefender", data.SourceTemplate.Name);
+        Assert.Equal("AmericaInfantryMissileDefender", data.SourceTemplate!.Name);
     }
 
     #endregion

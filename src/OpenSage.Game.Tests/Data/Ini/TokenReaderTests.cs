@@ -27,7 +27,7 @@ public class TokenReaderTests
 
         Assert.Equal(1, reader.CurrentPosition.Character);
         var next = reader.PeekToken(Spaces);
-        Assert.Equal("TokenA", next.Value.Text);
+        Assert.Equal("TokenA", next?.Text);
         Assert.Equal(1, reader.CurrentPosition.Character);
     }
 
@@ -51,8 +51,8 @@ public class TokenReaderTests
         var untilSpace = reader.PeekToken(Spaces);
         var untilSemicolon = reader.PeekToken(Semicolons);
 
-        Assert.Equal("TokenA", untilSpace.Value.Text);
-        Assert.Equal("TokenA TokenB", untilSemicolon.Value.Text);
+        Assert.Equal("TokenA", untilSpace?.Text);
+        Assert.Equal("TokenA TokenB", untilSemicolon?.Text);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class TokenReaderTests
         var untilSpace = reader.PeekToken(Spaces);
         var untilSemicolon = reader.NextToken(Semicolons);
 
-        Assert.Equal("TokenA", untilSpace.Value.Text);
-        Assert.Equal("TokenA TokenB", untilSemicolon.Value.Text);
+        Assert.Equal("TokenA", untilSpace?.Text);
+        Assert.Equal("TokenA TokenB", untilSemicolon?.Text);
     }
 }

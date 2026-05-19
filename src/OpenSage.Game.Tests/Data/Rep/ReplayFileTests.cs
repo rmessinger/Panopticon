@@ -354,7 +354,7 @@ public class ReplayFileTests
         WriteOrders(replayFile);
     }
 
-    private static ReplayFile LoadReplayFile([CallerMemberName] string testName = null)
+    private static ReplayFile LoadReplayFile([CallerMemberName] string? testName = null)
     {
         using (var fileSystem = new DiskFileSystem(Path.Combine(Environment.CurrentDirectory, "Data", "Rep", "Assets")))
         {

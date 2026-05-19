@@ -4,7 +4,7 @@ namespace OpenSage.Tools.ReplaySketch.Model;
 
 public sealed class PlayerSlotConfig
 {
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Index into the game's PlayerTemplates list.

@@ -117,6 +117,7 @@ public abstract class MockedGameTest : IDisposable
             throw new NotImplementedException();
         }
 
+#pragma warning disable CS8618 // Non-nullable properties not initialized in constructor (intentional mock)
         public TestGame(SageGame game)
         {
             SageGame = game;
@@ -135,6 +136,7 @@ public abstract class MockedGameTest : IDisposable
 
             GameLogic = new GameLogic(this);
         }
+#pragma warning restore CS8618
 
         public void StartCampaign(string campaignName, string missionName)
         {
