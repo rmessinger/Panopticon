@@ -1,5 +1,5 @@
 {
-  // ScenarioOrchestrator configuration
+  // TestHarness configuration
   // ------------------------------------
   // ScenarioPath : path to a scenario JSON profile, or null for the built-in Alpine Assault scenario
   // Game         : SAGE game to run (CncGenerals, CncGeneralsZeroHour, Bfme, Bfme2, Bfme2Rotwk)

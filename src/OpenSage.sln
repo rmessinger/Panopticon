@@ -64,7 +64,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.ImageSharp", "Veldr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.ImGui", "Veldrid.ImGui\Veldrid.ImGui.csproj", "{E6781A17-C40E-42BC-A58B-57E222CA2BEC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSage.Tools.ScenarioOrchestrator", "OpenSage.Tools.ScenarioOrchestrator\OpenSage.Tools.ScenarioOrchestrator.csproj", "{E6D28A7B-DBC0-4CC5-AF38-D2DB005D91D8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSage.Tools.TestHarness", "OpenSage.Tools.TestHarness\OpenSage.Tools.TestHarness.csproj", "{E6D28A7B-DBC0-4CC5-AF38-D2DB005D91D8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch", "OpenSage.Tools.ReplaySketch\OpenSage.Tools.ReplaySketch.csproj", "{D5F2653B-DEC9-4A27-B1E2-CFEEBB55401C}"
 EndProject

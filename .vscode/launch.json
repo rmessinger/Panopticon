@@ -34,6 +34,21 @@
           ]
         },
         {
+            "name": "TestHarness",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/OpenSage.Tools.TestHarness.dll",
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "TestHarness (Headless)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/OpenSage.Tools.TestHarness.dll",
+            "args": ["--headless"],
+            "preLaunchTask": "build"
+        },
+        {
             "name": "ReplaySketch (MAUI)",
             "type": "maui",
             "request": "launch",

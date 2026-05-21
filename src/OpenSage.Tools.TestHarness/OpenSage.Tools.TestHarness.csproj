@@ -19,7 +19,7 @@
   </Target>
 
   <ItemGroup>
-    <Content Include="ScenarioOrchestrator.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="TestHarness.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

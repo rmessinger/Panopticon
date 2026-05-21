@@ -1,13 +1,13 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Veldrid;
 
-namespace OpenSage.Tools.ScenarioOrchestrator;
+namespace OpenSage.Tools.TestHarness;
 
 /// <summary>
-/// Persistent configuration for the ScenarioOrchestrator tool.
-/// Loaded from <c>ScenarioOrchestrator.json</c> in the executable directory.
+/// Persistent configuration for the TestHarness tool.
+/// Loaded from <c>TestHarness.json</c> in the executable directory.
 /// </summary>
-public sealed class ScenarioOrchestratorConfig
+public sealed class TestHarnessConfig
 {
     /// <summary>
     /// Path to a scenario JSON profile.
@@ -28,13 +28,21 @@ public sealed class ScenarioOrchestratorConfig
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public GraphicsBackend? Renderer { get; set; } = null;
 
-    /// <summary>Whether to start in fullscreen mode.</summary>
+    /// <summary>Whether to start in fullscreen mode. Ignored in headless mode.</summary>
     public bool Fullscreen { get; set; } = false;
 
     /// <summary>
     /// Keep the exported .rep file on disk after the run instead of deleting it.
     /// </summary>
     public bool KeepReplay { get; set; } = false;
+
+    /// <summary>
+    /// Run without a window using an offscreen graphics device.
+    /// In headless mode frame captures can be triggered via replay action events and are
+    /// logged to stdout as <c>[CAPTURE] &lt;path&gt; | &lt;hint&gt;</c> lines for agent inspection.
+    /// When false (default) a normal game window is opened.
+    /// </summary>
+    public bool Headless { get; set; } = false;
 
     /// <summary>
     /// Override the game installation path instead of auto-detecting from the registry

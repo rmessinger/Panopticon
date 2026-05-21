@@ -16,7 +16,7 @@ internal static class ShaderCrossCompiler
 
     // Increment this whenever the cross-compilation logic changes (e.g. FixMetalMslBindings)
     // so that stale cached shader files are automatically invalidated.
-    private const int CrossCompilerVersion = 2;
+    private const int CrossCompilerVersion = 3;
 
 #if DEBUG
     private const bool UseDebugCompilation = true;
@@ -187,8 +187,10 @@ internal static class ShaderCrossCompiler
         ShaderStages stage)
     {
         // Compute the Metal buffer/texture/sampler index Veldrid will assign for each named resource.
-        // Veldrid's Metal backend (ResourceBindingModel.Improved) assigns indices sequentially
-        // per resource type, iterating layouts in set order and elements within each layout in order.
+        // Veldrid's Metal backend (ResourceBindingModel.Improved) assigns indices sequentially per
+        // resource type, counting ALL elements across all layouts regardless of shader stage.
+        // (MTLResourceLayout.BufferCount / TextureCount / SamplerCount count all elements, and
+        // MTLCommandList.GetBufferBase sums those counts. Stage is irrelevant to the slot assignment.)
         var expectedBuffers = new Dictionary<string, int>();
         var expectedTextures = new Dictionary<string, int>();
         var expectedSamplers = new Dictionary<string, int>();
@@ -198,11 +200,6 @@ internal static class ShaderCrossCompiler
         {
             foreach (var element in layout.Elements)
             {
-                if ((element.Stages & stage) == 0)
-                {
-                    continue;
-                }
-
                 switch (element.Kind)
                 {
                     case ResourceKind.UniformBuffer:

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -10,11 +10,11 @@ using OpenSage.Mods.BuiltIn;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 
-namespace OpenSage.Tools.ScenarioOrchestrator;
+namespace OpenSage.Tools.TestHarness;
 
 public static class Program
 {
-    private const string ConfigFileName = "ScenarioOrchestrator.json";
+    private const string ConfigFileName = "TestHarness.json";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -27,27 +27,34 @@ public static class Program
     public static void Main(string[] args)
     {
         var config = LoadConfig();
+
+        // --headless overrides the config file (useful for VS Code launch configs and CI).
+        if (Array.Exists(args, a => a.Equals("--headless", StringComparison.OrdinalIgnoreCase)))
+        {
+            config.Headless = true;
+        }
+
         Run(config);
     }
 
-    private static ScenarioOrchestratorConfig LoadConfig()
+    private static TestHarnessConfig LoadConfig()
     {
         var path = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
         if (!File.Exists(path))
         {
             Console.Error.WriteLine($"Config file not found: {path}");
             Console.Error.WriteLine("Creating a default config file.");
-            var defaults = new ScenarioOrchestratorConfig();
+            var defaults = new TestHarnessConfig();
             File.WriteAllText(path, JsonSerializer.Serialize(defaults, JsonOptions));
             return defaults;
         }
 
         var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<ScenarioOrchestratorConfig>(json, JsonOptions)
-               ?? new ScenarioOrchestratorConfig();
+        return JsonSerializer.Deserialize<TestHarnessConfig>(json, JsonOptions)
+               ?? new TestHarnessConfig();
     }
 
-    private static void Run(ScenarioOrchestratorConfig config)
+    private static void Run(TestHarnessConfig config)
     {
         var scenario = LoadScenario(config.ScenarioPath);
 
@@ -78,14 +85,21 @@ public static class Program
                 return;
             }
 
-            Platform.Start();
-            try
+            if (config.Headless)
             {
                 RunReplay(installation, config, outputPath);
             }
-            finally
+            else
             {
-                Platform.Stop();
+                Platform.Start();
+                try
+                {
+                    RunReplay(installation, config, outputPath);
+                }
+                finally
+                {
+                    Platform.Stop();
+                }
             }
         }
         finally
@@ -101,9 +115,21 @@ public static class Program
         }
     }
 
-    private static void RunReplay(GameInstallation installation, ScenarioOrchestratorConfig config, string replayPath)
+    private static void RunReplay(GameInstallation installation, TestHarnessConfig config, string replayPath)
     {
-        using var window = new GameWindow("OpenSAGE - ScenarioOrchestrator", 100, 100, 1024, 768, config.Fullscreen);
+        if (config.Headless)
+        {
+            RunHeadless(installation, config, replayPath);
+        }
+        else
+        {
+            RunWindowed(installation, config, replayPath);
+        }
+    }
+
+    private static void RunWindowed(GameInstallation installation, TestHarnessConfig config, string replayPath)
+    {
+        using var window = new GameWindow("OpenSAGE - TestHarness", 100, 100, 1024, 768, config.Fullscreen);
         using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, window);
         using var textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
 
@@ -136,6 +162,50 @@ public static class Program
                 window.Swapchain.Framebuffer);
             window.MessageQueue.Clear();
             game.GraphicsDevice.SwapBuffers(window.Swapchain);
+        }
+
+        Console.WriteLine("Done.");
+    }
+
+    private static void RunHeadless(GameInstallation installation, TestHarnessConfig config, string replayPath)
+    {
+        using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, null);
+
+        using var repFileSystem = new DiskFileSystem(Path.GetDirectoryName(replayPath)!);
+        var repEntry = repFileSystem.GetFile(Path.GetFileName(replayPath));
+
+        game.LoadReplayFile(repEntry);
+        game.StartRun();
+
+        var capture = new FrameCaptureService();
+
+        using var monitor = new ReplayActionMonitor(game);
+        monitor.ActionDispatched += (_, e) =>
+            Console.WriteLine($"  [dispatched] {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
+        monitor.ActionCompleted += (_, e) =>
+        {
+            Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
+
+            // Schedule a capture after every completed action so agents can verify
+            // the visual state immediately after each game event.
+            // The [CAPTURE] log line is emitted after the next render (FlushPending below).
+            capture.ScheduleCapture(
+                $"Action '{e.ActionType}' completed for player '{e.Player?.Name ?? "unknown"}'. " +
+                "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
+                "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
+        };
+
+        Console.WriteLine($"Running headless replay. Captures written to: {FrameCaptureService.CaptureDirectory}");
+        Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
+
+        var frameRect = new OpenSage.Mathematics.Rectangle(0, 0, 1024, 768);
+
+        while (game.IsRunning)
+        {
+            game.Update(Array.Empty<OpenSage.Input.InputMessage>());
+            game.Panel.EnsureFrame(frameRect);
+            game.Render();
+            capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
         }
 
         Console.WriteLine("Done.");
