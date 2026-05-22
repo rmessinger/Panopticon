@@ -138,6 +138,12 @@ public interface IGame
     event EventHandler<Logic.GameObjectCreatedEventArgs> ObjectCreated;
 
     /// <summary>
+    /// Fired each time a <see cref="Logic.Object.GameObject"/> is destroyed via
+    /// <see cref="Logic.GameLogic.DestroyObject"/>.
+    /// </summary>
+    event EventHandler<Logic.GameObjectDestroyedEventArgs> ObjectDestroyed;
+
+    /// <summary>
     /// Fired when a <see cref="Game.Render"/> completes, but before
     /// <see cref="Game.Panel"/>'s <see cref="GamePanel.Framebuffer"/>
     /// is copied to <see cref="GraphicsDevice.SwapchainFramebuffer"/>.

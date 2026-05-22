@@ -86,6 +86,7 @@ public abstract class MockedGameTest : IDisposable
         public event EventHandler RenderCompleted;
         public event EventHandler<OrderProcessedEventArgs> OrderProcessed;
         public event EventHandler<GameObjectCreatedEventArgs> ObjectCreated;
+        public event EventHandler<GameObjectDestroyedEventArgs> ObjectDestroyed;
 #pragma warning restore CS0067 // The event 'Game.X' is never used
         public void LoadSaveFile(FileSystemEntry entry)
         {

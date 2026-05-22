@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using OpenSage.Gui.ControlBar;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders.SpecialPower;
 
@@ -180,12 +181,24 @@ public sealed class OrderProcessor
                         var objectDefinitionId = (uint)order.Arguments[0].Value.Integer;
                         var objectDefinition = _game.AssetStore.ObjectDefinitions.GetByInstanceId(objectDefinitionId);
                         player.BankAccount.Withdraw((uint)objectDefinition.BuildCost);
-                        var placeInQueue = order.Arguments[1].Value.Integer;
 
-                        foreach (var unit in player.SelectedUnits)
+                        // Find a producer among the currently selected units that has a UnitBuild
+                        // command button for the requested unit definition.  This guards against the
+                        // command being routed to the wrong building (e.g. the Command Center instead
+                        // of the Barracks) when an incorrect selection is active.
+                        var producer = player.SelectedUnits
+                            .FirstOrDefault(u => CanProduceUnit(u, objectDefinition));
+
+                        // In synthetic/scripted replays no producer building is pre-selected; fall
+                        // back to the first player-owned building that can produce this unit.
+                        producer ??= _game.Scene3D.GameObjects.Objects
+                            .FirstOrDefault(u => u.Owner == player && CanProduceUnit(u, objectDefinition));
+
+                        if (producer != null)
                         {
-                            // Only units that can produce stuff should produce it
-                            unit.ProductionUpdate?.QueueProduction(objectDefinition);
+                            // Select the producer so subsequent orders (e.g. CancelUnit) target it.
+                            _game.Selection.SetSelectedObjects(player, [producer], playAudio: false);
+                            producer.ProductionUpdate?.QueueProduction(objectDefinition);
                         }
                     }
                     break;
@@ -300,10 +313,21 @@ public sealed class OrderProcessor
                 case OrderType.ForceAttackGround:
                     {
                         var targetPosition = order.Arguments[0].Value.Position;
-                        foreach (var unit in player.SelectedUnits)
+
+                        // In synthetic/scripted replays no units may be pre-selected; fall back to
+                        // all attackable units owned by this player so the attack order takes effect.
+                        var units = player.SelectedUnits.Count > 0
+                            ? (IEnumerable<GameObject>)player.SelectedUnits
+                            : _game.Scene3D.GameObjects.Objects
+                                .Where(u => u.Owner == player && u.CanAttack);
+
+                        foreach (var unit in units)
                         {
                             if (unit.CanAttack)
                             {
+                                // Move toward the target so the unit enters weapon range,
+                                // then the AI will auto-engage once in range.
+                                unit.AIUpdate?.SetTargetPoint(targetPosition);
                                 unit.CurrentWeapon?.SetTarget(new WeaponTarget(targetPosition));
                             }
                         }
@@ -520,5 +544,31 @@ public sealed class OrderProcessor
                 concreteGame.RaiseOrderProcessed(new OrderProcessedEventArgs(order, player));
             }
         }
+    }
+
+    /// <summary>
+    /// Returns true if <paramref name="building"/> has a <see cref="CommandType.UnitBuild"/>
+    /// button for <paramref name="objectDefinition"/> in its command set, meaning it is the
+    /// correct building to produce that unit.
+    /// </summary>
+    private static bool CanProduceUnit(GameObject building, ObjectDefinition objectDefinition)
+    {
+        var commandSet = building.Definition.CommandSet?.Value;
+        if (commandSet == null)
+        {
+            return false;
+        }
+
+        foreach (var buttonRef in commandSet.Buttons.Values)
+        {
+            var button = buttonRef?.Value;
+            if (button?.Command == CommandType.UnitBuild
+                && button.Object?.Value == objectDefinition)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -126,12 +126,16 @@ public sealed class Game : DisposableBase, IGame
     public event EventHandler<GameUpdatingEventArgs> Updating;
     public event EventHandler<Logic.Orders.OrderProcessedEventArgs> OrderProcessed;
     public event EventHandler<Logic.GameObjectCreatedEventArgs> ObjectCreated;
+    public event EventHandler<Logic.GameObjectDestroyedEventArgs> ObjectDestroyed;
 
     internal void RaiseOrderProcessed(Logic.Orders.OrderProcessedEventArgs args) =>
         OrderProcessed?.Invoke(this, args);
 
     internal void RaiseObjectCreated(Logic.GameObjectCreatedEventArgs args) =>
         ObjectCreated?.Invoke(this, args);
+
+    internal void RaiseObjectDestroyed(Logic.GameObjectDestroyedEventArgs args) =>
+        ObjectDestroyed?.Invoke(this, args);
 
     /// <summary>
     /// Fired when a <see cref="Render"/> completes, but before

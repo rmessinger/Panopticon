@@ -194,6 +194,10 @@ public static class ReplayExporter
             case ActionType.RecruitBasicUnit:
                 {
                     var unitDefId = isGla ? KnownDefinitions.GlaRebel : KnownDefinitions.UsaRanger;
+                    // Clear the selection before recruiting so the OrderProcessor falls back to
+                    // finding the correct producer building (Barracks) via its CommandSet, rather
+                    // than routing the order to whatever was previously selected.
+                    yield return Order.CreateClearSelection(playerIndex);
                     var recruitOrder = new Order(playerIndex, OrderType.CreateUnit);
                     recruitOrder.AddIntegerArgument(unitDefId); // arg[0] = definition InstanceId (hash)
                     recruitOrder.AddIntegerArgument(1);         // arg[1] = place in queue

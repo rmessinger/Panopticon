@@ -179,6 +179,14 @@ public static class Program
 
         var capture = new FrameCaptureService();
 
+        // Track how many players have had their AttackEnemyBase action complete.
+        // Once all players are done we run for a short tail period and then exit.
+        var scenario = LoadScenario(config.ScenarioPath);
+        var attacksExpected = scenario.Players.Count;
+        var attacksCompleted = 0;
+        const int RunoutFrames = 300; // ~60 game-seconds of tail for the units to visibly move
+        var runoutRemaining = int.MaxValue;
+
         using var monitor = new ReplayActionMonitor(game);
         monitor.ActionDispatched += (_, e) =>
             Console.WriteLine($"  [dispatched] {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
@@ -193,6 +201,15 @@ public static class Program
                 $"Action '{e.ActionType}' completed for player '{e.Player?.Name ?? "unknown"}'. " +
                 "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
                 "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
+
+            if (e.ActionType == ActionType.AttackEnemyBase)
+            {
+                attacksCompleted++;
+                if (attacksCompleted >= attacksExpected && runoutRemaining == int.MaxValue)
+                {
+                    runoutRemaining = RunoutFrames;
+                }
+            }
         };
 
         Console.WriteLine($"Running headless replay. Captures written to: {FrameCaptureService.CaptureDirectory}");
@@ -206,6 +223,14 @@ public static class Program
             game.Panel.EnsureFrame(frameRect);
             game.Render();
             capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
+
+            if (runoutRemaining != int.MaxValue)
+            {
+                if (runoutRemaining-- <= 0)
+                {
+                    game.Exit();
+                }
+            }
         }
 
         Console.WriteLine("Done.");

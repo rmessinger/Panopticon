@@ -51,6 +51,14 @@ public sealed class ReplayActionMonitor : IDisposable
         if (actionType is not null)
         {
             ActionDispatched?.Invoke(this, new ReplayActionEventArgs(actionType.Value, e.Player));
+
+            // For AttackEnemyBase the game effect — units begin moving toward the attack position —
+            // is immediate: the order is routed to all attackable units on the same frame it is
+            // processed. Fire ActionCompleted right away so the test harness can capture the state.
+            if (actionType == ActionType.AttackEnemyBase)
+            {
+                ActionCompleted?.Invoke(this, new ReplayActionEventArgs(actionType.Value, e.Player));
+            }
         }
     }
 

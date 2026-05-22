@@ -190,6 +190,11 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
         gameObject.SetObjectStatus(ObjectStatus.Destroyed, true);
 
+        if (_game is Game concreteGame)
+        {
+            concreteGame.RaiseObjectDestroyed(new GameObjectDestroyedEventArgs(gameObject));
+        }
+
         _destroyList.Add(gameObject);
     }
 
