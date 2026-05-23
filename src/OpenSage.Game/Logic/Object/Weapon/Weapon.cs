@@ -39,7 +39,9 @@ public sealed class Weapon : IPersistableObject
 
     internal WeaponTarget CurrentTarget { get; private set; }
 
-    private Vector3? CurrentTargetPosition => CurrentTarget?.TargetPosition;
+    private Vector3? CurrentTargetPosition => CurrentTarget == null || CurrentTarget.IsDestroyed
+        ? null
+        : CurrentTarget.TargetPosition;
 
     public bool HasValidTarget
     {
@@ -113,6 +115,13 @@ public sealed class Weapon : IPersistableObject
         if (CurrentTarget != null)
         {
             ParentGameObject.ModelConditionFlags.Set(_usingFlag, true);
+            // Enable weapon logic ticking. AI attack states are not fully implemented,
+            // so we gate on having a target rather than waiting for the AI to set Attacking.
+            ParentGameObject.ModelConditionFlags.Set(ModelConditionFlag.Attacking, true);
+        }
+        else
+        {
+            ParentGameObject.ModelConditionFlags.Set(ModelConditionFlag.Attacking, false);
         }
     }
 

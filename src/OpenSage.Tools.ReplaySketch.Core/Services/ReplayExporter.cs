@@ -70,7 +70,7 @@ public static class ReplayExporter
                     // place them in the replay file — the test harness injects them at runtime.
                     var actionOrders = BuildOrders(ownerIdx + 2, action.Type, worldPos, player.FactionIndex)
                         .ToList();
-                    deferred.Add(new DeferredAction(player.Name, aat.TriggerAction, actionOrders, aat.ExtraFrames));
+                    deferred.Add(new DeferredAction(ownerIdx + 2, aat.TriggerAction, actionOrders, aat.ExtraFrames));
                 }
                 else
                 {
@@ -214,10 +214,16 @@ public static class ReplayExporter
                     // finding the correct producer building (Barracks) via its CommandSet, rather
                     // than routing the order to whatever was previously selected.
                     yield return Order.CreateClearSelection(playerIndex);
-                    var recruitOrder = new Order(playerIndex, OrderType.CreateUnit);
-                    recruitOrder.AddIntegerArgument(unitDefId); // arg[0] = definition InstanceId (hash)
-                    recruitOrder.AddIntegerArgument(1);         // arg[1] = place in queue
-                    yield return recruitOrder;
+                    // Queue 5 units so there are enough attackers to destroy the enemy CC.
+                    // Each unit that exits the barracks will re-trigger AttackEnemyBase,
+                    // routing all available units toward the enemy base.
+                    for (var i = 0; i < 5; i++)
+                    {
+                        var recruitOrder = new Order(playerIndex, OrderType.CreateUnit);
+                        recruitOrder.AddIntegerArgument(unitDefId); // arg[0] = definition InstanceId (hash)
+                        recruitOrder.AddIntegerArgument(1);         // arg[1] = place in queue
+                        yield return recruitOrder;
+                    }
                     break;
                 }
 

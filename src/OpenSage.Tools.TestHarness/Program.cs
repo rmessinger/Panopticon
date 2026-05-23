@@ -61,8 +61,11 @@ public static class Program
         var scenario = LoadScenario(config.ScenarioPath);
 
         var definition = GameDefinition.FromGame(config.Game);
-        var installation = config.GamePath != null
-            ? new GameInstallation(definition, config.GamePath)
+        var effectiveGamePath = config.GamePath != null && Directory.Exists(config.GamePath)
+            ? config.GamePath
+            : null;
+        var installation = effectiveGamePath != null
+            ? new GameInstallation(definition, effectiveGamePath)
             : GameInstallation.FindAll(new[] { definition }).FirstOrDefault();
 
         if (installation == null)
@@ -146,16 +149,20 @@ public static class Program
 
         using var monitor = new ReplayActionMonitor(game);
         monitor.ActionDispatched += (_, e) =>
-            Console.WriteLine($"  [dispatched] {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
+        {
+            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+            Console.WriteLine($"  [dispatched] {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
+        };
         monitor.ActionCompleted += (_, e) =>
-            Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
-
+        {
+            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+            Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
+        };
         var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
 
         Console.WriteLine("Running replay — close the window or wait for it to finish.");
 
-        var frameCount = 0;
-        var maxFrames = config.MaxReplayFrames > 0 ? config.MaxReplayFrames : int.MaxValue;
+        var maxLogicFrames = config.MaxReplayFrames > 0 ? (uint)config.MaxReplayFrames : uint.MaxValue;
 
         while (game.IsRunning)
         {
@@ -174,10 +181,10 @@ public static class Program
             window.MessageQueue.Clear();
             game.GraphicsDevice.SwapBuffers(window.Swapchain);
 
-            frameCount++;
-            if (frameCount >= maxFrames)
+            var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+            if (logicFrame >= maxLogicFrames)
             {
-                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxFrames}). Forcing exit.");
+                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxLogicFrames} logic frames). Forcing exit.");
                 break;
             }
         }
@@ -199,20 +206,20 @@ public static class Program
 
         var capture = new FrameCaptureService();
 
-        // Track how many players have had their AttackEnemyBase action complete.
-        // Once all players are done we run for a short tail period and then exit.
-        var scenario = LoadScenario(config.ScenarioPath);
-        var attacksExpected = scenario.Players.Count;
-        var attacksCompleted = 0;
-        const int RunoutFrames = 300; // ~60 game-seconds of tail for the units to visibly move
-        var runoutRemaining = int.MaxValue;
+        // Once the first enemy Command Center is destroyed, run a short tail period then exit.
+        const uint RunoutLogicFrames = 300; // 10 game-seconds at 30 fps
+        var runoutEndLogicFrame = uint.MaxValue;
 
         using var monitor = new ReplayActionMonitor(game);
         monitor.ActionDispatched += (_, e) =>
-            Console.WriteLine($"  [dispatched] {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
+        {
+            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+            Console.WriteLine($"  [dispatched] {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
+        };
         monitor.ActionCompleted += (_, e) =>
         {
-            Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
+            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+            Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
 
             // Schedule a capture after every completed action so agents can verify
             // the visual state immediately after each game event.
@@ -222,13 +229,9 @@ public static class Program
                 "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
                 "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
 
-            if (e.ActionType == ActionType.AttackEnemyBase)
+            if (e.ActionType == ActionType.EnemyBaseDestroyed && runoutEndLogicFrame == uint.MaxValue)
             {
-                attacksCompleted++;
-                if (attacksCompleted >= attacksExpected && runoutRemaining == int.MaxValue)
-                {
-                    runoutRemaining = RunoutFrames;
-                }
+                runoutEndLogicFrame = frame + RunoutLogicFrames;
             }
         };
 
@@ -238,8 +241,7 @@ public static class Program
         Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
 
         var frameRect = new OpenSage.Mathematics.Rectangle(0, 0, 1024, 768);
-        var frameCount = 0;
-        var maxFrames = config.MaxReplayFrames > 0 ? config.MaxReplayFrames : int.MaxValue;
+        var maxLogicFrames = config.MaxReplayFrames > 0 ? (uint)config.MaxReplayFrames : uint.MaxValue;
 
         while (game.IsRunning)
         {
@@ -249,18 +251,18 @@ public static class Program
             game.Render();
             capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
 
-            frameCount++;
+            var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
 
-            if (runoutRemaining != int.MaxValue)
+            if (runoutEndLogicFrame != uint.MaxValue)
             {
-                if (runoutRemaining-- <= 0)
+                if (logicFrame >= runoutEndLogicFrame)
                 {
                     game.Exit();
                 }
             }
-            else if (frameCount >= maxFrames)
+            else if (logicFrame >= maxLogicFrames)
             {
-                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxFrames}). Forcing exit.");
+                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxLogicFrames} logic frames). Forcing exit.");
                 game.Exit();
             }
         }
@@ -284,7 +286,7 @@ public static class Program
         {
             foreach (var deferred in deferredActions)
             {
-                if (deferred.Trigger == e.ActionType && deferred.PlayerName == e.Player?.Name)
+                if (deferred.Trigger == e.ActionType && deferred.PlayerIndex == (int?)e.Player?.Id)
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }

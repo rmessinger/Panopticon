@@ -335,7 +335,7 @@ public class AIUpdate : UpdateModule
         else
         {
             var target = GameObject.CurrentWeapon?.CurrentTarget;
-            if (target != null)
+            if (target != null && !target.IsDestroyed)
             {
                 var directionToTarget = (target.TargetPosition - GameObject.Translation);
                 SetTargetDirection(directionToTarget);
@@ -353,33 +353,41 @@ public class AIUpdate : UpdateModule
 
             if (TargetPoints.Count > 0)
             {
-                Vector3? nextPoint = null;
-
-                if (TargetPoints.Count > 1)
+                // If the current weapon target is already in range, stop moving so the unit can fire.
+                if (GameObject.CurrentWeapon?.HasValidTarget == true)
                 {
-                    nextPoint = TargetPoints[1];
+                    StopMovingOnly();
                 }
-
-                // TODO(Port): Use correct parameter values.
-                var blocked = false;
-                CurrentLocomotor.LocoUpdateMoveTowardsPosition(
-                    GameObject,
-                    TargetPoints[0],
-                    Vector3.Distance(GameObject.Translation, TargetPoints[0]),
-                    CurrentLocomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState),
-                    ref blocked);
-
-                // TODO(Port): This isn't right.
-                var reachedPosition = (GameObject.Translation - TargetPoints[0]).Vector2XY().LengthSquared() < 0.25f;
-
-                // this should be moved to LogicTick
-                if (reachedPosition)
+                else
                 {
-                    Logger.Debug($"Reached point {TargetPoints[0]}");
-                    TargetPoints.RemoveAt(0);
-                    if (TargetPoints.Count == 0)
+                    Vector3? nextPoint = null;
+
+                    if (TargetPoints.Count > 1)
                     {
-                        MoveToNextWaypointOrStop();
+                        nextPoint = TargetPoints[1];
+                    }
+
+                    // TODO(Port): Use correct parameter values.
+                    var blocked = false;
+                    CurrentLocomotor.LocoUpdateMoveTowardsPosition(
+                        GameObject,
+                        TargetPoints[0],
+                        Vector3.Distance(GameObject.Translation, TargetPoints[0]),
+                        CurrentLocomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState),
+                        ref blocked);
+
+                    // TODO(Port): This isn't right.
+                    var reachedPosition = (GameObject.Translation - TargetPoints[0]).Vector2XY().LengthSquared() < 0.25f;
+
+                    // this should be moved to LogicTick
+                    if (reachedPosition)
+                    {
+                        Logger.Debug($"Reached point {TargetPoints[0]}");
+                        TargetPoints.RemoveAt(0);
+                        if (TargetPoints.Count == 0)
+                        {
+                            MoveToNextWaypointOrStop();
+                        }
                     }
                 }
             }

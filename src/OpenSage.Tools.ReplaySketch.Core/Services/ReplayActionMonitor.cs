@@ -2,6 +2,7 @@
 using OpenSage;
 using OpenSage.Content;
 using OpenSage.Logic;
+using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Model;
 
@@ -35,6 +36,7 @@ public sealed class ReplayActionMonitor : IDisposable
         _game = game;
         _game.OrderProcessed += OnOrderProcessed;
         _game.ObjectCreated += OnObjectCreated;
+        _game.ObjectDestroyed += OnObjectDestroyed;
         _game.ConstructionCompleted += OnConstructionCompleted;
     }
 
@@ -75,6 +77,15 @@ public sealed class ReplayActionMonitor : IDisposable
             new ReplayActionEventArgs(ActionType.RecruitBasicUnit, e.GameObject.Owner));
     }
 
+    private void OnObjectDestroyed(object? sender, GameObjectDestroyedEventArgs e)
+    {
+        if (e.GameObject.IsKindOf(ObjectKinds.CommandCenter))
+        {
+            ActionCompleted?.Invoke(this,
+                new ReplayActionEventArgs(ActionType.EnemyBaseDestroyed, e.GameObject.Owner));
+        }
+    }
+
     private void OnConstructionCompleted(object? sender, GameObjectConstructionCompletedEventArgs e)
     {
         var name = e.GameObject.Definition.Name;
@@ -91,6 +102,7 @@ public sealed class ReplayActionMonitor : IDisposable
     {
         _game.OrderProcessed -= OnOrderProcessed;
         _game.ObjectCreated -= OnObjectCreated;
+        _game.ObjectDestroyed -= OnObjectDestroyed;
         _game.ConstructionCompleted -= OnConstructionCompleted;
     }
 }

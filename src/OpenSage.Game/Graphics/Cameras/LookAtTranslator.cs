@@ -49,6 +49,13 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
     private bool _rotateDirLeft;
     private bool _rotateDirRight;
 
+    // World-space XY point around which the camera pivots when middle mouse is held
+    private System.Numerics.Vector2? _pivotWorldPos;
+
+    // Drag-to-pan state: world-space anchor locked to cursor on right-button-down
+    private bool _isDraggingPan;
+    private System.Numerics.Vector2 _panAnchorWorld;
+
     // C++ version also has _isChangingFOV and _lastPlaneID, but they're only used for debugging
 
     // TODO: Implement this
@@ -148,10 +155,10 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                             _scrollDir.Right = state;
                             break;
                         case Veldrid.Key.Q when _scheme == CameraControlScheme.TotalWar:
-                            _rotateDirLeft = state;
+                            _rotateDirRight = state;
                             break;
                         case Veldrid.Key.E when _scheme == CameraControlScheme.TotalWar:
-                            _rotateDirRight = state;
+                            _rotateDirLeft = state;
                             break;
                         // New feature: Escape disables mouse lock, so let's also stop scrolling
                         case Veldrid.Key.Escape:
@@ -195,9 +202,9 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
 
                     if (_scheme == CameraControlScheme.TotalWar)
                     {
-                        // Right drag = orbit (yaw + pitch) in Total War mode
-                        IsRotating = true;
-                        IsPitching = true;
+                        // Right drag = drag-to-pan in Total War mode
+                        _isDraggingPan = true;
+                        _panAnchorWorld = _tacticalView.GetGroundPointAtScreen(message.Value.MousePosition);
                     }
                     else
                     {
@@ -215,8 +222,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
 
                     if (_scheme == CameraControlScheme.TotalWar)
                     {
-                        IsRotating = false;
-                        IsPitching = false;
+                        _isDraggingPan = false;
                     }
                     else if (ScrollType == ScrollType.RightMouseButton)
                     {
@@ -232,18 +238,9 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                     _currentPos = _anchor;
                     _timestamp = gameTime.TotalTime.TotalMilliseconds;
 
-                    if (_scheme == CameraControlScheme.TotalWar)
-                    {
-                        // Middle drag = pan in Total War mode
-                        if (!IsScrolling)
-                        {
-                            SetScrolling(ScrollType.MiddleMouseButton);
-                        }
-                    }
-                    else
-                    {
-                        IsRotating = true;
-                    }
+                    IsRotating = true;
+                    IsPitching = true;
+                    _pivotWorldPos = _tacticalView.GetGroundPointAtScreen(message.Value.MousePosition);
                     break;
                 }
             case InputMessageType.MouseMiddleButtonUp:
@@ -260,23 +257,13 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                     var didMove = adx > PixelOffset || ady > PixelOffset;
                     var isClick = !didMove && gameTime.TotalTime.TotalMilliseconds - _timestamp < ClickDurationMs;
 
-                    if (_scheme == CameraControlScheme.TotalWar)
+                    IsRotating = false;
+                    IsPitching = false;
+                    _pivotWorldPos = null;
+                    if (isClick)
                     {
-                        StopScrolling(gameTime);
-                        if (isClick)
-                        {
-                            _tacticalView.SetAngleAndPitchToDefault();
-                            _tacticalView.SetZoomToDefault();
-                        }
-                    }
-                    else
-                    {
-                        IsRotating = false;
-                        if (isClick)
-                        {
-                            _tacticalView.SetAngleAndPitchToDefault();
-                            _tacticalView.SetZoomToDefault();
-                        }
+                        _tacticalView.SetAngleAndPitchToDefault();
+                        _tacticalView.SetZoomToDefault();
                     }
 
                     break;
@@ -323,6 +310,17 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         }
                     }
 
+                    if (_isDraggingPan)
+                    {
+                        var currentWorld = _tacticalView.GetGroundPointAtScreen(_currentPos);
+                        var delta = _panAnchorWorld - currentWorld;
+                        _tacticalView.PanByWorldDelta(delta);
+                        if (_pivotWorldPos.HasValue)
+                        {
+                            _pivotWorldPos = _pivotWorldPos.Value + delta;
+                        }
+                    }
+
                     if (IsRotating || IsPitching)
                     {
                         var factor = 0.01f;
@@ -331,12 +329,20 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
 
                         if (IsRotating)
                         {
-                            _tacticalView.Angle += factor * dx;
+                            var deltaAngle = -factor * dx;
+                            if (_pivotWorldPos.HasValue)
+                            {
+                                _tacticalView.RotateAroundWorldPoint(_pivotWorldPos.Value, deltaAngle);
+                            }
+                            else
+                            {
+                                _tacticalView.Angle += deltaAngle;
+                            }
                         }
 
                         if (IsPitching)
                         {
-                            _tacticalView.Pitch += factor * dy;
+                            _tacticalView.Pitch += -factor * dy;
                         }
 
                         _anchor = _currentPos;
@@ -470,29 +476,20 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         offset *= speedFactor * ScrollAmount * keyboardScrollSpeedFactor;
                         break;
                     }
-                case ScrollType.MiddleMouseButton:
-                    {
-                        // Total War middle-drag pan: velocity based on cursor distance from anchor
-                        var max = _tacticalView.Camera.ScreenSize / 2.0f;
-                        _anchor = new Point2D(
-                            (int)Math.Clamp(_anchor.X, max.X, _tacticalView.Camera.ScreenSize.X - max.X),
-                            (int)Math.Clamp(_anchor.Y, max.Y, _tacticalView.Camera.ScreenSize.Y - max.Y)
-                        );
-
-                        offset = (_currentPos.ToVector2() - _anchor.ToVector2()) * speedFactor;
-                        if (offset != Vector2.Zero)
-                        {
-                            var vec = Vector2.Normalize(offset);
-                            offset += speedFactor * vec * MathF.Pow(keyboardScrollSpeedFactor, 2.0f);
-                        }
-                        break;
-                    }
                 default:
                     break;
             }
 
             // TODO(Port): TheInGameUI->setScrollAmount(offset);
+            var posBeforeScroll = _tacticalView.Position;
             _tacticalView.ScrollBy(offset, gameTime);
+            if (_pivotWorldPos.HasValue)
+            {
+                var posAfterScroll = _tacticalView.Position;
+                _pivotWorldPos = _pivotWorldPos.Value + new System.Numerics.Vector2(
+                    posAfterScroll.X - posBeforeScroll.X,
+                    posAfterScroll.Y - posBeforeScroll.Y);
+            }
         }
         else
         {
@@ -528,7 +525,6 @@ public enum ScrollType
 {
     None,
     RightMouseButton,
-    MiddleMouseButton,
     Key,
     ScreenEdge
 }

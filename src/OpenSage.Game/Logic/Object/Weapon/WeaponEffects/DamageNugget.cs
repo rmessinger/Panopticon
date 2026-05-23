@@ -120,6 +120,8 @@ public class DamageNugget : WeaponEffectNugget
             //TODO: increase damage with context.Weapon.Template.WeaponBonuses
         }
 
+        var target = context.Weapon.CurrentTarget;
+
         context.Weapon.CurrentTarget.DoDamage(DamageType, (Fix64)Damage, DeathType, context.Weapon.ParentGameObject);
     }
 }

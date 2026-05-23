@@ -56,12 +56,19 @@ public class BezierProjectileBehavior : UpdateModule
         FXList groundHitFX)
     {
         // Did we hit an object?
-        // TODO
+        // TODO: Proper projectile-vs-object collision detection along the flight path.
 
         if (DidHitGround(gameObject, gameEngine))
         {
-            // TODO: Interpolate to find actual point we hit the ground?
-            Detonate(gameObject, gameEngine, new WeaponTarget(gameObject.Translation), detonateCallsKill, groundHitFX);
+            // If the projectile was fired at a specific object, preserve that target so that
+            // DamageNugget.Execute applies damage to the object. WeaponTarget.DoDamage only
+            // deals damage when the target type is Object; a position target does nothing.
+            var currentTarget = gameObject.CurrentWeapon?.CurrentTarget;
+            var detonationTarget = currentTarget?.TargetType == WeaponTargetType.Object
+                ? currentTarget
+                : new WeaponTarget(gameObject.Translation);
+
+            Detonate(gameObject, gameEngine, detonationTarget, detonateCallsKill, groundHitFX);
         }
     }
 

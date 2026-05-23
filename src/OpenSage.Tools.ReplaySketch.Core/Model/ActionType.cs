@@ -6,4 +6,5 @@ public enum ActionType
     GatherResources,
     RecruitBasicUnit,
     AttackEnemyBase,
+    EnemyBaseDestroyed,
 }

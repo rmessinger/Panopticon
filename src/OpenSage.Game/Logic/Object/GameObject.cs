@@ -1158,7 +1158,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     internal void SetWarhead(WeaponTemplate weaponTemplate)
     {
-        // TODO
+        _weaponSet.SetWarhead(weaponTemplate);
     }
 
     public bool CanPurchase(CommandButton button)

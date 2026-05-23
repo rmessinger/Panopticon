@@ -60,10 +60,10 @@ public sealed class TestHarnessConfig
     /// <summary>
     /// Maximum number of logic frames to run before forcibly exiting.
     /// Prevents the replay from running forever if an expected action never completes.
-    /// Generals logic runs at 5 fps, so 6000 frames ≈ 20 game-minutes.
+    /// Generals logic runs at 30 fps, so 9000 frames ≈ 5 game-minutes.
     /// Set to 0 to disable the limit (not recommended for CI).
     /// </summary>
-    public int MaxReplayFrames { get; set; } = 6000;
+    public int MaxReplayFrames { get; set; } = 9000;
 
     /// <summary>
     /// Camera control scheme to use in windowed mode.

@@ -8,7 +8,7 @@
 //
 // Each action's "timing" is a frame OFFSET from the previous action
 // (or from game start for the first action).
-// Generals runs logic at 5 fps, so 150 frames ≈ 30 seconds of game time.
+// Generals runs logic at 30 fps, so 150 frames ≈ 5 seconds of game time.
 //
 //   timing.kind = "fixed"
 //     Fires at exactly `frames` after the prior action.
@@ -90,7 +90,9 @@
         {
           "label": "Build Barracks",
           "type": "BuildBarracks",
-          "timing": { "kind": "fixed", "frames": 300 },
+          // Issues the build order at frame 90 (3 s at 30 fps) — enough time for the
+          // game to initialise without needlessly delaying the scenario.
+          "timing": { "kind": "fixed", "frames": 90 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "OwnBase",
@@ -101,9 +103,9 @@
         {
           "label": "Gather Resources",
           "type": "GatherResources",
-          // Offset from BuildBarracks. Fires ~30 s after the barracks order is issued,
-          // which is enough time for the truck to be ready while construction begins.
-          "timing": { "kind": "fixed", "frames": 150 },
+          // Fires 60 frames (2 s) after the BuildBarracks order — the truck is always
+          // ready at game start, so no extra wait is needed.
+          "timing": { "kind": "fixed", "frames": 60 },
           "position": null
         },
         {
@@ -111,6 +113,8 @@
           "type": "RecruitBasicUnit",
           // Deferred: fires only after the barracks finishes construction, preventing the
           // recruit order from arriving while the building is still being built.
+          // Queues 5 Rangers (see ReplayExporter) — each unit that exits will re-trigger
+          // AttackEnemyBase so all units are sent to attack together.
           "timing": { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 },
           "position": null
         },
@@ -122,9 +126,9 @@
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",
-            "distanceInBaseWidths": 1.0,
-            // Random bearing so the attack doesn't always hit the exact same tile.
-            "angle": { "kind": "random", "minDegrees": 150.0, "maxDegrees": 210.0 }
+            // Target the waypoint directly (0 = at the CC) so auto-engage fires point-blank.
+            "distanceInBaseWidths": 0.0,
+            "angle": { "kind": "fixed", "degrees": 0.0 }
           }
         }
       ]
@@ -139,7 +143,7 @@
         {
           "label": "Build Barracks",
           "type": "BuildBarracks",
-          "timing": { "kind": "fixed", "frames": 300 },
+          "timing": { "kind": "fixed", "frames": 90 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "OwnBase",
@@ -150,13 +154,15 @@
         {
           "label": "Gather Resources",
           "type": "GatherResources",
-          "timing": { "kind": "fixed", "frames": 150 },
+          "timing": { "kind": "fixed", "frames": 60 },
           "position": null
         },
         {
           "label": "Recruit Rebel",
           "type": "RecruitBasicUnit",
           // Deferred: fires only after the barracks finishes construction.
+          // Queues 5 Rebels (see ReplayExporter) — each unit that exits will re-trigger
+          // AttackEnemyBase so all units are sent to attack together.
           "timing": { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 },
           "position": null
         },
@@ -168,8 +174,9 @@
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",
-            "distanceInBaseWidths": 1.0,
-            "angle": { "kind": "random", "minDegrees": -30.0, "maxDegrees": 30.0 }
+            // Target the waypoint directly (0 = at the CC) so auto-engage fires point-blank.
+            "distanceInBaseWidths": 0.0,
+            "angle": { "kind": "fixed", "degrees": 0.0 }
           }
         }
       ]

@@ -1546,6 +1546,14 @@ public sealed class TacticalView : IPersistableObject
             _heightAboveGround = Math.Clamp(_heightAboveGround, _minHeightAboveGround, _maxHeightAboveGround);
         }
 
+        // Immediately apply the desired zoom so it takes effect regardless of CameraAdjustSpeed.
+        if (_cameraOffset.Z > 0)
+        {
+            var terrainHeight = GetHeightAroundPos(_pos.Vector2XY());
+            var desiredZoom = (terrainHeight + _heightAboveGround) / _cameraOffset.Z;
+            _zoom = Math.Clamp(desiredZoom, _minZoom, _maxZoom);
+        }
+
         ResetAnimationsAndFlags();
         SetCameraTransform();
     }
@@ -1682,6 +1690,47 @@ public sealed class TacticalView : IPersistableObject
 
             _rotateAnimation = null;
         }
+    }
+
+    /// <summary>
+    /// Gets the XY world-space position on the ground plane that corresponds to a screen-space position.
+    /// </summary>
+    public Vector2 GetGroundPointAtScreen(Point2D screenPos)
+    {
+        var (rayStart, rayEnd) = Camera.GetPickRay(new Vector2(screenPos.X, screenPos.Y));
+        var groundZ = _groundLevel;
+        return new Vector2(
+            Vector3Utility.FindXAtZ(groundZ, rayStart, rayEnd),
+            Vector3Utility.FindYAtZ(groundZ, rayStart, rayEnd)
+        );
+    }
+
+    /// <summary>
+    /// Rotates the camera by <paramref name="deltaAngle"/> radians around <paramref name="pivot"/>,
+    /// keeping the world-space pivot point fixed on screen.
+    /// </summary>
+    /// <summary>
+    /// Translates the camera position by <paramref name="delta"/> in world-space XY,
+    /// keeping height and orientation unchanged.
+    /// </summary>
+    public void PanByWorldDelta(Vector2 delta)
+    {
+        _pos.X += delta.X;
+        _pos.Y += delta.Y;
+        ResetAnimationsAndFlags();
+        SetCameraTransform();
+    }
+
+    public void RotateAroundWorldPoint(Vector2 pivot, float deltaAngle)
+    {
+        var offset = new Vector2(_pos.X - pivot.X, _pos.Y - pivot.Y);
+        var cosA = MathF.Cos(deltaAngle);
+        var sinA = MathF.Sin(deltaAngle);
+        _pos.X = pivot.X + offset.X * cosA - offset.Y * sinA;
+        _pos.Y = pivot.Y + offset.X * sinA + offset.Y * cosA;
+        _angle = NormalizeAngle(_angle + deltaAngle);
+        ResetAnimationsAndFlags();
+        SetCameraTransform();
     }
 
     public void ScrollBy(Vector2 delta, in TimeInterval gameTime)

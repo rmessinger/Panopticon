@@ -321,14 +321,35 @@ public sealed class OrderProcessor
                             : _game.Scene3D.GameObjects.Objects
                                 .Where(u => u.Owner == player && u.CanAttack);
 
+                        // Find the nearest enemy game object at or near the target position.
+                        // ForceAttackGround fires at a ground tile; if an enemy building is present
+                        // we must target it as an object so that weapon damage is actually applied
+                        // (position-targeted WeaponTarget.DoDamage currently deals no damage).
+                        // Buildings are not inserted into the quadtree, so do a linear scan.
+                        const float searchRadius = 300f;
+                        var targetObject = _game.Scene3D.GameObjects.Objects
+                            .Where(o => o.Owner != null
+                                && player.Enemies.Contains(o.Owner)
+                                && Vector3.DistanceSquared(o.Translation, targetPosition) <= searchRadius * searchRadius)
+                            .MinBy(o => Vector3.DistanceSquared(o.Translation, targetPosition));
+
                         foreach (var unit in units)
                         {
                             if (unit.CanAttack)
                             {
-                                // Move toward the target so the unit enters weapon range,
-                                // then the AI will auto-engage once in range.
-                                unit.AIUpdate?.SetTargetPoint(targetPosition);
-                                unit.CurrentWeapon?.SetTarget(new WeaponTarget(targetPosition));
+                                if (targetObject != null)
+                                {
+                                    unit.AIUpdate?.SetTargetPoint(targetObject.Translation);
+                                    unit.CurrentWeapon?.SetTarget(
+                                        new WeaponTarget(_game.Scene3D.GameObjects, targetObject.Id));
+                                }
+                                else
+                                {
+                                    // Move toward the target so the unit enters weapon range,
+                                    // then the AI will auto-engage once in range.
+                                    unit.AIUpdate?.SetTargetPoint(targetPosition);
+                                    unit.CurrentWeapon?.SetTarget(new WeaponTarget(targetPosition));
+                                }
                             }
                         }
                     }

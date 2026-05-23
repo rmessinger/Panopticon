@@ -14,5 +14,6 @@
   "Renderer": null,
   "Fullscreen": false,
   "KeepReplay": false,
-  "GamePath": "/Users/rmessinger/Library/Application Support/Steam/steamapps/common/Command and Conquer Generals"
+  "GamePath": null,
+  "MaxReplayFrames": 9000
 }

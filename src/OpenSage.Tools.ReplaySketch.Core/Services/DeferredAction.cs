@@ -11,8 +11,11 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 /// </summary>
 public sealed class DeferredAction
 {
-    /// <summary>The scenario player name (e.g. "Player1") that owns this action.</summary>
-    public string PlayerName { get; }
+    /// <summary>
+    /// The game player index that owns this action (matches <c>Order.PlayerIndex</c>
+    /// and <c>Player.Id</c>).
+    /// </summary>
+    public int PlayerIndex { get; }
 
     /// <summary>The <see cref="ActionType"/> whose completion triggers this action.</summary>
     public ActionType Trigger { get; }
@@ -25,9 +28,9 @@ public sealed class DeferredAction
     /// </summary>
     public uint ExtraFrames { get; }
 
-    public DeferredAction(string playerName, ActionType trigger, IReadOnlyList<Order> orders, uint extraFrames)
+    public DeferredAction(int playerIndex, ActionType trigger, IReadOnlyList<Order> orders, uint extraFrames)
     {
-        PlayerName = playerName;
+        PlayerIndex = playerIndex;
         Trigger = trigger;
         Orders = orders;
         ExtraFrames = extraFrames;

@@ -61,6 +61,18 @@ public sealed class WeaponSet : IPersistableObject
         }
     }
 
+    /// <summary>
+    /// Assigns a warhead weapon template to the primary weapon slot.
+    /// Called for projectile objects that carry a warhead supplied by their launcher.
+    /// Subsequent <see cref="Update"/> calls will not overwrite this weapon as long as
+    /// the object's weapon-set conditions do not change.
+    /// </summary>
+    internal void SetWarhead(WeaponTemplate warheadTemplate)
+    {
+        _weapons[(int)WeaponSlot.Primary] = new Weapon(_gameObject, warheadTemplate, WeaponSlot.Primary, _gameEngine);
+        _currentWeaponSlot = WeaponSlot.Primary;
+    }
+
     public void Persist(StatePersister reader)
     {
         reader.PersistVersion(1);
