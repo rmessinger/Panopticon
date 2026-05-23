@@ -29,13 +29,13 @@ public static class PlatformUtility
         {
             return 96.0f;
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            return 72.0f;
-        }
         else
         {
-            return 96.0f; // TODO: For GNOME3 the default DPI is 96
+            // SDL_GetDisplayDPI on all non-Windows platforms (including macOS) returns
+            // the logical DPI. Since the game was designed for Windows at 96 DPI, using
+            // 96 as the baseline ensures window and cursor sizes match the original
+            // physical appearance across all supported operating systems.
+            return 96.0f;
         }
     }
 }

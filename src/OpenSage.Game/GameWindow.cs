@@ -12,6 +12,7 @@ namespace OpenSage;
 
 public sealed class GameWindow : DisposableBase
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     public event EventHandler ClientSizeChanged;
 
     private readonly Sdl2Window _window;
@@ -79,6 +80,8 @@ public sealed class GameWindow : DisposableBase
 
         _window = VeldridStartup.CreateWindow(ref windowCreateInfo);
 
+        Logger.Debug($"[GameWindow] WindowScale={WindowScale}, requested={width}x{height}, actual Bounds={_window.Bounds.Width}x{_window.Bounds.Height}");
+
         _window.KeyDown += HandleKeyDown;
         _window.KeyUp += HandleKeyUp;
 
@@ -106,9 +109,10 @@ public sealed class GameWindow : DisposableBase
 
     private void HandleResized()
     {
+        var bounds = _window.Bounds;
         Swapchain.Resize(
-            (uint)_window.Bounds.Width,
-            (uint)_window.Bounds.Height);
+            (uint)bounds.Width,
+            (uint)bounds.Height);
 
         RaiseClientSizeChanged();
     }
