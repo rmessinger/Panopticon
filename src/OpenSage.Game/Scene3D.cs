@@ -156,7 +156,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
             ScriptLists = mapScriptLists
         };
 
-        TacticalView = new TacticalView(game.AssetStore.GameData.Current, Camera, game.TerrainLogic, game.Cursors, GameEngine.MsPerLogicFrame);
+        TacticalView = new TacticalView(game.AssetStore.GameData.Current, Camera, game.TerrainLogic, game.Cursors, GameEngine.MsPerLogicFrame, game.Configuration.CameraControlScheme);
         RegisterInputHandler(TacticalView.LookAtTranslator, game.InputMessageBuffer);
 
         game.ContentManager.GraphicsDevice.WaitForIdle();
@@ -303,7 +303,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
         if (!isDiagnosticScene)
         {
             RegisterInputHandler(new SelectionMessageHandler(game.Selection), inputMessageBuffer);
-            RegisterInputHandler(_orderGeneratorInputHandler = new OrderGeneratorInputHandler(game.OrderGenerator), inputMessageBuffer);
+            RegisterInputHandler(_orderGeneratorInputHandler = new OrderGeneratorInputHandler(game.OrderGenerator, game.Configuration.MouseClickMode), inputMessageBuffer);
             RegisterInputHandler(_debugMessageHandler = new DebugMessageHandler(DebugOverlay), inputMessageBuffer);
         }
 

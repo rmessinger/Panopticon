@@ -1065,6 +1065,9 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         EnergyProduction += Definition.EnergyProduction;
 
+        _gameEngine.GameLogic.RaiseConstructionCompleted(
+            new GameObjectConstructionCompletedEventArgs(this));
+
         foreach (var module in FindBehaviors<ICreateModule>())
         {
             module.OnBuildComplete();

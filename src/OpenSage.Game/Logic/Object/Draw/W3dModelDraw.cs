@@ -241,6 +241,29 @@ public class W3dModelDraw : DrawModule
         SetActiveAnimationState(bestAnimationState, random);
     }
 
+    private void HideMuzzleFlashBones(W3dModelDrawConditionState drawState)
+    {
+        if (drawState?.Model == null)
+        {
+            return;
+        }
+
+        var bones = drawState.Model.ModelBoneInstances;
+        foreach (var condState in _data.ConditionStates)
+        {
+            foreach (var muzzleFlash in condState.WeaponMuzzleFlashes)
+            {
+                for (var i = 0; i < bones.Length; i++)
+                {
+                    if (bones[i].Name.StartsWith(muzzleFlash.BoneName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        drawState.Model.BoneVisibilities[i] = false;
+                    }
+                }
+            }
+        }
+    }
+
     private void UpdateBoneVisibilities(ModelConditionState conditionState, W3dModelDrawConditionState drawState)
     {
         var model = conditionState.Model?.Value;
@@ -296,6 +319,12 @@ public class W3dModelDraw : DrawModule
 
         var drawState = new W3dModelDrawConditionState(modelInstance, particleSystems, _gameEngine);
         UpdateBoneVisibilities(conditionState, drawState);
+
+        // Muzzle flash bones must start hidden; UpdateConditionState will reveal them only
+        // when FiringA is active.  Without this, bones that default to visible in the W3D
+        // data stay lit permanently when transitioning to a state whose WeaponMuzzleFlashes
+        // list is empty (e.g. the idle state after firing).
+        HideMuzzleFlashBones(drawState);
 
         return drawState;
     }

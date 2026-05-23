@@ -1,4 +1,6 @@
-﻿using OpenSage.Input;
+﻿using System;
+using OpenSage.Input;
+using OpenSage.Logic.OrderGenerators;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Logic;
@@ -6,10 +8,21 @@ namespace OpenSage.Logic;
 public class OrderGeneratorInputHandler : InputMessageHandler
 {
     private readonly OrderGeneratorSystem _orderGeneratorSystem;
+    private readonly MouseClickMode _mouseClickMode;
 
     private bool _isDragging;
     private Point2D _mousePosition;
     private Point2D _dragEndPosition;
+
+    // Right-click tracking for Standard (modern) mode.
+    private bool _rightButtonTracking;
+    private Point2D _rightButtonDownPos;
+    private TimeSpan _rightButtonDownTime;
+
+    // A right-click is treated as a short click (order) if it covers fewer than
+    // this many pixels squared and is released within ShortClickMaxMs.
+    private const int ShortClickMaxDistanceSq = 25; // 5 px radius
+    private const double ShortClickMaxMs = 300.0;
 
     private KeyModifiers _keyModifiers;
 
@@ -18,9 +31,10 @@ public class OrderGeneratorInputHandler : InputMessageHandler
 
     internal KeyModifiers KeyModifiers => _keyModifiers;
 
-    public OrderGeneratorInputHandler(OrderGeneratorSystem orderGeneratorSystem)
+    public OrderGeneratorInputHandler(OrderGeneratorSystem orderGeneratorSystem, MouseClickMode mouseClickMode = MouseClickMode.Standard)
     {
         _orderGeneratorSystem = orderGeneratorSystem;
+        _mouseClickMode = mouseClickMode;
     }
 
     public void Update()
@@ -32,7 +46,6 @@ public class OrderGeneratorInputHandler : InputMessageHandler
 
     public override InputMessageResult HandleMessage(InputMessage message, in TimeInterval gameTime)
     {
-        // TODO: Implement both mouse modes
         switch (message.MessageType)
         {
             case InputMessageType.MouseMove:
@@ -48,18 +61,29 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                 break;
 
             case InputMessageType.MouseLeftButtonDown:
-                if (!_orderGeneratorSystem.ActiveGenerator.CanDrag)
+                if (_mouseClickMode == MouseClickMode.Classic)
                 {
-                    if (_orderGeneratorSystem.TryActivate(_keyModifiers))
+                    // Classic: left-click issues orders immediately (or starts a drag).
+                    if (!_orderGeneratorSystem.ActiveGenerator.CanDrag)
                     {
-                        return InputMessageResult.Handled;
+                        if (_orderGeneratorSystem.TryActivate(_keyModifiers))
+                        {
+                            return InputMessageResult.Handled;
+                        }
+                        break;
                     }
-                    break;
                 }
-                _isDragging = true;
-                // Copy initial position to drag end position so that delta is 0 if the drag ends immediately
-                _dragEndPosition = _mousePosition;
-                return InputMessageResult.Handled;
+
+                // Both modes: start a left-drag for generators that support dragging
+                // (e.g. ConstructBuildingOrderGenerator).
+                if (_orderGeneratorSystem.ActiveGenerator.CanDrag)
+                {
+                    _isDragging = true;
+                    // Copy initial position so the delta is 0 if drag ends immediately.
+                    _dragEndPosition = _mousePosition;
+                    return InputMessageResult.Handled;
+                }
+                break;
 
             case InputMessageType.MouseLeftButtonUp:
                 if (_isDragging)
@@ -71,8 +95,48 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                 break;
 
             case InputMessageType.MouseRightButtonDown:
-                // TODO: is this desirable if we don't actually deselect the unit, but simply pan the camera?
-                _orderGeneratorSystem.CancelOrderGenerator();
+                if (_mouseClickMode == MouseClickMode.Standard)
+                {
+                    // Cancel any non-default generator (e.g. build placement) on right-click.
+                    if (_orderGeneratorSystem.ActiveGenerator is not UnitOrderGenerator)
+                    {
+                        _orderGeneratorSystem.CancelOrderGenerator();
+                    }
+                    else
+                    {
+                        // Start tracking so we can distinguish a short click from a drag.
+                        _rightButtonTracking = true;
+                        _rightButtonDownPos = message.Value.MousePosition;
+                        _rightButtonDownTime = gameTime.TotalTime;
+                    }
+                }
+                else
+                {
+                    // Classic: right-click cancels the active order generator.
+                    _orderGeneratorSystem.CancelOrderGenerator();
+                }
+                break;
+
+            case InputMessageType.MouseRightButtonUp:
+                if (_mouseClickMode == MouseClickMode.Standard && _rightButtonTracking)
+                {
+                    _rightButtonTracking = false;
+
+                    var pos = message.Value.MousePosition;
+                    var dx = pos.X - _rightButtonDownPos.X;
+                    var dy = pos.Y - _rightButtonDownPos.Y;
+                    var distSq = dx * dx + dy * dy;
+                    var elapsed = (gameTime.TotalTime - _rightButtonDownTime).TotalMilliseconds;
+
+                    if (distSq <= ShortClickMaxDistanceSq && elapsed <= ShortClickMaxMs)
+                    {
+                        // Short right-click: issue the smart order.
+                        // Return NotHandled so that SelectionMessageHandler and LookAtTranslator
+                        // can also see the up-event and reset their internal state (Panning,
+                        // IsRotating) correctly.
+                        _orderGeneratorSystem.TryActivate(_keyModifiers);
+                    }
+                }
                 break;
 
             case InputMessageType.KeyDown:

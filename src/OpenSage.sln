@@ -72,6 +72,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch.Maui", "OpenSage.Tools.ReplaySketch.Maui\OpenSage.Tools.ReplaySketch.Maui.csproj", "{C7C7F537-E37F-4AC4-936C-F948E0A76A99}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.WorldBuilder.Core", "OpenSage.Tools.WorldBuilder.Core\OpenSage.Tools.WorldBuilder.Core.csproj", "{3EECB25F-C088-49FD-B5F7-26119ACD1B51}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.WorldBuilder.Maui", "OpenSage.Tools.WorldBuilder.Maui\OpenSage.Tools.WorldBuilder.Maui.csproj", "{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -186,6 +190,14 @@ Global
 		{C7C7F537-E37F-4AC4-936C-F948E0A76A99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7C7F537-E37F-4AC4-936C-F948E0A76A99}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7C7F537-E37F-4AC4-936C-F948E0A76A99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EECB25F-C088-49FD-B5F7-26119ACD1B51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EECB25F-C088-49FD-B5F7-26119ACD1B51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EECB25F-C088-49FD-B5F7-26119ACD1B51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EECB25F-C088-49FD-B5F7-26119ACD1B51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -203,6 +215,8 @@ Global
 		{D5F2653B-DEC9-4A27-B1E2-CFEEBB55401C} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{FE48484E-79D8-474F-9C19-C0786CE95FC2} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{C7C7F537-E37F-4AC4-936C-F948E0A76A99} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
+		{3EECB25F-C088-49FD-B5F7-26119ACD1B51} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
+		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DBD83F1E-3F41-45D9-AACC-62E00826AD5C}

@@ -18,6 +18,12 @@
 //     Fires at a uniformly-random frame in the interval [minFrames, maxFrames].
 //     { "kind": "random", "minFrames": 100, "maxFrames": 200 }
 //
+//   timing.kind = "afterActionCompleted"
+//     Does NOT write this action to the pre-baked replay.  Instead the test harness
+//     injects it at runtime when the specified triggerAction's ActionCompleted event
+//     fires (optionally delayed by extraFrames logic frames).
+//     { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 }
+//
 // ─── POSITION KINDS ──────────────────────────────────────────────────────────
 //
 // Omit "position" (or set it to null) for actions that don't target a map
@@ -89,7 +95,7 @@
             "kind": "landmarkRelative",
             "landmark": "OwnBase",
             "distanceInBaseWidths": 2.0,
-            "angle": { "kind": "fixed", "degrees": 45.0 }
+            "angle": { "kind": "fixed", "degrees": 225.0 }
           }
         },
         {
@@ -103,15 +109,16 @@
         {
           "label": "Recruit Ranger",
           "type": "RecruitBasicUnit",
-          // Offset from GatherResources. Fires once resources are likely flowing.
-          "timing": { "kind": "fixed", "frames": 150 },
+          // Deferred: fires only after the barracks finishes construction, preventing the
+          // recruit order from arriving while the building is still being built.
+          "timing": { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 },
           "position": null
         },
         {
           "label": "Attack Enemy Base",
           "type": "AttackEnemyBase",
-          // Offset from RecruitBasicUnit. Gives the ranger time to emerge from the barracks.
-          "timing": { "kind": "fixed", "frames": 300 },
+          // Deferred: fires after the ranger exits the barracks (RecruitBasicUnit completed).
+          "timing": { "kind": "afterActionCompleted", "triggerAction": "RecruitBasicUnit", "extraFrames": 0 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",
@@ -137,7 +144,7 @@
             "kind": "landmarkRelative",
             "landmark": "OwnBase",
             "distanceInBaseWidths": 2.0,
-            "angle": { "kind": "fixed", "degrees": 225.0 }
+            "angle": { "kind": "fixed", "degrees": 45.0 }
           }
         },
         {
@@ -149,13 +156,15 @@
         {
           "label": "Recruit Rebel",
           "type": "RecruitBasicUnit",
-          "timing": { "kind": "fixed", "frames": 150 },
+          // Deferred: fires only after the barracks finishes construction.
+          "timing": { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 },
           "position": null
         },
         {
           "label": "Attack Enemy Base",
           "type": "AttackEnemyBase",
-          "timing": { "kind": "fixed", "frames": 300 },
+          // Deferred: fires after the rebel exits the barracks (RecruitBasicUnit completed).
+          "timing": { "kind": "afterActionCompleted", "triggerAction": "RecruitBasicUnit", "extraFrames": 0 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",

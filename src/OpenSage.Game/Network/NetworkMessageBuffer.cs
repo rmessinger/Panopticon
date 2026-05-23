@@ -35,6 +35,13 @@ public sealed class NetworkMessageBuffer : DisposableBase
         _localOrders.Add(order);
     }
 
+    /// <summary>
+    /// Immediately processes <paramref name="orders"/> through the <see cref="OrderProcessor"/>,
+    /// bypassing the frame queue. Intended for test-harness runtime injection.
+    /// </summary>
+    internal void InjectOrdersNow(IEnumerable<Order> orders) =>
+        _orderProcessor.Process(orders);
+
     internal void Tick()
     {
         _connection.Send(_netFrameNumber, _localOrders);

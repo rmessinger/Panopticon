@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OpenSage.Tools.WorldBuilder.Maui.Views.TeamsPage"
+             Title="Teams"
+             BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#252525}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="16">
+
+        <Label Grid.Row="0" Text="Teams" FontSize="18" FontAttributes="Bold"
+               Margin="0,0,0,12"
+               TextColor="{AppThemeBinding Light=#1A1A1A, Dark=#D4D4D4}" />
+
+        <CollectionView Grid.Row="1" x:Name="TeamsListView"
+                        SelectionMode="Single">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,2" Padding="12,8"
+                            BackgroundColor="{AppThemeBinding Light=#FFF, Dark=#2D2D2D}"
+                            Stroke="{AppThemeBinding Light=#DDD, Dark=#3F3F46}"
+                            StrokeShape="RoundRectangle 4">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding Name}" FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#333, Dark=#CCC}" />
+                                <Label Text="{Binding Owner, StringFormat='Owner: {0}'}" FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#777, Dark=#888}" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1"
+                                   Text="{Binding IsSingleton, StringFormat='{0:Singleton;Multi;Singleton}'}"
+                                   FontSize="12" VerticalOptions="Center"
+                                   TextColor="{AppThemeBinding Light=#555, Dark=#AAA}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Grid.Row="2" Text="Close" Clicked="OnClose"
+                Margin="0,12,0,0"
+                BackgroundColor="#007ACC" TextColor="White" />
+
+    </Grid>
+</ContentPage>

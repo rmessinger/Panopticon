@@ -11,11 +11,12 @@ namespace OpenSage.Graphics.Cameras;
 /// <summary>
 /// Converts input messages into camera movement.
 /// </summary>
-public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cursorManager, GameData gameData) : InputMessageHandler
+public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cursorManager, GameData gameData, CameraControlScheme scheme = CameraControlScheme.Generals) : InputMessageHandler
 {
     private readonly TacticalView _tacticalView = tacticalView;
     private readonly CursorManager _cursorManager = cursorManager;
     private readonly GameData _gameData = gameData;
+    private readonly CameraControlScheme _scheme = scheme;
 
     // C++: SCROLL_AMT
     private const float ScrollAmount = 100.0f;
@@ -45,6 +46,8 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
     private Point2D _originalAnchor;
 
     private ScrollDirState _scrollDir;
+    private bool _rotateDirLeft;
+    private bool _rotateDirRight;
 
     // C++ version also has _isChangingFOV and _lastPlaneID, but they're only used for debugging
 
@@ -129,16 +132,26 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                     switch (key)
                     {
                         case Veldrid.Key.Up:
+                        case Veldrid.Key.W when _scheme == CameraControlScheme.TotalWar:
                             _scrollDir.Up = state;
                             break;
                         case Veldrid.Key.Down:
+                        case Veldrid.Key.S when _scheme == CameraControlScheme.TotalWar:
                             _scrollDir.Down = state;
                             break;
                         case Veldrid.Key.Left:
+                        case Veldrid.Key.A when _scheme == CameraControlScheme.TotalWar:
                             _scrollDir.Left = state;
                             break;
                         case Veldrid.Key.Right:
+                        case Veldrid.Key.D when _scheme == CameraControlScheme.TotalWar:
                             _scrollDir.Right = state;
+                            break;
+                        case Veldrid.Key.Q when _scheme == CameraControlScheme.TotalWar:
+                            _rotateDirLeft = state;
+                            break;
+                        case Veldrid.Key.E when _scheme == CameraControlScheme.TotalWar:
+                            _rotateDirRight = state;
                             break;
                         // New feature: Escape disables mouse lock, so let's also stop scrolling
                         case Veldrid.Key.Escape:
@@ -176,11 +189,23 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                 {
                     _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
                     _anchor = message.Value.MousePosition;
+                    _originalAnchor = _anchor;
+                    _currentPos = _anchor;
+                    _timestamp = gameTime.TotalTime.TotalMilliseconds;
 
-                    // TODO(Port): Also check TheInGameUI->isSelecting()
-                    if (!IsScrolling)
+                    if (_scheme == CameraControlScheme.TotalWar)
                     {
-                        SetScrolling(ScrollType.RightMouseButton);
+                        // Right drag = orbit (yaw + pitch) in Total War mode
+                        IsRotating = true;
+                        IsPitching = true;
+                    }
+                    else
+                    {
+                        // TODO(Port): Also check TheInGameUI->isSelecting()
+                        if (!IsScrolling)
+                        {
+                            SetScrolling(ScrollType.RightMouseButton);
+                        }
                     }
                     break;
                 }
@@ -188,7 +213,12 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                 {
                     _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
 
-                    if (ScrollType == ScrollType.RightMouseButton)
+                    if (_scheme == CameraControlScheme.TotalWar)
+                    {
+                        IsRotating = false;
+                        IsPitching = false;
+                    }
+                    else if (ScrollType == ScrollType.RightMouseButton)
                     {
                         StopScrolling(gameTime);
                     }
@@ -197,35 +227,56 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
             case InputMessageType.MouseMiddleButtonDown:
                 {
                     _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
-                    IsRotating = true;
                     _anchor = message.Value.MousePosition;
                     _originalAnchor = _anchor;
                     _currentPos = _anchor;
                     _timestamp = gameTime.TotalTime.TotalMilliseconds;
+
+                    if (_scheme == CameraControlScheme.TotalWar)
+                    {
+                        // Middle drag = pan in Total War mode
+                        if (!IsScrolling)
+                        {
+                            SetScrolling(ScrollType.MiddleMouseButton);
+                        }
+                    }
+                    else
+                    {
+                        IsRotating = true;
+                    }
                     break;
                 }
             case InputMessageType.MouseMiddleButtonUp:
                 {
                     _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
 
-                    // If the button was held for 5 of fewer logic frames, and it didn't move more than 5 pixels, treat it as a click
+                    // If the button was held for 5 or fewer logic frames and didn't move more than 5 pixels, treat it as a click
                     const uint ClickDurationFrames = 5;
                     const double ClickDurationMs = ClickDurationFrames * 1000.0 / 30.0;
                     const uint PixelOffset = 5;
 
-                    IsRotating = false;
-                    var dx = _currentPos.X - _originalAnchor.X;
-                    if (dx < 0)
-                    {
-                        dx = -dx;
-                    }
-                    var dy = _currentPos.Y - _originalAnchor.Y;
-                    var didMove = dx > PixelOffset || dy > PixelOffset;
+                    var adx = Math.Abs(_currentPos.X - _originalAnchor.X);
+                    var ady = Math.Abs(_currentPos.Y - _originalAnchor.Y);
+                    var didMove = adx > PixelOffset || ady > PixelOffset;
+                    var isClick = !didMove && gameTime.TotalTime.TotalMilliseconds - _timestamp < ClickDurationMs;
 
-                    if (!didMove && gameTime.TotalTime.TotalMilliseconds - _timestamp < ClickDurationMs)
+                    if (_scheme == CameraControlScheme.TotalWar)
                     {
-                        _tacticalView.SetAngleAndPitchToDefault();
-                        _tacticalView.SetZoomToDefault();
+                        StopScrolling(gameTime);
+                        if (isClick)
+                        {
+                            _tacticalView.SetAngleAndPitchToDefault();
+                            _tacticalView.SetZoomToDefault();
+                        }
+                    }
+                    else
+                    {
+                        IsRotating = false;
+                        if (isClick)
+                        {
+                            _tacticalView.SetAngleAndPitchToDefault();
+                            _tacticalView.SetZoomToDefault();
+                        }
                     }
 
                     break;
@@ -272,19 +323,22 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         }
                     }
 
-                    if (IsRotating)
+                    if (IsRotating || IsPitching)
                     {
                         var factor = 0.01f;
-                        var angle = factor * (_currentPos.X - _anchor.X);
-                        _tacticalView.Angle += angle;
-                        _anchor = _currentPos;
-                    }
+                        var dx = _currentPos.X - _anchor.X;
+                        var dy = _currentPos.Y - _anchor.Y;
 
-                    if (IsPitching)
-                    {
-                        var factor = 0.01f;
-                        var angle = factor * (_currentPos.Y - _anchor.Y);
-                        _tacticalView.Pitch += angle;
+                        if (IsRotating)
+                        {
+                            _tacticalView.Angle += factor * dx;
+                        }
+
+                        if (IsPitching)
+                        {
+                            _tacticalView.Pitch += factor * dy;
+                        }
+
                         _anchor = _currentPos;
                     }
 
@@ -416,6 +470,23 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         offset *= speedFactor * ScrollAmount * keyboardScrollSpeedFactor;
                         break;
                     }
+                case ScrollType.MiddleMouseButton:
+                    {
+                        // Total War middle-drag pan: velocity based on cursor distance from anchor
+                        var max = _tacticalView.Camera.ScreenSize / 2.0f;
+                        _anchor = new Point2D(
+                            (int)Math.Clamp(_anchor.X, max.X, _tacticalView.Camera.ScreenSize.X - max.X),
+                            (int)Math.Clamp(_anchor.Y, max.Y, _tacticalView.Camera.ScreenSize.Y - max.Y)
+                        );
+
+                        offset = (_currentPos.ToVector2() - _anchor.ToVector2()) * speedFactor;
+                        if (offset != Vector2.Zero)
+                        {
+                            var vec = Vector2.Normalize(offset);
+                            offset += speedFactor * vec * MathF.Pow(keyboardScrollSpeedFactor, 2.0f);
+                        }
+                        break;
+                    }
                 default:
                     break;
             }
@@ -429,6 +500,19 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
         }
 
         // TODO(Port): Replay stuff
+
+        if (_scheme == CameraControlScheme.TotalWar)
+        {
+            const float KeyRotateSpeed = 0.02f;
+            if (_rotateDirLeft)
+            {
+                _tacticalView.Angle -= KeyRotateSpeed;
+            }
+            if (_rotateDirRight)
+            {
+                _tacticalView.Angle += KeyRotateSpeed;
+            }
+        }
     }
 
     private struct ScrollDirState
@@ -444,6 +528,7 @@ public enum ScrollType
 {
     None,
     RightMouseButton,
+    MiddleMouseButton,
     Key,
     ScreenEdge
 }

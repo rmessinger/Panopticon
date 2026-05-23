@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using OpenSage.Data;
 using OpenSage.Graphics;
+using OpenSage.Graphics.Cameras;
 using OpenSage.IO;
 using OpenSage.Mods.BuiltIn;
 using OpenSage.Tools.ReplaySketch.Model;
@@ -77,7 +79,7 @@ public static class Program
         try
         {
             Console.WriteLine($"Exporting scenario to {outputPath} ...");
-            var exportError = ReplayExporter.Export(scenario, map, outputPath);
+            var exportError = ReplayExporter.Export(scenario, map, outputPath, out var deferredActions);
             if (exportError != null)
             {
                 Console.Error.WriteLine($"Export failed: {exportError}");
@@ -87,14 +89,14 @@ public static class Program
 
             if (config.Headless)
             {
-                RunReplay(installation, config, outputPath);
+                RunReplay(installation, config, outputPath, deferredActions);
             }
             else
             {
                 Platform.Start();
                 try
                 {
-                    RunReplay(installation, config, outputPath);
+                    RunReplay(installation, config, outputPath, deferredActions);
                 }
                 finally
                 {
@@ -115,22 +117,24 @@ public static class Program
         }
     }
 
-    private static void RunReplay(GameInstallation installation, TestHarnessConfig config, string replayPath)
+    private static void RunReplay(GameInstallation installation, TestHarnessConfig config, string replayPath,
+        IReadOnlyList<DeferredAction> deferredActions)
     {
         if (config.Headless)
         {
-            RunHeadless(installation, config, replayPath);
+            RunHeadless(installation, config, replayPath, deferredActions);
         }
         else
         {
-            RunWindowed(installation, config, replayPath);
+            RunWindowed(installation, config, replayPath, deferredActions);
         }
     }
 
-    private static void RunWindowed(GameInstallation installation, TestHarnessConfig config, string replayPath)
+    private static void RunWindowed(GameInstallation installation, TestHarnessConfig config, string replayPath,
+        IReadOnlyList<DeferredAction> deferredActions)
     {
         using var window = new GameWindow("OpenSAGE - TestHarness", 100, 100, 1024, 768, config.Fullscreen);
-        using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, window);
+        using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, CameraControlScheme = config.CameraControlScheme, MouseClickMode = config.MouseClickMode }, window);
         using var textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
 
         using var repFileSystem = new DiskFileSystem(Path.GetDirectoryName(replayPath)!);
@@ -138,6 +142,7 @@ public static class Program
 
         game.LoadReplayFile(repEntry);
         game.StartRun();
+        ApplyCameraZoomMultiplierOnce(game, config.MaxCameraZoomMultiplier);
 
         using var monitor = new ReplayActionMonitor(game);
         monitor.ActionDispatched += (_, e) =>
@@ -145,7 +150,12 @@ public static class Program
         monitor.ActionCompleted += (_, e) =>
             Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"}");
 
+        var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
+
         Console.WriteLine("Running replay — close the window or wait for it to finish.");
+
+        var frameCount = 0;
+        var maxFrames = config.MaxReplayFrames > 0 ? config.MaxReplayFrames : int.MaxValue;
 
         while (game.IsRunning)
         {
@@ -154,6 +164,7 @@ public static class Program
                 break;
             }
 
+            DrainPendingInjections(game, pendingInjections);
             game.Update(window.MessageQueue);
             game.Panel.EnsureFrame(window.ClientBounds);
             game.Render();
@@ -162,20 +173,29 @@ public static class Program
                 window.Swapchain.Framebuffer);
             window.MessageQueue.Clear();
             game.GraphicsDevice.SwapBuffers(window.Swapchain);
+
+            frameCount++;
+            if (frameCount >= maxFrames)
+            {
+                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxFrames}). Forcing exit.");
+                break;
+            }
         }
 
         Console.WriteLine("Done.");
     }
 
-    private static void RunHeadless(GameInstallation installation, TestHarnessConfig config, string replayPath)
+    private static void RunHeadless(GameInstallation installation, TestHarnessConfig config, string replayPath,
+        IReadOnlyList<DeferredAction> deferredActions)
     {
-        using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, null);
+        using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, CameraControlScheme = config.CameraControlScheme, MouseClickMode = config.MouseClickMode }, null);
 
         using var repFileSystem = new DiskFileSystem(Path.GetDirectoryName(replayPath)!);
         var repEntry = repFileSystem.GetFile(Path.GetFileName(replayPath));
 
         game.LoadReplayFile(repEntry);
         game.StartRun();
+        ApplyCameraZoomMultiplierOnce(game, config.MaxCameraZoomMultiplier);
 
         var capture = new FrameCaptureService();
 
@@ -212,17 +232,24 @@ public static class Program
             }
         };
 
+        var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
+
         Console.WriteLine($"Running headless replay. Captures written to: {FrameCaptureService.CaptureDirectory}");
         Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
 
         var frameRect = new OpenSage.Mathematics.Rectangle(0, 0, 1024, 768);
+        var frameCount = 0;
+        var maxFrames = config.MaxReplayFrames > 0 ? config.MaxReplayFrames : int.MaxValue;
 
         while (game.IsRunning)
         {
+            DrainPendingInjections(game, pendingInjections);
             game.Update(Array.Empty<OpenSage.Input.InputMessage>());
             game.Panel.EnsureFrame(frameRect);
             game.Render();
             capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
+
+            frameCount++;
 
             if (runoutRemaining != int.MaxValue)
             {
@@ -231,9 +258,91 @@ public static class Program
                     game.Exit();
                 }
             }
+            else if (frameCount >= maxFrames)
+            {
+                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxFrames}). Forcing exit.");
+                game.Exit();
+            }
         }
 
         Console.WriteLine("Done.");
+    }
+
+    /// <summary>
+    /// Subscribes to <see cref="ReplayActionMonitor.ActionCompleted"/> events and, for each
+    /// <see cref="DeferredAction"/> whose trigger matches, enqueues its orders for injection
+    /// on the next game-loop iteration (via <see cref="DrainPendingInjections"/>).
+    /// </summary>
+    private static List<(int RemainingFrames, IReadOnlyList<Logic.Orders.Order> Orders)> BuildDeferredInjector(
+        Game game,
+        ReplayActionMonitor monitor,
+        IReadOnlyList<DeferredAction> deferredActions)
+    {
+        var pending = new List<(int RemainingFrames, IReadOnlyList<Logic.Orders.Order> Orders)>();
+
+        monitor.ActionCompleted += (_, e) =>
+        {
+            foreach (var deferred in deferredActions)
+            {
+                if (deferred.Trigger == e.ActionType && deferred.PlayerName == e.Player?.Name)
+                {
+                    pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
+                }
+            }
+        };
+
+        return pending;
+    }
+
+    /// <summary>
+    /// Injects any pending deferred orders whose frame delay has elapsed.
+    /// Call once per game-loop iteration, BEFORE <c>game.Update()</c>.
+    /// </summary>
+    private static void DrainPendingInjections(
+        Game game,
+        List<(int RemainingFrames, IReadOnlyList<Logic.Orders.Order> Orders)> pending)
+    {
+        for (var i = pending.Count - 1; i >= 0; i--)
+        {
+            var (remaining, orders) = pending[i];
+            if (remaining <= 0)
+            {
+                game.InjectOrders(orders);
+                pending.RemoveAt(i);
+            }
+            else
+            {
+                pending[i] = (remaining - 1, orders);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Subscribes to <see cref="Game.Updating"/> and, on the first frame where
+    /// <see cref="IGame.Scene3D"/> is available, multiplies the tactical camera's
+    /// <see cref="Graphics.Cameras.TacticalView.MaxHeightAboveGround"/> by
+    /// <paramref name="multiplier"/> then unsubscribes.
+    /// </summary>
+    private static void ApplyCameraZoomMultiplierOnce(Game game, float multiplier)
+    {
+        if (multiplier == 1.0f)
+        {
+            return;
+        }
+
+        EventHandler<GameUpdatingEventArgs> handler = null!;
+        handler = (_, _) =>
+        {
+            var view = game.Scene3D?.TacticalView;
+            if (view == null)
+            {
+                return;
+            }
+
+            view.MaxHeightAboveGround *= multiplier;
+            game.Updating -= handler;
+        };
+        game.Updating += handler;
     }
 
     private static ReplayScenario LoadScenario(string? path)

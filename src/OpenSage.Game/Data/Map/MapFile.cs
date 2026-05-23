@@ -23,9 +23,9 @@ public class MapFile
     [AddedIn(SageGame.Ra3)]
     public GlobalVersion GlobalVersion { get; private set; }
 
-    public HeightMapData HeightMapData { get; private set; }
-    public BlendTileData BlendTileData { get; private set; }
-    public WorldInfo WorldInfo { get; private set; }
+    public HeightMapData HeightMapData { get; internal set; }
+    public BlendTileData BlendTileData { get; internal set; }
+    public WorldInfo WorldInfo { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
     public MPPositionList MPPositionList { get; private set; }
@@ -174,6 +174,29 @@ public class MapFile
     public static MapFile FromStream(Stream stream)
     {
         return Parse(stream, reader => ParseMapData(reader));
+    }
+
+    /// <summary>
+    /// Creates a new empty map with flat terrain suitable for the WorldBuilder editor.
+    /// </summary>
+    public static MapFile CreateEmpty(uint playableWidth, uint playableHeight, uint borderWidth, ushort initialHeight)
+    {
+        var totalWidth = playableWidth + borderWidth * 2 + 1;
+        var totalHeight = playableHeight + borderWidth * 2 + 1;
+
+        var elevations = new ushort[totalWidth, totalHeight];
+        for (var y = 0; y < totalHeight; y++)
+        {
+            for (var x = 0; x < totalWidth; x++)
+            {
+                elevations[x, y] = initialHeight;
+            }
+        }
+
+        return new MapFile
+        {
+            HeightMapData = HeightMapData.Create(borderWidth, elevations),
+        };
     }
 
     private static MapFile ParseMapData(BinaryReader reader)

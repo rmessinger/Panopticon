@@ -35,6 +35,7 @@ public sealed class ReplayActionMonitor : IDisposable
         _game = game;
         _game.OrderProcessed += OnOrderProcessed;
         _game.ObjectCreated += OnObjectCreated;
+        _game.ConstructionCompleted += OnConstructionCompleted;
     }
 
     private void OnOrderProcessed(object? sender, OrderProcessedEventArgs e)
@@ -74,10 +75,23 @@ public sealed class ReplayActionMonitor : IDisposable
             new ReplayActionEventArgs(ActionType.RecruitBasicUnit, e.GameObject.Owner));
     }
 
+    private void OnConstructionCompleted(object? sender, GameObjectConstructionCompletedEventArgs e)
+    {
+        var name = e.GameObject.Definition.Name;
+        if (name != KnownDefinitions.UsaBarracksName && name != KnownDefinitions.GlaBarracksName)
+        {
+            return;
+        }
+
+        ActionCompleted?.Invoke(this,
+            new ReplayActionEventArgs(ActionType.BuildBarracks, e.GameObject.Owner));
+    }
+
     public void Dispose()
     {
         _game.OrderProcessed -= OnOrderProcessed;
         _game.ObjectCreated -= OnObjectCreated;
+        _game.ConstructionCompleted -= OnConstructionCompleted;
     }
 }
 

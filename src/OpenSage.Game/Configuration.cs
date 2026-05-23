@@ -1,4 +1,6 @@
-﻿namespace OpenSage;
+﻿using OpenSage.Graphics.Cameras;
+
+namespace OpenSage;
 
 // TODO: Should this be immutable?
 // TODO: Should there be a way of merging Configuration instances?
@@ -25,6 +27,18 @@ public sealed class Configuration
     /// When <c>true</c>, all audio submixer volumes are set to zero at startup.
     /// </summary>
     public bool NoAudio { get; set; } = false;
+
+    /// <summary>
+    /// Determines how mouse and keyboard input maps to camera movement during gameplay.
+    /// </summary>
+    public CameraControlScheme CameraControlScheme { get; set; } = CameraControlScheme.TotalWar;
+
+    /// <summary>
+    /// Determines which mouse button issues movement and attack orders.
+    /// <see cref="MouseClickMode.Standard"/> uses right-click (modern RTS convention);
+    /// <see cref="MouseClickMode.Classic"/> uses left-click (original Generals convention).
+    /// </summary>
+    public MouseClickMode MouseClickMode { get; set; } = MouseClickMode.Standard;
 
     /// <summary>
     /// When set, the skirmish match started via the launcher is recorded and saved

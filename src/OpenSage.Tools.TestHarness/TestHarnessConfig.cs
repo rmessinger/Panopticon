@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using OpenSage.Graphics.Cameras;
 using Veldrid;
 
 namespace OpenSage.Tools.TestHarness;
@@ -49,4 +50,34 @@ public sealed class TestHarnessConfig
     /// or standard environment variables.
     /// </summary>
     public string? GamePath { get; set; } = null;
+
+    /// <summary>
+    /// Multiplier applied to the game's default <c>MaxCameraHeight</c> INI value.
+    /// 1.0 = game default; 2.0 (default) = double the zoom-out distance.
+    /// </summary>
+    public float MaxCameraZoomMultiplier { get; set; } = 2.0f;
+
+    /// <summary>
+    /// Maximum number of logic frames to run before forcibly exiting.
+    /// Prevents the replay from running forever if an expected action never completes.
+    /// Generals logic runs at 5 fps, so 6000 frames ≈ 20 game-minutes.
+    /// Set to 0 to disable the limit (not recommended for CI).
+    /// </summary>
+    public int MaxReplayFrames { get; set; } = 6000;
+
+    /// <summary>
+    /// Camera control scheme to use in windowed mode.
+    /// Generals = right-drag to pan, middle-drag to rotate.
+    /// TotalWar = right-drag to rotate, middle-drag to pan, Q/E to rotate.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public CameraControlScheme CameraControlScheme { get; set; } = CameraControlScheme.TotalWar;
+
+    /// <summary>
+    /// Mouse click scheme for issuing unit orders.
+    /// Standard (default) = right-click issues move/attack orders (modern RTS convention).
+    /// Classic = left-click issues orders (original Generals convention).
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public MouseClickMode MouseClickMode { get; set; } = MouseClickMode.Standard;
 }

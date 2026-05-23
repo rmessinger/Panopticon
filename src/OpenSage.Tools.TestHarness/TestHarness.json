@@ -1,4 +1,14 @@
 {
+  // TestHarness configuration
+  // ------------------------------------
+  // ScenarioPath : path to a scenario JSON profile, or null for the built-in Alpine Assault scenario
+  // Game         : SAGE game to run (CncGenerals, CncGeneralsZeroHour, Bfme, Bfme2, Bfme2Rotwk)
+  // Renderer     : graphics backend override, or null for platform default
+  //                accepted values: Direct3D11, Vulkan, OpenGL, Metal, OpenGLES
+  // Fullscreen   : start in fullscreen mode
+  // KeepReplay   : keep the exported .rep file on disk after the run
+  // GamePath     : override the game installation path (null = auto-detect)
+
   "ScenarioPath": null,
   "Game": "CncGenerals",
   "Renderer": null,

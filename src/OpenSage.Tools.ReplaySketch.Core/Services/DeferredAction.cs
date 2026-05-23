@@ -1,0 +1,35 @@
+﻿using System.Collections.Generic;
+using OpenSage.Logic.Orders;
+using OpenSage.Tools.ReplaySketch.Model;
+
+namespace OpenSage.Tools.ReplaySketch.Services;
+
+/// <summary>
+/// An action that was not written to the pre-baked replay file because it uses
+/// <see cref="AfterActionCompletedTiming"/>. The test harness injects it at runtime
+/// when the trigger action's <c>ActionCompleted</c> event fires.
+/// </summary>
+public sealed class DeferredAction
+{
+    /// <summary>The scenario player name (e.g. "Player1") that owns this action.</summary>
+    public string PlayerName { get; }
+
+    /// <summary>The <see cref="ActionType"/> whose completion triggers this action.</summary>
+    public ActionType Trigger { get; }
+
+    /// <summary>Pre-resolved orders to inject when the trigger fires.</summary>
+    public IReadOnlyList<Order> Orders { get; }
+
+    /// <summary>
+    /// Additional frames to wait after the trigger fires before injecting the orders.
+    /// </summary>
+    public uint ExtraFrames { get; }
+
+    public DeferredAction(string playerName, ActionType trigger, IReadOnlyList<Order> orders, uint extraFrames)
+    {
+        PlayerName = playerName;
+        Trigger = trigger;
+        Orders = orders;
+        ExtraFrames = extraFrames;
+    }
+}

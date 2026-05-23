@@ -24,21 +24,10 @@ public sealed class SelectionSystem : GameSystem
     // This should probably scale with resolution.
     private const int BoxSelectionMinimumSize = 30;
 
-    // TODO: consider allowing configuration for accessibility
-    // time after which releasing right click will not result in deselecting units, in ms
-    private const int DeselectMaxTimeMs = 250;
-
-    // TODO: scale with resolution, allow configuration for accessibility
-    // if the cursor moves further than this, don't deselect no matter how short right click was held for
-    private const int DeselectMaxDelta = 5;
-
     private SelectionGui SelectionGui => Game.Scene3D.SelectionGui;
 
     private Point2D _selectionStartPoint;
     private Point2D _selectionEndPoint;
-
-    private Point2D _panStartPoint;
-    private TimeSpan _panStartTime;
 
     public SelectionStatus Status { get; private set; } = SelectionStatus.NotSelecting;
     public bool Selecting => Status != SelectionStatus.NotSelecting;
@@ -61,20 +50,10 @@ public sealed class SelectionSystem : GameSystem
     public void OnStartRightClickDrag(Point2D point)
     {
         Panning = true;
-        _panStartPoint = point;
-        _panStartTime = Game.MapTime.TotalTime;
     }
 
     public void OnEndRightClickDrag(Point2D point2D)
     {
-        var selectionDelta = point2D - _panStartPoint;
-        var time = Game.MapTime.TotalTime - _panStartTime;
-        if (time.Milliseconds < DeselectMaxTimeMs &&
-            Math.Abs(selectionDelta.X) < DeselectMaxDelta && Math.Abs(selectionDelta.Y) < DeselectMaxDelta)
-        {
-            ClearSelectedObjectsForLocalPlayer();
-        }
-
         Panning = false;
     }
 

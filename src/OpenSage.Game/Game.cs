@@ -127,6 +127,7 @@ public sealed class Game : DisposableBase, IGame
     public event EventHandler<Logic.Orders.OrderProcessedEventArgs> OrderProcessed;
     public event EventHandler<Logic.GameObjectCreatedEventArgs> ObjectCreated;
     public event EventHandler<Logic.GameObjectDestroyedEventArgs> ObjectDestroyed;
+    public event EventHandler<Logic.GameObjectConstructionCompletedEventArgs> ConstructionCompleted;
 
     internal void RaiseOrderProcessed(Logic.Orders.OrderProcessedEventArgs args) =>
         OrderProcessed?.Invoke(this, args);
@@ -136,6 +137,12 @@ public sealed class Game : DisposableBase, IGame
 
     internal void RaiseObjectDestroyed(Logic.GameObjectDestroyedEventArgs args) =>
         ObjectDestroyed?.Invoke(this, args);
+
+    internal void RaiseConstructionCompleted(Logic.GameObjectConstructionCompletedEventArgs args) =>
+        ConstructionCompleted?.Invoke(this, args);
+
+    public void InjectOrders(IEnumerable<Logic.Orders.Order> orders) =>
+        NetworkMessageBuffer?.InjectOrdersNow(orders);
 
     /// <summary>
     /// Fired when a <see cref="Render"/> completes, but before

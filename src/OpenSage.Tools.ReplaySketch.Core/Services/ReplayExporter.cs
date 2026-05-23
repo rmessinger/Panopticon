@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using OpenSage.Content;
@@ -36,16 +37,20 @@ public static class ReplayExporter
 
     /// <summary>
     /// Exports the scenario as a <c>.rep</c> file to <paramref name="outputPath"/>.
+    /// Actions with <see cref="AfterActionCompletedTiming"/> are NOT written to the replay;
+    /// they are returned via <paramref name="deferredActions"/> for runtime injection.
     /// Returns <see langword="null"/> on success, or an error message string on failure.
     /// </summary>
-    public static string? Export(ReplayScenario scenario, MapMetadataService map, string outputPath)
+    public static string? Export(ReplayScenario scenario, MapMetadataService map, string outputPath,
+        out IReadOnlyList<DeferredAction> deferredActions)
     {
         var rng = new Random();
 
         // ------------------------------------------------------------------
-        // Build interleaved (frame, Order) sequence
+        // Build interleaved (frame, Order) sequence and collect deferred actions
         // ------------------------------------------------------------------
         var orders = new List<(uint Frame, Order Order)>();
+        var deferred = new List<DeferredAction>();
 
         for (var ownerIdx = 0; ownerIdx < scenario.Players.Count; ownerIdx++)
         {
@@ -57,19 +62,30 @@ public static class ReplayExporter
             uint cumulativeFrame = 0;
             foreach (var action in player.Actions)
             {
-                cumulativeFrame += action.Timing.Resolve(rng);
-
-                // Actions without a position (e.g. RecruitBasicUnit) use Vector3.Zero;
-                // BuildOrders won't consume the position for those action types.
                 var worldPos = action.Position?.Resolve(ctx, rng) ?? Vector3.Zero;
 
-                var actionOrders = BuildOrders(ownerIdx + 2, action.Type, worldPos, player.FactionIndex);
-                foreach (var order in actionOrders)
+                if (action.Timing is AfterActionCompletedTiming aat)
                 {
-                    orders.Add((cumulativeFrame, order));
+                    // Deferred: build the orders now (so positions are resolved) but don't
+                    // place them in the replay file — the test harness injects them at runtime.
+                    var actionOrders = BuildOrders(ownerIdx + 2, action.Type, worldPos, player.FactionIndex)
+                        .ToList();
+                    deferred.Add(new DeferredAction(player.Name, aat.TriggerAction, actionOrders, aat.ExtraFrames));
+                }
+                else
+                {
+                    cumulativeFrame += action.Timing.Resolve(rng);
+
+                    var actionOrders = BuildOrders(ownerIdx + 2, action.Type, worldPos, player.FactionIndex);
+                    foreach (var order in actionOrders)
+                    {
+                        orders.Add((cumulativeFrame, order));
+                    }
                 }
             }
         }
+
+        deferredActions = deferred;
 
         // Sort by frame, then by player index (stable sort)
         orders.Sort((a, b) =>
@@ -207,6 +223,11 @@ public static class ReplayExporter
 
             case ActionType.AttackEnemyBase:
                 {
+                    // Clear the selection first so ForceAttackGround falls back to all
+                    // CanAttack units. Without this, the barracks remains selected from the
+                    // preceding CreateUnit order and it cannot attack, causing the ranger to
+                    // stand still.
+                    yield return Order.CreateClearSelection(playerIndex);
                     yield return Order.CreateAttackGround(playerIndex, worldPos);
                     break;
                 }

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OpenSage.Tools.WorldBuilder.Maui.MainPage"
+             Title="OpenSAGE World Builder"
+             BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#1E1E1E}">
+
+    <Shell.MenuBarItems>
+        <!-- File menu -->
+        <MenuBarItem Text="File">
+            <MenuFlyoutItem Text="New Map…"        x:Name="MenuNew"    Clicked="OnMenuNew" />
+            <MenuFlyoutItem Text="Open Map…"       x:Name="MenuOpen"   Clicked="OnMenuOpen" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="Save"            x:Name="MenuSave"   Clicked="OnMenuSave" />
+            <MenuFlyoutItem Text="Save As…"        x:Name="MenuSaveAs" Clicked="OnMenuSaveAs" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="Exit"            x:Name="MenuExit"   Clicked="OnMenuExit" />
+        </MenuBarItem>
+
+        <!-- Edit menu -->
+        <MenuBarItem Text="Edit">
+            <MenuFlyoutItem Text="Undo"            x:Name="MenuUndo"   Clicked="OnMenuUndo" />
+            <MenuFlyoutItem Text="Redo"            x:Name="MenuRedo"   Clicked="OnMenuRedo" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="Select All"      x:Name="MenuSelectAll" Clicked="OnMenuSelectAll" />
+            <MenuFlyoutItem Text="Delete Selected" x:Name="MenuDelete"    Clicked="OnMenuDelete" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="Map Settings…"   x:Name="MenuMapSettings" Clicked="OnMenuMapSettings" />
+        </MenuBarItem>
+
+        <!-- View menu -->
+        <MenuBarItem Text="View">
+            <MenuFlyoutItem Text="Show Grid"       x:Name="MenuShowGrid"       Clicked="OnToggleShowGrid" />
+            <MenuFlyoutItem Text="Show Objects"    x:Name="MenuShowObjects"    Clicked="OnToggleShowObjects" />
+            <MenuFlyoutItem Text="Show Water"      x:Name="MenuShowWater"      Clicked="OnToggleShowWater" />
+            <MenuFlyoutItem Text="Show Waypoints"  x:Name="MenuShowWaypoints"  Clicked="OnToggleShowWaypoints" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="Lock Camera Angle" x:Name="MenuLockAngle"    Clicked="OnToggleLockAngle" />
+            <MenuFlyoutItem Text="Top-Down View"   x:Name="MenuTopDown"        Clicked="OnToggleTopDown" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="Show Passability (Ctrl+I)" x:Name="MenuPassability" Clicked="OnTogglePassability" />
+        </MenuBarItem>
+
+        <!-- Windows menu -->
+        <MenuBarItem Text="Windows">
+            <MenuFlyoutItem Text="Scripts…"        x:Name="MenuScripts"    Clicked="OnMenuScripts" />
+            <MenuFlyoutItem Text="Teams…"          x:Name="MenuTeams"      Clicked="OnMenuTeams" />
+            <MenuFlyoutItem Text="Player List…"    x:Name="MenuPlayerList" Clicked="OnMenuPlayerList" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="Map INI Editor…" x:Name="MenuMapIni"     Clicked="OnMenuMapIni" />
+            <MenuFlyoutItem Text="Map String Table…" x:Name="MenuMapStr"   Clicked="OnMenuMapStr" />
+        </MenuBarItem>
+
+        <!-- Help menu -->
+        <MenuBarItem Text="Help">
+            <MenuFlyoutItem Text="Settings…"       x:Name="MenuSettings"   Clicked="OnMenuSettings" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="About…"          x:Name="MenuAbout"      Clicked="OnMenuAbout" />
+        </MenuBarItem>
+    </Shell.MenuBarItems>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Toolbar row -->
+        <Border Grid.Row="0"
+                BackgroundColor="{AppThemeBinding Light=#E8E8E8, Dark=#252526}"
+                Stroke="{AppThemeBinding Light=#CCC, Dark=#3F3F46}"
+                StrokeThickness="0,0,0,1"
+                Padding="4,2">
+            <HorizontalStackLayout Spacing="2" VerticalOptions="Center">
+                <!-- Tool buttons (populated in code-behind once tools are implemented) -->
+                <Button x:Name="BtnArrow"
+                        Text="↖"
+                        ToolTipProperties.Text="Select / Arrow tool"
+                        Clicked="OnToolSelect"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+                <BoxView WidthRequest="1"
+                         BackgroundColor="{AppThemeBinding Light=#CCC, Dark=#555}"
+                         Margin="4,2" />
+                <Button x:Name="BtnHeightMound"
+                        Text="▲"
+                        ToolTipProperties.Text="Mound (raise terrain)"
+                        Clicked="OnToolHeightMound"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+                <Button x:Name="BtnHeightDig"
+                        Text="▼"
+                        ToolTipProperties.Text="Dig (lower terrain)"
+                        Clicked="OnToolHeightDig"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+                <Button x:Name="BtnSmooth"
+                        Text="〜"
+                        ToolTipProperties.Text="Smooth Height"
+                        Clicked="OnToolSmooth"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+                <BoxView WidthRequest="1"
+                         BackgroundColor="{AppThemeBinding Light=#CCC, Dark=#555}"
+                         Margin="4,2" />
+                <Button x:Name="BtnTexturePaint"
+                        Text="🖌"
+                        ToolTipProperties.Text="Paint Texture"
+                        Clicked="OnToolTexturePaint"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+                <Button x:Name="BtnEyeDropper"
+                        Text="💧"
+                        ToolTipProperties.Text="Eye Dropper"
+                        Clicked="OnToolEyeDropper"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+                <BoxView WidthRequest="1"
+                         BackgroundColor="{AppThemeBinding Light=#CCC, Dark=#555}"
+                         Margin="4,2" />
+                <Button x:Name="BtnPlaceObject"
+                        Text="📦"
+                        ToolTipProperties.Text="Place Object"
+                        Clicked="OnToolPlaceObject"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+                <Button x:Name="BtnWaypoint"
+                        Text="📍"
+                        ToolTipProperties.Text="Waypoint"
+                        Clicked="OnToolWaypoint"
+                        Style="{StaticResource ToolbarButtonStyle}" />
+            </HorizontalStackLayout>
+        </Border>
+
+        <!-- Work area: three columns -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="240,*,0"
+              Margin="0">
+
+            <!-- Left: tool properties panel -->
+            <Border Grid.Column="0"
+                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#252525}"
+                    Stroke="{AppThemeBinding Light=#CCC, Dark=#3F3F46}"
+                    StrokeThickness="0,0,1,0">
+                <ScrollView>
+                    <VerticalStackLayout x:Name="ToolPropertiesPanel"
+                                         Spacing="0"
+                                         Padding="0" />
+                </ScrollView>
+            </Border>
+
+            <!-- Centre: 3D viewport placeholder (VeldridViewport added in code-behind) -->
+            <ContentView Grid.Column="1"
+                         x:Name="ViewportContainer"
+                         BackgroundColor="#222222" />
+
+            <!-- Right panel: hidden for now; set Width > 0 when needed -->
+            <Border Grid.Column="2"
+                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#252525}"
+                    Stroke="{AppThemeBinding Light=#CCC, Dark=#3F3F46}"
+                    StrokeThickness="1,0,0,0" />
+
+        </Grid>
+
+        <!-- Status bar -->
+        <Border Grid.Row="2"
+                BackgroundColor="{AppThemeBinding Light=#007ACC, Dark=#007ACC}"
+                Padding="8,2">
+            <Label x:Name="StatusLabel"
+                   Text="Ready"
+                   TextColor="White"
+                   FontSize="12"
+                   VerticalOptions="Center" />
+        </Border>
+
+    </Grid>
+
+</ContentPage>

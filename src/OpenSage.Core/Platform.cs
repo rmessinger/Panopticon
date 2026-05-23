@@ -8,17 +8,47 @@ public static class Platform
 {
     public static void Start()
     {
-        // On macOS, SDL2 requires SDL_SetMainReady() before SDL_Init() whenever
-        // the caller is not launched via SDL's own entry point (e.g. test hosts,
-        // or apps that perform their own Cocoa/AppKit set-up). Without this call
-        // SDL2 attempts to configure the main menu from a non-main thread, which
-        // Cocoa rejects with NSInternalInconsistencyException.
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
+            // SDL2's Cocoa_RegisterApp calls [NSApp setMainMenu:] when NSApp is nil at
+            // SDL_VideoInit time.  On macOS 14+ the menu nib SDL uses contains a
+            // deprecated NSCalendarDate that throws NSGenericException during decoding,
+            // which propagates through the C++ exception machinery as an unhandled
+            // exception and kills the process with SIGABRT.
+            //
+            // Calling [NSApplication sharedApplication] first leaves NSApp non-nil, so
+            // SDL skips the setMainMenu: call entirely and the crash does not occur.
+            InitNSApplication();
+
+            // SDL_SetMainReady() tells SDL2 that the caller has done its own SDL_main-
+            // equivalent entry-point setup. Without it SDL may skip some
+            // thread-safety checks, so we still want it.
             SetMainReadyIfAvailable();
         }
 
         Sdl2Native.SDL_Init(SDLInitFlags.Video);
+    }
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_getClass")]
+    private static extern IntPtr ObjcGetClass([MarshalAs(UnmanagedType.LPStr)] string name);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "sel_registerName")]
+    private static extern IntPtr SelRegisterName([MarshalAs(UnmanagedType.LPStr)] string name);
+
+    [DllImport("/usr/lib/libobjc.A.dylib", EntryPoint = "objc_msgSend")]
+    private static extern IntPtr ObjcMsgSend(IntPtr receiver, IntPtr selector);
+
+    private static void InitNSApplication()
+    {
+        // [NSApplication sharedApplication] — idempotent; safe to call multiple times.
+        var nsApplicationClass = ObjcGetClass("NSApplication");
+        if (nsApplicationClass == IntPtr.Zero)
+        {
+            return;
+        }
+
+        var sharedApplicationSel = SelRegisterName("sharedApplication");
+        ObjcMsgSend(nsApplicationClass, sharedApplicationSel);
     }
 
     private static void SetMainReadyIfAvailable()

@@ -74,7 +74,7 @@ internal sealed class ExportPanel
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var outputPath = Path.Combine(replaysDir, $"sketch_{timestamp}.rep");
 
-            var error = ReplayExporter.Export(scenario, map, outputPath);
+            var error = ReplayExporter.Export(scenario, map, outputPath, out _);
 
             _lastExportPath = error == null ? outputPath : null;
             _lastExportError = error;
@@ -116,7 +116,7 @@ internal sealed class ExportPanel
             var replaysDir = ReplaysPathResolver.Resolve();
             var outputPath = Path.Combine(replaysDir, PreviewReplayName);
 
-            var error = ReplayExporter.Export(scenario, map, outputPath);
+            var error = ReplayExporter.Export(scenario, map, outputPath, out _);
             if (error != null)
             {
                 _lastExportPath = null;

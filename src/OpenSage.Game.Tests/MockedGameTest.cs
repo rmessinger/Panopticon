@@ -87,7 +87,9 @@ public abstract class MockedGameTest : IDisposable
         public event EventHandler<OrderProcessedEventArgs> OrderProcessed;
         public event EventHandler<GameObjectCreatedEventArgs> ObjectCreated;
         public event EventHandler<GameObjectDestroyedEventArgs> ObjectDestroyed;
+        public event EventHandler<GameObjectConstructionCompletedEventArgs> ConstructionCompleted;
 #pragma warning restore CS0067 // The event 'Game.X' is never used
+        public void InjectOrders(IEnumerable<Order> orders) { }
         public void LoadSaveFile(FileSystemEntry entry)
         {
             throw new NotImplementedException();

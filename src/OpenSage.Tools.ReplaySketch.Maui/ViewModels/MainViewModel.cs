@@ -140,7 +140,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var replaysDir = ReplaysPathResolver.Resolve();
         var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var outputPath = System.IO.Path.Combine(replaysDir, $"sketch_{timestamp}.rep");
-        var error = ReplayExporter.Export(Scenario, _map, outputPath);
+        var error = ReplayExporter.Export(Scenario, _map, outputPath, out _);
         ExportOk = error == null;
         ExportResult = error ?? $"✓ Exported to:\n{outputPath}";
     }
@@ -155,7 +155,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         var replaysDir = ReplaysPathResolver.Resolve();
         var outputPath = System.IO.Path.Combine(replaysDir, PreviewReplayName);
-        var error = ReplayExporter.Export(Scenario, _map, outputPath);
+        var error = ReplayExporter.Export(Scenario, _map, outputPath, out _);
         ExportOk = error == null;
         ExportResult = error != null
             ? $"Export failed: {error}"

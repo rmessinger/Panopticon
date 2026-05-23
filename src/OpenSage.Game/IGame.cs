@@ -144,6 +144,17 @@ public interface IGame
     event EventHandler<Logic.GameObjectDestroyedEventArgs> ObjectDestroyed;
 
     /// <summary>
+    /// Fired when a building finishes construction (transitions out of the under-construction state).
+    /// </summary>
+    event EventHandler<Logic.GameObjectConstructionCompletedEventArgs> ConstructionCompleted;
+
+    /// <summary>
+    /// Immediately processes <paramref name="orders"/> through the order processor,
+    /// bypassing the replay file. Intended for event-driven order injection at runtime.
+    /// </summary>
+    void InjectOrders(IEnumerable<Logic.Orders.Order> orders);
+
+    /// <summary>
     /// Fired when a <see cref="Game.Render"/> completes, but before
     /// <see cref="Game.Panel"/>'s <see cref="GamePanel.Framebuffer"/>
     /// is copied to <see cref="GraphicsDevice.SwapchainFramebuffer"/>.

@@ -100,7 +100,7 @@ public class RadarDrawUtil
             new SizeF(_miniMapTexture.Width, _miniMapTexture.Height),
             destinationRectangle.Size);
 
-        DrawRadarOverlay(drawingContext, objectTransform);
+        DrawRadarOverlay(drawingContext, objectTransform, fittedRectangle.ToRectangleF());
     }
 
     public void DrawRadarMinimap(DrawingContext2D drawingContext, in Mathematics.Rectangle rectangle, bool flip = false)
@@ -115,17 +115,17 @@ public class RadarDrawUtil
             rectF,
             rectF.Size,
             rectangle.Size);
-        DrawRadarOverlay(drawingContext, objectTransform);
+        DrawRadarOverlay(drawingContext, objectTransform, rectF);
     }
 
-    public void DrawRadarOverlay(DrawingContext2D drawingContext, in Matrix3x2 transform)
+    public void DrawRadarOverlay(DrawingContext2D drawingContext, in Matrix3x2 transform, RectangleF? clipRectangle = null)
     {
         foreach (var item in _radar.VisibleItems)
         {
             DrawRadarItem(item, drawingContext, transform);
         }
 
-        DrawCameraFrustum(drawingContext, transform);
+        DrawCameraFrustum(drawingContext, transform, clipRectangle);
     }
 
     private void DrawRadarItem(
@@ -189,7 +189,7 @@ public class RadarDrawUtil
         return Vector2.Transform(position2D, miniMapTransform);
     }
 
-    private void DrawCameraFrustum(DrawingContext2D drawingContext, Matrix3x2 miniMapTransform)
+    private void DrawCameraFrustum(DrawingContext2D drawingContext, Matrix3x2 miniMapTransform, RectangleF? clipRectangle)
     {
         // Create rays from camera position through each corner of the near plane.
         var frustumCorners = _camera.BoundingFrustum.Corners;
@@ -230,10 +230,16 @@ public class RadarDrawUtil
                 return;
             }
 
-            // TODO: Clip lines to destination rectangle.
+            var start = v0Radar.Value;
+            var end = v1Radar.Value;
+
+            if (clipRectangle.HasValue && !ClipLineToRectangle(clipRectangle.Value, ref start, ref end))
+            {
+                return;
+            }
 
             drawingContext.DrawLine(
-                new Line2D(v0Radar.Value, v1Radar.Value),
+                new Line2D(start, end),
                 2,
                 new ColorRgbaF(1, 1, 0, 1));
         }
@@ -242,5 +248,55 @@ public class RadarDrawUtil
         DrawFrustumLine(terrain1.Value, terrain2.Value);
         DrawFrustumLine(terrain2.Value, terrain3.Value);
         DrawFrustumLine(terrain3.Value, terrain0.Value);
+    }
+
+    /// <summary>
+    /// Clips a line segment to an axis-aligned rectangle using the Liang-Barsky algorithm.
+    /// Returns true if any part of the segment is inside the rectangle, with <paramref name="p0"/>
+    /// and <paramref name="p1"/> updated to the clipped endpoints.
+    /// </summary>
+    private static bool ClipLineToRectangle(in RectangleF rect, ref Vector2 p0, ref Vector2 p1)
+    {
+        var dx = p1.X - p0.X;
+        var dy = p1.Y - p0.Y;
+
+        Span<float> p = stackalloc float[] { -dx, dx, -dy, dy };
+        Span<float> q = stackalloc float[]
+        {
+            p0.X - rect.Left,
+            rect.Right - p0.X,
+            p0.Y - rect.Top,
+            rect.Bottom - p0.Y,
+        };
+
+        var t0 = 0f;
+        var t1 = 1f;
+
+        for (var i = 0; i < 4; i++)
+        {
+            if (p[i] == 0f)
+            {
+                if (q[i] < 0f)
+                {
+                    return false;
+                }
+            }
+            else if (p[i] < 0f)
+            {
+                var t = q[i] / p[i];
+                if (t > t1) return false;
+                if (t > t0) t0 = t;
+            }
+            else
+            {
+                var t = q[i] / p[i];
+                if (t < t0) return false;
+                if (t < t1) t1 = t;
+            }
+        }
+
+        p1 = new Vector2(p0.X + t1 * dx, p0.Y + t1 * dy);
+        p0 = new Vector2(p0.X + t0 * dx, p0.Y + t0 * dy);
+        return true;
     }
 }

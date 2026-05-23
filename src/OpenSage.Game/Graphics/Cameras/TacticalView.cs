@@ -90,6 +90,16 @@ public sealed class TacticalView : IPersistableObject
     private float _minHeightAboveGround;
     private float _maxHeightAboveGround;
 
+    /// <summary>
+    /// The maximum height the camera may sit above the ground.
+    /// Increasing this value allows the camera to zoom further out.
+    /// </summary>
+    public float MaxHeightAboveGround
+    {
+        get => _maxHeightAboveGround;
+        set => _maxHeightAboveGround = Math.Max(value, _minHeightAboveGround);
+    }
+
     public void SetLookDirection(Vector3 lookDirection)
     {
         _angle = MathF.Atan2(lookDirection.Y, lookDirection.X);
@@ -174,14 +184,14 @@ public sealed class TacticalView : IPersistableObject
         }
     }
 
-    public TacticalView(GameData gameData, Camera camera, TerrainLogic terrainLogic, CursorManager cursorManager, float msPerLogicFrame)
+    public TacticalView(GameData gameData, Camera camera, TerrainLogic terrainLogic, CursorManager cursorManager, float msPerLogicFrame, CameraControlScheme cameraControlScheme = CameraControlScheme.Generals)
     {
         _gameData = gameData;
         Camera = camera;
         _terrainLogic = terrainLogic;
         _msPerLogicFrame = msPerLogicFrame;
         _scrollAmountCutoff = _gameData.ScrollAmountCutoff;
-        LookAtTranslator = new LookAtTranslator(this, cursorManager, gameData);
+        LookAtTranslator = new LookAtTranslator(this, cursorManager, gameData, cameraControlScheme);
 
         Init();
         SetDefaultView(0, 0, 1);

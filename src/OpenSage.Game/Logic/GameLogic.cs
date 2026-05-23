@@ -198,6 +198,14 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         _destroyList.Add(gameObject);
     }
 
+    internal void RaiseConstructionCompleted(GameObjectConstructionCompletedEventArgs args)
+    {
+        if (_game is Game concreteGame)
+        {
+            concreteGame.RaiseConstructionCompleted(args);
+        }
+    }
+
     public void DeleteDestroyed()
     {
         foreach (var gameObject in _destroyList)
