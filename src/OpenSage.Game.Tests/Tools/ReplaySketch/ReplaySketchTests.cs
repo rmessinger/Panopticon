@@ -33,25 +33,58 @@ public class ReplaySketchTests
     }
 
     [Fact]
-    public void DefaultScenario_GatherResources_IsScheduledAfterBarracksConstruction()
+    public void DefaultScenario_GatherResources_TriggersOnBuildBarracksDispatched()
+    {
+        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+
+        foreach (var player in scenario.Players)
+        {
+            var gather = player.Actions[1];
+            Assert.Equal(ActionType.GatherResources, gather.Type);
+
+            var timing = Assert.IsType<AfterActionTiming>(gather.Timing);
+            Assert.Equal(ActionType.BuildBarracks, timing.TriggerAction);
+            Assert.Equal(ActionPhase.Dispatched, timing.TriggerPhase);
+        }
+    }
+
+    [Fact]
+    public void DefaultScenario_RecruitBasicUnit_TriggersOnBuildBarracksCompleted()
+    {
+        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+
+        foreach (var player in scenario.Players)
+        {
+            var recruit = player.Actions[2];
+            Assert.Equal(ActionType.RecruitBasicUnit, recruit.Type);
+
+            var timing = Assert.IsType<AfterActionTiming>(recruit.Timing);
+            Assert.Equal(ActionType.BuildBarracks, timing.TriggerAction);
+            Assert.Equal(ActionPhase.Completed, timing.TriggerPhase);
+        }
+    }
+
+    [Fact]
+    public void DefaultScenario_FixedTimedActions_HavePositiveFrameOffsets()
     {
         var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
         var rng = new Random(0);
 
         foreach (var player in scenario.Players)
         {
-            var barracksFrame = player.Actions[0].Timing.Resolve(rng);
-            var gatherOffset = player.Actions[1].Timing.Resolve(rng);
-
-            Assert.Equal(ActionType.BuildBarracks, player.Actions[0].Type);
-            Assert.Equal(ActionType.GatherResources, player.Actions[1].Type);
-            Assert.True(barracksFrame > 0, $"{player.Name}: BuildBarracks must be scheduled at a non-zero frame.");
-            Assert.True(gatherOffset > 0, $"{player.Name}: GatherResources must fire after BuildBarracks (positive offset).");
+            foreach (var action in player.Actions)
+            {
+                if (action.Timing is FixedTiming ft)
+                {
+                    Assert.True(ft.Frames > 0,
+                        $"{player.Name}: action {action.Type} must have a positive fixed frame offset.");
+                }
+            }
         }
     }
 
     [Fact]
-    public void DefaultScenario_CumulativeFrames_AreMonotonicallyIncreasing()
+    public void DefaultScenario_PrebakedActions_HaveMonotonicallyIncreasingFrames()
     {
         var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
         var rng = new Random(0);
@@ -60,11 +93,18 @@ public class ReplaySketchTests
         {
             uint cumulative = 0;
             uint previous = 0;
-            for (var i = 0; i < player.Actions.Count; i++)
+            foreach (var action in player.Actions)
             {
-                cumulative += player.Actions[i].Timing.Resolve(rng);
+                // Deferred actions (AfterActionTiming) return 0 from Resolve and are injected
+                // at runtime rather than baked into the replay — skip them in this check.
+                if (action.Timing is AfterActionTiming)
+                {
+                    continue;
+                }
+
+                cumulative += action.Timing.Resolve(rng);
                 Assert.True(cumulative > previous,
-                    $"{player.Name}: action {i} ({player.Actions[i].Type}) must fire at a later frame than the previous action.");
+                    $"{player.Name}: action {action.Type} must fire at a later frame than the previous pre-baked action.");
                 previous = cumulative;
             }
         }

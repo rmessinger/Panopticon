@@ -103,9 +103,10 @@
         {
           "label": "Gather Resources",
           "type": "GatherResources",
-          // Fires 60 frames (2 s) after the BuildBarracks order — the truck is always
-          // ready at game start, so no extra wait is needed.
-          "timing": { "kind": "fixed", "frames": 60 },
+          // Deferred: fires as soon as the BuildBarracks order is dispatched (i.e. construction
+          // starts), so the supply truck begins collecting resources immediately rather than
+          // waiting for the barracks to finish.
+          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Dispatched", "extraFrames": 0 },
           "position": null
         },
         {
@@ -115,14 +116,14 @@
           // recruit order from arriving while the building is still being built.
           // Queues 5 Rangers (see ReplayExporter) — each unit that exits will re-trigger
           // AttackEnemyBase so all units are sent to attack together.
-          "timing": { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": null
         },
         {
           "label": "Attack Enemy Base",
           "type": "AttackEnemyBase",
           // Deferred: fires after the ranger exits the barracks (RecruitBasicUnit completed).
-          "timing": { "kind": "afterActionCompleted", "triggerAction": "RecruitBasicUnit", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "RecruitBasicUnit", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",
@@ -154,7 +155,10 @@
         {
           "label": "Gather Resources",
           "type": "GatherResources",
-          "timing": { "kind": "fixed", "frames": 60 },
+          // Deferred: fires as soon as the BuildBarracks order is dispatched (i.e. construction
+          // starts), so the supply truck begins collecting resources immediately rather than
+          // waiting for the barracks to finish.
+          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Dispatched", "extraFrames": 0 },
           "position": null
         },
         {
@@ -163,14 +167,14 @@
           // Deferred: fires only after the barracks finishes construction.
           // Queues 5 Rebels (see ReplayExporter) — each unit that exits will re-trigger
           // AttackEnemyBase so all units are sent to attack together.
-          "timing": { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": null
         },
         {
           "label": "Attack Enemy Base",
           "type": "AttackEnemyBase",
           // Deferred: fires after the rebel exits the barracks (RecruitBasicUnit completed).
-          "timing": { "kind": "afterActionCompleted", "triggerAction": "RecruitBasicUnit", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "RecruitBasicUnit", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",

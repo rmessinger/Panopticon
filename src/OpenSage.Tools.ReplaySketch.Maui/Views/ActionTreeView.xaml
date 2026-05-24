@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
+             x:Class="OpenSage.Tools.ReplaySketch.Maui.Views.ActionTreeView"
+             x:Name="Root">
+
+    <Grid RowDefinitions="*,220">
+
+        <!-- Tree area: palette (left) + canvas (right) -->
+        <Grid Grid.Row="0" ColumnDefinitions="104,*">
+
+            <!-- Left: action type palette -->
+            <Border Grid.Column="0"
+                    Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                    BackgroundColor="{AppThemeBinding Light=#F4F4F4, Dark=#222222}"
+                    StrokeShape="Rectangle"
+                    Padding="0">
+                <ScrollView>
+                    <VerticalStackLayout x:Name="PalettePanel"
+                                         Padding="6" Spacing="4"/>
+                </ScrollView>
+            </Border>
+
+            <!-- Right: SkiaSharp tree canvas with transparent overlay -->
+            <Grid Grid.Column="1">
+
+                <!-- Canvas — draws nodes and edges -->
+                <skia:SKCanvasView x:Name="TreeCanvas"
+                                   PaintSurface="OnPaintSurface"
+                                   EnableTouchEvents="False"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill"/>
+
+                <!-- Fallback drop zone: catches palette drops on blank canvas areas -->
+                <BoxView x:Name="CanvasDropZone"
+                         Color="Transparent"
+                         HorizontalOptions="Fill"
+                         VerticalOptions="Fill"/>
+
+                <!-- Node overlay: transparent hit-test areas positioned over each tree node.
+                     InputTransparent=True on the container passes scroll events through, while
+                     each BoxView child remains interactive. -->
+                <AbsoluteLayout x:Name="NodeOverlay"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill"
+                                InputTransparent="True"/>
+
+            </Grid>
+
+        </Grid>
+
+        <!-- Detail panel: edit controls for the selected node -->
+        <Border Grid.Row="1"
+                Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                StrokeThickness="1"
+                Padding="0">
+            <ScrollView>
+                <VerticalStackLayout x:Name="DetailPanel"
+                                      Padding="8" Spacing="4"/>
+            </ScrollView>
+        </Border>
+
+    </Grid>
+</ContentView>

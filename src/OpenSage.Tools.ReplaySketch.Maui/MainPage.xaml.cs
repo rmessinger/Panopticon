@@ -12,17 +12,17 @@ public partial class MainPage : ContentPage
 
         ScenarioView.BindViewModel(_vm);
         MapPreviewView.BindViewModel(_vm);
-        ActionSequenceView.BindViewModel(_vm);
+        ActionTreeView.BindViewModel(_vm);
         ExportView.BindViewModel(_vm);
 
-        // When scenario or map changes, redraw the map preview and refresh action list
+        // When scenario or map changes, redraw the map preview and refresh action tree
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(MainViewModel.Map)
                                 or nameof(MainViewModel.SelectedSlotIndex))
             {
                 MapPreviewView.Invalidate();
-                ActionSequenceView.Refresh();
+                ActionTreeView.RefreshTree();
             }
         };
     }

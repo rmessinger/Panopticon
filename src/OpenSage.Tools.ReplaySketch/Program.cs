@@ -1,4 +1,7 @@
-﻿using OpenSage.Tools.ReplaySketch.UI;
+﻿// DEPRECATED: This ImGui/Veldrid frontend is superseded by the MAUI frontend in
+// OpenSage.Tools.ReplaySketch.Maui, which provides a tree-based action editor with
+// drag-and-drop support.  This project is no longer included in OpenSage.sln.
+using OpenSage.Tools.ReplaySketch.UI;
 using Veldrid;
 using Veldrid.StartupUtilities;
 

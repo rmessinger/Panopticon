@@ -271,9 +271,11 @@ public static class Program
     }
 
     /// <summary>
-    /// Subscribes to <see cref="ReplayActionMonitor.ActionCompleted"/> events and, for each
-    /// <see cref="DeferredAction"/> whose trigger matches, enqueues its orders for injection
-    /// on the next game-loop iteration (via <see cref="DrainPendingInjections"/>).
+    /// Subscribes to <see cref="ReplayActionMonitor.ActionDispatched"/> and
+    /// <see cref="ReplayActionMonitor.ActionCompleted"/> events and, for each
+    /// <see cref="DeferredAction"/> whose trigger and <see cref="DeferredAction.Phase"/> match,
+    /// enqueues its orders for injection on the next game-loop iteration (via
+    /// <see cref="DrainPendingInjections"/>).
     /// </summary>
     private static List<(int RemainingFrames, IReadOnlyList<Logic.Orders.Order> Orders)> BuildDeferredInjector(
         Game game,
@@ -282,11 +284,26 @@ public static class Program
     {
         var pending = new List<(int RemainingFrames, IReadOnlyList<Logic.Orders.Order> Orders)>();
 
+        monitor.ActionDispatched += (_, e) =>
+        {
+            foreach (var deferred in deferredActions)
+            {
+                if (deferred.Phase == ActionPhase.Dispatched
+                    && deferred.Trigger == e.ActionType
+                    && deferred.PlayerIndex == (int?)e.Player?.Id)
+                {
+                    pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
+                }
+            }
+        };
+
         monitor.ActionCompleted += (_, e) =>
         {
             foreach (var deferred in deferredActions)
             {
-                if (deferred.Trigger == e.ActionType && deferred.PlayerIndex == (int?)e.Player?.Id)
+                if (deferred.Phase == ActionPhase.Completed
+                    && deferred.Trigger == e.ActionType
+                    && deferred.PlayerIndex == (int?)e.Player?.Id)
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }

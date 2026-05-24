@@ -67,7 +67,7 @@ public sealed class CursorManager : DisposableBase
                 cursorEntry = _contentManager.FileSystem.GetFile(cursorFilePath);
             }
 
-            _cachedCursors[cursorName] = cursor = AddDisposable(new Cursor(cursorName, cursorEntry, _window?.WindowScale ?? 1.0f));
+            _cachedCursors[cursorName] = cursor = AddDisposable(new Cursor(cursorName, cursorEntry, _window?.CursorScale ?? 1.0f));
         }
 
         if (_currentCursor == cursor)

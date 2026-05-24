@@ -56,21 +56,21 @@ public partial class NewMapWizardPage : ContentPage
         initialHeight = 0;
         error = string.Empty;
 
-        if (!int.TryParse(WidthEntry.Text, out width) || width < 10 || width > 1000)
+        if (!int.TryParse(WidthEntry.Text, out width) || width < 10)
         {
-            error = "Width must be between 10 and 1000.";
+            error = "Width must be at least 10.";
             return false;
         }
 
-        if (!int.TryParse(HeightEntry.Text, out height) || height < 10 || height > 1000)
+        if (!int.TryParse(HeightEntry.Text, out height) || height < 10)
         {
-            error = "Height must be between 10 and 1000.";
+            error = "Height must be at least 10.";
             return false;
         }
 
-        if (!int.TryParse(BorderWidthEntry.Text, out borderWidth) || borderWidth < 2 || borderWidth > 20)
+        if (!int.TryParse(BorderWidthEntry.Text, out borderWidth) || borderWidth < 2)
         {
-            error = "Border width must be between 2 and 20.";
+            error = "Border width must be at least 2.";
             return false;
         }
 

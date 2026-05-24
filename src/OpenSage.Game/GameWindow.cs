@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using OpenSage.Input;
 using OpenSage.Mathematics;
 using OpenSage.Utilities;
@@ -20,6 +21,11 @@ public sealed class GameWindow : DisposableBase
     private bool _closing;
     private int _lastMouseX;
     private int _lastMouseY;
+
+    // Trackpad scroll smoothing: accumulate fractional deltas and debounce direction reversals
+    // to prevent rapid +1/-1 oscillation from macOS trackpad inertia physics.
+    private float _scrollAccumulator;
+    private int _lastScrollDirection;
 
     private void RaiseClientSizeChanged()
     {
@@ -44,6 +50,12 @@ public sealed class GameWindow : DisposableBase
     }
 
     public float WindowScale { get; private set; }
+
+    // On macOS the cursor appears 25% larger than intended, so scale it down.
+    private const float MacOsCursorScaleFactor = 0.75f;
+    public float CursorScale => RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+        ? WindowScale * MacOsCursorScaleFactor
+        : WindowScale;
 
     public InputSnapshot CurrentInputSnapshot { get; private set; }
 
@@ -194,8 +206,33 @@ public sealed class GameWindow : DisposableBase
 
     private void HandleMouseWheel(MouseWheelEventArgs args)
     {
-        var message = InputMessage.CreateMouseWheel((int)args.WheelDelta);
-        MessageQueue.Enqueue(message);
+        var delta = args.WheelDelta;
+        if (delta == 0)
+        {
+            return;
+        }
+
+        var deltaSign = Math.Sign(delta);
+
+        // Debounce rapid direction reversals caused by macOS trackpad inertia/bounce physics.
+        // When the scroll direction flips, discard the first reversal event and reset the
+        // accumulator so that oscillating +1/-1 events don't alternate the zoom level every frame.
+        if (_lastScrollDirection != 0 && deltaSign != _lastScrollDirection)
+        {
+            _scrollAccumulator = 0;
+            _lastScrollDirection = 0;
+            return;
+        }
+
+        _lastScrollDirection = deltaSign;
+        _scrollAccumulator += delta;
+
+        var discreteAmount = (int)_scrollAccumulator;
+        if (discreteAmount != 0)
+        {
+            _scrollAccumulator -= discreteAmount;
+            MessageQueue.Enqueue(InputMessage.CreateMouseWheel(discreteAmount));
+        }
     }
 
     public void Close()

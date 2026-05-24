@@ -64,13 +64,13 @@ public static class ReplayExporter
             {
                 var worldPos = action.Position?.Resolve(ctx, rng) ?? Vector3.Zero;
 
-                if (action.Timing is AfterActionCompletedTiming aat)
+                if (action.Timing is AfterActionTiming aat)
                 {
                     // Deferred: build the orders now (so positions are resolved) but don't
                     // place them in the replay file — the test harness injects them at runtime.
                     var actionOrders = BuildOrders(ownerIdx + 2, action.Type, worldPos, player.FactionIndex)
                         .ToList();
-                    deferred.Add(new DeferredAction(ownerIdx + 2, aat.TriggerAction, actionOrders, aat.ExtraFrames));
+                    deferred.Add(new DeferredAction(ownerIdx + 2, aat.TriggerAction, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
                 }
                 else
                 {

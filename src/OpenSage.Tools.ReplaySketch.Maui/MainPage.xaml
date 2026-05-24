@@ -29,12 +29,12 @@
                 <views:MapPreviewView x:Name="MapPreviewView"/>
             </Frame>
 
-            <!-- Right: action sequence editor -->
+            <!-- Right: action tree editor -->
             <Frame Grid.Column="2"
                    BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
                    Padding="0" Margin="2" CornerRadius="4">
-                <views:ActionSequenceView x:Name="ActionSequenceView"/>
+                <views:ActionTreeView x:Name="ActionTreeView"/>
             </Frame>
 
         </Grid>

@@ -6,7 +6,7 @@ namespace OpenSage.Tools.ReplaySketch.Model;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(FixedTiming), "fixed")]
 [JsonDerivedType(typeof(RandomTiming), "random")]
-[JsonDerivedType(typeof(AfterActionCompletedTiming), "afterActionCompleted")]
+[JsonDerivedType(typeof(AfterActionTiming), "afterAction")]
 public abstract record TimingConfig
 {
     public abstract uint Resolve(Random rng);
@@ -24,11 +24,21 @@ public record RandomTiming(uint MinFrames, uint MaxFrames) : TimingConfig
 }
 
 /// <summary>
-/// Timing kind that defers an action until a specific <see cref="ActionType"/> has completed
-/// at runtime, rather than at a pre-baked frame. The action is not written to the replay file;
-/// instead it is injected by the test harness when the trigger event fires.
+/// Timing kind that defers an action until a specific <see cref="ActionType"/> has reached a
+/// specified <see cref="ActionPhase"/> at runtime, rather than at a pre-baked frame.
+/// The action is not written to the replay file; instead it is injected by the test harness when
+/// the trigger event fires.
 /// </summary>
-public record AfterActionCompletedTiming(ActionType TriggerAction, uint ExtraFrames = 0) : TimingConfig
+/// <remarks>
+/// Because actions each declare their own predecessor trigger independently, they naturally form
+/// a tree rather than a forced linear sequence: multiple actions can branch off the same predecessor
+/// at the same or different phases (e.g. <see cref="ActionPhase.Dispatched"/> vs
+/// <see cref="ActionPhase.Completed"/>).
+/// </remarks>
+public record AfterActionTiming(
+    ActionType TriggerAction,
+    ActionPhase TriggerPhase = ActionPhase.Completed,
+    uint ExtraFrames = 0) : TimingConfig
 {
     /// <summary>
     /// Not used for replay export — deferred actions are injected at runtime.

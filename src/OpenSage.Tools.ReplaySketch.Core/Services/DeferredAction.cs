@@ -6,8 +6,8 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 
 /// <summary>
 /// An action that was not written to the pre-baked replay file because it uses
-/// <see cref="AfterActionCompletedTiming"/>. The test harness injects it at runtime
-/// when the trigger action's <c>ActionCompleted</c> event fires.
+/// <see cref="AfterActionTiming"/>. The test harness injects it at runtime when the trigger
+/// action reaches the specified <see cref="Phase"/>.
 /// </summary>
 public sealed class DeferredAction
 {
@@ -17,8 +17,13 @@ public sealed class DeferredAction
     /// </summary>
     public int PlayerIndex { get; }
 
-    /// <summary>The <see cref="ActionType"/> whose completion triggers this action.</summary>
+    /// <summary>The <see cref="ActionType"/> whose phase transition triggers this action.</summary>
     public ActionType Trigger { get; }
+
+    /// <summary>
+    /// The phase the trigger action must reach before this action's orders are injected.
+    /// </summary>
+    public ActionPhase Phase { get; }
 
     /// <summary>Pre-resolved orders to inject when the trigger fires.</summary>
     public IReadOnlyList<Order> Orders { get; }
@@ -28,10 +33,11 @@ public sealed class DeferredAction
     /// </summary>
     public uint ExtraFrames { get; }
 
-    public DeferredAction(int playerIndex, ActionType trigger, IReadOnlyList<Order> orders, uint extraFrames)
+    public DeferredAction(int playerIndex, ActionType trigger, ActionPhase phase, IReadOnlyList<Order> orders, uint extraFrames)
     {
         PlayerIndex = playerIndex;
         Trigger = trigger;
+        Phase = phase;
         Orders = orders;
         ExtraFrames = extraFrames;
     }
