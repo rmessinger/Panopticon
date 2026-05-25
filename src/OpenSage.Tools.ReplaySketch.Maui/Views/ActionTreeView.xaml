@@ -38,13 +38,10 @@
                          HorizontalOptions="Fill"
                          VerticalOptions="Fill"/>
 
-                <!-- Node overlay: transparent hit-test areas positioned over each tree node.
-                     InputTransparent=True on the container passes scroll events through, while
-                     each BoxView child remains interactive. -->
+                <!-- Node overlay: transparent hit-test areas positioned over each tree node. -->
                 <AbsoluteLayout x:Name="NodeOverlay"
                                 HorizontalOptions="Fill"
-                                VerticalOptions="Fill"
-                                InputTransparent="True"/>
+                                VerticalOptions="Fill"/>
 
             </Grid>
 

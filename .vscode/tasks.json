@@ -2,16 +2,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "maui: Build",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/src/OpenSage.Tools.ReplaySketch.Maui/OpenSage.Tools.ReplaySketch.Maui.csproj"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "build",
             "command": "dotnet",
             "type": "process",

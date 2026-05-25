@@ -52,8 +52,7 @@
             "name": "ReplaySketch (MAUI)",
             "type": "maui",
             "request": "launch",
-            "preLaunchTask": "maui: Build",
-            "project": "${workspaceFolder}/src/OpenSage.Tools.ReplaySketch.Maui/OpenSage.Tools.ReplaySketch.Maui.csproj"
+            "preLaunchTask": "maui: Build"
         },
         {
             "name": "Zero Hour",

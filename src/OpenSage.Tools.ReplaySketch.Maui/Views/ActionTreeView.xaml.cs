@@ -10,7 +10,7 @@ namespace OpenSage.Tools.ReplaySketch.Maui.Views;
 /// The left palette lists available <see cref="ActionType"/> commands; tapping a palette button
 /// adds the command to the current player's action list.  Each node in the canvas can be
 /// dragged onto another node to re-parent it via an <see cref="AfterActionTiming"/> trigger.
-/// Tapping a node selects it and shows its edit controls in the detail panel below.
+/// Selecting a node shows its edit controls in the detail panel below.
 /// </summary>
 public partial class ActionTreeView : ContentView
 {
@@ -92,6 +92,24 @@ public partial class ActionTreeView : ContentView
     {
         InitializeComponent();
         BuildPalette();
+        SetupOverlayTap();
+    }
+
+    private void SetupOverlayTap()
+    {
+        var tap = new TapGestureRecognizer();
+        tap.Tapped += (_, e) =>
+        {
+            var pos = e.GetPosition(NodeOverlay);
+            if (!pos.HasValue)
+                return;
+
+            var hit = _layoutNodes.FirstOrDefault(n => n.MauiBounds.Contains(pos.Value));
+            _selectedNode = hit == _selectedNode ? null : hit;
+            TreeCanvas.InvalidateSurface();
+            BuildDetailPanel(_selectedNode);
+        };
+        NodeOverlay.GestureRecognizers.Add(tap);
     }
 
     // ── Public API ───────────────────────────────────────────────────────────
@@ -313,16 +331,6 @@ public partial class ActionTreeView : ContentView
             };
             AbsoluteLayout.SetLayoutBounds(overlay, node.MauiBounds);
 
-            // Tap → select this node
-            var tap = new TapGestureRecognizer();
-            tap.Tapped += (_, _) =>
-            {
-                _selectedNode = capturedNode == _selectedNode ? null : capturedNode;
-                TreeCanvas.InvalidateSurface();
-                BuildDetailPanel(_selectedNode);
-            };
-            overlay.GestureRecognizers.Add(tap);
-
             // Drag this canvas node (for re-parenting)
             var drag = new DragGestureRecognizer { CanDrag = true };
             drag.DragStarting += (_, e) =>
@@ -499,7 +507,7 @@ public partial class ActionTreeView : ContentView
         {
             _externalDetailPanel.Children.Add(new Label
             {
-                Text = "Tap a node to edit it",
+                Text = "Select a node to edit it",
                 TextColor = Color.FromArgb("#888888"),
                 HorizontalOptions = LayoutOptions.Center,
                 Margin = new Thickness(0, 16),

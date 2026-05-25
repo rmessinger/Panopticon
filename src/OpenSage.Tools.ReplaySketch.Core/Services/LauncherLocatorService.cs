@@ -18,24 +18,31 @@ public sealed class LauncherLocatorService
     /// </summary>
     public string? Locate()
     {
-        // Walk up from our output dir to find the src/ ancestor
-        var srcDir = FindSrcDirectory(AppContext.BaseDirectory);
-        if (srcDir == null)
+        try
+        {
+            // Walk up from our output dir to find the src/ ancestor
+            var srcDir = FindSrcDirectory(AppContext.BaseDirectory);
+            if (srcDir == null)
+            {
+                return null;
+            }
+
+            var launcherBinDir = Path.Combine(srcDir, LauncherProjectName, "bin");
+            if (!Directory.Exists(launcherBinDir))
+            {
+                return null;
+            }
+
+            var preferredConfig = DetectConfiguration();
+
+            // Try preferred config first, then fall back to any config found
+            return TryFindInBinDir(launcherBinDir, preferredConfig)
+                ?? TryFindInBinDir(launcherBinDir, config: null);
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException or IOException)
         {
             return null;
         }
-
-        var launcherBinDir = Path.Combine(srcDir, LauncherProjectName, "bin");
-        if (!Directory.Exists(launcherBinDir))
-        {
-            return null;
-        }
-
-        var preferredConfig = DetectConfiguration();
-
-        // Try preferred config first, then fall back to any config found
-        return TryFindInBinDir(launcherBinDir, preferredConfig)
-            ?? TryFindInBinDir(launcherBinDir, config: null);
     }
 
     private static string? FindSrcDirectory(string startDir)
@@ -43,11 +50,18 @@ public sealed class LauncherLocatorService
         var current = startDir;
         while (current != null)
         {
-            // Check whether the current dir is named "src" or contains the launcher project
-            var launcherProject = Path.Combine(current, LauncherProjectName);
-            if (Directory.Exists(launcherProject))
+            try
             {
-                return current;
+                // Check whether the current dir is named "src" or contains the launcher project
+                var launcherProject = Path.Combine(current, LauncherProjectName);
+                if (Directory.Exists(launcherProject))
+                {
+                    return current;
+                }
+            }
+            catch (Exception e) when (e is UnauthorizedAccessException or IOException)
+            {
+                return null;
             }
 
             current = Path.GetDirectoryName(current);
@@ -88,23 +102,48 @@ public sealed class LauncherLocatorService
             ? $"{LauncherProjectName}.exe"
             : LauncherProjectName;
 
-        var configDirs = config != null
-            ? [Path.Combine(binDir, config)]
-            : Directory.GetDirectories(binDir);
+        string[] configDirs;
+        try
+        {
+            configDirs = config != null
+                ? [Path.Combine(binDir, config)]
+                : Directory.GetDirectories(binDir);
+        }
+        catch (Exception e) when (e is UnauthorizedAccessException or IOException)
+        {
+            return null;
+        }
 
         foreach (var configDir in configDirs)
         {
-            if (!Directory.Exists(configDir))
+            string[] tfmDirs;
+            try
+            {
+                if (!Directory.Exists(configDir))
+                {
+                    continue;
+                }
+
+                tfmDirs = Directory.GetDirectories(configDir);
+            }
+            catch (Exception e) when (e is UnauthorizedAccessException or IOException)
             {
                 continue;
             }
 
-            foreach (var tfmDir in Directory.GetDirectories(configDir))
+            foreach (var tfmDir in tfmDirs)
             {
                 var candidate = Path.Combine(tfmDir, exeName);
-                if (File.Exists(candidate))
+                try
                 {
-                    return candidate;
+                    if (File.Exists(candidate))
+                    {
+                        return candidate;
+                    }
+                }
+                catch (Exception e) when (e is UnauthorizedAccessException or IOException)
+                {
+                    continue;
                 }
             }
         }
