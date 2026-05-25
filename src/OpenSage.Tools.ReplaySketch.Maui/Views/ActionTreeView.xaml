@@ -5,10 +5,10 @@
              x:Class="OpenSage.Tools.ReplaySketch.Maui.Views.ActionTreeView"
              x:Name="Root">
 
-    <Grid RowDefinitions="*,220">
+    <Grid>
 
         <!-- Tree area: palette (left) + canvas (right) -->
-        <Grid Grid.Row="0" ColumnDefinitions="104,*">
+        <Grid ColumnDefinitions="104,*">
 
             <!-- Left: action type palette -->
             <Border Grid.Column="0"
@@ -49,18 +49,6 @@
             </Grid>
 
         </Grid>
-
-        <!-- Detail panel: edit controls for the selected node -->
-        <Border Grid.Row="1"
-                Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
-                BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
-                StrokeThickness="1"
-                Padding="0">
-            <ScrollView>
-                <VerticalStackLayout x:Name="DetailPanel"
-                                      Padding="8" Spacing="4"/>
-            </ScrollView>
-        </Border>
 
     </Grid>
 </ContentView>

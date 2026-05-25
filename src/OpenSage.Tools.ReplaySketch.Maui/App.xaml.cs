@@ -12,10 +12,10 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        var window = base.CreateWindow(activationState);
-        window.Width = DefaultWidth;
-        window.Height = DefaultHeight;
-        window.Page = new NavigationPage(new MainPage());
-        return window;
+        return new Window(new NavigationPage(new MainPage()))
+        {
+            Width = DefaultWidth,
+            Height = DefaultHeight,
+        };
     }
 }

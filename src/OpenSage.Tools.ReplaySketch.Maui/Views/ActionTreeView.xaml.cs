@@ -80,6 +80,7 @@ public partial class ActionTreeView : ContentView
     private List<LayoutNode> _layoutNodes = [];
     private LayoutNode? _selectedNode;
     private SizeF _canvasLogicalSize;
+    private VerticalStackLayout? _externalDetailPanel;
 
     // Landmark labels / values shared with position controls
     private static readonly string[] LandmarkLabels =
@@ -91,10 +92,19 @@ public partial class ActionTreeView : ContentView
     {
         InitializeComponent();
         BuildPalette();
-        BuildDetailPanel(null);
     }
 
     // ── Public API ───────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Provides the external <see cref="VerticalStackLayout"/> (owned by the right panel)
+    /// that this view writes selected-node edit controls into.
+    /// </summary>
+    public void SetExternalDetailPanel(VerticalStackLayout panel)
+    {
+        _externalDetailPanel = panel;
+        BuildDetailPanel(_selectedNode);
+    }
 
     public void BindViewModel(MainViewModel vm)
     {
@@ -482,11 +492,12 @@ public partial class ActionTreeView : ContentView
 
     private void BuildDetailPanel(LayoutNode? node)
     {
-        DetailPanel.Children.Clear();
+        if (_externalDetailPanel == null) return;
+        _externalDetailPanel.Children.Clear();
 
         if (node == null)
         {
-            DetailPanel.Children.Add(new Label
+            _externalDetailPanel.Children.Add(new Label
             {
                 Text = "Tap a node to edit it",
                 TextColor = Color.FromArgb("#888888"),
@@ -499,12 +510,12 @@ public partial class ActionTreeView : ContentView
         var action = node.Action;
         var player = _vm!.SelectedPlayer;
 
-        DetailPanel.Children.Add(SectionLabel($"Editing: {action.Label}"));
+        _externalDetailPanel.Children.Add(SectionLabel($"Editing: {action.Label}"));
 
         // Type
         var typeLabels = PaletteItems.Select(p => p.Label).ToArray();
         var typeValues = PaletteItems.Select(p => p.Type).ToArray();
-        DetailPanel.Children.Add(FieldRow("Type", BuildPicker(
+        _externalDetailPanel.Children.Add(FieldRow("Type", BuildPicker(
             typeLabels,
             Math.Max(0, Array.IndexOf(typeValues, action.Type)),
             idx =>
@@ -518,19 +529,19 @@ public partial class ActionTreeView : ContentView
             })));
 
         // Label
-        DetailPanel.Children.Add(FieldRow("Label",
+        _externalDetailPanel.Children.Add(FieldRow("Label",
             BuildEntry(action.Label, v => { action.Label = v; TreeCanvas.InvalidateSurface(); })));
 
         // Position
         if (action.Position != null)
         {
-            DetailPanel.Children.Add(SectionLabel("Position"));
-            DetailPanel.Children.Add(BuildPositionControls(action));
+            _externalDetailPanel.Children.Add(SectionLabel("Position"));
+            _externalDetailPanel.Children.Add(BuildPositionControls(action));
         }
 
         // Timing
-        DetailPanel.Children.Add(SectionLabel("Timing"));
-        DetailPanel.Children.Add(BuildTimingControls(action));
+        _externalDetailPanel.Children.Add(SectionLabel("Timing"));
+        _externalDetailPanel.Children.Add(BuildTimingControls(action));
 
         // Remove button
         var removeBtn = new Button
@@ -548,7 +559,7 @@ public partial class ActionTreeView : ContentView
             _selectedNode = null;
             RefreshTree();
         };
-        DetailPanel.Children.Add(removeBtn);
+        _externalDetailPanel.Children.Add(removeBtn);
     }
 
     // ── Position controls ─────────────────────────────────────────────────────

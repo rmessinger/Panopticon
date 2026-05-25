@@ -8,9 +8,9 @@
 
     <Grid RowDefinitions="*,Auto">
 
-        <!-- Three-column work area: left=200 fixed, centre=* (largest), right=340 fixed -->
+        <!-- Three-column work area: left=200 fixed, centre=* (largest), right=300 fixed -->
         <Grid Grid.Row="0"
-              ColumnDefinitions="200,*,340"
+              ColumnDefinitions="200,*,300"
               Margin="4,0">
 
             <!-- Left: scenario / player-slot editor -->
@@ -21,20 +21,20 @@
                 <views:ScenarioView x:Name="ScenarioView"/>
             </Frame>
 
-            <!-- Centre: map preview -->
+            <!-- Centre: action tree editor (palette + node graph) -->
             <Frame Grid.Column="1"
                    BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
                    Padding="0" Margin="2" CornerRadius="4">
-                <views:MapPreviewView x:Name="MapPreviewView"/>
+                <views:ActionTreeView x:Name="ActionTreeView"/>
             </Frame>
 
-            <!-- Right: action tree editor -->
+            <!-- Right: detail panel for the selected action node -->
             <Frame Grid.Column="2"
                    BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
                    Padding="0" Margin="2" CornerRadius="4">
-                <views:ActionTreeView x:Name="ActionTreeView"/>
+                <views:ActionDetailView x:Name="ActionDetail"/>
             </Frame>
 
         </Grid>
