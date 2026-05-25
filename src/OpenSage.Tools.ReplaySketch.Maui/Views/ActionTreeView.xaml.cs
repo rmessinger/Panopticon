@@ -1,5 +1,6 @@
 ﻿using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
+using OpenSage.Tools.ReplaySketch.Profiles;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 
@@ -14,12 +15,12 @@ namespace OpenSage.Tools.ReplaySketch.Maui.Views;
 /// </summary>
 public partial class ActionTreeView : ContentView
 {
-    // ── Layout constants (device-independent units) ──────────────────────────
-    private const float NodeW = 140f;
-    private const float NodeH = 44f;
-    private const float ColGap = 16f;
-    private const float RowGap = 80f;
-    private const float CanvasPad = 20f;
+    // ── Layout constants (re-exported from ActionTreeLayoutEngine for SKiaSharp drawing) ──
+    private const float NodeW = ActionTreeLayoutEngine.NodeW;
+    private const float NodeH = ActionTreeLayoutEngine.NodeH;
+    private const float ColGap = ActionTreeLayoutEngine.ColGap;
+    private const float RowGap = ActionTreeLayoutEngine.RowGap;
+    private const float CanvasPad = ActionTreeLayoutEngine.CanvasPad;
 
     // ── Palette metadata ─────────────────────────────────────────────────────
     private static readonly (ActionType Type, string Label, string DefaultLabel)[] PaletteItems =
@@ -66,11 +67,7 @@ public partial class ActionTreeView : ContentView
         public float CenterX { get; set; }
         public float CenterY { get; set; }
 
-        // MAUI logical-unit rect (for AbsoluteLayout overlay)
-        public Rect MauiBounds =>
-            new(CenterX - NodeW / 2, CenterY - NodeH / 2, NodeW, NodeH);
-
-        // SkiaSharp rect (drawn in logical units after Scale(density) is applied)
+        // SkiaSharp rect in logical units (used for both drawing and touch hit-testing)
         public SKRect SkBounds =>
             SKRect.Create(CenterX - NodeW / 2, CenterY - NodeH / 2, NodeW, NodeH);
     }
@@ -92,24 +89,27 @@ public partial class ActionTreeView : ContentView
     {
         InitializeComponent();
         BuildPalette();
-        SetupOverlayTap();
     }
 
-    private void SetupOverlayTap()
-    {
-        var tap = new TapGestureRecognizer();
-        tap.Tapped += (_, e) =>
-        {
-            var pos = e.GetPosition(NodeOverlay);
-            if (!pos.HasValue)
-                return;
+    // ── Touch hit-testing ─────────────────────────────────────────────────────
 
-            var hit = _layoutNodes.FirstOrDefault(n => n.MauiBounds.Contains(pos.Value));
-            _selectedNode = hit == _selectedNode ? null : hit;
-            TreeCanvas.InvalidateSurface();
-            BuildDetailPanel(_selectedNode);
-        };
-        NodeOverlay.GestureRecognizers.Add(tap);
+    private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
+    {
+        if (e.ActionType != SKTouchAction.Pressed) return;
+        e.Handled = true;
+
+        // Touch coordinates are in physical pixels; convert to logical units
+        // using the same density factor applied in OnPaintSurface.
+        var density = TreeCanvas.CanvasSize.Width > 0 && TreeCanvas.Width > 0
+            ? (float)(TreeCanvas.CanvasSize.Width / TreeCanvas.Width)
+            : 1f;
+        var logX = e.Location.X / density;
+        var logY = e.Location.Y / density;
+
+        var hit = _layoutNodes.FirstOrDefault(n => n.SkBounds.Contains(logX, logY));
+        _selectedNode = hit == _selectedNode ? null : hit;
+        TreeCanvas.InvalidateSurface();
+        BuildDetailPanel(_selectedNode);
     }
 
     // ── Public API ───────────────────────────────────────────────────────────
@@ -144,7 +144,6 @@ public partial class ActionTreeView : ContentView
         if (_vm == null) return;
         _layoutNodes = ComputeLayout(_vm.SelectedPlayer.Actions);
         UpdateCanvasSize();
-        RebuildOverlay();
         TreeCanvas.InvalidateSurface();
         BuildDetailPanel(_selectedNode);
     }
@@ -189,10 +188,10 @@ public partial class ActionTreeView : ContentView
             PalettePanel.Children.Add(btn);
         }
 
-        // Fallback drop zone: palette item dropped on blank canvas → FixedTiming
+        // Drop palette items onto the canvas; parent to selected node when one is active.
         var canvasDrop = new DropGestureRecognizer { AllowDrop = true };
-        canvasDrop.Drop += (_, e) => HandleDrop(e.Data.Properties, targetNode: null);
-        CanvasDropZone.GestureRecognizers.Add(canvasDrop);
+        canvasDrop.Drop += (_, e) => HandleDrop(e.Data.Properties, _selectedNode);
+        TreeCanvas.GestureRecognizers.Add(canvasDrop);
     }
 
     private void AddFromPalette(ActionType type)
@@ -221,88 +220,23 @@ public partial class ActionTreeView : ContentView
 
     private List<LayoutNode> ComputeLayout(IReadOnlyList<ActionEntry> actions)
     {
-        if (actions.Count == 0)
+        var layouts = ActionTreeLayoutEngine.ComputeLayout(actions);
+
+        if (layouts.Count == 0)
         {
             _canvasLogicalSize = new SizeF(200, 200);
             return [];
         }
 
-        // Parent-lookup by ActionType
-        var byType = new Dictionary<ActionType, ActionEntry>();
-        foreach (var a in actions)
-            byType[a.Type] = a;
+        _canvasLogicalSize = new SizeF(
+            layouts.Max(n => n.CenterX) + NodeW / 2f + CanvasPad,
+            layouts.Max(n => n.CenterY) + NodeH / 2f + CanvasPad);
 
-        // Classify each action: root (FixedTiming/RandomTiming) or child (AfterActionTiming)
-        var parentOf = new Dictionary<ActionEntry, ActionEntry>();
-        var roots = new List<ActionEntry>();
-
-        foreach (var a in actions)
+        return layouts.Select(l => new LayoutNode(l.Action, l.Row, l.Col)
         {
-            if (a.Timing is AfterActionTiming aat && byType.TryGetValue(aat.TriggerAction, out var parent))
-                parentOf[a] = parent;
-            else
-                roots.Add(a);
-        }
-
-        // BFS to assign row depths
-        var rowOf = new Dictionary<ActionEntry, int>();
-        var queue = new Queue<ActionEntry>(roots);
-        foreach (var r in roots) rowOf[r] = 0;
-
-        while (queue.Count > 0)
-        {
-            var current = queue.Dequeue();
-            var depth = rowOf[current];
-            foreach (var a in actions)
-            {
-                if (!rowOf.ContainsKey(a) && parentOf.TryGetValue(a, out var p) && p == current)
-                {
-                    rowOf[a] = depth + 1;
-                    queue.Enqueue(a);
-                }
-            }
-        }
-
-        // Orphans (e.g., AfterActionTiming referencing a non-existent predecessor)
-        var maxAssigned = rowOf.Values.DefaultIfEmpty(0).Max();
-        foreach (var a in actions)
-        {
-            if (!rowOf.ContainsKey(a))
-                rowOf[a] = ++maxAssigned;
-        }
-
-        // Group by row, preserving original list order within each row
-        var byRow = actions
-            .GroupBy(a => rowOf[a])
-            .OrderBy(g => g.Key)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        // Compute canvas logical size
-        var numRows = byRow.Keys.Max() + 1;
-        var maxRowWidth = byRow.Values.Max(r => r.Count * NodeW + Math.Max(0, r.Count - 1) * ColGap);
-        var canvasW = maxRowWidth + 2 * CanvasPad;
-        var canvasH = numRows * NodeH + Math.Max(0, numRows - 1) * RowGap + 2 * CanvasPad;
-        _canvasLogicalSize = new SizeF(canvasW, canvasH);
-
-        // Place nodes: center each row horizontally within the canvas
-        var nodes = new List<LayoutNode>();
-        foreach (var (row, rowActions) in byRow)
-        {
-            var rowWidth = rowActions.Count * NodeW + Math.Max(0, rowActions.Count - 1) * ColGap;
-            var rowStartX = (canvasW - rowWidth) / 2f + NodeW / 2f;
-            var centerY = CanvasPad + row * (NodeH + RowGap) + NodeH / 2f;
-
-            for (var col = 0; col < rowActions.Count; col++)
-            {
-                nodes.Add(new LayoutNode(rowActions[col], row, col)
-                {
-                    CenterX = rowStartX + col * (NodeW + ColGap),
-                    CenterY = centerY,
-                });
-            }
-        }
-
-        return nodes;
+            CenterX = l.CenterX,
+            CenterY = l.CenterY,
+        }).ToList();
     }
 
     // ── Canvas size ───────────────────────────────────────────────────────────
@@ -313,66 +247,21 @@ public partial class ActionTreeView : ContentView
         TreeCanvas.HeightRequest = Math.Max(_canvasLogicalSize.Height, 200);
     }
 
-    // ── Overlay rebuild ──────────────────────────────────────────────────────
-
-    private void RebuildOverlay()
-    {
-        NodeOverlay.Children.Clear();
-
-        foreach (var node in _layoutNodes)
-        {
-            var capturedNode = node;
-            var overlay = new BoxView
-            {
-                Color = Colors.Transparent,
-                WidthRequest = NodeW,
-                HeightRequest = NodeH,
-                InputTransparent = false,
-            };
-            AbsoluteLayout.SetLayoutBounds(overlay, node.MauiBounds);
-
-            // Drag this canvas node (for re-parenting)
-            var drag = new DragGestureRecognizer { CanDrag = true };
-            drag.DragStarting += (_, e) =>
-            {
-                e.Data.Properties["action"] = "node:" + capturedNode.Action.Type.ToString();
-            };
-            overlay.GestureRecognizers.Add(drag);
-
-            // Drop onto this node (from palette or from another canvas node)
-            var drop = new DropGestureRecognizer { AllowDrop = true };
-            drop.Drop += (_, e) => HandleDrop(e.Data.Properties, capturedNode);
-            overlay.GestureRecognizers.Add(drop);
-
-            NodeOverlay.Children.Add(overlay);
-        }
-    }
-
     private void HandleDrop(IReadOnlyDictionary<string, object> properties, LayoutNode? targetNode)
     {
         if (_vm == null) return;
         if (!properties.TryGetValue("action", out var rawVal) || rawVal is not string text) return;
+        if (!text.StartsWith("palette:") || !Enum.TryParse<ActionType>(text[8..], out var paletteType)) return;
 
-        if (text.StartsWith("palette:") && Enum.TryParse<ActionType>(text[8..], out var paletteType))
-        {
-            var timing = targetNode != null
-                ? (TimingConfig)new AfterActionTiming(targetNode.Action.Type, ActionPhase.Completed)
-                : new FixedTiming(300);
+        var timing = targetNode != null
+            ? (TimingConfig)new AfterActionTiming(targetNode.Action.Type, ActionPhase.Completed)
+            : new FixedTiming(300);
 
-            var item = PaletteItems.FirstOrDefault(p => p.Type == paletteType);
-            var entry = new ActionEntry(item.DefaultLabel, paletteType, DefaultPosition(paletteType), timing);
-            _vm.SelectedPlayer.Actions.Add(entry);
-            _selectedNode = null;
-            RefreshTree();
-        }
-        else if (text.StartsWith("node:") && Enum.TryParse<ActionType>(text[5..], out var draggedType))
-        {
-            var draggedAction = _vm.SelectedPlayer.Actions.FirstOrDefault(a => a.Type == draggedType);
-            if (draggedAction == null || targetNode == null || draggedAction == targetNode.Action) return;
-
-            draggedAction.Timing = new AfterActionTiming(targetNode.Action.Type, ActionPhase.Completed);
-            RefreshTree();
-        }
+        var item = PaletteItems.FirstOrDefault(p => p.Type == paletteType);
+        var entry = new ActionEntry(item.DefaultLabel, paletteType, DefaultPosition(paletteType), timing);
+        _vm.SelectedPlayer.Actions.Add(entry);
+        _selectedNode = null;
+        RefreshTree();
     }
 
     // ── SkiaSharp painting ────────────────────────────────────────────────────
