@@ -1,6 +1,7 @@
 ﻿using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
+using OpenSage.Tools.ReplaySketch.Services;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
 
@@ -25,7 +26,7 @@ public partial class ActionTreeView : ContentView
     // ── Palette metadata ─────────────────────────────────────────────────────
     private static readonly (ActionType Type, string Label, string DefaultLabel)[] PaletteItems =
     [
-        (ActionType.BuildBarracks,    "Build Barracks",    "BuildBarracks"),
+        (ActionType.Construct,        "Construct",         "Construct"),
         (ActionType.GatherResources,  "Gather Resources",  "GatherResources"),
         (ActionType.RecruitBasicUnit, "Recruit Unit",      "RecruitBasicUnit"),
         (ActionType.AttackEnemyBase,  "Attack Enemy Base", "AttackEnemyBase"),
@@ -34,10 +35,10 @@ public partial class ActionTreeView : ContentView
     // ── Default timing for palette-added actions ─────────────────────────────
     private static TimingConfig DefaultTiming(ActionType type) => type switch
     {
-        ActionType.BuildBarracks => new FixedTiming(90),
-        ActionType.GatherResources => new AfterActionTiming(ActionType.BuildBarracks, ActionPhase.Dispatched),
-        ActionType.RecruitBasicUnit => new AfterActionTiming(ActionType.BuildBarracks, ActionPhase.Completed),
-        ActionType.AttackEnemyBase => new AfterActionTiming(ActionType.RecruitBasicUnit, ActionPhase.Completed),
+        ActionType.Construct        => new FixedTiming(90),
+        ActionType.GatherResources  => new AfterActionTiming(ActionType.Construct, ActionPhase.Dispatched),
+        ActionType.RecruitBasicUnit => new AfterActionTiming(ActionType.Construct, ActionPhase.Completed),
+        ActionType.AttackEnemyBase  => new AfterActionTiming(ActionType.RecruitBasicUnit, ActionPhase.Completed),
         _ => new FixedTiming(300),
     };
 
@@ -177,21 +178,8 @@ public partial class ActionTreeView : ContentView
             };
             btn.Clicked += (_, _) => AddFromPalette(type);
 
-            // MAUI drag-and-drop: palette button → canvas
-            var drag = new DragGestureRecognizer { CanDrag = true };
-            drag.DragStarting += (_, e) =>
-            {
-                e.Data.Properties["action"] = "palette:" + type.ToString();
-            };
-            btn.GestureRecognizers.Add(drag);
-
             PalettePanel.Children.Add(btn);
         }
-
-        // Drop palette items onto the canvas; parent to selected node when one is active.
-        var canvasDrop = new DropGestureRecognizer { AllowDrop = true };
-        canvasDrop.Drop += (_, e) => HandleDrop(e.Data.Properties, _selectedNode);
-        TreeCanvas.GestureRecognizers.Add(canvasDrop);
     }
 
     private void AddFromPalette(ActionType type)
@@ -210,7 +198,15 @@ public partial class ActionTreeView : ContentView
         }
 
         var item = PaletteItems.FirstOrDefault(p => p.Type == type);
-        var entry = new ActionEntry(item.DefaultLabel, type, DefaultPosition(type), timing);
+        var entry = new ActionEntry(item.DefaultLabel, type, DefaultPosition(type), timing,
+            buildingDefinitionName: type == ActionType.Construct
+                ? BuildingCatalog.ForFaction(_vm.SelectedPlayer.FactionIndex)
+                    .FirstOrDefault(b => b.DisplayName == "Barracks")?.DefinitionName
+                    ?? KnownDefinitions.UsaBarracksName
+                : null,
+            unitDefinitionName: type == ActionType.RecruitBasicUnit
+                ? UnitCatalog.ForFaction(_vm.SelectedPlayer.FactionIndex).FirstOrDefault()?.DefinitionName
+                : null);
         _vm.SelectedPlayer.Actions.Add(entry);
         _selectedNode = null;
         RefreshTree();
@@ -247,23 +243,6 @@ public partial class ActionTreeView : ContentView
         TreeCanvas.HeightRequest = Math.Max(_canvasLogicalSize.Height, 200);
     }
 
-    private void HandleDrop(IReadOnlyDictionary<string, object> properties, LayoutNode? targetNode)
-    {
-        if (_vm == null) return;
-        if (!properties.TryGetValue("action", out var rawVal) || rawVal is not string text) return;
-        if (!text.StartsWith("palette:") || !Enum.TryParse<ActionType>(text[8..], out var paletteType)) return;
-
-        var timing = targetNode != null
-            ? (TimingConfig)new AfterActionTiming(targetNode.Action.Type, ActionPhase.Completed)
-            : new FixedTiming(300);
-
-        var item = PaletteItems.FirstOrDefault(p => p.Type == paletteType);
-        var entry = new ActionEntry(item.DefaultLabel, paletteType, DefaultPosition(paletteType), timing);
-        _vm.SelectedPlayer.Actions.Add(entry);
-        _selectedNode = null;
-        RefreshTree();
-    }
-
     // ── SkiaSharp painting ────────────────────────────────────────────────────
 
     private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -292,7 +271,9 @@ public partial class ActionTreeView : ContentView
 
     private void DrawEdges(SKCanvas canvas)
     {
-        var byType = _layoutNodes.ToDictionary(n => n.Action.Type);
+        var byType = _layoutNodes
+            .GroupBy(n => n.Action.Type)
+            .ToDictionary(g => g.Key, g => g.First());
 
         foreach (var child in _layoutNodes)
         {
@@ -428,6 +409,22 @@ public partial class ActionTreeView : ContentView
         // Label
         _externalDetailPanel.Children.Add(FieldRow("Label",
             BuildEntry(action.Label, v => { action.Label = v; TreeCanvas.InvalidateSurface(); })));
+
+        // Building definition name (Construct only)
+        if (action.Type == ActionType.Construct)
+        {
+            var factionIndex = _vm!.SelectedPlayer.FactionIndex;
+            _externalDetailPanel.Children.Add(FieldRow("Building",
+                BuildBuildingPicker(action, factionIndex, () => TreeCanvas.InvalidateSurface())));
+        }
+
+        // Unit definition name (RecruitBasicUnit only)
+        if (action.Type == ActionType.RecruitBasicUnit)
+        {
+            var factionIndex = _vm!.SelectedPlayer.FactionIndex;
+            _externalDetailPanel.Children.Add(FieldRow("Unit",
+                BuildUnitPicker(action, factionIndex, () => TreeCanvas.InvalidateSurface())));
+        }
 
         // Position
         if (action.Position != null)
@@ -591,7 +588,7 @@ public partial class ActionTreeView : ContentView
             var other = _vm!.SelectedPlayer.Actions.FirstOrDefault(a => a != action);
             action.Timing = other != null
                 ? new AfterActionTiming(other.Type, ActionPhase.Completed)
-                : new AfterActionTiming(ActionType.BuildBarracks, ActionPhase.Completed);
+                : new AfterActionTiming(ActionType.Construct, ActionPhase.Completed);
             RefreshTree();
         };
 
@@ -680,6 +677,36 @@ public partial class ActionTreeView : ContentView
         grid.Children.Add(lbl);
         grid.Children.Add(control);
         return grid;
+    }
+
+    private static Picker BuildBuildingPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
+    {
+        var options = BuildingCatalog.ForFaction(factionIndex);
+        var displayNames = options.Select(b => b.DisplayName).ToArray();
+        var currentIdx = options
+            .Select((b, i) => (b, i))
+            .FirstOrDefault(t => t.b.DefinitionName == action.BuildingDefinitionName).i;
+
+        return BuildPicker(displayNames, currentIdx, idx =>
+        {
+            action.BuildingDefinitionName = options[idx].DefinitionName;
+            onChanged?.Invoke();
+        });
+    }
+
+    private static Picker BuildUnitPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
+    {
+        var options = UnitCatalog.ForFaction(factionIndex);
+        var displayNames = options.Select(u => u.DisplayName).ToArray();
+        var currentIdx = options
+            .Select((u, i) => (u, i))
+            .FirstOrDefault(t => t.u.DefinitionName == action.UnitDefinitionName).i;
+
+        return BuildPicker(displayNames, currentIdx, idx =>
+        {
+            action.UnitDefinitionName = options[idx].DefinitionName;
+            onChanged?.Invoke();
+        });
     }
 
     private static Picker BuildPicker(string[] items, int selectedIndex, Action<int> onChange)

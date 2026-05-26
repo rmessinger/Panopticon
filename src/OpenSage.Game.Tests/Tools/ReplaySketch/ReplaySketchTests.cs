@@ -15,7 +15,7 @@ public class ReplaySketchTests
         var usa = scenario.Players[0];
 
         Assert.Equal(4, usa.Actions.Count);
-        Assert.Equal(ActionType.BuildBarracks, usa.Actions[0].Type);
+        Assert.Equal(ActionType.Construct, usa.Actions[0].Type);
         Assert.Equal(ActionType.GatherResources, usa.Actions[1].Type);
         Assert.Equal(ActionType.RecruitBasicUnit, usa.Actions[2].Type);
         Assert.Equal(ActionType.AttackEnemyBase, usa.Actions[3].Type);
@@ -28,14 +28,14 @@ public class ReplaySketchTests
         var gla = scenario.Players[1];
 
         Assert.Equal(4, gla.Actions.Count);
-        Assert.Equal(ActionType.BuildBarracks, gla.Actions[0].Type);
+        Assert.Equal(ActionType.Construct, gla.Actions[0].Type);
         Assert.Equal(ActionType.GatherResources, gla.Actions[1].Type);
         Assert.Equal(ActionType.RecruitBasicUnit, gla.Actions[2].Type);
         Assert.Equal(ActionType.AttackEnemyBase, gla.Actions[3].Type);
     }
 
     [Fact]
-    public void DefaultScenario_GatherResources_TriggersOnBuildBarracksDispatched()
+    public void DefaultScenario_GatherResources_TriggersOnConstructDispatched()
     {
         var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
 
@@ -45,13 +45,13 @@ public class ReplaySketchTests
             Assert.Equal(ActionType.GatherResources, gather.Type);
 
             var timing = Assert.IsType<AfterActionTiming>(gather.Timing);
-            Assert.Equal(ActionType.BuildBarracks, timing.TriggerAction);
+            Assert.Equal(ActionType.Construct, timing.TriggerAction);
             Assert.Equal(ActionPhase.Dispatched, timing.TriggerPhase);
         }
     }
 
     [Fact]
-    public void DefaultScenario_RecruitBasicUnit_TriggersOnBuildBarracksCompleted()
+    public void DefaultScenario_RecruitBasicUnit_TriggersOnConstructCompleted()
     {
         var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
 
@@ -61,9 +61,23 @@ public class ReplaySketchTests
             Assert.Equal(ActionType.RecruitBasicUnit, recruit.Type);
 
             var timing = Assert.IsType<AfterActionTiming>(recruit.Timing);
-            Assert.Equal(ActionType.BuildBarracks, timing.TriggerAction);
+            Assert.Equal(ActionType.Construct, timing.TriggerAction);
             Assert.Equal(ActionPhase.Completed, timing.TriggerPhase);
         }
+    }
+
+    [Fact]
+    public void DefaultScenario_RecruitBasicUnit_HasUnitDefinitionName()
+    {
+        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+
+        var usaRecruit = scenario.Players[0].Actions[2];
+        Assert.Equal(ActionType.RecruitBasicUnit, usaRecruit.Type);
+        Assert.Equal("AmericaInfantryRanger", usaRecruit.UnitDefinitionName);
+
+        var glaRecruit = scenario.Players[1].Actions[2];
+        Assert.Equal(ActionType.RecruitBasicUnit, glaRecruit.Type);
+        Assert.Equal("GLAInfantryRebel", glaRecruit.UnitDefinitionName);
     }
 
     [Fact]
@@ -137,7 +151,7 @@ public class ActionTreeLayoutEngineTests
     [Fact]
     public void SingleRootAction_IsInRow0()
     {
-        var action = MakeFixed(ActionType.BuildBarracks);
+        var action = MakeFixed(ActionType.Construct);
         var result = ActionTreeLayoutEngine.ComputeLayout([action]);
 
         Assert.Single(result);
@@ -147,8 +161,8 @@ public class ActionTreeLayoutEngineTests
     [Fact]
     public void ChildAction_IsInRowBelowParent()
     {
-        var parent = MakeFixed(ActionType.BuildBarracks);
-        var child = MakeAfter(ActionType.GatherResources, ActionType.BuildBarracks);
+        var parent = MakeFixed(ActionType.Construct);
+        var child = MakeAfter(ActionType.GatherResources, ActionType.Construct);
         var result = ActionTreeLayoutEngine.ComputeLayout([parent, child]);
 
         var parentNode = result.Single(n => n.Action == parent);
@@ -161,8 +175,8 @@ public class ActionTreeLayoutEngineTests
     [Fact]
     public void ChainOfThree_HasThreeDistinctRows()
     {
-        var a = MakeFixed(ActionType.BuildBarracks);
-        var b = MakeAfter(ActionType.GatherResources, ActionType.BuildBarracks);
+        var a = MakeFixed(ActionType.Construct);
+        var b = MakeAfter(ActionType.GatherResources, ActionType.Construct);
         var c = MakeAfter(ActionType.RecruitBasicUnit, ActionType.GatherResources);
 
         var result = ActionTreeLayoutEngine.ComputeLayout([a, b, c]);
@@ -181,12 +195,12 @@ public class ActionTreeLayoutEngineTests
     }
 
     [Fact]
-    public void DefaultScenarioLayout_BuildBarracks_IsRoot()
+    public void DefaultScenarioLayout_Construct_IsRoot()
     {
         var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
         var result = ActionTreeLayoutEngine.ComputeLayout(scenario.Players[0].Actions);
 
-        var barracks = result.Single(n => n.Action.Type == ActionType.BuildBarracks);
+        var barracks = result.Single(n => n.Action.Type == ActionType.Construct);
         Assert.Equal(0, barracks.Row);
     }
 
@@ -208,7 +222,7 @@ public class ActionTreeLayoutEngineTests
     public void HitTest_NodeEdgePoints_AreInside()
     {
         var node = ActionTreeLayoutEngine.ComputeLayout(
-            [MakeFixed(ActionType.BuildBarracks)])[0];
+            [MakeFixed(ActionType.Construct)])[0];
 
         var hw = ActionTreeLayoutEngine.NodeW / 2f - 1f;
         var hh = ActionTreeLayoutEngine.NodeH / 2f - 1f;
@@ -223,7 +237,7 @@ public class ActionTreeLayoutEngineTests
     public void HitTest_PointOutsideNode_ReturnsFalse()
     {
         var node = ActionTreeLayoutEngine.ComputeLayout(
-            [MakeFixed(ActionType.BuildBarracks)])[0];
+            [MakeFixed(ActionType.Construct)])[0];
 
         Assert.False(ActionTreeLayoutEngine.HitTest(node, node.CenterX - ActionTreeLayoutEngine.NodeW, node.CenterY));
         Assert.False(ActionTreeLayoutEngine.HitTest(node, node.CenterX, node.CenterY - ActionTreeLayoutEngine.NodeH));
@@ -232,7 +246,7 @@ public class ActionTreeLayoutEngineTests
     [Fact]
     public void AdjacentNodes_DoNotOverlapHitBounds()
     {
-        var a = MakeFixed(ActionType.BuildBarracks);
+        var a = MakeFixed(ActionType.Construct);
         var b = MakeFixed(ActionType.AttackEnemyBase);
         var result = ActionTreeLayoutEngine.ComputeLayout([a, b]);
 
@@ -248,7 +262,7 @@ public class ActionTreeLayoutEngineTests
     public void ToggleSelection_NullCurrent_SelectsClicked()
     {
         var node = ActionTreeLayoutEngine.ComputeLayout(
-            [MakeFixed(ActionType.BuildBarracks)])[0];
+            [MakeFixed(ActionType.Construct)])[0];
 
         var result = ActionTreeLayoutEngine.ToggleSelection(current: null, clicked: node);
         Assert.Equal(node, result);
@@ -258,7 +272,7 @@ public class ActionTreeLayoutEngineTests
     public void ToggleSelection_SameNode_Deselects()
     {
         var node = ActionTreeLayoutEngine.ComputeLayout(
-            [MakeFixed(ActionType.BuildBarracks)])[0];
+            [MakeFixed(ActionType.Construct)])[0];
 
         var result = ActionTreeLayoutEngine.ToggleSelection(current: node, clicked: node);
         Assert.Null(result);
@@ -268,7 +282,7 @@ public class ActionTreeLayoutEngineTests
     public void ToggleSelection_DifferentNode_SelectsNew()
     {
         var nodes = ActionTreeLayoutEngine.ComputeLayout(
-            [MakeFixed(ActionType.BuildBarracks), MakeFixed(ActionType.AttackEnemyBase)]);
+            [MakeFixed(ActionType.Construct), MakeFixed(ActionType.AttackEnemyBase)]);
 
         var result = ActionTreeLayoutEngine.ToggleSelection(current: nodes[0], clicked: nodes[1]);
         Assert.Equal(nodes[1], result);

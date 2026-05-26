@@ -5,7 +5,6 @@ using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Model;
-
 namespace OpenSage.Tools.ReplaySketch.Services;
 
 /// <summary>
@@ -44,7 +43,7 @@ public sealed class ReplayActionMonitor : IDisposable
     {
         var actionType = e.Order.OrderType switch
         {
-            OrderType.BuildObject => ActionType.BuildBarracks,
+            OrderType.BuildObject => ActionType.Construct,
             OrderType.GatherDumpSupplies => ActionType.GatherResources,
             OrderType.CreateUnit => ActionType.RecruitBasicUnit,
             OrderType.ForceAttackGround => ActionType.AttackEnemyBase,
@@ -67,11 +66,8 @@ public sealed class ReplayActionMonitor : IDisposable
 
     private void OnObjectCreated(object? sender, GameObjectCreatedEventArgs e)
     {
-        var name = e.GameObject.Definition.Name;
-        if (name != KnownDefinitions.UsaRangerName && name != KnownDefinitions.GlaRebelName)
-        {
+        if (!UnitCatalog.ContainsDefinition(e.GameObject.Definition.Name))
             return;
-        }
 
         ActionCompleted?.Invoke(this,
             new ReplayActionEventArgs(ActionType.RecruitBasicUnit, e.GameObject.Owner));
@@ -88,14 +84,8 @@ public sealed class ReplayActionMonitor : IDisposable
 
     private void OnConstructionCompleted(object? sender, GameObjectConstructionCompletedEventArgs e)
     {
-        var name = e.GameObject.Definition.Name;
-        if (name != KnownDefinitions.UsaBarracksName && name != KnownDefinitions.GlaBarracksName)
-        {
-            return;
-        }
-
         ActionCompleted?.Invoke(this,
-            new ReplayActionEventArgs(ActionType.BuildBarracks, e.GameObject.Owner));
+            new ReplayActionEventArgs(ActionType.Construct, e.GameObject.Owner));
     }
 
     public void Dispose()

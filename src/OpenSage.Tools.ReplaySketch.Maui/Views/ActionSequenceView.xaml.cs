@@ -12,9 +12,9 @@ namespace OpenSage.Tools.ReplaySketch.Maui.Views;
 public partial class ActionSequenceView : ContentView
 {
     private static readonly string[] ActionTypeLabels =
-        ["Build Barracks", "Recruit Basic Unit", "Attack Enemy Base"];
+        ["Construct", "Recruit Basic Unit", "Attack Enemy Base"];
     private static readonly ActionType[] ActionTypeValues =
-        [ActionType.BuildBarracks, ActionType.RecruitBasicUnit, ActionType.AttackEnemyBase];
+        [ActionType.Construct, ActionType.RecruitBasicUnit, ActionType.AttackEnemyBase];
 
     private static readonly string[] LandmarkLabels =
         ["Own Base", "Enemy Base", "Map Center"];
@@ -87,8 +87,32 @@ public partial class ActionSequenceView : ContentView
                     action.Position = null;
                 else if (action.Position == null)
                     action.Position = new LandmarkRelativePosition(LandmarkType.OwnBase, 2f, new FixedAngle(45f));
+                if (newType == ActionType.Construct)
+                    action.BuildingDefinitionName ??= BuildingCatalog.ForFaction(player.FactionIndex)
+                        .FirstOrDefault(b => b.DisplayName == "Barracks")?.DefinitionName
+                        ?? BuildingCatalog.ForFaction(player.FactionIndex).FirstOrDefault()?.DefinitionName;
+                else
+                    action.BuildingDefinitionName = null;
+                if (newType == ActionType.RecruitBasicUnit)
+                    action.UnitDefinitionName ??= UnitCatalog.ForFaction(player.FactionIndex).FirstOrDefault()?.DefinitionName;
+                else
+                    action.UnitDefinitionName = null;
                 Refresh();
             })));
+
+        // ── Building definition name (Construct only) ──────────────────────
+        if (action.Type == ActionType.Construct)
+        {
+            content.Children.Add(FieldRow("Building",
+                BuildBuildingPicker(action, player.FactionIndex, Refresh)));
+        }
+
+        // ── Unit definition name (RecruitBasicUnit only) ───────────────────
+        if (action.Type == ActionType.RecruitBasicUnit)
+        {
+            content.Children.Add(FieldRow("Unit",
+                BuildUnitPicker(action, player.FactionIndex, Refresh)));
+        }
 
         // ── Label ──────────────────────────────────────────────────────────
         content.Children.Add(FieldRow("Label", BuildEntry(action.Label, v => action.Label = v)));
@@ -296,6 +320,36 @@ public partial class ActionSequenceView : ContentView
         grid.Children.Add(lbl);
         grid.Children.Add(control);
         return grid;
+    }
+
+    private static Picker BuildBuildingPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
+    {
+        var options = BuildingCatalog.ForFaction(factionIndex);
+        var displayNames = options.Select(b => b.DisplayName).ToArray();
+        var currentIdx = options
+            .Select((b, i) => (b, i))
+            .FirstOrDefault(t => t.b.DefinitionName == action.BuildingDefinitionName).i;
+
+        return BuildPicker(displayNames, currentIdx, idx =>
+        {
+            action.BuildingDefinitionName = options[idx].DefinitionName;
+            onChanged?.Invoke();
+        });
+    }
+
+    private static Picker BuildUnitPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
+    {
+        var options = UnitCatalog.ForFaction(factionIndex);
+        var displayNames = options.Select(u => u.DisplayName).ToArray();
+        var currentIdx = options
+            .Select((u, i) => (u, i))
+            .FirstOrDefault(t => t.u.DefinitionName == action.UnitDefinitionName).i;
+
+        return BuildPicker(displayNames, currentIdx, idx =>
+        {
+            action.UnitDefinitionName = options[idx].DefinitionName;
+            onChanged?.Invoke();
+        });
     }
 
     private static Picker BuildPicker(string[] items, int selectedIndex, Action<int> onChange)

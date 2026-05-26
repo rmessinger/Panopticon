@@ -2,7 +2,7 @@
 
 public enum ActionType
 {
-    BuildBarracks,
+    Construct,
     GatherResources,
     RecruitBasicUnit,
     AttackEnemyBase,

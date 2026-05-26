@@ -22,7 +22,7 @@
 //     Does NOT write this action to the pre-baked replay.  Instead the test harness
 //     injects it at runtime when the specified triggerAction's ActionCompleted event
 //     fires (optionally delayed by extraFrames logic frames).
-//     { "kind": "afterActionCompleted", "triggerAction": "BuildBarracks", "extraFrames": 0 }
+//     { "kind": "afterActionCompleted", "triggerAction": "Construct", "extraFrames": 0 }
 //
 // ─── POSITION KINDS ──────────────────────────────────────────────────────────
 //
@@ -52,7 +52,8 @@
 //
 // ─── ACTION TYPES ────────────────────────────────────────────────────────────
 //
-//   "BuildBarracks"    — issues a build order for the faction's barracks
+//   "Construct"        — issues a build order for the specified building definition
+//                        (set via "buildingDefinitionName", e.g. "AmericaBarracks")
 //                        at the given position near the Command Center
 //   "GatherResources"  — sends the starting supply truck to the nearest supply node
 //                        (no position required)
@@ -89,7 +90,8 @@
       "actions": [
         {
           "label": "Build Barracks",
-          "type": "BuildBarracks",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaBarracks",
           // Issues the build order at frame 90 (3 s at 30 fps) — enough time for the
           // game to initialise without needlessly delaying the scenario.
           "timing": { "kind": "fixed", "frames": 90 },
@@ -103,20 +105,21 @@
         {
           "label": "Gather Resources",
           "type": "GatherResources",
-          // Deferred: fires as soon as the BuildBarracks order is dispatched (i.e. construction
+          // Deferred: fires as soon as the Construct order is dispatched (i.e. construction
           // starts), so the supply truck begins collecting resources immediately rather than
           // waiting for the barracks to finish.
-          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Dispatched", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Dispatched", "extraFrames": 0 },
           "position": null
         },
         {
           "label": "Recruit Ranger",
           "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaInfantryRanger",
           // Deferred: fires only after the barracks finishes construction, preventing the
           // recruit order from arriving while the building is still being built.
           // Queues 5 Rangers (see ReplayExporter) — each unit that exits will re-trigger
           // AttackEnemyBase so all units are sent to attack together.
-          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Completed", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": null
         },
         {
@@ -143,7 +146,8 @@
       "actions": [
         {
           "label": "Build Barracks",
-          "type": "BuildBarracks",
+          "type": "Construct",
+          "buildingDefinitionName": "GLABarracks",
           "timing": { "kind": "fixed", "frames": 90 },
           "position": {
             "kind": "landmarkRelative",
@@ -155,19 +159,20 @@
         {
           "label": "Gather Resources",
           "type": "GatherResources",
-          // Deferred: fires as soon as the BuildBarracks order is dispatched (i.e. construction
+          // Deferred: fires as soon as the Construct order is dispatched (i.e. construction
           // starts), so the supply truck begins collecting resources immediately rather than
           // waiting for the barracks to finish.
-          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Dispatched", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Dispatched", "extraFrames": 0 },
           "position": null
         },
         {
           "label": "Recruit Rebel",
           "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAInfantryRebel",
           // Deferred: fires only after the barracks finishes construction.
           // Queues 5 Rebels (see ReplayExporter) — each unit that exits will re-trigger
           // AttackEnemyBase so all units are sent to attack together.
-          "timing": { "kind": "afterAction", "triggerAction": "BuildBarracks", "triggerPhase": "Completed", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": null
         },
         {

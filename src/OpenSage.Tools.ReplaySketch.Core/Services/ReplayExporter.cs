@@ -68,7 +68,7 @@ public static class ReplayExporter
                 {
                     // Deferred: build the orders now (so positions are resolved) but don't
                     // place them in the replay file — the test harness injects them at runtime.
-                    var actionOrders = BuildOrders(ownerIdx + 2, action.Type, worldPos, player.FactionIndex)
+                    var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex)
                         .ToList();
                     deferred.Add(new DeferredAction(ownerIdx + 2, aat.TriggerAction, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
                 }
@@ -76,7 +76,7 @@ public static class ReplayExporter
                 {
                     cumulativeFrame += action.Timing.Resolve(rng);
 
-                    var actionOrders = BuildOrders(ownerIdx + 2, action.Type, worldPos, player.FactionIndex);
+                    var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex);
                     foreach (var order in actionOrders)
                     {
                         orders.Add((cumulativeFrame, order));
@@ -186,15 +186,17 @@ public static class ReplayExporter
     }
 
     private static IEnumerable<Order> BuildOrders(
-        int playerIndex, ActionType actionType, Vector3 worldPos, int factionIndex)
+        int playerIndex, ActionEntry action, Vector3 worldPos, int factionIndex)
     {
         bool isGla = factionIndex == 4;
 
-        switch (actionType)
+        switch (action.Type)
         {
-            case ActionType.BuildBarracks:
+            case ActionType.Construct:
                 {
-                    var defId = isGla ? KnownDefinitions.GlaBarracks : KnownDefinitions.UsaBarracks;
+                    var defName = action.BuildingDefinitionName
+                        ?? (isGla ? KnownDefinitions.GlaBarracksName : KnownDefinitions.UsaBarracksName);
+                    var defId = (int)AssetHash.GetHash(defName);
                     yield return Order.CreateBuildObject(playerIndex, defId, worldPos, 0f);
                     break;
                 }
@@ -209,7 +211,9 @@ public static class ReplayExporter
 
             case ActionType.RecruitBasicUnit:
                 {
-                    var unitDefId = isGla ? KnownDefinitions.GlaRebel : KnownDefinitions.UsaRanger;
+                    var unitName = action.UnitDefinitionName
+                        ?? (isGla ? KnownDefinitions.GlaRebelName : KnownDefinitions.UsaRangerName);
+                    var unitDefId = (int)AssetHash.GetHash(unitName);
                     // Clear the selection before recruiting so the OrderProcessor falls back to
                     // finding the correct producer building (Barracks) via its CommandSet, rather
                     // than routing the order to whatever was previously selected.

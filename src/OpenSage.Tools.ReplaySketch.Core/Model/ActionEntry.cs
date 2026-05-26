@@ -8,6 +8,20 @@ public sealed class ActionEntry
     public ActionType Type { get; set; }
 
     /// <summary>
+    /// Object definition name for <see cref="ActionType.Construct"/> actions
+    /// (e.g. <c>"AmericaBarracks"</c>, <c>"GLABarracks"</c>).
+    /// Null for all other action types.
+    /// </summary>
+    public string? BuildingDefinitionName { get; set; }
+
+    /// <summary>
+    /// Object definition name for <see cref="ActionType.RecruitBasicUnit"/> actions
+    /// (e.g. <c>"AmericaInfantryRanger"</c>, <c>"GLAInfantryRebel"</c>).
+    /// Null for all other action types.
+    /// </summary>
+    public string? UnitDefinitionName { get; set; }
+
+    /// <summary>
     /// Null for actions that do not target a map position (e.g. <see cref="ActionType.RecruitBasicUnit"/>).
     /// </summary>
     public PositionSpec? Position { get; set; }
@@ -15,11 +29,14 @@ public sealed class ActionEntry
     public TimingConfig Timing { get; set; }
 
     [JsonConstructor]
-    public ActionEntry(string label, ActionType type, PositionSpec? position, TimingConfig timing)
+    public ActionEntry(string label, ActionType type, PositionSpec? position, TimingConfig timing,
+        string? buildingDefinitionName = null, string? unitDefinitionName = null)
     {
         Label = label;
         Type = type;
         Position = position;
         Timing = timing;
+        BuildingDefinitionName = buildingDefinitionName;
+        UnitDefinitionName = unitDefinitionName;
     }
 }
