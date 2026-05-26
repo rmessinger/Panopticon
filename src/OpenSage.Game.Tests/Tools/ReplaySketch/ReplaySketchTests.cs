@@ -289,3 +289,102 @@ public class ActionTreeLayoutEngineTests
     }
 }
 
+/// <summary>
+/// Tests for <see cref="PlayerSlotConfig.MoveAction"/> — the pure model operation that
+/// backs the drag-and-drop reorder gesture in the ActionSequenceView.
+/// </summary>
+public class ActionSequenceDragTests
+{
+    private static ActionEntry MakeAction(string label, ActionType type) =>
+        new(label, type, null, new FixedTiming(90));
+
+    private static PlayerSlotConfig MakePlayer(params string[] labels)
+    {
+        var player = new PlayerSlotConfig();
+        foreach (var label in labels)
+            player.Actions.Add(MakeAction(label, ActionType.Construct));
+        return player;
+    }
+
+    [Fact]
+    public void MoveAction_ForwardOneStep_CorrectOrder()
+    {
+        var player = MakePlayer("A", "B", "C");
+        player.MoveAction(0, 1);
+        Assert.Equal(["B", "A", "C"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_ForwardToEnd_CorrectOrder()
+    {
+        var player = MakePlayer("A", "B", "C");
+        player.MoveAction(0, 2);
+        Assert.Equal(["B", "C", "A"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_BackwardOneStep_CorrectOrder()
+    {
+        var player = MakePlayer("A", "B", "C");
+        player.MoveAction(2, 1);
+        Assert.Equal(["A", "C", "B"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_BackwardToStart_CorrectOrder()
+    {
+        var player = MakePlayer("A", "B", "C");
+        player.MoveAction(2, 0);
+        Assert.Equal(["C", "A", "B"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_SameIndex_NoChange()
+    {
+        var player = MakePlayer("A", "B", "C");
+        player.MoveAction(1, 1);
+        Assert.Equal(["A", "B", "C"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_OutOfRangeFrom_Ignored()
+    {
+        var player = MakePlayer("A", "B");
+        player.MoveAction(-1, 0);
+        player.MoveAction(5, 0);
+        Assert.Equal(["A", "B"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_ToIndexClampedToEnd_MovesToLast()
+    {
+        var player = MakePlayer("A", "B", "C");
+        player.MoveAction(0, 99);
+        Assert.Equal(["B", "C", "A"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_ToIndexClampedToStart_MovesToFirst()
+    {
+        var player = MakePlayer("A", "B", "C");
+        player.MoveAction(2, -99);
+        Assert.Equal(["C", "A", "B"], player.Actions.Select(a => a.Label));
+    }
+
+    [Fact]
+    public void MoveAction_PreservesActionIdentity()
+    {
+        // The same ActionEntry instance should survive a move, not be replaced.
+        var player = new PlayerSlotConfig();
+        var a0 = MakeAction("A", ActionType.Construct);
+        var a1 = MakeAction("B", ActionType.GatherResources);
+        var a2 = MakeAction("C", ActionType.RecruitBasicUnit);
+        player.Actions.AddRange([a0, a1, a2]);
+
+        player.MoveAction(0, 2);
+
+        Assert.Same(a1, player.Actions[0]);
+        Assert.Same(a2, player.Actions[1]);
+        Assert.Same(a0, player.Actions[2]);
+    }
+}

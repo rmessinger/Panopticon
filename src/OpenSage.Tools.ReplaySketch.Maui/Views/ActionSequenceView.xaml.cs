@@ -22,6 +22,9 @@ public partial class ActionSequenceView : ContentView
         [LandmarkType.OwnBase, LandmarkType.EnemyBase, LandmarkType.MapCenter];
 
     private MainViewModel? _vm;
+    private int _dragFromIndex = -1;
+    private double _lastDragTotalY;
+    private const double CardHeightStep = 100.0; // px per position step
 
     public ActionSequenceView()
     {
@@ -63,7 +66,7 @@ public partial class ActionSequenceView : ContentView
 
     private View BuildActionCard(ActionEntry action, int actionIdx, PlayerSlotConfig player)
     {
-        // Outer card frame
+        // Outer card frame — highlighted while being dragged
         var card = new Border
         {
             Stroke = Color.FromArgb("#555"),
@@ -73,6 +76,46 @@ public partial class ActionSequenceView : ContentView
         };
 
         var content = new VerticalStackLayout { Spacing = 4 };
+
+        // ── Drag handle ────────────────────────────────────────────────────
+        var handle = new Label
+        {
+            Text = "⠿",
+            TextColor = Color.FromArgb("#888"),
+            FontSize = 16,
+            HorizontalOptions = LayoutOptions.Start,
+            Margin = new Thickness(0, 0, 0, 2),
+        };
+
+        var pan = new PanGestureRecognizer();
+        pan.PanUpdated += (_, e) =>
+        {
+            switch (e.StatusType)
+            {
+                case GestureStatus.Started:
+                    _dragFromIndex = actionIdx;
+                    _lastDragTotalY = 0;
+                    card.Stroke = Color.FromArgb("#569CD6");
+                    break;
+
+                case GestureStatus.Running:
+                    _lastDragTotalY = e.TotalY;
+                    break;
+
+                case GestureStatus.Completed:
+                    CommitDrag(player);
+                    card.Stroke = Color.FromArgb("#555");
+                    break;
+
+                case GestureStatus.Canceled:
+                    _dragFromIndex = -1;
+                    _lastDragTotalY = 0;
+                    card.Stroke = Color.FromArgb("#555");
+                    break;
+            }
+        };
+        handle.GestureRecognizers.Add(pan);
+        content.Children.Add(handle);
 
         // ── Action type ────────────────────────────────────────────────────
         content.Children.Add(FieldRow("Action", BuildPicker(
@@ -130,6 +173,24 @@ public partial class ActionSequenceView : ContentView
 
         card.Content = content;
         return card;
+    }
+
+    private void CommitDrag(PlayerSlotConfig player)
+    {
+        if (_dragFromIndex < 0)
+            return;
+
+        var steps = (int)Math.Round(_lastDragTotalY / CardHeightStep);
+        var toIndex = Math.Clamp(_dragFromIndex + steps, 0, player.Actions.Count - 1);
+
+        if (toIndex != _dragFromIndex)
+        {
+            player.MoveAction(_dragFromIndex, toIndex);
+            Refresh();
+        }
+
+        _dragFromIndex = -1;
+        _lastDragTotalY = 0;
     }
 
     // ── Position controls ────────────────────────────────────────────────

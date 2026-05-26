@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace OpenSage.Tools.ReplaySketch.Model;
 
@@ -21,4 +22,19 @@ public sealed class PlayerSlotConfig
     public int Team { get; set; }
 
     public List<ActionEntry> Actions { get; set; } = new();
+
+    /// <summary>
+    /// Moves the action at <paramref name="fromIndex"/> to <paramref name="toIndex"/>,
+    /// shifting intervening actions to fill the gap.
+    /// </summary>
+    public void MoveAction(int fromIndex, int toIndex)
+    {
+        if (fromIndex == toIndex) return;
+        if (fromIndex < 0 || fromIndex >= Actions.Count) return;
+        toIndex = Math.Clamp(toIndex, 0, Actions.Count - 1);
+
+        var action = Actions[fromIndex];
+        Actions.RemoveAt(fromIndex);
+        Actions.Insert(toIndex, action);
+    }
 }
