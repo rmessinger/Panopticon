@@ -78,11 +78,15 @@ public partial class ActionSequenceView : ContentView
         var content = new VerticalStackLayout { Spacing = 4 };
 
         // ── Drag handle ────────────────────────────────────────────────────
-        var handle = new Label
+        // Button (vs Label) reliably captures pointer events on Mac Catalyst.
+        var handle = new Button
         {
             Text = "⠿",
             TextColor = Color.FromArgb("#888"),
             FontSize = 16,
+            BackgroundColor = Colors.Transparent,
+            BorderWidth = 0,
+            Padding = new Thickness(0),
             HorizontalOptions = LayoutOptions.Start,
             Margin = new Thickness(0, 0, 0, 2),
         };
@@ -96,6 +100,8 @@ public partial class ActionSequenceView : ContentView
                     _dragFromIndex = actionIdx;
                     _lastDragTotalY = 0;
                     card.Stroke = Color.FromArgb("#569CD6");
+                    // Disable vertical scroll so the ScrollView doesn't compete with this pan
+                    ActionScrollView.Orientation = ScrollOrientation.Neither;
                     break;
 
                 case GestureStatus.Running:
@@ -105,12 +111,14 @@ public partial class ActionSequenceView : ContentView
                 case GestureStatus.Completed:
                     CommitDrag(player);
                     card.Stroke = Color.FromArgb("#555");
+                    ActionScrollView.Orientation = ScrollOrientation.Vertical;
                     break;
 
                 case GestureStatus.Canceled:
                     _dragFromIndex = -1;
                     _lastDragTotalY = 0;
                     card.Stroke = Color.FromArgb("#555");
+                    ActionScrollView.Orientation = ScrollOrientation.Vertical;
                     break;
             }
         };

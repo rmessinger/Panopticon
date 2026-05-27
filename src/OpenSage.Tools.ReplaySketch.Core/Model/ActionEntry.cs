@@ -1,9 +1,16 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json.Serialization;
 
 namespace OpenSage.Tools.ReplaySketch.Model;
 
 public sealed class ActionEntry
 {
+    /// <summary>
+    /// Unique identifier for this action, used by <see cref="AfterActionTiming.TriggerActionId"/>.
+    /// Auto-generated on construction; preserved in JSON for stable cross-action references.
+    /// </summary>
+    public string Id { get; }
+
     public string Label { get; set; }
     public ActionType Type { get; set; }
 
@@ -30,8 +37,9 @@ public sealed class ActionEntry
 
     [JsonConstructor]
     public ActionEntry(string label, ActionType type, PositionSpec? position, TimingConfig timing,
-        string? buildingDefinitionName = null, string? unitDefinitionName = null)
+        string? id = null, string? buildingDefinitionName = null, string? unitDefinitionName = null)
     {
+        Id = id ?? GenerateId();
         Label = label;
         Type = type;
         Position = position;
@@ -39,4 +47,6 @@ public sealed class ActionEntry
         BuildingDefinitionName = buildingDefinitionName;
         UnitDefinitionName = unitDefinitionName;
     }
+
+    private static string GenerateId() => Guid.NewGuid().ToString("N")[..6];
 }

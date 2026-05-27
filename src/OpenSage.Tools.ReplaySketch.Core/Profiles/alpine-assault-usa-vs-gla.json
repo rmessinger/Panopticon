@@ -89,6 +89,7 @@
       "team": 1,
       "actions": [
         {
+          "id": "a001",
           "label": "Build Barracks",
           "type": "Construct",
           "buildingDefinitionName": "AmericaBarracks",
@@ -103,15 +104,17 @@
           }
         },
         {
+          "id": "a002",
           "label": "Gather Resources",
           "type": "GatherResources",
           // Deferred: fires as soon as the Construct order is dispatched (i.e. construction
           // starts), so the supply truck begins collecting resources immediately rather than
           // waiting for the barracks to finish.
-          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Dispatched", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerActionId": "a001", "triggerPhase": "Dispatched", "extraFrames": 0 },
           "position": null
         },
         {
+          "id": "a003",
           "label": "Recruit Ranger",
           "type": "RecruitBasicUnit",
           "unitDefinitionName": "AmericaInfantryRanger",
@@ -119,14 +122,15 @@
           // recruit order from arriving while the building is still being built.
           // Queues 5 Rangers (see ReplayExporter) — each unit that exits will re-trigger
           // AttackEnemyBase so all units are sent to attack together.
-          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Completed", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerActionId": "a001", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": null
         },
         {
+          "id": "a004",
           "label": "Attack Enemy Base",
           "type": "AttackEnemyBase",
           // Deferred: fires after the ranger exits the barracks (RecruitBasicUnit completed).
-          "timing": { "kind": "afterAction", "triggerAction": "RecruitBasicUnit", "triggerPhase": "Completed", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerActionId": "a003", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",
@@ -145,6 +149,7 @@
       "team": 2,
       "actions": [
         {
+          "id": "b001",
           "label": "Build Barracks",
           "type": "Construct",
           "buildingDefinitionName": "GLABarracks",
@@ -157,29 +162,32 @@
           }
         },
         {
+          "id": "b002",
           "label": "Gather Resources",
           "type": "GatherResources",
           // Deferred: fires as soon as the Construct order is dispatched (i.e. construction
           // starts), so the supply truck begins collecting resources immediately rather than
           // waiting for the barracks to finish.
-          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Dispatched", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerActionId": "b001", "triggerPhase": "Dispatched", "extraFrames": 0 },
           "position": null
         },
         {
+          "id": "b003",
           "label": "Recruit Rebel",
           "type": "RecruitBasicUnit",
           "unitDefinitionName": "GLAInfantryRebel",
           // Deferred: fires only after the barracks finishes construction.
           // Queues 5 Rebels (see ReplayExporter) — each unit that exits will re-trigger
           // AttackEnemyBase so all units are sent to attack together.
-          "timing": { "kind": "afterAction", "triggerAction": "Construct", "triggerPhase": "Completed", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerActionId": "b001", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": null
         },
         {
+          "id": "b004",
           "label": "Attack Enemy Base",
           "type": "AttackEnemyBase",
           // Deferred: fires after the rebel exits the barracks (RecruitBasicUnit completed).
-          "timing": { "kind": "afterAction", "triggerAction": "RecruitBasicUnit", "triggerPhase": "Completed", "extraFrames": 0 },
+          "timing": { "kind": "afterAction", "triggerActionId": "b003", "triggerPhase": "Completed", "extraFrames": 0 },
           "position": {
             "kind": "landmarkRelative",
             "landmark": "EnemyBase",

@@ -41,11 +41,12 @@ public class ReplaySketchTests
 
         foreach (var player in scenario.Players)
         {
+            var construct = player.Actions[0];
             var gather = player.Actions[1];
             Assert.Equal(ActionType.GatherResources, gather.Type);
 
             var timing = Assert.IsType<AfterActionTiming>(gather.Timing);
-            Assert.Equal(ActionType.Construct, timing.TriggerAction);
+            Assert.Equal(construct.Id, timing.TriggerActionId);
             Assert.Equal(ActionPhase.Dispatched, timing.TriggerPhase);
         }
     }
@@ -57,11 +58,12 @@ public class ReplaySketchTests
 
         foreach (var player in scenario.Players)
         {
+            var construct = player.Actions[0];
             var recruit = player.Actions[2];
             Assert.Equal(ActionType.RecruitBasicUnit, recruit.Type);
 
             var timing = Assert.IsType<AfterActionTiming>(recruit.Timing);
-            Assert.Equal(ActionType.Construct, timing.TriggerAction);
+            Assert.Equal(construct.Id, timing.TriggerActionId);
             Assert.Equal(ActionPhase.Completed, timing.TriggerPhase);
         }
     }
@@ -138,8 +140,8 @@ public class ActionTreeLayoutEngineTests
     private static ActionEntry MakeFixed(ActionType type, uint frames = 90) =>
         new(type.ToString(), type, null, new FixedTiming(frames));
 
-    private static ActionEntry MakeAfter(ActionType type, ActionType trigger, ActionPhase phase = ActionPhase.Completed) =>
-        new(type.ToString(), type, null, new AfterActionTiming(trigger, phase));
+    private static ActionEntry MakeAfter(ActionType type, ActionEntry parent, ActionPhase phase = ActionPhase.Completed) =>
+        new(type.ToString(), type, null, new AfterActionTiming(parent.Id, phase));
 
     [Fact]
     public void EmptyActions_ReturnsEmptyLayout()
@@ -162,7 +164,7 @@ public class ActionTreeLayoutEngineTests
     public void ChildAction_IsInRowBelowParent()
     {
         var parent = MakeFixed(ActionType.Construct);
-        var child = MakeAfter(ActionType.GatherResources, ActionType.Construct);
+        var child = MakeAfter(ActionType.GatherResources, parent);
         var result = ActionTreeLayoutEngine.ComputeLayout([parent, child]);
 
         var parentNode = result.Single(n => n.Action == parent);
@@ -176,8 +178,8 @@ public class ActionTreeLayoutEngineTests
     public void ChainOfThree_HasThreeDistinctRows()
     {
         var a = MakeFixed(ActionType.Construct);
-        var b = MakeAfter(ActionType.GatherResources, ActionType.Construct);
-        var c = MakeAfter(ActionType.RecruitBasicUnit, ActionType.GatherResources);
+        var b = MakeAfter(ActionType.GatherResources, a);
+        var c = MakeAfter(ActionType.RecruitBasicUnit, b);
 
         var result = ActionTreeLayoutEngine.ComputeLayout([a, b, c]);
 
@@ -269,13 +271,13 @@ public class ActionTreeLayoutEngineTests
     }
 
     [Fact]
-    public void ToggleSelection_SameNode_Deselects()
+    public void ToggleSelection_SameNode_KeepsSelected()
     {
         var node = ActionTreeLayoutEngine.ComputeLayout(
             [MakeFixed(ActionType.Construct)])[0];
 
         var result = ActionTreeLayoutEngine.ToggleSelection(current: node, clicked: node);
-        Assert.Null(result);
+        Assert.Equal(node, result);
     }
 
     [Fact]

@@ -23,32 +23,6 @@ public partial class ActionTreeView : ContentView
     private const float RowGap = ActionTreeLayoutEngine.RowGap;
     private const float CanvasPad = ActionTreeLayoutEngine.CanvasPad;
 
-    // ── Palette metadata ─────────────────────────────────────────────────────
-    private static readonly (ActionType Type, string Label, string DefaultLabel)[] PaletteItems =
-    [
-        (ActionType.Construct,        "Construct",         "Construct"),
-        (ActionType.GatherResources,  "Gather Resources",  "GatherResources"),
-        (ActionType.RecruitBasicUnit, "Recruit Unit",      "RecruitBasicUnit"),
-        (ActionType.AttackEnemyBase,  "Attack Enemy Base", "AttackEnemyBase"),
-    ];
-
-    // ── Default timing for palette-added actions ─────────────────────────────
-    private static TimingConfig DefaultTiming(ActionType type) => type switch
-    {
-        ActionType.Construct        => new FixedTiming(90),
-        ActionType.GatherResources  => new AfterActionTiming(ActionType.Construct, ActionPhase.Dispatched),
-        ActionType.RecruitBasicUnit => new AfterActionTiming(ActionType.Construct, ActionPhase.Completed),
-        ActionType.AttackEnemyBase  => new AfterActionTiming(ActionType.RecruitBasicUnit, ActionPhase.Completed),
-        _ => new FixedTiming(300),
-    };
-
-    // ── Default position for palette-added actions ────────────────────────────
-    private static PositionSpec? DefaultPosition(ActionType type) => type switch
-    {
-        ActionType.RecruitBasicUnit => null,
-        _ => new LandmarkRelativePosition(LandmarkType.OwnBase, 2f, new FixedAngle(45f)),
-    };
-
     // ── Canvas colours ───────────────────────────────────────────────────────
     private static readonly SKColor CanvasBg = new(0x1A, 0x1A, 0x1A);
     private static readonly SKColor NodeFill = new(0x2D, 0x2D, 0x2D);
@@ -75,10 +49,14 @@ public partial class ActionTreeView : ContentView
 
     // ── State ────────────────────────────────────────────────────────────────
     private MainViewModel? _vm;
+    private ActionTreeController? _controller;
     private List<LayoutNode> _layoutNodes = [];
     private LayoutNode? _selectedNode;
     private SizeF _canvasLogicalSize;
     private VerticalStackLayout? _externalDetailPanel;
+
+    // Tracks which palette button is highlighted (UI-only, not in controller)
+    private Button? _flyoutActiveButton;
 
     // Landmark labels / values shared with position controls
     private static readonly string[] LandmarkLabels =
@@ -90,6 +68,10 @@ public partial class ActionTreeView : ContentView
     {
         InitializeComponent();
         BuildPalette();
+        FlyoutBackdrop.GestureRecognizers.Add(new TapGestureRecognizer
+        {
+            Command = new Command(HideFlyout)
+        });
     }
 
     // ── Touch hit-testing ─────────────────────────────────────────────────────
@@ -108,9 +90,8 @@ public partial class ActionTreeView : ContentView
         var logY = e.Location.Y / density;
 
         var hit = _layoutNodes.FirstOrDefault(n => n.SkBounds.Contains(logX, logY));
-        _selectedNode = hit == _selectedNode ? null : hit;
-        TreeCanvas.InvalidateSurface();
-        BuildDetailPanel(_selectedNode);
+        _controller?.SelectNode(hit?.Action.Id);
+        // SelectionChanged → SyncSelection handles the rest
     }
 
     // ── Public API ───────────────────────────────────────────────────────────
@@ -133,17 +114,60 @@ public partial class ActionTreeView : ContentView
             if (e.PropertyName is nameof(MainViewModel.SelectedSlotIndex)
                                 or nameof(MainViewModel.SelectedPlayer))
             {
+                AttachController(vm.SelectedPlayer);
                 _selectedNode = null;
                 RefreshTree();
             }
         };
+        AttachController(vm.SelectedPlayer);
         RefreshTree();
+    }
+
+    private void AttachController(PlayerSlotConfig player)
+    {
+        // Reset palette button highlight before swapping controllers
+        if (_flyoutActiveButton != null)
+        {
+            _flyoutActiveButton.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton = null;
+        }
+        FlyoutOverlay.IsVisible = false;
+
+        _controller = new ActionTreeController(player);
+        _controller.ActionsChanged += (_, _) => RefreshTree();
+        _controller.SelectionChanged += (_, _) => SyncSelection();
+        _controller.FlyoutStateChanged += (_, _) => SyncFlyout();
+    }
+
+    private void SyncSelection()
+    {
+        _selectedNode = _layoutNodes.FirstOrDefault(n => n.Action.Id == _controller?.SelectedActionId);
+        BuildDetailPanel(_selectedNode);
+        TreeCanvas.InvalidateSurface();
+    }
+
+    private void SyncFlyout()
+    {
+        if (_controller == null) return;
+
+        if (_controller.FlyoutIsOpen)
+        {
+            var item = ActionTreeController.PaletteItems.FirstOrDefault(p => p.Type == _controller.FlyoutType);
+            FlyoutCard.Margin = new Thickness(110, 40, 0, 0);
+            BuildFlyoutContent(item.Label, _vm!.SelectedPlayer.FactionIndex);
+            FlyoutOverlay.IsVisible = true;
+        }
+        else
+        {
+            FlyoutOverlay.IsVisible = false;
+        }
     }
 
     public void RefreshTree()
     {
         if (_vm == null) return;
         _layoutNodes = ComputeLayout(_vm.SelectedPlayer.Actions);
+        _selectedNode = _layoutNodes.FirstOrDefault(n => n.Action.Id == _controller?.SelectedActionId);
         UpdateCanvasSize();
         TreeCanvas.InvalidateSurface();
         BuildDetailPanel(_selectedNode);
@@ -165,7 +189,7 @@ public partial class ActionTreeView : ContentView
         };
         PalettePanel.Children.Add(header);
 
-        foreach (var (type, label, _) in PaletteItems)
+        foreach (var (type, label, _) in ActionTreeController.PaletteItems)
         {
             var btn = new Button
             {
@@ -176,40 +200,123 @@ public partial class ActionTreeView : ContentView
                 Padding = new Thickness(4, 6),
                 CornerRadius = 4,
             };
-            btn.Clicked += (_, _) => AddFromPalette(type);
+            btn.Clicked += (_, _) => ToggleAddFlyout(type, btn);
 
             PalettePanel.Children.Add(btn);
         }
     }
 
-    private void AddFromPalette(ActionType type)
-    {
-        if (_vm == null) return;
+    // ── Add-Action flyout ─────────────────────────────────────────────────────
 
-        TimingConfig timing;
-        if (_selectedNode != null && _selectedNode.Action != null)
+    private void ToggleAddFlyout(ActionType type, Button sourceButton)
+    {
+        if (_controller == null) return;
+
+        // Determine new open state before calling controller (it will toggle)
+        var willOpen = !(_controller.FlyoutIsOpen && _controller.FlyoutType == type);
+
+        if (willOpen)
         {
-            // Add as a child of the currently selected node
-            timing = new AfterActionTiming(_selectedNode.Action.Type, ActionPhase.Completed);
+            _flyoutActiveButton?.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton = sourceButton;
+            sourceButton.BackgroundColor = Color.FromArgb("#0E639C");
         }
         else
         {
-            timing = DefaultTiming(type);
+            _flyoutActiveButton?.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton = null;
         }
 
-        var item = PaletteItems.FirstOrDefault(p => p.Type == type);
-        var entry = new ActionEntry(item.DefaultLabel, type, DefaultPosition(type), timing,
-            buildingDefinitionName: type == ActionType.Construct
-                ? BuildingCatalog.ForFaction(_vm.SelectedPlayer.FactionIndex)
-                    .FirstOrDefault(b => b.DisplayName == "Barracks")?.DefinitionName
-                    ?? KnownDefinitions.UsaBarracksName
-                : null,
-            unitDefinitionName: type == ActionType.RecruitBasicUnit
-                ? UnitCatalog.ForFaction(_vm.SelectedPlayer.FactionIndex).FirstOrDefault()?.DefinitionName
-                : null);
-        _vm.SelectedPlayer.Actions.Add(entry);
-        _selectedNode = null;
-        RefreshTree();
+        _controller.OpenFlyout(type);  // fires FlyoutStateChanged → SyncFlyout
+    }
+
+    private void BuildFlyoutContent(string typeLabel, int factionIndex)
+    {
+        FlyoutContent.Children.Clear();
+
+        // Title
+        FlyoutContent.Children.Add(new Label
+        {
+            Text = $"Add: {typeLabel}",
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#569CD6"),
+            FontSize = 13,
+            Margin = new Thickness(0, 0, 0, 4),
+        });
+
+        // Label field
+        var labelEntry = new Entry
+        {
+            Text = _controller!.FlyoutDraft!.Label,
+            Placeholder = "Label",
+            TextColor = Color.FromArgb("#D4D4D4"),
+            BackgroundColor = Color.FromArgb("#3C3C3C"),
+            FontSize = 13,
+        };
+        labelEntry.TextChanged += (_, e) => _controller!.SetFlyoutLabel(e.NewTextValue);
+        FlyoutContent.Children.Add(FieldRow("Label", labelEntry));
+
+        // Building picker for Construct
+        if (_controller.FlyoutType == ActionType.Construct)
+            FlyoutContent.Children.Add(FieldRow("Building",
+                BuildBuildingPicker(_controller.FlyoutDraft, factionIndex)));
+
+        // Unit picker for RecruitBasicUnit
+        if (_controller.FlyoutType == ActionType.RecruitBasicUnit)
+            FlyoutContent.Children.Add(FieldRow("Unit",
+                BuildUnitPicker(_controller.FlyoutDraft, factionIndex)));
+
+        // Action row
+        var buttonsRow = new HorizontalStackLayout
+        {
+            Spacing = 8,
+            HorizontalOptions = LayoutOptions.End,
+            Margin = new Thickness(0, 4, 0, 0),
+        };
+
+        var cancelBtn = new Button
+        {
+            Text = "Cancel",
+            BackgroundColor = Color.FromArgb("#555"),
+            TextColor = Color.FromArgb("#D4D4D4"),
+            CornerRadius = 4,
+            FontSize = 12,
+            Padding = new Thickness(12, 6),
+        };
+        cancelBtn.Clicked += (_, _) => HideFlyout();
+
+        var addBtn = new Button
+        {
+            Text = "Add",
+            BackgroundColor = Color.FromArgb("#0E639C"),
+            TextColor = Colors.White,
+            CornerRadius = 4,
+            FontSize = 12,
+            Padding = new Thickness(12, 6),
+        };
+        addBtn.Clicked += (_, _) =>
+        {
+            _controller?.CommitFlyout();  // fires FlyoutStateChanged + ActionsChanged
+            if (_flyoutActiveButton != null)
+            {
+                _flyoutActiveButton.BackgroundColor = Color.FromArgb("#3C3C3C");
+                _flyoutActiveButton = null;
+            }
+        };
+
+        buttonsRow.Children.Add(cancelBtn);
+        buttonsRow.Children.Add(addBtn);
+        FlyoutContent.Children.Add(buttonsRow);
+    }
+
+    private void HideFlyout()
+    {
+        _controller?.CancelFlyout();  // fires FlyoutStateChanged → SyncFlyout
+        if (_flyoutActiveButton != null)
+        {
+            _flyoutActiveButton.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton = null;
+        }
     }
 
     // ── Layout computation ────────────────────────────────────────────────────
@@ -271,14 +378,12 @@ public partial class ActionTreeView : ContentView
 
     private void DrawEdges(SKCanvas canvas)
     {
-        var byType = _layoutNodes
-            .GroupBy(n => n.Action.Type)
-            .ToDictionary(g => g.Key, g => g.First());
+        var byId = _layoutNodes.ToDictionary(n => n.Action.Id);
 
         foreach (var child in _layoutNodes)
         {
             if (child.Action.Timing is not AfterActionTiming aat) continue;
-            if (!byType.TryGetValue(aat.TriggerAction, out var parent)) continue;
+            if (!byId.TryGetValue(aat.TriggerActionId, out var parent)) continue;
 
             var isDispatched = aat.TriggerPhase == ActionPhase.Dispatched;
             var edgeColor = isDispatched ? EdgeDispatched : EdgeCompleted;
@@ -345,10 +450,16 @@ public partial class ActionTreeView : ContentView
             })
                 canvas.DrawRoundRect(rrect, borderPaint);
 
-            // Action type (small, dimmed)
+            // Action type (small, dimmed) — top-left
             using var typePaint = new SKPaint { Color = TextDim, IsAntialias = true };
             using var typeFont = new SKFont { Size = 9 };
             canvas.DrawText(node.Action.Type.ToString(), b.Left + 6f, b.Top + 13f, typeFont, typePaint);
+
+            // ID badge — top-right
+            using var idFont = new SKFont { Size = 9 };
+            var idText = node.Action.Id;
+            var idW = idFont.MeasureText(idText);
+            canvas.DrawText(idText, b.Right - idW - 4f, b.Top + 13f, idFont, typePaint);
 
             // Label (main text)
             using var labelPaint = new SKPaint { Color = TextMain, IsAntialias = true };
@@ -391,8 +502,8 @@ public partial class ActionTreeView : ContentView
         _externalDetailPanel.Children.Add(SectionLabel($"Editing: {action.Label}"));
 
         // Type
-        var typeLabels = PaletteItems.Select(p => p.Label).ToArray();
-        var typeValues = PaletteItems.Select(p => p.Type).ToArray();
+        var typeLabels = ActionTreeController.PaletteItems.Select(p => p.Label).ToArray();
+        var typeValues = ActionTreeController.PaletteItems.Select(p => p.Type).ToArray();
         _externalDetailPanel.Children.Add(FieldRow("Type", BuildPicker(
             typeLabels,
             Math.Max(0, Array.IndexOf(typeValues, action.Type)),
@@ -587,8 +698,8 @@ public partial class ActionTreeView : ContentView
             if (!e.Value) return;
             var other = _vm!.SelectedPlayer.Actions.FirstOrDefault(a => a != action);
             action.Timing = other != null
-                ? new AfterActionTiming(other.Type, ActionPhase.Completed)
-                : new AfterActionTiming(ActionType.Construct, ActionPhase.Completed);
+                ? new AfterActionTiming(other.Id, ActionPhase.Completed)
+                : new FixedTiming(300);  // no other actions to trigger from
             RefreshTree();
         };
 
@@ -617,28 +728,52 @@ public partial class ActionTreeView : ContentView
         }
         else if (action.Timing is AfterActionTiming aat)
         {
-            // Trigger action picker — all types except the action itself
-            var triggerTypes = PaletteItems.Where(p => p.Type != action.Type).ToArray();
-            var triggerIdx = Math.Max(0, Array.FindIndex(triggerTypes, p => p.Type == aat.TriggerAction));
+            // Trigger action picker — show actual sibling actions (not abstract types)
+            var otherActions = _vm!.SelectedPlayer.Actions.Where(a => a != action).ToArray();
+            if (otherActions.Length == 0)
+            {
+                container.Children.Add(new Label
+                {
+                    Text = "No other actions to trigger from.",
+                    TextColor = Color.FromArgb("#888"),
+                    FontSize = 13,
+                });
+            }
+            else
+            {
+                var triggerIdx = Math.Max(0, Array.FindIndex(otherActions, a => a.Id == aat.TriggerActionId));
 
-            container.Children.Add(FieldRow("After action", BuildPicker(
-                triggerTypes.Select(p => p.Label).ToArray(),
-                triggerIdx,
-                idx => action.Timing = new AfterActionTiming(
-                    triggerTypes[idx].Type, aat.TriggerPhase, aat.ExtraFrames))));
+                container.Children.Add(FieldRow("After action", BuildPicker(
+                    otherActions.Select(a => $"{a.Id}: {a.Label}").ToArray(),
+                    triggerIdx,
+                    idx =>
+                    {
+                        action.Timing = new AfterActionTiming(
+                            otherActions[idx].Id, aat.TriggerPhase, aat.ExtraFrames);
+                        RefreshTree();
+                    })));
 
-            // Phase picker
-            var phases = new[] { "Dispatched", "Completed" };
-            var phaseIdx = aat.TriggerPhase == ActionPhase.Dispatched ? 0 : 1;
-            container.Children.Add(FieldRow("Phase", BuildPicker(phases, phaseIdx,
-                idx => action.Timing = new AfterActionTiming(
-                    aat.TriggerAction,
-                    idx == 0 ? ActionPhase.Dispatched : ActionPhase.Completed,
-                    aat.ExtraFrames))));
+                // Phase picker
+                var phases = new[] { "Dispatched", "Completed" };
+                var phaseIdx = aat.TriggerPhase == ActionPhase.Dispatched ? 0 : 1;
+                container.Children.Add(FieldRow("Phase", BuildPicker(phases, phaseIdx,
+                    idx =>
+                    {
+                        action.Timing = new AfterActionTiming(
+                            aat.TriggerActionId,
+                            idx == 0 ? ActionPhase.Dispatched : ActionPhase.Completed,
+                            aat.ExtraFrames);
+                        RefreshTree();
+                    })));
 
-            // Extra frames
-            container.Children.Add(FieldRow("Extra frames", BuildUIntEntry(aat.ExtraFrames,
-                v => action.Timing = new AfterActionTiming(aat.TriggerAction, aat.TriggerPhase, v))));
+                // Extra frames
+                container.Children.Add(FieldRow("Extra frames", BuildUIntEntry(aat.ExtraFrames,
+                    v =>
+                    {
+                        action.Timing = new AfterActionTiming(aat.TriggerActionId, aat.TriggerPhase, v);
+                        RefreshTree();
+                    })));
+            }
         }
 
         return container;

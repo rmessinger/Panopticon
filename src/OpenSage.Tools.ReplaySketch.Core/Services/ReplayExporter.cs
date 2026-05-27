@@ -68,9 +68,15 @@ public static class ReplayExporter
                 {
                     // Deferred: build the orders now (so positions are resolved) but don't
                     // place them in the replay file — the test harness injects them at runtime.
-                    var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex)
-                        .ToList();
-                    deferred.Add(new DeferredAction(ownerIdx + 2, aat.TriggerAction, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
+                    // Look up the trigger action by ID to get its ActionType for the monitor match.
+                    var triggerEntry = player.Actions.FirstOrDefault(a => a.Id == aat.TriggerActionId);
+                    if (triggerEntry != null)
+                    {
+                        var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex)
+                            .ToList();
+                        deferred.Add(new DeferredAction(ownerIdx + 2, triggerEntry.Type, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
+                    }
+                    // else: dangling reference — action is silently skipped (trigger no longer exists)
                 }
                 else
                 {

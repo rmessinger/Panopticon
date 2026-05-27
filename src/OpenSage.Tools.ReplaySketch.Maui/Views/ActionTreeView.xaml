@@ -33,5 +33,22 @@
 
         </Grid>
 
+        <!-- Add-Action flyout overlay — covers entire view, hidden by default -->
+        <Grid x:Name="FlyoutOverlay" IsVisible="False">
+            <!-- Semi-transparent backdrop; tap to dismiss -->
+            <BoxView x:Name="FlyoutBackdrop" BackgroundColor="#80000000" InputTransparent="False"/>
+            <!-- Flyout card -->
+            <Border x:Name="FlyoutCard"
+                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2D2D2D}"
+                    Stroke="{AppThemeBinding Light=#555, Dark=#666}"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="16"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Start"
+                    MinimumWidthRequest="280">
+                <VerticalStackLayout x:Name="FlyoutContent" Spacing="8"/>
+            </Border>
+        </Grid>
+
     </Grid>
 </ContentView>

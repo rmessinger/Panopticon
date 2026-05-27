@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenSage.Tools.ReplaySketch.Model;
@@ -28,16 +28,14 @@ public static class ActionTreeLayoutEngine
         if (actions.Count == 0)
             return [];
 
-        var byType = new Dictionary<ActionType, ActionEntry>();
-        foreach (var a in actions)
-            byType[a.Type] = a;
+        var byId = actions.ToDictionary(a => a.Id);
 
         // Classify: root (FixedTiming / RandomTiming) or child (AfterActionTiming).
         var parentOf = new Dictionary<ActionEntry, ActionEntry>();
         var roots = new List<ActionEntry>();
         foreach (var a in actions)
         {
-            if (a.Timing is AfterActionTiming aat && byType.TryGetValue(aat.TriggerAction, out var parent))
+            if (a.Timing is AfterActionTiming aat && byId.TryGetValue(aat.TriggerActionId, out var parent))
                 parentOf[a] = parent;
             else
                 roots.Add(a);
@@ -116,9 +114,9 @@ public static class ActionTreeLayoutEngine
         return x >= left && x <= left + NodeW && y >= top && y <= top + NodeH;
     }
 
-    /// <summary>Applies toggle semantics: click same node → deselect; click other → select.</summary>
+    /// <summary>Selects the clicked node; clicking the same node keeps it selected. Returns null if clicked is null (empty-space click).</summary>
     public static NodeLayout? ToggleSelection(NodeLayout? current, NodeLayout? clicked)
-        => clicked == current ? null : clicked;
+        => clicked;
 }
 
 /// <summary>Platform-free representation of a positioned action node.</summary>

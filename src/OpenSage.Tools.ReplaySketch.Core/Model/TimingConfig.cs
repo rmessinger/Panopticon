@@ -24,8 +24,9 @@ public record RandomTiming(uint MinFrames, uint MaxFrames) : TimingConfig
 }
 
 /// <summary>
-/// Timing kind that defers an action until a specific <see cref="ActionType"/> has reached a
-/// specified <see cref="ActionPhase"/> at runtime, rather than at a pre-baked frame.
+/// Timing kind that defers an action until a specific action (identified by its
+/// <see cref="ActionEntry.Id"/>) has reached a specified <see cref="ActionPhase"/> at runtime,
+/// rather than at a pre-baked frame.
 /// The action is not written to the replay file; instead it is injected by the test harness when
 /// the trigger event fires.
 /// </summary>
@@ -36,7 +37,7 @@ public record RandomTiming(uint MinFrames, uint MaxFrames) : TimingConfig
 /// <see cref="ActionPhase.Completed"/>).
 /// </remarks>
 public record AfterActionTiming(
-    ActionType TriggerAction,
+    string TriggerActionId,
     ActionPhase TriggerPhase = ActionPhase.Completed,
     uint ExtraFrames = 0) : TimingConfig
 {
