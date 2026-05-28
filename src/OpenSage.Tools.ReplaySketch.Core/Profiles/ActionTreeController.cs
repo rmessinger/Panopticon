@@ -75,6 +75,26 @@ public sealed class ActionTreeController
         SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Simulates a canvas tap at logical coordinates (<paramref name="x"/>, <paramref name="y"/>).
+    /// Computes the current layout internally and selects whichever node (if any) is hit.
+    /// Tapping empty space deselects the current node.
+    /// </summary>
+    public void SimulateTap(float x, float y)
+    {
+        var layout = ActionTreeLayoutEngine.ComputeLayout(_player.Actions);
+        string? hitId = null;
+        foreach (var node in layout)
+        {
+            if (ActionTreeLayoutEngine.HitTest(node, x, y))
+            {
+                hitId = node.Action.Id;
+                break;
+            }
+        }
+        SelectNode(hitId);
+    }
+
     // ── Add-action flyout ─────────────────────────────────────────────────────
 
     /// <summary>
