@@ -197,4 +197,25 @@ public class ActionTreeRendererTests
         var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry> { a1, a2 });
         GoldenImageHelper.AssertRenderedMatchesGolden(layout, "dispatched-edge");
     }
+
+    [Fact]
+    [Trait("Category", "Visual")]
+    public void Render_DragInProgress_ShowsGhostAndDropTarget()
+    {
+        var a1 = MakeAction(id: "d1", label: "Construct", type: ActionType.Construct);
+        var a2 = MakeAction(id: "d2", label: "Gather Resources", type: ActionType.GatherResources);
+        var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry> { a1, a2 });
+
+        var source = layout.First(n => n.Action.Id == "d2");
+        var target = layout.First(n => n.Action.Id == "d1");
+
+        // Drag d2 halfway towards d1, hovering over d1
+        var drag = new DragState(
+            DraggedId: "d2",
+            CurrentX: target.CenterX,
+            CurrentY: target.CenterY,
+            TargetId: "d1");
+
+        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "drag-in-progress", drag: drag);
+    }
 }

@@ -95,6 +95,79 @@ public sealed class ActionTreeController
         SelectNode(hitId);
     }
 
+    // ── Drag-to-reparent ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Simulates a drag gesture from (<paramref name="fromX"/>, <paramref name="fromY"/>) to
+    /// (<paramref name="toX"/>, <paramref name="toY"/>) in logical canvas coordinates.
+    /// If a node is hit at the start position and the end position is a different node,
+    /// the source is reparented under the target (<see cref="AfterActionTiming"/>).
+    /// Dropping on empty space makes the source a root node (<see cref="FixedTiming"/>).
+    /// No-ops when the source cannot be found or a cycle would result.
+    /// </summary>
+    public void SimulateDrag(float fromX, float fromY, float toX, float toY)
+    {
+        var layout = ActionTreeLayoutEngine.ComputeLayout(_player.Actions);
+
+        string? sourceId = null;
+        string? targetId = null;
+
+        foreach (var node in layout)
+        {
+            if (sourceId == null && ActionTreeLayoutEngine.HitTest(node, fromX, fromY))
+                sourceId = node.Action.Id;
+            if (targetId == null && ActionTreeLayoutEngine.HitTest(node, toX, toY))
+                targetId = node.Action.Id;
+        }
+
+        if (sourceId == null) return;
+
+        Reparent(sourceId, targetId == sourceId ? null : targetId);
+    }
+
+    /// <summary>
+    /// Re-parents <paramref name="sourceId"/> under <paramref name="newParentId"/>.
+    /// Passing <c>null</c> for <paramref name="newParentId"/> promotes the source to a root
+    /// node by assigning a <see cref="FixedTiming"/>.
+    /// Silently ignores requests that would create a cycle in the action graph.
+    /// </summary>
+    public void Reparent(string sourceId, string? newParentId)
+    {
+        var source = _player.Actions.FirstOrDefault(a => a.Id == sourceId);
+        if (source == null) return;
+
+        if (newParentId != null && IsCyclicReparent(sourceId, newParentId)) return;
+
+        source.Timing = newParentId != null
+            ? new AfterActionTiming(newParentId, ActionPhase.Completed)
+            : new FixedTiming(300);
+
+        ActionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> if making <paramref name="nodeId"/> a child of
+    /// <paramref name="newParentId"/> would create a cycle — i.e., <paramref name="nodeId"/>
+    /// is already an ancestor of <paramref name="newParentId"/>.
+    /// </summary>
+    private bool IsCyclicReparent(string nodeId, string newParentId)
+    {
+        var byId = _player.Actions.ToDictionary(a => a.Id);
+        var visited = new HashSet<string>();
+        var current = newParentId;
+
+        while (current != null && !visited.Contains(current))
+        {
+            if (current == nodeId) return true;
+            visited.Add(current);
+            current = byId.TryGetValue(current, out var a) && a.Timing is AfterActionTiming aat
+                ? aat.TriggerActionId
+                : null;
+        }
+
+        return false;
+    }
+
     // ── Add-action flyout ─────────────────────────────────────────────────────
 
     /// <summary>

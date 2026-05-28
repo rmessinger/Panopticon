@@ -397,4 +397,118 @@ public class ActionTreeControllerTests
         var ft = Assert.IsType<FixedTiming>(timing);
         Assert.Equal(300u, ft.Frames);
     }
+
+    // ── Reparent / drag-to-reparent ──────────────────────────────────────────
+
+    [Fact]
+    public void Reparent_ToOtherNode_SetsAfterActionTiming()
+    {
+        var player = UsaPlayer();
+        var a1 = MakeAction(ActionType.Construct, id: "a1");
+        var a2 = MakeAction(ActionType.GatherResources, id: "a2");
+        player.Actions.Add(a1);
+        player.Actions.Add(a2);
+        var ctrl = new ActionTreeController(player);
+
+        ctrl.Reparent("a2", "a1");
+
+        var timing = Assert.IsType<AfterActionTiming>(player.Actions[1].Timing);
+        Assert.Equal("a1", timing.TriggerActionId);
+        Assert.Equal(ActionPhase.Completed, timing.TriggerPhase);
+    }
+
+    [Fact]
+    public void Reparent_ToNull_SetsFixedTiming()
+    {
+        var player = UsaPlayer();
+        var a1 = MakeAction(ActionType.Construct, id: "a1");
+        var a2 = MakeAction(ActionType.GatherResources, id: "a2",
+            label: "Gather");
+        a2 = new ActionEntry(a2.Label, a2.Type, null, new AfterActionTiming("a1", ActionPhase.Completed), "a2");
+        player.Actions.Add(a1);
+        player.Actions.Add(a2);
+        var ctrl = new ActionTreeController(player);
+
+        ctrl.Reparent("a2", null);
+
+        Assert.IsType<FixedTiming>(player.Actions[1].Timing);
+    }
+
+    [Fact]
+    public void Reparent_WouldCreateCycle_DoesNotReparent()
+    {
+        var player = UsaPlayer();
+        var a1 = MakeAction(ActionType.Construct, id: "a1");
+        var a2 = new ActionEntry("Gather", ActionType.GatherResources, null,
+            new AfterActionTiming("a1", ActionPhase.Completed), "a2");
+        player.Actions.Add(a1);
+        player.Actions.Add(a2);
+        var ctrl = new ActionTreeController(player);
+
+        // Trying to make a1 a child of a2 would create a cycle
+        ctrl.Reparent("a1", "a2");
+
+        // a1's timing should be unchanged (FixedTiming from factory)
+        Assert.IsType<FixedTiming>(player.Actions[0].Timing);
+    }
+
+    [Fact]
+    public void SimulateDrag_OntoOtherNode_Reparents()
+    {
+        var player = UsaPlayer();
+        var a1 = MakeAction(ActionType.Construct, id: "a1");
+        var a2 = MakeAction(ActionType.GatherResources, id: "a2");
+        player.Actions.Add(a1);
+        player.Actions.Add(a2);
+        var ctrl = new ActionTreeController(player);
+
+        // Layout places nodes in columns; get their centres from the engine
+        var layout = ActionTreeLayoutEngine.ComputeLayout(player.Actions);
+        var n1 = layout.First(n => n.Action.Id == "a1");
+        var n2 = layout.First(n => n.Action.Id == "a2");
+
+        ctrl.SimulateDrag(n2.CenterX, n2.CenterY, n1.CenterX, n1.CenterY);
+
+        var timing = Assert.IsType<AfterActionTiming>(player.Actions[1].Timing);
+        Assert.Equal("a1", timing.TriggerActionId);
+    }
+
+    [Fact]
+    public void SimulateDrag_ToEmptySpace_MakesRoot()
+    {
+        var player = UsaPlayer();
+        var a2 = new ActionEntry("Gather", ActionType.GatherResources, null,
+            new AfterActionTiming("a1", ActionPhase.Completed), "a2");
+        player.Actions.Add(a2);
+        var ctrl = new ActionTreeController(player);
+
+        var layout = ActionTreeLayoutEngine.ComputeLayout(player.Actions);
+        var n2 = layout.First(n => n.Action.Id == "a2");
+
+        // Drag to far-off empty space (no node there)
+        ctrl.SimulateDrag(n2.CenterX, n2.CenterY, 9999f, 9999f);
+
+        Assert.IsType<FixedTiming>(player.Actions[0].Timing);
+    }
+
+    [Fact]
+    public void SimulateDrag_WouldCreateCycle_DoesNotReparent()
+    {
+        var player = UsaPlayer();
+        var a1 = MakeAction(ActionType.Construct, id: "a1");
+        var a2 = new ActionEntry("Gather", ActionType.GatherResources, null,
+            new AfterActionTiming("a1", ActionPhase.Completed), "a2");
+        player.Actions.Add(a1);
+        player.Actions.Add(a2);
+        var ctrl = new ActionTreeController(player);
+
+        var layout = ActionTreeLayoutEngine.ComputeLayout(player.Actions);
+        var n1 = layout.First(n => n.Action.Id == "a1");
+        var n2 = layout.First(n => n.Action.Id == "a2");
+
+        // a2 is already a child of a1; making a1 a child of a2 would cycle
+        ctrl.SimulateDrag(n1.CenterX, n1.CenterY, n2.CenterX, n2.CenterY);
+
+        Assert.IsType<FixedTiming>(player.Actions[0].Timing);
+    }
 }

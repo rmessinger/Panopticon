@@ -49,9 +49,16 @@
             "preLaunchTask": "build"
         },
         {
-            "name": "ReplaySketch (MAUI)",
+            "name": "ReplaySketch",
             "type": "maui",
             "request": "launch",
+            "preLaunchTask": "maui: Build"
+        },
+        {
+            "name": "WorldBuilder",
+            "type": "maui",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/OpenSage.Tools.WorldBuilder.Maui/OpenSage.Tools.WorldBuilder.Maui.csproj",
             "preLaunchTask": "maui: Build"
         },
         {

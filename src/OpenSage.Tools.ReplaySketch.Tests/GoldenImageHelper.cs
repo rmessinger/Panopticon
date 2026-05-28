@@ -29,12 +29,13 @@ public static class GoldenImageHelper
     public static byte[] RenderToPng(
         IReadOnlyList<NodeLayout> nodes,
         string? selectedId = null,
+        DragState? drag = null,
         int width = DefaultWidth,
         int height = DefaultHeight)
     {
         var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
         using var surface = SKSurface.Create(info);
-        ActionTreeRenderer.Render(surface.Canvas, nodes, selectedId);
+        ActionTreeRenderer.Render(surface.Canvas, nodes, selectedId, drag: drag);
         using var image = surface.Snapshot();
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         return data.ToArray();
@@ -108,10 +109,11 @@ public static class GoldenImageHelper
         IReadOnlyList<NodeLayout> nodes,
         string goldenName,
         string? selectedId = null,
+        DragState? drag = null,
         int width = DefaultWidth,
         int height = DefaultHeight)
     {
-        var png = RenderToPng(nodes, selectedId, width, height);
+        var png = RenderToPng(nodes, selectedId, drag, width, height);
         AssertMatchesGolden(png, goldenName);
     }
 

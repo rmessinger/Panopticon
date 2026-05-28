@@ -31,6 +31,15 @@ public partial class ActionTreeView : ContentView
     private SizeF _canvasLogicalSize;
     private VerticalStackLayout? _externalDetailPanel;
 
+    // ── Drag state ───────────────────────────────────────────────────────────
+    private const float DragThresholdDp = 8f;
+    private string? _dragId;
+    private float _dragStartX;
+    private float _dragStartY;
+    private float _dragCurrentX;
+    private float _dragCurrentY;
+    private bool _isDragging;
+
     // Tracks which palette button is highlighted (UI-only, not in controller)
     private Button? _flyoutActiveButton;
 
@@ -52,22 +61,87 @@ public partial class ActionTreeView : ContentView
 
     // ── Touch hit-testing ─────────────────────────────────────────────────────
 
-    private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
-    {
-        if (e.ActionType != SKTouchAction.Pressed) return;
-        e.Handled = true;
-
-        // Touch coordinates are in physical pixels; convert to logical units
-        // using the same density factor applied in OnPaintSurface.
-        var density = TreeCanvas.CanvasSize.Width > 0 && TreeCanvas.Width > 0
+    private float GetDensity() =>
+        TreeCanvas.CanvasSize.Width > 0 && TreeCanvas.Width > 0
             ? (float)(TreeCanvas.CanvasSize.Width / TreeCanvas.Width)
             : 1f;
+
+    private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
+    {
+        e.Handled = true;
+
+        var density = GetDensity();
         var logX = e.Location.X / density;
         var logY = e.Location.Y / density;
 
-        var hit = _layoutNodes.FirstOrDefault(n => ActionTreeLayoutEngine.HitTest(n, logX, logY));
-        _controller?.SelectNode(hit.Action?.Id);
-        // SelectionChanged → SyncSelection handles the rest
+        switch (e.ActionType)
+        {
+            case SKTouchAction.Pressed:
+                var hit = _layoutNodes.FirstOrDefault(n => ActionTreeLayoutEngine.HitTest(n, logX, logY));
+                if (hit.Action != null)
+                {
+                    _dragId = hit.Action.Id;
+                    _dragStartX = logX;
+                    _dragStartY = logY;
+                    _dragCurrentX = logX;
+                    _dragCurrentY = logY;
+                    _isDragging = false;
+                }
+                else
+                {
+                    _dragId = null;
+                    _isDragging = false;
+                    _controller?.SelectNode(null);
+                }
+                break;
+
+            case SKTouchAction.Moved:
+                if (_dragId != null)
+                {
+                    _dragCurrentX = logX;
+                    _dragCurrentY = logY;
+                    var dx = _dragCurrentX - _dragStartX;
+                    var dy = _dragCurrentY - _dragStartY;
+                    if (!_isDragging && MathF.Sqrt(dx * dx + dy * dy) >= DragThresholdDp)
+                        _isDragging = true;
+                    if (_isDragging)
+                        TreeCanvas.InvalidateSurface();
+                }
+                break;
+
+            case SKTouchAction.Released:
+                if (_dragId != null && _isDragging)
+                {
+                    _controller?.Reparent(
+                        _dragId,
+                        GetDropTargetId(logX, logY, _dragId));
+                }
+                else if (_dragId != null)
+                {
+                    // Short tap — just select
+                    _controller?.SelectNode(_dragId);
+                }
+                _dragId = null;
+                _isDragging = false;
+                TreeCanvas.InvalidateSurface();
+                break;
+
+            case SKTouchAction.Cancelled:
+                _dragId = null;
+                _isDragging = false;
+                TreeCanvas.InvalidateSurface();
+                break;
+        }
+    }
+
+    private string? GetDropTargetId(float logX, float logY, string excludeId)
+    {
+        foreach (var node in _layoutNodes)
+        {
+            if (node.Action.Id != excludeId && ActionTreeLayoutEngine.HitTest(node, logX, logY))
+                return node.Action.Id;
+        }
+        return null;
     }
 
     // ── Public API ───────────────────────────────────────────────────────────
@@ -333,7 +407,16 @@ public partial class ActionTreeView : ContentView
     private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
     {
         var density = TreeCanvas.Width > 0 ? (float)(e.Info.Width / TreeCanvas.Width) : 1f;
-        ActionTreeRenderer.Render(e.Surface.Canvas, _layoutNodes, _controller?.SelectedActionId, density);
+
+        DragState? drag = _isDragging && _dragId != null
+            ? new DragState(
+                _dragId,
+                _dragCurrentX,
+                _dragCurrentY,
+                GetDropTargetId(_dragCurrentX, _dragCurrentY, _dragId))
+            : null;
+
+        ActionTreeRenderer.Render(e.Surface.Canvas, _layoutNodes, _controller?.SelectedActionId, density, drag);
     }
 
     // ── Detail panel ──────────────────────────────────────────────────────────
