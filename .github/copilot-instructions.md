@@ -81,6 +81,10 @@ Follows the [dotnet/corefx style](docs/coding-style.md):
 - No `this.` unless required for disambiguation
 - `.editorconfig` at repo root enforces formatting; run `dotnet format src` before committing
 
+## Agent Communication
+
+Agents may use the file `.exchange` in the repository root to communicate with each other across sessions and concurrently. This file is excluded from version control (`.gitignore`). Use it to share state, pass results, or coordinate work between parallel or sequential agent sessions.
+
 ## PR Guidelines
 
 - All changes via PR; each commit must build

@@ -35,6 +35,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public bool MapLoaded => _map != null;
 
+    private string? _selectedActionId;
+    public string? SelectedActionId
+    {
+        get => _selectedActionId;
+        set { _selectedActionId = value; OnPropertyChanged(); }
+    }
+
     private int _selectedSlotIndex;
     public int SelectedSlotIndex
     {
@@ -100,6 +107,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         ReloadMapCommand = new RelayCommand(execute: _ => LoadMap());
 
+        // Restore a previously saved installation path (MAUI apps don't inherit shell env vars)
+        var savedPath = Preferences.Default.Get("cnc_generals_path", string.Empty);
+        if (!string.IsNullOrEmpty(savedPath))
+            _installationService.SetPath(savedPath);
+
         LoadMap();
     }
 
@@ -110,7 +122,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         if (!_installationService.TryGetInstallation(out var installation) || installation is null)
         {
-            MapLoadError = "Generals not found. Set CNC_GENERALS_PATH environment variable.";
+            MapLoadError = "Generals installation not found.\nSet CNC_GENERALS_PATH to the game folder, or use Browse below.";
             return;
         }
 
@@ -122,6 +134,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             MapLoadError = ex.Message;
         }
+    }
+
+    public void LoadMapFromFolder(string folderPath)
+    {
+        _installationService.SetPath(folderPath);
+        LoadMap();
+        if (MapLoaded)
+            Preferences.Default.Set("cnc_generals_path", folderPath);
     }
 
     private void ExecuteValidate()

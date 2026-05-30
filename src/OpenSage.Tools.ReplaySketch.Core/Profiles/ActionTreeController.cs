@@ -15,12 +15,16 @@ public sealed class ActionTreeController
 {
     // ── Palette metadata ─────────────────────────────────────────────────────
 
-    public static readonly (ActionType Type, string Label, string DefaultLabel)[] PaletteItems =
+    /// <summary>
+    /// Palette button metadata. <c>Verb</c> is used as the prefix when computing a default label
+    /// for a new action; for actions without a target it doubles as the full default label.
+    /// </summary>
+    public static readonly (ActionType Type, string Label, string Verb)[] PaletteItems =
     [
         (ActionType.Construct,        "Construct",         "Construct"),
-        (ActionType.GatherResources,  "Gather Resources",  "GatherResources"),
-        (ActionType.RecruitBasicUnit, "Recruit Unit",      "RecruitBasicUnit"),
-        (ActionType.AttackEnemyBase,  "Attack Enemy Base", "AttackEnemyBase"),
+        (ActionType.GatherResources,  "Gather Resources",  "Gather Resources"),
+        (ActionType.RecruitBasicUnit, "Recruit Unit",      "Recruit"),
+        (ActionType.AttackEnemyBase,  "Attack Enemy Base", "Attack Enemy Base"),
     ];
 
     // ── State ─────────────────────────────────────────────────────────────────
@@ -295,18 +299,33 @@ public sealed class ActionTreeController
         var item = PaletteItems.FirstOrDefault(p => p.Type == type);
         var factionIndex = _player.FactionIndex;
 
+        var buildingDefinitionName = type == ActionType.Construct
+            ? BuildingCatalog.ForFaction(factionIndex)
+                .FirstOrDefault(b => b.DisplayName == "Barracks")?.DefinitionName
+                ?? KnownDefinitions.UsaBarracksName
+            : null;
+
+        var unitDefinitionName = type == ActionType.RecruitBasicUnit
+            ? UnitCatalog.ForFaction(factionIndex).FirstOrDefault()?.DefinitionName
+            : null;
+
+        // Default label is "[Verb] [TargetDisplayName]" for actions that target a specific
+        // object (e.g. "Construct Barracks", "Recruit Ranger"), or just the verb for others.
+        var label = type switch
+        {
+            ActionType.Construct when buildingDefinitionName != null
+                => $"{item.Verb} {BuildingCatalog.GetDisplayName(buildingDefinitionName, factionIndex)}",
+            ActionType.RecruitBasicUnit when unitDefinitionName != null
+                => $"{item.Verb} {UnitCatalog.GetDisplayName(unitDefinitionName, factionIndex)}",
+            _ => item.Verb,
+        };
+
         return new ActionEntry(
-            label: item.DefaultLabel,
+            label: label,
             type: type,
             position: DefaultPosition(type),
             timing: new FixedTiming(0),  // overwritten in CommitFlyout
-            buildingDefinitionName: type == ActionType.Construct
-                ? BuildingCatalog.ForFaction(factionIndex)
-                    .FirstOrDefault(b => b.DisplayName == "Barracks")?.DefinitionName
-                    ?? KnownDefinitions.UsaBarracksName
-                : null,
-            unitDefinitionName: type == ActionType.RecruitBasicUnit
-                ? UnitCatalog.ForFaction(factionIndex).FirstOrDefault()?.DefinitionName
-                : null);
+            buildingDefinitionName: buildingDefinitionName,
+            unitDefinitionName: unitDefinitionName);
     }
 }

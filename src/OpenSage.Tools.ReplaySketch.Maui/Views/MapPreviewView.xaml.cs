@@ -1,29 +1,46 @@
-﻿using System.Numerics;
+﻿using System.IO;
 using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
+using OpenSage.Tools.ReplaySketch.Profiles;
 using OpenSage.Tools.ReplaySketch.Services;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using SkiaSharp.Views.Maui.Controls;
 
 namespace OpenSage.Tools.ReplaySketch.Maui.Views;
 
 public partial class MapPreviewView : ContentView
 {
-    // Slot colours (ARGB)
-    private static readonly SKColor[] SlotColors =
-    [
-        new SKColor(0xFF, 0x44, 0x44, 0xFF), // slot 0 – red
-        new SKColor(0x44, 0x44, 0xFF, 0xFF), // slot 1 – blue
-        new SKColor(0x44, 0xFF, 0x44, 0xFF), // slot 2 – green
-        new SKColor(0x44, 0xFF, 0xFF, 0xFF), // slot 3 – yellow
-    ];
-
-    private static readonly SKColor AnchorColor = SKColors.White;
-    private static readonly SKColor CircleColor = new SKColor(0xFF, 0xFF, 0xFF, 0x66);
-    private static readonly SKColor LineColor = new SKColor(0xFF, 0xFF, 0xFF, 0xCC);
-    private static readonly SKColor ArcColor = new SKColor(0xFF, 0xFF, 0xFF, 0x66);
-
     private MainViewModel? _vm;
+    private ActionTreeView? _treeView;
+
+    // Cached base layout — updated every OnPaintSurface call
+    private float _previewOffsetX;
+    private float _previewOffsetY;
+    private float _previewSize;
+
+    // Marker hit-test table rebuilt every paint (pre-view-transform coords)
+    private readonly List<MarkerInfo> _markers = new();
+    private readonly record struct MarkerInfo(int PlayerIdx, string ActionId, SKPoint Screen);
+    private const float HitRadiusPx = 14f;
+
+    // ── Zoom / pan ────────────────────────────────────────────────────────────
+    private SKMatrix _viewMatrix = SKMatrix.Identity;
+    private const float MinScale = 0.5f;
+    private const float MaxScale = 10f;
+
+    // Single-pointer drag state
+    private long _dragTouchId = -1;
+    private SKPoint _dragStartTouch;
+    private SKMatrix _dragStartMatrix;
+    private bool _hasDragged;
+    private const float DragThresholdPx = 6f;
+
+    // Double-tap reset detection
+    private DateTime _lastTapTime = DateTime.MinValue;
+    private SKPoint _lastTapPoint;
+    private static readonly TimeSpan DoubleTapInterval = TimeSpan.FromMilliseconds(350);
+    private const float DoubleTapDistPx = 30f;
 
     public MapPreviewView()
     {
@@ -33,197 +50,238 @@ public partial class MapPreviewView : ContentView
     public void BindViewModel(MainViewModel vm)
     {
         _vm = vm;
-        _vm.PropertyChanged += (_, _) => Canvas.InvalidateSurface();
-        Invalidate();
+        _vm.PropertyChanged += (_, e) =>
+        {
+            Canvas.InvalidateSurface();
+            if (e.PropertyName is nameof(MainViewModel.MapLoadError) or nameof(MainViewModel.Map))
+                SyncNoMapOverlay();
+        };
+
+        // Pre-fill path from saved preferences, falling back to the env var (may be empty in Mac Catalyst)
+        var savedPath = Preferences.Default.Get("cnc_generals_path", string.Empty);
+        var existing = !string.IsNullOrEmpty(savedPath)
+            ? savedPath
+            : Environment.GetEnvironmentVariable("CNC_GENERALS_PATH");
+        if (!string.IsNullOrEmpty(existing))
+            InstallPathEntry.Text = existing;
+
+        SyncNoMapOverlay();
+    }
+
+    private void SyncNoMapOverlay()
+    {
+        var hasMap = _vm?.Map != null;
+        NoMapOverlay.IsVisible = !hasMap;
+        if (!hasMap && _vm?.MapLoadError != null)
+            NoMapErrorLabel.Text = _vm.MapLoadError;
+        else if (!hasMap)
+            NoMapErrorLabel.Text = "No map loaded";
+    }
+
+    // ── No-map overlay handlers ────────────────────────────────────────────────
+
+    private async void OnBrowseClicked(object? sender, EventArgs e)
+    {
+        // FilePicker lets the user pick any file inside the game folder;
+        // we take its directory as the installation path.
+        try
+        {
+            var result = await FilePicker.PickAsync(new PickOptions
+            {
+                PickerTitle = "Select any file inside your Generals installation folder",
+            });
+            if (result != null)
+                InstallPathEntry.Text = Path.GetDirectoryName(result.FullPath) ?? string.Empty;
+        }
+        catch
+        {
+            // User cancelled or picker unavailable — no-op
+        }
+    }
+
+    private void OnLoadClicked(object? sender, EventArgs e)
+    {
+        var path = InstallPathEntry.Text?.Trim();
+        if (string.IsNullOrEmpty(path)) return;
+        _vm?.LoadMapFromFolder(path);
+    }
+
+    public void SetActionTreeBridge(ActionTreeView treeView)
+    {
+        _treeView = treeView;
     }
 
     public void Invalidate() => Canvas.InvalidateSurface();
+
+    private float GetDensity() =>
+        Canvas.CanvasSize.Width > 0 && Canvas.Width > 0
+            ? (float)(Canvas.CanvasSize.Width / Canvas.Width)
+            : 1f;
+
+    // ── Touch / zoom ─────────────────────────────────────────────────────────
+
+    private void OnResetZoomClicked(object? sender, EventArgs e)
+    {
+        _viewMatrix = SKMatrix.Identity;
+        ResetZoomBtn.IsVisible = false;
+        Canvas.InvalidateSurface();
+    }
+
+    private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
+    {
+        e.Handled = true;
+
+        switch (e.ActionType)
+        {
+            case SKTouchAction.Pressed:
+                _dragTouchId = e.Id;
+                _dragStartTouch = e.Location;
+                _dragStartMatrix = _viewMatrix;
+                _hasDragged = false;
+                break;
+
+            case SKTouchAction.Moved:
+                if (e.Id == _dragTouchId)
+                {
+                    var dx = e.Location.X - _dragStartTouch.X;
+                    var dy = e.Location.Y - _dragStartTouch.Y;
+                    if (!_hasDragged && MathF.Sqrt(dx * dx + dy * dy) > DragThresholdPx)
+                        _hasDragged = true;
+                    if (_hasDragged)
+                    {
+                        _viewMatrix = _dragStartMatrix.PostConcat(SKMatrix.CreateTranslation(dx, dy));
+                        UpdateResetButton();
+                        Canvas.InvalidateSurface();
+                    }
+                }
+                break;
+
+            case SKTouchAction.Released:
+                if (e.Id == _dragTouchId && !_hasDragged)
+                    HandleTap(e.Location);
+                _dragTouchId = -1;
+                break;
+
+            case SKTouchAction.WheelChanged:
+                // Scroll wheel / trackpad scroll → zoom at cursor
+                ZoomAtPoint(e.Location, e.WheelDelta);
+                break;
+        }
+    }
+
+    private void HandleTap(SKPoint canvasPos)
+    {
+        // Double-tap → reset zoom/pan
+        var now = DateTime.UtcNow;
+        if (now - _lastTapTime < DoubleTapInterval)
+        {
+            var ddx = canvasPos.X - _lastTapPoint.X;
+            var ddy = canvasPos.Y - _lastTapPoint.Y;
+            if (ddx * ddx + ddy * ddy < DoubleTapDistPx * DoubleTapDistPx)
+            {
+                _viewMatrix = SKMatrix.Identity;
+                UpdateResetButton();
+                Canvas.InvalidateSurface();
+                _lastTapTime = DateTime.MinValue;
+                return;
+            }
+        }
+        _lastTapTime = now;
+        _lastTapPoint = canvasPos;
+
+        // Map touch position (canvas pixels) back to pre-transform draw-call space
+        if (!_viewMatrix.TryInvert(out var inverse)) return;
+        var pt = inverse.MapPoint(canvasPos);
+
+        var density = GetDensity();
+        var hitR = HitRadiusPx * density;
+
+        // Hit-test existing markers
+        foreach (var m in _markers)
+        {
+            var dx = pt.X - m.Screen.X;
+            var dy = pt.Y - m.Screen.Y;
+            if (dx * dx + dy * dy <= hitR * hitR)
+            {
+                _treeView?.SelectActionFromMap(m.PlayerIdx, m.ActionId);
+                return;
+            }
+        }
+
+        // Empty-space tap: place selected action at clicked position
+        if (_vm?.SelectedActionId == null || _previewSize <= 0) return;
+        var action = _vm.SelectedPlayer.Actions.FirstOrDefault(a => a.Id == _vm.SelectedActionId);
+        if (action?.Position == null) return;
+
+        var normX = Math.Clamp((pt.X - _previewOffsetX) / _previewSize, 0f, 1f);
+        var normY = Math.Clamp(1f - (pt.Y - _previewOffsetY) / _previewSize, 0f, 1f);
+        action.Position = new NormalizedPosition(normX, normY);
+        _treeView?.RefreshSelectedNode();
+        Canvas.InvalidateSurface();
+    }
+
+    private void ZoomAtPoint(SKPoint canvasPos, float wheelDelta)
+    {
+        if (wheelDelta == 0) return;
+
+        // Each wheel tick is ~120 units; map to a smooth zoom ratio
+        var ratio = 1f + Math.Clamp(wheelDelta / 600f, -0.3f, 0.3f);
+
+        // Extract current uniform scale from matrix and clamp
+        var currentScale = MathF.Sqrt(_viewMatrix.ScaleX * _viewMatrix.ScaleX + _viewMatrix.SkewY * _viewMatrix.SkewY);
+        var newScale = Math.Clamp(currentScale * ratio, MinScale, MaxScale);
+        ratio = newScale / currentScale;
+
+        _viewMatrix = _viewMatrix.PostConcat(
+            SKMatrix.CreateScale(ratio, ratio, canvasPos.X, canvasPos.Y));
+        UpdateResetButton();
+        Canvas.InvalidateSurface();
+    }
+
+    private void UpdateResetButton()
+    {
+        var isIdentity = _viewMatrix.IsIdentity;
+        if (ResetZoomBtn.IsVisible == isIdentity)  // visible when NOT identity
+            ResetZoomBtn.IsVisible = !isIdentity;
+    }
+
+    // ── Paint ────────────────────────────────────────────────────────────────
 
     private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear(new SKColor(0x2A, 0x2A, 0x2A));
 
+        _markers.Clear();
+
         var map = _vm?.Map;
-        if (map == null)
-        {
-            NoMapLabel.IsVisible = true;
-            return;
-        }
-        NoMapLabel.IsVisible = false;
+        if (map == null) return;
 
         var info = e.Info;
         var previewSize = Math.Min(info.Width, info.Height);
         var offsetX = (info.Width - previewSize) / 2f;
         var offsetY = (info.Height - previewSize) / 2f;
 
-        // Draw border
-        using var borderPaint = new SKPaint { Color = new SKColor(0x55, 0x55, 0x55), Style = SKPaintStyle.Stroke, StrokeWidth = 1 };
-        canvas.DrawRect(offsetX, offsetY, previewSize, previewSize, borderPaint);
+        // Cache base layout for touch handler
+        _previewOffsetX = offsetX;
+        _previewOffsetY = offsetY;
+        _previewSize = previewSize;
 
-        var extentMin = map.ExtentMin;
-        var extentMax = map.ExtentMax;
+        // Apply zoom/pan transform — _viewMatrix operates in physical canvas pixel space
+        canvas.Save();
+        canvas.Concat(ref _viewMatrix);
 
-        SKPoint WorldToScreen(Vector2 world)
-        {
-            var nx = (world.X - extentMin.X) / (extentMax.X - extentMin.X);
-            var ny = 1f - (world.Y - extentMin.Y) / (extentMax.Y - extentMin.Y);
-            return new SKPoint(offsetX + nx * previewSize, offsetY + ny * previewSize);
-        }
+        var markers = MapPreviewRenderer.Render(
+            canvas, map,
+            _vm!.Scenario.Players,
+            _vm.Scenario.BaseRadiusWorldUnits,
+            _vm.SelectedSlotIndex,
+            _vm.SelectedActionId,
+            offsetX, offsetY, previewSize);
 
-        float WorldRadiusToPixels(float worldRadius)
-        {
-            var mapWidthWorld = extentMax.X - extentMin.X;
-            return worldRadius / mapWidthWorld * previewSize;
-        }
+        canvas.Restore();
 
-        var scenario = _vm!.Scenario;
-        var selectedSlotIndex = _vm.SelectedSlotIndex;
-
-        for (var slotIdx = 0; slotIdx < scenario.Players.Count; slotIdx++)
-        {
-            var player = scenario.Players[slotIdx];
-            var color = slotIdx < SlotColors.Length ? SlotColors[slotIdx] : AnchorColor;
-            var isSelected = slotIdx == selectedSlotIndex;
-
-            // Player start anchor
-            var startWorld = map.PlayerStart(slotIdx);
-            var startScreen = WorldToScreen(new Vector2(startWorld.X, startWorld.Y));
-
-            using var anchorPaint = new SKPaint { Color = color, Style = SKPaintStyle.Fill };
-            canvas.DrawCircle(startScreen, isSelected ? 7f : 5f, anchorPaint);
-
-            using var textPaint = new SKPaint { Color = color };
-            using var textFont = new SKFont { Size = 12 };
-            canvas.DrawText($"P{slotIdx + 1}", startScreen.X + 6, startScreen.Y - 4, textFont, textPaint);
-
-            // Action markers
-            for (var actionIdx = 0; actionIdx < player.Actions.Count; actionIdx++)
-            {
-                DrawActionMarker(canvas, player.Actions[actionIdx], actionIdx, slotIdx, map,
-                    WorldToScreen, WorldRadiusToPixels, color, isSelected,
-                    scenario.BaseRadiusWorldUnits);
-            }
-        }
-    }
-
-    private static void DrawActionMarker(
-        SKCanvas canvas,
-        ActionEntry action,
-        int actionIdx,
-        int slotIdx,
-        MapMetadataService map,
-        Func<Vector2, SKPoint> worldToScreen,
-        Func<float, float> worldRadiusToPixels,
-        SKColor color,
-        bool isSelected,
-        float baseRadius)
-    {
-        if (action.Position == null) return;
-
-        var label = $"{actionIdx + 1}";
-
-        using var dotPaint = new SKPaint { Color = color, Style = SKPaintStyle.Fill };
-        using var circlePaint = new SKPaint { Color = CircleColor, Style = SKPaintStyle.Stroke, StrokeWidth = 1 };
-        using var linePaint = new SKPaint { Color = LineColor, Style = SKPaintStyle.Stroke, StrokeWidth = 1.5f };
-        using var arcFillPaint = new SKPaint { Color = ArcColor, Style = SKPaintStyle.Fill };
-        using var selPaint = new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Stroke, StrokeWidth = 1.5f };
-        using var textPaint = new SKPaint { Color = color };
-        using var textFont = new SKFont { Size = 11 };
-
-        switch (action.Position)
-        {
-            case NormalizedPosition np:
-                {
-                    var wx = map.ExtentMin.X + np.NormX * (map.ExtentMax.X - map.ExtentMin.X);
-                    var wy = map.ExtentMin.Y + np.NormY * (map.ExtentMax.Y - map.ExtentMin.Y);
-                    var screen = worldToScreen(new Vector2(wx, wy));
-                    canvas.DrawCircle(screen, isSelected ? 5f : 3f, dotPaint);
-                    if (isSelected) canvas.DrawCircle(screen, 7f, selPaint);
-                    canvas.DrawText(label, screen.X + 6, screen.Y - 4, textFont, textPaint);
-                    break;
-                }
-
-            case LandmarkRelativePosition lrp:
-                {
-                    var anchor = GetLandmarkWorld(lrp.Landmark, slotIdx, 1 - slotIdx, map);
-                    var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
-                    var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
-
-                    // Distance circle
-                    canvas.DrawCircle(anchorScreen, distPixels, circlePaint);
-
-                    switch (lrp.Angle)
-                    {
-                        case FixedAngle fa:
-                            {
-                                var rad = fa.Degrees * MathF.PI / 180f;
-                                var tip = new SKPoint(
-                                    anchorScreen.X + MathF.Cos(rad) * distPixels,
-                                    anchorScreen.Y - MathF.Sin(rad) * distPixels);
-                                canvas.DrawLine(anchorScreen, tip, linePaint);
-                                canvas.DrawCircle(tip, isSelected ? 5f : 3f, dotPaint);
-                                if (isSelected) canvas.DrawCircle(tip, 7f, selPaint);
-                                canvas.DrawText(label, tip.X + 6, tip.Y - 4, textFont, textPaint);
-                                break;
-                            }
-
-                        case RandomAngle ra:
-                            {
-                                DrawArcSector(canvas, anchorScreen, distPixels,
-                                    ra.MinDegrees, ra.MaxDegrees, arcFillPaint, dotPaint);
-                                var midRad = (ra.MinDegrees + ra.MaxDegrees) * 0.5f * MathF.PI / 180f;
-                                var midTip = new SKPoint(
-                                    anchorScreen.X + MathF.Cos(midRad) * distPixels,
-                                    anchorScreen.Y - MathF.Sin(midRad) * distPixels);
-                                canvas.DrawText(label, midTip.X + 4, midTip.Y - 4, textFont, textPaint);
-                                break;
-                            }
-                    }
-                    break;
-                }
-        }
-    }
-
-    private static Vector3 GetLandmarkWorld(LandmarkType landmark, int ownerIdx, int enemyIdx, MapMetadataService map)
-        => landmark switch
-        {
-            LandmarkType.OwnBase => map.PlayerStart(ownerIdx),
-            LandmarkType.EnemyBase => map.PlayerStart(enemyIdx),
-            LandmarkType.MapCenter => map.MapCenter,
-            _ => map.MapCenter,
-        };
-
-    private static void DrawArcSector(
-        SKCanvas canvas,
-        SKPoint center,
-        float radius,
-        float minDeg,
-        float maxDeg,
-        SKPaint fillPaint,
-        SKPaint edgePaint)
-    {
-        const int segments = 24;
-        var minRad = minDeg * MathF.PI / 180f;
-        var maxRad = maxDeg * MathF.PI / 180f;
-        var step = (maxRad - minRad) / segments;
-
-        using var path = new SKPath();
-        path.MoveTo(center);
-        for (var i = 0; i <= segments; i++)
-        {
-            var a = minRad + i * step;
-            path.LineTo(center.X + MathF.Cos(a) * radius, center.Y - MathF.Sin(a) * radius);
-        }
-        path.Close();
-        canvas.DrawPath(path, fillPaint);
-
-        using var outlinePaint = new SKPaint { Color = edgePaint.Color, Style = SKPaintStyle.Stroke, StrokeWidth = 1.2f };
-        var minTip = new SKPoint(center.X + MathF.Cos(minRad) * radius, center.Y - MathF.Sin(minRad) * radius);
-        var maxTip = new SKPoint(center.X + MathF.Cos(maxRad) * radius, center.Y - MathF.Sin(maxRad) * radius);
-        canvas.DrawLine(center, minTip, outlinePaint);
-        canvas.DrawLine(center, maxTip, outlinePaint);
-        canvas.DrawCircle(minTip, 3f, edgePaint);
-        canvas.DrawCircle(maxTip, 3f, edgePaint);
+        foreach (var m in markers)
+            _markers.Add(new MarkerInfo(m.PlayerIdx, m.ActionId, new SKPoint(m.ScreenX, m.ScreenY)));
     }
 }

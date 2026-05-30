@@ -31,6 +31,9 @@ public partial class ActionTreeView : ContentView
     private SizeF _canvasLogicalSize;
     private VerticalStackLayout? _externalDetailPanel;
 
+    // Pending selection to apply once a new controller is created for a different player
+    private string? _pendingSelectId;
+
     // ── Drag state ───────────────────────────────────────────────────────────
     private const float DragThresholdDp = 8f;
     private string? _dragId;
@@ -156,6 +159,36 @@ public partial class ActionTreeView : ContentView
         BuildDetailPanel(_selectedNode);
     }
 
+    /// <summary>
+    /// Selects an action from an external view (e.g. the map view).
+    /// Handles the case where the action belongs to a different player slot —
+    /// the slot is switched first, and the selection is applied once the new controller is ready.
+    /// </summary>
+    public void SelectActionFromMap(int playerSlotIndex, string actionId)
+    {
+        if (_vm == null) return;
+        if (playerSlotIndex != _vm.SelectedSlotIndex)
+        {
+            _pendingSelectId = actionId;
+            _vm.SelectedSlotIndex = playerSlotIndex;  // triggers AttachController via PropertyChanged
+        }
+        else
+        {
+            _controller?.SelectNode(actionId);
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the detail panel and repaints the tree canvas for the currently selected node.
+    /// Called by external views (e.g. the map view) after they mutate an action's position.
+    /// </summary>
+    public void RefreshSelectedNode()
+    {
+        _selectedNode = FindNode(_controller?.SelectedActionId);
+        BuildDetailPanel(_selectedNode);
+        TreeCanvas.InvalidateSurface();
+    }
+
     public void BindViewModel(MainViewModel vm)
     {
         _vm = vm;
@@ -183,15 +216,26 @@ public partial class ActionTreeView : ContentView
         }
         FlyoutOverlay.IsVisible = false;
 
+        if (_vm != null) _vm.SelectedActionId = null;
+
         _controller = new ActionTreeController(player);
         _controller.ActionsChanged += (_, _) => RefreshTree();
         _controller.SelectionChanged += (_, _) => SyncSelection();
         _controller.FlyoutStateChanged += (_, _) => SyncFlyout();
+
+        // Apply any selection that was requested before the player switch completed
+        if (_pendingSelectId != null)
+        {
+            var id = _pendingSelectId;
+            _pendingSelectId = null;
+            _controller.SelectNode(id);
+        }
     }
 
     private void SyncSelection()
     {
         _selectedNode = FindNode(_controller?.SelectedActionId);
+        if (_vm != null) _vm.SelectedActionId = _controller?.SelectedActionId;
         BuildDetailPanel(_selectedNode);
         TreeCanvas.InvalidateSurface();
     }
@@ -205,11 +249,15 @@ public partial class ActionTreeView : ContentView
             var item = ActionTreeController.PaletteItems.FirstOrDefault(p => p.Type == _controller.FlyoutType);
             FlyoutCard.Margin = new Thickness(110, 40, 0, 0);
             BuildFlyoutContent(item.Label, _vm!.SelectedPlayer.FactionIndex);
+            // Enable backdrop interactivity before making it visible so it can dismiss on outside tap
+            FlyoutBackdrop.InputTransparent = false;
             FlyoutOverlay.IsVisible = true;
         }
         else
         {
             FlyoutOverlay.IsVisible = false;
+            // Return backdrop to transparent so it never intercepts palette-button clicks
+            FlyoutBackdrop.InputTransparent = true;
         }
     }
 

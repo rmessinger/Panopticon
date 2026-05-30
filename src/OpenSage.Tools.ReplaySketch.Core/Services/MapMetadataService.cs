@@ -16,20 +16,28 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 /// </summary>
 public sealed class MapMetadataService
 {
-    private readonly HeightMap _heightMap;
+    private readonly HeightMap? _heightMap;
     private readonly Vector3[] _playerStarts;
 
     public Vector3 ExtentMin { get; }
     public Vector3 ExtentMax { get; }
     public Vector3 MapCenter => (ExtentMin + ExtentMax) * 0.5f;
 
-    private MapMetadataService(HeightMap heightMap, Vector3 extentMin, Vector3 extentMax, Vector3[] playerStarts)
+    private MapMetadataService(HeightMap? heightMap, Vector3 extentMin, Vector3 extentMax, Vector3[] playerStarts)
     {
         _heightMap = heightMap;
         _playerStarts = playerStarts;
         ExtentMin = extentMin;
         ExtentMax = extentMax;
     }
+
+    /// <summary>
+    /// Creates a lightweight instance for unit tests — no game files required.
+    /// <see cref="SampleHeight"/> returns 0 for all positions.
+    /// </summary>
+    public static MapMetadataService CreateForTesting(
+        Vector3 extentMin, Vector3 extentMax, params Vector3[] playerStarts)
+        => new(null, extentMin, extentMax, playerStarts);
 
     /// <summary>
     /// Loads the given map file from the installation's virtual file system.
@@ -105,5 +113,5 @@ public sealed class MapMetadataService
     }
 
     /// <summary>Bilinear height sample at world XY coordinates.</summary>
-    public float SampleHeight(float x, float y) => _heightMap.GetHeight(x, y);
+    public float SampleHeight(float x, float y) => _heightMap?.GetHeight(x, y) ?? 0f;
 }

@@ -6,15 +6,63 @@
              x:Name="Root">
     <Grid>
         <skia:SKCanvasView x:Name="Canvas"
-                           WidthRequest="400"
-                           HeightRequest="400"
+                           HorizontalOptions="Fill"
+                           VerticalOptions="Fill"
                            PaintSurface="OnPaintSurface"
-                           EnableTouchEvents="False"/>
-        <Label x:Name="NoMapLabel"
-               Text="No map loaded"
-               HorizontalOptions="Center"
-               VerticalOptions="Center"
-               TextColor="Gray"
-               IsVisible="True"/>
+                           Touch="OnCanvasTouch"
+                           EnableTouchEvents="True"/>
+        <!-- No-map overlay: shown when no map is loaded; hidden once map loads -->
+        <VerticalStackLayout x:Name="NoMapOverlay"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Spacing="12"
+                             MaximumWidthRequest="340"
+                             Padding="24"
+                             IsVisible="True">
+            <Label x:Name="NoMapErrorLabel"
+                   Text="No map loaded"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   TextColor="#CCC"
+                   FontSize="14"/>
+            <Label Text="Generals installation folder:"
+                   TextColor="#888"
+                   FontSize="11"/>
+            <Entry x:Name="InstallPathEntry"
+                   Placeholder="e.g. /path/to/Generals"
+                   PlaceholderColor="#555"
+                   TextColor="#CCC"
+                   BackgroundColor="#333"
+                   FontSize="12"/>
+            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                <Button Text="Browse…"
+                        Clicked="OnBrowseClicked"
+                        FontSize="12"
+                        Padding="12,6"
+                        CornerRadius="4"
+                        BackgroundColor="#444"
+                        TextColor="#CCC"/>
+                <Button Text="Load"
+                        Clicked="OnLoadClicked"
+                        FontSize="12"
+                        Padding="12,6"
+                        CornerRadius="4"
+                        BackgroundColor="#336699"
+                        TextColor="White"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+        <!-- Reset-zoom button, visible only when the view has been panned/zoomed -->
+        <Button x:Name="ResetZoomBtn"
+                Text="↺ Reset"
+                Clicked="OnResetZoomClicked"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="8"
+                FontSize="11"
+                Padding="8,4"
+                CornerRadius="4"
+                BackgroundColor="#80333333"
+                TextColor="#CCC"
+                IsVisible="False"/>
     </Grid>
 </ContentView>

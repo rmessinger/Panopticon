@@ -35,8 +35,11 @@
 
         <!-- Add-Action flyout overlay — covers entire view, hidden by default -->
         <Grid x:Name="FlyoutOverlay" IsVisible="False">
-            <!-- Semi-transparent backdrop; tap to dismiss -->
-            <BoxView x:Name="FlyoutBackdrop" BackgroundColor="#80000000" InputTransparent="False"/>
+            <!-- Semi-transparent backdrop; tap to dismiss.
+                 InputTransparent=True while hidden so its gesture recognizer never
+                 fires for palette-button clicks (Mac Catalyst delivers pointer events
+                 to gesture recognizers on views inside hidden ancestors). -->
+            <BoxView x:Name="FlyoutBackdrop" BackgroundColor="#80000000" InputTransparent="True"/>
             <!-- Flyout card -->
             <Border x:Name="FlyoutCard"
                     BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2D2D2D}"

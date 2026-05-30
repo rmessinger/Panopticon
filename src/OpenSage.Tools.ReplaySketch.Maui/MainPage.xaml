@@ -21,13 +21,52 @@
                 <views:ScenarioView x:Name="ScenarioView"/>
             </Frame>
 
-            <!-- Centre: action tree editor (palette + node graph) -->
-            <Frame Grid.Column="1"
-                   BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
-                   BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
-                   Padding="0" Margin="2" CornerRadius="4">
-                <views:ActionTreeView x:Name="ActionTreeView"/>
-            </Frame>
+            <!-- Centre: tab bar + action tree / map view -->
+            <Grid Grid.Column="1"
+                  RowDefinitions="Auto,*"
+                  Margin="2">
+
+                <!-- Tab bar -->
+                <HorizontalStackLayout Grid.Row="0"
+                                       Spacing="0"
+                                       BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2A2A2A}">
+                    <Button x:Name="TreeTabBtn"
+                            Text="Tree"
+                            Clicked="OnTreeTabClicked"
+                            FontSize="12"
+                            Padding="16,6"
+                            CornerRadius="0"
+                            BorderWidth="0"
+                            BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                            TextColor="{AppThemeBinding Light=#333, Dark=#EEE}"/>
+                    <Button x:Name="MapTabBtn"
+                            Text="Map"
+                            Clicked="OnMapTabClicked"
+                            FontSize="12"
+                            Padding="16,6"
+                            CornerRadius="0"
+                            BorderWidth="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2A2A2A}"
+                            TextColor="{AppThemeBinding Light=#888, Dark=#888}"/>
+                </HorizontalStackLayout>
+
+                <!-- Content: tree view and map view share the same cell -->
+                <Grid Grid.Row="1">
+                    <Frame x:Name="TreeFrame"
+                           BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
+                           BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                           Padding="0" CornerRadius="0" IsVisible="True">
+                        <views:ActionTreeView x:Name="ActionTreeView"/>
+                    </Frame>
+                    <Frame x:Name="MapFrame"
+                           BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
+                           BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                           Padding="0" CornerRadius="0" IsVisible="False">
+                        <views:MapPreviewView x:Name="MapPreviewView"/>
+                    </Frame>
+                </Grid>
+
+            </Grid>
 
             <!-- Right: detail panel for the selected action node -->
             <Frame Grid.Column="2"
