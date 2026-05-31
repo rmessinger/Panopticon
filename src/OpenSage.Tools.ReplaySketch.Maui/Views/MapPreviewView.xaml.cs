@@ -14,6 +14,10 @@ public partial class MapPreviewView : ContentView
     private MainViewModel? _vm;
     private ActionTreeView? _treeView;
 
+    // Cached bird's-eye terrain thumbnail for the current map
+    private SKBitmap? _previewBitmap;
+    private MapMetadataService? _previewBitmapSource;
+
     // Cached base layout — updated every OnPaintSurface call
     private float _previewOffsetX;
     private float _previewOffsetY;
@@ -54,7 +58,10 @@ public partial class MapPreviewView : ContentView
         {
             Canvas.InvalidateSurface();
             if (e.PropertyName is nameof(MainViewModel.MapLoadError) or nameof(MainViewModel.Map))
+            {
                 SyncNoMapOverlay();
+                RebuildPreviewBitmap();
+            }
         };
 
         // Pre-fill path from saved preferences, falling back to the env var (may be empty in Mac Catalyst)
@@ -76,6 +83,26 @@ public partial class MapPreviewView : ContentView
             NoMapErrorLabel.Text = _vm.MapLoadError;
         else if (!hasMap)
             NoMapErrorLabel.Text = "No map loaded";
+    }
+
+    private void RebuildPreviewBitmap()
+    {
+        var map = _vm?.Map;
+        if (map == _previewBitmapSource) return;
+
+        _previewBitmap?.Dispose();
+        _previewBitmap = null;
+        _previewBitmapSource = map;
+
+        if (map?.PreviewImagePixels != null && map.PreviewImageWidth > 0 && map.PreviewImageHeight > 0)
+        {
+            var info = new SKImageInfo(map.PreviewImageWidth, map.PreviewImageHeight,
+                SKColorType.Rgba8888, SKAlphaType.Opaque);
+            var bitmap = new SKBitmap(info);
+            System.Runtime.InteropServices.Marshal.Copy(
+                map.PreviewImagePixels, 0, bitmap.GetPixels(), map.PreviewImagePixels.Length);
+            _previewBitmap = bitmap;
+        }
     }
 
     // ── No-map overlay handlers ────────────────────────────────────────────────
@@ -272,7 +299,7 @@ public partial class MapPreviewView : ContentView
         canvas.Concat(ref _viewMatrix);
 
         var markers = MapPreviewRenderer.Render(
-            canvas, map,
+            canvas, map, _previewBitmap,
             _vm!.Scenario.Players,
             _vm.Scenario.BaseRadiusWorldUnits,
             _vm.SelectedSlotIndex,

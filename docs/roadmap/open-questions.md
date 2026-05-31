@@ -92,3 +92,63 @@
     behind the module API* rather than a separate ECS substrate per domain.)
   - Affects [A4](track-a-foundations.md), [A1](deep-dives/headless-host.md),
     [B6](deep-dives/distributed-simulation.md), and [B3](track-b-scale.md).
+- **P0 harness — runtime object references — Decision: implicit auto-handles + opt-in names + query
+  selectors.** Authored commands in the [P0 harness](deep-dives/playable-baseline-harness.md)
+  reference an object an *earlier command created* (a produced unit, a built structure) by an
+  **implicit handle keyed to the producing command**, resolved at dispatch from build/production
+  results — so an author normally writes nothing ("attack the barracks built in command #3" just
+  works). An **explicit name** is opt-in sugar for readability/disambiguation. Objects the script did
+  **not** create (enemy/world objects such as an attack target) are referenced by a small set of
+  **query selectors** (faction/relationship/definition/proximity) resolved against `GameLogic` at
+  dispatch. Chosen over *named-handles-only* (forces noisy boilerplate and can't name pre-placed or
+  enemy objects) and *query-only* (non-deterministic and fragile for the script's own objects). This
+  generalizes today's `AfterActionTiming`/`DeferredAction` trigger model. Affects
+  [P0](track-p-playable-baseline.md) (P0-1).
+- **P0 harness — assertion DSL — Decision: JSON predicates over a fixed vocabulary, with a
+  code-defined escape hatch.** The authored assertion surface for the
+  [P0 harness](deep-dives/playable-baseline-harness.md) is **declarative JSON predicates** (e.g.
+  `{path: "player[1].money", op: ">=", value: 0}`) over a fixed path/operator vocabulary spanning
+  outcome, state, and per-tick invariant assertions — serializable into scenario files, trivially
+  machine-readable, and cheap for low-effort agents/CI to author. Complex invariants that exceed the
+  vocabulary use an **escape hatch of code-defined (C#) predicates** registered by name and
+  referenced from the scenario. Chosen over *JSON-only* (too limiting for rich invariants), a
+  *small expression language* (needs a parser/evaluator for marginal ergonomic gain), and
+  *code-only* (not serializable or agent-authorable). Affects
+  [P0](track-p-playable-baseline.md) (P0-4).
+- **P-track object ownership tracking — Decision: maintained per-`Player` owned-object set/counts.**
+  Per-`Player` building/unit counts (and an owned-object set) are maintained incrementally on
+  create/transfer/`OnDie`/`Destroy`, giving **O(1) ownership checks**. Chosen over an on-demand
+  all-objects scan (the `Player.GetEnergy` pattern, `Player.cs:92-104`) because the same state is
+  queried frequently by the victory check ([P3](track-p-playable-baseline.md)) and the AI decision
+  loop ([P2](track-p-playable-baseline.md)), and the maintained counts are friendly to the scale
+  tracks. Realized as a **foundational sub-phase [P1-5](deep-dives/skirmish-setup.md)** (owned by P1,
+  set up alongside players) consumed by both consumers rather than duplicated in either. Affects
+  [P1](track-p-playable-baseline.md), [P2](track-p-playable-baseline.md),
+  [P3](track-p-playable-baseline.md).
+- **Skirmish AI actuation — Decision: emit `Order`s through `OrderProcessor`.** The AI issues the
+  same `Order`s a human would (`BuildObject`/`CreateUnit`/`ForceAttack…`) rather than calling engine
+  APIs directly, so AI actions enter the recorded/replayed order stream — keeping runs reproducible
+  for [A2](track-a-foundations.md)/Track B and consistent with the
+  [P0 harness](deep-dives/playable-baseline-harness.md). Trade-off accepted: the AI must synthesize
+  valid order arguments (positions, object ids). Must be settled **before P2-2**. Affects
+  [P2](track-p-playable-baseline.md).
+- **Skirmish AI competence scope — Decision: minimum legal opponent in Track P; configurable
+  difficulty tiers designed but deferred.** Track P implements only a *minimum legal* AI — it builds,
+  economizes, produces, and mounts at least one attack so a match terminates win/lose; it is **not**
+  balanced or tournament-grade. The AI is structured for **configurable difficulty tiers**, but only
+  the minimum tier is implemented now; richer behavior (reactive defense, teching, multi-wave
+  pressure) is later expansion (a candidate [A4](track-a-foundations.md) pluggable-AI experiment
+  seam). Affects [P2](track-p-playable-baseline.md).
+- **Single-player `LocalPlayer` identification — Decision: explicit human-slot flag at setup.** The
+  skirmish/lobby config marks which slot is the local human; `PlayerManager` reads that flag instead
+  of the ad-hoc positional `_players[2]` fallback (`PlayerManager.cs:39-46`). Affects
+  [P1](track-p-playable-baseline.md).
+- **Skirmish spawn path — Decision: one shared SP+MP skirmish spawn.** Single-player becomes "a
+  skirmish with one human + AI slots," driven through the same start-position/starting-building/camera
+  code as multiplayer (`Game.cs:745-763`), removing the SP/MP split. Affects
+  [P1](track-p-playable-baseline.md).
+- **Victory defeat rule — Decision: real Generals rule by default, configurable.** A player is
+  defeated when they have **no command/production structures and no means to rebuild** (no
+  dozer/worker + insufficient resources), per Generals skirmish rules — implemented as the **default**
+  but exposed as a **configurable/data-driven** rule so experiments can swap simpler/stricter
+  conditions. Affects [P3](track-p-playable-baseline.md).

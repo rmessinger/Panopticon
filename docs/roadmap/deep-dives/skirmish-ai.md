@@ -94,8 +94,8 @@ build-out step — this is the data the original engine drives skirmish AI from,
 waiting. `BuildListInfo`'s `PriorityBuild`, `DesiredGatherers`, `IsSupplyBuilding`, `IsBuildable`
 fields directly inform steps 1–2.
 
-### 2.3 How the AI issues actions — decision (↗)
-Two viable actuation styles (escalate to choose):
+### 2.3 How the AI issues actions — Decision: orders via `OrderProcessor`
+Two actuation styles were considered:
 - **(a) Via `Order`s through `OrderProcessor`** — the AI emits the same `Order`s a human would
   (`BuildObject`, `CreateUnit`, `ForceAttack…`). *Pro:* one code path, automatically replay/record
   compatible (matches the [P0 harness](playable-baseline-harness.md) and A2 reproducibility). *Con:*
@@ -104,9 +104,9 @@ Two viable actuation styles (escalate to choose):
   `ProductionUpdate.QueueProduction/QueueUpgrade`, `IBuilderAIUpdate.SetBuildTarget`. *Pro:* simpler
   to author. *Con:* bypasses the order stream, so AI actions wouldn't appear in replays/recordings —
   a problem for A2/B-track reproducibility.
-- **Recommendation to validate:** prefer **(a)** so AI actions live in the same order stream the
-  framework records and replays; this keeps Track P's loop honest for the scaling tracks. Decide
-  before P2-2.
+- **Decision:** use **(a)** — AI actions live in the same order stream the framework records and
+  replays, keeping Track P's loop honest for the scaling tracks (the argument-synthesis cost is
+  accepted). Settled **before P2-2**. See [open-questions](../open-questions.md).
 
 ### 2.4 P5 — construction/production completeness
 The *mechanism* is largely present (§1.4). P5's work is **gap-closing + proving both sides**:
@@ -124,35 +124,49 @@ The *mechanism* is largely present (§1.4). P5's work is **gap-closing + proving
 ## 3. Integration surface
 - **AI decision (new):** an `Update(...)` on `SkirmishAIPlayer`/`AIPlayer`, ticked from the player
   loop; reads `Player.BankAccount`, `AIData.SkirmishBuildLists`, relationships (P1).
-- **Actuation:** `OrderProcessor.Process` (preferred) **or** `GameLogic.CreateObject`,
-  `GameObject.PrepareConstruction`, `ProductionUpdate.QueueProduction/QueueUpgrade`,
-  `IBuilderAIUpdate.SetBuildTarget/SetRepairTarget`.
+- **Actuation (decided — orders):** the AI emits `Order`s via `OrderProcessor.Process` (the same path a
+  human uses), **not** the direct API (`GameLogic.CreateObject` / `GameObject.PrepareConstruction` /
+  `ProductionUpdate.QueueProduction/QueueUpgrade` / `IBuilderAIUpdate.SetBuildTarget/SetRepairTarget`),
+  so AI actions enter the recorded order stream (§2.3).
 - **Gating:** `Player.CanProduceObject`, `GameObject.CanConstructUnit/CanEnqueueUpgrade`.
+- **Targets:** consume the foundational **[P1-5](skirmish-setup.md)** per-`Player` owned-object set for
+  enemy target selection (no all-objects scan).
 
 ## 4. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
 | **P2-1. AI tick scaffold** | Add a coarse-cadence `Update(...)` to the skirmish AI, ticked from the player loop; no behavior yet. | Not started |
-| **P2-2. Economy & base build-out** | Consume `SkirmishBuildLists`; ensure supply + harvesters; build prerequisite-satisfied, affordable structures in priority order. *(↗ actuation style first.)* | Not started |
+| **P2-2. Economy & base build-out** | Consume `SkirmishBuildLists`; ensure supply + harvesters; build prerequisite-satisfied, affordable structures in priority order. *(Actuation = orders — decided.)* | Not started |
 | **P2-3. Unit production** | Queue army units toward a target composition, money/prereq gated. | Not started |
 | **P2-4. Military behavior** | Threshold force → select enemy target (P1 relationships) → attack-move; basic defense. | Not started |
 | **P5-1. Funding & gating verification** | Confirm construction/production **debit `BankAccount`** and respect prerequisites for both player and AI; fix gaps. | Not started |
 | **P5-2. Upgrades & buildability binding** | Verify upgrade completion/application; locate + verify the control-bar buildability consumer. | Not started |
 
 ## 5. Sequencing & dependencies
-- **P2 depends on P1** (related, spawned players), **P4** (a working economy to spend), and **P5**
-  (construction/production mechanism). P2-1 can scaffold in parallel; P2-2+ need P4/P5.
-- The actuation-style decision (§2.3) **must be settled before P2-2** because it determines whether AI
-  actions enter the recorded order stream (a hard requirement for A2/B reproducibility).
+- **P2 depends on P1** (related, spawned players + the foundational **[P1-5](skirmish-setup.md)**
+  ownership tracking that P2-4 uses for target selection), **P4** (a working economy to spend), and
+  **P5** (construction/production mechanism). P2-1 can scaffold in parallel; P2-2+ need P4/P5.
+- **Actuation = orders (§2.3, decided):** the AI emits `Order`s through `OrderProcessor`, so its actions
+  enter the recorded order stream — this reuses the engine order path the
+  [P0 harness](playable-baseline-harness.md) drives, and P2's recorded-stream check runs through P0
+  (a hard requirement for A2/B reproducibility).
 - P2 feeds **P7** (the AI must "make progress" — an asserted invariant in the
   [P0 harness](playable-baseline-harness.md)).
 
-## 6. Open design questions (↗)
-- **Actuation style** — orders vs. direct API (§2.3). *Recommend orders.*
-- **AI architecture depth** — single state machine now vs. a pluggable AI seam later. Track P wants
-  *a* working AI; a *pluggable* AI policy is a candidate A4 experiment seam, not a P2 requirement.
-- **Where `BankAccount` is debited for construction** — verify/locate before P5-1.
+## 6. Resolved design questions & open work
+- **Actuation style** — **Decided:** orders via `OrderProcessor` (§2.3), so AI actions enter the
+  recorded stream. See [open-questions](../open-questions.md).
+- **AI competence scope** — **Decided:** minimum *legal* opponent in Track P
+  (build/economize/produce/≥1 attack → terminating win/lose); structured for configurable difficulty
+  tiers but only the minimum tier is implemented now. Richer behavior is later expansion. See
+  [open-questions](../open-questions.md).
+- **AI architecture depth** — single state machine now; a *pluggable* AI policy is a candidate
+  **[A4](../track-a-foundations.md)** experiment seam (the configurable difficulty tiers this scope
+  leaves stubbed are the natural variation axis), not a P2 requirement — consistent with the scope
+  decision above.
+- **Where `BankAccount` is debited for construction** — open *verification* task (not a design
+  choice): locate/confirm before P5-1.
 
 ## 7. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)

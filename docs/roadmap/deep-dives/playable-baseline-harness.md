@@ -112,10 +112,14 @@ fixed gameplay verb:
   `OrderArgumentType` (`Integer/Float/Boolean/ObjectId/Position/ScreenPosition/ScreenRectangle`).
 - Object references by **definition name** (resolved generically — see §3.2) and **position** via the
   existing polymorphic `PositionSpec`, so authoring stays scenario-relative.
-- Object-id arguments (e.g. `AttackObject`, `Enter`) need a way to name *runtime* objects that don't
-  exist until produced. Model a **symbolic handle** ("the barracks I built in command #3") resolved
-  at dispatch time from production/build results — this generalizes today's `AfterActionTiming`
-  trigger model (`TimingConfig.cs`, `DeferredAction.cs`).
+- Object-id arguments (e.g. `AttackObject`, `Enter`) need a way to reference *runtime* objects that
+  don't exist until produced. **Decision** (see [open-questions](../open-questions.md)): objects an
+  earlier command created are referenced by an **implicit handle keyed to the producing command**
+  (the author normally writes nothing — "the barracks built in command #3" resolves automatically at
+  dispatch from production/build results), with an **explicit name** as opt-in sugar; objects the
+  script did *not* create (enemy/world objects) use a small set of **query selectors**
+  (faction/relationship/definition/proximity) resolved against `GameLogic`. This generalizes today's
+  `AfterActionTiming` trigger model (`TimingConfig.cs`, `DeferredAction.cs`).
 - Keep `TimingConfig` (fixed/random/after-action) and the deferred-injection path; they already give
   authored *and* reactive ordering.
 - **Back-compat:** keep the five `ActionType`s as authoring sugar that lowers to `CommandSpec`s, so
@@ -128,7 +132,11 @@ player). This makes the harness faction-agnostic and is a prerequisite for autho
 match (any side, any unit/structure).
 
 ### 3.3 Validation / assertion layer (new)
-A declarative **assertion set** attached to a scenario, evaluated headlessly:
+A declarative **assertion set** attached to a scenario, evaluated headlessly. **Authoring shape
+(Decision, see [open-questions](../open-questions.md)):** assertions are **JSON predicates** (e.g.
+`{path: "player[1].money", op: ">=", value: 0}`) over a fixed path/operator vocabulary, with an
+**escape hatch of code-defined (C#) predicates** (registered by name, referenced from the scenario)
+for invariants that exceed the vocabulary. The three assertion kinds:
 
 - **Outcome assertions** — match terminated; winner/loser/team; reason. (Consumes P3's queryable
   `GameOutcome` — see [victory-defeat.md](victory-defeat.md).)
@@ -166,10 +174,10 @@ scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized 
 
 | Phase | Goal | Status |
 |---|---|---|
-| **P0-1. Open command model** | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + symbolic object handles; keep the five verbs as sugar. | Not started |
+| **P0-1. Open command model** | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); keep the five verbs as sugar. | Not started |
 | **P0-2. Generic definition/player resolution** | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
 | **P0-3. Exporter generalization** | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
-| **P0-4. Assertion layer** | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. *(↗ assertion DSL/API shape.)* | Not started |
+| **P0-4. Assertion layer** | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. *(JSON predicates over a fixed vocabulary + code-defined escape hatch — decided.)* | Not started |
 | **P0-5. Run-and-assert entry point** | One CLI/library call: scenario+commands in → headless run → report out (exit code + JSON). Wraps `RunHeadless` + the evaluator; terminates on P3 outcome. | Not started |
 | **P0-6. Large/procedural authoring** | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
 
@@ -181,11 +189,14 @@ scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized 
 - P0 unblocks P3/P6/P7 (they author + assert through it) and is later extended by
   [A5-3](visualization.md) (visualizer) and [A5-5](visualization.md) (scale).
 
-## 7. Open design questions (↗)
-- **Symbolic object-handle model** — how authored commands reference runtime-created objects
-  (produced units, built structures) for object-id arguments. Generalizes `AfterActionTiming`.
-- **Assertion DSL shape** — embedded JSON predicates vs. a small expression language vs. code-defined
-  predicates. Must stay cheap for low-effort agents to write.
+## 7. Resolved design questions
+- **Runtime object references** — **Decided:** implicit auto-handles keyed to the producing command
+  (opt-in explicit names) for script-created objects; query selectors
+  (faction/relationship/definition/proximity) for world/enemy objects. Generalizes
+  `AfterActionTiming`. See [open-questions](../open-questions.md).
+- **Assertion DSL shape** — **Decided:** declarative JSON predicates over a fixed path/operator
+  vocabulary, with a code-defined (C#) predicate escape hatch for complex invariants. See
+  [open-questions](../open-questions.md).
 
 ## 8. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)

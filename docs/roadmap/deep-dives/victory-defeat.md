@@ -55,14 +55,15 @@ headless run loop uses instead of today's ad-hoc "exit on enemy-CC destruction"
 A `VictorySystem` (a `GameSystem`, per the engine's subsystem pattern) runs a check at a **coarse
 cadence** (not every frame) from the logic tick:
 
-- **Defeat rule (baseline):** a player is defeated when they have **no production/command structures
-  and no means to rebuild** (no dozer/worker and insufficient resources), per Generals skirmish rules.
-  Start simple — *no buildings and no units* ⇒ defeated — then refine toward the real rule.
-- **Ownership query:** since there's no owned-object list, either (a) add a maintained per-`Player`
-  owned-object set (incremented on create/transfer, decremented on `OnDie`/`Destroy`), or (b) reuse
-  the existing all-objects scan (`Player.GetEnergy` pattern, `Player.cs:92-104`) at the coarse
-  cadence. **(a) is preferred** — it's O(1) per check and is also useful for AI (P2) and scale tracks;
-  flag as a design choice (↗).
+- **Defeat rule (Decision):** a player is defeated when they have **no command/production structures
+  and no means to rebuild** (no dozer/worker and insufficient resources), per Generals skirmish rules
+  — implemented as the **default** but exposed as a **configurable/data-driven** rule so experiments
+  can swap simpler/stricter conditions. See [open-questions](../open-questions.md).
+- **Ownership query (Decision):** consume the maintained per-`Player` owned-object set/counts provided by
+  the foundational **[P1-5](skirmish-setup.md)** ownership tracking (incremented on create/transfer,
+  decremented on `OnDie`/`Destroy`), giving **O(1)** checks rather than the all-objects scan
+  (`Player.GetEnergy` pattern, `Player.cs:92-104`). The same maintained view feeds the AI (P2) and the
+  scale tracks. See [open-questions](../open-questions.md).
 - **Win rule:** when all players *not allied* to player X are defeated (via [P1](skirmish-setup.md)
   relationships/teams), X (and allies) win.
 
@@ -88,7 +89,8 @@ On `Status → Decided`:
 - **New:** `GameOutcome` type + a `VictorySystem : GameSystem`; a death/ownership-change event from
   `GameObject.OnDie/Destroy`.
 - **Hook:** `GameLogic.Update(...)` (coarse-cadence check) / `Game.cs:876-959` tick.
-- **Reads:** per-`Player` owned-object counts (new) or all-objects scan (`Player.cs:92-104`);
+- **Reads:** the maintained per-`Player` owned-object counts from foundational
+  [P1-5](skirmish-setup.md) (not an all-objects scan, cf. `Player.cs:92-104`);
   relationships/teams from [P1](skirmish-setup.md).
 - **Handle:** `OrderType.EndGame` in `OrderProcessor.Process` (currently unhandled).
 - **Exposes:** `GameOutcome` off `GameLogic`/`IGame` for the [P0 harness](playable-baseline-harness.md)
@@ -99,23 +101,26 @@ On `Status → Decided`:
 | Phase | Goal | Status |
 |---|---|---|
 | **P3-1. `GameOutcome` + `VictorySystem` scaffold** | Add the outcome type and a `GameSystem` that ticks a check from the logic loop; exposes `InProgress`. | Not started |
-| **P3-2. Ownership tracking** | Maintain per-`Player` building/unit counts via create/death/transfer (preferred) or coarse all-objects scan. *(↗ which approach.)* | Not started |
-| **P3-3. Defeat & win rules** | Implement defeat (no structures + no rebuild) and win (all non-allies defeated, via P1 teams). | Not started |
-| **P3-4. Death→defeat event** | Emit a death/ownership-change notification from `GameObject.OnDie/Destroy`; `VictorySystem` reacts incrementally. | Not started |
-| **P3-5. End-of-match flow** | Stop sim, surface result, handle `OrderType.EndGame`, allow exit; expose `GameOutcome` for headless. | Not started |
+| **P3-2. Defeat & win rules** | Implement defeat (real Generals rule — no command/production structures + no rebuild — as the default, configurable) and win (all non-allies defeated, via P1 teams); consumes foundational [P1-5](skirmish-setup.md) ownership tracking. | Not started |
+| **P3-3. Death→defeat event** | Emit a death/ownership-change notification from `GameObject.OnDie/Destroy`; `VictorySystem` reacts incrementally. | Not started |
+| **P3-4. End-of-match flow** | Stop sim, surface result, handle `OrderType.EndGame`, allow exit; expose `GameOutcome` for headless. | Not started |
 
 ## 5. Sequencing & dependencies
-- **P3 depends on P1** (teams/relationships decide who wins/loses).
+- **P3 depends on P1** — teams/relationships decide who wins/loses, and the foundational
+  **[P1-5](skirmish-setup.md)** ownership tracking feeds defeat detection.
 - **P3 unblocks the [P0 harness](playable-baseline-harness.md) P0-4 outcome assertions** and is a hard
   prerequisite for **P7** (the capstone asserts the match *terminates* with the expected
   `GameOutcome`).
-- P3-2's ownership tracking is reused by P2 (AI target selection) and is friendly to the scale tracks.
+- The **[P1-5](skirmish-setup.md)** ownership tracking P3 consumes is shared with P2 (AI target
+  selection) and is friendly to the scale tracks.
 
-## 6. Open design questions (↗)
-- **Ownership tracking approach** — maintained per-player counts vs. on-demand scan (§2.2). Affects
-  per-tick cost at scale; recommend maintained counts.
-- **Exact defeat rule** — strict "no command center" vs. "no buildings and no units" vs. configurable.
-  Start with the simplest terminating rule and refine.
+## 6. Resolved design questions
+- **Ownership tracking approach** — **Decided:** maintained per-`Player` counts/owned-object set
+  (§2.2), O(1) per check, reused by P2 and the scale tracks. See
+  [open-questions](../open-questions.md).
+- **Exact defeat rule** — **Decided:** the real Generals rule (no command/production structures + no
+  means to rebuild) as the **default**, exposed as configurable. See
+  [open-questions](../open-questions.md).
 
 ## 7. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)

@@ -24,8 +24,6 @@ public static class MapPreviewRenderer
     ];
 
     private static readonly SKColor AnchorColor = SKColors.White;
-    private static readonly SKColor CircleColor = new SKColor(0xFF, 0xFF, 0xFF, 0x66);
-    private static readonly SKColor LineColor = new SKColor(0xFF, 0xFF, 0xFF, 0xCC);
     private static readonly SKColor ArcColor = new SKColor(0xFF, 0xFF, 0xFF, 0x66);
     private static readonly SKColor SelectionRingColor = SKColors.White;
 
@@ -42,6 +40,11 @@ public static class MapPreviewRenderer
     /// </summary>
     /// <param name="canvas">Target canvas, already cleared by the caller.</param>
     /// <param name="map">Map geometry and player-start data.</param>
+    /// <param name="previewBitmap">
+    /// Optional bird's-eye terrain thumbnail to draw as the background.
+    /// Typically built once from <see cref="MapMetadataService.PreviewImagePixels"/> and cached
+    /// by the caller.  Pass <c>null</c> to render a plain dark rectangle instead.
+    /// </param>
     /// <param name="players">Ordered list of player slots from the scenario.</param>
     /// <param name="baseRadiusWorldUnits">Radius used for landmark-relative distances.</param>
     /// <param name="selectedSlotIndex">Index of the currently active player slot.</param>
@@ -52,6 +55,7 @@ public static class MapPreviewRenderer
     public static IReadOnlyList<MarkerResult> Render(
         SKCanvas canvas,
         MapMetadataService map,
+        SKBitmap? previewBitmap,
         IReadOnlyList<PlayerSlotConfig> players,
         float baseRadiusWorldUnits,
         int selectedSlotIndex,
@@ -62,13 +66,22 @@ public static class MapPreviewRenderer
     {
         var markers = new List<MarkerResult>();
 
+        // ── Background: terrain thumbnail or plain dark fill ──────────────
+        var previewRect = new SKRect(offsetX, offsetY, offsetX + previewSize, offsetY + previewSize);
+
+        if (previewBitmap != null)
+        {
+            var src = new SKRect(0, 0, previewBitmap.Width, previewBitmap.Height);
+            canvas.DrawBitmap(previewBitmap, src, previewRect);
+        }
+
         using var borderPaint = new SKPaint
         {
             Color = new SKColor(0x55, 0x55, 0x55),
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 1,
         };
-        canvas.DrawRect(offsetX, offsetY, previewSize, previewSize, borderPaint);
+        canvas.DrawRect(previewRect, borderPaint);
 
         var extentMin = map.ExtentMin;
         var extentMax = map.ExtentMax;
@@ -189,8 +202,6 @@ public static class MapPreviewRenderer
         var label = $"{actionIdx + 1}";
 
         using var dotPaint = new SKPaint { Color = color, Style = SKPaintStyle.Fill };
-        using var circlePaint = new SKPaint { Color = CircleColor, Style = SKPaintStyle.Stroke, StrokeWidth = 1 };
-        using var linePaint = new SKPaint { Color = LineColor, Style = SKPaintStyle.Stroke, StrokeWidth = 1.5f };
         using var arcFillPaint = new SKPaint { Color = ArcColor, Style = SKPaintStyle.Fill };
         using var selPaint = new SKPaint
         {
@@ -222,8 +233,6 @@ public static class MapPreviewRenderer
                 var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
                 var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
 
-                canvas.DrawCircle(anchorScreen, distPixels, circlePaint);
-
                 switch (lrp.Angle)
                 {
                     case FixedAngle fa:
@@ -232,7 +241,6 @@ public static class MapPreviewRenderer
                         var tip = new SKPoint(
                             anchorScreen.X + MathF.Cos(rad) * distPixels,
                             anchorScreen.Y - MathF.Sin(rad) * distPixels);
-                        canvas.DrawLine(anchorScreen, tip, linePaint);
                         var dotR = isActionSelected ? 6f : isSlotSelected ? 5f : 3f;
                         canvas.DrawCircle(tip, dotR, dotPaint);
                         if (isActionSelected) canvas.DrawCircle(tip, dotR + 3f, selPaint);

@@ -106,6 +106,14 @@ The lobby already fills missing factions/colors/start positions (`GameOptionsUti
 must ensure the **AI slots** are filled the same way (faction from `GetPlayableSides()`, a free start
 position, a free color) so an AI player is fully specified before `StartGame`.
 
+### 3.4 Player object-ownership tracking (foundational)
+Both the AI (P2 target selection) and victory/defeat (P3 defeat detection) need cheap answers to "what
+does player X still own?". Rather than each consumer scanning all objects on demand, P1 establishes one
+**foundational** maintained per-`Player` view: building/unit counts plus an owned-object set, incremented
+on create/transfer and decremented on `OnDie`/`Destroy` (**O(1)** per check). It lives in P1 because it is
+a property of players (set up alongside relationships/spawns) and is consumed by **both** P2 and P3; it has
+no intra-P1 ordering constraint beyond object create/death hooks existing.
+
 ---
 
 ## 4. Integration surface (what P1 changes)
@@ -117,12 +125,16 @@ position, a free color) so an AI player is fully specified before `StartGame`.
 - `Gui/GameOptionsUtil.cs:239-305` — fill missing faction/color/start for AI slots.
 - `Scene3D.cs:430-455` + `Scripting/Waypoints.cs:76-81` + `Content/MapCache.cs:29-38` — start-position
   lookup/spawn (already largely present; verify under SP).
+- `Logic/Player.cs` + `GameObject` create/`OnDie`/`Destroy` hooks — maintain the per-`Player` owned-object
+  set + counts (foundational, consumed by P2 and P3).
 
-## 5. Open design questions (↗)
-- **`LocalPlayer` selection** for games that aren't human-only is ad hoc (`_players[2]` fallback,
-  `PlayerManager.cs:39-46`). Define how the human player is identified for a SP skirmish.
-- **Spawn ownership** — should AI-vs-human skirmish placement live in the SP path or the (renamed)
-  shared skirmish path? (`Game.cs:745-763`). Pick one owner to avoid the current SP/MP split.
+## 5. Resolved design questions
+- **`LocalPlayer` selection** — **Decided:** the skirmish/lobby config marks which slot is the local
+  human; `PlayerManager` reads that explicit flag instead of the `_players[2]` positional fallback
+  (`PlayerManager.cs:39-46`). See [open-questions](../open-questions.md).
+- **Spawn ownership** — **Decided:** unify on one shared SP+MP skirmish spawn path — SP is "a skirmish
+  with one human + AI slots" through the same start-position/building/camera code (`Game.cs:745-763`).
+  See [open-questions](../open-questions.md).
 
 ## 6. Sub-phases
 
@@ -132,11 +144,15 @@ position, a free color) so an AI player is fully specified before `StartGame`.
 | **P1-2. Unified skirmish spawn** | One start-position + starting-building + camera path for SP and MP; resolve player-array indexing and `LocalPlayer`. | Not started |
 | **P1-3. AI slot fill** | Ensure AI slots get faction/color/start filled before `StartGame` (lobby + local path). | Not started |
 | **P1-4. Boot validation** | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](playable-baseline-harness.md)). | Not started |
+| **P1-5. Object-ownership tracking** | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Not started |
 
 ## 7. Sequencing
 - P1 has **no Track-P prerequisite** (entry point alongside P0) but **gates P2/P3/P4/P5/P6** — they all
   assume correctly-related, spawned players.
 - P1-4's boot check rides on the [P0 harness](playable-baseline-harness.md) once P0-1/P0-5 exist.
+- **P1-5 is foundational and independent** within P1 (it only needs object create/death hooks + players);
+  it feeds **P2** (AI target selection) and **P3** (defeat detection), so it is owned by P1 rather than
+  duplicated in either consumer.
 
 ## 8. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)

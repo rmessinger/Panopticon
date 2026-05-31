@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using OpenSage.Data;
 using OpenSage.Data.Map;
+using OpenSage.Data.Tga;
 using OpenSage.IO;
 using OpenSage.Scripting;
 using OpenSage.Terrain;
@@ -23,12 +24,33 @@ public sealed class MapMetadataService
     public Vector3 ExtentMax { get; }
     public Vector3 MapCenter => (ExtentMin + ExtentMax) * 0.5f;
 
-    private MapMetadataService(HeightMap? heightMap, Vector3 extentMin, Vector3 extentMax, Vector3[] playerStarts)
+    /// <summary>
+    /// RGBA8 pixel data for the bird's-eye preview thumbnail, or <c>null</c> if unavailable.
+    /// Pixels are stored top-to-bottom, left-to-right, 4 bytes per pixel (R, G, B, A).
+    /// </summary>
+    public byte[]? PreviewImagePixels { get; }
+
+    /// <summary>Width of <see cref="PreviewImagePixels"/> in pixels.</summary>
+    public int PreviewImageWidth { get; }
+
+    /// <summary>Height of <see cref="PreviewImagePixels"/> in pixels.</summary>
+    public int PreviewImageHeight { get; }
+
+    private MapMetadataService(
+        HeightMap? heightMap,
+        Vector3 extentMin, Vector3 extentMax,
+        Vector3[] playerStarts,
+        byte[]? previewImagePixels = null,
+        int previewImageWidth = 0,
+        int previewImageHeight = 0)
     {
         _heightMap = heightMap;
         _playerStarts = playerStarts;
         ExtentMin = extentMin;
         ExtentMax = extentMax;
+        PreviewImagePixels = previewImagePixels;
+        PreviewImageWidth = previewImageWidth;
+        PreviewImageHeight = previewImageHeight;
     }
 
     /// <summary>
@@ -41,6 +63,7 @@ public sealed class MapMetadataService
 
     /// <summary>
     /// Loads the given map file from the installation's virtual file system.
+    /// Also attempts to load the companion <c>.tga</c> preview thumbnail.
     /// </summary>
     /// <param name="installation">A valid Generals installation.</param>
     /// <param name="mapPath">
@@ -55,6 +78,29 @@ public sealed class MapMetadataService
             ?? throw new FileNotFoundException($"Map not found in game file system: {mapPath}");
 
         var mapFile = MapFile.FromFileSystemEntry(entry);
+
+        // ------------------------------------------------------------------
+        // Load preview thumbnail (.tga at same path as the .map file)
+        // ------------------------------------------------------------------
+        byte[]? previewPixels = null;
+        int previewWidth = 0, previewHeight = 0;
+
+        var tgaPath = Path.ChangeExtension(mapPath, ".tga");
+        var tgaEntry = fileSystem.GetFile(tgaPath);
+        if (tgaEntry != null)
+        {
+            try
+            {
+                var tga = TgaFile.FromFileSystemEntry(tgaEntry);
+                previewPixels = TgaFile.ConvertPixelsToRgba8(tga, alphaToOpaque: true);
+                previewWidth = tga.Header.Width;
+                previewHeight = tga.Header.Height;
+            }
+            catch
+            {
+                // Preview is best-effort; ignore any decoding errors.
+            }
+        }
 
         // ------------------------------------------------------------------
         // Build HeightMap wrapper (gives us bilinear-interpolated SampleHeight)
@@ -95,7 +141,8 @@ public sealed class MapMetadataService
             }
         }
 
-        return new MapMetadataService(heightMap, extentMin, extentMax, playerStarts);
+        return new MapMetadataService(heightMap, extentMin, extentMax, playerStarts,
+            previewPixels, previewWidth, previewHeight);
     }
 
     /// <summary>

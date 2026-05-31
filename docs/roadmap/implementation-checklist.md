@@ -47,16 +47,22 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] Let `ActionEntry`/scenario target **any** player/owner and **any** object definition.
   - AC: a scenario with ≥3 players of mixed factions attributes each command to the correct
     `PlayerIndex`/owner; test asserts per-player order attribution.
+- [ ] Reference runtime-created objects via **implicit auto-handles** (keyed to the producing
+      command) with opt-in explicit names; reference world/enemy objects via **query selectors**
+      (faction/relationship/definition/proximity), resolved at dispatch.
+  - AC: a scenario issues `AttackObject`/`Enter` against an object produced by an earlier command
+    without the author writing an id, and another command targets an enemy structure via a selector;
+    both resolve in a headless run (state assertion passes).
 - [ ] Map the gameplay-relevant `OrderType` set (move, attack, construct, produce, ability) to
       exporter order emission.
   - AC: for each of move/attack/construct/produce/ability, an authored command produces the expected
     `OrderProcessor` effect in a headless run (state assertion passes).
 - [ ] Add a **validation/assertion layer** (expected post-conditions, invariants, outcomes) runnable
-      headlessly with a pass/fail result. (↗ model/API design)
-  - AC: _TBD_ — design the assertion model first (↗). Rough template: given a scenario + assertion
-    set, a headless run emits a machine-readable pass/fail report supporting ≥1 outcome, ≥1 state, and
-    ≥1 invariant assertion type; a deliberately-failing assertion is reported with frame +
-    expected/actual.
+      headlessly with a pass/fail result.
+  - AC: assertions are authored as JSON predicates (`{path, op, value}`) over a fixed path/operator
+    vocabulary spanning ≥1 outcome, ≥1 state, and ≥1 per-tick invariant type, with a code-defined
+    (C#) predicate escape hatch; a headless run emits a machine-readable pass/fail report and a
+    deliberately-failing assertion is reported with frame + expected/actual.
 - [ ] Provide a headless **run-and-assert entry point** cheap agents can call (scenario/command file
       in → result out).
   - AC: one CLI/library call takes a scenario/command file and returns exit code 0/non-zero + a JSON
@@ -82,24 +88,30 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] Start a single-player skirmish without networking (`LocalSkirmishManager` path).
   - AC: `LocalSkirmishManager` reaches `Started` with no network connection; a headless boot reaches
     the first logic tick.
-- [ ] Unify SP/MP spawn: single-player skirmish uses the MP start-position/building/camera path
-      (`Game.cs:745-763`); resolve `LocalPlayer` selection (`PlayerManager.cs:39-46`). (↗)
+- [ ] Unify SP/MP spawn onto one shared skirmish path (SP = one human + AI slots through the same
+      start-position/building/camera code, `Game.cs:745-763`); identify the human via an explicit
+      slot flag set at setup, not the `_players[2]` fallback (`PlayerManager.cs:39-46`).
   - AC: a SP skirmish spawns each non-neutral player's starting building(s) at its `Player_N_Start`
-    and places the camera, identical to the MP path; harness asserts each player has ≥1 starting
-    structure at its start waypoint.
+    and places the camera, identical to the MP path; `LocalPlayer` resolves from the explicit flag;
+    harness asserts each player has ≥1 starting structure at its start waypoint.
 - [ ] AI player slots, faction/army selection, and start positions (fill AI slots in the lobby path).
   - AC: an unset AI slot is assigned a valid playable side, a free color, and a free start position
     before `StartGame`; no slot has an unresolved faction/position at game start.
+- [ ] **P1-5 Object-ownership tracking (foundational):** maintained per-`Player` building/unit counts +
+      owned-object set, updated on create/transfer/`OnDie`/`Destroy` (decided — not an on-demand scan).
+      Consumed by P2 (AI target selection) and P3 (defeat detection); friendly to the scale tracks.
+  - AC: per-`Player` building/unit counts are accurate after create/death/transfer (test creates +
+    kills objects and asserts counts) with O(1) per-check cost.
 
 ### P2 — Skirmish AI opponent ([deep dive](deep-dives/skirmish-ai.md))
 - [ ] Add a coarse-cadence `Update(...)` decision loop to `SkirmishAIPlayer`/`AIPlayer` (currently
       persistence-only — `Logic/AI/AIPlayer.cs:8-154`, `SkirmishAIPlayer.cs:3-31`).
   - AC: `SkirmishAIPlayer.Update(...)` is invoked from the player tick at the intended cadence (test
     asserts call count over N frames); no behavior required yet.
-- [ ] **Decide actuation style** (orders via `OrderProcessor` vs. direct API) before P2-2 — recommend
-      orders so AI actions enter the recorded stream. (↗)
-  - AC: the choice is recorded in the P2 deep dive and a thin actuation adapter exists; if "orders,"
-    AI-issued actions appear in the recorded order stream (verified by replaying the run).
+- [ ] Actuate AI decisions by emitting `Order`s through `OrderProcessor` (decided — not direct API),
+      so AI actions enter the recorded stream.
+  - AC: a thin actuation adapter emits `Order`s; AI-issued actions appear in the recorded order stream
+    (verified by replaying the run).
 - [ ] AI base-building: consume the stranded `AIData.SkirmishBuildLists`/`BuildListInfo`
       (`Logic/AI/AIData.cs`, `Logic/Map/BuildListInfo.cs`).
   - AC: starting from a base + dozer/worker, the AI builds the build-list structures in priority order;
@@ -111,22 +123,21 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] AI unit production (money/prereq gated via `Player.CanProduceObject`).
   - AC: the AI produces ≥N army units gated by money/prereqs; production is blocked when unaffordable
     (balance never < 0).
-- [ ] AI attack/defense behavior (target via P1 relationships). (↗ scope of "good enough" AI)
-  - AC: _TBD_ — depends on the "good enough" scope (↗). Rough template: once a threshold force exists,
-    the AI moves units toward an enemy structure and engages; a headless match shows AI-initiated
-    combat.
+- [ ] AI attack/defense behavior (target via P1 relationships) — Track P scope is a **minimum legal
+      opponent** (build/economize/produce/≥1 attack → terminating match); structure for configurable
+      difficulty tiers but implement only the minimum tier now.
+  - AC: once a threshold force exists, the AI moves units toward an enemy structure (via P1
+    relationships) and engages; a headless match shows AI-initiated combat and can reach a win/lose
+    outcome.
 
 ### P3 — Victory & defeat conditions ([deep dive](deep-dives/victory-defeat.md))
 - [ ] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
   - AC: `GameOutcome` is queryable off `GameLogic`/`IGame` and reads `InProgress` during play;
     `VictorySystem` ticks from the logic loop (test asserts it runs).
-- [ ] Player-defeat detection (no production/command structures and no way to rebuild).
-  - AC: a harness scenario that eliminates a player's qualifying structures flags that player defeated
-    within the check cadence.
-- [ ] Ownership tracking: maintained per-`Player` building/unit counts vs. on-demand scan
-      (`Player.GetEnergy` pattern, `Player.cs:92-104`). (↗ approach)
-  - AC: _TBD_ — pick approach (↗). Rough template: per-player building/unit counts are accurate after
-    create/death/transfer (test creates + kills objects and asserts counts) with bounded per-tick cost.
+- [ ] Player-defeat detection — real Generals rule (no command/production structures and no means to
+      rebuild: no dozer/worker + insufficient resources) as the default, exposed as configurable.
+  - AC: a harness scenario that eliminates a player's qualifying structures + rebuild means flags that
+    player defeated within the check cadence; the rule is selectable via config.
 - [ ] Death→defeat event from `GameObject.OnDie/Destroy` (shared with P6-3 cleanup).
   - AC: a death/ownership-change notification fires from `OnDie`/`Destroy` and `VictorySystem` reacts
     without a full-object scan; test asserts the event fires once per death.

@@ -42,7 +42,7 @@ public sealed class MapPreviewRendererTests
         canvas.Clear(new SKColor(0x2A, 0x2A, 0x2A));
 
         MapPreviewRenderer.Render(
-            canvas, s_map, players,
+            canvas, s_map, previewBitmap: null, players,
             baseRadiusWorldUnits: BaseRadius,
             selectedSlotIndex: selectedSlot,
             selectedActionId: selectedActionId,

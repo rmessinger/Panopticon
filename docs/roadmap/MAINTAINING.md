@@ -18,7 +18,7 @@ Each artifact owns one view. A plan change usually touches **several**. Know whi
 
 | Document | Owns (source of truth for) |
 |---|---|
-| [`track-*.md`](README.md#document-map) (P, A, B, C) | Phase definitions, goals, **Status**, dependencies, per-phase notes. |
+| [`track-*.md`](README.md#document-map) (P, A, B, C) | Phase definitions, goals, **Milestone (definition-of-done)**, **Status**, dependencies, per-phase notes. |
 | [`implementation-checklist.md`](implementation-checklist.md) | The flat, granular **change list** — concrete items per phase, each with an **acceptance criteria (`AC:`)** sub-bullet. |
 | [`roadmap-tree.md`](roadmap-tree.md) | The **visual** hierarchy (mindmap) + dependency flow (LR stages). |
 | `roadmap-tree.html` | Interactive viewer — **auto-syncs** (reads the `.md` live). *No manual edit.* |
@@ -39,7 +39,7 @@ Find your change type; update **every** box listed. Then run the [validation](#v
 
 | You changed… | Must also update |
 |---|---|
-| **Add a phase / sub-phase** | track doc table + notes · implementation-checklist (new items, **each with an `AC:` sub-bullet** — concrete, or `_TBD_` + rough template if not yet definable) · roadmap-tree **mindmap** · roadmap-tree **LR flow** (place by dependency depth + edges) · README at-a-glance · its deps in the tree/checklist ordering |
+| **Add a phase / sub-phase** | track doc table (incl. a **Milestone** definition-of-done) + notes · implementation-checklist (new items, **each with an `AC:` sub-bullet** — concrete, or `_TBD_` + rough template if not yet definable) · roadmap-tree **mindmap** · roadmap-tree **LR flow** (place by dependency depth + edges) · README at-a-glance · its deps in the tree/checklist ordering |
 | **Rename / renumber a phase** | every doc above **plus** every inbound link/anchor; search the whole `docs/roadmap/` tree for the old id · agent-guide cards referencing it · SQL todo ids (if the orchestrator tracks them) |
 | **Remove a phase** | delete from track doc, checklist, tree (both diagrams), README; fix anything that depended on it |
 | **Change a dependency / ordering** | track doc "Depends on" · roadmap-tree LR edges (+ re-stage if depth changed) · checklist ordering |
