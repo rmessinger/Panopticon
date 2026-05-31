@@ -26,6 +26,11 @@ are *inspectable*. Today both are missing:
   first-class artifact.
 - **Results** are opaque without the replayer/visualizer (previously sketched as A1-6/A1-7, now
   owned here).
+- **Neither scales yet.** ReplaySketch authoring is hand-entry over a fixed vocabulary, and the
+  replay/visualization path assumes small runs. To *author* and *inspect* sim-scale scenarios —
+  the entire point of the framework — the tooling itself must scale to the same entity/command
+  magnitudes as the engine (see **A5-5**). Scenario tooling is on the scaling critical path, not
+  beside it.
 
 Pulling both into one layer keeps a single, domain-parameterized rendering/UX stack shared
 between "before" (preview a scenario) and "after" (replay a run).
@@ -33,6 +38,14 @@ between "before" (preview a scenario) and "after" (replay a run).
 ---
 
 ## 2. What already exists (reuse, don't reinvent)
+
+> **ReplaySketch is the primary tool.** Scenario and end-to-end testing flows through
+> `OpenSage.Tools.ReplaySketch` — it is the entry point lower-effort/automated agents use, and the
+> result replayer/visualizer below (A5-3) is built by **extending it** rather than starting a new
+> tool. [Track P, phase P0](../track-p-playable-baseline.md) finalizes ReplaySketch into a general
+> harness for **authoring and validating any arbitrary command/order set** (generalizing beyond its
+> current fixed `ActionType` vocabulary, plus an assertion layer); A5-3 builds on that harness, and
+> the playable-baseline check (P7) runs through it.
 
 | Capability | Current code | Reuse for |
 |---|---|---|
@@ -175,10 +188,11 @@ paying full per-entity-per-frame recording cost for every run.
 
 | Phase | Goal | Status |
 |---|---|---|
-| **A5-1. Scenario authoring & setup** | Define the declarative scenario artifact (§3.1) and the host/harness path that consumes it; procedural seeding for large stress scenarios; capture-from-run; pre-run validation + short preview (§3.4). Domain-parameterized. | Not started |
+| **A5-1. Scenario authoring & setup** | Define the declarative scenario artifact (§3.1) and the host/harness path that consumes it; procedural seeding for large stress scenarios; capture-from-run; pre-run validation + short preview (§3.4). Domain-parameterized. Large-scenario seeding scales under **A5-5**. | Not started |
 | **A5-2. Experiment matrix / parameter sweeps** | Let a scenario declare sweep axes; expand the matrix through the [A4 harness](../track-a-foundations.md), dispatch one run per cell, and key results for comparison (§3.3). | Not started |
-| **A5-3. Results replayer / visualizer** | Build the analysis tool of §4 on top of ReplaySketch: load runs, scrub the timeline, domain-parameterized visualizations, metric charts, event log, fidelity overlay, headless export. *(Supersedes the former A1-6.)* | Not started |
+| **A5-3. Results replayer / visualizer** | Build the analysis tool of §4 on top of ReplaySketch: load runs, scrub the timeline, domain-parameterized visualizations, metric charts, event log, fidelity overlay, headless export. Scales to large/long runs under **A5-5**. *(Supersedes the former A1-6.)* | Not started |
 | **A5-4. Divergence localization** | Implement the §5 drill-down: compare two runs' T1 signature trees to localize the first subtree exceeding tolerance, arm/inspect T2 detail, with stable cross-run bucketing and per-quantity tolerances. Validation surface for B3/B6. *(Supersedes the former A1-7.)* | Not started |
+| **A5-5. Authoring & visualization at scale** | Make ReplaySketch's authoring, replay, and visualization handle the **same magnitudes as the sim** they configure: **programmatic/procedural** generation of large command sets and initial conditions (not hand-entry); **streaming + LOD + culling** in the replay viewport (reuse [B5](../track-b-scale.md) instancing and [B7](variable-fidelity.md) fidelity *for visualization*); **bounded-memory** loading of long/large recordings; and authoring/replay throughput tracked by [B1](../track-b-scale.md) benchmarks. Keeps scenario tooling off the critical path as entity/command counts grow. Mirrors WorldBuilder's [B4a-7](larger-maps.md) large-population authoring. | Not started |
 
 ---
 

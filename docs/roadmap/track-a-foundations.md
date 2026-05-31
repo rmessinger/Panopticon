@@ -10,14 +10,16 @@
 | **A2. Reproducibility & statistical stability** | Make runs *comparable*, not bit-exact (see the [relaxed-determinism Decision](open-questions.md)). Centralize all randomness through a seeded source so experiments are controllable and re-runnable; audit uncontrolled nondeterminism; define the **conflict-resolution rules** for concurrent writes; add a verification harness that checks metric/invariant stability within tolerance (and an opt-in strict-hash mode for debugging). | Not started |
 | **A3. Simulation/presentation seam** | Formalize the boundary between logic state and presentation (`Drawable`/render/audio). Logic must not read render-only state. Enables headless + future thin clients. | Not started |
 | **A4. Experiment framework seams & harness** | The backbone of the project's "pluggable experiments" aim: establish stable seams with swappable implementations for optimization-relevant subsystems (e.g. the **simulation domain model**, pathfinding, partitioning, fidelity policy, storage layout, model import), plus an **experiment harness** that selects/configures an implementation, runs it against [B1](track-b-scale.md) benchmarks, and reports results to the [visualizer (A5)](deep-dives/visualization.md). Makes techniques interchangeable and independently measurable. | Not started |
-| **A5. Scenario authoring & visualization** | The human-facing layer that makes the headless host usable: **author scenarios** (declarative + visual + capture-from-run), drive **parameter sweeps/experiment matrices** (with [A4](deep-dives/visualization.md)), and **replay/visualize/compare** runs — including drilling into the tiered recording to **localize divergences**. **Detailed design:** [deep-dives/visualization.md](deep-dives/visualization.md). | Not started |
+| **A5. Scenario authoring & visualization** | The human-facing layer that makes the headless host usable: **author scenarios** (declarative + visual + capture-from-run), drive **parameter sweeps/experiment matrices** (with [A4](deep-dives/visualization.md)), and **replay/visualize/compare** runs — including drilling into the tiered recording to **localize divergences**. The ReplaySketch tooling must **scale with the sim** (large/procedural authoring, streaming/LOD replay — A5-5). **Detailed design:** [deep-dives/visualization.md](deep-dives/visualization.md). | Not started |
 
 ## Notes
 
 - **A4** is the foundation that realizes the roadmap's North Star (a framework for plugging in
   and measuring simulation-optimization experiments). Most Track B phases (B3 storage, B4
   pathfinding/partitioning, B6 partition scheme, B7 fidelity policy) should be expressed as
-  *implementations behind A4 seams* rather than one-off hard-wired changes.
+  *implementations behind A4 seams* rather than one-off hard-wired changes. The canonical list of
+  these seams — what each abstracts, its interface, and its implementations — is the
+  [**seam registry**](seams.md).
 - **A2** underpins both **B3** (parallel logic must stay *comparable* and obey the
   conflict-resolution rules) and **B6** (cross-shard state sync validated by invariants, not
   bit-equality). Per the [relaxed-determinism Decision](open-questions.md), A2 targets
@@ -49,7 +51,12 @@
   - **Fidelity hooks** — domain-defined LOD (aggregate crowds vs. aggregated traffic flows),
     consumed by [B7](deep-dives/variable-fidelity.md).
   RTS is simply the **first** domain implementation; the existing `GameObject`/module engine is
-  the reference adapter.
+  the reference adapter. Per the [domain-scope Decision](open-questions.md): non-RTS domains are
+  hosted by **extending the `GameObject`/module system** (a domain = a set of modules + a
+  topology/interaction adapter, sharing one entity runtime, save path, and B3 storage), **not** by
+  running separate per-domain runtimes; and a **transport/graph domain is the first non-RTS
+  validation target**, chosen to exercise graph-cut (non-spatial) partitioning and edge-coupled
+  interactions so the seam is proven topology-general rather than RTS-shaped.
 - **A5** depends on [A1-5 run outputs](deep-dives/headless-host.md) (the artifacts it replays and
   compares) and on **A4** for the experiment matrix/sweep wiring; its visualizations are
   **domain-parameterized** (the A4 domain model supplies the view). It is the validation surface

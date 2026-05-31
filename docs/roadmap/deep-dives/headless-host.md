@@ -15,7 +15,10 @@ batch/experiment runs.
 [Simulation Domain Model seam (A4)](../track-a-foundations.md), not an RTS world specifically.
 Its stepping, recording, and analysis are parameterized by the domain (entity schema, metrics,
 topology), so the same FTRT host can drive RTS battles, city builders, or transportation/logistics
-sims. RTS (the `GameObject`/module engine) is just the first domain adapter.
+sims. RTS (the `GameObject`/module engine) is just the first domain adapter; per the
+[domain-scope Decision](../open-questions.md) a **transport/graph** domain is the first non-RTS
+validation target, and non-RTS domains are hosted by **extending the same `GameObject`/module
+system** (modules + a topology/interaction adapter) rather than a separate runtime.
 
 ---
 

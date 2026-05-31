@@ -64,14 +64,13 @@ and [B6 — Distributed simulation](distributed-simulation.md). Under the
   acceptable if the resulting error stays within tolerance **and** all shards agree on each
   unit's fidelity — which requires driving fidelity from **replicated simulation state**, not
   local view.
-- **Resolution options (decide in B7-1):**
+- **Decision (settled in [open-questions](../open-questions.md)):**
   - **(a) Replicated-state fidelity inputs** — drive fidelity purely from simulation state all
     nodes share (position, activity, density), never from local camera/view. Keeps shards
-    consistent; camera-based LOD is then purely a *rendering* concern. Default for anything
-    shared/distributed.
-  - **(b) View-driven fidelity with bounded, reconciled error** — allow local view to drive
-    fidelity, treating low-fidelity results as provisional and bounding/reconciling the error.
-    Now more palatable since exact reproducibility isn't required; reserved for **single-node**
+    consistent; camera-based LOD is then purely a *rendering* concern. **Required for anything
+    shared/distributed.**
+  - **(b) View-driven fidelity** — allow local view to drive fidelity, treating low-fidelity
+    results as provisional and bounding the error. **Allowed only for single-node**, non-distributed
     scaling experiments where there are no shards to keep consistent.
 
 The [result replayer/visualizer (A5-3)](visualization.md) should **visualize fidelity levels**
@@ -84,7 +83,7 @@ differences (within tolerance) when comparing runs.
 
 | Phase | Goal | Status |
 |---|---|---|
-| **B7-1. Fidelity model & policy stance** | Define the fidelity-level abstraction, the policy inputs (§3), and the reproducibility stance (§4, default option (a) replicated-state inputs for shared sims). Design + benchmark targets (via [B1](../track-b-scale.md)). | Not started |
+| **B7-1. Fidelity model & policy stance** | Define the fidelity-level abstraction and the policy inputs (§3). Reproducibility stance is **settled** ([§4 Decision](#4-interaction-with-reproducibility-important)): replicated-state fidelity inputs are **required** for shared/distributed runs; view-driven fidelity is **single-node only**. Design + benchmark targets (via [B1](../track-b-scale.md)). | Not started |
 | **B7-2. Temporal LOD** | Generalize the existing wake-frame/sleepy-update mechanism so units update every N frames based on fidelity level; measure cost vs. accuracy. | Not started |
 | **B7-3. Simplified behavior/physics** | Provide low-fidelity update paths (cheap move/no fine collision/simplified AI) selected by fidelity level via module composition. | Not started |
 | **B7-4. Group aggregation** | Represent dense crowds of similar units as aggregate entities; expand to individuals on demand (combat, close interest). | Not started |

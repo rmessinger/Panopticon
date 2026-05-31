@@ -7,6 +7,13 @@ The first concrete scale milestone is **bigger maps**, pursued through the **Wor
 editor (`OpenSage.Tools.WorldBuilder.*`) since it is where maps are authored and is the
 fastest path to exercising large terrain end-to-end (author → save `.map` → play).
 
+> **WorldBuilder is scenario-authoring tooling, and must scale with the sim.** Beyond terrain,
+> WorldBuilder is where a scenario's **initial object population** (units, structures, props) is
+> laid out. A sim-scale experiment needs a sim-scale *authoring* path — placing and editing
+> thousands–millions of objects, not just a big heightmap. Terrain scaling (B4a-1…6) and
+> **large-population scenario authoring (B4a-7)** are the two halves of that, and B4a-7 is the
+> WorldBuilder counterpart to ReplaySketch's [A5-5](visualization.md) authoring-at-scale work.
+
 ## Decisions
 
 - **No size cap — design for arbitrarily large maps.** The goal is to gradually scale map size
@@ -59,6 +66,7 @@ fastest path to exercising large terrain end-to-end (author → save `.map` → 
 | **B4a-4. Terrain streaming & LOD** | Build terrain patches on demand around the camera, free distant patches, and add terrain LOD so render cost scales sub-linearly with map area (ties into B5). | Not started |
 | **B4a-5. Chunked terrain storage & extended map format** | **Core requirement.** Tile the heightmap/blend data into chunks so the whole grid need not be resident, and extend/replace the `.map` format to store chunked, arbitrarily large terrain. Enables editing and play of maps larger than memory (resolves C1/C5/C6) and feeds B6 spatial sharding. | Not started |
 | **B4a-6. Round-trip & play validation** | Validate large maps author → save → reload in WorldBuilder → play in the engine; confirm partition/pathfinding/rendering behave at increasing sizes. | Not started |
+| **B4a-7. Large-population scenario authoring** | Scale WorldBuilder beyond terrain to **placing and editing large object populations**: bulk/**procedural** placement of units and structures, **region-based** multi-object edit/undo (extend B4a-2's dirty-region model from cells to objects), scalable selection/iteration, and **instanced editor rendering** (reuse [B5](../track-b-scale.md)) so authoring a sim-scale scenario stays interactive. The authoring counterpart to the engine's [A5 scenario setup](visualization.md) and to ReplaySketch's [A5-5](visualization.md). | Not started |
 
 ## Sequencing notes
 
@@ -71,9 +79,13 @@ fastest path to exercising large terrain end-to-end (author → save `.map` → 
 - **B4a-5** (chunked storage & extended format) is a **core requirement** given the no-cap
   decision, and is the natural bridge to **B6** (distributed simulation via spatial sharding) —
   the chunk is the shard's unit of terrain. Coordinate the chunk/region concept with B6-1.
+- **B4a-7** (large-population authoring) reuses **B4a-2**'s dirty-region edit/undo model (lifted
+  from cells to objects) and **B5**'s instanced rendering, and pairs with the engine-side
+  [A5-5](visualization.md) so the *author* and *replay* tools scale together. It can proceed in
+  parallel with terrain streaming once region-based editing (B4a-2) exists.
 
 ## Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
-- Open question on the size ceiling & compatibility: [`../open-questions.md`](../open-questions.md)
+- Decision on the size ceiling & compatibility: [`../open-questions.md`](../open-questions.md)
 - Architecture snapshot: [`../current-state.md`](../current-state.md)
