@@ -4,10 +4,16 @@
 |---|---|
 | **Card ID** | `P0-01` |
 | **Roadmap phase** | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
-| **Status** | `Ready` |
+| **Status** | `Done` (superseded by deep-dive audit) |
 | **Type** | `investigation` |
 | **Effort** | `S` |
 | **Prerequisites** | none |
+
+> **Superseded.** The investigation this card requested has been completed and captured (file:line
+> grounded) in the [P0 deep dive](../../deep-dives/playable-baseline-harness.md) §2.1–2.2 (closed
+> `ActionType` vocabulary, `KnownDefinitions`, and the exporter translation table). Do **not** redo
+> this survey. The implementation follow-up is card
+> [`P0-03`](P0-03-faction-agnostic-definition-resolution.md).
 
 ## Goal
 

@@ -4,10 +4,15 @@
 |---|---|
 | **Card ID** | `P0-02` |
 | **Roadmap phase** | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
-| **Status** | `Ready` |
+| **Status** | `Done` (superseded by deep-dive audit) |
 | **Type** | `investigation` |
 | **Effort** | `S` |
 | **Prerequisites** | none |
+
+> **Superseded.** The engine `OrderType`/argument inventory this card requested is captured in the
+> [P0 deep dive](../../deep-dives/playable-baseline-harness.md) §2.3 (the `Order`/`OrderArgument*`
+> model, the ~110-value enum, and the `OrderProcessor.Process` handled subset — the authoritative
+> list of what a command can actually do). Do **not** redo this survey.
 
 ## Goal
 
