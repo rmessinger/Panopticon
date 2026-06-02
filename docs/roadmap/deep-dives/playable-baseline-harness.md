@@ -1,11 +1,11 @@
 # Deep Dive: ReplaySketch Arbitrary-Command Harness (P0)
 
-> Expands phase **P0** of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
+> Expands phase P0 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
 
-**Goal:** turn ReplaySketch from a fixed-vocabulary scenario sketcher into a **general
-command-authoring + headless validation harness** that can express *any* engine `Order`, over
-*any* object definition and player, and **assert** post-conditions/invariants/outcomes on a
+Goal: turn ReplaySketch from a fixed-vocabulary scenario sketcher into a general
+command-authoring + headless validation harness that can express any engine `Order`, over
+any object definition and player, and assert post-conditions/invariants/outcomes on a
 headless run. This is the substrate every other Track P phase validates through, and the base the
 [A5 result visualizer](visualization.md) later extends.
 
@@ -13,9 +13,9 @@ headless run. This is the substrate every other Track P phase validates through,
 
 ## 1. Why this is P0
 
-Every other P phase needs a way to *drive* a scenario and *check* what happened. Today ReplaySketch
-can drive only five canned action shapes against two hardcoded factions, and it has **no assertion
-layer at all** — it exports a `.rep` and (optionally) round-trips the header. To validate "the AI
+Every other P phase needs a way to drive a scenario and check what happened. Today ReplaySketch
+can drive only five canned action shapes against two hardcoded factions, and it has no assertion
+layer at all — it exports a `.rep` and (optionally) round-trips the header. To validate "the AI
 built a base," "the player was defeated," or "money never went negative," we need (a) arbitrary
 commands and (b) a way to read final/peri-tick state and assert on it. P0 builds both.
 
@@ -43,7 +43,7 @@ commands and (b) a way to read final/peri-tick state and assert on it. P0 builds
 ### 2.2 The exporter (action → engine `Order` → `.rep`)
 - `ReplayExporter.Export(...)` builds `(frame, Order)` pairs plus `DeferredAction`s
   (`Services/ReplayExporter.cs:44-95`); non-deferred actions advance
-  `cumulativeFrame += action.Timing.Resolve(rng)` (`:83-89`); deferred actions are *not* written to
+  `cumulativeFrame += action.Timing.Resolve(rng)` (`:83-89`); deferred actions are not written to
   the file (`:67-80`).
 - `BuildOrders(...)` is the closed translation table (`:194-250`):
   - `Construct` → `Order.CreateBuildObject(...)` (`:201-208`)
@@ -77,9 +77,9 @@ commands and (b) a way to read final/peri-tick state and assert on it. P0 builds
   SetRallyPoint, SpecialPower*, Enter, GatherDumpSupplies, BeginUpgrade, Sell, RepairStructure,
   EndGame, PurchaseScience, Evacuate, ToggleOvercharge, Checksum`, …
 - `OrderProcessor.Process(...)` is the dispatch switch (`Logic/Orders/OrderProcessor.cs:42-566`);
-  it has **real handlers** for the above and `CreateGroup0-9`/`SelectGroup0-9`, and a default that
-  logs `Unimplemented order type` (`:553-560`). **This is the authoritative list of what a command
-  can actually do** — the harness should target the handled subset first.
+  it has real handlers for the above and `CreateGroup0-9`/`SelectGroup0-9`, and a default that
+  logs `Unimplemented order type` (`:553-560`). This is the authoritative list of what a command
+  can actually do — the harness should target the handled subset first.
 
 ### 2.4 The headless run + where to read state
 - `TestHarness` `RunHeadless(...)` boots `new Game(...)` (audio off), `LoadReplayFile(repEntry)`,
@@ -95,7 +95,7 @@ commands and (b) a way to read final/peri-tick state and assert on it. P0 builds
   `ReplayConnection` keyed by timecode (`Network/ReplayConnection.cs:12-33`).
 - `.rep` container: `ReplayFile.FromFileSystemEntry/Write` (`Data/Rep/ReplayFile.cs:10-67`);
   `ReplayHeader.Create/Write/Parse` (`Data/Rep/ReplayHeader.cs:9-210`).
-- **State readable for assertions:** `Game.Updating` event + `Game.MapTime`
+- State readable for assertions: `Game.Updating` event + `Game.MapTime`
   (`src/OpenSage.Game/Game.cs:126,342,876-959`); `Player` and `Player.BankAccount`
   (`Logic/Player.cs`, `Logic/BankAccount.cs:9`); the `GameLogic` world container
   (`Logic/GameLogic.cs:12`).
@@ -105,48 +105,48 @@ commands and (b) a way to read final/peri-tick state and assert on it. P0 builds
 ## 3. Design
 
 ### 3.1 Open command model (replaces the closed `ActionType`)
-Introduce a `CommandSpec` (working name) that maps **directly onto an engine `Order`** rather than a
+Introduce a `CommandSpec` (working name) that maps directly onto an engine `Order` rather than a
 fixed gameplay verb:
 
 - `OrderType` (the full enum) + `PlayerIndex` + an ordered list of typed `CommandArgument`s mirroring
   `OrderArgumentType` (`Integer/Float/Boolean/ObjectId/Position/ScreenPosition/ScreenRectangle`).
-- Object references by **definition name** (resolved generically — see §3.2) and **position** via the
+- Object references by definition name (resolved generically — see §3.2) and position via the
   existing polymorphic `PositionSpec`, so authoring stays scenario-relative.
-- Object-id arguments (e.g. `AttackObject`, `Enter`) need a way to reference *runtime* objects that
-  don't exist until produced. **Decision** (see [open-questions](../open-questions.md)): objects an
-  earlier command created are referenced by an **implicit handle keyed to the producing command**
+- Object-id arguments (e.g. `AttackObject`, `Enter`) need a way to reference runtime objects that
+  don't exist until produced. Decision (see [open-questions](../open-questions.md)): objects an
+  earlier command created are referenced by an implicit handle keyed to the producing command
   (the author normally writes nothing — "the barracks built in command #3" resolves automatically at
-  dispatch from production/build results), with an **explicit name** as opt-in sugar; objects the
-  script did *not* create (enemy/world objects) use a small set of **query selectors**
+  dispatch from production/build results), with an explicit name as opt-in sugar; objects the
+  script did not create (enemy/world objects) use a small set of query selectors
   (faction/relationship/definition/proximity) resolved against `GameLogic`. This generalizes today's
   `AfterActionTiming` trigger model (`TimingConfig.cs`, `DeferredAction.cs`).
 - Keep `TimingConfig` (fixed/random/after-action) and the deferred-injection path; they already give
-  authored *and* reactive ordering.
-- **Back-compat:** keep the five `ActionType`s as authoring sugar that lowers to `CommandSpec`s, so
+  authored and reactive ordering.
+- Back-compat: keep the five `ActionType`s as authoring sugar that lowers to `CommandSpec`s, so
   existing JSON profiles (`Profiles/alpine-assault-usa-vs-gla.json`) keep working.
 
 ### 3.2 Generic definition resolution (removes hardcoded `KnownDefinitions`)
 Replace the hardcoded USA/GLA name→hash table (`ReplayExporter.cs:21-32`) with resolution against the
-loaded `AssetStore` by definition name (the same `AssetHash.GetHash` path, but for *any* object/
+loaded `AssetStore` by definition name (the same `AssetHash.GetHash` path, but for any object/
 player). This makes the harness faction-agnostic and is a prerequisite for authoring any baseline
 match (any side, any unit/structure).
 
 ### 3.3 Validation / assertion layer (new)
-A declarative **assertion set** attached to a scenario, evaluated headlessly. **Authoring shape
-(Decision, see [open-questions](../open-questions.md)):** assertions are **JSON predicates** (e.g.
+A declarative assertion set attached to a scenario, evaluated headlessly. Authoring shape
+(Decision, see [open-questions](../open-questions.md)): assertions are JSON predicates (e.g.
 `{path: "player[1].money", op: ">=", value: 0}`) over a fixed path/operator vocabulary, with an
-**escape hatch of code-defined (C#) predicates** (registered by name, referenced from the scenario)
+escape hatch of code-defined (C#) predicates (registered by name, referenced from the scenario)
 for invariants that exceed the vocabulary. The three assertion kinds:
 
-- **Outcome assertions** — match terminated; winner/loser/team; reason. (Consumes P3's queryable
+- Outcome assertions — match terminated; winner/loser/team; reason. (Consumes P3's queryable
   `GameOutcome` — see [victory-defeat.md](victory-defeat.md).)
-- **State assertions** — predicates over `Player`/`GameLogic`/`BankAccount` at end-of-run *or* at a
+- State assertions — predicates over `Player`/`GameLogic`/`BankAccount` at end-of-run or at a
   trigger frame (e.g. `player[1].money >= 0`, `player[2].ownedBuildings > 0` after frame N).
-- **Invariant assertions** — predicates checked *every tick* via the `Game.Updating` hook (e.g. money
+- Invariant assertions — predicates checked every tick via the `Game.Updating` hook (e.g. money
   never negative, unit count never duplicated/leaked, AI made progress). A failing invariant records
   the frame and aborts.
 - Evaluation hooks: subscribe to `Game.Updating` for per-tick invariants; read final state after the
-  run loop exits. Result is a structured **pass/fail report** (assertion id, expected, actual, frame).
+  run loop exits. Result is a structured pass/fail report (assertion id, expected, actual, frame).
 
 ### 3.4 Headless run-and-assert entry point
 A single callable surface (CLI + library) that cheap agents and CI use:
@@ -155,46 +155,46 @@ This wraps `RunHeadless`'s boot/loop (`Program.cs:195-270`) plus the §3.3 evalu
 current bespoke "exit on enemy-CC destruction" termination with P3's real outcome signal.
 
 ### 3.5 Scale (forward link)
-The model must support **programmatic/procedural generation** of large command sets (not hand-entry)
+The model must support programmatic/procedural generation of large command sets (not hand-entry)
 and efficient `.rep` emission, so the harness scales toward sim-scale runs. Full authoring/replay
 scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized under
-[A5-5](visualization.md); P0 only needs the *model* to not assume small, hand-authored scenarios.
+[A5-5](visualization.md); P0 only needs the model to not assume small, hand-authored scenarios.
 
 ---
 
 ## 4. Integration surface (what P0 plugs into)
-- **Author:** `CommandSpec`/assertion model in `OpenSage.Tools.ReplaySketch.Core/Model`; lowering in
+- Author: `CommandSpec`/assertion model in `OpenSage.Tools.ReplaySketch.Core/Model`; lowering in
   `Services/ReplayExporter` (`BuildOrders`/`Export`); definition resolution via `AssetStore`.
-- **Drive:** `ReplayFile.Write`/`ReplayHeader.Create`; `Order`/`OrderArgument*`; deferred path via
+- Drive: `ReplayFile.Write`/`ReplayHeader.Create`; `Order`/`OrderArgument*`; deferred path via
   `DeferredAction` + `Game.InjectOrders`.
-- **Run:** `TestHarness.RunHeadless`/`BuildDeferredInjector`/`DrainPendingInjections`.
-- **Assert:** `Game.Updating`/`Game.MapTime`; `Player`/`BankAccount`/`GameLogic`; P3 `GameOutcome`.
+- Run: `TestHarness.RunHeadless`/`BuildDeferredInjector`/`DrainPendingInjections`.
+- Assert: `Game.Updating`/`Game.MapTime`; `Player`/`BankAccount`/`GameLogic`; P3 `GameOutcome`.
 
 ## 5. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
-| **P0-1. Open command model** | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); keep the five verbs as sugar. | Not started |
-| **P0-2. Generic definition/player resolution** | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
-| **P0-3. Exporter generalization** | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
-| **P0-4. Assertion layer** | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. *(JSON predicates over a fixed vocabulary + code-defined escape hatch — decided.)* | Not started |
-| **P0-5. Run-and-assert entry point** | One CLI/library call: scenario+commands in → headless run → report out (exit code + JSON). Wraps `RunHeadless` + the evaluator; terminates on P3 outcome. | Not started |
-| **P0-6. Large/procedural authoring** | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
+| P0-1. Open command model | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); keep the five verbs as sugar. | Not started |
+| P0-2. Generic definition/player resolution | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
+| P0-3. Exporter generalization | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
+| P0-4. Assertion layer | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. (JSON predicates over a fixed vocabulary + code-defined escape hatch — decided.) | Not started |
+| P0-5. Run-and-assert entry point | One CLI/library call: scenario+commands in → headless run → report out (exit code + JSON). Wraps `RunHeadless` + the evaluator; terminates on P3 outcome. | Not started |
+| P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
 
 ## 6. Sequencing & dependencies
 - P0-1→P0-3 are the authoring generalization; P0-4/P0-5 are the validation half and can start once
   P0-1's model exists.
-- **P0-4's outcome assertions depend on P3** ([victory-defeat.md](victory-defeat.md)) for a real
+- P0-4's outcome assertions depend on P3 ([victory-defeat.md](victory-defeat.md)) for a real
   `GameOutcome`; until then P0-4 can assert state/invariants only.
 - P0 unblocks P3/P6/P7 (they author + assert through it) and is later extended by
   [A5-3](visualization.md) (visualizer) and [A5-5](visualization.md) (scale).
 
 ## 7. Resolved design questions
-- **Runtime object references** — **Decided:** implicit auto-handles keyed to the producing command
+- Runtime object references — Decided: implicit auto-handles keyed to the producing command
   (opt-in explicit names) for script-created objects; query selectors
   (faction/relationship/definition/proximity) for world/enemy objects. Generalizes
   `AfterActionTiming`. See [open-questions](../open-questions.md).
-- **Assertion DSL shape** — **Decided:** declarative JSON predicates over a fixed path/operator
+- Assertion DSL shape — Decided: declarative JSON predicates over a fixed path/operator
   vocabulary, with a code-defined (C#) predicate escape hatch for complex invariants. See
   [open-questions](../open-questions.md).
 

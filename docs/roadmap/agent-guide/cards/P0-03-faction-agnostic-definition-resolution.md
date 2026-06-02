@@ -2,38 +2,38 @@
 
 | Field | Value |
 |---|---|
-| **Card ID** | `P0-03` |
-| **Roadmap phase** | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase **P0-2**, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
-| **Status** | `Ready` |
-| **Type** | `mechanical-refactor` |
-| **Effort** | `S` |
-| **Prerequisites** | none |
+| Card ID | `P0-03` |
+| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-2, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
+| Status | `Ready` |
+| Type | `mechanical-refactor` |
+| Effort | `S` |
+| Prerequisites | none |
 
 ## Goal
 
 Remove the hardcoded USA/GLA defaults from the ReplaySketch exporter so a scenario's object
-definitions are resolved **purely from the names the scenario provides** (any faction, any object),
+definitions are resolved purely from the names the scenario provides (any faction, any object),
 via the existing `AssetHash.GetHash(name)` path. This is the first concrete step of P0's
 "express any command over any definition" generalization — a faction-agnostic exporter.
 
-## Context to read (and *only* this)
+## Context to read (and only this)
 
 - `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:16-32` — the `KnownDefinitions`
-  class (hardcoded USA/GLA barracks + ranger/rebel names/hashes) to **delete**.
+  class (hardcoded USA/GLA barracks + ranger/rebel names/hashes) to delete.
 - `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:194-251` — `BuildOrders(...)`, which
   currently falls back to `KnownDefinitions` via `isGla ? Gla… : Usa…` (lines 197, 203-205, 220-222);
   this is the code to change. Note `BuildOrders` is also called at lines 75 and 85 passing
   `player.FactionIndex`.
 - `src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json` — the regression
-  scenario. It **already specifies** `buildingDefinitionName` / `unitDefinitionName` for every
+  scenario. It already specifies `buildingDefinitionName` / `unitDefinitionName` for every
   action (lines ~95, 120, 155, 178), so removing the defaults must not change its behaviour.
 
 ## Steps
 
-1. **Delete** the `KnownDefinitions` class (`ReplayExporter.cs:16-32`) and the doc-comment above it.
+1. Delete the `KnownDefinitions` class (`ReplayExporter.cs:16-32`) and the doc-comment above it.
 2. In `BuildOrders`, for `ActionType.Construct` and `ActionType.RecruitBasicUnit`, replace the
    `action.BuildingDefinitionName ?? (isGla ? … : …)` / `action.UnitDefinitionName ?? (isGla ? … : …)`
-   fallbacks with a **required** name: read `action.BuildingDefinitionName` /
+   fallbacks with a required name: read `action.BuildingDefinitionName` /
    `action.UnitDefinitionName` directly. If the name is `null`/empty, throw an
    `InvalidOperationException` whose message names the offending `ActionType` (e.g.
    `"Construct action requires a BuildingDefinitionName"`). Keep the existing
@@ -69,14 +69,14 @@ grep -rn "KnownDefinitions" src   # must print nothing
 
 ## Out of scope / guardrails
 
-- Do **not** design the open `CommandSpec` model or the assertion layer — those are P0-1/P0-4
+- Do not design the open `CommandSpec` model or the assertion layer — those are P0-1/P0-4
   (escalate to a high-effort model / the [deep dive](../../deep-dives/playable-baseline-harness.md)).
-- Do **not** change the `ActionType` enum, the JSON profile, or the deferred-injection path.
+- Do not change the `ActionType` enum, the JSON profile, or the deferred-injection path.
 - Stay in `ReplayExporter.cs`. If the change pulls in other files, mark `Blocked` and report.
 
 ## On completion
 
-- Set **Status** above to `Done` (or `Blocked` + reason).
+- Set Status above to `Done` (or `Blocked` + reason).
 - Tick the matching item(s) in the [implementation checklist](../../implementation-checklist.md) (P0-2).
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:

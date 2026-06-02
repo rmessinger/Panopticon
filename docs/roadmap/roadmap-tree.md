@@ -1,6 +1,6 @@
 # Roadmap Tree
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). A **visual, maintained** view of the
+> Part of the [Large-Scale Simulation Roadmap](README.md). A visual, maintained view of the
 > whole roadmap: the hierarchy of tracks → phases → sub-phases, and the branching dependency
 > paths between them. Keep this in sync with the track documents
 > ([A](track-a-foundations.md) · [B](track-b-scale.md) · [C](track-c-external-assets.md)) and the
@@ -9,18 +9,18 @@
 
 The two diagrams below are complementary:
 
-- **[1. Structure tree](#1-structure-tree)** — the pure hierarchy (what work exists), every phase
+- [1. Structure tree](#1-structure-tree) — the pure hierarchy (what work exists), every phase
   and sub-phase. Read top-down.
-- **[2. Progression](#2-progression-dependency-flow)** — the branching *paths* (what must come before
+- [2. Progression](#2-progression-dependency-flow) — the branching paths (what must come before
   what) at phase granularity, including cross-track edges. Read along the arrows.
 
-Status is **not** encoded here (it would be a maintenance burden); the authoritative status of
+Status is not encoded here (it would be a maintenance burden); the authoritative status of
 each phase lives in its track document's table.
 
-> **Zoom & pan.** These diagrams can get large. For an interactive view with **mouse-wheel zoom and
-> drag-pan**, open [`roadmap-tree.html`](roadmap-tree.html) (served over HTTP — e.g.
+> Zoom & pan. These diagrams can get large. For an interactive view with mouse-wheel zoom and
+> drag-pan, open [`roadmap-tree.html`](roadmap-tree.html) (served over HTTP — e.g.
 > `python3 -m http.server` from this folder — since browsers block local `file://` fetches). It
-> reads the diagrams **live from this file**, so there's nothing to keep in sync. When viewing on
+> reads the diagrams live from this file, so there's nothing to keep in sync. When viewing on
 > GitHub, the rendered Mermaid diagrams below also have built-in zoom/pan controls (hover to reveal
 > them).
 
@@ -101,11 +101,11 @@ mindmap
 
 ## 2. Progression (dependency flow)
 
-A **left-to-right progression**: work flows through stages, each gated by the one before, starting
-from the **[playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md)** that gates the
-whole roadmap. Arrows read **"must precede."** Nodes keep their **track colour** (P = stone,
+A left-to-right progression: work flows through stages, each gated by the one before, starting
+from the [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) that gates the
+whole roadmap. Arrows read "must precede." Nodes keep their track colour (P = stone,
 A = blue, B = green, C = amber) so you can follow a single track across the stages, while the columns
-show *when* each phase becomes workable. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md)
+show when each phase becomes workable. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md)
 is drawn as its own node (highlighted) because it is an early prerequisite of the A1 host even though
 the rest of A4 follows A1.
 
@@ -233,8 +233,8 @@ flowchart LR
   class A4S seam;
 ```
 
-> **Coordination (not ordering):** **A3** and **C1** both touch the presentation seam, and **B5**
-> instancing should account for **C4** (Track C) models — these are coordination points, not strict
+> Coordination (not ordering): A3 and C1 both touch the presentation seam, and B5
+> instancing should account for C4 (Track C) models — these are coordination points, not strict
 > dependencies, so they are omitted from the progression arrows above (see the
 > [cross-track dependencies](README.md#cross-track-dependencies) note).
 
@@ -242,19 +242,19 @@ flowchart LR
 
 ## How to maintain this tree
 
-Update this file in the **same change** that alters the roadmap's structure:
+Update this file in the same change that alters the roadmap's structure:
 
-- **Add/remove/rename a phase or sub-phase** → update the matching node in the
+- Add/remove/rename a phase or sub-phase → update the matching node in the
   [structure tree](#1-structure-tree) (and the [progression](#2-progression-dependency-flow) if it is a
   phase). Keep node text terse — detail lives in the track docs and deep dives.
-- **Add/remove a dependency** → add/remove the corresponding arrow in the
+- Add/remove a dependency → add/remove the corresponding arrow in the
   [progression](#2-progression-dependency-flow). The arrows here mirror the `todo_deps` relationships and
   the "Sequencing notes" in the deep dives; keep them consistent.
-- **A phase gains a deep dive** → add the ⮕ marker to its node.
-- **Placing a node in a stage** → put a phase in the stage just **after** its latest hard
+- A phase gains a deep dive → add the ⮕ marker to its node.
+- Placing a node in a stage → put a phase in the stage just after its latest hard
   prerequisite (stage = longest dependency chain from Stage 0). If a new dependency pushes a phase
   past its current column, move it right so all progression arrows keep flowing left-to-right.
-- Do **not** encode per-phase status here — update the **Status** column in the track document
+- Do not encode per-phase status here — update the Status column in the track document
   instead, to avoid two sources of truth.
 
 This document is linked from the [README document map](README.md#document-map).
