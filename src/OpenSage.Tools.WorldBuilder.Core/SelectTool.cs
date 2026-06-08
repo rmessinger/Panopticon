@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using OpenSage.Data.Map;
 
 namespace OpenSage.Tools.WorldBuilder.Core;

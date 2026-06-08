@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
@@ -129,8 +129,8 @@ public sealed class GameViewportRenderer : IDisposable
     public void OnPointerEvent(ViewportPointerEvent pointerEvent)
     {
         Point2D position = new(
-            (int) MathF.Round(pointerEvent.Position.X),
-            (int) MathF.Round(pointerEvent.Position.Y));
+            (int)MathF.Round(pointerEvent.Position.X),
+            (int)MathF.Round(pointerEvent.Position.Y));
 
         switch (pointerEvent.EventType)
         {
@@ -150,7 +150,7 @@ public sealed class GameViewportRenderer : IDisposable
 
             case ViewportPointerEventType.Scroll:
                 QueueInputMessage(InputMessage.CreateMouseMove(position));
-                QueueInputMessage(InputMessage.CreateMouseWheel((int) MathF.Round(pointerEvent.ScrollDelta)));
+                QueueInputMessage(InputMessage.CreateMouseWheel((int)MathF.Round(pointerEvent.ScrollDelta)));
                 break;
         }
 
@@ -308,7 +308,7 @@ public sealed class GameViewportRenderer : IDisposable
             singlePlayer
         ]);
 
-        _game.Scene3D = (IScene3D) scene;
+        _game.Scene3D = (IScene3D)scene;
     }
 
     private void QueueInputMessage(InputMessage inputMessage)
@@ -321,7 +321,7 @@ public sealed class GameViewportRenderer : IDisposable
 
     private static Rectangle CreateBounds(uint width, uint height)
     {
-        return new Rectangle(0, 0, (int) width, (int) height);
+        return new Rectangle(0, 0, (int)width, (int)height);
     }
 
     private static GraphicsBackend? GetPreferredBackend()

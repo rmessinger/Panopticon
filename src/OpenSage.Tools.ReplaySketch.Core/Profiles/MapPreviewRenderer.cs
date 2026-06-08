@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 using OpenSage.Tools.ReplaySketch.Model;
@@ -99,24 +99,13 @@ public static class MapPreviewRenderer
             return worldRadius / mapWidthWorld * previewSize;
         }
 
+        // Pass 1 — action markers (drawn beneath player anchors so anchors are always legible)
         for (var slotIdx = 0; slotIdx < players.Count; slotIdx++)
         {
             var player = players[slotIdx];
             var color = slotIdx < SlotColors.Length ? SlotColors[slotIdx] : AnchorColor;
             var isSlotSelected = slotIdx == selectedSlotIndex;
 
-            // Player-start anchor
-            var startWorld = map.PlayerStart(slotIdx);
-            var startScreen = WorldToScreen(new Vector2(startWorld.X, startWorld.Y));
-
-            using var anchorPaint = new SKPaint { Color = color, Style = SKPaintStyle.Fill };
-            canvas.DrawCircle(startScreen, isSlotSelected ? 7f : 5f, anchorPaint);
-
-            using var textPaint = new SKPaint { Color = color };
-            using var textFont = new SKFont { Size = 12 };
-            canvas.DrawText($"P{slotIdx + 1}", startScreen.X + 6, startScreen.Y - 4, textFont, textPaint);
-
-            // Action markers
             for (var actionIdx = 0; actionIdx < player.Actions.Count; actionIdx++)
             {
                 var action = player.Actions[actionIdx];
@@ -135,6 +124,23 @@ public static class MapPreviewRenderer
             }
         }
 
+        // Pass 2 — player-start anchors drawn on top so they are never obscured by action rings
+        for (var slotIdx = 0; slotIdx < players.Count; slotIdx++)
+        {
+            var color = slotIdx < SlotColors.Length ? SlotColors[slotIdx] : AnchorColor;
+            var isSlotSelected = slotIdx == selectedSlotIndex;
+
+            var startWorld = map.PlayerStart(slotIdx);
+            var startScreen = WorldToScreen(new Vector2(startWorld.X, startWorld.Y));
+
+            using var anchorPaint = new SKPaint { Color = color, Style = SKPaintStyle.Fill };
+            canvas.DrawCircle(startScreen, isSlotSelected ? 7f : 5f, anchorPaint);
+
+            using var textPaint = new SKPaint { Color = color };
+            using var textFont = new SKFont { Size = 12 };
+            canvas.DrawText($"P{slotIdx + 1}", startScreen.X + 6, startScreen.Y - 4, textFont, textPaint);
+        }
+
         return markers;
     }
 
@@ -151,33 +157,33 @@ public static class MapPreviewRenderer
         switch (action.Position)
         {
             case NormalizedPosition np:
-            {
-                var wx = map.ExtentMin.X + np.NormX * (map.ExtentMax.X - map.ExtentMin.X);
-                var wy = map.ExtentMin.Y + np.NormY * (map.ExtentMax.Y - map.ExtentMin.Y);
-                return worldToScreen(new Vector2(wx, wy));
-            }
+                {
+                    var wx = map.ExtentMin.X + np.NormX * (map.ExtentMax.X - map.ExtentMin.X);
+                    var wy = map.ExtentMin.Y + np.NormY * (map.ExtentMax.Y - map.ExtentMin.Y);
+                    return worldToScreen(new Vector2(wx, wy));
+                }
 
             case LandmarkRelativePosition lrp when lrp.Angle is FixedAngle fa:
-            {
-                var anchor = GetLandmarkWorld(lrp.Landmark, slotIdx, 1 - slotIdx, map);
-                var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
-                var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
-                var rad = fa.Degrees * MathF.PI / 180f;
-                return new SKPoint(
-                    anchorScreen.X + MathF.Cos(rad) * distPixels,
-                    anchorScreen.Y - MathF.Sin(rad) * distPixels);
-            }
+                {
+                    var anchor = GetLandmarkWorld(lrp.Landmark, slotIdx, 1 - slotIdx, map);
+                    var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
+                    var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
+                    var rad = fa.Degrees * MathF.PI / 180f;
+                    return new SKPoint(
+                        anchorScreen.X + MathF.Cos(rad) * distPixels,
+                        anchorScreen.Y - MathF.Sin(rad) * distPixels);
+                }
 
             case LandmarkRelativePosition lrp when lrp.Angle is RandomAngle ra:
-            {
-                var anchor = GetLandmarkWorld(lrp.Landmark, slotIdx, 1 - slotIdx, map);
-                var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
-                var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
-                var midRad = (ra.MinDegrees + ra.MaxDegrees) * 0.5f * MathF.PI / 180f;
-                return new SKPoint(
-                    anchorScreen.X + MathF.Cos(midRad) * distPixels,
-                    anchorScreen.Y - MathF.Sin(midRad) * distPixels);
-            }
+                {
+                    var anchor = GetLandmarkWorld(lrp.Landmark, slotIdx, 1 - slotIdx, map);
+                    var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
+                    var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
+                    var midRad = (ra.MinDegrees + ra.MaxDegrees) * 0.5f * MathF.PI / 180f;
+                    return new SKPoint(
+                        anchorScreen.X + MathF.Cos(midRad) * distPixels,
+                        anchorScreen.Y - MathF.Sin(midRad) * distPixels);
+                }
 
             default:
                 return SKPoint.Empty;
@@ -215,55 +221,53 @@ public static class MapPreviewRenderer
         switch (action.Position)
         {
             case NormalizedPosition np:
-            {
-                var wx = map.ExtentMin.X + np.NormX * (map.ExtentMax.X - map.ExtentMin.X);
-                var wy = map.ExtentMin.Y + np.NormY * (map.ExtentMax.Y - map.ExtentMin.Y);
-                var screen = worldToScreen(new Vector2(wx, wy));
-                var dotR = isActionSelected ? 6f : isSlotSelected ? 5f : 3f;
-                canvas.DrawCircle(screen, dotR, dotPaint);
-                if (isActionSelected) canvas.DrawCircle(screen, dotR + 3f, selPaint);
-                else if (isSlotSelected) canvas.DrawCircle(screen, 7f, selPaint);
-                canvas.DrawText(label, screen.X + 6, screen.Y - 4, textFont, textPaint);
-                break;
-            }
+                {
+                    var wx = map.ExtentMin.X + np.NormX * (map.ExtentMax.X - map.ExtentMin.X);
+                    var wy = map.ExtentMin.Y + np.NormY * (map.ExtentMax.Y - map.ExtentMin.Y);
+                    var screen = worldToScreen(new Vector2(wx, wy));
+                    var dotR = isActionSelected ? 6f : isSlotSelected ? 5f : 3f;
+                    canvas.DrawCircle(screen, dotR, dotPaint);
+                    if (isActionSelected) canvas.DrawCircle(screen, dotR + 3f, selPaint);
+                    canvas.DrawText(label, screen.X + 6, screen.Y - 4, textFont, textPaint);
+                    break;
+                }
 
             case LandmarkRelativePosition lrp:
-            {
-                var anchor = GetLandmarkWorld(lrp.Landmark, slotIdx, 1 - slotIdx, map);
-                var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
-                var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
-
-                switch (lrp.Angle)
                 {
-                    case FixedAngle fa:
-                    {
-                        var rad = fa.Degrees * MathF.PI / 180f;
-                        var tip = new SKPoint(
-                            anchorScreen.X + MathF.Cos(rad) * distPixels,
-                            anchorScreen.Y - MathF.Sin(rad) * distPixels);
-                        var dotR = isActionSelected ? 6f : isSlotSelected ? 5f : 3f;
-                        canvas.DrawCircle(tip, dotR, dotPaint);
-                        if (isActionSelected) canvas.DrawCircle(tip, dotR + 3f, selPaint);
-                        else if (isSlotSelected) canvas.DrawCircle(tip, 7f, selPaint);
-                        canvas.DrawText(label, tip.X + 6, tip.Y - 4, textFont, textPaint);
-                        break;
-                    }
+                    var anchor = GetLandmarkWorld(lrp.Landmark, slotIdx, 1 - slotIdx, map);
+                    var anchorScreen = worldToScreen(new Vector2(anchor.X, anchor.Y));
+                    var distPixels = worldRadiusToPixels(lrp.DistanceInBaseWidths * baseRadius);
 
-                    case RandomAngle ra:
+                    switch (lrp.Angle)
                     {
-                        DrawArcSector(canvas, anchorScreen, distPixels,
-                            ra.MinDegrees, ra.MaxDegrees, arcFillPaint, dotPaint);
-                        var midRad = (ra.MinDegrees + ra.MaxDegrees) * 0.5f * MathF.PI / 180f;
-                        var midTip = new SKPoint(
-                            anchorScreen.X + MathF.Cos(midRad) * distPixels,
-                            anchorScreen.Y - MathF.Sin(midRad) * distPixels);
-                        if (isActionSelected) canvas.DrawCircle(midTip, 9f, selPaint);
-                        canvas.DrawText(label, midTip.X + 4, midTip.Y - 4, textFont, textPaint);
-                        break;
+                        case FixedAngle fa:
+                            {
+                                var rad = fa.Degrees * MathF.PI / 180f;
+                                var tip = new SKPoint(
+                                    anchorScreen.X + MathF.Cos(rad) * distPixels,
+                                    anchorScreen.Y - MathF.Sin(rad) * distPixels);
+                                var dotR = isActionSelected ? 6f : isSlotSelected ? 5f : 3f;
+                                canvas.DrawCircle(tip, dotR, dotPaint);
+                                if (isActionSelected) canvas.DrawCircle(tip, dotR + 3f, selPaint);
+                                canvas.DrawText(label, tip.X + 6, tip.Y - 4, textFont, textPaint);
+                                break;
+                            }
+
+                        case RandomAngle ra:
+                            {
+                                DrawArcSector(canvas, anchorScreen, distPixels,
+                                    ra.MinDegrees, ra.MaxDegrees, arcFillPaint, dotPaint);
+                                var midRad = (ra.MinDegrees + ra.MaxDegrees) * 0.5f * MathF.PI / 180f;
+                                var midTip = new SKPoint(
+                                    anchorScreen.X + MathF.Cos(midRad) * distPixels,
+                                    anchorScreen.Y - MathF.Sin(midRad) * distPixels);
+                                if (isActionSelected) canvas.DrawCircle(midTip, 9f, selPaint);
+                                canvas.DrawText(label, midTip.X + 4, midTip.Y - 4, textFont, textPaint);
+                                break;
+                            }
                     }
+                    break;
                 }
-                break;
-            }
         }
     }
 

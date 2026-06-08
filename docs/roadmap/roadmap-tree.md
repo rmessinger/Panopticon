@@ -59,6 +59,7 @@ mindmap
         A5-3 Results visualizer
         A5-4 Divergence localization
         A5-5 Authoring and visualization at scale
+        A5-6 WorldBuilder baseline
     B. Scale
       B1 Profiling and benchmarking utilities
       B2 Allocation cleanup
@@ -134,6 +135,7 @@ flowchart LR
     A2["A2 Reproducibility & stability"]
     A4S["A4-1 Domain Model seam"]
     A3["A3 Sim/presentation seam"]
+    A5WB["A5-6 WorldBuilder baseline"]
     B1["B1 Benchmarking utilities"]
     C1["C1 Import abstraction"]
   end
@@ -186,6 +188,7 @@ flowchart LR
   P7 --> A2
   P7 --> A3
   P7 --> A4S
+  P7 --> A5WB
   P7 --> B1
   P7 --> C1
 
@@ -195,6 +198,7 @@ flowchart LR
   B1 --> B2
   B1 --> B4
   B1 --> B4A
+  A5WB --> B4A
   A3 --> B5
   C1 --> C2
   C1 --> C3
@@ -226,7 +230,7 @@ flowchart LR
   B3 --> B7
   A5 --> B7
 
-  class A1,A2,A3,A4,A5 trackA;
+  class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
   class P0,P1,P2,P3,P4,P5,P6,P7 trackP;

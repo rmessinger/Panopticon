@@ -6,30 +6,37 @@ namespace OpenSage.Tools.ReplaySketch.Maui.Views;
 
 public partial class ScenarioView : ContentView
 {
-    private static readonly string[] MapLabels = ["Alpine Assault"];
-    private static readonly string[] MapPaths = ["maps/alpine assault/alpine assault.map"];
-
-    private static readonly string[] FactionLabels =
-        ["USA (2)", "China (3)", "GLA (4)", "USA Gen (5)", "Toxin (6)", "Demo (7)",
-         "Stealth (8)", "Nuke (9)", "Laser (10)", "Air Force (11)", "Super Weapon (12)", "Tank (13)"];
-
-    private static readonly int[] FactionIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-
     private MainViewModel? _vm;
     private bool _suppressCallbacks;
 
     public ScenarioView()
     {
         InitializeComponent();
-
-        MapPicker.ItemsSource = MapLabels;
-        FactionPicker.ItemsSource = FactionLabels;
     }
 
     public void BindViewModel(MainViewModel vm)
     {
         _vm = vm;
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.MapsGeneration))
+            {
+                RefreshAvailableMaps();
+                Refresh();
+            }
+        };
+        RefreshAvailableMaps();
         Refresh();
+    }
+
+    private void RefreshAvailableMaps()
+    {
+        if (_vm == null) return;
+
+        _suppressCallbacks = true;
+        MapPicker.ItemsSource = _vm.AvailableMaps;
+        MapPicker.SelectedIndex = Math.Max(0, _vm.GetDiscoveredMapIndex(_vm.Scenario.MapPath));
+        _suppressCallbacks = false;
     }
 
     public void Refresh()
@@ -39,8 +46,8 @@ public partial class ScenarioView : ContentView
 
         var scenario = _vm.Scenario;
 
-        // Map
-        var mapIdx = Array.IndexOf(MapPaths, scenario.MapPath);
+        // Map — find the index of the current scenario path in the discovered maps
+        var mapIdx = _vm.GetDiscoveredMapIndex(scenario.MapPath);
         MapPicker.SelectedIndex = mapIdx >= 0 ? mapIdx : 0;
 
         // Base radius
@@ -70,7 +77,12 @@ public partial class ScenarioView : ContentView
 
         PlayerNameEntry.Text = player.Name;
 
-        var factionIdx = Array.IndexOf(FactionIndices, player.FactionIndex);
+        var factionLabels = new[] { "USA (2)", "China (3)", "GLA (4)", "USA Gen (5)", "Toxin (6)", "Demo (7)",
+            "Stealth (8)", "Nuke (9)", "Laser (10)", "Air Force (11)", "Super Weapon (12)", "Tank (13)" };
+        var factionIndices = new[] { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
+
+        FactionPicker.ItemsSource = factionLabels;
+        var factionIdx = Array.IndexOf(factionIndices, player.FactionIndex);
         FactionPicker.SelectedIndex = factionIdx >= 0 ? factionIdx : 0;
 
         ColorEntry.Text = player.Color.ToString();
@@ -84,9 +96,10 @@ public partial class ScenarioView : ContentView
     {
         if (_suppressCallbacks || _vm == null) return;
         var idx = MapPicker.SelectedIndex;
-        if (idx >= 0 && idx < MapPaths.Length && _vm.Scenario.MapPath != MapPaths[idx])
+        var mapPath = _vm.GetDiscoveredMapPath(idx);
+        if (mapPath != null && !string.Equals(_vm.Scenario.MapPath, mapPath, StringComparison.OrdinalIgnoreCase))
         {
-            _vm.Scenario.MapPath = MapPaths[idx];
+            _vm.Scenario.MapPath = mapPath;
             _vm.LoadMap();
         }
     }
@@ -129,9 +142,10 @@ public partial class ScenarioView : ContentView
     private void OnFactionPickerChanged(object? sender, EventArgs e)
     {
         if (_suppressCallbacks || _vm == null) return;
+        var factionIndices = new[] { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
         var idx = FactionPicker.SelectedIndex;
-        if (idx >= 0 && idx < FactionIndices.Length)
-            _vm.SelectedPlayer.FactionIndex = FactionIndices[idx];
+        if (idx >= 0 && idx < factionIndices.Length)
+            _vm.SelectedPlayer.FactionIndex = factionIndices[idx];
     }
 
     private void OnColorCompleted(object? sender, EventArgs e) => CommitColor();

@@ -424,7 +424,7 @@ public class ActionTreeControllerTests
         var a1 = MakeAction(ActionType.Construct, id: "a1");
         var a2 = MakeAction(ActionType.GatherResources, id: "a2",
             label: "Gather");
-        a2 = new ActionEntry(a2.Label, a2.Type, null, new AfterActionTiming("a1", ActionPhase.Completed), "a2");
+        a2 = new ActionEntry(a2.Label, a2.Command, null, new AfterActionTiming("a1", ActionPhase.Completed), "a2");
         player.Actions.Add(a1);
         player.Actions.Add(a2);
         var ctrl = new ActionTreeController(player);

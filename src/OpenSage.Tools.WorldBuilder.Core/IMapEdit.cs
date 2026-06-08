@@ -1,4 +1,4 @@
-namespace OpenSage.Tools.WorldBuilder.Core;
+﻿namespace OpenSage.Tools.WorldBuilder.Core;
 
 /// <summary>
 /// Represents a reversible map editing operation (Command pattern).

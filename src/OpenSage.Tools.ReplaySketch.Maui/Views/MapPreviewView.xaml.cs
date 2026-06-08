@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using CommunityToolkit.Maui.Storage;
 using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
@@ -73,6 +74,7 @@ public partial class MapPreviewView : ContentView
             InstallPathEntry.Text = existing;
 
         SyncNoMapOverlay();
+        RebuildPreviewBitmap();
     }
 
     private void SyncNoMapOverlay()
@@ -109,16 +111,14 @@ public partial class MapPreviewView : ContentView
 
     private async void OnBrowseClicked(object? sender, EventArgs e)
     {
-        // FilePicker lets the user pick any file inside the game folder;
-        // we take its directory as the installation path.
+        // Use a folder picker so the user can point directly at the installation root.
         try
         {
-            var result = await FilePicker.PickAsync(new PickOptions
+            var result = await FolderPicker.Default.PickAsync(default);
+            if (result.IsSuccessful)
             {
-                PickerTitle = "Select any file inside your Generals installation folder",
-            });
-            if (result != null)
-                InstallPathEntry.Text = Path.GetDirectoryName(result.FullPath) ?? string.Empty;
+                InstallPathEntry.Text = result.Folder.Path;
+            }
         }
         catch
         {
@@ -130,7 +130,10 @@ public partial class MapPreviewView : ContentView
     {
         var path = InstallPathEntry.Text?.Trim();
         if (string.IsNullOrEmpty(path)) return;
-        _vm?.LoadMapFromFolder(path);
+        if (_vm != null)
+        {
+            _ = _vm.LoadMapFromFolderAsync(path);
+        }
     }
 
     public void SetActionTreeBridge(ActionTreeView treeView)

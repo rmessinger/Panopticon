@@ -29,7 +29,9 @@ ideas can be tried, swapped, and compared. Everything below is in service of two
 The following are the vague long-term goals of this framework:
 
 1. Arbitrarily large simulations — scale toward thousands–millions of entities, larger maps,
-   headless/offline batch simulation, and distributed simulation across processes/machines.
+   headless/offline batch simulation, and distributed simulation across processes/machines. The
+   first committed waypoint is 10k units at interactive rate (~30 fps) on one machine (see the
+   [near-term scale anchor Decision](open-questions.md)); larger figures stay directional.
 2. External asset incorporation — let units use models and animations authored outside the
    Westwood `.w3d` ecosystem, via a format-agnostic import abstraction.
 
@@ -65,7 +67,9 @@ The following are the vague long-term goals of this framework:
   must handle the same magnitudes (entity counts, map sizes, command volumes) as the simulations
   they configure. You cannot author or analyze a million-entity experiment with tooling that
   assumes hundreds, so the scenario tooling sits on the scaling critical path, not beside it:
-  WorldBuilder authoring scales under [B4a](track-b-scale.md), ReplaySketch/visualizer under
+  WorldBuilder authoring scales under [B4a](track-b-scale.md) (with WorldBuilder baseline
+  established first under [A5-6](deep-dives/visualization.md) — an early Track A sub-phase
+  that does not depend on A1/A4), ReplaySketch/visualizer under
   [A5](deep-dives/visualization.md) and [P0](track-p-playable-baseline.md), reusing the same
   streaming/LOD/instancing ([B4a](deep-dives/larger-maps.md)/[B5](track-b-scale.md)) and
   procedural-generation techniques as the engine.
@@ -88,6 +92,10 @@ The following are the vague long-term goals of this framework:
   in exchange for giving up bit-exact replays.
 - Incremental, always-shippable. Each phase should leave the engine building and the
   existing games playable.
+- Single-operator scope. The framework is a personal research tool for one operator for the
+  foreseeable future (see the [audience Decision](open-questions.md)). Tooling and run results
+  target that operator — not external users — so no multi-user robustness, third-party
+  reproducibility, or distribution hardening is a goal until that stance is revisited.
 
 ---
 

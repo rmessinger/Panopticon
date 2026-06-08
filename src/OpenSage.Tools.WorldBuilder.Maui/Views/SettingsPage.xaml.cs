@@ -1,4 +1,4 @@
-using CommunityToolkit.Maui.Storage;
+﻿using CommunityToolkit.Maui.Storage;
 
 namespace OpenSage.Tools.WorldBuilder.Maui.Views;
 

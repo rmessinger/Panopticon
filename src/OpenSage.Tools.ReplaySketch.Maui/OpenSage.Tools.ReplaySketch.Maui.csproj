@@ -41,6 +41,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" />
+    <PackageReference Include="CommunityToolkit.Maui" />
     <PackageReference Include="SkiaSharp.Views.Maui.Controls" />
   </ItemGroup>
 

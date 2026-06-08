@@ -1,4 +1,4 @@
-#if MACCATALYST
+﻿#if MACCATALYST
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
@@ -68,8 +68,8 @@ public class VeldridViewportHandler : ViewHandler<VeldridViewport, UIView>
         }
 
         double scale = PlatformView.ContentScaleFactor;
-        uint width = (uint) (bounds.Width * scale);
-        uint height = (uint) (bounds.Height * scale);
+        uint width = (uint)(bounds.Width * scale);
+        uint height = (uint)(bounds.Height * scale);
         if (width == 0 || height == 0)
         {
             return;

@@ -152,3 +152,50 @@
   dozer/worker + insufficient resources), per Generals skirmish rules — implemented as the default
   but exposed as a configurable/data-driven rule so experiments can swap simpler/stricter
   conditions. Affects [P3](track-p-playable-baseline.md).
+- Framework audience & distribution scope — Decision: single-operator personal research tool,
+  whole framework. The entire simulation framework — not just the C-track import tooling — is a
+  personal experimentation tool for one operator for the foreseeable future. This generalizes the
+  asset-licensing Decision above: no multi-user robustness, external/third-party reproducibility, or
+  distribution hardening is a goal. Human-facing tooling ([A5](track-a-foundations.md) authoring/
+  visualization, [B1](track-b-scale.md) benchmarks) targets that one operator, and runs need only be
+  reproducible-for-comparison by them, not citable or shareable by others. Deliberate and revisitable:
+  if the framework is ever shared, published, or used to distribute assets, multi-user concerns (and
+  the C5 provenance/licensing stance) must be revisited first. Affects the
+  [README guiding principles](README.md), [A5](track-a-foundations.md), [B1](track-b-scale.md).
+- Near-term scale anchor — Decision: 10k units at interactive rate (~30 fps) on one machine.
+  The first committed waypoint toward the long-term thousands–millions goal. Track B milestones
+  (B2–B5, B7) are designed and budgeted against this single anchor; the larger {100k, millions}
+  figures stay directional, not yet budgeted. [B1](track-b-scale.md) fixes a seeded 10k-unit
+  interactive scenario as the reference workload, and B2 (allocation), B3 (parallelism),
+  B4 (pathfinding), B5 (rendering), and B7 (fidelity) each target sustaining ~10k units at ~30 fps
+  single-node before the anchor is raised. Affects [B1–B5, B7](track-b-scale.md).
+- Non-RTS validation domain completeness — Decision: minimal partition-stress harness. The first
+  non-RTS (transport/graph) domain (see the Simulation-domain scope Decision) is implemented only as
+  far as needed to exercise graph-cut (non-spatial) partitioning and edge-coupled interaction/owner
+  authority — not a complete, terminating, Track-P-grade scenario. It instantiates graph entities,
+  runs them headlessly, and emits the partition/boundary metrics A4/B6 need, but requires no
+  economy/production/victory/AI loop. Just enough to prove the [A4](track-a-foundations.md) domain
+  seam and [B6](deep-dives/distributed-simulation.md) partitioning are topology-general rather than
+  RTS-shaped. Affects [A4](track-a-foundations.md), [B6](deep-dives/distributed-simulation.md).
+- A2 strict-hash mode scope — Decision: same platform/build, best-effort, parallelism allowed.
+  The opt-in strict-hash mode is scoped to a single platform + build and does not forbid intra-tick
+  parallelism; it is therefore best-effort and may still diverge under nondeterministic parallel
+  writes (consistent with the relaxed-determinism Decision). It is a finer-grained debugging
+  signature that approaches bit-equality for same-platform/same-build single runs, not a guarantee of
+  cross-platform or under-parallelism bit-exactness. The [A2](track-a-foundations.md) milestone is
+  softened accordingly — no unconditional "reproduces bit-exactly" promise. Affects
+  [A2](track-a-foundations.md).
+- C5 external-model tooling — Decision: extend ReplaySketch, no dedicated viewer. External-model
+  import/preview/validation tooling ([C5](track-c-external-assets.md)) extends ReplaySketch rather
+  than spawning a separate viewer, per the no-fragmentation tooling convention (ReplaySketch is the
+  primary tool). The "or a dedicated viewer" option is removed from C5. Affects
+  [C5](track-c-external-assets.md).
+- Save/load (StatePersister) reach — Decision: single-node only. The single `StatePersister`
+  save/persist path is required to work only for single-node runs; it is not required to serialize
+  sharded/distributed ([B6](deep-dives/distributed-simulation.md)) state. Distributed runs rely on the
+  recorded snapshot/delta stream (the relaxed-determinism recording) for analysis and replay, not on
+  `StatePersister`. The "one save/persist path" in the Simulation-domain scope Decision means one path
+  per node, not one path spanning shards. Headless single-node runs may still round-trip save/load;
+  cross-shard save/load is out of scope unless a later experiment needs it. Affects
+  [A1](deep-dives/headless-host.md), [B3](track-b-scale.md),
+  [B6](deep-dives/distributed-simulation.md).

@@ -1,4 +1,4 @@
-using Foundation;
+﻿using Foundation;
 
 namespace OpenSage.Tools.WorldBuilder.Maui.Platforms.MacCatalyst;
 

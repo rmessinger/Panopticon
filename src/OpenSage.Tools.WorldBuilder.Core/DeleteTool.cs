@@ -1,4 +1,4 @@
-namespace OpenSage.Tools.WorldBuilder.Core;
+﻿namespace OpenSage.Tools.WorldBuilder.Core;
 
 /// <summary>
 /// Deletes the currently selected object from the map.

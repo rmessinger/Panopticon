@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using OpenSage.Tools.ReplaySketch.Services;
 
@@ -100,5 +100,72 @@ public class GeneralsInstallationServiceTests : IDisposable
         {
             Directory.Delete(second);
         }
+    }
+
+    // ── Browse-and-Load fix scenarios ─────────────────────────────────────────
+    // These tests cover the specific scenario fixed when the Browse button was
+    // changed from a file picker (strip directory) to a folder picker:
+    // the installation path must be set and discoverable unconditionally, even
+    // if map loading subsequently fails (e.g. the folder exists but contains
+    // no valid game files).
+
+    [Fact]
+    public void SetPath_InstallationDiscoverable_BeforeMapLoadAttempt()
+    {
+        // Simulates the Browse+Load flow: after the user browses to a folder,
+        // SetPath is called immediately. Installation must be discoverable right
+        // away — before LoadMap runs and regardless of whether it succeeds.
+        var path = Path.GetTempPath();
+        var svc = new GeneralsInstallationService();
+
+        svc.SetPath(path);
+
+        var found = svc.TryGetInstallation(out var installation);
+
+        Assert.True(found);
+        Assert.Equal(path, installation!.Path);
+    }
+
+    [Fact]
+    public void SetPath_InstallationDiscoverable_EvenWhenDirectoryHasNoGameFiles()
+    {
+        // A valid directory with no game files is still "discovered" — the
+        // EnvironmentInstallationLocator only checks that the directory exists.
+        // This is the state after Browse picks a folder but the folder turns out
+        // to not contain a loadable map; the installation path is still set.
+        var emptyDir = Path.Combine(Path.GetTempPath(), "ReplaySketchTest_Empty_" + Guid.NewGuid());
+        Directory.CreateDirectory(emptyDir);
+        try
+        {
+            var svc = new GeneralsInstallationService();
+
+            svc.SetPath(emptyDir);
+            var found = svc.TryGetInstallation(out var installation);
+
+            Assert.True(found);
+            Assert.Equal(emptyDir, installation!.Path);
+        }
+        finally
+        {
+            Directory.Delete(emptyDir);
+        }
+    }
+
+    [Fact]
+    public void SetPath_EnvVarVisibleToNewServiceInstance()
+    {
+        // Simulates the app-restart restore path: on startup the VM reads the
+        // saved preference and calls SetPath, which sets the process env var.
+        // A new GeneralsInstallationService instance (created anywhere in the
+        // same process) must see the same path via the env var.
+        var path = Path.GetTempPath();
+        var firstSvc = new GeneralsInstallationService();
+        firstSvc.SetPath(path);
+
+        var secondSvc = new GeneralsInstallationService();
+        var found = secondSvc.TryGetInstallation(out var installation);
+
+        Assert.True(found);
+        Assert.Equal(path, installation!.Path);
     }
 }

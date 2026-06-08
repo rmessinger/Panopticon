@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Numerics;
+using OpenSage.Logic.Object;
+using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
 using Xunit;
@@ -19,6 +22,123 @@ public class ReplaySketchTests
         Assert.Equal(ActionType.GatherResources, usa.Actions[1].Type);
         Assert.Equal(ActionType.RecruitBasicUnit, usa.Actions[2].Type);
         Assert.Equal(ActionType.AttackEnemyBase, usa.Actions[3].Type);
+    }
+
+    // ── CommandSpec tests ────────────────────────────────────────────────────────
+    // Tests for the new CommandSpec model covering all OrderArgumentType variants
+    // and legacy round-trip.
+    [Fact]
+    public void IntegerArgument_ToOrder_ProducesIntegerArg()
+    {
+        var cmd = CommandSpec.CreateOpen(OrderType.SetSelection,
+            new IntegerCommandArgument(42));
+        var ctx = BuildStubContext();
+
+        var order = cmd.ToOrder(1, ctx, new Random());
+
+        Assert.NotEmpty(order.Arguments);
+        Assert.Equal(OrderArgumentType.Integer, order.Arguments[0].ArgumentType);
+        Assert.Equal(42, order.Arguments[0].Value.Integer);
+    }
+
+    [Fact]
+    public void FloatArgument_ToOrder_ProducesFloatArg()
+    {
+        var cmd = CommandSpec.CreateOpen(OrderType.Unknown1,
+            new FloatCommandArgument(3.14f));
+        var ctx = BuildStubContext();
+
+        var order = cmd.ToOrder(1, ctx, new Random());
+
+        Assert.NotEmpty(order.Arguments);
+        Assert.Equal(OrderArgumentType.Float, order.Arguments[0].ArgumentType);
+        Assert.Equal(3.14f, order.Arguments[0].Value.Float, 2);
+    }
+
+    [Fact]
+    public void BooleanArgument_ToOrder_ProducesBooleanArg()
+    {
+        var cmd = CommandSpec.CreateOpen(OrderType.Unknown1,
+            new BooleanCommandArgument(true));
+        var ctx = BuildStubContext();
+
+        var order = cmd.ToOrder(1, ctx, new Random());
+
+        Assert.NotEmpty(order.Arguments);
+        Assert.Equal(OrderArgumentType.Boolean, order.Arguments[0].ArgumentType);
+        Assert.True(order.Arguments[0].Value.Boolean);
+    }
+
+    [Fact]
+    public void ObjectIdArgument_ToOrder_ProducesObjectIdArg()
+    {
+        var cmd = CommandSpec.CreateOpen(OrderType.Unknown1,
+            new ObjectIdCommandArgument(5));
+        var ctx = BuildStubContext();
+
+        var order = cmd.ToOrder(1, ctx, new Random());
+
+        Assert.NotEmpty(order.Arguments);
+        Assert.Equal(OrderArgumentType.ObjectId, order.Arguments[0].ArgumentType);
+        Assert.Equal(new ObjectId(5), order.Arguments[0].Value.ObjectId);
+    }
+
+    [Fact]
+    public void PositionArgument_ToOrder_ProducesPositionArg()
+    {
+        var cmd = CommandSpec.CreateOpen(OrderType.Unknown1,
+            new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f)));
+        var ctx = BuildStubContext();
+
+        var order = cmd.ToOrder(1, ctx, new Random());
+
+        Assert.NotEmpty(order.Arguments);
+        Assert.Equal(OrderArgumentType.Position, order.Arguments[0].ArgumentType);
+        // Position should be roughly at map center
+        Assert.InRange(order.Arguments[0].Value.Position.X, 490, 510);
+        Assert.InRange(order.Arguments[0].Value.Position.Y, 490, 510);
+    }
+
+    [Fact]
+    public void LegacyConstruct_RoundTrip_PreservesType()
+    {
+        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var construct = scenario.Players[0].Actions[0];
+
+        Assert.Equal(ActionType.Construct, construct.Type);
+    }
+
+    [Fact]
+    public void ActionEntry_JSON_RoundTrip_WithOpenCommand()
+    {
+        var original = new ActionEntry(
+            "Test Open Command",
+            CommandSpec.CreateOpen(OrderType.Unknown1,
+                new IntegerCommandArgument(99),
+                new FloatCommandArgument(2.71f)),
+            null,
+            new FixedTiming(100));
+
+        var json = System.Text.Json.JsonSerializer.Serialize(original,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        var deserialized = System.Text.Json.JsonSerializer.Deserialize<ActionEntry>(json)!;
+
+        Assert.Equal(original.Label, deserialized.Label);
+        Assert.Null(deserialized.Type); // Open commands have no legacy ActionType
+        Assert.Equal(OrderType.Unknown1, deserialized.Command.OrderType);
+        Assert.Equal(2, deserialized.Command.Arguments.Count);
+    }
+
+    private static PositionContext BuildStubContext()
+    {
+        return new()
+        {
+            GetLandmark = _ => new Vector3(500, 500, 0),
+            BaseRadiusWorldUnits = 120f,
+            SampleHeight = (_, _) => 0f,
+            ExtentMin = Vector3.Zero,
+            ExtentMax = new Vector3(1000, 1000, 0),
+        };
     }
 
     [Fact]

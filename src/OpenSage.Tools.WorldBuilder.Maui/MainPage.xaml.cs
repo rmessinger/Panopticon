@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Maui.Storage;
 using OpenSage.Data;

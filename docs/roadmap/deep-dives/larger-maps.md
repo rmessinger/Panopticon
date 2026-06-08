@@ -7,6 +7,11 @@ The first concrete scale milestone is bigger maps, pursued through the WorldBuil
 editor (`OpenSage.Tools.WorldBuilder.`) since it is where maps are authored and is the
 fastest path to exercising large terrain end-to-end (author → save `.map` → play).
 
+> B4a assumes that WorldBuilder's basic author → save → load → play round-trip already
+> works at normal map sizes. That baseline is established in [A5-6](visualization.md) (an
+> early Track A sub-phase). B4a then scales beyond those limits; it must not be the first
+> time basic WorldBuilder functionality is audited.
+
 > WorldBuilder is scenario-authoring tooling, and must scale with the sim. Beyond terrain,
 > WorldBuilder is where a scenario's initial object population (units, structures, props) is
 > laid out. A sim-scale experiment needs a sim-scale authoring path — placing and editing

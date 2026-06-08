@@ -126,6 +126,10 @@ Spatial sharding is the last major scale phase because it composes everything be
   reference.
 - B6-7 (load balancing) is explicitly optional/last — static sharding must be correct and
   scalable first.
+- Save/load is single-node only. Per the [StatePersister-reach Decision](../open-questions.md),
+  `StatePersister` is not required to serialize sharded state; a sharded run is analyzed and replayed
+  via the recorded snapshot/delta stream, not by saving/loading cross-shard state. The "one
+  save/persist path" from the domain-scope Decision means one path per node.
 
 ## 6. Related
 

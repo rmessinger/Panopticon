@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using OpenSage.Data;
 using OpenSage.Mods.Generals;
 
@@ -39,5 +41,56 @@ public sealed class GeneralsInstallationService
 
         installation = _cachedInstallation;
         return installation is not null;
+    }
+
+    /// <summary>
+    /// Returns a multi-line diagnostic string describing what paths were probed and why
+    /// discovery succeeded or failed. Intended for display in the UI when no installation
+    /// is found, to help pinpoint the root cause without requiring a debugger.
+    /// </summary>
+    public string GetDiagnostics()
+    {
+        var lines = new System.Text.StringBuilder();
+
+        var envPath = Environment.GetEnvironmentVariable("CNC_GENERALS_PATH");
+        lines.AppendLine($"CNC_GENERALS_PATH: {(string.IsNullOrEmpty(envPath) ? "(not set)" : envPath)}");
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst() || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var homeEnv = Environment.GetEnvironmentVariable("HOME");
+            lines.AppendLine($"UserProfile: '{userProfile}'");
+            lines.AppendLine($"HOME env: '{homeEnv}'");
+
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (string.IsNullOrEmpty(homeDir))
+                homeDir = Environment.GetEnvironmentVariable("HOME") ?? string.Empty;
+            lines.AppendLine($"GetHomeDirectory: '{homeDir}'");
+
+            string vdfPath;
+            if (OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst() || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                vdfPath = Path.Combine(homeDir, "Library", "Application Support", "Steam", "steamapps", "libraryfolders.vdf");
+            }
+            else
+            {
+                vdfPath = Path.Combine(homeDir, ".local", "share", "Steam", "steamapps", "libraryfolders.vdf");
+            }
+
+            lines.AppendLine($"VDF path: {vdfPath}");
+            lines.AppendLine($"VDF exists: {File.Exists(vdfPath)}");
+
+            if (File.Exists(vdfPath))
+            {
+                var gameDir = Path.Combine(
+                    Path.GetDirectoryName(Path.GetDirectoryName(vdfPath))!,
+                    "common",
+                    "Command and Conquer Generals");
+                lines.AppendLine($"Game dir: {gameDir}");
+                lines.AppendLine($"Game dir exists: {Directory.Exists(gameDir)}");
+            }
+        }
+
+        return lines.ToString().TrimEnd();
     }
 }

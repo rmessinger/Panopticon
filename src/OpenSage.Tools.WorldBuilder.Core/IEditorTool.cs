@@ -1,4 +1,4 @@
-namespace OpenSage.Tools.WorldBuilder.Core;
+﻿namespace OpenSage.Tools.WorldBuilder.Core;
 
 /// <summary>
 /// Interface all editor tools implement. Each tool handles pointer/key input

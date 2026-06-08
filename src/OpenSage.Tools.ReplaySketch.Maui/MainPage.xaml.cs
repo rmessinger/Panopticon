@@ -5,6 +5,7 @@ namespace OpenSage.Tools.ReplaySketch.Maui;
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel _vm = new();
+    private bool _initialized;
 
     public MainPage()
     {
@@ -65,5 +66,17 @@ public partial class MainPage : ContentPage
                 ? Color.FromArgb("#EEE")
                 : Color.FromArgb("#333")
             : Color.FromArgb("#888");
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_initialized)
+        {
+            return;
+        }
+
+        _initialized = true;
+        _ = _vm.InitializeAsync();
     }
 }

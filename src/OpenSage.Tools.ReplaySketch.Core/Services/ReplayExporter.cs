@@ -72,9 +72,15 @@ public static class ReplayExporter
                     var triggerEntry = player.Actions.FirstOrDefault(a => a.Id == aat.TriggerActionId);
                     if (triggerEntry != null)
                     {
-                        var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex)
+                        var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex, ctx, rng)
                             .ToList();
-                        deferred.Add(new DeferredAction(ownerIdx + 2, triggerEntry.Type, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
+                        // Only create DeferredAction if the trigger is a legacy action (has ActionType).
+                        // Open commands cannot yet be deferred triggers.
+                        if (triggerEntry.Type is ActionType triggerType)
+                        {
+                            deferred.Add(new DeferredAction(ownerIdx + 2, triggerType, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
+                        }
+                        // else: open-command triggers are not yet supported; silently skip.
                     }
                     // else: dangling reference — action is silently skipped (trigger no longer exists)
                 }
@@ -82,7 +88,7 @@ public static class ReplayExporter
                 {
                     cumulativeFrame += action.Timing.Resolve(rng);
 
-                    var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex);
+                    var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex, ctx, rng);
                     foreach (var order in actionOrders)
                     {
                         orders.Add((cumulativeFrame, order));
@@ -192,10 +198,18 @@ public static class ReplayExporter
     }
 
     private static IEnumerable<Order> BuildOrders(
-        int playerIndex, ActionEntry action, Vector3 worldPos, int factionIndex)
+        int playerIndex, ActionEntry action, Vector3 worldPos, int factionIndex, PositionContext ctx, Random rng)
     {
         bool isGla = factionIndex == 4;
 
+        // If this is an open (non-legacy) command, resolve it directly.
+        if (action.Type == null)
+        {
+            yield return action.Command.ToOrder(playerIndex, ctx, rng);
+            yield break;
+        }
+
+        // Legacy action handling
         switch (action.Type)
         {
             case ActionType.Construct:
@@ -247,6 +261,10 @@ public static class ReplayExporter
                     yield return Order.CreateAttackGround(playerIndex, worldPos);
                     break;
                 }
+
+            case ActionType.EnemyBaseDestroyed:
+                // Sentinel value — produces no order. Only used for trigger matching.
+                break;
         }
     }
 

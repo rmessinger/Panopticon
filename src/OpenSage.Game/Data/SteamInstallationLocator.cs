@@ -126,7 +126,7 @@ public class SteamInstallationLocator : IInstallationLocator
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                GetHomeDirectory(),
                 ".local",
                 "share",
                 "Steam",
@@ -134,12 +134,15 @@ public class SteamInstallationLocator : IInstallationLocator
                 "libraryfolders.vdf"
             );
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        else if (OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst())
         {
             // Steam's UI doesn't allow installing games that don't have a macOS version (which is the case for all SAGE games),
             // but there are workarounds (such as SteamCMD or -console flag) that can be used to install Windows games.
+            // Note: on Mac Catalyst, RuntimeInformation.IsOSPlatform(OSPlatform.OSX) returns false and
+            // Environment.SpecialFolder.UserProfile returns an empty string; use OperatingSystem.IsMacCatalyst()
+            // to reach this branch, and fall back to the HOME environment variable for the home directory.
             return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                GetHomeDirectory(),
                 "Library",
                 "Application Support",
                 "Steam",
@@ -149,6 +152,23 @@ public class SteamInstallationLocator : IInstallationLocator
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Returns the current user's home directory. On most platforms this is
+    /// <see cref="Environment.SpecialFolder.UserProfile"/>, but on Mac Catalyst
+    /// that special folder resolves to an empty string. The HOME environment
+    /// variable is always set correctly on Unix-like runtimes including Mac Catalyst.
+    /// </summary>
+    internal static string GetHomeDirectory()
+    {
+        var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (!string.IsNullOrEmpty(profile))
+        {
+            return profile;
+        }
+
+        return Environment.GetEnvironmentVariable("HOME") ?? string.Empty;
     }
 }
 

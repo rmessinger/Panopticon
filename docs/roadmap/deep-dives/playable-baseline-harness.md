@@ -104,13 +104,22 @@ commands and (b) a way to read final/peri-tick state and assert on it. P0 builds
 
 ## 3. Design
 
-### 3.1 Open command model (replaces the closed `ActionType`)
+### 3.1 MAUI ViewModel testability (prerequisite for harness unit coverage)
+`MainViewModel.LoadMapFromFolder` currently uses `Preferences.Default` (a MAUI static) to persist
+the installation path. This makes the unconditional-save behaviour (path is recorded before map load
+is attempted, not only when it succeeds) untestable without a MAUI runtime. Before the harness
+expands further, extract an `IPreferencesStore` interface and inject it into `MainViewModel`, with
+a `MemoryPreferencesStore` for tests and the `Preferences.Default` adapter for production. The
+non-MAUI test project (`OpenSage.Tools.ReplaySketch.Tests`) then covers the full `LoadMapFromFolder`
+contract.
+
+### 3.2 Open command model (replaces the closed `ActionType`)
 Introduce a `CommandSpec` (working name) that maps directly onto an engine `Order` rather than a
 fixed gameplay verb:
 
 - `OrderType` (the full enum) + `PlayerIndex` + an ordered list of typed `CommandArgument`s mirroring
   `OrderArgumentType` (`Integer/Float/Boolean/ObjectId/Position/ScreenPosition/ScreenRectangle`).
-- Object references by definition name (resolved generically — see §3.2) and position via the
+- Object references by definition name (resolved generically — see §3.3) and position via the
   existing polymorphic `PositionSpec`, so authoring stays scenario-relative.
 - Object-id arguments (e.g. `AttackObject`, `Enter`) need a way to reference runtime objects that
   don't exist until produced. Decision (see [open-questions](../open-questions.md)): objects an
@@ -122,16 +131,14 @@ fixed gameplay verb:
   `AfterActionTiming` trigger model (`TimingConfig.cs`, `DeferredAction.cs`).
 - Keep `TimingConfig` (fixed/random/after-action) and the deferred-injection path; they already give
   authored and reactive ordering.
-- Back-compat: keep the five `ActionType`s as authoring sugar that lowers to `CommandSpec`s, so
-  existing JSON profiles (`Profiles/alpine-assault-usa-vs-gla.json`) keep working.
 
-### 3.2 Generic definition resolution (removes hardcoded `KnownDefinitions`)
+### 3.3 Generic definition resolution (removes hardcoded `KnownDefinitions`)
 Replace the hardcoded USA/GLA name→hash table (`ReplayExporter.cs:21-32`) with resolution against the
 loaded `AssetStore` by definition name (the same `AssetHash.GetHash` path, but for any object/
 player). This makes the harness faction-agnostic and is a prerequisite for authoring any baseline
 match (any side, any unit/structure).
 
-### 3.3 Validation / assertion layer (new)
+### 3.4 Validation / assertion layer (new)
 A declarative assertion set attached to a scenario, evaluated headlessly. Authoring shape
 (Decision, see [open-questions](../open-questions.md)): assertions are JSON predicates (e.g.
 `{path: "player[1].money", op: ">=", value: 0}`) over a fixed path/operator vocabulary, with an
@@ -148,13 +155,13 @@ for invariants that exceed the vocabulary. The three assertion kinds:
 - Evaluation hooks: subscribe to `Game.Updating` for per-tick invariants; read final state after the
   run loop exits. Result is a structured pass/fail report (assertion id, expected, actual, frame).
 
-### 3.4 Headless run-and-assert entry point
+### 3.5 Headless run-and-assert entry point
 A single callable surface (CLI + library) that cheap agents and CI use:
 `scenario/command file in → run headless → assertion report out (exit code + machine-readable JSON)`.
-This wraps `RunHeadless`'s boot/loop (`Program.cs:195-270`) plus the §3.3 evaluator, and replaces the
+This wraps `RunHeadless`'s boot/loop (`Program.cs:195-270`) plus the §3.4 evaluator, and replaces the
 current bespoke "exit on enemy-CC destruction" termination with P3's real outcome signal.
 
-### 3.5 Scale (forward link)
+### 3.6 Scale (forward link)
 The model must support programmatic/procedural generation of large command sets (not hand-entry)
 and efficient `.rep` emission, so the harness scales toward sim-scale runs. Full authoring/replay
 scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized under
@@ -174,7 +181,8 @@ scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized 
 
 | Phase | Goal | Status |
 |---|---|---|
-| P0-1. Open command model | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); keep the five verbs as sugar. | Not started |
+| P0-1. Open command model | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); `ActionType` is preserved as a convenience enum on `ActionEntry` only. | Done |
+| P0-1b. ViewModel testability | Extract `IPreferencesStore` from `MainViewModel`; inject it so `LoadMapFromFolder`'s unconditional path-persistence is unit-testable without a MAUI runtime. | Not started |
 | P0-2. Generic definition/player resolution | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
 | P0-3. Exporter generalization | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
 | P0-4. Assertion layer | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. (JSON predicates over a fixed vocabulary + code-defined escape hatch — decided.) | Not started |

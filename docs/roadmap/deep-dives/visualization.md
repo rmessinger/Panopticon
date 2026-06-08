@@ -193,6 +193,7 @@ paying full per-entity-per-frame recording cost for every run.
 | A5-3. Results replayer / visualizer | Build the analysis tool of §4 on top of ReplaySketch: load runs, scrub the timeline, domain-parameterized visualizations, metric charts, event log, fidelity overlay, headless export. Scales to large/long runs under A5-5. (Supersedes the former A1-6.) | Not started |
 | A5-4. Divergence localization | Implement the §5 drill-down: compare two runs' T1 signature trees to localize the first subtree exceeding tolerance, arm/inspect T2 detail, with stable cross-run bucketing and per-quantity tolerances. Validation surface for B3/B6. (Supersedes the former A1-7.) | Not started |
 | A5-5. Authoring & visualization at scale | Make ReplaySketch's authoring, replay, and visualization handle the same magnitudes as the sim they configure: programmatic/procedural generation of large command sets and initial conditions (not hand-entry); streaming + LOD + culling in the replay viewport (reuse [B5](../track-b-scale.md) instancing and [B7](variable-fidelity.md) fidelity for visualization); bounded-memory loading of long/large recordings; and authoring/replay throughput tracked by [B1](../track-b-scale.md) benchmarks. Keeps scenario tooling off the critical path as entity/command counts grow. Mirrors WorldBuilder's [B4a-7](larger-maps.md) large-population authoring. | Not started |
+| A5-6. WorldBuilder baseline | Establish WorldBuilder as a functional baseline scenario-authoring tool, before B4a scales it. Audit the tool's current functional state: what can be authored, saved, loaded, and played at normal map sizes; where the basic author → save → load → play round-trip works and where it fails. Document functional gaps for B4a to address. Unlike A5-1 through A5-5, this sub-phase does not depend on A1 or A4 — it is WorldBuilder tooling, not the headless sim pipeline — so it can start in Stage 1 alongside B4a, and [B4a](larger-maps.md) depends on it completing. | Not started |
 
 ---
 
@@ -206,8 +207,13 @@ paying full per-entity-per-frame recording cost for every run.
 - A5-4 (divergence localization) depends on A1-5's tiered recording (T1/T2) and the A5-3
   comparator; it is what lets [B3](track-b-scale.md) (parallelism) and
   [B6](distributed-simulation.md) (sharding) be debugged by pinpointing where a run drifts.
-- A5 shares one domain-parameterized rendering stack between setup preview (§3.2/§3.4) and
-  results replay (§4) — build it once.
+- A5-5 pairs with B4a-7 (large-population authoring) so the scenario author and replay tools
+  scale together.
+- A5-6 (WorldBuilder baseline) is an early-start sub-phase: it only requires P7 and can run
+  in parallel with Stage 0/1 work. It is a prerequisite for B4a — B4a must not be the first
+  time we discover basic WorldBuilder functionality is broken.
+- A5 (A5-1 through A5-5) shares one domain-parameterized rendering stack between setup
+  preview (§3.2/§3.4) and results replay (§4) — build it once.
 
 ## 8. Related
 

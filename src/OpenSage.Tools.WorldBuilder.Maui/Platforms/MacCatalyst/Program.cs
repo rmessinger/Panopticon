@@ -1,4 +1,4 @@
-using ObjCRuntime;
+﻿using ObjCRuntime;
 using OpenSage.Tools.WorldBuilder.Maui.Platforms.MacCatalyst;
 using UIKit;
 

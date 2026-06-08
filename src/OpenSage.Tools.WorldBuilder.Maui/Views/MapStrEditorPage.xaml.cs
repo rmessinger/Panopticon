@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using OpenSage.Tools.WorldBuilder.Core;
 
 namespace OpenSage.Tools.WorldBuilder.Maui.Views;

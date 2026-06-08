@@ -34,11 +34,21 @@ See [`track-p-playable-baseline.md`](track-p-playable-baseline.md). Bar: a full 
 skirmish playable build → fight → win/lose vs. AI.
 
 ### P0 — ReplaySketch arbitrary-command harness ([deep dive](deep-dives/playable-baseline-harness.md))
-- [ ] Replace the closed `ActionType` enum with an open command model that can express any engine
+- [x] Replace the closed `ActionType` enum with an open command model that can express any engine
       `OrderType` (`OpenSage.Tools.ReplaySketch.Core/Model`).
   - AC: a scenario can specify a command as `OrderType` + typed args and it exports to the matching
-    engine `Order`; a unit test covers ≥1 command per `OrderArgumentType`; the five legacy
-    `ActionType`s still round-trip (the existing profile JSON loads & exports unchanged).
+    engine `Order`; a unit test covers ≥1 command per `OrderArgumentType`.
+  - Completion: `CommandSpec` model created with polymorphic `CommandArgument` hierarchy (5 types).
+    `ActionEntry.Type` is a stored `ActionType?` field (null for open commands); `CommandSpec` holds
+    only `OrderType + Arguments`. `ReplayExporter.BuildOrders` dispatches on `ActionType` enum for
+    legacy actions. All 14 ReplaySketchTests pass; `alpine-assault-usa-vs-gla.json` loads correctly.
+- [ ] Extract an `IPreferencesStore` interface from `MainViewModel` (currently uses `Preferences.Default`
+      directly, a MAUI static); inject it so `LoadMapFromFolder`'s unconditional path-persistence is
+      unit-testable without a MAUI runtime.
+  - AC: `MainViewModel` accepts an `IPreferencesStore` via constructor injection (production code uses
+    the `Preferences.Default` implementation; tests supply a `MemoryPreferencesStore`); a unit test
+    calls `LoadMapFromFolder` with a valid directory path where map loading will fail (no game files),
+    and asserts the preference was saved regardless of map load outcome.
 - [ ] Remove hardcoded USA/GLA `KnownDefinitions`; resolve object definitions by name generically
       (`Services/ReplayExporter.cs`).
   - AC: a scenario referencing any object definition by name (incl. a non-USA/GLA faction) exports
@@ -278,6 +288,11 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
       loading; authoring/replay throughput tracked by B1. (Pairs with B4a-7.)
   - AC: authoring a large procedural scenario and replaying a long/large run stay within documented
     time/memory budgets (streaming/LOD/bounded-memory loading); B1 tracks the throughput.
+- [ ] A5-6 WorldBuilder baseline: audit functional state; ensure basic author → save → load → play
+      round-trip works at normal map sizes; document gaps. (Early-start sub-phase — no A1/A4
+      dependency; gates B4a.)
+  - AC: a normal-sized map with terrain and object placement round-trips through WorldBuilder (author
+    → save → load → play in the engine) without errors; functional gaps documented.
 
 ---
 
@@ -287,7 +302,8 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 
 - [ ] B1 Profiling & robust benchmarking utilities (reusable harness, statistical rigor,
       regression detection, machine-readable output).
-  - AC: a reusable harness runs repeatable seeded scenarios, reports mean+variance with warmup
+  - AC: a reusable harness runs repeatable seeded scenarios (incl. the 10k-unit interactive
+    reference workload — the [scale anchor](open-questions.md)), reports mean+variance with warmup
     discarded, detects regressions vs. stored baselines, emits machine-readable output, and is reused
     by ≥1 other track.
 - [ ] B2 Allocation & hot-path cleanup (per-tick allocations, collision-pair lists, cache hot
@@ -301,16 +317,16 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B4 Spatial & pathfinding scaling (hierarchical/flow-field, group movement, async path requests).
   - AC: TBD — hierarchical/flow-field pathing + group movement + async requests scale to a target
     unit count within a path-latency budget in B1; no pathing regressions on baseline maps.
-- [ ] B4a Larger maps via WorldBuilder ([deep dive](deep-dives/larger-maps.md)) — baseline audit,
-      region editing, large-map wizard, terrain streaming/LOD, chunked storage, round-trip,
+- [ ] B4a Larger maps via WorldBuilder ([deep dive](deep-dives/larger-maps.md)) — region editing,
+      large-map wizard, terrain streaming/LOD, chunked storage, round-trip at scale,
       large-population scenario authoring (B4a-7: bulk/procedural object placement, region-based
-      multi-object edit/undo, instanced editor rendering — pairs with A5-5).
+      multi-object edit/undo, instanced editor rendering — pairs with A5-5). Depends on A5-6.
   - AC: TBD (multi-sub-phase — see the deep dive). Rough template: very large maps author → save →
     reload → play within budgets; region edits are O(brush) not O(map area); large object populations
     are placeable/editable interactively.
 - [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
-  - AC: TBD — instancing/LOD/culling render a target unit count at an interactive frame budget in B1;
-    the tool viewports (B4a-7/A5-5) reuse it.
+  - AC: TBD — instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
+    the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.
 - [ ] B6 Distributed simulation via spatial sharding ([deep dive](deep-dives/distributed-simulation.md)).
   - AC: TBD (see the deep dive). Rough template: a sim runs sharded across ≥2 processes with
     cross-shard consistency within tolerance.
