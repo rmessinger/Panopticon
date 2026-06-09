@@ -113,6 +113,18 @@ a `MemoryPreferencesStore` for tests and the `Preferences.Default` adapter for p
 non-MAUI test project (`OpenSage.Tools.ReplaySketch.Tests`) then covers the full `LoadMapFromFolder`
 contract.
 
+`IPreferencesStore` is only the first MAUI seam. `MainViewModel` also binds directly to
+`MainThread.BeginInvokeOnMainThread` (background-load completion, `StartBackgroundLoad`
+`Program`/`MainViewModel.cs:180-190`) and to `System.Diagnostics.Process.Start` /
+`LauncherLocatorService` (`ExecutePlayInGame`, `MainViewModel.cs:250-273`). While those statics
+remain inline, the command flows that matter most for agents — `ValidateCommand`, `ExportCommand`,
+`PlayInGameCommand`, and the apply-results half of the background load — cannot be exercised
+headlessly, so a change to them has no fast, deterministic check. Abstract each behind a small
+injectable seam (a dispatcher that runs the continuation synchronously in tests; a process launcher
+that records the request instead of spawning), so the full `MainViewModel` command surface is
+unit-testable in `OpenSage.Tools.ReplaySketch.Tests` without a MAUI runtime. This is the testability
+substrate the agent validation playbook (§3.7) documents.
+
 ### 3.2 Open command model (replaces the closed `ActionType`)
 Introduce a `CommandSpec` (working name) that maps directly onto an engine `Order` rather than a
 fixed gameplay verb:
@@ -167,6 +179,29 @@ and efficient `.rep` emission, so the harness scales toward sim-scale runs. Full
 scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized under
 [A5-5](visualization.md); P0 only needs the model to not assume small, hand-authored scenarios.
 
+### 3.7 Agent validation playbook (new)
+A recurring obstacle for low-effort/automated agents working on ReplaySketch is the absence of a
+reliable, specific, repeatable way to validate a change — particularly in the MAUI layer, which has
+no automated coverage and cannot be driven by a windowless agent. The renderer side solves this with
+`OpenSage.Tools.TestHarness/AGENTS.md` (a documented visual-validation workflow); ReplaySketch needs
+the equivalent for command/scenario authoring and the MAUI tool. P0 adds a checked-in agent guide,
+`src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`, that documents the exact, runnable validation loop:
+
+- The Core-vs-MAUI split (all logic lives in `.Core`; MAUI only hosts), so agents know which changes
+  are headlessly checkable and which need the MAUI runtime.
+- Build / test / format commands: the non-MAUI `OpenSage.Tools.ReplaySketch.Tests` suite (controller,
+  renderer/golden, service tests), golden-image regeneration via `UPDATE_GOLDENS=1`
+  (`GoldenImageHelper`), and `dotnet format src --verify-no-changes`.
+- The headless run-and-assert entry point (§3.5 / P0-5) for command-level validation, once it lands.
+- The MAUI seams (§3.1, P0-1b/P0-1c) that keep new logic in `.Core` and unit-testable, plus what is
+  not headlessly reachable and how to add coverage when touching the MAUI layer.
+- A step-by-step checklist and a common-failure-mode table mirroring the TestHarness guide.
+
+The playbook is authored now and is honest about current state: it documents the test/golden/format
+loop that exists today and marks the run-and-assert flow (P0-4/P0-5) as forthcoming, tightening as
+those phases land. It is the documented surface for "how do I validate a ReplaySketch change" — the
+single answer to the persistent agent-validation gap.
+
 ---
 
 ## 4. Integration surface (what P0 plugs into)
@@ -176,6 +211,9 @@ scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized 
   `DeferredAction` + `Game.InjectOrders`.
 - Run: `TestHarness.RunHeadless`/`BuildDeferredInjector`/`DrainPendingInjections`.
 - Assert: `Game.Updating`/`Game.MapTime`; `Player`/`BankAccount`/`GameLogic`; P3 `GameOutcome`.
+- Validate (agent-facing): `OpenSage.Tools.ReplaySketch.Tests` (controller/renderer/golden/service);
+  `GoldenImageHelper` (`UPDATE_GOLDENS=1`); `dotnet format`; the §3.7 playbook
+  (`ReplaySketch.Maui/AGENTS.md`).
 
 ## 5. Sub-phases
 
@@ -183,17 +221,23 @@ scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized 
 |---|---|---|
 | P0-1. Open command model | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); `ActionType` is preserved as a convenience enum on `ActionEntry` only. | Done |
 | P0-1b. ViewModel testability | Extract `IPreferencesStore` from `MainViewModel`; inject it so `LoadMapFromFolder`'s unconditional path-persistence is unit-testable without a MAUI runtime. | Not started |
+| P0-1c. MAUI command-flow testability | Abstract the remaining MAUI statics `MainViewModel` binds to — the `MainThread` dispatcher (background-load completion) and `Process.Start`/launcher (`ExecutePlayInGame`) — behind small injectable seams so `ValidateCommand`/`ExportCommand`/`PlayInGameCommand` and the apply-results half of the background load are unit-testable headlessly in `OpenSage.Tools.ReplaySketch.Tests`. | Not started |
 | P0-2. Generic definition/player resolution | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
 | P0-3. Exporter generalization | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
 | P0-4. Assertion layer | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. (JSON predicates over a fixed vocabulary + code-defined escape hatch — decided.) | Not started |
 | P0-5. Run-and-assert entry point | One CLI/library call: scenario+commands in → headless run → report out (exit code + JSON). Wraps `RunHeadless` + the evaluator; terminates on P3 outcome. | Not started |
 | P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
+| P0-7. Agent validation playbook | Check in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, golden-image regen via `UPDATE_GOLDENS=1`, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Not started |
 
 ## 6. Sequencing & dependencies
 - P0-1→P0-3 are the authoring generalization; P0-4/P0-5 are the validation half and can start once
   P0-1's model exists.
+- P0-1c continues the MAUI testability seam started by P0-1b; both are independent of the
+  command-model work and can land any time.
 - P0-4's outcome assertions depend on P3 ([victory-defeat.md](victory-defeat.md)) for a real
   `GameOutcome`; until then P0-4 can assert state/invariants only.
+- P0-7 (the playbook) can be authored immediately against the current test/golden/format loop and is
+  tightened as P0-1c/P0-4/P0-5 land; it documents, rather than blocks, the other sub-phases.
 - P0 unblocks P3/P6/P7 (they author + assert through it) and is later extended by
   [A5-3](visualization.md) (visualizer) and [A5-5](visualization.md) (scale).
 
@@ -205,6 +249,11 @@ scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized 
 - Assertion DSL shape — Decided: declarative JSON predicates over a fixed path/operator
   vocabulary, with a code-defined (C#) predicate escape hatch for complex invariants. See
   [open-questions](../open-questions.md).
+- MAUI validation reach + agent playbook — Decided: ReplaySketch logic stays in `.Core` and is
+  validated headlessly via `OpenSage.Tools.ReplaySketch.Tests` (controller/renderer/golden/service)
+  plus the P0-5 run-and-assert flow; MAUI-only behaviour is minimized behind injectable seams
+  (P0-1b/P0-1c) rather than UI-automated, and the documented surface agents follow is a checked-in
+  `ReplaySketch.Maui/AGENTS.md` playbook (P0-7). See [open-questions](../open-questions.md).
 
 ## 8. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)

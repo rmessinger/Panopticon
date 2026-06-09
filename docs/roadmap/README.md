@@ -120,7 +120,7 @@ The following are the vague long-term goals of this framework:
 
 | Deep dive | Expands |
 |---|---|
-| [`deep-dives/playable-baseline-harness.md`](deep-dives/playable-baseline-harness.md) | Track P phase P0 — ReplaySketch arbitrary-command harness (open command model + headless assertion layer). |
+| [`deep-dives/playable-baseline-harness.md`](deep-dives/playable-baseline-harness.md) | Track P phase P0 — ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
 | [`deep-dives/skirmish-setup.md`](deep-dives/skirmish-setup.md) | Track P phase P1 — Skirmish setup & player relationships. |
 | [`deep-dives/skirmish-ai.md`](deep-dives/skirmish-ai.md) | Track P phases P2 — Skirmish AI opponent (+ P5 construction/production mechanism). |
 | [`deep-dives/victory-defeat.md`](deep-dives/victory-defeat.md) | Track P phase P3 — Victory & defeat conditions (queryable `GameOutcome`). |

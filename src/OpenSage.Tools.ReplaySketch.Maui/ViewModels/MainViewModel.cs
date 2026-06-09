@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
@@ -29,16 +30,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Incremented each time <see cref="AvailableMaps"/> is fully replaced.
-    /// <see cref="ScenarioView"/> observes this via <see cref="INotifyPropertyChanged"/>
-    /// to refresh the picker exactly once per discovery cycle.
+    /// Incremented each time <see cref="AvailableMaps"/> is fully replaced after async discovery.
+    /// Views subscribe to this via <see cref="INotifyPropertyChanged"/> to refresh the picker once.
     /// </summary>
     public int MapsGeneration { get; private set; }
 
     private IReadOnlyList<MapDiscoveryService.MapOption> _allMapOptions = new List<MapDiscoveryService.MapOption>();
-    private int _mapsLoadVersion;
-    private int _mapLoadVersion;
     private bool _initialized;
+    private int _mapsLoadVersion;
 
     private MapMetadataService? _map;
     public MapMetadataService? Map
@@ -55,6 +54,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public bool MapLoaded => _map != null;
+
+    private string? _currentInstallationPath;
+    public string? CurrentInstallationPath
+    {
+        get => _currentInstallationPath;
+        private set { _currentInstallationPath = value; OnPropertyChanged(); }
+    }
 
     private string? _selectedActionId;
     public string? SelectedActionId
@@ -129,26 +135,72 @@ public sealed class MainViewModel : INotifyPropertyChanged
             execute: _ => ExecutePlayInGame(),
             canExecute: _ => MapLoaded && LauncherPath != null);
 
-        ReloadMapCommand = new RelayCommand(execute: _ => _ = LoadMapAsync());
+        ReloadMapCommand = new RelayCommand(execute: _ => LoadMap());
 
         // Restore a previously saved installation path (MAUI apps don't inherit shell env vars)
         var savedPath = Preferences.Default.Get("cnc_generals_path", string.Empty);
         if (!string.IsNullOrEmpty(savedPath))
+        {
+            ReplaySketchLog.Write($"MainViewModel ctor restoring saved path '{savedPath}'");
             _installationService.SetPath(savedPath);
+            CurrentInstallationPath = savedPath;
+        }
 
         UpdateCommandStates();
     }
 
-    public async Task InitializeAsync()
+    public void Initialize()
     {
+        ReplaySketchLog.Write("MainViewModel.Initialize called");
+
         if (_initialized)
         {
+            ReplaySketchLog.Write("MainViewModel.Initialize ignored because it already ran");
             return;
         }
 
         _initialized = true;
-        await LoadMapAsync();
-        await LoadAvailableMapsAsync();
+        LoadMap();
+    }
+
+    /// <summary>
+    /// Loads the current scenario map immediately once an installation has been resolved.
+    /// Available-map discovery runs in the background so a slow scan can't block the first map.
+    /// </summary>
+    public void LoadMap()
+    {
+        ReplaySketchLog.Write($"LoadMap start map='{Scenario.MapPath}'");
+
+        Map = null;
+        MapLoadError = null;
+
+        if (!TryResolveInstallation(out var installation) || installation is null)
+        {
+            var diag = _installationService.GetDiagnostics();
+            MapLoadError =
+                $"Generals installation not found.\nSet CNC_GENERALS_PATH to the game folder, or use Browse below.\n\nDiagnostics:\n{diag}\n\nLog: {ReplaySketchLog.LogPath}";
+            ReplaySketchLog.Write($"LoadMap failed because installation was not found. Diagnostics: {diag.Replace(Environment.NewLine, " | ")}");
+            UpdateCommandStates();
+            return;
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            Map = MapMetadataService.Load(installation, Scenario.MapPath);
+            ReplaySketchLog.Write(
+                $"LoadMap succeeded installation='{installation.Path}' map='{Scenario.MapPath}' elapsedMs={stopwatch.ElapsedMilliseconds}");
+        }
+        catch (Exception ex)
+        {
+            MapLoadError = $"{ex.Message}\n\nLog: {ReplaySketchLog.LogPath}";
+            ReplaySketchLog.WriteException(
+                $"LoadMap failed installation='{installation.Path}' map='{Scenario.MapPath}'", ex);
+        }
+
+        UpdateCommandStates();
+        StartBackgroundMapDiscovery(installation);
     }
 
     public string? GetDiscoveredMapPath(int index)
@@ -174,105 +226,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         return -1;
     }
 
-    private async Task LoadAvailableMapsAsync()
-    {
-        var version = Interlocked.Increment(ref _mapsLoadVersion);
-
-        if (!_installationService.TryGetInstallation(out var installation) || installation is null)
-        {
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                AvailableMaps = new ObservableCollection<string>();
-                _allMapOptions = new List<MapDiscoveryService.MapOption>();
-                MapsGeneration++;
-                OnPropertyChanged(nameof(MapsGeneration));
-            });
-            return;
-        }
-
-        try
-        {
-            var maps = await Task.Run(() => MapDiscoveryService.DiscoverMaps(installation));
-            if (version != _mapsLoadVersion)
-            {
-                return;
-            }
-
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                _allMapOptions = maps;
-                AvailableMaps = new ObservableCollection<string>(maps.Select(m => m.Label));
-                MapsGeneration++;
-                OnPropertyChanged(nameof(MapsGeneration));
-            });
-        }
-        catch (Exception ex)
-        {
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                AvailableMaps = new ObservableCollection<string>();
-                _allMapOptions = new List<MapDiscoveryService.MapOption>();
-                MapLoadError = $"Failed to discover maps: {ex.Message}";
-                MapsGeneration++;
-                OnPropertyChanged(nameof(MapsGeneration));
-            });
-        }
-    }
-
     public IReadOnlyList<string> GetDiscoveredMapPaths() => _allMapOptions.Select(m => m.Path).ToList();
 
-    public void LoadMap() => _ = LoadMapAsync();
-
-    public async Task LoadMapAsync()
+    public void LoadMapFromFolder(string folderPath)
     {
-        var version = Interlocked.Increment(ref _mapLoadVersion);
-
-        if (!_installationService.TryGetInstallation(out var installation) || installation is null)
-        {
-            var diag = _installationService.GetDiagnostics();
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                Map = null;
-                MapLoadError = $"Generals installation not found.\nSet CNC_GENERALS_PATH to the game folder, or use Browse below.\n\nDiagnostics:\n{diag}";
-            });
-            return;
-        }
-
-        try
-        {
-            var loadedMap = await Task.Run(() => MapMetadataService.Load(installation, Scenario.MapPath));
-            if (version != _mapLoadVersion)
-            {
-                return;
-            }
-
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                MapLoadError = null;
-                Map = loadedMap;
-            });
-        }
-        catch (Exception ex)
-        {
-            if (version != _mapLoadVersion)
-            {
-                return;
-            }
-
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                Map = null;
-                MapLoadError = ex.Message;
-            });
-        }
-    }
-
-    public async Task LoadMapFromFolderAsync(string folderPath)
-    {
+        ReplaySketchLog.Write($"LoadMapFromFolder path='{folderPath}'");
         _installationService.SetPath(folderPath);
         Preferences.Default.Set("cnc_generals_path", folderPath);
-        await LoadMapAsync();
-        await LoadAvailableMapsAsync();
+        CurrentInstallationPath = folderPath;
+        LoadMap();
     }
 
     private void ExecuteValidate()
@@ -340,6 +302,62 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _validateCommand.RaiseCanExecuteChanged();
         _exportCommand.RaiseCanExecuteChanged();
         _playInGameCommand.RaiseCanExecuteChanged();
+    }
+
+    private bool TryResolveInstallation(out OpenSage.Data.GameInstallation? installation)
+    {
+        var foundInstallation = _installationService.TryGetInstallation(out installation) && installation is not null;
+        CurrentInstallationPath = installation?.Path;
+
+        if (foundInstallation)
+        {
+            ReplaySketchLog.Write($"TryResolveInstallation resolved '{installation!.Path}'");
+        }
+        else
+        {
+            ReplaySketchLog.Write("TryResolveInstallation did not resolve an installation");
+        }
+
+        return foundInstallation;
+    }
+
+    private void StartBackgroundMapDiscovery(OpenSage.Data.GameInstallation installation)
+    {
+        var version = Interlocked.Increment(ref _mapsLoadVersion);
+        var installationPath = installation.Path;
+
+        ReplaySketchLog.Write($"StartBackgroundMapDiscovery start installation='{installationPath}' version={version}");
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                var stopwatch = Stopwatch.StartNew();
+                var maps = MapDiscoveryService.DiscoverMaps(installation);
+                ReplaySketchLog.Write(
+                    $"StartBackgroundMapDiscovery discovered {maps.Count} maps from '{installationPath}' in {stopwatch.ElapsedMilliseconds} ms");
+
+                if (version != _mapsLoadVersion)
+                {
+                    ReplaySketchLog.Write(
+                        $"StartBackgroundMapDiscovery discarded stale result for installation='{installationPath}' version={version}");
+                    return;
+                }
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    _allMapOptions = maps;
+                    AvailableMaps = new ObservableCollection<string>(maps.Select(m => m.Label));
+                    MapsGeneration++;
+                    OnPropertyChanged(nameof(MapsGeneration));
+                });
+            }
+            catch (Exception ex)
+            {
+                ReplaySketchLog.WriteException(
+                    $"StartBackgroundMapDiscovery failed installation='{installationPath}'", ex);
+            }
+        });
     }
 }
 

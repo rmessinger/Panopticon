@@ -57,3 +57,17 @@
   resident; height tools clone the whole elevation array per stroke.
 
 See the [larger-maps deep dive](deep-dives/larger-maps.md) for how this constrains map size.
+
+## Validation tooling (ReplaySketch)
+
+- Core logic is well-covered headlessly: `OpenSage.Tools.ReplaySketch.Tests` (non-MAUI, CI-runnable)
+  has controller tests (`ActionTreeControllerTests`), golden-image renderer tests
+  (`ActionTreeRendererTests`/`MapPreviewRendererTests` via `GoldenImageHelper`, regen with
+  `UPDATE_GOLDENS=1`), and service tests (`GeneralsInstallationServiceTests`). All logic lives in
+  `OpenSage.Tools.ReplaySketch.Core`.
+- The MAUI layer has no automated coverage: `MainViewModel`
+  (`src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`) binds directly to MAUI statics
+  (`Preferences.Default`, `MainThread.BeginInvokeOnMainThread`, `Process.Start`/launcher), so its
+  command flows (Validate/Export/PlayInGame, background-load completion) cannot be exercised
+  headlessly. Closing this gap (injectable seams + a checked-in `AGENTS.md` playbook) is P0-1b/P0-1c/P0-7
+  in the [P0 deep dive](deep-dives/playable-baseline-harness.md).

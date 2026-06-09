@@ -1,5 +1,4 @@
-﻿using System.IO;
-using CommunityToolkit.Maui.Storage;
+﻿using CommunityToolkit.Maui.Storage;
 using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
@@ -63,18 +62,24 @@ public partial class MapPreviewView : ContentView
                 SyncNoMapOverlay();
                 RebuildPreviewBitmap();
             }
+
+            if (e.PropertyName == nameof(MainViewModel.CurrentInstallationPath))
+            {
+                SyncInstallationPath();
+            }
         };
 
-        // Pre-fill path from saved preferences, falling back to the env var (may be empty in Mac Catalyst)
-        var savedPath = Preferences.Default.Get("cnc_generals_path", string.Empty);
-        var existing = !string.IsNullOrEmpty(savedPath)
-            ? savedPath
-            : Environment.GetEnvironmentVariable("CNC_GENERALS_PATH");
-        if (!string.IsNullOrEmpty(existing))
-            InstallPathEntry.Text = existing;
-
+        SyncInstallationPath();
         SyncNoMapOverlay();
         RebuildPreviewBitmap();
+    }
+
+    private void SyncInstallationPath()
+    {
+        if (!string.IsNullOrEmpty(_vm?.CurrentInstallationPath))
+        {
+            InstallPathEntry.Text = _vm.CurrentInstallationPath;
+        }
     }
 
     private void SyncNoMapOverlay()
@@ -118,11 +123,13 @@ public partial class MapPreviewView : ContentView
             if (result.IsSuccessful)
             {
                 InstallPathEntry.Text = result.Folder.Path;
+                ReplaySketchLog.Write($"MapPreviewView browse selected '{result.Folder.Path}'");
             }
         }
         catch
         {
             // User cancelled or picker unavailable — no-op
+            ReplaySketchLog.Write("MapPreviewView browse was cancelled or unavailable");
         }
     }
 
@@ -132,7 +139,8 @@ public partial class MapPreviewView : ContentView
         if (string.IsNullOrEmpty(path)) return;
         if (_vm != null)
         {
-            _ = _vm.LoadMapFromFolderAsync(path);
+            ReplaySketchLog.Write($"MapPreviewView load clicked with path '{path}'");
+            _vm.LoadMapFromFolder(path);
         }
     }
 

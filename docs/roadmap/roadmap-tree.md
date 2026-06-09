@@ -35,6 +35,15 @@ mindmap
   root((OpenSAGE<br/>simulation<br/>roadmap))
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
+        P0-1 Open command model
+        P0-1b ViewModel testability
+        P0-1c MAUI command-flow testability
+        P0-2 Generic definition resolution
+        P0-3 Exporter generalization
+        P0-4 Assertion layer
+        P0-5 Run-and-assert entry point
+        P0-6 Large/procedural authoring
+        P0-7 Agent validation playbook
       P1 Skirmish setup and relationships ⮕
       P2 Skirmish AI opponent ⮕
       P3 Victory and defeat ⮕

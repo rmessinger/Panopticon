@@ -1,15 +1,16 @@
 ﻿using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
+using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tools.ReplaySketch.Maui;
 
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel _vm = new();
-    private bool _initialized;
 
     public MainPage()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
 
         ScenarioView.BindViewModel(_vm);
         ActionTreeView.BindViewModel(_vm);
@@ -28,6 +29,12 @@ public partial class MainPage : ContentPage
                 MapPreviewView.Invalidate();
             }
         };
+    }
+
+    private void OnLoaded(object? sender, EventArgs e)
+    {
+        ReplaySketchLog.Write("MainPage.Loaded");
+        _vm.Initialize();
     }
 
     // ── Tab switching ─────────────────────────────────────────────────────────
@@ -71,12 +78,7 @@ public partial class MainPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        if (_initialized)
-        {
-            return;
-        }
-
-        _initialized = true;
-        _ = _vm.InitializeAsync();
+        ReplaySketchLog.Write("MainPage.OnAppearing");
+        _vm.Initialize();
     }
 }

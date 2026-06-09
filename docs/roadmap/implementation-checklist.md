@@ -49,6 +49,14 @@ skirmish playable build → fight → win/lose vs. AI.
     the `Preferences.Default` implementation; tests supply a `MemoryPreferencesStore`); a unit test
     calls `LoadMapFromFolder` with a valid directory path where map loading will fail (no game files),
     and asserts the preference was saved regardless of map load outcome.
+- [ ] Abstract the remaining MAUI statics `MainViewModel` binds to — the `MainThread` dispatcher
+      (background-load completion, `MainViewModel.cs:180-190`) and `Process.Start`/launcher
+      (`ExecutePlayInGame`, `MainViewModel.cs:250-273`) — behind small injectable seams.
+  - AC: `MainViewModel` takes a dispatcher seam (runs the continuation synchronously in tests) and a
+    process-launcher seam (records the request instead of spawning); unit tests in
+    `OpenSage.Tools.ReplaySketch.Tests` exercise `ValidateCommand`, `ExportCommand`, `PlayInGameCommand`,
+    and the apply-results half of the background load headlessly (no MAUI runtime), asserting
+    command-state transitions and that `PlayInGame` records the expected launcher invocation.
 - [ ] Remove hardcoded USA/GLA `KnownDefinitions`; resolve object definitions by name generically
       (`Services/ReplayExporter.cs`).
   - AC: a scenario referencing any object definition by name (incl. a non-USA/GLA faction) exports
@@ -85,6 +93,14 @@ skirmish playable build → fight → win/lose vs. AI.
       (Full authoring/replay scaling is finalized under A5-5.)
   - AC: a scenario with ≥10k programmatically-generated orders exports and loads within a documented
     time/memory budget; test generates the orders without per-action hand-entry.
+- [ ] Check in an agent validation playbook at `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: the
+      documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change
+      (Core test suite, golden-image regen via `UPDATE_GOLDENS=1`, `dotnet format`, the run-and-assert
+      flow, and the MAUI testability seams), mirroring `OpenSage.Tools.TestHarness/AGENTS.md`.
+  - AC: `ReplaySketch.Maui/AGENTS.md` exists and documents the Core-vs-MAUI split, the exact build/
+    test/format/golden commands, what is headlessly validatable vs MAUI-only, a step-by-step
+    validation checklist, and a common-failure-mode table; it is honest about current capability
+    (marks the P0-4/P0-5 run-and-assert flow as forthcoming) and is referenced from the P0 deep dive.
 
 ### P1 — Skirmish setup & player relationships ([deep dive](deep-dives/skirmish-setup.md))
 - [ ] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /

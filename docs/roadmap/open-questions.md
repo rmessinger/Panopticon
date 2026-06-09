@@ -115,6 +115,21 @@
   small expression language (needs a parser/evaluator for marginal ergonomic gain), and
   code-only (not serializable or agent-authorable). Affects
   [P0](track-p-playable-baseline.md) (P0-4).
+- P0 harness — MAUI validation reach + agent playbook — Decision: keep logic in `.Core`, validate
+  headlessly via the test suite + run-and-assert, minimize MAUI-only code behind injectable seams,
+  and document the loop in a checked-in `AGENTS.md`. The persistent gap is that agents (especially
+  windowless/automated ones) have no reliable, specific way to validate a ReplaySketch change — most
+  acutely in the MAUI layer, which has no automated coverage. Decision: ReplaySketch logic stays in
+  `OpenSage.Tools.ReplaySketch.Core` and is validated headlessly by
+  `OpenSage.Tools.ReplaySketch.Tests` (controller/renderer/golden/service) plus the
+  [P0 harness](deep-dives/playable-baseline-harness.md) run-and-assert entry point (P0-5);
+  MAUI-only behaviour in `MainViewModel` is reduced to a thin shell by abstracting the MAUI statics
+  (`Preferences.Default`, `MainThread`, `Process.Start`/launcher) behind injectable seams
+  (P0-1b/P0-1c) so the command surface is unit-testable without a MAUI runtime; and the documented,
+  repeatable validation loop agents follow is a checked-in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`
+  playbook (P0-7), mirroring `OpenSage.Tools.TestHarness/AGENTS.md`. Chosen over UI-automation of the
+  MAUI app (heavy, platform-bound, flaky for agents) and over leaving validation undocumented (the
+  status quo that motivated this). Affects [P0](track-p-playable-baseline.md) (P0-1b/P0-1c/P0-7).
 - P-track object ownership tracking — Decision: maintained per-`Player` owned-object set/counts.
   Per-`Player` building/unit counts (and an owned-object set) are maintained incrementally on
   create/transfer/`OnDie`/`Destroy`, giving O(1) ownership checks. Chosen over an on-demand

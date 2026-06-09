@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -19,6 +20,7 @@ public sealed class GeneralsInstallationService
     /// </summary>
     public void SetPath(string folderPath)
     {
+        ReplaySketchLog.Write($"GeneralsInstallationService.SetPath path='{folderPath}'");
         Environment.SetEnvironmentVariable("CNC_GENERALS_PATH", folderPath);
         _cachedInstallation = null;
         _searchDone = false;
@@ -33,10 +35,28 @@ public sealed class GeneralsInstallationService
     {
         if (!_searchDone)
         {
+            ReplaySketchLog.Write("GeneralsInstallationService.TryGetInstallation probing locators");
+            var stopwatch = Stopwatch.StartNew();
             _cachedInstallation = InstallationLocators
                 .FindAllInstallations(GeneralsDefinition.Instance)
                 .FirstOrDefault();
             _searchDone = true;
+
+            if (_cachedInstallation is null)
+            {
+                ReplaySketchLog.Write(
+                    $"GeneralsInstallationService.TryGetInstallation no installation found after {stopwatch.ElapsedMilliseconds} ms; diagnostics: {GetDiagnostics().Replace(Environment.NewLine, " | ")}");
+            }
+            else
+            {
+                ReplaySketchLog.Write(
+                    $"GeneralsInstallationService.TryGetInstallation found '{_cachedInstallation.Path}' after {stopwatch.ElapsedMilliseconds} ms");
+            }
+        }
+        else
+        {
+            ReplaySketchLog.Write(
+                $"GeneralsInstallationService.TryGetInstallation using cached result '{_cachedInstallation?.Path ?? "(null)"}'");
         }
 
         installation = _cachedInstallation;
