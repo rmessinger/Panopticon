@@ -2,6 +2,10 @@
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
+using System.Text;
+using System.IO.Compression;
+using System.Threading.Tasks;
 using OpenSage.Data;
 using OpenSage.Data.Map;
 using OpenSage.Data.Tga;
@@ -127,12 +131,24 @@ public sealed class MapMetadataService
 
         if (previewPixels == null || Math.Min(previewWidth, previewHeight) < PreferredPreviewMinDimension)
         {
-            var generated = GenerateHeightShadedPreview(heightMapData, GeneratedPreviewMaxDimension);
-            if (generated != null)
+            var cachePath = GetPreviewCachePath(mapPath, entry.Length);
+            var cached = LoadPreviewCache(cachePath);
+            if (cached.HasValue)
             {
-                previewPixels = generated.Value.pixels;
-                previewWidth = generated.Value.width;
-                previewHeight = generated.Value.height;
+                previewPixels = cached.Value.pixels;
+                previewWidth = cached.Value.width;
+                previewHeight = cached.Value.height;
+            }
+            else
+            {
+                var generated = GenerateHeightShadedPreview(heightMapData, GeneratedPreviewMaxDimension);
+                if (generated != null)
+                {
+                    previewPixels = generated.Value.pixels;
+                    previewWidth = generated.Value.width;
+                    previewHeight = generated.Value.height;
+                    SavePreviewCache(cachePath, previewPixels, previewWidth, previewHeight);
+                }
             }
         }
 
@@ -176,6 +192,58 @@ public sealed class MapMetadataService
     /// <summary>Bilinear height sample at world XY coordinates.</summary>
     public float SampleHeight(float x, float y) => _heightMap?.GetHeight(x, y) ?? 0f;
 
+    // Cache directory: %LocalAppData%/OpenSAGE/ReplaySketch/previews
+    private static readonly string s_previewCacheDir = Path.Combine(
+        System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData),
+        "OpenSAGE", "ReplaySketch", "previews");
+
+    private static string GetPreviewCachePath(string mapPath, uint fileLength)
+    {
+        var pathHash = SHA1.HashData(Encoding.UTF8.GetBytes(mapPath.ToLowerInvariant()));
+        var hashHex = Convert.ToHexString(pathHash)[..16];
+        return Path.Combine(s_previewCacheDir, $"{hashHex}-{fileLength}.bin");
+    }
+
+    private static (byte[] pixels, int width, int height)? LoadPreviewCache(string cachePath)
+    {
+        if (!File.Exists(cachePath))
+            return null;
+        try
+        {
+            using var fs = File.OpenRead(cachePath);
+            using var gz = new GZipStream(fs, CompressionMode.Decompress);
+            using var reader = new BinaryReader(gz);
+            var width = reader.ReadInt32();
+            var height = reader.ReadInt32();
+            var pixels = reader.ReadBytes(width * height * 4);
+            if (pixels.Length != width * height * 4)
+                return null;
+            return (pixels, width, height);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void SavePreviewCache(string cachePath, byte[] pixels, int width, int height)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+            using var fs = File.Create(cachePath);
+            using var gz = new GZipStream(fs, CompressionLevel.Optimal);
+            using var writer = new BinaryWriter(gz);
+            writer.Write(width);
+            writer.Write(height);
+            writer.Write(pixels);
+        }
+        catch
+        {
+            // Cache writes are best-effort; never block startup on a write failure.
+        }
+    }
+
     private static (byte[] pixels, int width, int height)? GenerateHeightShadedPreview(HeightMapData data, int maxDimension)
     {
         var border = (int)data.BorderWidth;
@@ -187,7 +255,7 @@ public sealed class MapMetadataService
         }
 
         var longest = Math.Max(playableW, playableH);
-        var scale = Math.Max(1f, maxDimension / (float)longest);
+        var scale = Math.Min(1f, maxDimension / (float)longest);
         var outW = Math.Max(1, (int)MathF.Round(playableW * scale));
         var outH = Math.Max(1, (int)MathF.Round(playableH * scale));
         var pixels = new byte[outW * outH * 4];
@@ -197,7 +265,7 @@ public sealed class MapMetadataService
 
         var light = Vector3.Normalize(new Vector3(-0.45f, 0.7f, 0.55f));
 
-        for (var py = 0; py < outH; py++)
+        Parallel.For(0, outH, py =>
         {
             var ty = py / (float)Math.Max(1, outH - 1);
             var srcY = border + (int)MathF.Round((1f - ty) * (playableH - 1));
@@ -235,7 +303,7 @@ public sealed class MapMetadataService
                 pixels[i + 2] = (byte)Math.Clamp((int)(baseB * lighting), 0, 255);
                 pixels[i + 3] = 255;
             }
-        }
+        });
 
         return (pixels, outW, outH);
     }

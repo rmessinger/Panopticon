@@ -115,13 +115,24 @@
   small expression language (needs a parser/evaluator for marginal ergonomic gain), and
   code-only (not serializable or agent-authorable). Affects
   [P0](track-p-playable-baseline.md) (P0-4).
+- P0 harness — MAUI screenshot mode — Decision: agents verify MAUI-layer changes (layout, tab
+  switching, view wiring, error display) by running the app in screenshot-and-exit mode via
+  `REPLAYSKETCH_SCREENSHOT_PATH`, `REPLAYSKETCH_SCREENSHOT_TAB`, and `REPLAYSKETCH_SCREENSHOT_DELAY`
+  environment variables. `MainPage.OnLoaded` detects the variables, selects the requested tab, waits
+  the settle delay, captures the window via `Microsoft.Maui.Media.Screenshot.Default.CaptureAsync()`,
+  saves the PNG, and calls `Application.Current.Quit()`. Chosen over an external `screencapture`
+  script (requires window ID detection, timing heuristics, and no communication with the app) and
+  over UI-test frameworks (heavy, platform-bound, flaky). The in-app approach is self-contained,
+  requires no extra tooling or permissions, and works with `dotnet run`. Implemented as P0-1a;
+  documented in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`. Affects
+  [P0](track-p-playable-baseline.md) (P0-1a).
 - P0 harness — MAUI validation reach + agent playbook — Decision: keep logic in `.Core`, validate
   headlessly via the test suite + run-and-assert, minimize MAUI-only code behind injectable seams,
   and document the loop in a checked-in `AGENTS.md`. The persistent gap is that agents (especially
   windowless/automated ones) have no reliable, specific way to validate a ReplaySketch change — most
   acutely in the MAUI layer, which has no automated coverage. Decision: ReplaySketch logic stays in
   `OpenSage.Tools.ReplaySketch.Core` and is validated headlessly by
-  `OpenSage.Tools.ReplaySketch.Tests` (controller/renderer/golden/service) plus the
+  `OpenSage.Tools.ReplaySketch.Tests` (controller/interaction/service) plus the
   [P0 harness](deep-dives/playable-baseline-harness.md) run-and-assert entry point (P0-5);
   MAUI-only behaviour in `MainViewModel` is reduced to a thin shell by abstracting the MAUI statics
   (`Preferences.Default`, `MainThread`, `Process.Start`/launcher) behind injectable seams
@@ -167,6 +178,28 @@
   dozer/worker + insufficient resources), per Generals skirmish rules — implemented as the default
   but exposed as a configurable/data-driven rule so experiments can swap simpler/stricter
   conditions. Affects [P3](track-p-playable-baseline.md).
+- Match end-state enumeration — Decision: six end states, full `GameOutcome` type, all validated
+  by P7. Three `OutcomeReason` values: `Eliminated` (standard defeat or sudden-death resolution),
+  `Surrendered` (any player/AI issues `OrderType.EndGame`), `ScoreDecision` (time-limit expiry
+  with configurable score-metric tiebreak). Two additional `OutcomeStatus` values beyond
+  `InProgress`/`Decided`: `SuddenDeath` (transitional — mutual simultaneous elimination detected,
+  match continues). Mutual elimination resolves via sudden-death continuation to the next
+  `Eliminated` outcome. Time-limit expiry resolves via highest-score win (score metric is
+  configurable, default = buildings standing). Team wins are expressed by setting `WinningTeam`
+  rather than a separate reason. All six end states have P7 regression scenarios. Affects
+  [P3](track-p-playable-baseline.md) (P3-5/P3-6), [P7](track-p-playable-baseline.md).
+- Unit-contract validation scope — Decision: per-archetype full contract via P0 harness; one
+  representative per role; surfaced gaps are explicit, not silent. Six archetypes cover all
+  meaningful unit-behaviour variation in Generals/ZH: infantry, vehicle, aircraft, builder,
+  support, superweapon. Each is validated against a full contract (produce/move/attack/every
+  weapon mode/every special ability/die with ownership cleanup) via one P0 harness scenario.
+  "Full" means every `SpecialPowerType` in the unit's command set and every `WeaponSlot` are
+  exercised; unimplemented handlers produce explicit assertion failures (not silent no-ops) and
+  become tracked P6b gap items. Archetype granularity chosen over per-faction-unit (50+ units,
+  excessive) and per-role-category-only (misses ability/weapon-mode variation). Representative
+  units are from the USA reference faction; the scenario pattern is faction-agnostic via the P0
+  harness (any faction's unit can be substituted by name). Affects
+  [P6b](track-p-playable-baseline.md) (all sub-phases), [P7](track-p-playable-baseline.md).
 - Framework audience & distribution scope — Decision: single-operator personal research tool,
   whole framework. The entire simulation framework — not just the C-track import tooling — is a
   personal experimentation tool for one operator for the foreseeable future. This generalizes the

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Microsoft.Maui.ApplicationModel;
+using OpenSage.Tools.ReplaySketch.Maui.Services;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 
@@ -18,6 +19,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     // ── Services ──────────────────────────────────────────────────────────
     private readonly GeneralsInstallationService _installationService = new();
     private readonly LauncherLocatorService _launcherLocator = new();
+    private readonly IPreferencesStore _preferences;
 
     // ── State ─────────────────────────────────────────────────────────────
     public ReplayScenario Scenario { get; } = ReplayScenario.CreateAlpineAssaultUSAvGLA();
@@ -121,8 +123,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand PlayInGameCommand => _playInGameCommand;
     public ICommand ReloadMapCommand { get; }
 
-    public MainViewModel()
+    public MainViewModel(IPreferencesStore? preferences = null)
     {
+        _preferences = preferences ?? new MauiPreferencesStore();
         _validateCommand = new RelayCommand(
             execute: _ => ExecuteValidate(),
             canExecute: _ => MapLoaded);
@@ -138,7 +141,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ReloadMapCommand = new RelayCommand(execute: _ => LoadMap());
 
         // Restore a previously saved installation path (MAUI apps don't inherit shell env vars)
-        var savedPath = Preferences.Default.Get("cnc_generals_path", string.Empty);
+        var savedPath = _preferences.Get("cnc_generals_path", string.Empty);
         if (!string.IsNullOrEmpty(savedPath))
         {
             ReplaySketchLog.Write($"MainViewModel ctor restoring saved path '{savedPath}'");
@@ -160,47 +163,68 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
 
         _initialized = true;
-        LoadMap();
+        LoadMapAsync();
     }
 
     /// <summary>
-    /// Loads the current scenario map immediately once an installation has been resolved.
-    /// Available-map discovery runs in the background so a slow scan can't block the first map.
+    /// Loads the current scenario map asynchronously in the background.
+    /// The UI stays responsive while installation/map loading happens off the main thread.
+    /// Available-map discovery also runs in the background.
     /// </summary>
     public void LoadMap()
     {
-        ReplaySketchLog.Write($"LoadMap start map='{Scenario.MapPath}'");
+        LoadMapAsync();
+    }
+
+    private void LoadMapAsync()
+    {
+        ReplaySketchLog.Write($"LoadMapAsync start map='{Scenario.MapPath}'");
 
         Map = null;
         MapLoadError = null;
 
+        // TryResolveInstallation sets CurrentInstallationPath (a bindable property) so it
+        // must run on the main thread. Only the expensive MapMetadataService.Load is offloaded.
+        var installStopwatch = Stopwatch.StartNew();
         if (!TryResolveInstallation(out var installation) || installation is null)
         {
             var diag = _installationService.GetDiagnostics();
-            MapLoadError =
-                $"Generals installation not found.\nSet CNC_GENERALS_PATH to the game folder, or use Browse below.\n\nDiagnostics:\n{diag}\n\nLog: {ReplaySketchLog.LogPath}";
-            ReplaySketchLog.Write($"LoadMap failed because installation was not found. Diagnostics: {diag.Replace(Environment.NewLine, " | ")}");
+            MapLoadError = $"Generals installation not found.\nSet CNC_GENERALS_PATH to the game folder, or use Browse below.\n\nDiagnostics:\n{diag}\n\nLog: {ReplaySketchLog.LogPath}";
+            ReplaySketchLog.Write($"LoadMapAsync failed because installation was not found. Diagnostics: {diag.Replace(Environment.NewLine, " | ")}");
             UpdateCommandStates();
             return;
         }
+        ReplaySketchLog.Write($"  TryResolveInstallation: {installStopwatch.ElapsedMilliseconds}ms");
 
-        var stopwatch = Stopwatch.StartNew();
-
-        try
+        Task.Run(async () =>
         {
-            Map = MapMetadataService.Load(installation, Scenario.MapPath);
-            ReplaySketchLog.Write(
-                $"LoadMap succeeded installation='{installation.Path}' map='{Scenario.MapPath}' elapsedMs={stopwatch.ElapsedMilliseconds}");
-        }
-        catch (Exception ex)
-        {
-            MapLoadError = $"{ex.Message}\n\nLog: {ReplaySketchLog.LogPath}";
-            ReplaySketchLog.WriteException(
-                $"LoadMap failed installation='{installation.Path}' map='{Scenario.MapPath}'", ex);
-        }
+            try
+            {
+                var mapLoadStopwatch = Stopwatch.StartNew();
+                var loadedMap = MapMetadataService.Load(installation, Scenario.MapPath);
+                ReplaySketchLog.Write(
+                    $"  MapMetadataService.Load: {mapLoadStopwatch.ElapsedMilliseconds}ms installation='{installation.Path}' map='{Scenario.MapPath}'");
 
-        UpdateCommandStates();
-        StartBackgroundMapDiscovery(installation);
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Map = loadedMap;
+                    UpdateCommandStates();
+                });
+
+                StartBackgroundMapDiscovery(installation);
+            }
+            catch (Exception ex)
+            {
+                ReplaySketchLog.WriteException(
+                    $"LoadMapAsync failed map='{Scenario.MapPath}'", ex);
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    MapLoadError = $"{ex.Message}\n\nLog: {ReplaySketchLog.LogPath}";
+                    UpdateCommandStates();
+                });
+            }
+        });
     }
 
     public string? GetDiscoveredMapPath(int index)
@@ -232,7 +256,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         ReplaySketchLog.Write($"LoadMapFromFolder path='{folderPath}'");
         _installationService.SetPath(folderPath);
-        Preferences.Default.Set("cnc_generals_path", folderPath);
+        _preferences.Set("cnc_generals_path", folderPath);
         CurrentInstallationPath = folderPath;
         LoadMap();
     }

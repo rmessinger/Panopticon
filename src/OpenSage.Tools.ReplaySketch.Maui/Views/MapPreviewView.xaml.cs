@@ -46,9 +46,15 @@ public partial class MapPreviewView : ContentView
     private static readonly TimeSpan DoubleTapInterval = TimeSpan.FromMilliseconds(350);
     private const float DoubleTapDistPx = 30f;
 
+    // Trackpad pinch state
+    private SKMatrix _pinchStartMatrix = SKMatrix.Identity;
+
     public MapPreviewView()
     {
         InitializeComponent();
+        var pinch = new PinchGestureRecognizer();
+        pinch.PinchUpdated += OnCanvasPinchUpdated;
+        Canvas.GestureRecognizers.Add(pinch);
     }
 
     public void BindViewModel(MainViewModel vm)
@@ -165,6 +171,34 @@ public partial class MapPreviewView : ContentView
         Canvas.InvalidateSurface();
     }
 
+    private void OnZoomInClicked(object? sender, EventArgs e)
+    {
+        ZoomAtPoint(GetCanvasCenter(), 1.25f);
+    }
+
+    private void OnZoomOutClicked(object? sender, EventArgs e)
+    {
+        ZoomAtPoint(GetCanvasCenter(), 0.8f);
+    }
+
+    private void OnCanvasPinchUpdated(object? sender, PinchGestureUpdatedEventArgs e)
+    {
+        switch (e.Status)
+        {
+            case GestureStatus.Started:
+                _pinchStartMatrix = _viewMatrix;
+                break;
+
+            case GestureStatus.Running:
+                ApplyPinchZoom(e.ScaleOrigin, (float)e.Scale);
+                break;
+
+            case GestureStatus.Canceled:
+            case GestureStatus.Completed:
+                break;
+        }
+    }
+
     private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
     {
         e.Handled = true;
@@ -264,16 +298,64 @@ public partial class MapPreviewView : ContentView
 
         // Each wheel tick is ~120 units; map to a smooth zoom ratio
         var ratio = 1f + Math.Clamp(wheelDelta / 600f, -0.3f, 0.3f);
+        ZoomByRatio(canvasPos, ratio);
+    }
 
+    private void ZoomByRatio(SKPoint canvasPos, float ratio)
+    {
+        if (ratio <= 0f) return;
+
+        _viewMatrix = ZoomMatrix(_viewMatrix, canvasPos, ratio);
+        UpdateResetButton();
+        Canvas.InvalidateSurface();
+    }
+
+    private void ApplyPinchZoom(Point scaleOrigin, float scale)
+    {
+        if (scale <= 0f) return;
+
+        var origin = GetCanvasPoint(scaleOrigin);
+        _viewMatrix = ZoomMatrix(_pinchStartMatrix, origin, scale);
+        UpdateResetButton();
+        Canvas.InvalidateSurface();
+    }
+
+    private SKMatrix ZoomMatrix(SKMatrix baseMatrix, SKPoint canvasPos, float ratio)
+    {
         // Extract current uniform scale from matrix and clamp
-        var currentScale = MathF.Sqrt(_viewMatrix.ScaleX * _viewMatrix.ScaleX + _viewMatrix.SkewY * _viewMatrix.SkewY);
+        var currentScale = MathF.Sqrt(baseMatrix.ScaleX * baseMatrix.ScaleX + baseMatrix.SkewY * baseMatrix.SkewY);
         var newScale = Math.Clamp(currentScale * ratio, MinScale, MaxScale);
         ratio = newScale / currentScale;
 
-        _viewMatrix = _viewMatrix.PostConcat(
-            SKMatrix.CreateScale(ratio, ratio, canvasPos.X, canvasPos.Y));
-        UpdateResetButton();
-        Canvas.InvalidateSurface();
+        return baseMatrix.PostConcat(SKMatrix.CreateScale(ratio, ratio, canvasPos.X, canvasPos.Y));
+    }
+
+    private SKPoint GetCanvasCenter()
+    {
+        var width = (float)Canvas.CanvasSize.Width;
+        var height = (float)Canvas.CanvasSize.Height;
+        if (width <= 0f || height <= 0f)
+        {
+            width = (float)Canvas.Width;
+            height = (float)Canvas.Height;
+        }
+
+        return new SKPoint(width / 2f, height / 2f);
+    }
+
+    private SKPoint GetCanvasPoint(Point origin)
+    {
+        var width = (float)Canvas.CanvasSize.Width;
+        var height = (float)Canvas.CanvasSize.Height;
+        if (width <= 0f || height <= 0f)
+        {
+            width = (float)Canvas.Width;
+            height = (float)Canvas.Height;
+        }
+
+        var x = origin.X <= 1f ? origin.X * width : origin.X;
+        var y = origin.Y <= 1f ? origin.Y * height : origin.Y;
+        return new SKPoint((float)x, (float)y);
     }
 
     private void UpdateResetButton()
@@ -307,7 +389,7 @@ public partial class MapPreviewView : ContentView
 
         // Apply zoom/pan transform — _viewMatrix operates in physical canvas pixel space
         canvas.Save();
-        canvas.Concat(ref _viewMatrix);
+        canvas.Concat(in _viewMatrix);
 
         var markers = MapPreviewRenderer.Render(
             canvas, map, _previewBitmap,

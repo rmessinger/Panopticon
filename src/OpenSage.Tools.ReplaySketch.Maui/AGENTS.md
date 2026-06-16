@@ -51,36 +51,83 @@ Note: the `.Maui` project only builds with the platform MAUI workload for the cu
 
 ---
 
+## MAUI screenshot mode
+
+When a change touches the MAUI layer (XAML layout, view wiring, tab switching, error display,
+`MainViewModel` presentation logic), run the app in screenshot-and-exit mode to capture what it
+renders without a human manually launching it.
+
+### How it works
+
+Set `REPLAYSKETCH_SCREENSHOT_PATH` before launching the app. After the page finishes loading and
+a settle delay expires, the app captures a full-window screenshot, saves it to the path, and
+exits automatically.
+
+```bash
+# Capture the Tree tab (default) — app renders, saves, exits
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/replaysketch_tree.png \
+  dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+
+# Capture the Map tab
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/replaysketch_map.png \
+REPLAYSKETCH_SCREENSHOT_TAB=map \
+  dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+
+# Use a longer settle delay (seconds, default 3) if the map or data is slow to load
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/replaysketch_tree.png \
+REPLAYSKETCH_SCREENSHOT_DELAY=6 \
+  dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+```
+
+After the command returns, open the PNG:
+
+```bash
+open /tmp/replaysketch_tree.png    # macOS: Preview
+```
+
+Or view it with the `view` tool inside an agent session.
+
+### Environment variables
+
+| Variable | Default | Effect |
+|---|---|---|
+| `REPLAYSKETCH_SCREENSHOT_PATH` | (none; mode inactive) | Absolute path to write the output PNG. Activates screenshot-and-exit mode. |
+| `REPLAYSKETCH_SCREENSHOT_TAB` | `tree` | Which tab to capture: `tree` or `map`. |
+| `REPLAYSKETCH_SCREENSHOT_DELAY` | `3` | Seconds to wait after `OnLoaded` before capturing. Increase if map preview is slow. |
+
+If capture is not supported on the platform, or an error occurs, the app writes a diagnostic to
+`<path>.error` instead of the PNG and still exits. Always check for the `.error` file if the
+PNG is missing.
+
+### What the screenshot shows without game files installed
+
+Without a game installation detected, `MainViewModel.Initialize()` sets an error/empty state,
+so the screenshot captures the app's initial UI with no map data. This is still useful for
+verifying layout changes, error states, and tab-switching behaviour. To load real data, set the
+game installation path in preferences before launching (or use the `IPreferencesStore` seam once
+P0-1b lands).
+
+### Screenshot mode implementation note (P0-1a)
+
+The screenshot mode is implemented in `MainPage.OnLoaded`. It uses
+`Microsoft.Maui.Media.Screenshot.Default.CaptureAsync()`, which is supported on maccatalyst and
+Windows (the two platforms the app targets). The implementation is in:
+`src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml.cs`.
+
+---
+
 ## What the tests cover
 
-`OpenSage.Tools.ReplaySketch.Tests` (SkiaSharp + xUnit, non-MAUI):
+`OpenSage.Tools.ReplaySketch.Tests` (xUnit, non-MAUI):
 
 | Test file | Covers |
 |---|---|
 | `ActionTreeControllerTests` | Action-tree interaction logic (selection, drag, node layout) |
-| `ActionTreeRendererTests` | Action-tree rendering, compared to golden PNGs via `GoldenImageHelper` |
-| `MapPreviewRendererTests` | Map-preview rendering, compared to golden PNGs |
+| `ActionTreeRendererTests` | `SimulateTap` hit-testing against the layout engine's node geometry |
 | `GeneralsInstallationServiceTests` | Installation discovery/path service |
 
 `OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` covers the command model and the
 exporter (scenario → engine `Order` → `.rep`).
-
-### Golden-image workflow
-
-Renderer changes are validated against checked-in PNG baselines in
-`OpenSage.Tools.ReplaySketch.Tests/GoldenImages/`. `GoldenImageHelper.AssertMatchesGolden`
-decodes both images and allows up to a 1% pixel-mismatch ratio (tolerance 4 per channel) to
-absorb anti-aliasing noise.
-
-To intentionally update baselines after a deliberate visual change:
-
-```bash
-UPDATE_GOLDENS=1 dotnet test src/OpenSage.Tools.ReplaySketch.Tests
-```
-
-This rewrites the PNGs in both the test output directory and the project source tree so they can
-be committed. Review the regenerated images before committing — never run `UPDATE_GOLDENS=1` to
-mask an unexpected regression.
 
 ---
 
@@ -114,11 +161,13 @@ lands, prefer it for validating exporter/command changes end-to-end. Status:
 3. Run the headless suites:
    `dotnet test src/OpenSage.Tools.ReplaySketch.Tests` and the `ReplaySketch` filter on
    `OpenSage.Game.Tests`.
-4. If you changed a renderer, inspect any golden-image diff. If the change is intentional,
-   regenerate with `UPDATE_GOLDENS=1` and visually confirm the new PNGs before committing.
-5. If you changed `.Core` behaviour, add or extend a headless test that asserts it.
-6. If you changed exporter/command behaviour, validate the produced `.rep` / orders via the
+4. If you changed `.Core` behaviour, add or extend a headless test that asserts it.
+5. If you changed exporter/command behaviour, validate the produced `.rep` / orders via the
    command-model tests (and the run-and-assert entry point once available).
+6. If you changed anything visual — renderer logic, XAML layout, views, tab switching,
+   `MainViewModel` presentation — run the screenshot mode and inspect the output PNG to confirm
+   the visual result is correct (see [MAUI screenshot mode](#maui-screenshot-mode)). Capture
+   both tabs if both are affected.
 7. Check formatting: `dotnet format src --verify-no-changes`.
 8. Report per check: pass / fail (describe the failure) / uncertain.
 
@@ -128,11 +177,13 @@ lands, prefer it for validating exporter/command changes end-to-end. Status:
 
 | Symptom | Likely cause / where to look |
 |---|---|
-| Golden-image test fails after an unrelated change | Anti-aliasing drift or a real render regression — inspect the diff; do not blind-regenerate |
 | New ViewModel logic has no test you can write | Logic is inside a MAUI-static-bound method — move it into `.Core` (see seam table) |
 | `.Maui` project fails to build | Missing platform MAUI workload for the current OS, or you edited it on Linux where it builds as a library |
 | Exporter change passes tests but the `.rep` misbehaves in-game | Validate end-to-end via the run-and-assert entry point (P0-5) / the TestHarness, not unit tests alone |
 | `dotnet format` CI failure | Run `dotnet format src` and commit the result |
+| Screenshot mode: PNG not written, `.error` file present | `Screenshot.Default.IsCaptureSupported` returned false, or MAUI runtime error — read the `.error` file |
+| Screenshot mode: app hangs and does not exit | Increase `REPLAYSKETCH_SCREENSHOT_DELAY`; a background load may still be running during capture |
+| Screenshot mode: `dotnet run` exits with build error on Linux | Expected — screenshot mode requires a MAUI runtime (maccatalyst or Windows) |
 
 ---
 

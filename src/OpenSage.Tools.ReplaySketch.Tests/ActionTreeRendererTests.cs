@@ -1,13 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;
 
 /// <summary>
-/// Tests that combine <see cref="ActionTreeRenderer"/> (visual regression via golden images)
-/// with coordinate-based interaction testing via <see cref="ActionTreeController.SimulateTap"/>.
+/// Coordinate-based interaction tests for <see cref="ActionTreeController.SimulateTap"/>,
+/// verifying hit-testing against the layout engine's node geometry.
 /// </summary>
 public class ActionTreeRendererTests
 {
@@ -135,87 +134,6 @@ public class ActionTreeRendererTests
         Assert.Null(ctrl.SelectedActionId);
     }
 
-    // ── Golden image — visual regression tests ────────────────────────────────
-
-    [Fact]
-    [Trait("Category", "Visual")]
-    public void Render_EmptyGraph_MatchesGolden()
-    {
-        var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry>());
-        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "empty-graph");
-    }
-
-    [Fact]
-    [Trait("Category", "Visual")]
-    public void Render_SingleNode_MatchesGolden()
-    {
-        var action = MakeAction(id: "a1", label: "Construct");
-        var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry> { action });
-        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "single-node");
-    }
-
-    [Fact]
-    [Trait("Category", "Visual")]
-    public void Render_TwoNodeChain_MatchesGolden()
-    {
-        var a1 = MakeAction(id: "a1", label: "Construct", type: ActionType.Construct);
-        var a2 = MakeAction(
-            id: "a2",
-            label: "Gather Resources",
-            type: ActionType.GatherResources,
-            timing: new AfterActionTiming("a1", ActionPhase.Completed));
-
-        var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry> { a1, a2 });
-        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "two-node-chain");
-    }
-
-    [Fact]
-    [Trait("Category", "Visual")]
-    public void Render_SelectedNode_HasWhiteBorder()
-    {
-        var action = MakeAction(id: "sel1", label: "Selected");
-        var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry> { action });
-
-        // Render once without selection
-        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "node-unselected");
-
-        // Render again with this node selected
-        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "node-selected", selectedId: "sel1");
-    }
-
-    [Fact]
-    [Trait("Category", "Visual")]
-    public void Render_DispatchedEdge_UsesAmberColour()
-    {
-        var a1 = MakeAction(id: "b1", label: "Construct", type: ActionType.Construct);
-        var a2 = MakeAction(
-            id: "b2",
-            label: "Gather",
-            type: ActionType.GatherResources,
-            timing: new AfterActionTiming("b1", ActionPhase.Dispatched));
-
-        var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry> { a1, a2 });
-        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "dispatched-edge");
-    }
-
-    [Fact]
-    [Trait("Category", "Visual")]
-    public void Render_DragInProgress_ShowsGhostAndDropTarget()
-    {
-        var a1 = MakeAction(id: "d1", label: "Construct", type: ActionType.Construct);
-        var a2 = MakeAction(id: "d2", label: "Gather Resources", type: ActionType.GatherResources);
-        var layout = ActionTreeLayoutEngine.ComputeLayout(new List<ActionEntry> { a1, a2 });
-
-        var source = layout.First(n => n.Action.Id == "d2");
-        var target = layout.First(n => n.Action.Id == "d1");
-
-        // Drag d2 halfway towards d1, hovering over d1
-        var drag = new DragState(
-            DraggedId: "d2",
-            CurrentX: target.CenterX,
-            CurrentY: target.CenterY,
-            TargetId: "d1");
-
-        GoldenImageHelper.AssertRenderedMatchesGolden(layout, "drag-in-progress", drag: drag);
-    }
+    // ── SimulateDrag_WouldCreateCycle_DoesNotReparent already tested in ActionTreeControllerTests
 }
+

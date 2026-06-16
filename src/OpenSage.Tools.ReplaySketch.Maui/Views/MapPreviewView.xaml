@@ -51,18 +51,35 @@
                         TextColor="White"/>
             </HorizontalStackLayout>
         </VerticalStackLayout>
-        <!-- Reset-zoom button, visible only when the view has been panned/zoomed -->
-        <Button x:Name="ResetZoomBtn"
-                Text="↺ Reset"
-                Clicked="OnResetZoomClicked"
-                HorizontalOptions="End"
-                VerticalOptions="End"
-                Margin="8"
-                FontSize="11"
-                Padding="8,4"
-                CornerRadius="4"
-                BackgroundColor="#80333333"
-                TextColor="#CCC"
-                IsVisible="False"/>
+        <HorizontalStackLayout HorizontalOptions="End"
+                               VerticalOptions="End"
+                               Margin="8"
+                               Spacing="6">
+            <Button x:Name="ZoomOutBtn"
+                    Text="−"
+                    Clicked="OnZoomOutClicked"
+                    FontSize="14"
+                    Padding="10,4"
+                    CornerRadius="4"
+                    BackgroundColor="#80333333"
+                    TextColor="#CCC"/>
+            <Button x:Name="ZoomInBtn"
+                    Text="+"
+                    Clicked="OnZoomInClicked"
+                    FontSize="14"
+                    Padding="10,4"
+                    CornerRadius="4"
+                    BackgroundColor="#80333333"
+                    TextColor="#CCC"/>
+            <Button x:Name="ResetZoomBtn"
+                    Text="↺ Reset"
+                    Clicked="OnResetZoomClicked"
+                    FontSize="11"
+                    Padding="8,4"
+                    CornerRadius="4"
+                    BackgroundColor="#80333333"
+                    TextColor="#CCC"
+                    IsVisible="False"/>
+        </HorizontalStackLayout>
     </Grid>
 </ContentView>

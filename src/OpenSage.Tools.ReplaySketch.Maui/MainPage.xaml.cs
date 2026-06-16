@@ -1,4 +1,5 @@
-﻿using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
+﻿using Microsoft.Maui.Media;
+using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tools.ReplaySketch.Maui;
@@ -6,6 +7,18 @@ namespace OpenSage.Tools.ReplaySketch.Maui;
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel _vm = new();
+
+    // Screenshot-and-exit mode. Set environment variables before launching:
+    //   REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png   (required to activate)
+    //   REPLAYSKETCH_SCREENSHOT_TAB=tree|map         (optional, default: tree)
+    //   REPLAYSKETCH_SCREENSHOT_DELAY=N              (optional seconds, default: 3)
+    private static readonly string? ScreenshotPath =
+        Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_PATH");
+
+    private static readonly int ScreenshotDelaySec =
+        int.TryParse(Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_DELAY"), out var d) ? d : 3;
+
+    private bool _screenshotScheduled;
 
     public MainPage()
     {
@@ -35,6 +48,46 @@ public partial class MainPage : ContentPage
     {
         ReplaySketchLog.Write("MainPage.Loaded");
         _vm.Initialize();
+
+        if (ScreenshotPath is not null && !_screenshotScheduled)
+        {
+            _screenshotScheduled = true;
+            var tab = Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_TAB")?.ToLowerInvariant();
+            if (tab == "map")
+                SwitchToMap();
+            Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(ScreenshotDelaySec), () => _ = TakeScreenshotAsync());
+        }
+    }
+
+    private async Task TakeScreenshotAsync()
+    {
+        try
+        {
+            if (!Screenshot.Default.IsCaptureSupported)
+            {
+                await File.WriteAllTextAsync(ScreenshotPath! + ".error",
+                    "Screenshot capture is not supported on this platform.");
+            }
+            else
+            {
+                var dir = Path.GetDirectoryName(ScreenshotPath!);
+                if (!string.IsNullOrEmpty(dir))
+                    Directory.CreateDirectory(dir);
+
+                var result = await Screenshot.Default.CaptureAsync();
+                await using var stream = await result.OpenReadAsync();
+                await using var output = File.Create(ScreenshotPath!);
+                await stream.CopyToAsync(output);
+            }
+        }
+        catch (Exception ex)
+        {
+            await File.WriteAllTextAsync(ScreenshotPath! + ".error", ex.ToString());
+        }
+        finally
+        {
+            Application.Current?.Quit();
+        }
     }
 
     // ── Tab switching ─────────────────────────────────────────────────────────

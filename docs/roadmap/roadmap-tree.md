@@ -36,6 +36,7 @@ mindmap
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
         P0-1 Open command model
+        P0-1a MAUI screenshot mode
         P0-1b ViewModel testability
         P0-1c MAUI command-flow testability
         P0-2 Generic definition resolution
@@ -47,9 +48,22 @@ mindmap
       P1 Skirmish setup and relationships ⮕
       P2 Skirmish AI opponent ⮕
       P3 Victory and defeat ⮕
+        P3-1 GameOutcome scaffold
+        P3-2 Defeat and win rules
+        P3-3 Death-defeat event
+        P3-4 End-of-match flow
+        P3-5 Mutual elimination sudden death
+        P3-6 Time-limit score decision
       P4 Economy loop ⮕
       P5 Construction and production ⮕
       P6 Combat and command ⮕
+      P6b Unit-contract validation ⮕
+        P6b-1 Infantry archetype
+        P6b-2 Vehicle archetype
+        P6b-3 Aircraft archetype
+        P6b-4 Builder archetype
+        P6b-5 Support archetype
+        P6b-6 Superweapon archetype
       P7 End-to-end skirmish validation
     A. Foundations
       A1 Headless host ⮕
@@ -136,6 +150,7 @@ flowchart LR
     P2["P2 Skirmish AI opponent"]
     P3["P3 Victory & defeat"]
     P6["P6 Combat & command"]
+    P6B["P6b Unit-contract validation"]
     P7["P7 End-to-end skirmish validation"]
   end
 
@@ -188,11 +203,15 @@ flowchart LR
   P4 --> P2
   P5 --> P2
   P1 --> P6
+  P6 --> P6B
+  P0 --> P6B
+  P4 --> P6B
+  P5 --> P6B
   P2 --> P7
   P3 --> P7
   P4 --> P7
   P5 --> P7
-  P6 --> P7
+  P6B --> P7
   P0 --> P7
   P7 --> A2
   P7 --> A3
@@ -242,7 +261,7 @@ flowchart LR
   class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
-  class P0,P1,P2,P3,P4,P5,P6,P7 trackP;
+  class P0,P1,P2,P3,P4,P5,P6,P6B,P7 trackP;
   class A4S seam;
 ```
 

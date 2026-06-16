@@ -38,13 +38,24 @@ Introduce a first-class outcome type exposed off `GameLogic`/`IGame`:
 
 ```
 GameOutcome {
-    OutcomeStatus Status;        // InProgress | Decided
-    Player? WinningPlayer;       // or WinningTeam
-    Player? LosingPlayer;        // (per defeated player)
-    OutcomeReason Reason;        // Eliminated | Surrendered | AllAlliesDefeated | ...
+    OutcomeStatus Status;        // InProgress | SuddenDeath | Decided
+    Player? WinningPlayer;       // null if team win or no winner yet
+    Team? WinningTeam;           // set when a full team wins
+    Player? LosingPlayer;        // (per defeated player, populated on each defeat event)
+    OutcomeReason Reason;        // Eliminated | Surrendered | ScoreDecision
     int DecidedOnFrame;
 }
+
+enum OutcomeStatus { InProgress, SuddenDeath, Decided }
+enum OutcomeReason { Eliminated, Surrendered, ScoreDecision }
 ```
+
+`SuddenDeath` is a transitional status entered when mutual elimination is detected (both
+sides lose their last command/production structure in the same check window). The match
+continues under normal rules; the first elimination after that transitions to `Decided` with
+`Reason = Eliminated`. `ScoreDecision` is used when a time limit expires and a winner is
+picked by the configurable score metric. `Surrendered` covers any player — human or AI —
+issuing `OrderType.EndGame`.
 
 This is what the [P0 harness](playable-baseline-harness.md) §3.3 outcome assertions read, and what
 A2's verification harness / B1's benchmarks later assert against. It is the termination signal the
@@ -65,7 +76,17 @@ cadence (not every frame) from the logic tick:
   (`Player.GetEnergy` pattern, `Player.cs:92-104`). The same maintained view feeds the AI (P2) and the
   scale tracks. See [open-questions](../open-questions.md).
 - Win rule: when all players not allied to player X are defeated (via [P1](skirmish-setup.md)
-  relationships/teams), X (and allies) win.
+  relationships/teams), X (and allies) win. When the winning side is a full team, `WinningTeam`
+  is set (in addition to or instead of `WinningPlayer`).
+- Mutual elimination (Decision): if the last surviving command/production structures of both sides
+  are destroyed in the same check window, `Status` transitions to `SuddenDeath` rather than
+  `Decided`. Play continues under normal rules until the next elimination, which then becomes
+  `Decided` with `Reason = Eliminated`. See [open-questions](../open-questions.md).
+- Time limit (Decision): an optional configurable frame-count limit; when it expires, `Status`
+  transitions to `Decided` with `Reason = ScoreDecision` and `WinningPlayer`/`WinningTeam` set to
+  whichever side has the highest value of a configurable score metric (e.g. buildings standing,
+  units produced). Score metric is data-driven behind the same configurable-rule seam as the defeat
+  rule. See [open-questions](../open-questions.md).
 
 ### 2.3 Death → defeat plumbing
 Add a death/ownership-change notification so the `VictorySystem` (and AI, selection cleanup) can
@@ -76,12 +97,27 @@ react without polling every object every frame:
   cleanup).
 
 ### 2.4 End-of-match flow
-On `Status → Decided`:
+On `Status → Decided` (for any reason — elimination, surrender, score decision):
 - Stop/relax the sim (pause logic or switch to an observer state).
 - Surface the result (UI win/lose dialog for interactive play; structured `GameOutcome` for headless).
-- Handle `OrderType.EndGame` in `OrderProcessor` (an explicit surrender/quit also produces a
-  `GameOutcome`).
+- Handle `OrderType.EndGame` in `OrderProcessor` (an explicit surrender/quit by any player — human
+  or AI — also produces a `GameOutcome` with `Reason = Surrendered`).
 - Allow exit back to the menu (interactive) or clean run-loop termination (headless).
+
+On `Status → SuddenDeath` (mutual elimination): log/announce the sudden-death state; do not stop
+the sim; continue normal play until the next elimination triggers `Decided`.
+
+### 2.5 Sudden-death and time-limit implementation notes
+- Sudden-death entry: in the `VictorySystem` check, after processing all defeat events for the
+  current check window, if every remaining active player was just defeated simultaneously (i.e.
+  the check window left no active players), set `Status = SuddenDeath` and reverse the individual
+  defeat flags so play continues. Alternatively, structure the check so mutual defeat is detected
+  before individual defeat is committed.
+- Time-limit expiry: an optional `FrameLimit` (frames, not wall-clock) configured on the match.
+  Checked at the same coarse cadence as defeat. When `Game.MapTime / TickRate >= FrameLimit`,
+  compute the configured score metric for each player, select the highest (tiebreak = shared
+  victory between tied players), set `Status = Decided`, `Reason = ScoreDecision`.
+- Both rules live behind the same configurable/data-driven rule seam as the defeat rule (§2.2).
 
 ---
 
@@ -100,10 +136,12 @@ On `Status → Decided`:
 
 | Phase | Goal | Status |
 |---|---|---|
-| P3-1. `GameOutcome` + `VictorySystem` scaffold | Add the outcome type and a `GameSystem` that ticks a check from the logic loop; exposes `InProgress`. | Not started |
+| P3-1. `GameOutcome` + `VictorySystem` scaffold | Add the outcome type (`OutcomeStatus`, `OutcomeReason`, `WinningPlayer`/`WinningTeam`) and a `GameSystem` that ticks a check from the logic loop; exposes `InProgress`. | Not started |
 | P3-2. Defeat & win rules | Implement defeat (real Generals rule — no command/production structures + no rebuild — as the default, configurable) and win (all non-allies defeated, via P1 teams); consumes foundational [P1-5](skirmish-setup.md) ownership tracking. | Not started |
 | P3-3. Death→defeat event | Emit a death/ownership-change notification from `GameObject.OnDie/Destroy`; `VictorySystem` reacts incrementally. | Not started |
-| P3-4. End-of-match flow | Stop sim, surface result, handle `OrderType.EndGame`, allow exit; expose `GameOutcome` for headless. | Not started |
+| P3-4. End-of-match flow | Stop sim, surface result, handle `OrderType.EndGame` (surrender by any player — human or AI), allow exit; expose `GameOutcome` for headless. | Not started |
+| P3-5. Mutual elimination → sudden death | Detect when all remaining active players are simultaneously eliminated in the same check window; set `Status = SuddenDeath` and continue play until the next elimination decides the match. | Not started |
+| P3-6. Time-limit → score decision | Implement the optional frame-count limit; on expiry, select the winner by a configurable score metric (buildings standing, units produced, etc.) and set `Reason = ScoreDecision`. | Not started |
 
 ## 5. Sequencing & dependencies
 - P3 depends on P1 — teams/relationships decide who wins/loses, and the foundational
@@ -120,6 +158,14 @@ On `Status → Decided`:
   [open-questions](../open-questions.md).
 - Exact defeat rule — Decided: the real Generals rule (no command/production structures + no
   means to rebuild) as the default, exposed as configurable. See
+  [open-questions](../open-questions.md).
+- Full end-state enumeration — Decided: six distinct end states, all validated by P7. Three
+  `OutcomeReason` values: `Eliminated` (normal defeat or sudden-death resolution), `Surrendered`
+  (any player/AI issues `EndGame`), `ScoreDecision` (time-limit expiry). The `SuddenDeath`
+  transitional status covers mutual simultaneous elimination (play continues until next
+  elimination → `Eliminated`); `ScoreDecision` covers time-limit expiry with configurable
+  score-metric tiebreak. Team wins are represented by setting `WinningTeam` rather than a
+  separate reason. All six are on equal footing as P7 assertions. See
   [open-questions](../open-questions.md).
 
 ## 7. Related

@@ -123,8 +123,9 @@ The following are the vague long-term goals of this framework:
 | [`deep-dives/playable-baseline-harness.md`](deep-dives/playable-baseline-harness.md) | Track P phase P0 — ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
 | [`deep-dives/skirmish-setup.md`](deep-dives/skirmish-setup.md) | Track P phase P1 — Skirmish setup & player relationships. |
 | [`deep-dives/skirmish-ai.md`](deep-dives/skirmish-ai.md) | Track P phases P2 — Skirmish AI opponent (+ P5 construction/production mechanism). |
-| [`deep-dives/victory-defeat.md`](deep-dives/victory-defeat.md) | Track P phase P3 — Victory & defeat conditions (queryable `GameOutcome`). |
+| [`deep-dives/victory-defeat.md`](deep-dives/victory-defeat.md) | Track P phase P3 — Victory & defeat conditions (queryable `GameOutcome`, all six match end states). |
 | [`deep-dives/economy-production-combat.md`](deep-dives/economy-production-combat.md) | Track P phases P4 — Economy loop & P6 — Combat & command verification. |
+| [`deep-dives/unit-contract-validation.md`](deep-dives/unit-contract-validation.md) | Track P phase P6b — Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
 | [`deep-dives/headless-host.md`](deep-dives/headless-host.md) | Track A phase A1 — Headless simulation host. |
 | [`deep-dives/visualization.md`](deep-dives/visualization.md) | Track A phase A5 — Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
 | [`deep-dives/larger-maps.md`](deep-dives/larger-maps.md) | Track B phase B4a — Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
@@ -142,7 +143,7 @@ are roughly ordered; cross-track dependencies are noted in each track doc.
 - [Track P — Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
   arbitrary-command harness · P1 skirmish setup & player relationships · P2 skirmish AI opponent ·
   P3 victory/defeat conditions · P4 economy loop · P5 construction & production · P6 combat &
-  command · P7 end-to-end skirmish validation. Gates all other tracks.
+  command · P6b unit-contract validation · P7 end-to-end skirmish validation. Gates all other tracks.
 - [Track A — Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 reproducibility &
   statistical stability · A3 simulation/presentation seam · A4 experiment framework seams & harness
   (incl. the Simulation Domain Model seam — RTS, city-builder, transport, …) · A5 scenario

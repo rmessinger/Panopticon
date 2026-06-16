@@ -42,6 +42,15 @@ skirmish playable build → fight → win/lose vs. AI.
     `ActionEntry.Type` is a stored `ActionType?` field (null for open commands); `CommandSpec` holds
     only `OrderType + Arguments`. `ReplayExporter.BuildOrders` dispatches on `ActionType` enum for
     legacy actions. All 14 ReplaySketchTests pass; `alpine-assault-usa-vs-gla.json` loads correctly.
+- [x] Add screenshot-and-exit mode to `MainPage` so agents can capture the MAUI-layer UI without
+      manual app interaction.
+  - AC: setting `REPLAYSKETCH_SCREENSHOT_PATH=/tmp/out.png` before `dotnet run` causes the app to
+    render, wait for the configured settle delay, capture via `Screenshot.Default.CaptureAsync()`,
+    save a PNG, and exit; `REPLAYSKETCH_SCREENSHOT_TAB=map` switches to the Map tab before capture;
+    `REPLAYSKETCH_SCREENSHOT_DELAY=N` overrides the 3-second default; an `.error` file is written
+    on failure; `AGENTS.md` documents the complete workflow.
+  - Completion: implemented in `MainPage.OnLoaded`; `AGENTS.md` updated with screenshot section,
+    validation checklist step, and failure-mode table rows. Build confirmed (0 errors).
 - [ ] Extract an `IPreferencesStore` interface from `MainViewModel` (currently uses `Preferences.Default`
       directly, a MAUI static); inject it so `LoadMapFromFolder`'s unconditional path-persistence is
       unit-testable without a MAUI runtime.
@@ -93,14 +102,17 @@ skirmish playable build → fight → win/lose vs. AI.
       (Full authoring/replay scaling is finalized under A5-5.)
   - AC: a scenario with ≥10k programmatically-generated orders exports and loads within a documented
     time/memory budget; test generates the orders without per-action hand-entry.
-- [ ] Check in an agent validation playbook at `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: the
+- [x] Check in an agent validation playbook at `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: the
       documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change
-      (Core test suite, golden-image regen via `UPDATE_GOLDENS=1`, `dotnet format`, the run-and-assert
+      (Core test suite, screenshot mode for all visual verification, `dotnet format`, the run-and-assert
       flow, and the MAUI testability seams), mirroring `OpenSage.Tools.TestHarness/AGENTS.md`.
   - AC: `ReplaySketch.Maui/AGENTS.md` exists and documents the Core-vs-MAUI split, the exact build/
-    test/format/golden commands, what is headlessly validatable vs MAUI-only, a step-by-step
-    validation checklist, and a common-failure-mode table; it is honest about current capability
+    test/format commands, the screenshot mode (env vars, commands, error handling), what is
+    headlessly validatable vs MAUI-only, a step-by-step validation checklist (including a screenshot
+    step for visual changes), and a common-failure-mode table; it is honest about current capability
     (marks the P0-4/P0-5 run-and-assert flow as forthcoming) and is referenced from the P0 deep dive.
+  - Completion: `AGENTS.md` created with all sections; screenshot mode (P0-1a) is the sole visual
+    verification method; golden-image framework removed.
 
 ### P1 — Skirmish setup & player relationships ([deep dive](deep-dives/skirmish-setup.md))
 - [ ] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
@@ -176,6 +188,14 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] Expose match outcome as a first-class queryable result (for headless assertion).
   - AC: the P0 harness can assert on `GameOutcome` (winner/loser/reason/frame); covered by a harness
     test.
+- [ ] Mutual elimination → sudden-death handling (P3-5).
+  - AC: a scenario where all remaining active players' last structures are destroyed in the same
+    check window transitions `GameOutcome.Status` to `SuddenDeath` and does not terminate the match;
+    play continues until the next elimination, which sets `Status=Decided` with `Reason=Eliminated`.
+- [ ] Time-limit → score decision (P3-6).
+  - AC: a scenario with a configured frame-count limit expires and sets `Status=Decided`,
+    `Reason=ScoreDecision`, with `WinningPlayer`/`WinningTeam` set to the highest-score side per the
+    configured metric; test covers both a clear winner and a tie (shared victory).
 
 ### P4 — Economy loop end-to-end ([deep dive](deep-dives/economy-production-combat.md))
 - [ ] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
@@ -224,18 +244,56 @@ skirmish playable build → fight → win/lose vs. AI.
   - AC: TBD — populated as the P7 run surfaces defects. Rough template: each surfaced defect gets its
     own checklist item + a regression assertion in the harness.
 
+### P6b — Unit-contract validation ([deep dive](deep-dives/unit-contract-validation.md))
+- [ ] Infantry archetype contract (P6b-1).
+  - AC: a P0 harness scenario for the reference infantry unit (e.g. USA Ranger) asserts all six
+    contract points: produced, moves, garrison via `Enter`, basic attack reduces target health,
+    every `SpecialPowerType` in its command set produces an observable effect, dies with ownership
+    cleanup; unimplemented special-power handlers are logged as explicit gaps.
+- [ ] Vehicle archetype contract (P6b-2).
+  - AC: a P0 harness scenario for the reference vehicle unit asserts all six contract points:
+    produced, moves, basic attack, weapon-mode upgrade activates the expected `WeaponSlot`, dies;
+    unimplemented handlers logged.
+- [ ] Aircraft archetype contract (P6b-3).
+  - AC: a P0 harness scenario for the reference aircraft unit asserts all six contract points:
+    produced, moves (airborne), attack, land/takeoff cycle, special ability (if applicable), dies;
+    unimplemented handlers logged.
+- [ ] Builder archetype contract (P6b-4).
+  - AC: a P0 harness scenario for the reference dozer/builder asserts all six contract points:
+    produced, moves, constructs a building to completion, repairs a structure, dies; no production
+    or construction order left unhandled.
+- [ ] Support archetype contract (P6b-5).
+  - AC: a P0 harness scenario for the reference support unit asserts all six contract points:
+    produced, moves, primary special ability produces an observable effect (health restored,
+    hacking applied, ECM active, etc.), dies; unimplemented handlers logged.
+- [ ] Superweapon archetype contract (P6b-6).
+  - AC: a P0 harness scenario for the reference superweapon structure asserts all six contract
+    points: built, charge cycle advances per tick, `SpecialPowerAtLocation` fires and produces
+    area effect, cooldown state is set post-fire, structure can be sold; unimplemented handlers
+    logged.
+- [ ] All unimplemented special-power handlers surfaced by P6b-1 through P6b-6 are fixed or
+      documented as explicit out-of-scope gaps with a follow-up item.
+  - AC: every `SpecialPower*` order exercised by the six scenarios either passes its assertion or
+    has a documented gap item; none silently succeed without effect.
+
 ### P7 — End-to-end skirmish validation
-- [ ] Author/record a representative full-skirmish scenario (on the P0 harness).
-  - AC: a representative match scenario exists and runs on the P0 harness headlessly to completion.
-- [ ] Headless re-run asserting termination + expected win/lose outcome.
-  - AC: the scenario terminates with the expected win/lose `GameOutcome` headlessly; exit code reflects
-    pass/fail.
-- [ ] Assert invariants (no negative money, no lost/duplicated units, AI made progress).
-  - AC: the run asserts no negative money, no lost/duplicated units, and AI-made-progress; any failure
-    is reported with the offending frame.
-- [ ] Lock as the standing "is the game still playable?" regression check.
-  - AC: the scenario runs in CI (or a documented command) as the standing playability check, documented
-    in the repo.
+- [ ] Author one end-state scenario per match outcome (six total).
+  - AC: six scenario files exist, one per end state (player eliminated, player surrenders, AI
+    surrenders, team win, mutual elimination → sudden death, time-limit → score decision); each
+    runs on the P0 harness to headless completion.
+- [ ] All six scenarios assert their expected `GameOutcome`.
+  - AC: each scenario terminates with the correct `OutcomeStatus`, `OutcomeReason`, and
+    `WinningPlayer`/`WinningTeam`/`LosingPlayer`; exit code reflects pass/fail.
+- [ ] Promote P6b archetype-contract scenarios into the regression suite.
+  - AC: the six P6b archetype scenarios run as part of the P7 suite and all pass; any P6b gap
+    items still open are resolved before P7 is marked Done.
+- [ ] Assert invariants across all scenarios (no negative money, no lost/duplicated units, AI made
+      progress where applicable).
+  - AC: invariant assertions (money never negative, unit counts not duplicated, AI-issued orders
+    where AI participates) are attached to every scenario; failures report offending frame.
+- [ ] Lock the full suite as the standing "is the game still playable?" regression check.
+  - AC: all P7 scenarios (end-state + archetype-contract) run in CI (or a documented command) as
+    the standing playability check, documented in the repo.
 
 ---
 

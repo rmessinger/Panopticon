@@ -60,14 +60,15 @@ See the [larger-maps deep dive](deep-dives/larger-maps.md) for how this constrai
 
 ## Validation tooling (ReplaySketch)
 
-- Core logic is well-covered headlessly: `OpenSage.Tools.ReplaySketch.Tests` (non-MAUI, CI-runnable)
-  has controller tests (`ActionTreeControllerTests`), golden-image renderer tests
-  (`ActionTreeRendererTests`/`MapPreviewRendererTests` via `GoldenImageHelper`, regen with
-  `UPDATE_GOLDENS=1`), and service tests (`GeneralsInstallationServiceTests`). All logic lives in
-  `OpenSage.Tools.ReplaySketch.Core`.
+- Core logic is covered headlessly: `OpenSage.Tools.ReplaySketch.Tests` (non-MAUI, CI-runnable)
+  has controller tests (`ActionTreeControllerTests`), interaction/hit-testing tests
+  (`ActionTreeRendererTests`), and service tests (`GeneralsInstallationServiceTests`). All logic
+  lives in `OpenSage.Tools.ReplaySketch.Core`. Visual verification of renderer and MAUI-layer
+  changes is done via the MAUI screenshot mode (P0-1a): `REPLAYSKETCH_SCREENSHOT_PATH` triggers
+  screenshot-and-exit; the resulting PNG is inspected directly by agents.
 - The MAUI layer has no automated coverage: `MainViewModel`
   (`src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`) binds directly to MAUI statics
   (`Preferences.Default`, `MainThread.BeginInvokeOnMainThread`, `Process.Start`/launcher), so its
   command flows (Validate/Export/PlayInGame, background-load completion) cannot be exercised
-  headlessly. Closing this gap (injectable seams + a checked-in `AGENTS.md` playbook) is P0-1b/P0-1c/P0-7
-  in the [P0 deep dive](deep-dives/playable-baseline-harness.md).
+  headlessly. Closing this gap (injectable seams) is P0-1b/P0-1c in the
+  [P0 deep dive](deep-dives/playable-baseline-harness.md).
