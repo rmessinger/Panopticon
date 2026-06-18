@@ -43,7 +43,7 @@ Find your change type; update every box listed. Then run the [validation](#valid
 | Rename / renumber a phase | every doc above plus every inbound link/anchor; search the whole `docs/roadmap/` tree for the old id · agent-guide cards referencing it · SQL todo ids (if the orchestrator tracks them) |
 | Remove a phase | delete from track doc, checklist, tree (both diagrams), README; fix anything that depended on it |
 | Change a dependency / ordering | track doc "Depends on" · roadmap-tree LR edges (+ re-stage if depth changed) · checklist ordering |
-| Change a phase's Status | track doc Status · tick/untick checklist items · matching agent-guide card Status |
+| Change a phase's Status | track doc Status · tick/untick checklist items · matching agent-guide card Status · README [Progress](#progress) tables |
 | Make a decision (resolve an open question) | open-questions.md (write as Decision + rationale) · thread into the affected phase/deep dive · `store_memory` (repository scope) · README guiding principle if it's a principle |
 | Introduce / change a seam | seams.md registry · the A4 notes in track-a · any deep dive that uses it |
 | Write a deep dive | add `deep-dives/<name>.md` · link from the phase row · README Deep dives table · mark the phase ⮕ in the roadmap-tree mindmap |

@@ -141,6 +141,12 @@
   playbook (P0-7), mirroring `OpenSage.Tools.TestHarness/AGENTS.md`. Chosen over UI-automation of the
   MAUI app (heavy, platform-bound, flaky for agents) and over leaving validation undocumented (the
   status quo that motivated this). Affects [P0](track-p-playable-baseline.md) (P0-1b/P0-1c/P0-7).
+- P0 harness — ScenarioMatrix sweep placement — Decision: the cartesian-product matrix expansion
+  primitive belongs in P0 (P0-5b), not deferred to A5. A5-2 adds tooling and visualization on
+  top; it does not re-implement expansion or execution. All axis dimensions (OrderType, faction,
+  map, assertion parameters) are in scope; the matrix is built out incrementally alongside
+  implementation. Affects [P0](track-p-playable-baseline.md) (P0-5b) and
+  [A5](track-a-foundations.md) (A5-2).
 - P-track object ownership tracking — Decision: maintained per-`Player` owned-object set/counts.
   Per-`Player` building/unit counts (and an owned-object set) are maintained incrementally on
   create/transfer/`OnDie`/`Destroy`, giving O(1) ownership checks. Chosen over an on-demand

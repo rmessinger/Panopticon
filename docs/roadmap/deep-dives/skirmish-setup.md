@@ -154,6 +154,30 @@ no intra-P1 ordering constraint beyond object create/death hooks existing.
   it feeds P2 (AI target selection) and P3 (defeat detection), so it is owned by P1 rather than
   duplicated in either consumer.
 
+## 7. Scenario Matrix
+
+The P0-5b matrix runner validates P1 by sweeping over player-count and team configurations,
+ensuring relationship setup is correct across the space of valid match configurations.
+
+| Axis | Values | Notes |
+|---|---|---|
+| `playerCount` | 2, 3, 4, 6, 8 | Full range supported by Generals skirmish slots |
+| `teamConfig` | `FFA`, `2v2`, `3v1`, `4v4` | Team layout applied to the slot list |
+| `factionMix` | `mirror` (same faction), `mixed` (two factions), `all-factions` (each slot a distinct faction) | Tests faction-agnostic relationship setup |
+
+Constraints:
+- `2v2` requires `playerCount ≥ 4`; `4v4` requires `playerCount = 8`.
+- `all-factions` is only valid when `playerCount ≤` the number of available factions.
+
+Each cell runs one match boot through the P0 harness and asserts:
+- Every player pair has a defined `RelationshipType` (no unset defaults).
+- Same-team players are mutual allies; different-team players are mutual enemies.
+- Neutral players (teams not yet assigning an enemy relationship) are neutral.
+- `Player.Faction` matches the configured faction for each slot.
+
+This is the primary regression surface for P1: if relationship wiring or faction assignment
+regresses for any combination, the matrix run identifies the exact cell.
+
 ## 8. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - AI that consumes relationships: [`skirmish-ai.md`](skirmish-ai.md) (P2)

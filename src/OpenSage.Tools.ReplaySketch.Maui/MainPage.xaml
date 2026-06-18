@@ -14,12 +14,14 @@
               Margin="4,0">
 
             <!-- Left: scenario / player-slot editor -->
-            <Frame Grid.Column="0"
-                   BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
-                   BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
-                   Padding="0" Margin="2" CornerRadius="4">
+            <Border Grid.Column="0"
+                    Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                    Padding="0"
+                    Margin="2"
+                    StrokeShape="RoundRectangle 4">
                 <views:ScenarioView x:Name="ScenarioView"/>
-            </Frame>
+            </Border>
 
             <!-- Centre: tab bar + action tree / map view -->
             <Grid Grid.Column="1"
@@ -52,39 +54,47 @@
 
                 <!-- Content: tree view and map view share the same cell -->
                 <Grid Grid.Row="1">
-                    <Frame x:Name="TreeFrame"
-                           BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
-                           BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
-                           Padding="0" CornerRadius="0" IsVisible="True">
+                    <Border x:Name="TreeFrame"
+                            Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                            BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                            Padding="0"
+                            StrokeShape="RoundRectangle 0"
+                            IsVisible="True">
                         <views:ActionTreeView x:Name="ActionTreeView"/>
-                    </Frame>
-                    <Frame x:Name="MapFrame"
-                           BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
-                           BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
-                           Padding="0" CornerRadius="0" IsVisible="False">
+                    </Border>
+                    <Border x:Name="MapFrame"
+                            Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                            BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                            Padding="0"
+                            StrokeShape="RoundRectangle 0"
+                            IsVisible="False">
                         <views:MapPreviewView x:Name="MapPreviewView"/>
-                    </Frame>
+                    </Border>
                 </Grid>
 
             </Grid>
 
             <!-- Right: detail panel for the selected action node -->
-            <Frame Grid.Column="2"
-                   BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
-                   BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
-                   Padding="0" Margin="2" CornerRadius="4">
+            <Border Grid.Column="2"
+                    Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                    BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                    Padding="0"
+                    Margin="2"
+                    StrokeShape="RoundRectangle 4">
                 <views:ActionDetailView x:Name="ActionDetail"/>
-            </Frame>
+            </Border>
 
         </Grid>
 
         <!-- Bottom: validate / export / play strip -->
-        <Frame Grid.Row="1"
-               BorderColor="{AppThemeBinding Light=#CCC, Dark=#444}"
-               BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
-               Padding="0" Margin="4,2" CornerRadius="4">
+        <Border Grid.Row="1"
+                Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                Padding="0"
+                Margin="4,2"
+                StrokeShape="RoundRectangle 4">
             <views:ExportView x:Name="ExportView"/>
-        </Frame>
+        </Border>
 
     </Grid>
 

@@ -51,13 +51,19 @@ skirmish playable build → fight → win/lose vs. AI.
     on failure; `AGENTS.md` documents the complete workflow.
   - Completion: implemented in `MainPage.OnLoaded`; `AGENTS.md` updated with screenshot section,
     validation checklist step, and failure-mode table rows. Build confirmed (0 errors).
-- [ ] Extract an `IPreferencesStore` interface from `MainViewModel` (currently uses `Preferences.Default`
+- [x] Extract an `IPreferencesStore` interface from `MainViewModel` (currently uses `Preferences.Default`
       directly, a MAUI static); inject it so `LoadMapFromFolder`'s unconditional path-persistence is
       unit-testable without a MAUI runtime.
   - AC: `MainViewModel` accepts an `IPreferencesStore` via constructor injection (production code uses
     the `Preferences.Default` implementation; tests supply a `MemoryPreferencesStore`); a unit test
     calls `LoadMapFromFolder` with a valid directory path where map loading will fail (no game files),
     and asserts the preference was saved regardless of map load outcome.
+  - Completion: `IPreferencesStore` + `MemoryPreferencesStore` in Core; `MauiPreferencesStore` adapter
+    in MAUI; `MainViewModel` constructor takes optional `IPreferencesStore` (defaults to
+    `MauiPreferencesStore`); both `Preferences.Default` call sites replaced. `MemoryPreferencesStore`
+    headless tests added to `PreferencesStoreTests.cs`. The `LoadMapFromFolder` behavioral test is
+    blocked by TFM mismatch (test project is `net10.0`; MAUI project is `net10.0-maccatalyst`) —
+    tracked as follow-up in P0-1c. All 56 tests pass; formatting clean.
 - [ ] Abstract the remaining MAUI statics `MainViewModel` binds to — the `MainThread` dispatcher
       (background-load completion, `MainViewModel.cs:180-190`) and `Process.Start`/launcher
       (`ExecutePlayInGame`, `MainViewModel.cs:250-273`) — behind small injectable seams.
@@ -97,6 +103,13 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] Tests: author + validate an arbitrary command set end-to-end.
   - AC: an automated test authors a multi-command scenario, runs it headlessly, and asserts
     post-conditions; passes under `dotnet test src --filter Category!=Interactive`.
+- [ ] Scenario matrix runner: accept a `ScenarioMatrix` file with named sweep axes; expand to
+      one run per cartesian-product cell; emit a per-cell keyed result and aggregate JSON report.
+  - AC: a matrix file with ≥2 axes (e.g. faction × map) produces one run per cell; per-cell
+    results are keyed by axis combination; the aggregate report is valid JSON with
+    `totalCells/passed/failed/cells`; exit code 0 iff all cells pass; a matrix with one
+    deliberately-failing cell exits non-zero and reports which cell failed with assertion detail.
+  - Note: this is the expansion primitive A5-2 (experiment matrix tooling/visualizer) builds on.
 - [ ] Support arbitrary command volume: programmatic/procedural generation of large order sets
       (not hand-entry) and efficient `.rep` emission, so the harness scales toward sim-scale runs.
       (Full authoring/replay scaling is finalized under A5-5.)
@@ -140,6 +153,12 @@ skirmish playable build → fight → win/lose vs. AI.
       Consumed by P2 (AI target selection) and P3 (defeat detection); friendly to the scale tracks.
   - AC: per-`Player` building/unit counts are accurate after create/death/transfer (test creates +
     kills objects and asserts counts) with O(1) per-check cost.
+- [ ] P1 scenario matrix: sweep playerCount × teamConfig × factionMix; assert relationships and
+      faction assignment are correct for every cell.
+  - AC: a `ScenarioMatrix` (axes: `playerCount` ∈ {2,3,4,6,8}, `teamConfig` ∈ {FFA, 2v2, 3v1, 4v4},
+    `factionMix` ∈ {mirror, mixed}; invalid axis combinations pruned by ConstraintFilter) expands to
+    one boot-and-assert run per cell; every cell asserts correct ally/enemy relationships and faction
+    assignments; see the deep dive matrix section.
 
 ### P2 — Skirmish AI opponent ([deep dive](deep-dives/skirmish-ai.md))
 - [ ] Add a coarse-cadence `Update(...)` decision loop to `SkirmishAIPlayer`/`AIPlayer` (currently
@@ -167,6 +186,11 @@ skirmish playable build → fight → win/lose vs. AI.
   - AC: once a threshold force exists, the AI moves units toward an enemy structure (via P1
     relationships) and engages; a headless match shows AI-initiated combat and can reach a win/lose
     outcome.
+- [ ] P2 scenario matrix: sweep humanFaction × aiFaction × mapSize; assert the AI runs a legal
+      game for every faction and map combination.
+  - AC: a `ScenarioMatrix` (axes: `humanFaction` × `aiFaction` ∈ {USA, GLA, China}, `mapSize` ∈
+    {small, medium}) runs each of the 18 cells; each asserts AI built ≥1 structure, produced ≥1
+    unit, issued ≥1 attack order, and kept `BankAccount >= 0`; see the deep dive matrix section.
 
 ### P3 — Victory & defeat conditions ([deep dive](deep-dives/victory-defeat.md))
 - [ ] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
@@ -196,6 +220,12 @@ skirmish playable build → fight → win/lose vs. AI.
   - AC: a scenario with a configured frame-count limit expires and sets `Status=Decided`,
     `Reason=ScoreDecision`, with `WinningPlayer`/`WinningTeam` set to the highest-score side per the
     configured metric; test covers both a clear winner and a tie (shared victory).
+- [ ] P3 scenario matrix: sweep endState × playerCount; assert the correct `GameOutcome` is
+      produced for every end-state and player-count combination.
+  - AC: a `ScenarioMatrix` (axes: `endState` ∈ {PlayerEliminated, PlayerSurrenders, AISurrenders,
+    TeamWin, MutualElimination, ScoreDecision}, `playerCount` ∈ {2, 3, 4}; invalid combinations
+    pruned) runs one scripted scenario per cell; each asserts `GameOutcome.Status`,
+    `GameOutcome.Reason`, and winning/losing sides; see the deep dive matrix section.
 
 ### P4 — Economy loop end-to-end ([deep dive](deep-dives/economy-production-combat.md))
 - [ ] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
@@ -212,6 +242,11 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] Close gaps in supply-truck / worker / dozer cycles.
   - AC: worker/dozer/supply-truck complete a full gather→dump cycle without stalling over a sampled
     run (no stuck states).
+- [ ] P4 scenario matrix: sweep faction × supplyDensity × startingMoney; assert the economy
+      loop runs correctly for every combination.
+  - AC: a `ScenarioMatrix` (axes: `faction` ∈ {USA, GLA, China}, `supplyDensity` ∈ {sparse, normal,
+    rich}, `startingMoney` ∈ {low, normal}) runs 18 cells; each asserts `BankAccount >= 0` at all
+    ticks, income increased at least once, and ≥1 unit was produced; see the deep dive matrix section.
 
 ### P5 — Construction & production completeness ([deep dive](deep-dives/skirmish-ai.md) §1.4/§2.4)
 - [ ] Player and AI building placement (`OrderProcessor.BuildObject` + `IBuilderAIUpdate`).
@@ -227,6 +262,12 @@ skirmish playable build → fight → win/lose vs. AI.
       `GameObject.CanPurchase/CanConstructUnit/CanEnqueueUpgrade` (audit did not find the UI binding).
   - AC: the UI consumer of those methods is identified and documented; buildable/unbuildable state in
     the control bar reflects prereqs + money.
+- [ ] P5 scenario matrix: sweep faction × buildTreeDepth × playerType; assert prerequisite gating
+      and production work across all combinations.
+  - AC: a `ScenarioMatrix` (axes: `faction` ∈ {USA, GLA, China}, `buildTreeDepth` ∈ {tier1, tier2,
+    tier3}, `playerType` ∈ {human, AI}) runs 18 cells; each asserts the gated unit/upgrade is
+    unavailable before prereqs and available after; tier3 cells issue the full prerequisite chain;
+    see the deep dive matrix section.
 
 ### P6 — Combat & command verification ([deep dive](deep-dives/economy-production-combat.md) P6)
 - [ ] Command coverage matrix: every baseline control-bar action → `OrderType` → real
@@ -243,6 +284,11 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] Fill gaps surfaced by the P7 match run.
   - AC: TBD — populated as the P7 run surfaces defects. Rough template: each surfaced defect gets its
     own checklist item + a regression assertion in the harness.
+- [ ] P6 scenario matrix: sweep orderType × faction; assert each command type produces the correct
+      `OrderProcessor` effect for every faction.
+  - AC: a `ScenarioMatrix` (axes: `orderType` ∈ {MoveTo, AttackObject, BuildObject, CreateUnit,
+    SpecialPower}, `faction` ∈ {USA, GLA, China}) runs 15 cells; each asserts the observable effect
+    for that faction's reference unit; see the deep dive matrix section.
 
 ### P6b — Unit-contract validation ([deep dive](deep-dives/unit-contract-validation.md))
 - [ ] Infantry archetype contract (P6b-1).
@@ -275,6 +321,12 @@ skirmish playable build → fight → win/lose vs. AI.
       documented as explicit out-of-scope gaps with a follow-up item.
   - AC: every `SpecialPower*` order exercised by the six scenarios either passes its assertion or
     has a documented gap item; none silently succeed without effect.
+- [ ] P6b scenario matrix: sweep archetype × faction; assert the full unit contract for every
+      archetype-faction combination via the P0 harness.
+  - AC: a `ScenarioMatrix` (axes: `archetype` ∈ {infantry, vehicle, aircraft, builder, support,
+    superweapon}, `faction` ∈ {USA, GLA, China}; cells without a valid reference unit pruned by
+    ConstraintFilter) runs one full-contract scenario per cell; each asserts all six contract points
+    (produce/move/attack/abilities/die); see the deep dive matrix section.
 
 ### P7 — End-to-end skirmish validation
 - [ ] Author one end-state scenario per match outcome (six total).
@@ -294,6 +346,13 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] Lock the full suite as the standing "is the game still playable?" regression check.
   - AC: all P7 scenarios (end-state + archetype-contract) run in CI (or a documented command) as
     the standing playability check, documented in the repo.
+- [ ] P7 scenario matrix: sweep the full end-state × invariant space as the canonical regression
+      gate.
+  - AC: a `ScenarioMatrix` (axis: `endState` ∈ {PlayerEliminated, PlayerSurrenders, AISurrenders,
+    TeamWin, MutualElimination, ScoreDecision}) with universal invariant assertions (money never
+    negative, no unit duplication, AI progress where applicable) attached to all cells; the aggregate
+    report is the standing "is the game still playable?" check; all cells pass before P7 is marked
+    Done.
 
 ---
 
@@ -350,8 +409,11 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 ### A5 — Scenario authoring & visualization ([deep dive](deep-dives/visualization.md))
 - [ ] A5-1 Scenario authoring & setup (declarative + capture-from-run; built on the P0 harness).
   - AC: a declarative scenario (on P0) is authored and captured-from-run, then replayed; it round-trips.
-- [ ] A5-2 Experiment matrix / parameter sweeps.
-  - AC: a scenario declares sweep axes that expand to one run per cell; results are keyed for comparison.
+- [ ] A5-2 Experiment matrix / parameter sweeps (tooling/visualizer layer).
+  - AC: a scenario declares sweep axes that expand to one run per cell; results are keyed for
+    comparison; the visualizer can diff two matrix runs. Note: the expansion primitive (cartesian
+    product, per-cell execution, keyed JSON output) is provided by P0-5b; A5-2 adds tooling and
+    visualization on top.
 - [ ] A5-3 Results replayer / visualizer (extends ReplaySketch).
   - AC: the visualizer loads a run, scrubs the timeline, shows metrics/events, and exports headlessly.
 - [ ] A5-4 Divergence localization over the tiered recording.
@@ -380,6 +442,12 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     reference workload — the [scale anchor](open-questions.md)), reports mean+variance with warmup
     discarded, detects regressions vs. stored baselines, emits machine-readable output, and is reused
     by ≥1 other track.
+- [ ] B1 benchmark matrix: sweep unitCount × scenario × subsystem; produce keyed benchmark results
+      for regression comparison.
+  - AC: a `ScenarioMatrix`-style benchmark matrix (axes: `unitCount` ∈ {1000, 5000, 10000},
+    `scenario` ∈ {allMove, allCombat, mixedActions}, `subsystem` ∈ {pathfinding, combat, economy})
+    runs each cell via the B1 harness; per-cell mean+variance is keyed for side-by-side comparison
+    and regression detection.
 - [ ] B2 Allocation & hot-path cleanup (per-tick allocations, collision-pair lists, cache hot
       queries, data layout).
   - AC: per-tick allocations in the named hot paths are eliminated (allocation profiler shows ~0
@@ -404,10 +472,23 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B6 Distributed simulation via spatial sharding ([deep dive](deep-dives/distributed-simulation.md)).
   - AC: TBD (see the deep dive). Rough template: a sim runs sharded across ≥2 processes with
     cross-shard consistency within tolerance.
+- [ ] B6 scenario matrix: sweep shardCount × scenario × partitionStrategy; assert cross-shard
+      consistency for every configuration.
+  - AC: a `ScenarioMatrix` (axes: `shardCount` ∈ {1, 2, 4}, `scenario` ∈ {largeBattle,
+    multiRegion}, `partitionStrategy` ∈ {spatial-grid, spatial-graph-cut}; invalid combos pruned)
+    runs each cell; each asserts unit count matches the single-shard reference and aggregate metrics
+    are within tolerance; see the deep dive matrix section.
 - [ ] B7 Variable simulation fidelity ([deep dive](deep-dives/variable-fidelity.md)) — replicated-state
       fidelity for shared/distributed, view-driven single-node only.
   - AC: TBD (see the deep dive). Rough template: fidelity reduction scales unit count with bounded
     statistical error vs. a full-fidelity baseline.
+- [ ] B7 scenario matrix: sweep fidelityLevel × unitCount × importanceConfig; assert each technique
+      reduces cost while staying within bounded error.
+  - AC: a `ScenarioMatrix` (axes: `fidelityLevel` ∈ {full, temporal-lod, simplified-behavior,
+    aggregated}, `unitCount` ∈ {1000, 5000, 10000}, `importanceConfig` ∈ {all-high, mixed,
+    all-low}; cells requiring unitCount < 5000 for `aggregated` pruned) runs each cell; each asserts
+    lower mean tick time than `full` baseline and aggregate metrics within tolerance; see the deep
+    dive matrix section.
 
 ---
 

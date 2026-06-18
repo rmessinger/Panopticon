@@ -131,6 +131,29 @@ Spatial sharding is the last major scale phase because it composes everything be
   via the recorded snapshot/delta stream, not by saving/loading cross-shard state. The "one
   save/persist path" from the domain-scope Decision means one path per node.
 
+## 5. Scenario Matrix
+
+The P0-5b matrix runner validates B6 by sweeping over shard count and partition configurations,
+confirming that sharded runs stay within tolerance of a single-shard reference and produce
+no unit duplication or loss. Note that this matrix uses a benchmarking runner (via the A1 headless
+host + B1 harness) rather than the P0 game-scenario harness; it follows the same `ScenarioMatrix`
+data model and axis-expansion pattern.
+
+| Axis | Values | Notes |
+|---|---|---|
+| `shardCount` | 1, 2, 4 | Number of simulation shards; 1-shard is the reference run |
+| `scenario` | `largeBattle` (two armies meeting), `multiRegion` (units distributed across regions) | Tests different spatial distributions |
+| `partitionStrategy` | `spatial-grid`, `spatial-graph-cut` | The two partitioning approaches in B6-3 |
+
+Constraints:
+- `shardCount = 1` is only valid with `partitionStrategy = spatial-grid` (the reference run).
+- `spatial-graph-cut` requires `shardCount ≥ 2`.
+
+Each cell runs the scenario with the given shard configuration and asserts:
+- Unit count at end of run equals the reference (no units duplicated or lost across shards).
+- All unit positions are consistent with the single-shard reference within spatial tolerance.
+- Aggregate metrics (unit count, money totals) are within the A2 tolerance band.
+
 ## 6. Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)

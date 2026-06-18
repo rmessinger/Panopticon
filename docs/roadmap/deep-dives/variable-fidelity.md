@@ -108,6 +108,32 @@ differences (within tolerance) when comparing runs.
   with the [visualizer (A5-3)](visualization.md) — variable fidelity is explicitly a scaling
   experiment toolkit.
 
+## 6.5 Scenario Matrix
+
+The P0-5b matrix runner validates B7 by sweeping over fidelity level and unit count,
+confirming that each fidelity technique reduces cost proportionally while staying within the
+bounded statistical error. Like B6, this uses the benchmarking runner (A1 headless host + B1)
+rather than the P0 game harness; it follows the same `ScenarioMatrix` pattern.
+
+| Axis | Values | Notes |
+|---|---|---|
+| `fidelityLevel` | `full`, `temporal-lod`, `simplified-behavior`, `aggregated` | Each B7 technique in isolation |
+| `unitCount` | 1000, 5000, 10000 | The near-term scale anchor and fractions of it |
+| `importanceConfig` | `all-high`, `mixed` (50% high / 50% low), `all-low` | Tests that fidelity policy is driven by importance correctly |
+
+Constraints:
+- `aggregated` requires `unitCount ≥ 5000` (groups are too small to be meaningful below).
+- The `full` baseline cell is required and is the comparison reference for error bounds.
+
+Each cell runs a fixed-length simulation and asserts:
+- Mean tick time is lower than the `full` baseline for the same `unitCount`
+  (the technique saves compute).
+- Unit count at end of run equals the reference within B7's bounded-error tolerance.
+- Aggregate metrics (positions, money) are within the A2 tolerance band vs. `full`.
+
+B7-6 (fidelity visualization) extends the A5-3 replayer to display per-unit fidelity levels and
+graph the cost/accuracy trade-off across matrix cells side by side.
+
 ## 7. Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)

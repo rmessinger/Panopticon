@@ -1,4 +1,4 @@
-using OpenSage.Tools.ReplaySketch.Services;
+﻿using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tools.ReplaySketch.Maui.Services;
 

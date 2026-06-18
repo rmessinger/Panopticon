@@ -168,6 +168,34 @@ the sim; continue normal play until the next elimination triggers `Decided`.
   separate reason. All six are on equal footing as P7 assertions. See
   [open-questions](../open-questions.md).
 
+## 6.5 Scenario Matrix
+
+The P0-5b matrix runner validates P3 by sweeping over end-state types and player counts,
+ensuring every termination path produces the correct `GameOutcome`.
+
+| Axis | Values | Notes |
+|---|---|---|
+| `endState` | `PlayerEliminated`, `PlayerSurrenders`, `AISurrenders`, `TeamWin`, `MutualElimination`, `ScoreDecision` | All six match end states from the design |
+| `playerCount` | 2, 3, 4 | Tests that outcome detection works across match sizes |
+
+Constraints:
+- `TeamWin` requires `playerCount ≥ 2` with at least two teams.
+- `MutualElimination` requires ≥2 players to lose in the same tick (scenario is scripted to
+  trigger simultaneous last-structure destruction).
+- `ScoreDecision` requires a configured frame-count limit (set low in the test scenario so the
+  run terminates quickly).
+
+Each cell authors a scenario scripted to reach the target end state, runs it headlessly through
+the P0 harness, and asserts:
+- `GameOutcome.Status` matches `OutcomeStatus.Decided` (or `SuddenDeath` for
+  `MutualElimination`).
+- `GameOutcome.Reason` matches the expected `OutcomeReason` for the end state.
+- `GameOutcome.WinningTeam` (or winner list) is correct for the match configuration.
+- The run terminates within a bounded frame count (no infinite loop).
+
+This matrix is the primary gate for P7: once all six end-state cells pass, the full P7
+regression suite can be built on top of this matrix definition.
+
 ## 7. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Teams it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)

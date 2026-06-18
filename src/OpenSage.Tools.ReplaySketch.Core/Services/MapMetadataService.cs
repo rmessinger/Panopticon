@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
-using System.IO.Compression;
 using System.Threading.Tasks;
 using OpenSage.Data;
 using OpenSage.Data.Map;

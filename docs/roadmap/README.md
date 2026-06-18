@@ -170,13 +170,43 @@ are roughly ordered; cross-track dependencies are noted in each track doc.
 
 ---
 
-## How to maintain this roadmap
+## Progress
+
+Counts are against the [implementation checklist](implementation-checklist.md). Update when items are checked off.
+
+### Track P — Playable Baseline
+
+| Phase | Progress | Items |
+|---|---|---|
+| P0 — ReplaySketch harness | `███░░░░░░░` | 4 / 14 |
+| P1 — Skirmish setup | `░░░░░░░░░░` | 0 / 7 |
+| P2 — Skirmish AI | `░░░░░░░░░░` | 0 / 7 |
+| P3 — Victory & defeat | `░░░░░░░░░░` | 0 / 9 |
+| P4 — Economy loop | `░░░░░░░░░░` | 0 / 5 |
+| P5 — Construction & production | `░░░░░░░░░░` | 0 / 5 |
+| P6 — Combat & command | `░░░░░░░░░░` | 0 / 5 |
+| P6b — Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
+| P7 — End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
+| Track P total | `░░░░░░░░░░` | 4 / 66 |
+
+### Tracks A / B / C (gated on Track P)
+
+| Track | Progress | Items |
+|---|---|---|
+| Track A — Foundations | `░░░░░░░░░░` | 0 / 18 |
+| Track B — Scale | `░░░░░░░░░░` | 0 / 11 |
+| Track C — External Assets | `░░░░░░░░░░` | 0 / 6 |
+
+---
+
+
 
 > Iterating on the plan? Follow [`MAINTAINING.md`](MAINTAINING.md) — the single planning-agent
 > protocol for propagating a change across all parallel documents (change-type matrix, ordered
 > checklist, consistency invariants, validation). The bullets below are the quick summary.
 
 - Update a phase's Status when it changes state, in its track document.
+- Keep the [Progress](#progress) tables in sync — update the done/total counts and bar when checklist items are checked off.
 - Keep the [implementation checklist](implementation-checklist.md) in sync — check off granular
   changes as they land and add finer items as a phase gains detail.
 - When a phase gets a detailed design, add a doc under [`deep-dives/`](deep-dives/) and link it

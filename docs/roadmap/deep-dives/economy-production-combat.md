@@ -108,6 +108,38 @@ Fill gaps surfaced by P7's match run.
   units" invariant; both asserted through the [P0 harness](playable-baseline-harness.md).
 - P6-3 shares the death notification introduced for [P3-4](victory-defeat.md) — coordinate.
 
+## Scenario Matrix
+
+The P0-5b matrix runner validates P4 and P6 across faction × supply × order-type configurations.
+
+### P4 — Economy loop
+
+| Axis | Values | Notes |
+|---|---|---|
+| `faction` | `USA`, `GLA`, `China` | Each faction has different supply-unit types |
+| `supplyDensity` | `sparse` (1 supply source), `normal` (2), `rich` (4) | Tests harvester loop under different supply loads |
+| `startingMoney` | `low` (500), `normal` (10000) | Exercises production gating under money pressure |
+
+Constraints: none (all 3×2×2 = 12 cells are valid).
+
+Each cell runs a supply-harvester scenario through the P0 harness for a fixed frame count and asserts:
+- `player.BankAccount >= 0` at every tick (never negative — the universal invariant).
+- `player.money` increased from its starting value at least once (harvesting is running).
+- At least one unit was produced (money was spent on production).
+
+### P6 — Combat & command verification
+
+| Axis | Values | Notes |
+|---|---|---|
+| `orderType` | `MoveTo`, `AttackObject`, `BuildObject`, `CreateUnit`, `SpecialPower` | The five gameplay-relevant order families |
+| `faction` | `USA`, `GLA`, `China` | Order behavior and unit definitions vary per faction |
+
+Constraints: none (all 5×3 = 15 cells are valid).
+
+Each cell issues the given `OrderType` for a reference unit of the given faction and asserts
+the expected observable effect (unit moves / target health decreases / building constructed /
+unit spawns / ability effect observed).
+
 ## Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Production mechanism + AI that spends: [`skirmish-ai.md`](skirmish-ai.md) (P2/P5)

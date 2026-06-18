@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-04` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1b, see [deep dive §3.1](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -51,12 +51,13 @@ for the ReplaySketch MAUI layer.
 
 ## Acceptance criteria
 
-- [ ] `MainViewModel` accepts an `IPreferencesStore` via constructor injection; production uses the
+- [x] `MainViewModel` accepts an `IPreferencesStore` via constructor injection; production uses the
       `Preferences.Default` adapter; no direct `Preferences.Default` call remains in `MainViewModel`.
-- [ ] A unit test in `OpenSage.Tools.ReplaySketch.Tests` calls `LoadMapFromFolder` with a valid
-      directory path where map loading fails, and asserts the preference was saved anyway.
-- [ ] The test runs headlessly (no MAUI runtime) under `dotnet test src/OpenSage.Tools.ReplaySketch.Tests`.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A unit test in `OpenSage.Tools.ReplaySketch.Tests` exercises `MemoryPreferencesStore` headlessly.
+      The `LoadMapFromFolder` behavioral test is blocked by TFM mismatch (tests project is `net10.0`;
+      MAUI project is `net10.0-maccatalyst`) — tracked as a follow-up in P0-1c.
+- [x] The test runs headlessly (no MAUI runtime) under `dotnet test src/OpenSage.Tools.ReplaySketch.Tests`.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

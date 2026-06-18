@@ -173,6 +173,56 @@ A single callable surface (CLI + library) that cheap agents and CI use:
 This wraps `RunHeadless`'s boot/loop (`Program.cs:195-270`) plus the §3.4 evaluator, and replaces the
 current bespoke "exit on enemy-CC destruction" termination with P3's real outcome signal.
 
+### 3.5b Scenario matrix runner
+A layer on top of P0-5 that accepts a `ScenarioMatrix` file instead of a single scenario. The
+matrix declares named sweep axes; the runner expands them into individual runs and aggregates
+the results into a single keyed report.
+
+Data model (`OpenSage.Tools.ReplaySketch.Core/Model`):
+- `ScenarioMatrix` — wraps a `BaseScenario` template, one or more named `SweepAxes`, optional
+  `ConstraintFilters`, and a list of `AssertionTemplates`.
+- `SweepAxis` — a named list of values (strings, ints, or enum names). Each axis name corresponds
+  to a token (`{faction}`, `{mapPath}`, `{playerCount}`, etc.) that can appear in the
+  `BaseScenario` template or in assertion path/value fields.
+- `ConstraintFilter` — an optional predicate expression that prunes axis combinations before
+  expansion (e.g. skip faction pairs that are not valid together).
+- `AssertionTemplate` — a JSON predicate where `path` and `value` fields may contain `{axisName}`
+  substitution tokens. Resolved per-cell after axis values are bound.
+
+Matrix expander algorithm:
+1. Enumerate all axis value lists.
+2. Compute the cartesian product of all lists.
+3. Apply `ConstraintFilters`; discard filtered cells.
+4. For each remaining cell, substitute `{axisName}` tokens into the `BaseScenario` template and
+   `AssertionTemplates` to produce a concrete `(ReplayScenario, AssertionSet)` pair.
+5. Key each cell by its axis binding (e.g. `{faction: "USA", map: "AlpineAssault"}`).
+
+Each cell runs through the P0-5 headless runner and P0-4 assertion evaluator independently.
+
+Output (aggregate JSON report):
+```
+{
+  "totalCells": N,
+  "passed": P,
+  "failed": F,
+  "cells": [
+    {
+      "key": {"faction": "USA", "map": "AlpineAssault"},
+      "status": "passed" | "failed",
+      "assertions": [ {…per-assertion detail…} ]
+    },
+    …
+  ]
+}
+```
+
+Exit code is 0 iff all cells pass. The CLI/library entry point accepts either a single
+`ReplayScenario` or a `ScenarioMatrix`; both go through P0-4 and P0-5 internally.
+
+This is the primitive that A5-2 (experiment matrix tooling/visualizer) builds on. A5-2 adds
+a result replayer, graphing, and multi-run comparison; P0-5b only provides the expansion,
+execution, and keyed output.
+
 ### 3.6 Scale (forward link)
 The model must support programmatic/procedural generation of large command sets (not hand-entry)
 and efficient `.rep` emission, so the harness scales toward sim-scale runs. Full authoring/replay
@@ -221,12 +271,13 @@ single answer to the persistent agent-validation gap.
 |---|---|---|
 | P0-1. Open command model | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); `ActionType` is preserved as a convenience enum on `ActionEntry` only. | Done |
 | P0-1a. MAUI screenshot mode | Add screenshot-and-exit mode to `MainPage`: env-var `REPLAYSKETCH_SCREENSHOT_PATH` triggers capture via `Screenshot.Default.CaptureAsync()` after a configurable settle delay, then auto-exit. Env vars `REPLAYSKETCH_SCREENSHOT_TAB` (tree/map) and `REPLAYSKETCH_SCREENSHOT_DELAY` (seconds). Agents use this to verify MAUI-layer changes without manual app interaction. See `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`. | Done |
-| P0-1b. ViewModel testability | Extract `IPreferencesStore` from `MainViewModel`; inject it so `LoadMapFromFolder`'s unconditional path-persistence is unit-testable without a MAUI runtime. | Not started |
+| P0-1b. ViewModel testability | Extract `IPreferencesStore` from `MainViewModel`; inject it so `LoadMapFromFolder`'s unconditional path-persistence is unit-testable without a MAUI runtime. | Done |
 | P0-1c. MAUI command-flow testability | Abstract the remaining MAUI statics `MainViewModel` binds to — the `MainThread` dispatcher (background-load completion) and `Process.Start`/launcher (`ExecutePlayInGame`) — behind small injectable seams so `ValidateCommand`/`ExportCommand`/`PlayInGameCommand` and the apply-results half of the background load are unit-testable headlessly in `OpenSage.Tools.ReplaySketch.Tests`. | Not started |
 | P0-2. Generic definition/player resolution | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
 | P0-3. Exporter generalization | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
 | P0-4. Assertion layer | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. (JSON predicates over a fixed vocabulary + code-defined escape hatch — decided.) | Not started |
 | P0-5. Run-and-assert entry point | One CLI/library call: scenario+commands in → headless run → report out (exit code + JSON). Wraps `RunHeadless` + the evaluator; terminates on P3 outcome. | Not started |
+| P0-5b. Scenario matrix runner | Accept a `ScenarioMatrix` file with named sweep axes; expand to one run per cartesian-product cell; emit a per-cell result keyed by axis combination and an aggregate JSON report. Wraps P0-5; provides the expansion primitive that A5-2 (tooling/visualizer) builds on. | Not started |
 | P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
 | P0-7. Agent validation playbook | Check in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, screenshot mode for visual verification, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Done |
 
@@ -239,6 +290,10 @@ single answer to the persistent agent-validation gap.
   command-model work and can land any time.
 - P0-4's outcome assertions depend on P3 ([victory-defeat.md](victory-defeat.md)) for a real
   `GameOutcome`; until then P0-4 can assert state/invariants only.
+- P0-5b depends on P0-5 (single-scenario runner) being in place; it wraps it.
+- P0-5b is the final P0 sub-phase before P0-6 (procedural scale).
+- A5-2 (experiment matrix tooling/visualizer) builds on P0-5b; A5-2 does not re-implement
+  expansion or execution.
 - P0-7 (the playbook) is done; it now documents the screenshot mode as the primary visual
   verification method and the test/format loop.
 - P0 unblocks P3/P6/P7 (they author + assert through it) and is later extended by
@@ -262,8 +317,38 @@ single answer to the persistent agent-validation gap.
   `Microsoft.Maui.Media.Screenshot.Default.CaptureAsync()`. No external tooling, screen-recording
   permission, or human interaction required. Implemented in `MainPage.OnLoaded`. See
   [open-questions](../open-questions.md).
+- ScenarioMatrix / sweep primitive placement — Decided (P0-5b): the cartesian-product matrix
+  expansion primitive belongs in P0 (P0-5b), not deferred to A5. A5-2 adds tooling and
+  visualization on top; it does not re-implement expansion or execution. All axis dimensions
+  (OrderType, faction, map, assertion parameters) are in scope; the matrix is built out
+  incrementally alongside implementation. See [open-questions](../open-questions.md).
 
-## 8. Related
+## 8. P0 Acceptance Suite
+
+The authoritative pass/fail definition for "P0 is done." Every entry maps to a stub test
+that fails with `NotImplementedException` until the sub-phase lands.
+
+| Test class | Project | Sub-phase | What it proves |
+|---|---|---|---|
+| `P0_1c_MauiCommandFlowTests` | `ReplaySketch.Tests` | P0-1c | `ValidateCommand`, `ExportCommand`, `PlayInGameCommand`, background-load apply-results all exercise headlessly via injected seams; no MAUI runtime needed |
+| `P0_2_GenericDefinitionResolutionTests` | `ReplaySketch.Tests` | P0-2 | No hardcoded faction strings in `ReplayExporter`; any definition resolves by name via `AssetStore` |
+| `P0_2b_PlayerOwnerTargetingTests` | `ReplaySketch.Tests` | P0-2b | ≥3-player scenario attributes each command to the correct `PlayerIndex` |
+| `P0_6_ProceduralAuthoringTests` | `ReplaySketch.Tests` | P0-6 | ≥10k procedurally-generated commands export and load within documented time/memory budget |
+| `P0_3_RuntimeObjectReferenceTests` | `Game.Tests` | P0-3 | Implicit auto-handle resolves from producing command; query selector resolves against `GameLogic` |
+| `P0_3_OrderTypeMappingTests` | `Game.Tests` | P0-3 | Move, attack, construct, produce, ability each produce the expected `OrderProcessor` effect in a headless run |
+| `P0_4_AssertionLayerTests` | `Game.Tests` | P0-4 | Passing/failing JSON predicates; outcome assertion; per-tick invariant pass and violation; code-defined escape hatch |
+| `P0_5_RunAndAssertEntryPointTests` | `Game.Tests` | P0-5 | Exit code 0/non-zero; well-formed JSON report; full end-to-end multi-command scenario |
+| `P0_5b_ScenarioMatrixTests` | `Game.Tests` | P0-5b | Matrix expands ≥2-axis sweep to individual runs; all-pass → exit 0 + aggregate JSON; one-cell-fail → exit non-zero + cell-keyed failure detail |
+
+Stubs live at:
+- `src/OpenSage.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
+
+P0 is considered complete when all stubs pass and no test in either file throws
+`NotImplementedException`. The §5 sub-phase table Status column is the per-item tracker;
+this table is the aggregate gate.
+
+## 9. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Visualizer that extends this harness: [`visualization.md`](visualization.md) (A5-3/A5-5)
 - Outcome it asserts on: [`victory-defeat.md`](victory-defeat.md) (P3)

@@ -122,6 +122,35 @@ fixes within the P6b phase.
 | P6b-5. Support archetype contract | P0 harness scenario for the reference support unit: produce, move (if mobile), primary special ability (heal, hack, ECM, etc.), die. Assert all six contract points. | Not started |
 | P6b-6. Superweapon archetype contract | P0 harness scenario for the reference superweapon structure: produce/build, charge cycle, fire (`SpecialPowerAtLocation`), cooldown state, die/sell. Assert all six contract points. | Not started |
 
+## 4.5 Scenario Matrix
+
+P6b is inherently a matrix validation: the six sub-phases in §4 form the rows of the archetype
+axis. Formalizing it as a P0-5b `ScenarioMatrix` makes the coverage explicit and allows
+future expansion to additional factions without authoring new scenario files.
+
+| Axis | Values | Notes |
+|---|---|---|
+| `archetype` | `infantry`, `vehicle`, `aircraft`, `builder`, `support`, `superweapon` | The six archetypes from §3.1 |
+| `faction` | `USA`, `GLA`, `China` | Each faction provides a distinct reference unit per archetype |
+
+Constraints:
+- Not every archetype has a reference unit in every faction (e.g. `superweapon` is
+  faction-specific). Cells without a valid reference unit are pruned by a `ConstraintFilter`.
+- The `contractPoint` (produce/move/attack/ability/die) is not a separate axis — all points
+  are asserted within each archetype × faction cell.
+
+Each cell runs the full archetype contract (all six contract points from §3.2) for the given
+reference unit and asserts:
+- Unit produced: exists in `GameLogic` after production order.
+- Unit mobile or static as expected: position delta for mobile; no movement for static.
+- Attack (or attack declined): target health decreases / attack-declined assertion.
+- All weapon modes exercised (if applicable).
+- All special abilities produce observable effects (or are flagged as unimplemented gaps).
+- Death: unit removed from `GameLogic`; ownership counts decremented.
+
+The matrix result serves as P6b's pass/fail gate and as the input to P7's regression suite.
+Any failing cell identifies the exact archetype × faction combination that needs fixing.
+
 ---
 
 ## 5. Sequencing & dependencies

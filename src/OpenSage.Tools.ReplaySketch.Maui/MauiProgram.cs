@@ -1,4 +1,4 @@
-using CommunityToolkit.Maui;
+﻿using CommunityToolkit.Maui;
 using OpenSage.Tools.ReplaySketch.Maui;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 

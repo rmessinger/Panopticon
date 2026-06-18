@@ -168,6 +168,44 @@ The mechanism is largely present (§1.4). P5's work is gap-closing + proving bot
 - Where `BankAccount` is debited for construction — open verification task (not a design
   choice): locate/confirm before P5-1.
 
+## 6.5 Scenario Matrix
+
+The P0-5b matrix runner validates P2 and P5 by sweeping over faction and map configurations,
+ensuring the AI plays a legal game across its full faction × map space.
+
+### P2 — AI decision loop
+
+| Axis | Values | Notes |
+|---|---|---|
+| `humanFaction` | `USA`, `GLA`, `China` | The human-controlled player's faction |
+| `aiFaction` | `USA`, `GLA`, `China` | The AI-controlled player's faction |
+| `mapSize` | `small`, `medium` | Maps with different supply distribution |
+
+Constraints: none (all 3×3×2 = 18 cells are valid).
+
+Each cell runs the AI for a fixed number of frames through the P0 harness and asserts:
+- AI built ≥1 structure (command center or equivalent exists in `GameLogic`).
+- AI produced ≥1 unit.
+- AI issued ≥1 attack order.
+- `BankAccount` went positive at least once (economy is running).
+
+### P5 — Construction/production completeness
+
+| Axis | Values | Notes |
+|---|---|---|
+| `faction` | `USA`, `GLA`, `China` | Each faction has a distinct build tree |
+| `buildTreeDepth` | `tier1`, `tier2`, `tier3` | How far up the tech tree prerequisites are exercised |
+| `playerType` | `human`, `AI` | Validates the path is accessible to both |
+
+Constraints: `tier3` requires that `tier1` and `tier2` prerequisites are satisfied within the
+same cell run (the scenario issues the full prerequisite chain).
+
+Each cell asserts:
+- Each prerequisite structure at the requested tier exists and is fully constructed before the
+  gated unit/upgrade is attempted.
+- The gated unit spawns or upgrade applies after prerequisites are met.
+- The build tree is accessible via `OrderProcessor` (not just through direct API calls).
+
 ## 7. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Players/relationships it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)

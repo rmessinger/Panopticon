@@ -1,4 +1,4 @@
-namespace OpenSage.Tools.ReplaySketch.Services;
+﻿namespace OpenSage.Tools.ReplaySketch.Services;
 
 /// <summary>
 /// Minimal key/value persistence seam used by <see cref="../../../Maui/ViewModels/MainViewModel"/>.
