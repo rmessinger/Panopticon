@@ -13,24 +13,6 @@ using OpenSage.Tools.ReplaySketch.Model;
 
 namespace OpenSage.Tools.ReplaySketch.Services;
 
-/// <summary>
-/// Known object-definition names for the initial USA vs GLA scope.
-/// Object definition IDs used in replay orders are the <see cref="AssetHash"/> of
-/// the lowercased definition name — the same key the <see cref="AssetStore"/> uses.
-/// </summary>
-public static class KnownDefinitions
-{
-    public const string UsaBarracksName = "AmericaBarracks";
-    public const string UsaRangerName = "AmericaInfantryRanger";
-    public const string GlaBarracksName = "GLABarracks";
-    public const string GlaRebelName = "GLAInfantryRebel";
-
-    public static int UsaBarracks => (int)AssetHash.GetHash(UsaBarracksName);
-    public static int UsaRanger => (int)AssetHash.GetHash(UsaRangerName);
-    public static int GlaBarracks => (int)AssetHash.GetHash(GlaBarracksName);
-    public static int GlaRebel => (int)AssetHash.GetHash(GlaRebelName);
-}
-
 public static class ReplayExporter
 {
     private const int ChecksumIntervalFrames = 150;
@@ -72,7 +54,7 @@ public static class ReplayExporter
                     var triggerEntry = player.Actions.FirstOrDefault(a => a.Id == aat.TriggerActionId);
                     if (triggerEntry != null)
                     {
-                        var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex, ctx, rng)
+                        var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, ctx, rng)
                             .ToList();
                         // Only create DeferredAction if the trigger is a legacy action (has ActionType).
                         // Open commands cannot yet be deferred triggers.
@@ -88,7 +70,7 @@ public static class ReplayExporter
                 {
                     cumulativeFrame += action.Timing.Resolve(rng);
 
-                    var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, player.FactionIndex, ctx, rng);
+                    var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, ctx, rng);
                     foreach (var order in actionOrders)
                     {
                         orders.Add((cumulativeFrame, order));
@@ -198,10 +180,8 @@ public static class ReplayExporter
     }
 
     private static IEnumerable<Order> BuildOrders(
-        int playerIndex, ActionEntry action, Vector3 worldPos, int factionIndex, PositionContext ctx, Random rng)
+        int playerIndex, ActionEntry action, Vector3 worldPos, PositionContext ctx, Random rng)
     {
-        bool isGla = factionIndex == 4;
-
         // If this is an open (non-legacy) command, resolve it directly.
         if (action.Type == null)
         {
@@ -215,7 +195,7 @@ public static class ReplayExporter
             case ActionType.Construct:
                 {
                     var defName = action.BuildingDefinitionName
-                        ?? (isGla ? KnownDefinitions.GlaBarracksName : KnownDefinitions.UsaBarracksName);
+                        ?? throw new InvalidOperationException("Construct action requires a BuildingDefinitionName");
                     var defId = (int)AssetHash.GetHash(defName);
                     yield return Order.CreateBuildObject(playerIndex, defId, worldPos, 0f);
                     break;
@@ -232,7 +212,7 @@ public static class ReplayExporter
             case ActionType.RecruitBasicUnit:
                 {
                     var unitName = action.UnitDefinitionName
-                        ?? (isGla ? KnownDefinitions.GlaRebelName : KnownDefinitions.UsaRangerName);
+                        ?? throw new InvalidOperationException("RecruitBasicUnit action requires a UnitDefinitionName");
                     var unitDefId = (int)AssetHash.GetHash(unitName);
                     // Clear the selection before recruiting so the OrderProcessor falls back to
                     // finding the correct producer building (Barracks) via its CommandSet, rather

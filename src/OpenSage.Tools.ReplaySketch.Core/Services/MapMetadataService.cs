@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -79,12 +80,18 @@ public sealed class MapMetadataService
     /// </param>
     public static MapMetadataService Load(GameInstallation installation, string mapPath)
     {
+        var sw = Stopwatch.StartNew();
+
         using var fileSystem = installation.CreateFileSystem();
+        ReplaySketchLog.Write($"  MapMetadataService CreateFileSystem: {sw.ElapsedMilliseconds}ms");
+        sw.Restart();
 
         var entry = fileSystem.GetFile(mapPath)
             ?? throw new FileNotFoundException($"Map not found in game file system: {mapPath}");
 
         var mapFile = MapFile.FromFileSystemEntry(entry);
+        ReplaySketchLog.Write($"  MapMetadataService ParseMapFile: {sw.ElapsedMilliseconds}ms");
+        sw.Restart();
 
         // ------------------------------------------------------------------
         // Load preview thumbnail (.tga at same path as the .map file)
@@ -138,6 +145,7 @@ public sealed class MapMetadataService
                 previewPixels = cached.Value.pixels;
                 previewWidth = cached.Value.width;
                 previewHeight = cached.Value.height;
+                ReplaySketchLog.Write($"  MapMetadataService preview: loaded from cache ({previewWidth}x{previewHeight}) in {sw.ElapsedMilliseconds}ms cache='{cachePath}'");
             }
             else
             {
@@ -149,7 +157,12 @@ public sealed class MapMetadataService
                     previewHeight = generated.Value.height;
                     SavePreviewCache(cachePath, previewPixels, previewWidth, previewHeight);
                 }
+                ReplaySketchLog.Write($"  MapMetadataService preview: generated ({previewWidth}x{previewHeight}) in {sw.ElapsedMilliseconds}ms cache='{cachePath}'");
             }
+        }
+        else
+        {
+            ReplaySketchLog.Write($"  MapMetadataService preview: used .tga ({previewWidth}x{previewHeight}) in {sw.ElapsedMilliseconds}ms");
         }
 
         // ------------------------------------------------------------------
@@ -192,10 +205,28 @@ public sealed class MapMetadataService
     /// <summary>Bilinear height sample at world XY coordinates.</summary>
     public float SampleHeight(float x, float y) => _heightMap?.GetHeight(x, y) ?? 0f;
 
-    // Cache directory: %LocalAppData%/OpenSAGE/ReplaySketch/previews
-    private static readonly string s_previewCacheDir = Path.Combine(
-        System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData),
-        "OpenSAGE", "ReplaySketch", "previews");
+    // Cache directory: %LocalAppData%/OpenSAGE/ReplaySketch/previews, with a /tmp fallback
+    // if the primary location is not writable from this process (e.g. macCatalyst runtime).
+    private static readonly string s_previewCacheDir = ResolvePreviewCacheDir();
+
+    private static string ResolvePreviewCacheDir()
+    {
+        var primary = Path.Combine(PlatformPaths.AppDataBase, "OpenSAGE", "ReplaySketch", "previews");
+        try
+        {
+            Directory.CreateDirectory(primary);
+            var probe = Path.Combine(primary, ".write-probe");
+            File.WriteAllText(probe, "");
+            File.Delete(probe);
+            return primary;
+        }
+        catch
+        {
+            var fallback = Path.Combine(Path.GetTempPath(), "OpenSAGE-ReplaySketch", "previews");
+            try { Directory.CreateDirectory(fallback); } catch { }
+            return fallback;
+        }
+    }
 
     private static string GetPreviewCachePath(string mapPath, uint fileLength)
     {

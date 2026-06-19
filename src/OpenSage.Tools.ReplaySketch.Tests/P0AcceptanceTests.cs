@@ -1,9 +1,16 @@
 ﻿// P0 acceptance tests — Core-only deliverables (no game engine, no game files).
-// These are STUBS: each test throws NotImplementedException until the corresponding
-// P0 sub-phase is implemented. See §8 of docs/roadmap/deep-dives/playable-baseline-harness.md
-// for the full spec.
+// Some tests are implemented and some remain stubs that throw NotImplementedException
+// until their corresponding P0 sub-phase lands. See §8 of
+// docs/roadmap/deep-dives/playable-baseline-harness.md for the full spec.
 //
 // Run with: dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+
+using System.Numerics;
+using System.Reflection;
+using OpenSage.Content;
+using OpenSage.Logic.Orders;
+using OpenSage.Tools.ReplaySketch.Model;
+using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;
 
@@ -46,25 +53,66 @@ public class P0_1c_MauiCommandFlowTests
 }
 
 // ── P0-2: Generic definition resolution ──────────────────────────────────────
-// KnownDefinitions hardcoding removed; any object definition resolves by name.
+// Hardcoded faction defaults removed; object definitions resolve by authored names.
 
 public class P0_2_GenericDefinitionResolutionTests
 {
     [Fact]
     public void ReplayExporter_HasNoHardcodedFactionNames()
     {
-        // Assert: ReplayExporter source contains no literal "AmericaInfantryRanger",
-        // "GLAInfantryRebel", or similar hardcoded faction-specific strings.
-        throw new NotImplementedException("P0-2: remove KnownDefinitions; verify no hardcoded faction strings remain in ReplayExporter");
+        var replaySketchAssembly = typeof(ReplayExporter).Assembly;
+        var removedTypeName = "OpenSage.Tools.ReplaySketch.Services.Known" + "Definitions";
+        var knownDefinitionsType = replaySketchAssembly.GetType(removedTypeName);
+        Assert.Null(knownDefinitionsType);
+
+        var buildOrders = typeof(ReplayExporter).GetMethod(
+            "BuildOrders",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(buildOrders);
+
+        var parameterTypes = buildOrders!.GetParameters().Select(p => p.ParameterType).ToArray();
+        Assert.Equal(
+            [
+                typeof(int),
+                typeof(ActionEntry),
+                typeof(Vector3),
+                typeof(PositionContext),
+                typeof(Random),
+            ],
+            parameterTypes);
     }
 
     [Fact]
     public void CommandSpec_WithNonDefaultFaction_ResolvesDefinitionByName()
     {
-        // Arrange: a CommandSpec referencing a non-USA/GLA definition name.
-        // Act: resolve via AssetStore.
-        // Assert: the resolved hash matches the expected definition.
-        throw new NotImplementedException("P0-2: AssetStore-based resolution for any faction/definition name");
+        var action = new ActionEntry(
+            label: "Recruit Red Guard",
+            type: ActionType.RecruitBasicUnit,
+            position: null,
+            timing: new FixedTiming(0),
+            unitDefinitionName: "ChinaInfantryRedGuard");
+
+        var buildOrders = typeof(ReplayExporter).GetMethod(
+            "BuildOrders",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(buildOrders);
+
+        var orders = ((IEnumerable<Order>)buildOrders!.Invoke(
+            null,
+            [
+                2,
+                action,
+                Vector3.Zero,
+                null!,
+                new Random(0),
+            ])!)
+            .ToList();
+
+        var expectedHash = (int)AssetHash.GetHash("ChinaInfantryRedGuard");
+        var createUnitOrders = orders.Where(o => o.OrderType == OrderType.CreateUnit).ToList();
+
+        Assert.Equal(5, createUnitOrders.Count);
+        Assert.All(createUnitOrders, order => Assert.Equal(expectedHash, order.Arguments[0].Value.Integer));
     }
 }
 

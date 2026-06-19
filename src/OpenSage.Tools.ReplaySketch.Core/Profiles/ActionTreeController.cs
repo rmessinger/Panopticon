@@ -302,7 +302,7 @@ public sealed class ActionTreeController
         var buildingDefinitionName = type == ActionType.Construct
             ? BuildingCatalog.ForFaction(factionIndex)
                 .FirstOrDefault(b => b.DisplayName == "Barracks")?.DefinitionName
-                ?? KnownDefinitions.UsaBarracksName
+                ?? BuildingCatalog.ForFaction(factionIndex).FirstOrDefault()?.DefinitionName
             : null;
 
         var unitDefinitionName = type == ActionType.RecruitBasicUnit

@@ -8,52 +8,73 @@ public static class ReplaySketchLog
 {
     private static readonly object s_sync = new();
 
-    public static string LogPath { get; } = CreateLogPath();
+    // Resolved lazily on first Write: primary path first, temp fallback if primary is not writable.
+    private static string? s_activeLogPath;
+
+    /// <summary>
+    /// The path where log entries are actually being written.
+    /// Resolved on first <see cref="Write"/> call; reflects the fallback path if the primary
+    /// location is not writable from this process.
+    /// </summary>
+    public static string LogPath => s_activeLogPath ?? BuildPrimaryPath();
 
     public static void Write(string message)
     {
         var line = $"{DateTimeOffset.Now:O} [pid:{Environment.ProcessId}] {message}";
 
+        lock (s_sync)
+        {
+            if (s_activeLogPath is not null)
+            {
+                TryAppendLine(s_activeLogPath, line);
+                return;
+            }
+
+            // First write: probe primary path, then fall back to temp.
+            var primary = BuildPrimaryPath();
+            if (TryAppendLine(primary, line))
+            {
+                s_activeLogPath = primary;
+                Console.Error.WriteLine($"[ReplaySketchLog] writing to {primary}");
+                return;
+            }
+
+            var fallback = BuildFallbackPath();
+            if (TryAppendLine(fallback, line))
+            {
+                s_activeLogPath = fallback;
+                Console.Error.WriteLine($"[ReplaySketchLog] primary path not writable; writing to {fallback}");
+                return;
+            }
+
+            // Both paths failed — debug output only.
+            Console.Error.WriteLine($"[ReplaySketchLog] failed to write to any path: {line}");
+            Debug.WriteLine(line);
+        }
+    }
+
+    public static void WriteException(string context, Exception exception) =>
+        Write($"{context}: {exception}");
+
+    private static string BuildPrimaryPath() =>
+        Path.Combine(PlatformPaths.AppDataBase, "OpenSAGE", "ReplaySketch", "replaysketch.log");
+
+    private static string BuildFallbackPath() =>
+        Path.Combine(Path.GetTempPath(), "OpenSAGE-ReplaySketch", "replaysketch.log");
+
+    private static bool TryAppendLine(string path, string line)
+    {
         try
         {
-            var directory = Path.GetDirectoryName(LogPath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            lock (s_sync)
-            {
-                File.AppendAllText(LogPath, line + Environment.NewLine);
-            }
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+            File.AppendAllText(path, line + Environment.NewLine);
+            return true;
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {
-            Debug.WriteLine(line);
+            return false;
         }
-        catch (UnauthorizedAccessException)
-        {
-            Debug.WriteLine(line);
-        }
-        catch (NotSupportedException)
-        {
-            Debug.WriteLine(line);
-        }
-    }
-
-    public static void WriteException(string context, Exception exception)
-    {
-        Write($"{context}: {exception}");
-    }
-
-    private static string CreateLogPath()
-    {
-        var baseDirectory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        if (string.IsNullOrEmpty(baseDirectory))
-        {
-            baseDirectory = Path.GetTempPath();
-        }
-
-        return Path.Combine(baseDirectory, "OpenSAGE", "ReplaySketch", "replaysketch.log");
     }
 }
