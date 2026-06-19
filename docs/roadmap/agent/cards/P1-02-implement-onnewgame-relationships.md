@@ -8,6 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
+| Diagrams | [P1 Architecture Diagrams](../../deep-dives/skirmish-setup.md#8-architecture-diagrams) |
 
 ## Goal
 

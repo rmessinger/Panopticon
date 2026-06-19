@@ -2,6 +2,10 @@
 
 > Expands phase P0 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+>
+> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+>
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references used to ground the design in the actual codebase. Skip it if you are reading for design intent.
 
 Goal: turn ReplaySketch from a fixed-vocabulary scenario sketcher into a general
 command-authoring + headless validation harness that can express any engine `Order`, over
@@ -18,87 +22,6 @@ can drive only five canned action shapes against two hardcoded factions, and it 
 layer at all — it exports a `.rep` and (optionally) round-trips the header. To validate "the AI
 built a base," "the player was defeated," or "money never went negative," we need (a) arbitrary
 commands and (b) a way to read final/peri-tick state and assert on it. P0 builds both.
-
----
-
-## 2. Current code (grounded)
-
-### 2.1 The closed authoring vocabulary
-- `ActionType` is a closed 5-value enum — `Construct, GatherResources, RecruitBasicUnit,
-  AttackEnemyBase, EnemyBaseDestroyed` (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs:3-10`).
-- `ActionEntry` models one action with optional `BuildingDefinitionName`/`UnitDefinitionName`, a
-  `PositionSpec`, and a `TimingConfig`
-  (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:6-46`).
-- `ReplayScenario` holds `MapPath`, `BaseRadiusWorldUnits`, `Players`; `CreateAlpineAssaultUSAvGLA()`
-  loads an embedded JSON profile (`Model/ReplayScenario.cs:6-31`).
-- `PositionSpec` is polymorphic (`NormalizedPosition`, `LandmarkRelativePosition`) resolved to world
-  coordinates via a `PositionContext` (`Model/PositionSpec.cs:8-67`).
-- `TimingConfig` is polymorphic — `FixedTiming`, `RandomTiming`, `AfterActionTiming` (the latter
-  carries `TriggerActionId`, `TriggerPhase`, `ExtraFrames`) (`Model/TimingConfig.cs:6-48`).
-- `PlayerSlotConfig` carries per-player `Name`, `FactionIndex`, `Color`, `StartPosition`, `Team`,
-  `Actions` (`Model/PlayerSlotConfig.cs:6-30`).
-- `UnitCatalog`/`BuildingCatalog` are faction-indexed name/definition lookup tables
-  (`Model/UnitCatalog.cs:7-107`, `Model/BuildingCatalog.cs:7-71`).
-
-### 2.2 The exporter (action → engine `Order` → `.rep`)
-- `ReplayExporter.Export(...)` builds `(frame, Order)` pairs plus `DeferredAction`s
-  (`Services/ReplayExporter.cs:44-95`); non-deferred actions advance
-  `cumulativeFrame += action.Timing.Resolve(rng)` (`:83-89`); deferred actions are not written to
-  the file (`:67-80`).
-- `BuildOrders(...)` is the closed translation table (`:194-250`):
-  - `Construct` → `Order.CreateBuildObject(...)` (`:201-208`)
-  - `GatherResources` → `Order.CreateSupplyGatherDump(...)` (`:210-215`)
-  - `RecruitBasicUnit` → `ClearSelection` + five `CreateUnit` orders (`:218-237`)
-  - `AttackEnemyBase` → `ClearSelection` + `ForceAttackGround` (`:240-249`)
-- `KnownDefinitions` hardcodes USA/GLA barracks + ranger/rebel names and hashes (`:21-32`).
-- `InjectChecksums(...)` inserts `OrderType.Checksum` every 150 frames (`:164-192`).
-- File write is `ReplayFile.Write(stream, header, allOrders)` (`:139-143`); a round-trip read-back
-  compares header metadata (`:253-284`).
-- `DeferredAction` wraps a runtime-injected action: `PlayerIndex`, trigger `ActionType`,
-  `ActionPhase`, prebuilt `Orders`, `ExtraFrames` (`Services/DeferredAction.cs:9-36`).
-- `ScenarioProfileLoader` loads JSON (embedded or from disk) with case-insensitive enums
-  (`Services/ScenarioProfileLoader.cs:13-55`).
-- `ReplayActionMonitor` maps runtime orders/state back to `ActionType` (e.g. `BuildObject`→
-  `Construct`, `CreateUnit`→`RecruitBasicUnit`) for observation (`Services/ReplayActionMonitor.cs:18-107`).
-
-### 2.3 The engine order system P0 must generalize toward
-- `Order` = `PlayerIndex` + `OrderType` + typed `Arguments`, appended via `AddIntegerArgument`,
-  `AddFloatArgument`, `AddBooleanArgument`, `AddObjectIdArgument`, `AddPositionArgument`,
-  `AddScreenPositionArgument`, `AddScreenRectangleArgument`; plus static helpers (`CreateBuildObject`,
-  `CreateMoveOrder`, `CreateAttackGround`, `CreateAttackObject`, …)
-  (`src/OpenSage.Game/Logic/Orders/Order.cs:10-260`).
-- `OrderArgument` = `ArgumentType` + `OrderArgumentValue` (`Logic/Orders/OrderArgument.cs:6-60`);
-  the value is an explicit-layout union over `int/float/bool/ObjectId/Vector3/Point2D/Rectangle`
-  (`Logic/Orders/OrderArgumentValue.cs:8-30`).
-- `OrderArgumentType` = `Integer, Float, Boolean, ObjectId, Unknown4, Unknown5, Position,
-  ScreenPosition, ScreenRectangle, Unknown9, Unknown10` (`Logic/Orders/OrderArgumentType.cs:3-16`).
-- `OrderType` is a ~110-value enum (`Logic/Orders/OrderType.cs:3-137`); real user orders include
-  `BuildObject, CreateUnit, ForceAttackGround, AttackObject, MoveTo, SetSelection, ClearSelection,
-  SetRallyPoint, SpecialPower*, Enter, GatherDumpSupplies, BeginUpgrade, Sell, RepairStructure,
-  EndGame, PurchaseScience, Evacuate, ToggleOvercharge, Checksum`, …
-- `OrderProcessor.Process(...)` is the dispatch switch (`Logic/Orders/OrderProcessor.cs:42-566`);
-  it has real handlers for the above and `CreateGroup0-9`/`SelectGroup0-9`, and a default that
-  logs `Unimplemented order type` (`:553-560`). This is the authoritative list of what a command
-  can actually do — the harness should target the handled subset first.
-
-### 2.4 The headless run + where to read state
-- `TestHarness` `RunHeadless(...)` boots `new Game(...)` (audio off), `LoadReplayFile(repEntry)`,
-  `StartRun()`, installs a `ReplayActionMonitor`, then loops
-  `DrainPendingInjections → game.Update → EnsureFrame → Render → capture.FlushPending`, exiting on
-  enemy-CC destruction + runout or a frame timeout (`src/OpenSage.Tools.TestHarness/Program.cs:195-270`).
-- Deferred runtime injection: `BuildDeferredInjector(...)` hooks
-  `ReplayActionMonitor.ActionDispatched/ActionCompleted` and `DrainPendingInjections(...)` calls
-  `game.InjectOrders(...)` when the delay expires (`Program.cs:280-337`).
-- Orders enter the logic tick via `NetworkMessageBuffer.Tick()` (process current-frame orders
-  through `OrderProcessor`); `InjectOrdersNow(...)` bypasses the queue
-  (`src/OpenSage.Game/Network/NetworkMessageBuffer.cs:25-77`). Replay-backed orders flow through
-  `ReplayConnection` keyed by timecode (`Network/ReplayConnection.cs:12-33`).
-- `.rep` container: `ReplayFile.FromFileSystemEntry/Write` (`Data/Rep/ReplayFile.cs:10-67`);
-  `ReplayHeader.Create/Write/Parse` (`Data/Rep/ReplayHeader.cs:9-210`).
-- State readable for assertions: `Game.Updating` event + `Game.MapTime`
-  (`src/OpenSage.Game/Game.cs:126,342,876-959`); `Player` and `Player.BankAccount`
-  (`Logic/Player.cs`, `Logic/BankAccount.cs:9`); the `GameLogic` world container
-  (`Logic/GameLogic.cs:12`).
 
 ---
 
@@ -348,8 +271,366 @@ P0 is considered complete when all stubs pass and no test in either file throws
 `NotImplementedException`. The §5 sub-phase table Status column is the per-item tracker;
 this table is the aggregate gate.
 
-## 9. Related
+## 9. Architecture Diagrams
+
+### 9.1 Class diagram
+
+Classes marked `<<existing>>` are already in the codebase. Classes marked `<<pending>>` are
+planned but not yet implemented; the sub-phase responsible for each is noted in parentheses.
+
+```mermaid
+classDiagram
+
+  %% ── Model ──────────────────────────────────────────────────────────────────
+
+  class ReplayScenario {
+    <<existing>>
+    +string MapPath
+    +float BaseRadiusWorldUnits
+    +List~PlayerSlotConfig~ Players
+  }
+
+  class PlayerSlotConfig {
+    <<existing>>
+    +string Name
+    +int FactionIndex
+    +int StartPosition
+    +int Team
+    +List~ActionEntry~ Actions
+  }
+
+  class ActionEntry {
+    <<existing>>
+    +string Id
+    +string Label
+    +CommandSpec Command
+    +TimingConfig Timing
+    +PositionSpec Position
+  }
+
+  class CommandSpec {
+    <<existing>>
+    +OrderType OrderType
+    +IReadOnlyList~CommandArgument~ Arguments
+    +ToOrder(playerIndex, ctx, rng) Order
+  }
+
+  class CommandArgument {
+    <<abstract, existing>>
+    +AppendTo(order, ctx, rng)
+  }
+
+  class TimingConfig {
+    <<abstract, existing>>
+  }
+  class FixedTiming { <<existing>> }
+  class RandomTiming { <<existing>> }
+  class AfterActionTiming {
+    <<existing>>
+    +string TriggerActionId
+    +ActionPhase TriggerPhase
+    +int ExtraFrames
+  }
+
+  class PositionSpec {
+    <<abstract, existing>>
+    +Resolve(ctx, rng) Vector3
+  }
+
+  class AssertionSet {
+    <<pending P0-4>>
+    +IReadOnlyList~AssertionPredicate~ Predicates
+  }
+
+  class AssertionPredicate {
+    <<pending P0-4>>
+    +string Path
+    +string Op
+    +JsonElement Value
+    +AssertionKind Kind
+  }
+
+  class ScenarioMatrix {
+    <<pending P0-5b>>
+    +ReplayScenario BaseScenario
+    +IReadOnlyList~SweepAxis~ Axes
+    +IReadOnlyList~ConstraintFilter~ Filters
+    +IReadOnlyList~AssertionTemplate~ AssertionTemplates
+  }
+
+  class SweepAxis {
+    <<pending P0-5b>>
+    +string Name
+    +IReadOnlyList~object~ Values
+  }
+
+  %% ── Services ────────────────────────────────────────────────────────────────
+
+  class ReplayExporter {
+    <<static, existing>>
+    +Export(scenario, map, path) deferredActions
+    -BuildOrders(action, ctx, rng) IEnumerable~Order~
+  }
+
+  class ScenarioProfileLoader {
+    <<static, existing>>
+    +LoadEmbedded(name) ReplayScenario
+    +LoadFromDisk(path) ReplayScenario
+  }
+
+  class PredicateEvaluator {
+    <<pending P0-4>>
+    +SubscribeInvariant(game, assertionSet)
+    +EvaluateFinal(game, assertionSet) AssertionReport
+  }
+
+  class RunAndAssertEntryPoint {
+    <<pending P0-5>>
+    +Run(scenario, assertions) AssertionReport
+  }
+
+  class ScenarioMatrixExpander {
+    <<pending P0-5b>>
+    +Expand(matrix) IEnumerable~MatrixCell~
+  }
+
+  %% ── MAUI seams ──────────────────────────────────────────────────────────────
+
+  class IPreferencesStore {
+    <<interface, existing P0-1b>>
+    +Get(key) string
+    +Set(key, value)
+  }
+
+  class IMainThreadDispatcher {
+    <<interface, pending P0-1c>>
+    +Post(action)
+  }
+
+  class IProcessLauncher {
+    <<interface, pending P0-1c>>
+    +Start(path, args)
+  }
+
+  %% ── Engine (read-only from harness) ─────────────────────────────────────────
+
+  class Order {
+    <<engine>>
+    +int PlayerIndex
+    +OrderType Type
+    +List~OrderArgument~ Arguments
+  }
+
+  class Game {
+    <<engine>>
+    +event Updating
+    +float MapTime
+    +InjectOrders(orders)
+  }
+
+  class Player {
+    <<engine>>
+    +BankAccount BankAccount
+    +int OwnedBuildingCount
+    +int OwnedUnitCount
+  }
+
+  class GameOutcome {
+    <<engine, pending P3>>
+    +OutcomeStatus Status
+    +OutcomeReason Reason
+  }
+
+  %% ── Relationships ────────────────────────────────────────────────────────────
+
+  ReplayScenario "1" --> "N" PlayerSlotConfig
+  PlayerSlotConfig "1" --> "N" ActionEntry
+  ActionEntry --> CommandSpec
+  ActionEntry --> TimingConfig
+  ActionEntry --> PositionSpec
+  CommandSpec "1" --> "N" CommandArgument
+  TimingConfig <|-- FixedTiming
+  TimingConfig <|-- RandomTiming
+  TimingConfig <|-- AfterActionTiming
+  CommandSpec ..> Order : creates via ToOrder
+  AssertionSet "1" --> "N" AssertionPredicate
+  ScenarioMatrix "1" --> "N" SweepAxis
+  ScenarioMatrix --> ReplayScenario : template
+  ReplayExporter ..> ReplayScenario : reads
+  ReplayExporter ..> Order : emits
+  PredicateEvaluator ..> Game : subscribes Updating
+  PredicateEvaluator ..> Player : reads state
+  PredicateEvaluator ..> GameOutcome : reads outcome
+  RunAndAssertEntryPoint --> ReplayExporter
+  RunAndAssertEntryPoint --> PredicateEvaluator
+  RunAndAssertEntryPoint ..> Game : boots and drives
+  ScenarioMatrixExpander ..> ScenarioMatrix : expands
+  ScenarioMatrixExpander ..> RunAndAssertEntryPoint : invokes per cell
+```
+
+### 9.2 Sequence diagram — run-and-assert flow (single scenario)
+
+Shows the flow through P0-5 (`RunAndAssertEntryPoint`) for a single `ReplayScenario`.
+The matrix runner (P0-5b) wraps this in a loop over expanded cells.
+
+```mermaid
+sequenceDiagram
+  actor Author as Test / CLI
+  participant Loader as ScenarioProfileLoader
+  participant Exporter as ReplayExporter
+  participant Entry as RunAndAssertEntryPoint
+  participant G as Game (headless)
+  participant Eval as PredicateEvaluator
+  participant Rep as AssertionReport
+
+  Author->>Loader: LoadFromDisk(scenarioPath)
+  Loader-->>Author: ReplayScenario + AssertionSet
+
+  Author->>Entry: Run(scenario, assertionSet)
+
+  Entry->>Exporter: Export(scenario, map, tempPath)
+  Exporter->>Exporter: BuildOrders per ActionEntry
+  Exporter-->>Entry: .rep file + deferredActions
+
+  Entry->>G: new Game(installation) [headless, audio off]
+  Entry->>G: LoadReplayFile(repEntry)
+  Entry->>Eval: SubscribeInvariant(game, assertionSet)
+  Eval->>G: game.Updating += OnTick
+
+  loop Each tick
+    G->>G: NetworkMessageBuffer.Tick (process orders)
+    G->>G: OrderProcessor.Process
+    G-->>Eval: Updating event
+    Eval->>Eval: check invariant predicates
+    alt Invariant violation
+      Eval->>Rep: record failure(assertionId, frame)
+      Eval->>G: abort run
+    end
+  end
+
+  G-->>Entry: run complete (outcome or timeout)
+  Entry->>Eval: EvaluateFinal(game, assertionSet)
+  Eval->>G: read Player / BankAccount / GameLogic
+  Eval->>G: read GameOutcome [P3 – may be stub until P3 lands]
+  Eval-->>Rep: AssertionReport (pass/fail per predicate)
+
+  Entry-->>Author: exit 0 or non-zero + JSON report
+```
+
+### 9.3 Sequence diagram — matrix expansion flow (P0-5b)
+
+```mermaid
+sequenceDiagram
+  actor Author as Test / CLI
+  participant Expander as ScenarioMatrixExpander
+  participant Entry as RunAndAssertEntryPoint
+  participant Agg as MatrixReport (aggregate)
+
+  Author->>Expander: Expand(scenarioMatrix)
+  Expander->>Expander: cartesian product of SweepAxes
+  Expander->>Expander: apply ConstraintFilters (prune)
+  Expander->>Expander: substitute {tokens} into BaseScenario + AssertionTemplates
+
+  loop Each MatrixCell
+    Expander->>Entry: Run(concreteScenario, concreteAssertions)
+    Entry-->>Agg: cell result {key, status, assertions[]}
+  end
+
+  Expander-->>Author: aggregate JSON report (totalCells, passed, failed, cells[])
+  note over Author: exit 0 iff all cells pass
+```
+
+---
+
+## 10. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Visualizer that extends this harness: [`visualization.md`](visualization.md) (A5-3/A5-5)
 - Outcome it asserts on: [`victory-defeat.md`](victory-defeat.md) (P3)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
+
+---
+
+## Appendix: Current code — agent context
+
+> Agent context: this section contains file:line code references for agents
+> implementing this phase. Human readers: the design intent above does not
+> require reading this section.
+
+### 2.1 The closed authoring vocabulary
+- `ActionType` is a closed 5-value enum — `Construct, GatherResources, RecruitBasicUnit,
+  AttackEnemyBase, EnemyBaseDestroyed` (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs:3-10`).
+- `ActionEntry` models one action with optional `BuildingDefinitionName`/`UnitDefinitionName`, a
+  `PositionSpec`, and a `TimingConfig`
+  (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:6-46`).
+- `ReplayScenario` holds `MapPath`, `BaseRadiusWorldUnits`, `Players`; `CreateAlpineAssaultUSAvGLA()`
+  loads an embedded JSON profile (`Model/ReplayScenario.cs:6-31`).
+- `PositionSpec` is polymorphic (`NormalizedPosition`, `LandmarkRelativePosition`) resolved to world
+  coordinates via a `PositionContext` (`Model/PositionSpec.cs:8-67`).
+- `TimingConfig` is polymorphic — `FixedTiming`, `RandomTiming`, `AfterActionTiming` (the latter
+  carries `TriggerActionId`, `TriggerPhase`, `ExtraFrames`) (`Model/TimingConfig.cs:6-48`).
+- `PlayerSlotConfig` carries per-player `Name`, `FactionIndex`, `Color`, `StartPosition`, `Team`,
+  `Actions` (`Model/PlayerSlotConfig.cs:6-30`).
+- `UnitCatalog`/`BuildingCatalog` are faction-indexed name/definition lookup tables
+  (`Model/UnitCatalog.cs:7-107`, `Model/BuildingCatalog.cs:7-71`).
+
+### 2.2 The exporter (action → engine `Order` → `.rep`)
+- `ReplayExporter.Export(...)` builds `(frame, Order)` pairs plus `DeferredAction`s
+  (`Services/ReplayExporter.cs:44-95`); non-deferred actions advance
+  `cumulativeFrame += action.Timing.Resolve(rng)` (`:83-89`); deferred actions are not written to
+  the file (`:67-80`).
+- `BuildOrders(...)` is the closed translation table (`:194-250`):
+  - `Construct` → `Order.CreateBuildObject(...)` (`:201-208`)
+  - `GatherResources` → `Order.CreateSupplyGatherDump(...)` (`:210-215`)
+  - `RecruitBasicUnit` → `ClearSelection` + five `CreateUnit` orders (`:218-237`)
+  - `AttackEnemyBase` → `ClearSelection` + `ForceAttackGround` (`:240-249`)
+- `KnownDefinitions` hardcodes USA/GLA barracks + ranger/rebel names and hashes (`:21-32`).
+- `InjectChecksums(...)` inserts `OrderType.Checksum` every 150 frames (`:164-192`).
+- File write is `ReplayFile.Write(stream, header, allOrders)` (`:139-143`); a round-trip read-back
+  compares header metadata (`:253-284`).
+- `DeferredAction` wraps a runtime-injected action: `PlayerIndex`, trigger `ActionType`,
+  `ActionPhase`, prebuilt `Orders`, `ExtraFrames` (`Services/DeferredAction.cs:9-36`).
+- `ScenarioProfileLoader` loads JSON (embedded or from disk) with case-insensitive enums
+  (`Services/ScenarioProfileLoader.cs:13-55`).
+- `ReplayActionMonitor` maps runtime orders/state back to `ActionType` (e.g. `BuildObject`→
+  `Construct`, `CreateUnit`→`RecruitBasicUnit`) for observation (`Services/ReplayActionMonitor.cs:18-107`).
+
+### 2.3 The engine order system P0 must generalize toward
+- `Order` = `PlayerIndex` + `OrderType` + typed `Arguments`, appended via `AddIntegerArgument`,
+  `AddFloatArgument`, `AddBooleanArgument`, `AddObjectIdArgument`, `AddPositionArgument`,
+  `AddScreenPositionArgument`, `AddScreenRectangleArgument`; plus static helpers (`CreateBuildObject`,
+  `CreateMoveOrder`, `CreateAttackGround`, `CreateAttackObject`, …)
+  (`src/OpenSage.Game/Logic/Orders/Order.cs:10-260`).
+- `OrderArgument` = `ArgumentType` + `OrderArgumentValue` (`Logic/Orders/OrderArgument.cs:6-60`);
+  the value is an explicit-layout union over `int/float/bool/ObjectId/Vector3/Point2D/Rectangle`
+  (`Logic/Orders/OrderArgumentValue.cs:8-30`).
+- `OrderArgumentType` = `Integer, Float, Boolean, ObjectId, Unknown4, Unknown5, Position,
+  ScreenPosition, ScreenRectangle, Unknown9, Unknown10` (`Logic/Orders/OrderArgumentType.cs:3-16`).
+- `OrderType` is a ~110-value enum (`Logic/Orders/OrderType.cs:3-137`); real user orders include
+  `BuildObject, CreateUnit, ForceAttackGround, AttackObject, MoveTo, SetSelection, ClearSelection,
+  SetRallyPoint, SpecialPower*, Enter, GatherDumpSupplies, BeginUpgrade, Sell, RepairStructure,
+  EndGame, PurchaseScience, Evacuate, ToggleOvercharge, Checksum`, …
+- `OrderProcessor.Process(...)` is the dispatch switch (`Logic/Orders/OrderProcessor.cs:42-566`);
+  it has real handlers for the above and `CreateGroup0-9`/`SelectGroup0-9`, and a default that
+  logs `Unimplemented order type` (`:553-560`). This is the authoritative list of what a command
+  can actually do — the harness should target the handled subset first.
+
+### 2.4 The headless run + where to read state
+- `TestHarness` `RunHeadless(...)` boots `new Game(...)` (audio off), `LoadReplayFile(repEntry)`,
+  `StartRun()`, installs a `ReplayActionMonitor`, then loops
+  `DrainPendingInjections → game.Update → EnsureFrame → Render → capture.FlushPending`, exiting on
+  enemy-CC destruction + runout or a frame timeout (`src/OpenSage.Tools.TestHarness/Program.cs:195-270`).
+- Deferred runtime injection: `BuildDeferredInjector(...)` hooks
+  `ReplayActionMonitor.ActionDispatched/ActionCompleted` and `DrainPendingInjections(...)` calls
+  `game.InjectOrders(...)` when the delay expires (`Program.cs:280-337`).
+- Orders enter the logic tick via `NetworkMessageBuffer.Tick()` (process current-frame orders
+  through `OrderProcessor`); `InjectOrdersNow(...)` bypasses the queue
+  (`src/OpenSage.Game/Network/NetworkMessageBuffer.cs:25-77`). Replay-backed orders flow through
+  `ReplayConnection` keyed by timecode (`Network/ReplayConnection.cs:12-33`).
+- `.rep` container: `ReplayFile.FromFileSystemEntry/Write` (`Data/Rep/ReplayFile.cs:10-67`);
+  `ReplayHeader.Create/Write/Parse` (`Data/Rep/ReplayHeader.cs:9-210`).
+- State readable for assertions: `Game.Updating` event + `Game.MapTime`
+  (`src/OpenSage.Game/Game.cs:126,342,876-959`); `Player` and `Player.BankAccount`
+  (`Logic/Player.cs`, `Logic/BankAccount.cs:9`); the `GameLogic` world container
+  (`Logic/GameLogic.cs:12`).
+
+---

@@ -9,7 +9,9 @@
 > Bar: a full Command & Conquer: Generals / Zero Hour skirmish match is playable end-to-end
 > (build → fight → win/lose) against a computer opponent.
 >
-> See [`current-state.md`](current-state.md) for the architecture these phases modify.
+> See [`agent/current-state.md`](agent/current-state.md) for the architecture these phases modify.
+>
+> Audience: human — strategic track overview.
 
 ## Why this comes first
 
@@ -59,6 +61,22 @@ strongest gaps, in priority order:
 | P6. Combat & command verification | Confirm the player can select units and issue move/attack/build/ability orders through the control bar end-to-end, and that weapon/damage-type/death paths cover the units a baseline match uses. Fill gaps surfaced by P7's match run. Detailed design: [deep-dives/economy-production-combat.md](deep-dives/economy-production-combat.md) (P6). | A player drives selection plus move/attack/build/ability orders through the control bar, with combat and death resolving correctly. | Not started | P1 |
 | P6b. Unit-contract validation | Systematic per-archetype test suite: one P0 harness scenario per unit archetype (infantry, vehicle, aircraft, builder, support, superweapon), each asserting the full contract — produced, moves/positions, attacks with each weapon mode, executes every special ability, and dies with correct ownership cleanup. Surfaces unimplemented special-power handlers as explicit gaps. Detailed design: [deep-dives/unit-contract-validation.md](deep-dives/unit-contract-validation.md). | One scenario per archetype runs headlessly and asserts the full unit contract (produce/move/attack/abilities/die); all implemented; unimplemented handlers identified and fixed. | Not started | P0, P4, P5, P6 |
 | P7. End-to-end skirmish validation | Capstone: drive a whole skirmish to a win/lose result and lock it as a regression suite. Primary vehicle is [ReplaySketch](deep-dives/visualization.md) built on P0's command/validation harness — author one scenario per end state (six total: player eliminated, player surrenders, AI surrenders, team win, mutual elimination → sudden death, time-limit → score decision) and re-run each headlessly, asserting it terminates with the expected `GameOutcome` and key invariants (no negative money, no lost/duplicated units, AI made progress where applicable). All six become the standing "is the game still playable?" regression suite. | All six match end-state scenarios re-run headlessly to their expected `GameOutcome` and are locked as a standing regression suite. | Not started | P0, P2, P3, P4, P5, P6, P6b |
+
+## Phase resources
+
+A navigation index — deep dives, architecture diagrams, and agent task cards — for each phase.
+Diagrams marked with a `†` are placeholder stubs; they will be elaborated before the first card
+for that phase is marked `Ready`.
+
+| Phase | Deep dive | Diagrams | Agent cards |
+|---|---|---|---|
+| P0 | [Harness](deep-dives/playable-baseline-harness.md) | [§9](deep-dives/playable-baseline-harness.md#9-architecture-diagrams) | [P0-01](agent/cards/P0-01-catalog-replaysketch-vocabulary.md) [P0-02](agent/cards/P0-02-inventory-engine-ordertypes.md) [P0-03](agent/cards/P0-03-faction-agnostic-definition-resolution.md) [P0-04](agent/cards/P0-04-extract-ipreferencesstore.md) [P0-05](agent/cards/P0-05-inject-mainthread-and-process-seams.md) [P0-06](agent/cards/P0-06-exporter-open-command-coverage.md) [P0-07](agent/cards/P0-07-assertion-layer.md) [P0-08](agent/cards/P0-08-run-and-assert-entry-point.md) [P0-09](agent/cards/P0-09-large-procedural-authoring.md) [P0-10](agent/cards/P0-10-multi-player-attribution-test.md) [P0-11](agent/cards/P0-11-object-handle-model-types.md) [P0-12](agent/cards/P0-12-runtime-handle-resolution.md) [P0-13](agent/cards/P0-13-per-ordertype-headless-coverage.md) |
+| P1 | [Skirmish setup](deep-dives/skirmish-setup.md) | [§8](deep-dives/skirmish-setup.md#8-architecture-diagrams) `†` | [P1-01](agent/cards/P1-01-map-player-relationship-code.md) [P1-02](agent/cards/P1-02-implement-onnewgame-relationships.md) [P1-03](agent/cards/P1-03-test-reciprocal-relationships.md) |
+| P2 / P5 | [Skirmish AI](deep-dives/skirmish-ai.md) | [§8](deep-dives/skirmish-ai.md#8-architecture-diagrams) `†` | — |
+| P3 | [Victory / defeat](deep-dives/victory-defeat.md) | [§8](deep-dives/victory-defeat.md#8-architecture-diagrams) `†` | — |
+| P4 / P6 | [Economy, production, combat](deep-dives/economy-production-combat.md) | [§](deep-dives/economy-production-combat.md#architecture-diagrams) `†` | — |
+| P6b | [Unit contract](deep-dives/unit-contract-validation.md) | [§7](deep-dives/unit-contract-validation.md#7-architecture-diagrams) `†` | — |
+| P7 | — | — | — |
 
 ## Notes
 

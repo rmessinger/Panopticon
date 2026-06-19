@@ -8,6 +8,7 @@
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | [`P1-02`](P1-02-implement-onnewgame-relationships.md) (the reciprocal wiring under test) |
+| Diagrams | [P1 Architecture Diagrams](../../deep-dives/skirmish-setup.md#8-architecture-diagrams) |
 
 ## Goal
 

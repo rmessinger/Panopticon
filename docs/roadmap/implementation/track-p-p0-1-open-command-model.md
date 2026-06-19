@@ -3,6 +3,9 @@
 > Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-1: Open command model
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md) — first item under P0
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -68,6 +71,11 @@ New `CommandSpecTests` class in `ReplaySketchTests.cs`:
 - Legacy round-trip test: `ReplayScenario.CreateAlpineAssaultUSAvGLA()` still loads; all `ActionEntry`s carry their original `ActionType` value.
 - JSON round-trip test: An `ActionEntry` with an open `CommandSpec` serializes and deserializes correctly; `Type` is null.
 
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
+
 ## Files to change
 
 | File | Change |
@@ -84,7 +92,7 @@ New `CommandSpecTests` class in `ReplaySketchTests.cs`:
 
 - Object-id auto-handles (implicit handle keyed to producing command) → checklist item 4
 - Query selectors for world/enemy objects → checklist item 4
-- Removal of `KnownDefinitions` / faction-agnostic resolution → agent-guide card `P0-03`
+- Removal of `KnownDefinitions` / faction-agnostic resolution → agent card `P0-03`
 - `DeferredAction` trigger redesign for `CommandSpec`-based triggers → later item
 - Validation/assertion layer → checklist item 6
 - Headless run-and-assert entry point → checklist item 7

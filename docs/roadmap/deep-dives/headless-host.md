@@ -2,6 +2,10 @@
 
 > Expands phase A1 of [Track A — Foundations](../track-a-foundations.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md). First-pass design — refine as phases land.
+>
+> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+>
+> The agent-context section at the bottom ([What already exists appendix](#appendix-what-already-exists--agent-context)) contains code-level details about the current state. Skip it if you are reading for design intent.
 
 Goal: run the simulation logic core with no window, and ideally no GPU/audio, so the
 engine can be driven for batch/offline simulation, CI, faster-than-real-time (FTRT) runs,
@@ -19,40 +23,6 @@ sims. RTS (the `GameObject`/module engine) is just the first domain adapter; per
 [domain-scope Decision](../open-questions.md) a transport/graph domain is the first non-RTS
 validation target, and non-RTS domains are hosted by extending the same `GameObject`/module
 system (modules + a topology/interaction adapter) rather than a separate runtime.
-
----
-
-## 1. What already exists
-
-A surprising amount of "headless" plumbing is already present and should be reused, not
-reinvented:
-
-- Windowless graphics device. `GraphicsDeviceUtility.CreateGraphicsDevice`
-  (`src/OpenSage.Game/Graphics/GraphicsDeviceUtility.cs`) accepts a `null` window and creates a
-  swapchain-less D3D11/Vulkan/Metal device. `new Game(installation, backend, config, window:
-  null)` already works.
-- A headless run loop. `OpenSage.Tools.TestHarness` (`Program.cs`, `RunHeadless`)
-  constructs a windowless `Game`, loads a replay, and ticks `game.Update(empty)` + `game.Render()`
-  in a loop with a frame cap.
-- Frame capture for inspection. `FrameCaptureService`
-  (`src/OpenSage.Game/Graphics/FrameCaptureService.cs`) renders to a texture and writes PNGs
-  with machine-parseable `[CAPTURE]` stdout lines — explicitly "for use in headless test runs".
-- Replay action monitoring. `ReplayActionMonitor` (ReplaySketch) surfaces dispatched/
-  completed in-game actions with player + frame, used by the TestHarness for logging and
-  deferred-order injection.
-- A logic-only mock. `MockedGameTest.TestGame` (`src/OpenSage.Game.Tests/MockedGameTest.cs`)
-  implements `IGame` with `GraphicsDevice = null` and an `AssetStore` built with
-  `OnDemandAssetLoadStrategy.None`, proving parts of the logic layer can exist without GPU
-  resources.
-- A non-rendering data tool. `OpenSage.Tools.Sav2Json` constructs a `Game` purely to load/
-  persist save state.
-- An engine seam. `IGameEngine` / `GameEngine` (`src/OpenSage.Game/GameEngine.cs`) already
-  abstracts the logic-side services (`AssetLoadContext`, `GameLogic`, `Terrain`, `Navigation`,
-  `Quadtree`, `Scene3D`) behind an interface — a natural foundation for a host.
-
-Bottom line: "headless" today means no window but still requires a real GPU and still
-runs the full `Game.Update` → `Render` path. True GPU-less, logic-only simulation is not yet
-possible.
 
 ---
 
@@ -165,9 +135,97 @@ is specified in [visualization.md §5](visualization.md).
   bit-exact re-simulation (see the [relaxed-determinism Decision](../open-questions.md)). These
   outputs are consumed by [A5 visualization](visualization.md).
 
-## 6. Related
+## 7. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once A1 moves to active implementation. The
+placeholder below captures the key types the headless simulation host introduces.
+
+```mermaid
+classDiagram
+  class SimulationHost {
+    <<pending A1>>
+    +GameLogic Logic
+    +FixedTickRate float
+    +Run(scenario) RunOutput
+    +event TickComplete
+  }
+
+  class RunOutput {
+    <<pending A1>>
+    +TieredRecording Recording
+    +GameOutcome Outcome
+    +PerformanceMetrics Metrics
+  }
+
+  class TieredRecording {
+    <<pending A1>>
+    +T0 FrameHashes
+    +T1 StateDelta
+    +T2 FullSnapshot
+  }
+
+  class PerformanceMetrics {
+    <<pending A1>>
+    +TimeSpan TotalWallTime
+    +double LogicTicksPerSecond
+    +long PeakMemoryBytes
+  }
+
+  class Game {
+    <<engine>>
+    +GameLogic Logic
+    +Update(dt)
+  }
+
+  SimulationHost --> RunOutput
+  RunOutput --> TieredRecording
+  RunOutput --> PerformanceMetrics
+  SimulationHost ..> Game : wraps without renderer/audio
+```
+
+## 8. Related
 
 - Track A overview: [`../track-a-foundations.md`](../track-a-foundations.md)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 - Scenario authoring & visualization (consumes A1 outputs): [`visualization.md`](visualization.md)
 - Relaxed-determinism Decision (was an open question): [`../open-questions.md`](../open-questions.md)
+
+---
+
+## Appendix: What already exists — agent context
+
+> Agent context: this section contains file:line code references for agents
+> implementing this phase. Human readers: the design intent above does not
+> require reading this section.
+
+A surprising amount of "headless" plumbing is already present and should be reused, not
+reinvented:
+
+- Windowless graphics device. `GraphicsDeviceUtility.CreateGraphicsDevice`
+  (`src/OpenSage.Game/Graphics/GraphicsDeviceUtility.cs`) accepts a `null` window and creates a
+  swapchain-less D3D11/Vulkan/Metal device. `new Game(installation, backend, config, window:
+  null)` already works.
+- A headless run loop. `OpenSage.Tools.TestHarness` (`Program.cs`, `RunHeadless`)
+  constructs a windowless `Game`, loads a replay, and ticks `game.Update(empty)` + `game.Render()`
+  in a loop with a frame cap.
+- Frame capture for inspection. `FrameCaptureService`
+  (`src/OpenSage.Game/Graphics/FrameCaptureService.cs`) renders to a texture and writes PNGs
+  with machine-parseable `[CAPTURE]` stdout lines — explicitly "for use in headless test runs".
+- Replay action monitoring. `ReplayActionMonitor` (ReplaySketch) surfaces dispatched/
+  completed in-game actions with player + frame, used by the TestHarness for logging and
+  deferred-order injection.
+- A logic-only mock. `MockedGameTest.TestGame` (`src/OpenSage.Game.Tests/MockedGameTest.cs`)
+  implements `IGame` with `GraphicsDevice = null` and an `AssetStore` built with
+  `OnDemandAssetLoadStrategy.None`, proving parts of the logic layer can exist without GPU
+  resources.
+- A non-rendering data tool. `OpenSage.Tools.Sav2Json` constructs a `Game` purely to load/
+  persist save state.
+- An engine seam. `IGameEngine` / `GameEngine` (`src/OpenSage.Game/GameEngine.cs`) already
+  abstracts the logic-side services (`AssetLoadContext`, `GameLogic`, `Terrain`, `Navigation`,
+  `Quadtree`, `Scene3D`) behind an interface — a natural foundation for a host.
+
+Bottom line: "headless" today means no window but still requires a real GPU and still
+runs the full `Game.Update` → `Render` path. True GPU-less, logic-only simulation is not yet
+possible.
+
+---

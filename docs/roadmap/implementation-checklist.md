@@ -3,13 +3,15 @@
 > Part of the [Large-Scale Simulation Roadmap](README.md). A single, granular, human-facing list
 > of the concrete changes to make toward implementation — one flat checklist across the whole
 > roadmap, ordered by dependency. This is the "what's left to build" view; the [track docs](README.md#document-map)
-> hold the why/design, the [agent-guide](agent-guide/) holds bounded task cards for cheap agents,
+> hold the why/design, the [agent](agent/) holds bounded task cards for cheap agents,
 > and this file is the running change list a human works down.
+>
+> Audience: human — the authoritative progress checklist.
 
 How to use & maintain
 
 - Check an item off (`- [x]`) when it lands; keep this in sync with the phase Status in the
-  track docs and any matching [agent-guide card](agent-guide/).
+  track docs and any matching [agent card](agent/).
 - Items are intentionally granular (a concrete code change / area), not strategy. Add finer items
   as a phase gets a deep dive; split anything too big to do in one focused change.
 - Order: everything under Track P gates Tracks A/B/C — do P first. Within a track, items are
@@ -72,7 +74,7 @@ skirmish playable build → fight → win/lose vs. AI.
     `OpenSage.Tools.ReplaySketch.Tests` exercise `ValidateCommand`, `ExportCommand`, `PlayInGameCommand`,
     and the apply-results half of the background load headlessly (no MAUI runtime), asserting
     command-state transitions and that `PlayInGame` records the expected launcher invocation.
-- [ ] Remove hardcoded USA/GLA `KnownDefinitions`; resolve object definitions by name generically
+- [x] Remove hardcoded USA/GLA `KnownDefinitions`; resolve object definitions by name generically
       (`Services/ReplayExporter.cs`).
   - AC: a scenario referencing any object definition by name (incl. a non-USA/GLA faction) exports
     orders with the correct definition hash; no faction names remain hardcoded in `ReplayExporter`;

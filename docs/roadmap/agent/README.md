@@ -4,10 +4,8 @@
 > to build and why; this guide says how a low-effort automated agent picks up a small, bounded
 > slice and finishes it safely — without needing a high-effort model to re-reason the whole design.
 >
-> Audience: cheap/fast automated agents (and the orchestrators that dispatch them). If you are a
-> human or a high-effort model doing strategic design, work in the [roadmap docs](../README.md)
-> instead and leave task cards behind here for cheaper agents to execute. When you change the plan
-> itself, follow the [planning-agent protocol](../MAINTAINING.md) to keep all parallel docs in sync.
+> Audience: agent — this folder and its cards are written for automated agents. Human readers
+> wanting a project overview: start with the [roadmap README](../README.md) and [track docs](../README.md#document-map).
 
 ---
 
@@ -111,14 +109,19 @@ duplicate in-flight work.
 
 | File | Purpose |
 |---|---|
-| [`README.md`](README.md) | This loop + conventions (you are here). |
+| [`README.md`](../README.md) | This loop + conventions (you are here). |
 | [`task-card-template.md`](task-card-template.md) | Copy this to author a new card. |
 | [`cards/`](cards/) | The executable task cards, one bounded unit of work each. |
 
 ## How to maintain this guide
 
-- When a roadmap phase is ready to be chipped at, decompose it into cards here (don't wait for a
-  full deep dive — small investigation/prep cards are valuable early).
+- When a roadmap phase is ready to be chipped at, ensure the phase's deep-dive `Architecture
+  Diagrams` section contains a class diagram and at least one sequence diagram grounded in the
+  actual types and flows — replace any placeholder stubs before writing the first card. This is
+  the gate; cards written without it lack the structural reference agents need to stay in scope.
+- Decompose the phase into cards here (don't wait for a full deep dive — small
+  investigation/prep cards are valuable early, but the diagrams should still precede executable
+  cards).
 - Keep each card small enough for a low-effort model — if a card needs deep reasoning, split it
   or escalate it to a roadmap deep dive instead.
 - Keep card Status and the roadmap phase Status in sync.

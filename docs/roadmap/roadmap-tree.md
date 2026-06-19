@@ -6,6 +6,8 @@
 > ([A](track-a-foundations.md) · [B](track-b-scale.md) · [C](track-c-external-assets.md)) and the
 > deep dives whenever phases, sub-phases, or dependencies change — see
 > [How to maintain](#how-to-maintain-this-tree).
+>
+> Audience: human — this is the primary visual overview of the whole roadmap.
 
 The two diagrams below are complementary:
 

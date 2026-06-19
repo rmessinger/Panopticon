@@ -8,6 +8,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 > Superseded. The engine `OrderType`/argument inventory this card requested is captured in the
 > [P0 deep dive](../../deep-dives/playable-baseline-harness.md) §2.3 (the `Order`/`OrderArgument*`

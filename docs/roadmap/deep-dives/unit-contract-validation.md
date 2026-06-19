@@ -2,6 +2,10 @@
 
 > Expands phase P6b of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+>
+> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+>
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
 Goal: verify that every unit archetype present in the reference game (Generals/ZH) satisfies
 its full behavioural contract — can be produced, moves/positions correctly, attacks with each
@@ -19,43 +23,6 @@ control bar. It surfaces gaps from the P7 match run at a coarse level. P6b tight
 systematic, archetype-by-archetype contract so no unit category is left untested before P7 locks
 the regression suite. Without it, P7 can only assert "the match finishes" without confidence that
 individual unit types work correctly.
-
----
-
-## 2. Current code (grounded)
-
-### 2.1 Unit archetype tagging
-`ObjectDefinition.KindOf` (`Logic/Object/ObjectDefinition.cs:912`) holds a `BitArray<ObjectKinds>`
-whose values include `INFANTRY`, `VEHICLE`, `AIRCRAFT`, `STRUCTURE`, `DOZER`, `SUPPLY_SOURCE`,
-`FS_SUPERWEAPON`, `TRANSPORT`, `HERO`, etc. (`Logic/Object/ObjectKinds.cs`). This is the canonical
-archetype tag: a P6b scenario picks representative units by querying `KindOf` flags.
-
-### 2.2 Movement and targeting
-Movement orders use `OrderType.MoveTo` and `OrderType.AttackMove`; target orders use
-`OrderType.AttackObject` / `OrderType.ForceAttackObject` / `OrderType.ForceAttackGround`. Enter
-(garrison, hijack) uses `OrderType.Enter` (`Logic/Orders/OrderType.cs:50-51,66,69,101,104`).
-`OrderProcessor.Process` dispatches these to the live handlers (`Logic/Orders/OrderProcessor.cs`).
-
-### 2.3 Weapon system
-`Weapon` (`Logic/Object/Weapon/Weapon.cs`) is the runtime weapon instance; `WeaponTemplateSet`
-(`Logic/Object/Weapon/WeaponTemplateSet.cs`) maps up to 5 `WeaponSlot`s with `PreferredAgainst`
-and `OnlyAgainst` filters, `AutoChooseSources`, and `WeaponSetUpgrade` for upgrade-switched weapon
-sets. `UnitOrderGenerator` checks `CurrentWeapon` when deciding whether an attack order is
-applicable (`Logic/OrderGenerators/UnitOrderGenerator.cs:150`). Weapon modes are expressed as
-different slots in `WeaponTemplateSet` or as `WeaponSetUpgrade`.
-
-### 2.4 Special powers / abilities
-`OrderType.SpecialPower` / `SpecialPowerAtLocation` / `SpecialPowerAtObject` (order types 1040–1042)
-are dispatched in `OrderProcessor.Process` (`:388-420`) to `SpecialPowerApplicator`,
-`SpecialPowerAtLocationApplicator`, and `SpecialPowerAtObjectApplicator`. `SpecialPowerType` is the
-discriminator enum. Some special powers already have live handlers; others log "Unimplemented."
-P6b surfaces which are not yet handled.
-
-### 2.5 Death and ownership cleanup
-`GameObject.Kill`/`OnDie`/`Destroy` drive the death path; ownership changes are notified via the
-[P3-3](victory-defeat.md) death/ownership-change event. Correct cleanup means the unit is removed
-from the owner's counts and from `GameLogic`'s object list, and any garrison/transport it held is
-cleared.
 
 ---
 
@@ -165,10 +132,94 @@ Any failing cell identifies the exact archetype × faction combination that need
 
 ---
 
-## 6. Related
+## 7. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once P6b moves to active implementation. The
+placeholder below captures the key types the unit-contract test suite introduces.
+
+```mermaid
+classDiagram
+  class UnitArchetype {
+    <<enum, pending P6b>>
+    Infantry
+    Vehicle
+    Aircraft
+    Builder
+    Support
+    Superweapon
+  }
+
+  class UnitContractScenario {
+    <<pending P6b>>
+    +UnitArchetype Archetype
+    +string FactionName
+    +string UnitDefinitionName
+    +AssertionSet ContractAssertions
+  }
+
+  class ContractAssertion {
+    <<pending P6b>>
+    +string Phase
+    +AssertionPredicate Predicate
+  }
+
+  class UnitContractRunner {
+    <<pending P6b>>
+    +RunAll(archetypes, factions) ContractReport
+  }
+
+  UnitContractScenario --> UnitArchetype
+  UnitContractScenario "1" --> "N" ContractAssertion
+  UnitContractRunner ..> UnitContractScenario : generates per cell
+```
+
+## 8. Related
 
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Harness used for authoring/asserting: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
 - Combat paths P6b builds on: [`economy-production-combat.md`](economy-production-combat.md) (P6)
 - Capstone that locks P6b scenarios as regression: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md) (P7)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
+
+---
+
+## Appendix: Current code — agent context
+
+> Agent context: this section contains file:line code references for agents
+> implementing this phase. Human readers: the design intent above does not
+> require reading this section.
+
+### 2.1 Unit archetype tagging
+`ObjectDefinition.KindOf` (`Logic/Object/ObjectDefinition.cs:912`) holds a `BitArray<ObjectKinds>`
+whose values include `INFANTRY`, `VEHICLE`, `AIRCRAFT`, `STRUCTURE`, `DOZER`, `SUPPLY_SOURCE`,
+`FS_SUPERWEAPON`, `TRANSPORT`, `HERO`, etc. (`Logic/Object/ObjectKinds.cs`). This is the canonical
+archetype tag: a P6b scenario picks representative units by querying `KindOf` flags.
+
+### 2.2 Movement and targeting
+Movement orders use `OrderType.MoveTo` and `OrderType.AttackMove`; target orders use
+`OrderType.AttackObject` / `OrderType.ForceAttackObject` / `OrderType.ForceAttackGround`. Enter
+(garrison, hijack) uses `OrderType.Enter` (`Logic/Orders/OrderType.cs:50-51,66,69,101,104`).
+`OrderProcessor.Process` dispatches these to the live handlers (`Logic/Orders/OrderProcessor.cs`).
+
+### 2.3 Weapon system
+`Weapon` (`Logic/Object/Weapon/Weapon.cs`) is the runtime weapon instance; `WeaponTemplateSet`
+(`Logic/Object/Weapon/WeaponTemplateSet.cs`) maps up to 5 `WeaponSlot`s with `PreferredAgainst`
+and `OnlyAgainst` filters, `AutoChooseSources`, and `WeaponSetUpgrade` for upgrade-switched weapon
+sets. `UnitOrderGenerator` checks `CurrentWeapon` when deciding whether an attack order is
+applicable (`Logic/OrderGenerators/UnitOrderGenerator.cs:150`). Weapon modes are expressed as
+different slots in `WeaponTemplateSet` or as `WeaponSetUpgrade`.
+
+### 2.4 Special powers / abilities
+`OrderType.SpecialPower` / `SpecialPowerAtLocation` / `SpecialPowerAtObject` (order types 1040–1042)
+are dispatched in `OrderProcessor.Process` (`:388-420`) to `SpecialPowerApplicator`,
+`SpecialPowerAtLocationApplicator`, and `SpecialPowerAtObjectApplicator`. `SpecialPowerType` is the
+discriminator enum. Some special powers already have live handlers; others log "Unimplemented."
+P6b surfaces which are not yet handled.
+
+### 2.5 Death and ownership cleanup
+`GameObject.Kill`/`OnDie`/`Destroy` drive the death path; ownership changes are notified via the
+[P3-3](victory-defeat.md) death/ownership-change event. Correct cleanup means the unit is removed
+from the owner's counts and from `GameLogic`'s object list, and any garrison/transport it held is
+cleared.
+
+---

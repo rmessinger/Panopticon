@@ -8,6 +8,8 @@
 > since the AI drives it. This doc covers the economy loop (P4) and combat/command (P6), both
 > of which the audit found mostly present but unproven — so these phases are largely
 > verify-and-close-gaps, not greenfield.
+>
+> Audience: human — design intent and architecture diagrams.
 
 ---
 
@@ -140,9 +142,60 @@ Each cell issues the given `OrderType` for a reference unit of the given faction
 the expected observable effect (unit moves / target health decreases / building constructed /
 unit spawns / ability effect observed).
 
+## Architecture Diagrams
+
+Diagrams for these phases will be elaborated once P4/P6 move to active implementation. The
+placeholder below captures the key economic and production types.
+
+```mermaid
+classDiagram
+  class BankAccount {
+    <<engine>>
+    +int Balance
+    +Deposit(amount)
+    +Withdraw(amount)
+  }
+
+  class SupplySystem {
+    <<pending P4>>
+    +IReadOnlyList~SupplySource~ Sources
+    +TotalAvailable int
+  }
+
+  class SupplySource {
+    <<pending P4>>
+    +Vector3 Position
+    +int RemainingSupply
+  }
+
+  class ProductionQueue {
+    <<pending P4>>
+    +Enqueue(definitionName)
+    +Tick(dt)
+    +event UnitCompleted
+  }
+
+  class CombatSystem {
+    <<pending P6>>
+    +ProcessAttack(attacker, target)
+    +event UnitKilled
+    +event BuildingDestroyed
+  }
+
+  class Player {
+    <<engine>>
+    +BankAccount BankAccount
+  }
+
+  Player --> BankAccount
+  Player --> ProductionQueue
+  Player --> SupplySystem
+  SupplySystem "1" --> "N" SupplySource
+```
+
 ## Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Production mechanism + AI that spends: [`skirmish-ai.md`](skirmish-ai.md) (P2/P5)
 - Death→defeat event shared with: [`victory-defeat.md`](victory-defeat.md) (P3)
 - Harness for the assertions: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)

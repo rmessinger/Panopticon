@@ -3,7 +3,9 @@
 > Part of the [Large-Scale RTS Roadmap](README.md). Incorporating unit models and animations
 > authored outside the Westwood `.w3d` ecosystem. The chosen direction is format-agnostic
 > first — design the import abstraction before committing to concrete formats. See
-> [`current-state.md`](current-state.md) for the existing W3D pipeline these phases generalize.
+> [`agent/current-state.md`](agent/current-state.md) for the existing W3D pipeline these phases generalize.
+>
+> Audience: human — strategic track overview.
 
 > The Milestone column states the single demonstrable outcome that marks each phase done (its
 > definition-of-done); the granular steps to get there live in
@@ -17,6 +19,21 @@
 | C4. First concrete external format | Implement a concrete importer (candidate: glTF 2.0 — open standard, strong animation/tooling support) against the C1 abstraction, validated end-to-end on a unit. Committed scope ([Decision](open-questions.md)): static meshes + skinned skeletal animation only — proves mesh + skeleton + gameplay-driven animation through C1/C2/C3; morph targets and advanced PBR material extensions are out of scope here (see C6). | A glTF 2.0 unit (static mesh + skinned skeletal animation) imports and plays end-to-end. | Not started | C1, C2, C3 |
 | C5. Authoring & validation tooling | Tooling to import/preview/validate external models by extending ReplaySketch (the primary tool; no dedicated viewer — see the [C5 tooling Decision](open-questions.md)), surfacing skeleton/animation/material mapping issues (missing bones, unmapped materials, bad scale/orientation). Licensing/provenance is out of scope per the [Decision](open-questions.md) — this is a single-operator tool; revisit only if it is ever distributed. | The tool previews an external model and flags missing bones, unmapped materials, and bad scale/orientation. | Not started | C4 |
 | C6. Extended model features (deferred) | Add the features intentionally cut from C4 only if an experiment needs them: glTF morph targets (blendshapes) and advanced PBR/material extensions (e.g. `KHR_materials_*`). Deferred by default. | On demand, glTF morph targets and advanced PBR extensions import for an experiment that needs them. | Not started | C4 |
+
+## Phase resources
+
+A navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
+Diagrams are required before any phase's first task card is marked `Ready`; all C-phase deep
+dives are yet to be written.
+
+| Phase | Deep dive | Diagrams | Agent cards |
+|---|---|---|---|
+| C1 | — | — | — |
+| C2 | — | — | — |
+| C3 | — | — | — |
+| C4 | — | — | — |
+| C5 | — | — | — |
+| C6 | — | — | — |
 
 ## Cross-track dependencies
 

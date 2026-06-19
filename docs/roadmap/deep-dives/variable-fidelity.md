@@ -2,6 +2,8 @@
 
 > Expands phase B7 of [Track B — Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md). First-pass design — refine as phases land.
+>
+> Audience: human — design intent and architecture diagrams.
 
 Goal: scale total simulated unit counts by spending compute proportionally to how much each
 unit matters right now — running less-important units more cheaply — as an experimental
@@ -134,7 +136,55 @@ Each cell runs a fixed-length simulation and asserts:
 B7-6 (fidelity visualization) extends the A5-3 replayer to display per-unit fidelity levels and
 graph the cost/accuracy trade-off across matrix cells side by side.
 
-## 7. Related
+## 8. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once B7 moves to active implementation. The
+placeholder below captures the key types variable fidelity introduces.
+
+```mermaid
+classDiagram
+  class FidelityLevel {
+    <<enum, pending B7>>
+    Full
+    Reduced
+    Statistical
+  }
+
+  class FidelityConfig {
+    <<pending B7>>
+    +FidelityLevel Default
+    +IReadOnlyList~ImportanceRule~ Rules
+  }
+
+  class ImportanceRule {
+    <<pending B7>>
+    +string Selector
+    +FidelityLevel AssignedLevel
+  }
+
+  class FidelityScheduler {
+    <<pending B7>>
+    +Assign(objects, config)
+    +Reclassify(objects, newContext)
+  }
+
+  class ReducedFidelityModel {
+    <<pending B7>>
+    +Tick(dt) : statistical approximation
+  }
+
+  class FullFidelityModel {
+    <<existing>>
+    +Tick(dt) : full simulation
+  }
+
+  FidelityConfig "1" --> "N" ImportanceRule
+  FidelityScheduler --> FidelityConfig
+  FidelityScheduler ..> ReducedFidelityModel : switches to
+  FidelityScheduler ..> FullFidelityModel : switches to
+```
+
+## 9. Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
 - Reproducibility & statistical stability: [`../track-a-foundations.md`](../track-a-foundations.md)

@@ -8,6 +8,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 > Superseded. The investigation this card requested has been completed and captured (file:line
 > grounded) in the [P0 deep dive](../../deep-dives/playable-baseline-harness.md) §2.1–2.2 (closed

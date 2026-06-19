@@ -2,6 +2,10 @@
 
 > Expands phase P2 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+>
+> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+>
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
 Goal: give `SkirmishAIPlayer`/`AIPlayer` an actual strategic decision loop so a computer
 opponent plays a complete, legal skirmish: build a base from build lists, manage economy
@@ -10,61 +14,6 @@ tournament-grade — it must reach a terminating, winnable/losable game.
 
 This deep dive also covers the construction/production execution surface (P5) the AI drives,
 since the two are tightly coupled: P2 is the decision layer, P5 is the mechanism it actuates.
-
----
-
-## 1. Current code (grounded)
-
-### 1.1 The strategic AI is state-only (the gap)
-- `AIPlayer` is persisted fields only — counters, flags, an object id, a position — and `Persist(...)`;
-  no update/decision loop (`src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154`).
-- `SkirmishAIPlayer` adds 4 persisted scalars + `Persist(...)`; no behavior
-  (`Logic/AI/SkirmishAIPlayer.cs:3-31`).
-- ⇒ There is currently no strategic AI at all, only save/load state.
-
-### 1.2 Per-object AI exists (unit-level, not strategic)
-- Base `AIUpdate` owns locomotion, target points, pathing/turret state, idle/move helpers
-  (`Logic/Object/Update/AIUpdate/AIUpdate.cs:13-260`).
-- Builder behavior: `DozerAIUpdate` (`.../DozerAIUpdate.cs:9-74`) and `WorkerAIUpdate`
-  (`.../WorkerAIUpdate.cs:12-220`) wrap `DozerAndWorkerState` with `SetBuildTarget`/`SetRepairTarget`.
-- Harvester loop: `SupplyAIUpdate` (search/approach/request/gather/pickup/dump,
-  `.../SupplyAIUpdate.cs:8-258`) and the thin `SupplyTruckAIUpdate` (`.../SupplyTruckAIUpdate.cs:6-34`).
-- These drive individual units; none is a player-level strategy loop.
-
-### 1.3 Data-driven AI inputs exist but are unconsumed
-- `AIData` parses the `AIData` INI block and stores `SkirmishBuildLists`
-  (`Logic/AI/AIData.cs:7-260`; `SkirmishBuildList` parse `:99-100,242-245`).
-- `BuildListInfo` carries AI-only fields: `ResourceGatherers`, `IsSupplyBuilding`, `DesiredGatherers`,
-  `CurrentGatherers`, `PriorityBuild`, `IsBuildable` (`Logic/Map/BuildListInfo.cs:10-237`).
-- `IniParser.BlockParsers.cs` parses `AIData`/`SkirmishAIData`; `SkirmishAIData.cs` exists (container).
-- ⇒ No code consumes `AIData.SkirmishBuildLists` yet — the build-order data is parsed and stranded.
-
-### 1.4 How actions are actuated (the P5 mechanism)
-- Human/scripted orders run through `OrderProcessor.Process(...)`
-  (`Logic/Orders/OrderProcessor.cs:96-204`):
-  - Build structure → `CreateObject(...)` + `GameObject.PrepareConstruction()` +
-    `(dozer?.AIUpdate as IBuilderAIUpdate)?.SetBuildTarget(...)`.
-  - Upgrade → `ProductionUpdate.QueueUpgrade(...)`; Unit → `ProductionUpdate.QueueProduction(...)`;
-    Repair → `SetRepairTarget(...)`.
-- `ProductionUpdate` owns the queue and spawn: `Update()` advances the front job and spawns units
-  (`Logic/Object/Update/ProductionUpdate.cs:59-156`); `ProduceObject(...)` calls
-  `GameEngine.GameLogic.CreateObject(...)`, places the transform, and moves out to the rally point
-  (`:343-395`); `QueueProduction(...)` (`:472-483`), `QueueUpgrade(...)` (`:516-525`),
-  `CanProduceObject(...)` (`:271-291`), `CanEnqueue()` (`:551`).
-- Construction lifecycle on `GameObject`: `PrepareConstruction()` (`:991-1034`),
-  `SetIsBeingConstructed()` (`:1039-1044`), `AdvanceConstruction()` (`:1046-1058`),
-  `FinishConstruction()` (`:1060-1074`), `IsBeingConstructed()` (`:1077-1082`)
-  (`Logic/Object/GameObject.cs`).
-- Prerequisites/tech gating: `Player.CanProduceObject(ObjectDefinition)` checks
-  `Prerequisites.Objects` (AND of OR-lists) + `Prerequisites.Sciences` (`Logic/Player.cs:357-420`);
-  `GameObject.CanConstructUnit(...)` (`:1186-1192`), `CanPurchase(CommandButton)` (`:1164-1182`),
-  `CanEnqueueUpgrade(...)` (`:1194-1222`).
-- Builder placement: `OrderProcessor.BuildObject` (`:96-121`) → `DozerAIUpdate.SetBuildTarget`
-  (`DozerAIUpdate.cs:41-46`) / `WorkerAIUpdate.SetBuildTarget` (`WorkerAIUpdate.cs:48-54`); builder
-  cancels if the target dies (`GameObject.cs:1298-1316`).
-- Upgrades: `QueueUpgrade`/`CancelUpgrade` (`ProductionUpdate.cs:516-549`); completion via
-  `GrantUpgrade(...)` (`:113-123`); `Player.AddUpgrade/HasUpgrade/HasEnqueuedUpgrade`
-  (`Player.cs:423-492`); `GameObject.Upgrade(...)`/`UpdateUpgradeableModules()` (`:1232-1247`).
 
 ---
 
@@ -206,9 +155,125 @@ Each cell asserts:
 - The gated unit spawns or upgrade applies after prerequisites are met.
 - The build tree is accessible via `OrderProcessor` (not just through direct API calls).
 
-## 7. Related
+## 8. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once P2/P5 move to active implementation. The
+placeholder below captures the key types the AI subsystem introduces.
+
+```mermaid
+classDiagram
+  class ISkirmishAI {
+    <<interface, pending P2>>
+    +Tick(gameState, dt)
+    +EmitOrders() IEnumerable~Order~
+  }
+
+  class AIBrain {
+    <<pending P2>>
+    -EconomyPlanner EconomyPlanner
+    -BuildPlanner BuildPlanner
+    -AttackPlanner AttackPlanner
+  }
+
+  class EconomyPlanner {
+    <<pending P2>>
+    +Plan(state) IEnumerable~AIDecision~
+  }
+
+  class BuildPlanner {
+    <<pending P2>>
+    +Plan(state) IEnumerable~AIDecision~
+  }
+
+  class AttackPlanner {
+    <<pending P2>>
+    +Plan(state) IEnumerable~AIDecision~
+  }
+
+  class AIDecision {
+    <<pending P2>>
+    +Order ToOrder(playerIndex)
+  }
+
+  class OrderProcessor {
+    <<engine>>
+    +Process(order)
+  }
+
+  ISkirmishAI <|.. AIBrain
+  AIBrain --> EconomyPlanner
+  AIBrain --> BuildPlanner
+  AIBrain --> AttackPlanner
+  EconomyPlanner ..> AIDecision : produces
+  BuildPlanner ..> AIDecision : produces
+  AttackPlanner ..> AIDecision : produces
+  AIDecision ..> OrderProcessor : dispatches via
+```
+
+## 9. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Players/relationships it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)
 - Economy it spends: [`economy-production-combat.md`](economy-production-combat.md) (P4/P5/P6)
 - Order stream / harness: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
+
+---
+
+## Appendix: Current code — agent context
+
+> Agent context: this section contains file:line code references for agents
+> implementing this phase. Human readers: the design intent above does not
+> require reading this section.
+
+### 1.1 The strategic AI is state-only (the gap)
+- `AIPlayer` is persisted fields only — counters, flags, an object id, a position — and `Persist(...)`;
+  no update/decision loop (`src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154`).
+- `SkirmishAIPlayer` adds 4 persisted scalars + `Persist(...)`; no behavior
+  (`Logic/AI/SkirmishAIPlayer.cs:3-31`).
+- ⇒ There is currently no strategic AI at all, only save/load state.
+
+### 1.2 Per-object AI exists (unit-level, not strategic)
+- Base `AIUpdate` owns locomotion, target points, pathing/turret state, idle/move helpers
+  (`Logic/Object/Update/AIUpdate/AIUpdate.cs:13-260`).
+- Builder behavior: `DozerAIUpdate` (`.../DozerAIUpdate.cs:9-74`) and `WorkerAIUpdate`
+  (`.../WorkerAIUpdate.cs:12-220`) wrap `DozerAndWorkerState` with `SetBuildTarget`/`SetRepairTarget`.
+- Harvester loop: `SupplyAIUpdate` (search/approach/request/gather/pickup/dump,
+  `.../SupplyAIUpdate.cs:8-258`) and the thin `SupplyTruckAIUpdate` (`.../SupplyTruckAIUpdate.cs:6-34`).
+- These drive individual units; none is a player-level strategy loop.
+
+### 1.3 Data-driven AI inputs exist but are unconsumed
+- `AIData` parses the `AIData` INI block and stores `SkirmishBuildLists`
+  (`Logic/AI/AIData.cs:7-260`; `SkirmishBuildList` parse `:99-100,242-245`).
+- `BuildListInfo` carries AI-only fields: `ResourceGatherers`, `IsSupplyBuilding`, `DesiredGatherers`,
+  `CurrentGatherers`, `PriorityBuild`, `IsBuildable` (`Logic/Map/BuildListInfo.cs:10-237`).
+- `IniParser.BlockParsers.cs` parses `AIData`/`SkirmishAIData`; `SkirmishAIData.cs` exists (container).
+- ⇒ No code consumes `AIData.SkirmishBuildLists` yet — the build-order data is parsed and stranded.
+
+### 1.4 How actions are actuated (the P5 mechanism)
+- Human/scripted orders run through `OrderProcessor.Process(...)`
+  (`Logic/Orders/OrderProcessor.cs:96-204`):
+  - Build structure → `CreateObject(...)` + `GameObject.PrepareConstruction()` +
+    `(dozer?.AIUpdate as IBuilderAIUpdate)?.SetBuildTarget(...)`.
+  - Upgrade → `ProductionUpdate.QueueUpgrade(...)`; Unit → `ProductionUpdate.QueueProduction(...)`;
+    Repair → `SetRepairTarget(...)`.
+- `ProductionUpdate` owns the queue and spawn: `Update()` advances the front job and spawns units
+  (`Logic/Object/Update/ProductionUpdate.cs:59-156`); `ProduceObject(...)` calls
+  `GameEngine.GameLogic.CreateObject(...)`, places the transform, and moves out to the rally point
+  (`:343-395`); `QueueProduction(...)` (`:472-483`), `QueueUpgrade(...)` (`:516-525`),
+  `CanProduceObject(...)` (`:271-291`), `CanEnqueue()` (`:551`).
+- Construction lifecycle on `GameObject`: `PrepareConstruction()` (`:991-1034`),
+  `SetIsBeingConstructed()` (`:1039-1044`), `AdvanceConstruction()` (`:1046-1058`),
+  `FinishConstruction()` (`:1060-1074`), `IsBeingConstructed()` (`:1077-1082`)
+  (`Logic/Object/GameObject.cs`).
+- Prerequisites/tech gating: `Player.CanProduceObject(ObjectDefinition)` checks
+  `Prerequisites.Objects` (AND of OR-lists) + `Prerequisites.Sciences` (`Logic/Player.cs:357-420`);
+  `GameObject.CanConstructUnit(...)` (`:1186-1192`), `CanPurchase(CommandButton)` (`:1164-1182`),
+  `CanEnqueueUpgrade(...)` (`:1194-1222`).
+- Builder placement: `OrderProcessor.BuildObject` (`:96-121`) → `DozerAIUpdate.SetBuildTarget`
+  (`DozerAIUpdate.cs:41-46`) / `WorkerAIUpdate.SetBuildTarget` (`WorkerAIUpdate.cs:48-54`); builder
+  cancels if the target dies (`GameObject.cs:1298-1316`).
+- Upgrades: `QueueUpgrade`/`CancelUpgrade` (`ProductionUpdate.cs:516-549`); completion via
+  `GrantUpgrade(...)` (`:113-123`); `Player.AddUpgrade/HasUpgrade/HasEnqueuedUpgrade`
+  (`Player.cs:423-492`); `GameObject.Upgrade(...)`/`UpdateUpgradeableModules()` (`:1232-1247`).
+
+---

@@ -2,6 +2,10 @@
 
 > Expands phase B6 of [Track B — Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md). First-pass design — refine as phases land.
+>
+> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+>
+> The agent-context section at the bottom ([Current-state hooks appendix](#appendix-current-state-hooks--agent-context)) contains code-level details about what the implementation builds on. Skip it if you are reading for design intent.
 
 Goal: run a single simulation larger than one machine can handle by partitioning the
 world across processes/machines.
@@ -48,18 +52,6 @@ Spatial sharding is the last major scale phase because it composes everything be
 - [A4 Simulation Domain Model seam](../track-a-foundations.md) — supplies the topology model
   (grid / graph / zones), interaction locality (halo derivation), resolution authority, and
   metrics, so the sharding machinery here is domain-parameterized rather than RTS-specific.
-
----
-
-## 2. Current-state hooks (what we build on)
-
-| Concern | Current code | Note |
-|---|---|---|
-| Object storage | `GameLogic` `List<GameObject>` by `ObjectId` (`src/OpenSage.Game/Logic/GameLogic.cs`) | Single flat list; needs a region-owned view + non-resident "ghost" objects for neighbours. |
-| Spatial partitioning | `PartitionCellManager`, `Quadtree` (`src/OpenSage.Game/DataStructures/`) | Already cell-based; the partition grid is the candidate boundary primitive for the spatial-grid domain. Graph/zone domains plug in a different partition primitive (graph cut / district set) behind the same B6 boundary interface. |
-| Pathfinding | `Navigation` A* graph (`src/OpenSage.Game/Navigation/`) | Cross-shard paths need either a shared coarse graph or per-shard graphs with boundary stitching. Generalizes to domain routing/flow (transport routing, utility flow) via the domain model. |
-| Order/frame model | `NetworkMessageBuffer`, `ReplayConnection` (`src/OpenSage.Game/Network/`) | Frame-ordered lockstep-style processing; the transport pattern for exchanging boundary/handoff messages. |
-| Conflict resolution | `IGame.CreateRandom()` seam + the B3 intent/merge model | Per-shard randomness must be seeded per deterministic-context so a handed-off object behaves consistently (not bit-identically) on its new shard; cross-shard write conflicts use the same [B3](../track-b-scale.md) conflict-resolution/authority rules. |
 
 ---
 
@@ -154,9 +146,78 @@ Each cell runs the scenario with the given shard configuration and asserts:
 - All unit positions are consistent with the single-shard reference within spatial tolerance.
 - Aggregate metrics (unit count, money totals) are within the A2 tolerance band.
 
-## 6. Related
+## 7. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once B6 moves to active implementation. The
+placeholder below captures the key types the distributed simulation introduces.
+
+```mermaid
+classDiagram
+  class SimShard {
+    <<pending B6>>
+    +int ShardId
+    +Rectangle SpatialPartition
+    +IReadOnlyList~GameObject~ OwnedObjects
+    +Tick(dt)
+  }
+
+  class ShardCoordinator {
+    <<pending B6>>
+    +IReadOnlyList~SimShard~ Shards
+    +Route(order) SimShard
+    +SynchronizeEdges()
+  }
+
+  class EdgeMessage {
+    <<pending B6>>
+    +int SourceShardId
+    +int TargetShardId
+    +IReadOnlyList~StateUpdate~ Updates
+  }
+
+  class SnapshotDeltaStream {
+    <<pending B6>>
+    +Record(frame, shardId, delta)
+    +Replay(fromFrame)
+  }
+
+  class PartitionStrategy {
+    <<interface, pending B6>>
+    +Partition(objects) IReadOnlyList~SimShard~
+  }
+
+  class GraphCutPartitioner {
+    <<pending B6>>
+  }
+
+  ShardCoordinator "1" --> "N" SimShard
+  ShardCoordinator --> SnapshotDeltaStream
+  ShardCoordinator ..> EdgeMessage : exchanges between shards
+  PartitionStrategy <|.. GraphCutPartitioner
+  ShardCoordinator --> PartitionStrategy
+```
+
+## 8. Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
 - Headless host (a shard is a host): [`headless-host.md`](headless-host.md)
 - Larger maps / chunked storage (shard unit): [`larger-maps.md`](larger-maps.md)
 - Open questions: [`../open-questions.md`](../open-questions.md)
+
+---
+
+## Appendix: Current-state hooks — agent context
+
+> Agent context: this section contains file:line code references for agents
+> implementing this phase. Human readers: the design intent above does not
+> require reading this section.
+
+| Concern | Current code | Note |
+|---|---|---|
+| Object storage | `GameLogic` `List<GameObject>` by `ObjectId` (`src/OpenSage.Game/Logic/GameLogic.cs`) | Single flat list; needs a region-owned view + non-resident "ghost" objects for neighbours. |
+| Spatial partitioning | `PartitionCellManager`, `Quadtree` (`src/OpenSage.Game/DataStructures/`) | Already cell-based; the partition grid is the candidate boundary primitive for the spatial-grid domain. Graph/zone domains plug in a different partition primitive (graph cut / district set) behind the same B6 boundary interface. |
+| Pathfinding | `Navigation` A* graph (`src/OpenSage.Game/Navigation/`) | Cross-shard paths need either a shared coarse graph or per-shard graphs with boundary stitching. Generalizes to domain routing/flow (transport routing, utility flow) via the domain model. |
+| Order/frame model | `NetworkMessageBuffer`, `ReplayConnection` (`src/OpenSage.Game/Network/`) | Frame-ordered lockstep-style processing; the transport pattern for exchanging boundary/handoff messages. |
+| Conflict resolution | `IGame.CreateRandom()` seam + the B3 intent/merge model | Per-shard randomness must be seeded per deterministic-context so a handed-off object behaves consistently (not bit-identically) on its new shard; cross-shard write conflicts use the same [B3](../track-b-scale.md) conflict-resolution/authority rules. |
+
+---

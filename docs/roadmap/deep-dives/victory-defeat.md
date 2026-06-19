@@ -2,32 +2,15 @@
 
 > Expands phase P3 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+>
+> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+>
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
 Goal: build the missing match-end system — detect player defeat, declare win/lose,
 drive end-of-match flow (stop the sim, surface the result, allow exit), and expose the result as a
 first-class, queryable `GameOutcome` so headless runs (the [P0 harness](playable-baseline-harness.md))
 can assert on it. This is the single biggest correctness gap in the baseline game.
-
----
-
-## 1. Current code (grounded) — it's missing
-
-- No outcome logic. No meaningful matches for `Victory|Defeat|GameOver|EndGame|IsDefeated|WinLose`
-  in `src/OpenSage.Game` beyond order plumbing/enum references — there is no win/lose controller.
-- `OrderType.EndGame` exists but is unhandled. It is defined in
-  `Logic/Orders/OrderType.cs`, but `OrderProcessor.Process(...)`
-  (`Logic/Orders/OrderProcessor.cs`) has no `EndGame` handler (default path logs
-  `Unimplemented order type`).
-- Ownership tracking is partial. `Player` exposes `SupplyManager`, `BankAccount`, selection sets,
-  and `GetEnergy(...)` which iterates `allGameObjects.Objects` to sum owned energy producers
-  (`Logic/Player.cs:22,73,92-104,130-135`) — but there is no per-player owned-object list or
-  building-count field; ownership is derived by scanning all objects.
-- Death flow exists, no event hook. `GameObject.IsDestroyed`, `Kill(...)`, `OnDie(...)`,
-  `Destroy()` exist (`Logic/Object/GameObject.cs`); `OnDie` iterates death modules and plays a sound;
-  `Kill()` routes into death handling. There is no death/destroyed event a defeat system could
-  subscribe to.
-- Tick hook available. A per-frame victory check can live in `GameLogic.Update(...)`
-  (`Logic/GameLogic.cs`) or the main game tick (`Game.cs:876-959`, `Scene3D.LocalLogicTick`).
 
 ---
 
@@ -196,9 +179,88 @@ the P0 harness, and asserts:
 This matrix is the primary gate for P7: once all six end-state cells pass, the full P7
 regression suite can be built on top of this matrix definition.
 
-## 7. Related
+## 8. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once P3 moves to active implementation. The
+placeholder below captures the key types the victory/defeat subsystem introduces.
+
+```mermaid
+classDiagram
+  class GameOutcome {
+    <<pending P3>>
+    +OutcomeStatus Status
+    +OutcomeReason Reason
+    +IReadOnlyList~int~ WinningPlayerIndices
+  }
+
+  class OutcomeStatus {
+    <<enum, pending P3>>
+    InProgress
+    SuddenDeath
+    Decided
+  }
+
+  class OutcomeReason {
+    <<enum, pending P3>>
+    Eliminated
+    Surrendered
+    ScoreDecision
+  }
+
+  class VictoryConditionRule {
+    <<pending P3>>
+    +bool Evaluate(gameState) bool
+    +GameOutcome Resolve(gameState)
+  }
+
+  class DefaultVictoryRule {
+    <<pending P3>>
+    +Evaluate() bool
+    note: no cmd/production structs AND no means to rebuild
+  }
+
+  class Game {
+    <<engine>>
+    +GameOutcome CurrentOutcome
+  }
+
+  GameOutcome --> OutcomeStatus
+  GameOutcome --> OutcomeReason
+  VictoryConditionRule <|-- DefaultVictoryRule
+  Game --> GameOutcome
+  Game --> VictoryConditionRule
+```
+
+## 9. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Teams it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)
 - Harness that asserts the outcome: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
 - Combat/death paths: [`economy-production-combat.md`](economy-production-combat.md) (P6)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
+
+---
+
+## Appendix: Current code — agent context
+
+> Agent context: this section contains file:line code references for agents
+> implementing this phase. Human readers: the design intent above does not
+> require reading this section.
+
+- No outcome logic. No meaningful matches for `Victory|Defeat|GameOver|EndGame|IsDefeated|WinLose`
+  in `src/OpenSage.Game` beyond order plumbing/enum references — there is no win/lose controller.
+- `OrderType.EndGame` exists but is unhandled. It is defined in
+  `Logic/Orders/OrderType.cs`, but `OrderProcessor.Process(...)`
+  (`Logic/Orders/OrderProcessor.cs`) has no `EndGame` handler (default path logs
+  `Unimplemented order type`).
+- Ownership tracking is partial. `Player` exposes `SupplyManager`, `BankAccount`, selection sets,
+  and `GetEnergy(...)` which iterates `allGameObjects.Objects` to sum owned energy producers
+  (`Logic/Player.cs:22,73,92-104,130-135`) — but there is no per-player owned-object list or
+  building-count field; ownership is derived by scanning all objects.
+- Death flow exists, no event hook. `GameObject.IsDestroyed`, `Kill(...)`, `OnDie(...)`,
+  `Destroy()` exist (`Logic/Object/GameObject.cs`); `OnDie` iterates death modules and plays a sound;
+  `Kill()` routes into death handling. There is no death/destroyed event a defeat system could
+  subscribe to.
+- Tick hook available. A per-frame victory check can live in `GameLogic.Update(...)`
+  (`Logic/GameLogic.cs`) or the main game tick (`Game.cs:876-959`, `Scene3D.LocalLogicTick`).
+
+---

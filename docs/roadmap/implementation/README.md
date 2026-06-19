@@ -1,5 +1,8 @@
 # Implementation plans
 
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
+
 Concrete, code-grounded implementation plans for [implementation-checklist.md](../implementation-checklist.md)
 items, ordered by the dependency sequence in the checklist. Each plan cites a specific checklist item
 and the deep dive it derives from, then lists the design, files to change, tests, and out-of-scope.
@@ -8,7 +11,8 @@ These are design docs, not the checklist itself: the checklist tracks Status, th
 
 ## Track P · P0 — ReplaySketch arbitrary-command harness
 
-Source of truth: [deep-dives/playable-baseline-harness.md](../deep-dives/playable-baseline-harness.md).
+Source of truth: [deep-dives/playable-baseline-harness.md](../deep-dives/playable-baseline-harness.md) —
+[Architecture diagrams §9](../deep-dives/playable-baseline-harness.md#9-architecture-diagrams).
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|

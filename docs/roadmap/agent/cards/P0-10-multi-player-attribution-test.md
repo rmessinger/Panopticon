@@ -8,6 +8,7 @@
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `P0-03` (faction-agnostic definition resolution must be done first) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
 

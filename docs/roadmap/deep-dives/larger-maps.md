@@ -2,6 +2,8 @@
 
 > Expands phase B4a of [Track B — Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
+>
+> Audience: human — design intent and architecture diagrams.
 
 The first concrete scale milestone is bigger maps, pursued through the WorldBuilder
 editor (`OpenSage.Tools.WorldBuilder.`) since it is where maps are authored and is the
@@ -89,8 +91,47 @@ fastest path to exercising large terrain end-to-end (author → save `.map` → 
   [A5-5](visualization.md) so the author and replay tools scale together. It can proceed in
   parallel with terrain streaming once region-based editing (B4a-2) exists.
 
+## Architecture Diagrams
+
+Diagrams for this phase will be elaborated once B4a moves to active implementation. The
+placeholder below captures the key types larger-map support introduces.
+
+```mermaid
+classDiagram
+  class ChunkedHeightMap {
+    <<pending B4a>>
+    +int ChunkSize
+    +IReadOnlyList~HeightMapChunk~ Chunks
+    +LoadRegion(bounds) IEnumerable~HeightMapChunk~
+  }
+
+  class HeightMapChunk {
+    <<pending B4a>>
+    +Rectangle WorldBounds
+    +ushort[,] Elevations
+    +bool IsDirty
+  }
+
+  class RegionBasedEditor {
+    <<pending B4a, WorldBuilder>>
+    +LoadRegion(bounds)
+    +SaveRegion(bounds)
+    +PaintTerrain(stroke)
+  }
+
+  class LargeObjectPopulation {
+    <<pending B4a, WorldBuilder>>
+    +Serialize(objects) StreamingObjectList
+    +Load(region) IEnumerable~ObjectDefinition~
+  }
+
+  ChunkedHeightMap "1" --> "N" HeightMapChunk
+  RegionBasedEditor --> ChunkedHeightMap
+  RegionBasedEditor --> LargeObjectPopulation
+```
+
 ## Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
 - Decision on the size ceiling & compatibility: [`../open-questions.md`](../open-questions.md)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)

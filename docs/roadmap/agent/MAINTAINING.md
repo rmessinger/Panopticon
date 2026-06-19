@@ -1,14 +1,13 @@
 # Maintaining the roadmap — planning-agent protocol
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). The single, authoritative checklist for
+> Part of the [Large-Scale Simulation Roadmap](../README.md). The single, authoritative checklist for
 > agents (or humans) who iterate on the plan itself — adding/changing/reordering phases, recording
 > decisions, introducing seams, writing deep dives. The roadmap is a set of parallel documents that
 > must move together; this protocol says exactly what to propagate after every plan change so they
 > never drift.
 >
-> Audience: roadmap planning agents (high-effort, editing the design). This is distinct from the
-> [agent-guide](agent-guide/), which is for execution agents chipping at bounded task cards. If you
-> are executing a card, follow the agent-guide; if you are changing the plan, follow this.
+> Audience: agent (planning agent) — this doc is a workflow protocol for agents modifying the
+> roadmap. Human readers: see the [document map](README.md#document-map) for what to read instead.
 
 ---
 
@@ -19,15 +18,15 @@ Each artifact owns one view. A plan change usually touches several. Know which o
 | Document | Owns (source of truth for) |
 |---|---|
 | [`track-*.md`](README.md#document-map) (P, A, B, C) | Phase definitions, goals, Milestone (definition-of-done), Status, dependencies, per-phase notes. |
-| [`implementation-checklist.md`](implementation-checklist.md) | The flat, granular change list — concrete items per phase, each with an acceptance criteria (`AC:`) sub-bullet. |
-| [`roadmap-tree.md`](roadmap-tree.md) | The visual hierarchy (mindmap) + dependency flow (LR stages). |
+| [`implementation-checklist.md`](../implementation-checklist.md) | The flat, granular change list — concrete items per phase, each with an acceptance criteria (`AC:`) sub-bullet. |
+| [`roadmap-tree.md`](../roadmap-tree.md) | The visual hierarchy (mindmap) + dependency flow (LR stages). |
 | `roadmap-tree.html` | Interactive viewer — auto-syncs (reads the `.md` live). No manual edit. |
-| [`open-questions.md`](open-questions.md) | The decision log (every item a settled Decision + rationale). |
-| [`seams.md`](seams.md) | The seam registry (structural + A4 experiment seams). |
-| [`deep-dives/`](deep-dives/) | Per-phase detailed designs. |
+| [`open-questions.md`](../open-questions.md) | The decision log (every item a settled Decision + rationale). |
+| [`seams.md`](../seams.md) | The seam registry (structural + A4 experiment seams). |
+| [`deep-dives/`](../deep-dives/) | Per-phase detailed designs. |
 | [`current-state.md`](current-state.md) | Snapshot of the code the roadmap assumes. |
-| [`agent-guide/`](agent-guide/) | Task cards + the execution-agent workflow. |
-| [`README.md`](README.md) | Index: doc map, deep-dive table, at-a-glance, guiding principles. |
+| [`agent/`](./) | Task cards + the execution-agent workflow. |
+| [`README.md`](../README.md) | Index: doc map, deep-dive table, at-a-glance, guiding principles. |
 | Copilot memories | Durable decisions/conventions (via `store_memory`, repository scope). |
 | Session `plan.md` | The orchestrator's working notes — session-local, not in the repo. |
 
@@ -40,14 +39,14 @@ Find your change type; update every box listed. Then run the [validation](#valid
 | You changed… | Must also update |
 |---|---|
 | Add a phase / sub-phase | track doc table (incl. a Milestone definition-of-done) + notes · implementation-checklist (new items, each with an `AC:` sub-bullet — concrete, or `TBD` + rough template if not yet definable) · roadmap-tree mindmap · roadmap-tree LR flow (place by dependency depth + edges) · README at-a-glance · its deps in the tree/checklist ordering |
-| Rename / renumber a phase | every doc above plus every inbound link/anchor; search the whole `docs/roadmap/` tree for the old id · agent-guide cards referencing it · SQL todo ids (if the orchestrator tracks them) |
+| Rename / renumber a phase | every doc above plus every inbound link/anchor; search the whole `docs/roadmap/` tree for the old id · agent cards referencing it · SQL todo ids (if the orchestrator tracks them) |
 | Remove a phase | delete from track doc, checklist, tree (both diagrams), README; fix anything that depended on it |
 | Change a dependency / ordering | track doc "Depends on" · roadmap-tree LR edges (+ re-stage if depth changed) · checklist ordering |
-| Change a phase's Status | track doc Status · tick/untick checklist items · matching agent-guide card Status · README [Progress](#progress) tables |
+| Change a phase's Status | track doc Status · tick/untick checklist items · matching agent card Status · README [Progress](#progress) tables |
 | Make a decision (resolve an open question) | open-questions.md (write as Decision + rationale) · thread into the affected phase/deep dive · `store_memory` (repository scope) · README guiding principle if it's a principle |
 | Introduce / change a seam | seams.md registry · the A4 notes in track-a · any deep dive that uses it |
-| Write a deep dive | add `deep-dives/<name>.md` · link from the phase row · README Deep dives table · mark the phase ⮕ in the roadmap-tree mindmap |
-| Phase ready for cheap agents | decompose into [agent-guide cards](agent-guide/) (template) · keep card Status ↔ phase Status |
+| Write a deep dive | add `deep-dives/<name>.md` · link from the phase row · add an `Architecture Diagrams` placeholder section · update the phase's Phase resources row in the track doc · README Deep dives table · mark the phase ⮕ in the roadmap-tree mindmap |
+| Phase ready for cheap agents | Architecture diagrams (class + sequence) complete in the phase's deep-dive `Architecture Diagrams` section — placeholder stubs must be replaced with diagrams grounded in the actual types and flows before the first card is written · update the Phase resources row in the track doc (remove `†`) · add implementation plan entry to `implementation/README.md` with diagram link · decompose into [agent cards](./) (template) · keep card Status ↔ phase Status |
 | Code drifts from assumptions | refresh current-state.md (it underpins every phase) |
 | Add/rename/remove any doc | README doc map + (if a deep dive) the Deep dives table · this file's parallel-documents table |
 
@@ -83,7 +82,14 @@ Find your change type; update every box listed. Then run the [validation](#valid
 - Card Status ↔ phase Status ↔ checklist ticks do not contradict each other.
 - Every checklist item has an `AC:` sub-bullet (concrete, or `TBD` + rough template). Tighten
   `TBD` ACs into concrete, verifiable ones as the phase's deep dive lands.
+- Every deep-dive for a phase that is `In progress` or `Done` has a populated `Architecture
+  Diagrams` section: at minimum a class diagram showing the key types the phase introduces and
+  a sequence diagram showing the primary run-time flow. Placeholder stubs are only acceptable for
+  phases still `Not started`.
 - No broken internal links or anchors anywhere under `docs/roadmap/`.
+- Every document under `docs/roadmap/` carries an `Audience:` line in its opening blockquote.
+  Valid values: `human`, `agent`, `human + agent`. New docs must include this line; see the
+  [audience guide](README.md#audience-guide) for which value to assign.
 
 ---
 
@@ -98,7 +104,7 @@ grep -oE '\]\(([a-zA-Z0-9_./#-]+)\)' README.md
 ```
 
 This is documentation only — no `dotnet` build/test is required for plan changes (that's the
-[execution agents'](agent-guide/README.md#standard-validation) job when they implement a card).
+[execution agents'](README.md#standard-validation) job when they implement a card).
 
 ---
 

@@ -4,6 +4,9 @@
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-6: Procedural authoring at scale
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Support procedural/programmatic authoring of large command sets with efficient .rep emission"
 > Related: full authoring-tool scale is A5-5 ([visualization.md](../deep-dives/visualization.md)); this is the minimal P0 slice.
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -49,6 +52,11 @@ A code-first authoring API plus a throughput check, reusing the landed open comm
   managed allocation; assert they stay under a documented bound (the bound is written into the P0 deep
   dive so regressions are visible). This reuses the B1 benchmarking discipline at a tiny scale; the
   real benchmark harness is B1.
+
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 

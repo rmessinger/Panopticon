@@ -4,6 +4,9 @@
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-4: Assertion layer
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Add a validation/assertion layer (expected post-conditions, invariants, outcomes)"
 > Decision: [open-questions.md](../open-questions.md) — "P0 harness — assertion DSL" (JSON predicates over a fixed vocabulary + code-defined escape hatch).
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -82,6 +85,11 @@ names it.
   (P0-5), which owns the headless boot. This plan delivers the evaluator + model + report as a
   library so P0-5 just constructs and drives it; a minimal in-process test can exercise the evaluator
   against a mocked/headless `Game` without the full CLI.
+
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 

@@ -3,6 +3,9 @@
 > Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-2: Generic definition/player resolution
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md) — second item under P0
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -97,6 +100,11 @@ Add three tests in `ReplaySketchTests.cs`:
 - `ResolveConstructDefinitionName_ExplicitNameTakesPrecedence`: calls helper with
   `specified = "SomeCustomBuilding", factionIndex = 3`, asserts result is
   `"SomeCustomBuilding"` (explicit override wins).
+
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
 
 ## Files to Change
 

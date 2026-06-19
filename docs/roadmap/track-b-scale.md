@@ -2,12 +2,14 @@
 
 > Part of the [Large-Scale RTS Roadmap](README.md). Scaling the engine toward very large unit
 > counts and maps. Builds on [Track A — Foundations](track-a-foundations.md); see
-> [`current-state.md`](current-state.md) for the architecture these phases modify.
+> [`agent/current-state.md`](agent/current-state.md) for the architecture these phases modify.
 >
 > Near-term scale anchor: the first committed waypoint is 10k units at interactive rate
 > (~30 fps) on one machine (see the [scale-anchor Decision](open-questions.md)). B2–B5 and B7 are
 > designed and budgeted against this anchor; the larger {100k, millions} figures stay directional
 > until it is raised.
+>
+> Audience: human — strategic track overview.
 
 > The Milestone column states the single demonstrable outcome that marks each phase done (its
 > definition-of-done); the granular steps to get there live in
@@ -23,6 +25,23 @@
 | B5. Rendering at scale | GPU instancing for repeated unit models, LOD/impostors, culling, and render-bucket/shadow improvements so presentation keeps up with large logic scenes. | A large repeated-model scene renders via GPU instancing + LOD/culling within frame budget. | Not started | A3 |
 | B6. Distributed simulation | Partition a single simulation across processes/machines via spatial sharding. Boundary/handoff correctness is validated by invariants (no unit duplication/loss) and statistical closeness to a single-shard reference — not bit-exact sync (see the [relaxed-determinism Decision](open-questions.md)). Detailed design: [deep-dives/distributed-simulation.md](deep-dives/distributed-simulation.md). | One simulation runs across ≥2 shards/processes with no unit loss/duplication, staying statistically close to a single-shard reference. | Not started | A1, A2, B3 |
 | B7. Variable simulation fidelity | A toolkit of fidelity-reduction techniques (temporal LOD, simplified behavior, group aggregation, precision) to scale unit counts by spending compute proportionally to each unit's importance. Experimental scaling lever. Detailed design: [deep-dives/variable-fidelity.md](deep-dives/variable-fidelity.md). | Applying fidelity reduction to low-importance units raises the sustainable unit count within bounded statistical error. | Not started | B1, B3 |
+
+## Phase resources
+
+A navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
+Diagrams marked `†` are placeholder stubs; they will be elaborated before the first card for that
+phase is marked `Ready`.
+
+| Phase | Deep dive | Diagrams | Agent cards |
+|---|---|---|---|
+| B1 | — | — | — |
+| B2 | — | — | — |
+| B3 | — | — | — |
+| B4 | — | — | — |
+| B4a | [Larger maps](deep-dives/larger-maps.md) | [§](deep-dives/larger-maps.md#architecture-diagrams) `†` | — |
+| B5 | — | — | — |
+| B6 | [Distributed sim](deep-dives/distributed-simulation.md) | [§7](deep-dives/distributed-simulation.md#7-architecture-diagrams) `†` | — |
+| B7 | [Variable fidelity](deep-dives/variable-fidelity.md) | [§8](deep-dives/variable-fidelity.md#8-architecture-diagrams) `†` | — |
 
 ## Cross-track dependencies
 

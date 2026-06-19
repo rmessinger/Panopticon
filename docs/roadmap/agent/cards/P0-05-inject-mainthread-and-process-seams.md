@@ -8,6 +8,7 @@
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `P0-04` (IPreferencesStore seam, so constructor injection pattern is already established) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
 

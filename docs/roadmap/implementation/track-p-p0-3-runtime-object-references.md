@@ -4,6 +4,9 @@
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · part of sub-phase P0-3 (the object-reference model that exporter generalization needs)
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Reference runtime-created objects via implicit auto-handles … and world/enemy objects via query selectors"
 > Decision: [open-questions.md](../open-questions.md) — "P0 harness — runtime object references" (implicit auto-handles + opt-in names + query selectors).
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -75,6 +78,11 @@ Two reference kinds, both resolved at dispatch against `GameLogic`, replacing th
   routed to the deferred path (not written to the `.rep` body) with enough metadata for runtime
   resolution, mirroring how `AfterActionTiming` actions are deferred today (`:67-86`). Literal-only
   commands keep exporting inline.
+
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 

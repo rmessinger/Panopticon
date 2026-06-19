@@ -11,6 +11,8 @@
 > Each phase has a Status (`Not started` / `In progress` / `Done` / `Revised`). When a
 > phase grows its own detailed design, add a deep-dive under [`deep-dives/`](deep-dives/) and
 > link it from the phase.
+>
+> Audience: human — start here for a project overview.
 
 ---
 
@@ -101,20 +103,43 @@ The following are the vague long-term goals of this framework:
 
 ## Document map
 
-| Document | Contents |
-|---|---|
-| [`current-state.md`](current-state.md) | Snapshot of the architecture this roadmap builds on (cited). |
-| [`MAINTAINING.md`](MAINTAINING.md) | Planning-agent protocol: the single checklist for propagating a plan change across all parallel docs (with a change-type matrix + consistency invariants). |
-| [`roadmap-tree.md`](roadmap-tree.md) | Visual tree of the whole roadmap: tracks → phases → sub-phases hierarchy + the branching dependency flow. |
-| [`seams.md`](seams.md) | Definition of a "seam" and the maintained registry of all framework seams (structural + A4 experiment seams). |
-| [`track-p-playable-baseline.md`](track-p-playable-baseline.md) | Prerequisite track: make the reference game (Generals/ZH) a fully playable end-to-end skirmish (setup, AI, economy, production, combat, win/lose). Gates Tracks A/B/C. |
-| [`track-a-foundations.md`](track-a-foundations.md) | Shared prerequisites: headless host, reproducibility & statistical stability, sim/presentation seam, experiment framework, scenario authoring & visualization. |
-| [`track-b-scale.md`](track-b-scale.md) | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
-| [`track-c-external-assets.md`](track-c-external-assets.md) | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
-| [`open-questions.md`](open-questions.md) | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
-| [`implementation-checklist.md`](implementation-checklist.md) | Single granular change list (human-facing): every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
-| [`agent-guide/`](agent-guide/) | Agent-focused companion: how a low-effort automated agent picks up small, bounded slices of the roadmap (task cards + workflow) without re-reasoning the whole design. |
-| [`deep-dives/`](deep-dives/) | Per-phase detailed designs as they're written. |
+### Audience guide
+
+The roadmap docs divide into two audiences. Knowing which is which tells you what to read first
+and what to skip.
+
+| Audience | What to read | What to skip |
+|---|---|---|
+| Human (strategic overview, progress tracking, design intent) | `README.md`, `roadmap-tree.md`, `track-*.md`, `open-questions.md`, `implementation-checklist.md`, `deep-dives/` | `agent/`, `implementation/`, `agent/current-state.md`, `agent/MAINTAINING.md` |
+| Agent (automated planning/execution, codebase context required) | `agent/`, `implementation/`, `agent/current-state.md`, `agent/MAINTAINING.md` | Track docs and deep dives provide needed context |
+
+`seams.md` serves both: the overview and diagram sections are human-readable; the registry
+detail and file citations are agent context. A split into a human overview and an agent registry
+is planned.
+
+The deep-dives and implementation plans are human-facing. Each deep-dive has code-grounding
+content (file:line references) in a clearly marked appendix at the bottom; the sections above it
+describe design intent without requiring codebase context. Each implementation plan has a `---`
+divider separating the human-readable problem/design/approach from the agent-context file and test
+details below it.
+
+### All documents
+
+| Document | Audience | Contents |
+|---|---|---|
+| [`agent/current-state.md`](agent/current-state.md) | agent | Snapshot of the architecture this roadmap builds on (cited). |
+| [`agent/MAINTAINING.md`](agent/MAINTAINING.md) | agent | Planning-agent protocol: the single checklist for propagating a plan change across all parallel docs (with a change-type matrix + consistency invariants). |
+| [`roadmap-tree.md`](roadmap-tree.md) | human | Visual tree of the whole roadmap: tracks → phases → sub-phases hierarchy + the branching dependency flow. |
+| [`seams.md`](seams.md) | human + agent | Definition of a "seam" and the maintained registry of all framework seams (structural + A4 experiment seams). Pending split into a human overview and an agent registry. |
+| [`track-p-playable-baseline.md`](track-p-playable-baseline.md) | human | Prerequisite track: make the reference game (Generals/ZH) a fully playable end-to-end skirmish (setup, AI, economy, production, combat, win/lose). Gates Tracks A/B/C. |
+| [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, reproducibility & statistical stability, sim/presentation seam, experiment framework, scenario authoring & visualization. |
+| [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
+| [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
+| [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
+| [`implementation-checklist.md`](implementation-checklist.md) | human | Single granular change list: every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
+| [`agent/`](agent/) | agent | Agent-focused companion: how a low-effort automated agent picks up small, bounded slices of the roadmap (task cards + workflow) without re-reasoning the whole design. |
+| [`implementation/`](implementation/) | human | Per-sub-phase plans: problem, design rationale, and approach above the divider; file:line agent-context details below the divider. |
+| [`deep-dives/`](deep-dives/) | human | Per-phase detailed designs. Code-grounding content is in a clearly marked appendix at the bottom of each doc; the sections above are readable without codebase context. |
 
 ### Deep dives
 
@@ -201,7 +226,7 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 
 
 
-> Iterating on the plan? Follow [`MAINTAINING.md`](MAINTAINING.md) — the single planning-agent
+> Iterating on the plan? Follow [`agent/MAINTAINING.md`](agent/MAINTAINING.md) — the single planning-agent
 > protocol for propagating a change across all parallel documents (change-type matrix, ordered
 > checklist, consistency invariants, validation). The bullets below are the quick summary.
 
@@ -211,7 +236,7 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
   changes as they land and add finer items as a phase gains detail.
 - When a phase gets a detailed design, add a doc under [`deep-dives/`](deep-dives/) and link it
   from the phase row (and from the [Deep dives](#deep-dives) table above).
-- When [`current-state.md`](current-state.md) drifts from the code, refresh it — it is the
+- When [`agent/current-state.md`](agent/current-state.md) drifts from the code, refresh it — it is the
   basis for every phase's assumptions.
 - Record significant decisions in [`open-questions.md`](open-questions.md) (move an item from
   "open question" to a noted decision, and update the affected phase).
@@ -222,4 +247,4 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 - Update the [seam registry](seams.md) whenever a phase introduces a new pluggable seam or adds an
   implementation behind an existing one.
 - When a phase is ready to be chipped at by cheap/automated agents, decompose it into task cards
-  in the [`agent-guide/`](agent-guide/) (keep card Status and the phase Status in sync).
+  in the [`agent/`](agent/) (keep card Status and the phase Status in sync).

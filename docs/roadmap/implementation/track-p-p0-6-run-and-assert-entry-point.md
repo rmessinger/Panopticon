@@ -4,6 +4,9 @@
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-5: Run-and-assert entry point
 > Checklist items: [implementation-checklist.md](../implementation-checklist.md) — P0 items "Provide a headless run-and-assert entry point cheap agents can call" and "Tests: author + validate an arbitrary command set end-to-end"
 > Depends on: [track-p-p0-5-assertion-layer.md](track-p-p0-5-assertion-layer.md) (the evaluator/report this wraps).
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -56,7 +59,7 @@ decoupled from the windowed `TestHarness`.
   `--max-frames`, `--no-render`. It loads the scenario, calls `RunAndAssert`, writes the JSON report,
   and sets process exit code 0 (all assertions pass) or non-zero (any fail / run error). Document the
   invocation in the [P0 deep dive](../deep-dives/playable-baseline-harness.md) and the
-  [agent-guide](../agent-guide/README.md) so cheap agents can call it.
+  [agent](../agent/README.md) so cheap agents can call it.
 
 ### End-to-end test (the second checklist item)
 
@@ -66,6 +69,11 @@ decoupled from the windowed `TestHarness`.
   `RunAndAssert`, and asserts the returned report is all-pass. This is the standing "harness works"
   regression and the template P7 later scales into a full-match check.
 
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
+
 ## Files to change
 
 | File | Change |
@@ -74,7 +82,7 @@ decoupled from the windowed `TestHarness`.
 | `src/OpenSage.Tools.ReplaySketch.Core/Services/RunOptions.cs` | NEW — run options |
 | `src/OpenSage.Tools.TestHarness/Program.cs` | Refactor `RunHeadless` to call the shared runner with `render = true`; add the CLI `run` verb (or a sibling CLI) |
 | `docs/roadmap/deep-dives/playable-baseline-harness.md` | Document the CLI invocation + exit-code/report contract |
-| `docs/roadmap/agent-guide/README.md` | Note the run-and-assert command as the harness entry point for cheap agents |
+| `docs/roadmap/agent/README.md` | Note the run-and-assert command as the harness entry point for cheap agents |
 | `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchEndToEndTests.cs` | NEW — the end-to-end authored-scenario test |
 
 ## Tests

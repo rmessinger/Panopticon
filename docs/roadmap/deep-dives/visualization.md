@@ -2,6 +2,8 @@
 
 > Expands phase A5 of [Track A — Foundations](../track-a-foundations.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md). First-pass design — refine as phases land.
+>
+> Audience: human — design intent and architecture diagrams.
 
 Goal: the human/agent-facing surface of the experiment framework — set up a simulation
 scenario going in, and replay/analyze/compare its results coming out. This is the bookend to
@@ -215,7 +217,61 @@ paying full per-entity-per-frame recording cost for every run.
 - A5 (A5-1 through A5-5) shares one domain-parameterized rendering stack between setup
   preview (§3.2/§3.4) and results replay (§4) — build it once.
 
-## 8. Related
+## 9. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once A5 moves to active implementation. The
+placeholder below captures the key types the scenario authoring and visualization layer introduces.
+
+```mermaid
+classDiagram
+  class ScenarioAuthoringTool {
+    <<pending A5, extends ReplaySketch>>
+    +Author(scenario) ReplayScenario
+    +CaptureFromRun(runId) ReplayScenario
+  }
+
+  class ExperimentMatrix {
+    <<pending A5>>
+    +ScenarioMatrix Matrix
+    +IReadOnlyList~ExperimentRun~ Runs
+  }
+
+  class ExperimentRun {
+    <<pending A5>>
+    +string RunId
+    +MatrixCell Cell
+    +RunOutput Output
+  }
+
+  class RunOutput {
+    <<pending A5>>
+    +TieredRecording Recording
+    +AssertionReport Assertions
+  }
+
+  class ResultVisualizer {
+    <<pending A5>>
+    +Replay(runId)
+    +Compare(runA, runB)
+    +LocalizeDivergence(runA, runB) DivergenceReport
+  }
+
+  class TieredRecording {
+    <<pending A5>>
+    +T0 FrameHashes
+    +T1 StateDelta
+    +T2 FullSnapshot
+  }
+
+  ExperimentMatrix "1" --> "N" ExperimentRun
+  ExperimentRun --> RunOutput
+  RunOutput --> TieredRecording
+  ResultVisualizer ..> ExperimentRun : replays
+  ResultVisualizer ..> TieredRecording : drills into
+  ScenarioAuthoringTool ..> ExperimentMatrix : feeds
+```
+
+## 10. Related
 
 - Headless/FTRT host (produces the runs/recordings A5 consumes): [`headless-host.md`](headless-host.md)
 - Experiment framework seams & harness (sweeps, domain model): [`../track-a-foundations.md`](../track-a-foundations.md)

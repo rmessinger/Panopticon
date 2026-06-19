@@ -4,6 +4,8 @@
 > once an open question now carries a Decision (with rationale), threaded into the affected
 > phase in its track document. No questions are currently open — add new ones here as they
 > arise, and convert them to a Decision (and update the affected phase) once settled.
+>
+> Audience: human — the decision log for the roadmap.
 
 - Determinism vs. parallelism — Decision: relaxed/statistical determinism + free intra-tick
   parallelism with explicit conflict resolution. Bit-exact, cross-platform reproducibility is

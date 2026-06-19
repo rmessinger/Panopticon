@@ -3,6 +3,9 @@
 > Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-1b: ViewModel testability
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Extract an `IPreferencesStore` interface from `MainViewModel`"
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -69,6 +72,11 @@ prescribes (§3.1).
 If `MainViewModel` cannot currently be constructed headlessly (other MAUI statics in its ctor), the
 plan's first step is to confirm/჻minimize ctor dependencies; if a blocking MAUI static is found, the first step is to confirm and minimize ctor dependencies, then
 escalate rather than widening scope (the card may need to extract a second seam).
+
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 

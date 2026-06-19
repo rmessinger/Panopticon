@@ -2,6 +2,10 @@
 
 > Expands phase P1 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+>
+> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+>
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
 Goal: make starting a single-player skirmish vs. ≥1 AI work end-to-end without networking —
 players created, factions/colors/teams assigned, start positions resolved, starting buildings/units
@@ -18,65 +22,6 @@ know who its enemy is; victory/defeat (P3) needs teams/relationships to decide w
 needs relationship checks to allow attacks. Today relationships are an explicit `// TODO`, and the
 single-player spawn path diverges from the multiplayer one, so a SP skirmish doesn't get starting
 buildings or a camera the way an MP game does.
-
----
-
-## 2. Current code (grounded)
-
-### 2.1 Start path
-- `SkirmishManager.StartGame()` builds `List<PlayerSetting>` from `Settings.Slots` and calls
-  `Game.StartSkirmishOrMultiPlayerGame(...)` (`src/OpenSage.Game/Network/SkirmishManager.cs:55-93`).
-- `LocalSkirmishManager.HandleStartButtonClickAsync()` only sets `Connection = new EchoConnection()`
-  and flips status to `ReadyToStart` — no networking (`Network/SkirmishManager.cs:96-114`).
-- `HostSkirmishManager`/`ClientSkirmishManager` hold the real network path; SP never enters them
-  (`Network/SkirmishManager.cs:373-588`).
-- `Game.StartSkirmishOrMultiPlayerGame()` wraps `StartGame(...)`; `StartSinglePlayerGame()` uses
-  `new EchoConnection()` and `gameType: SinglePlayer` (`Game.cs:822-845`).
-- `Game.StartGame()` loads the map, creates `Scene3D`, sets `NetworkMessageBuffer`, builds the
-  control bar, resets timers, enables scripting (`Game.cs:717-802`).
-- Divergence: starting buildings + camera-at-start are created only for
-  `gameType != SinglePlayer`, for `Scene3D.Players[i + 2]` (`Game.cs:745-763`) — so a SP skirmish has
-  no equivalent local placement path.
-- `Game.LocalLogicTick()` pumps `SkirmishManager.Update()` until status is `Started`
-  (`Game.cs:921-929`).
-
-### 2.2 Menu entry points
-- "Skirmish" button → `new LocalSkirmishManager(context.Game)` + opens `SkirmishGameOptionsMenu.wnd`
-  (`src/OpenSage.Mods.Generals/Gui/MainMenuCallbacks.cs:127-130`).
-- Lobby init: `SkirmishGameOptionsMenuCallbacks` → `GameOptionsUtil`
-  (`Gui/SkirmishGameOptionsMenuCallbacks.cs:31-39`).
-- Start button validates slots, fills missing start positions/factions/colors, then calls
-  `SkirmishManager.HandleStartButtonClickAsync()` (`Gui/GameOptionsUtil.cs:239-305`); missing faction
-  is randomized to a playable side (`:292-295`); faction combo from `Game.GetPlayableSides()` (`:68-75`).
-
-### 2.3 Player model & relationships
-- `PlayerManager.OnNewGame(...)` creates players from map players, picks `LocalPlayer`, then
-  TODOs relationships (`src/OpenSage.Game/Logic/PlayerManager.cs:24-46`).
-- `PlayerManager.CreatePlayers(...)` maps `mapPlayer.Allies/Enemies` into `player.Allies`/
-  `player.Enemies` (`PlayerManager.cs:50-76`) — so map-defined relationships are read, but the
-  skirmish-slot-driven setup is the gap.
-- `Player` has `_playerToPlayerRelationships` + `playerToTeamRelationships` (`Logic/Player.cs:33-35`),
-  public `Allies`/`Enemies` sets (`:126-128`), a `Team` (`:139`),
-  `GetRelationship(Team? that)` (team override → player override → neutral) (`:811-831`),
-  `RelationshipType { Enemies=0, Neutral=1, Allies=2 }` (`:965-970`), `PlayerRelationships` overrides
-  (`:972-994`), and `AddAlly()`/`AddEnemy()` that only add to sets, no reciprocal wiring (`:779-786`).
-- `PlayerSetting` fields: `StartPosition`, `SideName`, `Color`, `Team`, `Owner`, `Name`,
-  `IsLocalForMultiplayer` (`Logic/PlayerSettings.cs:17-36`).
-- `PlayerTemplate` fields: `Side`, `PlayableSide`, `IsObserver`, `StartMoney`, `PreferredColor`,
-  `DisplayName`, `StartingBuilding`, `StartingUnits`, … (`Logic/PlayerTemplate.cs:115-140`; INI parse
-  `:58-113`).
-
-### 2.4 Start positions & factions
-- `Waypoints.TryGetPlayerStart(int playerIndex)` looks up `Player{i}_Start`
-  (`src/OpenSage.Game/Scripting/Waypoints.cs:76-81`); map load builds `Waypoints` from map objects
-  (`Scene3D.cs:139-152`).
-- `Scene3D.CreateSkirmishPlayerStartingBuilding(...)` uses `TryGetPlayerStart`, falls back to
-  `(80,80,0)` + heightmap Z (`Scene3D.cs:430-438`); `player.Template.StartingBuilding` +
-  `StartingUnits[0]` drive spawns (`Scene3D.cs:440-455`).
-- Map start positions stored in `MapCache` `Player_1..8_Start` (`Content/MapCache.cs:29-38,66-73`);
-  user maps in `UserMapCache` (`Data/Map/UserMapCache.cs:144-145,272-273`).
-- Slot faction index → playable side name (`SkirmishManager.cs:76-82`); replay metadata maps
-  `PlayerTemplate.Side` ↔ faction index (`Game.cs:225-279`).
 
 ---
 
@@ -178,9 +123,113 @@ Each cell runs one match boot through the P0 harness and asserts:
 This is the primary regression surface for P1: if relationship wiring or faction assignment
 regresses for any combination, the matrix run identifies the exact cell.
 
-## 8. Related
+## 8. Architecture Diagrams
+
+Diagrams for this phase will be elaborated once P1 moves to active implementation. The
+placeholder below captures the key types P1 introduces or wires together.
+
+```mermaid
+classDiagram
+  class SkirmishSetupConfig {
+    <<pending P1>>
+    +IReadOnlyList~PlayerSlot~ Slots
+    +int TeamCount
+  }
+
+  class PlayerSlot {
+    <<pending P1>>
+    +int SlotIndex
+    +bool IsLocalHuman
+    +string FactionName
+    +int TeamIndex
+    +bool IsAI
+  }
+
+  class Player {
+    <<engine>>
+    +string Name
+    +int Team
+    +Relationships Relationships
+  }
+
+  class PlayerRelationships {
+    <<engine, extended P1>>
+    +GetRelationship(playerA, playerB) Relationship
+  }
+
+  SkirmishSetupConfig "1" --> "N" PlayerSlot
+  PlayerSlot ..> Player : maps to on game start
+  Player --> PlayerRelationships
+```
+
+## 9. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - AI that consumes relationships: [`skirmish-ai.md`](skirmish-ai.md) (P2)
 - Outcome that consumes teams: [`victory-defeat.md`](victory-defeat.md) (P3)
 - Harness for the boot check: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
-- Architecture snapshot: [`../current-state.md`](../current-state.md)
+- Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
+
+---
+
+## Appendix: Current code — agent context
+
+> Agent context: this section contains file:line code references for agents
+> implementing this phase. Human readers: the design intent above does not
+> require reading this section.
+
+### 2.1 Start path
+- `SkirmishManager.StartGame()` builds `List<PlayerSetting>` from `Settings.Slots` and calls
+  `Game.StartSkirmishOrMultiPlayerGame(...)` (`src/OpenSage.Game/Network/SkirmishManager.cs:55-93`).
+- `LocalSkirmishManager.HandleStartButtonClickAsync()` only sets `Connection = new EchoConnection()`
+  and flips status to `ReadyToStart` — no networking (`Network/SkirmishManager.cs:96-114`).
+- `HostSkirmishManager`/`ClientSkirmishManager` hold the real network path; SP never enters them
+  (`Network/SkirmishManager.cs:373-588`).
+- `Game.StartSkirmishOrMultiPlayerGame()` wraps `StartGame(...)`; `StartSinglePlayerGame()` uses
+  `new EchoConnection()` and `gameType: SinglePlayer` (`Game.cs:822-845`).
+- `Game.StartGame()` loads the map, creates `Scene3D`, sets `NetworkMessageBuffer`, builds the
+  control bar, resets timers, enables scripting (`Game.cs:717-802`).
+- Divergence: starting buildings + camera-at-start are created only for
+  `gameType != SinglePlayer`, for `Scene3D.Players[i + 2]` (`Game.cs:745-763`) — so a SP skirmish has
+  no equivalent local placement path.
+- `Game.LocalLogicTick()` pumps `SkirmishManager.Update()` until status is `Started`
+  (`Game.cs:921-929`).
+
+### 2.2 Menu entry points
+- "Skirmish" button → `new LocalSkirmishManager(context.Game)` + opens `SkirmishGameOptionsMenu.wnd`
+  (`src/OpenSage.Mods.Generals/Gui/MainMenuCallbacks.cs:127-130`).
+- Lobby init: `SkirmishGameOptionsMenuCallbacks` → `GameOptionsUtil`
+  (`Gui/SkirmishGameOptionsMenuCallbacks.cs:31-39`).
+- Start button validates slots, fills missing start positions/factions/colors, then calls
+  `SkirmishManager.HandleStartButtonClickAsync()` (`Gui/GameOptionsUtil.cs:239-305`); missing faction
+  is randomized to a playable side (`:292-295`); faction combo from `Game.GetPlayableSides()` (`:68-75`).
+
+### 2.3 Player model & relationships
+- `PlayerManager.OnNewGame(...)` creates players from map players, picks `LocalPlayer`, then
+  TODOs relationships (`src/OpenSage.Game/Logic/PlayerManager.cs:24-46`).
+- `PlayerManager.CreatePlayers(...)` maps `mapPlayer.Allies/Enemies` into `player.Allies`/
+  `player.Enemies` (`PlayerManager.cs:50-76`) — so map-defined relationships are read, but the
+  skirmish-slot-driven setup is the gap.
+- `Player` has `_playerToPlayerRelationships` + `playerToTeamRelationships` (`Logic/Player.cs:33-35`),
+  public `Allies`/`Enemies` sets (`:126-128`), a `Team` (`:139`),
+  `GetRelationship(Team? that)` (team override → player override → neutral) (`:811-831`),
+  `RelationshipType { Enemies=0, Neutral=1, Allies=2 }` (`:965-970`), `PlayerRelationships` overrides
+  (`:972-994`), and `AddAlly()`/`AddEnemy()` that only add to sets, no reciprocal wiring (`:779-786`).
+- `PlayerSetting` fields: `StartPosition`, `SideName`, `Color`, `Team`, `Owner`, `Name`,
+  `IsLocalForMultiplayer` (`Logic/PlayerSettings.cs:17-36`).
+- `PlayerTemplate` fields: `Side`, `PlayableSide`, `IsObserver`, `StartMoney`, `PreferredColor`,
+  `DisplayName`, `StartingBuilding`, `StartingUnits`, … (`Logic/PlayerTemplate.cs:115-140`; INI parse
+  `:58-113`).
+
+### 2.4 Start positions & factions
+- `Waypoints.TryGetPlayerStart(int playerIndex)` looks up `Player{i}_Start`
+  (`src/OpenSage.Game/Scripting/Waypoints.cs:76-81`); map load builds `Waypoints` from map objects
+  (`Scene3D.cs:139-152`).
+- `Scene3D.CreateSkirmishPlayerStartingBuilding(...)` uses `TryGetPlayerStart`, falls back to
+  `(80,80,0)` + heightmap Z (`Scene3D.cs:430-438`); `player.Template.StartingBuilding` +
+  `StartingUnits[0]` drive spawns (`Scene3D.cs:440-455`).
+- Map start positions stored in `MapCache` `Player_1..8_Start` (`Content/MapCache.cs:29-38,66-73`);
+  user maps in `UserMapCache` (`Data/Map/UserMapCache.cs:144-145,272-273`).
+- Slot faction index → playable side name (`SkirmishManager.cs:76-82`); replay metadata maps
+  `PlayerTemplate.Side` ↔ faction index (`Game.cs:225-279`).
+
+---

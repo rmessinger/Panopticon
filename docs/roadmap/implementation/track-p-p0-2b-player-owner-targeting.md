@@ -4,6 +4,9 @@
 > Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-2: Generic definition/player resolution (player half)
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Let `ActionEntry`/scenario target any player/owner and any object definition"
 > Companion plan: [track-p-p0-2-generic-definition-resolution.md](track-p-p0-2-generic-definition-resolution.md) covers the definition half (removing `KnownDefinitions`); this plan covers the player/owner half.
+>
+> Audience: human — problem statement, design rationale, and approach are above
+> the divider. File:line implementation details are below the divider (agent context).
 
 ## Problem
 
@@ -82,6 +85,11 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
 - `EnemyContext_PicksHostilePlayer_NotHardcodedIndex`: with a 3-player relationship layout, assert
   the position context for an owner's landmark-relative action is built against the hostile player,
   not slot 0/1 positionally.
+
+---
+
+> Agent implementation details — the sections below list exact files, methods, and
+> tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 

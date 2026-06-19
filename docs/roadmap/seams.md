@@ -5,6 +5,10 @@
 > seams (especially [A4](track-a-foundations.md)); this is the single place that names them, says
 > what each one abstracts, and tracks their interface and implementations. Keep it in sync as
 > seams are introduced or change — see [How to maintain](#how-to-maintain-this-registry).
+>
+> Audience: human + agent — the overview and seam descriptions are human-readable; the registry
+> detail and file citations are agent context. A split into a human overview and an agent
+> registry is planned.
 
 ## What is a seam?
 

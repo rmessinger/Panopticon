@@ -1,8 +1,11 @@
 # Current-State Summary
 
-> Part of the [Large-Scale RTS Roadmap](README.md). A snapshot of the architecture the roadmap
+> Part of the [Large-Scale RTS Roadmap](../README.md). A snapshot of the architecture the roadmap
 > builds on (see cited files; update as the code evolves — this is the basis for every phase's
 > assumptions).
+>
+> Audience: agent — contains file:line code citations used to ground phase assumptions. Human
+> readers wanting a project overview: see the [track docs](README.md#document-map).
 
 ## Simulation core
 

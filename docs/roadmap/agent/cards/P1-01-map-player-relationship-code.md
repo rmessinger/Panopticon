@@ -8,6 +8,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
+| Diagrams | [P1 Architecture Diagrams](../../deep-dives/skirmish-setup.md#8-architecture-diagrams) |
 
 > Superseded. The relationship-gap survey this card requested is captured in the
 > [P1 deep dive](../../deep-dives/skirmish-setup.md) §2.3 (the `OnNewGame()` TODO, the existing

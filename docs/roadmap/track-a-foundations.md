@@ -2,7 +2,9 @@
 
 > Part of the [Large-Scale RTS Roadmap](README.md). Shared prerequisites that both the
 > [Scale](track-b-scale.md) and [External Assets](track-c-external-assets.md) tracks build on.
-> See [`current-state.md`](current-state.md) for the architecture these phases modify.
+> See [`agent/current-state.md`](agent/current-state.md) for the architecture these phases modify.
+>
+> Audience: human — strategic track overview.
 
 > The Milestone column states the single demonstrable outcome that marks each phase done (its
 > definition-of-done); the granular steps to get there live in
@@ -15,6 +17,20 @@
 | A3. Simulation/presentation seam | Formalize the boundary between logic state and presentation (`Drawable`/render/audio). Logic must not read render-only state. Enables headless + future thin clients. | A full logic tick executes with zero reads of render/audio-only state. | Not started |
 | A4. Experiment framework seams & harness | The backbone of the project's "pluggable experiments" aim: establish stable seams with swappable implementations for optimization-relevant subsystems (e.g. the simulation domain model, pathfinding, partitioning, fidelity policy, storage layout, model import), plus an experiment harness that selects/configures an implementation, runs it against [B1](track-b-scale.md) benchmarks, and reports results to the [visualizer (A5)](deep-dives/visualization.md). Makes techniques interchangeable and independently measurable. | Two implementations of one seam are config-selected, benchmarked on B1, and compared with no caller changes. | Not started |
 | A5. Scenario authoring & visualization | The human-facing layer that makes the headless host usable: author scenarios (declarative + visual + capture-from-run), drive parameter sweeps/experiment matrices (with [A4](deep-dives/visualization.md)), and replay/visualize/compare runs — including drilling into the tiered recording to localize divergences. The ReplaySketch tooling must scale with the sim (large/procedural authoring, streaming/LOD replay — A5-5). Also includes A5-6: WorldBuilder baseline (audit functional state, ensure the basic author → save → load → play round-trip works at normal map sizes) — an early-start sub-phase that does not depend on A1/A4 and gates B4a. Detailed design: [deep-dives/visualization.md](deep-dives/visualization.md). | A scenario is authored, swept across a parameter matrix, and its runs replayed/compared with a divergence localized in the visualizer; and a normal-sized map round-trips through WorldBuilder and plays. | Not started |
+
+## Phase resources
+
+A navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
+Diagrams marked `†` are placeholder stubs; they will be elaborated before the first card for that
+phase is marked `Ready`.
+
+| Phase | Deep dive | Diagrams | Agent cards |
+|---|---|---|---|
+| A1 | [Headless host](deep-dives/headless-host.md) | [§7](deep-dives/headless-host.md#7-architecture-diagrams) `†` | — |
+| A2 | — | — | — |
+| A3 | — | — | — |
+| A4 | — | — | — |
+| A5 | [Visualization](deep-dives/visualization.md) | [§9](deep-dives/visualization.md#9-architecture-diagrams) `†` | — |
 
 ## Notes
 
