@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-12` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Blocked` (current `HarnessRunner` executes authored commands via exported `.rep`; runtime handle/selector substitution requires direct per-command dispatch wiring in the run loop) |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `P0-08` (HarnessRunner must exist), `P0-11` (handle/selector model types must exist) |
