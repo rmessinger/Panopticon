@@ -92,7 +92,7 @@ skirmish playable build → fight → win/lose vs. AI.
       exporter order emission.
   - AC: for each of move/attack/construct/produce/ability, an authored command produces the expected
     `OrderProcessor` effect in a headless run (state assertion passes).
-- [ ] Add a validation/assertion layer (expected post-conditions, invariants, outcomes) runnable
+- [x] Add a validation/assertion layer (expected post-conditions, invariants, outcomes) runnable
       headlessly with a pass/fail result.
   - AC: assertions are authored as JSON predicates (`{path, op, value}`) over a fixed path/operator
     vocabulary spanning ≥1 outcome, ≥1 state, and ≥1 per-tick invariant type, with a code-defined

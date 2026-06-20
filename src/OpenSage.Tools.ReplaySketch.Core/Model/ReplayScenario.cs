@@ -19,6 +19,8 @@ public sealed class ReplayScenario
 
     public List<PlayerSlotConfig> Players { get; set; } = new();
 
+    public List<ScenarioAssertion> Assertions { get; set; } = new();
+
     // -----------------------------------------------------------------
     // Factory
     // -----------------------------------------------------------------

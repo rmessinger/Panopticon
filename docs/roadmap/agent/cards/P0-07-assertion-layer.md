@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-07` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none (evaluates against `Game` state accessible independently of other P0 cards) |
