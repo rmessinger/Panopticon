@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-10` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-2, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `P0-03` (faction-agnostic definition resolution must be done first) |

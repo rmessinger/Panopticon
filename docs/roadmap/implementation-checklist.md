@@ -79,7 +79,7 @@ skirmish playable build → fight → win/lose vs. AI.
   - AC: a scenario referencing any object definition by name (incl. a non-USA/GLA faction) exports
     orders with the correct definition hash; no faction names remain hardcoded in `ReplayExporter`;
     test resolves a definition from a non-default faction.
-- [ ] Let `ActionEntry`/scenario target any player/owner and any object definition.
+- [x] Let `ActionEntry`/scenario target any player/owner and any object definition.
   - AC: a scenario with ≥3 players of mixed factions attributes each command to the correct
     `PlayerIndex`/owner; test asserts per-player order attribution.
 - [ ] Reference runtime-created objects via implicit auto-handles (keyed to the producing

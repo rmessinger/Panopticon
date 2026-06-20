@@ -9,6 +9,8 @@ using System.IO;
 using System.Numerics;
 using System.Reflection;
 using OpenSage.Content;
+using OpenSage.Data.Rep;
+using OpenSage.IO;
 using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
@@ -163,11 +165,107 @@ public class P0_2b_PlayerOwnerTargetingTests
     [Fact]
     public void Scenario_ThreePlayers_CommandsAttributedToCorrectPlayerIndex()
     {
-        // Arrange: scenario with 3 players each issuing a distinct command.
-        // Act: export to orders.
-        // Assert: each order carries the PlayerIndex of the player who authored it.
-        throw new NotImplementedException("P0-2b: ActionEntry/scenario targets any player; per-player order attribution");
+        var scenario = BuildScenario(playerCount: 3);
+        var map = CreateTestMap();
+        var outputPath = Path.Combine(Path.GetTempPath(), $"rs-multi-3-{Guid.NewGuid():N}.rep");
+
+        try
+        {
+            var error = ReplayExporter.Export(scenario, map, outputPath, out _);
+            Assert.Null(error);
+
+            using var fs = new DiskFileSystem(Path.GetDirectoryName(outputPath)!);
+            var replay = ReplayFile.FromFileSystemEntry(fs.GetFile(Path.GetFileName(outputPath)));
+            var playerIndices = replay.Chunks
+                .Select(c => c.Order)
+                .Where(o => o.OrderType == OrderType.MoveTo)
+                .Select(o => o.PlayerIndex)
+                .Distinct()
+                .OrderBy(i => i)
+                .ToArray();
+
+            Assert.Equal([2, 3, 4], playerIndices);
+        }
+        finally
+        {
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+        }
     }
+
+    [Fact]
+    public void TwoPlayerScenario_PlayerIndicesStartAtTwo()
+    {
+        var scenario = BuildScenario(playerCount: 2);
+        var map = CreateTestMap();
+        var outputPath = Path.Combine(Path.GetTempPath(), $"rs-multi-2-{Guid.NewGuid():N}.rep");
+
+        try
+        {
+            var error = ReplayExporter.Export(scenario, map, outputPath, out _);
+            Assert.Null(error);
+
+            using var fs = new DiskFileSystem(Path.GetDirectoryName(outputPath)!);
+            var replay = ReplayFile.FromFileSystemEntry(fs.GetFile(Path.GetFileName(outputPath)));
+            var playerIndices = replay.Chunks
+                .Select(c => c.Order)
+                .Where(o => o.OrderType == OrderType.MoveTo)
+                .Select(o => o.PlayerIndex)
+                .Distinct()
+                .OrderBy(i => i)
+                .ToArray();
+
+            Assert.Equal([2, 3], playerIndices);
+        }
+        finally
+        {
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+        }
+    }
+
+    private static ReplayScenario BuildScenario(int playerCount)
+    {
+        var scenario = new ReplayScenario
+        {
+            MapPath = "maps/alpine assault/alpine assault.map",
+        };
+
+        for (var i = 0; i < playerCount; i++)
+        {
+            scenario.Players.Add(new PlayerSlotConfig
+            {
+                Name = $"P{i + 1}",
+                FactionIndex = 2 + (i * 2),
+                Color = (sbyte)(i + 1),
+                StartPosition = i + 1,
+                Team = i + 1,
+                Actions =
+                {
+                    new ActionEntry(
+                        label: "Move",
+                        command: CommandSpec.CreateOpen(
+                            OrderType.MoveTo,
+                            new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f))),
+                        position: null,
+                        timing: new FixedTiming(100),
+                        id: $"move-{i}"),
+                },
+            });
+        }
+
+        return scenario;
+    }
+
+    private static MapMetadataService CreateTestMap() =>
+        MapMetadataService.CreateForTesting(
+            extentMin: Vector3.Zero,
+            extentMax: new Vector3(100f, 100f, 20f),
+            playerStarts: Vector3.Zero);
 }
 
 // ── P0-6: Procedural authoring at scale ──────────────────────────────────────
