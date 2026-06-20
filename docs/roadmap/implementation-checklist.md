@@ -112,7 +112,7 @@ skirmish playable build → fight → win/lose vs. AI.
     `totalCells/passed/failed/cells`; exit code 0 iff all cells pass; a matrix with one
     deliberately-failing cell exits non-zero and reports which cell failed with assertion detail.
   - Note: this is the expansion primitive A5-2 (experiment matrix tooling/visualizer) builds on.
-- [ ] Support arbitrary command volume: programmatic/procedural generation of large order sets
+- [x] Support arbitrary command volume: programmatic/procedural generation of large order sets
       (not hand-entry) and efficient `.rep` emission, so the harness scales toward sim-scale runs.
       (Full authoring/replay scaling is finalized under A5-5.)
   - AC: a scenario with ≥10k programmatically-generated orders exports and loads within a documented

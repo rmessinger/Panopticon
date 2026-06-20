@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-09` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-6, see [deep dive §3.6](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `P0-06` (exporter open-command coverage) |

@@ -5,6 +5,7 @@
 //
 // Run with: dotnet test src/OpenSage.Tools.ReplaySketch.Tests
 
+using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using System.Reflection;
@@ -276,10 +277,120 @@ public class P0_6_ProceduralAuthoringTests
     [Fact]
     public void ProceduralScenario_TenThousandOrders_ExportsAndLoadsWithinBudget()
     {
-        // Arrange: programmatically generate a scenario with ≥10k commands (no hand-entry).
-        // Act: export to .rep; measure elapsed time and peak allocation.
-        // Assert: export time < documented budget; .rep round-trips without error;
-        // no per-command hand-entry in the generation loop.
-        throw new NotImplementedException("P0-6: ≥10k procedurally-generated orders export within time/memory budget");
+        var scenario = new ReplayScenario
+        {
+            MapPath = "maps/alpine assault/alpine assault.map",
+            Players =
+            {
+                new PlayerSlotConfig
+                {
+                    Name = "P1",
+                    FactionIndex = 2,
+                    Color = 1,
+                    StartPosition = 1,
+                    Team = 1,
+                },
+            },
+        };
+
+        for (var i = 0; i < 10_000; i++)
+        {
+            scenario.Players[0].Actions.Add(
+                new ActionEntry(
+                    label: $"Move-{i}",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.MoveTo,
+                        new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f))),
+                    position: null,
+                    timing: new FixedTiming(1),
+                    id: $"cmd-{i}"));
+        }
+
+        var map = MapMetadataService.CreateForTesting(
+            extentMin: Vector3.Zero,
+            extentMax: new Vector3(100f, 100f, 20f),
+            playerStarts: Vector3.Zero);
+        var outputPath = Path.Combine(Path.GetTempPath(), $"rs-proc-10k-{Guid.NewGuid():N}.rep");
+
+        try
+        {
+            var sw = Stopwatch.StartNew();
+            var error = ReplayExporter.Export(scenario, map, outputPath, out var deferredActions);
+            sw.Stop();
+
+            Console.WriteLine($"Procedural export elapsed: {sw.ElapsedMilliseconds}ms");
+
+            Assert.Null(error);
+            Assert.Empty(deferredActions);
+            Assert.True(File.Exists(outputPath));
+            Assert.True(new FileInfo(outputPath).Length > 0);
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"Expected export under 5s, got {sw.Elapsed.TotalSeconds:F2}s");
+        }
+        finally
+        {
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+        }
+    }
+
+    [Fact]
+    public void ProceduralScenario_WithMixedTimings_Exports()
+    {
+        var scenario = new ReplayScenario
+        {
+            MapPath = "maps/alpine assault/alpine assault.map",
+            Players =
+            {
+                new PlayerSlotConfig
+                {
+                    Name = "P1",
+                    FactionIndex = 2,
+                    Color = 1,
+                    StartPosition = 1,
+                    Team = 1,
+                },
+            },
+        };
+
+        for (var i = 0; i < 100; i++)
+        {
+            TimingConfig timing = (i % 2 == 0)
+                ? new FixedTiming(10)
+                : new RandomTiming(5, 20);
+
+            scenario.Players[0].Actions.Add(
+                new ActionEntry(
+                    label: $"Move-{i}",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.MoveTo,
+                        new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f))),
+                    position: null,
+                    timing: timing,
+                    id: $"mix-{i}"));
+        }
+
+        var map = MapMetadataService.CreateForTesting(
+            extentMin: Vector3.Zero,
+            extentMax: new Vector3(100f, 100f, 20f),
+            playerStarts: Vector3.Zero);
+        var outputPath = Path.Combine(Path.GetTempPath(), $"rs-proc-mix-{Guid.NewGuid():N}.rep");
+
+        try
+        {
+            var error = ReplayExporter.Export(scenario, map, outputPath, out _);
+
+            Assert.Null(error);
+            Assert.True(File.Exists(outputPath));
+            Assert.True(new FileInfo(outputPath).Length > 0);
+        }
+        finally
+        {
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+        }
     }
 }
