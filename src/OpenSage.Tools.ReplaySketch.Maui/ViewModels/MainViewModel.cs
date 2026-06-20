@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using Microsoft.Maui.ApplicationModel;
 using OpenSage.Tools.ReplaySketch.Maui.Services;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
@@ -20,6 +19,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly GeneralsInstallationService _installationService = new();
     private readonly LauncherLocatorService _launcherLocator = new();
     private readonly IPreferencesStore _preferences;
+    private readonly IMainThreadDispatcher _mainThreadDispatcher;
+    private readonly IProcessLauncher _processLauncher;
 
     // ── State ─────────────────────────────────────────────────────────────
     public ReplayScenario Scenario { get; } = ReplayScenario.CreateAlpineAssaultUSAvGLA();
@@ -123,9 +124,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand PlayInGameCommand => _playInGameCommand;
     public ICommand ReloadMapCommand { get; }
 
-    public MainViewModel(IPreferencesStore? preferences = null)
+    public MainViewModel(
+        IPreferencesStore? preferences = null,
+        IMainThreadDispatcher? mainThreadDispatcher = null,
+        IProcessLauncher? processLauncher = null)
     {
         _preferences = preferences ?? new MauiPreferencesStore();
+        _mainThreadDispatcher = mainThreadDispatcher ?? new MauiMainThreadDispatcher();
+        _processLauncher = processLauncher ?? new SystemProcessLauncher();
         _validateCommand = new RelayCommand(
             execute: _ => ExecuteValidate(),
             canExecute: _ => MapLoaded);
@@ -205,7 +211,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 ReplaySketchLog.Write(
                     $"  MapMetadataService.Load: {mapLoadStopwatch.ElapsedMilliseconds}ms installation='{installation.Path}' map='{Scenario.MapPath}'");
 
-                await MainThread.InvokeOnMainThreadAsync(() =>
+                await _mainThreadDispatcher.InvokeOnMainThreadAsync(() =>
                 {
                     Map = loadedMap;
                     UpdateCommandStates();
@@ -218,7 +224,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 ReplaySketchLog.WriteException(
                     $"LoadMapAsync failed map='{Scenario.MapPath}'", ex);
 
-                await MainThread.InvokeOnMainThreadAsync(() =>
+                await _mainThreadDispatcher.InvokeOnMainThreadAsync(() =>
                 {
                     MapLoadError = $"{ex.Message}\n\nLog: {ReplaySketchLog.LogPath}";
                     UpdateCommandStates();
@@ -306,7 +312,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             UseShellExecute = false,
             CreateNoWindow = false,
         };
-        System.Diagnostics.Process.Start(psi);
+        _processLauncher.Start(psi);
     }
 
     // ── INotifyPropertyChanged ─────────────────────────────────────────────
@@ -368,7 +374,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     return;
                 }
 
-                await MainThread.InvokeOnMainThreadAsync(() =>
+                await _mainThreadDispatcher.InvokeOnMainThreadAsync(() =>
                 {
                     _allMapOptions = maps;
                     AvailableMaps = new ObservableCollection<string>(maps.Select(m => m.Label));

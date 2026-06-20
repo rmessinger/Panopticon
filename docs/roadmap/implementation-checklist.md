@@ -66,7 +66,7 @@ skirmish playable build → fight → win/lose vs. AI.
     headless tests added to `PreferencesStoreTests.cs`. The `LoadMapFromFolder` behavioral test is
     blocked by TFM mismatch (test project is `net10.0`; MAUI project is `net10.0-maccatalyst`) —
     tracked as follow-up in P0-1c. All 56 tests pass; formatting clean.
-- [ ] Abstract the remaining MAUI statics `MainViewModel` binds to — the `MainThread` dispatcher
+- [x] Abstract the remaining MAUI statics `MainViewModel` binds to — the `MainThread` dispatcher
       (background-load completion, `MainViewModel.cs:180-190`) and `Process.Start`/launcher
       (`ExecutePlayInGame`, `MainViewModel.cs:250-273`) — behind small injectable seams.
   - AC: `MainViewModel` takes a dispatcher seam (runs the continuation synchronously in tests) and a

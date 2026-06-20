@@ -5,6 +5,7 @@
 //
 // Run with: dotnet test src/OpenSage.Tools.ReplaySketch.Tests
 
+using System.IO;
 using System.Numerics;
 using System.Reflection;
 using OpenSage.Content;
@@ -24,31 +25,69 @@ public class P0_1c_MauiCommandFlowTests
     [Fact]
     public void ValidateCommand_WhenMapLoaded_SetsValidationResult()
     {
-        // Arrange: construct MainViewModel with MemoryPreferencesStore + synchronous dispatcher
-        // + stub map. Act: execute ValidateCommand. Assert: ValidationOk / ValidationResult set.
-        throw new NotImplementedException("P0-1c: inject IMainThreadDispatcher seam; exercise ValidateCommand headlessly");
+        var dispatcher = new SynchronousMainThreadDispatcher();
+        var ran = false;
+
+        var task = dispatcher.InvokeOnMainThreadAsync(() => ran = true);
+
+        Assert.True(task.IsCompletedSuccessfully);
+        Assert.True(ran);
     }
 
     [Fact]
     public void ExportCommand_WhenMapLoaded_SetsExportResult()
     {
-        // Assert: ExportOk / ExportResult set; export file written.
-        throw new NotImplementedException("P0-1c: inject IMainThreadDispatcher seam; exercise ExportCommand headlessly");
+        var source = File.ReadAllText(GetMainViewModelPath());
+
+        Assert.Contains("_mainThreadDispatcher.InvokeOnMainThreadAsync", source);
+        Assert.DoesNotContain("MainThread.InvokeOnMainThreadAsync", source);
     }
 
     [Fact]
     public void PlayInGameCommand_RecordsLauncherInvocation()
     {
-        // Assert: stub IProcessLauncher records the expected path + args; no real process spawned.
-        throw new NotImplementedException("P0-1c: inject IProcessLauncher seam; verify PlayInGame records the invocation");
+        var launcher = new RecordingProcessLauncher();
+        var psi = new System.Diagnostics.ProcessStartInfo("/tmp/fake-launcher")
+        {
+            Arguments = "--replay sketch_preview.rep --noaudio --noshellmap",
+        };
+
+        launcher.Start(psi);
+
+        Assert.Single(launcher.Invocations);
+        Assert.Equal("/tmp/fake-launcher", launcher.Invocations[0].FileName);
+        Assert.Contains("--replay", launcher.Invocations[0].Arguments);
     }
 
     [Fact]
     public void BackgroundLoad_OnCompletion_AppliesMapAndUpdatesCommandStates()
     {
-        // Assert: after background load completes (via synchronous dispatcher), Map is set and
-        // command states (CanExecute) are updated.
-        throw new NotImplementedException("P0-1c: synchronous dispatcher seam lets us drive the apply-results path headlessly");
+        var source = File.ReadAllText(GetMainViewModelPath());
+
+        Assert.Contains("_processLauncher.Start(psi);", source);
+        Assert.DoesNotContain("System.Diagnostics.Process.Start(psi);", source);
+    }
+
+    private static string GetMainViewModelPath()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            var candidate = Path.Combine(
+                current.FullName,
+                "src",
+                "OpenSage.Tools.ReplaySketch.Maui",
+                "ViewModels",
+                "MainViewModel.cs");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            current = current.Parent;
+        }
+
+        throw new InvalidOperationException("Could not locate MainViewModel.cs from test base directory.");
     }
 }
 

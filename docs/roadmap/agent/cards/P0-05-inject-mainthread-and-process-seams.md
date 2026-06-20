@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-05` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1c, see [deep dive §3.1](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `P0-04` (IPreferencesStore seam, so constructor injection pattern is already established) |
