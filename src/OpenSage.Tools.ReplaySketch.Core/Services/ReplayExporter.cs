@@ -57,12 +57,15 @@ public static class ReplayExporter
                         var actionOrders = BuildOrders(ownerIdx + 2, action, worldPos, ctx, rng)
                             .ToList();
                         // Only create DeferredAction if the trigger is a legacy action (has ActionType).
-                        // Open commands cannot yet be deferred triggers.
                         if (triggerEntry.Type is ActionType triggerType)
                         {
                             deferred.Add(new DeferredAction(ownerIdx + 2, triggerType, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
                         }
-                        // else: open-command triggers are not yet supported; silently skip.
+                        else
+                        {
+                            throw new InvalidOperationException(
+                                $"AfterActionTiming on action '{action.Id}' references trigger '{aat.TriggerActionId}' which is an open CommandSpec command. Open-command deferred triggers are not yet supported.");
+                        }
                     }
                     // else: dangling reference — action is silently skipped (trigger no longer exists)
                 }
