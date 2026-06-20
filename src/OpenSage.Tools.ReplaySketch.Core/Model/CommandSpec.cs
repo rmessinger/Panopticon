@@ -39,6 +39,12 @@ public sealed class CommandSpec
         return order;
     }
 
+    public CommandSpec Resolve(IObjectReferenceResolver resolver)
+    {
+        var resolvedArguments = Arguments.Select(arg => arg.Resolve(resolver)).ToList();
+        return new CommandSpec(OrderType, resolvedArguments);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Factory methods for legacy actions
     // ─────────────────────────────────────────────────────────────────────────
@@ -134,4 +140,3 @@ internal sealed class CommandSpecJsonConverter : JsonConverter<CommandSpec>
         writer.WriteEndObject();
     }
 }
-

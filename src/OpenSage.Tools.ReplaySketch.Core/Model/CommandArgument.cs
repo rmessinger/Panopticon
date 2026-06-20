@@ -16,10 +16,17 @@ namespace OpenSage.Tools.ReplaySketch.Model;
 [JsonDerivedType(typeof(BooleanCommandArgument), "boolean")]
 [JsonDerivedType(typeof(ObjectIdCommandArgument), "objectId")]
 [JsonDerivedType(typeof(PositionCommandArgument), "position")]
+[JsonDerivedType(typeof(HandleCommandArgument), "handle")]
+[JsonDerivedType(typeof(QuerySelectorCommandArgument), "query")]
 public abstract class CommandArgument
 {
     /// <summary>Appends this argument to <paramref name="order"/>.</summary>
     public abstract void AppendTo(Order order, PositionContext ctx, Random rng);
+
+    /// <summary>
+    /// Returns a resolved version of this argument. Default implementation returns this argument unchanged.
+    /// </summary>
+    public virtual CommandArgument Resolve(IObjectReferenceResolver resolver) => this;
 }
 
 /// <summary>Appends an integer argument.</summary>
@@ -85,5 +92,45 @@ public sealed class PositionCommandArgument : CommandArgument
     {
         var worldPos = Spec.Resolve(ctx, rng);
         order.AddPositionArgument(worldPos);
+    }
+}
+
+public sealed class HandleCommandArgument : CommandArgument
+{
+    public string CommandId { get; }
+
+    [JsonConstructor]
+    public HandleCommandArgument(string commandId) => CommandId = commandId;
+
+    public override void AppendTo(Order order, PositionContext ctx, Random rng) =>
+        throw new InvalidOperationException(
+            $"HandleCommandArgument (commandId='{CommandId}') must be resolved before dispatch.");
+
+    public override CommandArgument Resolve(IObjectReferenceResolver resolver)
+    {
+        var id = resolver.ResolveHandle(CommandId);
+        return new ObjectIdCommandArgument(id.Index);
+    }
+}
+
+public sealed class QuerySelectorCommandArgument : CommandArgument
+{
+    public string? Relationship { get; }
+    public string? DefinitionName { get; }
+
+    [JsonConstructor]
+    public QuerySelectorCommandArgument(string? relationship, string? definitionName)
+    {
+        Relationship = relationship;
+        DefinitionName = definitionName;
+    }
+
+    public override void AppendTo(Order order, PositionContext ctx, Random rng) =>
+        throw new InvalidOperationException("QuerySelectorCommandArgument must be resolved before dispatch.");
+
+    public override CommandArgument Resolve(IObjectReferenceResolver resolver)
+    {
+        var id = resolver.ResolveSelector(this);
+        return new ObjectIdCommandArgument(id.Index);
     }
 }
