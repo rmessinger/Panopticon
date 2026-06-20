@@ -88,7 +88,7 @@ skirmish playable build → fight → win/lose vs. AI.
   - AC: a scenario issues `AttackObject`/`Enter` against an object produced by an earlier command
     without the author writing an id, and another command targets an enemy structure via a selector;
     both resolve in a headless run (state assertion passes).
-- [ ] Map the gameplay-relevant `OrderType` set (move, attack, construct, produce, ability) to
+- [x] Map the gameplay-relevant `OrderType` set (move, attack, construct, produce, ability) to
       exporter order emission.
   - AC: for each of move/attack/construct/produce/ability, an authored command produces the expected
     `OrderProcessor` effect in a headless run (state assertion passes).
