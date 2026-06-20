@@ -114,7 +114,7 @@ internal static class SkudefReader
         // sorting criteria. We don't actually know what those criteria are as the source code for the update is not available.
         // So this is a guess based on the behavior of the Steam version of the game.
         var entries = Directory
-            .GetFileSystemEntries(directory)
+            .GetFileSystemEntries(directory, "*", new System.IO.EnumerationOptions { IgnoreInaccessible = true })
             // In the CD / Origin release of ZH, .big files from Generals were included in the same directory as the other .big files.
             // In the current Steam version, they are in a subdirectory. We need to make sure that the Generals .big files are loaded first,
             // so that Zero Hour can override them.
