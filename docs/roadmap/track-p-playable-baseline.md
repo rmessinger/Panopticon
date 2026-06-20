@@ -76,7 +76,7 @@ for that phase is marked `Ready`.
 | P3 | [Victory / defeat](deep-dives/victory-defeat.md) | [§8](deep-dives/victory-defeat.md#8-architecture-diagrams) `†` | — |
 | P4 / P6 | [Economy, production, combat](deep-dives/economy-production-combat.md) | [§](deep-dives/economy-production-combat.md#architecture-diagrams) `†` | — |
 | P6b | [Unit contract](deep-dives/unit-contract-validation.md) | [§7](deep-dives/unit-contract-validation.md#7-architecture-diagrams) `†` | — |
-| P7 | — | — | — |
+| P7 | [end-to-end-regression.md](deep-dives/end-to-end-regression.md) | [§8 Architecture Diagrams](deep-dives/end-to-end-regression.md#8-architecture-diagrams) | — |
 
 ## Notes
 
