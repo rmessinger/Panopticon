@@ -28,6 +28,12 @@ public static class Program
 
     public static void Main(string[] args)
     {
+        if (Array.Exists(args, a => a.Equals("--run-assert", StringComparison.OrdinalIgnoreCase)))
+        {
+            Environment.Exit(RunAndAssertCommand(args));
+            return;
+        }
+
         var config = LoadConfig();
 
         // --headless overrides the config file (useful for VS Code launch configs and CI).
@@ -37,6 +43,59 @@ public static class Program
         }
 
         Run(config);
+    }
+
+    private static int RunAndAssertCommand(string[] args)
+    {
+        var scenarioPath = GetArgValue(args, "--scenario");
+        if (string.IsNullOrEmpty(scenarioPath))
+        {
+            Console.Error.WriteLine("Missing required --scenario <path.json> argument.");
+            return 1;
+        }
+
+        var gamePath = GetArgValue(args, "--game-path");
+        var installationService = new GeneralsInstallationService();
+        if (!string.IsNullOrEmpty(gamePath))
+        {
+            installationService.SetPath(gamePath);
+        }
+
+        if (!installationService.TryGetInstallation(out var installation) || installation is null)
+        {
+            Console.Error.WriteLine("Could not locate a Generals installation.");
+            Console.Error.WriteLine(installationService.GetDiagnostics());
+            return 1;
+        }
+
+        var scenario = ScenarioProfileLoader.LoadFromFile(scenarioPath);
+        var tempDirectory = Path.Combine(Path.GetTempPath(), $"opensage_runassert_{Guid.NewGuid():N}");
+        try
+        {
+            var report = HarnessRunner.RunAndAssert(scenario, installation, tempDirectory);
+            Console.WriteLine(report.ToJson());
+            return report.AllPassed ? 0 : 1;
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    private static string? GetArgValue(string[] args, string name)
+    {
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i].Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return args[i + 1];
+            }
+        }
+
+        return null;
     }
 
     private static TestHarnessConfig LoadConfig()

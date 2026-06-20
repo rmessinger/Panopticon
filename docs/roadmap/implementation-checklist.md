@@ -98,7 +98,7 @@ skirmish playable build → fight → win/lose vs. AI.
     vocabulary spanning ≥1 outcome, ≥1 state, and ≥1 per-tick invariant type, with a code-defined
     (C#) predicate escape hatch; a headless run emits a machine-readable pass/fail report and a
     deliberately-failing assertion is reported with frame + expected/actual.
-- [ ] Provide a headless run-and-assert entry point cheap agents can call (scenario/command file
+- [x] Provide a headless run-and-assert entry point cheap agents can call (scenario/command file
       in → result out).
   - AC: one CLI/library call takes a scenario/command file and returns exit code 0/non-zero + a JSON
     report; documented invocation; runnable headlessly in CI.

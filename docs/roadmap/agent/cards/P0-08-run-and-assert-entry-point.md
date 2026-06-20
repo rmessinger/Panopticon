@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-08` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5, see [deep dive §3.5](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `P0-07` (assertion layer must exist), `P0-03` (faction-agnostic exporter) |

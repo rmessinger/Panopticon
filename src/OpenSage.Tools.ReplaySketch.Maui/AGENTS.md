@@ -133,24 +133,26 @@ exporter (scenario → engine `Order` → `.rep`).
 
 ## The MAUI layer: what is and is not validatable
 
-`MainViewModel` (`ViewModels/MainViewModel.cs`) currently binds directly to MAUI statics, which
-is why its command flows are not yet headlessly testable:
+`MainViewModel` (`ViewModels/MainViewModel.cs`) uses injectable seams for the MAUI statics:
 
 | Binding | Where | Roadmap seam to remove it |
 |---|---|---|
-| `Preferences.Default` | constructor + `LoadMapFromFolder` | P0-1b: extract `IPreferencesStore` |
-| `MainThread.BeginInvokeOnMainThread` | `StartBackgroundLoad` apply-results | P0-1c: inject a dispatcher seam |
-| `Process.Start` / launcher | `ExecutePlayInGame` | P0-1c: inject a process-launcher seam |
+| `Preferences.Default` | constructor + `LoadMapFromFolder` | `IPreferencesStore` (`MauiPreferencesStore` / `MemoryPreferencesStore`) |
+| `MainThread.InvokeOnMainThreadAsync` | map-load and map-discovery apply-results | `IMainThreadDispatcher` (`MauiMainThreadDispatcher` / `SynchronousMainThreadDispatcher`) |
+| `Process.Start` / launcher | `ExecutePlayInGame` | `IProcessLauncher` (`SystemProcessLauncher` / `RecordingProcessLauncher`) |
 
-Until those seams land, do not add new logic directly inside `MainViewModel` methods that touch
-these statics — you will create untestable code. Put the logic in a `.Core` service and have the
-ViewModel call it. When you do touch a flow that has a seam, add a unit test in
+Do not add new logic directly inside `MainViewModel` methods that touch MAUI/runtime APIs.
+Put the logic in a `.Core` service and have the ViewModel call it. When you touch a flow with a seam, add a unit test in
 `OpenSage.Tools.ReplaySketch.Tests` using the in-memory/synchronous test double.
 
-Forthcoming (P0-4/P0-5): a headless run-and-assert entry point — scenario/command file in,
-machine-readable pass/fail report out (exit code + JSON) — for command-level validation. Once it
-lands, prefer it for validating exporter/command changes end-to-end. Status:
-[playable-baseline-harness.md](../../docs/roadmap/deep-dives/playable-baseline-harness.md).
+Headless run-and-assert entry point:
+
+```sh
+dotnet run --project src/OpenSage.Tools.TestHarness -- --run-assert --scenario <path-to-scenario.json> [--game-path <path-to-generals>]
+```
+
+This command emits a machine-readable JSON report to stdout and exits 0 when all assertions pass,
+1 when any assertion fails.
 
 ---
 
@@ -163,7 +165,7 @@ lands, prefer it for validating exporter/command changes end-to-end. Status:
    `OpenSage.Game.Tests`.
 4. If you changed `.Core` behaviour, add or extend a headless test that asserts it.
 5. If you changed exporter/command behaviour, validate the produced `.rep` / orders via the
-   command-model tests (and the run-and-assert entry point once available).
+   command-model tests and the run-and-assert entry point.
 6. If you changed anything visual — renderer logic, XAML layout, views, tab switching,
    `MainViewModel` presentation — run the screenshot mode and inspect the output PNG to confirm
    the visual result is correct (see [MAUI screenshot mode](#maui-screenshot-mode)). Capture
