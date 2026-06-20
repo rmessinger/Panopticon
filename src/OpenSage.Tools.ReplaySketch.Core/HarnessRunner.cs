@@ -5,6 +5,8 @@ using System.Linq;
 using OpenSage.Data;
 using OpenSage.Graphics;
 using OpenSage.IO;
+using OpenSage.Logic;
+using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Assertions;
 using OpenSage.Tools.ReplaySketch.Model;
@@ -15,6 +17,18 @@ public static class HarnessRunner
 {
     private const uint DefaultFrameTimeout = 18_000;
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Schedule entry: one row per non-AfterAction action across all players.
+    // DirectDispatch is non-null only for handle-dependent open commands that
+    // cannot be exported to the .rep file.
+    // ──────────────────────────────────────────────────────────────────────────
+    private record struct ScheduledAction(
+        uint Frame,
+        int PlayerIndex,
+        string CommandId,
+        ActionEntry? DirectDispatch,
+        PositionContext Ctx);
+
     public static AssertionReport RunAndAssert(
         ReplayScenario scenario,
         GameInstallation installation,
@@ -24,7 +38,17 @@ public static class HarnessRunner
         var replayPath = Path.Combine(tempDirectory, "sketch_run.rep");
 
         var map = MapMetadataService.Load(installation, scenario.MapPath);
-        var exportError = ReplayExporter.Export(scenario, map, replayPath, out var deferredActions);
+
+        // Build a concrete scenario where handle-dependent actions are replaced with no-ops
+        // so that ReplayExporter does not encounter unresolvable arguments at export time.
+        var concreteScenario = BuildConcreteScenario(scenario);
+
+        // Pre-compute the per-frame tracking/dispatch schedule for ALL non-AfterAction actions.
+        // Note: RandomTiming frame alignment is best-effort when the schedule's seeded Random(0)
+        // diverges from ReplayExporter's unseeded Random. FixedTiming is always exact.
+        var schedule = BuildActionSchedule(scenario, map);
+
+        var exportError = ReplayExporter.Export(concreteScenario, map, replayPath, out var deferredActions);
         if (exportError is not null)
         {
             throw new InvalidOperationException($"Replay export failed: {exportError}");
@@ -50,16 +74,49 @@ public static class HarnessRunner
             using var monitor = new ReplayActionMonitor(game);
             var pendingInjections = BuildDeferredInjector(monitor, deferredActions);
 
-            while (game.IsRunning)
+            var resolver = new ObjectReferenceResolver(game);
+            var dispatchRng = new Random();
+            try
             {
-                DrainPendingInjections(game, pendingInjections);
-                game.Update(Array.Empty<OpenSage.Input.InputMessage>());
-
-                var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
-                if (logicFrame >= DefaultFrameTimeout)
+                while (game.IsRunning)
                 {
-                    break;
+                    var logicFrame = ComputeLogicFrame(game);
+
+                    // For every action whose scheduled frame matches the current frame:
+                    //   - Call BeginCommand to start tracking any objects this action creates.
+                    //   - For handle-dependent actions: also resolve args and inject directly,
+                    //     since they were replaced with no-ops in the exported .rep.
+                    var frameActions = schedule.Where(s => s.Frame == logicFrame).ToList();
+                    foreach (var item in frameActions)
+                    {
+                        resolver.BeginCommand(item.CommandId);
+                        if (item.DirectDispatch is { } action)
+                        {
+                            var resolved = action.Command.Resolve(resolver);
+                            var order = resolved.ToOrder(item.PlayerIndex, item.Ctx, dispatchRng);
+                            game.InjectOrders(new[] { order });
+                        }
+                    }
+
+                    DrainPendingInjections(game, pendingInjections);
+                    game.Update(Array.Empty<OpenSage.Input.InputMessage>());
+
+                    // End command tracking after the update so any ObjectCreated events fired
+                    // during the update are correctly attributed to their command.
+                    foreach (var _ in frameActions)
+                    {
+                        resolver.EndCommand();
+                    }
+
+                    if (logicFrame >= DefaultFrameTimeout)
+                    {
+                        break;
+                    }
                 }
+            }
+            finally
+            {
+                resolver.Dispose();
             }
 
             return evaluator.Evaluate();
@@ -69,6 +126,109 @@ public static class HarnessRunner
             Platform.Stop();
         }
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Handle-dependency helpers
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private static bool ContainsUnresolvableArgs(ActionEntry action) =>
+        action.Command.Arguments.Any(a => a is HandleCommandArgument or QuerySelectorCommandArgument);
+
+    /// <summary>
+    /// Returns a copy of <paramref name="scenario"/> in which every handle-dependent action
+    /// is replaced with an <see cref="ActionType.EnemyBaseDestroyed"/> no-op carrying the same
+    /// timing and id. This preserves cumulative frame alignment for subsequent concrete actions.
+    /// </summary>
+    private static ReplayScenario BuildConcreteScenario(ReplayScenario scenario)
+    {
+        var concrete = new ReplayScenario
+        {
+            MapPath = scenario.MapPath,
+            BaseRadiusWorldUnits = scenario.BaseRadiusWorldUnits,
+            Assertions = scenario.Assertions,
+        };
+
+        foreach (var player in scenario.Players)
+        {
+            var slot = new PlayerSlotConfig
+            {
+                Name = player.Name,
+                FactionIndex = player.FactionIndex,
+                Color = player.Color,
+                StartPosition = player.StartPosition,
+                Team = player.Team,
+            };
+
+            foreach (var action in player.Actions)
+            {
+                if (ContainsUnresolvableArgs(action))
+                {
+                    // Replace with a sentinel that advances the frame counter but emits no order.
+                    slot.Actions.Add(new ActionEntry(
+                        label: $"[no-op:{action.Label}]",
+                        type: ActionType.EnemyBaseDestroyed,
+                        position: null,
+                        timing: action.Timing,
+                        id: action.Id));
+                }
+                else
+                {
+                    slot.Actions.Add(action);
+                }
+            }
+
+            concrete.Players.Add(slot);
+        }
+
+        return concrete;
+    }
+
+    /// <summary>
+    /// Pre-computes the per-frame dispatch schedule for every non-<see cref="AfterActionTiming"/>
+    /// action. AfterActionTiming actions are handled by the existing deferred-injection mechanism
+    /// and are excluded here.
+    /// </summary>
+    private static List<ScheduledAction> BuildActionSchedule(
+        ReplayScenario scenario, MapMetadataService map)
+    {
+        var schedule = new List<ScheduledAction>();
+        var rng = new Random(0);
+
+        for (var ownerIdx = 0; ownerIdx < scenario.Players.Count; ownerIdx++)
+        {
+            var player = scenario.Players[ownerIdx];
+            var enemyIdx = ownerIdx == 0 ? 1 : 0;
+            var ctx = TerrainValidator.BuildContextPublic(scenario, map, ownerIdx, enemyIdx);
+            var playerIndex = ownerIdx + 2;
+
+            uint cumulativeFrame = 0;
+            foreach (var action in player.Actions)
+            {
+                if (action.Timing is AfterActionTiming)
+                {
+                    continue;
+                }
+
+                cumulativeFrame += action.Timing.Resolve(rng);
+
+                schedule.Add(new ScheduledAction(
+                    Frame: cumulativeFrame,
+                    PlayerIndex: playerIndex,
+                    CommandId: action.Id,
+                    DirectDispatch: ContainsUnresolvableArgs(action) ? action : null,
+                    Ctx: ctx));
+            }
+        }
+
+        return schedule;
+    }
+
+    private static uint ComputeLogicFrame(Game game) =>
+        (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Deferred injection (AfterActionTiming, existing mechanism)
+    // ──────────────────────────────────────────────────────────────────────────
 
     private static List<(int RemainingFrames, IReadOnlyList<Order> Orders)> BuildDeferredInjector(
         ReplayActionMonitor monitor,
@@ -122,5 +282,36 @@ public static class HarnessRunner
                 pending[i] = (remaining - 1, orders);
             }
         }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ObjectReferenceResolver — wraps HandleTracker + Game.ObjectCreated event
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private sealed class ObjectReferenceResolver : IObjectReferenceResolver, IDisposable
+    {
+        private readonly Game _game;
+        private readonly HandleTracker _tracker = new();
+
+        public ObjectReferenceResolver(Game game)
+        {
+            _game = game;
+            _game.ObjectCreated += OnObjectCreated;
+        }
+
+        public void BeginCommand(string commandId) => _tracker.BeginCommand(commandId);
+
+        public void EndCommand() => _tracker.EndCommand();
+
+        private void OnObjectCreated(object? sender, GameObjectCreatedEventArgs e) =>
+            _tracker.OnObjectCreated(e.GameObject.Id);
+
+        public ObjectId ResolveHandle(string commandId) =>
+            _tracker.ResolveHandle(commandId);
+
+        public ObjectId ResolveSelector(QuerySelectorCommandArgument selector) =>
+            _game.FindFirstObjectByDefinitionName(selector.DefinitionName ?? string.Empty);
+
+        public void Dispose() => _game.ObjectCreated -= OnObjectCreated;
     }
 }

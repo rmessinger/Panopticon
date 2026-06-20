@@ -82,7 +82,7 @@ skirmish playable build → fight → win/lose vs. AI.
 - [x] Let `ActionEntry`/scenario target any player/owner and any object definition.
   - AC: a scenario with ≥3 players of mixed factions attributes each command to the correct
     `PlayerIndex`/owner; test asserts per-player order attribution.
-- [ ] Reference runtime-created objects via implicit auto-handles (keyed to the producing
+- [x] Reference runtime-created objects via implicit auto-handles (keyed to the producing
       command) with opt-in explicit names; reference world/enemy objects via query selectors
       (faction/relationship/definition/proximity), resolved at dispatch.
   - AC: a scenario issues `AttackObject`/`Enter` against an object produced by an earlier command

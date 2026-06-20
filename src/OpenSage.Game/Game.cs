@@ -145,6 +145,23 @@ public sealed class Game : DisposableBase, IGame
         NetworkMessageBuffer?.InjectOrdersNow(orders);
 
     /// <summary>
+    /// Returns the <see cref="Logic.Object.ObjectId"/> of the first live game object whose
+    /// <see cref="Logic.Object.ObjectDefinition"/> name equals <paramref name="definitionName"/>,
+    /// or <see cref="Logic.Object.ObjectId.Invalid"/> when no match is found.
+    /// </summary>
+    public Logic.Object.ObjectId FindFirstObjectByDefinitionName(string definitionName)
+    {
+        foreach (var obj in GameLogic.Objects)
+        {
+            if (obj?.Definition?.Name == definitionName)
+            {
+                return obj.Id;
+            }
+        }
+        return Logic.Object.ObjectId.Invalid;
+    }
+
+    /// <summary>
     /// Fired when a <see cref="Render"/> completes, but before
     /// <see cref="Panel"/>'s <see cref="GamePanel.Framebuffer"/>
     /// is copied to <see cref="GraphicsDevice.SwapchainFramebuffer"/>.
