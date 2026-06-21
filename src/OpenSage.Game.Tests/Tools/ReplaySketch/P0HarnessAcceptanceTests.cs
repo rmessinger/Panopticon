@@ -15,7 +15,7 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 
 public class P0_3_RuntimeObjectReferenceTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void ImplicitHandle_AttackObject_ResolvesFromProducingCommand()
     {
         // Arrange: scenario where command B targets the unit produced by command A using
@@ -25,7 +25,7 @@ public class P0_3_RuntimeObjectReferenceTests
         throw new NotImplementedException("P0-3: implicit auto-handle keyed to the producing command resolves at dispatch");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void QuerySelector_TargetsEnemyStructure_ResolvesByRelationship()
     {
         // Arrange: scenario with a command that targets an enemy structure via a
@@ -41,7 +41,7 @@ public class P0_3_RuntimeObjectReferenceTests
 
 public class P0_3_OrderTypeMappingTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void MoveOrder_HeadlessRun_UnitReachesDestination()
     {
         // Arrange: scenario with a MoveTo command for a unit.
@@ -50,7 +50,7 @@ public class P0_3_OrderTypeMappingTests
         throw new NotImplementedException("P0-3: MoveTo command → unit reaches destination in headless run");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void AttackOrder_HeadlessRun_TargetHealthReduces()
     {
         // Arrange: scenario with an attack command.
@@ -59,7 +59,7 @@ public class P0_3_OrderTypeMappingTests
         throw new NotImplementedException("P0-3: attack command → target health reduces in headless run");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void ConstructOrder_HeadlessRun_BuildingExists()
     {
         // Arrange: scenario with a BuildObject command.
@@ -68,7 +68,7 @@ public class P0_3_OrderTypeMappingTests
         throw new NotImplementedException("P0-3: BuildObject command → building exists and is constructed in headless run");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void ProduceOrder_HeadlessRun_UnitSpawns()
     {
         // Arrange: scenario with a CreateUnit command issued after a production structure exists.
@@ -77,7 +77,7 @@ public class P0_3_OrderTypeMappingTests
         throw new NotImplementedException("P0-3: CreateUnit command → unit spawns in headless run");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void AbilityOrder_HeadlessRun_ProducesObservableEffect()
     {
         // Arrange: scenario with a SpecialPower* command for a unit that has a special ability.
@@ -92,7 +92,7 @@ public class P0_3_OrderTypeMappingTests
 
 public class P0_4_AssertionLayerTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void PassingStatePredicate_HeadlessRun_ReportsPass()
     {
         // Arrange: scenario with a state assertion that will be true at end-of-run
@@ -102,7 +102,7 @@ public class P0_4_AssertionLayerTests
         throw new NotImplementedException("P0-4: a passing JSON predicate produces a pass entry in the report");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void FailingStatePredicate_HeadlessRun_ReportsWithFrameAndExpectedActual()
     {
         // Arrange: scenario with a deliberately-failing assertion
@@ -113,7 +113,7 @@ public class P0_4_AssertionLayerTests
         throw new NotImplementedException("P0-4: a failing JSON predicate reports assertion id + frame + expected + actual");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void OutcomeAssertion_MatchDecided_ReportsPass()
     {
         // Arrange: scenario constructed to produce a Decided outcome; assertion expects
@@ -124,7 +124,7 @@ public class P0_4_AssertionLayerTests
         throw new NotImplementedException("P0-4: outcome assertion checks GameOutcome.Status == Decided after P3 lands");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void InvariantAssertion_MoneyNeverNegative_PassesThroughRun()
     {
         // Arrange: scenario with a per-tick invariant (player[*].money >= 0).
@@ -133,7 +133,7 @@ public class P0_4_AssertionLayerTests
         throw new NotImplementedException("P0-4: per-tick invariant (money >= 0) checked via Game.Updating; no violation");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void InvariantAssertion_Violated_AbortsAndReportsOffendingFrame()
     {
         // Arrange: scenario rigged to violate a per-tick invariant at a known frame.
@@ -142,7 +142,7 @@ public class P0_4_AssertionLayerTests
         throw new NotImplementedException("P0-4: invariant violation aborts run and reports the frame");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void CodeDefinedPredicateEscapeHatch_Registered_EvaluatesCorrectly()
     {
         // Arrange: a C# predicate registered by name, referenced from the scenario.
@@ -157,7 +157,7 @@ public class P0_4_AssertionLayerTests
 
 public class P0_5_RunAndAssertEntryPointTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void EntryPoint_PassingScenario_ExitsZeroWithJsonReport()
     {
         // Arrange: a scenario with only passing assertions.
@@ -166,7 +166,7 @@ public class P0_5_RunAndAssertEntryPointTests
         throw new NotImplementedException("P0-5: passing scenario → exit code 0 + JSON report with all passing assertions");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void EntryPoint_FailingAssertion_ExitsNonZeroWithJsonReport()
     {
         // Arrange: a scenario with at least one deliberately-failing assertion.
@@ -175,7 +175,7 @@ public class P0_5_RunAndAssertEntryPointTests
         throw new NotImplementedException("P0-5: failing assertion → exit code non-zero + JSON report identifying the failure");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void EntryPoint_MultiCommandScenario_AuthorsAndAssertsEndToEnd()
     {
         // Arrange: a multi-command scenario (authored programmatically) with post-condition assertions.
@@ -191,7 +191,7 @@ public class P0_5_RunAndAssertEntryPointTests
 
 public class P0_5b_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_Expansion_ProducesOneRunPerCell()
     {
         // Arrange: a ScenarioMatrix with 2 axes of lengths M and N.
@@ -200,7 +200,7 @@ public class P0_5b_ScenarioMatrixTests
         throw new NotImplementedException("P0-5b: cartesian-product expansion produces exactly M×N cells, each uniquely keyed");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCellsPass_ExitsZeroAndEmitsAggregateReport()
     {
         // Arrange: a ScenarioMatrix where every cell's assertions will pass.
@@ -209,7 +209,7 @@ public class P0_5b_ScenarioMatrixTests
         throw new NotImplementedException("P0-5b: all cells pass → exit code 0 + aggregate JSON with passed==totalCells");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_OneCellFails_ExitsNonZeroAndReportsCell()
     {
         // Arrange: a ScenarioMatrix where exactly one cell's assertion is deliberately failing.

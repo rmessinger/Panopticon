@@ -18,7 +18,7 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 
 public class P1_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_BootWithCorrectRelationships()
     {
         // Arrange: ScenarioMatrix with axes playerCount × teamConfig × factionMix
@@ -29,7 +29,7 @@ public class P1_ScenarioMatrixTests
         throw new NotImplementedException("P1 matrix: relationship and faction assignment correct for every playerCount × teamConfig × factionMix cell");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_InvalidCombinations_PrunedByConstraintFilter()
     {
         // Arrange: ScenarioMatrix that includes a cell violating a constraint
@@ -46,7 +46,7 @@ public class P1_ScenarioMatrixTests
 
 public class P2_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_AIPlaysLegalGame()
     {
         // Arrange: ScenarioMatrix with axes humanFaction × aiFaction ∈ {USA, GLA, China},
@@ -57,7 +57,7 @@ public class P2_ScenarioMatrixTests
         throw new NotImplementedException("P2 matrix: AI plays a legal game for every humanFaction × aiFaction × mapSize cell");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_MirrorFactionCells_AIStillFunctional()
     {
         // Arrange: cells where humanFaction == aiFaction (mirror match).
@@ -73,7 +73,7 @@ public class P2_ScenarioMatrixTests
 
 public class P3_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_ProduceCorrectGameOutcome()
     {
         // Arrange: ScenarioMatrix with axes
@@ -87,7 +87,7 @@ public class P3_ScenarioMatrixTests
         throw new NotImplementedException("P3 matrix: correct GameOutcome for every endState × playerCount cell");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_SuddenDeath_ContinuesUntilNextElimination()
     {
         // Arrange: MutualElimination cells (≥2 players lose last structure simultaneously).
@@ -104,7 +104,7 @@ public class P3_ScenarioMatrixTests
 
 public class P4_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_EconomyLoopRunsCorrectly()
     {
         // Arrange: ScenarioMatrix with axes
@@ -117,7 +117,7 @@ public class P4_ScenarioMatrixTests
         throw new NotImplementedException("P4 matrix: BankAccount >= 0 at all ticks, income positive, >= 1 unit produced for every faction × supplyDensity × startingMoney cell");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_LowStartingMoney_ProductionGatedUntilIncomeArrives()
     {
         // Arrange: startingMoney=low cells.
@@ -134,7 +134,7 @@ public class P4_ScenarioMatrixTests
 
 public class P5_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_PrerequisiteGatingEnforced()
     {
         // Arrange: ScenarioMatrix with axes
@@ -148,7 +148,7 @@ public class P5_ScenarioMatrixTests
         throw new NotImplementedException("P5 matrix: prerequisite gating enforced and production completes for every faction × buildTreeDepth × playerType cell");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AIPlayerType_BuildsViaOrderProcessorNotDirectAPI()
     {
         // Arrange: playerType=AI cells.
@@ -165,7 +165,7 @@ public class P5_ScenarioMatrixTests
 
 public class P6_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_OrderTypeProducesExpectedEffect()
     {
         // Arrange: ScenarioMatrix with axes
@@ -178,7 +178,7 @@ public class P6_ScenarioMatrixTests
         throw new NotImplementedException("P6 matrix: each orderType produces the expected observable effect for every faction cell");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_SpecialPowerCells_UnimplementedHandlersSurfaceAsFailures()
     {
         // Arrange: SpecialPower cells across all three factions.
@@ -195,7 +195,7 @@ public class P6_ScenarioMatrixTests
 
 public class P6b_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllValidCells_FullContractPasses()
     {
         // Arrange: ScenarioMatrix with axes
@@ -209,7 +209,7 @@ public class P6b_ScenarioMatrixTests
         throw new NotImplementedException("P6b matrix: full unit contract passes for every valid archetype × faction cell; unimplemented handlers are explicit gaps");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_GapCells_ReportedInAggregateWithAxisKey()
     {
         // Arrange: introduce a known-unimplemented SpecialPower into one cell's archetype.
@@ -226,7 +226,7 @@ public class P6b_ScenarioMatrixTests
 
 public class P7_ScenarioMatrixTests
 {
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllEndStateCells_PassWithInvariants()
     {
         // Arrange: ScenarioMatrix with axis
@@ -242,7 +242,7 @@ public class P7_ScenarioMatrixTests
         throw new NotImplementedException("P7 matrix: all six end-state cells pass GameOutcome assertion + universal invariants (money >= 0, no unit duplication, AI progress)");
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_InvariantViolation_AbortsRunAndReportsCell()
     {
         // Arrange: introduce a deliberate invariant violation in one cell's scenario

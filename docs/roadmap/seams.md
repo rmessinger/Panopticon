@@ -44,6 +44,53 @@ Two kinds of seam appear in the roadmap:
 
 ---
 
+## Landscape overview
+
+The diagram below shows where each seam sits in the runtime stack. Structural seams (dashed
+edges) are layer boundaries; experiment seams (A4) are pluggable swap points within the
+simulation layer, with the Simulation Domain Model as the central hub that parameterizes
+all the others.
+
+```mermaid
+graph TD
+    subgraph PRES["Presentation"]
+        RENDER[Rendering / Drawable]
+        AUDIO[Audio]
+        GUI[GUI / HUD]
+    end
+
+    subgraph ENG["Engine Services  ·  A1-1: GPU-optional  ·  A1-2: Asset load strategy"]
+        IGAME[IGameEngine / GameEngine]
+        GPU["A1-1 · GPU-optional\nVeldrid device → null device"]
+        ALOAD["A1-2 · Asset load strategy\non-demand → data-only / none"]
+    end
+
+    subgraph SIM["Simulation / Logic  —  SimulationHost"]
+        DOM["★ A4-1 · Simulation Domain Model\nRTS · transport/graph · city-builder · …"]
+        STORE["B3 · Entity storage layout\nmodule-objects → data-oriented SoA"]
+        PART["B6-1 · Partition scheme\nspatial grid → graph-cut → zone-adj"]
+        PATH["B4 / B6-5 · Pathfinding / routing\nA* → hierarchical / flow-field → cross-shard"]
+        FID["B7-1 · Fidelity policy\nfull → temporal LOD → aggregation"]
+        RNG["A2 / B3 · Randomness & conflict resolution\nseeded RNG → intent-buffer merge + authority rules"]
+    end
+
+    subgraph ASSETS["External Assets"]
+        IMPORT["C1 · Model / animation import\nW3D → glTF 2.0"]
+    end
+
+    PRES -. "A3 · Sim / Presentation boundary\nlogic must not read render-only state" .-> ENG
+    ENG --> SIM
+    ALOAD -.-> ASSETS
+
+    DOM --> STORE
+    DOM --> PART
+    DOM --> PATH
+    DOM --> FID
+    DOM --> RNG
+```
+
+---
+
 ## Seam registry
 
 Status legend: Reference = a working implementation exists (usually today's engine behaviour);
