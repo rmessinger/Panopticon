@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-14` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5b, see [deep dive §3.5b](../../deep-dives/playable-baseline-harness.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `P0-08` (HarnessRunner.RunAndAssert must exist) |

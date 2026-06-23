@@ -12,6 +12,7 @@ public sealed class AssertionEvaluator
     private readonly List<AssertionResult> _invariantFailures = new();
     private readonly HashSet<string> _failedInvariantIds = new();
     private bool _subscribed;
+    public bool IsAborted { get; private set; }
 
     public AssertionEvaluator(IReadOnlyList<ScenarioAssertion> assertions, Game game)
     {
@@ -66,6 +67,7 @@ public sealed class AssertionEvaluator
             {
                 _failedInvariantIds.Add(assertion.Id);
                 _invariantFailures.Add(result);
+                IsAborted = true;
             }
         }
     }

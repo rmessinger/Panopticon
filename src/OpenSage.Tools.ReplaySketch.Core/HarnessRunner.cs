@@ -101,6 +101,11 @@ public static class HarnessRunner
                     DrainPendingInjections(game, pendingInjections);
                     game.Update(Array.Empty<OpenSage.Input.InputMessage>());
 
+                    if (evaluator.IsAborted)
+                    {
+                        break;
+                    }
+
                     // End command tracking after the update so any ObjectCreated events fired
                     // during the update are correctly attributed to their command.
                     foreach (var _ in frameActions)

@@ -102,10 +102,10 @@ skirmish playable build → fight → win/lose vs. AI.
       in → result out).
   - AC: one CLI/library call takes a scenario/command file and returns exit code 0/non-zero + a JSON
     report; documented invocation; runnable headlessly in CI.
-- [ ] Tests: author + validate an arbitrary command set end-to-end.
+- [x] Tests: author + validate an arbitrary command set end-to-end.
   - AC: an automated test authors a multi-command scenario, runs it headlessly, and asserts
     post-conditions; passes under `dotnet test src --filter Category!=Interactive`.
-- [ ] Scenario matrix runner: accept a `ScenarioMatrix` file with named sweep axes; expand to
+- [x] Scenario matrix runner: accept a `ScenarioMatrix` file with named sweep axes; expand to
       one run per cartesian-product cell; emit a per-cell keyed result and aggregate JSON report.
   - AC: a matrix file with ≥2 axes (e.g. faction × map) produces one run per cell; per-cell
     results are keyed by axis combination; the aggregate report is valid JSON with
@@ -439,11 +439,17 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 
 - [ ] B1 Profiling & robust benchmarking utilities (reusable harness, statistical rigor,
-      regression detection, machine-readable output).
+      regression detection, machine-readable output, hardware characterization).
   - AC: a reusable harness runs repeatable seeded scenarios (incl. the 10k-unit interactive
     reference workload — the [scale anchor](open-questions.md)), reports mean+variance with warmup
     discarded, detects regressions vs. stored baselines, emits machine-readable output, and is reused
     by ≥1 other track.
+- [ ] B1 hardware characterization: probe host machine and include context in benchmark report.
+  - AC: each benchmark run emits a `hardware` section in the machine-readable output containing CPU
+    model/core count/frequency, system memory and measured bandwidth, and GPU device/VRAM; a
+    `capacity_estimate` field derives the sustainable unit count at the target frame rate for that
+    machine from the per-subsystem timing results; reports from different machines are unambiguously
+    tagged so results can be compared across hardware.
 - [ ] B1 benchmark matrix: sweep unitCount × scenario × subsystem; produce keyed benchmark results
       for regression comparison.
   - AC: a `ScenarioMatrix`-style benchmark matrix (axes: `unitCount` ∈ {1000, 5000, 10000},

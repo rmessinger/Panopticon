@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `P0-15` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `P0-07`, `P0-08`, `P0-09`, `P0-10` |

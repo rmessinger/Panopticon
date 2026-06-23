@@ -219,7 +219,7 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 | Track | Progress | Items |
 |---|---|---|
 | Track A — Foundations | `░░░░░░░░░░` | 0 / 18 |
-| Track B — Scale | `░░░░░░░░░░` | 0 / 11 |
+| Track B — Scale | `░░░░░░░░░░` | 0 / 12 |
 | Track C — External Assets | `░░░░░░░░░░` | 0 / 6 |
 
 ---

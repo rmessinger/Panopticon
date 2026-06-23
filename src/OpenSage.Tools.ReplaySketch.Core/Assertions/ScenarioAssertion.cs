@@ -10,6 +10,7 @@ namespace OpenSage.Tools.ReplaySketch.Model;
 [JsonDerivedType(typeof(StateAssertion), "state")]
 [JsonDerivedType(typeof(InvariantAssertion), "invariant")]
 [JsonDerivedType(typeof(OutcomeAssertion), "outcome")]
+[JsonDerivedType(typeof(CodeAssertion), "code")]
 public abstract class ScenarioAssertion
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
@@ -184,6 +185,34 @@ public sealed class OutcomeAssertion : ScenarioAssertion
             Message = passed
                 ? null
                 : $"Outcome assertions are not implemented yet (expected '{ExpectedStatus}', actual '{actualStatus}').",
+        };
+    }
+}
+
+public sealed class CodeAssertion : ScenarioAssertion
+{
+    public string PredicateName { get; set; } = string.Empty;
+
+    public override AssertionResult Evaluate(Game game, uint frame)
+    {
+        if (!CodeAssertionRegistry.TryGet(PredicateName, out var predicate) || predicate is null)
+        {
+            return new AssertionResult
+            {
+                AssertionId = Id,
+                Passed = false,
+                FailFrame = frame,
+                Message = $"No predicate registered with name '{PredicateName}'.",
+            };
+        }
+
+        var passed = predicate(game, frame);
+        return new AssertionResult
+        {
+            AssertionId = Id,
+            Passed = passed,
+            FailFrame = passed ? null : frame,
+            Message = passed ? null : $"Code predicate '{PredicateName}' returned false.",
         };
     }
 }

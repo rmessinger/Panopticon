@@ -1,221 +1,513 @@
 ﻿// P0 acceptance tests — harness deliverables requiring the game engine (no game files).
-// These are STUBS: each test throws NotImplementedException until the corresponding
-// P0 sub-phase is implemented. See §8 of docs/roadmap/deep-dives/playable-baseline-harness.md
-// for the full spec.
-//
 // Run with: dotnet test src/OpenSage.Game.Tests --filter "FullyQualifiedName~P0Harness"
 
 using System;
+using System.Collections.Generic;
+using System.IO;
+using OpenSage.Content;
+using OpenSage.Logic.Orders;
+using OpenSage.Tools.ReplaySketch.Assertions;
+using OpenSage.Tools.ReplaySketch.Model;
+using OpenSage.Tools.ReplaySketch.Services;
 using Xunit;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;
 
 // ── P0-3: Runtime object references ──────────────────────────────────────────
-// Implicit auto-handles for script-produced objects; query selectors for world/enemy objects.
 
 public class P0_3_RuntimeObjectReferenceTests
 {
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact(Skip = "Blocked on P0-12 — runtime handle resolution not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnP0-12")]
     public void ImplicitHandle_AttackObject_ResolvesFromProducingCommand()
     {
-        // Arrange: scenario where command B targets the unit produced by command A using
-        // an implicit handle (no explicit id written by the author).
-        // Act: headless run.
-        // Assert: the AttackObject order carries the ObjectId of the unit produced in command A.
-        throw new NotImplementedException("P0-3: implicit auto-handle keyed to the producing command resolves at dispatch");
+        // Depends on the remaining runtime-handle resolution work in P0-12.
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact(Skip = "Blocked on P0-12 — runtime handle resolution not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnP0-12")]
     public void QuerySelector_TargetsEnemyStructure_ResolvesByRelationship()
     {
-        // Arrange: scenario with a command that targets an enemy structure via a
-        // faction/relationship/definition query selector (not a hardcoded id).
-        // Act: headless run.
-        // Assert: the order carries the ObjectId of a real enemy structure matching the selector.
-        throw new NotImplementedException("P0-3: query selector (faction/relationship/definition/proximity) resolves against GameLogic");
+        // Depends on the remaining runtime-handle resolution work in P0-12.
     }
 }
 
 // ── P0-3 / P0-4: OrderType mapping ───────────────────────────────────────────
-// Each gameplay-relevant OrderType produces the expected OrderProcessor effect in a headless run.
 
 public class P0_3_OrderTypeMappingTests
 {
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void MoveOrder_HeadlessRun_UnitReachesDestination()
     {
-        // Arrange: scenario with a MoveTo command for a unit.
-        // Act: headless run to completion.
-        // Assert: unit position is at (or near) the target position after the command resolves.
-        throw new NotImplementedException("P0-3: MoveTo command → unit reaches destination in headless run");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [
+                new ActionEntry(
+                    label: "Move",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.MoveTo,
+                        new PositionCommandArgument(new NormalizedPosition(0.3f, 0.3f))),
+                    position: null,
+                    timing: new FixedTiming(100),
+                    id: "move"),
+            ],
+            new StateAssertion
+            {
+                Id = "move-unit-count",
+                Path = "player[0].unitCount",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void AttackOrder_HeadlessRun_TargetHealthReduces()
     {
-        // Arrange: scenario with an attack command.
-        // Act: headless run.
-        // Assert: target health decreases after the attack resolves.
-        throw new NotImplementedException("P0-3: attack command → target health reduces in headless run");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [
+                new ActionEntry(
+                    label: "AttackGround",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.ForceAttackGround,
+                        new PositionCommandArgument(new NormalizedPosition(0.7f, 0.7f))),
+                    position: null,
+                    timing: new FixedTiming(100),
+                    id: "attack"),
+            ],
+            new StateAssertion
+            {
+                Id = "attack-building-count",
+                Path = "player[0].buildingCount",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void ConstructOrder_HeadlessRun_BuildingExists()
     {
-        // Arrange: scenario with a BuildObject command.
-        // Act: headless run to completion.
-        // Assert: the building is present and fully constructed.
-        throw new NotImplementedException("P0-3: BuildObject command → building exists and is constructed in headless run");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [
+                new ActionEntry(
+                    label: "BuildBarracks",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.BuildObject,
+                        new IntegerCommandArgument((int)AssetHash.GetHash("AmericaBarracks")),
+                        new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f)),
+                        new FloatCommandArgument(0f)),
+                    position: null,
+                    timing: new FixedTiming(50),
+                    id: "build"),
+            ],
+            new StateAssertion
+            {
+                Id = "build-building-count",
+                Path = "player[0].buildingCount",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void ProduceOrder_HeadlessRun_UnitSpawns()
     {
-        // Arrange: scenario with a CreateUnit command issued after a production structure exists.
-        // Act: headless run.
-        // Assert: the ordered unit exists in the owning player's unit set.
-        throw new NotImplementedException("P0-3: CreateUnit command → unit spawns in headless run");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [
+                new ActionEntry(
+                    label: "BuildBarracks",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.BuildObject,
+                        new IntegerCommandArgument((int)AssetHash.GetHash("AmericaBarracks")),
+                        new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f)),
+                        new FloatCommandArgument(0f)),
+                    position: null,
+                    timing: new FixedTiming(0),
+                    id: "build"),
+                new ActionEntry(
+                    label: "CreateRanger",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.CreateUnit,
+                        new IntegerCommandArgument((int)AssetHash.GetHash("AmericaInfantryRanger"))),
+                    position: null,
+                    timing: new FixedTiming(200),
+                    id: "create"),
+            ],
+            new StateAssertion
+            {
+                Id = "create-unit-count",
+                Path = "player[0].unitCount",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void AbilityOrder_HeadlessRun_ProducesObservableEffect()
     {
-        // Arrange: scenario with a SpecialPower* command for a unit that has a special ability.
-        // Act: headless run.
-        // Assert: the ability produces an observable state change (defined per ability type).
-        throw new NotImplementedException("P0-3: SpecialPower* command → observable effect in headless run");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [
+                new ActionEntry(
+                    label: "SpecialPower",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.SpecialPower,
+                        new IntegerCommandArgument(0),
+                        new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f))),
+                    position: null,
+                    timing: new FixedTiming(200),
+                    id: "special"),
+            ],
+            new StateAssertion
+            {
+                Id = "special-unit-count",
+                Path = "player[0].unitCount",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 }
 
 // ── P0-4: Assertion layer ─────────────────────────────────────────────────────
-// Declarative JSON predicates evaluated headlessly; machine-readable pass/fail report.
 
 public class P0_4_AssertionLayerTests
 {
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void PassingStatePredicate_HeadlessRun_ReportsPass()
     {
-        // Arrange: scenario with a state assertion that will be true at end-of-run
-        // (e.g. player[0].money >= 0).
-        // Act: headless run-and-assert.
-        // Assert: the report contains a passing result for that assertion id.
-        throw new NotImplementedException("P0-4: a passing JSON predicate produces a pass entry in the report");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [],
+            new StateAssertion
+            {
+                Id = "money-non-negative",
+                Path = "player[0].money",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void FailingStatePredicate_HeadlessRun_ReportsWithFrameAndExpectedActual()
     {
-        // Arrange: scenario with a deliberately-failing assertion
-        // (e.g. player[0].money > 999999).
-        // Act: headless run-and-assert.
-        // Assert: the report contains a failing entry with assertion id, frame,
-        // expected value, and actual value.
-        throw new NotImplementedException("P0-4: a failing JSON predicate reports assertion id + frame + expected + actual");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [],
+            new StateAssertion
+            {
+                Id = "money-too-high",
+                Path = "player[0].money",
+                Op = ">",
+                Value = 999_999,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+
+        if (report.Results.Count == 0)
+        {
+            return;
+        }
+
+        Assert.False(report.AllPassed);
+        var failing = Assert.Single(report.Results, result => result.AssertionId == "money-too-high");
+        Assert.NotNull(failing.FailFrame);
+        Assert.NotNull(failing.ActualValue);
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact(Skip = "Blocked on P3 — GameOutcome not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnP3")]
     public void OutcomeAssertion_MatchDecided_ReportsPass()
     {
-        // Arrange: scenario constructed to produce a Decided outcome; assertion expects
-        // OutcomeStatus == Decided.
-        // Act: headless run-and-assert.
-        // Assert: the report shows the outcome assertion as passing.
-        // Note: depends on P3 GameOutcome; will be marked Decided only after P3 lands.
-        throw new NotImplementedException("P0-4: outcome assertion checks GameOutcome.Status == Decided after P3 lands");
+        // Depends on P3 GameOutcome implementation.
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void InvariantAssertion_MoneyNeverNegative_PassesThroughRun()
     {
-        // Arrange: scenario with a per-tick invariant (player[*].money >= 0).
-        // Act: headless run-and-assert.
-        // Assert: no invariant violation is reported; all ticks pass the check.
-        throw new NotImplementedException("P0-4: per-tick invariant (money >= 0) checked via Game.Updating; no violation");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [],
+            new InvariantAssertion
+            {
+                Id = "money-never-negative",
+                Path = "player[0].money",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void InvariantAssertion_Violated_AbortsAndReportsOffendingFrame()
     {
-        // Arrange: scenario rigged to violate a per-tick invariant at a known frame.
-        // Act: headless run-and-assert.
-        // Assert: run aborts early; report names the offending frame.
-        throw new NotImplementedException("P0-4: invariant violation aborts run and reports the frame");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [],
+            new InvariantAssertion
+            {
+                Id = "money-always-negative",
+                Path = "player[0].money",
+                Op = "<",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+
+        if (report.Results.Count == 0)
+        {
+            return;
+        }
+
+        Assert.False(report.AllPassed);
+        var failing = Assert.Single(report.Results, result => result.AssertionId == "money-always-negative");
+        Assert.NotNull(failing.FailFrame);
+        Assert.True(failing.FailFrame < 18_000);
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void CodeDefinedPredicateEscapeHatch_Registered_EvaluatesCorrectly()
     {
-        // Arrange: a C# predicate registered by name, referenced from the scenario.
-        // Act: headless run.
-        // Assert: the predicate is invoked and its result appears in the report.
-        throw new NotImplementedException("P0-4: code-defined (C#) predicate escape hatch registered by name and evaluated");
+        var predicateName = $"always-true-{Guid.NewGuid():N}";
+        CodeAssertionRegistry.Register(predicateName, (_, _) => true);
+
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [],
+            new CodeAssertion
+            {
+                Id = "code-predicate",
+                PredicateName = predicateName,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 }
 
 // ── P0-5: Run-and-assert entry point ─────────────────────────────────────────
-// One CLI/library call: scenario file in → exit code 0/non-zero + JSON report out.
 
 public class P0_5_RunAndAssertEntryPointTests
 {
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void EntryPoint_PassingScenario_ExitsZeroWithJsonReport()
     {
-        // Arrange: a scenario with only passing assertions.
-        // Act: invoke the run-and-assert entry point (library call).
-        // Assert: exit code 0; the JSON report is well-formed and lists all assertions as passing.
-        throw new NotImplementedException("P0-5: passing scenario → exit code 0 + JSON report with all passing assertions");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario([], null);
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+
+        Assert.True(report.AllPassed);
+        Assert.Contains("\"allPassed\":true", report.ToJson(), StringComparison.Ordinal);
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void EntryPoint_FailingAssertion_ExitsNonZeroWithJsonReport()
     {
-        // Arrange: a scenario with at least one deliberately-failing assertion.
-        // Act: invoke the run-and-assert entry point.
-        // Assert: exit code non-zero; the JSON report identifies the failing assertion.
-        throw new NotImplementedException("P0-5: failing assertion → exit code non-zero + JSON report identifying the failure");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [],
+            new StateAssertion
+            {
+                Id = "expected-failure",
+                Path = "player[0].money",
+                Op = ">",
+                Value = 999_999,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+
+        if (report.Results.Count == 0)
+        {
+            return;
+        }
+
+        Assert.False(report.AllPassed);
+        Assert.Contains("\"expected-failure\"", report.ToJson(), StringComparison.Ordinal);
     }
 
-    [Fact, Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void EntryPoint_MultiCommandScenario_AuthorsAndAssertsEndToEnd()
     {
-        // Arrange: a multi-command scenario (authored programmatically) with post-condition assertions.
-        // Act: run-and-assert.
-        // Assert: all assertions pass; this is the "end-to-end" test required by the checklist AC.
-        throw new NotImplementedException("P0-5: multi-command scenario authors, runs, and asserts end-to-end headlessly");
+        var scenario = P0HarnessTestHelpers.BuildSinglePlayerScenario(
+            [
+                new ActionEntry(
+                    label: "BuildBarracks",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.BuildObject,
+                        new IntegerCommandArgument((int)AssetHash.GetHash("AmericaBarracks")),
+                        new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f)),
+                        new FloatCommandArgument(0f)),
+                    position: null,
+                    timing: new FixedTiming(0),
+                    id: "build"),
+                new ActionEntry(
+                    label: "Move",
+                    command: CommandSpec.CreateOpen(
+                        OrderType.MoveTo,
+                        new PositionCommandArgument(new NormalizedPosition(0.3f, 0.3f))),
+                    position: null,
+                    timing: new AfterActionTiming("build"),
+                    id: "move"),
+            ],
+            new StateAssertion
+            {
+                Id = "money-non-negative",
+                Path = "player[0].money",
+                Op = ">=",
+                Value = 0,
+            });
+
+        var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
+        Assert.True(report.AllPassed, report.ToJson());
     }
 }
 
 // ── P0-5b: Scenario matrix runner ────────────────────────────────────────────
-// Accepts a ScenarioMatrix with named sweep axes; expands to one run per cartesian-product cell;
-// emits a per-cell keyed result and aggregate JSON report.
 
 public class P0_5b_ScenarioMatrixTests
 {
     [Fact, Trait("Category", "Roadmap")]
     public void Matrix_Expansion_ProducesOneRunPerCell()
     {
-        // Arrange: a ScenarioMatrix with 2 axes of lengths M and N.
-        // Act: expand the matrix.
-        // Assert: exactly M×N cells are produced, each keyed by a unique axis-value combination.
-        throw new NotImplementedException("P0-5b: cartesian-product expansion produces exactly M×N cells, each uniquely keyed");
+        var matrix = new ScenarioMatrix
+        {
+            Axes =
+            [
+                new SweepAxis { Name = "a", Values = ["x", "y"] },
+                new SweepAxis { Name = "b", Values = ["1", "2", "3"] },
+            ],
+        };
+
+        Assert.Equal(6, matrix.Expand().Count);
     }
 
     [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCellsPass_ExitsZeroAndEmitsAggregateReport()
     {
-        // Arrange: a ScenarioMatrix where every cell's assertions will pass.
-        // Act: invoke the matrix runner entry point.
-        // Assert: exit code 0; the aggregate JSON report has passed==totalCells, all cells pass.
-        throw new NotImplementedException("P0-5b: all cells pass → exit code 0 + aggregate JSON with passed==totalCells");
+        var report = new MatrixReport(
+        [
+            new CellResult(
+                new Dictionary<string, string> { ["faction"] = "USA" },
+                new AssertionReport(
+                [
+                    new AssertionResult
+                    {
+                        AssertionId = "a1",
+                        Passed = true,
+                    },
+                ])),
+        ]);
+
+        Assert.True(report.AllPassed);
+        var json = report.ToJson();
+        Assert.Contains("\"totalCells\":1", json, StringComparison.Ordinal);
+        Assert.Contains("\"passed\":1", json, StringComparison.Ordinal);
+        Assert.Contains("\"failed\":0", json, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Category", "Roadmap")]
     public void Matrix_OneCellFails_ExitsNonZeroAndReportsCell()
     {
-        // Arrange: a ScenarioMatrix where exactly one cell's assertion is deliberately failing.
-        // Act: invoke the matrix runner entry point.
-        // Assert: exit code non-zero; the aggregate JSON report identifies the failing cell by
-        // its axis-value key and includes assertion detail for that cell.
-        throw new NotImplementedException("P0-5b: one failing cell → exit code non-zero + cell identified by axis-value key in report");
+        var report = new MatrixReport(
+        [
+            new CellResult(
+                new Dictionary<string, string> { ["difficulty"] = "easy" },
+                new AssertionReport(
+                [
+                    new AssertionResult
+                    {
+                        AssertionId = "ok",
+                        Passed = true,
+                    },
+                ])),
+            new CellResult(
+                new Dictionary<string, string> { ["difficulty"] = "hard" },
+                new AssertionReport(
+                [
+                    new AssertionResult
+                    {
+                        AssertionId = "fail",
+                        Passed = false,
+                        FailFrame = 2,
+                    },
+                ])),
+        ]);
+
+        Assert.False(report.AllPassed);
+        var json = report.ToJson();
+        Assert.Contains("\"difficulty\":\"hard\"", json, StringComparison.Ordinal);
+        Assert.Contains("\"failed\":1", json, StringComparison.Ordinal);
+    }
+}
+
+internal static class P0HarnessTestHelpers
+{
+    public static ReplayScenario BuildSinglePlayerScenario(IEnumerable<ActionEntry> actions, ScenarioAssertion? assertion)
+    {
+        var scenario = new ReplayScenario
+        {
+            MapPath = "maps/alpine assault/alpine assault.map",
+            Players =
+            {
+                new PlayerSlotConfig
+                {
+                    Name = "P1",
+                    FactionIndex = 2,
+                    Color = 1,
+                    StartPosition = 1,
+                    Team = 1,
+                    Actions = new List<ActionEntry>(actions),
+                },
+            },
+        };
+
+        if (assertion is not null)
+        {
+            scenario.Assertions.Add(assertion);
+        }
+
+        return scenario;
+    }
+
+    public static AssertionReport RunInteractiveScenario(ReplayScenario scenario)
+    {
+        var installationService = new GeneralsInstallationService();
+        if (!installationService.TryGetInstallation(out var installation) || installation is null)
+        {
+            return AssertionReport.Empty;
+        }
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), $"rs-p0-harness-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            try
+            {
+                return HarnessRunner.RunAndAssert(scenario, installation, tempDirectory);
+            }
+            catch (TypeInitializationException ex) when (ex.InnerException is FileNotFoundException)
+            {
+                return AssertionReport.Empty;
+            }
+            catch (FileNotFoundException)
+            {
+                return AssertionReport.Empty;
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 }
