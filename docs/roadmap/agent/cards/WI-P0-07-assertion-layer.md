@@ -1,8 +1,8 @@
-# Task Card: `P0-07` — Assertion layer: data model and evaluator
+# Task Card: `WI-P0-07` — Assertion layer: data model and evaluator
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-07` |
+| Card ID | `WI-P0-07` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
@@ -15,7 +15,7 @@
 Add a declarative assertion layer to the ReplaySketch harness: `ScenarioAssertion` subtypes
 serializable to/from JSON, an `AssertionEvaluator` that hooks into a running `Game` and produces
 a structured `AssertionReport` (pass/fail per assertion with frame + actual value on failure).
-This is the data model and evaluation logic only — the CLI entry point is P0-08.
+This is the data model and evaluation logic only — the CLI entry point is WI-P0-08.
 
 ## Context to read (and only this)
 
@@ -77,7 +77,7 @@ This is the data model and evaluation logic only — the CLI entry point is P0-0
      (or mock via the test infrastructure) evaluates to `Passed=true` when money is non-negative.
    - An `AssertionReport.ToJson()` round-trips correctly (allPassed reflects results, IDs present).
    - An `InvariantAssertion` with a deliberately impossible condition records the correct fail frame.
-   (Use a real or in-memory `Game` if available; otherwise defer game-state tests to P0-08.)
+   (Use a real or in-memory `Game` if available; otherwise defer game-state tests to WI-P0-08.)
 
 ## Files likely to change
 
@@ -111,7 +111,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not implement the CLI entry point (that is P0-08).
+- Do not implement the CLI entry point (that is WI-P0-08).
 - Do not implement real `GameOutcome` yet — `OutcomeAssertion` evaluates against a stub; real
   support lands when P3 (`GameOutcome`) is implemented.
 - The code-defined (C#) predicate escape hatch is out of scope for this card; add it later
@@ -124,4 +124,4 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the P0-4 assertion-layer item in the [implementation checklist](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Follow-up: `P0-08` (run-and-assert entry point) depends on this card.
+- Follow-up: `WI-P0-08` (run-and-assert entry point) depends on this card.

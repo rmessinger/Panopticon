@@ -1,13 +1,13 @@
-# Task Card: `P0-14` — ScenarioMatrix model and runner (P0-5b)
+# Task Card: `WI-P0-14` — ScenarioMatrix model and runner (P0-5b)
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-14` |
+| Card ID | `WI-P0-14` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5b, see [deep dive §3.5b](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `P0-08` (HarnessRunner.RunAndAssert must exist) |
+| Prerequisites | `WI-P0-08` (HarnessRunner.RunAndAssert must exist) |
 | Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
@@ -130,7 +130,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not implement the P1–P7 matrix axis values or scenarios — P0-14 only provides the
+- Do not implement the P1–P7 matrix axis values or scenarios — WI-P0-14 only provides the
   infrastructure.
 - Do not add a parallel/concurrent cell runner — single-threaded sequential execution only.
 - Do not implement a JSON expression parser for `ConstraintFilter` — accept a `Func<>` for now.

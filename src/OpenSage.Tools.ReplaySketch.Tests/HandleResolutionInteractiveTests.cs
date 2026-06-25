@@ -5,7 +5,7 @@ using OpenSage.Tools.ReplaySketch.Services;
 namespace OpenSage.Tests.Tools.ReplaySketch;
 
 /// <summary>
-/// P0-12: Integration tests for runtime handle resolution in <see cref="HarnessRunner"/>.
+/// WI-P0-12: Integration tests for runtime handle resolution in <see cref="HarnessRunner"/>.
 /// Verifies that scenarios with <see cref="HandleCommandArgument"/> do not throw
 /// "must be resolved before dispatch" when <see cref="HarnessRunner.RunAndAssert"/> executes.
 /// </summary>

@@ -1,18 +1,18 @@
-# Task Card: `P0-14` — Harness runner direct-dispatch path for handle-dependent commands
+# Task Card: `WI-P0-14` — Harness runner direct-dispatch path for handle-dependent commands
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-14` |
+| Card ID | `WI-P0-14` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (supplemental to P0-1, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `P0-08` (HarnessRunner must exist), `P0-11` (handle/selector model types must exist) |
+| Prerequisites | `WI-P0-08` (HarnessRunner must exist), `WI-P0-11` (handle/selector model types must exist) |
 | Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
 
-Unblock P0-12 by giving `HarnessRunner` two new capabilities:
+Unblock WI-P0-12 by giving `HarnessRunner` two new capabilities:
 
 1. A `HandleTracker` class that maps `CommandEntry.Id → ObjectId` via `BeginCommand` /
    `EndCommand` / `OnObjectCreated` (testable headlessly, no SDL2 dependency).
@@ -115,5 +115,5 @@ earlier commands — without the caller specifying raw `ObjectId` values.
 ## On completion
 
 - Set Status above to `Done`.
-- P0-12 is now unblocked — change its Status to `Ready`.
+- WI-P0-12 is now unblocked — change its Status to `Ready`.
 - Append a result line to repo-root `.exchange`.

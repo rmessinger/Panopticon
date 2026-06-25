@@ -1,8 +1,8 @@
-# Task Card: `P0-02` — Inventory the engine's `OrderType` vocabulary
+# Task Card: `WI-P0-02` — Inventory the engine's `OrderType` vocabulary
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-02` |
+| Card ID | `WI-P0-02` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
 | Status | `Done` (superseded by deep-dive audit) |
 | Type | `investigation` |
@@ -66,7 +66,7 @@ Read-only — no build/test. Verify every `OrderType` value appears in exactly o
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
   - A design card (escalate to high-effort model) for the generalized command model + assertion
-    layer, citing this inventory and `P0-01`.
+    layer, citing this inventory and `WI-P0-01`.
 
 ## Notes
 

@@ -1,8 +1,8 @@
-# Task Card: `P1-01` — Map the player-relationship gap
+# Task Card: `WI-P1-01` — Map the player-relationship gap
 
 | Field | Value |
 |---|---|
-| Card ID | `P1-01` |
+| Card ID | `WI-P1-01` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) |
 | Status | `Done` (superseded by deep-dive audit) |
 | Type | `investigation` |
@@ -14,7 +14,7 @@
 > [P1 deep dive](../../deep-dives/skirmish-setup.md) §2.3 (the `OnNewGame()` TODO, the existing
 > `Player`/`PlayerManager` relationship API, and that `AddAlly`/`AddEnemy` are non-reciprocal) plus
 > the §3.1 implementation brief. Do not redo this survey. The implementation follow-up is card
-> [`P1-02`](P1-02-implement-onnewgame-relationships.md).
+> [`WI-P1-02`](WI-P1-02-implement-onnewgame-relationships.md).
 
 ## Goal
 
@@ -68,7 +68,7 @@ Read-only — no build/test. Verify the brief names concrete types/methods, not 
 - Set Status to `Done`.
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
-  - `P1-02` — implement player-relationship setup in `OnNewGame` per the brief (effort permitting,
+  - `WI-P1-02` — implement player-relationship setup in `OnNewGame` per the brief (effort permitting,
     may need a stronger model).
 
 ## Notes

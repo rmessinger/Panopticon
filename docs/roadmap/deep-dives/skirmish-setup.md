@@ -85,11 +85,11 @@ no intra-P1 ordering constraint beyond object create/death hooks existing.
 
 | Phase | Goal | Status |
 |---|---|---|
-| P1-1. Team & relationship setup | Implement `OnNewGame()` relationships: assign teams from slots, derive ally/enemy/neutral, wire reciprocally. | Not started |
-| P1-2. Unified skirmish spawn | One start-position + starting-building + camera path for SP and MP; resolve player-array indexing and `LocalPlayer`. | Not started |
-| P1-3. AI slot fill | Ensure AI slots get faction/color/start filled before `StartGame` (lobby + local path). | Not started |
-| P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](playable-baseline-harness.md)). | Not started |
-| P1-5. Object-ownership tracking | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Not started |
+| P1-1. Team & relationship setup | Implement `OnNewGame()` relationships: assign teams from slots, derive ally/enemy/neutral, wire reciprocally. | Not started (cards: `WI-P1-02`, `WI-P1-03`) |
+| P1-2. Unified skirmish spawn | One start-position + starting-building + camera path for SP and MP; resolve player-array indexing and `LocalPlayer`. | Not started (card: `WI-P1-04`) |
+| P1-3. AI slot fill | Ensure AI slots get faction/color/start filled before `StartGame` (lobby + local path). | Not started (card: `WI-P1-05`) |
+| P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](playable-baseline-harness.md)). | Not started (card: `WI-P1-06`) |
+| P1-5. Object-ownership tracking | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Not started (card: `WI-P1-07`) |
 
 ## 7. Sequencing
 - P1 has no Track-P prerequisite (entry point alongside P0) but gates P2/P3/P4/P5/P6 — they all

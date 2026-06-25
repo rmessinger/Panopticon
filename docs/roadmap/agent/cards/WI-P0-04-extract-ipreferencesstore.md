@@ -1,8 +1,8 @@
-# Task Card: `P0-04` — Extract `IPreferencesStore` from ReplaySketch `MainViewModel`
+# Task Card: `WI-P0-04` — Extract `IPreferencesStore` from ReplaySketch `MainViewModel`
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-04` |
+| Card ID | `WI-P0-04` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1b, see [deep dive §3.1](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |

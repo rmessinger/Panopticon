@@ -1,13 +1,13 @@
 # Task Card: `<CARD-ID>` — <short title>
 
-> Copy this file into [`cards/`](cards/) named `<PHASE>-<NN>-<slug>.md`
-> (e.g. `P0-01-catalog-replaysketch-vocabulary.md`). Fill every field. Delete this quote block and
+> Copy this file into [`cards/`](cards/) named `WI-<PHASE>-<NN>-<slug>.md`
+> (e.g. `WI-P0-01-catalog-replaysketch-vocabulary.md`). Fill every field. Delete this quote block and
 > any guidance in angle brackets. Keep the card small enough for a low-effort model — if it
 > needs deep design reasoning, split it or escalate to a roadmap deep dive.
 
 | Field | Value |
 |---|---|
-| Card ID | `<PHASE>-<NN>` (e.g. `P0-01`) |
+| Card ID | `WI-<PHASE>-<NN>` (e.g. `WI-P0-01`) |
 | Roadmap phase | [`<phase>`](../../track-p-playable-baseline.md) — link to the exact phase row |
 | Status | `Ready` \| `In progress` \| `Done` \| `Blocked` |
 | Type | `investigation` \| `pattern-replication` \| `mechanical-refactor` \| `test-addition` |

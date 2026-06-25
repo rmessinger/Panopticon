@@ -1,8 +1,8 @@
-# Task Card: `P0-11` — Object handle and query selector model types
+# Task Card: `WI-P0-11` — Object handle and query selector model types
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-11` |
+| Card ID | `WI-P0-11` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
@@ -16,10 +16,10 @@ Add model types that let a scenario author reference runtime objects without kno
 `ObjectId` at authoring time: `HandleCommandArgument` (resolves to the object produced by a
 named earlier command) and `QuerySelectorCommandArgument` (resolves to an object matching a
 faction/relationship/definition filter at dispatch time). Also add the `IObjectReferenceResolver`
-interface and a `Resolve` extension point so the `HarnessRunner` (P0-12) can substitute
+interface and a `Resolve` extension point so the `HarnessRunner` (WI-P0-12) can substitute
 concrete `ObjectId` values before dispatch.
 
-This is the model-only card. Runtime wiring into the run loop is P0-12.
+This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
 
 ## Context to read (and only this)
 
@@ -171,7 +171,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not wire this into the `HarnessRunner` run loop — that is P0-12.
+- Do not wire this into the `HarnessRunner` run loop — that is WI-P0-12.
 - Do not implement a production `IObjectReferenceResolver` — only the interface and model
   types belong here.
 - Do not change `PositionContext`, `ActionEntry`, `ReplayExporter`, or existing argument types.
@@ -182,4 +182,4 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` (or `Blocked` + reason).
 - Append a result line to repo-root `.exchange`.
-- Follow-up card `P0-12` (runtime resolution in `HarnessRunner`) depends on this card.
+- Follow-up card `WI-P0-12` (runtime resolution in `HarnessRunner`) depends on this card.

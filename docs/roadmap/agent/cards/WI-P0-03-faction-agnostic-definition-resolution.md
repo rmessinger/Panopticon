@@ -1,8 +1,8 @@
-# Task Card: `P0-03` — Make ReplaySketch definition resolution faction-agnostic
+# Task Card: `WI-P0-03` — Make ReplaySketch definition resolution faction-agnostic
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-03` |
+| Card ID | `WI-P0-03` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-2, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |

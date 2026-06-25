@@ -1,8 +1,8 @@
-# Task Card: `P0-01` — Catalog the current ReplaySketch command vocabulary
+# Task Card: `WI-P0-01` — Catalog the current ReplaySketch command vocabulary
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-01` |
+| Card ID | `WI-P0-01` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
 | Status | `Done` (superseded by deep-dive audit) |
 | Type | `investigation` |
@@ -14,7 +14,7 @@
 > grounded) in the [P0 deep dive](../../deep-dives/playable-baseline-harness.md) §2.1–2.2 (closed
 > `ActionType` vocabulary, `KnownDefinitions`, and the exporter translation table). Do not redo
 > this survey. The implementation follow-up is card
-> [`P0-03`](P0-03-faction-agnostic-definition-resolution.md).
+> [`WI-P0-03`](WI-P0-03-faction-agnostic-definition-resolution.md).
 
 ## Goal
 
@@ -65,7 +65,7 @@ Read-only — no build/test. Verify the Notes table covers every `ActionType` va
 - Set Status to `Done`.
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
-  - `P0-02` (inventory engine `OrderType`s) if not already present.
+  - `WI-P0-02` (inventory engine `OrderType`s) if not already present.
   - A design card for the generalized order model (escalate: needs a high-effort model / deep dive).
 
 ## Notes

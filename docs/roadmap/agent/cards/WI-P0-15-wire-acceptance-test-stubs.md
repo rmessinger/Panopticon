@@ -1,19 +1,19 @@
-# Task Card: `P0-15` — Wire P0 acceptance test stubs to real implementations
+# Task Card: `WI-P0-15` — Wire P0 acceptance test stubs to real implementations
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-15` |
+| Card ID | `WI-P0-15` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `P0-07`, `P0-08`, `P0-09`, `P0-10` |
+| Prerequisites | `WI-P0-07`, `WI-P0-08`, `WI-P0-09`, `WI-P0-10` |
 | Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
 
 Update the remaining `NotImplementedException` stubs in the two P0 acceptance test files so they
-call the real implementations that agents P0-07 through P0-13 built. No new production code; only
+call the real implementations that agents WI-P0-07 through WI-P0-13 built. No new production code; only
 test wiring and two blocked-stub annotations.
 
 ## Context to read (and only this)
@@ -23,9 +23,9 @@ test wiring and two blocked-stub annotations.
 - `src/OpenSage.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs` — two remaining stubs:
   `P0_2b_PlayerOwnerTargetingTests` and `P0_6_ProceduralAuthoringTests`.
 - `src/OpenSage.Tools.ReplaySketch.Tests/MultiPlayerAttributionTests.cs` — real P0-2b tests
-  already written by P0-10 (copy the core assertion logic).
+  already written by WI-P0-10 (copy the core assertion logic).
 - `src/OpenSage.Tools.ReplaySketch.Tests/` — look for the procedural authoring scale test file
-  written by P0-09 to copy the 10k-order assertion logic into P0_6.
+  written by WI-P0-09 to copy the 10k-order assertion logic into P0_6.
 - `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` — `RunAndAssert` signature.
 - `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` — wiring reference.
 - `src/OpenSage.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs` — `RunInteractiveScenario`
@@ -46,7 +46,7 @@ test wiring and two blocked-stub annotations.
    `OrderTypeCoverageTests` scenarios rather than duplicating the setup.
 
    Note: the two stubs in `P0_3_RuntimeObjectReferenceTests` (`ImplicitHandle_AttackObject` and
-   `QuerySelector_TargetsEnemyStructure`) depend on P0-12 (runtime handle resolution) which is
+   `QuerySelector_TargetsEnemyStructure`) depend on WI-P0-12 (runtime handle resolution) which is
    blocked. Add `[Trait("Category", "BlockedOnP0-12")]` and keep the `NotImplementedException`
    with a comment explaining the dependency.
 
@@ -63,10 +63,10 @@ test wiring and two blocked-stub annotations.
    - `InvariantAssertion_MoneyNeverNegative_PassesThroughRun`: Tag Interactive. Add an
      `InvariantAssertion(player[0].money >= 0)` to a normal scenario. Run via
      `HarnessRunner.RunAndAssert`. Assert `report.AllPassed`.
-   - `InvariantAssertion_Violated_AbortsAndReportsOffendingFrame`: Depends on P0-16 (early-abort
+   - `InvariantAssertion_Violated_AbortsAndReportsOffendingFrame`: Depends on WI-P0-16 (early-abort
      not yet implemented). Add `[Trait("Category", "BlockedOnP0-16")]`. Keep
      `NotImplementedException` with comment.
-   - `CodeDefinedPredicateEscapeHatch_Registered_EvaluatesCorrectly`: Depends on P0-17
+   - `CodeDefinedPredicateEscapeHatch_Registered_EvaluatesCorrectly`: Depends on WI-P0-17
      (escape hatch not yet implemented). Add `[Trait("Category", "BlockedOnP0-17")]`. Keep
      `NotImplementedException` with comment.
 
@@ -89,7 +89,7 @@ test wiring and two blocked-stub annotations.
 
 5. **P0_6_ProceduralAuthoringTests.ProceduralScenario_TenThousandOrders_ExportsAndLoadsWithinBudget**:
    Remove `throw new NotImplementedException`. Copy the assertion logic from the procedural scale
-   test written by P0-09 — generate 10,000 `MoveTo` `ActionEntry` values, export, assert export
+   test written by WI-P0-09 — generate 10,000 `MoveTo` `ActionEntry` values, export, assert export
    succeeds and elapsed time < 5 seconds.
 
 ## Files likely to change
@@ -119,7 +119,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not implement the blocked stubs (P0-12, P0-16, P0-17, P3 dependencies) — annotate and leave.
+- Do not implement the blocked stubs (WI-P0-12, WI-P0-16, WI-P0-17, P3 dependencies) — annotate and leave.
 - Do not change production code in this card; test wiring only.
 - If `OpenSage.Game.Tests` already references `ReplaySketch.Core` transitively, no `.csproj`
   change is needed — verify before adding the reference.

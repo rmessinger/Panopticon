@@ -92,7 +92,7 @@ New `CommandSpecTests` class in `ReplaySketchTests.cs`:
 
 - Object-id auto-handles (implicit handle keyed to producing command) → checklist item 4
 - Query selectors for world/enemy objects → checklist item 4
-- Removal of `KnownDefinitions` / faction-agnostic resolution → agent card `P0-03`
+- Removal of `KnownDefinitions` / faction-agnostic resolution → agent card `WI-P0-03`
 - `DeferredAction` trigger redesign for `CommandSpec`-based triggers → later item
 - Validation/assertion layer → checklist item 6
 - Headless run-and-assert entry point → checklist item 7

@@ -1,8 +1,8 @@
-# Task Card: `P1-02` — Implement player-relationship setup in `OnNewGame`
+# Task Card: `WI-P1-02` — Implement player-relationship setup in `OnNewGame`
 
 | Field | Value |
 |---|---|
-| Card ID | `P1-02` |
+| Card ID | `WI-P1-02` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/skirmish-setup.md)) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
@@ -86,7 +86,7 @@ dotnet format src --verify-no-changes
 - Tick the matching item(s) in the [implementation checklist](../../implementation-checklist.md) (P1-1).
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
-  - [`P1-03`](P1-03-test-reciprocal-relationships.md) — unit test for the reciprocal wiring (if not
+  - [`WI-P1-03`](WI-P1-03-test-reciprocal-relationships.md) — unit test for the reciprocal wiring (if not
     already present).
   - A card (may need a stronger model) for P1-2 unified SP/MP spawn + `LocalPlayer` selection,
     once the ↗ decisions in [deep dive §5](../../deep-dives/skirmish-setup.md) are made.

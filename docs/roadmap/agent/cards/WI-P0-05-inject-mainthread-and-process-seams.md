@@ -1,13 +1,13 @@
-# Task Card: `P0-05` — Inject `IMainThreadDispatcher` and `IProcessLauncher` seams into `MainViewModel`
+# Task Card: `WI-P0-05` — Inject `IMainThreadDispatcher` and `IProcessLauncher` seams into `MainViewModel`
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-05` |
+| Card ID | `WI-P0-05` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1c, see [deep dive §3.1](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
-| Prerequisites | `P0-04` (IPreferencesStore seam, so constructor injection pattern is already established) |
+| Prerequisites | `WI-P0-04` (IPreferencesStore seam, so constructor injection pattern is already established) |
 | Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
@@ -53,7 +53,7 @@ background-load apply-results path are unit-testable headlessly in
 
 5. Add two unit tests in `OpenSage.Tools.ReplaySketch.Tests`:
    - Construct `MainViewModel` with `SynchronousMainThreadDispatcher` and a `RecordingProcessLauncher`
-     (plus the `MemoryPreferencesStore` from P0-04 if that card is done, or a stub if not). Call
+     (plus the `MemoryPreferencesStore` from WI-P0-04 if that card is done, or a stub if not). Call
      `StartBackgroundMapDiscovery` (or trigger the code path that sets `AvailableMaps`) synchronously
      and assert `AvailableMaps` is populated without a `MainThread` runtime.
    - Call `ExecutePlayInGame` (after setting `_map` to a non-null stub and configuring
@@ -101,7 +101,7 @@ REPLAYSKETCH_SCREENSHOT_PATH=/tmp/rs_p005_tree.png dotnet run --project src/Open
 - Do not abstract `ValidateCommand` or `ExportCommand` internals here — only the two statics named above.
 - Do not change the command model, exporter, or assertion layer.
 - Keep `MainViewModel`'s observable behaviour (property-changed events, command states) identical.
-- If `P0-04` is not yet done, stub `IPreferencesStore` with a no-op implementation for this card's tests.
+- If `WI-P0-04` is not yet done, stub `IPreferencesStore` with a no-op implementation for this card's tests.
 
 ## On completion
 

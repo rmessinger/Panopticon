@@ -1,13 +1,13 @@
-# Task Card: `P0-16` — Invariant early-abort in HarnessRunner
+# Task Card: `WI-P0-16` — Invariant early-abort in HarnessRunner
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-16` |
+| Card ID | `WI-P0-16` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
-| Prerequisites | `P0-07`, `P0-08` |
+| Prerequisites | `WI-P0-07`, `WI-P0-08` |
 | Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
@@ -84,5 +84,5 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done`.
 - Remove the `[Trait("Category", "BlockedOnP0-16")]` annotation from the stub in
-  `P0HarnessAcceptanceTests.cs` (P0-15 adds this annotation; P0-16 removes it by implementing).
+  `P0HarnessAcceptanceTests.cs` (WI-P0-15 adds this annotation; WI-P0-16 removes it by implementing).
 - Append a result line to repo-root `.exchange`.

@@ -150,6 +150,10 @@ skirmish playable build → fight → win/lose vs. AI.
 - [ ] AI player slots, faction/army selection, and start positions (fill AI slots in the lobby path).
   - AC: an unset AI slot is assigned a valid playable side, a free color, and a free start position
     before `StartGame`; no slot has an unresolved faction/position at game start.
+- [ ] P1-4 Boot validation: a human + ≥1 AI skirmish boots headlessly via the P0 harness with
+      correct relationships, spawn positions, and faction assignments asserted.
+  - AC: `P1BootValidationTests` passes (or skips cleanly on CI without game files); predicates for
+    symmetric relationships, non-empty spawn, and `LocalPlayer` identification all pass.
 - [ ] P1-5 Object-ownership tracking (foundational): maintained per-`Player` building/unit counts +
       owned-object set, updated on create/transfer/`OnDie`/`Destroy` (decided — not an on-demand scan).
       Consumed by P2 (AI target selection) and P3 (defeat detection); friendly to the scale tracks.

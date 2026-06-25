@@ -12,8 +12,9 @@ collection from ModDB for use with OpenSAGE. It follows the same pattern as
 
 ### Tool type
 
-CLI — `CommandLine` + `CommandParser`, `Program.cs` entry point, net8.0. Match
+CLI — `CommandLine` + `CommandParser`, `Program.cs` entry point. Match
 `src/OpenSage.Tools.BigTool/OpenSage.Tools.BigTool.csproj` exactly (no game install required).
+TFM is inherited from `src/Directory.Build.props` (`net10.0`) — do not set it in the project file.
 
 Suggested project path: `src/OpenSage.Tools.ModCollector/`
 
@@ -73,6 +74,17 @@ Three options evaluated:
 3. Curated static JSON manifest of known-good download URLs — most robust for v1.
 
 Decision: start with option 3 (curated manifest). Upgrade to option 2 later.
+
+### Error handling
+
+If a download fails (HTTP error, timeout, network error): retry once after a 2-second delay.
+If the retry also fails: log the error to stderr and skip that entry; continue with remaining
+downloads. Exit code 0 if any entries succeeded; non-zero if all failed.
+
+### Work item card prefix
+
+Cards for this tool use the `WI-MC-` prefix (`MC` = ModCollector). Cards live in
+`docs/roadmap/agent/cards/`.
 
 ## CLI surface
 

@@ -1,19 +1,19 @@
-# Task Card: `P1-03` — Unit test for reciprocal player relationships
+# Task Card: `WI-P1-03` — Unit test for reciprocal player relationships
 
 | Field | Value |
 |---|---|
-| Card ID | `P1-03` |
+| Card ID | `WI-P1-03` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/skirmish-setup.md)) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | [`P1-02`](P1-02-implement-onnewgame-relationships.md) (the reciprocal wiring under test) |
+| Prerequisites | [`WI-P1-02`](WI-P1-02-implement-onnewgame-relationships.md) (the reciprocal wiring under test) |
 | Diagrams | [P1 Architecture Diagrams](../../deep-dives/skirmish-setup.md#8-architecture-diagrams) |
 
 ## Goal
 
 Add a small xUnit test that locks in the reciprocal behaviour of `Player.AddAlly`/`AddEnemy`
-delivered by [`P1-02`](P1-02-implement-onnewgame-relationships.md): allying/enmitying one player must
+delivered by [`WI-P1-02`](WI-P1-02-implement-onnewgame-relationships.md): allying/enmitying one player must
 update both players' sets, and the operation must be idempotent. This guards the relationship
 invariant that P2/P3/P6 rely on.
 
@@ -65,7 +65,7 @@ dotnet format src --verify-no-changes
 
 - Do not test `OnNewGame`/team-derived relationships here (it needs map players + setup) — this
   card covers the `AddAlly`/`AddEnemy` primitives only. A broader `OnNewGame` test can be a later card.
-- Do not modify production code; if a test can't pass because `P1-02` isn't done/correct, mark
+- Do not modify production code; if a test can't pass because `WI-P1-02` isn't done/correct, mark
   `Blocked` and report (don't "fix" production from a test card).
 
 ## On completion

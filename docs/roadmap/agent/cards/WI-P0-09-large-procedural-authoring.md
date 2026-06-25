@@ -1,13 +1,13 @@
-# Task Card: `P0-09` — Large/procedural authoring: verify model and add scale test
+# Task Card: `WI-P0-09` — Large/procedural authoring: verify model and add scale test
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-09` |
+| Card ID | `WI-P0-09` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-6, see [deep dive §3.6](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `P0-06` (exporter open-command coverage) |
+| Prerequisites | `WI-P0-06` (exporter open-command coverage) |
 | Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
@@ -90,5 +90,5 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason; include the measured export time).
 - Tick the P0-6 large-authoring item in the [implementation checklist](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` including the measured export time and machine spec.
-- If P0-08 is also done at this point, update the P0 row in `track-p-playable-baseline.md` to
+- If WI-P0-08 is also done at this point, update the P0 row in `track-p-playable-baseline.md` to
   `In progress` (all sub-phases landed or in flight).

@@ -17,16 +17,16 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 
 public class P0_3_RuntimeObjectReferenceTests
 {
-    [Fact(Skip = "Blocked on P0-12 — runtime handle resolution not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnP0-12")]
+    [Fact(Skip = "Blocked on WI-P0-12 — runtime handle resolution not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnWI-P0-12")]
     public void ImplicitHandle_AttackObject_ResolvesFromProducingCommand()
     {
-        // Depends on the remaining runtime-handle resolution work in P0-12.
+        // Depends on the remaining runtime-handle resolution work in WI-P0-12.
     }
 
-    [Fact(Skip = "Blocked on P0-12 — runtime handle resolution not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnP0-12")]
+    [Fact(Skip = "Blocked on WI-P0-12 — runtime handle resolution not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnWI-P0-12")]
     public void QuerySelector_TargetsEnemyStructure_ResolvesByRelationship()
     {
-        // Depends on the remaining runtime-handle resolution work in P0-12.
+        // Depends on the remaining runtime-handle resolution work in WI-P0-12.
     }
 }
 

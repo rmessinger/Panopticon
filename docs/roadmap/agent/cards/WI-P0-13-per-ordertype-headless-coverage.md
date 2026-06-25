@@ -1,13 +1,13 @@
-# Task Card: `P0-13` — Per-OrderType headless coverage (move / attack / construct / produce / ability)
+# Task Card: `WI-P0-13` — Per-OrderType headless coverage (move / attack / construct / produce / ability)
 
 | Field | Value |
 |---|---|
-| Card ID | `P0-13` |
+| Card ID | `WI-P0-13` |
 | Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-3, see [deep dive §3.2/§3.5](../../deep-dives/playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `P0-07` (assertion layer), `P0-08` (run-and-assert entry point), `P0-03` (faction-agnostic exporter) |
+| Prerequisites | `WI-P0-07` (assertion layer), `WI-P0-08` (run-and-assert entry point), `WI-P0-03` (faction-agnostic exporter) |
 | Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
 
 ## Goal
@@ -20,14 +20,14 @@ author → export → headless-run → assert chain works for each order family.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (P0-08) — `RunAndAssert` signature.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (P0-07) — how
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (WI-P0-08) — `RunAndAssert` signature.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (WI-P0-07) — how
   assertions are wired.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (P0-07) — `StateAssertion`
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (WI-P0-07) — `StateAssertion`
   fields (`Path`, `Op`, `Value`).
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91` — `CreateOpen(...)`.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` — `PositionCommandArgument`,
-  `IntegerCommandArgument`, `HandleCommandArgument` (P0-11).
+  `IntegerCommandArgument`, `HandleCommandArgument` (WI-P0-11).
 - `src/OpenSage.Game/Logic/Orders/OrderType.cs` — canonical names: `MoveTo`, `ForceAttackGround`,
   `BuildObject`, `CreateUnit`, `SpecialPower`.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:42-566` — the authoritative list of handled
@@ -119,7 +119,7 @@ dotnet test src --filter "FullyQualifiedName~OrderTypeCoverage"
 - Do not add non-Interactive variants of these tests (they require game files for map/asset loading).
 - Do not author six-phase skirmish scenarios here; each test is the minimal one-command scenario
   needed to exercise the target `OrderType`.
-- If `HarnessRunner` is not done (P0-08 blocked), mark this card `Blocked`.
+- If `HarnessRunner` is not done (WI-P0-08 blocked), mark this card `Blocked`.
 
 ## On completion
 
