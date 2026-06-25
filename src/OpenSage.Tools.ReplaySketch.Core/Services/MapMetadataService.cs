@@ -211,7 +211,7 @@ public sealed class MapMetadataService
 
     private static string ResolvePreviewCacheDir()
     {
-        var primary = Path.Combine(PlatformPaths.AppDataBase, "OpenSAGE", "ReplaySketch", "previews");
+        var primary = Path.Combine(PlatformPaths.CacheBase, "OpenSAGE", "ReplaySketch", "previews");
         try
         {
             Directory.CreateDirectory(primary);
