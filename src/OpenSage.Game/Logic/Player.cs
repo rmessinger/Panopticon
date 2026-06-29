@@ -127,6 +127,12 @@ public class Player : IPersistableObject
 
     public HashSet<Player> Enemies { get; internal set; }
 
+    public HashSet<GameObject> OwnedObjects { get; } = new();
+
+    public int BuildingCount { get; private set; }
+
+    public int UnitCount { get; private set; }
+
     private HashSet<GameObject>[] _selectionGroups;
 
     // TODO: Does the order matter? Is it ever visible in UI?
@@ -136,7 +142,7 @@ public class Player : IPersistableObject
 
     public GameObject? HoveredUnit { get; set; }
 
-    public int Team { get; init; }
+    public int Team { get; set; }
 
     public Player(uint id, PlayerTemplate? template, in ColorRgb color, IGame game)
     {
@@ -778,12 +784,58 @@ public class Player : IPersistableObject
 
     public void AddAlly(Player player)
     {
+        if (player == null || player == this)
+        {
+            return;
+        }
+
         Allies.Add(player);
+        player.Allies.Add(this);
     }
 
     public void AddEnemy(Player player)
     {
+        if (player == null || player == this)
+        {
+            return;
+        }
+
         Enemies.Add(player);
+        player.Enemies.Add(this);
+    }
+
+    public void AddOwnedObject(GameObject gameObject)
+    {
+        if (gameObject == null || !OwnedObjects.Add(gameObject))
+        {
+            return;
+        }
+
+        if (gameObject.IsStructure)
+        {
+            BuildingCount++;
+        }
+        else
+        {
+            UnitCount++;
+        }
+    }
+
+    public void RemoveOwnedObject(GameObject gameObject)
+    {
+        if (gameObject == null || !OwnedObjects.Remove(gameObject))
+        {
+            return;
+        }
+
+        if (gameObject.IsStructure)
+        {
+            BuildingCount--;
+        }
+        else
+        {
+            UnitCount--;
+        }
     }
 
     public void InitializeStrategyData(BitArray<ObjectKinds> validMemberKindOf, BitArray<ObjectKinds> invalidMemberKindOf)

@@ -22,27 +22,69 @@ public sealed class PlayerManager : IPersistableObject
     }
 
     internal void OnNewGame(Data.Map.Player[] mapPlayers, GameType gameType)
+        => OnNewGame(mapPlayers, gameType, null);
+
+    internal void OnNewGame(Data.Map.Player[] mapPlayers, GameType gameType, PlayerSetting[] playerSettings)
     {
         _players = CreatePlayers(mapPlayers, gameType).ToArray();
 
+        if (playerSettings != null)
+        {
+            for (var i = 0; i < playerSettings.Length && i + 2 < _players.Length; i++)
+            {
+                _players[i + 2].Team = playerSettings[i].Team;
+            }
+        }
+
         LocalPlayer = null;
 
-        foreach (var player in _players)
+        if (playerSettings != null)
         {
-            if (player.IsHuman)
+            var localPlayerIndex = Array.FindIndex(playerSettings, setting => setting.IsLocalForMultiplayer);
+            if (localPlayerIndex >= 0 && localPlayerIndex + 2 < _players.Length)
             {
-                LocalPlayer = player;
-                break;
+                LocalPlayer = _players[localPlayerIndex + 2];
+            }
+        }
+
+        if (LocalPlayer == null)
+        {
+            foreach (var player in _players)
+            {
+                if (player.IsHuman)
+                {
+                    LocalPlayer = player;
+                    break;
+                }
             }
         }
 
         if (LocalPlayer == null && _players.Length > 2)
         {
-            // TODO: Probably not the right way to do it.
             LocalPlayer = _players[2];
         }
 
-        // TODO: Setup player relationships.
+        if (playerSettings != null)
+        {
+            var skirmishPlayers = _players.Skip(2).Take(playerSettings.Length).ToArray();
+            for (var i = 0; i < skirmishPlayers.Length; i++)
+            {
+                for (var j = i + 1; j < skirmishPlayers.Length; j++)
+                {
+                    var left = skirmishPlayers[i];
+                    var right = skirmishPlayers[j];
+
+                    if (left.Team == right.Team && left.Team != -1)
+                    {
+                        left.AddAlly(right);
+                    }
+                    else
+                    {
+                        left.AddEnemy(right);
+                    }
+                }
+            }
+        }
     }
 
     // This needs to operate on the entire player list, because players have references to each other

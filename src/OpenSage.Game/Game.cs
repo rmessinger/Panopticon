@@ -709,7 +709,8 @@ public sealed class Game : DisposableBase, IGame
             mapPlayers,
             mapTeams,
             mapScriptLists,
-            gameType);
+            gameType,
+            playerSettings);
     }
 
     public Window LoadWindow(string wndFileName)

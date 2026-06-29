@@ -123,12 +123,13 @@ public sealed class Scene3D : DisposableBase, IScene3D
         Data.Map.Player[] mapPlayers,
         Data.Map.Team[] mapTeams,
         ScriptList[] mapScriptLists,
-        GameType gameType)
+        GameType gameType,
+        PlayerSetting[] playerSettings = null)
         : this(game, () => game.Viewport, game.InputMessageBuffer, false, mapFile, mapPath)
     {
         game.Scene3D = this;
 
-        game.PlayerManager.OnNewGame(mapPlayers, gameType);
+        game.PlayerManager.OnNewGame(mapPlayers, gameType, playerSettings);
 
         game.TeamFactory.Initialize(mapTeams);
 
