@@ -257,49 +257,19 @@ public class GameOptionsUtil
                     }
                     else
                     {
-                        var availablePositions = new List<byte>(CurrentMap.NumPlayers);
-                        for (byte a = 1; a <= CurrentMap.NumPlayers; a++)
-                        {
-                            availablePositions.Add(a);
-                        }
-
                         foreach (var slot in _game.SkirmishManager.Settings.Slots)
                         {
-                            if (slot.StartPosition != 0)
-                            {
-                                availablePositions.Remove(slot.StartPosition);
-                            }
-                        }
-
-                        var random = new Random(_game.SkirmishManager.Settings.Seed);
-
-                        foreach (var slot in _game.SkirmishManager.Settings.Slots)
-                        {
-                            // Close open slots.
                             if (slot.State == SkirmishSlotState.Open)
                             {
                                 slot.State = SkirmishSlotState.Closed;
                             }
-
-                            if (slot.State != SkirmishSlotState.Closed)
-                            {
-                                if (slot.StartPosition == 0)
-                                {
-                                    slot.StartPosition = availablePositions.Last();
-                                    availablePositions.Remove(slot.StartPosition);
-                                }
-
-                                if (slot.FactionIndex == 0)
-                                {
-                                    slot.FactionIndex = (byte)random.Next(1, _game.GetPlayableSides().Count() + 1);
-                                }
-
-                                if (slot.ColorIndex == -1)
-                                {
-                                    slot.ColorIndex = (sbyte)random.Next(slot.ColorIndex, _game.AssetStore.MultiplayerColors.Count);
-                                }
-                            }
                         }
+
+                        SkirmishSlotDefaults.ApplyDefaults(
+                            _game,
+                            _game.SkirmishManager.Settings.Slots,
+                            _game.SkirmishManager.Settings.MapName,
+                            _game.SkirmishManager.Settings.Seed);
 
                         await context.Game.SkirmishManager.HandleStartButtonClickAsync();
                     }

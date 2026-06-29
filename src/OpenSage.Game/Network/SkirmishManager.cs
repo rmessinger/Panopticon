@@ -54,6 +54,8 @@ public abstract class SkirmishManager
 
     internal void StartGame()
     {
+        SkirmishSlotDefaults.ApplyDefaults(Game, Settings.Slots, Settings.MapName, Settings.Seed);
+
         var playerSettings = new List<PlayerSetting>();
         for (var i = 0; i < Settings.Slots.Length; i++)
         {
