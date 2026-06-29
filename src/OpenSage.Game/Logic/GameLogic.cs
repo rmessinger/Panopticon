@@ -118,6 +118,8 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         _game.Scene3D.Radar?.AddGameObject(gameObject);
         _game.PartitionCellManager.OnObjectAdded(gameObject);
 
+        gameObject.Owner?.AddOwnedObject(gameObject);
+
         if (_game is Game concreteGame)
         {
             concreteGame.RaiseObjectCreated(new GameObjectCreatedEventArgs(gameObject));
@@ -186,6 +188,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
         gameObject.Drawable.Destroy();
 
+        gameObject.Owner?.RemoveOwnedObject(gameObject);
         gameObject.OnDestroy();
 
         gameObject.SetObjectStatus(ObjectStatus.Destroyed, true);
