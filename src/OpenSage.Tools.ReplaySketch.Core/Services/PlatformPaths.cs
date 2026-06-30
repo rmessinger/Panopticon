@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 
 namespace OpenSage.Tools.ReplaySketch.Services;

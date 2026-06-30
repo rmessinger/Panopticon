@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using Xunit;

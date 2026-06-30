@@ -1,4 +1,4 @@
-using OpenSage.Logic;
+﻿using OpenSage.Logic;
 using OpenSage.Mathematics;
 using Xunit;
 
