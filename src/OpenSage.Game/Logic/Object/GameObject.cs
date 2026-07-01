@@ -288,7 +288,38 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     public float VerticalOffset;
 
-    public Player Owner { get; internal set; }
+    private Player _owner;
+
+    /// <summary>
+    /// The player that currently owns this object. Reassigning this (e.g. when an object joins a
+    /// team, or is captured) automatically moves the object between <see cref="Player.OwnedObjects"/>
+    /// sets and keeps <see cref="Player.BuildingCount"/>/<see cref="Player.UnitCount"/> in sync,
+    /// but only for objects that are already tracked under their current owner — first assignment
+    /// (during construction, before <c>GameLogic.AddObject</c> runs) intentionally does not add the
+    /// object, since <c>GameLogic.AddObject</c> is responsible for that initial registration.
+    /// </summary>
+    public Player Owner
+    {
+        get => _owner;
+        internal set
+        {
+            var oldOwner = _owner;
+            if (oldOwner == value)
+            {
+                return;
+            }
+
+            var wasTracked = oldOwner != null && oldOwner.OwnedObjects.Contains(this);
+
+            _owner = value;
+
+            if (wasTracked)
+            {
+                oldOwner.RemoveOwnedObject(this);
+                value?.AddOwnedObject(this);
+            }
+        }
+    }
 
     public GameObject ParentHorde { get; set; }
 
