@@ -46,6 +46,33 @@ public class PlayerManagerTests : MockedGameTest
         Assert.DoesNotContain(first, second.Enemies);
     }
 
+    [Fact]
+    public void OnNewGame_UnteamedPlayersAreMutualEnemies()
+    {
+        // -1 is the "no team" sentinel (matches SkirmishSlot's default and PlayerManager.OnNewGame's
+        // ally-wiring check). Two players who never had a team assigned must fight each other, not
+        // be wired as allies.
+        var playerSettings = new[]
+        {
+            new PlayerSetting(1, "FactionAmerica", new ColorRgb(255, 255, 255), -1, PlayerOwner.EasyAi, "first"),
+            new PlayerSetting(2, "FactionGLA", new ColorRgb(255, 255, 255), -1, PlayerOwner.EasyAi, "second"),
+        };
+
+        var manager = new PlayerManager(Generals);
+        var mapPlayers = CreateMapPlayers();
+
+        manager.OnNewGame(mapPlayers, GameType.Skirmish, playerSettings);
+
+        var first = manager.Players[2];
+        var second = manager.Players[3];
+
+        Assert.Contains(second, first.Enemies);
+        Assert.Contains(first, second.Enemies);
+        Assert.DoesNotContain(second, first.Allies);
+        Assert.DoesNotContain(first, second.Allies);
+    }
+
+
     private static OpenSage.Data.Map.Player[] CreateMapPlayers() =>
     [
         OpenSage.Data.Map.Player.CreateNeutralPlayer(),

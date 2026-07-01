@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-10` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, [deep dive §3.1](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-02` |
@@ -92,4 +92,25 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Confirmed the bug: `SkirmishSlot.Team` (`sbyte`) had no explicit initializer, so it defaulted to
+`0`, and every reset path (`GameOptionsUtil.cs` state-change reset, `SkirmishManager.cs` disconnect
+reset) also explicitly reset it to `0`. `0` is GUI `Team:1` (a real team), not the "no team" `-1`
+sentinel that `PlayerManager.OnNewGame` checks for (`left.Team == right.Team && left.Team != -1`).
+So two unedited AI opponents (e.g. two "Easy Army" slots nobody assigned a team to) shared
+`Team == 0` and were wired as mutual allies instead of enemies.
+
+Fix applied:
+- `SkirmishSlot._team` now defaults to `-1` ("no team").
+- `GameOptionsUtil.cs` state-change reset and `SkirmishManager.cs` disconnect reset now reset
+  `slot.Team` to `-1` instead of `0`.
+- Found and fixed a related bug while validating the GUI round-trip criterion: the team-combo
+  `SelectedIndex` lookup in `GameOptionsUtil.UpdateUI` used `slot.Team - 1` (copied from the
+  1-based `ColorIndex`/`FactionIndex` round-trip lines above it), but the team combo's
+  `DataItem`s already match `slot.Team` directly (`{-1, 0, 1, 2, 3}`), so the `-1` offset picked
+  the wrong entry (and would fail to find any entry for the new `-1` default). Changed the lookup
+  to compare `slot.Team` directly.
+
+Added tests: `SkirmishSlotTests.DefaultTeam_IsNoTeamSentinel` (new file) and
+`PlayerManagerTests.OnNewGame_UnteamedPlayersAreMutualEnemies`. Validation:
+`dotnet build src` clean, `dotnet test src --filter Category!=Interactive` 668 passed / 22 skipped
+/ 0 failed, `dotnet format src --verify-no-changes` reports 0 CHARSET/style errors.

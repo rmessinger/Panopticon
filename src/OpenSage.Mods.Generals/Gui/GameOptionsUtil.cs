@@ -214,7 +214,7 @@ public class GameOptionsUtil
                     slot.StartPosition = 0;
                     slot.ColorIndex = 0;
                     slot.FactionIndex = 0;
-                    slot.Team = 0;
+                    slot.Team = -1;
                     slot.Ready = false;
                     slot.ReadyUpdated = false;
                 }
@@ -318,7 +318,7 @@ public class GameOptionsUtil
 
             var teamCombo = (ComboBox)window.Controls.FindControl($"{_optionsPath}{ComboBoxTeamPrefix}{slot.Index}");
             if ((sbyte)teamCombo.Items[teamCombo.SelectedIndex].DataItem != slot.Team)
-                teamCombo.SelectedIndex = Array.FindIndex(teamCombo.Items, x => (sbyte)x.DataItem == slot.Team - 1);
+                teamCombo.SelectedIndex = Array.FindIndex(teamCombo.Items, x => (sbyte)x.DataItem == slot.Team);
 
             var playerTemplateCombo = (ComboBox)window.Controls.FindControl($"{_optionsPath}{ComboBoxPlayerTemplatePrefix}{slot.Index}");
             if (playerTemplateCombo.SelectedIndex != slot.FactionIndex)

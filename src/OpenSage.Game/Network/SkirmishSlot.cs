@@ -95,7 +95,9 @@ public class SkirmishSlot : IPersistableObject
         }
     }
 
-    private sbyte _team;
+    // -1 means "no team" (free-for-all): players without an explicit team are mutual enemies.
+    // See PlayerManager.OnNewGame, which only treats Team == -1 as the "no team" sentinel.
+    private sbyte _team = -1;
     public sbyte Team
     {
         get
