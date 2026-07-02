@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-08` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -79,4 +79,7 @@ dotnet test src --filter Category!=Interactive
 
 ## Result
 
-<!-- append after completing -->
+Fixed via `dotnet format src` (rewrote the five files with the UTF-8 BOM, no other content
+changes — confirmed via `git diff`, only the BOM byte was added). `dotnet format src
+--verify-no-changes` no longer reports any `CHARSET` errors. `dotnet build src` and
+`dotnet test src --filter Category!=Interactive` pass.

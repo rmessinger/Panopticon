@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-11` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-5, [deep dive §3.4](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-07` |
@@ -96,4 +96,19 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Converted `GameObject.Owner` from an auto-property to a backed property. On reassignment, if the
+object was already tracked in the old owner's `OwnedObjects` (checked via `HashSet.Contains`), the
+setter calls `oldOwner.RemoveOwnedObject(this)` then `newOwner?.AddOwnedObject(this)` — moving the
+object and fixing `BuildingCount`/`UnitCount` on both sides. First assignment (construction, before
+`GameLogic.AddObject` runs) leaves `oldOwner == null`, so `wasTracked` is false and no add happens,
+avoiding double-counting; `GameLogic.AddObject`'s existing explicit `AddOwnedObject` call remains
+the sole initial registration.
+
+Added three tests to `PlayerOwnershipTests`: `OwnerReassignment_MovesObjectBetweenPlayersAndFixesCounts`
+(A→B transfer moves the object and counts, and destroying afterward decrements only B),
+`OwnerAssignment_AtConstructionDoesNotDoubleCount` (construction-style assignment doesn't add until
+`GameLogic.AddObject` does), plus retained the original `AddOwnedObject_TracksOwnedObjectsAndCounts`.
+
+Validation: `dotnet build src` clean, `dotnet test src --filter "FullyQualifiedName~PlayerOwnershipTests"`
+3 passed, `dotnet test src --filter Category!=Interactive` 670 passed / 22 skipped / 0 failed,
+`dotnet format src --verify-no-changes` reports 0 CHARSET/style errors.

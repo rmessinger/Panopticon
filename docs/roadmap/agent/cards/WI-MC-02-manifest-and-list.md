@@ -18,7 +18,9 @@ print them as a console table, filtered by optional `--game` and `--category` fl
 ## Steps
 
 1. Create `src/OpenSage.Tools.ModCollector/manifest.json` as an embedded resource.
-   Schema: array of objects with fields `name`, `game`, `category`, `moddbUrl`, `downloadUrl`.
+   Schema: array of objects with fields `name`, `game`, `category`, `moddbUrl`, `downloadUrl`, `status`.
+   Game values are the canonical slugs defined in the plan (e.g. `cnc-generals-zero-hour`, `bfme2`,
+   `bfme2-rotwk`). See the [game slug table](../../plans/mod-collector.md#game-slug-table).
    Populate with the seed entries from the plan (Contra, Shockwave, NProject Mod, Edain Mod,
    Age of the Ring, and a handful of map packs per game). For each entry, verify that
    `downloadUrl` is a direct `.zip` download before committing — use `curl -I <url>` to check
@@ -75,8 +77,8 @@ sealed class ListOptions
 
 - `dotnet run --project src/OpenSage.Tools.ModCollector -- list` prints a table with at least
   one row.
-- `dotnet run --project src/OpenSage.Tools.ModCollector -- list --game command-and-conquer-generals-zero-hour`
-  shows only ZeroHour entries.
+- `dotnet run --project src/OpenSage.Tools.ModCollector -- list --game cnc-generals-zero-hour`
+  shows only Zero Hour entries.
 - Build is clean, `dotnet format src --verify-no-changes` passes.
 
 ## Validation

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-09` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (relates to P1-3, [deep dive §3.3](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-05` |
@@ -77,4 +77,14 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Added a reserve-first pass in `ApplyDefaults` that removes every non-`Open`/`Closed` slot's
+pre-set `StartPosition` from `availablePositions` before the original assignment loop runs, so
+manually-placed positions can no longer be re-handed to another slot. Added
+`src/OpenSage.Game.Tests/Network/SkirmishSlotDefaultsTests.cs` with
+`ApplyDefaults_DoesNotReassignAlreadyTakenStartPositions` and
+`ApplyDefaults_SkipsOpenAndClosedSlots`. Along the way found that `MockedGameTest.TestGame
+.GetPlayableSides()` (test harness stub) threw `NotImplementedException`, blocking any test that
+exercises `ApplyDefaults`; implemented it to mirror the real `Game.GetPlayableSides()`
+(`AssetStore.PlayerTemplates.Where(x => x.PlayableSide)`). Validation: `dotnet build src` clean,
+`dotnet test src --filter Category!=Interactive` 666 passed / 22 skipped / 0 failed, `dotnet format
+src --verify-no-changes` reports 0 CHARSET/style errors for changed files.

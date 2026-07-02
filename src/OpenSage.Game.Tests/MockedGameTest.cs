@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using OpenSage.Audio;
 using OpenSage.Client;
@@ -199,7 +200,7 @@ public abstract class MockedGameTest : IDisposable
 
         public IEnumerable<PlayerTemplate> GetPlayableSides()
         {
-            throw new NotImplementedException();
+            return AssetStore.PlayerTemplates.Where(x => x.PlayableSide);
         }
 
         public MappedImage GetMappedImage(string name)
