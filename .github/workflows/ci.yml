@@ -33,6 +33,10 @@ jobs:
       with:
         dotnet-version: '8.x'
 
+    - name: Install MAUI Mac Catalyst workload
+      if: matrix.os == 'macos-latest'
+      run: dotnet workload install maui-maccatalyst
+
     - name: Test
       run: dotnet test src --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
 
