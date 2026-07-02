@@ -422,7 +422,7 @@ public sealed class HostSkirmishManager : NetworkSkirmishManager
             slot.StartPosition = 0;
             slot.ColorIndex = -1;
             slot.FactionIndex = 0;
-            slot.Team = 0;
+            slot.Team = -1;
             slot.Ready = false;
             slot.ReadyUpdated = false;
 

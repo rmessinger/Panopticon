@@ -61,6 +61,18 @@
 
 See the [larger-maps deep dive](deep-dives/larger-maps.md) for how this constrains map size.
 
+## Mod acquisition tooling (ModCollector)
+
+- `OpenSage.Tools.ModCollector` does not yet exist in the repo. It will be created by the
+  `WI-MC-*` agent task cards (see [`agent/cards/WI-MC-01` through `WI-MC-04`](cards/)).
+- Design authority: [`docs/roadmap/plans/mod-collector.md`](../plans/mod-collector.md) —
+  covers purpose, game slug table, manifest schema, seed entries, and engine integration path.
+- Engine integration point: the output `.big` files are consumed through the existing
+  `SkudefReader` virtual file system by pointing the game path environment variable at the
+  extracted directory. No engine changes required.
+- Game slug conventions are defined in the plan's [game slug table](../plans/mod-collector.md#game-slug-table),
+  derived from `SageGame` enum names (`src/OpenSage.Game/SageGame.cs`) in kebab-case.
+
 ## Validation tooling (ReplaySketch)
 
 - Core logic is covered headlessly: `OpenSage.Tools.ReplaySketch.Tests` (non-MAUI, CI-runnable)
