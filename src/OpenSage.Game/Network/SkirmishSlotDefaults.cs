@@ -33,28 +33,22 @@ public static class SkirmishSlotDefaults
         var random = new Random(seed);
         var playableSides = game.GetPlayableSides().ToArray();
 
+        var activeSlots = slots
+            .Where(slot => slot.State != SkirmishSlotState.Open && slot.State != SkirmishSlotState.Closed)
+            .ToList();
+
         // Reserve positions already assigned to a slot before handing out the remaining
         // positions, so a manually-set StartPosition can't be re-assigned to another slot.
-        foreach (var slot in slots)
+        foreach (var slot in activeSlots)
         {
-            if (slot.State == SkirmishSlotState.Open || slot.State == SkirmishSlotState.Closed)
-            {
-                continue;
-            }
-
             if (slot.StartPosition != 0)
             {
                 availablePositions.Remove(slot.StartPosition);
             }
         }
 
-        foreach (var slot in slots)
+        foreach (var slot in activeSlots)
         {
-            if (slot.State == SkirmishSlotState.Open || slot.State == SkirmishSlotState.Closed)
-            {
-                continue;
-            }
-
             if (slot.StartPosition == 0)
             {
                 if (availablePositions.Count == 0)
