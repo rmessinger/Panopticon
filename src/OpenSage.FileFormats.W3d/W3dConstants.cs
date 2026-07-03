@@ -1,4 +1,4 @@
-﻿namespace OpenSage.FileFormats.W3d;
+namespace OpenSage.FileFormats.W3d;
 
 internal static class W3dConstants
 {

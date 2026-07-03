@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Graphics.Cameras;
+namespace OpenSage.Graphics.Cameras;
 
 /// <summary>
 /// Determines how mouse and keyboard input maps to camera movement.

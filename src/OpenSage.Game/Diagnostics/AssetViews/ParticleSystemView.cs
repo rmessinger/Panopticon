@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using OpenSage.Graphics.ParticleSystems;
 using OpenSage.Graphics.Rendering;
 

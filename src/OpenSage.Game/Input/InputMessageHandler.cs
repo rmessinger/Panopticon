@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Input;
+namespace OpenSage.Input;
 
 public abstract class InputMessageHandler
 {

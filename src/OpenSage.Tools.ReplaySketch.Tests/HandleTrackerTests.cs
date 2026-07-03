@@ -1,4 +1,4 @@
-﻿using OpenSage.Logic.Object;
+using OpenSage.Logic.Object;
 using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;

@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Csf;
+using OpenSage.Data.Csf;
 using Xunit;
 using Xunit.Abstractions;
 

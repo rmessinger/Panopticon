@@ -1,4 +1,4 @@
-﻿using OpenSage.Content;
+using OpenSage.Content;
 using OpenSage.Logic.Object;
 using OpenSage.Tests.Logic.Object.Update;
 using Xunit;

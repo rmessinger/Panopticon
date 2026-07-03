@@ -1,4 +1,4 @@
-﻿using OpenSage.Gui.Apt;
+using OpenSage.Gui.Apt;
 using Veldrid;
 
 namespace OpenSage.Diagnostics;

@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Tga;
+namespace OpenSage.Data.Tga;
 
 public enum TgaImageType : byte
 {

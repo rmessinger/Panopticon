@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Tools.ReplaySketch.Maui.Views;
+namespace OpenSage.Tools.ReplaySketch.Maui.Views;
 
 public partial class ActionDetailView : ContentView
 {

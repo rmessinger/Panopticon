@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.Data.Wak;
 using Xunit;
 using Xunit.Abstractions;

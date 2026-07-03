@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+using ImGuiNET;
 using OpenSage.Data.Ini;
 using OpenSage.Mathematics;
 

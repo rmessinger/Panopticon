@@ -1,4 +1,4 @@
-﻿namespace OpenSage.IO;
+namespace OpenSage.IO;
 
 internal static class SkudefReader
 {

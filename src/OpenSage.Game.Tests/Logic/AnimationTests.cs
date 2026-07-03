@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OpenSage.Content;
 using OpenSage.Gui;
 using OpenSage.Logic.Object;

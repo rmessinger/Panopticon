@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Tools.WorldBuilder.Maui;
+namespace OpenSage.Tools.WorldBuilder.Maui;
 
 public partial class App : Application
 {

@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using OpenSage.Gui.ControlBar;
 using OpenSage.Gui.Wnd.Images;
 using OpenSage.Input;

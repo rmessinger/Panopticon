@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Terrain.Roads;
+namespace OpenSage.Terrain.Roads;
 
 internal interface ISimpleRoadSegment : IRoadSegment
 {

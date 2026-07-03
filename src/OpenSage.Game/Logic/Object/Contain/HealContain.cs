@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using FixedMath.NET;
 using OpenSage.Audio;

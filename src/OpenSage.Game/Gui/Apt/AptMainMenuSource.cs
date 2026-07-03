@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Gui.Apt;
+namespace OpenSage.Gui.Apt;
 
 public class AptMainMenuSource : IMainMenuSource
 {

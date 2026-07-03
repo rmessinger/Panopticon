@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui;
 using OpenSage.Tools.WorldBuilder.Maui.Views;
 
 #if WINDOWS

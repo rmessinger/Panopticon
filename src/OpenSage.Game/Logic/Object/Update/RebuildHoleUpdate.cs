@@ -1,4 +1,4 @@
-﻿using FixedMath.NET;
+using FixedMath.NET;
 using ImGuiNET;
 using OpenSage.Content;
 using OpenSage.Data.Ini;

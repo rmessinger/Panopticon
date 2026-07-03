@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OpenSage.Content.Loaders;
 using OpenSage.Graphics.Rendering;
 using OpenSage.Graphics.Shaders;

@@ -1,4 +1,4 @@
-﻿using OpenSage.Mathematics;
+using OpenSage.Mathematics;
 using Xunit;
 
 namespace OpenSage.Tests.Mathematics;

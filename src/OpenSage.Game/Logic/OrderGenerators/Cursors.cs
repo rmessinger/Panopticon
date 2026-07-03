@@ -1,4 +1,4 @@
-﻿using OpenSage.Logic.Orders;
+using OpenSage.Logic.Orders;
 
 namespace OpenSage.Logic.OrderGenerators;
 

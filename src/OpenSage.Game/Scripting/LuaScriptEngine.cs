@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using MoonSharp.Interpreter;
 using OpenSage.Data.Ini;

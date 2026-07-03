@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using OpenSage;
 using OpenSage.Tools.ReplaySketch.Model;

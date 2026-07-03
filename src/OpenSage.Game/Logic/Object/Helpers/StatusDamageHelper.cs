@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic.Object.Helpers;
+namespace OpenSage.Logic.Object.Helpers;
 
 internal sealed class StatusDamageHelper : ObjectHelperModule
 {

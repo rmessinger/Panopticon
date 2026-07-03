@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Gui.Apt.ActionScript;
+namespace OpenSage.Gui.Apt.ActionScript;
 
 /// <summary>
 /// See SWF specification https://www.mobilefish.com/download/flash/swf_file_format_spec_v9.pdf

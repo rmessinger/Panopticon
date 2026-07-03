@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using OpenSage.Gui.Wnd.Controls;
 using OpenSage.Network;
 

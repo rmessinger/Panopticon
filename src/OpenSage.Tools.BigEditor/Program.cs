@@ -1,4 +1,4 @@
-﻿using OpenSage.Tools.BigEditor.UI;
+using OpenSage.Tools.BigEditor.UI;
 using Veldrid;
 using Veldrid.StartupUtilities;
 

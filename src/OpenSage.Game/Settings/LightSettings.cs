@@ -1,4 +1,4 @@
-﻿using OpenSage.Graphics.Shaders;
+using OpenSage.Graphics.Shaders;
 
 namespace OpenSage.Settings;
 

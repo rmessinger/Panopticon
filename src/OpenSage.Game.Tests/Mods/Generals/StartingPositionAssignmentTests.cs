@@ -1,4 +1,4 @@
-﻿using OpenSage.Mods.Generals.Gui;
+using OpenSage.Mods.Generals.Gui;
 using OpenSage.Network;
 using Xunit;
 

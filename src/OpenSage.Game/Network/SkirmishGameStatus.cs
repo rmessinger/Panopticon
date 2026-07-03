@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Network;
+namespace OpenSage.Network;
 
 public enum SkirmishGameStatus
 {

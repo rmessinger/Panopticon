@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Graphics.Animation;
+namespace OpenSage.Graphics.Animation;
 
 public enum AnimationClipType
 {

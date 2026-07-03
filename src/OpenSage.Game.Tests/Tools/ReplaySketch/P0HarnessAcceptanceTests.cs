@@ -1,4 +1,4 @@
-﻿// P0 acceptance tests — harness deliverables requiring the game engine (no game files).
+// P0 acceptance tests — harness deliverables requiring the game engine (no game files).
 // Run with: dotnet test src/OpenSage.Game.Tests --filter "FullyQualifiedName~P0Harness"
 
 using System;

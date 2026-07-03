@@ -1,4 +1,4 @@
-﻿using OpenSage.Tools.ReplaySketch.Model;
+using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;

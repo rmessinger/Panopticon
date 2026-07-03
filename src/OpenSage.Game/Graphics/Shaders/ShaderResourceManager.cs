@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OpenSage.Diagnostics;
 using OpenSage.Rendering;
 using Veldrid;

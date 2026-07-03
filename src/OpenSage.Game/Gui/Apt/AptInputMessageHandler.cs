@@ -1,4 +1,4 @@
-﻿using OpenSage.Input;
+using OpenSage.Input;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Gui.Apt;

@@ -1,4 +1,4 @@
-﻿using OpenSage.IO;
+using OpenSage.IO;
 
 namespace OpenSage.Audio;
 

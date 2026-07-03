@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using OpenSage.Gui.ControlBar;
 using OpenSage.Logic;

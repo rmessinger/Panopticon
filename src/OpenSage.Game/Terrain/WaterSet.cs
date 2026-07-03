@@ -1,4 +1,4 @@
-﻿using OpenSage.Content;
+using OpenSage.Content;
 using OpenSage.Data.Ini;
 using OpenSage.Data.Map;
 using OpenSage.Graphics;

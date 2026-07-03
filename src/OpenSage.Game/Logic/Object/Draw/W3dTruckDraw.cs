@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 using OpenSage.Client;
 using OpenSage.Data.Ini;

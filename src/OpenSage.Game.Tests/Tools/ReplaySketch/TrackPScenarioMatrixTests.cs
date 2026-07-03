@@ -1,4 +1,4 @@
-﻿// Track P scenario matrix stubs — one class per phase.
+// Track P scenario matrix stubs — one class per phase.
 // Each class verifies that the phase's ScenarioMatrix (defined in the phase's deep dive matrix
 // section) expands and runs correctly against the P0-5b runner. These are STUBS: each test throws
 // NotImplementedException until the corresponding phase and P0-5b are implemented.

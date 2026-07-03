@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using OpenSage.Graphics.Mathematics;
 using OpenSage.Graphics.Rendering;

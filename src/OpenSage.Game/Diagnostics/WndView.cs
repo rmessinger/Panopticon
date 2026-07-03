@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using ImGuiNET;
 using OpenSage.Diagnostics.Util;
 using OpenSage.Gui.Wnd.Controls;

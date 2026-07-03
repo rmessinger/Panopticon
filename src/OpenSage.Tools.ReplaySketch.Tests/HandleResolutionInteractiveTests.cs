@@ -1,4 +1,4 @@
-﻿using OpenSage.Logic.Orders;
+using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 

@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Tools.WorldBuilder.Core;
+namespace OpenSage.Tools.WorldBuilder.Core;
 
 /// <summary>
 /// Brush mode for height editing tools.

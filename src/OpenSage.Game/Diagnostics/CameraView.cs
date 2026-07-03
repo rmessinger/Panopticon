@@ -1,4 +1,4 @@
-﻿
+
 namespace OpenSage.Diagnostics;
 
 internal sealed class CameraView : DiagnosticView
