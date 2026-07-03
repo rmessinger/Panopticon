@@ -57,18 +57,13 @@ public class SteamLocatorTests
 
     /// <summary>
     /// Verifies that the Steam locator finds the game installation on this machine.
-    /// This test is intentionally skipped on Windows (where Steam discovery uses the registry)
-    /// and on Linux (where a Steam install is not expected in CI).
+    /// Uses <see cref="GameFactAttribute"/> so it is automatically skipped in CI (and on any
+    /// machine) where Generals isn't actually installed, rather than assuming it's always
+    /// present on macOS.
     /// </summary>
-    [Fact]
+    [GameFact(SageGame.CncGenerals)]
     public void FindInstallations_FindsGeneralsOnThisMachine()
     {
-        if (!OperatingSystem.IsMacOS() && !OperatingSystem.IsMacCatalyst())
-        {
-            // Only enforce this on macOS/Mac Catalyst where we know the game is installed via Steam.
-            return;
-        }
-
         var locator = new SteamInstallationLocator();
         var installations = locator.FindInstallations(GeneralsDefinition.Instance);
 
