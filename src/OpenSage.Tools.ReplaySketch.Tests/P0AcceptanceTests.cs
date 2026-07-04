@@ -1,4 +1,4 @@
-﻿// P0 acceptance tests — Core-only deliverables (no game engine, no game files).
+// P0 acceptance tests — Core-only deliverables (no game engine, no game files).
 // Some tests are implemented and some remain stubs that throw NotImplementedException
 // until their corresponding P0 sub-phase lands. See §8 of
 // docs/roadmap/deep-dives/playable-baseline-harness.md for the full spec.

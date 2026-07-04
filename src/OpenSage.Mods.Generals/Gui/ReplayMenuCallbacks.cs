@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using OpenSage.Content.Translation;
 using OpenSage.Data.Rep;

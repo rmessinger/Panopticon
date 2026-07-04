@@ -1,4 +1,4 @@
-﻿
+
 using OpenSage.Logic.Object;
 using Xunit;
 

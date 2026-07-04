@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using OpenSage.Logic.Object;
 using OpenSage.Tools.ReplaySketch.Model;
 

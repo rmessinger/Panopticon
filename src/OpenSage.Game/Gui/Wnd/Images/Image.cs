@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Mathematics;
 using Veldrid;
 using Rectangle = OpenSage.Mathematics.Rectangle;

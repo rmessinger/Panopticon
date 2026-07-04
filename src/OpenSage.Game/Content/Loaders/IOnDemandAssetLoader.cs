@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Content.Loaders;
+namespace OpenSage.Content.Loaders;
 
 internal interface IOnDemandAssetLoader<TAsset>
     where TAsset : BaseAsset

@@ -1,4 +1,4 @@
-﻿using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
+using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
 using OpenSage.Tools.ReplaySketch.Services;

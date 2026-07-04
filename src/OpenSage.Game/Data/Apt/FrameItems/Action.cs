@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.Gui.Apt.ActionScript;
 
 namespace OpenSage.Data.Apt.FrameItems;

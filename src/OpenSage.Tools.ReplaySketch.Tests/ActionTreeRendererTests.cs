@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
 

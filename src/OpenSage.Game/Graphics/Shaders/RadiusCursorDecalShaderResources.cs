@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Veldrid;
 
 namespace OpenSage.Graphics.Shaders;

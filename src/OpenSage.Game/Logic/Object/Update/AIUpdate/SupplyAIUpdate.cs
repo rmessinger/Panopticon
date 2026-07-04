@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using OpenSage.Audio;
 using OpenSage.Content;
 using OpenSage.Data.Ini;

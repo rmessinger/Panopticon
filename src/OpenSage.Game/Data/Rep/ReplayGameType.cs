@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Rep;
+namespace OpenSage.Data.Rep;
 
 public enum ReplayGameType
 {

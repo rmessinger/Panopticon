@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OpenSage.Audio;
 using OpenSage.Content.Loaders;
 using OpenSage.Eva;

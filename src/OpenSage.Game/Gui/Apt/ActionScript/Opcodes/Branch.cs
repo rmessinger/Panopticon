@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Gui.Apt.ActionScript.Opcodes;
+namespace OpenSage.Gui.Apt.ActionScript.Opcodes;
 
 /// <summary>
 /// Pops a bool from the stack. If the bool is true jump to the byte offset (parameter)

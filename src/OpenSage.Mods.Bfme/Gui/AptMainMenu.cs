@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Apt;
+using OpenSage.Data.Apt;
 using OpenSage.Gui.Apt;
 using OpenSage.Gui.Apt.ActionScript;
 using Veldrid;

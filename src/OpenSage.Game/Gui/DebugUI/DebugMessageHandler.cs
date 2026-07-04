@@ -1,4 +1,4 @@
-﻿using OpenSage.Input;
+using OpenSage.Input;
 using Veldrid;
 
 namespace OpenSage.Gui.DebugUI;

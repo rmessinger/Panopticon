@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Gui.Wnd;
+namespace OpenSage.Gui.Wnd;
 
 public enum WndWindowMessageType
 {

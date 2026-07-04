@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Numerics;
 using OpenSage.Content.Loaders;
 using OpenSage.Data.Map;

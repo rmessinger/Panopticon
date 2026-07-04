@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic.Object;
+namespace OpenSage.Logic.Object;
 
 public abstract class ContainModuleData : BehaviorModuleData
 {

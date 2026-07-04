@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OpenSage.Data.Ini;
 using OpenSage.Gui.ControlBar;
 

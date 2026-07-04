@@ -1,4 +1,4 @@
-﻿using OpenSage.Tools.WorldBuilder.Core;
+using OpenSage.Tools.WorldBuilder.Core;
 
 namespace OpenSage.Tools.WorldBuilder.Maui.Views;
 

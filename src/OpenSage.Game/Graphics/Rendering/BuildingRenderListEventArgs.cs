@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Graphics.Cameras;
 
 namespace OpenSage.Graphics.Rendering;

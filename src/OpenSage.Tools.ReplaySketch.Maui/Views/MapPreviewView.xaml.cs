@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Maui.Storage;
+using CommunityToolkit.Maui.Storage;
 using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
@@ -123,9 +123,28 @@ public partial class MapPreviewView : ContentView
     private async void OnBrowseClicked(object? sender, EventArgs e)
     {
         // Use a folder picker so the user can point directly at the installation root.
+        if (!(OperatingSystem.IsAndroid()
+            || OperatingSystem.IsIOSVersionAtLeast(14)
+            || OperatingSystem.IsMacCatalystVersionAtLeast(14)
+            || OperatingSystem.IsWindows()))
+        {
+            ReplaySketchLog.Write("MapPreviewView browse unavailable on this platform");
+            return;
+        }
+
         try
         {
+            if (!OperatingSystem.IsAndroid()
+                && !OperatingSystem.IsIOS()
+                && !OperatingSystem.IsMacCatalyst()
+                && !OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
+#pragma warning disable CA1416
             var result = await FolderPicker.Default.PickAsync(default);
+#pragma warning restore CA1416
             if (result.IsSuccessful)
             {
                 InstallPathEntry.Text = result.Folder.Path;

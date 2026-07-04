@@ -1,4 +1,4 @@
-﻿using OpenSage.Network;
+using OpenSage.Network;
 using Xunit;
 
 namespace OpenSage.Tests.Network;

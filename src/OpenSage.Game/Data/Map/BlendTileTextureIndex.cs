@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Map;
+namespace OpenSage.Data.Map;
 
 public struct BlendTileTextureIndex
 {

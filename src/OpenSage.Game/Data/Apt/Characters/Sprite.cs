@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using OpenSage.Data.Apt.FrameItems;
 using OpenSage.FileFormats;

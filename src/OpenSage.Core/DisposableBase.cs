@@ -1,4 +1,4 @@
-﻿// Ported from SharpDX:
+// Ported from SharpDX:
 //
 // Copyright (c) 2010-2013 SharpDX - Alexandre Mutel
 // 

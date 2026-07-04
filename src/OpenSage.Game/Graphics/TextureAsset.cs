@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.Data.Dds;
 using OpenSage.Utilities.Extensions;
 using Veldrid;

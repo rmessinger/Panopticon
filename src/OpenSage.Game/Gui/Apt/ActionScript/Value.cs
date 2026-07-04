@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Data.Apt;
 using OpenSage.FileFormats;
 using OpenSage.Gui.Apt.ActionScript.Library;

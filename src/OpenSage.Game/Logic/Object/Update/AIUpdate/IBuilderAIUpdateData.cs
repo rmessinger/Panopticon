@@ -1,4 +1,4 @@
-﻿using OpenSage.Mathematics;
+using OpenSage.Mathematics;
 
 namespace OpenSage.Logic.Object;
 

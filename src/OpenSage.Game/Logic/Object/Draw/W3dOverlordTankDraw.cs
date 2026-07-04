@@ -1,4 +1,4 @@
-﻿using OpenSage.Client;
+using OpenSage.Client;
 using OpenSage.Data.Ini;
 
 namespace OpenSage.Logic.Object;

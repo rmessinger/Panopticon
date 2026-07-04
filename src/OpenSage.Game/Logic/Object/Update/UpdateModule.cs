@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+using ImGuiNET;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Logic.Object;

@@ -1,4 +1,4 @@
-﻿using OpenSage.Content;
+using OpenSage.Content;
 
 namespace OpenSage.Gui.Wnd;
 

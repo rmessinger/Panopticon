@@ -1,4 +1,4 @@
-﻿// Based on https://github.com/CodesInChaos/SoftFloat
+// Based on https://github.com/CodesInChaos/SoftFloat
 
 // Copyright (c) 2011 CodesInChaos
 

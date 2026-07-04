@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Map;
+using OpenSage.Data.Map;
 using OpenSage.Data.Scb;
 using Xunit;
 using Xunit.Abstractions;

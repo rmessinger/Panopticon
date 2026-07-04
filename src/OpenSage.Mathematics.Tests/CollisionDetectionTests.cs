@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Xunit;
 
 namespace OpenSage.Mathematics.Tests;

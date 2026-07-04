@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.Mathematics;
 
 namespace OpenSage.FileFormats.W3d;

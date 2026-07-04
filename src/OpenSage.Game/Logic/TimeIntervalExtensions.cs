@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic;
+namespace OpenSage.Logic;
 
 public static class TimeIntervalExtensions
 {

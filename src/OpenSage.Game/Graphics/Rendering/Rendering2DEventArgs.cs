@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Gui;
 
 namespace OpenSage.Graphics.Rendering;

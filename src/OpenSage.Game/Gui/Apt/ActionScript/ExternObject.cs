@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Gui.Apt.ActionScript;
+namespace OpenSage.Gui.Apt.ActionScript;
 
 public sealed class ExternObject : ObjectContext
 {

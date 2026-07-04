@@ -1,4 +1,4 @@
-﻿namespace OpenSage;
+namespace OpenSage;
 
 /// <summary>
 /// Represents an abstract subsystem across different SAGE games.

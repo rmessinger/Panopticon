@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Gui.Wnd;
 using OpenSage.Gui.Wnd.Controls;
 using OpenSage.Network;
