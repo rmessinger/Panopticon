@@ -197,6 +197,17 @@ public partial class MainPage : ContentPage
             _viewModel.CurrentMap.MapFile.WriteTo(memStream);
             memStream.Position = 0;
 
+            if (!(OperatingSystem.IsAndroid()
+                || OperatingSystem.IsIOSVersionAtLeast(14)
+                || OperatingSystem.IsMacCatalystVersionAtLeast(14)
+                || OperatingSystem.IsWindows()))
+            {
+                await DisplayAlertAsync("Save As Error",
+                    "Save As is not available on this platform.",
+                    "OK");
+                return;
+            }
+
             var fileSaver = FileSaver.Default;
             var result = await fileSaver.SaveAsync(defaultName, memStream, CancellationToken.None);
 

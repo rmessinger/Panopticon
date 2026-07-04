@@ -6,27 +6,27 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 
 public static class ReplaySketchLog
 {
-    private static readonly object s_sync = new();
+    private static readonly object Sync = new();
 
     // Resolved lazily on first Write: primary path first, temp fallback if primary is not writable.
-    private static string? s_activeLogPath;
+    private static string? ActiveLogPath;
 
     /// <summary>
     /// The path where log entries are actually being written.
     /// Resolved on first <see cref="Write"/> call; reflects the fallback path if the primary
     /// location is not writable from this process.
     /// </summary>
-    public static string LogPath => s_activeLogPath ?? BuildPrimaryPath();
+    public static string LogPath => ActiveLogPath ?? BuildPrimaryPath();
 
     public static void Write(string message)
     {
         var line = $"{DateTimeOffset.Now:O} [pid:{Environment.ProcessId}] {message}";
 
-        lock (s_sync)
+        lock (Sync)
         {
-            if (s_activeLogPath is not null)
+            if (ActiveLogPath is not null)
             {
-                TryAppendLine(s_activeLogPath, line);
+                TryAppendLine(ActiveLogPath, line);
                 return;
             }
 
@@ -34,7 +34,7 @@ public static class ReplaySketchLog
             var primary = BuildPrimaryPath();
             if (TryAppendLine(primary, line))
             {
-                s_activeLogPath = primary;
+                ActiveLogPath = primary;
                 Console.Error.WriteLine($"[ReplaySketchLog] writing to {primary}");
                 return;
             }
@@ -42,7 +42,7 @@ public static class ReplaySketchLog
             var fallback = BuildFallbackPath();
             if (TryAppendLine(fallback, line))
             {
-                s_activeLogPath = fallback;
+                ActiveLogPath = fallback;
                 Console.Error.WriteLine($"[ReplaySketchLog] primary path not writable; writing to {fallback}");
                 return;
             }

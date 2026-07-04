@@ -123,6 +123,15 @@ public partial class MapPreviewView : ContentView
     private async void OnBrowseClicked(object? sender, EventArgs e)
     {
         // Use a folder picker so the user can point directly at the installation root.
+        if (!(OperatingSystem.IsAndroid()
+            || OperatingSystem.IsIOSVersionAtLeast(14)
+            || OperatingSystem.IsMacCatalystVersionAtLeast(14)
+            || OperatingSystem.IsWindows()))
+        {
+            ReplaySketchLog.Write("MapPreviewView browse unavailable on this platform");
+            return;
+        }
+
         try
         {
             var result = await FolderPicker.Default.PickAsync(default);

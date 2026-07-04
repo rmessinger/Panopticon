@@ -48,6 +48,14 @@ public partial class SettingsPage : ContentPage
 
     private static async Task BrowseForFolder(Entry entry)
     {
+        if (!(OperatingSystem.IsAndroid()
+            || OperatingSystem.IsIOSVersionAtLeast(14)
+            || OperatingSystem.IsMacCatalystVersionAtLeast(14)
+            || OperatingSystem.IsWindows()))
+        {
+            return;
+        }
+
         try
         {
             var result = await FolderPicker.Default.PickAsync(CancellationToken.None);
