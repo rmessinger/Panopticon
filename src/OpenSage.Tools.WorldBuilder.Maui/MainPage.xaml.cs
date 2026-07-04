@@ -193,6 +193,14 @@ public partial class MainPage : ContentPage
 
         try
         {
+            if (!OperatingSystem.IsAndroid()
+                && !OperatingSystem.IsIOS()
+                && !OperatingSystem.IsMacCatalyst()
+                && !OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
             using var memStream = new MemoryStream();
             _viewModel.CurrentMap.MapFile.WriteTo(memStream);
             memStream.Position = 0;
@@ -209,7 +217,9 @@ public partial class MainPage : ContentPage
             }
 
             var fileSaver = FileSaver.Default;
+#pragma warning disable CA1416
             var result = await fileSaver.SaveAsync(defaultName, memStream, CancellationToken.None);
+#pragma warning restore CA1416
 
             if (result.IsSuccessful)
             {

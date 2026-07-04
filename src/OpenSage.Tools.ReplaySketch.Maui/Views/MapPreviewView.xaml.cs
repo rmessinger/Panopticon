@@ -134,7 +134,17 @@ public partial class MapPreviewView : ContentView
 
         try
         {
+            if (!OperatingSystem.IsAndroid()
+                && !OperatingSystem.IsIOS()
+                && !OperatingSystem.IsMacCatalyst()
+                && !OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
+#pragma warning disable CA1416
             var result = await FolderPicker.Default.PickAsync(default);
+#pragma warning restore CA1416
             if (result.IsSuccessful)
             {
                 InstallPathEntry.Text = result.Folder.Path;
