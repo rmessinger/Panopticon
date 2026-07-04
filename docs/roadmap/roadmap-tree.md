@@ -3,7 +3,8 @@
 > Part of the [Large-Scale Simulation Roadmap](README.md). A visual, maintained view of the
 > whole roadmap: the hierarchy of tracks → phases → sub-phases, and the branching dependency
 > paths between them. Keep this in sync with the track documents
-> ([A](track-a-foundations.md) · [B](track-b-scale.md) · [C](track-c-external-assets.md)) and the
+> ([A](track-a-foundations.md) · [B](track-b-scale.md) · [C](track-c-external-assets.md) ·
+> [D](track-d-gameplay-expansion.md)) and the
 > deep dives whenever phases, sub-phases, or dependencies change — see
 > [How to maintain](#how-to-maintain-this-tree).
 >
@@ -121,6 +122,11 @@ mindmap
       C4 First concrete format
       C5 Authoring tooling
       C6 Extended features deferred
+    D. Gameplay content expansion
+      D1 Tech tree prerequisite graph ⮕
+      D2 Era and age progression ⮕
+      D3 External content ingestion
+      D4 Reference non-SAGE scenario
 ```
 
 ---
@@ -130,7 +136,7 @@ mindmap
 A left-to-right progression: work flows through stages, each gated by the one before, starting
 from the [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) that gates the
 whole roadmap. Arrows read "must precede." Nodes keep their track colour (P = stone,
-A = blue, B = green, C = amber) so you can follow a single track across the stages, while the columns
+A = blue, B = green, C = amber, D = pink) so you can follow a single track across the stages, while the columns
 show when each phase becomes workable. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md)
 is drawn as its own node (highlighted) because it is an early prerequisite of the A1 host even though
 the rest of A4 follows A1.
@@ -140,6 +146,7 @@ flowchart LR
   classDef trackA fill:#eef2ff,stroke:#5566aa,color:#223;
   classDef trackB fill:#eafaf0,stroke:#3a8a5a,color:#132;
   classDef trackC fill:#fff6e9,stroke:#b5853a,color:#321;
+  classDef trackD fill:#fdeef2,stroke:#a8477a,color:#310;
   classDef seam fill:#ffd9f2,stroke:#b3559a,stroke-width:2px,color:#312;
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
 
@@ -164,6 +171,7 @@ flowchart LR
     A5WB["A5-6 WorldBuilder baseline"]
     B1["B1 Benchmarking utilities"]
     C1["C1 Import abstraction"]
+    D1["D1 Tech tree prerequisite graph"]
   end
 
   subgraph S1["Stage 1 · Core host & cleanup"]
@@ -175,6 +183,7 @@ flowchart LR
     B5["B5 Rendering at scale"]
     C2["C2 Skeleton retargeting"]
     C3["C3 Material mapping"]
+    D2["D2 Era and age progression"]
   end
 
   subgraph S2["Stage 2 · Harness & core scale"]
@@ -182,6 +191,7 @@ flowchart LR
     A4["A4 Experiment harness"]
     B3["B3 Parallel logic"]
     C4["C4 First format · static + skinned"]
+    D3["D3 External content ingestion"]
   end
 
   subgraph S3["Stage 3 · Scenario, distribution & tooling"]
@@ -190,6 +200,7 @@ flowchart LR
     B6["B6 Distributed simulation"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
+    D4["D4 Reference non-SAGE scenario"]
   end
 
   subgraph S4["Stage 4 · Fidelity scaling"]
@@ -221,6 +232,7 @@ flowchart LR
   P7 --> A5WB
   P7 --> B1
   P7 --> C1
+  P7 --> D1
 
   %% Stage 0 -> 1
   A4S --> A1
@@ -232,6 +244,7 @@ flowchart LR
   A3 --> B5
   C1 --> C2
   C1 --> C3
+  D1 --> D2
 
   %% Stage 1 -> 2
   A1 --> A4
@@ -242,6 +255,8 @@ flowchart LR
   C1 --> C4
   C2 --> C4
   C3 --> C4
+  D1 --> D3
+  C1 --> D3
 
   %% Stage 2 -> 3
   A1 --> A5
@@ -253,6 +268,8 @@ flowchart LR
   B3 --> B6
   C4 --> C5
   C4 --> C6
+  D2 --> D4
+  D3 --> D4
 
   %% Stage 3 -> 4
   B1 --> B7
@@ -264,13 +281,17 @@ flowchart LR
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7 trackP;
+  class D1,D2,D3,D4 trackD;
   class A4S seam;
 ```
 
 > Coordination (not ordering): A3 and C1 both touch the presentation seam, and B5
 > instancing should account for C4 (Track C) models — these are coordination points, not strict
 > dependencies, so they are omitted from the progression arrows above (see the
-> [cross-track dependencies](README.md#cross-track-dependencies) note).
+> [cross-track dependencies](README.md#cross-track-dependencies) note). D3 also depends on the
+> standalone [ModCollector tool](plans/mod-collector.md), which is not part of any lettered track
+> and is omitted as a node here — it has no engine dependency and can be built independently of
+> this progression.
 
 ---
 

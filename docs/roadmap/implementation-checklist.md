@@ -523,3 +523,24 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     failures.
 - [ ] C6 Extended features (deferred): morph targets, advanced PBR.
   - AC: deferred — out of scope until C1–C5 land; no AC yet.
+
+## Track D — Gameplay Content Expansion
+
+See [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) and the
+[deep dive](deep-dives/tech-tree-era-progression.md). Gated on Track P (P7); D3/D4 also gated on
+Track C (C1) and the standalone [ModCollector tool](plans/mod-collector.md).
+
+- [ ] D1 Tech tree / prerequisite graph generalization (`TechNode`/`TechTreeState`, adapter over
+  existing `UpgradeTemplate`).
+  - AC: TBD — a branching tech tree (a node with two alternative prerequisite paths) is authored
+    in INI and gates build/produce availability; existing built-in content is unaffected.
+- [ ] D2 Era/age progression mechanic (`EraDefinition`/`EraState`, gated age-up order).
+  - AC: TBD — an age-up order validates against cost/prerequisites, resolves after its time gate,
+    and era-gated tech/build options become available immediately after.
+- [ ] D3 External content ingestion pipeline (ModCollector-staged content through `AssetStore`
+  scope layering).
+  - AC: TBD — a ModCollector-staged content pack's models and INI-authored tech nodes load and
+    render alongside built-in content with no engine change per mod.
+- [ ] D4 Reference non-SAGE scenario (small tech tree + one era transition, via ReplaySketch).
+  - AC: TBD — a ReplaySketch-authored scenario builds through a branching tech node and one era
+    transition, asserted headlessly per the P0 harness pattern.
