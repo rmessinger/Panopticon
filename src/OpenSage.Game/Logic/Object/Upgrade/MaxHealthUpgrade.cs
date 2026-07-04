@@ -1,4 +1,4 @@
-﻿using FixedMath.NET;
+using FixedMath.NET;
 using OpenSage.Data.Ini;
 
 namespace OpenSage.Logic.Object;

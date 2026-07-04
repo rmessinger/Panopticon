@@ -1,4 +1,4 @@
-﻿
+
 # nullable enable
 
 namespace OpenSage.Graphics.Cameras;

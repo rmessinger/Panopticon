@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Scripting;
+namespace OpenSage.Scripting;
 
 partial class ScriptActions
 {

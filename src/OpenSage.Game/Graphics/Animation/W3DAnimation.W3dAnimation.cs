@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using OpenSage.Content.Util;
 using OpenSage.FileFormats.W3d;

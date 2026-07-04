@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using OpenSage.Content.Translation;
 using OpenSage.Data.Apt;

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.FileFormats;
 using OpenSage.Logic.Map;
 

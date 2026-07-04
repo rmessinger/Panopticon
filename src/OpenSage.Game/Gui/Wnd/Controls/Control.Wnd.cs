@@ -1,4 +1,4 @@
-﻿using OpenSage.Content;
+using OpenSage.Content;
 using OpenSage.Content.Translation;
 using OpenSage.Content.Util;
 using OpenSage.Data.Wnd;

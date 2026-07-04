@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic.Object;
+namespace OpenSage.Logic.Object;
 
 internal sealed class PreAttackWeaponState : FixedDurationWeaponState
 {

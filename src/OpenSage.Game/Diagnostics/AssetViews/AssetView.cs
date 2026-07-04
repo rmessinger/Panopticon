@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Diagnostics.AssetViews;
+namespace OpenSage.Diagnostics.AssetViews;
 
 internal abstract class AssetView : DisposableBase
 {

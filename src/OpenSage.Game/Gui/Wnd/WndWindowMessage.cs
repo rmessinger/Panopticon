@@ -1,4 +1,4 @@
-﻿using OpenSage.Gui.Wnd.Controls;
+using OpenSage.Gui.Wnd.Controls;
 using OpenSage.Mathematics;
 using Veldrid;
 

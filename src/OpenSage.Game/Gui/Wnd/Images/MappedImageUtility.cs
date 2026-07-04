@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Content;
 using OpenSage.Data.Utilities.Extensions;
 using OpenSage.Graphics;

@@ -1,4 +1,4 @@
-﻿using OpenSage.Gui.Wnd.Controls;
+using OpenSage.Gui.Wnd.Controls;
 
 namespace OpenSage.Gui.Wnd;
 

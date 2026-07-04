@@ -1,4 +1,4 @@
-﻿using OpenSage.Gui.Apt;
+using OpenSage.Gui.Apt;
 using OpenSage.Gui.Apt.ActionScript;
 
 namespace OpenSage.Mods.Bfme.Gui;

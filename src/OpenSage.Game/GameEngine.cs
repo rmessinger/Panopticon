@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using OpenSage.Audio;
 using OpenSage.Client;
 using OpenSage.Content;

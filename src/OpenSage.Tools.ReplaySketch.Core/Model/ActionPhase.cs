@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Tools.ReplaySketch.Model;
+namespace OpenSage.Tools.ReplaySketch.Model;
 
 /// <summary>
 /// The lifecycle phase of a predecessor action that can serve as a trigger for a subsequent action.

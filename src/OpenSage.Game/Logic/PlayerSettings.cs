@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Logic;

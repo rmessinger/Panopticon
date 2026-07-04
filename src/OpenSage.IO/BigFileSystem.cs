@@ -1,4 +1,4 @@
-﻿using OpenSage.FileFormats.Big;
+using OpenSage.FileFormats.Big;
 
 namespace OpenSage.IO;
 

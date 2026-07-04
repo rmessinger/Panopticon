@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Audio;
+namespace OpenSage.Audio;
 
 public enum ThingTemplateObjectSpecificVoiceType
 {

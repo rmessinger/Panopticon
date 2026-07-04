@@ -1,4 +1,4 @@
-﻿using OpenSage.Audio;
+using OpenSage.Audio;
 using OpenSage.Content;
 using OpenSage.Data.Ini;
 using OpenSage.Graphics.ParticleSystems;

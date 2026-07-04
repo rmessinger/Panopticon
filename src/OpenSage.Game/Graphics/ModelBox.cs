@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using OpenSage.Content.Loaders;
 using OpenSage.FileFormats.W3d;
 using OpenSage.Graphics.Cameras;

@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using OpenSage.Logic.Object;
 using OpenSage.Mathematics;
 using Xunit;

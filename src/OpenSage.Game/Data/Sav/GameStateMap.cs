@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.Network;
 
 namespace OpenSage.Data.Sav;

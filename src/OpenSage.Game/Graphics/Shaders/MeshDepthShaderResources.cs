@@ -1,4 +1,4 @@
-﻿using OpenSage.Graphics.Rendering.Shadows;
+using OpenSage.Graphics.Rendering.Shadows;
 using OpenSage.Rendering;
 using Veldrid;
 

@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic.Object.Helpers;
+namespace OpenSage.Logic.Object.Helpers;
 
 // I found, in .sav files, modules called ModuleTag_SMCHelper.
 // Searching in the RA3 SDK, I found ObjectSMCHelper, with the comment

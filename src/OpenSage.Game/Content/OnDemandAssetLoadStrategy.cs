@@ -1,4 +1,4 @@
-﻿using OpenSage.Content.Loaders;
+using OpenSage.Content.Loaders;
 
 namespace OpenSage.Content;
 

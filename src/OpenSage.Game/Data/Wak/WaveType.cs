@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Wak;
+namespace OpenSage.Data.Wak;
 
 public enum WaveType : uint
 {

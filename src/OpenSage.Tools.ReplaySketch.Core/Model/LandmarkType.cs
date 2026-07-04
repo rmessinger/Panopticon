@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Tools.ReplaySketch.Model;
+namespace OpenSage.Tools.ReplaySketch.Model;
 
 public enum LandmarkType
 {

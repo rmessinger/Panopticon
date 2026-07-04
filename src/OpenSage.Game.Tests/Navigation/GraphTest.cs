@@ -1,4 +1,4 @@
-﻿using OpenSage.Navigation;
+using OpenSage.Navigation;
 using Xunit;
 
 namespace OpenSage.Tests.Navigation;

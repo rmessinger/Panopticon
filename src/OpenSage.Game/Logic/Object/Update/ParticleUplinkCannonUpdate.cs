@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Numerics;
 using OpenSage.Audio;
 using OpenSage.Content;

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Gui.Apt.ActionScript.Library;

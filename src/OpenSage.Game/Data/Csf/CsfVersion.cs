@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Csf;
+namespace OpenSage.Data.Csf;
 
 public enum CsfVersion : uint
 {

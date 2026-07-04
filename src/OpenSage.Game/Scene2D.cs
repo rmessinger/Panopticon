@@ -1,4 +1,4 @@
-﻿using OpenSage.Gui;
+using OpenSage.Gui;
 using OpenSage.Gui.Apt;
 using OpenSage.Gui.CommandListOverlay;
 using OpenSage.Gui.ControlBar;

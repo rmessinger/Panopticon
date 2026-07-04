@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using OpenSage.Data;
 using OpenSage.Mods.Generals;
 using OpenSage.Tests.Data;

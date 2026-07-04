@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Ini;
+namespace OpenSage.Data.Ini;
 
 internal enum IniTokenType
 {

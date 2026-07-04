@@ -1,4 +1,4 @@
-﻿using Microsoft.Maui.Media;
+using Microsoft.Maui.Media;
 using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
 using OpenSage.Tools.ReplaySketch.Services;
 

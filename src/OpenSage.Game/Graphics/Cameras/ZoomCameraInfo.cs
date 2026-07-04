@@ -1,4 +1,4 @@
-﻿
+
 namespace OpenSage.Graphics.Cameras;
 
 // Original version is based on frames, we use milliseonds

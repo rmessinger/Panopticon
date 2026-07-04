@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Map;
+using OpenSage.Data.Map;
 
 namespace OpenSage.Tools.WorldBuilder.Core;
 

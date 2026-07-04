@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using OpenSage.Logic.AI.AIStates;
 using OpenSage.Logic.Object;

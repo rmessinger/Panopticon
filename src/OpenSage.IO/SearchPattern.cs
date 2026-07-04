@@ -1,4 +1,4 @@
-﻿// This file is from Zio - https://github.com/xoofx/zio
+// This file is from Zio - https://github.com/xoofx/zio
 // and is licenced under the BSD 2-Clause "Simplified" License:
 //
 // Copyright (c) 2017-2021, Alexandre Mutel

@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic;
+namespace OpenSage.Logic;
 
 public sealed class CampaignManager : IPersistableObject
 {

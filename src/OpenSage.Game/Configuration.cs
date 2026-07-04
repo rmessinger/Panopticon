@@ -1,4 +1,4 @@
-﻿using OpenSage.Graphics.Cameras;
+using OpenSage.Graphics.Cameras;
 
 namespace OpenSage;
 

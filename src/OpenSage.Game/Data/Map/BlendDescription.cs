@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using OpenSage.Data.Utilities.Extensions;
 
