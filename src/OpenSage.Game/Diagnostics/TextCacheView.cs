@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Diagnostics;
+namespace OpenSage.Diagnostics;
 
 internal sealed class TextCacheView : DiagnosticView
 {

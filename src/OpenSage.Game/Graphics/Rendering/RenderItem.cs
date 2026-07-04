@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 using OpenSage.Mathematics;
 using OpenSage.Rendering;

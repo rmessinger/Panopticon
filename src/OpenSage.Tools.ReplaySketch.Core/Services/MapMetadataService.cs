@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -207,7 +207,7 @@ public sealed class MapMetadataService
 
     // Cache directory: %LocalAppData%/OpenSAGE/ReplaySketch/previews, with a /tmp fallback
     // if the primary location is not writable from this process (e.g. macCatalyst runtime).
-    private static readonly string s_previewCacheDir = ResolvePreviewCacheDir();
+    private static readonly string PreviewCacheDir = ResolvePreviewCacheDir();
 
     private static string ResolvePreviewCacheDir()
     {
@@ -232,7 +232,7 @@ public sealed class MapMetadataService
     {
         var pathHash = SHA1.HashData(Encoding.UTF8.GetBytes(mapPath.ToLowerInvariant()));
         var hashHex = Convert.ToHexString(pathHash)[..16];
-        return Path.Combine(s_previewCacheDir, $"{hashHex}-{fileLength}.bin");
+        return Path.Combine(PreviewCacheDir, $"{hashHex}-{fileLength}.bin");
     }
 
     private static (byte[] pixels, int width, int height)? LoadPreviewCache(string cachePath)

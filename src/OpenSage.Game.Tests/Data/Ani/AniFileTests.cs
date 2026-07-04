@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Ani;
+using OpenSage.Data.Ani;
 using Xunit;
 using Xunit.Abstractions;
 

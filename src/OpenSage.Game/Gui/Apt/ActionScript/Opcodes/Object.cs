@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Data.Apt.Characters;
 
 namespace OpenSage.Gui.Apt.ActionScript.Opcodes;

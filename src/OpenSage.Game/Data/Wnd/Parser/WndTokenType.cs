@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Wnd.Parser;
+namespace OpenSage.Data.Wnd.Parser;
 
 internal enum WndTokenType
 {

@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Ani;
+namespace OpenSage.Data.Ani;
 
 public sealed class CursorImage
 {

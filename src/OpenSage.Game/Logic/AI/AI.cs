@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic.AI;
+namespace OpenSage.Logic.AI;
 
 public sealed class AI
 {

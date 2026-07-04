@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Data.Dds;
+namespace OpenSage.Data.Dds;
 
 public enum DdsImageFormat
 {

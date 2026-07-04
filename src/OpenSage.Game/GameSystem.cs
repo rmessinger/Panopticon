@@ -1,4 +1,4 @@
-﻿namespace OpenSage;
+namespace OpenSage;
 
 public abstract class GameSystem : DisposableBase
 {

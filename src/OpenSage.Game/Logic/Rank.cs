@@ -1,4 +1,4 @@
-﻿
+
 using OpenSage.Content;
 
 namespace OpenSage.Logic;

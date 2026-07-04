@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.FileFormats.Big;
 using OpenSage.FileFormats.W3d;
 using Xunit;

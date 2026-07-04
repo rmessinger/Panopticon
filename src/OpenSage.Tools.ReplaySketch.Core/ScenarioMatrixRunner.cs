@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OpenSage.Data;
 using OpenSage.Tools.ReplaySketch.Assertions;
 using OpenSage.Tools.ReplaySketch.Model;

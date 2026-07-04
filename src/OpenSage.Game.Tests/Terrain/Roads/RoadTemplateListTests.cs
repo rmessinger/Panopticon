@@ -1,4 +1,4 @@
-﻿using OpenSage.Terrain.Roads;
+using OpenSage.Terrain.Roads;
 using Xunit;
 
 namespace OpenSage.Tests.Terrain.Roads;

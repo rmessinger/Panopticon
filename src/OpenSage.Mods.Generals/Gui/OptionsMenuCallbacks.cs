@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using OpenSage.Gui.Wnd;
 using OpenSage.Gui.Wnd.Controls;
 

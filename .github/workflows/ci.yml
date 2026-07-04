@@ -33,8 +33,15 @@ jobs:
       with:
         dotnet-version: '8.x'
 
+    - name: Install MAUI Mac Catalyst workload
+      if: matrix.os == 'macos-latest'
+      run: dotnet workload install maui-maccatalyst
+
     - name: Test
-      run: dotnet test src --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+      run: |
+        dotnet test src/OpenSage.Mathematics.Tests/OpenSage.Mathematics.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+        dotnet test src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+        dotnet test src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
 
     - name: Upload coverage
       uses: codecov/codecov-action@v5

@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Tools.ReplaySketch.Assertions;
+namespace OpenSage.Tools.ReplaySketch.Assertions;
 
 public sealed class AssertionResult
 {

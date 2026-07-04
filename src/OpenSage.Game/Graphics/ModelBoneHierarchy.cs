@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using OpenSage.FileFormats.W3d;
 
 namespace OpenSage.Graphics;

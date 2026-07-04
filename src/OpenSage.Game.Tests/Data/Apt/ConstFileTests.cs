@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using OpenSage.Data.Apt;
 using OpenSage.FileFormats.Big;
 using OpenSage.IO;

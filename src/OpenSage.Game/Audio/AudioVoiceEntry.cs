@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Audio;
+namespace OpenSage.Audio;
 
 public sealed class AudioVoiceEntry : SoundOrEvaEvent
 {

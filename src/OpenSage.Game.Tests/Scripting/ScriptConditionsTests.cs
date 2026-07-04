@@ -1,4 +1,4 @@
-﻿using OpenSage.Scripting;
+using OpenSage.Scripting;
 using Xunit;
 
 namespace OpenSage.Tests.Scripting;

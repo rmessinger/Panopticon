@@ -1,4 +1,4 @@
-﻿namespace OpenSage.IO;
+namespace OpenSage.IO;
 
 public abstract class FileSystem : DisposableBase
 {

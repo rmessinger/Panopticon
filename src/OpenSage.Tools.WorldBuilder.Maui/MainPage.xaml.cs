@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Maui.Storage;
 using OpenSage.Data;
@@ -193,12 +193,33 @@ public partial class MainPage : ContentPage
 
         try
         {
+            if (!OperatingSystem.IsAndroid()
+                && !OperatingSystem.IsIOS()
+                && !OperatingSystem.IsMacCatalyst()
+                && !OperatingSystem.IsWindows())
+            {
+                return;
+            }
+
             using var memStream = new MemoryStream();
             _viewModel.CurrentMap.MapFile.WriteTo(memStream);
             memStream.Position = 0;
 
+            if (!(OperatingSystem.IsAndroid()
+                || OperatingSystem.IsIOSVersionAtLeast(14)
+                || OperatingSystem.IsMacCatalystVersionAtLeast(14)
+                || OperatingSystem.IsWindows()))
+            {
+                await DisplayAlertAsync("Save As Error",
+                    "Save As is not available on this platform.",
+                    "OK");
+                return;
+            }
+
             var fileSaver = FileSaver.Default;
+#pragma warning disable CA1416
             var result = await fileSaver.SaveAsync(defaultName, memStream, CancellationToken.None);
+#pragma warning restore CA1416
 
             if (result.IsSuccessful)
             {

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using ImGuiNET;
 
 namespace OpenSage.Tools.BigEditor.Views;

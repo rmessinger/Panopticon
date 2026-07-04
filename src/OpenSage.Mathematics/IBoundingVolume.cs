@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Mathematics;
+namespace OpenSage.Mathematics;
 
 public interface IBoundingVolume
 {

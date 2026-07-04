@@ -1,4 +1,4 @@
-﻿// From https://github.com/nickgravelyn/Triangulator
+// From https://github.com/nickgravelyn/Triangulator
 // Licensed under the MIT license
 
 //The MIT License(MIT)

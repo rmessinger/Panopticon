@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Ini;
+using OpenSage.Data.Ini;
 using OpenSage.Logic.Object;
 
 namespace OpenSage.Eva;

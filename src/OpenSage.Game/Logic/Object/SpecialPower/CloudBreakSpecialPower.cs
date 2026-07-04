@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Ini;
+using OpenSage.Data.Ini;
 using OpenSage.Terrain;
 
 namespace OpenSage.Logic.Object;

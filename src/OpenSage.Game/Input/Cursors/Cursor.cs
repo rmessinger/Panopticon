@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Data.Ani;
 using OpenSage.IO;
 using OpenSage.Utilities;

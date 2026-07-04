@@ -1,4 +1,4 @@
-﻿
+
 namespace OpenSage.Logic.Object;
 
 public readonly record struct ObjectId(uint Index)

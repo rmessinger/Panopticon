@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.Logic.Object;
 
 namespace OpenSage.Logic;

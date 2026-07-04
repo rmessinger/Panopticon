@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Graphics.Rendering;
+namespace OpenSage.Graphics.Rendering;
 
 public sealed class RenderBucket
 {

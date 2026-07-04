@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Terrain.Roads;
+namespace OpenSage.Terrain.Roads;
 
 public static class RoadConstants
 {

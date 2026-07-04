@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using ImGuiNET;
 using OpenSage.Content;
 using OpenSage.Data.Ini;

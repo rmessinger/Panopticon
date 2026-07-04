@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Apt;
+using OpenSage.Data.Apt;
 using OpenSage.IO;
 using Xunit;
 using Xunit.Abstractions;

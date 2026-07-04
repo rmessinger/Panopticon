@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Logic.Orders;
+namespace OpenSage.Logic.Orders;
 
 public enum OrderArgumentType : byte
 {

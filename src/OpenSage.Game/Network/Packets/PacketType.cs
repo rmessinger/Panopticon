@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Network.Packets;
+namespace OpenSage.Network.Packets;
 
 public enum PacketType
 {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using OpenSage.FileFormats.W3d;
 using OpenSage.Graphics.Animation;
 using OpenSage.IO;

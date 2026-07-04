@@ -1,4 +1,4 @@
-﻿using OpenSage.Data.Ini;
+using OpenSage.Data.Ini;
 using Veldrid;
 
 namespace OpenSage.Input;

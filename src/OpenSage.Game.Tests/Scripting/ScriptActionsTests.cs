@@ -1,4 +1,4 @@
-﻿namespace OpenSage.Tests.Scripting;
+namespace OpenSage.Tests.Scripting;
 
 public class ScriptActionsTests
 {

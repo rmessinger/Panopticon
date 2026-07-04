@@ -1,4 +1,4 @@
-﻿using OpenSage.Graphics;
+using OpenSage.Graphics;
 using OpenSage.Graphics.Shaders;
 using OpenSage.Rendering;
 using Veldrid;
