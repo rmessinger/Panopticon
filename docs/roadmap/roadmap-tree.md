@@ -4,7 +4,7 @@
 > whole roadmap: the hierarchy of tracks → phases → sub-phases, and the branching dependency
 > paths between them. Keep this in sync with the track documents
 > ([A](track-a-foundations.md) · [B](track-b-scale.md) · [C](track-c-external-assets.md) ·
-> [D](track-d-gameplay-expansion.md)) and the
+> [D](track-d-gameplay-expansion.md) · [E](track-e-naval-warfare.md)) and the
 > deep dives whenever phases, sub-phases, or dependencies change — see
 > [How to maintain](#how-to-maintain-this-tree).
 >
@@ -127,6 +127,11 @@ mindmap
       D2 Era and age progression ⮕
       D3 External content ingestion
       D4 Reference non-SAGE scenario
+    E. Naval warfare
+      E1 Water and ground terrain passability ⮕
+      E2 Ship combat ⮕
+      E3 Naval production
+      E4 Reference naval scenario
 ```
 
 ---
@@ -136,7 +141,7 @@ mindmap
 A left-to-right progression: work flows through stages, each gated by the one before, starting
 from the [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) that gates the
 whole roadmap. Arrows read "must precede." Nodes keep their track colour (P = stone,
-A = blue, B = green, C = amber, D = pink) so you can follow a single track across the stages, while the columns
+A = blue, B = green, C = amber, D = pink, E = teal) so you can follow a single track across the stages, while the columns
 show when each phase becomes workable. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md)
 is drawn as its own node (highlighted) because it is an early prerequisite of the A1 host even though
 the rest of A4 follows A1.
@@ -147,6 +152,7 @@ flowchart LR
   classDef trackB fill:#eafaf0,stroke:#3a8a5a,color:#132;
   classDef trackC fill:#fff6e9,stroke:#b5853a,color:#321;
   classDef trackD fill:#fdeef2,stroke:#a8477a,color:#310;
+  classDef trackE fill:#e9f7fb,stroke:#2f8aa3,color:#032;
   classDef seam fill:#ffd9f2,stroke:#b3559a,stroke-width:2px,color:#312;
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
 
@@ -172,6 +178,7 @@ flowchart LR
     B1["B1 Benchmarking utilities"]
     C1["C1 Import abstraction"]
     D1["D1 Tech tree prerequisite graph"]
+    E1["E1 Water and ground terrain passability"]
   end
 
   subgraph S1["Stage 1 · Core host & cleanup"]
@@ -184,6 +191,8 @@ flowchart LR
     C2["C2 Skeleton retargeting"]
     C3["C3 Material mapping"]
     D2["D2 Era and age progression"]
+    E2["E2 Ship combat"]
+    E3["E3 Naval production"]
   end
 
   subgraph S2["Stage 2 · Harness & core scale"]
@@ -192,6 +201,7 @@ flowchart LR
     B3["B3 Parallel logic"]
     C4["C4 First format · static + skinned"]
     D3["D3 External content ingestion"]
+    E4["E4 Reference naval scenario"]
   end
 
   subgraph S3["Stage 3 · Scenario, distribution & tooling"]
@@ -233,6 +243,7 @@ flowchart LR
   P7 --> B1
   P7 --> C1
   P7 --> D1
+  P7 --> E1
 
   %% Stage 0 -> 1
   A4S --> A1
@@ -245,6 +256,8 @@ flowchart LR
   C1 --> C2
   C1 --> C3
   D1 --> D2
+  E1 --> E2
+  E1 --> E3
 
   %% Stage 1 -> 2
   A1 --> A4
@@ -257,6 +270,8 @@ flowchart LR
   C3 --> C4
   D1 --> D3
   C1 --> D3
+  E2 --> E4
+  E3 --> E4
 
   %% Stage 2 -> 3
   A1 --> A5
@@ -282,6 +297,7 @@ flowchart LR
   class C1,C2,C3,C4,C5,C6 trackC;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7 trackP;
   class D1,D2,D3,D4 trackD;
+  class E1,E2,E3,E4 trackE;
   class A4S seam;
 ```
 
