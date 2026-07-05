@@ -255,3 +255,16 @@
   cross-shard save/load is out of scope unless a later experiment needs it. Affects
   [A1](deep-dives/headless-host.md), [B3](track-b-scale.md),
   [B6](deep-dives/distributed-simulation.md).
+- Non-SAGE gameplay mechanics scope — Decision: hosted as new Track D content on the existing
+  RTS domain, not a new Simulation Domain Model. Age of Empires/Empire Earth style tech trees and
+  era/age progression are new gameplay content and mechanism (a generalized prerequisite graph
+  plus a new era state machine), added by extending the existing `GameObject`/module/`ObjectDefinition`
+  system per the domain-scope Decision above — they are not different enough in kind (entities,
+  interactions, topology) to justify a second Simulation Domain Model implementation. External
+  content (models, INI overrides) for this track is ingested via the standalone
+  [ModCollector tool](plans/mod-collector.md) (download/stage community mod archives into `.big`
+  files) plus Track C's import abstraction (C1) — ModCollector is a genuine prerequisite for
+  Track D phase D3 onward, but D1/D2 (the tech-tree/era mechanism itself) do not need it and can
+  be validated against existing built-in content first. Affects
+  [Track D](track-d-gameplay-expansion.md),
+  [deep-dives/tech-tree-era-progression.md](deep-dives/tech-tree-era-progression.md).

@@ -3,6 +3,13 @@
 > This plan is the design authority for `OpenSage.Tools.ModCollector` and the four
 > `WI-MC-*` agent task cards that implement it. Cards reference this document for rationale and
 > conventions; card steps are the executable specification.
+>
+> Used by [Track D — Gameplay Content Expansion](../track-d-gameplay-expansion.md) phase D3
+> (external content ingestion), which stages mod archives through this tool before wiring them
+> into the engine's `AssetStore`.
+>
+> Audience: human — design authority and conventions for the ModCollector tool and its agent
+> task cards.
 
 ---
 

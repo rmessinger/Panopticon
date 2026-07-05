@@ -135,6 +135,8 @@ details below it.
 | [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, reproducibility & statistical stability, sim/presentation seam, experiment framework, scenario authoring & visualization. |
 | [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
 | [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
+| [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
+| [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `OpenSage.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
 | [`implementation-checklist.md`](implementation-checklist.md) | human | Single granular change list: every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
 | [`agent/`](agent/) | agent | Agent-focused companion: how a low-effort automated agent picks up small, bounded slices of the roadmap (task cards + workflow) without re-reasoning the whole design. |
@@ -156,6 +158,7 @@ details below it.
 | [`deep-dives/larger-maps.md`](deep-dives/larger-maps.md) | Track B phase B4a — Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/distributed-simulation.md`](deep-dives/distributed-simulation.md) | Track B phase B6 — Distributed simulation (spatial sharding). |
 | [`deep-dives/variable-fidelity.md`](deep-dives/variable-fidelity.md) | Track B phase B7 — Variable simulation fidelity (scaling toolkit). |
+| [`deep-dives/tech-tree-era-progression.md`](deep-dives/tech-tree-era-progression.md) | Track D phases D1/D2 — Tech-tree/prerequisite-graph generalization and era/age progression. |
 
 ---
 
@@ -182,6 +185,10 @@ are roughly ordered; cross-track dependencies are noted in each track doc.
   abstraction · C2 skeleton/animation retargeting · C3 material mapping · C4 first concrete
   format (static + skinned) · C5 authoring/validation tooling · C6 extended features (deferred:
   morph targets, advanced PBR).
+- [Track D — Gameplay Content Expansion](track-d-gameplay-expansion.md): D1 tech-tree/
+  prerequisite-graph generalization · D2 era/age progression mechanic · D3 external content
+  ingestion (ModCollector + Track C) · D4 reference non-SAGE scenario. Depends on Track P
+  (D1/D2) and Track C/ModCollector (D3/D4).
 
 ### Cross-track dependencies
 
@@ -192,6 +199,8 @@ are roughly ordered; cross-track dependencies are noted in each track doc.
   W3D-specific.
 - C1 and A3 both touch the presentation seam — coordinate so the import abstraction
   feeds the same runtime `Model`/`ModelInstance` types that the rendering refactor expects.
+- Track D (D1/D2) depends only on Track P; D3/D4 additionally depend on Track C (C1) and the
+  standalone [ModCollector tool](plans/mod-collector.md).
 
 ---
 
@@ -221,6 +230,16 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 | Track A — Foundations | `░░░░░░░░░░` | 0 / 18 |
 | Track B — Scale | `░░░░░░░░░░` | 0 / 12 |
 | Track C — External Assets | `░░░░░░░░░░` | 0 / 6 |
+
+### Track D — Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
+
+| Phase | Progress | Items |
+|---|---|---|
+| D1 — Tech tree / prerequisite graph | `░░░░░░░░░░` | 0 / 1 |
+| D2 — Era/age progression | `░░░░░░░░░░` | 0 / 1 |
+| D3 — External content ingestion | `░░░░░░░░░░` | 0 / 1 |
+| D4 — Reference non-SAGE scenario | `░░░░░░░░░░` | 0 / 1 |
+| Track D total | `░░░░░░░░░░` | 0 / 4 |
 
 ---
 
