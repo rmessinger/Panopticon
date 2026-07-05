@@ -7,10 +7,17 @@ public sealed class SkirmishAIPlayer : AIPlayer
     private float _unknownFloat1;
     private float _unknownFloat2;
 
+    internal int DecisionTickCount { get; private set; }
+
     internal SkirmishAIPlayer(Player owner)
         : base(owner)
     {
 
+    }
+
+    protected override void OnDecisionTick()
+    {
+        DecisionTickCount++;
     }
 
     public override void Persist(StatePersister reader)

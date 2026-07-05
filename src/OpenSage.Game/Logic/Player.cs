@@ -106,6 +106,7 @@ public class Player : IPersistableObject
     public void LogicTick()
     {
         Rank.Update();
+        AIPlayer?.Update();
     }
 
     public bool SpecialPowerAvailable(SpecialPower specialPower)

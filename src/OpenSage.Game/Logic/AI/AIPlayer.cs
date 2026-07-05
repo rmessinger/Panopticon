@@ -7,6 +7,8 @@ namespace OpenSage.Logic.AI;
 
 public class AIPlayer : IPersistableObject
 {
+    internal const uint DefaultDecisionCadenceFrames = 60;
+
     private readonly Player _owner;
 
     private readonly List<AIPlayerUnknownThing> _unknownThings = new();
@@ -28,6 +30,25 @@ public class AIPlayer : IPersistableObject
     internal AIPlayer(Player owner)
     {
         _owner = owner;
+    }
+
+    internal void Update()
+    {
+        if (_countdownSomething1 == 0)
+        {
+            _countdownSomething1 = DefaultDecisionCadenceFrames;
+        }
+
+        _countdownSomething1--;
+        if (_countdownSomething1 == 0)
+        {
+            OnDecisionTick();
+            _countdownSomething1 = DefaultDecisionCadenceFrames;
+        }
+    }
+
+    protected virtual void OnDecisionTick()
+    {
     }
 
     public virtual void Persist(StatePersister reader)
