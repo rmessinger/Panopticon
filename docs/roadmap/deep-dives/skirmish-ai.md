@@ -110,10 +110,12 @@ The mechanism is largely present (§1.4). P5's work is gap-closing + proving bot
   (build/economize/produce/≥1 attack → terminating win/lose); structured for configurable difficulty
   tiers but only the minimum tier is implemented now. Richer behavior is later expansion. See
   [open-questions](../open-questions.md).
-- AI architecture depth — single state machine now; a pluggable AI policy is a candidate
+- AI architecture depth — single state machine now; formalized as a candidate
   [A4](../track-a-foundations.md) experiment seam (the configurable difficulty tiers this scope
   leaves stubbed are the natural variation axis), not a P2 requirement — consistent with the scope
-  decision above.
+  decision above. Design: [pluggable-ai.md](pluggable-ai.md) (`IAIDecisionPolicy`, with this
+  phase's `SkirmishAIPlayer` state machine as the reference implementation). Not implemented by
+  P2; see that doc's §6 for follow-on work.
 - Where `BankAccount` is debited for construction — open verification task (not a design
   choice): locate/confirm before P5-1.
 
@@ -215,6 +217,8 @@ classDiagram
 - Players/relationships it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)
 - Economy it spends: [`economy-production-combat.md`](economy-production-combat.md) (P4/P5/P6)
 - Order stream / harness: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
+- Pluggable AI policy seam this phase's reference implementation is carved from:
+  [`pluggable-ai.md`](pluggable-ai.md) (A4)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 
 ---

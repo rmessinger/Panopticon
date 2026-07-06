@@ -29,7 +29,7 @@ phase is marked `Ready`.
 | A1 | [Headless host](deep-dives/headless-host.md) | [§7](deep-dives/headless-host.md#7-architecture-diagrams) `†` | — |
 | A2 | — | — | — |
 | A3 | — | — | — |
-| A4 | — | — | — |
+| A4 | [Pluggable AI policy](deep-dives/pluggable-ai.md) | [§8](deep-dives/pluggable-ai.md#8-architecture-diagrams) `†` | — |
 | A5 | [Visualization](deep-dives/visualization.md) | [§9](deep-dives/visualization.md#9-architecture-diagrams) `†` | — |
 
 ## Notes
@@ -86,3 +86,12 @@ phase is marked `Ready`.
   domain-parameterized (the A4 domain model supplies the view). It is the validation surface
   for [B3](track-b-scale.md) parallelism and [B6](deep-dives/distributed-simulation.md) sharding —
   comparing within tolerance and localizing drift, not asserting bit-equality.
+- AI decision policy (an A4 seam). How a player's strategic decisions get made (build/produce/
+  attack) is pluggable independently of actuation, which always stays `Order`s through
+  `OrderProcessor` regardless of policy (unaffected — [P2](track-p-playable-baseline.md)'s
+  actuation decision). [Track P's P2](deep-dives/skirmish-ai.md) lands the reference
+  implementation (a rule-based state machine); the seam is what lets a second, very different
+  implementation — a small neural network whose weights are evolved by running many seeded
+  self-play matches, scored off [`GameOutcome`](deep-dives/victory-defeat.md) — be
+  config-selected and compared with no change to `AIPlayer`, `OrderProcessor`, or callers.
+  Detailed design: [deep-dives/pluggable-ai.md](deep-dives/pluggable-ai.md).

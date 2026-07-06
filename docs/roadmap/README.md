@@ -154,6 +154,7 @@ details below it.
 | [`deep-dives/economy-production-combat.md`](deep-dives/economy-production-combat.md) | Track P phases P4 — Economy loop & P6 — Combat & command verification. |
 | [`deep-dives/unit-contract-validation.md`](deep-dives/unit-contract-validation.md) | Track P phase P6b — Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
 | [`deep-dives/headless-host.md`](deep-dives/headless-host.md) | Track A phase A1 — Headless simulation host. |
+| [`deep-dives/pluggable-ai.md`](deep-dives/pluggable-ai.md) | Track A phase A4 — Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
 | [`deep-dives/visualization.md`](deep-dives/visualization.md) | Track A phase A5 — Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
 | [`deep-dives/larger-maps.md`](deep-dives/larger-maps.md) | Track B phase B4a — Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/distributed-simulation.md`](deep-dives/distributed-simulation.md) | Track B phase B6 — Distributed simulation (spatial sharding). |

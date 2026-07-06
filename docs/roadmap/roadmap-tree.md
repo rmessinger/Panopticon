@@ -77,8 +77,9 @@ mindmap
         A1-5 Run outputs T0/T1/T2
       A2 Reproducibility and stability
       A3 Sim/presentation seam
-      A4 Experiment framework
+      A4 Experiment framework ⮕
         A4-1 Simulation Domain Model seam
+        A4-2 AI decision policy seam
       A5 Scenario and visualization ⮕
         A5-1 Scenario authoring
         A5-2 Experiment matrix

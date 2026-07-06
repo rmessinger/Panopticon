@@ -173,6 +173,19 @@
   the minimum tier is implemented now; richer behavior (reactive defense, teching, multi-wave
   pressure) is later expansion (a candidate [A4](track-a-foundations.md) pluggable-AI experiment
   seam). Affects [P2](track-p-playable-baseline.md).
+- Pluggable AI decision policy — Decision: formalize how a player's strategic decisions get made
+  (build/produce/attack) as its own A4 experiment seam now that P2 has a reference
+  implementation to carve it from. `AIPlayer.OnDecisionTick()`'s current subclass-override shape
+  becomes an injectable `IAIDecisionPolicy`, with `SkirmishAIPlayer`'s rule-based state machine
+  as the reference implementation; actuation is unaffected — every policy still emits `Order`s
+  through `OrderProcessor` (the P2 actuation decision above), so reproducibility (A2) and the
+  recorded/replayed order stream hold regardless of which policy runs. This is what unblocks a
+  neural-network policy trained by running many seeded self-play matches (a population of
+  weight-vector genomes, fitness scored off `GameOutcome`, evolved via selection/mutation across
+  generations — an A4 experiment sweep). Design-only for now; implementation (interface
+  extraction, a first NN policy, and the training harness) is follow-on work. Detailed design:
+  [deep-dives/pluggable-ai.md](deep-dives/pluggable-ai.md). Affects
+  [A4](track-a-foundations.md), [P2](track-p-playable-baseline.md).
 - Single-player `LocalPlayer` identification — Decision: explicit human-slot flag at setup. The
   skirmish/lobby config marks which slot is the local human; `PlayerManager` reads that flag instead
   of the ad-hoc positional `_players[2]` fallback (`PlayerManager.cs:39-46`). Affects
