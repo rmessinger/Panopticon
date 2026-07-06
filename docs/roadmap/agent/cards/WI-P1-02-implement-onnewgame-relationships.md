@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-02` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -90,3 +90,11 @@ dotnet format src --verify-no-changes
     already present).
   - A card (may need a stronger model) for P1-2 unified SP/MP spawn + `LocalPlayer` selection,
     once the ↗ decisions in [deep dive §5](../../deep-dives/skirmish-setup.md) are made.
+
+
+## Result
+
+Done (commit d5acbbb7, "Implement P1 relationship wiring"). `Player.AddAlly`/`AddEnemy` are now
+reciprocal (`Player.cs:785-807`); `PlayerManager.OnNewGame` derives ally/enemy relationships from
+`PlayerSetting.Team` for skirmish slots, preserving map-defined relationships from `CreatePlayers`.
+Covered by `PlayerRelationshipTests` and `PlayerManagerTests` (see [`WI-P1-03`](WI-P1-03-test-reciprocal-relationships.md), also completed in the same change).

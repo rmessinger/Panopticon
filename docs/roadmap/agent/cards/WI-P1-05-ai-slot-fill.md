@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-05` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-3, see [deep dive §3.3](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-04` |
@@ -94,4 +94,9 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Done (commit 677b7bc9, "Add skirmish slot defaulting"). Extracted a shared
+`SkirmishSlotDefaults.ApplyDefaults(...)` helper (`src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`)
+that assigns a random playable side, a free color, and a free start position to any unset AI slot;
+called from `SkirmishManager.StartGame` so both the lobby and headless/programmatic start paths go
+through the same defaulting logic. A start-position collision bug in this helper was found and fixed
+later by `WI-P1-09`.

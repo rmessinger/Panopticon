@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-04` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-2, see [deep dive §3.2](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-02` |
@@ -86,4 +86,9 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Done (commit d5acbbb7). `PlayerManager.OnNewGame` now resolves `LocalPlayer` from the explicit
+`PlayerSetting.IsLocalForMultiplayer` flag (falling back to the first human player, and only then to
+`_players[2]` as a last resort). The `Game.StartGame` spawn guard (`gameType != GameType.SinglePlayer`)
+did not need editing: single-player skirmish starts already use `GameType.Skirmish` (not
+`GameType.SinglePlayer`, which is reserved for the campaign path), so the shared
+`CreateSkirmishPlayerStartingBuilding` + camera path already runs for SP skirmish and MP alike.
