@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using OpenSage.Logic.Object;
+using OpenSage.Logic.Orders;
 
 namespace OpenSage.Logic.AI;
 
@@ -32,6 +33,10 @@ public class AIPlayer : IPersistableObject
         _owner = owner;
     }
 
+    protected Player Owner => _owner;
+
+    protected int OwnerPlayerIndex => (int)_owner.Id;
+
     internal void Update()
     {
         if (_countdownSomething1 == 0)
@@ -49,6 +54,37 @@ public class AIPlayer : IPersistableObject
 
     protected virtual void OnDecisionTick()
     {
+    }
+
+    protected void EnqueueOrder(Order order)
+    {
+        DispatchOrders([order]);
+    }
+
+    protected void EnqueueOrders(IReadOnlyList<Order> orders)
+    {
+        if (orders.Count == 0)
+        {
+            return;
+        }
+
+        DispatchOrders(orders);
+    }
+
+    protected virtual void DispatchOrders(IReadOnlyList<Order> orders)
+    {
+        var networkMessageBuffer = _owner.Game.NetworkMessageBuffer;
+        if (networkMessageBuffer != null)
+        {
+            foreach (var order in orders)
+            {
+                networkMessageBuffer.AddLocalOrder(order);
+            }
+
+            return;
+        }
+
+        _owner.Game.InjectOrders(orders);
     }
 
     public virtual void Persist(StatePersister reader)
