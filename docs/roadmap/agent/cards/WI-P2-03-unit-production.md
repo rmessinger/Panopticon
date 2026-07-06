@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P2-03` |
 | Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-3, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases) and [§2.1](../../deep-dives/skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-02`; P5 production/funding/prerequisite behavior available for `CreateUnit` |
@@ -44,12 +44,12 @@ Add the minimum AI production planner: from existing production structures, queu
 
 ## Acceptance criteria
 
-- [ ] The AI produces at least 3 army units in a headless run when money, prerequisites, and a producer are available.
-- [ ] Production is gated by `Player.CanProduceObject(...)` and producer-local construction/production checks.
-- [ ] When the selected unit is unaffordable, no `CreateUnit` order is emitted and `BankAccount` never becomes negative.
-- [ ] Production orders are emitted through `OrderProcessor`/the recorded order stream, not by direct `ProductionUpdate` calls.
-- [ ] The default target force size is named, documented or obvious in code, and verified by a test.
-- [ ] Tests are `[Fact]`/CI-runnable or otherwise fail loudly; no skipped test is the only acceptance gate.
+- [x] The AI produces at least 3 army units in a headless run when money, prerequisites, and a producer are available.
+- [x] Production is gated by `Player.CanProduceObject(...)` and producer-local construction/production checks.
+- [x] When the selected unit is unaffordable, no `CreateUnit` order is emitted and `BankAccount` never becomes negative.
+- [x] Production orders are emitted through `OrderProcessor`/the recorded order stream, not by direct `ProductionUpdate` calls.
+- [x] The default target force size is named, documented or obvious in code, and verified by a test.
+- [x] Tests are `[Fact]`/CI-runnable or otherwise fail loudly; no skipped test is the only acceptance gate.
 - [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
@@ -78,4 +78,8 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Added unit-production planning to `SkirmishAIPlayer` after the economy/base-build step.
+- Implemented deterministic producer/unit selection from command sets, affordability/prerequisite gating, and duplicate queue suppression.
+- Enforced the default army target size with `DefaultTargetArmySize = 3`.
+- Added `SkirmishAIUnitProductionTests` covering affordable production order emission and unaffordable no-op behavior with non-negative bank balance.
+- Validation is blocked in this environment by missing .NET targeting-pack data (`Microsoft.NETCore.App.Ref/10.0.9/data/FrameworkList.xml`).

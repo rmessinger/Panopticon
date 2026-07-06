@@ -11,6 +11,7 @@ namespace OpenSage.Logic.AI;
 public sealed class SkirmishAIPlayer : AIPlayer
 {
     private const int MaxEconomyAssignmentsPerDecision = 2;
+    internal const int DefaultTargetArmySize = 3;
 
     private int _unknownInt1;
     private int _unknownInt2;
@@ -31,6 +32,7 @@ public sealed class SkirmishAIPlayer : AIPlayer
         DecisionTickCount++;
 
         RunEconomyAndBaseBuildout();
+        RunUnitProduction();
     }
 
     private void RunEconomyAndBaseBuildout()
@@ -314,6 +316,98 @@ public sealed class SkirmishAIPlayer : AIPlayer
         }
 
         return null;
+    }
+
+    private void RunUnitProduction()
+    {
+        var attackCapableArmyCount = Owner.OwnedObjects.Count(
+            x =>
+                !x.IsStructure
+                && x.CanAttack
+                && !x.Definition.KindOf.Get(ObjectKinds.Harvester)
+                && !x.Definition.KindOf.Get(ObjectKinds.Dozer));
+        if (attackCapableArmyCount >= DefaultTargetArmySize)
+        {
+            return;
+        }
+
+        foreach (var producer in Owner.OwnedObjects)
+        {
+            if (!producer.IsStructure)
+            {
+                continue;
+            }
+
+            var commandSet = producer.Definition.CommandSet?.Value;
+            if (commandSet == null)
+            {
+                continue;
+            }
+
+            var candidateUnit = commandSet.Buttons.Values
+                .Select(x => x?.Value)
+                .Where(x => x?.Command == CommandType.UnitBuild && x.Object?.Value != null)
+                .Select(x => x!.Object!.Value)
+                .OrderBy(x => x.Name, StringComparer.Ordinal)
+                .FirstOrDefault(CanQueueUnitProduction);
+            if (candidateUnit == null)
+            {
+                continue;
+            }
+
+            var createUnitOrder = new Order(OwnerPlayerIndex, OrderType.CreateUnit);
+            createUnitOrder.AddIntegerArgument((int)candidateUnit.InstanceId);
+            EnqueueOrder(createUnitOrder);
+            return;
+        }
+    }
+
+    private bool CanQueueUnitProduction(ObjectDefinition unitDefinition)
+    {
+        if (unitDefinition.KindOf.Get(ObjectKinds.Structure))
+        {
+            return false;
+        }
+
+        if (unitDefinition.KindOf.Get(ObjectKinds.Harvester)
+            || unitDefinition.KindOf.Get(ObjectKinds.Dozer))
+        {
+            return false;
+        }
+
+        if (!unitDefinition.KindOf.Get(ObjectKinds.CanAttack))
+        {
+            return false;
+        }
+
+        if (Owner.BankAccount.Money < unitDefinition.BuildCost)
+        {
+            return false;
+        }
+
+        if (!Owner.CanProduceObject(unitDefinition))
+        {
+            return false;
+        }
+
+        if (CountOwnedAndQueuedByDefinition(unitDefinition) >= DefaultTargetArmySize)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private int CountOwnedAndQueuedByDefinition(ObjectDefinition unitDefinition)
+    {
+        var ownedCount = Owner.OwnedObjects.Count(
+            x => !x.IsStructure && x.Definition == unitDefinition);
+        var queuedCount = Owner.OwnedObjects
+            .Where(x => x.ProductionUpdate != null)
+            .SelectMany(x => x.ProductionUpdate!.ProductionQueue)
+            .Count(x => x.ObjectDefinition == unitDefinition);
+
+        return ownedCount + queuedCount;
     }
 
     public override void Persist(StatePersister reader)
