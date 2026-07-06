@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json.Serialization;
 using OpenSage;
 using OpenSage.Tools.ReplaySketch.Assertions;
+using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tools.ReplaySketch.Model;
 
@@ -56,12 +57,13 @@ public abstract class ScenarioAssertion
                     resolvedValue = player.BankAccount.Money;
                     return true;
                 case "unitCount":
-                    // Track-P ownership-count model is not fully wired in engine yet.
-                    resolvedValue = 0;
+                    resolvedValue = player.UnitCount;
                     return true;
                 case "buildingCount":
-                    // Track-P ownership-count model is not fully wired in engine yet.
-                    resolvedValue = 0;
+                    resolvedValue = player.BuildingCount;
+                    return true;
+                case "attackOrderCount":
+                    resolvedValue = ReplayActionMetrics.GetAttackOrderCount(player.Id);
                     return true;
                 default:
                     error = $"Unsupported player path suffix '{suffix}'.";

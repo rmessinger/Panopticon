@@ -34,6 +34,8 @@ public static class HarnessRunner
         GameInstallation installation,
         string tempDirectory)
     {
+        ReplayActionMetrics.Reset();
+
         Directory.CreateDirectory(tempDirectory);
         var replayPath = Path.Combine(tempDirectory, "sketch_run.rep");
 

@@ -143,10 +143,21 @@ public sealed class ScenarioMatrix
 
         return new ReplayScenario
         {
-            MapPath = BaseScenario.MapPath,
+            MapPath = Substitute(BaseScenario.MapPath, bindings),
             BaseRadiusWorldUnits = BaseScenario.BaseRadiusWorldUnits,
             Players = BaseScenario.Players.ToList(),
             Assertions = assertions,
         };
+    }
+
+    private static string Substitute(string template, IReadOnlyDictionary<string, string> bindings)
+    {
+        var output = template;
+        foreach (var (name, value) in bindings)
+        {
+            output = output.Replace($"{{{name}}}", value, StringComparison.Ordinal);
+        }
+
+        return output;
     }
 }
