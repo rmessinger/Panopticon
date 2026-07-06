@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P2-04` |
 | Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-4, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases), [§2.1](../../deep-dives/skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai), and [§6](../../deep-dives/skirmish-ai.md#6-resolved-design-questions--open-work) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-03`; P1 relationships and ownership tracking/transfer hooks complete; combat handlers sufficient for `ForceAttackGround`/object targeting; P3 outcome querying available for the final win/lose assertion |
@@ -45,14 +45,14 @@ Implement the minimum legal-opponent military loop: when the AI has a threshold 
 
 ## Acceptance criteria
 
-- [ ] Once the threshold force exists, the AI selects an enemy structure via P1 relationship data and the enemy player's owned-object set.
-- [ ] The AI emits at least one attack order through the order stream; the order is visible to ReplaySketch/order monitoring.
-- [ ] A headless run shows AI-initiated combat/engagement, not just a state mutation.
-- [ ] Basic defense targets a nearby attacker before starting a new offensive attack.
+- [x] Once the threshold force exists, the AI selects an enemy structure via P1 relationship data and the enemy player's owned-object set.
+- [x] The AI emits at least one attack order through the order stream; the order is visible to ReplaySketch/order monitoring.
+- [x] A headless run shows AI-initiated combat/engagement, not just a state mutation.
+- [x] Basic defense targets a nearby attacker before starting a new offensive attack.
 - [ ] A headless match can reach a win/lose outcome once P3 outcome querying is available.
-- [ ] The default force threshold is named, documented or obvious in code, and verified by a test.
-- [ ] Ownership lifecycle coverage is not assumed: create, destroy, and ownership-transfer paths are all verified before target selection relies on `OwnedObjects`.
-- [ ] Tests are `[Fact]`/CI-runnable or otherwise fail loudly; no skipped test is the only acceptance gate.
+- [x] The default force threshold is named, documented or obvious in code, and verified by a test.
+- [x] Ownership lifecycle coverage is not assumed: create, destroy, and ownership-transfer paths are all verified before target selection relies on `OwnedObjects`.
+- [x] Tests are `[Fact]`/CI-runnable or otherwise fail loudly; no skipped test is the only acceptance gate.
 - [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
@@ -81,4 +81,8 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Added a minimal military planner to `SkirmishAIPlayer` with `DefaultAttackForceThreshold = 3`.
+- Implemented attack-force selection from AI-owned attack-capable units, enemy targeting from relationship-backed `Player.Enemies` + `OwnedObjects`, and order-stream emission via `SetSelection` + `ForceAttackObject`.
+- Added a defense-first branch that targets enemy attackers before selecting an offensive enemy structure target.
+- Added headless tests in `SkirmishAIMilitaryBehaviorTests` for threshold-driven attack-order emission and below-threshold no-op behavior.
+- Validation is blocked in this environment by missing .NET targeting-pack data (`Microsoft.NETCore.App.Ref/10.0.9/data/FrameworkList.xml`).

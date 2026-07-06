@@ -12,6 +12,7 @@ public sealed class SkirmishAIPlayer : AIPlayer
 {
     private const int MaxEconomyAssignmentsPerDecision = 2;
     internal const int DefaultTargetArmySize = 3;
+    internal const int DefaultAttackForceThreshold = 3;
 
     private int _unknownInt1;
     private int _unknownInt2;
@@ -33,6 +34,7 @@ public sealed class SkirmishAIPlayer : AIPlayer
 
         RunEconomyAndBaseBuildout();
         RunUnitProduction();
+        RunMilitaryBehavior();
     }
 
     private void RunEconomyAndBaseBuildout()
@@ -408,6 +410,93 @@ public sealed class SkirmishAIPlayer : AIPlayer
             .Count(x => x.ObjectDefinition == unitDefinition);
 
         return ownedCount + queuedCount;
+    }
+
+    private void RunMilitaryBehavior()
+    {
+        var force = Owner.OwnedObjects
+            .Where(
+                x => !x.IsStructure
+                    && x.CanAttack
+                    && !x.Definition.KindOf.Get(ObjectKinds.Harvester)
+                    && !x.Definition.KindOf.Get(ObjectKinds.Dozer))
+            .ToList();
+        if (force.Count == 0)
+        {
+            force = Owner.OwnedObjects
+                .Where(x => !x.IsStructure && x.CanAttack)
+                .ToList();
+        }
+
+        if (force.Count < DefaultAttackForceThreshold)
+        {
+            return;
+        }
+
+        var defensiveTarget = FindDefensiveTarget();
+        if (defensiveTarget != null)
+        {
+            IssueAttackOrders(force, defensiveTarget);
+            return;
+        }
+
+        var offensiveTarget = FindOffensiveTargetStructure();
+        if (offensiveTarget != null)
+        {
+            IssueAttackOrders(force, offensiveTarget);
+        }
+    }
+
+    private GameObject? FindDefensiveTarget()
+    {
+        var hasAnyOwnedStructure = Owner.OwnedObjects.Any(x => x.IsStructure);
+        if (!hasAnyOwnedStructure)
+        {
+            return null;
+        }
+
+        foreach (var enemy in Owner.Enemies)
+        {
+            var attacker = enemy.OwnedObjects.FirstOrDefault(x => !x.IsStructure && x.CanAttack);
+            if (attacker != null)
+            {
+                return attacker;
+            }
+        }
+
+        return null;
+    }
+
+    private GameObject? FindOffensiveTargetStructure()
+    {
+        foreach (var enemy in Owner.Enemies)
+        {
+            var targetStructure = enemy.OwnedObjects.FirstOrDefault(x => x.IsStructure);
+            if (targetStructure != null)
+            {
+                return targetStructure;
+            }
+        }
+
+        return null;
+    }
+
+    private void IssueAttackOrders(IReadOnlyList<GameObject> force, GameObject target)
+    {
+        var objectIds = force
+            .Select(x => x.Id)
+            .ToList();
+
+        if (objectIds.Count == 0)
+        {
+            return;
+        }
+
+        EnqueueOrders(
+        [
+            Order.CreateSetSelection(OwnerPlayerIndex, objectIds),
+            Order.CreateAttackObject(OwnerPlayerIndex, target.Id, force: true),
+        ]);
     }
 
     public override void Persist(StatePersister reader)
