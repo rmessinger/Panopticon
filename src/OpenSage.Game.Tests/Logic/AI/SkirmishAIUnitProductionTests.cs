@@ -31,6 +31,7 @@ public sealed class SkirmishAIUnitProductionTests : MockedGameTest
 
         Generals.AssetStore.ObjectDefinitions.Add(producerDefinition);
         Generals.AssetStore.ObjectDefinitions.Add(unitDefinition);
+        RegisterPlayerTemplates();
 
         var manager = new PlayerManager(Generals);
         manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, CreatePlayerSettings());
@@ -70,6 +71,7 @@ public sealed class SkirmishAIUnitProductionTests : MockedGameTest
 
         Generals.AssetStore.ObjectDefinitions.Add(producerDefinition);
         Generals.AssetStore.ObjectDefinitions.Add(expensiveUnit);
+        RegisterPlayerTemplates();
 
         var manager = new PlayerManager(Generals);
         manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, CreatePlayerSettings());
@@ -95,7 +97,7 @@ public sealed class SkirmishAIUnitProductionTests : MockedGameTest
     {
         var gameObject = (GameObject)RuntimeHelpers.GetUninitializedObject(typeof(GameObject));
 
-        SetField(gameObject, "_id", new ObjectId(1000 + owner.OwnedObjects.Count));
+        SetField(gameObject, "_id", new ObjectId((uint)(1000 + owner.OwnedObjects.Count)));
         SetField(gameObject, "Definition", definition);
         SetProperty(gameObject, nameof(GameObject.IsStructure), isStructure);
         SetProperty(gameObject, nameof(GameObject.CanAttack), !isStructure);
@@ -151,4 +153,20 @@ public sealed class SkirmishAIUnitProductionTests : MockedGameTest
         new PlayerSetting(1, "FactionAmerica", new ColorRgb(255, 255, 255), 1, PlayerOwner.Player, "human", true),
         new PlayerSetting(2, "FactionGLA", new ColorRgb(255, 128, 64), 2, PlayerOwner.EasyAi, "ai"),
     ];
+
+    private void RegisterPlayerTemplates()
+    {
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionAmerica"));
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionGLA"));
+    }
+
+    private static PlayerTemplate CreatePlayerTemplate(string name)
+    {
+        var template = new PlayerTemplate();
+        var setNameAndInstanceId = typeof(PlayerTemplate).GetMethod(
+            "SetNameAndInstanceId",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        setNameAndInstanceId!.Invoke(template, new object[] { "PlayerTemplate", name });
+        return template;
+    }
 }

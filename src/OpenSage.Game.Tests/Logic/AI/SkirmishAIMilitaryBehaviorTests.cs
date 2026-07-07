@@ -14,6 +14,7 @@ public sealed class SkirmishAIMilitaryBehaviorTests : MockedGameTest
     public void DecisionTick_WhenForceMeetsThreshold_EmitsAttackOrderAgainstEnemyStructure()
     {
         var manager = new PlayerManager(Generals);
+        RegisterPlayerTemplates();
         manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, CreatePlayerSettings());
 
         var aiPlayer = manager.Players[3];
@@ -26,7 +27,7 @@ public sealed class SkirmishAIMilitaryBehaviorTests : MockedGameTest
             var attacker = CreateFakeGameObject(
                 attackerDef,
                 aiPlayer,
-                objectId: 2000 + i,
+                objectId: (uint)(2000 + i),
                 isStructure: false,
                 canAttack: true);
             aiPlayer.AddOwnedObject(attacker);
@@ -60,6 +61,7 @@ public sealed class SkirmishAIMilitaryBehaviorTests : MockedGameTest
     public void DecisionTick_WhenForceBelowThreshold_DoesNotEmitAttackOrder()
     {
         var manager = new PlayerManager(Generals);
+        RegisterPlayerTemplates();
         manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, CreatePlayerSettings());
 
         var aiPlayer = manager.Players[3];
@@ -72,7 +74,7 @@ public sealed class SkirmishAIMilitaryBehaviorTests : MockedGameTest
             var attacker = CreateFakeGameObject(
                 attackerDef,
                 aiPlayer,
-                objectId: 4000 + i,
+                objectId: (uint)(4000 + i),
                 isStructure: false,
                 canAttack: true);
             aiPlayer.AddOwnedObject(attacker);
@@ -101,7 +103,7 @@ public sealed class SkirmishAIMilitaryBehaviorTests : MockedGameTest
     private static GameObject CreateFakeGameObject(
         ObjectDefinition definition,
         Player owner,
-        int objectId,
+        uint objectId,
         bool isStructure,
         bool canAttack)
     {
@@ -163,4 +165,20 @@ public sealed class SkirmishAIMilitaryBehaviorTests : MockedGameTest
         new PlayerSetting(1, "FactionAmerica", new ColorRgb(255, 255, 255), 1, PlayerOwner.Player, "enemyHuman", true),
         new PlayerSetting(2, "FactionGLA", new ColorRgb(255, 128, 64), 2, PlayerOwner.EasyAi, "ai"),
     ];
+
+    private void RegisterPlayerTemplates()
+    {
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionAmerica"));
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionGLA"));
+    }
+
+    private static PlayerTemplate CreatePlayerTemplate(string name)
+    {
+        var template = new PlayerTemplate();
+        var setNameAndInstanceId = typeof(PlayerTemplate).GetMethod(
+            "SetNameAndInstanceId",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        setNameAndInstanceId!.Invoke(template, new object[] { "PlayerTemplate", name });
+        return template;
+    }
 }

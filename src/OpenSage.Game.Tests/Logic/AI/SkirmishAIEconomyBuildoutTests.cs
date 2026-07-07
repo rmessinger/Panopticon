@@ -30,6 +30,7 @@ public sealed class SkirmishAIEconomyBuildoutTests : MockedGameTest
             CreateBuildList("FactionGLA", [buildInfo]));
 
         var manager = new PlayerManager(Generals);
+        RegisterPlayerTemplates();
         manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, CreatePlayerSettings());
 
         for (var i = 0; i < (int)AIPlayer.DefaultDecisionCadenceFrames; i++)
@@ -49,6 +50,7 @@ public sealed class SkirmishAIEconomyBuildoutTests : MockedGameTest
             CreateBuildList("FactionAmerica", new List<BuildListInfo>()));
 
         var manager = new PlayerManager(Generals);
+        RegisterPlayerTemplates();
         manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, CreatePlayerSettings());
 
         for (var i = 0; i < (int)AIPlayer.DefaultDecisionCadenceFrames; i++)
@@ -123,4 +125,20 @@ public sealed class SkirmishAIEconomyBuildoutTests : MockedGameTest
         new PlayerSetting(1, "FactionAmerica", new ColorRgb(255, 255, 255), 1, PlayerOwner.Player, "human", true),
         new PlayerSetting(2, "FactionGLA", new ColorRgb(255, 128, 64), 2, PlayerOwner.EasyAi, "ai"),
     ];
+
+    private void RegisterPlayerTemplates()
+    {
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionAmerica"));
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionGLA"));
+    }
+
+    private static PlayerTemplate CreatePlayerTemplate(string name)
+    {
+        var template = new PlayerTemplate();
+        var setNameAndInstanceId = typeof(PlayerTemplate).GetMethod(
+            "SetNameAndInstanceId",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        setNameAndInstanceId!.Invoke(template, new object[] { "PlayerTemplate", name });
+        return template;
+    }
 }
