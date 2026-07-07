@@ -28,16 +28,7 @@ You can also build like that on Windows, in case you don't want to use Visual St
 
 ##### .NET 8.0+
 
-Linux distributions may have multiple forms of .NET Core installations, with the minimum version supported being 8.0.
-
-If you wish to install .NET Core 8.0+ on your system, you can follow the instructions either for your distribution, for example:
-
-- [Ubuntu Package Instructions](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-install?tabs=dotnet8&pivots=os-linux-ubuntu-2404)
-- [Fedora Package Instructions](https://learn.microsoft.com/en-us/dotnet/core/install/linux-fedora?tabs=dotnet8)
-
-Or simply follow the universal Linux [installation script instructions](https://learn.microsoft.com/en-us/dotnet/core/install/linux-scripted-manual).
-
-Do look at the main, [official Linux installation guide by MicroSoft](https://learn.microsoft.com/en-us/dotnet/core/install/linux) to see how to install .NET Core on your system.
+Minimum supported version: .NET 8.0+. Install via the [official Linux installation guide](https://learn.microsoft.com/en-us/dotnet/core/install/linux), or a distro package if preferred: [Ubuntu](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-install?tabs=dotnet8&pivots=os-linux-ubuntu-2404), [Fedora](https://learn.microsoft.com/en-us/dotnet/core/install/linux-fedora?tabs=dotnet8).
 
 ##### `libc`
 

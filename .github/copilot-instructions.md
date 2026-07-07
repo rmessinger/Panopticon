@@ -2,6 +2,10 @@
 
 OpenSAGE is a C# (.NET 8) open-source reimplementation of the SAGE game engine (Command & Conquer: Generals, Battle for Middle-earth, etc.). It reads original game data files but contains no game assets.
 
+## Response Style
+
+Keep responses concise: lead with the outcome, skip step-by-step narration of routine work, and don't restate the plan or the user's request back to them. Reserve longer explanations for genuinely complex or ambiguous decisions.
+
 ## Build, Test & Format
 
 ```sh
@@ -90,6 +94,7 @@ Follows the [dotnet/corefx style](docs/coding-style.md):
 - `var` only when the type is unambiguous from the right-hand side
 - `nameof(...)` over string literals wherever possible
 - No `this.` unless required for disambiguation
+- Comment only what isn't obvious from the code; don't add comments that just restate what a line does
 - `.editorconfig` at repo root enforces formatting; run `dotnet format src` before committing
 
 ## Testing and Visual Validation
@@ -108,7 +113,7 @@ To capture frames for automated visual validation, use `FrameCapturer` in `OpenS
 
 ## Roadmap and Agent Task Cards
 
-The long-term plan lives under `docs/roadmap/`. `docs/roadmap/README.md` is the index; per-track docs are `track-p-*.md`, `track-a-*.md`, `track-b-*.md`, and `track-c-*.md`. When changing the plan, follow `docs/roadmap/MAINTAINING.md` to propagate changes across all parallel docs.
+The long-term plan lives under `docs/roadmap/`. `docs/roadmap/README.md` is the index; per-track docs are `track-p-*.md`, `track-a-*.md`, `track-b-*.md`, and `track-c-*.md`. When changing the plan, follow `docs/roadmap/MAINTAINING.md` to propagate changes across all parallel docs. Documentation generally (including the roadmap) follows the concise style in `CONTRIBUTING.md`.
 
 For incremental, low-effort implementation work, use the agent task-card system in `docs/roadmap/agent-guide/`:
 
