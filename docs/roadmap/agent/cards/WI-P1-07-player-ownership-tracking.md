@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-07` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-5, see [deep dive §3.4](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-02` |
@@ -110,4 +110,9 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Done (commit 8518ed49, "Track per-player owned objects"). `Player.OwnedObjects`
+(`HashSet<GameObject>`) plus derived `BuildingCount`/`UnitCount` added to `Player.cs`;
+`GameLogic.cs` calls `gameObject.Owner?.AddOwnedObject(gameObject)` on object registration and
+`gameObject.Owner?.RemoveOwnedObject(gameObject)` on removal/death. Transfer-on-owner-reassignment
+(step 4, optional) was completed separately by `WI-P1-11`. Covered by
+`src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs`.

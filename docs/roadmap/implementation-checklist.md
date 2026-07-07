@@ -1,29 +1,28 @@
 # Implementation Checklist
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). A single, granular, human-facing list
-> of the concrete changes to make toward implementation — one flat checklist across the whole
-> roadmap, ordered by dependency. This is the "what's left to build" view; the [track docs](README.md#document-map)
-> hold the why/design, the [agent](agent/) holds bounded task cards for cheap agents,
-> and this file is the running change list a human works down.
+> Part of the [Large-Scale Simulation Roadmap](README.md). This is the flat, dependency-ordered
+> checklist of concrete implementation changes across the roadmap. The [track docs](README.md#document-map)
+> hold the design and rationale, [agent](agent/) holds bounded task cards for cheap agents, and
+> this file is the running build list.
 >
 > Audience: human — the authoritative progress checklist.
 
 How to use & maintain
 
-- Check an item off (`- [x]`) when it lands; keep this in sync with the phase Status in the
-  track docs and any matching [agent card](agent/).
-- Items are intentionally granular (a concrete code change / area), not strategy. Add finer items
-  as a phase gets a deep dive; split anything too big to do in one focused change.
-- Order: everything under Track P gates Tracks A/B/C — do P first. Within a track, items are
-  roughly top-down by dependency.
-- Each group links to its phase for context. Don't duplicate rationale here — link it.
-- Acceptance criteria (AC): every item has an `AC:` sub-bullet stating how you know it's done —
-  a verifiable check, ideally a [P0 harness](deep-dives/playable-baseline-harness.md) assertion or an
-  automated test (`dotnet test src --filter Category!=Interactive`). Where a phase is still too
-  ill-defined to pin down, the AC is marked `TBD` with a rough template to fill in once the
-  design firms up. Tighten `TBD` ACs into concrete ones as deep dives land. Every item must build
-  (`dotnet build src`) and pass formatting (`dotnet format src --verify-no-changes`) — that baseline
-  is implied and not repeated per item.
+- Check an item off (`- [x]`) when it lands. Keep it aligned with the phase Status in the track
+  docs and any matching [agent card](agent/).
+- Items are intentionally granular: a concrete code change or area, not strategy. Add finer items
+  as a phase gets a deep dive, and split anything too large for one focused change.
+- Order matters. Track P gates Tracks A/B/C, so do P first. Within a track, items are roughly
+  top-down by dependency.
+- Each group links to its phase for context. Keep rationale in the linked docs instead of
+  repeating it here.
+- Every item has an `AC:` sub-bullet with a verifiable completion check, ideally a
+  [P0 harness](deep-dives/playable-baseline-harness.md) assertion or an automated test
+  (`dotnet test src --filter Category!=Interactive`). If a phase is still too undefined, mark the
+  AC as `TBD` with a rough template and tighten it once the deep dive lands. Every item is also
+  expected to build (`dotnet build src`) and pass formatting
+  (`dotnet format src --verify-no-changes`); that baseline is implied and not repeated per item.
 
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `(↗)` needs a design decision / high-effort
 model before it can be done · `AC:` acceptance criteria · `TBD` AC not yet definable.
@@ -32,8 +31,8 @@ model before it can be done · `AC:` acceptance criteria · `TBD` AC not yet def
 
 ## Track P — Playable Baseline (prerequisite)
 
-See [`track-p-playable-baseline.md`](track-p-playable-baseline.md). Bar: a full Generals/ZH
-skirmish playable build → fight → win/lose vs. AI.
+See [`track-p-playable-baseline.md`](track-p-playable-baseline.md). Success bar: a full
+Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 
 ### P0 — ReplaySketch arbitrary-command harness ([deep dive](deep-dives/playable-baseline-harness.md))
 - [x] Replace the closed `ActionType` enum with an open command model that can express any engine
@@ -130,35 +129,48 @@ skirmish playable build → fight → win/lose vs. AI.
     verification method; golden-image framework removed.
 
 ### P1 — Skirmish setup & player relationships ([deep dive](deep-dives/skirmish-setup.md))
-- [ ] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
+- [x] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
       neutrals) — `src/OpenSage.Game/Logic/PlayerManager.cs:45`.
   - AC: after `OnNewGame`, every player pair has a defined `RelationshipType` (no TODO/defaults left);
     a 2-player human-vs-AI skirmish reports them as mutual enemies via `GetRelationship`; unit test.
-- [ ] Wire skirmish slot/team data from `SkirmishManager` into relationship setup; make ally/enemy
+  - Done: `WI-P1-02` (commit d5acbbb7). Team-derived relationships wired in `OnNewGame`; covered by
+    `PlayerManagerTests`.
+- [x] Wire skirmish slot/team data from `SkirmishManager` into relationship setup; make ally/enemy
       wiring reciprocal (`Player.AddAlly/AddEnemy`, `Logic/Player.cs:779-786`).
   - AC: same-team slots are allies and different-team slots are enemies; `A ally/enemy B ⇒ B ally/enemy
     A` (test asserts symmetry).
+  - Done: `WI-P1-02`/`WI-P1-03` (commit d5acbbb7). Reciprocity + symmetry covered by
+    `PlayerRelationshipTests`.
 - [ ] Start a single-player skirmish without networking (`LocalSkirmishManager` path).
   - AC: `LocalSkirmishManager` reaches `Started` with no network connection; a headless boot reaches
     the first logic tick.
-- [ ] Unify SP/MP spawn onto one shared skirmish path (SP = one human + AI slots through the same
+- [x] Unify SP/MP spawn onto one shared skirmish path (SP = one human + AI slots through the same
       start-position/building/camera code, `Game.cs:745-763`); identify the human via an explicit
       slot flag set at setup, not the `_players[2]` fallback (`PlayerManager.cs:39-46`).
   - AC: a SP skirmish spawns each non-neutral player's starting building(s) at its `Player_N_Start`
     and places the camera, identical to the MP path; `LocalPlayer` resolves from the explicit flag;
     harness asserts each player has ≥1 starting structure at its start waypoint.
-- [ ] AI player slots, faction/army selection, and start positions (fill AI slots in the lobby path).
+  - Done: `WI-P1-04` (commit d5acbbb7). `LocalPlayer` now resolves from `IsLocalForMultiplayer`;
+    SP skirmish already used `GameType.Skirmish` so the shared spawn/camera path applied without a
+    guard change. No dedicated harness assertion for the "≥1 starting structure per player" clause
+    yet — see the open P1-4 boot-validation item below.
+- [x] AI player slots, faction/army selection, and start positions (fill AI slots in the lobby path).
   - AC: an unset AI slot is assigned a valid playable side, a free color, and a free start position
     before `StartGame`; no slot has an unresolved faction/position at game start.
+  - Done: `WI-P1-05` (commit 677b7bc9), with a start-position collision bug fixed by `WI-P1-09`
+    (commit 583d09de). Shared `SkirmishSlotDefaults.ApplyDefaults(...)` helper used by both paths.
 - [ ] P1-4 Boot validation: a human + ≥1 AI skirmish boots headlessly via the P0 harness with
       correct relationships, spawn positions, and faction assignments asserted.
   - AC: `P1BootValidationTests` passes (or skips cleanly on CI without game files); predicates for
     symmetric relationships, non-empty spawn, and `LocalPlayer` identification all pass.
-- [ ] P1-5 Object-ownership tracking (foundational): maintained per-`Player` building/unit counts +
+  - Status: not started — see `WI-P1-06`.
+- [x] P1-5 Object-ownership tracking (foundational): maintained per-`Player` building/unit counts +
       owned-object set, updated on create/transfer/`OnDie`/`Destroy` (decided — not an on-demand scan).
       Consumed by P2 (AI target selection) and P3 (defeat detection); friendly to the scale tracks.
   - AC: per-`Player` building/unit counts are accurate after create/death/transfer (test creates +
     kills objects and asserts counts) with O(1) per-check cost.
+  - Done: `WI-P1-07` (commit 8518ed49) + `WI-P1-11` (commit 122ed1eb, owner-transfer tracking).
+    Covered by `PlayerOwnershipTests`.
 - [ ] P1 scenario matrix: sweep playerCount × teamConfig × factionMix; assert relationships and
       faction assignment are correct for every cell.
   - AC: a `ScenarioMatrix` (axes: `playerCount` ∈ {2,3,4,6,8}, `teamConfig` ∈ {FFA, 2v2, 3v1, 4v4},
@@ -171,16 +183,16 @@ skirmish playable build → fight → win/lose vs. AI.
       persistence-only — `Logic/AI/AIPlayer.cs:8-154`, `SkirmishAIPlayer.cs:3-31`).
   - AC: `SkirmishAIPlayer.Update(...)` is invoked from the player tick at the intended cadence (test
     asserts call count over N frames); no behavior required yet.
-- [ ] Actuate AI decisions by emitting `Order`s through `OrderProcessor` (decided — not direct API),
+- [x] Actuate AI decisions by emitting `Order`s through `OrderProcessor` (decided — not direct API),
       so AI actions enter the recorded stream.
   - AC: a thin actuation adapter emits `Order`s; AI-issued actions appear in the recorded order stream
     (verified by replaying the run).
-- [ ] AI base-building: consume the stranded `AIData.SkirmishBuildLists`/`BuildListInfo`
+- [x] AI base-building: consume the stranded `AIData.SkirmishBuildLists`/`BuildListInfo`
       (`Logic/AI/AIData.cs`, `Logic/Map/BuildListInfo.cs`).
   - AC: starting from a base + dozer/worker, the AI builds the build-list structures in priority order;
     a headless run shows the AI's building count rising toward the build-list target within a frame
     budget.
-- [ ] AI economy management (dozers/workers + supply).
+- [x] AI economy management (dozers/workers + supply).
   - AC: the AI maintains ≥1 supply structure and assigns harvesters; AI `BankAccount` income is
     positive over a sampled interval in a headless run.
 - [ ] AI unit production (money/prereq gated via `Player.CanProduceObject`).

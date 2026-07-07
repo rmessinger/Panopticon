@@ -7,21 +7,20 @@
 >
 > The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
-Goal: verify that every unit archetype present in the reference game (Generals/ZH) satisfies
-its full behavioural contract — can be produced, moves/positions correctly, attacks with each
-weapon mode, executes every special ability/power, and dies with correct ownership cleanup. One
-representative unit per archetype is exercised end-to-end via the
-[P0 harness](playable-baseline-harness.md), producing one scenario file and one assertion set
-per archetype. These scenarios become part of the P7 regression suite.
+Goal: verify that every unit archetype in the reference game (Generals/ZH) satisfies its full
+behavioural contract: can be produced, moves/positions correctly, attacks with each weapon mode,
+executes every special ability/power, and dies with correct ownership cleanup. One representative
+unit per archetype is exercised end-to-end via the [P0 harness](playable-baseline-harness.md),
+producing one scenario file and one assertion set per archetype. These scenarios become part of
+P7.
 
 ---
 
 ## 1. Why P6b
 
-P6 (combat & command) confirms the player can drive selection and issue basic orders through the
-control bar. It surfaces gaps from the P7 match run at a coarse level. P6b tightens this into a
-systematic, archetype-by-archetype contract so no unit category is left untested before P7 locks
-the regression suite. Without it, P7 can only assert "the match finishes" without confidence that
+P6 confirms the player can drive selection and issue basic orders through the control bar. P6b
+turns that into an archetype-by-archetype contract so no unit category is left untested before P7
+locks the regression suite. Without it, P7 can only assert that the match finishes, not that
 individual unit types work correctly.
 
 ---
@@ -46,7 +45,7 @@ without changing production code.
 
 ### 3.2 Full contract per archetype
 
-Each archetype contract is a set of P0 harness assertions. "Full contract" means:
+Each archetype contract is a P0 harness assertion set. "Full contract" means:
 
 1. Produced — the unit is ordered, the production completes, and the unit exists in `GameLogic`.
    Assert: `player[X].ownedUnits contains a unit of definition D after frame N`.
@@ -70,11 +69,10 @@ Assertions use the P0 harness JSON-predicate vocabulary plus code-defined predic
 like "unit of definition D exists in player's owned set" that need a query selector.
 
 ### 3.3 Surfacing unimplemented handlers as gaps, not silent failures
-A special-ability assertion whose handler is currently unimplemented in `OrderProcessor` should
-fail the harness run with a clear message (assertion failed: `SpecialPower(X)` had no observable
-effect after N frames). This produces an explicit gap list that P6b tracks rather than silently
-swallowing. Gaps are documented in the `P6b.exchange` or `.exchange` log and become follow-up
-fixes within the P6b phase.
+If a special-ability handler is still unimplemented in `OrderProcessor`, the harness run should
+fail with a clear message (assertion failed: `SpecialPower(X)` had no observable effect after N
+frames). That turns missing handlers into an explicit P6b gap list instead of a silent failure.
+Document gaps in `P6b.exchange` or `.exchange`, then fix them within P6b.
 
 ---
 
@@ -91,9 +89,9 @@ fixes within the P6b phase.
 
 ## 4.5 Scenario Matrix
 
-P6b is inherently a matrix validation: the six sub-phases in §4 form the rows of the archetype
-axis. Formalizing it as a P0-5b `ScenarioMatrix` makes the coverage explicit and allows
-future expansion to additional factions without authoring new scenario files.
+P6b is naturally a matrix validation: the six sub-phases in §4 form the rows of the archetype
+axis. Formalizing it as a P0-5b `ScenarioMatrix` makes coverage explicit and allows future
+expansion to additional factions without new scenario files.
 
 | Axis | Values | Notes |
 |---|---|---|
@@ -115,18 +113,18 @@ reference unit and asserts:
 - All special abilities produce observable effects (or are flagged as unimplemented gaps).
 - Death: unit removed from `GameLogic`; ownership counts decremented.
 
-The matrix result serves as P6b's pass/fail gate and as the input to P7's regression suite.
-Any failing cell identifies the exact archetype × faction combination that needs fixing.
+The matrix result is P6b's pass/fail gate and an input to P7's regression suite. Any failing
+cell identifies the exact archetype × faction combination that needs fixing.
 
 ---
 
 ## 5. Sequencing & dependencies
 
-- P6b depends on P0 (the harness must support arbitrary commands and assertions), P4 (economy is
-  needed to fund production), P5 (construction/production must work for units to be produced), and
-  P6 (basic combat paths confirmed; P6b refines the per-archetype detail).
-- P6b unblocks P7's per-archetype regression scenarios — the six P6b scenario files are promoted
-  to the P7 regression suite.
+- P6b depends on P0 (arbitrary commands and assertions), P4 (economy funds production), P5
+  (construction/production works), and P6 (basic combat paths confirmed; P6b refines them by
+  archetype).
+- P6b unblocks P7's per-archetype regression scenarios by promoting the six P6b scenario files
+  into the P7 regression suite.
 - Unimplemented special-power handlers surfaced by P6b become in-phase fixes before P6b is marked
   Done; deep or cross-cutting gaps escalate to P6 or a new phase.
 

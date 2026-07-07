@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using OpenSage.Logic.Object;
+using OpenSage.Logic.Orders;
 
 namespace OpenSage.Logic.AI;
 
 public class AIPlayer : IPersistableObject
 {
+    internal const uint DefaultDecisionCadenceFrames = 60;
+
     private readonly Player _owner;
 
     private readonly List<AIPlayerUnknownThing> _unknownThings = new();
@@ -28,6 +31,60 @@ public class AIPlayer : IPersistableObject
     internal AIPlayer(Player owner)
     {
         _owner = owner;
+    }
+
+    protected Player Owner => _owner;
+
+    protected int OwnerPlayerIndex => (int)_owner.Id;
+
+    internal void Update()
+    {
+        if (_countdownSomething1 == 0)
+        {
+            _countdownSomething1 = DefaultDecisionCadenceFrames;
+        }
+
+        _countdownSomething1--;
+        if (_countdownSomething1 == 0)
+        {
+            OnDecisionTick();
+            _countdownSomething1 = DefaultDecisionCadenceFrames;
+        }
+    }
+
+    protected virtual void OnDecisionTick()
+    {
+    }
+
+    protected void EnqueueOrder(Order order)
+    {
+        DispatchOrders([order]);
+    }
+
+    protected void EnqueueOrders(IReadOnlyList<Order> orders)
+    {
+        if (orders.Count == 0)
+        {
+            return;
+        }
+
+        DispatchOrders(orders);
+    }
+
+    protected virtual void DispatchOrders(IReadOnlyList<Order> orders)
+    {
+        var networkMessageBuffer = _owner.Game.NetworkMessageBuffer;
+        if (networkMessageBuffer != null)
+        {
+            foreach (var order in orders)
+            {
+                networkMessageBuffer.AddLocalOrder(order);
+            }
+
+            return;
+        }
+
+        _owner.Game.InjectOrders(orders);
     }
 
     public virtual void Persist(StatePersister reader)

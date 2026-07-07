@@ -1,23 +1,21 @@
 # Track B — Scale
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Scaling the engine toward very large unit
-> counts and maps. Builds on [Track A — Foundations](track-a-foundations.md); see
+> Part of the [Large-Scale RTS Roadmap](README.md). Scale the engine to very large unit counts and maps.
+> Builds on [Track A — Foundations](track-a-foundations.md); see
 > [`agent/current-state.md`](agent/current-state.md) for the architecture these phases modify.
 >
-> Near-term scale anchor: the first committed waypoint is 10k units at interactive rate
-> (~30 fps) on one machine (see the [scale-anchor Decision](open-questions.md)). B2–B5 and B7 are
-> designed and budgeted against this anchor; the larger {100k, millions} figures stay directional
-> until it is raised.
+> Near-term scale anchor: 10k units at interactive rate (~30 fps) on one machine. See the
+> [scale-anchor Decision](open-questions.md). B2–B5 and B7 are designed and budgeted against this
+> anchor; the larger {100k, millions} figures stay directional until it is raised.
 >
 > Audience: human — strategic track overview.
 
-> The Milestone column states the single demonstrable outcome that marks each phase done (its
-> definition-of-done); the granular steps to get there live in
+> The Milestone column states the demonstrable outcome that marks each phase done. Granular steps live in
 > [`implementation-checklist.md`](implementation-checklist.md).
 
 | Phase | Goal | Milestone | Status | Depends on |
 |---|---|---|---|---|
-| B1. Profiling & robust benchmarking utilities | Build a reusable benchmarking harness (not ad-hoc scripts) and repeatable large-unit scenarios (e.g. N-unit stress scenarios), capturing baselines for logic tick, partitioning, pathfinding, and rendering. Establish the metrics this whole framework optimizes. Robustness requirements: repeatable/seeded scenarios; statistical rigor (multiple runs with warmup discarded, report mean + variance/confidence interval); regression detection against stored baselines with tolerance thresholds; machine-readable output (e.g. JSON/CSV) consumable by CI and the [visualizer](deep-dives/visualization.md); per-subsystem timing/allocation/throughput counters; and a stable API every other track reuses to measure its own experiments. Hardware characterization is a first-class output: on each run the harness probes the host machine (CPU model/core count/frequency, memory bandwidth, GPU device/VRAM) and includes that context in the machine-readable report, so results from different hardware are unambiguously comparable and achievable simulation capacity (sustainable unit count at target frame rate) can be inferred per machine. | A seeded N-unit scenario runs repeatedly and emits machine-readable mean+variance with regression detection against a stored baseline, alongside a hardware characterization summary so results from different machines are directly comparable. | Not started | — |
+| B1. Profiling & robust benchmarking utilities | Build a reusable benchmarking harness, not ad-hoc scripts, plus repeatable large-unit scenarios such as N-unit stress scenarios. Capture baselines for logic tick, partitioning, pathfinding, and rendering, and establish the metrics the framework optimizes. Robustness requirements: repeatable/seeded scenarios; statistical rigor with multiple runs, warmup discarded, and mean plus variance/confidence interval reported; regression detection against stored baselines with tolerance thresholds; machine-readable output such as JSON/CSV for CI and the [visualizer](deep-dives/visualization.md); per-subsystem timing/allocation/throughput counters; and a stable API every other track reuses to measure its own experiments. Hardware characterization is a first-class output: each run probes CPU model/core count/frequency, memory bandwidth, and GPU device/VRAM, and includes that context in the machine-readable report so results from different hardware are directly comparable and achievable simulation capacity can be inferred per machine. | A seeded N-unit scenario runs repeatedly and emits machine-readable mean+variance with regression detection against a stored baseline, alongside a hardware characterization summary so results from different machines are directly comparable. | Not started | — |
 | B2. Allocation & hot-path cleanup | Eliminate per-tick allocations called out in code (object iteration list copy, collision-pair lists), cache hot queries (terrain height), and tighten data layout for cache efficiency. | The called-out per-tick allocations measure at/near zero in B1 counters with unchanged behavior. | Not started | B1 |
 | B3. Parallel & data-oriented logic | Introduce free intra-tick parallelism with explicit conflict resolution (data-parallel systems write via intent/command buffers, merged by deterministic-enough rules per the [relaxed-determinism Decision](open-questions.md)). Per the [ECS-adoption Decision](open-questions.md) this is an incremental shift of hot module data toward data-oriented / SoA layouts behind the existing module API (no full ECS rewrite). | A hot logic system ticks data-parallel via intent/command buffers, staying within A2 comparison tolerance. | Not started | A2, B2 |
 | B4. Spatial & pathfinding scaling | Hierarchical/flow-field pathfinding and partitioning that scales to very large maps and unit counts; group movement; async path requests. | Large-unit group movement pathfinds on a large map via hierarchical/flow-field paths within benchmark budget. | Not started | B1 |
@@ -28,9 +26,8 @@
 
 ## Phase resources
 
-A navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
-Diagrams marked `†` are placeholder stubs; they will be elaborated before the first card for that
-phase is marked `Ready`.
+Navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
+Diagrams marked `†` are placeholder stubs; replace them before the first card for that phase is marked `Ready`.
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
@@ -45,22 +42,8 @@ phase is marked `Ready`.
 
 ## Cross-track dependencies
 
-- B5 (instanced rendering) should account for [Track C](track-c-external-assets.md) models
-  so instancing is not W3D-specific. Its instancing/LOD/culling is also reused by the authoring &
-  inspection tools — WorldBuilder's editor viewport (B4a-7) and ReplaySketch's replay viewport
-  ([A5-5](deep-dives/visualization.md)) — so tool rendering scales with the sim.
-- B1 (benchmarks) cover not just the engine but the scenario tooling at scale — WorldBuilder
-  authoring/edit latency (B4a-7) and ReplaySketch authoring/replay throughput ([A5-5](deep-dives/visualization.md)) —
-  since those tools are on the scaling critical path.
-- B4a (chunked terrain storage) is the natural bridge to B6 (distributed simulation via
-  spatial sharding) — see the [larger-maps deep dive](deep-dives/larger-maps.md). B4a-7
-  (large-population authoring) pairs with [A5-5](deep-dives/visualization.md) so the map/scenario
-  author and the run replay tools scale together.
-- B7 (variable fidelity) composes with [A2](track-a-foundations.md) and B6 (per-shard
-  fidelity hints). Under the [relaxed-determinism Decision](open-questions.md) the constraint is
-  bounded statistical error and cross-shard consistency (fidelity driven by replicated state),
-  not bit-exact reproducibility. See the [variable-fidelity deep dive](deep-dives/variable-fidelity.md).
-- Save/load is single-node only. Per the [StatePersister-reach Decision](open-questions.md), the
-  `StatePersister` save/persist path serves single-node runs (B3 SoA storage stays save-compatible);
-  it is not required to serialize sharded B6 state. Distributed runs analyze and replay via the
-  recorded snapshot/delta stream, not `StatePersister`.
+- B5 should account for [Track C](track-c-external-assets.md) models so instancing is not W3D-specific. Its instancing/LOD/culling is also reused by WorldBuilder's editor viewport (B4a-7) and ReplaySketch's replay viewport ([A5-5](deep-dives/visualization.md)), so tool rendering scales with the sim.
+- B1 benchmarks cover the engine and the scenario tooling at scale because WorldBuilder authoring/edit latency (B4a-7) and ReplaySketch authoring/replay throughput ([A5-5](deep-dives/visualization.md)) are on the scaling critical path.
+- B4a is the natural bridge to B6; see the [larger-maps deep dive](deep-dives/larger-maps.md). B4a-7 pairs with [A5-5](deep-dives/visualization.md) so the map/scenario author and run replay tools scale together.
+- B7 composes with [A2](track-a-foundations.md) and B6. Under the [relaxed-determinism Decision](open-questions.md), the constraint is bounded statistical error and cross-shard consistency, with fidelity driven by replicated state, not bit-exact reproducibility. See the [variable-fidelity deep dive](deep-dives/variable-fidelity.md).
+- Save/load is single-node only. Per the [StatePersister-reach Decision](open-questions.md), the `StatePersister` save/persist path serves single-node runs, and B3 SoA storage stays save-compatible. It does not need to serialize sharded B6 state. Distributed runs analyze and replay through the recorded snapshot/delta stream, not `StatePersister`.

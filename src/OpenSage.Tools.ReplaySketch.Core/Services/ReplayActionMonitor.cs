@@ -46,12 +46,19 @@ public sealed class ReplayActionMonitor : IDisposable
             OrderType.BuildObject => ActionType.Construct,
             OrderType.GatherDumpSupplies => ActionType.GatherResources,
             OrderType.CreateUnit => ActionType.RecruitBasicUnit,
+            OrderType.AttackObject => ActionType.AttackEnemyBase,
+            OrderType.ForceAttackObject => ActionType.AttackEnemyBase,
             OrderType.ForceAttackGround => ActionType.AttackEnemyBase,
             _ => (ActionType?)null,
         };
 
         if (actionType is not null)
         {
+            if (actionType == ActionType.AttackEnemyBase)
+            {
+                ReplayActionMetrics.RecordAttackOrder(e.Player);
+            }
+
             ActionDispatched?.Invoke(this, new ReplayActionEventArgs(actionType.Value, e.Player));
 
             // For AttackEnemyBase the game effect — units begin moving toward the attack position —

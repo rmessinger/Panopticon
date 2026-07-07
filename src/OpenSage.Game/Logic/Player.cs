@@ -18,6 +18,7 @@ public class Player : IPersistableObject
     private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     private readonly IGame _game;
+    internal IGame Game => _game;
 
     public readonly SupplyManager SupplyManager;
 
@@ -106,6 +107,7 @@ public class Player : IPersistableObject
     public void LogicTick()
     {
         Rank.Update();
+        AIPlayer?.Update();
     }
 
     public bool SpecialPowerAvailable(SpecialPower specialPower)

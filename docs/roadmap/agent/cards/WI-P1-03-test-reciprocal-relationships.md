@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-03` |
 | Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | [`WI-P1-02`](WI-P1-02-implement-onnewgame-relationships.md) (the reciprocal wiring under test) |
@@ -75,3 +75,9 @@ dotnet format src --verify-no-changes
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
   - An `OnNewGame` team→relationship integration test once a lightweight player-setup fixture exists.
+
+## Result
+
+Done (commit d5acbbb7, delivered alongside `WI-P1-02`).
+`src/OpenSage.Game.Tests/Logic/PlayerRelationshipTests.cs` covers `AddEnemy`/`AddAlly` reciprocity
+and idempotency; `PlayerManagerTests.cs` covers the `OnNewGame` team-derived wiring.

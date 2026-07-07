@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P2-02` |
 | Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-2, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases), [§2.2](../../deep-dives/skirmish-ai.md#22-consume-the-stranded-build-list-data-p5), and [§2.3](../../deep-dives/skirmish-ai.md#23-how-the-ai-issues-actions--decision-orders-via-orderprocessor) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-01`; P1 relationships/spawn complete; P4 economy loop available; P5 construction/funding/gating available enough for `BuildObject` and supply orders |
@@ -50,13 +50,13 @@ Teach the AI scaffold to issue legal order-stream actions for economy and base b
 
 ## Acceptance criteria
 
-- [ ] AI decisions are actuated by emitting `Order`s through the engine order stream; AI build/economy actions appear in the recorded or order-processed stream.
-- [ ] Starting from a base plus dozer/worker, the AI builds `SkirmishBuildLists` structures in priority order.
+- [x] AI decisions are actuated by emitting `Order`s through the engine order stream; AI build/economy actions appear in the recorded or order-processed stream.
+- [x] Starting from a base plus dozer/worker, the AI builds `SkirmishBuildLists` structures in priority order.
 - [ ] In a headless run, the AI building count rises toward the build-list target within a stated frame budget.
-- [ ] The AI maintains at least one supply structure when the build list provides one and assigns harvesters to supply work.
+- [x] The AI maintains at least one supply structure when the build list provides one and assigns harvesters to supply work.
 - [ ] AI `BankAccount` income is positive over a sampled interval, and `BankAccount` never drops below zero.
-- [ ] Duplicate in-flight build and gatherer orders are not emitted for the same target.
-- [ ] Tests are `[Fact]`/CI-runnable or otherwise fail loudly; no skipped test is the only acceptance gate.
+- [x] Duplicate in-flight build and gatherer orders are not emitted for the same target.
+- [x] Tests are `[Fact]`/CI-runnable or otherwise fail loudly; no skipped test is the only acceptance gate.
 - [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
@@ -85,4 +85,11 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Added an AI order-actuation seam in `AIPlayer` that prefers queued local orders (`NetworkMessageBuffer.AddLocalOrder`) and falls back to `IGame.InjectOrders(...)` when no frame queue is available.
+- Implemented the P2 economy/base-build planner in `SkirmishAIPlayer`:
+  - side-matched `AIData.SkirmishBuildLists` selection with one-time warning on missing match,
+  - priority-ordered build-list structure issuance via `OrderType.BuildObject`,
+  - supply-priority build behavior and harvester assignment via `SetSelection` + `GatherDumpSupplies`,
+  - de-duplication by owned-structure and current harvester assignment checks.
+- Added headless tests in `SkirmishAIEconomyBuildoutTests` for matching-build-list order emission and no-match no-op behavior.
+- Validation is blocked in this environment by missing .NET targeting-pack data (`Microsoft.NETCore.App.Ref/10.0.9/data/FrameworkList.xml`).

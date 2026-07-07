@@ -1,16 +1,13 @@
 # Large-Scale RTS Simulation & External Asset Roadmap
 
-> Living roadmap. Long-term plan for evolving OpenSAGE into an extensible framework for
-> simulation-optimization experiments — a base on which to plug in and measure various ideas
-> for scaling RTS simulation. It has no fixed product goal; the only fixed aims are
-> scalability and flexibility. Specific capabilities (larger maps, distributed sim,
-> variable fidelity, external assets, …) are experiments plugged into the framework, not
-> destinations.
+> Living roadmap for evolving OpenSAGE into an extensible framework for
+> simulation-optimization experiments. The fixed aims are scalability and flexibility.
+> Larger maps, distributed sim, variable fidelity, external assets, and similar capabilities
+> are experiments enabled by the framework, not end goals.
 >
-> This roadmap is split across several linked documents (see [Document map](#document-map)).
-> Each phase has a Status (`Not started` / `In progress` / `Done` / `Revised`). When a
-> phase grows its own detailed design, add a deep-dive under [`deep-dives/`](deep-dives/) and
-> link it from the phase.
+> This roadmap is split across linked documents; see [Document map](#document-map). Each phase
+> has a Status (`Not started` / `In progress` / `Done` / `Revised`). Add deep dives under
+> [`deep-dives/`](deep-dives/) and link them from the owning phase.
 >
 > Audience: human — start here for a project overview.
 
@@ -18,9 +15,9 @@
 
 ## Vision
 
-The overarching aim is a framework for plugging in and measuring simulation-optimization
-experiments. There is no fixed end-state — success is measured by how easily new scaling
-ideas can be tried, swapped, and compared. Everything below is in service of two fixed aims:
+The aim is a framework for plugging in and measuring simulation-optimization experiments.
+There is no fixed end-state. Success is how easily new scaling ideas can be tried, swapped,
+and compared. Everything below serves two fixed aims:
 
 - Scalability — push the simulation far beyond a single playable battle (more units,
   larger maps, headless/offline batch runs, distributed simulation, reduced per-unit cost).
@@ -28,7 +25,7 @@ ideas can be tried, swapped, and compared. Everything below is in service of two
   given approach (a pathfinder, a fidelity policy, a partitioning scheme, a model format) can be
   replaced by an experiment without rewriting the engine.
 
-The following are the vague long-term goals of this framework:
+Long-term goals:
 
 1. Arbitrarily large simulations — scale toward thousands–millions of entities, larger maps,
    headless/offline batch simulation, and distributed simulation across processes/machines. The
@@ -37,67 +34,55 @@ The following are the vague long-term goals of this framework:
 2. External asset incorporation — let units use models and animations authored outside the
    Westwood `.w3d` ecosystem, via a format-agnostic import abstraction.
 
-> These goals are vehicles for experimentation, not the point in themselves. New goals can
-> be added as the framework matures. The simulation domain itself is pluggable (see the
-> [Simulation Domain Model seam](track-a-foundations.md)): RTS is the first domain and a
-> transport/graph domain is the first non-RTS validation target, with other models (city
-> builders, agent-based sims) hosted by extending the same `GameObject`/module system.
+> These goals are experiments, not the point in themselves. New goals can be added later. The
+> simulation domain is pluggable; see the [Simulation Domain Model seam](track-a-foundations.md).
+> RTS is the first domain, transport/graph is the first non-RTS validation target, and other
+> models such as city builders and agent-based sims extend the same `GameObject`/module system.
 
-> Prerequisite — a playable baseline first. None of the above is worth scaling until the
-> reference game runs end-to-end. [Track P — Playable Baseline](track-p-playable-baseline.md)
-> is the hard prerequisite: a full Generals/Zero Hour skirmish must be playable build → fight →
-> win/lose before the headless host, benchmarks, and experiment seams have a correct match loop
-> to scale and measure. Track A/B/C work is gated on it.
+> Prerequisite: a playable baseline first. [Track P — Playable Baseline](track-p-playable-baseline.md)
+> is the hard prerequisite. A full Generals/Zero Hour skirmish must run build → fight → win/lose
+> before the headless host, benchmarks, and experiment seams have a correct match loop to scale
+> and measure. Track A/B/C work is gated on it.
 
 ### Guiding principles
 
-- Framework first: optimization techniques are pluggable experiments. Prefer stable seams
-  with swappable implementations (pathfinding, fidelity policy, partitioning, model import,
-  storage layout) over hard-wiring any single approach. Each technique must be replaceable and
-  independently measurable.
-- Measure everything — robust benchmarking utilities are a first-class requirement. Because
-  the goal is experimentation, every technique is evaluated against benchmarks
-  ([B1](track-b-scale.md)) and inspected with the
-  [result replayer/visualizer](deep-dives/visualization.md). The benchmarking utilities are
-  themselves a deliverable, not ad-hoc scripts: repeatable scenarios, statistically rigorous
-  results (multiple runs, variance/confidence reported, warmup discarded), regression detection
-  against stored baselines, machine-readable output, and a reusable harness shared by every
-  track. Cost/accuracy trade-offs are first-class outputs.
-- Authoring & inspection tools scale with the simulation. The tools that create and
-  inspect scenarios — WorldBuilder (maps + initial object placement) and
-  [ReplaySketch](deep-dives/visualization.md) (command authoring, replay, visualization) —
-  must handle the same magnitudes (entity counts, map sizes, command volumes) as the simulations
-  they configure. You cannot author or analyze a million-entity experiment with tooling that
-  assumes hundreds, so the scenario tooling sits on the scaling critical path, not beside it:
-  WorldBuilder authoring scales under [B4a](track-b-scale.md) (with WorldBuilder baseline
-  established first under [A5-6](deep-dives/visualization.md) — an early Track A sub-phase
-  that does not depend on A1/A4), ReplaySketch/visualizer under
-  [A5](deep-dives/visualization.md) and [P0](track-p-playable-baseline.md), reusing the same
-  streaming/LOD/instancing ([B4a](deep-dives/larger-maps.md)/[B5](track-b-scale.md)) and
-  procedural-generation techniques as the engine.
-- Domain-agnostic where it's cheap. The simulation domain (entities, interactions,
-  topology, metrics) is a pluggable seam, so the scale infrastructure — the
+- Framework first. Optimization techniques are experiments behind stable seams with swappable
+  implementations for pathfinding, fidelity policy, partitioning, model import, and storage
+  layout. Each technique must be replaceable and independently measurable.
+- Measure everything. Benchmarking utilities are a deliverable, not ad-hoc scripts. Every
+  technique is evaluated against [B1](track-b-scale.md) benchmarks and inspected with the
+  [result replayer/visualizer](deep-dives/visualization.md). The shared harness must support
+  repeatable scenarios, multiple runs, variance/confidence reporting, discarded warmup,
+  regression detection against stored baselines, machine-readable output, and cost/accuracy
+  trade-offs.
+- Authoring and inspection tools scale with the simulation. WorldBuilder and
+  [ReplaySketch](deep-dives/visualization.md) must handle the same entity counts, map sizes,
+  and command volumes as the simulations they configure. WorldBuilder authoring scales under
+  [B4a](track-b-scale.md), after the [A5-6](deep-dives/visualization.md) baseline lands.
+  ReplaySketch and the visualizer scale under [A5](deep-dives/visualization.md) and
+  [P0](track-p-playable-baseline.md), reusing the engine's streaming, LOD, instancing,
+  and procedural-generation work from [B4a](deep-dives/larger-maps.md) and
+  [B5](track-b-scale.md).
+- Domain-agnostic where it is cheap. The simulation domain is a pluggable seam, so the
   [FTRT headless host](deep-dives/headless-host.md) and
-  [distributed sim](deep-dives/distributed-simulation.md) — is not hard-wired to RTS and can host
-  other simulation models. RTS is the reference domain, not a baked-in assumption.
+  [distributed sim](deep-dives/distributed-simulation.md) are not hard-wired to RTS. RTS is the
+  reference domain, not a baked-in assumption.
 - Scale and extensibility win over original-engine fidelity when they conflict. Reading
-  original SAGE data remains valuable (and we should not break it gratuitously), but it is not
-  allowed to block the architectural changes scale requires. Note the
-  [relaxed-determinism Decision](open-questions.md) explicitly trades bit-exact, re-simulatable
-  replays for parallel scale — recorded state, not input re-simulation, backs run analysis.
-- Separate "simulation" from "presentation" cleanly. Headless and distributed scenarios
-  require a logic core that runs with no renderer, audio, or window.
-- Reproducibility for comparison, not bit-exactness. Per the
-  [relaxed-determinism Decision](open-questions.md), the framework targets runs that are stable
-  enough to compare experiments (seeded, re-runnable, metric/invariant-stable) rather than
-  bit-identical. This buys aggressive intra-tick parallelism (with explicit conflict resolution)
-  in exchange for giving up bit-exact replays.
-- Incremental, always-shippable. Each phase should leave the engine building and the
-  existing games playable.
+  original SAGE data remains valuable, but it must not block the architectural changes scale
+  requires. The [relaxed-determinism Decision](open-questions.md) trades bit-exact,
+  re-simulatable replays for parallel scale; recorded state, not input re-simulation, backs run
+  analysis.
+- Separate simulation from presentation cleanly. Headless and distributed scenarios need a
+  logic core that runs with no renderer, audio, or window.
+- Reproducibility is for comparison, not bit-exactness. Runs must be seeded, re-runnable, and
+  metric/invariant-stable enough to compare experiments. The trade-off is aggressive intra-tick
+  parallelism with explicit conflict resolution instead of bit-exact replays.
+- Incremental, always-shippable. Each phase should leave the engine building and the existing
+  games playable.
 - Single-operator scope. The framework is a personal research tool for one operator for the
-  foreseeable future (see the [audience Decision](open-questions.md)). Tooling and run results
-  target that operator — not external users — so no multi-user robustness, third-party
-  reproducibility, or distribution hardening is a goal until that stance is revisited.
+  foreseeable future. Tooling and run results target that operator, not external users, so
+  multi-user robustness, third-party reproducibility, and distribution hardening stay out of
+  scope until that stance changes.
 
 ---
 
@@ -105,23 +90,20 @@ The following are the vague long-term goals of this framework:
 
 ### Audience guide
 
-The roadmap docs divide into two audiences. Knowing which is which tells you what to read first
-and what to skip.
+The roadmap docs divide into two audiences. Use this to decide what to read first.
 
 | Audience | What to read | What to skip |
 |---|---|---|
 | Human (strategic overview, progress tracking, design intent) | `README.md`, `roadmap-tree.md`, `track-*.md`, `open-questions.md`, `implementation-checklist.md`, `deep-dives/` | `agent/`, `implementation/`, `agent/current-state.md`, `agent/MAINTAINING.md` |
 | Agent (automated planning/execution, codebase context required) | `agent/`, `implementation/`, `agent/current-state.md`, `agent/MAINTAINING.md` | Track docs and deep dives provide needed context |
 
-`seams.md` serves both: the overview and diagram sections are human-readable; the registry
-detail and file citations are agent context. A split into a human overview and an agent registry
-is planned.
+`seams.md` serves both audiences: the overview and diagrams are human-facing, while the
+registry detail and file citations are agent context. A split into separate overview and registry
+docs is planned.
 
-The deep-dives and implementation plans are human-facing. Each deep-dive has code-grounding
-content (file:line references) in a clearly marked appendix at the bottom; the sections above it
-describe design intent without requiring codebase context. Each implementation plan has a `---`
-divider separating the human-readable problem/design/approach from the agent-context file and test
-details below it.
+Deep dives and implementation plans are human-facing. Deep dives keep code-grounding file:line
+references in a marked appendix at the bottom. Implementation plans use a `---` divider between
+human-readable problem/design/approach sections and agent-context file and test details.
 
 ### All documents
 
@@ -155,6 +137,7 @@ details below it.
 | [`deep-dives/economy-production-combat.md`](deep-dives/economy-production-combat.md) | Track P phases P4 — Economy loop & P6 — Combat & command verification. |
 | [`deep-dives/unit-contract-validation.md`](deep-dives/unit-contract-validation.md) | Track P phase P6b — Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
 | [`deep-dives/headless-host.md`](deep-dives/headless-host.md) | Track A phase A1 — Headless simulation host. |
+| [`deep-dives/pluggable-ai.md`](deep-dives/pluggable-ai.md) | Track A phase A4 — Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
 | [`deep-dives/visualization.md`](deep-dives/visualization.md) | Track A phase A5 — Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
 | [`deep-dives/larger-maps.md`](deep-dives/larger-maps.md) | Track B phase B4a — Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/distributed-simulation.md`](deep-dives/distributed-simulation.md) | Track B phase B6 — Distributed simulation (spatial sharding). |
@@ -166,9 +149,9 @@ details below it.
 
 ## Tracks at a glance
 
-The roadmap is organized into two parallel tracks (Scale, External Assets) plus a shared
-Foundations track — all gated on a playable-baseline prerequisite track. Phases within a track
-are roughly ordered; cross-track dependencies are noted in each track doc.
+The roadmap has a playable-baseline prerequisite track, a shared Foundations track, and two
+parallel tracks for Scale and External Assets. Phases within a track are roughly ordered;
+cross-track dependencies are noted in each track doc.
 
 - [Track P — Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
   arbitrary-command harness · P1 skirmish setup & player relationships · P2 skirmish AI opponent ·
@@ -221,7 +204,7 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 | Phase | Progress | Items |
 |---|---|---|
 | P0 — ReplaySketch harness | `███░░░░░░░` | 4 / 14 |
-| P1 — Skirmish setup | `░░░░░░░░░░` | 0 / 7 |
+| P1 — Skirmish setup | `██████░░░░` | 5 / 8 |
 | P2 — Skirmish AI | `░░░░░░░░░░` | 0 / 7 |
 | P3 — Victory & defeat | `░░░░░░░░░░` | 0 / 9 |
 | P4 — Economy loop | `░░░░░░░░░░` | 0 / 5 |
@@ -229,7 +212,7 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 | P6 — Combat & command | `░░░░░░░░░░` | 0 / 5 |
 | P6b — Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
 | P7 — End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
-| Track P total | `░░░░░░░░░░` | 4 / 66 |
+| Track P total | `█░░░░░░░░░` | 9 / 67 |
 
 ### Tracks A / B / C (gated on Track P)
 
@@ -263,25 +246,24 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 
 
 
-> Iterating on the plan? Follow [`agent/MAINTAINING.md`](agent/MAINTAINING.md) — the single planning-agent
-> protocol for propagating a change across all parallel documents (change-type matrix, ordered
-> checklist, consistency invariants, validation). The bullets below are the quick summary.
+> Iterating on the plan? Follow [`agent/MAINTAINING.md`](agent/MAINTAINING.md). It is the
+> planning-agent protocol for propagating a change across the parallel roadmap docs. The bullets
+> below are only a summary.
 
-- Update a phase's Status when it changes state, in its track document.
-- Keep the [Progress](#progress) tables in sync — update the done/total counts and bar when checklist items are checked off.
-- Keep the [implementation checklist](implementation-checklist.md) in sync — check off granular
-  changes as they land and add finer items as a phase gains detail.
+- Update a phase's Status in its track document when the phase changes state.
+- Keep the [Progress](#progress) tables in sync with checklist done/total counts and bars.
+- Keep the [implementation checklist](implementation-checklist.md) in sync as granular changes land,
+  and add finer items as a phase gains detail.
 - When a phase gets a detailed design, add a doc under [`deep-dives/`](deep-dives/) and link it
-  from the phase row (and from the [Deep dives](#deep-dives) table above).
-- When [`agent/current-state.md`](agent/current-state.md) drifts from the code, refresh it — it is the
-  basis for every phase's assumptions.
-- Record significant decisions in [`open-questions.md`](open-questions.md) (move an item from
-  "open question" to a noted decision, and update the affected phase).
+  from the phase row and the [Deep dives](#deep-dives) table.
+- Refresh [`agent/current-state.md`](agent/current-state.md) when it drifts from the code; it
+  underpins each phase's assumptions.
+- Record significant decisions in [`open-questions.md`](open-questions.md) and update the affected
+  phase.
 - Keep this README's tables in sync when documents or deep dives are added or removed.
 - Update the [visual roadmap tree](roadmap-tree.md) whenever a phase, sub-phase, or dependency is
-  added, removed, or renamed (see its own
-  [maintenance note](roadmap-tree.md#how-to-maintain-this-tree)).
-- Update the [seam registry](seams.md) whenever a phase introduces a new pluggable seam or adds an
-  implementation behind an existing one.
-- When a phase is ready to be chipped at by cheap/automated agents, decompose it into task cards
-  in the [`agent/`](agent/) (keep card Status and the phase Status in sync).
+  added, removed, or renamed.
+- Update the [seam registry](seams.md) whenever a phase introduces a new pluggable seam or a new
+  implementation behind an existing seam.
+- When a phase is ready for cheap or automated agents, decompose it into task cards in
+  [`agent/`](agent/) and keep card Status aligned with phase Status.

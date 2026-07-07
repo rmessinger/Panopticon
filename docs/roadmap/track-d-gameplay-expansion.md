@@ -1,30 +1,27 @@
 # Track D — Gameplay Content Expansion
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Extends the reference gameplay loop beyond
-> the built-in SAGE titles (Command & Conquer/BFME) with mechanics from other RTS traditions —
-> starting with Age of Empires/Empire Earth style tech trees and era/age progression. This is
-> new gameplay content and mechanism hosted by the existing `GameObject`/module system, not a new
-> Simulation Domain Model (see the [domain-scope Decision](open-questions.md)); it is a
-> consumer of Track C's external-model import and the standalone
-> [ModCollector tool](plans/mod-collector.md), not a replacement for either.
+> Part of the [Large-Scale RTS Roadmap](README.md). Extend the reference gameplay loop beyond the
+> built-in SAGE titles (Command & Conquer/BFME) with mechanics from other RTS traditions, starting
+> with Age of Empires/Empire Earth style tech trees and era/age progression. This is new gameplay
+> content and mechanism hosted by the existing `GameObject`/module system, not a new Simulation
+> Domain Model; see the [domain-scope Decision](open-questions.md). It consumes Track C's
+> external-model import and the standalone [ModCollector tool](plans/mod-collector.md); it does not
+> replace either.
 >
 > Audience: human — strategic track overview.
 
 ## Why this comes after Track P (and alongside A/B/C)
 
-Generalizing `UpgradeTemplate` into an explicit prerequisite graph and adding an era state
-machine both touch core per-player game state (`GameLogic`, save/load, the order pipeline,
-the control bar). Doing that against a half-working match loop would be unverifiable — Track P's
-playable baseline (build → fight → win/lose) has to be solid first so D1-D4 have a working game to
-extend and a working [P0 harness](deep-dives/playable-baseline-harness.md) to validate against.
-Track D does not otherwise depend on Track A/B (scale) work, and only D3 onward needs Track C
-(external model import) and ModCollector (external asset download/staging) — D1/D2 can be
-designed and validated with existing built-in content first.
+Generalizing `UpgradeTemplate` into an explicit prerequisite graph and adding an era state machine
+both touch core per-player game state: `GameLogic`, save/load, the order pipeline, and the control
+bar. They need Track P's playable baseline, build → fight → win/lose, so D1-D4 extend a working
+game and validate against a working [P0 harness](deep-dives/playable-baseline-harness.md). Track D
+does not otherwise depend on Track A/B work. Only D3 onward needs Track C and ModCollector, so D1/D2
+can be designed and validated with existing built-in content first.
 
 ## Phases
 
-> The Milestone column states the single demonstrable outcome that marks each phase done (its
-> definition-of-done); the granular steps to get there live in
+> The Milestone column states the demonstrable outcome that marks each phase done. Granular steps live in
 > [`implementation-checklist.md`](implementation-checklist.md).
 
 | Phase | Goal | Milestone | Status | Depends on |
@@ -36,9 +33,8 @@ designed and validated with existing built-in content first.
 
 ## Phase resources
 
-A navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
-Diagrams are required before any phase's first task card is marked `Ready`; D1/D2 share a deep
-dive, D3/D4 are yet to be written.
+Navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
+Diagrams are required before any phase's first task card is marked `Ready`. D1/D2 share a deep dive; D3/D4 are still unwritten.
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
@@ -48,22 +44,12 @@ dive, D3/D4 are yet to be written.
 | D4 | — | — | — |
 
 † Placeholder — see the deep dive's [Architecture Diagrams](deep-dives/tech-tree-era-progression.md#architecture-diagrams)
-section; a class + sequence diagram must replace it before D1's first task card is written, per
+section. A class + sequence diagram must replace it before D1's first task card is written, per
 [`agent/MAINTAINING.md`](agent/MAINTAINING.md).
 
 ## Cross-track dependencies
 
-- D1/D2 depend on Track P (P7) only — they extend existing per-player game state, not
-  scale/rendering/import infrastructure, and can be designed/validated with existing built-in
-  content before any external asset lands.
-- D3 depends on Track C's C1 (format-agnostic import abstraction) and on
-  [ModCollector](plans/mod-collector.md) — a standalone CLI tool (not part of Tracks A/B/C),
-  planned via the `WI-MC-01..04` agent task cards, that downloads/stages community mod archives
-  into `.big` files the engine's existing `SkudefReader`/virtual file system can already consume.
-  ModCollector itself has no engine dependency and can be built any time.
-- D4 reuses the [P0 ReplaySketch harness](deep-dives/playable-baseline-harness.md) pattern for
-  authoring/asserting — no new scenario-authoring tool is introduced (see the
-  [C5 tooling Decision](open-questions.md) no-fragmentation convention: extend ReplaySketch, do
-  not add a dedicated viewer/editor).
-- Track D does not require Track B (scale) or Track A beyond what Track P already delivers;
-  it is not gated on A1/A4/B1-B7.
+- D1/D2 depend only on Track P (P7). They extend existing per-player game state, not scale/rendering/import infrastructure, and can be designed and validated with existing built-in content before any external asset lands.
+- D3 depends on Track C's C1 and on [ModCollector](plans/mod-collector.md), a standalone CLI tool, not part of Tracks A/B/C, planned via the `WI-MC-01..04` agent task cards. It downloads and stages community mod archives into `.big` files that the engine's existing `SkudefReader`/virtual file system can already consume. ModCollector has no engine dependency and can be built any time.
+- D4 reuses the [P0 ReplaySketch harness](deep-dives/playable-baseline-harness.md) pattern for authoring and asserting. No new scenario-authoring tool is introduced; see the [C5 tooling Decision](open-questions.md).
+- Track D does not require Track B or Track A beyond what Track P already delivers. It is not gated on A1/A4/B1-B7.

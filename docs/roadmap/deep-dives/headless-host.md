@@ -7,22 +7,21 @@
 >
 > The agent-context section at the bottom ([What already exists appendix](#appendix-what-already-exists--agent-context)) contains code-level details about the current state. Skip it if you are reading for design intent.
 
-Goal: run the simulation logic core with no window, and ideally no GPU/audio, so the
-engine can be driven for batch/offline simulation, CI, faster-than-real-time (FTRT) runs,
-and (later) distributed runs — plus a way to analyze the results of those runs.
+Goal: run the simulation logic core with no window and, ideally, no GPU or audio, so the engine
+can drive batch and offline simulation, CI, faster-than-real-time (FTRT) runs, and later
+distributed runs, with a way to analyze those results.
 
-Detaching the logic step from the render/present cadence is what lets the host tick as fast as
-the hardware allows (FTRT) rather than at the wall-clock game rate — the point of headless
-batch/experiment runs.
+Detaching the logic step from the render and present cadence lets the host tick as fast as the
+hardware allows instead of at the wall-clock game rate. That is the point of headless batch and
+experiment runs.
 
-Domain-agnostic. The host owns a simulation world through the
-[Simulation Domain Model seam (A4)](../track-a-foundations.md), not an RTS world specifically.
-Its stepping, recording, and analysis are parameterized by the domain (entity schema, metrics,
-topology), so the same FTRT host can drive RTS battles, city builders, or transportation/logistics
-sims. RTS (the `GameObject`/module engine) is just the first domain adapter; per the
-[domain-scope Decision](../open-questions.md) a transport/graph domain is the first non-RTS
-validation target, and non-RTS domains are hosted by extending the same `GameObject`/module
-system (modules + a topology/interaction adapter) rather than a separate runtime.
+The host is domain-agnostic. It owns a simulation world through the [Simulation Domain Model seam (A4)](../track-a-foundations.md), not an RTS world specifically. Stepping,
+recording, and analysis are parameterized by the domain, so the same FTRT host can drive RTS
+battles, city builders, or transportation/logistics sims. RTS, the `GameObject` and module engine,
+is the first domain adapter. Per the [domain-scope Decision](../open-questions.md), a
+transport or graph domain is the first non-RTS validation target, and non-RTS domains extend the
+same `GameObject` and module system with a topology and interaction adapter rather than a separate
+runtime.
 
 ---
 
@@ -42,43 +41,41 @@ system (modules + a topology/interaction adapter) rather than a separate runtime
 ## 3. Required infrastructure (first pass)
 
 ### 3.1 A GPU-optional graphics seam
-Introduce a "null/headless" rendering path so logic can run without a real device.
+Introduce a null or headless rendering path so logic can run without a real device.
 
-Decision (chosen direction): (a) Null device abstraction — define an interface over
-the bits of `GraphicsDevice` the logic/asset-data path touches, with a no-op headless
-implementation. This is the cleanest long-term option and decouples logic from
-`GraphicsDevice`, aligning with [A3 — Simulation/presentation seam](../track-a-foundations.md).
-It is a larger refactor, scoped and validated in A1-1.
+Decision: a null device abstraction. Define an interface over the `GraphicsDevice` parts the
+logic and asset-data path touch, with a no-op headless implementation. This is the cleanest
+long-term option, decouples logic from `GraphicsDevice`, aligns with
+[A3 — Simulation/presentation seam](../track-a-foundations.md), and is scoped and validated in
+A1-1.
 
-Alternative considered and rejected as the primary direction: (b) headless Veldrid offscreen
-device — smaller change, but still requires working graphics drivers on the host, so it does
-not unblock GPU-less CI/cloud nodes. May still be used opportunistically where a real device is
-available (e.g. frame captures).
+The rejected primary alternative is a headless Veldrid offscreen device. It is a smaller change
+but still requires working graphics drivers, so it does not unblock GPU-less CI or cloud nodes.
+It may still be useful where a real device is available, such as frame capture.
 
 ### 3.2 Data-only asset loading
-Split asset data (object/weapon/locomotor INI, map data) from GPU upload (textures,
-shaders, model buffers) so a headless host loads only what logic needs (H2). The
-`OnDemandAssetLoadStrategy.None` path used by `TestGame` is the seed for this.
+Split asset data (object, weapon, and locomotor INI, map data) from GPU upload (textures,
+shaders, model buffers) so a headless host loads only the logic-side data it needs (H2). The
+`OnDemandAssetLoadStrategy.None` path used by `TestGame` is the seed.
 
 ### 3.3 Logic-tick extraction
 Separate the fixed-rate logic step (`GameLogic.Update`, network tick, `Scene3D.LogicTick`,
-`PartitionCellManager.Update`, scripting) from the local/render tick (input, Scene2D, audio,
+`PartitionCellManager.Update`, scripting) from the local or render tick (input, Scene2D, audio,
 cursors) so a host can call logic-only (H3). The fixed-rate stepping already lives in
 `Game.Update`; extract it into a reusable stepper.
 
 ### 3.4 `SimulationHost`
-A lightweight host that owns the logic-side world (via the existing `IGameEngine` seam,
-parameterized by the [domain model (A4)](../track-a-foundations.md)),
-advances it by N frames or until a stop condition as fast as the hardware allows (FTRT), and
-exposes hooks for input/order injection (`InjectOrders`) and result capture. It must run with
-presentation systems absent or stubbed (H4/H5), and must not assume RTS-specific concepts so a
-non-RTS domain can supply its own entity/step model.
+A lightweight host that owns the logic-side world through the existing `IGameEngine` seam,
+parameterized by the [domain model (A4)](../track-a-foundations.md). It advances the world by N
+frames or until a stop condition at FTRT speed and exposes hooks for input or order injection
+(`InjectOrders`) and result capture. It must run with presentation systems absent or stubbed
+(H4/H5) and avoid RTS-specific assumptions so a non-RTS domain can supply its own entity and step
+model.
 
 ### 3.5 Reproducibility + result outputs
 Build on [A2](../track-a-foundations.md): a seeded, re-runnable stepper plus structured run
-outputs the analysis layer consumes. Per the [relaxed-determinism Decision](../open-questions.md),
-runs are comparable, not bit-exact, so the outputs lean on recorded state and metrics rather
-than on input-only re-simulation:
+outputs that the analysis layer consumes. Per the [relaxed-determinism Decision](../open-questions.md), runs are comparable, not bit-exact, so outputs lean on recorded state and metrics
+instead of input-only re-simulation:
 - Recorded state snapshots/deltas — periodic world snapshots (+ per-frame deltas) so any
   frame can be reconstructed for analysis without assuming a re-run reproduces it bit-for-bit.
 - Metrics/events stream — domain-defined probes (RTS: unit counts, deaths, economy, APM;
@@ -99,13 +96,12 @@ than on input-only re-simulation:
 - Optional frame captures via `FrameCaptureService` when a GPU is available.
 
 ### 3.6 Result analysis & visualization → see phase A5
-Replaying, visualizing, and comparing/localizing divergences between runs — plus authoring
-the scenarios that feed the host — are owned by a dedicated layer,
-[A5 — Scenario authoring & visualization](visualization.md). The host's job (A1) ends at
-emitting the run outputs in §3.5; A5 is the consumer that makes them inspectable and is the
+Replaying, visualizing, comparing, and localizing divergences between runs, plus authoring the
+scenarios that feed the host, belong to [A5 — Scenario authoring & visualization](visualization.md).
+A1 ends at emitting the run outputs in §3.5. A5 consumes them, makes them inspectable, and is the
 validation surface for [B3](../track-b-scale.md) parallelism and
-[B6](distributed-simulation.md) sharding. The tiered recording (T0/T1/T2) the host emits in §3.5
-is specified in [visualization.md §5](visualization.md).
+[B6](distributed-simulation.md) sharding. The tiered recording (T0/T1/T2) emitted here is
+specified in [visualization.md §5](visualization.md).
 
 ---
 
@@ -128,12 +124,11 @@ is specified in [visualization.md §5](visualization.md).
 ## 5. Sequencing notes
 
 - A1-1 gates the rest; everything depends on the chosen graphics seam.
-- A1-2/3/4 are the core host and can land incrementally behind the existing windowless path
-  (the TestHarness `RunHeadless` loop is a working integration target throughout).
+- A1-2/3/4 are the core host and can land incrementally behind the existing windowless path.
+  The TestHarness `RunHeadless` loop is the integration target throughout.
 - A1-5 depends on [A2 — Reproducibility & statistical stability](../track-a-foundations.md)
-  for runs to be seeded and comparable; its outputs lean on recorded state rather than
-  bit-exact re-simulation (see the [relaxed-determinism Decision](../open-questions.md)). These
-  outputs are consumed by [A5 visualization](visualization.md).
+  so runs are seeded and comparable. Its outputs lean on recorded state rather than bit-exact
+  re-simulation and are consumed by [A5 visualization](visualization.md).
 
 ## 7. Architecture Diagrams
 
@@ -198,8 +193,7 @@ classDiagram
 > implementing this phase. Human readers: the design intent above does not
 > require reading this section.
 
-A surprising amount of "headless" plumbing is already present and should be reused, not
-reinvented:
+A surprising amount of headless plumbing already exists and should be reused:
 
 - Windowless graphics device. `GraphicsDeviceUtility.CreateGraphicsDevice`
   (`src/OpenSage.Game/Graphics/GraphicsDeviceUtility.cs`) accepts a `null` window and creates a
@@ -224,8 +218,7 @@ reinvented:
   abstracts the logic-side services (`AssetLoadContext`, `GameLogic`, `Terrain`, `Navigation`,
   `Quadtree`, `Scene3D`) behind an interface — a natural foundation for a host.
 
-Bottom line: "headless" today means no window but still requires a real GPU and still
-runs the full `Game.Update` → `Render` path. True GPU-less, logic-only simulation is not yet
-possible.
+Today, headless means no window but still requires a real GPU and still runs the full
+`Game.Update` → `Render` path. True GPU-less, logic-only simulation is not yet possible.
 
 ---

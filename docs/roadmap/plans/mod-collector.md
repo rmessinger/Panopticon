@@ -16,14 +16,14 @@
 ## Purpose
 
 ModCollector is a command-line tool that downloads and stages community mods for use with
-OpenSAGE. Without it, a user must manually locate a mod's direct download URL, extract the
-archive, identify the `.big` files inside, and place them where the engine can find them —
-steps that differ per mod site and per game. ModCollector automates all of that.
+OpenSAGE. Without it, a user must find a mod's direct download URL, extract the archive, identify
+the `.big` files inside, and place them where the engine can find them. ModCollector automates
+those steps.
 
-The tool is a single-operator personal-use utility (matching the
-[framework audience decision](../open-questions.md)). It is not a package manager, does not
-manage mod versions beyond the static embedded manifest, and has no update mechanism beyond
-updating the manifest in a new build.
+The tool is a single-operator personal-use utility, matching the
+[framework audience decision](../open-questions.md). It is not a package manager, does not manage
+mod versions beyond the static embedded manifest, and has no update mechanism beyond shipping a new
+build with a new manifest.
 
 ---
 
@@ -62,11 +62,11 @@ After `extract`, the output tree has the shape:
       ...
 ```
 
-Set the matching game path environment variable (e.g. `CNC_GENERALS_ZH_PATH`) to
-`<output>/<game-slug>/<category>` — or to `<output>/<game-slug>` if multiple categories share
-one path — and OpenSAGE will pick up the `.big` files through the existing `SkudefReader`
-(`src/OpenSage.Mods.*/` uses `SkudefReader` to enumerate additional `.big` files). No engine
-changes are required.
+Set the matching game path environment variable, for example `CNC_GENERALS_ZH_PATH`, to
+`<output>/<game-slug>/<category>` or to `<output>/<game-slug>` if multiple categories share one
+path. OpenSAGE then picks up the `.big` files through the existing `SkudefReader`; the
+`src/OpenSage.Mods.*/` projects already use `SkudefReader` to enumerate additional `.big` files.
+No engine changes are required.
 
 ---
 
@@ -105,9 +105,9 @@ are listed for completeness.
 | `downloadUrl` | string | Direct `.zip` download URL. Empty string if not yet verified. |
 | `status` | string | `"ok"` if `downloadUrl` is a verified direct download; `"unverified"` otherwise. |
 
-Entries with `status: "unverified"` or an empty `downloadUrl` appear in `list` output (so the
-user knows the entry exists) but are silently skipped by `download`. The agent that implements
-WI-MC-02 must verify each `downloadUrl` with `curl -I <url>` before setting `status: "ok"`.
+Entries with `status: "unverified"` or an empty `downloadUrl` still appear in `list` so the user
+knows they exist, but `download` skips them. The agent implementing WI-MC-02 must verify each
+`downloadUrl` with `curl -I <url>` before setting `status: "ok"`.
 
 ---
 

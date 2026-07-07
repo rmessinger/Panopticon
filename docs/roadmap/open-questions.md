@@ -1,20 +1,17 @@
 # Open Questions
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). A decision log: each entry that was
-> once an open question now carries a Decision (with rationale), threaded into the affected
-> phase in its track document. No questions are currently open — add new ones here as they
-> arise, and convert them to a Decision (and update the affected phase) once settled.
+> Part of the [Large-Scale Simulation Roadmap](README.md). This is the decision log. Each item
+> is a settled Decision with rationale and links back to the affected phase. No questions are
+> currently open; add new ones here and convert them to a Decision once settled.
 >
 > Audience: human — the decision log for the roadmap.
 
 - Determinism vs. parallelism — Decision: relaxed/statistical determinism + free intra-tick
   parallelism with explicit conflict resolution. Bit-exact, cross-platform reproducibility is
-  not a goal. Results must be stable enough to compare experiments (aggregate metrics and
-  invariants reproducible within tolerance), not bit-identical. Within a tick, data-parallel
-  systems may run concurrently and write freely; conflicting writes are reconciled by
-  well-defined conflict-resolution rules (intent/command buffers + a deterministic-enough
-  merge/authority step) rather than by forbidding parallelism. Consequences threaded through the
-  roadmap:
+  not a goal. Results must be stable enough to compare experiments through aggregate metrics and
+  invariants reproduced within tolerance, not bit-identical. Within a tick, data-parallel
+  systems may run concurrently and write freely; conflicting writes are reconciled through
+  intent/command buffers plus a deterministic-enough merge and authority step. Consequences:
   - [A2](track-a-foundations.md) is recast from "bit-exact determinism" to reproducibility
     & statistical stability — seeded randomness stays centralized (so experiments are
     controllable and re-runnable), but the verification harness checks metric/invariant
@@ -33,47 +30,43 @@
     signature tree → triggered per-entity detail) captured live — see
     [visualization.md §5](deep-dives/visualization.md).
 - ECS adoption depth — Decision: incremental data-oriented storage behind the module API
-  (no full ECS rewrite). Settled as a consequence of the Simulation-domain scope & mapping
-  Decision below (mapping (2)): since every domain — RTS and non-RTS alike — is hosted by
-  extending the `GameObject`/module system rather than separate runtimes, a single incremental
-  data-oriented (SoA-style) storage behind the existing module API serves all domains. Hot
-  module data migrates toward data-oriented layouts opportunistically (driven by
-  [B1](track-b-scale.md) benchmarks) while the module API and composition model stay intact.
-  Affects [B3](track-b-scale.md).
+  (no full ECS rewrite). This follows from the Simulation-domain scope & mapping Decision below:
+  every domain, RTS and non-RTS alike, is hosted by extending the `GameObject`/module system
+  rather than by adding separate runtimes, so one incremental SoA-style storage layer behind the
+  existing module API serves all domains. Hot module data migrates toward data-oriented layouts
+  opportunistically, driven by [B1](track-b-scale.md) benchmarks, while the module API and
+  composition model stay intact. Affects [B3](track-b-scale.md).
 - Distributed model — Decision: spatial sharding. One world partitioned by region across
   nodes (chosen over lockstep peers, which caps scale at a single machine's capacity). Trades
   that ceiling for cross-shard handoff and boundary sync. See
   [B6 deep dive](deep-dives/distributed-simulation.md). Affects
   [B6](track-b-scale.md) and informs [A2](track-a-foundations.md)/[B3](track-b-scale.md).
 - glTF scope for C4 — Decision: static meshes + skinned skeletal animation only. The first
-  concrete external format ([C4](track-c-external-assets.md)) commits to static geometry and
-  skinned skeletal animation — the minimum that gets externally-authored units (mesh + skeleton
-  + gameplay-driven animation) into the engine. Morph targets (blendshapes) and advanced glTF
-  PBR material extensions are deferred to a later, explicitly-deferred phase
-  ([C6](track-c-external-assets.md)), added only if an experiment needs them. Keeps the first
-  importer small and proves the C1 abstraction end-to-end fastest.
+  concrete external format ([C4](track-c-external-assets.md)) covers the minimum needed to get
+  externally-authored units, with mesh, skeleton, and gameplay-driven animation, into the engine.
+  Morph targets (blendshapes) and advanced glTF PBR material extensions are deferred to
+  [C6](track-c-external-assets.md) and added only if an experiment needs them. This keeps the
+  first importer small and proves the C1 abstraction end-to-end as early as possible.
 - Large-map ceiling & compatibility — Decision: no size cap; no compatibility constraint.
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
   experiments; OpenSAGE may extend/replace the `.map` format and need not stay loadable in the
   original engine. Makes chunked storage (B4a-5) a core requirement. See
   [B4a deep dive](deep-dives/larger-maps.md).
 - Variable-fidelity determinism stance — Decision: fidelity is a function of replicated
-  simulation state for anything shared/distributed; view-driven fidelity is allowed only for
-  single-node, non-distributed experiments. Downstream of the relaxed-determinism Decision
-  (exact reproducibility is not required), so the real constraints are bounded statistical
-  error and cross-shard consistency — fidelity inputs for shared/distributed runs must be
-  derived from replicated state so all shards independently agree on each entity's fidelity level
-  (never from a local camera/view, which shards don't share). View-driven fidelity (e.g. LOD by
-  camera distance) remains available as an optimization for single-node experiments where there is
-  no shard to disagree. Affects [B7](deep-dives/variable-fidelity.md) and
+  simulation state for anything shared or distributed; view-driven fidelity is allowed only for
+  single-node, non-distributed experiments. Under the relaxed-determinism Decision, the real
+  constraints are bounded statistical error and cross-shard consistency. Shared and distributed
+  runs therefore derive fidelity inputs from replicated state so every shard agrees on each
+  entity's fidelity level, never from a local camera or view. View-driven fidelity, such as LOD
+  by camera distance, remains available for single-node experiments where no shard can disagree.
+  Affects [B7](deep-dives/variable-fidelity.md) and
   [A2](track-a-foundations.md)/[B6](deep-dives/distributed-simulation.md).
 - Asset licensing — Decision: out of scope (single-user tool). For the foreseeable future
   this is a personal experimentation tool used by one operator, so import tooling
-  ([C5](track-c-external-assets.md)) does not enforce or track provenance/licensing. This is a
-  deliberate, revisitable stance: if the tool is ever distributed, shared, or used to
-  redistribute external assets, provenance/license capture and validation must be revisited before
-  that happens (the engine still ships no assets). Until then, respecting source licenses is the
-  operator's manual responsibility.
+  ([C5](track-c-external-assets.md)) does not enforce or track provenance or licensing. Revisit
+  this before the tool is distributed, shared, or used to redistribute external assets; the engine
+  still ships no assets. Until then, respecting source licenses is the operator's manual
+  responsibility.
 - Simulation-domain scope & mapping — Decision: validate against a transport/graph domain
   first; host non-RTS domains by extending the existing `GameObject`/module system. The
   [Simulation Domain Model seam](track-a-foundations.md) keeps the domain pluggable (RTS first,
@@ -129,34 +122,30 @@
   documented in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`. Affects
   [P0](track-p-playable-baseline.md) (P0-1a).
 - P0 harness — MAUI validation reach + agent playbook — Decision: keep logic in `.Core`, validate
-  headlessly via the test suite + run-and-assert, minimize MAUI-only code behind injectable seams,
-  and document the loop in a checked-in `AGENTS.md`. The persistent gap is that agents (especially
-  windowless/automated ones) have no reliable, specific way to validate a ReplaySketch change — most
-  acutely in the MAUI layer, which has no automated coverage. Decision: ReplaySketch logic stays in
+  headlessly through the test suite plus run-and-assert, minimize MAUI-only code behind injectable
+  seams, and document the loop in a checked-in `AGENTS.md`. ReplaySketch logic stays in
   `OpenSage.Tools.ReplaySketch.Core` and is validated headlessly by
-  `OpenSage.Tools.ReplaySketch.Tests` (controller/interaction/service) plus the
-  [P0 harness](deep-dives/playable-baseline-harness.md) run-and-assert entry point (P0-5);
-  MAUI-only behaviour in `MainViewModel` is reduced to a thin shell by abstracting the MAUI statics
-  (`Preferences.Default`, `MainThread`, `Process.Start`/launcher) behind injectable seams
-  (P0-1b/P0-1c) so the command surface is unit-testable without a MAUI runtime; and the documented,
-  repeatable validation loop agents follow is a checked-in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`
-  playbook (P0-7), mirroring `OpenSage.Tools.TestHarness/AGENTS.md`. Chosen over UI-automation of the
-  MAUI app (heavy, platform-bound, flaky for agents) and over leaving validation undocumented (the
-  status quo that motivated this). Affects [P0](track-p-playable-baseline.md) (P0-1b/P0-1c/P0-7).
+  `OpenSage.Tools.ReplaySketch.Tests` plus the [P0 harness](deep-dives/playable-baseline-harness.md)
+  run-and-assert entry point (P0-5). `MainViewModel` is reduced to a thin shell by abstracting
+  `Preferences.Default`, `MainThread`, and `Process.Start` or launcher behavior behind injectable
+  seams (P0-1b/P0-1c), so the command surface is unit-testable without a MAUI runtime. The
+  documented validation loop lives in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md` (P0-7),
+  mirroring `OpenSage.Tools.TestHarness/AGENTS.md`. Chosen over MAUI UI automation and over leaving
+  validation undocumented. Affects [P0](track-p-playable-baseline.md) (P0-1b/P0-1c/P0-7).
 - P0 harness — ScenarioMatrix sweep placement — Decision: the cartesian-product matrix expansion
   primitive belongs in P0 (P0-5b), not deferred to A5. A5-2 adds tooling and visualization on
   top; it does not re-implement expansion or execution. All axis dimensions (OrderType, faction,
   map, assertion parameters) are in scope; the matrix is built out incrementally alongside
   implementation. Affects [P0](track-p-playable-baseline.md) (P0-5b) and
   [A5](track-a-foundations.md) (A5-2).
-- P-track object ownership tracking — Decision: maintained per-`Player` owned-object set/counts.
-  Per-`Player` building/unit counts (and an owned-object set) are maintained incrementally on
-  create/transfer/`OnDie`/`Destroy`, giving O(1) ownership checks. Chosen over an on-demand
-  all-objects scan (the `Player.GetEnergy` pattern, `Player.cs:92-104`) because the same state is
-  queried frequently by the victory check ([P3](track-p-playable-baseline.md)) and the AI decision
-  loop ([P2](track-p-playable-baseline.md)), and the maintained counts are friendly to the scale
-  tracks. Realized as a foundational sub-phase [P1-5](deep-dives/skirmish-setup.md) (owned by P1,
-  set up alongside players) consumed by both consumers rather than duplicated in either. Affects
+- P-track object ownership tracking — Decision: maintained per-`Player` owned-object set and
+  counts. Building and unit counts, plus an owned-object set, are maintained incrementally on
+  create, transfer, `OnDie`, and `Destroy`, giving O(1) ownership checks. This replaces an
+  on-demand all-objects scan such as the `Player.GetEnergy` pattern (`Player.cs:92-104`) because
+  the same state is queried frequently by the victory check ([P3](track-p-playable-baseline.md))
+  and the AI decision loop ([P2](track-p-playable-baseline.md)), and because maintained counts fit
+  the scale tracks better. Realized as foundational sub-phase
+  [P1-5](deep-dives/skirmish-setup.md), owned by P1 and shared by both consumers. Affects
   [P1](track-p-playable-baseline.md), [P2](track-p-playable-baseline.md),
   [P3](track-p-playable-baseline.md).
 - Skirmish AI actuation — Decision: emit `Order`s through `OrderProcessor`. The AI issues the
@@ -173,6 +162,19 @@
   the minimum tier is implemented now; richer behavior (reactive defense, teching, multi-wave
   pressure) is later expansion (a candidate [A4](track-a-foundations.md) pluggable-AI experiment
   seam). Affects [P2](track-p-playable-baseline.md).
+- Pluggable AI decision policy — Decision: formalize how a player's strategic decisions get made
+  (build/produce/attack) as its own A4 experiment seam now that P2 has a reference
+  implementation to carve it from. `AIPlayer.OnDecisionTick()`'s current subclass-override shape
+  becomes an injectable `IAIDecisionPolicy`, with `SkirmishAIPlayer`'s rule-based state machine
+  as the reference implementation; actuation is unaffected — every policy still emits `Order`s
+  through `OrderProcessor` (the P2 actuation decision above), so reproducibility (A2) and the
+  recorded/replayed order stream hold regardless of which policy runs. This is what unblocks a
+  neural-network policy trained by running many seeded self-play matches (a population of
+  weight-vector genomes, fitness scored off `GameOutcome`, evolved via selection/mutation across
+  generations — an A4 experiment sweep). Design-only for now; implementation (interface
+  extraction, a first NN policy, and the training harness) is follow-on work. Detailed design:
+  [deep-dives/pluggable-ai.md](deep-dives/pluggable-ai.md). Affects
+  [A4](track-a-foundations.md), [P2](track-p-playable-baseline.md).
 - Single-player `LocalPlayer` identification — Decision: explicit human-slot flag at setup. The
   skirmish/lobby config marks which slot is the local human; `PlayerManager` reads that flag instead
   of the ad-hoc positional `_players[2]` fallback (`PlayerManager.cs:39-46`). Affects

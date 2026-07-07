@@ -1,27 +1,26 @@
 # Deep Dive: Skirmish Setup & Player Relationships (P1)
 
 > Expands phase P1 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
-> the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+> the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
 >
 > The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
-Goal: make starting a single-player skirmish vs. ≥1 AI work end-to-end without networking —
+Goal: make starting a single-player skirmish vs. ≥1 AI work end-to-end without networking:
 players created, factions/colors/teams assigned, start positions resolved, starting buildings/units
-spawned, and — critically — player relationships wired (allies / enemies / neutrals). After P1, a
-match boots with a human + AI players correctly related; behavior (AI) and outcome (victory) come in
-P2/P3.
+spawned, and player relationships wired (allies / enemies / neutrals). After P1, a match boots with
+a human + AI players correctly related. Behavior (AI) and outcome (victory) come in P2/P3.
 
 ---
 
 ## 1. Why this is foundational
 
-Everything else in Track P assumes a correctly-initialized set of related players: the AI (P2) needs to
-know who its enemy is; victory/defeat (P3) needs teams/relationships to decide who lost; combat (P6)
-needs relationship checks to allow attacks. Today relationships are an explicit `// TODO`, and the
-single-player spawn path diverges from the multiplayer one, so a SP skirmish doesn't get starting
-buildings or a camera the way an MP game does.
+Track P assumes correctly initialized, related players. P2 needs to know who the enemy is. P3 needs
+teams and relationships to decide who lost. P6 needs relationship checks to allow attacks. Today
+relationships are an explicit `// TODO`, and the single-player spawn path diverges from the
+multiplayer path, so an SP skirmish misses the starting buildings and camera placement the MP path
+already provides.
 
 ---
 
@@ -32,32 +31,32 @@ Implement the `PlayerManager.OnNewGame()` TODO (`PlayerManager.cs:45-46`) so tha
 created from skirmish slots:
 
 - Each player is assigned its `Team` from its slot (`PlayerSetting.Team`).
-- Relationships are derived from teams: players on the same team are allies, different teams are
-  enemies, and the neutral/civilian player is neutral to all. This drives
+- Relationships are derived from teams: players on the same team are allies, players on different
+  teams are enemies, and the neutral/civilian player is neutral to all. This drives
   `Player.GetRelationship(...)` (already team-aware at `Player.cs:811-831`).
-- Wiring must be reciprocal — fix/augment `AddAlly()`/`AddEnemy()` (`Player.cs:779-786`) or set
-  both sides in `PlayerManager`, so `A enemy B ⇒ B enemy A`.
+- Wiring is reciprocal. Fix or augment `AddAlly()`/`AddEnemy()` (`Player.cs:779-786`) or set both
+  sides in `PlayerManager`, so `A enemy B ⇒ B enemy A`.
 - Reuse the existing map-relationship path (`CreatePlayers`, `PlayerManager.cs:50-76`) where the map
   defines relationships, but let skirmish-slot teams take precedence for slot-driven games.
 
 ### 3.2 Unified skirmish spawn path
 Resolve the SP/MP divergence at `Game.cs:745-763`: a single-player skirmish must run the same
-start-position lookup + `CreateSkirmishPlayerStartingBuilding` + camera-placement path the MP branch
-uses, for every non-neutral player (human and AI). Decide the player-array indexing explicitly
-(the `Players[i + 2]` offset and the `_players[2]` `LocalPlayer` fallback are ad hoc — see §5).
+start-position lookup, `CreateSkirmishPlayerStartingBuilding`, and camera-placement path the MP
+branch uses, for every non-neutral player, human and AI. Decide the player-array indexing
+explicitly; the `Players[i + 2]` offset and `_players[2]` `LocalPlayer` fallback are ad hoc. See §5.
 
 ### 3.3 Faction / color / start-position fill
-The lobby already fills missing factions/colors/start positions (`GameOptionsUtil.cs:239-305`); P1
-must ensure the AI slots are filled the same way (faction from `GetPlayableSides()`, a free start
-position, a free color) so an AI player is fully specified before `StartGame`.
+The lobby already fills missing factions, colors, and start positions (`GameOptionsUtil.cs:239-305`).
+P1 must apply the same fill behavior to AI slots so every AI player is fully specified before
+`StartGame`: faction from `GetPlayableSides()`, a free start position, and a free color.
 
 ### 3.4 Player object-ownership tracking (foundational)
-Both the AI (P2 target selection) and victory/defeat (P3 defeat detection) need cheap answers to "what
-does player X still own?". Rather than each consumer scanning all objects on demand, P1 establishes one
-foundational maintained per-`Player` view: building/unit counts plus an owned-object set, incremented
-on create/transfer and decremented on `OnDie`/`Destroy` (O(1) per check). It lives in P1 because it is
-a property of players (set up alongside relationships/spawns) and is consumed by both P2 and P3; it has
-no intra-P1 ordering constraint beyond object create/death hooks existing.
+Both the AI in P2 and victory/defeat in P3 need cheap answers to "what does player X still own?"
+Rather than scanning all objects on demand, P1 establishes one maintained per-`Player` view:
+building/unit counts plus an owned-object set, incremented on create/transfer and decremented on
+`OnDie`/`Destroy`. Checks stay O(1). It belongs in P1 because it is player state set up alongside
+relationships and spawns, consumed by both P2 and P3, and has no intra-P1 ordering constraint beyond
+object create/death hooks existing.
 
 ---
 
@@ -69,40 +68,40 @@ no intra-P1 ordering constraint beyond object create/death hooks existing.
 - `Network/SkirmishManager.cs:55-114` — slot→`PlayerSetting` mapping for AI + human in the local path.
 - `Gui/GameOptionsUtil.cs:239-305` — fill missing faction/color/start for AI slots.
 - `Scene3D.cs:430-455` + `Scripting/Waypoints.cs:76-81` + `Content/MapCache.cs:29-38` — start-position
-  lookup/spawn (already largely present; verify under SP).
+  lookup/spawn, already largely present; verify under SP.
 - `Logic/Player.cs` + `GameObject` create/`OnDie`/`Destroy` hooks — maintain the per-`Player` owned-object
-  set + counts (foundational, consumed by P2 and P3).
+  set + counts, foundational and consumed by P2 and P3.
 
 ## 5. Resolved design questions
 - `LocalPlayer` selection — Decided: the skirmish/lobby config marks which slot is the local
   human; `PlayerManager` reads that explicit flag instead of the `_players[2]` positional fallback
   (`PlayerManager.cs:39-46`). See [open-questions](../open-questions.md).
-- Spawn ownership — Decided: unify on one shared SP+MP skirmish spawn path — SP is "a skirmish
-  with one human + AI slots" through the same start-position/building/camera code (`Game.cs:745-763`).
-  See [open-questions](../open-questions.md).
+- Spawn ownership — Decided: unify on one shared SP+MP skirmish spawn path. SP is a skirmish with
+  one human + AI slots through the same start-position/building/camera code (`Game.cs:745-763`). See
+  [open-questions](../open-questions.md).
 
 ## 6. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
-| P1-1. Team & relationship setup | Implement `OnNewGame()` relationships: assign teams from slots, derive ally/enemy/neutral, wire reciprocally. | Not started (cards: `WI-P1-02`, `WI-P1-03`) |
-| P1-2. Unified skirmish spawn | One start-position + starting-building + camera path for SP and MP; resolve player-array indexing and `LocalPlayer`. | Not started (card: `WI-P1-04`) |
-| P1-3. AI slot fill | Ensure AI slots get faction/color/start filled before `StartGame` (lobby + local path). | Not started (card: `WI-P1-05`) |
+| P1-1. Team & relationship setup | Implement `OnNewGame()` relationships: assign teams from slots, derive ally/enemy/neutral, wire reciprocally. | Done (cards: `WI-P1-02`, `WI-P1-03`) |
+| P1-2. Unified skirmish spawn | One start-position + starting-building + camera path for SP and MP; resolve player-array indexing and `LocalPlayer`. | Done (card: `WI-P1-04`) |
+| P1-3. AI slot fill | Ensure AI slots get faction/color/start filled before `StartGame` (lobby + local path). | Done (card: `WI-P1-05`; start-position collision fix: `WI-P1-09`) |
 | P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](playable-baseline-harness.md)). | Not started (card: `WI-P1-06`) |
-| P1-5. Object-ownership tracking | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Not started (card: `WI-P1-07`) |
+| P1-5. Object-ownership tracking | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Done (card: `WI-P1-07`; owner-transfer tracking: `WI-P1-11`) |
 
 ## 7. Sequencing
-- P1 has no Track-P prerequisite (entry point alongside P0) but gates P2/P3/P4/P5/P6 — they all
-  assume correctly-related, spawned players.
+- P1 has no Track-P prerequisite and is an entry point alongside P0, but it gates P2/P3/P4/P5/P6.
+  All of them assume correctly related, spawned players.
 - P1-4's boot check rides on the [P0 harness](playable-baseline-harness.md) once P0-1/P0-5 exist.
-- P1-5 is foundational and independent within P1 (it only needs object create/death hooks + players);
-  it feeds P2 (AI target selection) and P3 (defeat detection), so it is owned by P1 rather than
+- P1-5 is foundational and independent within P1. It only needs object create/death hooks +
+  players, feeds P2 target selection and P3 defeat detection, and belongs in P1 rather than being
   duplicated in either consumer.
 
 ## 7. Scenario Matrix
 
-The P0-5b matrix runner validates P1 by sweeping over player-count and team configurations,
-ensuring relationship setup is correct across the space of valid match configurations.
+The P0-5b matrix runner validates P1 by sweeping over player-count and team configurations and
+checking relationship setup across valid match configurations.
 
 | Axis | Values | Notes |
 |---|---|---|
@@ -115,13 +114,13 @@ Constraints:
 - `all-factions` is only valid when `playerCount ≤` the number of available factions.
 
 Each cell runs one match boot through the P0 harness and asserts:
-- Every player pair has a defined `RelationshipType` (no unset defaults).
+- Every player pair has a defined `RelationshipType` with no unset defaults.
 - Same-team players are mutual allies; different-team players are mutual enemies.
-- Neutral players (teams not yet assigning an enemy relationship) are neutral.
+- Neutral players, teams not yet assigning an enemy relationship, are neutral.
 - `Player.Faction` matches the configured faction for each slot.
 
-This is the primary regression surface for P1: if relationship wiring or faction assignment
-regresses for any combination, the matrix run identifies the exact cell.
+This is the primary regression surface for P1. If relationship wiring or faction assignment regresses,
+the matrix run identifies the exact cell.
 
 ## 8. Architecture Diagrams
 
@@ -181,7 +180,7 @@ classDiagram
 - `SkirmishManager.StartGame()` builds `List<PlayerSetting>` from `Settings.Slots` and calls
   `Game.StartSkirmishOrMultiPlayerGame(...)` (`src/OpenSage.Game/Network/SkirmishManager.cs:55-93`).
 - `LocalSkirmishManager.HandleStartButtonClickAsync()` only sets `Connection = new EchoConnection()`
-  and flips status to `ReadyToStart` — no networking (`Network/SkirmishManager.cs:96-114`).
+  and flips status to `ReadyToStart`; no networking (`Network/SkirmishManager.cs:96-114`).
 - `HostSkirmishManager`/`ClientSkirmishManager` hold the real network path; SP never enters them
   (`Network/SkirmishManager.cs:373-588`).
 - `Game.StartSkirmishOrMultiPlayerGame()` wraps `StartGame(...)`; `StartSinglePlayerGame()` uses
@@ -189,7 +188,7 @@ classDiagram
 - `Game.StartGame()` loads the map, creates `Scene3D`, sets `NetworkMessageBuffer`, builds the
   control bar, resets timers, enables scripting (`Game.cs:717-802`).
 - Divergence: starting buildings + camera-at-start are created only for
-  `gameType != SinglePlayer`, for `Scene3D.Players[i + 2]` (`Game.cs:745-763`) — so a SP skirmish has
+  `gameType != SinglePlayer`, for `Scene3D.Players[i + 2]` (`Game.cs:745-763`), so a SP skirmish has
   no equivalent local placement path.
 - `Game.LocalLogicTick()` pumps `SkirmishManager.Update()` until status is `Started`
   (`Game.cs:921-929`).
@@ -207,7 +206,7 @@ classDiagram
 - `PlayerManager.OnNewGame(...)` creates players from map players, picks `LocalPlayer`, then
   TODOs relationships (`src/OpenSage.Game/Logic/PlayerManager.cs:24-46`).
 - `PlayerManager.CreatePlayers(...)` maps `mapPlayer.Allies/Enemies` into `player.Allies`/
-  `player.Enemies` (`PlayerManager.cs:50-76`) — so map-defined relationships are read, but the
+  `player.Enemies` (`PlayerManager.cs:50-76`), so map-defined relationships are read, but the
   skirmish-slot-driven setup is the gap.
 - `Player` has `_playerToPlayerRelationships` + `playerToTeamRelationships` (`Logic/Player.cs:33-35`),
   public `Allies`/`Enemies` sets (`:126-128`), a `Team` (`:139`),
