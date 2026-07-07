@@ -5,21 +5,20 @@
 >
 > Audience: human — design intent and architecture diagrams.
 
-Goal: the human/agent-facing surface of the experiment framework — set up a simulation
-scenario going in, and replay/analyze/compare its results coming out. This is the bookend to
-the [headless/FTRT host (A1)](headless-host.md): A1 runs experiments and emits recordings; A5
-is how you author what it runs and make sense of what it produced.
+Goal: provide the human- and agent-facing surface of the experiment framework: author a
+simulation scenario on the way in, then replay, analyze, and compare results on the way out. This
+bookends the [headless/FTRT host (A1)](headless-host.md): A1 runs experiments and emits
+recordings; A5 authors what it runs and interprets what it produced.
 
-Both ends are domain-parameterized via the
-[Simulation Domain Model seam (A4)](../track-a-foundations.md): the same authoring and
-visualization machinery serves RTS battles, city builders, and transportation/logistics sims, with
-the domain supplying entity kinds, topology, and metrics. RTS is the reference domain.
+Both ends are domain-parameterized via the [Simulation Domain Model seam (A4)](../track-a-foundations.md). The same authoring and visualization machinery serves RTS
+battles, city builders, and transportation/logistics sims, with the domain supplying entity kinds,
+topology, and metrics. RTS is the reference domain.
 
 ---
 
 ## 1. Why a dedicated layer
 
-A scaling/optimization framework is only usable if experiments are easy to define and results
+A scaling or optimization framework is only useful if experiments are easy to define and results
 are inspectable. Today both are missing:
 
 - Setup is purely programmatic — `SimulationHost` input injection (A1-4), harness config
@@ -34,8 +33,8 @@ are inspectable. Today both are missing:
   magnitudes as the engine (see A5-5). Scenario tooling is on the scaling critical path, not
   beside it.
 
-Pulling both into one layer keeps a single, domain-parameterized rendering/UX stack shared
-between "before" (preview a scenario) and "after" (replay a run).
+Pulling both into one layer keeps one domain-parameterized rendering and UX stack for previewing
+scenarios and replaying runs.
 
 ---
 
@@ -62,9 +61,8 @@ between "before" (preview a scenario) and "after" (replay a run).
 ## 3. Scenario setup & authoring
 
 ### 3.1 What a scenario is
-A scenario is a versioned, declarative artifact capturing everything needed to make a run
-reproducible-for-comparison (not bit-exact — see the
-[relaxed-determinism Decision](../open-questions.md)):
+A scenario is a versioned, declarative artifact containing everything needed to make a run
+reproducible-for-comparison, not bit-exact; see the [relaxed-determinism Decision](../open-questions.md):
 
 - Domain selection — which [domain model (A4)](../track-a-foundations.md) (RTS / city /
   transport / …) and its configuration.
@@ -83,36 +81,34 @@ reproducible-for-comparison (not bit-exact — see the
   [domain metrics](headless-host.md) to record.
 
 ### 3.2 Authoring surfaces
-- Declarative scenario file (primary). A human- and agent-writable scenario definition that
-  the harness and host consume directly — the source of truth, diff-able and version-controllable.
-  Agent-authored scenarios (and the [`.exchange`](../../../.github/copilot-instructions.md) hand-off)
-  are first-class.
-- Visual setup (secondary, GPU-light). A domain-parameterized editor that reuses the §4
-  rendering: place/paint entities on the spatial/graph/zone view, edit parameters, and scrub a
-  preview. For spatial domains this extends WorldBuilder; for graph/zone domains it renders
-  the network/district view. Visual edits serialize back to the declarative file.
-- Capture-from-run. Derive a new scenario from any frame of a previous run's recorded state
-  (a recorded snapshot is a valid initial population) — e.g. "fork the battle at frame 4000."
+- Declarative scenario file (primary). A human- and agent-writable definition that the harness
+  and host consume directly. It is the source of truth, diffable, and version-controllable.
+  Agent-authored scenarios, and the [`.exchange`](../../../.github/copilot-instructions.md)
+  hand-off, are first-class.
+- Visual setup (secondary, GPU-light). A domain-parameterized editor reusing the §4 rendering so
+  authors can place or paint entities, edit parameters, and scrub a preview. For spatial domains
+  this extends WorldBuilder; graph and zone domains render the network or district view. Visual
+  edits serialize back to the declarative file.
+- Capture-from-run. Derive a new scenario from any frame of a previous run's recorded state,
+  because a recorded snapshot is a valid initial population.
 
 ### 3.3 Parameter sweeps / experiment matrix
-Optimization experiments are rarely a single run. A5 lets a scenario declare sweep axes
-(e.g. unit count ∈ {1k, 10k, 100k} × partition scheme ∈ {grid, graph} × fidelity ∈ {off, on}); the
-[A4 harness](../track-a-foundations.md) expands the matrix, dispatches one host run per cell
-(parallelizable, and the cells can themselves be sharded via [B6](distributed-simulation.md)), and
-collects results keyed by cell for side-by-side comparison in §4/§5.
+Optimization experiments are rarely single-run. A5 lets a scenario declare sweep axes such as
+unit count, partition scheme, and fidelity. The [A4 harness](../track-a-foundations.md) expands
+the matrix, dispatches one host run per cell, and collects results keyed by cell for side-by-side
+comparison in §4 and §5. Cells can also be sharded via [B6](distributed-simulation.md).
 
 ### 3.4 Pre-run validation & preview
-Before committing to a long FTRT run, sanity-check the scenario: schema/seed validity, entity
-placements inside the world, topology connectivity, probe wiring — and a short preview (render
-frame 0 + step a few frames) so authoring mistakes are caught in seconds, not after an hour-long
-batch.
+Before a long FTRT run, sanity-check the scenario: schema and seed validity, entity placement,
+topology connectivity, probe wiring, and a short preview that renders frame 0 and steps a few
+frames. Catch authoring mistakes in seconds, not after an hour-long batch.
 
 ---
 
 ## 4. Results replay & visualization
 
-A tool to replay recorded runs and analyze/visualize their results, so headless/FTRT batch
-runs are inspectable rather than opaque.
+A tool to replay recorded runs and analyze or visualize their results, so headless and FTRT
+batch runs are inspectable rather than opaque.
 
 - Load a run from its recorded artifacts: the recorded state snapshots/deltas and the
   metrics/events/signature stream from [A1-5 run outputs](headless-host.md) (and/or the `.rep`
@@ -142,17 +138,15 @@ runs are inspectable rather than opaque.
 
 ## 5. Run comparison & divergence localization
 
-Detecting that two runs diverged is cheap; localizing where (which frame, partition,
-entity, and system) is what makes the framework useful for validating parallelism
-([B3](track-b-scale.md)) and sharding ([B6](distributed-simulation.md)). The
-[relaxed-determinism Decision](../open-questions.md) makes this harder than in a bit-exact engine:
-the classic "re-run with tracing and binary-search the first divergent frame" trick is
-unreliable, because a re-run is only statistically equivalent — it may not reproduce the same
-divergence. Localization detail therefore often has to be captured in the original run.
+Detecting divergence is cheap. Localizing it by frame, partition, entity, and system is what
+makes the framework useful for validating parallelism ([B3](track-b-scale.md)) and sharding
+([B6](distributed-simulation.md)). The [relaxed-determinism Decision](../open-questions.md)
+makes this harder than in a bit-exact engine: re-running with tracing and binary-searching the
+first divergent frame is unreliable because a re-run is only statistically equivalent. Localization
+detail therefore often has to be captured in the original run.
 
 ### 5.1 Tiered recording (emitted by [A1-5](headless-host.md), consumed here)
-The recording is explicitly tiered so the always-on cost stays proportional to the very large
-scales this roadmap targets:
+The recording is tiered so always-on cost stays proportional to the scale this roadmap targets:
 
 | Tier | What it records | Cost | Purpose |
 |---|---|---|---|
@@ -181,8 +175,8 @@ scales this roadmap targets:
   recording cost is bounded; at extreme scale T1 can coarsen and T2 can be armed only for suspect
   regions.
 
-This makes the recorded artifacts granular enough to identify where divergences occur without
-paying full per-entity-per-frame recording cost for every run.
+This keeps artifacts granular enough to identify divergence without paying full per-entity,
+per-frame recording cost for every run.
 
 ---
 
@@ -211,11 +205,11 @@ paying full per-entity-per-frame recording cost for every run.
   [B6](distributed-simulation.md) (sharding) be debugged by pinpointing where a run drifts.
 - A5-5 pairs with B4a-7 (large-population authoring) so the scenario author and replay tools
   scale together.
-- A5-6 (WorldBuilder baseline) is an early-start sub-phase: it only requires P7 and can run
-  in parallel with Stage 0/1 work. It is a prerequisite for B4a — B4a must not be the first
-  time we discover basic WorldBuilder functionality is broken.
-- A5 (A5-1 through A5-5) shares one domain-parameterized rendering stack between setup
-  preview (§3.2/§3.4) and results replay (§4) — build it once.
+- A5-6 (WorldBuilder baseline) is an early-start sub-phase. It only requires P7, can run in
+  parallel with Stage 0/1 work, and is a prerequisite for B4a. B4a must not be the first time we
+  discover basic WorldBuilder functionality is broken.
+- A5-1 through A5-5 share one domain-parameterized rendering stack between setup preview and
+  results replay.
 
 ## 9. Architecture Diagrams
 

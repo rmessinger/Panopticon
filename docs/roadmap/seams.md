@@ -1,10 +1,9 @@
 # Framework Seams
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). Defines what a seam is in this
-> framework and maintains the authoritative registry of seams. The whole roadmap leans on
-> seams (especially [A4](track-a-foundations.md)); this is the single place that names them, says
-> what each one abstracts, and tracks their interface and implementations. Keep it in sync as
-> seams are introduced or change — see [How to maintain](#how-to-maintain-this-registry).
+> Part of the [Large-Scale Simulation Roadmap](README.md). This doc defines a seam and is the
+> authoritative seam registry. It names each seam, states what it abstracts, and tracks the
+> interface and implementations. Keep it in sync as seams are introduced or changed; see
+> [How to maintain](#how-to-maintain-this-registry).
 >
 > Audience: human + agent — the overview and seam descriptions are human-readable; the registry
 > detail and file citations are agent context. A split into a human overview and an agent
@@ -12,13 +11,13 @@
 
 ## What is a seam?
 
-A seam is a stable boundary that isolates one axis of variation so that alternative
-implementations can be swapped behind it and measured independently, without changing the code
-that uses it.
+A seam is a stable boundary around one axis of variation. It lets alternative
+implementations be swapped behind the boundary and measured independently, without changing the
+code that uses it.
 
-The term follows Michael Feathers' sense — "a place where you can alter behaviour without editing
-in that place" — specialized here for the project's North Star (a framework for plugging in and
-measuring simulation-optimization experiments). In this framework a seam has four properties:
+The term follows Michael Feathers' sense of "a place where you can alter behaviour without
+editing in that place," specialized here for a framework that plugs in and measures
+simulation-optimization experiments. In this roadmap a seam has four properties:
 
 1. One axis of variation. Each seam abstracts exactly one decision — how do we partition?,
    what is the simulation domain?, how do we store entity data? — not a grab-bag.
@@ -29,15 +28,15 @@ measuring simulation-optimization experiments). In this framework a seam has fou
 4. A reference implementation. Usually the existing engine behaviour (e.g. RTS, W3D, the
    spatial grid) refactored to be one implementation — which proves the seam is real.
 
-Two kinds of seam appear in the roadmap:
+The roadmap uses two seam types:
 
 - Structural seams — architectural boundaries that decouple subsystems so the simulation can
-  run in new contexts (e.g. headless, distributed). They are mostly enable/disable or
-  present/absent, not a menu of techniques.
+  run in new contexts such as headless or distributed execution. These are usually present or
+  absent, not a menu of techniques.
 - Experiment seams — the [A4](track-a-foundations.md) swappable-implementation axes. These are
-  where optimization techniques plug in as interchangeable, independently-measurable experiments.
-  A Track B/C phase should generally be expressed as an implementation behind an experiment seam
-  rather than a one-off hard-wired change.
+  where optimization techniques plug in as interchangeable, independently measurable
+  experiments. A Track B or C phase should usually land as an implementation behind an
+  experiment seam rather than as a one-off hard-wired change.
 
 > Rule of thumb: if a roadmap phase says "make X pluggable / swappable / domain-agnostic /
 > behind an abstraction," it is introducing or widening a seam — add or update it here.
@@ -46,10 +45,9 @@ Two kinds of seam appear in the roadmap:
 
 ## Landscape overview
 
-The diagram below shows where each seam sits in the runtime stack. Structural seams (dashed
-edges) are layer boundaries; experiment seams (A4) are pluggable swap points within the
-simulation layer, with the Simulation Domain Model as the central hub that parameterizes
-all the others.
+The diagram below places each seam in the runtime stack. Structural seams, shown with dashed
+edges, are layer boundaries. Experiment seams are pluggable swap points inside the simulation
+layer. The Simulation Domain Model is the central hub that parameterizes the others.
 
 ```mermaid
 graph TD
@@ -93,9 +91,9 @@ graph TD
 
 ## Seam registry
 
-Status legend: Reference = a working implementation exists (usually today's engine behaviour);
-Planned = introduced by a roadmap phase; Future = anticipated implementations behind the
-seam. Code references point at the current types the seam is (or will be) carved from.
+Status legend: Reference = a working implementation exists, usually today's engine behavior.
+Planned = introduced by a roadmap phase. Future = anticipated implementations behind the seam.
+Code references point at the current types the seam is, or will be, carved from.
 
 ### Structural seams
 
@@ -119,21 +117,21 @@ seam. Code references point at the current types the seam is (or will be) carved
 | Randomness / conflict resolution | Source of randomness and how concurrent writes are reconciled | `IGame.CreateRandom()` seam + B3 intent/command buffers + merge/authority rules | Reference: per-context seeded RNG · Planned: intent-buffer merge + cross-shard authority rules | [A2](track-a-foundations.md) / [B3](track-b-scale.md) | [open-questions (relaxed determinism)](open-questions.md), [distributed-sim](deep-dives/distributed-simulation.md) |
 | AI decision policy | How a player's strategic decisions get made (what to build/produce/attack), independent of actuation (always `Order`s) | `IAIDecisionPolicy` (planned), hosted by `AIPlayer.OnDecisionTick()` in place of today's subclass override | Reference: rule-based state machine (`SkirmishAIPlayer`, [P2](track-p-playable-baseline.md)) · Future: neural-network policy with weights evolved across seeded self-play populations | A4 (design: [pluggable-ai](deep-dives/pluggable-ai.md)) | [pluggable-ai](deep-dives/pluggable-ai.md), [skirmish-ai](deep-dives/skirmish-ai.md) |
 
-> Derived, not separate: the [visualization](deep-dives/visualization.md) layer's views and the
-> divergence-bucketing keys are parameterized by the Simulation Domain Model seam (the domain
-> supplies the view and the stable bucket keys); they are not an independent seam.
+> Derived, not separate: the [visualization](deep-dives/visualization.md) layer's views and
+> divergence-bucketing keys are parameterized by the Simulation Domain Model seam. The domain
+> supplies the view and the stable bucket keys, so this is not an independent seam.
 
 ---
 
 ## How to maintain this registry
 
 - Adding a seam: when a phase introduces a new pluggable boundary, add a row to the correct
-  table (structural vs. experiment) with its axis of variation, interface, implementations, and the
-  owning phase. Cross-link the phase doc back here.
-- Widening a seam: when a new implementation is planned or lands (e.g. a second partition
-  scheme), update the Implementations cell and flip Reference/Planned/Future as appropriate.
-- Naming: name a seam by its axis of variation (what varies), not by its first
-  implementation — e.g. "Partition scheme," not "Spatial grid."
-- Keep it singular: if a row is trying to abstract more than one axis, split it.
+  table with its axis of variation, interface, implementations, and owning phase. Cross-link the
+  phase doc back here.
+- Widening a seam: when a new implementation is planned or lands, update the Implementations cell
+  and adjust Reference, Planned, and Future as needed.
+- Naming: name a seam by its axis of variation, not by its first implementation. For example,
+  use "Partition scheme," not "Spatial grid."
+- Keep it singular: if a row abstracts more than one axis, split it.
 - This doc is linked from the [README document map](README.md#document-map); keep the
   [A4 notes](track-a-foundations.md) pointing here as the canonical seam list.

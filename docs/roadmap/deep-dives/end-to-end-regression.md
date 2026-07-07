@@ -7,25 +7,25 @@
 >
 > The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
-Goal: author one P0 harness scenario per match end state (six total), run each headlessly,
-assert it terminates with the expected `GameOutcome` and a shared set of universal invariants, and
-lock all six as a standing "is the game still playable?" regression gate.
+Goal: author one P0 harness scenario per match end state, six total, run each headlessly,
+assert that it terminates with the expected `GameOutcome` and a shared set of universal
+invariants, and lock all six as a standing playable-regression gate.
 
-P7 is the Track P capstone. It assembles all prior phases into a single continuous check: the full
-skirmish loop — economy, production, AI, combat, and victory detection — must terminate correctly
-for every supported end-state path. When P7 passes, the baseline game loop is verified end-to-end.
+P7 is the Track P capstone. It assembles the prior phases into one continuous check: economy,
+production, AI, combat, and victory detection must terminate correctly for every supported
+end-state path. When P7 passes, the baseline game loop is verified end to end.
 
 ---
 
 ## 1. Why P7
 
-Every other Track P phase validates a subsystem in isolation: P1 checks setup, P3 checks victory
-detection, P6 checks combat paths. None of them confirm that all subsystems cooperate correctly in
-a match that actually runs to completion. P7 provides that confirmation by constructing minimal but
-realistic scenarios that exercise the full loop and asserting on the result.
+Every other Track P phase validates a subsystem in isolation. P1 checks setup, P3 checks victory
+detection, and P6 checks combat paths. None confirm that all subsystems cooperate in a match that
+runs to completion. P7 does that with minimal but realistic scenarios that exercise the full loop
+and assert on the result.
 
-A passing P7 suite is also the gate for Track A (A1 headless host) and Track B (B1 benchmarks). Both
-assume a validated, terminating match loop — P7 is the documented proof that such a loop exists.
+A passing P7 suite is also the gate for Track A (A1 headless host) and Track B (B1 benchmarks).
+Both assume a validated, terminating match loop, and P7 is the documented proof that it exists.
 
 ---
 
@@ -46,12 +46,13 @@ universal invariant set (§3) plus an end-state-specific outcome assertion.
 
 ### Scripting approach
 
-Each scenario uses a small number of P0 harness commands (build, produce, attack, `EndGame`) chosen
-to deterministically reach the target end state in the fewest ticks. Scenarios are written once by
-a human or agent, stored in `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/`, and are
-never re-generated. They are authored for determinism: fixed seeds, no random timing, no optional
-branching. An AI player that must "make progress" is scripted with explicit `BuildObject` and
-`CreateUnit` orders (not the live AI) so the scenario is reproducible across builds.
+Each scenario uses a small number of P0 harness commands, such as build, produce, attack, and
+`EndGame`, chosen to reach the target end state deterministically in the fewest ticks. Scenarios
+are written once by a human or agent, stored in
+`src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/`, and never re-generated. They use
+fixed seeds, no random timing, and no optional branching. Any AI player that must make progress is
+scripted with explicit `BuildObject` and `CreateUnit` orders rather than the live AI so the
+scenario stays reproducible across builds.
 
 ---
 
@@ -90,17 +91,17 @@ Output: a six-cell aggregate JSON report. All six cells must pass for P7 to be c
 
 ## 5. Regression locking
 
-"Locking" means the six scenario files and their assertion sets are committed to source control
-(`src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/`) and the corresponding tests in
-`TrackPScenarioMatrixTests.cs` (P7 class) are unblocked. From that point:
+Locking means the six scenario files and their assertion sets are committed to source control in
+`src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/`, and the corresponding tests in
+`TrackPScenarioMatrixTests.cs` are unblocked. From that point:
 
 - The `P7_ScenarioMatrixTests` xUnit tests run with every `dotnet test src --filter Category!=Interactive`
-  invocation (they require no game files — scenarios are headless, engine mock-based).
-- A regression means a new test failure: a scenario that previously terminated correctly no
-  longer does so. The first responder is the phase-matrix report which identifies the failing cell.
-- Scenarios are not regenerated on each test run — they are static inputs. If a scenario itself
-  must change (because a Phase dep changed the end-state scripting), that is an explicit authored
-  update committed alongside the code change.
+  invocation. They require no game files because the scenarios are headless and engine mock-based.
+- A regression is a new test failure: a scenario that previously terminated correctly no longer
+  does so. The phase-matrix report identifies the failing cell.
+- Scenarios are static inputs, not regenerated on each test run. If one must change because a
+  phase dependency changed the end-state scripting, that authored update is committed alongside the
+  code change.
 
 ---
 
@@ -121,14 +122,10 @@ Output: a six-cell aggregate JSON report. All six cells must pass for P7 to be c
 
 ## 7. Sequencing & dependencies
 
-- P7 depends on all prior Track P phases: P0 (harness, run-and-assert), P1 (player/team setup),
-  P2 (AI, for AI-involved end states), P3 (queryable `GameOutcome`), P4 (economy), P5
-  (construction/production), P6 (combat/command), P6b (unit contracts, whose scenarios feed P7).
-- P7 unblocks Track A (A1 headless host depends on a validated terminating loop) and Track B
-  (B1 benchmarks need a scenario that runs to completion).
-- P7's six scenario files can be reused as the seed for A2 (strict-hash verification — run the
-  same P7 scenarios twice, compare outcomes) and for B1 (benchmark those same scenarios for
-  frame-time and object counts).
+- P7 depends on all earlier Track P phases: P0, P1, P2, P3, P4, P5, P6, and P6b.
+- P7 unblocks Track A because A1 headless host depends on a validated terminating loop, and Track
+  B because B1 benchmarks need a scenario that runs to completion.
+- P7's six scenario files also seed A2 strict-hash verification and B1 benchmarking.
 
 ---
 

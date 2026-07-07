@@ -1,28 +1,26 @@
 # Track E — Naval Warfare
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Makes water-surface combat actually work.
+> Part of the [Large-Scale RTS Roadmap](README.md). Make water-surface combat work.
 > Unlike [Track D](track-d-gameplay-expansion.md)'s tech trees/eras, naval warfare is not wholly
-> new content — BFME2's Corsairs of Umbar data already defines ship `ObjectKind`s and a `WATER`
-> locomotor surface — but the terrain/pathfinding layer that would make any of it move and fight
-> correctly is an unimplemented stub (`Pathfinder.ValidMovementTerrain` always returns `true`,
-> `TerrainLogic` always resolves to the ground layer). This track finishes that seam and proves
-> it with real ship combat.
+> new content: BFME2's Corsairs of Umbar data already defines ship `ObjectKind`s and a `WATER`
+> locomotor surface. The terrain/pathfinding layer that should make them move and fight is still
+> stubbed: `Pathfinder.ValidMovementTerrain` always returns `true`, and `TerrainLogic` always
+> resolves to the ground layer. This track completes that seam and proves it with real ship combat.
 >
 > Audience: human — strategic track overview.
 
 ## Why this comes after Track P
 
 Fixing the water/ground pathfinding stub and adding ship combat both touch core per-object
-movement and combat resolution (`Locomotor`, `Pathfinder`, weapon slots) — the same reasoning as
-Track D: this needs a stable, validated match loop ([Track P](track-p-playable-baseline.md)) to
-build and test against, not a partial one. Track E does not otherwise depend on Track A/B (scale)
-work, and does not need Track C or [ModCollector](plans/mod-collector.md) at all — the reference
-BFME2 `SHIP_*`/`PORT` content already ships with the engine's supported games.
+movement and combat resolution: `Locomotor`, `Pathfinder`, and weapon slots. Like Track D, this
+needs a stable, validated match loop in [Track P](track-p-playable-baseline.md), not a partial
+one. Track E does not otherwise depend on Track A/B work and does not need Track C or
+[ModCollector](plans/mod-collector.md); the reference BFME2 `SHIP_*`/`PORT` content already ships
+with the engine's supported games.
 
 ## Phases
 
-> The Milestone column states the single demonstrable outcome that marks each phase done (its
-> definition-of-done); the granular steps to get there live in
+> The Milestone column states the demonstrable outcome that marks each phase done. Granular steps live in
 > [`implementation-checklist.md`](implementation-checklist.md).
 
 | Phase | Goal | Milestone | Status | Depends on |
@@ -34,9 +32,8 @@ BFME2 `SHIP_*`/`PORT` content already ships with the engine's supported games.
 
 ## Phase resources
 
-A navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
-Diagrams are required before any phase's first task card is marked `Ready`; E1/E2 share a deep
-dive, E3/E4 are yet to be written.
+Navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
+Diagrams are required before any phase's first task card is marked `Ready`. E1/E2 share a deep dive; E3/E4 are still unwritten.
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
@@ -46,17 +43,12 @@ dive, E3/E4 are yet to be written.
 | E4 | — | — | — |
 
 † Placeholder — see the deep dive's [Architecture Diagrams](deep-dives/naval-warfare.md#architecture-diagrams)
-section; a class + sequence diagram must replace it before E1's first task card is written, per
+section. A class + sequence diagram must replace it before E1's first task card is written, per
 [`agent/MAINTAINING.md`](agent/MAINTAINING.md).
 
 ## Cross-track dependencies
 
-- E1-E4 depend on Track P (P7) only — they finish an existing structural stub and exercise
-  content the engine already ships with BFME2, so no external asset pipeline is required.
-- Track E does not require Track C or [ModCollector](plans/mod-collector.md); a later phase could
-  extend it with non-BFME2 naval content (e.g. Empire Earth-style navies) the same way Track D's
-  D3 ingests external content, but that is not part of E1-E4's scope.
-- B4a (larger maps) should account for water-layer terrain streaming once both land — coordinate
-  so chunked/streamed terrain carries the same water-depth data E1 introduces.
-- Track E does not require Track A/B beyond what Track P already delivers; it is not gated on
-  A1/A4/B1-B7.
+- E1-E4 depend only on Track P (P7). They finish an existing structural stub and exercise content the engine already ships with BFME2, so no external asset pipeline is required.
+- Track E does not require Track C or [ModCollector](plans/mod-collector.md). A later phase could extend it with non-BFME2 naval content, such as Empire Earth-style navies, the same way Track D's D3 ingests external content, but that is outside E1-E4.
+- B4a should account for water-layer terrain streaming once both land so chunked/streamed terrain carries the same water-depth data E1 introduces.
+- Track E does not require Track A/B beyond what Track P already delivers. It is not gated on A1/A4/B1-B7.

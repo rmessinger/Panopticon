@@ -7,20 +7,19 @@
 >
 > The agent-context section at the bottom ([Current-state hooks appendix](#appendix-current-state-hooks--agent-context)) contains code-level details about what the implementation builds on. Skip it if you are reading for design intent.
 
-Goal: run a single simulation larger than one machine can handle by partitioning the
-world across processes/machines.
+Goal: run one simulation larger than a single machine can handle by partitioning the world
+across processes or machines.
 
-Decision (chosen model): Spatial sharding — one world, partitioned by region across
-nodes; each node simulates the entities in its region(s). Chosen over lockstep peers because
-lockstep requires every node to simulate the whole world, which caps total scale at one
-machine's capacity. Spatial sharding trades that ceiling for the complexity of cross-shard
-handoff and boundary synchronization. See
-[open-questions.md](../open-questions.md) for the trade-off record.
+Decision: spatial sharding. One world is partitioned by region across nodes, and each node
+simulates the entities in its region or regions. This was chosen over lockstep peers because
+lockstep makes every node simulate the whole world, capping total scale at one machine's
+capacity. Spatial sharding trades that ceiling for cross-shard handoff and boundary
+synchronization complexity. See [open-questions.md](../open-questions.md) for the trade-off
+record.
 
-Domain-parameterized (not RTS-only). Partitioning, halo derivation, handoff, and
-interaction resolution are all driven by the
-[Simulation Domain Model seam (A4)](../track-a-foundations.md), so this infrastructure serves
-non-RTS simulations too. The domain's topology model selects the partitioning scheme:
+The design is domain-parameterized, not RTS-only. Partitioning, halo derivation, handoff, and
+interaction resolution are driven by the [Simulation Domain Model seam (A4)](../track-a-foundations.md), so the infrastructure also serves non-RTS simulations. The
+domain's topology model selects the partitioning scheme:
 - 2-D spatial grid for RTS / open-field battles (the reference domain; built on
   [B4a-5 chunks](larger-maps.md)).
 - Graph/network partitioning for transportation/logistics sims (roads, rail, utility
@@ -35,16 +34,15 @@ is domain-parameterized.
 
 ## 1. Why this depends on the rest of Track A/B
 
-Spatial sharding is the last major scale phase because it composes everything before it:
+Spatial sharding is the last major scale phase because it composes the earlier work:
 
 - [A1 Headless host](headless-host.md) — a shard is a headless `SimulationHost` instance;
   no shard renders. The host's logic-only step and run-output hooks are prerequisites.
 - [A2 Reproducibility & statistical stability](../track-a-foundations.md) — per the
   [relaxed-determinism Decision](../open-questions.md), shards do not agree bit-for-bit.
-  Correctness is defined by invariants (no unit duplication/loss, conservation of handed-off
-  objects) and statistical closeness of metrics to a single-shard reference. The hierarchical
-  signature tree (A1-5) plus [A5-4 divergence localization](visualization.md) screen for drift
-  and drill down to where it occurs, rather than acting as an equality gate.
+  Correctness is defined by invariants and statistical closeness to a single-shard reference.
+  The hierarchical signature tree (A1-5) plus [A5-4 divergence localization](visualization.md)
+  screen for drift and localize it instead of acting as an equality gate.
 - [B3 Parallel/data-oriented logic](../track-b-scale.md) — the data-oriented storage and
   safe-parallel update model are what make a region's slice cheap to step and to serialize.
 - [B4a-5 Chunked terrain storage](larger-maps.md) — the chunk/region concept used for
@@ -110,26 +108,24 @@ Spatial sharding is the last major scale phase because it composes everything be
 
 - B6-1 is design-only and can begin early (it informs B4a-5's chunk boundaries), but
   implementation waits on A1/A2/B3.
-- B6-2/3 deliberately run in one process first so handoff and conflict resolution can be
-  debugged against a single-shard reference (comparing invariants and aggregate metrics within
-  tolerance) before networking is introduced.
-- The [result replayer/visualizer (A5-3)](visualization.md) is the validation surface here:
-  its run-comparison surfaces where a sharded run drifts beyond tolerance from the single-shard
+- B6-2/3 run in one process first so handoff and conflict resolution can be debugged against a
+  single-shard reference before networking is introduced.
+- The [result replayer/visualizer (A5-3)](visualization.md) is the validation surface. Its
+  run-comparison shows where a sharded run drifts beyond tolerance from the single-shard
   reference.
-- B6-7 (load balancing) is explicitly optional/last — static sharding must be correct and
-  scalable first.
+- B6-7 (load balancing) is optional and last. Static sharding must be correct and scalable first.
 - Save/load is single-node only. Per the [StatePersister-reach Decision](../open-questions.md),
-  `StatePersister` is not required to serialize sharded state; a sharded run is analyzed and replayed
-  via the recorded snapshot/delta stream, not by saving/loading cross-shard state. The "one
-  save/persist path" from the domain-scope Decision means one path per node.
+  `StatePersister` does not need to serialize sharded state; analyze and replay sharded runs via
+  the recorded snapshot/delta stream instead. The domain-scope Decision's "one save/persist path"
+  means one path per node.
 
 ## 5. Scenario Matrix
 
-The P0-5b matrix runner validates B6 by sweeping over shard count and partition configurations,
-confirming that sharded runs stay within tolerance of a single-shard reference and produce
-no unit duplication or loss. Note that this matrix uses a benchmarking runner (via the A1 headless
-host + B1 harness) rather than the P0 game-scenario harness; it follows the same `ScenarioMatrix`
-data model and axis-expansion pattern.
+The P0-5b-style matrix runner validates B6 by sweeping over shard count and partition
+configurations, confirming that sharded runs stay within tolerance of a single-shard reference and
+produce no unit duplication or loss. This matrix uses a benchmarking runner, via the A1 headless
+host and B1 harness, rather than the P0 game-scenario harness, but it follows the same
+`ScenarioMatrix` data model and axis-expansion pattern.
 
 | Axis | Values | Notes |
 |---|---|---|

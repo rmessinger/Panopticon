@@ -6,45 +6,39 @@
 > Audience: human — design intent and architecture diagrams. Code references are in the
 > agent-context appendix at the bottom.
 
-Goal: carve out how a player's strategic decisions are made as its own A4 experiment seam, so
-the rule-based skirmish AI that [P2](../track-p-playable-baseline.md) lands is one swappable
-implementation, not the only possible one. This is what unblocks plugging in a learned policy —
-in particular a small neural network whose weights are evolved by running many seeded
-self-play matches — without touching `Player`, `OrderProcessor`, or anything else that treats
-"the AI" as an opaque decision-maker.
+Goal: make a player's strategic decision-making its own A4 experiment seam, so the rule-based
+skirmish AI from [P2](../track-p-playable-baseline.md) is one swappable implementation rather than
+the only one. That is what unblocks a learned policy, especially a small neural network whose
+weights are evolved through many seeded self-play matches, without touching `Player`,
+`OrderProcessor`, or any other caller that treats the AI as an opaque decision-maker.
 
 This doc designs the seam only. It does not implement a neural-network policy or a training
-harness; see §6 for the follow-on work this unblocks.
+harness; §6 covers the follow-on work it unblocks.
 
 ---
 
 ## 1. Why this is a seam, not a P2 detail
 
-[skirmish-ai.md §6](skirmish-ai.md#6-resolved-design-questions--open-work) already flagged this:
-"a pluggable AI policy is a candidate A4 experiment seam ... not a P2 requirement." P2 lands a
-single concrete policy (`SkirmishAIPlayer`: a state machine over economy → build-out →
-production → military, described in skirmish-ai.md §2.1). That is exactly the shape an
-[A4](../track-a-foundations.md) seam wants: a stable interface with one reference
-implementation, sized so a second, very different implementation (a neural net) can sit behind
-the same interface and be selected/compared without caller changes.
+[skirmish-ai.md §6](skirmish-ai.md#6-resolved-design-questions--open-work) already records the
+key decision: a pluggable AI policy is an A4 experiment seam, not a P2 requirement. P2 lands one
+concrete policy, `SkirmishAIPlayer`, described in [skirmish-ai.md §2.1](skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai). That is the shape an
+[A4](../track-a-foundations.md) seam needs: a stable interface with one reference
+implementation, sized so a very different implementation such as a neural net can sit behind the
+same interface and be selected or compared without caller changes.
 
-The axis of variation here is narrow and specific: how a player's per-tick strategic decisions
-get made (what to build, what to produce, when/where to attack). It is not the per-object AI
-(`AIUpdate`/`DozerAIUpdate`/`SupplyAIUpdate` etc. — locomotion, pathing, individual unit
-behavior); that stays exactly as it is. It is also not the actuation path — every implementation
-behind this seam still emits `Order`s through `OrderProcessor`, per the P2 actuation decision
-(skirmish-ai.md §2.3), so reproducibility (A2) and the recorded/replayed order stream are
-preserved regardless of which policy is running.
+The variation axis is narrow: how a player's per-tick strategic decisions are made. It is not
+per-object AI (`AIUpdate`/`DozerAIUpdate`/`SupplyAIUpdate`, etc.), and it is not the actuation
+path. Every implementation still emits `Order`s through `OrderProcessor`, per the P2 actuation
+decision in [skirmish-ai.md §2.3](skirmish-ai.md#23-how-the-ai-issues-actions--decision-orders-via-orderprocessor), so reproducibility (A2) and the recorded/replayed order stream stay intact.
 
 ---
 
 ## 2. Interface shape (design, not implementation)
 
-The seam sits at exactly the point `AIPlayer.OnDecisionTick()` occupies today: a coarse-cadence
-callback, driven from `AIPlayer.Update()` (ticked from the player loop), that reads game state
-and enqueues `Order`s. Today that method is a `protected virtual` hook overridden by
-`SkirmishAIPlayer`; the seam formalizes it as an injectable strategy rather than a subclass
-override, so a policy is a pluggable collaborator instead of a base-class override:
+The seam sits where `AIPlayer.OnDecisionTick()` sits today: a coarse-cadence callback, driven
+from `AIPlayer.Update()`, that reads game state and enqueues `Order`s. Today it is a
+`protected virtual` hook overridden by `SkirmishAIPlayer`; this seam turns it into an injectable
+strategy so a policy is a pluggable collaborator instead of a base-class override:
 
 ```csharp
 // Illustrative — not implemented by this doc.
@@ -72,38 +66,33 @@ public readonly struct AIDecisionContext
 ```
 
 `AIPlayer` becomes a thin host: it owns the tick cadence and dispatches to an
-`IAIDecisionPolicy`, instead of subclasses overriding `OnDecisionTick()` directly.
-`SkirmishAIPlayer`'s existing state machine (economy/build-out/production/military,
-skirmish-ai.md §2.1) becomes the reference implementation of this interface — a
-`RuleBasedAIDecisionPolicy` (or the `SkirmishAIPlayer` type itself is refactored to hold one) —
-proving the seam is real per the A4 definition ([seams.md](../seams.md#what-is-a-seam)).
+`IAIDecisionPolicy` instead of relying on subclass overrides. `SkirmishAIPlayer`'s existing state
+machine from [skirmish-ai.md §2.1](skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai) becomes the reference implementation — either as a
+`RuleBasedAIDecisionPolicy` or via a refactored `SkirmishAIPlayer` that holds one — proving the
+seam is real per the A4 definition ([seams.md](../seams.md#what-is-a-seam)).
 
 ### 2.1 Selection
 
-Which policy a player uses is config-selected, matching the A4 pattern used elsewhere in the
-registry (e.g. Model/animation import, Partition scheme): a `PlayerAIType`-adjacent setting
-(skirmish slot config, already the source of `isSkirmish`/`AIPlayer` vs `SkirmishAIPlayer`
-selection in `Player.CreateNew`) grows a policy identifier, and a small factory maps it to an
-`IAIDecisionPolicy` implementation. No caller of `AIPlayer` needs to know which policy is
-running.
+Policy selection is config-driven, matching other A4 seams. A `PlayerAIType`-adjacent setting in
+the skirmish slot config, which already drives `AIPlayer` vs `SkirmishAIPlayer` selection in
+`Player.CreateNew`, grows a policy identifier. A small factory maps that identifier to an
+`IAIDecisionPolicy`, and no caller of `AIPlayer` needs to know which policy is running.
 
 ### 2.2 Why this shape, specifically
 
-- Matches the existing actuation boundary exactly (orders via `OrderProcessor`), so it costs
-  nothing in reproducibility or replay compatibility — the seam is additive over what P2 already
-  decided (skirmish-ai.md §2.3), not a re-litigation of it.
-- Keeps the interface narrow (one method, one read-only context) so a neural-network
-  implementation is not forced to understand build lists, prerequisites, or unit kind flags —
-  it only needs a state encoding and an order-decoding step, both private to that
-  implementation.
-- Leaves cadence, persistence (`AIPlayer.Persist`), and dispatch (`EnqueueOrder(s)`) owned by
-  the host (`AIPlayer`), not duplicated per policy.
+- It matches the existing actuation boundary exactly: orders via `OrderProcessor`. The seam is
+  additive over P2's actuation decision, not a re-litigation of it.
+- It keeps the interface narrow: one method and one read-only context. A neural-network
+  implementation then needs only a private state encoding and order-decoding step, not engine
+  knowledge about build lists, prerequisites, or unit kind flags.
+- It keeps cadence, persistence (`AIPlayer.Persist`), and dispatch (`EnqueueOrder(s)`) in the
+  host (`AIPlayer`) instead of duplicating them per policy.
 
 ---
 
 ## 3. What this unblocks: a neural-network policy
 
-A neural-network implementation of `IAIDecisionPolicy` is the concrete motivating case:
+A neural-network implementation of `IAIDecisionPolicy` is the motivating case:
 
 - State encoding: `AIDecisionContext` → a fixed-size feature vector (economy state, owned unit
   counts by kind, enemy visibility, build-list progress, ...). This encoding is itself an
@@ -118,11 +107,10 @@ A neural-network implementation of `IAIDecisionPolicy` is the concrete motivatin
 
 ## 4. What this unblocks: evolutionary training via seeded weight populations
 
-The user's stated training goal — generate multiple seed weight vectors and see how each
-evolves via repeated simulation runs — maps directly onto the [A4 experiment
-harness](../track-a-foundations.md): the harness already selects/configures an implementation
-behind a seam, runs it, and reports results ([A5](visualization.md) visualizes them). Applied
-here:
+The user's training goal — generate multiple seed weight vectors and evolve them through repeated
+simulation runs — maps directly onto the [A4 experiment harness](../track-a-foundations.md), which
+already selects a seam implementation, runs it, and reports results. [A5](visualization.md)
+visualizes those results. Applied here:
 
 1. Population — a set of weight vectors (genomes), one `IAIDecisionPolicy` instance per genome.
 2. Fitness — a full headless match per genome (via the [P0 harness](playable-baseline-harness.md)
@@ -136,11 +124,11 @@ here:
    (best/mean/worst fitness, diversity) reported to the visualizer so evolution progress across
    seeds is inspectable, not just the final result.
 
-This training harness is not designed in detail here — it is downstream of this seam existing
-(§6) — but the seam is shaped so it drops in cleanly: nothing about "run N genomes across M
-seeded matches and collect fitness" requires any change to `AIPlayer`, `OrderProcessor`, or
-`GameOutcome`; it only requires the ability to construct an `IAIDecisionPolicy` from a weight
-vector and hand it to a player slot, which is exactly what §2.1's factory does.
+This doc does not design the training harness in detail; that follows the seam (§6). The seam is
+shaped so the harness drops in cleanly: running N genomes across M seeded matches and collecting
+fitness requires no change to `AIPlayer`, `OrderProcessor`, or `GameOutcome`. It only requires a
+way to construct an `IAIDecisionPolicy` from a weight vector and assign it to a player slot, which
+§2.1's factory provides.
 
 ---
 
@@ -162,8 +150,7 @@ vector and hand it to a player slot, which is exactly what §2.1's factory does.
 
 ## 6. Follow-on work (not in this doc)
 
-This doc formalizes the seam only. Concrete follow-ups, each sizeable enough to be its own
-task-card set once picked up:
+This doc formalizes the seam only. Follow-up work, each large enough for its own task-card set:
 
 - Extract `IAIDecisionPolicy`/`AIDecisionContext` and refactor `SkirmishAIPlayer` to implement
   it as the reference policy, with no behavior change (verified by the existing P2 tests:

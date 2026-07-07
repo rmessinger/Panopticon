@@ -8,10 +8,10 @@
 > The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references used to ground the design in the actual codebase. Skip it if you are reading for design intent.
 
 Goal: turn ReplaySketch from a fixed-vocabulary scenario sketcher into a general
-command-authoring + headless validation harness that can express any engine `Order`, over
-any object definition and player, and assert post-conditions/invariants/outcomes on a
-headless run. This is the substrate every other Track P phase validates through, and the base the
-[A5 result visualizer](visualization.md) later extends.
+command-authoring and headless validation harness that can express any engine `Order` over any
+object definition and player, then assert post-conditions, invariants, and outcomes on a headless
+run. Every other Track P phase validates through this substrate, and
+[A5 result visualizer](visualization.md) later extends it.
 
 ---
 
@@ -19,9 +19,9 @@ headless run. This is the substrate every other Track P phase validates through,
 
 Every other P phase needs a way to drive a scenario and check what happened. Today ReplaySketch
 can drive only five canned action shapes against two hardcoded factions, and it has no assertion
-layer at all — it exports a `.rep` and (optionally) round-trips the header. To validate "the AI
-built a base," "the player was defeated," or "money never went negative," we need (a) arbitrary
-commands and (b) a way to read final/peri-tick state and assert on it. P0 builds both.
+layer. It exports a `.rep` and optionally round-trips the header. To validate that the AI built a
+base, the player was defeated, or money never went negative, we need arbitrary commands and a way
+to read final or per-tick state and assert on it. P0 provides both.
 
 ---
 
@@ -29,27 +29,27 @@ commands and (b) a way to read final/peri-tick state and assert on it. P0 builds
 
 ### 3.1 MAUI ViewModel testability (prerequisite for harness unit coverage)
 `MainViewModel.LoadMapFromFolder` currently uses `Preferences.Default` (a MAUI static) to persist
-the installation path. This makes the unconditional-save behaviour (path is recorded before map load
-is attempted, not only when it succeeds) untestable without a MAUI runtime. Before the harness
-expands further, extract an `IPreferencesStore` interface and inject it into `MainViewModel`, with
-a `MemoryPreferencesStore` for tests and the `Preferences.Default` adapter for production. The
-non-MAUI test project (`OpenSage.Tools.ReplaySketch.Tests`) then covers the full `LoadMapFromFolder`
-contract.
+the installation path. That makes the unconditional-save behaviour, where the path is recorded
+before map load is attempted, untestable without a MAUI runtime. Before the harness expands
+further, extract an `IPreferencesStore` interface and inject it into `MainViewModel`, with a
+`MemoryPreferencesStore` for tests and the `Preferences.Default` adapter for production. The
+non-MAUI test project (`OpenSage.Tools.ReplaySketch.Tests`) then covers the full
+`LoadMapFromFolder` contract.
 
 `IPreferencesStore` is only the first MAUI seam. `MainViewModel` also binds directly to
 `MainThread.BeginInvokeOnMainThread` (background-load completion, `StartBackgroundLoad`
 `Program`/`MainViewModel.cs:180-190`) and to `System.Diagnostics.Process.Start` /
 `LauncherLocatorService` (`ExecutePlayInGame`, `MainViewModel.cs:250-273`). While those statics
-remain inline, the command flows that matter most for agents — `ValidateCommand`, `ExportCommand`,
+remain inline, the agent-critical command flows — `ValidateCommand`, `ExportCommand`,
 `PlayInGameCommand`, and the apply-results half of the background load — cannot be exercised
-headlessly, so a change to them has no fast, deterministic check. Abstract each behind a small
-injectable seam (a dispatcher that runs the continuation synchronously in tests; a process launcher
-that records the request instead of spawning), so the full `MainViewModel` command surface is
-unit-testable in `OpenSage.Tools.ReplaySketch.Tests` without a MAUI runtime. This is the testability
-substrate the agent validation playbook (§3.7) documents.
+headlessly, so changes to them have no fast deterministic check. Abstract each behind a small
+injectable seam, a dispatcher that runs the continuation synchronously in tests and a process
+launcher that records the request instead of spawning, so the full `MainViewModel` command surface
+is unit-testable in `OpenSage.Tools.ReplaySketch.Tests` without a MAUI runtime. This is the
+foundation the agent validation playbook (§3.7) documents.
 
 ### 3.2 Open command model (replaces the closed `ActionType`)
-Introduce a `CommandSpec` (working name) that maps directly onto an engine `Order` rather than a
+Introduce a `CommandSpec` (working name) that maps directly to an engine `Order` instead of a
 fixed gameplay verb:
 
 - `OrderType` (the full enum) + `PlayerIndex` + an ordered list of typed `CommandArgument`s mirroring
@@ -68,17 +68,17 @@ fixed gameplay verb:
   authored and reactive ordering.
 
 ### 3.3 Generic definition resolution (removes hardcoded `KnownDefinitions`)
-Replace the hardcoded USA/GLA name→hash table (`ReplayExporter.cs:21-32`) with resolution against the
-loaded `AssetStore` by definition name (the same `AssetHash.GetHash` path, but for any object/
-player). This makes the harness faction-agnostic and is a prerequisite for authoring any baseline
-match (any side, any unit/structure).
+Replace the hardcoded USA/GLA name→hash table (`ReplayExporter.cs:21-32`) with definition-name
+resolution against the loaded `AssetStore`, using the same `AssetHash.GetHash` path for any
+object or player. This makes the harness faction-agnostic and is required for authoring any
+baseline match.
 
 ### 3.4 Validation / assertion layer (new)
-A declarative assertion set attached to a scenario, evaluated headlessly. Authoring shape
-(Decision, see [open-questions](../open-questions.md)): assertions are JSON predicates (e.g.
-`{path: "player[1].money", op: ">=", value: 0}`) over a fixed path/operator vocabulary, with an
-escape hatch of code-defined (C#) predicates (registered by name, referenced from the scenario)
-for invariants that exceed the vocabulary. The three assertion kinds:
+Add a declarative assertion set to each scenario and evaluate it headlessly. Authoring shape,
+settled in [open-questions](../open-questions.md): assertions are JSON predicates such as
+`{path: "player[1].money", op: ">=", value: 0}` over a fixed path and operator vocabulary, with a
+code-defined C# escape hatch for invariants that exceed that vocabulary. The three assertion kinds
+are:
 
 - Outcome assertions — match terminated; winner/loser/team; reason. (Consumes P3's queryable
   `GameOutcome` — see [victory-defeat.md](victory-defeat.md).)
@@ -91,15 +91,15 @@ for invariants that exceed the vocabulary. The three assertion kinds:
   run loop exits. Result is a structured pass/fail report (assertion id, expected, actual, frame).
 
 ### 3.5 Headless run-and-assert entry point
-A single callable surface (CLI + library) that cheap agents and CI use:
+Expose one callable surface, CLI and library, for agents and CI:
 `scenario/command file in → run headless → assertion report out (exit code + machine-readable JSON)`.
-This wraps `RunHeadless`'s boot/loop (`Program.cs:195-270`) plus the §3.4 evaluator, and replaces the
-current bespoke "exit on enemy-CC destruction" termination with P3's real outcome signal.
+It wraps `RunHeadless`'s boot and loop (`Program.cs:195-270`) plus the §3.4 evaluator, and replaces
+the bespoke enemy-CC-destruction termination with P3's real outcome signal.
 
 ### 3.5b Scenario matrix runner
-A layer on top of P0-5 that accepts a `ScenarioMatrix` file instead of a single scenario. The
-matrix declares named sweep axes; the runner expands them into individual runs and aggregates
-the results into a single keyed report.
+Add a layer on top of P0-5 that accepts a `ScenarioMatrix` file instead of a single scenario.
+The matrix declares named sweep axes; the runner expands them into individual runs and aggregates
+the results into one keyed report.
 
 Data model (`OpenSage.Tools.ReplaySketch.Core/Model`):
 - `ScenarioMatrix` — wraps a `BaseScenario` template, one or more named `SweepAxes`, optional
@@ -120,7 +120,7 @@ Matrix expander algorithm:
    `AssertionTemplates` to produce a concrete `(ReplayScenario, AssertionSet)` pair.
 5. Key each cell by its axis binding (e.g. `{faction: "USA", map: "AlpineAssault"}`).
 
-Each cell runs through the P0-5 headless runner and P0-4 assertion evaluator independently.
+Each cell runs independently through the P0-5 headless runner and P0-4 assertion evaluator.
 
 Output (aggregate JSON report):
 ```
@@ -142,23 +142,21 @@ Output (aggregate JSON report):
 Exit code is 0 iff all cells pass. The CLI/library entry point accepts either a single
 `ReplayScenario` or a `ScenarioMatrix`; both go through P0-4 and P0-5 internally.
 
-This is the primitive that A5-2 (experiment matrix tooling/visualizer) builds on. A5-2 adds
-a result replayer, graphing, and multi-run comparison; P0-5b only provides the expansion,
-execution, and keyed output.
+This is the primitive that A5-2 builds on. A5-2 adds result replay, graphing, and multi-run
+comparison; P0-5b only provides expansion, execution, and keyed output.
 
 ### 3.6 Scale (forward link)
-The model must support programmatic/procedural generation of large command sets (not hand-entry)
-and efficient `.rep` emission, so the harness scales toward sim-scale runs. Full authoring/replay
-scaling (streaming, bounded-memory loading, throughput benchmarks) is finalized under
-[A5-5](visualization.md); P0 only needs the model to not assume small, hand-authored scenarios.
+The model must support programmatic or procedural generation of large command sets and efficient
+`.rep` emission so the harness scales toward sim-scale runs. Full authoring and replay scaling,
+including streaming, bounded-memory loading, and throughput benchmarks, is finalized under
+[A5-5](visualization.md); P0 only needs the model to avoid assuming small hand-authored scenarios.
 
 ### 3.7 Agent validation playbook (new)
-A recurring obstacle for low-effort/automated agents working on ReplaySketch is the absence of a
-reliable, specific, repeatable way to validate a change — particularly in the MAUI layer, which has
-no automated coverage and cannot be driven by a windowless agent. The renderer side solves this with
-`OpenSage.Tools.TestHarness/AGENTS.md` (a documented visual-validation workflow); ReplaySketch needs
-the equivalent for command/scenario authoring and the MAUI tool. P0 adds a checked-in agent guide,
-`src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`, that documents the exact, runnable validation loop:
+ReplaySketch lacks a reliable, specific, repeatable validation loop for low-effort and automated
+agents, especially in the MAUI layer, which has no automated coverage and cannot be driven by a
+windowless agent. The renderer side already has this in `OpenSage.Tools.TestHarness/AGENTS.md`.
+P0 adds the equivalent guide for command or scenario authoring and the MAUI tool:
+`src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`, documenting the exact runnable validation loop:
 
 - The Core-vs-MAUI split (all logic lives in `.Core`; MAUI only hosts), so agents know which changes
   are headlessly checkable and which need the MAUI runtime.
@@ -170,10 +168,10 @@ the equivalent for command/scenario authoring and the MAUI tool. P0 adds a check
   not headlessly reachable and how to add coverage when touching the MAUI layer.
 - A step-by-step checklist and a common-failure-mode table mirroring the TestHarness guide.
 
-The playbook is authored now and is honest about current state: it documents the test/screenshot/format
-loop that exists today and marks the run-and-assert flow (P0-4/P0-5) as forthcoming, tightening as
-those phases land. It is the documented surface for "how do I validate a ReplaySketch change" — the
-single answer to the persistent agent-validation gap.
+The playbook is authored now and reflects current state: it documents today's test,
+screenshot, and format loop and marks the P0-4/P0-5 run-and-assert flow as forthcoming,
+tightening as those phases land. It is the documented answer to how a ReplaySketch change is
+validated.
 
 ---
 
@@ -205,51 +203,48 @@ single answer to the persistent agent-validation gap.
 | P0-7. Agent validation playbook | Check in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, screenshot mode for visual verification, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Done |
 
 ## 6. Sequencing & dependencies
-- P0-1a (screenshot mode) is complete; it is a standalone agent-tooling change independent of
-  the command-model work and requires no other sub-phase.
-- P0-1→P0-3 are the authoring generalization; P0-4/P0-5 are the validation half and can start once
+- P0-1a (screenshot mode) is complete, standalone agent tooling, and independent of the
+  command-model work.
+- P0-1 through P0-3 generalize authoring. P0-4 and P0-5 cover validation and can start once
   P0-1's model exists.
-- P0-1c continues the MAUI testability seam started by P0-1b; both are independent of the
-  command-model work and can land any time.
+- P0-1c continues the MAUI testability seam started by P0-1b and can land independently of the
+  command-model work.
 - P0-4's outcome assertions depend on P3 ([victory-defeat.md](victory-defeat.md)) for a real
-  `GameOutcome`; until then P0-4 can assert state/invariants only.
-- P0-5b depends on P0-5 (single-scenario runner) being in place; it wraps it.
-- P0-5b is the final P0 sub-phase before P0-6 (procedural scale).
-- A5-2 (experiment matrix tooling/visualizer) builds on P0-5b; A5-2 does not re-implement
-  expansion or execution.
-- P0-7 (the playbook) is done; it now documents the screenshot mode as the primary visual
-  verification method and the test/format loop.
-- P0 unblocks P3/P6/P7 (they author + assert through it) and is later extended by
-  [A5-3](visualization.md) (visualizer) and [A5-5](visualization.md) (scale).
+  `GameOutcome`; until then P0-4 can assert state and invariants only.
+- P0-5b depends on and wraps P0-5, and is the final P0 sub-phase before P0-6.
+- A5-2 builds on P0-5b and does not re-implement expansion or execution.
+- P0-7 is done and documents the screenshot mode plus the test and format loop.
+- P0 unblocks P3, P6, and P7 and is later extended by [A5-3](visualization.md) and
+  [A5-5](visualization.md).
 
 ## 7. Resolved design questions
-- Runtime object references — Decided: implicit auto-handles keyed to the producing command
-  (opt-in explicit names) for script-created objects; query selectors
-  (faction/relationship/definition/proximity) for world/enemy objects. Generalizes
+- Runtime object references — Decided: implicit auto-handles keyed to the producing command,
+  with opt-in explicit names, for script-created objects; query selectors
+  (faction/relationship/definition/proximity) for world or enemy objects. Generalizes
   `AfterActionTiming`. See [open-questions](../open-questions.md).
-- Assertion DSL shape — Decided: declarative JSON predicates over a fixed path/operator
-  vocabulary, with a code-defined (C#) predicate escape hatch for complex invariants. See
+- Assertion DSL shape — Decided: declarative JSON predicates over a fixed path and operator
+  vocabulary, with a code-defined C# predicate escape hatch for complex invariants. See
   [open-questions](../open-questions.md).
 - MAUI validation reach + agent playbook — Decided: ReplaySketch logic stays in `.Core` and is
-  validated headlessly via `OpenSage.Tools.ReplaySketch.Tests` (controller/renderer/golden/service)
-  plus the P0-5 run-and-assert flow; MAUI-only behaviour is minimized behind injectable seams
-  (P0-1b/P0-1c) rather than UI-automated, and the documented surface agents follow is a checked-in
-  `ReplaySketch.Maui/AGENTS.md` playbook (P0-7). See [open-questions](../open-questions.md).
-- MAUI screenshot mode — Decided (P0-1a): agents capture MAUI-layer changes via an
-  env-var-triggered screenshot-and-exit mode (`REPLAYSKETCH_SCREENSHOT_PATH`), using
+  validated headlessly via `OpenSage.Tools.ReplaySketch.Tests` plus the P0-5 run-and-assert flow.
+  MAUI-only behaviour is minimized behind injectable seams (P0-1b/P0-1c), and the documented
+  surface agents follow is the checked-in `ReplaySketch.Maui/AGENTS.md` playbook (P0-7). See
+  [open-questions](../open-questions.md).
+- MAUI screenshot mode — Decided (P0-1a): agents capture MAUI-layer changes via an env-var-
+  triggered screenshot-and-exit mode (`REPLAYSKETCH_SCREENSHOT_PATH`) using
   `Microsoft.Maui.Media.Screenshot.Default.CaptureAsync()`. No external tooling, screen-recording
-  permission, or human interaction required. Implemented in `MainPage.OnLoaded`. See
+  permission, or human interaction is required. Implemented in `MainPage.OnLoaded`. See
   [open-questions](../open-questions.md).
 - ScenarioMatrix / sweep primitive placement — Decided (P0-5b): the cartesian-product matrix
-  expansion primitive belongs in P0 (P0-5b), not deferred to A5. A5-2 adds tooling and
-  visualization on top; it does not re-implement expansion or execution. All axis dimensions
-  (OrderType, faction, map, assertion parameters) are in scope; the matrix is built out
-  incrementally alongside implementation. See [open-questions](../open-questions.md).
+  expansion primitive belongs in P0, not deferred to A5. A5-2 adds tooling and visualization on
+  top; it does not re-implement expansion or execution. All axis dimensions are in scope, and the
+  matrix is built out incrementally alongside implementation. See
+  [open-questions](../open-questions.md).
 
 ## 8. P0 Acceptance Suite
 
-The authoritative pass/fail definition for "P0 is done." Every entry maps to a stub test
-that fails with `NotImplementedException` until the sub-phase lands.
+This is the authoritative pass/fail definition for P0. Every entry maps to a stub test that
+fails with `NotImplementedException` until the sub-phase lands.
 
 | Test class | Project | Sub-phase | What it proves |
 |---|---|---|---|
@@ -267,9 +262,9 @@ Stubs live at:
 - `src/OpenSage.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`
 - `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
 
-P0 is considered complete when all stubs pass and no test in either file throws
-`NotImplementedException`. The §5 sub-phase table Status column is the per-item tracker;
-this table is the aggregate gate.
+P0 is complete when all stubs pass and no test in either file throws
+`NotImplementedException`. The §5 sub-phase table tracks each item; this table is the aggregate
+gate.
 
 ## 9. Architecture Diagrams
 
@@ -470,8 +465,8 @@ classDiagram
 
 ### 9.2 Sequence diagram — run-and-assert flow (single scenario)
 
-Shows the flow through P0-5 (`RunAndAssertEntryPoint`) for a single `ReplayScenario`.
-The matrix runner (P0-5b) wraps this in a loop over expanded cells.
+Shows the P0-5 flow for a single `ReplayScenario`. The P0-5b matrix runner wraps it in a loop
+over expanded cells.
 
 ```mermaid
 sequenceDiagram

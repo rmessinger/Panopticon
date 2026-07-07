@@ -7,22 +7,22 @@
 >
 > The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
 
-Goal: give `SkirmishAIPlayer`/`AIPlayer` an actual strategic decision loop so a computer
-opponent plays a complete, legal skirmish: build a base from build lists, manage economy
+Goal: give `SkirmishAIPlayer`/`AIPlayer` a strategic decision loop so a computer opponent
+plays a complete, legal skirmish: build a base from build lists, manage economy
 (dozers/workers + supply), produce units, and mount attacks/defense. Difficulty need not be
-tournament-grade — it must reach a terminating, winnable/losable game.
+tournament-grade; it must reach a terminating, winnable/losable game.
 
-This deep dive also covers the construction/production execution surface (P5) the AI drives,
-since the two are tightly coupled: P2 is the decision layer, P5 is the mechanism it actuates.
+This deep dive also covers the construction/production execution surface (P5) that P2 drives.
+P2 is the decision layer; P5 is the mechanism it actuates.
 
 ---
 
 ## 2. Design
 
 ### 2.1 Add a strategic decision loop to the skirmish AI
-Give `SkirmishAIPlayer` (and/or `AIPlayer`) an `Update(...)` driven from the player tick (the same
-place `PlayerManager`/`GameLogic` advance players each frame). The loop is a simple, legible state
-machine running at a coarse cadence (every N logic frames, not every frame):
+Give `SkirmishAIPlayer` (and/or `AIPlayer`) an `Update(...)` driven from the player tick, where
+`PlayerManager`/`GameLogic` already advance players each frame. The loop is a coarse-cadence state
+machine that runs every N logic frames, not every frame:
 
 1. Economy — ensure a supply structure + enough harvesters; if income is low and affordable,
    queue another harvester/supply building.
@@ -58,7 +58,7 @@ Two actuation styles were considered:
   accepted). Settled before P2-2. See [open-questions](../open-questions.md).
 
 ### 2.4 P5 — construction/production completeness
-The mechanism is largely present (§1.4). P5's work is gap-closing + proving both sides:
+The mechanism is largely present (§1.4). P5 closes the remaining gaps and verifies both paths:
 - Confirm construction debits `BankAccount` (the audit could not confirm production/construction
   debits money — verify in `ProductionUpdate`/build paths; add if missing).
 - Confirm prerequisite/tech gating holds for AI-issued builds the same as for the player
@@ -73,10 +73,8 @@ The mechanism is largely present (§1.4). P5's work is gap-closing + proving bot
 ## 3. Integration surface
 - AI decision (new): an `Update(...)` on `SkirmishAIPlayer`/`AIPlayer`, ticked from the player
   loop; reads `Player.BankAccount`, `AIData.SkirmishBuildLists`, relationships (P1).
-- Actuation (decided — orders): the AI emits `Order`s via `OrderProcessor.Process` (the same path a
-  human uses), not the direct API (`GameLogic.CreateObject` / `GameObject.PrepareConstruction` /
-  `ProductionUpdate.QueueProduction/QueueUpgrade` / `IBuilderAIUpdate.SetBuildTarget/SetRepairTarget`),
-  so AI actions enter the recorded order stream (§2.3).
+- Actuation: the AI emits `Order`s via `OrderProcessor.Process`, not the direct API, so AI
+  actions enter the recorded order stream (§2.3).
 - Gating: `Player.CanProduceObject`, `GameObject.CanConstructUnit/CanEnqueueUpgrade`.
 - Targets: consume the foundational [P1-5](skirmish-setup.md) per-`Player` owned-object set for
   enemy target selection (no all-objects scan).
@@ -96,10 +94,9 @@ The mechanism is largely present (§1.4). P5's work is gap-closing + proving bot
 - P2 depends on P1 (related, spawned players + the foundational [P1-5](skirmish-setup.md)
   ownership tracking that P2-4 uses for target selection), P4 (a working economy to spend), and
   P5 (construction/production mechanism). P2-1 can scaffold in parallel; P2-2+ need P4/P5.
-- Actuation = orders (§2.3, decided): the AI emits `Order`s through `OrderProcessor`, so its actions
-  enter the recorded order stream — this reuses the engine order path the
-  [P0 harness](playable-baseline-harness.md) drives, and P2's recorded-stream check runs through P0
-  (a hard requirement for A2/B reproducibility).
+- Actuation = orders (§2.3, decided): the AI emits `Order`s through `OrderProcessor`, reusing the
+  engine order path the [P0 harness](playable-baseline-harness.md) drives. P2's recorded-stream
+  check therefore runs through P0, which A2/B reproducibility requires.
 - P2 feeds P7 (the AI must "make progress" — an asserted invariant in the
   [P0 harness](playable-baseline-harness.md)).
 
@@ -107,15 +104,14 @@ The mechanism is largely present (§1.4). P5's work is gap-closing + proving bot
 - Actuation style — Decided: orders via `OrderProcessor` (§2.3), so AI actions enter the
   recorded stream. See [open-questions](../open-questions.md).
 - AI competence scope — Decided: minimum legal opponent in Track P
-  (build/economize/produce/≥1 attack → terminating win/lose); structured for configurable difficulty
-  tiers but only the minimum tier is implemented now. Richer behavior is later expansion. See
-  [open-questions](../open-questions.md).
-- AI architecture depth — single state machine now; formalized as a candidate
-  [A4](../track-a-foundations.md) experiment seam (the configurable difficulty tiers this scope
-  leaves stubbed are the natural variation axis), not a P2 requirement — consistent with the scope
-  decision above. Design: [pluggable-ai.md](pluggable-ai.md) (`IAIDecisionPolicy`, with this
-  phase's `SkirmishAIPlayer` state machine as the reference implementation). Not implemented by
-  P2; see that doc's §6 for follow-on work.
+  (build/economize/produce/≥1 attack → terminating win/lose). The design leaves room for
+  configurable difficulty tiers, but only the minimum tier is implemented now. Richer behavior is
+  later expansion. See [open-questions](../open-questions.md).
+- AI architecture depth — single state machine now. Formalize pluggability later as the
+  candidate [A4](../track-a-foundations.md) experiment seam; the stubbed difficulty tiers are the
+  natural variation axis. Design: [pluggable-ai.md](pluggable-ai.md)
+  (`IAIDecisionPolicy`, with this phase's `SkirmishAIPlayer` state machine as the reference
+  implementation). Not implemented by P2; see that doc's §6 for follow-on work.
 - Where `BankAccount` is debited for construction — open verification task (not a design
   choice): locate/confirm before P5-1.
 
