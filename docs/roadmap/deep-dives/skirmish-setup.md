@@ -3,14 +3,13 @@
 > Expands phase P1 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the skirmish-setup design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if reading for design intent.
 
-Goal: make starting a single-player skirmish vs. ≥1 AI work end-to-end without networking:
-players created, factions/colors/teams assigned, start positions resolved, starting buildings/units
-spawned, and player relationships wired (allies / enemies / neutrals). After P1, a match boots with
-a human + AI players correctly related. Behavior (AI) and outcome (victory) come in P2/P3.
+Purpose: make starting a single-player skirmish against one or more AI players work end to end
+without networking. The design covers player creation, faction/team assignment, start positions,
+and relationship wiring.
 
 ---
 

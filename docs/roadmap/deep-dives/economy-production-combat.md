@@ -5,19 +5,17 @@
 > [Large-Scale Simulation Roadmap](../README.md).
 >
 > P5 (construction/production mechanism) is covered in [`skirmish-ai.md`](skirmish-ai.md) §1.4/§2.4,
-> since the AI drives it. This doc covers the economy loop (P4) and combat/command (P6). The audit
-> found both mostly present but unproven, so these phases are largely verify-and-close-gaps rather
-> than greenfield.
+> since the AI drives it. This document covers the economy loop (P4) and combat/command (P6).
 >
-> Audience: human — design intent and architecture diagrams.
+> Audience: human overview of the P4/P6 verification design.
 
 ---
 
 ## P4 — Economy loop end-to-end
 
-Goal: verify and complete the full money loop: harvest/supply collection → deposit to
-`BankAccount` → fund construction and production → spend. Close gaps in supply-truck/worker/dozer
-cycles and power.
+Purpose: verify and complete the full money loop: harvest/supply collection → deposit to
+`BankAccount` → fund construction and production → spend. The design closes gaps in
+supply-truck/worker/dozer cycles and power.
 
 ### Current code (grounded) — mostly present
 - Money state: `BankAccount.Withdraw(...)` (`Logic/BankAccount.cs:22-38`) and `Deposit(...)`

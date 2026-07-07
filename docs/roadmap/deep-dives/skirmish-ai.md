@@ -1,16 +1,15 @@
 # Deep Dive: Skirmish AI Opponent (P2)
 
 > Expands phase P2 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
-> the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+> the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the skirmish-AI design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if reading for design intent.
 
-Goal: give `SkirmishAIPlayer`/`AIPlayer` a strategic decision loop so a computer opponent
-plays a complete, legal skirmish: build a base from build lists, manage economy
-(dozers/workers + supply), produce units, and mount attacks/defense. Difficulty need not be
-tournament-grade; it must reach a terminating, winnable/losable game.
+Purpose: give `SkirmishAIPlayer`/`AIPlayer` a strategic decision loop so a computer opponent can
+play a complete, legal skirmish. The design covers base build-out, economy management,
+unit production, and attack/defense decisions.
 
 This deep dive also covers the construction/production execution surface (P5) that P2 drives.
 P2 is the decision layer; P5 is the mechanism it actuates.

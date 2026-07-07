@@ -1,17 +1,15 @@
 # Deep Dive: ReplaySketch Arbitrary-Command Harness (P0)
 
 > Expands phase P0 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
-> the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+> the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the harness design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references used to ground the design in the actual codebase. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references used to ground the design in the actual codebase. Skip it if reading for design intent.
 
-Goal: turn ReplaySketch from a fixed-vocabulary scenario sketcher into a general
-command-authoring and headless validation harness that can express any engine `Order` over any
-object definition and player, then assert post-conditions, invariants, and outcomes on a headless
-run. Every other Track P phase validates through this substrate, and
-[A5 result visualizer](visualization.md) later extends it.
+Purpose: turn ReplaySketch into a general command-authoring and headless validation harness. The
+scope covers command modeling, object resolution, assertions, and a run-and-assert entry point that
+later phases and the visualization layer share.
 
 ---
 

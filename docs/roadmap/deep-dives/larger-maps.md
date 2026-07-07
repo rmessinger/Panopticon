@@ -3,11 +3,10 @@
 > Expands phase B4a of [Track B — Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams.
+> Audience: human overview of the larger-maps design.
 
-The first concrete scale milestone is bigger maps, pursued through the WorldBuilder
-editor (`OpenSage.Tools.WorldBuilder.`). It is where maps are authored and the fastest
-path to exercising large terrain end-to-end: author → save `.map` → play.
+Purpose: scale WorldBuilder and map loading toward very large maps and large populations. The
+design treats terrain streaming and large-object authoring as the core requirements.
 
 > B4a assumes that WorldBuilder's basic author → save → load → play round-trip already
 > works at normal map sizes. That baseline is established in [A5-6](visualization.md), an

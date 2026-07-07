@@ -1,34 +1,21 @@
 # Deep Dive: Distributed Simulation
 
 > Expands phase B6 of [Track B — Scale](../track-b-scale.md). Part of the
-> [Large-Scale RTS Roadmap](../README.md). First-pass design — refine as phases land.
+> [Large-Scale RTS Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the distributed-simulation design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current-state hooks appendix](#appendix-current-state-hooks--agent-context)) contains code-level details about what the implementation builds on. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current-state hooks appendix](#appendix-current-state-hooks--agent-context)) contains code-level details about what the implementation builds on. Skip it if reading for design intent.
 
-Goal: run one simulation larger than a single machine can handle by partitioning the world
-across processes or machines.
+Purpose: run one simulation beyond a single machine by partitioning the world across processes or
+machines. The design uses spatial sharding and domain-parameterized handoff rules.
 
-Decision: spatial sharding. One world is partitioned by region across nodes, and each node
-simulates the entities in its region or regions. This was chosen over lockstep peers because
-lockstep makes every node simulate the whole world, capping total scale at one machine's
-capacity. Spatial sharding trades that ceiling for cross-shard handoff and boundary
-synchronization complexity. See [open-questions.md](../open-questions.md) for the trade-off
-record.
-
-The design is domain-parameterized, not RTS-only. Partitioning, halo derivation, handoff, and
-interaction resolution are driven by the [Simulation Domain Model seam (A4)](../track-a-foundations.md), so the infrastructure also serves non-RTS simulations. The
-domain's topology model selects the partitioning scheme:
-- 2-D spatial grid for RTS / open-field battles (the reference domain; built on
-  [B4a-5 chunks](larger-maps.md)).
-- Graph/network partitioning for transportation/logistics sims (roads, rail, utility
-  networks) — partition the graph (e.g. edge-cut / METIS-style), boundaries are cut edges, halos
-  are N-hop neighbourhoods rather than radius discs.
-- Zone/region adjacency for city builders — partition by districts; cross-border coupling is
-  resource/utility/traffic flow rather than spatial proximity.
-RTS spatial sharding is the first implementation; the rest of this doc notes where each problem
-is domain-parameterized.
+The design is domain-parameterized rather than RTS-only. Partitioning, halo derivation, handoff,
+and interaction resolution are driven by the [Simulation Domain Model seam (A4)](../track-a-foundations.md), so the infrastructure also serves non-RTS simulations. The domain's topology model selects the partitioning scheme:
+- 2-D spatial grid for RTS/open-field battles (the reference domain; built on [B4a-5 chunks](larger-maps.md)).
+- Graph/network partitioning for transport/logistics simulations (roads, rail, utility networks): partition the graph and treat cut edges as boundaries.
+- Zone/region adjacency for city builders: partition by districts and treat resource/utility/traffic flow as cross-border coupling.
+RTS spatial sharding is the first implementation; the rest of this document notes where each problem is domain-parameterized.
 
 ---
 

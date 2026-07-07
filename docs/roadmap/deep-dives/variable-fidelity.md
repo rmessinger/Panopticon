@@ -3,12 +3,11 @@
 > Expands phase B7 of [Track B — Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams.
+> Audience: human overview of the variable-fidelity design.
 
-Goal: scale total simulated unit counts by spending compute in proportion to how much each unit
-matters right now. Less-important units run more cheaply. This is an experimental toolkit of
-fidelity-reduction techniques rather than a single mechanism, and it is the simulation-side
-analogue of rendering LOD.
+Purpose: trade simulation detail for scale by lowering fidelity for less-important units. The
+design centers on a composable toolkit of fidelity-reduction techniques rather than a single
+mechanism.
 
 ---
 

@@ -1,18 +1,14 @@
 # Deep Dive: Unit-Contract Validation (P6b)
 
 > Expands phase P6b of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
-> the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+> the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the unit-contract design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if reading for design intent.
 
-Goal: verify that every unit archetype in the reference game (Generals/ZH) satisfies its full
-behavioural contract: can be produced, moves/positions correctly, attacks with each weapon mode,
-executes every special ability/power, and dies with correct ownership cleanup. One representative
-unit per archetype is exercised end-to-end via the [P0 harness](playable-baseline-harness.md),
-producing one scenario file and one assertion set per archetype. These scenarios become part of
-P7.
+Purpose: verify unit archetypes in the reference game through repeatable headless scenarios. The
+design uses one contract per archetype and feeds the P7 regression suite.
 
 ---
 

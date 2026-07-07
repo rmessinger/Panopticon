@@ -1,18 +1,14 @@
 # Deep Dive: Scenario Authoring & Visualization
 
 > Expands phase A5 of [Track A — Foundations](../track-a-foundations.md). Part of the
-> [Large-Scale RTS Roadmap](../README.md). First-pass design — refine as phases land.
+> [Large-Scale RTS Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams.
+> Audience: human overview of the authoring and visualization design.
 
-Goal: provide the human- and agent-facing surface of the experiment framework: author a
-simulation scenario on the way in, then replay, analyze, and compare results on the way out. This
-bookends the [headless/FTRT host (A1)](headless-host.md): A1 runs experiments and emits
-recordings; A5 authors what it runs and interprets what it produced.
+Purpose: provide the authoring and analysis surface for the experiment framework. The design covers
+scenario authoring, sweep execution, replay, and result comparison for the host's recorded runs.
 
-Both ends are domain-parameterized via the [Simulation Domain Model seam (A4)](../track-a-foundations.md). The same authoring and visualization machinery serves RTS
-battles, city builders, and transportation/logistics sims, with the domain supplying entity kinds,
-topology, and metrics. RTS is the reference domain.
+Both ends are domain-parameterized via the [Simulation Domain Model seam (A4)](../track-a-foundations.md). The same authoring and visualization machinery serves RTS battles, city builders, and transportation/logistics simulations, with the domain supplying entity kinds, topology, and metrics. RTS is the reference domain.
 
 ---
 

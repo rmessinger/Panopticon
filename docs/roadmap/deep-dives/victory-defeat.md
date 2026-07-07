@@ -3,14 +3,12 @@
 > Expands phase P3 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the victory and defeat design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if reading for design intent.
 
-Goal: build the missing match-end system: detect player defeat, declare win/lose, drive end-of-match
-flow, and expose the result as a queryable `GameOutcome` so headless runs, the
-[P0 harness](playable-baseline-harness.md), can assert on it. This is the largest correctness gap in
-the baseline game.
+Purpose: add a first-class match-end result that can be asserted in headless runs. The design covers
+outcome state, defeat/win detection, and end-of-match flow.
 
 ---
 

@@ -1,18 +1,16 @@
 # Deep Dive: Pluggable AI Decision Policy
 
 > Expands phase A4 of [Track A — Foundations](../track-a-foundations.md). Part of the
-> [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+> [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the
+> Audience: human overview of the pluggable-AI design. Code references are in the
 > agent-context appendix at the bottom.
 
-Goal: make a player's strategic decision-making its own A4 experiment seam, so the rule-based
-skirmish AI from [P2](../track-p-playable-baseline.md) is one swappable implementation rather than
-the only one. That is what unblocks a learned policy, especially a small neural network whose
-weights are evolved through many seeded self-play matches, without touching `Player`,
-`OrderProcessor`, or any other caller that treats the AI as an opaque decision-maker.
+Purpose: make a player's strategic decision-making its own A4 experiment seam. The design keeps
+rule-based skirmish AI from [P2](../track-p-playable-baseline.md) as one swappable implementation
+rather than the only one.
 
-This doc designs the seam only. It does not implement a neural-network policy or a training
+This document designs the seam only. It does not implement a neural-network policy or a training
 harness; §6 covers the follow-on work it unblocks.
 
 ---
