@@ -136,6 +136,7 @@ details below it.
 | [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
 | [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
+| [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes the stubbed water/ground pathfinding layer and adds ship combat/production, validated against BFME2's existing ship content. Gated on Track P only. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `OpenSage.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
 | [`implementation-checklist.md`](implementation-checklist.md) | human | Single granular change list: every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
@@ -160,6 +161,7 @@ details below it.
 | [`deep-dives/distributed-simulation.md`](deep-dives/distributed-simulation.md) | Track B phase B6 — Distributed simulation (spatial sharding). |
 | [`deep-dives/variable-fidelity.md`](deep-dives/variable-fidelity.md) | Track B phase B7 — Variable simulation fidelity (scaling toolkit). |
 | [`deep-dives/tech-tree-era-progression.md`](deep-dives/tech-tree-era-progression.md) | Track D phases D1/D2 — Tech-tree/prerequisite-graph generalization and era/age progression. |
+| [`deep-dives/naval-warfare.md`](deep-dives/naval-warfare.md) | Track E phases E1/E2 — Water/ground terrain passability and ship combat. |
 
 ---
 
@@ -190,6 +192,9 @@ are roughly ordered; cross-track dependencies are noted in each track doc.
   prerequisite-graph generalization · D2 era/age progression mechanic · D3 external content
   ingestion (ModCollector + Track C) · D4 reference non-SAGE scenario. Depends on Track P
   (D1/D2) and Track C/ModCollector (D3/D4).
+- [Track E — Naval Warfare](track-e-naval-warfare.md): E1 water/ground terrain passability ·
+  E2 ship combat · E3 naval production (`PORT`) · E4 reference naval scenario. Depends on Track
+  P only.
 
 ### Cross-track dependencies
 
@@ -202,6 +207,9 @@ are roughly ordered; cross-track dependencies are noted in each track doc.
   feeds the same runtime `Model`/`ModelInstance` types that the rendering refactor expects.
 - Track D (D1/D2) depends only on Track P; D3/D4 additionally depend on Track C (C1) and the
   standalone [ModCollector tool](plans/mod-collector.md).
+- Track E depends only on Track P; it finishes an existing stub and exercises BFME2's existing
+  ship content, so it needs neither Track C nor ModCollector. B4a (larger maps) should coordinate
+  terrain streaming with E1's water-depth data once both land.
 
 ---
 
@@ -241,6 +249,16 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 | D3 — External content ingestion | `░░░░░░░░░░` | 0 / 1 |
 | D4 — Reference non-SAGE scenario | `░░░░░░░░░░` | 0 / 1 |
 | Track D total | `░░░░░░░░░░` | 0 / 4 |
+
+### Track E — Naval Warfare (gated on Track P only)
+
+| Phase | Progress | Items |
+|---|---|---|
+| E1 — Water/ground terrain passability | `░░░░░░░░░░` | 0 / 1 |
+| E2 — Ship combat | `░░░░░░░░░░` | 0 / 1 |
+| E3 — Naval production | `░░░░░░░░░░` | 0 / 1 |
+| E4 — Reference naval scenario | `░░░░░░░░░░` | 0 / 1 |
+| Track E total | `░░░░░░░░░░` | 0 / 4 |
 
 ---
 

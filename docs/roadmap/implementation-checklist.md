@@ -557,3 +557,24 @@ Track C (C1) and the standalone [ModCollector tool](plans/mod-collector.md).
 - [ ] D4 Reference non-SAGE scenario (small tech tree + one era transition, via ReplaySketch).
   - AC: TBD — a ReplaySketch-authored scenario builds through a branching tech node and one era
     transition, asserted headlessly per the P0 harness pattern.
+
+## Track E — Naval Warfare
+
+See [`track-e-naval-warfare.md`](track-e-naval-warfare.md) and the
+[deep dive](deep-dives/naval-warfare.md). Gated on Track P (P7) only.
+
+- [ ] E1 Water/ground terrain passability (`TerrainLogic`/`Pathfinder` stub replacement, wiring
+  `Locomotor.Surfaces` and `AIData.WadeWaterDepth`/`DeepWaterDepth`).
+  - AC: TBD — a water-only locomotor cannot move onto dry land, a ground-only unit cannot enter
+    deep water but can wade shallow water, and `OverWater` triggers correctly.
+- [ ] E2 Ship combat (broadside weapon slots, ram/collision for `SHIP_SUICIDE`, `SHIP_TRANSPORT`
+  verification).
+  - AC: TBD — two ships exchange broadside fire and destroy each other; a suicide ship rams and
+    destroys a target; a transport loads/unloads passengers while moving on water.
+- [ ] E3 Naval production (`PORT` building placement/production via existing production-queue
+  pattern).
+  - AC: TBD — a `PORT` building can only be placed adjacent to water, produces a ship, and the
+    ship's rally point resolves correctly on water.
+- [ ] E4 Reference naval scenario (port + ships fighting, via ReplaySketch).
+  - AC: TBD — a ReplaySketch-authored scenario builds a ship from a port and wins a water
+    engagement, asserted headlessly per the P0 harness pattern.
