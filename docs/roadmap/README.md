@@ -15,23 +15,22 @@
 ## Vision
 
 Purpose: a framework for integrating simulation-optimization experiments into the engine and
-measuring their effects. No fixed end-state exists. Success is measured by the ease with which
-new scaling ideas can be introduced, swapped, and compared.
+measuring their effects.
 
 Fixed aims:
 
-- Scalability — larger simulations, larger maps, headless/offline batch runs, distributed
+- Scalability - larger simulations, larger maps, headless/offline batch runs, distributed
   simulation, and reduced per-unit cost.
-- Flexibility — pluggable techniques behind stable seams; pathfinders, fidelity policies,
+- Flexibility - pluggable techniques behind stable seams; pathfinders, fidelity policies,
   partitioning schemes, and model formats can be replaced without rewriting the engine.
 
 Long-term goals:
 
-1. Arbitrarily large simulations — scale toward thousands–millions of entities, larger maps,
+1. Arbitrarily large simulations - scale toward thousands–millions of entities, larger maps,
    headless/offline batch simulation, and distributed simulation across processes/machines. The
    first committed waypoint is 10k units at interactive rate (~30 fps) on one machine (see the
    [near-term scale anchor Decision](open-questions.md)); larger figures remain directional.
-2. External asset incorporation — support for models and animations authored outside the
+2. External asset incorporation - support for models and animations authored outside the
    Westwood `.w3d` ecosystem through a format-agnostic import abstraction.
 
 Scope notes:
@@ -41,7 +40,7 @@ Scope notes:
   RTS is the first domain, transport/graph is the first non-RTS validation target, and other
   models such as city builders and agent-based simulations extend the same `GameObject`/module
   system.
-- Prerequisite: a playable baseline first. [Track P — Playable Baseline](track-p-playable-baseline.md)
+- Prerequisite: a playable baseline first. [Track P - Playable Baseline](track-p-playable-baseline.md)
   is the hard prerequisite. A full Generals/Zero Hour skirmish must run build → fight → win/lose
   before the headless host, benchmarks, and experiment seams have a correct match loop to scale
   and measure. Track A/B/C work remains gated on it.
@@ -133,20 +132,20 @@ human-readable problem/design/approach sections and agent-context file and test 
 
 | Deep dive | Expands |
 |---|---|
-| [`deep-dives/playable-baseline-harness.md`](deep-dives/playable-baseline-harness.md) | Track P phase P0 — ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
-| [`deep-dives/skirmish-setup.md`](deep-dives/skirmish-setup.md) | Track P phase P1 — Skirmish setup & player relationships. |
-| [`deep-dives/skirmish-ai.md`](deep-dives/skirmish-ai.md) | Track P phases P2 — Skirmish AI opponent (+ P5 construction/production mechanism). |
-| [`deep-dives/victory-defeat.md`](deep-dives/victory-defeat.md) | Track P phase P3 — Victory & defeat conditions (queryable `GameOutcome`, all six match end states). |
-| [`deep-dives/economy-production-combat.md`](deep-dives/economy-production-combat.md) | Track P phases P4 — Economy loop & P6 — Combat & command verification. |
-| [`deep-dives/unit-contract-validation.md`](deep-dives/unit-contract-validation.md) | Track P phase P6b — Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
-| [`deep-dives/headless-host.md`](deep-dives/headless-host.md) | Track A phase A1 — Headless simulation host. |
-| [`deep-dives/pluggable-ai.md`](deep-dives/pluggable-ai.md) | Track A phase A4 — Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
-| [`deep-dives/visualization.md`](deep-dives/visualization.md) | Track A phase A5 — Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
-| [`deep-dives/larger-maps.md`](deep-dives/larger-maps.md) | Track B phase B4a — Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
-| [`deep-dives/distributed-simulation.md`](deep-dives/distributed-simulation.md) | Track B phase B6 — Distributed simulation (spatial sharding). |
-| [`deep-dives/variable-fidelity.md`](deep-dives/variable-fidelity.md) | Track B phase B7 — Variable simulation fidelity (scaling toolkit). |
-| [`deep-dives/tech-tree-era-progression.md`](deep-dives/tech-tree-era-progression.md) | Track D phases D1/D2 — Tech-tree/prerequisite-graph generalization and era/age progression. |
-| [`deep-dives/naval-warfare.md`](deep-dives/naval-warfare.md) | Track E phases E1/E2 — Water/ground terrain passability and ship combat. |
+| [`deep-dives/playable-baseline-harness.md`](deep-dives/playable-baseline-harness.md) | Track P phase P0 - ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
+| [`deep-dives/skirmish-setup.md`](deep-dives/skirmish-setup.md) | Track P phase P1 - Skirmish setup & player relationships. |
+| [`deep-dives/skirmish-ai.md`](deep-dives/skirmish-ai.md) | Track P phases P2 - Skirmish AI opponent (+ P5 construction/production mechanism). |
+| [`deep-dives/victory-defeat.md`](deep-dives/victory-defeat.md) | Track P phase P3 - Victory & defeat conditions (queryable `GameOutcome`, all six match end states). |
+| [`deep-dives/economy-production-combat.md`](deep-dives/economy-production-combat.md) | Track P phases P4 - Economy loop & P6 - Combat & command verification. |
+| [`deep-dives/unit-contract-validation.md`](deep-dives/unit-contract-validation.md) | Track P phase P6b - Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
+| [`deep-dives/headless-host.md`](deep-dives/headless-host.md) | Track A phase A1 - Headless simulation host. |
+| [`deep-dives/pluggable-ai.md`](deep-dives/pluggable-ai.md) | Track A phase A4 - Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
+| [`deep-dives/visualization.md`](deep-dives/visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
+| [`deep-dives/larger-maps.md`](deep-dives/larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
+| [`deep-dives/distributed-simulation.md`](deep-dives/distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
+| [`deep-dives/variable-fidelity.md`](deep-dives/variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (scaling toolkit). |
+| [`deep-dives/tech-tree-era-progression.md`](deep-dives/tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
+| [`deep-dives/naval-warfare.md`](deep-dives/naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
 
 ---
 
@@ -156,39 +155,39 @@ Track layout: a prerequisite Playable Baseline track, a shared Foundations track
 Scale and External Assets tracks. Phase order is approximate; cross-track dependencies appear in
 each track document.
 
-- [Track P — Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
+- [Track P - Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
   arbitrary-command harness · P1 skirmish setup & player relationships · P2 skirmish AI opponent ·
   P3 victory/defeat conditions · P4 economy loop · P5 construction & production · P6 combat &
   command · P6b unit-contract validation · P7 end-to-end skirmish validation. Gates all other tracks.
-- [Track A — Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 reproducibility &
+- [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 reproducibility &
   statistical stability · A3 simulation/presentation seam · A4 experiment framework seams & harness
-  (incl. the Simulation Domain Model seam — RTS, city-builder, transport, …) · A5 scenario
-  authoring & visualization (incl. authoring/visualization at scale — the ReplaySketch tooling
+  (incl. the Simulation Domain Model seam - RTS, city-builder, transport, …) · A5 scenario
+  authoring & visualization (incl. authoring/visualization at scale - the ReplaySketch tooling
   scales with the sim).
-- [Track B — Scale](track-b-scale.md): B1 profiling & benchmarking utilities · B2 allocation cleanup · B3
+- [Track B - Scale](track-b-scale.md): B1 profiling & benchmarking utilities · B2 allocation cleanup · B3
   parallel/data-oriented logic · B4 spatial & pathfinding scaling · B4a larger maps (+
   large-population scenario authoring in WorldBuilder) · B5
   rendering at scale · B6 distributed simulation · B7 variable simulation fidelity.
-- [Track C — External Models & Animations](track-c-external-assets.md): C1 import
+- [Track C - External Models & Animations](track-c-external-assets.md): C1 import
   abstraction · C2 skeleton/animation retargeting · C3 material mapping · C4 first concrete
   format (static + skinned) · C5 authoring/validation tooling · C6 extended features (deferred:
   morph targets, advanced PBR).
-- [Track D — Gameplay Content Expansion](track-d-gameplay-expansion.md): D1 tech-tree/
+- [Track D - Gameplay Content Expansion](track-d-gameplay-expansion.md): D1 tech-tree/
   prerequisite-graph generalization · D2 era/age progression mechanic · D3 external content
   ingestion (ModCollector + Track C) · D4 reference non-SAGE scenario. Depends on Track P
   (D1/D2) and Track C/ModCollector (D3/D4).
-- [Track E — Naval Warfare](track-e-naval-warfare.md): E1 water/ground terrain passability ·
+- [Track E - Naval Warfare](track-e-naval-warfare.md): E1 water/ground terrain passability ·
   E2 ship combat · E3 naval production (`PORT`) · E4 reference naval scenario. Depends on Track
   P only.
 
 ### Cross-track dependencies
 
 - Track P gates everything. [A1 (headless host)](track-a-foundations.md) depends on
-  P7 — a validated, terminating skirmish loop is the headless host's unit of work; A2/A4 and
+  P7 - a validated, terminating skirmish loop is the headless host's unit of work; A2/A4 and
   all of Tracks B/C inherit that prerequisite.
 - B5 (instanced rendering) should account for Track C models so instancing is not
   W3D-specific.
-- C1 and A3 both touch the presentation seam — coordinate so the import abstraction
+- C1 and A3 both touch the presentation seam - coordinate so the import abstraction
   feeds the same runtime `Model`/`ModelInstance` types that the rendering refactor expects.
 - Track D (D1/D2) depends only on Track P; D3/D4 additionally depend on Track C (C1) and the
   standalone [ModCollector tool](plans/mod-collector.md).
@@ -202,47 +201,47 @@ each track document.
 
 Progress counts follow the [implementation checklist](implementation-checklist.md). Updates occur when checklist items are checked off.
 
-### Track P — Playable Baseline
+### Track P - Playable Baseline
 
 | Phase | Progress | Items |
 |---|---|---|
-| P0 — ReplaySketch harness | `███░░░░░░░` | 4 / 14 |
-| P1 — Skirmish setup | `██████░░░░` | 5 / 8 |
-| P2 — Skirmish AI | `██████████` | 7 / 7 |
-| P3 — Victory & defeat | `░░░░░░░░░░` | 0 / 9 |
-| P4 — Economy loop | `░░░░░░░░░░` | 0 / 5 |
-| P5 — Construction & production | `░░░░░░░░░░` | 0 / 5 |
-| P6 — Combat & command | `░░░░░░░░░░` | 0 / 5 |
-| P6b — Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
-| P7 — End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
+| P0 - ReplaySketch harness | `███░░░░░░░` | 4 / 14 |
+| P1 - Skirmish setup | `██████░░░░` | 5 / 8 |
+| P2 - Skirmish AI | `██████████` | 7 / 7 |
+| P3 - Victory & defeat | `░░░░░░░░░░` | 0 / 9 |
+| P4 - Economy loop | `░░░░░░░░░░` | 0 / 5 |
+| P5 - Construction & production | `░░░░░░░░░░` | 0 / 5 |
+| P6 - Combat & command | `░░░░░░░░░░` | 0 / 5 |
+| P6b - Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
+| P7 - End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
 | Track P total | `██░░░░░░░░` | 16 / 67 |
 
 ### Tracks A / B / C (gated on Track P)
 
 | Track | Progress | Items |
 |---|---|---|
-| Track A — Foundations | `░░░░░░░░░░` | 0 / 18 |
-| Track B — Scale | `░░░░░░░░░░` | 0 / 12 |
-| Track C — External Assets | `░░░░░░░░░░` | 0 / 6 |
+| Track A - Foundations | `░░░░░░░░░░` | 0 / 18 |
+| Track B - Scale | `░░░░░░░░░░` | 0 / 12 |
+| Track C - External Assets | `░░░░░░░░░░` | 0 / 6 |
 
-### Track D — Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
+### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
 
 | Phase | Progress | Items |
 |---|---|---|
-| D1 — Tech tree / prerequisite graph | `░░░░░░░░░░` | 0 / 1 |
-| D2 — Era/age progression | `░░░░░░░░░░` | 0 / 1 |
-| D3 — External content ingestion | `░░░░░░░░░░` | 0 / 1 |
-| D4 — Reference non-SAGE scenario | `░░░░░░░░░░` | 0 / 1 |
+| D1 - Tech tree / prerequisite graph | `░░░░░░░░░░` | 0 / 1 |
+| D2 - Era/age progression | `░░░░░░░░░░` | 0 / 1 |
+| D3 - External content ingestion | `░░░░░░░░░░` | 0 / 1 |
+| D4 - Reference non-SAGE scenario | `░░░░░░░░░░` | 0 / 1 |
 | Track D total | `░░░░░░░░░░` | 0 / 4 |
 
-### Track E — Naval Warfare (gated on Track P only)
+### Track E - Naval Warfare (gated on Track P only)
 
 | Phase | Progress | Items |
 |---|---|---|
-| E1 — Water/ground terrain passability | `░░░░░░░░░░` | 0 / 1 |
-| E2 — Ship combat | `░░░░░░░░░░` | 0 / 1 |
-| E3 — Naval production | `░░░░░░░░░░` | 0 / 1 |
-| E4 — Reference naval scenario | `░░░░░░░░░░` | 0 / 1 |
+| E1 - Water/ground terrain passability | `░░░░░░░░░░` | 0 / 1 |
+| E2 - Ship combat | `░░░░░░░░░░` | 0 / 1 |
+| E3 - Naval production | `░░░░░░░░░░` | 0 / 1 |
+| E4 - Reference naval scenario | `░░░░░░░░░░` | 0 / 1 |
 | Track E total | `░░░░░░░░░░` | 0 / 4 |
 
 ---
