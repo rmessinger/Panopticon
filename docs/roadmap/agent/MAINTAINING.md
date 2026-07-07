@@ -110,6 +110,9 @@ This is documentation only — no `dotnet` build/test is required for plan chang
 
 ## Documentation style
 
+Builds on the repository-wide documentation style in [`CONTRIBUTING.md`](../../../CONTRIBUTING.md).
+Additional rules specific to `docs/roadmap/`:
+
 - No markdown emphasis (no bold `**...**` or italic `*...*` / `_..._`) anywhere in roadmap docs.
 - Use plain prose. Structure through headers, tables, lists, and `` `code spans` `` only.
 - Fenced code blocks for shell commands and code examples are fine.

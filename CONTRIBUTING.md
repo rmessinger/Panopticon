@@ -14,6 +14,14 @@ OpenSage tries to strictly match the coding style described in [Coding Style](do
 
 * **DO NOT** send PRs for style changes.
 
+Documentation Style
+--------------------
+
+* **DO** keep documentation concise: state facts and decisions plainly rather than explaining at length.
+* **DO** prefer plain prose, headers, tables, and lists over decorative formatting.
+* **DO** avoid duplicating information already documented elsewhere; link to it instead.
+* **DO** follow [`docs/roadmap/agent/MAINTAINING.md`](docs/roadmap/agent/MAINTAINING.md) for the stricter formatting rules that apply specifically to `docs/roadmap/`.
+
 Pull Requests
 -------------
 
