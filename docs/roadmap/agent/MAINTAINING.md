@@ -116,6 +116,10 @@ Additional rules specific to `docs/roadmap/`:
 - No markdown emphasis (no bold `**...**` or italic `*...*` / `_..._`) anywhere in roadmap docs.
 - Use plain prose. Structure through headers, tables, lists, and `` `code spans` `` only.
 - Fenced code blocks for shell commands and code examples are fine.
+- Don't repeat the same rationale, background, or "why this matters" explanation across multiple
+  roadmap docs (README, track docs, deep dives, task cards). State it once in the doc that owns the
+  topic and link to it from the others.
+- Applies to every file under `docs/roadmap/`, including `agent/cards/` task cards.
 
 ---
 

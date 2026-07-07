@@ -17,9 +17,11 @@ OpenSage tries to strictly match the coding style described in [Coding Style](do
 Documentation Style
 --------------------
 
-* **DO** keep documentation concise: state facts and decisions plainly rather than explaining at length.
+* **DO** keep documentation concise: state facts and decisions plainly rather than explaining at length. Prefer short, direct sentences over multi-clause ones.
+* **DO** cut filler and hedging phrases ("it's worth noting that", "in order to", "as mentioned above", "please note that") — say the thing directly instead.
 * **DO** prefer plain prose, headers, tables, and lists over decorative formatting.
-* **DO** avoid duplicating information already documented elsewhere; link to it instead.
+* **DO** avoid duplicating information already documented elsewhere, including rationale/background repeated across multiple docs; state it once in the most relevant place and link to it instead.
+* **DO** reserve longer explanations for genuinely complex or ambiguous decisions; everything else should be a single clear statement.
 * **DO** follow [`docs/roadmap/agent/MAINTAINING.md`](docs/roadmap/agent/MAINTAINING.md) for the stricter formatting rules that apply specifically to `docs/roadmap/`.
 
 Pull Requests
