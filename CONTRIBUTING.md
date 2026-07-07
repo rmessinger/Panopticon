@@ -18,6 +18,7 @@ Documentation Style
 --------------------
 
 * **DO** keep documentation concise: state facts and decisions plainly rather than explaining at length. Prefer short, direct sentences over multi-clause ones.
+* **DO** write impersonally, in a reference/spec style: state facts structurally (`Entry point: X`, `Default: Y`) rather than narrating what "you" do or what the software "will" do. Avoid second person ("you", "your") and first person ("we", "our"); name the subject (the tool, the config, the command) instead of the reader.
 * **DO** cut filler and hedging phrases ("it's worth noting that", "in order to", "as mentioned above", "please note that") — say the thing directly instead.
 * **DO** prefer plain prose, headers, tables, and lists over decorative formatting.
 * **DO** avoid duplicating information already documented elsewhere, including rationale/background repeated across multiple docs; state it once in the most relevant place and link to it instead.
