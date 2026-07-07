@@ -28,6 +28,7 @@ The general rule we follow is "use Visual Studio defaults".
 14. Fields should be specified at the top within type declarations.
 15. When including non-ASCII characters in the source code use Unicode escape sequences (\uXXXX) instead of literal characters. Literal non-ASCII characters occasionally get garbled by a tool or editor.
 16. When using labels (for goto), indent the label one less than the current indentation.
+17. Comments should explain non-obvious intent, not restate what the code already says. Prefer a clear name over a comment; avoid comments that would go stale as soon as the code changes.
 
 An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been provided at the root of the OpenSage repository, enabling C# auto-formatting conforming to the above guidelines.
 
