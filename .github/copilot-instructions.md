@@ -31,6 +31,8 @@ dotnet run --project src/OpenSage.Launcher
 
 Tests that need actual game files installed are annotated with `[GameFact(SageGame.X)]`. These are skipped in CI. Tests without game files extend `MockedGameTest`.
 
+CI (`CI`, `Debug Build`, `Format`) only runs on pushes to `main`, not on branches or pull requests, to conserve Actions usage. Before pushing any commit, run the build, the non-interactive test suite, and the format check locally (the three commands above) and fix any failures — this is the only verification those changes get before landing on `main`.
+
 ## Architecture
 
 ### Project Layout

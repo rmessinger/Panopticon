@@ -2,8 +2,8 @@ name: Format
 
 on:
   push:
-  pull_request:
-  merge_group:
+    branches:
+    - main
 
 jobs:
   format:
