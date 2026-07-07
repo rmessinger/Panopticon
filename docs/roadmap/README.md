@@ -1,57 +1,59 @@
 # Large-Scale RTS Simulation & External Asset Roadmap
 
-> Living roadmap for evolving OpenSAGE into an extensible framework for
-> simulation-optimization experiments. The fixed aims are scalability and flexibility.
-> Larger maps, distributed sim, variable fidelity, external assets, and similar capabilities
-> are experiments enabled by the framework, not end goals.
+> Living roadmap for an extensible framework for simulation-optimization experiments. Fixed aims:
+> scalability and flexibility. Larger maps, distributed simulation, variable fidelity, and external
+> assets remain framework experiments rather than terminal goals.
 >
-> This roadmap is split across linked documents; see [Document map](#document-map). Each phase
-> has a Status (`Not started` / `In progress` / `Done` / `Revised`). Add deep dives under
-> [`deep-dives/`](deep-dives/) and link them from the owning phase.
+> Structure: linked documents; see [Document map](#document-map). Each phase carries a Status
+> (`Not started` / `In progress` / `Done` / `Revised`). New deep dives belong under
+> [`deep-dives/`](deep-dives/) and link from the owning phase.
 >
-> Audience: human — start here for a project overview.
+> Audience: human overview and progress tracking.
 
 ---
 
 ## Vision
 
-The aim is a framework for plugging in and measuring simulation-optimization experiments.
-There is no fixed end-state. Success is how easily new scaling ideas can be tried, swapped,
-and compared. Everything below serves two fixed aims:
+Purpose: a framework for integrating simulation-optimization experiments into the engine and
+measuring their effects. No fixed end-state exists. Success is measured by the ease with which
+new scaling ideas can be introduced, swapped, and compared.
 
-- Scalability — push the simulation far beyond a single playable battle (more units,
-  larger maps, headless/offline batch runs, distributed simulation, reduced per-unit cost).
-- Flexibility — make techniques pluggable and interchangeable behind stable seams, so any
-  given approach (a pathfinder, a fidelity policy, a partitioning scheme, a model format) can be
-  replaced by an experiment without rewriting the engine.
+Fixed aims:
+
+- Scalability — larger simulations, larger maps, headless/offline batch runs, distributed
+  simulation, and reduced per-unit cost.
+- Flexibility — pluggable techniques behind stable seams; pathfinders, fidelity policies,
+  partitioning schemes, and model formats can be replaced without rewriting the engine.
 
 Long-term goals:
 
 1. Arbitrarily large simulations — scale toward thousands–millions of entities, larger maps,
    headless/offline batch simulation, and distributed simulation across processes/machines. The
    first committed waypoint is 10k units at interactive rate (~30 fps) on one machine (see the
-   [near-term scale anchor Decision](open-questions.md)); larger figures stay directional.
-2. External asset incorporation — let units use models and animations authored outside the
-   Westwood `.w3d` ecosystem, via a format-agnostic import abstraction.
+   [near-term scale anchor Decision](open-questions.md)); larger figures remain directional.
+2. External asset incorporation — support for models and animations authored outside the
+   Westwood `.w3d` ecosystem through a format-agnostic import abstraction.
 
-> These goals are experiments, not the point in themselves. New goals can be added later. The
-> simulation domain is pluggable; see the [Simulation Domain Model seam](track-a-foundations.md).
-> RTS is the first domain, transport/graph is the first non-RTS validation target, and other
-> models such as city builders and agent-based sims extend the same `GameObject`/module system.
+Scope notes:
 
-> Prerequisite: a playable baseline first. [Track P — Playable Baseline](track-p-playable-baseline.md)
-> is the hard prerequisite. A full Generals/Zero Hour skirmish must run build → fight → win/lose
-> before the headless host, benchmarks, and experiment seams have a correct match loop to scale
-> and measure. Track A/B/C work is gated on it.
+- These goals remain experiments rather than terminal objectives. New goals can be added later.
+- The simulation domain remains pluggable; see the [Simulation Domain Model seam](track-a-foundations.md).
+  RTS is the first domain, transport/graph is the first non-RTS validation target, and other
+  models such as city builders and agent-based simulations extend the same `GameObject`/module
+  system.
+- Prerequisite: a playable baseline first. [Track P — Playable Baseline](track-p-playable-baseline.md)
+  is the hard prerequisite. A full Generals/Zero Hour skirmish must run build → fight → win/lose
+  before the headless host, benchmarks, and experiment seams have a correct match loop to scale
+  and measure. Track A/B/C work remains gated on it.
 
 ### Guiding principles
 
-- Framework first. Optimization techniques are experiments behind stable seams with swappable
+- Framework first: optimization techniques are experiments behind stable seams with swappable
   implementations for pathfinding, fidelity policy, partitioning, model import, and storage
-  layout. Each technique must be replaceable and independently measurable.
-- Measure everything. Benchmarking utilities are a deliverable, not ad-hoc scripts. Every
+  layout. Each technique remains replaceable and independently measurable.
+- Measure everything: benchmarking utilities are a deliverable, not ad-hoc scripts. Each
   technique is evaluated against [B1](track-b-scale.md) benchmarks and inspected with the
-  [result replayer/visualizer](deep-dives/visualization.md). The shared harness must support
+  [result replayer/visualizer](deep-dives/visualization.md). The shared harness supports
   repeatable scenarios, multiple runs, variance/confidence reporting, discarded warmup,
   regression detection against stored baselines, machine-readable output, and cost/accuracy
   trade-offs.
@@ -66,21 +68,22 @@ Long-term goals:
 - Domain-agnostic where it is cheap. The simulation domain is a pluggable seam, so the
   [FTRT headless host](deep-dives/headless-host.md) and
   [distributed sim](deep-dives/distributed-simulation.md) are not hard-wired to RTS. RTS is the
-  reference domain, not a baked-in assumption.
+  reference domain rather than a baked-in assumption.
 - Scale and extensibility win over original-engine fidelity when they conflict. Reading
   original SAGE data remains valuable, but it must not block the architectural changes scale
   requires. The [relaxed-determinism Decision](open-questions.md) trades bit-exact,
-  re-simulatable replays for parallel scale; recorded state, not input re-simulation, backs run
-  analysis.
+  re-simulatable replays for parallel scale; recorded state rather than input re-simulation backs
+  run analysis.
 - Separate simulation from presentation cleanly. Headless and distributed scenarios need a
-  logic core that runs with no renderer, audio, or window.
-- Reproducibility is for comparison, not bit-exactness. Runs must be seeded, re-runnable, and
-  metric/invariant-stable enough to compare experiments. The trade-off is aggressive intra-tick
-  parallelism with explicit conflict resolution instead of bit-exact replays.
-- Incremental, always-shippable. Each phase should leave the engine building and the existing
-  games playable.
-- Single-operator scope. The framework is a personal research tool for one operator for the
-  foreseeable future. Tooling and run results target that operator, not external users, so
+  logic core that runs without a renderer, audio, or window.
+- Reproducibility is for comparison rather than bit-exactness. Runs must be seeded,
+  re-runnable, and metric/invariant-stable enough to compare experiments. The trade-off is
+  aggressive intra-tick parallelism with explicit conflict resolution rather than bit-exact
+  replays.
+- Incremental, always-shippable: each phase leaves the engine building and the existing games
+  playable.
+- Single-operator scope: the framework is a personal research tool for one operator for the
+  foreseeable future. Tooling and run results target that operator rather than external users, so
   multi-user robustness, third-party reproducibility, and distribution hardening stay out of
   scope until that stance changes.
 
@@ -90,7 +93,7 @@ Long-term goals:
 
 ### Audience guide
 
-The roadmap docs divide into two audiences. Use this to decide what to read first.
+Audience map: two document classes. Use this to choose the first read.
 
 | Audience | What to read | What to skip |
 |---|---|---|
@@ -149,9 +152,9 @@ human-readable problem/design/approach sections and agent-context file and test 
 
 ## Tracks at a glance
 
-The roadmap has a playable-baseline prerequisite track, a shared Foundations track, and two
-parallel tracks for Scale and External Assets. Phases within a track are roughly ordered;
-cross-track dependencies are noted in each track doc.
+Track layout: a prerequisite Playable Baseline track, a shared Foundations track, and parallel
+Scale and External Assets tracks. Phase order is approximate; cross-track dependencies appear in
+each track document.
 
 - [Track P — Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
   arbitrary-command harness · P1 skirmish setup & player relationships · P2 skirmish AI opponent ·
@@ -197,7 +200,7 @@ cross-track dependencies are noted in each track doc.
 
 ## Progress
 
-Counts are against the [implementation checklist](implementation-checklist.md). Update when items are checked off.
+Progress counts follow the [implementation checklist](implementation-checklist.md). Updates occur when checklist items are checked off.
 
 ### Track P — Playable Baseline
 
@@ -246,9 +249,9 @@ Counts are against the [implementation checklist](implementation-checklist.md). 
 
 
 
-> Iterating on the plan? Follow [`agent/MAINTAINING.md`](agent/MAINTAINING.md). It is the
+> Plan maintenance: follow [`agent/MAINTAINING.md`](agent/MAINTAINING.md). That document is the
 > planning-agent protocol for propagating a change across the parallel roadmap docs. The bullets
-> below are only a summary.
+> below are a summary.
 
 - Update a phase's Status in its track document when the phase changes state.
 - Keep the [Progress](#progress) tables in sync with checklist done/total counts and bars.
