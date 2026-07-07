@@ -179,7 +179,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     assignments; see the deep dive matrix section.
 
 ### P2 — Skirmish AI opponent ([deep dive](deep-dives/skirmish-ai.md))
-- [ ] Add a coarse-cadence `Update(...)` decision loop to `SkirmishAIPlayer`/`AIPlayer` (currently
+- [x] Add a coarse-cadence `Update(...)` decision loop to `SkirmishAIPlayer`/`AIPlayer` (currently
       persistence-only — `Logic/AI/AIPlayer.cs:8-154`, `SkirmishAIPlayer.cs:3-31`).
   - AC: `SkirmishAIPlayer.Update(...)` is invoked from the player tick at the intended cadence (test
     asserts call count over N frames); no behavior required yet.
@@ -195,16 +195,16 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] AI economy management (dozers/workers + supply).
   - AC: the AI maintains ≥1 supply structure and assigns harvesters; AI `BankAccount` income is
     positive over a sampled interval in a headless run.
-- [ ] AI unit production (money/prereq gated via `Player.CanProduceObject`).
+- [x] AI unit production (money/prereq gated via `Player.CanProduceObject`).
   - AC: the AI produces ≥N army units gated by money/prereqs; production is blocked when unaffordable
     (balance never < 0).
-- [ ] AI attack/defense behavior (target via P1 relationships) — Track P scope is a minimum legal
+- [x] AI attack/defense behavior (target via P1 relationships) — Track P scope is a minimum legal
       opponent (build/economize/produce/≥1 attack → terminating match); structure for configurable
       difficulty tiers but implement only the minimum tier now.
   - AC: once a threshold force exists, the AI moves units toward an enemy structure (via P1
     relationships) and engages; a headless match shows AI-initiated combat and can reach a win/lose
     outcome.
-- [ ] P2 scenario matrix: sweep humanFaction × aiFaction × mapSize; assert the AI runs a legal
+- [x] P2 scenario matrix: sweep humanFaction × aiFaction × mapSize; assert the AI runs a legal
       game for every faction and map combination.
   - AC: a `ScenarioMatrix` (axes: `humanFaction` × `aiFaction` ∈ {USA, GLA, China}, `mapSize` ∈
     {small, medium}) runs each of the 18 cells; each asserts AI built ≥1 structure, produced ≥1
