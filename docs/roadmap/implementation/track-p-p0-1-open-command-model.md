@@ -1,11 +1,10 @@
-# Implementation Plan: Track P · P0-1 — Replace `ActionType` with Open `CommandSpec` Model
+# Implementation Plan: Track P · P0-1: Replace `ActionType` with an Open `CommandSpec` Model
 
-> Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-1: Open command model
-> Checklist item: [implementation-checklist.md](../implementation-checklist.md) — first item under P0
+> Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-1: Open command model
+> Checklist item: [implementation-checklist.md](../implementation-checklist.md), first item under P0
 >
-> Audience: human — problem statement, design rationale, and approach are above
-> the divider. File:line implementation details are below the divider (agent context).
+> Audience: human overview of the implementation plan. Agent context sits below the divider.
 
 ## Problem
 
@@ -24,9 +23,9 @@ Checklist item AC:
 
 How to carry either a legacy `ActionType` or a new `CommandSpec` in `ActionEntry` without making both fields nullable. Options considered:
 
-- A: `ActionType.Command` sentinel — `Type` stays non-nullable; add `ActionType.Command` as a new enum value. `Command: CommandSpec?` is only non-null when `Type == Command`. JSON: new actions write `"type": "Command"` + `"command": {...}`.
-- B: Polymorphic `ActionEntry` — `[JsonPolymorphic]` with `LegacyActionEntry` (non-nullable `Type: ActionType`) and `CommandActionEntry` (non-nullable `Command: CommandSpec`). Requires a JSON discriminator.
-- C (chosen): `CommandSpec` is always present; `ActionEntry.Type` is a stored `ActionType?` field (null for open commands). The five legacy verbs are static `CommandSpec` factory methods; `ActionEntry` tracks which legacy type it represents as a plain nullable enum field. JSON: `"type": "Construct"` for legacy actions, `"command": {...}` for open commands — no discriminator needed.
+- A: `ActionType.Command` sentinel : `Type` stays non-nullable; add `ActionType.Command` as a new enum value. `Command: CommandSpec?` is only non-null when `Type == Command`. JSON: new actions write `"type": "Command"` + `"command": {...}`.
+- B: Polymorphic `ActionEntry` : `[JsonPolymorphic]` with `LegacyActionEntry` (non-nullable `Type: ActionType`) and `CommandActionEntry` (non-nullable `Command: CommandSpec`). Requires a JSON discriminator.
+- C (chosen): `CommandSpec` is always present; `ActionEntry.Type` is a stored `ActionType?` field (null for open commands). The five legacy verbs are static `CommandSpec` factory methods; `ActionEntry` tracks which legacy type it represents as a plain nullable enum field. JSON: `"type": "Construct"` for legacy actions, `"command": {...}` for open commands : no discriminator needed.
 
 Rationale: Option C produces the cleanest model. `CommandSpec` holds only `OrderType + Arguments` with no string tags. Legacy identity lives on `ActionEntry` (as `ActionType?`), not inside the command model. No backward-compat shims needed since ReplaySketch JSON is internal with no versioning requirement.
 
@@ -39,7 +38,7 @@ Introduce a `CommandSpec` model that maps directly onto an engine `Order`. The f
 
 ### New model types
 
-- `CommandArgument` — polymorphic hierarchy mirroring `OrderArgumentType`:
+- `CommandArgument` : polymorphic hierarchy mirroring `OrderArgumentType`:
   - `IntegerCommandArgument(int Value)` → kind: `integer`
   - `FloatCommandArgument(float Value)` → kind: `float`
   - `BooleanCommandArgument(bool Value)` → kind: `boolean`
@@ -47,15 +46,15 @@ Introduce a `CommandSpec` model that maps directly onto an engine `Order`. The f
   - `PositionCommandArgument(PositionSpec Spec)` → kind: `position` (reuses existing `PositionSpec` so positions can be landmark-relative)
   - Each implements `OrderArgument Resolve(PositionContext ctx, Random rng)`.
 
-- `CommandSpec` — the open command model:
+- `CommandSpec` : the open command model:
   - `OrderType OrderType` (the full engine enum)
   - `List<CommandArgument> Arguments`
-  - `Order ToOrder(int playerIndex, PositionContext ctx, Random rng)` — creates an `Order` and appends all resolved arguments. Public method → directly unit-testable without going through `Export`.
+  - `Order ToOrder(int playerIndex, PositionContext ctx, Random rng)` : creates an `Order` and appends all resolved arguments. Public method → directly unit-testable without going through `Export`.
   - No legacy identity stored here. Static factory methods (`Construct()`, `GatherResources()`, etc.) produce the matching `CommandSpec` for legacy-type construction.
 
 - `ActionEntry` changes:
-  - `Type: ActionType?` — stored field (null for open commands, non-null for legacy actions).
-  - `Command: CommandSpec` — always set. Legacy constructor calls `CommandSpec.ForLegacyType(type)`.
+  - `Type: ActionType?` : stored field (null for open commands, non-null for legacy actions).
+  - `Command: CommandSpec` : always set. Legacy constructor calls `CommandSpec.ForLegacyType(type)`.
 
 ### ReplayExporter changes
   - `BuildOrders`: branches on `action.Type == null` (open command → `CommandSpec.ToOrder(...)`) vs non-null (legacy action → existing switch on `ActionType` enum).
@@ -73,17 +72,17 @@ New `CommandSpecTests` class in `ReplaySketchTests.cs`:
 
 ---
 
-> Agent implementation details — the sections below list exact files, methods, and
+> Agent implementation details : the sections below list exact files, methods, and
 > tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` | NEW — polymorphic argument hierarchy |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs` | NEW — open command model + `ToOrder`; no legacy identity stored |
+| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` | NEW : polymorphic argument hierarchy |
+| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs` | NEW : open command model + `ToOrder`; no legacy identity stored |
 | `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs` | Add `CommandSpec Command` field; make `Type: ActionType?` a stored field (not derived); update JSON converter |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs` | Kept — still used as `ActionEntry.Type` for legacy dispatch |
+| `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs` | Kept : still used as `ActionEntry.Type` for legacy dispatch |
 | `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | `BuildOrders`: dispatch on `action.Type` enum; open-command branch calls `ToOrder` |
 | `src/OpenSage.Tools.ReplaySketch.Core/Profiles/ActionTreeController.cs` | Verify compiles cleanly after `ActionEntry` changes |
 | `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add `CommandSpecTests` class |

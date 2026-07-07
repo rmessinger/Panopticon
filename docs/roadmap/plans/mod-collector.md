@@ -1,15 +1,13 @@
 # ModCollector Tool Plan
 
-> This plan is the design authority for `OpenSage.Tools.ModCollector` and the four
-> `WI-MC-*` agent task cards that implement it. Cards reference this document for rationale and
-> conventions; card steps are the executable specification.
+> Design authority for `OpenSage.Tools.ModCollector` and the WI-MC task cards. Cards reference
+> this document for conventions and rationale. The executable specification lives in the card
+> steps.
 >
-> Used by [Track D — Gameplay Content Expansion](../track-d-gameplay-expansion.md) phase D3
-> (external content ingestion), which stages mod archives through this tool before wiring them
-> into the engine's `AssetStore`.
+> Used by [Track D: Gameplay Content Expansion](../track-d-gameplay-expansion.md), phase D3,
+> which stages mod archives through this tool before wiring them into the engine's `AssetStore`.
 >
-> Audience: human — design authority and conventions for the ModCollector tool and its agent
-> task cards.
+> Audience: human overview of the ModCollector design.
 
 ---
 
@@ -37,7 +35,7 @@ modcollector download --output <dir> [--game <slug>] [--category <slug>]
 modcollector extract --output <dir>
 ```
 
-`list` reads the embedded manifest and prints a filtered table — no network access.
+`list` reads the embedded manifest and prints a filtered table : no network access.
 
 `download` iterates the manifest (filtered), fetches each `downloadUrl` as a `.zip`, saves it
 under `<output>/<game>/<category>/<name>.zip`, skips already-present files, and retries once
@@ -84,17 +82,17 @@ are listed for completeness.
 | `Bfme` | `bfme` | Battle for Middle-earth |
 | `Bfme2` | `bfme2` | Battle for Middle-earth II |
 | `Bfme2Rotwk` | `bfme2-rotwk` | Rise of the Witch-king |
-| `Cnc3` | `cnc3` | Not targeted — no mod entries in initial manifest |
-| `Cnc3KanesWrath` | `cnc3-kanes-wrath` | Not targeted — no mod entries in initial manifest |
-| `Ra3` | `ra3` | Not targeted — no mod entries in initial manifest |
-| `Ra3Uprising` | `ra3-uprising` | Not targeted — no mod entries in initial manifest |
-| `Cnc4` | `cnc4` | Not targeted — no mod entries in initial manifest |
+| `Cnc3` | `cnc3` | Not targeted : no mod entries in initial manifest |
+| `Cnc3KanesWrath` | `cnc3-kanes-wrath` | Not targeted : no mod entries in initial manifest |
+| `Ra3` | `ra3` | Not targeted : no mod entries in initial manifest |
+| `Ra3Uprising` | `ra3-uprising` | Not targeted : no mod entries in initial manifest |
+| `Cnc4` | `cnc4` | Not targeted : no mod entries in initial manifest |
 
 ---
 
 ## Manifest schema
 
-`manifest.json` is an embedded resource — a JSON array of objects. Each object has:
+`manifest.json` is an embedded resource : a JSON array of objects. Each object has:
 
 | Field | Type | Description |
 |---|---|---|
@@ -147,7 +145,7 @@ working end-to-end; they follow the same schema with `category: "maps"`.
 - Versioning or upgrading already-downloaded mods. Re-downloading requires manually deleting
   the existing file.
 - Conflict detection between mods.
-- Automatic manifest updates at runtime — the manifest is embedded at build time.
+- Automatic manifest updates at runtime : the manifest is embedded at build time.
 - Support for mods distributed as `.exe` installers or requiring patching steps.
 - Any GUI. The tool is CLI-only.
 

@@ -1,12 +1,11 @@
-# Implementation Plan: Track P · P0-3 — Gameplay `OrderType` Mapping
+# Implementation Plan: Track P · P0-3: Gameplay `OrderType` Mapping
 
-> Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-3: Exporter generalization
-> Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Map the gameplay-relevant `OrderType` set (move, attack, construct, produce, ability) to exporter order emission"
-> Depends on: [track-p-p0-3-runtime-object-references.md](track-p-p0-3-runtime-object-references.md) (attack/enter orders need object references).
+> Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-3: Exporter generalization
+> Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Map the gameplay-relevant `OrderType` set (move, attack, construct, produce, ability) to exporter order emission"
+> Depends on: [track-p-p0-3-runtime-object-references.md](track-p-p0-3-runtime-object-references.md), because attack and enter orders need object references.
 >
-> Audience: human — problem statement, design rationale, and approach are above
-> the divider. File:line implementation details are below the divider (agent context).
+> Audience: human overview of the implementation plan. Agent context sits below the divider.
 
 ## Problem
 
@@ -44,11 +43,11 @@ selection precondition:
 | Attack (ground) | `ForceAttackGround` | position arg; `ClearSelection`/selection handling (cf. legacy `:260`) |
 | Construct | `BuildObject` | definition-hash + position + angle (cf. legacy `:220`) |
 | Produce (unit) | `CreateUnit` | definition-hash + queue-place args (cf. legacy `:246-248`); producer selection |
-| Produce (upgrade) | `BeginUpgrade` | producer object-id + upgrade-hash — confirm handler |
+| Produce (upgrade) | `BeginUpgrade` | producer object-id + upgrade-hash : confirm handler |
 | Ability / special power | `SpecialPower*` | confirm the `SpecialPower` arg layout (power id, target pos/object, options) |
 
 (The table is the starting hypothesis; the implementation must verify each against the real handler
-and correct it — `OrderProcessor.Process` is the source of truth, per the
+and correct it : `OrderProcessor.Process` is the source of truth, per the
 [P0 deep dive §2.3](../deep-dives/playable-baseline-harness.md).)
 
 ### Encode as tested factories
@@ -76,7 +75,7 @@ and correct it — `OrderProcessor.Process` is the source of truth, per the
 
 ---
 
-> Agent implementation details — the sections below list exact files, methods, and
+> Agent implementation details : the sections below list exact files, methods, and
 > tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
@@ -104,5 +103,5 @@ and correct it — `OrderProcessor.Process` is the source of truth, per the
   ([track-p-p0-3-runtime-object-references.md](track-p-p0-3-runtime-object-references.md)); this plan
   consumes it for attack/enter.
 - The assertion vocabulary the effect tests use → [track-p-p0-5-assertion-layer.md](track-p-p0-5-assertion-layer.md).
-- Exhaustive coverage of all ~110 `OrderType`s — only the baseline-match verb set is in scope; the
+- Exhaustive coverage of all ~110 `OrderType`s : only the baseline-match verb set is in scope; the
   rest remain expressible via raw `CommandSpec` but are not given factories here.

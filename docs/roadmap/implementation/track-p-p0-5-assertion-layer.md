@@ -1,12 +1,11 @@
-# Implementation Plan: Track P · P0-4 — Validation / Assertion Layer
+# Implementation Plan: Track P · P0-4: Validation and Assertion Layer
 
-> Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-4: Assertion layer
-> Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Add a validation/assertion layer (expected post-conditions, invariants, outcomes)"
-> Decision: [open-questions.md](../open-questions.md) — "P0 harness — assertion DSL" (JSON predicates over a fixed vocabulary + code-defined escape hatch).
+> Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-4: Assertion layer
+> Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Add a validation/assertion layer (expected post-conditions, invariants, outcomes)"
+> Decision: [open-questions.md](../open-questions.md), "P0 harness: assertion DSL" (JSON predicates over a fixed vocabulary plus a code-defined escape hatch).
 >
-> Audience: human — problem statement, design rationale, and approach are above
-> the divider. File:line implementation details are below the divider (agent context).
+> Audience: human overview of the implementation plan. Agent context sits below the divider.
 
 ## Problem
 
@@ -28,12 +27,12 @@ Checklist item AC:
 Three assertion kinds, all declarative JSON predicates over a fixed vocabulary, plus a C# escape
 hatch, evaluated headlessly:
 
-1. State assertions — a predicate over engine state at end-of-run or at a trigger frame, e.g.
+1. State assertions : a predicate over engine state at end-of-run or at a trigger frame, e.g.
    `{path: "player[1].money", op: ">=", value: 0}`, `{path: "player[2].buildingCount", op: ">", value: 0, atFrame: 1800}`.
-2. Invariant assertions — a predicate checked every tick via `Game.Updating` (`Game.cs:126`), e.g.
+2. Invariant assertions : a predicate checked every tick via `Game.Updating` (`Game.cs:126`), e.g.
    money never negative, unit count never duplicated/leaked. A failing invariant records the frame
    and aborts the run.
-3. Outcome assertions — match terminated; winner/loser/team/reason. These consume P3's queryable
+3. Outcome assertions : match terminated; winner/loser/team/reason. These consume P3's queryable
    `GameOutcome` ([victory-defeat.md](../deep-dives/victory-defeat.md)). `GameOutcome` does not exist
    yet, so this plan ships state + invariant assertions now and adds the outcome path as a thin
    adapter once P3 lands (the deep dive §6 notes this dependency).
@@ -70,13 +69,13 @@ names it.
   parsed with the existing `System.Text.Json` polymorphic style used by `CommandArgument`.
 - `AssertionSet` attached to `ReplayScenario` (new optional `Assertions` list; serialized in the
   scenario JSON, ignored by the `.rep` itself).
-- `AssertionEvaluator` — given a `Game`:
+- `AssertionEvaluator` : given a `Game`:
   - subscribes to `Game.Updating` and evaluates invariant assertions each tick; on failure records
     `{assertionId, expected, actual, frame}` and signals abort;
   - evaluates state assertions at their `atFrame` (or end-of-run);
   - evaluates outcome assertions when the run terminates (P3 outcome; until then skipped/unsupported
     with a clear "requires P3" report entry).
-- `AssertionReport` — structured, machine-readable: overall pass/fail + per-assertion
+- `AssertionReport` : structured, machine-readable: overall pass/fail + per-assertion
   `{id, kind, status, expected, actual, frame}`. Serializable to JSON.
 
 ### Where it runs
@@ -88,19 +87,19 @@ names it.
 
 ---
 
-> Agent implementation details — the sections below list exact files, methods, and
+> Agent implementation details : the sections below list exact files, methods, and
 > tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/Assertion.cs` | NEW — assertion model (JSON predicates, 3 kinds) |
+| `src/OpenSage.Tools.ReplaySketch.Core/Model/Assertion.cs` | NEW : assertion model (JSON predicates, 3 kinds) |
 | `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` | Add optional `Assertions` list (serialized in scenario JSON) |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/StatePath.cs` | NEW — closed path resolver over `Game` state |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/AssertionEvaluator.cs` | NEW — per-tick + end-of-run + outcome evaluation, abort on invariant failure |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/AssertionReport.cs` | NEW — machine-readable pass/fail report |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/CodePredicateRegistry.cs` | NEW — named C# predicate escape hatch |
+| `src/OpenSage.Tools.ReplaySketch.Core/Services/StatePath.cs` | NEW : closed path resolver over `Game` state |
+| `src/OpenSage.Tools.ReplaySketch.Core/Services/AssertionEvaluator.cs` | NEW : per-tick + end-of-run + outcome evaluation, abort on invariant failure |
+| `src/OpenSage.Tools.ReplaySketch.Core/Services/AssertionReport.cs` | NEW : machine-readable pass/fail report |
+| `src/OpenSage.Tools.ReplaySketch.Core/Services/CodePredicateRegistry.cs` | NEW : named C# predicate escape hatch |
 | `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Tests below |
 
 ## Tests

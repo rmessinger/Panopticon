@@ -1,12 +1,11 @@
-# Implementation Plan: Track P · P0-2 (cont.) — Player/Owner & Definition Targeting
+# Implementation Plan: Track P · P0-2 (cont.): Player/Owner and Definition Targeting
 
-> Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-2: Generic definition/player resolution (player half)
-> Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Let `ActionEntry`/scenario target any player/owner and any object definition"
-> Companion plan: [track-p-p0-2-generic-definition-resolution.md](track-p-p0-2-generic-definition-resolution.md) covers the definition half (removing `KnownDefinitions`); this plan covers the player/owner half.
+> Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-2: Generic definition/player resolution (player half)
+> Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Let `ActionEntry`/scenario target any player/owner and any object definition"
+> Companion plan: [track-p-p0-2-generic-definition-resolution.md](track-p-p0-2-generic-definition-resolution.md) covers the definition half, removing `KnownDefinitions`; this plan covers the player/owner half.
 >
-> Audience: human — problem statement, design rationale, and approach are above
-> the divider. File:line implementation details are below the divider (agent context).
+> Audience: human overview of the implementation plan. Agent context sits below the divider.
 
 ## Problem
 
@@ -36,10 +35,10 @@ players. Options considered:
   centralized rather than the inline `ownerIdx + 2`. Resolve "enemy"-relative position context
   against the first player whose relationship to the owner is `Enemy` (falling back to the existing
   behavior when relationships are absent), not a hardcoded index.
-- B: Add an explicit `OwnerPlayerIndex` to every `ActionEntry`. Rejected — redundant with the slot
+- B: Add an explicit `OwnerPlayerIndex` to every `ActionEntry`. Rejected : redundant with the slot
   that already owns the action list, and invites inconsistency (an action attributed to a slot it
   doesn't live under).
-- C: Leave positional mapping; only generalize the enemy lookup. Rejected — does not satisfy the
+- C: Leave positional mapping; only generalize the enemy lookup. Rejected : does not satisfy the
   ≥3-player attribution AC and leaves the `+2` assumption undocumented.
 
 Rationale: ownership is already structurally encoded by which `PlayerSlotConfig.Actions` list an
@@ -52,7 +51,7 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
 
 - Introduce `internal static int ToEnginePlayerIndex(int scenarioPlayerIndex)` (or a small
   `PlayerIndexMap` helper) encoding the current `+2` offset in one place, with a comment explaining
-  the offset (engine indices 0/1 are reserved — confirm against `PlayerManager`/replay slot
+  the offset (engine indices 0/1 are reserved : confirm against `PlayerManager`/replay slot
   numbering during implementation and document the reason). Replace the three inline `ownerIdx + 2`
   uses (`:75,:81,:91`).
 - This keeps behavior identical for the existing two-player scenarios while making the mapping
@@ -63,7 +62,7 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
 - Replace `enemyIdx = ownerIdx == 0 ? 1 : 0` (`:58`) with a lookup that picks the enemy used for
   `TerrainValidator.BuildContextPublic(...)` from the scenario's relationships: the first other
   player marked hostile to the owner (using `PlayerSlotConfig.Team` and/or an explicit relationship
-  field — see the P1 relationship model in [skirmish-setup.md](../deep-dives/skirmish-setup.md)),
+  field : see the P1 relationship model in [skirmish-setup.md](../deep-dives/skirmish-setup.md)),
   falling back to "the other player" only when no relationship data exists (preserving today's
   two-player behavior).
 - Keep this scoped to choosing the position-context enemy for landmark-relative authoring; full
@@ -88,7 +87,7 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
 
 ---
 
-> Agent implementation details — the sections below list exact files, methods, and
+> Agent implementation details : the sections below list exact files, methods, and
 > tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
