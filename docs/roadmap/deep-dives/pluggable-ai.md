@@ -194,17 +194,30 @@ task-card set once picked up:
 
 ## 8. Architecture diagrams
 
-Placeholder — this phase is `Not started`; diagrams will be elaborated (grounded in the actual
-extracted types) before the first implementation task card is written, per
-[MAINTAINING.md](../agent/MAINTAINING.md).
+Grounded in the current code (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`,
+`src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`, `src/OpenSage.Game/Logic/Player.cs`,
+`src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`). Class names ending `(planned)` do not exist
+yet; everything else is the type/member as it stands today.
 
 ```mermaid
 classDiagram
+  class Player {
+    <<engine, existing>>
+    +AIPlayer? AIPlayer
+    +LogicTick()
+    +CreateNew(...)$ Player
+  }
+
   class AIPlayer {
-    <<host, existing>>
-    -IAIDecisionPolicy Policy
+    <<host, existing — becomes thin dispatcher>>
+    -Player _owner
+    -uint _countdownSomething1
     +Update()
-    -OnDecisionTick()
+    #OnDecisionTick() virtual
+    #EnqueueOrder(Order)
+    #EnqueueOrders(IReadOnlyList~Order~)
+    #DispatchOrders(IReadOnlyList~Order~) virtual
+    +Persist(StatePersister)
   }
 
   class IAIDecisionPolicy {
@@ -213,30 +226,72 @@ classDiagram
   }
 
   class AIDecisionContext {
-    <<planned>>
+    <<readonly struct, planned>>
+    +Player Owner
+    +int OwnerPlayerIndex
+    +int DecisionTickCount
   }
 
   class RuleBasedAIDecisionPolicy {
-    <<planned — today's SkirmishAIPlayer logic>>
+    <<planned — extracted from SkirmishAIPlayer>>
+    -RunEconomyAndBaseBuildout()
+    -RunUnitProduction()
+    -RunMilitaryBehavior()
+  }
+
+  class SkirmishAIPlayer {
+    <<existing — today's OnDecisionTick override>>
+    +int DecisionTickCount
+    #OnDecisionTick() override
   }
 
   class NeuralNetworkAIDecisionPolicy {
-    <<future>>
+    <<future — depends on RuleBasedAIDecisionPolicy landing first>>
     -float[] Weights
+    -EncodeState(AIDecisionContext) float[]
+    -DecodeActions(float[]) IReadOnlyList~Order~
   }
 
   class OrderProcessor {
-    <<engine>>
-    +Process(order)
+    <<engine, existing>>
+    +Process(IEnumerable~Order~)
   }
 
-  AIPlayer --> IAIDecisionPolicy
+  Player --> AIPlayer : owns
+  AIPlayer --> IAIDecisionPolicy : dispatches to (planned)
   IAIDecisionPolicy <|.. RuleBasedAIDecisionPolicy
   IAIDecisionPolicy <|.. NeuralNetworkAIDecisionPolicy
   IAIDecisionPolicy ..> AIDecisionContext : reads
-  RuleBasedAIDecisionPolicy ..> OrderProcessor : dispatches via (through AIPlayer)
-  NeuralNetworkAIDecisionPolicy ..> OrderProcessor : dispatches via (through AIPlayer)
+  SkirmishAIPlayer --|> AIPlayer : today's subclass (pre-refactor)
+  RuleBasedAIDecisionPolicy ..> SkirmishAIPlayer : replaces subclass override with policy
+  AIPlayer ..> OrderProcessor : EnqueueOrder(s) -> DispatchOrders -> ... -> Process(...)
 ```
+
+Sequence — today's dispatch path (`AIPlayer.Update()` → `OnDecisionTick()` override), and the
+planned path once `IAIDecisionPolicy` lands:
+
+```mermaid
+sequenceDiagram
+  participant PM as PlayerManager
+  participant P as Player
+  participant AP as AIPlayer
+  participant Pol as IAIDecisionPolicy (planned)
+  participant OP as OrderProcessor
+
+  PM->>P: LogicTick()
+  P->>AP: Update()
+  Note over AP: countdown reaches 0 (DefaultDecisionCadenceFrames)
+  AP->>Pol: DecideNextOrders(AIDecisionContext)
+  Pol-->>AP: IReadOnlyList~Order~
+  AP->>AP: EnqueueOrders(orders)
+  AP->>OP: DispatchOrders -> NetworkMessageBuffer.AddLocalOrder / Game.InjectOrders -> Process(...)
+```
+
+Today, `Pol` does not exist: `AIPlayer.OnDecisionTick()` is a `protected virtual` hook and
+`SkirmishAIPlayer` overrides it directly, calling `RunEconomyAndBaseBuildout()` /
+`RunUnitProduction()` / `RunMilitaryBehavior()` inline instead of through a policy object. The
+first task card ([`WI-A4-01`](../agent/cards/WI-A4-01-extract-ai-decision-policy-interface.md))
+introduces `Pol` without changing this sequence's observable behavior.
 
 ---
 

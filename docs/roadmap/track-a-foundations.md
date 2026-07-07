@@ -29,7 +29,7 @@ phase is marked `Ready`.
 | A1 | [Headless host](deep-dives/headless-host.md) | [§7](deep-dives/headless-host.md#7-architecture-diagrams) `†` | — |
 | A2 | — | — | — |
 | A3 | — | — | — |
-| A4 | [Pluggable AI policy](deep-dives/pluggable-ai.md) | [§8](deep-dives/pluggable-ai.md#8-architecture-diagrams) `†` | — |
+| A4 | [Pluggable AI policy](deep-dives/pluggable-ai.md) | [§8](deep-dives/pluggable-ai.md#8-architecture-diagrams) | [`WI-A4-01`](agent/cards/WI-A4-01-extract-ai-decision-policy-interface.md), [`WI-A4-02`](agent/cards/WI-A4-02-ai-policy-selection-factory.md), [`WI-A4-03`](agent/cards/WI-A4-03-design-neural-network-policy.md), [`WI-A4-04`](agent/cards/WI-A4-04-implement-neural-network-policy.md) |
 | A5 | [Visualization](deep-dives/visualization.md) | [§9](deep-dives/visualization.md#9-architecture-diagrams) `†` | — |
 
 ## Notes
