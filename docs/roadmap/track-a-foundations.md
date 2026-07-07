@@ -1,10 +1,10 @@
 # Track A — Foundations
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Shared prerequisites for
-> [Scale](track-b-scale.md) and [External Assets](track-c-external-assets.md).
-> See [`agent/current-state.md`](agent/current-state.md) for the architecture these phases modify.
+> Part of the [Large-Scale RTS Roadmap](README.md). This track establishes the shared
+> prerequisites for [Scale](track-b-scale.md) and [External Assets](track-c-external-assets.md).
+> Architecture context: see [`agent/current-state.md`](agent/current-state.md).
 >
-> Audience: human — strategic track overview.
+> Audience: human overview of the foundations track.
 
 > The Milestone column states the demonstrable outcome that marks each phase done. Granular steps live in
 > [`implementation-checklist.md`](implementation-checklist.md).

@@ -1,14 +1,15 @@
 # Track B — Scale
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Scale the engine to very large unit counts and maps.
-> Builds on [Track A — Foundations](track-a-foundations.md); see
-> [`agent/current-state.md`](agent/current-state.md) for the architecture these phases modify.
+> Part of the [Large-Scale RTS Roadmap](README.md). This track scales the engine to very large
+> unit counts and maps. It builds on [Track A — Foundations](track-a-foundations.md).
 >
 > Near-term scale anchor: 10k units at interactive rate (~30 fps) on one machine. See the
-> [scale-anchor Decision](open-questions.md). B2–B5 and B7 are designed and budgeted against this
-> anchor; the larger {100k, millions} figures stay directional until it is raised.
+> [scale-anchor Decision](open-questions.md). B2–B5 and B7 use that anchor as the first budgeted
+> target; the larger {100k, millions} figures remain directional until it is raised.
 >
-> Audience: human — strategic track overview.
+> Architecture context: see [`agent/current-state.md`](agent/current-state.md).
+>
+> Audience: human overview of the scale track.
 
 > The Milestone column states the demonstrable outcome that marks each phase done. Granular steps live in
 > [`implementation-checklist.md`](implementation-checklist.md).

@@ -1,25 +1,20 @@
 # Track P — Playable Baseline (prerequisite)
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). The hard prerequisite for every other
-> track. Before the engine is worth scaling, sharding, or measuring, the reference game must be
-> fully playable end-to-end: start a skirmish against an AI opponent, build a base, run an
-> economy, produce and command units, fight, and reach a win/lose outcome. Tracks A/B/C assume
-> that correct, complete simulation; this track delivers it.
+> Part of the [Large-Scale Simulation Roadmap](README.md). This track establishes the playable
+> skirmish loop that later tracks build on. A complete build → fight → win/lose match against an
+> AI opponent is the prerequisite for the rest of the roadmap.
 >
-> Bar: a full Command & Conquer: Generals / Zero Hour skirmish match is playable end-to-end
-> (build → fight → win/lose) against a computer opponent.
+> Bar: a full Generals / Zero Hour skirmish runs end to end against a computer opponent.
 >
-> See [`agent/current-state.md`](agent/current-state.md) for the architecture these phases modify.
+> Architecture context: see [`agent/current-state.md`](agent/current-state.md).
 >
-> Audience: human — strategic track overview.
+> Audience: human overview of the prerequisite track.
 
 ## Why this comes first
 
-A scaling/experimentation framework built on a half-working game would measure and distribute the
-wrong thing. The [headless host (A1)](deep-dives/headless-host.md), [reproducibility (A2)](track-a-foundations.md),
-and [benchmarks (B1)](track-b-scale.md) all need a complete match loop as their unit of work: a
-run that starts, progresses, and terminates with a result. Track P makes that loop real and
-correct; the rest of the roadmap then scales and pluginizes it.
+A complete match loop is the unit of work for the later foundations, scale, and external-asset
+tracks. The [headless host (A1)](deep-dives/headless-host.md), [reproducibility (A2)](track-a-foundations.md),
+and [benchmarks (B1)](track-b-scale.md) all depend on that loop.
 
 ## Status from the current code (audit)
 

@@ -1,15 +1,15 @@
 # Roadmap Tree
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). This is the visual overview of the
-> roadmap: tracks → phases → sub-phases, plus phase-level dependency flow. Keep it in sync with
-> the track documents ([A](track-a-foundations.md) · [B](track-b-scale.md) ·
+> Part of the [Large-Scale Simulation Roadmap](README.md). This document is the visual overview of
+> the roadmap: tracks → phases → sub-phases, with dependency flow. Keep it aligned with the track
+> documents ([A](track-a-foundations.md) · [B](track-b-scale.md) ·
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
-> [E](track-e-naval-warfare.md)) and the deep dives whenever phases, sub-phases, or dependencies
-> change; see [How to maintain](#how-to-maintain-this-tree).
+> [E](track-e-naval-warfare.md)) and the deep dives as phases, sub-phases, or dependencies change;
+> see [How to maintain](#how-to-maintain-this-tree).
 >
-> Audience: human — this is the primary visual overview of the whole roadmap.
+> Audience: human overview of roadmap structure and dependency flow.
 
-The diagrams below are complementary:
+The diagrams below cover two views:
 
 - [1. Structure tree](#1-structure-tree) — hierarchy only: every track, phase, and sub-phase.
 - [2. Progression](#2-progression-dependency-flow) — phase-level dependency flow, including

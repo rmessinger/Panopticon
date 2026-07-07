@@ -1,13 +1,11 @@
 # Framework Seams
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). This doc defines a seam and is the
-> authoritative seam registry. It names each seam, states what it abstracts, and tracks the
-> interface and implementations. Keep it in sync as seams are introduced or changed; see
+> Part of the [Large-Scale Simulation Roadmap](README.md). This document defines a seam and
+> maintains the seam registry. It names each seam, states what it abstracts, and tracks the
+> interface and implementations. Keep it aligned as seams are introduced or changed; see
 > [How to maintain](#how-to-maintain-this-registry).
 >
-> Audience: human + agent — the overview and seam descriptions are human-readable; the registry
-> detail and file citations are agent context. A split into a human overview and an agent
-> registry is planned.
+> Audience: human and agent overview of the roadmap's pluggable seams.
 
 ## What is a seam?
 

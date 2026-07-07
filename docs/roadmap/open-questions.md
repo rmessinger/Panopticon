@@ -1,10 +1,10 @@
 # Open Questions
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). This is the decision log. Each item
-> is a settled Decision with rationale and links back to the affected phase. No questions are
-> currently open; add new ones here and convert them to a Decision once settled.
+> Part of the [Large-Scale Simulation Roadmap](README.md). This document is the decision log.
+> Each entry is a settled Decision with rationale and links back to the affected phase. No
+> questions remain open; new items join here and become Decisions once settled.
 >
-> Audience: human — the decision log for the roadmap.
+> Audience: human reference for roadmap decisions.
 
 - Determinism vs. parallelism — Decision: relaxed/statistical determinism + free intra-tick
   parallelism with explicit conflict resolution. Bit-exact, cross-platform reproducibility is

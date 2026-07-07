@@ -1,14 +1,13 @@
 # Track D — Gameplay Content Expansion
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Extend the reference gameplay loop beyond the
-> built-in SAGE titles (Command & Conquer/BFME) with mechanics from other RTS traditions, starting
-> with Age of Empires/Empire Earth style tech trees and era/age progression. This is new gameplay
-> content and mechanism hosted by the existing `GameObject`/module system, not a new Simulation
-> Domain Model; see the [domain-scope Decision](open-questions.md). It consumes Track C's
-> external-model import and the standalone [ModCollector tool](plans/mod-collector.md); it does not
-> replace either.
+> Part of the [Large-Scale RTS Roadmap](README.md). This track extends the reference gameplay loop
+> beyond the built-in SAGE titles with mechanics from other RTS traditions, starting with
+> tech-tree and era/age-progression concepts. It adds gameplay content and mechanism through the
+> existing `GameObject`/module system rather than a new Simulation Domain Model.
 >
-> Audience: human — strategic track overview.
+> Architecture context: see [`agent/current-state.md`](agent/current-state.md).
+>
+> Audience: human overview of the gameplay-expansion track.
 
 ## Why this comes after Track P (and alongside A/B/C)
 

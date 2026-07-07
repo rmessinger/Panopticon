@@ -1,13 +1,11 @@
 # Track E — Naval Warfare
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Make water-surface combat work.
-> Unlike [Track D](track-d-gameplay-expansion.md)'s tech trees/eras, naval warfare is not wholly
-> new content: BFME2's Corsairs of Umbar data already defines ship `ObjectKind`s and a `WATER`
-> locomotor surface. The terrain/pathfinding layer that should make them move and fight is still
-> stubbed: `Pathfinder.ValidMovementTerrain` always returns `true`, and `TerrainLogic` always
-> resolves to the ground layer. This track completes that seam and proves it with real ship combat.
+> Part of the [Large-Scale RTS Roadmap](README.md). This track completes the water/ground
+> movement seam and adds ship combat. It uses existing BFME2 naval content as the reference.
 >
-> Audience: human — strategic track overview.
+> Architecture context: see [`agent/current-state.md`](agent/current-state.md).
+>
+> Audience: human overview of the naval-warfare track.
 
 ## Why this comes after Track P
 

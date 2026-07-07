@@ -1,28 +1,23 @@
 # Implementation Checklist
 
-> Part of the [Large-Scale Simulation Roadmap](README.md). This is the flat, dependency-ordered
-> checklist of concrete implementation changes across the roadmap. The [track docs](README.md#document-map)
-> hold the design and rationale, [agent](agent/) holds bounded task cards for cheap agents, and
-> this file is the running build list.
+> Part of the [Large-Scale Simulation Roadmap](README.md). This document is the dependency-ordered
+> implementation checklist for the roadmap. The [track docs](README.md#document-map) hold design
+> and rationale, [agent](agent/) holds bounded task cards, and this file is the work list.
 >
-> Audience: human — the authoritative progress checklist.
+> Audience: human progress checklist.
 
-How to use & maintain
+### Maintenance
 
 - Check an item off (`- [x]`) when it lands. Keep it aligned with the phase Status in the track
   docs and any matching [agent card](agent/).
-- Items are intentionally granular: a concrete code change or area, not strategy. Add finer items
-  as a phase gets a deep dive, and split anything too large for one focused change.
-- Order matters. Track P gates Tracks A/B/C, so do P first. Within a track, items are roughly
-  top-down by dependency.
-- Each group links to its phase for context. Keep rationale in the linked docs instead of
-  repeating it here.
-- Every item has an `AC:` sub-bullet with a verifiable completion check, ideally a
-  [P0 harness](deep-dives/playable-baseline-harness.md) assertion or an automated test
-  (`dotnet test src --filter Category!=Interactive`). If a phase is still too undefined, mark the
-  AC as `TBD` with a rough template and tighten it once the deep dive lands. Every item is also
-  expected to build (`dotnet build src`) and pass formatting
-  (`dotnet format src --verify-no-changes`); that baseline is implied and not repeated per item.
+- Keep items granular: each one should be a concrete code change or area, not a strategy. Split
+  anything too large for one focused change.
+- Keep order intact. Track P gates Tracks A/B/C, so P items come first. Within a track, items are
+  roughly top-down by dependency.
+- Keep rationale in the linked docs instead of repeating it here. Each item carries an `AC:`
+  sub-bullet with a verifiable completion check, ideally a [P0 harness](deep-dives/playable-baseline-harness.md)
+  assertion or an automated test (`dotnet test src --filter Category!=Interactive`). If a phase is
+  still too undefined, mark the AC as `TBD` and tighten it once the deep dive lands.
 
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `(↗)` needs a design decision / high-effort
 model before it can be done · `AC:` acceptance criteria · `TBD` AC not yet definable.

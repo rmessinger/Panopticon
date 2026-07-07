@@ -1,24 +1,24 @@
 # Agent Guide — incremental roadmap iteration
 
-> A parallel, agent-focused companion to the [roadmap](../README.md). The roadmap says what
-> to build and why; this guide says how a low-effort automated agent picks up a small, bounded
-> slice and finishes it safely — without needing a high-effort model to re-reason the whole design.
+> A parallel, agent-focused companion to the [roadmap](../README.md). The roadmap states what
+> to build and why; this guide states how a low-effort automated agent picks up a small, bounded
+> slice and completes it safely without requiring a high-effort model to re-reason the whole design.
 >
-> Audience: agent — this folder and its cards are written for automated agents. Human readers
-> wanting a project overview: start with the [roadmap README](../README.md) and [track docs](../README.md#document-map).
+> Audience: agent-focused workflow. Human readers wanting a project overview should start with the
+> [roadmap README](../README.md) and [track docs](../README.md#document-map).
 
 ---
 
 ## Why this exists
 
-The roadmap phases (P, A, B, C) are large and design-heavy. Executing them end-to-end needs strong
-reasoning. But most phases decompose into many small, mechanical, low-ambiguity steps —
-cataloging code, replicating an existing pattern, adding a test, a narrow refactor. Those steps
-don't need a high-effort model if they are written down precisely. This guide is where they are
-written down, as task cards.
+Roadmap phases (P, A, B, C) are large and design-heavy. Execution at that scale requires strong
+reasoning. Most phases decompose into many small, mechanical, low-ambiguity steps — cataloging
+code, replicating an existing pattern, adding a test, or applying a narrow refactor. Those steps do
+not require a high-effort model when they are written down precisely. This guide stores them as task
+cards.
 
-A good task card is self-contained: a cheap agent should be able to execute it by reading the card
-plus the exact files it names — no roadmap-wide context required.
+A good task card is self-contained: a cheap agent can execute it by reading the card and the exact
+files it names, without roadmap-wide context.
 
 ---
 
@@ -40,11 +40,11 @@ Every agent working from this guide follows the same loop:
    completes a phase, and tick the matching item(s) in the
    [implementation checklist](../implementation-checklist.md).
 6. Report / hand off. Write a one-paragraph result to the shared [`.exchange`](#coordination)
-   file at the repo root (what changed, validation result, any follow-up cards to create). This lets
-   the next agent or a human continue without re-discovering your work.
+   file at the repo root (what changed, validation result, and any follow-up cards to create). This
+   lets the next agent or a human continue without re-discovering the work.
 
-> Golden rule: a card is a contract. If you can't satisfy it within its stated scope and
-> guardrails, mark it `Blocked` and explain why — don't expand scope to force it through.
+> Golden rule: a card is a contract. If a card cannot be satisfied within its stated scope and
+> guardrails, it is marked `Blocked` with an explanation rather than expanded to force completion.
 
 ---
 
@@ -57,9 +57,8 @@ in fresh sessions can't see it. Rely only on repo artifacts:
 - The Status column in each [track document](../README.md#document-map) (`Not started` /
   `In progress` / `Done`) — the authoritative phase state.
 
-If no `Ready` card matches a phase you've been asked to advance, your job may be to write new
-cards (using the [template](task-card-template.md)) by decomposing that phase — a small,
-high-leverage task in itself.
+If no `Ready` card matches a phase that needs advancement, a new card can be written (using the
+[template](task-card-template.md)) by decomposing that phase into a small, high-leverage task.
 
 ---
 
@@ -99,9 +98,9 @@ output where the card specifies.
 ## Coordination
 
 Agents share the repo-root `.exchange` file to pass state across sessions and concurrent runs
-(it is gitignored). Append a short, dated entry when you finish or block a card: card id, what
-changed, validation result, and any follow-up cards to create. Read it before starting so you don't
-duplicate in-flight work.
+(it is gitignored). A short, dated entry is appended when a card is completed or blocked: card id,
+what changed, validation result, and any follow-up cards to create. The file is read before work
+starts to avoid duplicate in-flight work.
 
 ---
 
@@ -109,7 +108,7 @@ duplicate in-flight work.
 
 | File | Purpose |
 |---|---|
-| [`README.md`](../README.md) | This loop + conventions (you are here). |
+| [`README.md`](../README.md) | This loop and its conventions. |
 | [`task-card-template.md`](task-card-template.md) | Copy this to author a new card. |
 | [`cards/`](cards/) | The executable task cards, one bounded unit of work each. |
 
