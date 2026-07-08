@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-06` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-6, see [deep dive §2.5](../../deep-dives/victory-defeat.md#25-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/victory-defeat.md#4-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-6, see [deep dive §1.5](../../deep-dives/victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-02`, and `WI-P3-04` |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#8-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 

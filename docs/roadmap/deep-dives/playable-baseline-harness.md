@@ -5,7 +5,7 @@
 >
 > Audience: human overview of the harness design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references used to ground the design in the actual codebase. Skip it if reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context)) contains file:line code references used to ground the design in the actual codebase. Skip it if reading for design intent.
 
 Purpose: turn ReplaySketch into a general command-authoring and headless validation harness. The
 scope covers command modeling, object resolution, assertions, and a run-and-assert entry point that
@@ -13,7 +13,7 @@ later phases and the visualization layer share.
 
 ---
 
-## 1. Why this is P0
+## 1. Rationale
 
 Every other P phase needs a way to drive a scenario and check what happened. Today ReplaySketch
 can drive only five canned action shapes against two hardcoded factions, and it has no assertion
@@ -23,9 +23,9 @@ to read final or per-tick state and assert on it. P0 provides both.
 
 ---
 
-## 3. Design
+## 2. Design
 
-### 3.1 MAUI ViewModel testability (prerequisite for harness unit coverage)
+### 2.1 MAUI ViewModel testability (prerequisite for harness unit coverage)
 `MainViewModel.LoadMapFromFolder` currently uses `Preferences.Default` (a MAUI static) to persist
 the installation path. That makes the unconditional-save behaviour, where the path is recorded
 before map load is attempted, untestable without a MAUI runtime. Before the harness expands
@@ -44,15 +44,15 @@ headlessly, so changes to them have no fast deterministic check. Abstract each b
 injectable seam, a dispatcher that runs the continuation synchronously in tests and a process
 launcher that records the request instead of spawning, so the full `MainViewModel` command surface
 is unit-testable in `OpenSage.Tools.ReplaySketch.Tests` without a MAUI runtime. This is the
-foundation the agent validation playbook (§3.7) documents.
+foundation the agent validation playbook (§2.7) documents.
 
-### 3.2 Open command model (replaces the closed `ActionType`)
+### 2.2 Open command model (replaces the closed `ActionType`)
 Introduce a `CommandSpec` (working name) that maps directly to an engine `Order` instead of a
 fixed gameplay verb:
 
 - `OrderType` (the full enum) + `PlayerIndex` + an ordered list of typed `CommandArgument`s mirroring
   `OrderArgumentType` (`Integer/Float/Boolean/ObjectId/Position/ScreenPosition/ScreenRectangle`).
-- Object references by definition name (resolved generically — see §3.3) and position via the
+- Object references by definition name, resolved generically, see §2.3, and position via the
   existing polymorphic `PositionSpec`, so authoring stays scenario-relative.
 - Object-id arguments (e.g. `AttackObject`, `Enter`) need a way to reference runtime objects that
   don't exist until produced. Decision (see [open-questions](../open-questions.md)): objects an
@@ -65,13 +65,13 @@ fixed gameplay verb:
 - Keep `TimingConfig` (fixed/random/after-action) and the deferred-injection path; they already give
   authored and reactive ordering.
 
-### 3.3 Generic definition resolution (removes hardcoded `KnownDefinitions`)
+### 2.3 Generic definition resolution (removes hardcoded `KnownDefinitions`)
 Replace the hardcoded USA/GLA name→hash table (`ReplayExporter.cs:21-32`) with definition-name
 resolution against the loaded `AssetStore`, using the same `AssetHash.GetHash` path for any
 object or player. This makes the harness faction-agnostic and is required for authoring any
 baseline match.
 
-### 3.4 Validation / assertion layer (new)
+### 2.4 Validation and assertion layer (new)
 Add a declarative assertion set to each scenario and evaluate it headlessly. Authoring shape,
 settled in [open-questions](../open-questions.md): assertions are JSON predicates such as
 `{path: "player[1].money", op: ">=", value: 0}` over a fixed path and operator vocabulary, with a
@@ -88,13 +88,13 @@ are:
 - Evaluation hooks: subscribe to `Game.Updating` for per-tick invariants; read final state after the
   run loop exits. Result is a structured pass/fail report (assertion id, expected, actual, frame).
 
-### 3.5 Headless run-and-assert entry point
+### 2.5 Headless run-and-assert entry point
 Expose one callable surface, CLI and library, for agents and CI:
 `scenario/command file in → run headless → assertion report out (exit code + machine-readable JSON)`.
-It wraps `RunHeadless`'s boot and loop (`Program.cs:195-270`) plus the §3.4 evaluator, and replaces
+It wraps `RunHeadless`'s boot and loop (`Program.cs:195-270`) plus the §2.4 evaluator, and replaces
 the bespoke enemy-CC-destruction termination with P3's real outcome signal.
 
-### 3.5b Scenario matrix runner
+### 2.5b Scenario matrix runner
 Add a layer on top of P0-5 that accepts a `ScenarioMatrix` file instead of a single scenario.
 The matrix declares named sweep axes; the runner expands them into individual runs and aggregates
 the results into one keyed report.
@@ -143,13 +143,13 @@ Exit code is 0 iff all cells pass. The CLI/library entry point accepts either a 
 This is the primitive that A5-2 builds on. A5-2 adds result replay, graphing, and multi-run
 comparison; P0-5b only provides expansion, execution, and keyed output.
 
-### 3.6 Scale (forward link)
+### 2.6 Scale (forward link)
 The model must support programmatic or procedural generation of large command sets and efficient
 `.rep` emission so the harness scales toward sim-scale runs. Full authoring and replay scaling,
 including streaming, bounded-memory loading, and throughput benchmarks, is finalized under
 [A5-5](visualization.md); P0 only needs the model to avoid assuming small hand-authored scenarios.
 
-### 3.7 Agent validation playbook (new)
+### 2.7 Agent validation playbook (new)
 ReplaySketch lacks a reliable, specific, repeatable validation loop for low-effort and automated
 agents, especially in the MAUI layer, which has no automated coverage and cannot be driven by a
 windowless agent. The renderer side already has this in `OpenSage.Tools.TestHarness/AGENTS.md`.
@@ -161,8 +161,8 @@ P0 adds the equivalent guide for command or scenario authoring and the MAUI tool
 - Build / test / format commands: the non-MAUI `OpenSage.Tools.ReplaySketch.Tests` suite (controller,
   interaction, and service tests), the MAUI screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`) for visual
   verification of any renderer or MAUI-layer change, and `dotnet format src --verify-no-changes`.
-- The headless run-and-assert entry point (§3.5 / P0-5) for command-level validation, once it lands.
-- The MAUI seams (§3.1, P0-1b/P0-1c) that keep new logic in `.Core` and unit-testable, plus what is
+- The headless run-and-assert entry point (§2.5, P0-5) for command-level validation, once it lands.
+- The MAUI seams (§2.1, P0-1b/P0-1c) that keep new logic in `.Core` and unit-testable, plus what is
   not headlessly reachable and how to add coverage when touching the MAUI layer.
 - A step-by-step checklist and a common-failure-mode table mirroring the TestHarness guide.
 
@@ -173,7 +173,7 @@ validated.
 
 ---
 
-## 4. Integration surface (what P0 plugs into)
+## 3. Integration surface (what P0 plugs into)
 - Author: `CommandSpec`/assertion model in `OpenSage.Tools.ReplaySketch.Core/Model`; lowering in
   `Services/ReplayExporter` (`BuildOrders`/`Export`); definition resolution via `AssetStore`.
 - Drive: `ReplayFile.Write`/`ReplayHeader.Create`; `Order`/`OrderArgument*`; deferred path via
@@ -182,9 +182,9 @@ validated.
 - Assert: `Game.Updating`/`Game.MapTime`; `Player`/`BankAccount`/`GameLogic`; P3 `GameOutcome`.
 - Validate (agent-facing): `OpenSage.Tools.ReplaySketch.Tests` (controller/interaction/service);
   MAUI screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`) for visual verification; `dotnet format`;
-  the §3.7 playbook (`ReplaySketch.Maui/AGENTS.md`).
+  the §2.7 playbook (`ReplaySketch.Maui/AGENTS.md`).
 
-## 5. Sub-phases
+## 4. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
@@ -200,7 +200,7 @@ validated.
 | P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
 | P0-7. Agent validation playbook | Check in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, screenshot mode for visual verification, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Done |
 
-## 6. Sequencing & dependencies
+## 5. Sequencing and dependencies
 - P0-1a (screenshot mode) is complete, standalone agent tooling, and independent of the
   command-model work.
 - P0-1 through P0-3 generalize authoring. P0-4 and P0-5 cover validation and can start once
@@ -215,7 +215,7 @@ validated.
 - P0 unblocks P3, P6, and P7 and is later extended by [A5-3](visualization.md) and
   [A5-5](visualization.md).
 
-## 7. Resolved design questions
+## 6. Resolved design questions
 - Runtime object references — Decided: implicit auto-handles keyed to the producing command,
   with opt-in explicit names, for script-created objects; query selectors
   (faction/relationship/definition/proximity) for world or enemy objects. Generalizes
@@ -239,7 +239,7 @@ validated.
   matrix is built out incrementally alongside implementation. See
   [open-questions](../open-questions.md).
 
-## 8. P0 Acceptance Suite
+## 7. P0 Acceptance Suite
 
 This is the authoritative pass/fail definition for P0. Every entry maps to a stub test that
 fails with `NotImplementedException` until the sub-phase lands.
@@ -261,12 +261,12 @@ Stubs live at:
 - `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
 
 P0 is complete when all stubs pass and no test in either file throws
-`NotImplementedException`. The §5 sub-phase table tracks each item; this table is the aggregate
+`NotImplementedException`. The §4 sub-phase table tracks each item; this table is the aggregate
 gate.
 
-## 9. Architecture Diagrams
+## 8. Architecture Diagrams
 
-### 9.1 Class diagram
+### 8.1 Class diagram
 
 Classes marked `<<existing>>` are already in the codebase. Classes marked `<<pending>>` are
 planned but not yet implemented; the sub-phase responsible for each is noted in parentheses.
@@ -461,7 +461,7 @@ classDiagram
   ScenarioMatrixExpander ..> RunAndAssertEntryPoint : invokes per cell
 ```
 
-### 9.2 Sequence diagram — run-and-assert flow (single scenario)
+### 8.2 Sequence diagram: run-and-assert flow (single scenario)
 
 Shows the P0-5 flow for a single `ReplayScenario`. The P0-5b matrix runner wraps it in a loop
 over expanded cells.
@@ -510,7 +510,7 @@ sequenceDiagram
   Entry-->>Author: exit 0 or non-zero + JSON report
 ```
 
-### 9.3 Sequence diagram — matrix expansion flow (P0-5b)
+### 8.3 Sequence diagram: matrix expansion flow (P0-5b)
 
 ```mermaid
 sequenceDiagram
@@ -535,7 +535,7 @@ sequenceDiagram
 
 ---
 
-## 10. Related
+## 9. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Visualizer that extends this harness: [`visualization.md`](visualization.md) (A5-3/A5-5)
 - Outcome it asserts on: [`victory-defeat.md`](victory-defeat.md) (P3)
@@ -543,13 +543,13 @@ sequenceDiagram
 
 ---
 
-## Appendix: Current code — agent context
+## Appendix: Current code (agent context)
 
 > Agent context: this section contains file:line code references for agents
 > implementing this phase. Human readers: the design intent above does not
 > require reading this section.
 
-### 2.1 The closed authoring vocabulary
+### The closed authoring vocabulary
 - `ActionType` is a closed 5-value enum — `Construct, GatherResources, RecruitBasicUnit,
   AttackEnemyBase, EnemyBaseDestroyed` (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs:3-10`).
 - `ActionEntry` models one action with optional `BuildingDefinitionName`/`UnitDefinitionName`, a
@@ -566,7 +566,7 @@ sequenceDiagram
 - `UnitCatalog`/`BuildingCatalog` are faction-indexed name/definition lookup tables
   (`Model/UnitCatalog.cs:7-107`, `Model/BuildingCatalog.cs:7-71`).
 
-### 2.2 The exporter (action → engine `Order` → `.rep`)
+### The exporter (action → engine `Order` → `.rep`)
 - `ReplayExporter.Export(...)` builds `(frame, Order)` pairs plus `DeferredAction`s
   (`Services/ReplayExporter.cs:44-95`); non-deferred actions advance
   `cumulativeFrame += action.Timing.Resolve(rng)` (`:83-89`); deferred actions are not written to
@@ -587,7 +587,7 @@ sequenceDiagram
 - `ReplayActionMonitor` maps runtime orders/state back to `ActionType` (e.g. `BuildObject`→
   `Construct`, `CreateUnit`→`RecruitBasicUnit`) for observation (`Services/ReplayActionMonitor.cs:18-107`).
 
-### 2.3 The engine order system P0 must generalize toward
+### The engine order system P0 must generalize toward
 - `Order` = `PlayerIndex` + `OrderType` + typed `Arguments`, appended via `AddIntegerArgument`,
   `AddFloatArgument`, `AddBooleanArgument`, `AddObjectIdArgument`, `AddPositionArgument`,
   `AddScreenPositionArgument`, `AddScreenRectangleArgument`; plus static helpers (`CreateBuildObject`,
@@ -607,7 +607,7 @@ sequenceDiagram
   logs `Unimplemented order type` (`:553-560`). This is the authoritative list of what a command
   can actually do — the harness should target the handled subset first.
 
-### 2.4 The headless run + where to read state
+### The headless run + where to read state
 - `TestHarness` `RunHeadless(...)` boots `new Game(...)` (audio off), `LoadReplayFile(repEntry)`,
   `StartRun()`, installs a `ReplayActionMonitor`, then loops
   `DrainPendingInjections → game.Update → EnsureFrame → Render → capture.FlushPending`, exiting on

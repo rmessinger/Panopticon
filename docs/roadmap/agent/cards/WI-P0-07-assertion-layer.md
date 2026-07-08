@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none (evaluates against `Game` state accessible independently of other P0 cards) |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 

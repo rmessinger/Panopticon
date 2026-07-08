@@ -8,7 +8,7 @@
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P0-07`, `WI-P0-08` |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6b-08` |
-| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b scenario matrix, see [deep dive §4.5](../../deep-dives/unit-contract-validation.md#45-scenario-matrix) |
+| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b scenario matrix, see [deep dive §4](../../deep-dives/unit-contract-validation.md#4-scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P6b-01`, `WI-P6b-02`, `WI-P6b-03`, `WI-P6b-04`, `WI-P6b-05`, `WI-P6b-06`, `WI-P6b-07` |
-| Diagrams | [P6b Architecture Diagrams](../../deep-dives/unit-contract-validation.md#7-architecture-diagrams) |
+| Diagrams | [P6b Architecture Diagrams](../../deep-dives/unit-contract-validation.md#6-architecture-diagrams) |
 
 ## Goal
 

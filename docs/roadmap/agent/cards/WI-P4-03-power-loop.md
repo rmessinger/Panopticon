@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-03` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-3, see [P4 deep dive](../../deep-dives/economy-production-combat.md#p4--economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/economy-production-combat.md#p4-sub-phases) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-3, see [P4 deep dive](../../deep-dives/economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/economy-production-combat.md#p4-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |

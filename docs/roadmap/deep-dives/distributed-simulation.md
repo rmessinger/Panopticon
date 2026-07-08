@@ -5,7 +5,7 @@
 >
 > Audience: human overview of the distributed-simulation design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current-state hooks appendix](#appendix-current-state-hooks--agent-context)) contains code-level details about what the implementation builds on. Skip it if reading for design intent.
+> The agent-context section at the bottom ([Current-state hooks appendix](#appendix-current-state-hooks-agent-context)) contains code-level details about what the implementation builds on. Skip it if reading for design intent.
 
 Purpose: run one simulation beyond a single machine by partitioning the world across processes or
 machines. The design uses spatial sharding and domain-parameterized handoff rules.
@@ -19,7 +19,7 @@ RTS spatial sharding is the first implementation; the rest of this document note
 
 ---
 
-## 1. Why this depends on the rest of Track A/B
+## 1. Dependencies
 
 Spatial sharding is the last major scale phase because it composes the earlier work:
 
@@ -40,7 +40,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 
 ---
 
-## 3. Core problems to solve
+## 2. Core problems to solve
 
 1. Partitioning policy. How is the world divided and who owns each partition? The scheme is
    chosen by the [domain topology model (A4)](../track-a-foundations.md): a static grid of regions
@@ -77,7 +77,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 
 ---
 
-## 4. Sub-phases
+## 3. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
@@ -91,7 +91,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 
 ---
 
-## 5. Sequencing notes
+## 4. Sequencing notes
 
 - B6-1 is design-only and can begin early (it informs B4a-5's chunk boundaries), but
   implementation waits on A1/A2/B3.
@@ -129,7 +129,7 @@ Each cell runs the scenario with the given shard configuration and asserts:
 - All unit positions are consistent with the single-shard reference within spatial tolerance.
 - Aggregate metrics (unit count, money totals) are within the A2 tolerance band.
 
-## 7. Architecture Diagrams
+## 6. Architecture Diagrams
 
 Diagrams for this phase will be elaborated once B6 moves to active implementation. The
 placeholder below captures the key types the distributed simulation introduces.
@@ -180,7 +180,7 @@ classDiagram
   ShardCoordinator --> PartitionStrategy
 ```
 
-## 8. Related
+## 7. Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
 - Headless host (a shard is a host): [`headless-host.md`](headless-host.md)
@@ -189,7 +189,7 @@ classDiagram
 
 ---
 
-## Appendix: Current-state hooks — agent context
+## Appendix: Current-state hooks (agent context)
 
 > Agent context: this section contains file:line code references for agents
 > implementing this phase. Human readers: the design intent above does not

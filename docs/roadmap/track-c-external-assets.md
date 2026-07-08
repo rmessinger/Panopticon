@@ -1,4 +1,4 @@
-# Track C — External Models & Animations
+# Track C: External Models & Animations
 
 > Part of the [Large-Scale RTS Roadmap](README.md). This track adds unit models and animations
 > authored outside the Westwood `.w3d` ecosystem. The design begins with a format-agnostic import

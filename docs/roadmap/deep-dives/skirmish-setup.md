@@ -5,7 +5,7 @@
 >
 > Audience: human overview of the skirmish-setup design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context)) contains file:line code references. Skip it if reading for design intent.
 
 Purpose: make starting a single-player skirmish against one or more AI players work end to end
 without networking. The design covers player creation, faction/team assignment, start positions,
@@ -13,7 +13,7 @@ and relationship wiring.
 
 ---
 
-## 1. Why this is foundational
+## 1. Rationale
 
 Track P assumes correctly initialized, related players. P2 needs to know who the enemy is. P3 needs
 teams and relationships to decide who lost. P6 needs relationship checks to allow attacks. Today
@@ -23,9 +23,9 @@ already provides.
 
 ---
 
-## 3. Design
+## 2. Design
 
-### 3.1 Relationship setup (the core fix)
+### 2.1 Relationship setup (the core fix)
 Implement the `PlayerManager.OnNewGame()` TODO (`PlayerManager.cs:45-46`) so that, after players are
 created from skirmish slots:
 
@@ -38,18 +38,18 @@ created from skirmish slots:
 - Reuse the existing map-relationship path (`CreatePlayers`, `PlayerManager.cs:50-76`) where the map
   defines relationships, but let skirmish-slot teams take precedence for slot-driven games.
 
-### 3.2 Unified skirmish spawn path
+### 2.2 Unified skirmish spawn path
 Resolve the SP/MP divergence at `Game.cs:745-763`: a single-player skirmish must run the same
 start-position lookup, `CreateSkirmishPlayerStartingBuilding`, and camera-placement path the MP
 branch uses, for every non-neutral player, human and AI. Decide the player-array indexing
-explicitly; the `Players[i + 2]` offset and `_players[2]` `LocalPlayer` fallback are ad hoc. See §5.
+explicitly; the `Players[i + 2]` offset and `_players[2]` `LocalPlayer` fallback are ad hoc. See §4.
 
-### 3.3 Faction / color / start-position fill
+### 2.3 Faction, color, and start-position fill
 The lobby already fills missing factions, colors, and start positions (`GameOptionsUtil.cs:239-305`).
 P1 must apply the same fill behavior to AI slots so every AI player is fully specified before
 `StartGame`: faction from `GetPlayableSides()`, a free start position, and a free color.
 
-### 3.4 Player object-ownership tracking (foundational)
+### 2.4 Player object-ownership tracking (foundational)
 Both the AI in P2 and victory/defeat in P3 need cheap answers to "what does player X still own?"
 Rather than scanning all objects on demand, P1 establishes one maintained per-`Player` view:
 building/unit counts plus an owned-object set, incremented on create/transfer and decremented on
@@ -59,7 +59,7 @@ object create/death hooks existing.
 
 ---
 
-## 4. Integration surface (what P1 changes)
+## 3. Integration surface (what P1 changes)
 - `Logic/PlayerManager.cs:24-46` — implement relationship + team setup after player creation.
 - `Logic/Player.cs:779-786` (+ `:811-831,965-994`) — reciprocal ally/enemy wiring; confirm team→
   player default resolution.
@@ -71,7 +71,7 @@ object create/death hooks existing.
 - `Logic/Player.cs` + `GameObject` create/`OnDie`/`Destroy` hooks — maintain the per-`Player` owned-object
   set + counts, foundational and consumed by P2 and P3.
 
-## 5. Resolved design questions
+## 4. Resolved design questions
 - `LocalPlayer` selection — Decided: the skirmish/lobby config marks which slot is the local
   human; `PlayerManager` reads that explicit flag instead of the `_players[2]` positional fallback
   (`PlayerManager.cs:39-46`). See [open-questions](../open-questions.md).
@@ -79,7 +79,7 @@ object create/death hooks existing.
   one human + AI slots through the same start-position/building/camera code (`Game.cs:745-763`). See
   [open-questions](../open-questions.md).
 
-## 6. Sub-phases
+## 5. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
@@ -89,7 +89,7 @@ object create/death hooks existing.
 | P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](playable-baseline-harness.md)). | Not started (card: `WI-P1-06`) |
 | P1-5. Object-ownership tracking | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Done (card: `WI-P1-07`; owner-transfer tracking: `WI-P1-11`) |
 
-## 7. Sequencing
+## 6. Sequencing
 - P1 has no Track-P prerequisite and is an entry point alongside P0, but it gates P2/P3/P4/P5/P6.
   All of them assume correctly related, spawned players.
 - P1-4's boot check rides on the [P0 harness](playable-baseline-harness.md) once P0-1/P0-5 exist.
@@ -169,13 +169,13 @@ classDiagram
 
 ---
 
-## Appendix: Current code — agent context
+## Appendix: Current code (agent context)
 
 > Agent context: this section contains file:line code references for agents
 > implementing this phase. Human readers: the design intent above does not
 > require reading this section.
 
-### 2.1 Start path
+### Start path
 - `SkirmishManager.StartGame()` builds `List<PlayerSetting>` from `Settings.Slots` and calls
   `Game.StartSkirmishOrMultiPlayerGame(...)` (`src/OpenSage.Game/Network/SkirmishManager.cs:55-93`).
 - `LocalSkirmishManager.HandleStartButtonClickAsync()` only sets `Connection = new EchoConnection()`
@@ -192,7 +192,7 @@ classDiagram
 - `Game.LocalLogicTick()` pumps `SkirmishManager.Update()` until status is `Started`
   (`Game.cs:921-929`).
 
-### 2.2 Menu entry points
+### Menu entry points
 - "Skirmish" button → `new LocalSkirmishManager(context.Game)` + opens `SkirmishGameOptionsMenu.wnd`
   (`src/OpenSage.Mods.Generals/Gui/MainMenuCallbacks.cs:127-130`).
 - Lobby init: `SkirmishGameOptionsMenuCallbacks` → `GameOptionsUtil`
@@ -201,7 +201,7 @@ classDiagram
   `SkirmishManager.HandleStartButtonClickAsync()` (`Gui/GameOptionsUtil.cs:239-305`); missing faction
   is randomized to a playable side (`:292-295`); faction combo from `Game.GetPlayableSides()` (`:68-75`).
 
-### 2.3 Player model & relationships
+### Player model & relationships
 - `PlayerManager.OnNewGame(...)` creates players from map players, picks `LocalPlayer`, then
   TODOs relationships (`src/OpenSage.Game/Logic/PlayerManager.cs:24-46`).
 - `PlayerManager.CreatePlayers(...)` maps `mapPlayer.Allies/Enemies` into `player.Allies`/
@@ -218,7 +218,7 @@ classDiagram
   `DisplayName`, `StartingBuilding`, `StartingUnits`, … (`Logic/PlayerTemplate.cs:115-140`; INI parse
   `:58-113`).
 
-### 2.4 Start positions & factions
+### Start positions & factions
 - `Waypoints.TryGetPlayerStart(int playerIndex)` looks up `Player{i}_Start`
   (`src/OpenSage.Game/Scripting/Waypoints.cs:76-81`); map load builds `Waypoints` from map objects
   (`Scene3D.cs:139-152`).

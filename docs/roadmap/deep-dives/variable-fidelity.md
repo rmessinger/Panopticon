@@ -105,7 +105,7 @@ differences within tolerance.
 - Every B7 technique is measured against [B1](../track-b-scale.md) benchmarks and validated with the
   [visualizer (A5-3)](visualization.md). Variable fidelity is explicitly a scaling experiment toolkit.
 
-## 6.5 Scenario Matrix
+## 7. Scenario Matrix
 
 The P0-5b matrix runner validates B7 by sweeping over fidelity level and unit count and confirming
 that each technique reduces cost proportionally while staying within the bounded statistical error.

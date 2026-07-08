@@ -4,20 +4,20 @@
 > [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of the
 > [Large-Scale Simulation Roadmap](../README.md).
 >
-> P5 (construction/production mechanism) is covered in [`skirmish-ai.md`](skirmish-ai.md) §1.4/§2.4,
+> P5 (construction/production mechanism) is covered in [`skirmish-ai.md`](skirmish-ai.md) §1.4 (design) and appendix §1.4,
 > since the AI drives it. This document covers the economy loop (P4) and combat/command (P6).
 >
 > Audience: human overview of the P4/P6 verification design.
 
 ---
 
-## P4 — Economy loop end-to-end
+## P4: Economy loop end-to-end
 
 Purpose: verify and complete the full money loop: harvest/supply collection → deposit to
 `BankAccount` → fund construction and production → spend. The design closes gaps in
 supply-truck/worker/dozer cycles and power.
 
-### Current code (grounded) — mostly present
+### Current code (grounded): mostly present
 - Money state: `BankAccount.Withdraw(...)` (`Logic/BankAccount.cs:22-38`) and `Deposit(...)`
   (`:41-60`); `Deposit` records income via `Player.AcademyStats.RecordIncome()`.
 - Wiring: `Player` holds `public readonly SupplyManager SupplyManager;` and
@@ -50,13 +50,13 @@ supply-truck/worker/dozer cycles and power.
 
 ---
 
-## P6 — Combat & command verification
+## P6: Combat and command verification
 
 Goal: confirm that the player can select units and issue move/attack/build/ability orders through the
 control bar end-to-end, and that weapon/damage-type/death paths cover the units a baseline match
 uses. Fill the gaps surfaced by P7's match run.
 
-### Current code (grounded) — mostly present, with gaps
+### Current code (grounded): mostly present, with gaps
 - Selection & command path: `SelectionSystem.cs`, `OrderGeneratorInputHandler.cs`,
   `Mods.Generals/Gui/GeneralsControlBar.cs` — the UI/control-bar → order-generation → dispatch path.
 - Order generation: `OrderGenerator` base (`Logic/OrderGenerators/OrderGenerator.cs:12-33`);
@@ -111,7 +111,7 @@ uses. Fill the gaps surfaced by P7's match run.
 
 The P0-5b matrix runner validates P4 and P6 across faction × supply × order-type configurations.
 
-### P4 — Economy loop
+### P4: Economy loop
 
 | Axis | Values | Notes |
 |---|---|---|
@@ -126,7 +126,7 @@ Each cell runs a supply-harvester scenario through the P0 harness for a fixed fr
 - `player.money` increased from its starting value at least once, proving harvesting is running.
 - At least one unit was produced, proving money was spent on production.
 
-### P6 — Combat & command verification
+### P6: Combat and command verification
 
 | Axis | Values | Notes |
 |---|---|---|

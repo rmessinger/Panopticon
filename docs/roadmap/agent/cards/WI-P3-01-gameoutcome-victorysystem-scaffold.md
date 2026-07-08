@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-01` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-1, see [deep dive §2.1](../../deep-dives/victory-defeat.md#21-a-gameoutcome-value-the-queryable-result) and [§4](../../deep-dives/victory-defeat.md#4-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-1, see [deep dive §1.1](../../deep-dives/victory-defeat.md#11-a-gameoutcome-value-the-queryable-result) and [§4](../../deep-dives/victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | P1 player creation/relationships should remain intact; no P3 card dependency |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#8-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 

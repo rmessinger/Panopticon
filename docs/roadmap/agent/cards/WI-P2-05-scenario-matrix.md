@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-05` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — P2 scenario matrix, see [deep dive §6.5](../../deep-dives/skirmish-ai.md#65-scenario-matrix) and [§4](../../deep-dives/skirmish-ai.md#4-sub-phases) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — P2 scenario matrix, see [deep dive §6](../../deep-dives/skirmish-ai.md#6-scenario-matrix) and [§4](../../deep-dives/skirmish-ai.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-01`, `WI-P2-02`, `WI-P2-03`, `WI-P2-04`; P0 ScenarioMatrix runner and assertion paths available |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 

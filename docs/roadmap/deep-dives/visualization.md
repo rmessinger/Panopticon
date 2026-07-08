@@ -12,7 +12,7 @@ Both ends are domain-parameterized via the [Simulation Domain Model seam (A4)](.
 
 ---
 
-## 1. Why a dedicated layer
+## 1. Rationale
 
 A scaling or optimization framework is only useful if experiments are easy to define and results
 are inspectable. Today both are missing:
@@ -207,7 +207,7 @@ per-frame recording cost for every run.
 - A5-1 through A5-5 share one domain-parameterized rendering stack between setup preview and
   results replay.
 
-## 9. Architecture Diagrams
+## 8. Architecture Diagrams
 
 Diagrams for this phase will be elaborated once A5 moves to active implementation. The
 placeholder below captures the key types the scenario authoring and visualization layer introduces.
@@ -261,7 +261,7 @@ classDiagram
   ScenarioAuthoringTool ..> ExperimentMatrix : feeds
 ```
 
-## 10. Related
+## 9. Related
 
 - Headless/FTRT host (produces the runs/recordings A5 consumes): [`headless-host.md`](headless-host.md)
 - Experiment framework seams & harness (sweeps, domain model): [`../track-a-foundations.md`](../track-a-foundations.md)

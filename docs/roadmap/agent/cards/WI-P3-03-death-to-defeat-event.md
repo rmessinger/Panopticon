@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-03` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-3, see [deep dive §2.3](../../deep-dives/victory-defeat.md#23-death--defeat-plumbing) and [§4](../../deep-dives/victory-defeat.md#4-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-3, see [deep dive §1.3](../../deep-dives/victory-defeat.md#13-death--defeat-plumbing) and [§4](../../deep-dives/victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01` and `WI-P1-07`; this card feeds `WI-P3-02` incremental defeat checks |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#8-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 

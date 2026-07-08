@@ -17,27 +17,27 @@ The term follows Michael Feathers' sense of "a place where you can alter behavio
 editing in that place," specialized here for a framework that plugs in and measures
 simulation-optimization experiments. In this roadmap a seam has four properties:
 
-1. One axis of variation. Each seam abstracts exactly one decision — how do we partition?,
-   what is the simulation domain?, how do we store entity data? — not a grab-bag.
+1. One axis of variation. Each seam abstracts exactly one decision: how do we partition, what is the
+   simulation domain, or how do we store entity data? It is not a grab-bag.
 2. A stable interface. Callers depend on the interface, never on a concrete implementation.
 3. Swappable, comparable implementations. Two or more implementations can sit behind it, and
    the [A4 experiment harness](track-a-foundations.md) can select one, run it against
    [B1 benchmarks](track-b-scale.md), and compare results.
 4. A reference implementation. Usually the existing engine behaviour (e.g. RTS, W3D, the
-   spatial grid) refactored to be one implementation — which proves the seam is real.
+   spatial grid) refactored to be one implementation, which proves the seam is real.
 
 The roadmap uses two seam types:
 
-- Structural seams — architectural boundaries that decouple subsystems so the simulation can
+- Structural seams: architectural boundaries that decouple subsystems so the simulation can
   run in new contexts such as headless or distributed execution. These are usually present or
   absent, not a menu of techniques.
-- Experiment seams — the [A4](track-a-foundations.md) swappable-implementation axes. These are
+- Experiment seams: the [A4](track-a-foundations.md) swappable-implementation axes. These are
   where optimization techniques plug in as interchangeable, independently measurable
   experiments. A Track B or C phase should usually land as an implementation behind an
   experiment seam rather than as a one-off hard-wired change.
 
 > Rule of thumb: if a roadmap phase says "make X pluggable / swappable / domain-agnostic /
-> behind an abstraction," it is introducing or widening a seam — add or update it here.
+> behind an abstraction," it is introducing or widening a seam, add or update it here.
 
 ---
 
@@ -106,7 +106,7 @@ Code references point at the current types the seam is, or will be, carved from.
 
 | Seam | Axis of variation | Interface (current → planned) | Implementations | Introduced / owned by | Docs |
 |---|---|---|---|---|---|
-| Simulation Domain Model | What the simulation is — entity/component schema, topology/space model, interaction model & locality, resolution authority, domain metrics, fidelity hooks | New seam (the central one) | Reference: RTS (`GameObject`/module engine) · First non-RTS validation: transport/graph · Future: city-builder, agent-based ([Decision](open-questions.md)) | [A4-1](track-a-foundations.md) | [track-a](track-a-foundations.md), [headless-host](deep-dives/headless-host.md), [distributed-sim](deep-dives/distributed-simulation.md) |
+| Simulation Domain Model | What the simulation is: entity/component schema, topology/space model, interaction model & locality, resolution authority, domain metrics, fidelity hooks | New seam (the central one) | Reference: RTS (`GameObject`/module engine) · First non-RTS validation: transport/graph · Future: city-builder, agent-based ([Decision](open-questions.md)) | [A4-1](track-a-foundations.md) | [track-a](track-a-foundations.md), [headless-host](deep-dives/headless-host.md), [distributed-sim](deep-dives/distributed-simulation.md) |
 | Partition scheme | How the world is divided into shards/regions | `IPartitionScheme`-style abstraction (planned), built on `PartitionCellManager` / `Quadtree` (`src/OpenSage.Game/DataStructures/`) | Reference: spatial grid · Planned: graph-cut (transport) · Future: zone-adjacency (city) | [B6-1](deep-dives/distributed-simulation.md) | [distributed-sim](deep-dives/distributed-simulation.md) |
 | Pathfinding / routing | How entities route across space/topology | Generalize `Navigation` A* (`src/OpenSage.Game/Navigation/`) | Reference: A* nav graph · Planned: hierarchical/flow-field; cross-shard routing; domain routing/flow | [B4](track-b-scale.md) / [B6-5](deep-dives/distributed-simulation.md) | [track-b](track-b-scale.md), [distributed-sim](deep-dives/distributed-simulation.md) |
 | Entity storage layout | Memory/iteration layout of entity state | Behind the `GameObject`/module API (incremental data-oriented / SoA) | Reference: module objects · Planned: data-oriented hot-data storage | [B3](track-b-scale.md) | [track-b](track-b-scale.md), [open-questions (ECS lean)](open-questions.md) |
@@ -121,7 +121,7 @@ Code references point at the current types the seam is, or will be, carved from.
 
 ---
 
-## How to maintain this registry
+## Registry maintenance
 
 - Adding a seam: when a phase introduces a new pluggable boundary, add a row to the correct
   table with its axis of variation, interface, implementations, and owning phase. Cross-link the

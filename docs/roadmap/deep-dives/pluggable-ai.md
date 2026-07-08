@@ -15,11 +15,11 @@ harness; §6 covers the follow-on work it unblocks.
 
 ---
 
-## 1. Why this is a seam, not a P2 detail
+## 1. Rationale
 
-[skirmish-ai.md §6](skirmish-ai.md#6-resolved-design-questions--open-work) already records the
+[skirmish-ai.md §5](skirmish-ai.md#5-resolved-design-questions-and-open-work) already records the
 key decision: a pluggable AI policy is an A4 experiment seam, not a P2 requirement. P2 lands one
-concrete policy, `SkirmishAIPlayer`, described in [skirmish-ai.md §2.1](skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai). That is the shape an
+concrete policy, `SkirmishAIPlayer`, described in [skirmish-ai.md §1.1](skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai). That is the shape an
 [A4](../track-a-foundations.md) seam needs: a stable interface with one reference
 implementation, sized so a very different implementation such as a neural net can sit behind the
 same interface and be selected or compared without caller changes.
@@ -27,7 +27,7 @@ same interface and be selected or compared without caller changes.
 The variation axis is narrow: how a player's per-tick strategic decisions are made. It is not
 per-object AI (`AIUpdate`/`DozerAIUpdate`/`SupplyAIUpdate`, etc.), and it is not the actuation
 path. Every implementation still emits `Order`s through `OrderProcessor`, per the P2 actuation
-decision in [skirmish-ai.md §2.3](skirmish-ai.md#23-how-the-ai-issues-actions--decision-orders-via-orderprocessor), so reproducibility (A2) and the recorded/replayed order stream stay intact.
+decision in [skirmish-ai.md §1.3](skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor), so reproducibility (A2) and the recorded/replayed order stream stay intact.
 
 ---
 
@@ -59,13 +59,13 @@ public readonly struct AIDecisionContext
     public Player Owner { get; }
     public int OwnerPlayerIndex { get; }
     public int DecisionTickCount { get; }
-    // ... read accessors mirroring what SkirmishAIPlayer already reads (§2.1 of skirmish-ai.md).
+    // ... read accessors mirroring what SkirmishAIPlayer already reads (§1.1 of skirmish-ai.md).
 }
 ```
 
 `AIPlayer` becomes a thin host: it owns the tick cadence and dispatches to an
 `IAIDecisionPolicy` instead of relying on subclass overrides. `SkirmishAIPlayer`'s existing state
-machine from [skirmish-ai.md §2.1](skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai) becomes the reference implementation — either as a
+machine from [skirmish-ai.md §1.1](skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) becomes the reference implementation, either as a
 `RuleBasedAIDecisionPolicy` or via a refactored `SkirmishAIPlayer` that holds one — proving the
 seam is real per the A4 definition ([seams.md](../seams.md#what-is-a-seam)).
 
@@ -76,7 +76,7 @@ the skirmish slot config, which already drives `AIPlayer` vs `SkirmishAIPlayer` 
 `Player.CreateNew`, grows a policy identifier. A small factory maps that identifier to an
 `IAIDecisionPolicy`, and no caller of `AIPlayer` needs to know which policy is running.
 
-### 2.2 Why this shape, specifically
+### 2.2 Rationale for this shape
 
 - It matches the existing actuation boundary exactly: orders via `OrderProcessor`. The seam is
   additive over P2's actuation decision, not a re-litigation of it.
@@ -135,7 +135,7 @@ way to construct an `IAIDecisionPolicy` from a weight vector and assign it to a 
 - Host: `AIPlayer.OnDecisionTick()` becomes a dispatch to an injected `IAIDecisionPolicy`
   instead of a `protected virtual` override point.
 - Reference implementation: `SkirmishAIPlayer`'s existing economy/build-out/production/military
-  state machine (skirmish-ai.md §2.1), refactored behind the interface — no behavior change.
+  state machine (skirmish-ai.md §1.1), refactored behind the interface, no behavior change.
 - Selection: a policy-identifier config value (alongside the existing skirmish/`PlayerAIType`
   slot configuration in `Player.CreateNew`) resolved by a small factory.
 - Actuation: unchanged — every policy still emits `Order`s via `OrderProcessor` (skirmish-ai.md
@@ -154,7 +154,7 @@ This doc formalizes the seam only. Follow-up work, each large enough for its own
   it as the reference policy, with no behavior change (verified by the existing P2 tests:
   `SkirmishAIEconomyBuildoutTests`, `SkirmishAIMilitaryBehaviorTests`,
   `SkirmishAIUnitProductionTests`, `SkirmishAIPlayerTickTests`, and the P0-5b scenario matrix in
-  skirmish-ai.md §6.5).
+  skirmish-ai.md §6).
 - Add the policy-selection config plumbing (§2.1) and a factory, defaulting to the rule-based
   policy so existing skirmish setups are unaffected.
 - Design and implement a first neural-network `IAIDecisionPolicy` (state encoding, network
@@ -280,7 +280,7 @@ introduces `Pol` without changing this sequence's observable behavior.
 
 ---
 
-## Appendix: Current code — agent context
+## Appendix: Current code (agent context)
 
 > Agent context: file:line references for agents implementing this phase. Human readers: the
 > design intent above does not require reading this section.

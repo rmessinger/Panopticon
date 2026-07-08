@@ -11,8 +11,8 @@
 
 The diagrams below cover two views:
 
-- [1. Structure tree](#1-structure-tree) — hierarchy only: every track, phase, and sub-phase.
-- [2. Progression](#2-progression-dependency-flow) — phase-level dependency flow, including
+- [1. Structure tree](#1-structure-tree): hierarchy only, every track, phase, and sub-phase.
+- [2. Progression](#2-progression-dependency-flow): phase-level dependency flow, including
   cross-track edges.
 
 Status is not encoded here. The authoritative status for each phase lives in its track document.
@@ -303,7 +303,7 @@ flowchart LR
 
 ---
 
-## How to maintain this tree
+## Tree maintenance
 
 Update this file in the same change that alters roadmap structure:
 

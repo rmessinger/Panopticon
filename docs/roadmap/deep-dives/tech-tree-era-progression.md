@@ -6,7 +6,7 @@
 > Audience: human overview of the tech-tree and era-progression design. Code references are in the
 > agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context))
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context))
 > contains file:line code references. Skip it if reading for design intent.
 
 Purpose: generalize the existing upgrade/prerequisite mechanism into an explicit, data-authored
@@ -118,7 +118,7 @@ D1's first task card is marked `Ready`.
 
 ---
 
-## Appendix: current code / agent context
+## Appendix: Current code (agent context)
 
 - `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs` — existing per-object upgrade template;
   D1's adapter wraps this rather than replacing it.

@@ -12,7 +12,7 @@ These are design docs, not the checklist itself. The checklist tracks status; th
 ## Track P · P0 : ReplaySketch arbitrary-command harness
 
 Source of truth: [deep-dives/playable-baseline-harness.md](../deep-dives/playable-baseline-harness.md) :
-[Architecture diagrams §9](../deep-dives/playable-baseline-harness.md#9-architecture-diagrams).
+[Architecture diagrams §8](../deep-dives/playable-baseline-harness.md#8-architecture-diagrams).
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|

@@ -5,7 +5,7 @@
 >
 > Audience: human overview of the headless-host design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([What already exists appendix](#appendix-what-already-exists--agent-context)) contains code-level details about the current state. Skip it if reading for design intent.
+> The agent-context section at the bottom ([What already exists appendix](#appendix-what-already-exists-agent-context)) contains code-level details about the current state. Skip it if reading for design intent.
 
 Purpose: run the simulation logic core without a window, GPU, or audio stack so the engine can
 support batch runs, CI, faster-than-real-time runs, and later distributed runs.
@@ -17,7 +17,7 @@ The host is domain-agnostic. It owns a simulation world through the [Simulation 
 
 ---
 
-## 2. Primary blockers
+## 1. Primary blockers
 
 | # | Coupling | Where | Impact |
 |---|---|---|---|
@@ -30,9 +30,9 @@ The host is domain-agnostic. It owns a simulation world through the [Simulation 
 
 ---
 
-## 3. Required infrastructure (first pass)
+## 2. Required infrastructure
 
-### 3.1 A GPU-optional graphics seam
+### 2.1 A GPU-optional graphics seam
 Introduce a null or headless rendering path so logic can run without a real device.
 
 Decision: a null device abstraction. Define an interface over the `GraphicsDevice` parts the
@@ -45,18 +45,18 @@ The rejected primary alternative is a headless Veldrid offscreen device. It is a
 but still requires working graphics drivers, so it does not unblock GPU-less CI or cloud nodes.
 It may still be useful where a real device is available, such as frame capture.
 
-### 3.2 Data-only asset loading
+### 2.2 Data-only asset loading
 Split asset data (object, weapon, and locomotor INI, map data) from GPU upload (textures,
 shaders, model buffers) so a headless host loads only the logic-side data it needs (H2). The
 `OnDemandAssetLoadStrategy.None` path used by `TestGame` is the seed.
 
-### 3.3 Logic-tick extraction
+### 2.3 Logic-tick extraction
 Separate the fixed-rate logic step (`GameLogic.Update`, network tick, `Scene3D.LogicTick`,
 `PartitionCellManager.Update`, scripting) from the local or render tick (input, Scene2D, audio,
 cursors) so a host can call logic-only (H3). The fixed-rate stepping already lives in
 `Game.Update`; extract it into a reusable stepper.
 
-### 3.4 `SimulationHost`
+### 2.4 `SimulationHost`
 A lightweight host that owns the logic-side world through the existing `IGameEngine` seam,
 parameterized by the [domain model (A4)](../track-a-foundations.md). It advances the world by N
 frames or until a stop condition at FTRT speed and exposes hooks for input or order injection
@@ -64,7 +64,7 @@ frames or until a stop condition at FTRT speed and exposes hooks for input or or
 (H4/H5) and avoid RTS-specific assumptions so a non-RTS domain can supply its own entity and step
 model.
 
-### 3.5 Reproducibility + result outputs
+### 2.5 Reproducibility and result outputs
 Build on [A2](../track-a-foundations.md): a seeded, re-runnable stepper plus structured run
 outputs that the analysis layer consumes. Per the [relaxed-determinism Decision](../open-questions.md), runs are comparable, not bit-exact, so outputs lean on recorded state and metrics
 instead of input-only re-simulation:
@@ -85,21 +85,21 @@ instead of input-only re-simulation:
   caveat that the re-run is statistically equivalent, not identical.
 - Optional frame captures via `FrameCaptureService` when a GPU is available.
 
-### 3.6 Result analysis & visualization → see phase A5
+### 2.6 Result analysis and visualization: see phase A5
 Replaying, visualizing, comparing, and localizing divergences between runs, plus authoring the
 scenarios that feed the host, belong to [A5: Scenario authoring and visualization](visualization.md).
-A1 ends at emitting the run outputs in §3.5. A5 consumes them, makes them inspectable, and is the
+A1 ends at emitting the run outputs in §2.5. A5 consumes them, makes them inspectable, and is the
 validation surface for [B3](../track-b-scale.md) parallelism and
 [B6](distributed-simulation.md) sharding. The tiered recording, T0, T1, and T2, emitted here is
 specified in [visualization.md §5](visualization.md).
 
 ---
 
-## 4. Sub-phases
+## 3. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
-| A1-1. Headless seam audit & approach | Confirm exactly what the logic/asset-data path needs from `GraphicsDevice`/graphics resources, then scope the null device abstraction (chosen §3.1 approach) and document the target "logic-only" surface. | Not started |
+| A1-1. Headless seam audit & approach | Confirm exactly what the logic/asset-data path needs from `GraphicsDevice`/graphics resources, then scope the null device abstraction (chosen §2.1 approach) and document the target "logic-only" surface. | Not started |
 | A1-2. Data-only asset loading | Allow `AssetStore`/`ContentManager` to load logic-relevant data without GPU upload (H2), generalizing the `OnDemandAssetLoadStrategy.None` path. | Not started |
 | A1-3. Logic-tick extraction | Extract the deterministic logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Not started |
 | A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Not started |
@@ -111,7 +111,7 @@ specified in [visualization.md §5](visualization.md).
 
 ---
 
-## 5. Sequencing notes
+## 4. Sequencing notes
 
 - A1-1 gates the rest; everything depends on the chosen graphics seam.
 - A1-2/3/4 are the core host and can land incrementally behind the existing windowless path.
@@ -120,7 +120,7 @@ specified in [visualization.md §5](visualization.md).
   so runs are seeded and comparable. Its outputs lean on recorded state rather than bit-exact
   re-simulation and are consumed by [A5 visualization](visualization.md).
 
-## 7. Architecture Diagrams
+## 5. Architecture Diagrams
 
 Diagrams for this phase will be elaborated once A1 moves to active implementation. The
 placeholder below captures the key types the headless simulation host introduces.
@@ -168,7 +168,7 @@ classDiagram
   SimulationHost ..> Game : wraps without renderer/audio
 ```
 
-## 8. Related
+## 6. Related
 
 - Track A overview: [`../track-a-foundations.md`](../track-a-foundations.md)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
@@ -177,7 +177,7 @@ classDiagram
 
 ---
 
-## Appendix: What already exists, agent context
+## Appendix: What already exists (agent context)
 
 > Agent context: this section contains file:line code references for agents
 > implementing this phase. Human readers: the design intent above does not

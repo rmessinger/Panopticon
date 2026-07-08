@@ -8,7 +8,7 @@
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P0-06` (exporter open-command coverage) |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 

@@ -1,4 +1,4 @@
-# Track E — Naval Warfare
+# Track E: Naval Warfare
 
 > Part of the [Large-Scale RTS Roadmap](README.md). This track completes the water/ground
 > movement seam and adds ship combat. It uses existing BFME2 naval content as the reference.
@@ -7,7 +7,7 @@
 >
 > Audience: human overview of the naval-warfare track.
 
-## Why this comes after Track P
+## Track ordering rationale
 
 Fixing the water/ground pathfinding stub and adding ship combat both touch core per-object
 movement and combat resolution: `Locomotor`, `Pathfinder`, and weapon slots. Like Track D, this
@@ -40,7 +40,7 @@ Diagrams are required before any phase's first task card is marked `Ready`. E1/E
 | E3 | — | — | — |
 | E4 | — | — | — |
 
-† Placeholder — see the deep dive's [Architecture Diagrams](deep-dives/naval-warfare.md#architecture-diagrams)
+† Placeholder: see the deep dive's [Architecture Diagrams](deep-dives/naval-warfare.md#architecture-diagrams)
 section. A class + sequence diagram must replace it before E1's first task card is written, per
 [`agent/MAINTAINING.md`](agent/MAINTAINING.md).
 

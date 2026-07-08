@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-03` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-3, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6--combat--command-verification) and [§P6 sub-phases](../../deep-dives/economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-3, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | P1 owner tracking; share/reuse P3-4's death event from [victory/defeat §2.3](../../deep-dives/victory-defeat.md#23-death--defeat-plumbing) |
+| Prerequisites | P1 owner tracking; share/reuse P3-4's death event from [victory/defeat §1.3](../../deep-dives/victory-defeat.md#13-death--defeat-plumbing) |
 | Diagrams | [P6 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
 
 ## Goal

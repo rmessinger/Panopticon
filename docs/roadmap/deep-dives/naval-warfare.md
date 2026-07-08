@@ -6,7 +6,7 @@
 > Audience: human overview of the naval-warfare design. Code references are in the
 > agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context))
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context))
 > contains file:line code references. Skip it if reading for design intent.
 
 Purpose: complete water/ground movement and ship combat using existing BFME2 naval content. The
@@ -96,7 +96,7 @@ movement, must replace this placeholder before E1's first task card is marked `R
 
 ---
 
-## Appendix: current code / agent context
+## Appendix: Current code (agent context)
 
 - `src/OpenSage.Game/Terrain/TerrainLogic.cs:88,97` — `GetLayerForDestination`/
   `GetHighestLayerForDestination` unconditionally return `PathfindLayerType.Ground`; this is the

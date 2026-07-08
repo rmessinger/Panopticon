@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-01` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-1, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases) and [§2.1](../../deep-dives/skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-1, see [deep dive §4](../../deep-dives/skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | P1 player creation must still create `SkirmishAIPlayer` for non-human skirmish slots; no P4/P5 dependency for this scaffold |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 

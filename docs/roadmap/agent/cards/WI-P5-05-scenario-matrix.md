@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-05` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — scenario matrix for P5-1/P5-2, see [deep dive §6.5](../../deep-dives/skirmish-ai.md#65-scenario-matrix), [§4](../../deep-dives/skirmish-ai.md#4-sub-phases), and [Appendix §1.4](../../deep-dives/skirmish-ai.md#14-how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — scenario matrix for P5-1/P5-2, see [deep dive §6](../../deep-dives/skirmish-ai.md#6-scenario-matrix), [§4](../../deep-dives/skirmish-ai.md#3-sub-phases), and [Appendix](../../deep-dives/skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P5-01`, `WI-P5-02`, `WI-P5-03`, `WI-P5-04` |
-| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 

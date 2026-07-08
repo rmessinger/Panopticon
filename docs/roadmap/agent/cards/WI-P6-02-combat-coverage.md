@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-02` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-2, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6--combat--command-verification) and [§P6 sub-phases](../../deep-dives/economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-2, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |

@@ -5,14 +5,14 @@
 >
 > Audience: human overview of the unit-contract design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context)) contains file:line code references. Skip it if reading for design intent.
 
 Purpose: verify unit archetypes in the reference game through repeatable headless scenarios. The
 design uses one contract per archetype and feeds the P7 regression suite.
 
 ---
 
-## 1. Why P6b
+## 1. Rationale
 
 P6 confirms the player can drive selection and issue basic orders through the control bar. P6b
 turns that into an archetype-by-archetype contract so no unit category is left untested before P7
@@ -21,9 +21,9 @@ individual unit types work correctly.
 
 ---
 
-## 3. Design
+## 2. Design
 
-### 3.1 Archetype definitions
+### 2.1 Archetype definitions
 Six archetypes cover the meaningful variation in unit behaviour for Generals/ZH:
 
 | Archetype | `KindOf` tag(s) | Reference unit | Notes |
@@ -39,7 +39,7 @@ The archetype set is defined in a small data file or constants block inside
 `OpenSage.Tools.ReplaySketch.Core` (or a P6b-specific scenario profile) so it can be extended
 without changing production code.
 
-### 3.2 Full contract per archetype
+### 2.2 Full contract per archetype
 
 Each archetype contract is a P0 harness assertion set. "Full contract" means:
 
@@ -64,7 +64,7 @@ Each archetype contract is a P0 harness assertion set. "Full contract" means:
 Assertions use the P0 harness JSON-predicate vocabulary plus code-defined predicates for cases
 like "unit of definition D exists in player's owned set" that need a query selector.
 
-### 3.3 Surfacing unimplemented handlers as gaps, not silent failures
+### 2.3 Surfacing unimplemented handlers as gaps, not silent failures
 If a special-ability handler is still unimplemented in `OrderProcessor`, the harness run should
 fail with a clear message (assertion failed: `SpecialPower(X)` had no observable effect after N
 frames). That turns missing handlers into an explicit P6b gap list instead of a silent failure.
@@ -72,7 +72,7 @@ Document gaps in `P6b.exchange` or `.exchange`, then fix them within P6b.
 
 ---
 
-## 4. Sub-phases
+## 3. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
@@ -83,15 +83,15 @@ Document gaps in `P6b.exchange` or `.exchange`, then fix them within P6b.
 | P6b-5. Support archetype contract | P0 harness scenario for the reference support unit: produce, move (if mobile), primary special ability (heal, hack, ECM, etc.), die. Assert all six contract points. | Not started |
 | P6b-6. Superweapon archetype contract | P0 harness scenario for the reference superweapon structure: produce/build, charge cycle, fire (`SpecialPowerAtLocation`), cooldown state, die/sell. Assert all six contract points. | Not started |
 
-## 4.5 Scenario Matrix
+## 4. Scenario Matrix
 
-P6b is naturally a matrix validation: the six sub-phases in §4 form the rows of the archetype
+P6b is naturally a matrix validation: the six sub-phases in §3 form the rows of the archetype
 axis. Formalizing it as a P0-5b `ScenarioMatrix` makes coverage explicit and allows future
 expansion to additional factions without new scenario files.
 
 | Axis | Values | Notes |
 |---|---|---|
-| `archetype` | `infantry`, `vehicle`, `aircraft`, `builder`, `support`, `superweapon` | The six archetypes from §3.1 |
+| `archetype` | `infantry`, `vehicle`, `aircraft`, `builder`, `support`, `superweapon` | The six archetypes from §2.1 |
 | `faction` | `USA`, `GLA`, `China` | Each faction provides a distinct reference unit per archetype |
 
 Constraints:
@@ -100,7 +100,7 @@ Constraints:
 - The `contractPoint` (produce/move/attack/ability/die) is not a separate axis — all points
   are asserted within each archetype × faction cell.
 
-Each cell runs the full archetype contract (all six contract points from §3.2) for the given
+Each cell runs the full archetype contract (all six contract points from §2.2) for the given
 reference unit and asserts:
 - Unit produced: exists in `GameLogic` after production order.
 - Unit mobile or static as expected: position delta for mobile; no movement for static.
@@ -114,7 +114,7 @@ cell identifies the exact archetype × faction combination that needs fixing.
 
 ---
 
-## 5. Sequencing & dependencies
+## 5. Sequencing and dependencies
 
 - P6b depends on P0 (arbitrary commands and assertions), P4 (economy funds production), P5
   (construction/production works), and P6 (basic combat paths confirmed; P6b refines them by
@@ -126,7 +126,7 @@ cell identifies the exact archetype × faction combination that needs fixing.
 
 ---
 
-## 7. Architecture Diagrams
+## 6. Architecture Diagrams
 
 Diagrams for this phase will be elaborated once P6b moves to active implementation. The
 placeholder below captures the key types the unit-contract test suite introduces.
@@ -167,7 +167,7 @@ classDiagram
   UnitContractRunner ..> UnitContractScenario : generates per cell
 ```
 
-## 8. Related
+## 7. Related
 
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Harness used for authoring/asserting: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
@@ -177,25 +177,25 @@ classDiagram
 
 ---
 
-## Appendix: Current code — agent context
+## Appendix: Current code (agent context)
 
 > Agent context: this section contains file:line code references for agents
 > implementing this phase. Human readers: the design intent above does not
 > require reading this section.
 
-### 2.1 Unit archetype tagging
+### Unit archetype tagging
 `ObjectDefinition.KindOf` (`Logic/Object/ObjectDefinition.cs:912`) holds a `BitArray<ObjectKinds>`
 whose values include `INFANTRY`, `VEHICLE`, `AIRCRAFT`, `STRUCTURE`, `DOZER`, `SUPPLY_SOURCE`,
 `FS_SUPERWEAPON`, `TRANSPORT`, `HERO`, etc. (`Logic/Object/ObjectKinds.cs`). This is the canonical
 archetype tag: a P6b scenario picks representative units by querying `KindOf` flags.
 
-### 2.2 Movement and targeting
+### Movement and targeting
 Movement orders use `OrderType.MoveTo` and `OrderType.AttackMove`; target orders use
 `OrderType.AttackObject` / `OrderType.ForceAttackObject` / `OrderType.ForceAttackGround`. Enter
 (garrison, hijack) uses `OrderType.Enter` (`Logic/Orders/OrderType.cs:50-51,66,69,101,104`).
 `OrderProcessor.Process` dispatches these to the live handlers (`Logic/Orders/OrderProcessor.cs`).
 
-### 2.3 Weapon system
+### Weapon system
 `Weapon` (`Logic/Object/Weapon/Weapon.cs`) is the runtime weapon instance; `WeaponTemplateSet`
 (`Logic/Object/Weapon/WeaponTemplateSet.cs`) maps up to 5 `WeaponSlot`s with `PreferredAgainst`
 and `OnlyAgainst` filters, `AutoChooseSources`, and `WeaponSetUpgrade` for upgrade-switched weapon
@@ -203,14 +203,14 @@ sets. `UnitOrderGenerator` checks `CurrentWeapon` when deciding whether an attac
 applicable (`Logic/OrderGenerators/UnitOrderGenerator.cs:150`). Weapon modes are expressed as
 different slots in `WeaponTemplateSet` or as `WeaponSetUpgrade`.
 
-### 2.4 Special powers / abilities
+### Special powers / abilities
 `OrderType.SpecialPower` / `SpecialPowerAtLocation` / `SpecialPowerAtObject` (order types 1040–1042)
 are dispatched in `OrderProcessor.Process` (`:388-420`) to `SpecialPowerApplicator`,
 `SpecialPowerAtLocationApplicator`, and `SpecialPowerAtObjectApplicator`. `SpecialPowerType` is the
 discriminator enum. Some special powers already have live handlers; others log "Unimplemented."
 P6b surfaces which are not yet handled.
 
-### 2.5 Death and ownership cleanup
+### Death and ownership cleanup
 `GameObject.Kill`/`OnDie`/`Destroy` drive the death path; ownership changes are notified via the
 [P3-3](victory-defeat.md) death/ownership-change event. Correct cleanup means the unit is removed
 from the owner's counts and from `GameLogic`'s object list, and any garrison/transport it held is

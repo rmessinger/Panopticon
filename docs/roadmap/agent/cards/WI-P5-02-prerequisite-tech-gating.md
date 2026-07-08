@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-02` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases), [§2.4](../../deep-dives/skirmish-ai.md#24-p5--constructionproduction-completeness), and [Appendix §1.4](../../deep-dives/skirmish-ai.md#14-how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | P1 and P4 complete |
-| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 

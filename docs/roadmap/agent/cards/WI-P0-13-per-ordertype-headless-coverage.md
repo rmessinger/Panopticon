@@ -8,7 +8,7 @@
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P0-07` (assertion layer), `WI-P0-08` (run-and-assert entry point), `WI-P0-03` (faction-agnostic exporter) |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#9-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 

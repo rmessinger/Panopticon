@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6b-03` |
-| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b-3 Aircraft archetype contract, see [deep dive §3 Design](../../deep-dives/unit-contract-validation.md#3-design) and [§4 Sub-phases](../../deep-dives/unit-contract-validation.md#4-sub-phases) |
+| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b-3 Aircraft archetype contract, see [deep dive §3 Design](../../deep-dives/unit-contract-validation.md#2-design) and [§4 Sub-phases](../../deep-dives/unit-contract-validation.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | Track P phases P0, P4, P5, and P6 complete |
-| Diagrams | [P6b Architecture Diagrams](../../deep-dives/unit-contract-validation.md#7-architecture-diagrams) |
+| Diagrams | [P6b Architecture Diagrams](../../deep-dives/unit-contract-validation.md#6-architecture-diagrams) |
 
 ## Goal
 

@@ -1,4 +1,4 @@
-# Track D — Gameplay Content Expansion
+# Track D: Gameplay Content Expansion
 
 > Part of the [Large-Scale RTS Roadmap](README.md). This track extends the reference gameplay loop
 > beyond the built-in SAGE titles with mechanics from other RTS traditions, starting with
@@ -9,7 +9,7 @@
 >
 > Audience: human overview of the gameplay-expansion track.
 
-## Why this comes after Track P (and alongside A/B/C)
+## Track ordering rationale
 
 Generalizing `UpgradeTemplate` into an explicit prerequisite graph and adding an era state machine
 both touch core per-player game state: `GameLogic`, save/load, the order pipeline, and the control
@@ -42,7 +42,7 @@ Diagrams are required before any phase's first task card is marked `Ready`. D1/D
 | D3 | — | — | — |
 | D4 | — | — | — |
 
-† Placeholder — see the deep dive's [Architecture Diagrams](deep-dives/tech-tree-era-progression.md#architecture-diagrams)
+† Placeholder: see the deep dive's [Architecture Diagrams](deep-dives/tech-tree-era-progression.md#architecture-diagrams)
 section. A class + sequence diagram must replace it before D1's first task card is written, per
 [`agent/MAINTAINING.md`](agent/MAINTAINING.md).
 

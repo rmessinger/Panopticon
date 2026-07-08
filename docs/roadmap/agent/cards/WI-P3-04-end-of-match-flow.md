@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-04` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-4, see [deep dive §2.4](../../deep-dives/victory-defeat.md#24-end-of-match-flow) and [§4](../../deep-dives/victory-defeat.md#4-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-4, see [deep dive §1.4](../../deep-dives/victory-defeat.md#14-end-of-match-flow) and [§4](../../deep-dives/victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`; `WI-P3-02` for eliminated outcomes; P1 relationships must remain available |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#8-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-03` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-3, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases) and [§2.1](../../deep-dives/skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-3, see [deep dive §4](../../deep-dives/skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-02`; P5 production/funding/prerequisite behavior available for `CreateUnit` |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
