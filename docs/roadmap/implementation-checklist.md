@@ -209,7 +209,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
   - AC: `GameOutcome` is queryable off `GameLogic`/`IGame` and reads `InProgress` during play;
     `VictorySystem` ticks from the logic loop (test asserts it runs).
-- [ ] Player-defeat detection: real Generals rule (no command/production structures and no means to
+- [x] Player-defeat detection: real Generals rule (no command/production structures and no means to
       rebuild: no dozer/worker + insufficient resources) as the default, exposed as configurable.
   - AC: a harness scenario that eliminates a player's qualifying structures + rebuild means flags that
     player defeated within the check cadence; the rule is selectable via config.
