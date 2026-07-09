@@ -29,6 +29,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
     private LogicFrame _currentFrame;
 
     public LogicFrame CurrentFrame => _currentFrame;
+    public GameOutcome CurrentOutcome => _game.CurrentOutcome;
 
     private uint _rankLevelLimit;
 
@@ -289,6 +290,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         _sleepyUpdates.Validate();
 
         _currentFrame++;
+        _game.VictorySystem.Tick(_currentFrame);
     }
 
     // Sleepy update stuff.

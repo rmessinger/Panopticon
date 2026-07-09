@@ -206,7 +206,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     unit, issued ≥1 attack order, and kept `BankAccount >= 0`; see the deep dive matrix section.
 
 ### P3: Victory & defeat conditions ([deep dive](deep-dives/p3-victory-defeat.md))
-- [ ] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
+- [x] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
   - AC: `GameOutcome` is queryable off `GameLogic`/`IGame` and reads `InProgress` during play;
     `VictorySystem` ticks from the logic loop (test asserts it runs).
 - [ ] Player-defeat detection: real Generals rule (no command/production structures and no means to

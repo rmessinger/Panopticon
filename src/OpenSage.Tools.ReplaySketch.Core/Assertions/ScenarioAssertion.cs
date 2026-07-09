@@ -71,13 +71,15 @@ public abstract class ScenarioAssertion
             }
         }
 
+        var outcome = game.CurrentOutcome;
+
         switch (path)
         {
             case "outcome.status":
-                resolvedValue = 0; // OutcomeStatus.InProgress until P3 lands.
+                resolvedValue = (double)outcome.Status;
                 return true;
             case "outcome.reason":
-                resolvedValue = 0; // OutcomeReason default until P3 lands.
+                resolvedValue = (double)outcome.Reason;
                 return true;
             default:
                 error = $"Unsupported assertion path '{path}'.";
@@ -176,8 +178,15 @@ public sealed class OutcomeAssertion : ScenarioAssertion
 
     public override AssertionResult Evaluate(Game game, uint frame)
     {
-        const string actualStatus = "InProgress";
+        var outcome = game.CurrentOutcome;
+        var actualStatus = outcome.Status.ToString();
         var passed = string.Equals(ExpectedStatus, actualStatus, StringComparison.OrdinalIgnoreCase);
+
+        if (passed && !string.IsNullOrWhiteSpace(ExpectedReason))
+        {
+            passed = string.Equals(ExpectedReason, outcome.Reason.ToString(), StringComparison.OrdinalIgnoreCase);
+        }
+
         return new AssertionResult
         {
             AssertionId = Id,
@@ -186,7 +195,9 @@ public sealed class OutcomeAssertion : ScenarioAssertion
             FailFrame = passed ? null : frame,
             Message = passed
                 ? null
-                : $"Outcome assertions are not implemented yet (expected '{ExpectedStatus}', actual '{actualStatus}').",
+                : $"Outcome assertion failed: expected status '{ExpectedStatus}'"
+                  + (string.IsNullOrWhiteSpace(ExpectedReason) ? string.Empty : $" reason '{ExpectedReason}'")
+                  + $", actual status '{actualStatus}' reason '{outcome.Reason}'.",
         };
     }
 }
