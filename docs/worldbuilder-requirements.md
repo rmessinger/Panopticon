@@ -1,4 +1,4 @@
-# WorldBuilder Map/Scenario Editor — Requirements
+# WorldBuilder Map/Scenario Editor: Requirements
 
 This document specifies the requirements for implementing a WorldBuilder-compatible map and scenario editor in OpenSAGE, based on the tooling described in the [CNC Labs WorldBuilder tutorials](https://www.cnclabs.com/maps/generals/worldbuilder/).
 
@@ -369,7 +369,7 @@ Each script has:
 
 | Category | Example Actions |
 |---|---|
-| Scripting → Timer | Seconds countdown timer `<name>` — set to `<N>` |
+| Scripting → Timer | Seconds countdown timer `<name>`, set to `<N>` |
 | Scripting → Timer | Set timer `<name>` to expire between `<min>` and `<max>` seconds/frames |
 | Scripting → Timer | Stop timer `<name>` |
 | Scripting → Counter | Set counter `<name>` to `<N>` |
@@ -472,7 +472,7 @@ A per-map INI override file located alongside the `.map` file. Supports:
 
 - **Object overrides**: `Object <TemplateName>` blocks with `ReplaceModule` / `AddModule` entries. Used for train garrisoning and custom vehicle configurations (see train tutorial).
 - For **single-player** missions the file must be named `solo.ini` instead.
-- The editor should expose a **map.ini editor pane** — a MAUI `Editor` control with monospace font for raw text — and a structured **Weather** settings panel with `CheckBox` / `Entry` fields for each parameter.
+- The editor should expose a **map.ini editor pane** (a MAUI `Editor` control with monospace font for raw text) and a structured **Weather** settings panel with `CheckBox` / `Entry` fields for each parameter.
 
 ### 21.2 Map.str
 

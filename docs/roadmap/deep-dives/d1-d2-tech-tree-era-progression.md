@@ -3,17 +3,15 @@
 > Expands phases D1 and D2 of [Track D — Gameplay Content Expansion](../track-d-gameplay-expansion.md).
 > Part of the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the
+> Audience: human overview of the tech-tree and era-progression design. Code references are in the
 > agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context))
-> contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context))
+> contains file:line code references. Skip it if reading for design intent.
 
-Goal: generalize the engine's existing upgrade/prerequisite mechanism into an explicit,
-data-authored prerequisite graph, and add discrete era progression, Age of Empires/Empire Earth
-style, as content on top of the existing `GameObject`/module system. Era progression is a mechanic
-the SAGE games never had. Both are prerequisite design work for Track D's reference non-SAGE
-scenario (D4).
+Purpose: generalize the existing upgrade/prerequisite mechanism into an explicit, data-authored
+prerequisite graph and add discrete era progression as content on top of the existing
+`GameObject`/module system. Both pieces support Track D's reference non-SAGE scenario.
 
 ---
 
@@ -106,7 +104,7 @@ across sharded runs.
   C1's import abstraction. It turns the D1/D2 mechanism into actual AoE/Empire Earth-flavored
   content.
 - D4 is the integration proof: one small tech tree plus one era transition, authored and asserted
-  through ReplaySketch. See [`deep-dives/playable-baseline-harness.md`](playable-baseline-harness.md).
+  through ReplaySketch. See [`deep-dives/p0-playable-baseline-harness.md`](playable-baseline-harness.md).
 
 ---
 
@@ -120,7 +118,7 @@ D1's first task card is marked `Ready`.
 
 ---
 
-## Appendix: current code / agent context
+## Appendix: Current code (agent context)
 
 - `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs` — existing per-object upgrade template;
   D1's adapter wraps this rather than replacing it.

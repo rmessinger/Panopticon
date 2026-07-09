@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-06` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-6, see [deep dive §2.5](../../deep-dives/victory-defeat.md#25-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/victory-defeat.md#4-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-6, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-02`, and `WI-P3-04` |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#8-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,8 +16,8 @@ Add an optional frame-count time limit to `VictorySystem` that decides the match
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/victory-defeat.md:68-72` — time-limit design in defeat detection.
-- `docs/roadmap/deep-dives/victory-defeat.md:93-103` — frame-limit and score-decision implementation notes.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:68-72` — time-limit design in defeat detection.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:93-103` — frame-limit and score-decision implementation notes.
 - `docs/roadmap/implementation-checklist.md:225-228` — score-decision AC.
 - `src/OpenSage.Game/IGame.cs:93-96` — map time surface if implementation uses elapsed game time.
 - `src/OpenSage.Game/Game.cs:899-927` and `src/OpenSage.Game/Game.cs:963-975` — logic tick timing and update flow.

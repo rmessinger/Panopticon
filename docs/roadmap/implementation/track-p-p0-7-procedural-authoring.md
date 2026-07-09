@@ -1,12 +1,11 @@
-# Implementation Plan: Track P · P0-6 — Procedural / Programmatic Command Authoring
+# Implementation Plan: Track P · P0-6: Procedural and Programmatic Command Authoring
 
-> Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-6: Procedural authoring at scale
-> Checklist item: [implementation-checklist.md](../implementation-checklist.md) — P0 item "Support procedural/programmatic authoring of large command sets with efficient .rep emission"
-> Related: full authoring-tool scale is A5-5 ([visualization.md](../deep-dives/visualization.md)); this is the minimal P0 slice.
+> Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-6: Procedural authoring at scale
+> Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Support procedural/programmatic authoring of large command sets with efficient .rep emission"
+> Related: full authoring-tool scale is A5-5 ([visualization.md](../deep-dives/a5-visualization.md)); this is the minimal P0 slice.
 >
-> Audience: human — problem statement, design rationale, and approach are above
-> the divider. File:line implementation details are below the divider (agent context).
+> Audience: human overview of the implementation plan. Agent context sits below the divider.
 
 ## Problem
 
@@ -27,7 +26,7 @@ A code-first authoring API plus a throughput check, reusing the landed open comm
 
 ### Authoring API (Core)
 
-- `ScenarioBuilder` — a fluent/programmatic builder producing a `ReplayScenario`:
+- `ScenarioBuilder` : a fluent/programmatic builder producing a `ReplayScenario`:
   - `builder.At(frame).Command(CommandSpec)` / `builder.At(frame).ForPlayer(i).Command(...)`;
   - convenience generators that emit many `CommandSpec`s over a frame range (e.g. "spawn N units of
     def D for player P across frames F0..F1"), all funnelling into the existing
@@ -55,18 +54,18 @@ A code-first authoring API plus a throughput check, reusing the landed open comm
 
 ---
 
-> Agent implementation details — the sections below list exact files, methods, and
+> Agent implementation details : the sections below list exact files, methods, and
 > tests for agents executing this plan. Human readers can stop here.
 
 ## Files to change
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Authoring/ScenarioBuilder.cs` | NEW — programmatic builder + bulk generators (seeded) |
+| `src/OpenSage.Tools.ReplaySketch.Core/Authoring/ScenarioBuilder.cs` | NEW : programmatic builder + bulk generators (seeded) |
 | `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Streamlined large-set emission (preallocate, stream, no redundant copies); behaviour-preserving |
-| `docs/roadmap/deep-dives/playable-baseline-harness.md` | Document the authoring API and the export/load budget |
+| `docs/roadmap/deep-dives/p0-playable-baseline-harness.md` | Document the authoring API and the export/load budget |
 | `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioBuilderTests.cs` | Unit tests for the builder (Core-only project) |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchScaleTests.cs` | NEW — 10k-order export/load round-trip + budget assertion |
+| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchScaleTests.cs` | NEW : 10k-order export/load round-trip + budget assertion |
 
 ## Tests
 
@@ -79,6 +78,6 @@ A code-first authoring API plus a throughput check, reusing the landed open comm
 
 - UI for procedural authoring; this is a code-first API (MAUI stays for small hand-authoring).
 - The full authoring/visualization tool scaling to the 10k-unit anchor → A5-5
-  ([visualization.md](../deep-dives/visualization.md)).
+  ([visualization.md](../deep-dives/a5-visualization.md)).
 - The rigorous, statistical benchmark harness → B1 ([track-b-scale.md](../track-b-scale.md)); this
   plan ships only a single guardrail budget test.

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-02` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-2, see [deep dive §2.2](../../deep-dives/victory-defeat.md#22-defeat-detection) and [§4](../../deep-dives/victory-defeat.md#4-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-2, see [deep dive §1.2](../../deep-dives/p3-victory-defeat.md#12-defeat-detection) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-03`, and `WI-P1-07` ownership tracking (`Player.OwnedObjects`, `BuildingCount`, `UnitCount`) |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#8-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,8 +16,8 @@ Implement the default configurable defeat rule and win rule: a player is defeate
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/victory-defeat.md:48-72` — default Generals defeat rule, win rule, ownership dependency, and configurable-rule seam.
-- `docs/roadmap/deep-dives/victory-defeat.md:118-124` — P3-1/P3-2/P3-3 sequencing.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:48-72` — default Generals defeat rule, win rule, ownership dependency, and configurable-rule seam.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:118-124` — P3-1/P3-2/P3-3 sequencing.
 - `docs/roadmap/implementation-checklist.md:205-208` — defeat-rule AC.
 - `docs/roadmap/implementation-checklist.md:212-214` — all-non-allies-defeated win AC.
 - `src/OpenSage.Game/Logic/Player.cs:126-134` — P1 ownership/relationship fields consumed by this card.

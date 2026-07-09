@@ -6,18 +6,18 @@ Opensage uses the standard .NET Core tooling. Install the tools and build normal
 
 ### Windows
 
-On Windows you can just open the provided solution file `src/OpenSage.sln` to get started.
+Solution file: `src/OpenSage.sln`, openable directly in Visual Studio.
 
 ### Linux & MacOS
 
-On Unix systems you want to use the .NET Core CLI tools to compile OpenSage:
+Build via the .NET Core CLI:
 
 ```shell
 cd src
 dotnet build
 ```
 
-You can also build like that on Windows, in case you don't want to use Visual Studio.
+Also works on Windows as an alternative to Visual Studio.
 
 #### Linux dependencies
 
@@ -81,13 +81,13 @@ Since there are no official installers of the original games on Unix systems, th
 | BFME II   | BFME2_PATH           |
 | BFME II   | BFME2_ROTWK_PATH     |
 
-The same identifiers do also work for Windows, in case you don't want to use the registry.
+The same environment variables also work on Windows, as an alternative to the registry.
 
 ### Starting OpenSage
 
-To run OpenSage you must run the OpenSage.Launcher project, which by default will start into C&C Generals. You can start a different game,
-by passing the `-g` option with an identfier for the game you want to start, e.g. `-g bfme` will start **Battle for Middleearth** (granted you have specified a valid installation location).
+Entry point: `OpenSage.Launcher` project. Default game: C&C Generals. Game selection: `-g <identifier>`
+(e.g. `-g bfme` for Battle for Middle-earth), contingent on a configured installation location.
 
 ### Developer Mode
 
-While inside the launcher application you can switch into a `developer mode`, by pressing **F11**. This mode gives you some useful insights on what's going on inside the engine and should help you for debugging purposes.
+Toggle: `F11` inside the launcher. Function: engine-internals display, for debugging.

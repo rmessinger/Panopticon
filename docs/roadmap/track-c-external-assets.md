@@ -1,11 +1,12 @@
-# Track C — External Models & Animations
+# Track C: External Models & Animations
 
-> Part of the [Large-Scale RTS Roadmap](README.md). Incorporate unit models and animations authored
-> outside the Westwood `.w3d` ecosystem. Start format-agnostic: design the import abstraction
-> before committing to concrete formats. See [`agent/current-state.md`](agent/current-state.md)
-> for the existing W3D pipeline these phases generalize.
+> Part of the [Large-Scale RTS Roadmap](README.md). This track adds unit models and animations
+> authored outside the Westwood `.w3d` ecosystem. The design begins with a format-agnostic import
+> abstraction before any concrete format is implemented.
 >
-> Audience: human — strategic track overview.
+> Architecture context: see [`agent/current-state.md`](agent/current-state.md).
+>
+> Audience: human overview of the external-assets track.
 
 > The Milestone column states the demonstrable outcome that marks each phase done. Granular steps live in
 > [`implementation-checklist.md`](implementation-checklist.md).

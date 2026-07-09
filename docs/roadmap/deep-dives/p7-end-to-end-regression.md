@@ -1,23 +1,19 @@
 # Deep Dive: End-to-End Skirmish Regression Suite (P7)
 
 > Expands phase P7 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
-> the [Large-Scale Simulation Roadmap](../README.md). First-pass design — refine as it lands.
+> the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the P7 regression suite. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context)) contains file:line code references. Skip it if reading for design intent.
 
-Goal: author one P0 harness scenario per match end state, six total, run each headlessly,
-assert that it terminates with the expected `GameOutcome` and a shared set of universal
-invariants, and lock all six as a standing playable-regression gate.
-
-P7 is the Track P capstone. It assembles the prior phases into one continuous check: economy,
-production, AI, combat, and victory detection must terminate correctly for every supported
-end-state path. When P7 passes, the baseline game loop is verified end to end.
+Purpose: lock the playable baseline with six headless end-state scenarios. The design assembles the
+prior phases into one regression gate: economy, production, AI, combat, and victory detection must
+terminate correctly for each supported end-state path.
 
 ---
 
-## 1. Why P7
+## 1. Rationale
 
 Every other Track P phase validates a subsystem in isolation. P1 checks setup, P3 checks victory
 detection, and P6 checks combat paths. None confirm that all subsystems cooperate in a match that
@@ -204,7 +200,7 @@ classDiagram
   CellResult --> GameOutcome : asserts on
 ```
 
-### Sequence diagram — suite execution
+### Sequence diagram: suite execution
 
 ```mermaid
 sequenceDiagram
@@ -237,7 +233,7 @@ sequenceDiagram
   T ->> T: Assert all 6 cells pass
 ```
 
-### Sequence diagram — MutualElimination cell
+### Sequence diagram: MutualElimination cell
 
 ```mermaid
 sequenceDiagram
@@ -267,7 +263,7 @@ sequenceDiagram
 
 ---
 
-## Appendix: Current code — agent context
+## Appendix: Current code (agent context)
 
 > Agent context: this section contains file:line code references for agents
 > implementing this phase. Human readers: the design intent above does not

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-01` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-1, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases) and [§2.1](../../deep-dives/skirmish-ai.md#21-add-a-strategic-decision-loop-to-the-skirmish-ai) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | P1 player creation must still create `SkirmishAIPlayer` for non-human skirmish slots; no P4/P5 dependency for this scaffold |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,8 +16,8 @@ Add a no-behavior strategic AI tick scaffold: `Player.LogicTick()` invokes `Skir
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/skirmish-ai.md:20-39` — design for the coarse-cadence decision loop and idempotence.
-- `docs/roadmap/deep-dives/skirmish-ai.md:228-233` — current gap: AI classes are persistence-only.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:20-39` — design for the coarse-cadence decision loop and idempotence.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:228-233` — current gap: AI classes are persistence-only.
 - `src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154` — base AI player persistence; preserve every persist branch and guard.
 - `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs:3-31` — skirmish AI subclass with no behavior.
 - `src/OpenSage.Game/Logic/Player.cs:84-109` — `AIPlayer` property and current `LogicTick()`.

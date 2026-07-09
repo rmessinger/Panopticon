@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-04` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — scenario matrix, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6--combat--command-verification) and [§Scenario Matrix](../../deep-dives/economy-production-combat.md#scenario-matrix) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — scenario matrix, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§Scenario Matrix](../../deep-dives/p4-p6-economy-production-combat.md#scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P6-01`, `WI-P6-02`, `WI-P6-03` |
-| Diagrams | [P6 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P6 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Replace the P6 scenario-matrix stub with a CI-running 15-cell matrix sweeping or
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/economy-production-combat.md:113-144` — P6 matrix axes, constraints, and per-cell assertions.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-144` — P6 matrix axes, constraints, and per-cell assertions.
 - `docs/roadmap/implementation-checklist.md:293-297` — checklist ACs for the P6 scenario matrix.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-152` — matrix expansion model.
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — matrix runner.

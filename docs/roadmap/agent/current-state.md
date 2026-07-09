@@ -59,7 +59,7 @@
 - Authoring: WorldBuilder (`src/OpenSage.Tools.WorldBuilder.*`) assumes the full grid is
   resident; height tools clone the whole elevation array per stroke.
 
-See the [larger-maps deep dive](deep-dives/larger-maps.md) for how this constrains map size.
+See the [larger-maps deep dive](deep-dives/b4a-larger-maps.md) for how this constrains map size.
 
 ## Mod acquisition tooling (ModCollector)
 
@@ -86,4 +86,4 @@ See the [larger-maps deep dive](deep-dives/larger-maps.md) for how this constrai
   (`Preferences.Default`, `MainThread.BeginInvokeOnMainThread`, `Process.Start`/launcher), so its
   command flows (Validate/Export/PlayInGame, background-load completion) cannot be exercised
   headlessly. Closing this gap (injectable seams) is P0-1b/P0-1c in the
-  [P0 deep dive](deep-dives/playable-baseline-harness.md).
+  [P0 deep dive](deep-dives/p0-playable-baseline-harness.md).

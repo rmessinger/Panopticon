@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-02` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases), [§2.4](../../deep-dives/skirmish-ai.md#24-p5--constructionproduction-completeness), and [Appendix §1.4](../../deep-dives/skirmish-ai.md#14-how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | P1 and P4 complete |
-| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P5 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -17,9 +17,9 @@ Verify and close faction prerequisite/tech gating so `Player.CanProduceObject(..
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation-checklist.md:261-263` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/skirmish-ai.md:60-69` — P5 gating scope.
-- `docs/roadmap/deep-dives/skirmish-ai.md:84-93` — P5-1 funding/gating row.
-- `docs/roadmap/deep-dives/skirmish-ai.md:268-271` — `Player.CanProduceObject` and `GameObject` gating entry points.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69` — P5 gating scope.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93` — P5-1 funding/gating row.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271` — `Player.CanProduceObject` and `GameObject` gating entry points.
 - `src/OpenSage.Game/Logic/Player.cs:363-427` — object/science prerequisite evaluation; preserve AND-of-OR semantics.
 - `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192` — `CanPurchase`/`CanConstructUnit` money + owner gating.
 - `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291` — producer-local gating.

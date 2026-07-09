@@ -8,19 +8,19 @@
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none (P2's `SkirmishAIPlayer` state machine already lands the reference behavior) |
-| Diagrams | [Pluggable AI §8](../../deep-dives/pluggable-ai.md#8-architecture-diagrams) |
+| Diagrams | [Pluggable AI §8](../../deep-dives/a4-pluggable-ai.md#8-architecture-diagrams) |
 
 ## Goal
 
 Introduce the `IAIDecisionPolicy` / `AIDecisionContext` seam described in
-[deep-dives/pluggable-ai.md §2](../../deep-dives/pluggable-ai.md#2-interface-shape-design-not-implementation),
+[deep-dives/a4-pluggable-ai.md §2](../../deep-dives/a4-pluggable-ai.md#2-interface-shape-design-not-implementation),
 and refactor `SkirmishAIPlayer`'s existing state machine to be the reference implementation
 (`RuleBasedAIDecisionPolicy`) behind it — with **no observable behavior change**.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/pluggable-ai.md` §§1-2, 5 — the seam design this card implements.
-- `docs/roadmap/deep-dives/pluggable-ai.md` §8 — architecture/sequence diagrams to follow exactly.
+- `docs/roadmap/deep-dives/a4-pluggable-ai.md` §§1-2, 5 — the seam design this card implements.
+- `docs/roadmap/deep-dives/a4-pluggable-ai.md` §8 — architecture/sequence diagrams to follow exactly.
 - `src/OpenSage.Game/Logic/AI/AIPlayer.cs` — current host: `Update()`, `OnDecisionTick()`
   (`protected virtual`), `EnqueueOrder(s)`, `DispatchOrders(...)`, `Persist(...)`. Preserve
   `Persist` byte-for-byte; do not touch save-format fields.

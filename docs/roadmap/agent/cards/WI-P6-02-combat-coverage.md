@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-02` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-2, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6--combat--command-verification) and [§P6 sub-phases](../../deep-dives/economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-2, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | P1 spawned/related players and owner tracking; `WI-P6-01` useful but not required |
-| Diagrams | [P6 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P6 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Verify and close the baseline combat path: weapon fire applies damage through `D
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/economy-production-combat.md:76-95` — P6 verify-and-close design and combat sub-phase.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:76-95` — P6 verify-and-close design and combat sub-phase.
 - `docs/roadmap/implementation-checklist.md:283-286` — checklist ACs for weapon/damage/death coverage.
 - `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs:101-140` — target assignment and weapon firing.
 - `src/OpenSage.Game/Logic/Object/Weapon/WeaponTarget.cs:36-46` — target damage dispatch.

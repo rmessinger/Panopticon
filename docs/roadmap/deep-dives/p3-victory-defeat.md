@@ -3,20 +3,18 @@
 > Expands phase P3 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the agent-context appendix at the bottom.
+> Audience: human overview of the victory and defeat design. Code references are in the agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context)) contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context)) contains file:line code references. Skip it if reading for design intent.
 
-Goal: build the missing match-end system: detect player defeat, declare win/lose, drive end-of-match
-flow, and expose the result as a queryable `GameOutcome` so headless runs, the
-[P0 harness](playable-baseline-harness.md), can assert on it. This is the largest correctness gap in
-the baseline game.
+Purpose: add a first-class match-end result that can be asserted in headless runs. The design covers
+outcome state, defeat/win detection, and end-of-match flow.
 
 ---
 
-## 2. Design
+## 1. Design
 
-### 2.1 A `GameOutcome` value (the queryable result)
+### 1.1 A `GameOutcome` value (the queryable result)
 Introduce a first-class outcome type exposed off `GameLogic`/`IGame`:
 
 ```
@@ -40,12 +38,12 @@ continues under normal rules; the next elimination transitions to `Decided` with
 configurable score metric. `Surrendered` covers any player, human or AI, issuing
 `OrderType.EndGame`.
 
-This is what the [P0 harness](playable-baseline-harness.md) §3.3 outcome assertions read, and what
+This is what the [P0 harness](playable-baseline-harness.md) §2.3 outcome assertions read, and what
 A2's verification harness and B1's benchmarks later assert against. It is also the termination
 signal the headless run loop uses instead of today's ad hoc exit-on-enemy-CC-destruction path in
 `TestHarness/Program.cs:232-267`.
 
-### 2.2 Defeat detection
+### 1.2 Defeat detection
 A `VictorySystem`, implemented as a `GameSystem`, runs a coarse-cadence check from the logic tick:
 
 - Defeat rule (Decision): a player is defeated when they have no command/production structures and
@@ -69,7 +67,7 @@ A `VictorySystem`, implemented as a `GameSystem`, runs a coarse-cadence check fr
   The score metric is data-driven behind the same configurable-rule seam as the defeat rule. See
   [open-questions](../open-questions.md).
 
-### 2.3 Death → defeat plumbing
+### 1.3 Death → defeat plumbing
 Add a death/ownership-change notification so `VictorySystem`, AI, and selection cleanup can react
 without polling every object every frame:
 - Emit from `GameObject.OnDie(...)`/`Destroy()` (`GameObject.cs`) and from ownership transfer.
@@ -77,7 +75,7 @@ without polling every object every frame:
   This also fixes latent gaps the audit flagged, including selection invalidation on death and
   ownership cleanup.
 
-### 2.4 End-of-match flow
+### 1.4 End-of-match flow
 On `Status → Decided`, for elimination, surrender, or score decision:
 - Stop or relax the sim by pausing logic or switching to an observer state.
 - Surface the result through a UI win/lose dialog for interactive play and structured `GameOutcome`
@@ -89,7 +87,7 @@ On `Status → Decided`, for elimination, surrender, or score decision:
 On `Status → SuddenDeath`, for mutual elimination, log or announce the state, keep the sim running,
 and continue until the next elimination produces `Decided`.
 
-### 2.5 Sudden-death and time-limit implementation notes
+### 1.5 Sudden-death and time-limit implementation notes
 - Sudden-death entry: in the `VictorySystem` check, after processing all defeat events for the
   current check window, if every remaining active player was just defeated simultaneously, meaning
   the check window left no active players, set `Status = SuddenDeath` and reverse the individual
@@ -99,11 +97,11 @@ and continue until the next elimination produces `Decided`.
   match. Check it at the same coarse cadence as defeat. When `Game.MapTime / TickRate >= FrameLimit`,
   compute the configured score metric for each player, select the highest, tie-break = shared victory
   between tied players, and set `Status = Decided`, `Reason = ScoreDecision`.
-- Both rules live behind the same configurable/data-driven rule seam as the defeat rule in §2.2.
+- Both rules live behind the same configurable/data-driven rule seam as the defeat rule in §1.2.
 
 ---
 
-## 3. Integration surface
+## 2. Integration surface
 - New: `GameOutcome` type + `VictorySystem : GameSystem`; a death/ownership-change event from
   `GameObject.OnDie/Destroy`.
 - Hook: `GameLogic.Update(...)` coarse-cadence check / `Game.cs:876-959` tick.
@@ -113,7 +111,7 @@ and continue until the next elimination produces `Decided`.
 - Exposes: `GameOutcome` off `GameLogic`/`IGame` for the [P0 harness](playable-baseline-harness.md)
   and the [A5 visualizer](visualization.md).
 
-## 4. Sub-phases
+## 3. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
@@ -124,7 +122,7 @@ and continue until the next elimination produces `Decided`.
 | P3-5. Mutual elimination → sudden death | Detect when all remaining active players are simultaneously eliminated in the same check window; set `Status = SuddenDeath` and continue play until the next elimination decides the match. | Not started |
 | P3-6. Time-limit → score decision | Implement the optional frame-count limit; on expiry, select the winner by a configurable score metric (buildings standing, units produced, etc.) and set `Reason = ScoreDecision`. | Not started |
 
-## 5. Sequencing & dependencies
+## 4. Sequencing & dependencies
 - P3 depends on P1 because teams/relationships decide who wins and loses, and
   [P1-5](skirmish-setup.md) ownership tracking feeds defeat detection.
 - P3 unblocks the [P0 harness](playable-baseline-harness.md) P0-4 outcome assertions and is a hard
@@ -132,8 +130,8 @@ and continue until the next elimination produces `Decided`.
 - The [P1-5](skirmish-setup.md) ownership tracking P3 consumes is shared with P2 AI target selection
   and is also useful to the scale tracks.
 
-## 6. Resolved design questions
-- Ownership tracking approach — Decided: maintained per-`Player` counts/owned-object set from §2.2,
+## 5. Resolved design questions
+- Ownership tracking approach — Decided: maintained per-`Player` counts/owned-object set from §1.2,
   giving O(1) checks and reused by P2 and the scale tracks. See
   [open-questions](../open-questions.md).
 - Exact defeat rule — Decided: the real Generals rule, no command/production structures plus no
@@ -146,7 +144,7 @@ and continue until the next elimination produces `Decided`.
   continues until the next elimination resolves to `Eliminated`. Team wins are represented by
   `WinningTeam` rather than a separate reason. See [open-questions](../open-questions.md).
 
-## 6.5 Scenario Matrix
+## 6. Scenario Matrix
 
 The P0-5b matrix runner validates P3 by sweeping over end-state types and player counts and
 checking that every termination path produces the correct `GameOutcome`.
@@ -173,7 +171,7 @@ the P0 harness, and asserts:
 This matrix is the primary gate for P7. Once all six end-state cells pass, the full P7 regression
 suite can be built on top of this matrix definition.
 
-## 8. Architecture Diagrams
+## 7. Architecture Diagrams
 
 Diagrams for this phase will be elaborated once P3 moves to active implementation. The
 placeholder below captures the key types the victory/defeat subsystem introduces.
@@ -225,7 +223,7 @@ classDiagram
   Game --> VictoryConditionRule
 ```
 
-## 9. Related
+## 8. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
 - Teams it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)
 - Harness that asserts the outcome: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
@@ -234,7 +232,7 @@ classDiagram
 
 ---
 
-## Appendix: Current code — agent context
+## Appendix: Current code (agent context)
 
 > Agent context: this section contains file:line code references for agents
 > implementing this phase. Human readers: the design intent above does not

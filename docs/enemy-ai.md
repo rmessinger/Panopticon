@@ -5,12 +5,12 @@ original SAGE AI have been ported, which are still stubs, and how the pieces fit
 together at runtime. It covers two distinct layers that the original engine calls
 "AI":
 
-1. **Per-unit AI** (`AIUpdate` + `AIUpdateStateMachine`) — the behavior state
+1. **Per-unit AI** (`AIUpdate` + `AIUpdateStateMachine`): the behavior state
    machine attached to every `GameObject` that can move, fight, guard, wander,
    etc. This is the layer that is substantially ported and functional.
-2. **Per-player / skirmish AI** (`AIPlayer` / `SkirmishAIPlayer`) — the
+2. **Per-player / skirmish AI** (`AIPlayer` / `SkirmishAIPlayer`): the
    strategic, build-order/attack-wave decision maker for computer-controlled
-   players. **This layer is currently a save/load stub only** — the original
+   players. **This layer is currently a save/load stub only**: the original
    fields are preserved (mostly as `_unknownXxx` placeholders) so replays and
    save files round-trip correctly, but none of the decision-making logic has
    been ported yet. Computer players in OpenSAGE currently rely on map/team
@@ -48,17 +48,17 @@ movement types like `JetAIUpdate`, `DozerAIUpdate`, `TransportAIUpdate`,
 The AI behavior is expressed with a small, reusable finite-state-machine
 framework in `OpenSage.Logic.AI`:
 
-- **`StateMachineBase`** — holds a dictionary of `StateId -> State`, the
+- **`StateMachineBase`**: holds a dictionary of `StateId -> State`, the
   current state, a "goal object/position", and a sleep timer. `Update()` calls
   the current state's `Update()`, and `SetState`/`SetStateInternal` handle
   transitions (`OnExit` on the old state, `OnEnter` on the new one).
-- **`State`** — a single behavior. Each state is registered via
+- **`State`**: a single behavior. Each state is registered via
   `DefineState(id, state, successStateId, failureStateId, conditions...)`.
   When a state's `Update()`/`OnEnter()` returns `StateReturnType.Success`,
   `Failure`, `Continue`, or `Sleep(n)`, the owning machine looks up the
   matching transition (fixed success/failure target, or one of the
   registered `StateConditionInfo` predicates) and switches state accordingly.
-- States can nest **sub state machines** — e.g. `GuardState`, `HuntState`,
+- States can nest **sub state machines**, e.g. `GuardState`, `HuntState`,
   `AttackAreaState`, `AttackTeamState` each wrap their own private
   `StateMachineBase` subclass (`GuardStateMachine`, `AttackAreaStateMachine`,
   ...) to implement multi-step behaviors, similar to hierarchical state
@@ -72,21 +72,21 @@ framework in `OpenSage.Logic.AI`:
 ### 1.3 Per-player / skirmish AI (largely unimplemented)
 
 `Player.AIPlayer` is non-null for any non-human player (`AIPlayer` for a
-"generic" computer player, `SkirmishAIPlayer` for a skirmish opponent — see
+"generic" computer player, `SkirmishAIPlayer` for a skirmish opponent, see
 `Player.cs`). Both classes today only implement `Persist()` for save/load
 compatibility; their fields are mostly undocumented placeholders
 (`_unknownInt1`, `_unknownFloat`, ...) carried over from reverse engineering
 the original binary format. **Neither class currently has an `Update()` method
 or any decision-making logic** (build orders, attack waves, resource
-management). This is a known gap — see `docs/roadmap/` for where this fits
+management). This is a known gap; see `docs/roadmap/` for where this fits
 in the long-term plan.
 
 In place of strategic AI, computer-controlled behavior in OpenSAGE today comes
 from:
-- **Map/team scripts** (`OpenSage.Scripting`) — trigger-based, authored per
+- **Map/team scripts** (`OpenSage.Scripting`): trigger-based, authored per
   map, can command teams to guard/attack/patrol using the same per-unit AI
   states described above.
-- **Default idle behavior** — turret auto-acquire, `Guard`/`Wander` states,
+- **Default idle behavior**: turret auto-acquire, `Guard`/`Wander` states,
   and reactive states like `PanicState`/`AttackAreaState` that fire from
   `AIUpdate` when a unit takes damage or spots an enemy, independent of any
   higher-level planner.
@@ -100,7 +100,7 @@ which are queued in `TargetPoints` and walked one at a time each frame. The
 exposes parsed data (e.g. `SlopeLimits`); `ValidMovementTerrain`,
 `AddObjectToPathfindMap`, and `RemoveObjectFromPathfindMap` are stubs
 (`// TODO(Port): Implement this.`), so fine-grained terrain classification
-from the original game is not yet ported — routing currently relies on the
+from the original game is not yet ported; routing currently relies on the
 navigation mesh/grid in `IGameEngine.Navigation`.
 
 ## 2. Class Diagrams

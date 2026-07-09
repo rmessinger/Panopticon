@@ -1,6 +1,6 @@
 # Plan: "Play in Game" button for ReplaySketch
 
-> **Saved plan** — resume this in a future session by opening this file from the Copilot session state folder or referencing it with `/session`.
+> **Saved plan**: resume this in a future session by opening this file from the Copilot session state folder or referencing it with `/session`.
 
 
 ## Problem
@@ -28,7 +28,7 @@ A new `LauncherLocatorService` handles step 2. The search strategy:
 
 | File | Change |
 |---|---|
-| `Services/LauncherLocatorService.cs` | **New** — sibling-dir search for `OpenSage.Launcher[.exe]` |
+| `Services/LauncherLocatorService.cs` | **New**: sibling-dir search for `OpenSage.Launcher[.exe]` |
 | `UI/ExportPanel.cs` | Add "Play in Game" button; inject/create `LauncherLocatorService`; wire export+launch |
 | `UI/MainForm.cs` | Pass `GeneralsInstallationService` (already available) through to `ExportPanel` if needed |
 
@@ -47,6 +47,6 @@ OpenSage.Launcher[.exe] --replay sketch_preview.rep --noaudio --noshellmap
 
 ## Todos
 
-1. `launcher-locator-service` — Create `Services/LauncherLocatorService.cs` with sibling-dir search
-2. `export-panel-play-button` — Add "Play in Game" button + logic to `ExportPanel.cs` (depends on 1)
-3. `main-form-wire` — Thread `LauncherLocatorService` instance through `MainForm` to `ExportPanel` (depends on 1)
+1. `launcher-locator-service`: Create `Services/LauncherLocatorService.cs` with sibling-dir search
+2. `export-panel-play-button`: Add "Play in Game" button + logic to `ExportPanel.cs` (depends on 1)
+3. `main-form-wire`: Thread `LauncherLocatorService` instance through `MainForm` to `ExportPanel` (depends on 1)

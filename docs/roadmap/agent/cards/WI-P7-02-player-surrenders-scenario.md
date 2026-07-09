@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-02` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-2 PlayerSurrenders, see [deep dive §6](../../deep-dives/end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-2 PlayerSurrenders, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | Track P phases `P0`, `P2`, `P3`, `P4`, `P5`, `P6`, `P6b` complete; `WI-P3-04` done for `OrderType.EndGame` surrender/end-of-match flow |
-| Diagrams | [P7 Architecture Diagrams](../../deep-dives/end-to-end-regression.md#8-architecture-diagrams) |
+| Diagrams | [P7 Architecture Diagrams](../../deep-dives/p7-end-to-end-regression.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -16,11 +16,11 @@ Create the checked-in P7 PlayerSurrenders scenario where the human player issues
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/end-to-end-regression.md:38-45` — PlayerSurrenders expected outcome.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:47-54` — deterministic scenario authoring requirements.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:58-70` — universal invariants and per-tick abort behavior.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:112-112` — P7-2 sub-phase row.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:298-300` — `OrderType.EndGame` dependency on P3-4.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — PlayerSurrenders expected outcome.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariants and per-tick abort behavior.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:112-112` — P7-2 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300` — `OrderType.EndGame` dependency on P3-4.
 - `docs/roadmap/implementation-checklist.md:337-344` — scenario and outcome ACs.
 - `src/OpenSage.Game/Logic/Orders/OrderType.cs:3-6` — `EndGame` enum value.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:426-428` — `EndGame` processing path.

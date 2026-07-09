@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-01` (Done) — `IAIDecisionPolicy`/`RuleBasedAIDecisionPolicy` must exist first |
-| Diagrams | [Pluggable AI §8](../../deep-dives/pluggable-ai.md#8-architecture-diagrams) |
+| Diagrams | [Pluggable AI §8](../../deep-dives/a4-pluggable-ai.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -20,7 +20,7 @@ neural-network policy (`WI-A4-03`) plugs into without touching `Player`/`AIPlaye
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/pluggable-ai.md` §2.1 — selection design.
+- `docs/roadmap/deep-dives/a4-pluggable-ai.md` §2.1 — selection design.
 - `src/OpenSage.Game/Logic/Player.cs:763-777` — current `SkirmishAIPlayer` vs. `AIPlayer` vs.
   `null` selection based on `isHuman`/`isSkirmish`/`side`, in `Player.CreateNew(...)`.
 - `src/OpenSage.Game/Logic/AI/AIPlayer.cs`, `RuleBasedAIDecisionPolicy.cs`,

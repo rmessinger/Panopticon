@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6b-08` |
-| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b scenario matrix, see [deep dive §4.5](../../deep-dives/unit-contract-validation.md#45-scenario-matrix) |
+| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b scenario matrix, see [deep dive §4](../../deep-dives/p6b-unit-contract-validation.md#4-scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P6b-01`, `WI-P6b-02`, `WI-P6b-03`, `WI-P6b-04`, `WI-P6b-05`, `WI-P6b-06`, `WI-P6b-07` |
-| Diagrams | [P6b Architecture Diagrams](../../deep-dives/unit-contract-validation.md#7-architecture-diagrams) |
+| Diagrams | [P6b Architecture Diagrams](../../deep-dives/p6b-unit-contract-validation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -16,9 +16,9 @@ Create the P6b `ScenarioMatrix` test that sweeps `archetype × faction`, prunes 
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/unit-contract-validation.md:31-45` — archetype definitions and USA reference units.
-- `docs/roadmap/deep-dives/unit-contract-validation.md:47-67` — full six-point contract each cell must assert.
-- `docs/roadmap/deep-dives/unit-contract-validation.md:92-119` — matrix axes, `ConstraintFilter`, per-cell assertions, and pass/fail purpose.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:31-45` — archetype definitions and USA reference units.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:47-67` — full six-point contract each cell must assert.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:92-119` — matrix axes, `ConstraintFilter`, per-cell assertions, and pass/fail purpose.
 - `docs/roadmap/implementation-checklist.md:330-335` — checklist AC for the P6b matrix.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152` — `SweepAxis`, `ConstraintFilter`, `AssertionTemplate`, and expansion.
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — matrix execution via `HarnessRunner`.

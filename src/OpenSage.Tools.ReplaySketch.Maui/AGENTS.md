@@ -4,7 +4,7 @@
 
 `OpenSage.Tools.ReplaySketch` is the primary tool for authoring and validating ordered
 command/scenario sequences against the engine. It is the substrate Track P validates through
-(see [docs/roadmap/deep-dives/playable-baseline-harness.md](../../docs/roadmap/deep-dives/playable-baseline-harness.md)).
+(see [docs/roadmap/deep-dives/p0-playable-baseline-harness.md](../../docs/roadmap/deep-dives/p0-playable-baseline-harness.md)).
 
 This guide answers one question: how do I reliably validate a ReplaySketch change? It is the
 command/scenario-authoring counterpart to
@@ -191,6 +191,6 @@ This command emits a machine-readable JSON report to stdout and exits 0 when all
 
 ## Related
 
-- Roadmap deep dive (P0): [`docs/roadmap/deep-dives/playable-baseline-harness.md`](../../docs/roadmap/deep-dives/playable-baseline-harness.md)
+- Roadmap deep dive (P0): [`docs/roadmap/deep-dives/p0-playable-baseline-harness.md`](../../docs/roadmap/deep-dives/p0-playable-baseline-harness.md)
 - Renderer visual validation: [`OpenSage.Tools.TestHarness/AGENTS.md`](../OpenSage.Tools.TestHarness/AGENTS.md)
 - Architecture snapshot: [`docs/roadmap/current-state.md`](../../docs/roadmap/current-state.md)

@@ -1,11 +1,10 @@
-# Implementation Plan: Track P · P0-2 — Generic Definition Resolution
+# Implementation Plan: Track P · P0-2: Generic Definition Resolution
 
-> Track: [Track P — Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0 — ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md) · sub-phase P0-2: Generic definition/player resolution
-> Checklist item: [implementation-checklist.md](../implementation-checklist.md) — second item under P0
+> Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-2: Generic definition/player resolution
+> Checklist item: [implementation-checklist.md](../implementation-checklist.md), second item under P0
 >
-> Audience: human — problem statement, design rationale, and approach are above
-> the divider. File:line implementation details are below the divider (agent context).
+> Audience: human overview of the implementation plan. Agent context sits below the divider.
 
 ## Problem
 
@@ -22,7 +21,7 @@ var unitName = action.UnitDefinitionName
 
 The `KnownDefinitions` class (`ReplayExporter.cs:21-32`) encodes only 4 definition
 names for USA and GLA. China (factionIndex 3) and all sub-faction indices (5-12)
-silently fall through to the USA defaults — wrong hashes, wrong units.
+silently fall through to the USA defaults : wrong hashes, wrong units.
 
 `BuildingCatalog` and `UnitCatalog` already have complete, correct per-faction
 lists for USA (2), China (3), GLA (4), and all sub-factions (5-12). The exporter
@@ -103,7 +102,7 @@ Add three tests in `ReplaySketchTests.cs`:
 
 ---
 
-> Agent implementation details — the sections below list exact files, methods, and
+> Agent implementation details : the sections below list exact files, methods, and
 > tests for agents executing this plan. Human readers can stop here.
 
 ## Files to Change
@@ -112,7 +111,7 @@ Add three tests in `ReplaySketchTests.cs`:
 |---|---|
 | `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Delete `KnownDefinitions` class; extract `ResolveConstructDefinitionName` and `ResolveUnitDefinitionName` helpers; remove `isGla` branch |
 | `src/OpenSage.Tools.ReplaySketch.Core/Profiles/ActionTreeController.cs` | Remove `?? KnownDefinitions.UsaBarracksName` fallback |
-| `src/OpenSage.Tools.ReplaySketch.Core/AssemblyInfo.cs` | NEW — `InternalsVisibleTo("OpenSage.Game.Tests")` |
+| `src/OpenSage.Tools.ReplaySketch.Core/AssemblyInfo.cs` | NEW : `InternalsVisibleTo("OpenSage.Game.Tests")` |
 | `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add 3 tests for helper methods |
 
 ## Out of Scope (Later P0 Items)

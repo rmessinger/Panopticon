@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6b-07` |
-| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b gap closure, see [deep dive §3.3](../../deep-dives/unit-contract-validation.md#33-surfacing-unimplemented-handlers-as-gaps-not-silent-failures) and [§4 Sub-phases](../../deep-dives/unit-contract-validation.md#4-sub-phases) |
+| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b gap closure, see [deep dive §2.3](../../deep-dives/p6b-unit-contract-validation.md#23-surfacing-unimplemented-handlers-as-gaps-not-silent-failures) and [§4 Sub-phases](../../deep-dives/p6b-unit-contract-validation.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-P6b-01`, `WI-P6b-02`, `WI-P6b-03`, `WI-P6b-04`, `WI-P6b-05`, `WI-P6b-06` |
-| Diagrams | [P6b Architecture Diagrams](../../deep-dives/unit-contract-validation.md#7-architecture-diagrams) |
+| Diagrams | [P6b Architecture Diagrams](../../deep-dives/p6b-unit-contract-validation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -16,8 +16,8 @@ Close or explicitly document every unimplemented `SpecialPower*` handler surface
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/unit-contract-validation.md:72-77` — gap handling rule.
-- `docs/roadmap/deep-dives/unit-contract-validation.md:123-131` — sequencing and in-phase fixes.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:72-77` — gap handling rule.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:123-131` — sequencing and in-phase fixes.
 - `docs/roadmap/implementation-checklist.md:326-329` — checklist AC for P6b gap closure.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:388-426,556-560` — special-power dispatch and default unimplemented-order logging.
 - `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerApplicator.cs:13-37` — no-target special powers and current throwing handlers.

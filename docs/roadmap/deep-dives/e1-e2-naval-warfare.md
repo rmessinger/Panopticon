@@ -3,18 +3,14 @@
 > Expands phases E1 and E2 of [Track E — Naval Warfare](../track-e-naval-warfare.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams. Code references are in the
+> Audience: human overview of the naval-warfare design. Code references are in the
 > agent-context appendix at the bottom.
 >
-> The agent-context section at the bottom ([Current code appendix](#appendix-current-code--agent-context))
-> contains file:line code references. Skip it if you are reading for design intent.
+> The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context))
+> contains file:line code references. Skip it if reading for design intent.
 
-Goal: make water-surface combat work end-to-end. Unlike [Track D](../track-d-gameplay-expansion.md)'s
-tech trees and eras, naval warfare is not wholly new to the engine's data model. BFME2's Corsairs of
-Umbar content already defines ship `ObjectKind`s (`SHIP`, `SHIP_BATTLESHIP`, `SHIP_BOMBARD`,
-`SHIP_SUICIDE`, `SHIP_TRANSPORT`), a `PORT` building kind, and a `WATER` locomotor surface, but the
-terrain/pathfinding layer that should make any of it move and fight correctly is still a stub. This
-track finishes that seam and proves it with real ship combat rather than inventing new mechanisms.
+Purpose: complete water/ground movement and ship combat using existing BFME2 naval content. The
+design focuses on terrain passability, ship weapons, and port production rather than new content.
 
 ---
 
@@ -100,7 +96,7 @@ movement, must replace this placeholder before E1's first task card is marked `R
 
 ---
 
-## Appendix: current code / agent context
+## Appendix: Current code (agent context)
 
 - `src/OpenSage.Game/Terrain/TerrainLogic.cs:88,97` — `GetLayerForDestination`/
   `GetHighestLayerForDestination` unconditionally return `PathfindLayerType.Ground`; this is the

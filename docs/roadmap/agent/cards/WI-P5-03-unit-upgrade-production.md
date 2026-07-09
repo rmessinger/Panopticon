@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-03` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-2, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases), [§2.4](../../deep-dives/skirmish-ai.md#24-p5--constructionproduction-completeness), and [Appendix §1.4](../../deep-dives/skirmish-ai.md#14-how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-2, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | P1 and P4 complete |
-| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P5 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -17,10 +17,10 @@ Verify and close structure production end-to-end: units queued through `Producti
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation-checklist.md:264-266` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/skirmish-ai.md:60-69` — P5 production and upgrade scope.
-- `docs/roadmap/deep-dives/skirmish-ai.md:84-93` — P5-2 upgrades row.
-- `docs/roadmap/deep-dives/skirmish-ai.md:257-263` — queue/spawn mechanism.
-- `docs/roadmap/deep-dives/skirmish-ai.md:275-277` — upgrade completion/application mechanism.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69` — P5 production and upgrade scope.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93` — P5-2 upgrades row.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:257-263` — queue/spawn mechanism.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:275-277` — upgrade completion/application mechanism.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:148-168` — upgrade order, debit, cancel, and refund.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-224` — unit order, producer selection, queueing, cancel, and refund.
 - `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:59-156` — queue advancement and upgrade grant.

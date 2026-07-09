@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-02` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-2, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases), [§2.2](../../deep-dives/skirmish-ai.md#22-consume-the-stranded-build-list-data-p5), and [§2.3](../../deep-dives/skirmish-ai.md#23-how-the-ai-issues-actions--decision-orders-via-orderprocessor) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-2, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.2](../../deep-dives/p2-p5-skirmish-ai.md#12-consume-the-stranded-build-list-data-p5), and [§1.3](../../deep-dives/p2-p5-skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-01`; P1 relationships/spawn complete; P4 economy loop available; P5 construction/funding/gating available enough for `BuildObject` and supply orders |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,10 +16,10 @@ Teach the AI scaffold to issue legal order-stream actions for economy and base b
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/skirmish-ai.md:27-44` — economy and build-list planner rules.
-- `docs/roadmap/deep-dives/skirmish-ai.md:46-58` — decision: AI actuates via orders, not direct APIs.
-- `docs/roadmap/deep-dives/skirmish-ai.md:244-250` — `AIData`/`BuildListInfo` are parsed but stranded.
-- `docs/roadmap/deep-dives/skirmish-ai.md:252-274` — order/construction actuation surface.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:27-44` — economy and build-list planner rules.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:46-58` — decision: AI actuates via orders, not direct APIs.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:244-250` — `AIData`/`BuildListInfo` are parsed but stranded.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-274` — order/construction actuation surface.
 - `src/OpenSage.Game/Logic/AI/AIData.cs:7-113` — `AIData` parser includes `SkirmishBuildList`.
 - `src/OpenSage.Game/Logic/AI/AIData.cs:242-245` — `SkirmishBuildLists` storage.
 - `src/OpenSage.Game/Logic/AI/AIData.cs:325-342` — `AISkirmishBuildList` and `Structures`.

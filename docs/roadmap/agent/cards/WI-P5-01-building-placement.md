@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-01` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/skirmish-ai.md#4-sub-phases), [§2.4](../../deep-dives/skirmish-ai.md#24-p5--constructionproduction-completeness), and [Appendix §1.4](../../deep-dives/skirmish-ai.md#14-how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | P1 and P4 complete |
-| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#8-architecture-diagrams) |
+| Diagrams | [P5 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -17,10 +17,10 @@ Verify and close the shared player/AI building-placement path: `OrderProcessor.B
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation-checklist.md:257-260` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/skirmish-ai.md:60-69` — P5 gap-closing scope.
-- `docs/roadmap/deep-dives/skirmish-ai.md:84-93` — P5-1/P5-2 sub-phase mapping.
-- `docs/roadmap/deep-dives/skirmish-ai.md:252-258` — P5 action path through orders and builder AI.
-- `docs/roadmap/deep-dives/skirmish-ai.md:272-274` — builder placement mechanism.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69` — P5 gap-closing scope.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93` — P5-1/P5-2 sub-phase mapping.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-258` — P5 action path through orders and builder AI.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:272-274` — builder placement mechanism.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121` — `BuildObject` handler, debit, object creation, and builder target assignment.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:123-130` — cancel/refund path to preserve.
 - `src/OpenSage.Game/Logic/Object/Update/AIUpdate/IBuilderAIUpdate.cs:12-18` — builder interface contract.

@@ -3,12 +3,11 @@
 > Expands phase B7 of [Track B — Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
-> Audience: human — design intent and architecture diagrams.
+> Audience: human overview of the variable-fidelity design.
 
-Goal: scale total simulated unit counts by spending compute in proportion to how much each unit
-matters right now. Less-important units run more cheaply. This is an experimental toolkit of
-fidelity-reduction techniques rather than a single mechanism, and it is the simulation-side
-analogue of rendering LOD.
+Purpose: trade simulation detail for scale by lowering fidelity for less-important units. The
+design centers on a composable toolkit of fidelity-reduction techniques rather than a single
+mechanism.
 
 ---
 
@@ -106,7 +105,7 @@ differences within tolerance.
 - Every B7 technique is measured against [B1](../track-b-scale.md) benchmarks and validated with the
   [visualizer (A5-3)](visualization.md). Variable fidelity is explicitly a scaling experiment toolkit.
 
-## 6.5 Scenario Matrix
+## 7. Scenario Matrix
 
 The P0-5b matrix runner validates B7 by sweeping over fidelity level and unit count and confirming
 that each technique reduces cost proportionally while staying within the bounded statistical error.
