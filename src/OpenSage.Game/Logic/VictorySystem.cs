@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using OpenSage.Logic.Object;
 
@@ -6,6 +7,7 @@ namespace OpenSage.Logic;
 public sealed class VictorySystem : GameSystem
 {
     public static readonly LogicFrameSpan DefaultCheckCadence = new LogicFrameSpan(30);
+    public const int NoFrameLimit = -1;
 
     private LogicFrame _nextCheckFrame = new LogicFrame(DefaultCheckCadence.Value);
     private readonly HashSet<Player> _defeatedPlayers = [];
@@ -13,14 +15,22 @@ public sealed class VictorySystem : GameSystem
     private readonly HashSet<Player> _playersToRecheck = [];
     private bool _isAttached;
     private VictoryConditionRule _conditionRule = new DefaultVictoryConditionRule();
+    private Func<Player, int> _scoreMetric = static player => player.BuildingCount;
 
     public GameOutcome CurrentOutcome { get; } = new();
 
     public int CheckTickCount { get; private set; }
+    internal int FrameLimit { get; set; } = NoFrameLimit;
     internal VictoryConditionRule ConditionRule
     {
         get => _conditionRule;
         set => _conditionRule = value ?? throw new System.ArgumentNullException(nameof(value));
+    }
+
+    internal Func<Player, int> ScoreMetric
+    {
+        get => _scoreMetric;
+        set => _scoreMetric = value ?? throw new System.ArgumentNullException(nameof(value));
     }
 
     internal int LifecycleNotificationCount { get; private set; }
@@ -56,6 +66,7 @@ public sealed class VictorySystem : GameSystem
         LastCheckFrame = currentFrame;
         LastProcessedPlayerCount = _playersToRecheck.Count;
         EvaluatePendingPlayers();
+        EvaluateFrameLimit(currentFrame);
         _playersToRecheck.Clear();
         _nextCheckFrame = currentFrame + DefaultCheckCadence;
     }
@@ -363,5 +374,41 @@ public sealed class VictorySystem : GameSystem
         }
 
         return activePlayers.Count > 1 && newlyDefeatedPlayers.Count == activePlayers.Count;
+    }
+
+    private void EvaluateFrameLimit(LogicFrame currentFrame)
+    {
+        if (CurrentOutcome.Status == OutcomeStatus.Decided || FrameLimit == NoFrameLimit || currentFrame.Value < FrameLimit)
+        {
+            return;
+        }
+
+        var winningPlayers = new List<Player>();
+        var bestScore = int.MinValue;
+
+        foreach (var player in GetCompetitivePlayers())
+        {
+            if (_defeatedPlayers.Contains(player))
+            {
+                continue;
+            }
+
+            var score = ScoreMetric(player);
+            if (score > bestScore)
+            {
+                winningPlayers.Clear();
+                winningPlayers.Add(player);
+                bestScore = score;
+            }
+            else if (score == bestScore)
+            {
+                winningPlayers.Add(player);
+            }
+        }
+
+        if (winningPlayers.Count > 0)
+        {
+            TrySetDecidedOutcome(OutcomeReason.ScoreDecision, winningPlayers, null);
+        }
     }
 }

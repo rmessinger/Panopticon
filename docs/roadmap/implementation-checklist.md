@@ -229,7 +229,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: a scenario where all remaining active players' last structures are destroyed in the same
     check window transitions `GameOutcome.Status` to `SuddenDeath` and does not terminate the match;
     play continues until the next elimination, which sets `Status=Decided` with `Reason=Eliminated`.
-- [ ] Time-limit → score decision (P3-6).
+- [x] Time-limit → score decision (P3-6).
   - AC: a scenario with a configured frame-count limit expires and sets `Status=Decided`,
     `Reason=ScoreDecision`, with `WinningPlayer`/`WinningTeam` set to the highest-score side per the
     configured metric; test covers both a clear winner and a tie (shared victory).
