@@ -233,7 +233,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: a scenario with a configured frame-count limit expires and sets `Status=Decided`,
     `Reason=ScoreDecision`, with `WinningPlayer`/`WinningTeam` set to the highest-score side per the
     configured metric; test covers both a clear winner and a tie (shared victory).
-- [ ] P3 scenario matrix: sweep endState × playerCount; assert the correct `GameOutcome` is
+- [x] P3 scenario matrix: sweep endState × playerCount; assert the correct `GameOutcome` is
       produced for every end-state and player-count combination.
   - AC: a `ScenarioMatrix` (axes: `endState` ∈ {PlayerEliminated, PlayerSurrenders, AISurrenders,
     TeamWin, MutualElimination, ScoreDecision}, `playerCount` ∈ {2, 3, 4}; invalid combinations
