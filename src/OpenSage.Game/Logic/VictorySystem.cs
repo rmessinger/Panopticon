@@ -88,6 +88,24 @@ public sealed class VictorySystem : GameSystem
         return _defeatedPlayers.Contains(player);
     }
 
+    internal bool Surrender(Player player)
+    {
+        if (player == null || CurrentOutcome.Status == OutcomeStatus.Decided)
+        {
+            return false;
+        }
+
+        _defeatedPlayers.Add(player);
+
+        var winningPlayers = GetOpposingPlayers(player);
+        if (winningPlayers.Count == 0)
+        {
+            return false;
+        }
+
+        return TrySetDecidedOutcome(OutcomeReason.Surrendered, winningPlayers, player);
+    }
+
     internal void QueuePlayerForEvaluation(Player player)
     {
         if (player != null)
@@ -129,11 +147,7 @@ public sealed class VictorySystem : GameSystem
                 continue;
             }
 
-            CurrentOutcome.Status = OutcomeStatus.Decided;
-            CurrentOutcome.Reason = OutcomeReason.Eliminated;
-            CurrentOutcome.LosingPlayer = defeatedPlayer;
-            CurrentOutcome.SetWinningPlayers(winningPlayers);
-            CurrentOutcome.WinningTeam = TryResolveWinningTeam(winningPlayers);
+            TrySetDecidedOutcome(OutcomeReason.Eliminated, winningPlayers, defeatedPlayer);
             break;
         }
     }
@@ -204,6 +218,23 @@ public sealed class VictorySystem : GameSystem
         }
 
         return winningTeam;
+    }
+
+    private bool TrySetDecidedOutcome(OutcomeReason reason, List<Player> winningPlayers, Player losingPlayer)
+    {
+        if (CurrentOutcome.Status == OutcomeStatus.Decided)
+        {
+            return false;
+        }
+
+        CurrentOutcome.Status = OutcomeStatus.Decided;
+        CurrentOutcome.Reason = reason;
+        CurrentOutcome.LosingPlayer = losingPlayer;
+        CurrentOutcome.SetWinningPlayers(winningPlayers);
+        CurrentOutcome.WinningTeam = TryResolveWinningTeam(winningPlayers);
+        CurrentOutcome.DecidedOnFrame = unchecked((int)Game.GameLogic.CurrentFrame.Value);
+        Game.IsLogicRunning = false;
+        return true;
     }
 
     private IEnumerable<Player> GetCompetitivePlayers()
@@ -278,5 +309,21 @@ public sealed class VictorySystem : GameSystem
         }
 
         return _minimumKnownRebuildCosts.TryGetValue(player, out rebuildCost);
+    }
+
+    private List<Player> GetOpposingPlayers(Player player)
+    {
+        var winners = new List<Player>();
+        foreach (var candidate in GetCompetitivePlayers())
+        {
+            if (_defeatedPlayers.Contains(candidate) || candidate == player || candidate.Allies.Contains(player))
+            {
+                continue;
+            }
+
+            winners.Add(candidate);
+        }
+
+        return winners;
     }
 }

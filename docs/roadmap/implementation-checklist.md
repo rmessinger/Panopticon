@@ -216,13 +216,13 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Death→defeat event from `GameObject.OnDie/Destroy` (shared with P6-3 cleanup).
   - AC: a death/ownership-change notification fires from `OnDie`/`Destroy` and `VictorySystem` reacts
     without a full-object scan; test asserts the event fires once per death.
-- [ ] Win/lose determination + match-end flow (stop sim, surface result, allow exit).
+- [x] Win/lose determination + match-end flow (stop sim, surface result, allow exit).
   - AC: when all non-allies of player X are defeated, `GameOutcome.Status=Decided` with X as winner;
     the sim stops/relaxes and exit is possible; harness asserts the decided outcome.
-- [ ] Handle the `EndGame` order in `OrderProcessor` (currently unhandled).
+- [x] Handle the `EndGame` order in `OrderProcessor` (currently unhandled).
   - AC: an `EndGame` order produces a `Decided` `GameOutcome` (surrender/quit) instead of logging
     "unimplemented"; test issues `EndGame` and asserts the outcome.
-- [ ] Expose match outcome as a first-class queryable result (for headless assertion).
+- [x] Expose match outcome as a first-class queryable result (for headless assertion).
   - AC: the P0 harness can assert on `GameOutcome` (winner/loser/reason/frame); covered by a harness
     test.
 - [ ] Mutual elimination → sudden-death handling (P3-5).
