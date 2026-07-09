@@ -213,7 +213,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
       rebuild: no dozer/worker + insufficient resources) as the default, exposed as configurable.
   - AC: a harness scenario that eliminates a player's qualifying structures + rebuild means flags that
     player defeated within the check cadence; the rule is selectable via config.
-- [ ] Death→defeat event from `GameObject.OnDie/Destroy` (shared with P6-3 cleanup).
+- [x] Death→defeat event from `GameObject.OnDie/Destroy` (shared with P6-3 cleanup).
   - AC: a death/ownership-change notification fires from `OnDie`/`Destroy` and `VictorySystem` reacts
     without a full-object scan; test asserts the event fires once per death.
 - [ ] Win/lose determination + match-end flow (stop sim, surface result, allow exit).

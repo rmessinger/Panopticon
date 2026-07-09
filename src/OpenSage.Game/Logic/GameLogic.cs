@@ -31,6 +31,8 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
     public LogicFrame CurrentFrame => _currentFrame;
     public GameOutcome CurrentOutcome => _game.CurrentOutcome;
 
+    internal event EventHandler<GameObjectLifecycleEventArgs> ObjectLifecycleChanged;
+
     private uint _rankLevelLimit;
 
     // object id -> some frame? unsure if order matters for this collection
@@ -67,6 +69,8 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         _objectDefinitionLookupTable = new ObjectDefinitionLookupTable(game.AssetStore.ObjectDefinitions);
 
         Random = game.CreateRandom();
+
+        game.VictorySystem.Attach(this);
     }
 
     public GameObject CreateObject(ObjectDefinition objectDefinition, Player player)
@@ -185,11 +189,13 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
         _game.Scene3D?.Quadtree.Remove(gameObject);
         _game.Scene3D?.Radar.RemoveGameObject(gameObject);
-        gameObject.PartitionObject.Remove();
+        gameObject.PartitionObject?.Remove();
 
-        gameObject.Drawable.Destroy();
+        gameObject.Drawable?.Destroy();
 
-        gameObject.Owner?.RemoveOwnedObject(gameObject);
+        var owner = gameObject.Owner;
+        owner?.RemoveOwnedObject(gameObject);
+        gameObject.RaiseLifecycleEvent(GameObjectLifecycleEventReason.Destroyed, owner, owner);
         gameObject.OnDestroy();
 
         gameObject.SetObjectStatus(ObjectStatus.Destroyed, true);
@@ -200,6 +206,11 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         }
 
         _destroyList.Add(gameObject);
+    }
+
+    internal void RaiseObjectLifecycleChanged(GameObjectLifecycleEventArgs args)
+    {
+        ObjectLifecycleChanged?.Invoke(this, args);
     }
 
     internal void RaiseConstructionCompleted(GameObjectConstructionCompletedEventArgs args)
