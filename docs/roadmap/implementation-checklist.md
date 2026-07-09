@@ -225,7 +225,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Expose match outcome as a first-class queryable result (for headless assertion).
   - AC: the P0 harness can assert on `GameOutcome` (winner/loser/reason/frame); covered by a harness
     test.
-- [ ] Mutual elimination → sudden-death handling (P3-5).
+- [x] Mutual elimination → sudden-death handling (P3-5).
   - AC: a scenario where all remaining active players' last structures are destroyed in the same
     check window transitions `GameOutcome.Status` to `SuddenDeath` and does not terminate the match;
     play continues until the next elimination, which sets `Status=Decided` with `Reason=Eliminated`.

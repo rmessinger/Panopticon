@@ -134,9 +134,23 @@ public sealed class VictorySystem : GameSystem
                 continue;
             }
 
-            _defeatedPlayers.Add(player);
-            CurrentOutcome.LosingPlayer = player;
             newlyDefeatedPlayers.Add(player);
+        }
+
+        if (newlyDefeatedPlayers.Count == 0)
+        {
+            return;
+        }
+
+        if (CurrentOutcome.Status != OutcomeStatus.SuddenDeath && ShouldEnterSuddenDeath(newlyDefeatedPlayers))
+        {
+            EnterSuddenDeath();
+            return;
+        }
+
+        foreach (var newlyDefeatedPlayer in newlyDefeatedPlayers)
+        {
+            _defeatedPlayers.Add(newlyDefeatedPlayer);
         }
 
         foreach (var defeatedPlayer in newlyDefeatedPlayers)
@@ -218,6 +232,16 @@ public sealed class VictorySystem : GameSystem
         }
 
         return winningTeam;
+    }
+
+    private void EnterSuddenDeath()
+    {
+        CurrentOutcome.Status = OutcomeStatus.SuddenDeath;
+        CurrentOutcome.Reason = OutcomeReason.None;
+        CurrentOutcome.LosingPlayer = null;
+        CurrentOutcome.WinningTeam = null;
+        CurrentOutcome.SetWinningPlayers(null);
+        CurrentOutcome.DecidedOnFrame = null;
     }
 
     private bool TrySetDecidedOutcome(OutcomeReason reason, List<Player> winningPlayers, Player losingPlayer)
@@ -325,5 +349,19 @@ public sealed class VictorySystem : GameSystem
         }
 
         return winners;
+    }
+
+    private bool ShouldEnterSuddenDeath(List<Player> newlyDefeatedPlayers)
+    {
+        var activePlayers = new List<Player>();
+        foreach (var player in GetCompetitivePlayers())
+        {
+            if (!_defeatedPlayers.Contains(player))
+            {
+                activePlayers.Add(player);
+            }
+        }
+
+        return activePlayers.Count > 1 && newlyDefeatedPlayers.Count == activePlayers.Count;
     }
 }
