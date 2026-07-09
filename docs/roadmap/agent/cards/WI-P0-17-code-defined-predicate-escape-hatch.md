@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-17` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P0-07` |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/p0-playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -19,7 +19,7 @@ is in-process code; the scenario JSON references the predicate by its registered
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/playable-baseline-harness.md §3.4` — "escape hatch of code-defined
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4` — "escape hatch of code-defined
   (C#) predicates (registered by name, referenced from the scenario)".
 - `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` — the base class and
   the three existing subtypes; `CodeAssertion` is a fourth subtype.

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-04` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-4, see [deep dive §4](../../deep-dives/skirmish-ai.md#3-sub-phases), [§1.1](../../deep-dives/skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai), and [§5](../../deep-dives/skirmish-ai.md#5-resolved-design-questions-and-open-work) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-4, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.1](../../deep-dives/p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai), and [§5](../../deep-dives/p2-p5-skirmish-ai.md#5-resolved-design-questions-and-open-work) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-03`; P1 relationships and ownership tracking/transfer hooks complete; combat handlers sufficient for `ForceAttackGround`/object targeting; P3 outcome querying available for the final win/lose assertion |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,9 +16,9 @@ Implement the minimum legal-opponent military loop: when the AI has a threshold 
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/skirmish-ai.md:33-38` — target selection, attack threshold, and idempotence.
-- `docs/roadmap/deep-dives/skirmish-ai.md:73-82` — integration surface: relationships and owned-object set.
-- `docs/roadmap/deep-dives/skirmish-ai.md:106-116` — Track P scope is the minimum legal opponent with a difficulty seam.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:33-38` — target selection, attack threshold, and idempotence.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:73-82` — integration surface: relationships and owned-object set.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:106-116` — Track P scope is the minimum legal opponent with a difficulty seam.
 - `src/OpenSage.Game/Logic/Player.cs:126-134` — allies/enemies and owned-object counts.
 - `src/OpenSage.Game/Logic/Player.cs:785-805` — reciprocal ally/enemy helpers.
 - `src/OpenSage.Game/Logic/Player.cs:807-839` — maintained owned-object set and counts.

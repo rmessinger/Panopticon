@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-05` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-5, see [deep dive §1.5](../../deep-dives/victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-5, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-02`, `WI-P3-03`, and `WI-P3-04` |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#7-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,8 +16,8 @@ Detect simultaneous mutual elimination in one victory check window, transition t
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/victory-defeat.md:64-67` — mutual-elimination design in defeat detection.
-- `docs/roadmap/deep-dives/victory-defeat.md:90-103` — sudden-death flow and implementation notes.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:64-67` — mutual-elimination design in defeat detection.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:90-103` — sudden-death flow and implementation notes.
 - `docs/roadmap/implementation-checklist.md:221-224` — sudden-death AC.
 - `src/OpenSage.Game/Logic/GameLogic.cs:250-292` — logic frame advance used for check-window tests.
 - `src/OpenSage.Game/Game.cs:899-927` and `src/OpenSage.Game/Game.cs:963-975` — logic-running behavior that must continue in sudden death.

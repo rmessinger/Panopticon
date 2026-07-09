@@ -1,7 +1,7 @@
 # Implementation Plan: Track P · P0-2: Generic Definition Resolution
 
 > Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-2: Generic definition/player resolution
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-2: Generic definition/player resolution
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md), second item under P0
 >
 > Audience: human overview of the implementation plan. Agent context sits below the divider.

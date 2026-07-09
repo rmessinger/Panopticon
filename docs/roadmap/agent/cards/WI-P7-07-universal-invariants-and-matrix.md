@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-07` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-7 Universal invariants + matrix run, see [deep dive §6](../../deep-dives/end-to-end-regression.md#6-sub-phases), [§3](../../deep-dives/end-to-end-regression.md#3-universal-invariants), and [§4](../../deep-dives/end-to-end-regression.md#4-scenario-matrix) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-7 Universal invariants + matrix run, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases), [§3](../../deep-dives/p7-end-to-end-regression.md#3-universal-invariants), and [§4](../../deep-dives/p7-end-to-end-regression.md#4-scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | Track P phases `P0`, `P2`, `P3`, `P4`, `P5`, `P6`, `P6b` complete; `WI-P7-01`, `WI-P7-02`, `WI-P7-03`, `WI-P7-04`, `WI-P7-05`, and `WI-P7-06` done |
-| Diagrams | [P7 Architecture Diagrams](../../deep-dives/end-to-end-regression.md#8-architecture-diagrams) |
+| Diagrams | [P7 Architecture Diagrams](../../deep-dives/p7-end-to-end-regression.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -16,11 +16,11 @@ Attach the three universal invariants to all six P7 scenarios and prove the P0-5
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/end-to-end-regression.md:58-70` — the three universal invariants and per-tick abort requirement.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:74-87` — P7 matrix axis and six-cell aggregate report.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:117-117` — P7-7 sub-phase row.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:210-240` — suite execution sequence diagram.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:293-296` — per-tick invariant hook via `Game.Updating`.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — the three universal invariants and per-tick abort requirement.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:74-87` — P7 matrix axis and six-cell aggregate report.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:117-117` — P7-7 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:210-240` — suite execution sequence diagram.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:293-296` — per-tick invariant hook via `Game.Updating`.
 - `docs/roadmap/implementation-checklist.md:348-360` — invariant and matrix ACs.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151` — matrix expansion and assertion-template materialization.
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — P0-5b runner over expanded cells.

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-04` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-2, see [deep dive §4](../../deep-dives/skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-2, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | P1 and P4 complete |
-| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
+| Diagrams | [P5 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -17,8 +17,8 @@ Locate and verify the Generals control-bar consumer for buildability state so co
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation-checklist.md:267-270` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/skirmish-ai.md:68-69` — audit gap for UI buildability binding.
-- `docs/roadmap/deep-dives/skirmish-ai.md:268-271` — buildability methods to verify.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:68-69` — audit gap for UI buildability binding.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271` — buildability methods to verify.
 - `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1222` — `CanPurchase`, `CanConstructUnit`, and `CanEnqueueUpgrade`.
 - `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:407-505` — current Generals command-button enablement candidate.
 - `src/OpenSage.Mods.Generals/Gui/CommandButtonUtils.cs:15-70` — button wiring and callbacks.

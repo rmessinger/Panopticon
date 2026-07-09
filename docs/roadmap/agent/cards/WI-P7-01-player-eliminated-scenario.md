@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-01` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-1 PlayerEliminated, see [deep dive §6](../../deep-dives/end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-1 PlayerEliminated, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | Track P phases `P0`, `P2`, `P3`, `P4`, `P5`, `P6`, `P6b` complete; `WI-P3-02` and `WI-P3-03` done for elimination-to-outcome behavior |
-| Diagrams | [P7 Architecture Diagrams](../../deep-dives/end-to-end-regression.md#8-architecture-diagrams) |
+| Diagrams | [P7 Architecture Diagrams](../../deep-dives/p7-end-to-end-regression.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -16,11 +16,11 @@ Create the checked-in P7 PlayerEliminated scenario that drives a human player's 
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/end-to-end-regression.md:38-45` — expected P7 end-state outcomes.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:47-54` — deterministic scenario storage and scripting approach.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:58-70` — universal invariant set and per-tick failure behavior.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:111-111` — P7-1 sub-phase row.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:279-291` — Regression directory, JSON format, and pending P3 `GameOutcome` query path.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — expected P7 end-state outcomes.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — deterministic scenario storage and scripting approach.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariant set and per-tick failure behavior.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:111-111` — P7-1 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:279-291` — Regression directory, JSON format, and pending P3 `GameOutcome` query path.
 - `docs/roadmap/implementation-checklist.md:337-344` — six scenario files and expected `GameOutcome` ACs.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22` — scenario JSON shape.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24` — player faction/team/action slots.

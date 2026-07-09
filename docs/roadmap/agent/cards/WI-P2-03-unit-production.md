@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-03` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-3, see [deep dive §4](../../deep-dives/skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-3, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-02`; P5 production/funding/prerequisite behavior available for `CreateUnit` |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,9 +16,9 @@ Add the minimum AI production planner: from existing production structures, queu
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/skirmish-ai.md:31-38` — production planner and budget/idempotence rules.
-- `docs/roadmap/deep-dives/skirmish-ai.md:252-263` — `OrderProcessor` and `ProductionUpdate` production path.
-- `docs/roadmap/deep-dives/skirmish-ai.md:268-271` — prerequisite and tech gating.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:31-38` — production planner and budget/idempotence rules.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-263` — `OrderProcessor` and `ProductionUpdate` production path.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271` — prerequisite and tech gating.
 - `src/OpenSage.Game/Logic/Player.cs:363-427` — `Player.CanProduceObject(...)` prerequisite/science checks.
 - `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192` — purchase and unit-construction gating.
 - `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291` — producer-local production gating.

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-A4-03` |
-| Roadmap phase | [Track A · A4](../../track-a-foundations.md) — AI decision policy seam, §3/§4 of [pluggable-ai.md](../../deep-dives/pluggable-ai.md) |
+| Roadmap phase | [Track A · A4](../../track-a-foundations.md) — AI decision policy seam, §3/§4 of [pluggable-ai.md](../../deep-dives/a4-pluggable-ai.md) |
 | Status | `Blocked` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-02` (Done) — the seam and factory must exist so the design has a concrete interface/context to encode against |
-| Diagrams | [Pluggable AI §8](../../deep-dives/pluggable-ai.md#8-architecture-diagrams) |
+| Diagrams | [Pluggable AI §8](../../deep-dives/a4-pluggable-ai.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -21,7 +21,7 @@ inline in a code card.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/pluggable-ai.md` §3 (what this unblocks: NN policy) and §4
+- `docs/roadmap/deep-dives/a4-pluggable-ai.md` §3 (what this unblocks: NN policy) and §4
   (evolutionary training) — the shape and constraints this design must satisfy.
 - `src/OpenSage.Game/Logic/AI/AIDecisionContext.cs` (added by `WI-A4-01`) — the actual read
   surface a state encoding has to work from.
@@ -55,14 +55,14 @@ inline in a code card.
 2. Add a short "Open questions" section for anything genuinely undecided (e.g. whether to expose
    a fixed action catalog vs. continuous outputs) and route those to
    [open-questions.md](../../open-questions.md) rather than deciding them unilaterally in this card.
-3. Update `docs/roadmap/deep-dives/pluggable-ai.md` §3 to link the new design doc instead of
+3. Update `docs/roadmap/deep-dives/a4-pluggable-ai.md` §3 to link the new design doc instead of
    describing the encoding inline, and add the design doc to `track-a-foundations.md`'s A4
    phase-resources table.
 
 ## Files likely to change
 
 - `docs/roadmap/deep-dives/neural-network-ai-policy.md` (new)
-- `docs/roadmap/deep-dives/pluggable-ai.md` (link update in §3)
+- `docs/roadmap/deep-dives/a4-pluggable-ai.md` (link update in §3)
 - `docs/roadmap/track-a-foundations.md` (phase-resources table row)
 - `docs/roadmap/open-questions.md` (if open questions are surfaced)
 
@@ -88,7 +88,7 @@ renders correctly (valid Markdown/Mermaid) and that all internal links resolve.
 - Do not implement `NeuralNetworkAIDecisionPolicy` in code here — that is `WI-A4-04`.
 - Do not design the evolutionary training harness in detail here — that is a separate,
   later-unblocked card (depends on the A1 headless host and P3 `GameOutcome`, neither of which
-  exist yet at time of writing; see `docs/roadmap/deep-dives/pluggable-ai.md` §4/§6).
+  exist yet at time of writing; see `docs/roadmap/deep-dives/a4-pluggable-ai.md` §4/§6).
 - If the feature/action space design turns out to require engine changes beyond
   `AIDecisionContext` as `WI-A4-01` shaped it, stop and mark `Blocked` — flag the needed context
   extension as a prerequisite rather than redesigning the seam inline.

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-11` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/p0-playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -28,7 +28,7 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
   `ObjectIdCommandArgument` (line ~52) is the type the resolver will return.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:26-38` — `ToOrder(...)`:
   iterates `Arguments` calling `arg.AppendTo(...)`.
-- `docs/roadmap/deep-dives/playable-baseline-harness.md §3.2` — the handle/selector design
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.2` — the handle/selector design
   decision (implicit auto-handles keyed to the producing command; query selectors for
   world/enemy objects).
 - `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs` — test style reference.

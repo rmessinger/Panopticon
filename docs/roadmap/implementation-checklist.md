@@ -15,7 +15,7 @@
 - Keep order intact. Track P gates Tracks A/B/C, so P items come first. Within a track, items are
   roughly top-down by dependency.
 - Keep rationale in the linked docs instead of repeating it here. Each item carries an `AC:`
-  sub-bullet with a verifiable completion check, ideally a [P0 harness](deep-dives/playable-baseline-harness.md)
+  sub-bullet with a verifiable completion check, ideally a [P0 harness](deep-dives/p0-playable-baseline-harness.md)
   assertion or an automated test (`dotnet test src --filter Category!=Interactive`). If a phase is
   still too undefined, mark the AC as `TBD` and tighten it once the deep dive lands.
 
@@ -29,7 +29,7 @@ model before it can be done · `AC:` acceptance criteria · `TBD` AC not yet def
 See [`track-p-playable-baseline.md`](track-p-playable-baseline.md). Success bar: a full
 Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 
-### P0: ReplaySketch arbitrary-command harness ([deep dive](deep-dives/playable-baseline-harness.md))
+### P0: ReplaySketch arbitrary-command harness ([deep dive](deep-dives/p0-playable-baseline-harness.md))
 - [x] Replace the closed `ActionType` enum with an open command model that can express any engine
       `OrderType` (`OpenSage.Tools.ReplaySketch.Core/Model`).
   - AC: a scenario can specify a command as `OrderType` + typed args and it exports to the matching
@@ -123,7 +123,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - Completion: `AGENTS.md` created with all sections; screenshot mode (P0-1a) is the sole visual
     verification method; golden-image framework removed.
 
-### P1: Skirmish setup & player relationships ([deep dive](deep-dives/skirmish-setup.md))
+### P1: Skirmish setup & player relationships ([deep dive](deep-dives/p1-skirmish-setup.md))
 - [x] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
       neutrals): `src/OpenSage.Game/Logic/PlayerManager.cs:45`.
   - AC: after `OnNewGame`, every player pair has a defined `RelationshipType` (no TODO/defaults left);
@@ -173,7 +173,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     one boot-and-assert run per cell; every cell asserts correct ally/enemy relationships and faction
     assignments; see the deep dive matrix section.
 
-### P2: Skirmish AI opponent ([deep dive](deep-dives/skirmish-ai.md))
+### P2: Skirmish AI opponent ([deep dive](deep-dives/p2-p5-skirmish-ai.md))
 - [x] Add a coarse-cadence `Update(...)` decision loop to `SkirmishAIPlayer`/`AIPlayer` (currently
       persistence-only, `Logic/AI/AIPlayer.cs:8-154`, `SkirmishAIPlayer.cs:3-31`).
   - AC: `SkirmishAIPlayer.Update(...)` is invoked from the player tick at the intended cadence (test
@@ -205,7 +205,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     {small, medium}) runs each of the 18 cells; each asserts AI built ≥1 structure, produced ≥1
     unit, issued ≥1 attack order, and kept `BankAccount >= 0`; see the deep dive matrix section.
 
-### P3: Victory & defeat conditions ([deep dive](deep-dives/victory-defeat.md))
+### P3: Victory & defeat conditions ([deep dive](deep-dives/p3-victory-defeat.md))
 - [ ] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
   - AC: `GameOutcome` is queryable off `GameLogic`/`IGame` and reads `InProgress` during play;
     `VictorySystem` ticks from the logic loop (test asserts it runs).
@@ -240,7 +240,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     pruned) runs one scripted scenario per cell; each asserts `GameOutcome.Status`,
     `GameOutcome.Reason`, and winning/losing sides; see the deep dive matrix section.
 
-### P4: Economy loop end-to-end ([deep dive](deep-dives/economy-production-combat.md))
+### P4: Economy loop end-to-end ([deep dive](deep-dives/p4-p6-economy-production-combat.md))
 - [ ] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
   - AC: a harness scenario with a harvester shows `BankAccount` balance increasing after a supply
     dump (assert positive delta).
@@ -261,7 +261,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     rich}, `startingMoney` ∈ {low, normal}) runs 18 cells; each asserts `BankAccount >= 0` at all
     ticks, income increased at least once, and ≥1 unit was produced; see the deep dive matrix section.
 
-### P5: Construction & production completeness ([deep dive](deep-dives/skirmish-ai.md) §1.4/§2.4)
+### P5: Construction & production completeness ([deep dive](deep-dives/p2-p5-skirmish-ai.md) §1.4/§2.4)
 - [ ] Player and AI building placement (`OrderProcessor.BuildObject` + `IBuilderAIUpdate`).
   - AC: both a player order and an AI request place and construct a structure to completion at a valid
     location; harness asserts a finished building for each.
@@ -282,7 +282,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     unavailable before prereqs and available after; tier3 cells issue the full prerequisite chain;
     see the deep dive matrix section.
 
-### P6: Combat & command verification ([deep dive](deep-dives/economy-production-combat.md) P6)
+### P6: Combat & command verification ([deep dive](deep-dives/p4-p6-economy-production-combat.md) P6)
 - [ ] Command coverage matrix: every baseline control-bar action → `OrderType` → real
       `OrderProcessor` handler; assert each via the harness.
   - AC: each baseline control-bar action maps to a handled `OrderType`; a harness command per action
@@ -303,7 +303,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     SpecialPower}, `faction` ∈ {USA, GLA, China}) runs 15 cells; each asserts the observable effect
     for that faction's reference unit; see the deep dive matrix section.
 
-### P6b: Unit-contract validation ([deep dive](deep-dives/unit-contract-validation.md))
+### P6b: Unit-contract validation ([deep dive](deep-dives/p6b-unit-contract-validation.md))
 - [ ] Infantry archetype contract (P6b-1).
   - AC: a P0 harness scenario for the reference infantry unit (e.g. USA Ranger) asserts all six
     contract points: produced, moves, garrison via `Enter`, basic attack reduces target health,
@@ -373,7 +373,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 
 See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 
-### A1: Headless simulation host ([deep dive](deep-dives/headless-host.md))
+### A1: Headless simulation host ([deep dive](deep-dives/a1-headless-host.md))
 - [ ] A1-1 Headless seam audit & approach.
   - AC: TBD, a written audit (in the headless-host deep dive) lists renderer/audio/window couplings
     in the logic tick with a removal approach per coupling.
@@ -419,7 +419,7 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
   - AC: TBD, the harness selects/configures an impl, runs it against B1 benchmarks, and reports to
     A5; demonstrated by swapping one seam impl and comparing results.
 
-### A5: Scenario authoring & visualization ([deep dive](deep-dives/visualization.md))
+### A5: Scenario authoring & visualization ([deep dive](deep-dives/a5-visualization.md))
 - [ ] A5-1 Scenario authoring & setup (declarative + capture-from-run; built on the P0 harness).
   - AC: a declarative scenario (on P0) is authored and captured-from-run, then replayed; it round-trips.
 - [ ] A5-2 Experiment matrix / parameter sweeps (tooling/visualizer layer).
@@ -478,7 +478,7 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B4 Spatial & pathfinding scaling (hierarchical/flow-field, group movement, async path requests).
   - AC: TBD, hierarchical/flow-field pathing + group movement + async requests scale to a target
     unit count within a path-latency budget in B1; no pathing regressions on baseline maps.
-- [ ] B4a Larger maps via WorldBuilder ([deep dive](deep-dives/larger-maps.md)): region editing,
+- [ ] B4a Larger maps via WorldBuilder ([deep dive](deep-dives/b4a-larger-maps.md)): region editing,
       large-map wizard, terrain streaming/LOD, chunked storage, round-trip at scale,
       large-population scenario authoring (B4a-7: bulk/procedural object placement, region-based
       multi-object edit/undo, instanced editor rendering, pairs with A5-5). Depends on A5-6.
@@ -488,7 +488,7 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
   - AC: TBD, instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
     the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.
-- [ ] B6 Distributed simulation via spatial sharding ([deep dive](deep-dives/distributed-simulation.md)).
+- [ ] B6 Distributed simulation via spatial sharding ([deep dive](deep-dives/b6-distributed-simulation.md)).
   - AC: TBD (see the deep dive). Rough template: a sim runs sharded across ≥2 processes with
     cross-shard consistency within tolerance.
 - [ ] B6 scenario matrix: sweep shardCount × scenario × partitionStrategy; assert cross-shard
@@ -497,7 +497,7 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     multiRegion}, `partitionStrategy` ∈ {spatial-grid, spatial-graph-cut}; invalid combos pruned)
     runs each cell; each asserts unit count matches the single-shard reference and aggregate metrics
     are within tolerance; see the deep dive matrix section.
-- [ ] B7 Variable simulation fidelity ([deep dive](deep-dives/variable-fidelity.md)): replicated-state
+- [ ] B7 Variable simulation fidelity ([deep dive](deep-dives/b7-variable-fidelity.md)): replicated-state
       fidelity for shared/distributed, view-driven single-node only.
   - AC: TBD (see the deep dive). Rough template: fidelity reduction scales unit count with bounded
     statistical error vs. a full-fidelity baseline.
@@ -534,7 +534,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
 ## Track D: Gameplay Content Expansion
 
 See [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) and the
-[deep dive](deep-dives/tech-tree-era-progression.md). Gated on Track P (P7); D3/D4 also gated on
+[deep dive](deep-dives/d1-d2-tech-tree-era-progression.md). Gated on Track P (P7); D3/D4 also gated on
 Track C (C1) and the standalone [ModCollector tool](plans/mod-collector.md).
 
 - [ ] D1 Tech tree / prerequisite graph generalization (`TechNode`/`TechTreeState`, adapter over
@@ -555,7 +555,7 @@ Track C (C1) and the standalone [ModCollector tool](plans/mod-collector.md).
 ## Track E: Naval Warfare
 
 See [`track-e-naval-warfare.md`](track-e-naval-warfare.md) and the
-[deep dive](deep-dives/naval-warfare.md). Gated on Track P (P7) only.
+[deep dive](deep-dives/e1-e2-naval-warfare.md). Gated on Track P (P7) only.
 
 - [ ] E1 Water/ground terrain passability (`TerrainLogic`/`Pathfinder` stub replacement, wiring
   `Locomotor.Surfaces` and `AIData.WadeWaterDepth`/`DeepWaterDepth`).

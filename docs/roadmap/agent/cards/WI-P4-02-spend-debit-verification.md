@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-02` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-2, see [P4 deep dive](../../deep-dives/economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/economy-production-combat.md#p4-sub-phases) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-2, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | P1 complete enough that player ownership, construction ownership, and headless harness assertions are reliable |
-| Diagrams | [P4 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P4 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Verify that construction, unit production, and upgrades debit `BankAccount` corr
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/economy-production-combat.md:16-55` — P4 design says debit/refund wiring was not confirmed and must be verified or closed.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55` — P4 design says debit/refund wiring was not confirmed and must be verified or closed.
 - `docs/roadmap/implementation-checklist.md:240-243` — checklist AC for debit, cancel refunds, insufficient-funds blocking, and never-negative balance.
 - `src/OpenSage.Game/Logic/BankAccount.cs:22-60` — `Withdraw` currently clamps to available money; do not rely on partial withdraw as purchase approval.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-130` — `BuildObject` withdraws and `CancelBuild` deposits.

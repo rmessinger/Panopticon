@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-01` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-1, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-1, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | P1 spawned/related players and owner tracking; P0 harness command/assertion path available |
-| Diagrams | [P6 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P6 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
 
 ## Goal
 
@@ -16,8 +16,8 @@ Create a CI-running command coverage matrix proving every baseline control-bar a
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/economy-production-combat.md:56-95` — P6 goal, design, and P6-1 sub-phase.
-- `docs/roadmap/deep-dives/economy-production-combat.md:132-144` — P6 order/faction matrix axes and expected observable effects.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:56-95` — P6 goal, design, and P6-1 sub-phase.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:132-144` — P6 order/faction matrix axes and expected observable effects.
 - `docs/roadmap/implementation-checklist.md:278-282` — checklist ACs for command coverage.
 - `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:359-531` — control-bar command-set and special-power button wiring.
 - `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:558-640` — selected-unit command and production-queue wiring.

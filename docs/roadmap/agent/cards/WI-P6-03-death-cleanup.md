@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-03` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-3, see [deep dive §P6](../../deep-dives/economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-3, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | P1 owner tracking; share/reuse P3-4's death event from [victory/defeat §1.3](../../deep-dives/victory-defeat.md#13-death--defeat-plumbing) |
-| Diagrams | [P6 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
+| Prerequisites | P1 owner tracking; share/reuse P3-4's death event from [victory/defeat §1.3](../../deep-dives/p3-victory-defeat.md#13-death--defeat-plumbing) |
+| Diagrams | [P6 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
 
 ## Goal
 
@@ -16,9 +16,9 @@ Ensure dying or destroyed objects leave no dangling references: remove them from
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/economy-production-combat.md:82-87` — death cleanup design and P3-4 sharing requirement.
-- `docs/roadmap/deep-dives/economy-production-combat.md:89-112` — P6-3 sub-phase and sequencing dependency.
-- `docs/roadmap/deep-dives/victory-defeat.md:74-80` — death→defeat event that P6-3 must share.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:82-87` — death cleanup design and P3-4 sharing requirement.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:89-112` — P6-3 sub-phase and sequencing dependency.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80` — death→defeat event that P6-3 must share.
 - `docs/roadmap/implementation-checklist.md:287-289` — checklist ACs for death cleanup.
 - `src/OpenSage.Game/Logic/SelectionSystem.cs:113-165` — selection mutation APIs.
 - `src/OpenSage.Game/Logic/Object/GameObject.cs:291` — current `Owner` property shape.

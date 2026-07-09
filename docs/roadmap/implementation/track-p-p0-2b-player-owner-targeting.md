@@ -1,7 +1,7 @@
 # Implementation Plan: Track P · P0-2 (cont.): Player/Owner and Definition Targeting
 
 > Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-2: Generic definition/player resolution (player half)
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-2: Generic definition/player resolution (player half)
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Let `ActionEntry`/scenario target any player/owner and any object definition"
 > Companion plan: [track-p-p0-2-generic-definition-resolution.md](track-p-p0-2-generic-definition-resolution.md) covers the definition half, removing `KnownDefinitions`; this plan covers the player/owner half.
 >
@@ -62,7 +62,7 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
 - Replace `enemyIdx = ownerIdx == 0 ? 1 : 0` (`:58`) with a lookup that picks the enemy used for
   `TerrainValidator.BuildContextPublic(...)` from the scenario's relationships: the first other
   player marked hostile to the owner (using `PlayerSlotConfig.Team` and/or an explicit relationship
-  field : see the P1 relationship model in [skirmish-setup.md](../deep-dives/skirmish-setup.md)),
+  field : see the P1 relationship model in [skirmish-setup.md](../deep-dives/p1-skirmish-setup.md)),
   falling back to "the other player" only when no relationship data exists (preserving today's
   two-player behavior).
 - Keep this scoped to choosing the position-context enemy for landmark-relative authoring; full
@@ -104,5 +104,5 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
   [track-p-p0-2-generic-definition-resolution.md](track-p-p0-2-generic-definition-resolution.md).
 - Runtime object references (auto-handles / selectors) → [track-p-p0-3-runtime-object-references.md](track-p-p0-3-runtime-object-references.md).
 - In-engine player relationship wiring (the `OnNewGame` TODO) → P1
-  ([skirmish-setup.md](../deep-dives/skirmish-setup.md)); this plan only consumes relationship data
+  ([skirmish-setup.md](../deep-dives/p1-skirmish-setup.md)); this plan only consumes relationship data
   for authoring-time enemy selection.

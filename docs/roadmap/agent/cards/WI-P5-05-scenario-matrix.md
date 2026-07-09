@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-05` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — scenario matrix for P5-1/P5-2, see [deep dive §6](../../deep-dives/skirmish-ai.md#6-scenario-matrix), [§4](../../deep-dives/skirmish-ai.md#3-sub-phases), and [Appendix](../../deep-dives/skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — scenario matrix for P5-1/P5-2, see [deep dive §6](../../deep-dives/p2-p5-skirmish-ai.md#6-scenario-matrix), [§4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P5-01`, `WI-P5-02`, `WI-P5-03`, `WI-P5-04` |
-| Diagrams | [P5 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
+| Diagrams | [P5 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -17,8 +17,8 @@ Replace the P5 scenario-matrix stub with an executable 18-cell matrix covering f
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation-checklist.md:271-276` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/skirmish-ai.md:120-156` — P2/P5 matrix model and P5 axes/assertions.
-- `docs/roadmap/deep-dives/skirmish-ai.md:252-277` — P5 order, construction, production, gating, and upgrade mechanisms.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:120-156` — P2/P5 matrix model and P5 axes/assertions.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-277` — P5 order, construction, production, gating, and upgrade mechanisms.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-152` — matrix expansion and assertion templates.
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — matrix runner.
 - `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:374-448` — existing matrix test style.

@@ -8,10 +8,10 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/p0-playable-baseline-harness.md#8-architecture-diagrams) |
 
 > Superseded. The engine `OrderType`/argument inventory this card requested is captured in the
-> [P0 deep dive](../../deep-dives/playable-baseline-harness.md) §2.3 (the `Order`/`OrderArgument*`
+> [P0 deep dive](../../deep-dives/p0-playable-baseline-harness.md) §2.3 (the `Order`/`OrderArgument*`
 > model, the ~110-value enum, and the `OrderProcessor.Process` handled subset — the authoritative
 > list of what a command can actually do). Do not redo this survey.
 

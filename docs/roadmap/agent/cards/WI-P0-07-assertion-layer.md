@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-07` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none (evaluates against `Game` state accessible independently of other P0 cards) |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/p0-playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -19,7 +19,7 @@ This is the data model and evaluation logic only — the CLI entry point is WI-P
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/playable-baseline-harness.md §3.4` — the three assertion kinds
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4` — the three assertion kinds
   (outcome, state, invariant) and the JSON predicate vocabulary.
 - `src/OpenSage.Game/Game.cs:876-959` — `Game.Updating` event (per-tick hook for invariant assertions).
 - `src/OpenSage.Game/Logic/Player.cs` and `src/OpenSage.Game/Logic/BankAccount.cs` — state readable

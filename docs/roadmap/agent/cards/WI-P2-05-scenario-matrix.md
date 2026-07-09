@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-05` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — P2 scenario matrix, see [deep dive §6](../../deep-dives/skirmish-ai.md#6-scenario-matrix) and [§4](../../deep-dives/skirmish-ai.md#3-sub-phases) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — P2 scenario matrix, see [deep dive §6](../../deep-dives/p2-p5-skirmish-ai.md#6-scenario-matrix) and [§4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P2-01`, `WI-P2-02`, `WI-P2-03`, `WI-P2-04`; P0 ScenarioMatrix runner and assertion paths available |
-| Diagrams | [P2 Architecture Diagrams](../../deep-dives/skirmish-ai.md#7-architecture-diagrams) |
+| Diagrams | [P2 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Create the P2 `ScenarioMatrix` test that sweeps `humanFaction × aiFaction × ma
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/skirmish-ai.md:120-140` — P2 matrix axes, 18 valid cells, and per-cell assertions.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:120-140` — P2 matrix axes, 18 valid cells, and per-cell assertions.
 - `docs/roadmap/implementation-checklist.md:195-199` — checklist acceptance criteria for the P2 matrix.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152` — axes, filters, assertion templates, and expansion.
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — matrix execution via `HarnessRunner`.

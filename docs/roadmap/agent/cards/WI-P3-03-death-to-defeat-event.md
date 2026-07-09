@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-03` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-3, see [deep dive §1.3](../../deep-dives/victory-defeat.md#13-death--defeat-plumbing) and [§4](../../deep-dives/victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-3, see [deep dive §1.3](../../deep-dives/p3-victory-defeat.md#13-death--defeat-plumbing) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01` and `WI-P1-07`; this card feeds `WI-P3-02` incremental defeat checks |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#7-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Add a death/destroy/ownership-change notification that lets `VictorySystem` reac
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/victory-defeat.md:74-80` — required event sources and incremental reaction.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80` — required event sources and incremental reaction.
 - `docs/roadmap/implementation-checklist.md:209-211` — lifecycle-event AC.
 - `src/OpenSage.Game/Logic/GameLogic.cs:71-128` — object creation and owned-object add hook.
 - `src/OpenSage.Game/Logic/GameLogic.cs:178-199` — destroy path, owned-object removal, and existing destroyed event.

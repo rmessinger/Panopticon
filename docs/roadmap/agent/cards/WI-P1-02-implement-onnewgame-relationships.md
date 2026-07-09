@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-02` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/skirmish-setup.md)) |
+| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/p1-skirmish-setup.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [P1 Architecture Diagrams](../../deep-dives/skirmish-setup.md#8-architecture-diagrams) |
+| Diagrams | [P1 Architecture Diagrams](../../deep-dives/p1-skirmish-setup.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -73,7 +73,7 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do NOT change `LocalPlayer` selection or unify the SP/MP spawn path — those are open design
-  questions (↗) in the [deep dive §5](../../deep-dives/skirmish-setup.md). If your change starts
+  questions (↗) in the [deep dive §5](../../deep-dives/p1-skirmish-setup.md). If your change starts
   needing them, mark `Blocked` and report.
 - Do not redesign the relationship API or the `Team` model — only wire what exists.
 - Keep the diff to the two files above.
@@ -89,7 +89,7 @@ dotnet format src --verify-no-changes
   - [`WI-P1-03`](WI-P1-03-test-reciprocal-relationships.md) — unit test for the reciprocal wiring (if not
     already present).
   - A card (may need a stronger model) for P1-2 unified SP/MP spawn + `LocalPlayer` selection,
-    once the ↗ decisions in [deep dive §5](../../deep-dives/skirmish-setup.md) are made.
+    once the ↗ decisions in [deep dive §5](../../deep-dives/p1-skirmish-setup.md) are made.
 
 
 ## Result
