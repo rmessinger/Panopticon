@@ -58,6 +58,11 @@ public class Scene25D(IScene3D scene3D, AssetStore assetStore)
                     DrawHealthBox(drawingContext, obj);
                 }
 
+                if (LocalPlayer.HoveredUnit == obj && obj.IsSelectable)
+                {
+                    DrawHoverOutline(drawingContext, obj);
+                }
+
                 if (obj.IsBeingConstructed())
                 {
                     DrawBuildProgress(drawingContext, obj);
@@ -131,6 +136,29 @@ public class Scene25D(IScene3D scene3D, AssetStore assetStore)
         }
 
         return new BoundingSphere(gameObject.Translation, geometrySize);
+    }
+
+    /// <summary>
+    /// Draws a lightweight screen-space outline around a hovered, selectable object as a
+    /// substitute for changing the mouse cursor shape. Reuses the same projected bounding
+    /// sphere already computed for health boxes, so this is just one extra 2D rectangle
+    /// draw per hovered object.
+    /// </summary>
+    private void DrawHoverOutline(DrawingContext2D drawingContext, GameObject gameObject)
+    {
+        var boundingSphere = GetBoundingSphere(gameObject);
+        var outlineSize = Camera.GetScreenSize(boundingSphere);
+
+        var outlineRect = Camera.WorldToScreenRectangle(
+            gameObject.Translation,
+            new SizeF(outlineSize, outlineSize));
+
+        if (outlineRect == null)
+        {
+            return;
+        }
+
+        drawingContext.DrawRectangle(outlineRect.Value, new ColorRgbaF(1, 1, 1, 0.8f), 2);
     }
 
     private void DrawHealthBox(DrawingContext2D drawingContext, GameObject gameObject)
