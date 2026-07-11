@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P3-02` |
 | Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-2, see [deep dive §1.2](../../deep-dives/p3-victory-defeat.md#12-defeat-detection) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-03`, and `WI-P1-07` ownership tracking (`Player.OwnedObjects`, `BuildingCount`, `UnitCount`) |
@@ -83,4 +83,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Added a configurable `VictoryConditionRule` seam with `DefaultVictoryConditionRule`, implemented queued defeat evaluation from maintained owned-object state plus cached rebuild costs, and resolved wins when every non-allied player on the opposing side is defeated.
+- Added `VictoryRuleTests` covering defeat within cadence, preserved rebuild ability with a surviving builder plus cash, allied-side win resolution, and rule-seam substitution; full non-interactive validation passed.

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P3-01` |
 | Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-1, see [deep dive §1.1](../../deep-dives/p3-victory-defeat.md#11-a-gameoutcome-value-the-queryable-result) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | P1 player creation/relationships should remain intact; no P3 card dependency |
@@ -83,4 +83,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Added `GameOutcome`, `OutcomeStatus`, and `OutcomeReason` in `OpenSage.Logic`, exposed the live outcome via `IGame`/`GameLogic`, and wired a scaffold `VictorySystem : GameSystem` into the logic loop with a named cadence and no decision logic.
+- Added headless coverage in `src/OpenSage.Game.Tests/Logic/Victory/GameOutcomeTests.cs` for default in-progress outcome semantics and cadence ticks; validation passed with the repo-local `.dotnet` SDK.

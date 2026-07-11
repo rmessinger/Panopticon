@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using OpenSage.Content;
+using OpenSage.Logic;
 using OpenSage.Logic.Orders;
+using OpenSage.Mathematics;
 using OpenSage.Tools.ReplaySketch.Assertions;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
@@ -180,7 +182,7 @@ public class P0_3_OrderTypeMappingTests
 
 // ── P0-4: Assertion layer ─────────────────────────────────────────────────────
 
-public class P0_4_AssertionLayerTests
+public class P0_4_AssertionLayerTests : MockedGameTest
 {
     [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
     public void PassingStatePredicate_HeadlessRun_ReportsPass()
@@ -225,10 +227,26 @@ public class P0_4_AssertionLayerTests
         Assert.NotNull(failing.ActualValue);
     }
 
-    [Fact(Skip = "Blocked on P3 — GameOutcome not yet implemented"), Trait("Category", "Roadmap"), Trait("Category", "BlockedOnP3")]
+    [Fact, Trait("Category", "Roadmap")]
     public void OutcomeAssertion_MatchDecided_ReportsPass()
     {
-        // Depends on P3 GameOutcome implementation.
+        ConfigureTwoPlayerSkirmish();
+
+        var losingPlayer = Generals.PlayerManager.Players[3];
+        Assert.True(Generals.VictorySystem.Surrender(losingPlayer));
+
+        var assertion = new OutcomeAssertion
+        {
+            Id = "match-decided",
+            ExpectedStatus = "Decided",
+            ExpectedReason = "Surrendered",
+            ExpectedWinningPlayerIndex = 2,
+            ExpectedLosingPlayerIndex = 3,
+            ExpectedDecidedFrame = 0,
+        };
+
+        var result = assertion.Evaluate(Generals, 0);
+        Assert.True(result.Passed, result.Message);
     }
 
     [Fact, Trait("Category", "Roadmap"), Trait("Category", "Interactive")]
@@ -290,6 +308,34 @@ public class P0_4_AssertionLayerTests
 
         var report = P0HarnessTestHelpers.RunInteractiveScenario(scenario);
         Assert.True(report.AllPassed, report.ToJson());
+    }
+
+    private void ConfigureTwoPlayerSkirmish()
+    {
+        Generals.PlayerManager.OnNewGame(
+            [
+                OpenSage.Data.Map.Player.CreateNeutralPlayer(),
+                OpenSage.Data.Map.Player.CreateCivilianPlayer(),
+                new OpenSage.Data.Map.Player
+                {
+                    Name = "player1",
+                    Faction = "FactionAmerica",
+                    DisplayName = "Player 1",
+                    IsHuman = true,
+                },
+                new OpenSage.Data.Map.Player
+                {
+                    Name = "player2",
+                    Faction = "FactionGLA",
+                    DisplayName = "Player 2",
+                    IsHuman = false,
+                },
+            ],
+            GameType.Skirmish,
+            [
+                new PlayerSetting(1, "FactionAmerica", new ColorRgb(255, 255, 255), -1, PlayerOwner.Player, "player1", true),
+                new PlayerSetting(2, "FactionGLA", new ColorRgb(255, 128, 64), -1, PlayerOwner.EasyAi, "player2"),
+            ]);
     }
 }
 

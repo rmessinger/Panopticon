@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P3-05` |
 | Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-5, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-02`, `WI-P3-03`, and `WI-P3-04` |
@@ -77,4 +77,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Updated `VictorySystem` to batch defeat checks per cadence window, enter `OutcomeStatus.SuddenDeath` when every remaining active player would be eliminated together, and delay final defeat commitment until a later elimination resolves the match.
+- Added `SuddenDeathOutcomeTests` covering the transitional sudden-death state, continued logic ticking, and later eliminated resolution; full non-interactive validation passed.

@@ -92,6 +92,8 @@ public sealed class Game : DisposableBase, IGame
     /// </summary>
     public OrderGeneratorSystem OrderGenerator { get; }
 
+    public VictorySystem VictorySystem { get; }
+
     /// <summary>
     /// Gets the audio system
     /// </summary>
@@ -457,11 +459,15 @@ public sealed class Game : DisposableBase, IGame
 
     public Texture LauncherImage { get; }
 
+    public GameOutcome CurrentOutcome => VictorySystem.CurrentOutcome;
+
     GameLogic IGame.GameLogic => GameLogic;
     internal GameLogic GameLogic { get; }
 
     GameClient IGame.GameClient => GameClient;
     internal GameClient GameClient { get; }
+
+    VictorySystem IGame.VictorySystem => VictorySystem;
 
     public PlayerManager PlayerManager { get; }
 
@@ -612,6 +618,8 @@ public sealed class Game : DisposableBase, IGame
             Selection = AddDisposable(new SelectionSystem(this));
 
             OrderGenerator = AddDisposable(new OrderGeneratorSystem(this));
+
+            VictorySystem = AddDisposable(new VictorySystem(this));
 
             Panel.ClientSizeChanged += OnPanelSizeChanged;
             Panel.EnsureFrame(window?.ClientBounds ?? new Mathematics.Rectangle(0, 0, 1, 1)); // fallback set for sav2json tool

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P3-06` |
 | Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-6, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-02`, and `WI-P3-04` |
@@ -81,3 +81,4 @@ dotnet format src --verify-no-changes
 ## Result
 
 <!-- append after completing -->
+Implemented optional `VictorySystem.FrameLimit` (`NoFrameLimit = -1`) plus configurable `ScoreMetric`, deciding on cadence by `Player.BuildingCount`. Added headless `TimeLimitScoreDecisionTests` for disabled-by-default, clear-winner, and shared-victory tie outcomes.

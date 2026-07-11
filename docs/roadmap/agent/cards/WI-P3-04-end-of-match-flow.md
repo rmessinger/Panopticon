@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P3-04` |
 | Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-4, see [deep dive §1.4](../../deep-dives/p3-victory-defeat.md#14-end-of-match-flow) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`; `WI-P3-02` for eliminated outcomes; P1 relationships must remain available |
@@ -85,4 +85,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Centralized decided-outcome transitions in `VictorySystem`, now recording winner/loser/reason/frame exactly once and stopping logic updates for headless runs when a match is decided.
+- Routed `OrderType.EndGame` through `VictorySystem.Surrender`, extended `OutcomeAssertion`/path resolution to report winner/loser/team/frame data, unblocked `OutcomeAssertion_MatchDecided_ReportsPass`, and added `EndOfMatchFlowTests`; full non-interactive validation passed.

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P3-07` |
 | Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — P3 scenario matrix, see [deep dive §6](../../deep-dives/p3-victory-defeat.md#6-scenario-matrix) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-02`, `WI-P3-03`, `WI-P3-04`, `WI-P3-05`, and `WI-P3-06` |
@@ -81,3 +81,4 @@ dotnet format src --verify-no-changes
 ## Result
 
 <!-- append after completing -->
+Replaced the skipped P3 matrix stubs with headless `ScenarioMatrix`-driven tests over 17 valid cells, pruning the 2-player allied `TeamWin` shape. The matrix now asserts final outcome status/reason/winners/loser/frame per cell and separately verifies sudden-death transition + later resolution for all mutual-elimination cells.

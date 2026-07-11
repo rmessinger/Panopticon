@@ -37,6 +37,7 @@ public abstract class MockedGameTest : IDisposable
         public IGameDefinition Definition { get; }
         public SageGame SageGame { get; }
         public Configuration Configuration { get; }
+        public GameOutcome CurrentOutcome => VictorySystem.CurrentOutcome;
         public string UserDataLeafName { get; }
         public string UserDataFolder { get; }
         public string UserAppDataFolder { get; }
@@ -68,6 +69,7 @@ public abstract class MockedGameTest : IDisposable
         public Texture LauncherImage { get; }
         public GameLogic GameLogic { get; }
         public GameClient GameClient { get; }
+        public VictorySystem VictorySystem { get; }
         public PlayerManager PlayerManager { get; }
         public TeamFactory TeamFactory { get; }
         public PartitionCellManager PartitionCellManager { get; }
@@ -131,6 +133,8 @@ public abstract class MockedGameTest : IDisposable
             SageGame = game;
             AssetStore = new AssetStore(game, null, null, null, null, null, null, OnDemandAssetLoadStrategy.None);
             GameEngine = new GameEngine(AssetStore.LoadContext, null, null, null, null, null, null, null, Scene3D, this);
+            IsLogicRunning = true;
+            GameSystems = new List<GameSystem>();
 
             AssetStore.PushScope();
 
@@ -142,6 +146,8 @@ public abstract class MockedGameTest : IDisposable
             TerrainLogic = new TerrainLogic();
             TerrainLogic.SetHeightMapData(OpenSage.Data.Map.HeightMapData.Create(0, new ushort[2, 2] { { 0, 0 }, { 0, 0 } }));
 
+            VictorySystem = new VictorySystem(this);
+            GameSystems.ForEach(gs => gs.Initialize());
             GameLogic = new GameLogic(this);
         }
 #pragma warning restore CS8618

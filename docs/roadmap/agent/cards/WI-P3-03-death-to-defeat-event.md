@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P3-03` |
 | Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-3, see [deep dive §1.3](../../deep-dives/p3-victory-defeat.md#13-death--defeat-plumbing) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01` and `WI-P1-07`; this card feeds `WI-P3-02` incremental defeat checks |
@@ -85,4 +85,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+- Added `GameObjectLifecycleEventArgs`/`GameObjectLifecycleEventReason`, raised lifecycle notifications from `OnDie`, `DestroyObject`, and tracked owner transfers, and subscribed `VictorySystem` to queue only affected players for later checks.
+- Added `VictoryObjectLifecycleEventTests` covering one-shot die/destroy/owner-change notifications, ownership-count consistency, and incremental `VictorySystem` recheck queuing; full non-interactive validation passed.

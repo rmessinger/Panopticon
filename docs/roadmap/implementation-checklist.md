@@ -206,34 +206,34 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     unit, issued ≥1 attack order, and kept `BankAccount >= 0`; see the deep dive matrix section.
 
 ### P3: Victory & defeat conditions ([deep dive](deep-dives/p3-victory-defeat.md))
-- [ ] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
+- [x] Add a `GameOutcome` type + a `VictorySystem : GameSystem` ticked from the logic loop.
   - AC: `GameOutcome` is queryable off `GameLogic`/`IGame` and reads `InProgress` during play;
     `VictorySystem` ticks from the logic loop (test asserts it runs).
-- [ ] Player-defeat detection: real Generals rule (no command/production structures and no means to
+- [x] Player-defeat detection: real Generals rule (no command/production structures and no means to
       rebuild: no dozer/worker + insufficient resources) as the default, exposed as configurable.
   - AC: a harness scenario that eliminates a player's qualifying structures + rebuild means flags that
     player defeated within the check cadence; the rule is selectable via config.
-- [ ] Death→defeat event from `GameObject.OnDie/Destroy` (shared with P6-3 cleanup).
+- [x] Death→defeat event from `GameObject.OnDie/Destroy` (shared with P6-3 cleanup).
   - AC: a death/ownership-change notification fires from `OnDie`/`Destroy` and `VictorySystem` reacts
     without a full-object scan; test asserts the event fires once per death.
-- [ ] Win/lose determination + match-end flow (stop sim, surface result, allow exit).
+- [x] Win/lose determination + match-end flow (stop sim, surface result, allow exit).
   - AC: when all non-allies of player X are defeated, `GameOutcome.Status=Decided` with X as winner;
     the sim stops/relaxes and exit is possible; harness asserts the decided outcome.
-- [ ] Handle the `EndGame` order in `OrderProcessor` (currently unhandled).
+- [x] Handle the `EndGame` order in `OrderProcessor` (currently unhandled).
   - AC: an `EndGame` order produces a `Decided` `GameOutcome` (surrender/quit) instead of logging
     "unimplemented"; test issues `EndGame` and asserts the outcome.
-- [ ] Expose match outcome as a first-class queryable result (for headless assertion).
+- [x] Expose match outcome as a first-class queryable result (for headless assertion).
   - AC: the P0 harness can assert on `GameOutcome` (winner/loser/reason/frame); covered by a harness
     test.
-- [ ] Mutual elimination → sudden-death handling (P3-5).
+- [x] Mutual elimination → sudden-death handling (P3-5).
   - AC: a scenario where all remaining active players' last structures are destroyed in the same
     check window transitions `GameOutcome.Status` to `SuddenDeath` and does not terminate the match;
     play continues until the next elimination, which sets `Status=Decided` with `Reason=Eliminated`.
-- [ ] Time-limit → score decision (P3-6).
+- [x] Time-limit → score decision (P3-6).
   - AC: a scenario with a configured frame-count limit expires and sets `Status=Decided`,
     `Reason=ScoreDecision`, with `WinningPlayer`/`WinningTeam` set to the highest-score side per the
     configured metric; test covers both a clear winner and a tie (shared victory).
-- [ ] P3 scenario matrix: sweep endState × playerCount; assert the correct `GameOutcome` is
+- [x] P3 scenario matrix: sweep endState × playerCount; assert the correct `GameOutcome` is
       produced for every end-state and player-count combination.
   - AC: a `ScenarioMatrix` (axes: `endState` ∈ {PlayerEliminated, PlayerSurrenders, AISurrenders,
     TeamWin, MutualElimination, ScoreDecision}, `playerCount` ∈ {2, 3, 4}; invalid combinations
