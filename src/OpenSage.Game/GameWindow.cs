@@ -215,9 +215,12 @@ public sealed class GameWindow : DisposableBase
         var deltaSign = Math.Sign(delta);
 
         // Debounce rapid direction reversals caused by macOS trackpad inertia/bounce physics.
-        // When the scroll direction flips, discard the first reversal event and reset the
-        // accumulator so that oscillating +1/-1 events don't alternate the zoom level every frame.
-        if (_lastScrollDirection != 0 && deltaSign != _lastScrollDirection)
+        // A real mouse wheel fully consumes its accumulator every notch (delta is a whole
+        // number), so the accumulator is back to zero before the next event arrives. Trackpad
+        // inertia instead leaves a fractional remainder that then flips sign as it settles.
+        // Only discard the reversal when there's a pending fractional remainder, so a
+        // deliberate mouse-wheel direction change isn't dropped.
+        if (_lastScrollDirection != 0 && deltaSign != _lastScrollDirection && _scrollAccumulator != 0)
         {
             _scrollAccumulator = 0;
             _lastScrollDirection = 0;

@@ -865,8 +865,8 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     internal void OnCollide(GameObject other, in Vector3 location, in Vector3 normal)
     {
-        Logger.Info($"GameObject {Definition.Name} colliding with {other?.Definition.Name ?? "Ground"}");
-
+        // Disabling this for the time being
+        // Logger.Info($"GameObject {Definition.Name} colliding with {other?.Definition.Name ?? "Ground"}");
         foreach (var behavior in _behaviorModules)
         {
             if (behavior is ICollideModule collideModule)
