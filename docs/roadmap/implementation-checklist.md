@@ -122,6 +122,17 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     (marks the P0-4/P0-5 run-and-assert flow as forthcoming) and is referenced from the P0 deep dive.
   - Completion: `AGENTS.md` created with all sections; screenshot mode (P0-1a) is the sole visual
     verification method; golden-image framework removed.
+- [ ] Decouple replay-driven selection state from interactive UI selection state, so a human
+      observer in `OpenSage.Tools.TestHarness` (or a live spectator) can drag-select units without
+      the recorded replay's own `SetSelection`/`ClearSelection` orders overwriting their selection or
+      `OrderGenerator.ActiveGenerator`.
+  - AC: while replaying a `.rep` with `OpenSage.Tools.TestHarness`, a human click-and-drag over units
+    shows the selection rectangle and yields the dragged units as selected, even on frames where the
+    replay itself issues a `SetSelection`/`ClearSelection` order for the same player; a headless test
+    asserts the human's `SelectionSystem` state survives a replay-issued selection order on the same
+    frame.
+  - Note: follow-up to the "Allow box-selecting any object's stats while watching a replay" fix
+    (`SelectionSystem.MultiSelect`); see `WI-P0-18`.
 
 ### P1: Skirmish setup & player relationships ([deep dive](deep-dives/p1-skirmish-setup.md))
 - [x] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
