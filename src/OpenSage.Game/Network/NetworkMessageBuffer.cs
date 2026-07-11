@@ -22,6 +22,9 @@ public sealed class NetworkMessageBuffer : DisposableBase
     /// <summary>The last frame number processed by <see cref="Tick"/>.</summary>
     public uint CurrentFrame => _netFrameNumber;
 
+    /// <summary>Whether orders are being read back from a recorded replay rather than live players.</summary>
+    public bool IsReplay => _connection is ReplayConnection;
+
     public NetworkMessageBuffer(IGame game, IConnection connection)
     {
         FrameOrders = new Dictionary<uint, List<Order>>();

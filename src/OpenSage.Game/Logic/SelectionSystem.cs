@@ -226,8 +226,10 @@ public sealed class SelectionSystem : GameSystem
                 continue;
             }
 
-            //only allow own objects to be drag selected
-            if (gameObject.Owner != Game.Scene3D.LocalPlayer)
+            // Only allow own objects to be drag-selected during live play. When watching a
+            // replay there's no player to command, so let the viewer box-select any
+            // object (e.g. to inspect stats) regardless of owner.
+            if (gameObject.Owner != Game.Scene3D.LocalPlayer && Game.NetworkMessageBuffer?.IsReplay != true)
             {
                 continue;
             }
