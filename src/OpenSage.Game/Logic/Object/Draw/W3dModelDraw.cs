@@ -222,16 +222,25 @@ public class W3dModelDraw : DrawModule
 
         if (_activeModelDrawConditionState != null)
         {
-            foreach (var weaponMuzzleFlash in bestConditionState.WeaponMuzzleFlashes)
+            // Hide every muzzle flash bone known across all condition states first. Only
+            // updating bones listed under bestConditionState left a previously-revealed
+            // flash stuck visible whenever the newly active condition state (e.g. one with
+            // no WeaponMuzzleFlashes at all, such as interacting with a structure) didn't
+            // redeclare that bone.
+            HideMuzzleFlashBones(_activeModelDrawConditionState);
+
+            if (flags.Get(ModelConditionFlag.FiringA))
             {
-                var visible = flags.Get(ModelConditionFlag.FiringA);
-                for (var i = 0; i < _activeModelDrawConditionState.Model.ModelBoneInstances.Length; i++)
+                foreach (var weaponMuzzleFlash in bestConditionState.WeaponMuzzleFlashes)
                 {
-                    var bone = _activeModelDrawConditionState.Model.ModelBoneInstances[i];
-                    // StartsWith is a bit awkward here, but for instance AVCommance has WeaponMuzzleFlashes = { TurretFX }, and Bones = { TURRETFX01 }
-                    if (bone.Name.StartsWith(weaponMuzzleFlash.BoneName, StringComparison.OrdinalIgnoreCase))
+                    for (var i = 0; i < _activeModelDrawConditionState.Model.ModelBoneInstances.Length; i++)
                     {
-                        _activeModelDrawConditionState.Model.BoneVisibilities[i] = visible;
+                        var bone = _activeModelDrawConditionState.Model.ModelBoneInstances[i];
+                        // StartsWith is a bit awkward here, but for instance AVCommance has WeaponMuzzleFlashes = { TurretFX }, and Bones = { TURRETFX01 }
+                        if (bone.Name.StartsWith(weaponMuzzleFlash.BoneName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _activeModelDrawConditionState.Model.BoneVisibilities[i] = true;
+                        }
                     }
                 }
             }
