@@ -35,6 +35,13 @@ public sealed class ActionEntry
     public string? UnitDefinitionName { get; set; }
 
     /// <summary>
+    /// Number of units to queue for RecruitBasicUnit actions. Null or unused for other action
+    /// types. Defaults to 5 (see <see cref="Services.ReplayExporter"/>) when unset, to preserve
+    /// the original "queue enough attackers" behaviour of the default scenario.
+    /// </summary>
+    public int? Quantity { get; set; }
+
+    /// <summary>
     /// Position for legacy actions. Null or unused for open commands, which embed position
     /// arguments directly in their CommandSpec.Arguments.
     /// </summary>
@@ -44,7 +51,7 @@ public sealed class ActionEntry
 
     public ActionEntry(string label, CommandSpec command, PositionSpec? position, TimingConfig timing,
         string? id = null, string? buildingDefinitionName = null, string? unitDefinitionName = null,
-        ActionType? type = null)
+        ActionType? type = null, int? quantity = null)
     {
         Id = id ?? GenerateId();
         Label = label;
@@ -53,13 +60,15 @@ public sealed class ActionEntry
         Timing = timing;
         BuildingDefinitionName = buildingDefinitionName;
         UnitDefinitionName = unitDefinitionName;
+        Quantity = quantity;
         Type = type;
     }
 
     /// <summary>Legacy constructor. Wraps ActionType in a CommandSpec.</summary>
     public ActionEntry(string label, ActionType type, PositionSpec? position, TimingConfig timing,
-        string? id = null, string? buildingDefinitionName = null, string? unitDefinitionName = null)
-        : this(label, CommandSpec.ForLegacyType(type), position, timing, id, buildingDefinitionName, unitDefinitionName, type)
+        string? id = null, string? buildingDefinitionName = null, string? unitDefinitionName = null,
+        int? quantity = null)
+        : this(label, CommandSpec.ForLegacyType(type), position, timing, id, buildingDefinitionName, unitDefinitionName, type, quantity)
     {
     }
 
@@ -130,7 +139,11 @@ internal sealed class ActionEntryJsonConverter : JsonConverter<ActionEntry>
             ? uElem.GetString()
             : null;
 
-        return new ActionEntry(label, command, position, timing, id, buildingName, unitName, legacyType);
+        var quantity = root.TryGetProperty("quantity", out var qElem) && qElem.ValueKind == JsonValueKind.Number
+            ? qElem.GetInt32()
+            : (int?)null;
+
+        return new ActionEntry(label, command, position, timing, id, buildingName, unitName, legacyType, quantity);
     }
 
     public override void Write(Utf8JsonWriter writer, ActionEntry value, JsonSerializerOptions options)
@@ -161,6 +174,10 @@ internal sealed class ActionEntryJsonConverter : JsonConverter<ActionEntry>
         if (value.UnitDefinitionName != null)
         {
             writer.WriteString("unitDefinitionName", value.UnitDefinitionName);
+        }
+        if (value.Quantity.HasValue)
+        {
+            writer.WriteNumber("quantity", value.Quantity.Value);
         }
         writer.WriteEndObject();
     }
