@@ -1,7 +1,7 @@
 # Implementation Plan: Track P · P0-3: Gameplay `OrderType` Mapping
 
 > Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-3: Exporter generalization
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-3: Exporter generalization
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Map the gameplay-relevant `OrderType` set (move, attack, construct, produce, ability) to exporter order emission"
 > Depends on: [track-p-p0-3-runtime-object-references.md](track-p-p0-3-runtime-object-references.md), because attack and enter orders need object references.
 >
@@ -48,7 +48,7 @@ selection precondition:
 
 (The table is the starting hypothesis; the implementation must verify each against the real handler
 and correct it : `OrderProcessor.Process` is the source of truth, per the
-[P0 deep dive §2.3](../deep-dives/playable-baseline-harness.md).)
+[P0 deep dive §2.3](../deep-dives/p0-playable-baseline-harness.md).)
 
 ### Encode as tested factories
 
@@ -69,7 +69,7 @@ and correct it : `OrderProcessor.Process` is the source of truth, per the
 
 ### Document the catalog
 
-- Add a short "verb → order" table to the [P0 deep dive](../deep-dives/playable-baseline-harness.md)
+- Add a short "verb → order" table to the [P0 deep dive](../deep-dives/p0-playable-baseline-harness.md)
   (or a sibling reference note) so future authors/agents have the mapping without re-reading
   `OrderProcessor`.
 
@@ -84,7 +84,7 @@ and correct it : `OrderProcessor.Process` is the source of truth, per the
 |---|---|
 | `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs` | Add verb factory methods for move/attack/construct/produce/ability |
 | `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Emit multi-order factory sequences in the open-command branch |
-| `docs/roadmap/deep-dives/playable-baseline-harness.md` | Add the verb→`OrderType` catalog table |
+| `docs/roadmap/deep-dives/p0-playable-baseline-harness.md` | Add the verb→`OrderType` catalog table |
 | `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | One headless test per verb (effect assertion) |
 
 ## Tests

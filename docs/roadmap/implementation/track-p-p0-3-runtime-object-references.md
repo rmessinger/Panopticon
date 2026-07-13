@@ -1,7 +1,7 @@
 # Implementation Plan: Track P · P0-3: Runtime Object References (Auto-handles and Selectors)
 
 > Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), part of sub-phase P0-3: the object-reference model exporter generalization needs
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), part of sub-phase P0-3: the object-reference model exporter generalization needs
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Reference runtime-created objects via implicit auto-handles and world/enemy objects via query selectors"
 > Decision: [open-questions.md](../open-questions.md), "P0 harness: runtime object references" (implicit auto-handles, opt-in names, query selectors).
 >

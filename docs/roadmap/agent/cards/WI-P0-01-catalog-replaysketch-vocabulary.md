@@ -8,10 +8,10 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/p0-playable-baseline-harness.md#8-architecture-diagrams) |
 
 > Superseded. The investigation this card requested has been completed and captured (file:line
-> grounded) in the [P0 deep dive](../../deep-dives/playable-baseline-harness.md) §2.1–2.2 (closed
+> grounded) in the [P0 deep dive](../../deep-dives/p0-playable-baseline-harness.md) §2.1–2.2 (closed
 > `ActionType` vocabulary, `KnownDefinitions`, and the exporter translation table). Do not redo
 > this survey. The implementation follow-up is card
 > [`WI-P0-03`](WI-P0-03-faction-agnostic-definition-resolution.md).

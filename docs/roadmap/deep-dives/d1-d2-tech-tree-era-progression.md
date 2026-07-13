@@ -104,7 +104,7 @@ across sharded runs.
   C1's import abstraction. It turns the D1/D2 mechanism into actual AoE/Empire Earth-flavored
   content.
 - D4 is the integration proof: one small tech tree plus one era transition, authored and asserted
-  through ReplaySketch. See [`deep-dives/playable-baseline-harness.md`](playable-baseline-harness.md).
+  through ReplaySketch. See [`deep-dives/p0-playable-baseline-harness.md`](playable-baseline-harness.md).
 
 ---
 

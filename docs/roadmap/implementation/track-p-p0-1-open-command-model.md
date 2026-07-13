@@ -1,7 +1,7 @@
 # Implementation Plan: Track P · P0-1: Replace `ActionType` with an Open `CommandSpec` Model
 
 > Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-1: Open command model
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-1: Open command model
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md), first item under P0
 >
 > Audience: human overview of the implementation plan. Agent context sits below the divider.

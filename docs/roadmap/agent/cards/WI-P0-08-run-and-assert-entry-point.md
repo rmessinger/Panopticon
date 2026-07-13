@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-08` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5, see [deep dive §3.5](../../deep-dives/playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5, see [deep dive §3.5](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P0-07` (assertion layer must exist), `WI-P0-03` (faction-agnostic exporter) |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/p0-playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -31,7 +31,7 @@ or human in the loop.
   takes a `ReplayScenario`, produces a `.rep` file and a `deferredActions` list.
 - `src/OpenSage.Tools.ReplaySketch.Core/Services/ScenarioProfileLoader.cs:13-55` — JSON loader
   for `ReplayScenario` (case-insensitive enums, embedded or disk-based).
-- `docs/roadmap/deep-dives/playable-baseline-harness.md §3.5` — design intent.
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.5` — design intent.
 
 ## Steps
 

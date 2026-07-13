@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-08` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-8 Regression lock, see [deep dive §6](../../deep-dives/end-to-end-regression.md#6-sub-phases) and [§5](../../deep-dives/end-to-end-regression.md#5-regression-locking) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-8 Regression lock, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§5](../../deep-dives/p7-end-to-end-regression.md#5-regression-locking) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | Track P phases `P0`, `P2`, `P3`, `P4`, `P5`, `P6`, `P6b` complete; `WI-P7-07` done |
-| Diagrams | [P7 Architecture Diagrams](../../deep-dives/end-to-end-regression.md#8-architecture-diagrams) |
+| Diagrams | [P7 Architecture Diagrams](../../deep-dives/p7-end-to-end-regression.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -16,10 +16,10 @@ Lock P7 as the standing playability regression suite by ensuring the six end-sta
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/end-to-end-regression.md:91-103` — regression locking requirements.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:117-118` — P7-7/P7-8 sub-phase rows.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:210-240` — suite execution sequence diagram.
-- `docs/roadmap/deep-dives/end-to-end-regression.md:284-287` — current `P7_ScenarioMatrixTests` methods to unblock.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:91-103` — regression locking requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:117-118` — P7-7/P7-8 sub-phase rows.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:210-240` — suite execution sequence diagram.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:284-287` — current `P7_ScenarioMatrixTests` methods to unblock.
 - `docs/roadmap/implementation-checklist.md:345-360` — P6b promotion, CI/standing regression, and matrix ACs.
 - `docs/roadmap/agent/README.md:66-75` — standard validation commands.
 - `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:222-254` — current P7 skipped stubs and method names.

@@ -52,21 +52,21 @@ Scope notes:
   layout. Each technique remains replaceable and independently measurable.
 - Measure everything: benchmarking utilities are a deliverable, not ad-hoc scripts. Each
   technique is evaluated against [B1](track-b-scale.md) benchmarks and inspected with the
-  [result replayer/visualizer](deep-dives/visualization.md). The shared harness supports
+  [result replayer/visualizer](deep-dives/a5-visualization.md). The shared harness supports
   repeatable scenarios, multiple runs, variance/confidence reporting, discarded warmup,
   regression detection against stored baselines, machine-readable output, and cost/accuracy
   trade-offs.
 - Authoring and inspection tools scale with the simulation. WorldBuilder and
-  [ReplaySketch](deep-dives/visualization.md) must handle the same entity counts, map sizes,
+  [ReplaySketch](deep-dives/a5-visualization.md) must handle the same entity counts, map sizes,
   and command volumes as the simulations they configure. WorldBuilder authoring scales under
-  [B4a](track-b-scale.md), after the [A5-6](deep-dives/visualization.md) baseline lands.
-  ReplaySketch and the visualizer scale under [A5](deep-dives/visualization.md) and
+  [B4a](track-b-scale.md), after the [A5-6](deep-dives/a5-visualization.md) baseline lands.
+  ReplaySketch and the visualizer scale under [A5](deep-dives/a5-visualization.md) and
   [P0](track-p-playable-baseline.md), reusing the engine's streaming, LOD, instancing,
-  and procedural-generation work from [B4a](deep-dives/larger-maps.md) and
+  and procedural-generation work from [B4a](deep-dives/b4a-larger-maps.md) and
   [B5](track-b-scale.md).
 - Domain-agnostic where it is cheap. The simulation domain is a pluggable seam, so the
-  [FTRT headless host](deep-dives/headless-host.md) and
-  [distributed sim](deep-dives/distributed-simulation.md) are not hard-wired to RTS. RTS is the
+  [FTRT headless host](deep-dives/a1-headless-host.md) and
+  [distributed sim](deep-dives/b6-distributed-simulation.md) are not hard-wired to RTS. RTS is the
   reference domain rather than a baked-in assumption.
 - Scale and extensibility win over original-engine fidelity when they conflict. Reading
   original SAGE data remains valuable, but it must not block the architectural changes scale
@@ -132,20 +132,20 @@ human-readable problem/design/approach sections and agent-context file and test 
 
 | Deep dive | Expands |
 |---|---|
-| [`deep-dives/playable-baseline-harness.md`](deep-dives/playable-baseline-harness.md) | Track P phase P0 - ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
-| [`deep-dives/skirmish-setup.md`](deep-dives/skirmish-setup.md) | Track P phase P1 - Skirmish setup & player relationships. |
-| [`deep-dives/skirmish-ai.md`](deep-dives/skirmish-ai.md) | Track P phases P2 - Skirmish AI opponent (+ P5 construction/production mechanism). |
-| [`deep-dives/victory-defeat.md`](deep-dives/victory-defeat.md) | Track P phase P3 - Victory & defeat conditions (queryable `GameOutcome`, all six match end states). |
-| [`deep-dives/economy-production-combat.md`](deep-dives/economy-production-combat.md) | Track P phases P4 - Economy loop & P6 - Combat & command verification. |
-| [`deep-dives/unit-contract-validation.md`](deep-dives/unit-contract-validation.md) | Track P phase P6b - Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
-| [`deep-dives/headless-host.md`](deep-dives/headless-host.md) | Track A phase A1 - Headless simulation host. |
-| [`deep-dives/pluggable-ai.md`](deep-dives/pluggable-ai.md) | Track A phase A4 - Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
-| [`deep-dives/visualization.md`](deep-dives/visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
-| [`deep-dives/larger-maps.md`](deep-dives/larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
-| [`deep-dives/distributed-simulation.md`](deep-dives/distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
-| [`deep-dives/variable-fidelity.md`](deep-dives/variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (scaling toolkit). |
-| [`deep-dives/tech-tree-era-progression.md`](deep-dives/tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
-| [`deep-dives/naval-warfare.md`](deep-dives/naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
+| [`deep-dives/p0-playable-baseline-harness.md`](deep-dives/p0-playable-baseline-harness.md) | Track P phase P0 - ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
+| [`deep-dives/p1-skirmish-setup.md`](deep-dives/p1-skirmish-setup.md) | Track P phase P1 - Skirmish setup & player relationships. |
+| [`deep-dives/p2-p5-skirmish-ai.md`](deep-dives/p2-p5-skirmish-ai.md) | Track P phases P2 - Skirmish AI opponent (+ P5 construction/production mechanism). |
+| [`deep-dives/p3-victory-defeat.md`](deep-dives/p3-victory-defeat.md) | Track P phase P3 - Victory & defeat conditions (queryable `GameOutcome`, all six match end states). |
+| [`deep-dives/p4-p6-economy-production-combat.md`](deep-dives/p4-p6-economy-production-combat.md) | Track P phases P4 - Economy loop & P6 - Combat & command verification. |
+| [`deep-dives/p6b-unit-contract-validation.md`](deep-dives/p6b-unit-contract-validation.md) | Track P phase P6b - Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
+| [`deep-dives/a1-headless-host.md`](deep-dives/a1-headless-host.md) | Track A phase A1 - Headless simulation host. |
+| [`deep-dives/a4-pluggable-ai.md`](deep-dives/a4-pluggable-ai.md) | Track A phase A4 - Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
+| [`deep-dives/a5-visualization.md`](deep-dives/a5-visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
+| [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
+| [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
+| [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (scaling toolkit). |
+| [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
+| [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
 
 ---
 

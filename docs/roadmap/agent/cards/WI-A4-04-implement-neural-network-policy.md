@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-A4-04` |
-| Roadmap phase | [Track A · A4](../../track-a-foundations.md) — AI decision policy seam, §3 of [pluggable-ai.md](../../deep-dives/pluggable-ai.md) |
+| Roadmap phase | [Track A · A4](../../track-a-foundations.md) — AI decision policy seam, §3 of [pluggable-ai.md](../../deep-dives/a4-pluggable-ai.md) |
 | Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-03` (Done) — the state encoding / network shape / decoding design must exist and be followed exactly, not reinvented |
-| Diagrams | [Pluggable AI §8](../../deep-dives/pluggable-ai.md#8-architecture-diagrams) |
+| Diagrams | [Pluggable AI §8](../../deep-dives/a4-pluggable-ai.md#8-architecture-diagrams) |
 
 ## Goal
 

@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6b-03` |
-| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b-3 Aircraft archetype contract, see [deep dive §3 Design](../../deep-dives/unit-contract-validation.md#2-design) and [§4 Sub-phases](../../deep-dives/unit-contract-validation.md#3-sub-phases) |
+| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b-3 Aircraft archetype contract, see [deep dive §3 Design](../../deep-dives/p6b-unit-contract-validation.md#2-design) and [§4 Sub-phases](../../deep-dives/p6b-unit-contract-validation.md#3-sub-phases) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | Track P phases P0, P4, P5, and P6 complete |
-| Diagrams | [P6b Architecture Diagrams](../../deep-dives/unit-contract-validation.md#6-architecture-diagrams) |
+| Diagrams | [P6b Architecture Diagrams](../../deep-dives/p6b-unit-contract-validation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -17,9 +17,9 @@ Create a CI-running P0-harness contract scenario test for the USA Comanche (`Obj
 ## Context to read (and only this)
 
 - `docs/roadmap/track-p-playable-baseline.md:62` — P6b phase dependency and pass/fail intent.
-- `docs/roadmap/deep-dives/unit-contract-validation.md:31-67` — archetype definitions and the six-point unit contract.
-- `docs/roadmap/deep-dives/unit-contract-validation.md:72-77` — unimplemented special powers must surface as explicit gaps.
-- `docs/roadmap/deep-dives/unit-contract-validation.md:192-223` — current code appendix for tags, orders, weapons, powers, and death cleanup.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:31-67` — archetype definitions and the six-point unit contract.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:72-77` — unimplemented special powers must surface as explicit gaps.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:192-223` — current code appendix for tags, orders, weapons, powers, and death cleanup.
 - `docs/roadmap/implementation-checklist.md:299-335` — checklist ACs to mirror.
 - `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:912` and `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:34-50,103-104,148-160,217-218,289-290` — `KindOf` tags for archetype detection.
 - `src/OpenSage.Game/Gui/ControlBar/CommandSet.cs:7-34` and `src/OpenSage.Game/Gui/ControlBar/CommandButton.cs:30-47,87-104,219-285` — command-set buttons, special powers, and weapon slots.
@@ -36,7 +36,7 @@ Create a CI-running P0-harness contract scenario test for the USA Comanche (`Obj
 ## Steps
 
 1. Create `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bAircraftContractTests.cs` as a real xUnit `[Fact]` test file that runs under `dotnet test src --filter Category!=Interactive`. Base the test on `MockedGameTest` or another no-game-install harness seam; a `[GameFact]` may be added only as supplemental coverage, never as the acceptance gate.
-2. Build one P0-harness `ReplayScenario` in code for the USA Comanche. Use the reference unit from `docs/roadmap/deep-dives/unit-contract-validation.md:31-41`; if exact asset names need resolution, resolve them through loaded `ObjectDefinition.KindOf`/`CommandSet` data instead of hardcoding an unrelated unit.
+2. Build one P0-harness `ReplayScenario` in code for the USA Comanche. Use the reference unit from `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:31-41`; if exact asset names need resolution, resolve them through loaded `ObjectDefinition.KindOf`/`CommandSet` data instead of hardcoding an unrelated unit.
 3. Add code-defined predicates via `CodeAssertionRegistry` (or extend `ScenarioAssertion` only where necessary) for produced-object lookup, position delta, health delta, weapon-slot observation, command-set special-power enumeration, gap reporting, and death cleanup.
 4. Execute the contract in ordered phases: produce, move/static check, land/takeoff cycle and airborne movement, attack/decline, weapon modes plus every command-set `SpecialPowerType`, then death/sell cleanup.
 5. For every special-power or order handler that throws `NotImplementedException`, `ArgumentOutOfRangeException`, reaches the default unimplemented branch, or has no observable effect after the frame budget, record a failure message beginning `P6b gap:`. Do not skip, swallow, or convert it into a passing no-op.

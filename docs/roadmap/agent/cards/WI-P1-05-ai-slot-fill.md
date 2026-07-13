@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-05` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-3, see [deep dive §3.3](../../deep-dives/skirmish-setup.md)) |
+| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-3, see [deep dive §3.3](../../deep-dives/p1-skirmish-setup.md)) |
 | Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-04` |
-| Diagrams | [P1 Architecture Diagrams](../../deep-dives/skirmish-setup.md#8-architecture-diagrams) |
+| Diagrams | [P1 Architecture Diagrams](../../deep-dives/p1-skirmish-setup.md#8-architecture-diagrams) |
 
 ## Goal
 

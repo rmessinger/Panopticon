@@ -1,7 +1,7 @@
 # Implementation Plan: Track P · P0-5: Run-and-Assert Entry Point and End-to-End Test
 
 > Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-5: Run-and-assert entry point
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-5: Run-and-assert entry point
 > Checklist items: [implementation-checklist.md](../implementation-checklist.md), P0 items "Provide a headless run-and-assert entry point cheap agents can call" and "Tests: author and validate an arbitrary command set end to end"
 > Depends on: [track-p-p0-5-assertion-layer.md](track-p-p0-5-assertion-layer.md), because the evaluator and report this wraps depend on that layer.
 >
@@ -57,7 +57,7 @@ decoupled from the windowed `TestHarness`.
   `--scenario <file>` (scenario JSON incl. embedded assertions), optional `--map`, `--out <report.json>`,
   `--max-frames`, `--no-render`. It loads the scenario, calls `RunAndAssert`, writes the JSON report,
   and sets process exit code 0 (all assertions pass) or non-zero (any fail / run error). Document the
-  invocation in the [P0 deep dive](../deep-dives/playable-baseline-harness.md) and the
+  invocation in the [P0 deep dive](../deep-dives/p0-playable-baseline-harness.md) and the
   [agent](../agent/README.md) so cheap agents can call it.
 
 ### End-to-end test (the second checklist item)
@@ -80,7 +80,7 @@ decoupled from the windowed `TestHarness`.
 | `src/OpenSage.Tools.ReplaySketch.Core/Services/HeadlessRunner.cs` | NEW : `RunAndAssert` library entry point (renderer-optional boot/loop) |
 | `src/OpenSage.Tools.ReplaySketch.Core/Services/RunOptions.cs` | NEW : run options |
 | `src/OpenSage.Tools.TestHarness/Program.cs` | Refactor `RunHeadless` to call the shared runner with `render = true`; add the CLI `run` verb (or a sibling CLI) |
-| `docs/roadmap/deep-dives/playable-baseline-harness.md` | Document the CLI invocation + exit-code/report contract |
+| `docs/roadmap/deep-dives/p0-playable-baseline-harness.md` | Document the CLI invocation + exit-code/report contract |
 | `docs/roadmap/agent/README.md` | Note the run-and-assert command as the harness entry point for cheap agents |
 | `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchEndToEndTests.cs` | NEW : the end-to-end authored-scenario test |
 
@@ -96,7 +96,7 @@ decoupled from the windowed `TestHarness`.
 ## Out of scope
 
 - The assertion model/evaluator itself → [track-p-p0-5-assertion-layer.md](track-p-p0-5-assertion-layer.md).
-- Real win/lose termination semantics → P3 ([victory-defeat.md](../deep-dives/victory-defeat.md));
+- Real win/lose termination semantics → P3 ([victory-defeat.md](../deep-dives/p3-victory-defeat.md));
   this wires the outcome signal in once it exists.
 - Large/procedural authoring throughput → [track-p-p0-7-procedural-authoring.md](track-p-p0-7-procedural-authoring.md).
-- Replay-viewport/visualization scaling → A5 ([visualization.md](../deep-dives/visualization.md)).
+- Replay-viewport/visualization scaling → A5 ([visualization.md](../deep-dives/a5-visualization.md)).

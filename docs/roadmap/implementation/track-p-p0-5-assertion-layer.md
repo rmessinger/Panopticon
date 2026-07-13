@@ -1,7 +1,7 @@
 # Implementation Plan: Track P · P0-4: Validation and Assertion Layer
 
 > Track: [Track P: Playable Baseline](../track-p-playable-baseline.md)
-> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/playable-baseline-harness.md), sub-phase P0-4: Assertion layer
+> Phase: [P0: ReplaySketch arbitrary-command harness](../deep-dives/p0-playable-baseline-harness.md), sub-phase P0-4: Assertion layer
 > Checklist item: [implementation-checklist.md](../implementation-checklist.md), P0 item "Add a validation/assertion layer (expected post-conditions, invariants, outcomes)"
 > Decision: [open-questions.md](../open-questions.md), "P0 harness: assertion DSL" (JSON predicates over a fixed vocabulary plus a code-defined escape hatch).
 >
@@ -33,7 +33,7 @@ hatch, evaluated headlessly:
    money never negative, unit count never duplicated/leaked. A failing invariant records the frame
    and aborts the run.
 3. Outcome assertions : match terminated; winner/loser/team/reason. These consume P3's queryable
-   `GameOutcome` ([victory-defeat.md](../deep-dives/victory-defeat.md)). `GameOutcome` does not exist
+   `GameOutcome` ([victory-defeat.md](../deep-dives/p3-victory-defeat.md)). `GameOutcome` does not exist
    yet, so this plan ships state + invariant assertions now and adds the outcome path as a thin
    adapter once P3 lands (the deep dive §6 notes this dependency).
 
@@ -44,7 +44,7 @@ A fixed, documented set of read-only paths resolved against the running `Game`:
 | Path | Resolves to |
 |---|---|
 | `player[i].money` | `Game` players' `BankAccount.Money` (`Logic/BankAccount.cs:13`) |
-| `player[i].buildingCount` / `player[i].unitCount` | owned-object counts (the P1-5 maintained ownership set, [skirmish-setup.md](../deep-dives/skirmish-setup.md)); until then, a `GameLogic` scan filtered by owner) |
+| `player[i].buildingCount` / `player[i].unitCount` | owned-object counts (the P1-5 maintained ownership set, [skirmish-setup.md](../deep-dives/p1-skirmish-setup.md)); until then, a `GameLogic` scan filtered by owner) |
 | `player[i].name` / `player[i].relationshipTo[j]` | `Player.Name`, `Player.GetRelationship` (`Logic/Player.cs:64,811`) |
 | `frame` | current logic frame (`game.MapTime` / `MsPerLogicFrame`, as `Program.cs:184,216` computes) |
 | `outcome.winner` / `outcome.reason` | P3 `GameOutcome` (deferred until P3) |

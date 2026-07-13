@@ -17,6 +17,7 @@ using OpenSage.Graphics.Rendering;
 using OpenSage.Graphics.Shaders;
 using OpenSage.Gui.ControlBar;
 using OpenSage.Gui.InGame;
+using OpenSage.Logic;
 using OpenSage.Logic.Map;
 using OpenSage.Logic.Object.Helpers;
 using OpenSage.Mathematics;
@@ -289,6 +290,8 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
     public float VerticalOffset;
 
     private Player _owner;
+    private bool _raisedDestroyedLifecycleEvent;
+    private bool _raisedDiedLifecycleEvent;
 
     /// <summary>
     /// The player that currently owns this object. Reassigning this (e.g. when an object joins a
@@ -317,6 +320,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             {
                 oldOwner.RemoveOwnedObject(this);
                 value?.AddOwnedObject(this);
+                RaiseLifecycleEvent(GameObjectLifecycleEventReason.OwnerChanged, oldOwner, value);
             }
         }
     }
@@ -1107,6 +1111,11 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     public bool IsBeingConstructed()
     {
+        if (Drawable == null)
+        {
+            return false;
+        }
+
         return ModelConditionFlags.Get(ModelConditionFlag.ActivelyBeingConstructed) ||
                ModelConditionFlags.Get(ModelConditionFlag.AwaitingConstruction) ||
                ModelConditionFlags.Get(ModelConditionFlag.PartiallyConstructed);
@@ -1335,7 +1344,10 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         if (construction)
         {
-            ModelConditionFlags.Set(ModelConditionFlag.DestroyedWhilstBeingConstructed, true);
+            if (Drawable != null)
+            {
+                Drawable.ModelConditionFlags.Set(ModelConditionFlag.DestroyedWhilstBeingConstructed, true);
+            }
 
             var mostRecentConstructor = _gameEngine.GameLogic.GetObjectById(BuiltByObjectID);
             // mostRecentConstructor is set to the unit currently or most recently building us
@@ -1347,8 +1359,11 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         }
         else
         {
-            ModelConditionFlags.Set(ModelConditionFlag.ReallyDamaged, false);
-            ModelConditionFlags.Set(ModelConditionFlag.Damaged, false);
+            if (Drawable != null)
+            {
+                Drawable.ModelConditionFlags.Set(ModelConditionFlag.ReallyDamaged, false);
+                Drawable.ModelConditionFlags.Set(ModelConditionFlag.Damaged, false);
+            }
         }
 
         IsSelectable = false;
@@ -1364,6 +1379,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             module.OnDie(damageInput);
         }
 
+        RaiseLifecycleEvent(GameObjectLifecycleEventReason.Died, Owner, Owner);
         PlayDieSound(damageInput.DeathType);
     }
 
@@ -1394,6 +1410,36 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
     public void Destroy()
     {
         _gameEngine.GameLogic.DestroyObject(this);
+    }
+
+    internal void RaiseLifecycleEvent(GameObjectLifecycleEventReason reason, Player previousOwner, Player currentOwner)
+    {
+        if (_gameEngine == null || _gameEngine.GameLogic == null)
+        {
+            return;
+        }
+
+        switch (reason)
+        {
+            case GameObjectLifecycleEventReason.Died:
+                if (_raisedDiedLifecycleEvent)
+                {
+                    return;
+                }
+
+                _raisedDiedLifecycleEvent = true;
+                break;
+            case GameObjectLifecycleEventReason.Destroyed:
+                if (_raisedDestroyedLifecycleEvent)
+                {
+                    return;
+                }
+
+                _raisedDestroyedLifecycleEvent = true;
+                break;
+        }
+
+        _gameEngine.GameLogic.RaiseObjectLifecycleChanged(new GameObjectLifecycleEventArgs(this, previousOwner, currentOwner, reason));
     }
 
     private void ExecuteRandomSlowDeathBehavior(in DamageInfoInput damageInput)

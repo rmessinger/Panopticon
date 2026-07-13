@@ -106,6 +106,7 @@ public interface IGame
     IGameDefinition Definition { get; }
     SageGame SageGame { get; }
     Configuration Configuration { get; }
+    GameOutcome CurrentOutcome { get; }
     string UserDataLeafName { get; }
     string UserDataFolder { get; }
     string UserAppDataFolder { get; }
@@ -119,6 +120,7 @@ public interface IGame
     Texture LauncherImage { get; }
     internal GameLogic GameLogic { get; }
     internal GameClient GameClient { get; }
+    internal VictorySystem VictorySystem { get; }
     PlayerManager PlayerManager { get; }
     TeamFactory TeamFactory { get; }
     PartitionCellManager PartitionCellManager { get; }

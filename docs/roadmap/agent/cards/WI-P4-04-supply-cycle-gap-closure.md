@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-04` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-4, see [P4 deep dive](../../deep-dives/economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/economy-production-combat.md#p4-sub-phases) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-4, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | P1 complete enough that player ownership, construction ownership, and headless object ticking are reliable |
-| Diagrams | [P4 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P4 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Close small gaps that leave supply trucks, workers, or dozers stuck in economy/b
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/economy-production-combat.md:16-55` — P4 goal includes closing supply-truck/worker/dozer cycles.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55` — P4 goal includes closing supply-truck/worker/dozer cycles.
 - `docs/roadmap/implementation-checklist.md:248-250` — checklist AC: worker/dozer/supply-truck complete full cycles without stuck states.
 - `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:15-28` — supply gather state enum.
 - `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257` — state transitions for gather, carry, target search, dump, and finish.

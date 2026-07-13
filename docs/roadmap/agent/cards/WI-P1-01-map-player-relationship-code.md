@@ -8,10 +8,10 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [P1 Architecture Diagrams](../../deep-dives/skirmish-setup.md#8-architecture-diagrams) |
+| Diagrams | [P1 Architecture Diagrams](../../deep-dives/p1-skirmish-setup.md#8-architecture-diagrams) |
 
 > Superseded. The relationship-gap survey this card requested is captured in the
-> [P1 deep dive](../../deep-dives/skirmish-setup.md) §2.3 (the `OnNewGame()` TODO, the existing
+> [P1 deep dive](../../deep-dives/p1-skirmish-setup.md) §2.3 (the `OnNewGame()` TODO, the existing
 > `Player`/`PlayerManager` relationship API, and that `AddAlly`/`AddEnemy` are non-reciprocal) plus
 > the §3.1 implementation brief. Do not redo this survey. The implementation follow-up is card
 > [`WI-P1-02`](WI-P1-02-implement-onnewgame-relationships.md).

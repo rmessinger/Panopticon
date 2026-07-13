@@ -27,17 +27,31 @@ public sealed class OrderProcessor
         {
             Player? player = null;
 
-            if (order.PlayerIndex == -1)
+            if (_game.Scene3D != null)
             {
-                player = _game.Scene3D.LocalPlayer;
+                if (order.PlayerIndex == -1)
+                {
+                    player = _game.Scene3D.LocalPlayer;
+                }
+                else
+                {
+                    player = _game.Scene3D.Players[(int)order.PlayerIndex];
+                }
             }
             else
             {
-                player = _game.Scene3D.Players[(int)order.PlayerIndex];
+                player = order.PlayerIndex == -1
+                    ? _game.PlayerManager.LocalPlayer
+                    : _game.PlayerManager.GetPlayerByIndex((uint)order.PlayerIndex);
             }
 
             var logLevel = order.OrderType == OrderType.SetCameraPosition ? NLog.LogLevel.Trace : NLog.LogLevel.Debug;
             Logger.Log(logLevel, $"Order for player {order.PlayerIndex}: {order.OrderType}");
+
+            if (player == null)
+            {
+                continue;
+            }
 
             switch (order.OrderType)
             {
@@ -424,7 +438,7 @@ public sealed class OrderProcessor
                     break;
 
                 case OrderType.EndGame:
-                    _game.EndGame();
+                    _game.VictorySystem.Surrender(player);
                     break;
 
                 case OrderType.PurchaseScience:

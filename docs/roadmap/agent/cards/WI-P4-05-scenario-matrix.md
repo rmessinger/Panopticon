@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-05` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — scenario matrix, see [P4 deep dive](../../deep-dives/economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 Scenario Matrix](../../deep-dives/economy-production-combat.md#p4-economy-loop) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — scenario matrix, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 Scenario Matrix](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P4-01`, `WI-P4-02`, `WI-P4-03` |
-| Diagrams | [P4 Architecture Diagrams](../../deep-dives/economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P4 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
 
 ## Goal
 
@@ -16,8 +16,8 @@ Replace the P4 scenario-matrix stub with a CI-running matrix test that expands a
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/economy-production-combat.md:113-131` — P4 matrix axes and per-cell assertions; use the checklist's 18-cell count where it corrects the arithmetic.
-- `docs/roadmap/deep-dives/economy-production-combat.md:145-194` — P4 architecture diagram links for economy types.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-131` — P4 matrix axes and per-cell assertions; use the checklist's 18-cell count where it corrects the arithmetic.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:145-194` — P4 architecture diagram links for economy types.
 - `docs/roadmap/implementation-checklist.md:251-255` — checklist AC: 18 cells for `faction` × `supplyDensity` × `startingMoney`.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152` — `SweepAxis`, assertion templates, and expansion.
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — running expanded cells with `HarnessRunner.RunAndAssert`.

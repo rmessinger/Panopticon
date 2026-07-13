@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-07` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — P3 scenario matrix, see [deep dive §6](../../deep-dives/victory-defeat.md#6-scenario-matrix) |
-| Status | `Ready` |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — P3 scenario matrix, see [deep dive §6](../../deep-dives/p3-victory-defeat.md#6-scenario-matrix) |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-01`, `WI-P3-02`, `WI-P3-03`, `WI-P3-04`, `WI-P3-05`, and `WI-P3-06` |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/victory-defeat.md#7-architecture-diagrams) |
+| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
 
 ## Goal
 
@@ -16,7 +16,7 @@ Author and enable the P3 scenario matrix that sweeps end-state type by player co
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/victory-defeat.md:154-180` — matrix axes, constraints, and per-cell assertions.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:154-180` — matrix axes, constraints, and per-cell assertions.
 - `docs/roadmap/implementation-checklist.md:229-234` — scenario-matrix AC.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151` — matrix expansion, filters, and assertion templates.
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — runner over expanded cells.
@@ -81,3 +81,4 @@ dotnet format src --verify-no-changes
 ## Result
 
 <!-- append after completing -->
+Replaced the skipped P3 matrix stubs with headless `ScenarioMatrix`-driven tests over 17 valid cells, pruning the 2-player allied `TeamWin` shape. The matrix now asserts final outcome status/reason/winners/loser/frame per cell and separately verifies sudden-death transition + later resolution for all mutual-elimination cells.

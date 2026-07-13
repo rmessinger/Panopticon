@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-09` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-6, see [deep dive §3.6](../../deep-dives/playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-6, see [deep dive §3.6](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P0-06` (exporter open-command coverage) |
-| Diagrams | [P0 Architecture Diagrams](../../deep-dives/playable-baseline-harness.md#8-architecture-diagrams) |
+| Diagrams | [P0 Architecture Diagrams](../../deep-dives/p0-playable-baseline-harness.md#8-architecture-diagrams) |
 
 ## Goal
 
@@ -28,7 +28,7 @@ documents the result; if gaps exist, it surfaces them for a targeted follow-up.
   look for any N² behaviour (nested iteration, repeated LINQ materializations) that would blow
   up at 10k commands.
 - `src/OpenSage.Tools.ReplaySketch.Tests/` — test style reference.
-- `docs/roadmap/deep-dives/playable-baseline-harness.md §3.6` — intent.
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.6` — intent.
 
 ## Steps
 

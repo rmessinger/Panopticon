@@ -18,7 +18,7 @@
     stability within tolerance and conflict-resolution correctness, not bit-equality.
   - [B3](track-b-scale.md) adopts the free-intra-tick + conflict-resolution model as its
     concrete parallelism design (read/modify via intent buffers, merge by rules).
-  - [B6](deep-dives/distributed-simulation.md) validates handoff/boundary sync by
+  - [B6](deep-dives/b6-distributed-simulation.md) validates handoff/boundary sync by
     invariants (no unit duplication/loss, conservation) and statistical metric closeness to a
     single-shard reference, not by bit-exact state-hash equality. Cross-shard conflicts use the
     same authority/resolution rules.
@@ -28,7 +28,7 @@
     reproduce a run bit-for-bit. To still locate where runs diverge, A1-5 records and A5-4
     localizes via a tiered, hierarchical recording (aggregate metrics → per-region/entity
     signature tree → triggered per-entity detail) captured live; see
-    [visualization.md §5](deep-dives/visualization.md).
+    [visualization.md §5](deep-dives/a5-visualization.md).
 - ECS adoption depth. Decision: incremental data-oriented storage behind the module API
   (no full ECS rewrite). This follows from the Simulation-domain scope & mapping Decision below:
   every domain, RTS and non-RTS alike, is hosted by extending the `GameObject`/module system
@@ -39,7 +39,7 @@
 - Distributed model. Decision: spatial sharding. One world partitioned by region across
   nodes (chosen over lockstep peers, which caps scale at a single machine's capacity). Trades
   that ceiling for cross-shard handoff and boundary sync. See
-  [B6 deep dive](deep-dives/distributed-simulation.md). Affects
+  [B6 deep dive](deep-dives/b6-distributed-simulation.md). Affects
   [B6](track-b-scale.md) and informs [A2](track-a-foundations.md)/[B3](track-b-scale.md).
 - glTF scope for C4. Decision: static meshes + skinned skeletal animation only. The first
   concrete external format ([C4](track-c-external-assets.md)) covers the minimum needed to get
@@ -51,7 +51,7 @@
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
   experiments; OpenSAGE may extend/replace the `.map` format and need not stay loadable in the
   original engine. Makes chunked storage (B4a-5) a core requirement. See
-  [B4a deep dive](deep-dives/larger-maps.md).
+  [B4a deep dive](deep-dives/b4a-larger-maps.md).
 - Variable-fidelity determinism stance. Decision: fidelity is a function of replicated
   simulation state for anything shared or distributed; view-driven fidelity is allowed only for
   single-node, non-distributed experiments. Under the relaxed-determinism Decision, the real
@@ -59,8 +59,8 @@
   runs therefore derive fidelity inputs from replicated state so every shard agrees on each
   entity's fidelity level, never from a local camera or view. View-driven fidelity, such as LOD
   by camera distance, remains available for single-node experiments where no shard can disagree.
-  Affects [B7](deep-dives/variable-fidelity.md) and
-  [A2](track-a-foundations.md)/[B6](deep-dives/distributed-simulation.md).
+  Affects [B7](deep-dives/b7-variable-fidelity.md) and
+  [A2](track-a-foundations.md)/[B6](deep-dives/b6-distributed-simulation.md).
 - Asset licensing. Decision: out of scope (single-user tool). For the foreseeable future
   this is a personal experimentation tool used by one operator, so import tooling
   ([C5](track-c-external-assets.md)) does not enforce or track provenance or licensing. Revisit
@@ -74,7 +74,7 @@
   - (1) First non-RTS validation domain = transport/graph. Chosen over a city-builder because
     a graph/network domain best stresses non-spatial partitioning (graph-cut rather than a 2-D
     grid), edge-coupled interaction locality, and edge-owner resolution authority: exactly the
-    parts of the A4 seam, [B6](deep-dives/distributed-simulation.md) partitioning, and A5-4
+    parts of the A4 seam, [B6](deep-dives/b6-distributed-simulation.md) partitioning, and A5-4
     divergence bucketing that an RTS-only design would leave RTS-shaped. It forces the seam to be
     genuinely topology-general early.
   - (2) Mapping strategy = extend the `GameObject`/module system, not parallel domain adapters
@@ -85,10 +85,10 @@
     one save/persist path, and one set of B3 storage optimizations behind the domain seam. (Also
     resolves the storage half of the ECS adoption depth question toward incremental,
     behind the module API rather than a separate ECS substrate per domain.)
-  - Affects [A4](track-a-foundations.md), [A1](deep-dives/headless-host.md),
-    [B6](deep-dives/distributed-simulation.md), and [B3](track-b-scale.md).
+  - Affects [A4](track-a-foundations.md), [A1](deep-dives/a1-headless-host.md),
+    [B6](deep-dives/b6-distributed-simulation.md), and [B3](track-b-scale.md).
 - P0 harness: runtime object references. Decision: implicit auto-handles + opt-in names + query
-  selectors. Authored commands in the [P0 harness](deep-dives/playable-baseline-harness.md)
+  selectors. Authored commands in the [P0 harness](deep-dives/p0-playable-baseline-harness.md)
   reference an object an earlier command created (a produced unit, a built structure) by an
   implicit handle keyed to the producing command, resolved at dispatch from build/production
   results, so an author normally writes nothing ("attack the barracks built in command #3" just
@@ -101,7 +101,7 @@
   [P0](track-p-playable-baseline.md) (P0-1).
 - P0 harness: assertion DSL. Decision: JSON predicates over a fixed vocabulary, with a
   code-defined escape hatch. The authored assertion surface for the
-  [P0 harness](deep-dives/playable-baseline-harness.md) is declarative JSON predicates (e.g.
+  [P0 harness](deep-dives/p0-playable-baseline-harness.md) is declarative JSON predicates (e.g.
   `{path: "player[1].money", op: ">=", value: 0}`) over a fixed path/operator vocabulary spanning
   outcome, state, and per-tick invariant assertions: serializable into scenario files, trivially
   machine-readable, and cheap for low-effort agents/CI to author. Complex invariants that exceed the
@@ -125,7 +125,7 @@
   headlessly through the test suite plus run-and-assert, minimize MAUI-only code behind injectable
   seams, and document the loop in a checked-in `AGENTS.md`. ReplaySketch logic stays in
   `OpenSage.Tools.ReplaySketch.Core` and is validated headlessly by
-  `OpenSage.Tools.ReplaySketch.Tests` plus the [P0 harness](deep-dives/playable-baseline-harness.md)
+  `OpenSage.Tools.ReplaySketch.Tests` plus the [P0 harness](deep-dives/p0-playable-baseline-harness.md)
   run-and-assert entry point (P0-5). `MainViewModel` is reduced to a thin shell by abstracting
   `Preferences.Default`, `MainThread`, and `Process.Start` or launcher behavior behind injectable
   seams (P0-1b/P0-1c), so the command surface is unit-testable without a MAUI runtime. The
@@ -145,14 +145,14 @@
   the same state is queried frequently by the victory check ([P3](track-p-playable-baseline.md))
   and the AI decision loop ([P2](track-p-playable-baseline.md)), and because maintained counts fit
   the scale tracks better. Realized as foundational sub-phase
-  [P1-5](deep-dives/skirmish-setup.md), owned by P1 and shared by both consumers. Affects
+  [P1-5](deep-dives/p1-skirmish-setup.md), owned by P1 and shared by both consumers. Affects
   [P1](track-p-playable-baseline.md), [P2](track-p-playable-baseline.md),
   [P3](track-p-playable-baseline.md).
 - Skirmish AI actuation. Decision: emit `Order`s through `OrderProcessor`. The AI issues the
   same `Order`s a human would (`BuildObject`/`CreateUnit`/`ForceAttack…`) rather than calling engine
   APIs directly, so AI actions enter the recorded/replayed order stream, keeping runs reproducible
   for [A2](track-a-foundations.md)/Track B and consistent with the
-  [P0 harness](deep-dives/playable-baseline-harness.md). Trade-off accepted: the AI must synthesize
+  [P0 harness](deep-dives/p0-playable-baseline-harness.md). Trade-off accepted: the AI must synthesize
   valid order arguments (positions, object ids). Must be settled before P2-2. Affects
   [P2](track-p-playable-baseline.md).
 - Skirmish AI competence scope. Decision: minimum legal opponent in Track P; configurable
@@ -173,7 +173,7 @@
   weight-vector genomes, fitness scored off `GameOutcome`, evolved via selection/mutation across
   generations in an A4 experiment sweep). Design-only for now; implementation (interface
   extraction, a first NN policy, and the training harness) is follow-on work. Detailed design:
-  [deep-dives/pluggable-ai.md](deep-dives/pluggable-ai.md). Affects
+  [deep-dives/a4-pluggable-ai.md](deep-dives/a4-pluggable-ai.md). Affects
   [A4](track-a-foundations.md), [P2](track-p-playable-baseline.md).
 - Single-player `LocalPlayer` identification. Decision: explicit human-slot flag at setup. The
   skirmish/lobby config marks which slot is the local human; `PlayerManager` reads that flag instead
@@ -233,8 +233,8 @@
   authority, not a complete, terminating, Track-P-grade scenario. It instantiates graph entities,
   runs them headlessly, and emits the partition/boundary metrics A4/B6 need, but requires no
   economy/production/victory/AI loop. Just enough to prove the [A4](track-a-foundations.md) domain
-  seam and [B6](deep-dives/distributed-simulation.md) partitioning are topology-general rather than
-  RTS-shaped. Affects [A4](track-a-foundations.md), [B6](deep-dives/distributed-simulation.md).
+  seam and [B6](deep-dives/b6-distributed-simulation.md) partitioning are topology-general rather than
+  RTS-shaped. Affects [A4](track-a-foundations.md), [B6](deep-dives/b6-distributed-simulation.md).
 - A2 strict-hash mode scope. Decision: same platform/build, best-effort, parallelism allowed.
   The opt-in strict-hash mode is scoped to a single platform + build and does not forbid intra-tick
   parallelism; it is therefore best-effort and may still diverge under nondeterministic parallel
@@ -250,13 +250,13 @@
   [C5](track-c-external-assets.md).
 - Save/load (StatePersister) reach. Decision: single-node only. The single `StatePersister`
   save/persist path is required to work only for single-node runs; it is not required to serialize
-  sharded/distributed ([B6](deep-dives/distributed-simulation.md)) state. Distributed runs rely on the
+  sharded/distributed ([B6](deep-dives/b6-distributed-simulation.md)) state. Distributed runs rely on the
   recorded snapshot/delta stream (the relaxed-determinism recording) for analysis and replay, not on
   `StatePersister`. The "one save/persist path" in the Simulation-domain scope Decision means one path
   per node, not one path spanning shards. Headless single-node runs may still round-trip save/load;
   cross-shard save/load is out of scope unless a later experiment needs it. Affects
-  [A1](deep-dives/headless-host.md), [B3](track-b-scale.md),
-  [B6](deep-dives/distributed-simulation.md).
+  [A1](deep-dives/a1-headless-host.md), [B3](track-b-scale.md),
+  [B6](deep-dives/b6-distributed-simulation.md).
 - Non-SAGE gameplay mechanics scope. Decision: hosted as new Track D content on the existing
   RTS domain, not a new Simulation Domain Model. Age of Empires/Empire Earth style tech trees and
   era/age progression are new gameplay content and mechanism (a generalized prerequisite graph
@@ -269,4 +269,4 @@
   Track D phase D3 onward, but D1/D2 (the tech-tree/era mechanism itself) do not need it and can
   be validated against existing built-in content first. Affects
   [Track D](track-d-gameplay-expansion.md),
-  [deep-dives/tech-tree-era-progression.md](deep-dives/tech-tree-era-progression.md).
+  [deep-dives/d1-d2-tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md).
