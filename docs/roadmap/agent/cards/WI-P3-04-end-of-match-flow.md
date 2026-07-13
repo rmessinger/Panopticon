@@ -1,9 +1,9 @@
-# Task Card: `WI-P3-04` — End-of-match flow and EndGame handling
+# Task Card `WI-P3-04`: End-of-match flow and EndGame handling
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-04` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-4, see [deep dive §1.4](../../deep-dives/p3-victory-defeat.md#14-end-of-match-flow) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-4, see [deep dive §1.4](../../deep-dives/p3-victory-defeat.md#14-end-of-match-flow) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -16,18 +16,18 @@ Complete the decided-match flow: a decided `GameOutcome` relaxes/stops simulatio
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:82-91` — decided vs sudden-death end-of-match behavior.
-- `docs/roadmap/implementation-checklist.md:212-220` — match-end, `EndGame`, and queryable-outcome ACs.
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs:1-6` — `OrderType.EndGame` value.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:24-43` — player resolution and order switch.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:553-566` — current default "Unimplemented order type" path and processed-order event.
-- `src/OpenSage.Game/IGame.cs:80-96` — `InGame`, `IsLogicRunning`, and `MapTime` surface.
-- `src/OpenSage.Game/Game.cs:899-927` — logic/scripting update gating via `IsLogicRunning`.
-- `src/OpenSage.Game/Game.cs:963-975` — game logic tick location.
-- `src/OpenSage.Game/Game.cs:1056-1060` — existing exit method.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — placeholder outcome assertion implementation.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:228-232` — blocked P0 outcome acceptance test.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70` — headless test base; tests must run in CI.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:82-91`: decided vs sudden-death end-of-match behavior.
+- `docs/roadmap/implementation-checklist.md:212-220`: match-end, `EndGame`, and queryable-outcome ACs.
+- `src/OpenSage.Game/Logic/Orders/OrderType.cs:1-6`: `OrderType.EndGame` value.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:24-43`: player resolution and order switch.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:553-566`: current default "Unimplemented order type" path and processed-order event.
+- `src/OpenSage.Game/IGame.cs:80-96`: `InGame`, `IsLogicRunning`, and `MapTime` surface.
+- `src/OpenSage.Game/Game.cs:899-927`: logic/scripting update gating via `IsLogicRunning`.
+- `src/OpenSage.Game/Game.cs:963-975`: game logic tick location.
+- `src/OpenSage.Game/Game.cs:1056-1060`: existing exit method.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: placeholder outcome assertion implementation.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:228-232`: blocked P0 outcome acceptance test.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 

@@ -1,9 +1,9 @@
-# Task Card: `WI-P1-09` — Fix start-position collision in `SkirmishSlotDefaults.ApplyDefaults`
+# Task Card `WI-P1-09`: Fix start-position collision in `SkirmishSlotDefaults.ApplyDefaults`
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-09` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (relates to P1-3, [deep dive §3.3](../../deep-dives/p1-skirmish-setup.md)) |
+| Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) (relates to P1-3, [deep dive §3.3](../../deep-dives/p1-skirmish-setup.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -14,21 +14,21 @@
 
 Fix a regression introduced when slot-default logic was extracted from `GameOptionsUtil` into
 `SkirmishSlotDefaults.ApplyDefaults`: the new code builds the available-start-position pool
-(`1..NumPlayers`) but never removes positions that are **already assigned** to other slots before
+(`1..NumPlayers`) but never removes positions that are already assigned to other slots before
 auto-distributing the remainder. As a result a slot whose `StartPosition` was set manually (or by
 another path) can have its position re-handed to a different slot, producing two players on the same
 start point. Restore the "reserve already-taken positions first" behaviour the GUI code had.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Network/SkirmishSlotDefaults.cs` — `ApplyDefaults(...)`: the
+- `src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`: `ApplyDefaults(...)`: the
   `availablePositions` build loop and the per-slot `if (slot.StartPosition == 0)` assignment that
   pops `availablePositions[^1]`. Note it never excludes positions already held by other slots.
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs` (git history before the P1 refactor) — the
+- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs` (git history before the P1 refactor): the
   original code: it built `availablePositions` then did a first pass removing every
-  `slot.StartPosition != 0` from the pool **before** the assignment pass. This is the behaviour to
+  `slot.StartPosition != 0` from the pool before the assignment pass. This is the behaviour to
   re-create.
-- `src/OpenSage.Game/Network/SkirmishManager.cs` — `HostSkirmishManager.SkirmishClientUpdatePacketReceived`
+- `src/OpenSage.Game/Network/SkirmishManager.cs`: `HostSkirmishManager.SkirmishClientUpdatePacketReceived`
   already guards start-position uniqueness for the network path; mirror that intent here.
 
 ## Steps

@@ -1,9 +1,9 @@
-# Task Card: `WI-P1-06` — Boot validation: human + AI skirmish boots headlessly
+# Task Card `WI-P1-06`: Boot validation: human + AI skirmish boots headlessly
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-06` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-4, see [deep dive §7](../../deep-dives/p1-skirmish-setup.md)) |
+| Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-4, see [deep dive §7](../../deep-dives/p1-skirmish-setup.md)) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -19,18 +19,18 @@ regress, this test surfaces it.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs` — the existing
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the existing
   P0 harness acceptance test class. Match its structure exactly: use `HarnessRunner`,
   load a map, run a fixed number of ticks, assert on the resulting `AssertionReport`.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` — `RunAndAssert(...)` entry point
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: `RunAndAssert(...)` entry point
   and `HarnessRunnerOptions`; note how the test sets up a `ScenarioScript` (commands + assertions).
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` — available assertion
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: available assertion
   subtypes: `PropertyAssertion`, `OutcomeAssertion`, `InvariantAssertion`, `CodeAssertion`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` — register named
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs`: register named
   predicates keyed by string; this is the preferred way to write complex assertions.
-- `src/OpenSage.Game/Logic/PlayerManager.cs` — `Players` property (the list to query for
+- `src/OpenSage.Game/Logic/PlayerManager.cs`: `Players` property (the list to query for
   relationship and ownership assertions).
-- `src/OpenSage.Game/Logic/Player.cs:811-831` — `GetRelationship(Team? that)` (use this to
+- `src/OpenSage.Game/Logic/Player.cs:811-831`: `GetRelationship(Team? that)` (use this to
   assert ally/enemy status between a pair of players).
 
 ## Steps
@@ -41,12 +41,12 @@ regress, this test surfaces it.
 
 2. Register the needed predicates in a static constructor or `[ModuleInitializer]` via
    `CodeAssertionRegistry`. The minimum set:
-   - `"P1.HumanPlayerIsLocal"` — asserts the game has exactly one player marked as
+   - `"P1.HumanPlayerIsLocal"`: asserts the game has exactly one player marked as
      `LocalPlayer`, and it is not a neutral or AI player.
-   - `"P1.RelationshipsAreSymmetric"` — for every ordered pair `(a, b)` of non-neutral players,
+   - `"P1.RelationshipsAreSymmetric"`: for every ordered pair `(a, b)` of non-neutral players,
      asserts `a.GetRelationship(...) == b.GetRelationship(...)` (i.e. the relationship is
      reflexively symmetric).
-   - `"P1.NoPlayerUnspawned"` — asserts every non-neutral player has a `GameObject` in the
+   - `"P1.NoPlayerUnspawned"`: asserts every non-neutral player has a `GameObject` in the
      scene with a start position (i.e. `Scene3D.GameObjects` contains at least one object
      owned by each non-neutral player).
 

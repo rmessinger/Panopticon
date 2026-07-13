@@ -1,9 +1,9 @@
-# Task Card: `WI-P5-02` — Prerequisite and tech gating
+# Task Card `WI-P5-02`: Prerequisite and tech gating
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-02` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md): sub-phase P5-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,16 +16,16 @@ Verify and close faction prerequisite/tech gating so `Player.CanProduceObject(..
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:261-263` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69` — P5 gating scope.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93` — P5-1 funding/gating row.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271` — `Player.CanProduceObject` and `GameObject` gating entry points.
-- `src/OpenSage.Game/Logic/Player.cs:363-427` — object/science prerequisite evaluation; preserve AND-of-OR semantics.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192` — `CanPurchase`/`CanConstructUnit` money + owner gating.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291` — producer-local gating.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:99-100` and `src/OpenSage.Game/Logic/AI/AIData.cs:242-245` — parsed `SkirmishBuildLists`.
-- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:65-82` and `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:228-236` — build-list fields and `IsBuildable`.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base.
+- `docs/roadmap/implementation-checklist.md:261-263`: checklist item and exact AC to satisfy.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 gating scope.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-1 funding/gating row.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271`: `Player.CanProduceObject` and `GameObject` gating entry points.
+- `src/OpenSage.Game/Logic/Player.cs:363-427`: object/science prerequisite evaluation; preserve AND-of-OR semantics.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192`: `CanPurchase`/`CanConstructUnit` money + owner gating.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291`: producer-local gating.
+- `src/OpenSage.Game/Logic/AI/AIData.cs:99-100` and `src/OpenSage.Game/Logic/AI/AIData.cs:242-245`: parsed `SkirmishBuildLists`.
+- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:65-82` and `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:228-236`: build-list fields and `IsBuildable`.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 

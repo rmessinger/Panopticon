@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-09` — Large/procedural authoring: verify model and add scale test
+# Task Card `WI-P0-09`: Large/procedural authoring: verify model and add scale test
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-09` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-6, see [deep dive §3.6](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-6, see [deep dive §3.6](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -15,20 +15,20 @@
 Confirm that the `ReplayScenario`/`CommandSpec`/`ReplayExporter` stack can handle
 programmatically-generated large command sets (≥10k commands) without per-command hand-entry,
 within a documented time/memory budget. This is a test-addition card: if the model already
-supports it (likely — it is plain C# collections), the card adds the benchmark/regression test and
+supports it (likely: it is plain C# collections), the card adds the benchmark/regression test and
 documents the result; if gaps exist, it surfaces them for a targeted follow-up.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` — `PlayerSlotConfig.Actions`
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: `PlayerSlotConfig.Actions`
   is a `List<ActionEntry>`, populated normally.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs` — `ActionEntry` constructor;
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs`: `ActionEntry` constructor;
   verify it has no hidden per-instance allocation beyond the fields.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-160` — the export loop;
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-160`: the export loop;
   look for any N² behaviour (nested iteration, repeated LINQ materializations) that would blow
   up at 10k commands.
-- `src/OpenSage.Tools.ReplaySketch.Tests/` — test style reference.
-- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.6` — intent.
+- `src/OpenSage.Tools.ReplaySketch.Tests/`: test style reference.
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.6`: intent.
 
 ## Steps
 
@@ -47,7 +47,7 @@ documents the result; if gaps exist, it surfaces them for a targeted follow-up.
 
 3. If step 1 reveals a real N² problem (e.g., `Actions.FirstOrDefault` inside the timing loop
    with `AfterActionTiming` scanning the whole list on each action), fix it and note the change in
-   the test's comment. Otherwise this step is a no-op — do not over-engineer.
+   the test's comment. Otherwise this step is a no-op. Do not over-engineer.
 
 4. Add a second smaller test `GenerateScenario_WithMixedTimings_Exports`:
    - 100 actions: alternating `FixedTiming(10)` and `RandomTiming(5, 20)`.
@@ -55,8 +55,8 @@ documents the result; if gaps exist, it surfaces them for a targeted follow-up.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Tests/` — two new tests.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` — only if a real N² issue
+- `src/OpenSage.Tools.ReplaySketch.Tests/`: two new tests.
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: only if a real N² issue
   is found (see step 3).
 
 ## Acceptance criteria
@@ -79,7 +79,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not implement streaming `.rep` emission or bounded-memory loading — that is A5-5 (scale track).
+- Do not implement streaming `.rep` emission or bounded-memory loading: that is A5-5 (scale track).
   P0-6 only ensures the model does not assume small scenarios.
 - Do not change `TimingConfig` or the JSON serialization format.
 - 10k is the test size; the model should support it. If it doesn't hit the budget, document and

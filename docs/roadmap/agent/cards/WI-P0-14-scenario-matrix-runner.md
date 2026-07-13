@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-14` — ScenarioMatrix model and runner (P0-5b)
+# Task Card `WI-P0-14`: ScenarioMatrix model and runner (P0-5b)
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-14` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5b, see [deep dive §3.5b](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5b, see [deep dive §3.5b](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -19,16 +19,16 @@ This is the primitive the P1–P7 phase matrices depend on.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.5b` — full design: model types,
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.5b`: full design: model types,
   expansion algorithm, output shape, and the aggregate JSON report format.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` — the template this matrix
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the template this matrix
   wraps per-cell.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` — `AssertionTemplate`
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: `AssertionTemplate`
   will produce concrete assertions by substituting axis tokens.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs` — per-cell report type;
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs`: per-cell report type;
   aggregate report is a new type that wraps a list of per-cell results.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` — the entry point called per cell.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs` — the
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: the entry point called per cell.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
   `P0_5b_ScenarioMatrixTests` stubs that this card must unblock.
 
 ## Steps
@@ -38,14 +38,14 @@ This is the primitive the P1–P7 phase matrices depend on.
    - `SweepAxis`: `string Name`, `IReadOnlyList<string> Values`.
    - `ConstraintFilter`: `string Expression` (a simple predicate string for documentation; for now
      implement the constraint as a `Func<IReadOnlyDictionary<string, string>, bool>` passed at
-     construction time — no expression parser needed yet).
+     construction time. No expression parser needed yet).
    - `AssertionTemplate`: `string Kind` (`"state"` / `"invariant"`), `string Id`, `string Path`,
      `string Op`, `string Value`. Each of these fields may contain `{axisName}` tokens substituted
      per-cell. `ToConcreteAssertion(IReadOnlyDictionary<string,string> bindings)` returns a
      concrete `ScenarioAssertion` with tokens replaced by their bound values.
    - `ScenarioMatrix`: `ReplayScenario BaseScenario`, `IReadOnlyList<SweepAxis> Axes`,
      `IReadOnlyList<ConstraintFilter> Filters`, `IReadOnlyList<AssertionTemplate> AssertionTemplates`.
-     Method `IReadOnlyList<MatrixCell> Expand()` — cartesian product of all axis value lists,
+     Method `IReadOnlyList<MatrixCell> Expand()`: cartesian product of all axis value lists,
      filtered, each cell bound to a `IReadOnlyDictionary<string,string>` of axis-name → value.
    - `MatrixCell`: `IReadOnlyDictionary<string,string> Bindings`,
      `ReplayScenario ConcreteScenario` (template with assertion templates resolved for this cell).
@@ -65,7 +65,7 @@ This is the primitive the P1–P7 phase matrices depend on.
 3. Create `MatrixReport.cs` with:
    - `IReadOnlyList<CellResult> Cells`
    - `bool AllPassed` (computed)
-   - `string ToJson()` — emits:
+   - `string ToJson()`: emits:
      ```json
      { "totalCells": N, "passed": P, "failed": F,
        "cells": [{ "key": {bindings}, "status": "passed"|"failed", "assertions": [...] }] }
@@ -75,7 +75,7 @@ This is the primitive the P1–P7 phase matrices depend on.
    `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`:
 
    a. `Matrix_Expansion_ProducesOneRunPerCell`:
-      Build a `ScenarioMatrix` with 2 axes of lengths 2 and 3 (no `BaseScenario` needed —
+      Build a `ScenarioMatrix` with 2 axes of lengths 2 and 3 (no `BaseScenario` needed:
       just expand). Assert `matrix.Expand().Count == 6`.
 
    b. `Matrix_AllCellsPass_ExitsZeroAndEmitsAggregateReport`:
@@ -104,7 +104,7 @@ This is the primitive the P1–P7 phase matrices depend on.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs` (new)
 - `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs` (new)
 - `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs` — unblock P0_5b stubs
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: unblock P0_5b stubs
 - `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioMatrixTests.cs` (new unit tests)
 
 ## Acceptance criteria
@@ -130,10 +130,10 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not implement the P1–P7 matrix axis values or scenarios — WI-P0-14 only provides the
+- Do not implement the P1–P7 matrix axis values or scenarios: WI-P0-14 only provides the
   infrastructure.
-- Do not add a parallel/concurrent cell runner — single-threaded sequential execution only.
-- Do not implement a JSON expression parser for `ConstraintFilter` — accept a `Func<>` for now.
+- Do not add a parallel/concurrent cell runner: single-threaded sequential execution only.
+- Do not implement a JSON expression parser for `ConstraintFilter`: accept a `Func<>` for now.
 
 ## On completion
 

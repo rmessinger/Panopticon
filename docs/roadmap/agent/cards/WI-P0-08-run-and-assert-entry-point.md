@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-08` — Headless run-and-assert entry point
+# Task Card `WI-P0-08`: Headless run-and-assert entry point
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-08` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5, see [deep dive §3.5](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-5, see [deep dive §3.5](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -12,7 +12,7 @@
 
 ## Goal
 
-Expose a single callable surface — one library method and one CLI entry point — that takes a
+Expose a single callable surface: one library method and one CLI entry point: that takes a
 scenario/command file (JSON), runs it headlessly, evaluates its assertions, and returns exit code
 0 (all passed) or 1 (any failed) plus a machine-readable JSON report. This is the capstone of P0:
 after this card, agents can validate any authored command sequence end-to-end without a game window
@@ -20,18 +20,18 @@ or human in the loop.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.TestHarness/Program.cs:128-200` — the `RunHeadless(...)` method: boots a
+- `src/OpenSage.Tools.TestHarness/Program.cs:128-200`: the `RunHeadless(...)` method: boots a
   `Game`, loads a `.rep` file, runs the update loop, exits on enemy-CC destruction or frame timeout.
   This is the loop this card wraps.
-- `src/OpenSage.Tools.TestHarness/Program.cs:280-337` — `BuildDeferredInjector(...)` and
+- `src/OpenSage.Tools.TestHarness/Program.cs:280-337`: `BuildDeferredInjector(...)` and
   `DrainPendingInjections(...)`: the deferred-action injection plumbing used by the headless loop.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (from WI-P0-07) — the
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (from WI-P0-07): the
   evaluator to subscribe before the loop and call after.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100` — `Export(...)`:
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100`: `Export(...)`:
   takes a `ReplayScenario`, produces a `.rep` file and a `deferredActions` list.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ScenarioProfileLoader.cs:13-55` — JSON loader
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ScenarioProfileLoader.cs:13-55`: JSON loader
   for `ReplayScenario` (case-insensitive enums, embedded or disk-based).
-- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.5` — design intent.
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.5`: design intent.
 
 ## Steps
 
@@ -45,7 +45,7 @@ or human in the loop.
    The method:
    a. Exports the scenario to `tempDirectory/sketch_run.rep` using `ReplayExporter.Export`.
    b. Builds a `MapMetadataService` for the scenario's map path.
-   c. Creates a `Game` (headless, audio off) using the installation — mirror
+   c. Creates a `Game` (headless, audio off) using the installation: mirror
       `RunHeadless`'s boot sequence in `TestHarness/Program.cs:195-210`.
    d. Creates an `AssertionEvaluator(scenario.Assertions, game)` and calls `evaluator.Subscribe()`.
    e. Loads the `.rep` and runs the headless update loop (mirror `RunHeadless:210-270`).
@@ -73,8 +73,8 @@ or human in the loop.
 ## Files likely to change
 
 - `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (new).
-- `src/OpenSage.Tools.TestHarness/Program.cs` — new `--run-assert` path.
-- `src/OpenSage.Game.Tests/` or `src/OpenSage.Tools.ReplaySketch.Tests/` — integration test
+- `src/OpenSage.Tools.TestHarness/Program.cs`: new `--run-assert` path.
+- `src/OpenSage.Game.Tests/` or `src/OpenSage.Tools.ReplaySketch.Tests/`: integration test
   (tagged `Interactive`).
 
 ## Acceptance criteria
@@ -100,11 +100,11 @@ dotnet run --project src/OpenSage.Tools.TestHarness -- --run-assert --scenario s
 
 ## Out of scope / guardrails
 
-- Do not add a GUI or MAUI interface to this entry point — it is CLI/library only.
+- Do not add a GUI or MAUI interface to this entry point: it is CLI/library only.
 - The `OutcomeAssertion` evaluation stubs until P3 lands; do not block on P3.
 - Do not change existing TestHarness scenarios or the default `RunHeadless` path.
 - If wiring into `TestHarness/Program.cs` is complex (many unrelated sub-commands), create a thin
-  separate `OpenSage.Tools.ReplaySketch.Cli` project instead — but exhaust the in-place approach first.
+  separate `OpenSage.Tools.ReplaySketch.Cli` project instead. But exhaust the in-place approach first.
 
 ## On completion
 

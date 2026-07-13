@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-07` — Universal invariants and P7 scenario matrix
+# Task Card `WI-P7-07`: Universal invariants and P7 scenario matrix
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-07` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-7 Universal invariants + matrix run, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases), [§3](../../deep-dives/p7-end-to-end-regression.md#3-universal-invariants), and [§4](../../deep-dives/p7-end-to-end-regression.md#4-scenario-matrix) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-7 Universal invariants + matrix run, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases), [§3](../../deep-dives/p7-end-to-end-regression.md#3-universal-invariants), and [§4](../../deep-dives/p7-end-to-end-regression.md#4-scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,20 +16,20 @@ Attach the three universal invariants to all six P7 scenarios and prove the P0-5
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — the three universal invariants and per-tick abort requirement.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:74-87` — P7 matrix axis and six-cell aggregate report.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:117-117` — P7-7 sub-phase row.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:210-240` — suite execution sequence diagram.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:293-296` — per-tick invariant hook via `Game.Updating`.
-- `docs/roadmap/implementation-checklist.md:348-360` — invariant and matrix ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151` — matrix expansion and assertion-template materialization.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — P0-5b runner over expanded cells.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73` — per-tick invariant subscription and abort.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:135-167` — `InvariantAssertion` implementation.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:192-218` — `CodeAssertion` escape hatch for invariants that need code.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs:7-15` — predicate registration.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55` — aggregate cell report and JSON shape.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254` — final P7 matrix test names to satisfy in P7-08.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: the three universal invariants and per-tick abort requirement.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:74-87`: P7 matrix axis and six-cell aggregate report.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:117-117`: P7-7 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:210-240`: suite execution sequence diagram.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:293-296`: per-tick invariant hook via `Game.Updating`.
+- `docs/roadmap/implementation-checklist.md:348-360`: invariant and matrix ACs.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151`: matrix expansion and assertion-template materialization.
+- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: P0-5b runner over expanded cells.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73`: per-tick invariant subscription and abort.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:135-167`: `InvariantAssertion` implementation.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:192-218`: `CodeAssertion` escape hatch for invariants that need code.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs:7-15`: predicate registration.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55`: aggregate cell report and JSON shape.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254`: final P7 matrix test names to satisfy in P7-08.
 
 ## Steps
 

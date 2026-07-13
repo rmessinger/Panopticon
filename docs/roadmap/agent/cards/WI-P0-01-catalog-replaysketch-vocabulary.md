@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-01` — Catalog the current ReplaySketch command vocabulary
+# Task Card `WI-P0-01`: Catalog the current ReplaySketch command vocabulary
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-01` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
 | Status | `Done` (superseded by deep-dive audit) |
 | Type | `investigation` |
 | Effort | `S` |
@@ -18,16 +18,16 @@
 
 ## Goal
 
-Produce a precise, written inventory of how ReplaySketch represents commands today — the closed
-action vocabulary and the hardcoded object definitions — so the P0 generalization work has an exact
+Produce a precise, written inventory of how ReplaySketch represents commands today: the closed
+action vocabulary and the hardcoded object definitions: so the P0 generalization work has an exact
 "before" picture to work against. Read-only; no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs` — the closed action enum.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs` — the per-action data model.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` — the scenario shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` — how actions become engine
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs`: the closed action enum.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs`: the per-action data model.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the scenario shape.
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: how actions become engine
   `Order`s and a `.rep`; note the `KnownDefinitions` class (hardcoded USA/GLA defs).
 
 ## Steps
@@ -54,11 +54,11 @@ action vocabulary and the hardcoded object definitions — so the P0 generalizat
 
 ## Validation commands
 
-Read-only — no build/test. Verify the Notes table covers every `ActionType` value.
+Read-only. No build/test. Verify the Notes table covers every `ActionType` value.
 
 ## Out of scope / guardrails
 
-- Do not change any code or design the new model — that's a later card. This is purely a survey.
+- Do not change any code or design the new model: that's a later card. This is purely a survey.
 
 ## On completion
 

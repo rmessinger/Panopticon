@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-03` — Make ReplaySketch definition resolution faction-agnostic
+# Task Card `WI-P0-03`: Make ReplaySketch definition resolution faction-agnostic
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-03` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-2, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-2, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -15,17 +15,17 @@
 Remove the hardcoded USA/GLA defaults from the ReplaySketch exporter so a scenario's object
 definitions are resolved purely from the names the scenario provides (any faction, any object),
 via the existing `AssetHash.GetHash(name)` path. This is the first concrete step of P0's
-"express any command over any definition" generalization — a faction-agnostic exporter.
+"express any command over any definition" generalization: a faction-agnostic exporter.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:16-32` — the `KnownDefinitions`
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:16-32`: the `KnownDefinitions`
   class (hardcoded USA/GLA barracks + ranger/rebel names/hashes) to delete.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:194-251` — `BuildOrders(...)`, which
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:194-251`: `BuildOrders(...)`, which
   currently falls back to `KnownDefinitions` via `isGla ? Gla… : Usa…` (lines 197, 203-205, 220-222);
   this is the code to change. Note `BuildOrders` is also called at lines 75 and 85 passing
   `player.FactionIndex`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json` — the regression
+- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json`: the regression
   scenario. It already specifies `buildingDefinitionName` / `unitDefinitionName` for every
   action (lines ~95, 120, 155, 178), so removing the defaults must not change its behaviour.
 
@@ -70,7 +70,7 @@ grep -rn "KnownDefinitions" src   # must print nothing
 
 ## Out of scope / guardrails
 
-- Do not design the open `CommandSpec` model or the assertion layer — those are P0-1/P0-4
+- Do not design the open `CommandSpec` model or the assertion layer: those are P0-1/P0-4
   (escalate to a high-effort model / the [deep dive](../../deep-dives/p0-playable-baseline-harness.md)).
 - Do not change the `ActionType` enum, the JSON profile, or the deferred-injection path.
 - Stay in `ReplayExporter.cs`. If the change pulls in other files, mark `Blocked` and report.

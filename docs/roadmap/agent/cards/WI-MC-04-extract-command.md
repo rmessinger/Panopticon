@@ -1,4 +1,4 @@
-# Task Card: `WI-MC-04` — `--extract` command
+# Task Card `WI-MC-04`: `--extract` command
 
 | Field | Value |
 |---|---|
@@ -8,23 +8,23 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-MC-03` |
-| Diagrams | N/A — standalone tool, see plan |
+| Diagrams | N/A: standalone tool, see plan |
 
 ## Goal
 
 Implement the `extract` verb: walk the output tree, find all `.zip` files, extract any `.big`
 files they contain into the same directory, then delete the `.zip`. After extraction, the
-directory tree is engine-ready — a user can point `CNC_GENERALS_ZH_PATH` (etc.) at a
+directory tree is engine-ready: a user can point `CNC_GENERALS_ZH_PATH` (etc.) at a
 `<game>/<category>` directory and OpenSAGE picks up the `.big` files via `SkudefReader`.
 
 ## Context
 
 Key references:
-- `src/OpenSage.Tools.BigTool/Program.cs:201-221` — `ExtractMode` opens a `BigArchive` and
+- `src/OpenSage.Tools.BigTool/Program.cs:201-221`: `ExtractMode` opens a `BigArchive` and
   streams entries to disk. The extraction here is different (we're unpacking a `.zip` to find
   `.big` files, not extracting a `.big` archive), but the pattern of streaming to file is the
   same.
-- `System.IO.Compression.ZipFile` / `ZipArchive` — built into .NET, no extra packages needed.
+- `System.IO.Compression.ZipFile` / `ZipArchive`: built into .NET, no extra packages needed.
 
 ## Steps
 

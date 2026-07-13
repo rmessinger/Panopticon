@@ -1,6 +1,6 @@
 # Deep Dive: Scenario Authoring & Visualization
 
-> Expands phase A5 of [Track A — Foundations](../track-a-foundations.md). Part of the
+> Expands phase A5 of [Track A: Foundations](../track-a-foundations.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
 > Audience: human overview of the authoring and visualization design.
@@ -17,15 +17,15 @@ Both ends are domain-parameterized via the [Simulation Domain Model seam (A4)](.
 A scaling or optimization framework is only useful if experiments are easy to define and results
 are inspectable. Today both are missing:
 
-- Setup is purely programmatic — `SimulationHost` input injection (A1-4), harness config
+- Setup is purely programmatic: `SimulationHost` input injection (A1-4), harness config
   (A4), benchmark scenario builders (B1), and map authoring in WorldBuilder (B4a). There is no
   way to lay out initial conditions, parameterize a sweep, or save/version a scenario as a
   first-class artifact.
 - Results are opaque without the replayer/visualizer (previously sketched as A1-6/A1-7, now
   owned here).
 - Neither scales yet. ReplaySketch authoring is hand-entry over a fixed vocabulary, and the
-  replay/visualization path assumes small runs. To author and inspect sim-scale scenarios —
-  the entire point of the framework — the tooling itself must scale to the same entity/command
+  replay/visualization path assumes small runs. To author and inspect sim-scale scenarios,
+  the entire point of the framework, the tooling itself must scale to the same entity/command
   magnitudes as the engine (see A5-5). Scenario tooling is on the scaling critical path, not
   beside it.
 
@@ -37,7 +37,7 @@ scenarios and replaying runs.
 ## 2. What already exists (reuse, don't reinvent)
 
 > ReplaySketch is the primary tool. Scenario and end-to-end testing flows through
-> `OpenSage.Tools.ReplaySketch` — it is the entry point lower-effort/automated agents use, and the
+> `OpenSage.Tools.ReplaySketch`. It is the entry point lower-effort/automated agents use, and the
 > result replayer/visualizer below (A5-3) is built by extending it rather than starting a new
 > tool. [Track P, phase P0](../track-p-playable-baseline.md) finalizes ReplaySketch into a general
 > harness for authoring and validating any arbitrary command/order set (generalizing beyond its
@@ -60,21 +60,21 @@ scenarios and replaying runs.
 A scenario is a versioned, declarative artifact containing everything needed to make a run
 reproducible-for-comparison, not bit-exact; see the [relaxed-determinism Decision](../open-questions.md):
 
-- Domain selection — which [domain model (A4)](../track-a-foundations.md) (RTS / city /
+- Domain selection: which [domain model (A4)](../track-a-foundations.md) (RTS / city /
   transport / …) and its configuration.
-- World / topology — the map (spatial grid, via [B4a](larger-maps.md)), graph/network, or
+- World / topology: the map (spatial grid, via [B4a](b4a-larger-maps.md)), graph/network, or
   zone layout the domain partitions over.
-- Initial entity population — placements/seeds: explicit unit/building placement (RTS),
+- Initial entity population: placements/seeds: explicit unit/building placement (RTS),
   zoning + initial buildings (city), the network + initial vehicles/demand (transport). Supports
   procedural seeding (e.g. "N units per side in formation") for large stress scenarios.
-- Parameters — domain + experiment knobs (counts, economy rates, AI profiles, fidelity
-  policy, partition scheme, pathfinder choice — i.e. the [A4 seam](../track-a-foundations.md)
+- Parameters: domain + experiment knobs (counts, economy rates, AI profiles, fidelity
+  policy, partition scheme, pathfinder choice, i.e. the [A4 seam](../track-a-foundations.md)
   selections under test).
-- Seed — the master RNG seed (A2) so the scenario is re-runnable.
-- Input/order timeline — scripted orders/events injected over time via the host's
+- Seed: the master RNG seed (A2) so the scenario is re-runnable.
+- Input/order timeline: scripted orders/events injected over time via the host's
   `InjectOrders` hook (A1-4).
-- Stop conditions & probes — end criteria (frame cap, victory, steady-state) and which
-  [domain metrics](headless-host.md) to record.
+- Stop conditions & probes: end criteria (frame cap, victory, steady-state) and which
+  [domain metrics](a1-headless-host.md) to record.
 
 ### 3.2 Authoring surfaces
 - Declarative scenario file (primary). A human- and agent-writable definition that the harness
@@ -92,7 +92,7 @@ reproducible-for-comparison, not bit-exact; see the [relaxed-determinism Decisio
 Optimization experiments are rarely single-run. A5 lets a scenario declare sweep axes such as
 unit count, partition scheme, and fidelity. The [A4 harness](../track-a-foundations.md) expands
 the matrix, dispatches one host run per cell, and collects results keyed by cell for side-by-side
-comparison in §4 and §5. Cells can also be sharded via [B6](distributed-simulation.md).
+comparison in §4 and §5. Cells can also be sharded via [B6](b6-distributed-simulation.md).
 
 ### 3.4 Pre-run validation & preview
 Before a long FTRT run, sanity-check the scenario: schema and seed validity, entity placement,
@@ -107,26 +107,26 @@ A tool to replay recorded runs and analyze or visualize their results, so headle
 batch runs are inspectable rather than opaque.
 
 - Load a run from its recorded artifacts: the recorded state snapshots/deltas and the
-  metrics/events/signature stream from [A1-5 run outputs](headless-host.md) (and/or the `.rep`
+  metrics/events/signature stream from [A1-5 run outputs](a1-headless-host.md) (and/or the `.rep`
   inputs for re-running).
-- State reconstruction from recorded snapshots/deltas — reconstruct any frame from what was
+- State reconstruction from recorded snapshots/deltas: reconstruct any frame from what was
   recorded. Re-simulation through the `SimulationHost` is available for approximate
   reconstruction or re-running, but (per the [relaxed-determinism Decision](../open-questions.md))
-  it yields a statistically-equivalent run, not a bit-identical one — so authoritative analysis
+  it yields a statistically-equivalent run, not a bit-identical one; authoritative analysis
   uses the recorded state.
-- Timeline scrubbing — step/seek to any logic frame; play/pause/fast-forward.
-- Visualizations (domain-parameterized — the domain model supplies the view):
+- Timeline scrubbing: step/seek to any logic frame; play/pause/fast-forward.
+- Visualizations, domain-parameterized as the domain model supplies the view:
   - A spatial 2-D overview/heatmap of entity positions/movement for grid domains (RTS), a
     network/graph view for transport domains (links, vehicles, congestion), or a zone
-    choropleth for city builders (population/utility/traffic by district) — all GPU-light and
+    choropleth for city builders (population/utility/traffic by district); all GPU-light and
     suitable for CI artifacts.
   - Optional full 3-D playback when a GPU is present (reuse the engine renderer / TestHarness
     windowed path).
   - Time-series charts of the domain's metrics (RTS unit/building counts, economy, casualties;
     city population/traffic; transport throughput/delay).
   - Event log with jump-to-frame (built on `ReplayActionMonitor`).
-  - Fidelity overlay — colour entities by their [B7](variable-fidelity.md) fidelity level.
-- Headless/exportable mode — render the 2-D overview and charts to image/HTML artifacts
+  - Fidelity overlay: colour entities by their [B7](b7-variable-fidelity.md) fidelity level.
+- Headless/exportable mode: render the 2-D overview and charts to image/HTML artifacts
   without a window, for CI and remote inspection (extends `FrameCaptureService`'s
   agent-inspection workflow).
 
@@ -135,37 +135,37 @@ batch runs are inspectable rather than opaque.
 ## 5. Run comparison & divergence localization
 
 Detecting divergence is cheap. Localizing it by frame, partition, entity, and system is what
-makes the framework useful for validating parallelism ([B3](track-b-scale.md)) and sharding
-([B6](distributed-simulation.md)). The [relaxed-determinism Decision](../open-questions.md)
+makes the framework useful for validating parallelism ([B3](../track-b-scale.md)) and sharding
+([B6](b6-distributed-simulation.md)). The [relaxed-determinism Decision](../open-questions.md)
 makes this harder than in a bit-exact engine: re-running with tracing and binary-searching the
 first divergent frame is unreliable because a re-run is only statistically equivalent. Localization
 detail therefore often has to be captured in the original run.
 
-### 5.1 Tiered recording (emitted by [A1-5](headless-host.md), consumed here)
+### 5.1 Tiered recording (emitted by [A1-5](a1-headless-host.md), consumed here)
 The recording is tiered so always-on cost stays proportional to the scale this roadmap targets:
 
 | Tier | What it records | Cost | Purpose |
 |---|---|---|---|
-| T0 — Aggregate | Per-frame metrics + invariants (counts, conservation checks). | Always on, tiny. | Detect that a run drifted / broke an invariant. |
-| T1 — Hierarchical signature | A signature tree per frame following the domain topology (world → partition → entity-bucket: spatial cells for grids, graph nodes/edges for networks, districts for city builders), quantized to tolerance. | Always on, small (one hash per node). | Localize drift by drilling down the tree to the first subtree that exceeds tolerance. |
-| T2 — Triggered detail | Per-entity, per-system state deltas for a bounded frame+region window, into a ring buffer. | On-demand, large; only around a tripped threshold or a user-marked window. | Pinpoint the exact entity/system and inspect the values that diverged. |
+| T0: Aggregate | Per-frame metrics + invariants (counts, conservation checks). | Always on, tiny. | Detect that a run drifted / broke an invariant. |
+| T1: Hierarchical signature | A signature tree per frame following the domain topology (world → partition → entity-bucket: spatial cells for grids, graph nodes/edges for networks, districts for city builders), quantized to tolerance. | Always on, small (one hash per node). | Localize drift by drilling down the tree to the first subtree that exceeds tolerance. |
+| T2: Triggered detail | Per-entity, per-system state deltas for a bounded frame+region window, into a ring buffer. | On-demand, large; only around a tripped threshold or a user-marked window. | Pinpoint the exact entity/system and inspect the values that diverged. |
 
 ### 5.2 Design points
 - Hierarchical, addressable signatures (T1). A single global hash only answers "diverged
   yes/no at frame N." A tree keyed by partition and entity-bucket lets the comparator descend to
-  the smallest node that diverged — turning O(world) inspection into O(log) drill-down.
+  the smallest node that diverged, turning O(world) inspection into O(log) drill-down.
 - Live triggering (T2), not re-run. Because re-runs don't reproduce divergence, T2 is armed
   before a run and fires when a T1 subtree (or a T0 invariant) breaches tolerance, snapshotting
   recent detailed deltas from a ring buffer. A user can also pre-mark a frame/region window.
 - Tolerance-aware comparison. "Divergence" is first place drift exceeds a configured
-  tolerance, reported per subtree — not first non-identical bit. Tolerances are per-quantity
+  tolerance, reported per subtree, not first non-identical bit. Tolerances are per-quantity
   (e.g. position ε, health ε) and surfaced in the comparator.
 - Stable bucketing across runs. For two runs to be comparable, partition/entity buckets must
   be addressed by stable keys drawn from the domain topology (spatial cell, graph node/edge,
   or district id + stable entity id), not by iteration order or memory layout, so the same bucket
   lines up across runs that parallelized or partitioned differently.
 - Strict-mode interplay. When the opt-in strict-hash mode is on (small scenarios), T1 nodes
-  carry exact hashes and divergence localizes to the exact first frame/entity — best-of-both for
+  carry exact hashes and divergence localizes to the exact first frame/entity; best-of-both for
   debugging, at small scale.
 - Budgeted overhead. T1 granularity (bucket size) and T2 ring-buffer depth are configurable so
   recording cost is bounded; at extreme scale T1 can coarsen and T2 can be armed only for suspect
@@ -184,21 +184,21 @@ per-frame recording cost for every run.
 | A5-2. Experiment matrix / parameter sweeps | Let a scenario declare sweep axes; expand the matrix through the [A4 harness](../track-a-foundations.md), dispatch one run per cell, and key results for comparison (§3.3). | Not started |
 | A5-3. Results replayer / visualizer | Build the analysis tool of §4 on top of ReplaySketch: load runs, scrub the timeline, domain-parameterized visualizations, metric charts, event log, fidelity overlay, headless export. Scales to large/long runs under A5-5. (Supersedes the former A1-6.) | Not started |
 | A5-4. Divergence localization | Implement the §5 drill-down: compare two runs' T1 signature trees to localize the first subtree exceeding tolerance, arm/inspect T2 detail, with stable cross-run bucketing and per-quantity tolerances. Validation surface for B3/B6. (Supersedes the former A1-7.) | Not started |
-| A5-5. Authoring & visualization at scale | Make ReplaySketch's authoring, replay, and visualization handle the same magnitudes as the sim they configure: programmatic/procedural generation of large command sets and initial conditions (not hand-entry); streaming + LOD + culling in the replay viewport (reuse [B5](../track-b-scale.md) instancing and [B7](variable-fidelity.md) fidelity for visualization); bounded-memory loading of long/large recordings; and authoring/replay throughput tracked by [B1](../track-b-scale.md) benchmarks. Keeps scenario tooling off the critical path as entity/command counts grow. Mirrors WorldBuilder's [B4a-7](larger-maps.md) large-population authoring. | Not started |
-| A5-6. WorldBuilder baseline | Establish WorldBuilder as a functional baseline scenario-authoring tool, before B4a scales it. Audit the tool's current functional state: what can be authored, saved, loaded, and played at normal map sizes; where the basic author → save → load → play round-trip works and where it fails. Document functional gaps for B4a to address. Unlike A5-1 through A5-5, this sub-phase does not depend on A1 or A4 — it is WorldBuilder tooling, not the headless sim pipeline — so it can start in Stage 1 alongside B4a, and [B4a](larger-maps.md) depends on it completing. | Not started |
+| A5-5. Authoring & visualization at scale | Make ReplaySketch's authoring, replay, and visualization handle the same magnitudes as the sim they configure: programmatic/procedural generation of large command sets and initial conditions (not hand-entry); streaming + LOD + culling in the replay viewport (reuse [B5](../track-b-scale.md) instancing and [B7](b7-variable-fidelity.md) fidelity for visualization); bounded-memory loading of long/large recordings; and authoring/replay throughput tracked by [B1](../track-b-scale.md) benchmarks. Keeps scenario tooling off the critical path as entity/command counts grow. Mirrors WorldBuilder's [B4a-7](b4a-larger-maps.md) large-population authoring. | Not started |
+| A5-6. WorldBuilder baseline | Establish WorldBuilder as a functional baseline scenario-authoring tool, before B4a scales it. Audit the tool's current functional state: what can be authored, saved, loaded, and played at normal map sizes; where the basic author → save → load → play round-trip works and where it fails. Document functional gaps for B4a to address. Unlike A5-1 through A5-5, this sub-phase does not depend on A1 or A4. It is WorldBuilder tooling, not the headless sim pipeline, so it can start in Stage 1 alongside B4a, and [B4a](b4a-larger-maps.md) depends on it completing. | Not started |
 
 ---
 
 ## 7. Sequencing notes
 
-- A5-1/3 can begin as soon as the [A1 host](headless-host.md) and [A1-5 run outputs](headless-host.md)
-  exist — A5-1 needs the host's input/injection + initial-state path; A5-3 needs the recorded
+- A5-1/3 can begin as soon as the [A1 host](a1-headless-host.md) and [A1-5 run outputs](a1-headless-host.md)
+  exist: A5-1 needs the host's input/injection + initial-state path; A5-3 needs the recorded
   outputs.
 - A5-2 (sweeps) depends on the [A4 harness](../track-a-foundations.md) (it expands and
-  dispatches the matrix) and pairs naturally with [B1 benchmarks](track-b-scale.md).
+  dispatches the matrix) and pairs naturally with [B1 benchmarks](../track-b-scale.md).
 - A5-4 (divergence localization) depends on A1-5's tiered recording (T1/T2) and the A5-3
-  comparator; it is what lets [B3](track-b-scale.md) (parallelism) and
-  [B6](distributed-simulation.md) (sharding) be debugged by pinpointing where a run drifts.
+  comparator; it is what lets [B3](../track-b-scale.md) (parallelism) and
+  [B6](b6-distributed-simulation.md) (sharding) be debugged by pinpointing where a run drifts.
 - A5-5 pairs with B4a-7 (large-population authoring) so the scenario author and replay tools
   scale together.
 - A5-6 (WorldBuilder baseline) is an early-start sub-phase. It only requires P7, can run in
@@ -263,9 +263,9 @@ classDiagram
 
 ## 9. Related
 
-- Headless/FTRT host (produces the runs/recordings A5 consumes): [`headless-host.md`](headless-host.md)
+- Headless/FTRT host (produces the runs/recordings A5 consumes): [`a1-headless-host.md`](a1-headless-host.md)
 - Experiment framework seams & harness (sweeps, domain model): [`../track-a-foundations.md`](../track-a-foundations.md)
-- Distributed sim (validated via §5 localization): [`distributed-simulation.md`](distributed-simulation.md)
-- Variable fidelity (fidelity overlay): [`variable-fidelity.md`](variable-fidelity.md)
-- Larger maps (spatial authoring substrate): [`larger-maps.md`](larger-maps.md)
+- Distributed sim (validated via §5 localization): [`b6-distributed-simulation.md`](b6-distributed-simulation.md)
+- Variable fidelity (fidelity overlay): [`b7-variable-fidelity.md`](b7-variable-fidelity.md)
+- Larger maps (spatial authoring substrate): [`b4a-larger-maps.md`](b4a-larger-maps.md)
 - Relaxed-determinism Decision: [`../open-questions.md`](../open-questions.md)

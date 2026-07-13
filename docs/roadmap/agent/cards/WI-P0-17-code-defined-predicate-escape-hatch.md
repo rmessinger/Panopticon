@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-17` — Code-defined predicate escape hatch
+# Task Card `WI-P0-17`: Code-defined predicate escape hatch
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-17` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -14,18 +14,18 @@
 
 Add a `CodeAssertion` type: a named C# predicate registered by name that can be referenced
 from a scenario's assertion list. This is the escape hatch for invariants that exceed the
-JSON path/operator vocabulary — e.g., "unit count is distinct (no duplicates)". The registration
+JSON path/operator vocabulary: e.g., "unit count is distinct (no duplicates)". The registration
 is in-process code; the scenario JSON references the predicate by its registered name.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4` — "escape hatch of code-defined
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4`: "escape hatch of code-defined
   (C#) predicates (registered by name, referenced from the scenario)".
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` — the base class and
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: the base class and
   the three existing subtypes; `CodeAssertion` is a fourth subtype.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` — needs a static
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`: needs a static
   registration table and must dispatch `CodeAssertion` evaluations through it.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs` — the
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
   `CodeDefinedPredicateEscapeHatch_Registered_EvaluatesCorrectly` stub to unblock.
 
 ## Steps
@@ -93,7 +93,7 @@ is in-process code; the scenario JSON references the predicate by its registered
      evaluates to `Passed=false` with a clear message.
    - `CodeAssertion_RegistryHit_ReportsPredicateResult`: register a predicate that returns `true`,
      build a `CodeAssertion` referencing it, serialize/deserialize the assertion, call `Evaluate`
-     with `null` game (verify the predicate call path works with a stub — or use `default!` if the
+     with `null` game (verify the predicate call path works with a stub, or use `default!` if the
      predicate ignores the `Game` argument in the test).
    - `CodeAssertion_Json_RoundTrips`: serialize and deserialize a `CodeAssertion` with
      `kind == "code"`.
@@ -101,9 +101,9 @@ is in-process code; the scenario JSON references the predicate by its registered
 ## Files likely to change
 
 - `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` — add `CodeAssertion`
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: add `CodeAssertion`
   subtype and `[JsonDerivedType]` attribute.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs` — unblock stub.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: unblock stub.
 - `src/OpenSage.Tools.ReplaySketch.Tests/CodeAssertionTests.cs` (new unit tests)
 
 ## Acceptance criteria
@@ -129,7 +129,7 @@ dotnet format src --verify-no-changes
 
 - `CodeAssertionRegistry` is a simple static dictionary. Do not add thread-safety, DI
   integration, or dynamic loading.
-- `InvariantAssertion` subtypes are separate from `CodeAssertion` — a code-defined invariant
+- `InvariantAssertion` subtypes are separate from `CodeAssertion`: a code-defined invariant
   (per-tick check) is not in scope for this card. If needed later, it can be added as a fifth
   subtype.
 

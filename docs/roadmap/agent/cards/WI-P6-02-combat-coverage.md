@@ -1,9 +1,9 @@
-# Task Card: `WI-P6-02` — Combat coverage
+# Task Card `WI-P6-02`: Combat coverage
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-02` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-2, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): sub-phase P6-2, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,17 +16,17 @@ Verify and close the baseline combat path: weapon fire applies damage through `D
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:76-95` — P6 verify-and-close design and combat sub-phase.
-- `docs/roadmap/implementation-checklist.md:283-286` — checklist ACs for weapon/damage/death coverage.
-- `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs:101-140` — target assignment and weapon firing.
-- `src/OpenSage.Game/Logic/Object/Weapon/WeaponTarget.cs:36-46` — target damage dispatch.
-- `src/OpenSage.Game/Logic/Object/Weapon/WeaponEffects/DamageNugget.cs:115-126` — weapon nugget damage execution.
-- `src/OpenSage.Game/Logic/Object/Damage/DamageModule.cs:9-18` and `:51-75` — damage callbacks and damage-type helpers.
-- `src/OpenSage.Game/Logic/Object/Body/ActiveBody.cs:58-83` and `:302-361` — health reduction, damage callbacks, and death trigger.
-- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs:29-33` and `:85-123` — current fire-weapon update behavior and parsed data.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1284-1337` — `Kill`/`OnDie` path and selection side effects.
-- `src/OpenSage.Game.Tests/Logic/Object/Body/ActiveBodyTests.cs:6-28` — existing active-body test style.
-- `src/OpenSage.Game.Tests/Logic/Object/ModuleTest.cs:5-12` — module test base.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:76-95`: P6 verify-and-close design and combat sub-phase.
+- `docs/roadmap/implementation-checklist.md:283-286`: checklist ACs for weapon/damage/death coverage.
+- `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs:101-140`: target assignment and weapon firing.
+- `src/OpenSage.Game/Logic/Object/Weapon/WeaponTarget.cs:36-46`: target damage dispatch.
+- `src/OpenSage.Game/Logic/Object/Weapon/WeaponEffects/DamageNugget.cs:115-126`: weapon nugget damage execution.
+- `src/OpenSage.Game/Logic/Object/Damage/DamageModule.cs:9-18` and `:51-75`: damage callbacks and damage-type helpers.
+- `src/OpenSage.Game/Logic/Object/Body/ActiveBody.cs:58-83` and `:302-361`: health reduction, damage callbacks, and death trigger.
+- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs:29-33` and `:85-123`: current fire-weapon update behavior and parsed data.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1284-1337`: `Kill`/`OnDie` path and selection side effects.
+- `src/OpenSage.Game.Tests/Logic/Object/Body/ActiveBodyTests.cs:6-28`: existing active-body test style.
+- `src/OpenSage.Game.Tests/Logic/Object/ModuleTest.cs:5-12`: module test base.
 
 ## Steps
 

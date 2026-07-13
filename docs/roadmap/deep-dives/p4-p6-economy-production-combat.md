@@ -1,10 +1,10 @@
 # Deep Dive: Economy & Combat Verification (P4 & P6)
 
 > Expands phases P4 (economy loop) and P6 (combat & command) of
-> [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of the
+> [Track P: Playable Baseline](../track-p-playable-baseline.md). Part of the
 > [Large-Scale Simulation Roadmap](../README.md).
 >
-> P5 (construction/production mechanism) is covered in [`skirmish-ai.md`](skirmish-ai.md) §1.4 (design) and appendix §1.4,
+> P5 (construction/production mechanism) is covered in [`p2-p5-skirmish-ai.md`](p2-p5-skirmish-ai.md) §1.4 (design) and appendix §1.4,
 > since the AI drives it. This document covers the economy loop (P4) and combat/command (P6).
 >
 > Audience: human overview of the P4/P6 verification design.
@@ -31,7 +31,7 @@ supply-truck/worker/dozer cycles and power.
   Verify this in `ProductionUpdate` and the build/queue path, and add it if missing.
 
 ### Design (verify & close)
-1. Prove the full cycle end-to-end with a [P0 harness](playable-baseline-harness.md) scenario:
+1. Prove the full cycle end-to-end with a [P0 harness](p0-playable-baseline-harness.md) scenario:
    harvester gathers → `BankAccount` balance rises → a queued unit/structure debits the balance →
    spend is blocked when funds are insufficient. Assert money is never negative, a P7 invariant.
 2. Confirm or implement the debit: ensure `ProductionUpdate.QueueProduction/QueueUpgrade`
@@ -58,7 +58,7 @@ uses. Fill the gaps surfaced by P7's match run.
 
 ### Current code (grounded): mostly present, with gaps
 - Selection & command path: `SelectionSystem.cs`, `OrderGeneratorInputHandler.cs`,
-  `Mods.Generals/Gui/GeneralsControlBar.cs` — the UI/control-bar → order-generation → dispatch path.
+  `Mods.Generals/Gui/GeneralsControlBar.cs`: the UI/control-bar → order-generation → dispatch path.
 - Order generation: `OrderGenerator` base (`Logic/OrderGenerators/OrderGenerator.cs:12-33`);
   command generators read selection + world position before creating `Order`s; dispatch via
   `NetworkMessageBuffer.Tick` → `OrderProcessor.Process` (`OrderProcessor.cs:42-566`).
@@ -71,16 +71,16 @@ uses. Fill the gaps surfaced by P7's match run.
   selection invalidation on death and ownership cleanup are unverified.
 
 ### Design (verify & close)
-1. Command coverage matrix: enumerate the control-bar actions a baseline match uses — move, attack,
-   force-attack, build, produce, sell, repair, ability/special-power, rally point — and verify each
+1. Command coverage matrix: enumerate the control-bar actions a baseline match uses: move, attack,
+   force-attack, build, produce, sell, repair, ability/special-power, rally point, and verify each
    maps button → `OrderType` → a real `OrderProcessor` handler. The handled set is already known in
-   `OrderProcessor.cs:42-566`. Author each as a [P0 harness](playable-baseline-harness.md) command and
+   `OrderProcessor.cs:42-566`. Author each as a [P0 harness](p0-playable-baseline-harness.md) command and
    assert the effect.
 2. Combat coverage: verify weapon fire → `DamageModule` → `ActiveBody` health → `Kill/OnDie` for
    the unit/damage-type set the baseline factions field. Assert kills, death cleanup, and selection
    invalidation on death.
 3. Death cleanup: ensure dying objects are removed from selection and owner tracking. This ties
-   directly into the shared death notification used by [victory-defeat](victory-defeat.md) P3-4.
+   directly into the shared death notification used by [victory-defeat](p3-victory-defeat.md) P3-4.
 
 ### P6 sub-phases
 | Phase | Goal | Status |
@@ -104,8 +104,8 @@ uses. Fill the gaps surfaced by P7's match run.
   since the AI needs a working economy to spend. P6 is largely verification and can proceed once
   units exist.
 - Both feed P7: P4 supplies the "money never negative" invariant, P6 the "no lost/duplicated units"
-  invariant. Both are asserted through the [P0 harness](playable-baseline-harness.md).
-- P6-3 shares the death notification introduced for [P3-4](victory-defeat.md). Coordinate them.
+  invariant. Both are asserted through the [P0 harness](p0-playable-baseline-harness.md).
+- P6-3 shares the death notification introduced for [P3-4](p3-victory-defeat.md). Coordinate them.
 
 ## Scenario Matrix
 
@@ -192,7 +192,7 @@ classDiagram
 
 ## Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
-- Production mechanism + AI that spends: [`skirmish-ai.md`](skirmish-ai.md) (P2/P5)
-- Death→defeat event shared with: [`victory-defeat.md`](victory-defeat.md) (P3)
-- Harness for the assertions: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
+- Production mechanism + AI that spends: [`p2-p5-skirmish-ai.md`](p2-p5-skirmish-ai.md) (P2/P5)
+- Death→defeat event shared with: [`p3-victory-defeat.md`](p3-victory-defeat.md) (P3)
+- Harness for the assertions: [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)

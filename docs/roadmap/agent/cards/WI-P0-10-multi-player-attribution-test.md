@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-10` — Multi-player command attribution test
+# Task Card `WI-P0-10`: Multi-player command attribution test
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-10` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-2, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-2, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -13,19 +13,19 @@
 ## Goal
 
 Add a unit test that verifies a scenario with three players of mixed factions routes each player's
-commands to the correct engine `PlayerIndex` in the exported orders — confirming that the
+commands to the correct engine `PlayerIndex` in the exported orders: confirming that the
 `ownerIdx + 2` convention is correct and that no cross-player contamination occurs.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:55-95` — the export loop:
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:55-95`: the export loop:
   `ownerIdx` iterates `scenario.Players`; `playerIndex = ownerIdx + 2` is the engine-side
   player index (`+2` because slots 0 and 1 are reserved for neutral/civilian in Generals).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs` — `FactionIndex`, `Actions`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91` — `CreateOpen(...)` factory.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` — `PositionCommandArgument`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PositionSpec.cs` — `NormalizedPosition`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs` — test style reference; note
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs`: `FactionIndex`, `Actions`.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91`: `CreateOpen(...)` factory.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `PositionCommandArgument`.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/PositionSpec.cs`: `NormalizedPosition`.
+- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference; note
   how `MapMetadataService.CreateForTesting(...)` and `ReplayExporter` are constructed.
 
 ## Steps
@@ -35,7 +35,7 @@ commands to the correct engine `PlayerIndex` in the exported orders — confirmi
 
 2. Add one test `ThreePlayerScenario_RoutesCommandsToCorrectPlayerIndex`:
    - Build a `ReplayScenario` with three `PlayerSlotConfig` entries. Assign distinct
-     `FactionIndex` values (e.g., 2, 4, 6 — USA, GLA, and any third value). Give each player
+     `FactionIndex` values (e.g., 2, 4, 6: USA, GLA, and any third value). Give each player
      exactly one `ActionEntry` whose `Type` is `null` and whose `Command` is
      `CommandSpec.CreateOpen(OrderType.MoveTo, new PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f)))`,
      with `FixedTiming(100)`.
@@ -75,7 +75,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not change `ReplayExporter`, `PlayerSlotConfig`, or the `ownerIdx + 2` convention — this
+- Do not change `ReplayExporter`, `PlayerSlotConfig`, or the `ownerIdx + 2` convention: this
   card only adds tests that confirm the existing behaviour.
 - Do not test AI or game-file-dependent paths; these are pure export unit tests.
 - If the `ReplayFile` read-back API is unavailable without game files, assert directly on the
