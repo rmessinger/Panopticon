@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-01` — PlayerEliminated regression scenario
+# Task Card `WI-P7-01`: PlayerEliminated regression scenario
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-01` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-1 PlayerEliminated, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-1 PlayerEliminated, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,19 +16,19 @@ Create the checked-in P7 PlayerEliminated scenario that drives a human player's 
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — expected P7 end-state outcomes.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — deterministic scenario storage and scripting approach.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariant set and per-tick failure behavior.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:111-111` — P7-1 sub-phase row.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:279-291` — Regression directory, JSON format, and pending P3 `GameOutcome` query path.
-- `docs/roadmap/implementation-checklist.md:337-344` — six scenario files and expected `GameOutcome` ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22` — scenario JSON shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24` — player faction/team/action slots.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20` — action entries and open command payloads.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96` — `CreateOpen` for arbitrary `OrderType` commands.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127` — run-and-assert entry point and frame timeout.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — outcome assertion surface; replace placeholder `InProgress` behavior after P3.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242` — final P7 matrix gate that will consume this scenario.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: expected P7 end-state outcomes.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario storage and scripting approach.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariant set and per-tick failure behavior.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:111-111`: P7-1 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:279-291`: Regression directory, JSON format, and pending P3 `GameOutcome` query path.
+- `docs/roadmap/implementation-checklist.md:337-344`: six scenario files and expected `GameOutcome` ACs.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: player faction/team/action slots.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries and open command payloads.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96`: `CreateOpen` for arbitrary `OrderType` commands.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point and frame timeout.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; replace placeholder `InProgress` behavior after P3.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix gate that will consume this scenario.
 
 ## Steps
 

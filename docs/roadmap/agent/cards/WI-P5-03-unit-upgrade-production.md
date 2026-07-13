@@ -1,9 +1,9 @@
-# Task Card: `WI-P5-03` — Unit and upgrade production
+# Task Card `WI-P5-03`: Unit and upgrade production
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-03` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-2, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md): sub-phase P5-2, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,21 +16,21 @@ Verify and close structure production end-to-end: units queued through `Producti
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:264-266` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69` — P5 production and upgrade scope.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93` — P5-2 upgrades row.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:257-263` — queue/spawn mechanism.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:275-277` — upgrade completion/application mechanism.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:148-168` — upgrade order, debit, cancel, and refund.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-224` — unit order, producer selection, queueing, cancel, and refund.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:59-156` — queue advancement and upgrade grant.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:343-430` — unit creation, ownership, spawn transform, natural rally point, and explicit rally point.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:472-549` — `QueueProduction`, `CancelProduction`, `QueueUpgrade`, and `CancelUpgrade`.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:551-551` — queue-capacity sentinel.
-- `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs:130-145` — player/object upgrade application.
-- `src/OpenSage.Game/Logic/Player.cs:429-498` — player upgrade queue/completion state.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1232-1247` — object upgrade application and module updates.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base.
+- `docs/roadmap/implementation-checklist.md:264-266`: checklist item and exact AC to satisfy.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 production and upgrade scope.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-2 upgrades row.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:257-263`: queue/spawn mechanism.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:275-277`: upgrade completion/application mechanism.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:148-168`: upgrade order, debit, cancel, and refund.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-224`: unit order, producer selection, queueing, cancel, and refund.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:59-156`: queue advancement and upgrade grant.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:343-430`: unit creation, ownership, spawn transform, natural rally point, and explicit rally point.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:472-549`: `QueueProduction`, `CancelProduction`, `QueueUpgrade`, and `CancelUpgrade`.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:551-551`: queue-capacity sentinel.
+- `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs:130-145`: player/object upgrade application.
+- `src/OpenSage.Game/Logic/Player.cs:429-498`: player upgrade queue/completion state.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1232-1247`: object upgrade application and module updates.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 

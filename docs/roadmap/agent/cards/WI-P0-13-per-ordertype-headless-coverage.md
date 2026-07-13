@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-13` — Per-OrderType headless coverage (move / attack / construct / produce / ability)
+# Task Card `WI-P0-13`: Per-OrderType headless coverage (move / attack / construct / produce / ability)
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-13` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-3, see [deep dive §3.2/§3.5](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-3, see [deep dive §3.2/§3.5](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -15,31 +15,31 @@
 Add one `[Trait("Category", "Interactive")]` integration test per gameplay-relevant `OrderType`
 (move, attack/ground, construct, produce, ability) that authors a minimal scenario via
 `HarnessRunner.RunAndAssert`, injects a `StateAssertion` verifying the expected
-`OrderProcessor` effect, and asserts it passes — confirming the full
+`OrderProcessor` effect, and asserts it passes: confirming the full
 author → export → headless-run → assert chain works for each order family.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (WI-P0-08) — `RunAndAssert` signature.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (WI-P0-07) — how
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (WI-P0-08): `RunAndAssert` signature.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (WI-P0-07): how
   assertions are wired.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (WI-P0-07) — `StateAssertion`
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (WI-P0-07): `StateAssertion`
   fields (`Path`, `Op`, `Value`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91` — `CreateOpen(...)`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` — `PositionCommandArgument`,
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91`: `CreateOpen(...)`.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `PositionCommandArgument`,
   `IntegerCommandArgument`, `HandleCommandArgument` (WI-P0-11).
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs` — canonical names: `MoveTo`, `ForceAttackGround`,
+- `src/OpenSage.Game/Logic/Orders/OrderType.cs`: canonical names: `MoveTo`, `ForceAttackGround`,
   `BuildObject`, `CreateUnit`, `SpecialPower`.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:42-566` — the authoritative list of handled
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:42-566`: the authoritative list of handled
   order types; confirm each target type has a real handler (not the default "Unimplemented" log).
-- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json` — USA faction
+- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json`: USA faction
   definition names to reuse for construct/produce steps (barracks name, ranger name).
-- `src/OpenSage.Game.Tests/` — existing Interactive test style (look for `[GameFact]` usage).
+- `src/OpenSage.Game.Tests/`: existing Interactive test style (look for `[GameFact]` usage).
 
 ## Steps
 
 1. Create `src/OpenSage.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs` (or add to
-   `OpenSage.Game.Tests` if `GameInstallation` is more accessible there — use whichever project
+   `OpenSage.Game.Tests` if `GameInstallation` is more accessible there. Use whichever project
    already has Interactive test infrastructure and a `GameInstallation` fixture).
 
 2. Add a shared helper `BuildSingleCommandScenario(CommandSpec command, PositionSpec position,
@@ -85,7 +85,7 @@ author → export → headless-run → assert chain works for each order family.
 4. If any order type is handled by the "Unimplemented order type" default branch in
    `OrderProcessor` (confirmed by checking `OrderProcessor.cs:553-560`), mark that test
    `[Trait("Category", "Interactive")]` and add a comment: `// Known gap: handler not
-   implemented — test documents the gap.` Do not fail the card on this; surfacing the gap
+   implemented: test documents the gap.` Do not fail the card on this; surfacing the gap
    is the goal.
 
 ## Files likely to change
@@ -115,7 +115,7 @@ dotnet test src --filter "FullyQualifiedName~OrderTypeCoverage"
 
 ## Out of scope / guardrails
 
-- Do not implement missing `OrderProcessor` handlers — document gaps in comments only.
+- Do not implement missing `OrderProcessor` handlers: document gaps in comments only.
 - Do not add non-Interactive variants of these tests (they require game files for map/asset loading).
 - Do not author six-phase skirmish scenarios here; each test is the minimal one-command scenario
   needed to exercise the target `OrderType`.

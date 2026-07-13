@@ -1,13 +1,13 @@
-# Task Card: `WI-A4-02` — AI policy-selection config + factory
+# Task Card `WI-A4-02`: AI policy-selection config + factory
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-A4-02` |
-| Roadmap phase | [Track A · A4](../../track-a-foundations.md) — Experiment framework seams & harness, AI decision policy seam |
+| Roadmap phase | [Track A · A4](../../track-a-foundations.md): Experiment framework seams & harness, AI decision policy seam |
 | Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-A4-01` (Done) — `IAIDecisionPolicy`/`RuleBasedAIDecisionPolicy` must exist first |
+| Prerequisites | `WI-A4-01` (Done): `IAIDecisionPolicy`/`RuleBasedAIDecisionPolicy` must exist first |
 | Diagrams | [Pluggable AI §8](../../deep-dives/a4-pluggable-ai.md#8-architecture-diagrams) |
 
 ## Goal
@@ -20,11 +20,11 @@ neural-network policy (`WI-A4-03`) plugs into without touching `Player`/`AIPlaye
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/a4-pluggable-ai.md` §2.1 — selection design.
-- `src/OpenSage.Game/Logic/Player.cs:763-777` — current `SkirmishAIPlayer` vs. `AIPlayer` vs.
+- `docs/roadmap/deep-dives/a4-pluggable-ai.md` §2.1: selection design.
+- `src/OpenSage.Game/Logic/Player.cs:763-777`: current `SkirmishAIPlayer` vs. `AIPlayer` vs.
   `null` selection based on `isHuman`/`isSkirmish`/`side`, in `Player.CreateNew(...)`.
 - `src/OpenSage.Game/Logic/AI/AIPlayer.cs`, `RuleBasedAIDecisionPolicy.cs`,
-  `IAIDecisionPolicy.cs` (all added by `WI-A4-01`) — the interface/constructor shape to plug the
+  `IAIDecisionPolicy.cs` (all added by `WI-A4-01`): the interface/constructor shape to plug the
   factory output into.
 - Look for how other config-selected seams in this codebase already do this (e.g. search for
   existing `*Type` enum + factory pairs referenced from `seams.md`'s Experiment seams table) to
@@ -33,7 +33,7 @@ neural-network policy (`WI-A4-03`) plugs into without touching `Player`/`AIPlaye
 ## Steps
 
 1. Add an `AIDecisionPolicyType` (or similarly named) enum with at least `RuleBased` (default).
-   Do not add a `NeuralNetwork` member yet — `WI-A4-03` adds that when the implementation exists.
+   Do not add a `NeuralNetwork` member yet: `WI-A4-03` adds that when the implementation exists.
 2. Add a small factory (e.g. `AIDecisionPolicyFactory.Create(AIDecisionPolicyType, Player owner)`
    returning `IAIDecisionPolicy`) that currently only produces `RuleBasedAIDecisionPolicy`.
 3. Thread the policy-identifier value through wherever skirmish slot config already flows into
@@ -63,7 +63,7 @@ neural-network policy (`WI-A4-03`) plugs into without touching `Player`/`AIPlaye
 - [ ] Exactly one factory resolves the identifier to an implementation; no other call site
       branches on policy type.
 - [ ] No change to `Player.CreateNew(...)`'s existing `isHuman`/`isSkirmish`/`side` branching for
-      *which* AI class (`SkirmishAIPlayer`/`AIPlayer`/`null`) is created — only which policy that
+      *which* AI class (`SkirmishAIPlayer`/`AIPlayer`/`null`) is created: only which policy that
       class is handed.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
@@ -79,11 +79,11 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not implement a neural-network policy or add a `NeuralNetwork` enum member with no backing
-  implementation — enum members must correspond to real, working implementations.
+  implementation: enum members must correspond to real, working implementations.
 - Do not change which slots get an `AIPlayer` at all (human vs. AI slot assignment is a P1
   concern, not this card's).
 - If the existing skirmish slot config storage format is ambiguous or would require a save-format
-  version bump to add the identifier, stop and mark `Blocked` — flag it in `.exchange` for a
+  version bump to add the identifier, stop and mark `Blocked`. Flag it in `.exchange` for a
   design decision rather than guessing at a save-compat shortcut.
 
 ## On completion

@@ -1,4 +1,4 @@
-# Task Card: `WI-MC-02` — Manifest model and `--list` command
+# Task Card `WI-MC-02`: Manifest model and `--list` command
 
 | Field | Value |
 |---|---|
@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-MC-01` |
-| Diagrams | N/A — standalone tool, see plan |
+| Diagrams | N/A: standalone tool, see plan |
 
 ## Goal
 
@@ -23,7 +23,7 @@ print them as a console table, filtered by optional `--game` and `--category` fl
    `bfme2-rotwk`). See the [game slug table](../../plans/mod-collector.md#game-slug-table).
    Populate with the seed entries from the plan (Contra, Shockwave, NProject Mod, Edain Mod,
    Age of the Ring, and a handful of map packs per game). For each entry, verify that
-   `downloadUrl` is a direct `.zip` download before committing — use `curl -I <url>` to check
+   `downloadUrl` is a direct `.zip` download before committing. Use `curl -I <url>` to check
    `Content-Type: application/zip` (or similar). If a URL cannot be verified, leave
    `downloadUrl` as `""` and mark the entry with `"status": "unverified"`.
 

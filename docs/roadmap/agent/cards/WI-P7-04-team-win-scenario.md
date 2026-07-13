@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-04` — TeamWin regression scenario
+# Task Card `WI-P7-04`: TeamWin regression scenario
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-04` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-4 TeamWin, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-4 TeamWin, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,17 +16,17 @@ Create the checked-in P7 TeamWin scenario where both losing-team players are eli
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — TeamWin expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — deterministic scenario authoring requirements.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariants and per-tick reporting.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:114-114` — P7-4 sub-phase row.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:194-200` — `GameOutcome` fields including `WinningTeam`.
-- `docs/roadmap/implementation-checklist.md:337-344` — scenario and expected outcome ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24` — player slot `Team` assignment.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22` — scenario JSON shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127` — run-and-assert entry point.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — outcome assertion surface; extend for `WinningTeam` if needed.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242` — final P7 matrix consumer.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: TeamWin expected outcome.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and per-tick reporting.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:114-114`: P7-4 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:194-200`: `GameOutcome` fields including `WinningTeam`.
+- `docs/roadmap/implementation-checklist.md:337-344`: scenario and expected outcome ACs.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: player slot `Team` assignment.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for `WinningTeam` if needed.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
 
 ## Steps
 

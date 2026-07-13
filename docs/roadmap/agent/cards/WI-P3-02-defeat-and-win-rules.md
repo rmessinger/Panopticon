@@ -1,9 +1,9 @@
-# Task Card: `WI-P3-02` — Defeat and win rules
+# Task Card `WI-P3-02`: Defeat and win rules
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-02` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-2, see [deep dive §1.2](../../deep-dives/p3-victory-defeat.md#12-defeat-detection) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-2, see [deep dive §1.2](../../deep-dives/p3-victory-defeat.md#12-defeat-detection) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,18 +16,18 @@ Implement the default configurable defeat rule and win rule: a player is defeate
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:48-72` — default Generals defeat rule, win rule, ownership dependency, and configurable-rule seam.
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:118-124` — P3-1/P3-2/P3-3 sequencing.
-- `docs/roadmap/implementation-checklist.md:205-208` — defeat-rule AC.
-- `docs/roadmap/implementation-checklist.md:212-214` — all-non-allies-defeated win AC.
-- `src/OpenSage.Game/Logic/Player.cs:126-134` — P1 ownership/relationship fields consumed by this card.
-- `src/OpenSage.Game/Logic/Player.cs:350-380` — existing production-prerequisite scan; do not copy this pattern for victory scans.
-- `src/OpenSage.Game/Logic/Player.cs:785-804` and `src/OpenSage.Game/Logic/Player.cs:863-884` — allies/enemies and relationship lookup.
-- `src/OpenSage.Game/Logic/Player.cs:807-839` — maintained owned-object set and counts from `WI-P1-07`.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291-297` and `src/OpenSage.Game/Logic/Object/GameObject.cs:586-631` — owner, structure flag, and kind checks.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:788-798` — object-level production capability check.
-- `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:148-218` and `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:379-383` — relevant structure/command/rebuild kind flags.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70` — headless test base; tests must run in CI.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:48-72`: default Generals defeat rule, win rule, ownership dependency, and configurable-rule seam.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:118-124`: P3-1/P3-2/P3-3 sequencing.
+- `docs/roadmap/implementation-checklist.md:205-208`: defeat-rule AC.
+- `docs/roadmap/implementation-checklist.md:212-214`: all-non-allies-defeated win AC.
+- `src/OpenSage.Game/Logic/Player.cs:126-134`: P1 ownership/relationship fields consumed by this card.
+- `src/OpenSage.Game/Logic/Player.cs:350-380`: existing production-prerequisite scan; do not copy this pattern for victory scans.
+- `src/OpenSage.Game/Logic/Player.cs:785-804` and `src/OpenSage.Game/Logic/Player.cs:863-884`: allies/enemies and relationship lookup.
+- `src/OpenSage.Game/Logic/Player.cs:807-839`: maintained owned-object set and counts from `WI-P1-07`.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:291-297` and `src/OpenSage.Game/Logic/Object/GameObject.cs:586-631`: owner, structure flag, and kind checks.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:788-798`: object-level production capability check.
+- `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:148-218` and `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:379-383`: relevant structure/command/rebuild kind flags.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 

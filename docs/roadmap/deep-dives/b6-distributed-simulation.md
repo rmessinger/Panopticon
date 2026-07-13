@@ -1,6 +1,6 @@
 # Deep Dive: Distributed Simulation
 
-> Expands phase B6 of [Track B — Scale](../track-b-scale.md). Part of the
+> Expands phase B6 of [Track B: Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
 > Audience: human overview of the distributed-simulation design. Code references are in the agent-context appendix at the bottom.
@@ -12,7 +12,7 @@ machines. The design uses spatial sharding and domain-parameterized handoff rule
 
 The design is domain-parameterized rather than RTS-only. Partitioning, halo derivation, handoff,
 and interaction resolution are driven by the [Simulation Domain Model seam (A4)](../track-a-foundations.md), so the infrastructure also serves non-RTS simulations. The domain's topology model selects the partitioning scheme:
-- 2-D spatial grid for RTS/open-field battles (the reference domain; built on [B4a-5 chunks](larger-maps.md)).
+- 2-D spatial grid for RTS/open-field battles (the reference domain; built on [B4a-5 chunks](b4a-larger-maps.md)).
 - Graph/network partitioning for transport/logistics simulations (roads, rail, utility networks): partition the graph and treat cut edges as boundaries.
 - Zone/region adjacency for city builders: partition by districts and treat resource/utility/traffic flow as cross-border coupling.
 RTS spatial sharding is the first implementation; the rest of this document notes where each problem is domain-parameterized.
@@ -23,18 +23,18 @@ RTS spatial sharding is the first implementation; the rest of this document note
 
 Spatial sharding is the last major scale phase because it composes the earlier work:
 
-- [A1 Headless host](headless-host.md) — a shard is a headless `SimulationHost` instance;
+- [A1 Headless host](a1-headless-host.md): a shard is a headless `SimulationHost` instance;
   no shard renders. The host's logic-only step and run-output hooks are prerequisites.
-- [A2 Reproducibility & statistical stability](../track-a-foundations.md) — per the
+- [A2 Reproducibility & statistical stability](../track-a-foundations.md): per the
   [relaxed-determinism Decision](../open-questions.md), shards do not agree bit-for-bit.
   Correctness is defined by invariants and statistical closeness to a single-shard reference.
-  The hierarchical signature tree (A1-5) plus [A5-4 divergence localization](visualization.md)
+  The hierarchical signature tree (A1-5) plus [A5-4 divergence localization](a5-visualization.md)
   screen for drift and localize it instead of acting as an equality gate.
-- [B3 Parallel/data-oriented logic](../track-b-scale.md) — the data-oriented storage and
+- [B3 Parallel/data-oriented logic](../track-b-scale.md): the data-oriented storage and
   safe-parallel update model are what make a region's slice cheap to step and to serialize.
-- [B4a-5 Chunked terrain storage](larger-maps.md) — the chunk/region concept used for
+- [B4a-5 Chunked terrain storage](b4a-larger-maps.md): the chunk/region concept used for
   large-map streaming is the natural unit of spatial partitioning for shards.
-- [A4 Simulation Domain Model seam](../track-a-foundations.md) — supplies the topology model
+- [A4 Simulation Domain Model seam](../track-a-foundations.md): supplies the topology model
   (grid / graph / zones), interaction locality (halo derivation), resolution authority, and
   metrics, so the sharding machinery here is domain-parameterized rather than RTS-specific.
 
@@ -58,21 +58,21 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 4. Boundary synchronization. Per-frame exchange of halo state and handoff events, frame-
    aligned so neighbouring shards stay in step at the region seams (frame-sync at seams is
    required structurally, independent of the relaxed bit-exactness stance).
-5. Cross-shard interactions. Effects that span a boundary — combat/abilities (RTS), a vehicle
+5. Cross-shard interactions. Effects that span a boundary: combat/abilities (RTS), a vehicle
    traversing a cut edge or a passenger trip (transport), a utility/resource flow across districts
-   (city) — need a domain-defined resolution-authority rule (RTS: initiator's shard;
+   (city), need a domain-defined resolution-authority rule (RTS: initiator's shard;
    transport: edge owner; flows: conservation at the cut) to avoid double resolution.
 6. Cross-shard routing/flow. Long-range coupling spanning partitions: a coarse global graph
    for routing + local per-shard refinement (RTS pathing and transport routing), or relayed
    requests; for flow domains this is cross-boundary flow/conservation rather than path
    requests.
 7. Partition-independence (within tolerance). Results should be statistically equivalent
-   regardless of how the world is partitioned — not bit-identical (per the
+   regardless of how the world is partitioned, not bit-identical (per the
    [relaxed-determinism Decision](../open-questions.md)). Validated by checking conservation
    invariants and comparing aggregate metrics against a single-shard reference within tolerance,
-   using the hierarchical signature tree ([A5-4 divergence localization](visualization.md)) to
+   using the hierarchical signature tree ([A5-4 divergence localization](a5-visualization.md)) to
    pinpoint any region/entity that drifts.
-8. Fault/latency model. What happens if a shard stalls or drops — does the whole sim block
+8. Fault/latency model. What happens if a shard stalls or drops, does the whole sim block
    (true single-sim) or degrade? First pass: block (correctness over availability).
 
 ---
@@ -81,7 +81,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 
 | Phase | Goal | Status |
 |---|---|---|
-| B6-1. Partition model & boundary spec | Define the partitioning against the [domain topology model (A4)](../track-a-foundations.md) — a `IPartitionScheme`-style abstraction with a spatial-grid implementation first (built on B4a-5 chunks), then a graph-cut implementation as the first non-RTS validation domain (per the [domain-scope Decision](../open-questions.md)), with zone-adjacency for later domains — plus halo-extent derivation and the boundary message format. Pure design + simulation-on-paper. | Not started |
+| B6-1. Partition model & boundary spec | Define the partitioning against the [domain topology model (A4)](../track-a-foundations.md): a `IPartitionScheme`-style abstraction with a spatial-grid implementation first (built on B4a-5 chunks), then a graph-cut implementation as the first non-RTS validation domain (per the [domain-scope Decision](../open-questions.md)), with zone-adjacency for later domains, plus halo-extent derivation and the boundary message format. Pure design + simulation-on-paper. | Not started |
 | B6-2. Single-process multi-shard | Run N shards in one process over a partitioned world, with halo exchange + handoff through an in-memory transport. Validates correctness without networking. | Not started |
 | B6-3. Handoff & halo correctness | Make ownership handoff and halo sync frame-aligned and conservation-correct (no duplication/loss); verify aggregate metrics and the hierarchical signature tree (A1-5 recording / A5-4 localization) stay within tolerance of a single-shard reference, drilling down to localize any drifting region/entity. | Not started |
 | B6-4. Cross-shard interactions | Implement the domain-defined resolution-authority rule for boundary-spanning effects (RTS combat/abilities, transport edge traversal, city flows), so each is resolved exactly once. | Not started |
@@ -97,7 +97,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
   implementation waits on A1/A2/B3.
 - B6-2/3 run in one process first so handoff and conflict resolution can be debugged against a
   single-shard reference before networking is introduced.
-- The [result replayer/visualizer (A5-3)](visualization.md) is the validation surface. Its
+- The [result replayer/visualizer (A5-3)](a5-visualization.md) is the validation surface. Its
   run-comparison shows where a sharded run drifts beyond tolerance from the single-shard
   reference.
 - B6-7 (load balancing) is optional and last. Static sharding must be correct and scalable first.
@@ -183,8 +183,8 @@ classDiagram
 ## 7. Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
-- Headless host (a shard is a host): [`headless-host.md`](headless-host.md)
-- Larger maps / chunked storage (shard unit): [`larger-maps.md`](larger-maps.md)
+- Headless host (a shard is a host): [`a1-headless-host.md`](a1-headless-host.md)
+- Larger maps / chunked storage (shard unit): [`b4a-larger-maps.md`](b4a-larger-maps.md)
 - Open questions: [`../open-questions.md`](../open-questions.md)
 
 ---

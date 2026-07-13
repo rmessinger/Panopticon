@@ -1,6 +1,6 @@
 # Deep Dive: Victory & Defeat Conditions (P3)
 
-> Expands phase P3 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
+> Expands phase P3 of [Track P: Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the victory and defeat design. Code references are in the agent-context appendix at the bottom.
@@ -38,7 +38,7 @@ continues under normal rules; the next elimination transitions to `Decided` with
 configurable score metric. `Surrendered` covers any player, human or AI, issuing
 `OrderType.EndGame`.
 
-This is what the [P0 harness](playable-baseline-harness.md) §2.3 outcome assertions read, and what
+This is what the [P0 harness](p0-playable-baseline-harness.md) §2.3 outcome assertions read, and what
 A2's verification harness and B1's benchmarks later assert against. It is also the termination
 signal the headless run loop uses instead of today's ad hoc exit-on-enemy-CC-destruction path in
 `TestHarness/Program.cs:232-267`.
@@ -51,10 +51,10 @@ A `VictorySystem`, implemented as a `GameSystem`, runs a coarse-cadence check fr
   skirmish rules. This is the default but remains configurable/data-driven so experiments can swap
   simpler or stricter conditions. See [open-questions](../open-questions.md).
 - Ownership query (Decision): consume the maintained per-`Player` owned-object set/counts provided by
-  [P1-5](skirmish-setup.md) ownership tracking. Counts are incremented on create/transfer and
+  [P1-5](p1-skirmish-setup.md) ownership tracking. Counts are incremented on create/transfer and
   decremented on `OnDie`/`Destroy`, so checks stay O(1) rather than scanning all objects. This same
   maintained view also feeds AI and the scale tracks. See [open-questions](../open-questions.md).
-- Win rule: when all players not allied to player X are defeated, via [P1](skirmish-setup.md)
+- Win rule: when all players not allied to player X are defeated, via [P1](p1-skirmish-setup.md)
   relationships/teams, X and allies win. When the winning side is a full team, `WinningTeam` is set
   in addition to or instead of `WinningPlayer`.
 - Mutual elimination (Decision): if the last surviving command/production structures of both sides
@@ -105,39 +105,39 @@ and continue until the next elimination produces `Decided`.
 - New: `GameOutcome` type + `VictorySystem : GameSystem`; a death/ownership-change event from
   `GameObject.OnDie/Destroy`.
 - Hook: `GameLogic.Update(...)` coarse-cadence check / `Game.cs:876-959` tick.
-- Reads: the maintained per-`Player` owned-object counts from [P1-5](skirmish-setup.md), not an
-  all-objects scan, and relationships/teams from [P1](skirmish-setup.md).
+- Reads: the maintained per-`Player` owned-object counts from [P1-5](p1-skirmish-setup.md), not an
+  all-objects scan, and relationships/teams from [P1](p1-skirmish-setup.md).
 - Handle: `OrderType.EndGame` in `OrderProcessor.Process`, currently unhandled.
-- Exposes: `GameOutcome` off `GameLogic`/`IGame` for the [P0 harness](playable-baseline-harness.md)
-  and the [A5 visualizer](visualization.md).
+- Exposes: `GameOutcome` off `GameLogic`/`IGame` for the [P0 harness](p0-playable-baseline-harness.md)
+  and the [A5 visualizer](a5-visualization.md).
 
 ## 3. Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
 | P3-1. `GameOutcome` + `VictorySystem` scaffold | Add the outcome type (`OutcomeStatus`, `OutcomeReason`, `WinningPlayer`/`WinningTeam`) and a `GameSystem` that ticks a check from the logic loop; exposes `InProgress`. | Not started |
-| P3-2. Defeat & win rules | Implement defeat (real Generals rule — no command/production structures + no rebuild — as the default, configurable) and win (all non-allies defeated, via P1 teams); consumes foundational [P1-5](skirmish-setup.md) ownership tracking. | Not started |
+| P3-2. Defeat & win rules | Implement defeat (real Generals rule: no command/production structures + no rebuild, as the default, configurable) and win (all non-allies defeated, via P1 teams); consumes foundational [P1-5](p1-skirmish-setup.md) ownership tracking. | Not started |
 | P3-3. Death→defeat event | Emit a death/ownership-change notification from `GameObject.OnDie/Destroy`; `VictorySystem` reacts incrementally. | Not started |
-| P3-4. End-of-match flow | Stop sim, surface result, handle `OrderType.EndGame` (surrender by any player — human or AI), allow exit; expose `GameOutcome` for headless. | Not started |
+| P3-4. End-of-match flow | Stop sim, surface result, handle `OrderType.EndGame` (surrender by any player, human or AI), allow exit; expose `GameOutcome` for headless. | Not started |
 | P3-5. Mutual elimination → sudden death | Detect when all remaining active players are simultaneously eliminated in the same check window; set `Status = SuddenDeath` and continue play until the next elimination decides the match. | Not started |
 | P3-6. Time-limit → score decision | Implement the optional frame-count limit; on expiry, select the winner by a configurable score metric (buildings standing, units produced, etc.) and set `Reason = ScoreDecision`. | Not started |
 
 ## 4. Sequencing & dependencies
 - P3 depends on P1 because teams/relationships decide who wins and loses, and
-  [P1-5](skirmish-setup.md) ownership tracking feeds defeat detection.
-- P3 unblocks the [P0 harness](playable-baseline-harness.md) P0-4 outcome assertions and is a hard
+  [P1-5](p1-skirmish-setup.md) ownership tracking feeds defeat detection.
+- P3 unblocks the [P0 harness](p0-playable-baseline-harness.md) P0-4 outcome assertions and is a hard
   prerequisite for P7, which asserts that the match terminates with the expected `GameOutcome`.
-- The [P1-5](skirmish-setup.md) ownership tracking P3 consumes is shared with P2 AI target selection
+- The [P1-5](p1-skirmish-setup.md) ownership tracking P3 consumes is shared with P2 AI target selection
   and is also useful to the scale tracks.
 
 ## 5. Resolved design questions
-- Ownership tracking approach — Decided: maintained per-`Player` counts/owned-object set from §1.2,
+- Ownership tracking approach: Decided: maintained per-`Player` counts/owned-object set from §1.2,
   giving O(1) checks and reused by P2 and the scale tracks. See
   [open-questions](../open-questions.md).
-- Exact defeat rule — Decided: the real Generals rule, no command/production structures plus no
+- Exact defeat rule: Decided: the real Generals rule, no command/production structures plus no
   means to rebuild, as the default, exposed as configurable. See
   [open-questions](../open-questions.md).
-- Full end-state enumeration — Decided: six distinct end states, all validated by P7. There are
+- Full end-state enumeration: Decided: six distinct end states, all validated by P7. There are
   three `OutcomeReason` values: `Eliminated` for normal defeat or sudden-death resolution,
   `Surrendered` for any player or AI issuing `EndGame`, and `ScoreDecision` for time-limit expiry.
   `SuddenDeath` is the transitional status for mutual simultaneous elimination, where play
@@ -225,9 +225,9 @@ classDiagram
 
 ## 8. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
-- Teams it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)
-- Harness that asserts the outcome: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
-- Combat/death paths: [`economy-production-combat.md`](economy-production-combat.md) (P6)
+- Teams it needs: [`p1-skirmish-setup.md`](p1-skirmish-setup.md) (P1)
+- Harness that asserts the outcome: [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0)
+- Combat/death paths: [`p4-p6-economy-production-combat.md`](p4-p6-economy-production-combat.md) (P6)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 
 ---

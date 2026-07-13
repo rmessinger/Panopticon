@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-12` — Runtime object handle and selector resolution in `HarnessRunner`
+# Task Card `WI-P0-12`: Runtime object handle and selector resolution in `HarnessRunner`
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-12` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -15,26 +15,26 @@
 Extend `HarnessRunner.RunAndAssert` to resolve `HandleCommandArgument` and
 `QuerySelectorCommandArgument` values before each command is dispatched to the engine, so a
 scenario can issue `AttackObject`/`Enter` orders against objects produced by earlier commands
-or filtered from the live game world — without the author specifying a raw `ObjectId`.
+or filtered from the live game world, without the author specifying a raw `ObjectId`.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (created by WI-P0-08) — the
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (created by WI-P0-08): the
   `RunAndAssert` method and the headless game loop it runs. This is the only file to change.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs` (created by WI-P0-11) —
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs` (created by WI-P0-11):
   the interface to implement.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` (updated by WI-P0-11) —
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` (updated by WI-P0-11):
   `HandleCommandArgument.CommandId`, `QuerySelectorCommandArgument.Relationship/DefinitionName`,
   `CommandSpec.Resolve(resolver)`.
-- `src/OpenSage.Game/Game.cs:128,135` — `Game.ObjectCreated` event and
+- `src/OpenSage.Game/Game.cs:128,135`: `Game.ObjectCreated` event and
   `GameObjectCreatedEventArgs` (contains the created `GameObject`).
-- `src/OpenSage.Game/Logic/GameLogic.cs:42-57` — `GameLogic.Objects` (enumerable over all live
+- `src/OpenSage.Game/Logic/GameLogic.cs:42-57`: `GameLogic.Objects` (enumerable over all live
   objects, safe to iterate).
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291` — `GameObject.Owner` (`Player`);
-  line `125` — `GameObject.Id` (`ObjectId`).
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs` — `ObjectDefinition.Name` (compare
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:291`: `GameObject.Owner` (`Player`);
+  line `125`: `GameObject.Id` (`ObjectId`).
+- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs`: `ObjectDefinition.Name` (compare
   against `QuerySelectorCommandArgument.DefinitionName`).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs` — test style reference.
+- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference.
 
 ## Steps
 
@@ -132,8 +132,8 @@ or filtered from the live game world — without the author specifying a raw `Ob
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` — nested resolver class + wiring.
-- `src/OpenSage.Tools.ReplaySketch.Tests/` — one headless unit test + one Interactive test.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: nested resolver class + wiring.
+- `src/OpenSage.Tools.ReplaySketch.Tests/`: one headless unit test + one Interactive test.
 
 ## Acceptance criteria
 
@@ -161,7 +161,7 @@ dotnet test src --filter "FullyQualifiedName~HandleResolution"
 
 ## Out of scope / guardrails
 
-- Do not implement full relationship-based selector filtering beyond `DefinitionName` — the
+- Do not implement full relationship-based selector filtering beyond `DefinitionName`: the
   `Relationship` field exists on the model but the relationship-check logic can be left as a
   comment/TODO in `ResolveSelector` and filled in as a follow-up.
 - Do not change `CommandArgument`, `CommandSpec`, `IObjectReferenceResolver`, or engine types.

@@ -1,9 +1,9 @@
-# Task Card: `WI-P4-01` — Gather-to-deposit verification
+# Task Card `WI-P4-01`: Gather-to-deposit verification
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-01` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-1, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-1, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,15 +16,15 @@ Prove the baseline supply collection loop credits `Player.BankAccount` through `
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55` — P4 goal, current gather/deposit wiring, and P4-1 sub-phase.
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:145-194` — P4 architecture diagram links for economy types.
-- `docs/roadmap/implementation-checklist.md:236-239` — checklist AC for supply collection → `BankAccount.Deposit`.
-- `src/OpenSage.Game/Logic/BankAccount.cs:22-60` — `Withdraw` clamps to current money; `Deposit` increments `Money` and records income.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257` — gather state machine from source search through `DumpBoxes`.
-- `src/OpenSage.Game/Logic/Object/Update/SupplyCenterDockUpdate.cs:17-35` — `DumpBoxes` calls `GameObject.Owner.BankAccount.Deposit(...)`.
-- `src/OpenSage.Game/Logic/Object/Update/SupplyWarehouseDockUpdate.cs:17-31` — source box availability and decrement.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:458-470` — spawned harvester targeting logic.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base; tests here run in CI.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 goal, current gather/deposit wiring, and P4-1 sub-phase.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:145-194`: P4 architecture diagram links for economy types.
+- `docs/roadmap/implementation-checklist.md:236-239`: checklist AC for supply collection → `BankAccount.Deposit`.
+- `src/OpenSage.Game/Logic/BankAccount.cs:22-60`: `Withdraw` clamps to current money; `Deposit` increments `Money` and records income.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257`: gather state machine from source search through `DumpBoxes`.
+- `src/OpenSage.Game/Logic/Object/Update/SupplyCenterDockUpdate.cs:17-35`: `DumpBoxes` calls `GameObject.Owner.BankAccount.Deposit(...)`.
+- `src/OpenSage.Game/Logic/Object/Update/SupplyWarehouseDockUpdate.cs:17-31`: source box availability and decrement.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:458-470`: spawned harvester targeting logic.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 

@@ -74,12 +74,12 @@ instead of input-only re-simulation:
   primary basis for comparing runs.
 - Hierarchical state signature per frame: a tolerance-aware signature tree, from world to
   partition to entity bucket, so divergence screening can be drilled down to a locus rather than
-  only flagged globally. The tier design is in [visualization.md §5](visualization.md). An opt-in
+  only flagged globally. The tier design is in [visualization.md §5](a5-visualization.md). An opt-in
   strict-hash mode remains available for bit-exact debugging.
 - Triggered detail capture: when the signature tree trips a tolerance threshold, the host writes
   detailed per-entity and per-system deltas for the affected frame and region window into a
   bounded ring buffer. Captured live because a re-run will not reproduce the same divergence, as
-  described in [visualization.md §5](visualization.md).
+  described in [visualization.md §5](a5-visualization.md).
 - Replay recording of inputs, including orders, seed, and map, reusing the existing `.rep` path
   (`ReplayConnection`, TestHarness export). This is useful for re-running an experiment, with the
   caveat that the re-run is statistically equivalent, not identical.
@@ -87,11 +87,11 @@ instead of input-only re-simulation:
 
 ### 2.6 Result analysis and visualization: see phase A5
 Replaying, visualizing, comparing, and localizing divergences between runs, plus authoring the
-scenarios that feed the host, belong to [A5: Scenario authoring and visualization](visualization.md).
+scenarios that feed the host, belong to [A5: Scenario authoring and visualization](a5-visualization.md).
 A1 ends at emitting the run outputs in §2.5. A5 consumes them, makes them inspectable, and is the
 validation surface for [B3](../track-b-scale.md) parallelism and
-[B6](distributed-simulation.md) sharding. The tiered recording, T0, T1, and T2, emitted here is
-specified in [visualization.md §5](visualization.md).
+[B6](b6-distributed-simulation.md) sharding. The tiered recording, T0, T1, and T2, emitted here is
+specified in [visualization.md §5](a5-visualization.md).
 
 ---
 
@@ -103,10 +103,10 @@ specified in [visualization.md §5](visualization.md).
 | A1-2. Data-only asset loading | Allow `AssetStore`/`ContentManager` to load logic-relevant data without GPU upload (H2), generalizing the `OnDemandAssetLoadStrategy.None` path. | Not started |
 | A1-3. Logic-tick extraction | Extract the deterministic logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Not started |
 | A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Not started |
-| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered divergence recording ([visualization.md §5](visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay (input) recordings from a headless run (builds on [A2](../track-a-foundations.md) for seeded, comparable runs). | Not started |
+| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered divergence recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay (input) recordings from a headless run (builds on [A2](../track-a-foundations.md) for seeded, comparable runs). | Not started |
 
 > Result analysis, visualization, and scenario authoring were previously sketched here as
-> A1-6/A1-7; they now live in their own phase, [A5](visualization.md) (A5-1 scenario authoring,
+> A1-6/A1-7; they now live in their own phase, [A5](a5-visualization.md) (A5-1 scenario authoring,
 > A5-2 sweeps, A5-3 replayer/visualizer, A5-4 divergence localization).
 
 ---
@@ -118,7 +118,7 @@ specified in [visualization.md §5](visualization.md).
   The TestHarness `RunHeadless` loop is the integration target throughout.
 - A1-5 depends on [A2: Reproducibility and statistical stability](../track-a-foundations.md)
   so runs are seeded and comparable. Its outputs lean on recorded state rather than bit-exact
-  re-simulation and are consumed by [A5 visualization](visualization.md).
+  re-simulation and are consumed by [A5 visualization](a5-visualization.md).
 
 ## 5. Architecture Diagrams
 
@@ -172,7 +172,7 @@ classDiagram
 
 - Track A overview: [`../track-a-foundations.md`](../track-a-foundations.md)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
-- Scenario authoring & visualization (consumes A1 outputs): [`visualization.md`](visualization.md)
+- Scenario authoring & visualization (consumes A1 outputs): [`a5-visualization.md`](a5-visualization.md)
 - Relaxed-determinism Decision (was an open question): [`../open-questions.md`](../open-questions.md)
 
 ---

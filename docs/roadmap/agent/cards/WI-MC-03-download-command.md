@@ -1,4 +1,4 @@
-# Task Card: `WI-MC-03` — `--download` command
+# Task Card `WI-MC-03`: `--download` command
 
 | Field | Value |
 |---|---|
@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-MC-02` |
-| Diagrams | N/A — standalone tool, see plan |
+| Diagrams | N/A: standalone tool, see plan |
 
 ## Goal
 

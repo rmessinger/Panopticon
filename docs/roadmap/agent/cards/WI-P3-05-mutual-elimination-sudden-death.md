@@ -1,9 +1,9 @@
-# Task Card: `WI-P3-05` — Mutual elimination to sudden death
+# Task Card `WI-P3-05`: Mutual elimination to sudden death
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-05` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-5, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-5, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,14 +16,14 @@ Detect simultaneous mutual elimination in one victory check window, transition t
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:64-67` — mutual-elimination design in defeat detection.
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:90-103` — sudden-death flow and implementation notes.
-- `docs/roadmap/implementation-checklist.md:221-224` — sudden-death AC.
-- `src/OpenSage.Game/Logic/GameLogic.cs:250-292` — logic frame advance used for check-window tests.
-- `src/OpenSage.Game/Game.cs:899-927` and `src/OpenSage.Game/Game.cs:963-975` — logic-running behavior that must continue in sudden death.
-- `src/OpenSage.Game/Logic/Player.cs:126-134` and `src/OpenSage.Game/Logic/Player.cs:785-804` — player state and ally/enemy relationships.
-- `src/OpenSage.Game/Logic/Player.cs:807-839` — maintained owned-object counts consumed by the defeat rule.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70` — headless test base; tests must run in CI.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:64-67`: mutual-elimination design in defeat detection.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:90-103`: sudden-death flow and implementation notes.
+- `docs/roadmap/implementation-checklist.md:221-224`: sudden-death AC.
+- `src/OpenSage.Game/Logic/GameLogic.cs:250-292`: logic frame advance used for check-window tests.
+- `src/OpenSage.Game/Game.cs:899-927` and `src/OpenSage.Game/Game.cs:963-975`: logic-running behavior that must continue in sudden death.
+- `src/OpenSage.Game/Logic/Player.cs:126-134` and `src/OpenSage.Game/Logic/Player.cs:785-804`: player state and ally/enemy relationships.
+- `src/OpenSage.Game/Logic/Player.cs:807-839`: maintained owned-object counts consumed by the defeat rule.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 
