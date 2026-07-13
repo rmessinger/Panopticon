@@ -36,10 +36,16 @@ public static class Program
 
         var config = LoadConfig();
 
-        // --headless overrides the config file (useful for VS Code launch configs and CI).
+        // --headless and --scenario override the config file (useful for VS Code launch configs and CI).
         if (Array.Exists(args, a => a.Equals("--headless", StringComparison.OrdinalIgnoreCase)))
         {
             config.Headless = true;
+        }
+
+        var scenarioPath = GetArgValue(args, "--scenario");
+        if (!string.IsNullOrEmpty(scenarioPath))
+        {
+            config.ScenarioPath = scenarioPath;
         }
 
         Run(config);

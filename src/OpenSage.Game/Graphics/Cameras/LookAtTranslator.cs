@@ -160,6 +160,21 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         case Veldrid.Key.E when _scheme == CameraControlScheme.TotalWar:
                             _rotateDirLeft = state;
                             break;
+                        // New feature: keyboard zoom, using the physical +/- keys (to the right of the
+                        // top-row 0) so the same keys work regardless of keyboard layout. Trackpad
+                        // scrolling doesn't reliably trigger the mouse-wheel zoom on all platforms.
+                        case Veldrid.Key.Plus:
+                            if (state)
+                            {
+                                _tacticalView.ZoomIn();
+                            }
+                            return disp;
+                        case Veldrid.Key.Minus:
+                            if (state)
+                            {
+                                _tacticalView.ZoomOut();
+                            }
+                            return disp;
                         // New feature: Escape disables mouse lock, so let's also stop scrolling
                         case Veldrid.Key.Escape:
                             if (IsScrolling)
