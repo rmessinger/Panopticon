@@ -249,7 +249,8 @@ public static class HarnessRunner
             {
                 if (deferred.Phase == ActionPhase.Dispatched
                     && deferred.Trigger == e.ActionType
-                    && deferred.PlayerIndex == (int?)e.Player?.Id)
+                    && deferred.PlayerIndex == (int?)e.Player?.Id
+                    && MatchesDefinition(deferred, e))
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }
@@ -262,7 +263,8 @@ public static class HarnessRunner
             {
                 if (deferred.Phase == ActionPhase.Completed
                     && deferred.Trigger == e.ActionType
-                    && deferred.PlayerIndex == (int?)e.Player?.Id)
+                    && deferred.PlayerIndex == (int?)e.Player?.Id
+                    && MatchesDefinition(deferred, e))
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }
@@ -271,6 +273,17 @@ public static class HarnessRunner
 
         return pending;
     }
+
+    /// <summary>
+    /// A deferred action with no <see cref="DeferredAction.TriggerDefinitionName"/> matches any
+    /// event of the right type/phase/player (preserves prior behaviour for trigger types that
+    /// don't target a specific definition, e.g. GatherResources/AttackEnemyBase/EnemyBaseDestroyed).
+    /// Otherwise the runtime event's definition name must match exactly, so that scenarios with
+    /// several actions sharing an ActionType (e.g. one Construct per building) only trigger their
+    /// own children instead of every sibling's.
+    /// </summary>
+    private static bool MatchesDefinition(DeferredAction deferred, ReplayActionEventArgs e) =>
+        deferred.TriggerDefinitionName is null || deferred.TriggerDefinitionName == e.DefinitionName;
 
     private static void DrainPendingInjections(
         Game game,

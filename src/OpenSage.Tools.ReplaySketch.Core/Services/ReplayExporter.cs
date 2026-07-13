@@ -59,7 +59,17 @@ public static class ReplayExporter
                         // Only create DeferredAction if the trigger is a legacy action (has ActionType).
                         if (triggerEntry.Type is ActionType triggerType)
                         {
-                            deferred.Add(new DeferredAction(ownerIdx + 2, triggerType, aat.TriggerPhase, actionOrders, aat.ExtraFrames));
+                            // Disambiguate which specific building/unit the trigger refers to, so
+                            // that scenarios with several actions sharing the same ActionType (e.g.
+                            // one Construct per building in a full build-out) don't cross-fire each
+                            // other's children — see DeferredAction.TriggerDefinitionName.
+                            var triggerDefinitionName = triggerType switch
+                            {
+                                ActionType.Construct => triggerEntry.BuildingDefinitionName,
+                                ActionType.RecruitBasicUnit => triggerEntry.UnitDefinitionName,
+                                _ => null,
+                            };
+                            deferred.Add(new DeferredAction(ownerIdx + 2, triggerType, aat.TriggerPhase, actionOrders, aat.ExtraFrames, triggerDefinitionName));
                         }
                         else
                         {
@@ -221,10 +231,12 @@ public static class ReplayExporter
                     // finding the correct producer building (Barracks) via its CommandSet, rather
                     // than routing the order to whatever was previously selected.
                     yield return Order.CreateClearSelection(playerIndex);
-                    // Queue 5 units so there are enough attackers to destroy the enemy CC.
-                    // Each unit that exits the barracks will re-trigger AttackEnemyBase,
-                    // routing all available units toward the enemy base.
-                    for (var i = 0; i < 5; i++)
+                    // Defaults to 5 units so there are enough attackers to destroy the enemy CC.
+                    // Each unit that exits its producer will re-trigger AttackEnemyBase, routing
+                    // all available units toward the enemy base. Scenarios that only need one of
+                    // each unit type (e.g. a full-roster build-out) can override via "quantity".
+                    var quantity = action.Quantity ?? 5;
+                    for (var i = 0; i < quantity; i++)
                     {
                         var recruitOrder = new Order(playerIndex, OrderType.CreateUnit);
                         recruitOrder.AddIntegerArgument(unitDefId); // arg[0] = definition InstanceId (hash)
