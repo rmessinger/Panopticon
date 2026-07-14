@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-06` — ScoreDecision regression scenario
+# Task Card `WI-P7-06`: ScoreDecision regression scenario
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-06` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-6 ScoreDecision, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-6 ScoreDecision, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,16 +16,16 @@ Create the checked-in P7 ScoreDecision scenario that reaches a small configured 
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — ScoreDecision expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — deterministic scenario authoring requirements.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariants and failure reporting.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:116-116` — P7-6 sub-phase row.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:302-304` — `MatchConfig.FrameLimit` dependency on P3-6.
-- `docs/roadmap/implementation-checklist.md:337-344` — scenario and expected outcome ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119` — update loop and timeout; distinguish harness timeout from match frame limit.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22` — scenario JSON shape; extend only if P3 added match config fields.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — outcome assertion surface; extend for score-decision reason if needed.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242` — final P7 matrix consumer.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: ScoreDecision expected outcome.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and failure reporting.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:116-116`: P7-6 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:302-304`: `MatchConfig.FrameLimit` dependency on P3-6.
+- `docs/roadmap/implementation-checklist.md:337-344`: scenario and expected outcome ACs.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119`: update loop and timeout; distinguish harness timeout from match frame limit.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape; extend only if P3 added match config fields.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for score-decision reason if needed.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
 
 ## Steps
 

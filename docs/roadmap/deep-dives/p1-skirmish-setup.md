@@ -1,6 +1,6 @@
 # Deep Dive: Skirmish Setup & Player Relationships (P1)
 
-> Expands phase P1 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
+> Expands phase P1 of [Track P: Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the skirmish-setup design. Code references are in the agent-context appendix at the bottom.
@@ -60,22 +60,22 @@ object create/death hooks existing.
 ---
 
 ## 3. Integration surface (what P1 changes)
-- `Logic/PlayerManager.cs:24-46` — implement relationship + team setup after player creation.
-- `Logic/Player.cs:779-786` (+ `:811-831,965-994`) — reciprocal ally/enemy wiring; confirm team→
+- `Logic/PlayerManager.cs:24-46`: implement relationship + team setup after player creation.
+- `Logic/Player.cs:779-786` (+ `:811-831,965-994`): reciprocal ally/enemy wiring; confirm team→
   player default resolution.
-- `Game.cs:717-802` (esp. `:745-763`) — SP skirmish uses the MP start-position/building/camera path.
-- `Network/SkirmishManager.cs:55-114` — slot→`PlayerSetting` mapping for AI + human in the local path.
-- `Gui/GameOptionsUtil.cs:239-305` — fill missing faction/color/start for AI slots.
-- `Scene3D.cs:430-455` + `Scripting/Waypoints.cs:76-81` + `Content/MapCache.cs:29-38` — start-position
+- `Game.cs:717-802` (esp. `:745-763`): SP skirmish uses the MP start-position/building/camera path.
+- `Network/SkirmishManager.cs:55-114`: slot→`PlayerSetting` mapping for AI + human in the local path.
+- `Gui/GameOptionsUtil.cs:239-305`: fill missing faction/color/start for AI slots.
+- `Scene3D.cs:430-455` + `Scripting/Waypoints.cs:76-81` + `Content/MapCache.cs:29-38`: start-position
   lookup/spawn, already largely present; verify under SP.
-- `Logic/Player.cs` + `GameObject` create/`OnDie`/`Destroy` hooks — maintain the per-`Player` owned-object
+- `Logic/Player.cs` + `GameObject` create/`OnDie`/`Destroy` hooks: maintain the per-`Player` owned-object
   set + counts, foundational and consumed by P2 and P3.
 
 ## 4. Resolved design questions
-- `LocalPlayer` selection — Decided: the skirmish/lobby config marks which slot is the local
+- `LocalPlayer` selection: Decided: the skirmish/lobby config marks which slot is the local
   human; `PlayerManager` reads that explicit flag instead of the `_players[2]` positional fallback
   (`PlayerManager.cs:39-46`). See [open-questions](../open-questions.md).
-- Spawn ownership — Decided: unify on one shared SP+MP skirmish spawn path. SP is a skirmish with
+- Spawn ownership: Decided: unify on one shared SP+MP skirmish spawn path. SP is a skirmish with
   one human + AI slots through the same start-position/building/camera code (`Game.cs:745-763`). See
   [open-questions](../open-questions.md).
 
@@ -86,13 +86,13 @@ object create/death hooks existing.
 | P1-1. Team & relationship setup | Implement `OnNewGame()` relationships: assign teams from slots, derive ally/enemy/neutral, wire reciprocally. | Done (cards: `WI-P1-02`, `WI-P1-03`) |
 | P1-2. Unified skirmish spawn | One start-position + starting-building + camera path for SP and MP; resolve player-array indexing and `LocalPlayer`. | Done (card: `WI-P1-04`) |
 | P1-3. AI slot fill | Ensure AI slots get faction/color/start filled before `StartGame` (lobby + local path). | Done (card: `WI-P1-05`; start-position collision fix: `WI-P1-09`) |
-| P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](playable-baseline-harness.md)). | Not started (card: `WI-P1-06`) |
+| P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](p0-playable-baseline-harness.md)). | Not started (card: `WI-P1-06`) |
 | P1-5. Object-ownership tracking | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Done (card: `WI-P1-07`; owner-transfer tracking: `WI-P1-11`) |
 
 ## 6. Sequencing
 - P1 has no Track-P prerequisite and is an entry point alongside P0, but it gates P2/P3/P4/P5/P6.
   All of them assume correctly related, spawned players.
-- P1-4's boot check rides on the [P0 harness](playable-baseline-harness.md) once P0-1/P0-5 exist.
+- P1-4's boot check rides on the [P0 harness](p0-playable-baseline-harness.md) once P0-1/P0-5 exist.
 - P1-5 is foundational and independent within P1. It only needs object create/death hooks +
   players, feeds P2 target selection and P3 defeat detection, and belongs in P1 rather than being
   duplicated in either consumer.
@@ -162,9 +162,9 @@ classDiagram
 
 ## 9. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
-- AI that consumes relationships: [`skirmish-ai.md`](skirmish-ai.md) (P2)
-- Outcome that consumes teams: [`victory-defeat.md`](victory-defeat.md) (P3)
-- Harness for the boot check: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
+- AI that consumes relationships: [`p2-p5-skirmish-ai.md`](p2-p5-skirmish-ai.md) (P2)
+- Outcome that consumes teams: [`p3-victory-defeat.md`](p3-victory-defeat.md) (P3)
+- Harness for the boot check: [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 
 ---

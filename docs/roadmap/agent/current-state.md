@@ -1,15 +1,15 @@
 # Current-State Summary
 
 > Part of the [Large-Scale RTS Roadmap](../README.md). A snapshot of the architecture the roadmap
-> builds on (see cited files; update as the code evolves — this is the basis for every phase's
+> builds on (see cited files; update as the code evolves: this is the basis for every phase's
 > assumptions).
 >
-> Audience: agent — contains file:line code citations used to ground phase assumptions. Human
-> readers wanting a project overview: see the [track docs](README.md#document-map).
+> Audience: agent: contains file:line code citations used to ground phase assumptions. Human
+> readers wanting a project overview: see the [track docs](../README.md#document-map).
 
 ## Simulation core
 
-- Game loop: `src/OpenSage.Game/Game.cs` — `Update()` runs input/local tick, then a
+- Game loop: `src/OpenSage.Game/Game.cs`: `Update()` runs input/local tick, then a
   fixed-rate `LogicTick()` (`GameLogic.Update()`, network buffer, `Scene3D.LogicTick`,
   `PartitionCellManager.Update()`), then `Scripting.ScriptingTick()`. `Render()` is a
   separate pass (`Graphics.Draw`). Logic and render are already decoupled in timing.
@@ -34,7 +34,7 @@
 
 ## Model & animation pipeline
 
-- W3D parsing: `src/OpenSage.FileFormats.W3d/` — `W3dFile` parses meshes, hierarchy
+- W3D parsing: `src/OpenSage.FileFormats.W3d/`: `W3dFile` parses meshes, hierarchy
   (skeleton pivots), animations (incl. compressed), materials, emitters, HLOD, etc.
 - W3D → runtime: `OnDemandModelLoader` (`src/OpenSage.Game/Content/Loaders/`) builds a
   `Model` (`Graphics/Model.cs`) with `ModelBoneHierarchy` + `ModelSubObject[]`; mesh
@@ -47,7 +47,7 @@
   models and animations.
 - Asset loading extension point: `AssetStore` + `OnDemandAssetLoadStrategy` +
   `IOnDemandAssetLoader` are where a new model/animation format would plug in.
-- External formats: none today — no glTF/FBX/OBJ/COLLADA/Assimp references in `src/`.
+- External formats: none today. No glTF/FBX/OBJ/COLLADA/Assimp references in `src/`.
 
 ## Map & terrain (relevant to larger maps)
 
@@ -59,13 +59,13 @@
 - Authoring: WorldBuilder (`src/OpenSage.Tools.WorldBuilder.*`) assumes the full grid is
   resident; height tools clone the whole elevation array per stroke.
 
-See the [larger-maps deep dive](deep-dives/b4a-larger-maps.md) for how this constrains map size.
+See the [larger-maps deep dive](../deep-dives/b4a-larger-maps.md) for how this constrains map size.
 
 ## Mod acquisition tooling (ModCollector)
 
 - `OpenSage.Tools.ModCollector` does not yet exist in the repo. It will be created by the
   `WI-MC-*` agent task cards (see [`agent/cards/WI-MC-01` through `WI-MC-04`](cards/)).
-- Design authority: [`docs/roadmap/plans/mod-collector.md`](../plans/mod-collector.md) —
+- Design authority: [`docs/roadmap/plans/mod-collector.md`](../plans/mod-collector.md):
   covers purpose, game slug table, manifest schema, seed entries, and engine integration path.
 - Engine integration point: the output `.big` files are consumed through the existing
   `SkudefReader` virtual file system by pointing the game path environment variable at the
@@ -86,4 +86,4 @@ See the [larger-maps deep dive](deep-dives/b4a-larger-maps.md) for how this cons
   (`Preferences.Default`, `MainThread.BeginInvokeOnMainThread`, `Process.Start`/launcher), so its
   command flows (Validate/Export/PlayInGame, background-load completion) cannot be exercised
   headlessly. Closing this gap (injectable seams) is P0-1b/P0-1c in the
-  [P0 deep dive](deep-dives/p0-playable-baseline-harness.md).
+  [P0 deep dive](../deep-dives/p0-playable-baseline-harness.md).

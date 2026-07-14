@@ -1,6 +1,6 @@
 # Deep Dive: Skirmish AI Opponent (P2)
 
-> Expands phase P2 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
+> Expands phase P2 of [Track P: Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the skirmish-AI design. Code references are in the agent-context appendix at the bottom.
@@ -23,14 +23,14 @@ Give `SkirmishAIPlayer` (and/or `AIPlayer`) an `Update(...)` driven from the pla
 `PlayerManager`/`GameLogic` already advance players each frame. The loop is a coarse-cadence state
 machine that runs every N logic frames, not every frame:
 
-1. Economy — ensure a supply structure + enough harvesters; if income is low and affordable,
+1. Economy: ensure a supply structure + enough harvesters; if income is low and affordable,
    queue another harvester/supply building.
-2. Base build-out — walk the `AIData.SkirmishBuildLists` for the AI's faction in priority order;
+2. Base build-out: walk the `AIData.SkirmishBuildLists` for the AI's faction in priority order;
    for the next unbuilt, affordable, prerequisite-satisfied structure, issue a build.
-3. Production — at production structures, queue army units toward a target composition, gated by
+3. Production: at production structures, queue army units toward a target composition, gated by
    `Player.CanProduceObject(...)`.
-4. Military — once a threshold force exists, select an attack target (an enemy structure via the
-   relationship data from [P1](skirmish-setup.md)) and issue attack-move; otherwise hold/defend.
+4. Military: once a threshold force exists, select an attack target (an enemy structure via the
+   relationship data from [P1](p1-skirmish-setup.md)) and issue attack-move; otherwise hold/defend.
 
 The loop must be idempotent and budget-aware: never queue what it can't afford
 (`BankAccount`), never duplicate in-flight build/production jobs (check
@@ -38,34 +38,34 @@ The loop must be idempotent and budget-aware: never queue what it can't afford
 
 ### 1.2 Consume the stranded build-list data (P5)
 Wire `AIData.SkirmishBuildLists` / `BuildListInfo` (`AIData.cs`, `BuildListInfo.cs`) into the base
-build-out step — this is the data the original engine drives skirmish AI from, already parsed and
+build-out step. This is the data the original engine drives skirmish AI from, already parsed and
 waiting. `BuildListInfo`'s `PriorityBuild`, `DesiredGatherers`, `IsSupplyBuilding`, `IsBuildable`
 fields directly inform steps 1–2.
 
 ### 1.3 How the AI issues actions (Decision: orders via `OrderProcessor`)
 Two actuation styles were considered:
-- (a) Via `Order`s through `OrderProcessor` — the AI emits the same `Order`s a human would
+- (a) Via `Order`s through `OrderProcessor`: the AI emits the same `Order`s a human would
   (`BuildObject`, `CreateUnit`, `ForceAttack…`). Pro: one code path, automatically replay/record
-  compatible (matches the [P0 harness](playable-baseline-harness.md) and A2 reproducibility). Con:
+  compatible (matches the [P0 harness](p0-playable-baseline-harness.md) and A2 reproducibility). Con:
   must synthesize valid order arguments (positions, object ids).
-- (b) Direct API calls — `GameLogic.CreateObject`, `PrepareConstruction`,
+- (b) Direct API calls: `GameLogic.CreateObject`, `PrepareConstruction`,
   `ProductionUpdate.QueueProduction/QueueUpgrade`, `IBuilderAIUpdate.SetBuildTarget`. Pro: simpler
-  to author. Con: bypasses the order stream, so AI actions wouldn't appear in replays/recordings —
+  to author. Con: bypasses the order stream, so AI actions wouldn't appear in replays/recordings.
   a problem for A2/B-track reproducibility.
-- Decision: use (a) — AI actions live in the same order stream the framework records and
+- Decision: use (a). AI actions live in the same order stream the framework records and
   replays, keeping Track P's loop honest for the scaling tracks (the argument-synthesis cost is
   accepted). Settled before P2-2. See [open-questions](../open-questions.md).
 
 ### 1.4 P5: construction and production completeness
 The mechanism is largely present (see appendix §1.4). P5 closes the remaining gaps and verifies both paths:
 - Confirm construction debits `BankAccount` (the audit could not confirm production/construction
-  debits money — verify in `ProductionUpdate`/build paths; add if missing).
+  debits money; verify in `ProductionUpdate`/build paths; add if missing).
 - Confirm prerequisite/tech gating holds for AI-issued builds the same as for the player
   (`Player.CanProduceObject`, `GameObject.CanConstructUnit`).
 - Confirm upgrades complete and apply (`GrantUpgrade`, `Player.AddUpgrade`,
   `GameObject.Upgrade`).
 - Identify the control-bar/UI buildability binding (the audit did not locate the UI consumer of
-  `CanPurchase`/`CanConstructUnit`/`CanEnqueueUpgrade`) — needed for P6 player-side parity.
+  `CanPurchase`/`CanConstructUnit`/`CanEnqueueUpgrade`); needed for P6 player-side parity.
 
 ---
 
@@ -75,7 +75,7 @@ The mechanism is largely present (see appendix §1.4). P5 closes the remaining g
 - Actuation: the AI emits `Order`s via `OrderProcessor.Process`, not the direct API, so AI
   actions enter the recorded order stream (§1.3).
 - Gating: `Player.CanProduceObject`, `GameObject.CanConstructUnit/CanEnqueueUpgrade`.
-- Targets: consume the foundational [P1-5](skirmish-setup.md) per-`Player` owned-object set for
+- Targets: consume the foundational [P1-5](p1-skirmish-setup.md) per-`Player` owned-object set for
   enemy target selection (no all-objects scan).
 
 ## 3. Sub-phases
@@ -83,35 +83,35 @@ The mechanism is largely present (see appendix §1.4). P5 closes the remaining g
 | Phase | Goal | Status |
 |---|---|---|
 | P2-1. AI tick scaffold | Add a coarse-cadence `Update(...)` to the skirmish AI, ticked from the player loop; no behavior yet. | Not started |
-| P2-2. Economy & base build-out | Consume `SkirmishBuildLists`; ensure supply + harvesters; build prerequisite-satisfied, affordable structures in priority order. (Actuation = orders — decided.) | Not started |
+| P2-2. Economy & base build-out | Consume `SkirmishBuildLists`; ensure supply + harvesters; build prerequisite-satisfied, affordable structures in priority order. (Actuation = orders; decided.) | Not started |
 | P2-3. Unit production | Queue army units toward a target composition, money/prereq gated. | Not started |
 | P2-4. Military behavior | Threshold force → select enemy target (P1 relationships) → attack-move; basic defense. | Not started |
 | P5-1. Funding & gating verification | Confirm construction/production debit `BankAccount` and respect prerequisites for both player and AI; fix gaps. | Not started |
 | P5-2. Upgrades & buildability binding | Verify upgrade completion/application; locate + verify the control-bar buildability consumer. | Not started |
 
 ## 4. Sequencing and dependencies
-- P2 depends on P1 (related, spawned players + the foundational [P1-5](skirmish-setup.md)
+- P2 depends on P1 (related, spawned players + the foundational [P1-5](p1-skirmish-setup.md)
   ownership tracking that P2-4 uses for target selection), P4 (a working economy to spend), and
   P5 (construction/production mechanism). P2-1 can scaffold in parallel; P2-2+ need P4/P5.
 - Actuation = orders (§1.3, decided): the AI emits `Order`s through `OrderProcessor`, reusing the
-  engine order path the [P0 harness](playable-baseline-harness.md) drives. P2's recorded-stream
+  engine order path the [P0 harness](p0-playable-baseline-harness.md) drives. P2's recorded-stream
   check therefore runs through P0, which A2/B reproducibility requires.
-- P2 feeds P7 (the AI must "make progress" — an asserted invariant in the
-  [P0 harness](playable-baseline-harness.md)).
+- P2 feeds P7 (the AI must "make progress", an asserted invariant in the
+  [P0 harness](p0-playable-baseline-harness.md)).
 
 ## 5. Resolved design questions and open work
 - Actuation style: decided on orders via `OrderProcessor` (§1.3), so AI actions enter the
   recorded stream. See [open-questions](../open-questions.md).
-- AI competence scope — Decided: minimum legal opponent in Track P
+- AI competence scope: Decided: minimum legal opponent in Track P
   (build/economize/produce/≥1 attack → terminating win/lose). The design leaves room for
   configurable difficulty tiers, but only the minimum tier is implemented now. Richer behavior is
   later expansion. See [open-questions](../open-questions.md).
-- AI architecture depth — single state machine now. Formalize pluggability later as the
+- AI architecture depth: single state machine now. Formalize pluggability later as the
   candidate [A4](../track-a-foundations.md) experiment seam; the stubbed difficulty tiers are the
-  natural variation axis. Design: [pluggable-ai.md](pluggable-ai.md)
+  natural variation axis. Design: [pluggable-ai.md](a4-pluggable-ai.md)
   (`IAIDecisionPolicy`, with this phase's `SkirmishAIPlayer` state machine as the reference
   implementation). Not implemented by P2; see that doc's §6 for follow-on work.
-- Where `BankAccount` is debited for construction — open verification task (not a design
+- Where `BankAccount` is debited for construction: open verification task (not a design
   choice): locate/confirm before P5-1.
 
 ## 6. Scenario Matrix
@@ -209,11 +209,11 @@ classDiagram
 
 ## 8. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
-- Players/relationships it needs: [`skirmish-setup.md`](skirmish-setup.md) (P1)
-- Economy it spends: [`economy-production-combat.md`](economy-production-combat.md) (P4/P5/P6)
-- Order stream / harness: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
+- Players/relationships it needs: [`p1-skirmish-setup.md`](p1-skirmish-setup.md) (P1)
+- Economy it spends: [`p4-p6-economy-production-combat.md`](p4-p6-economy-production-combat.md) (P4/P5/P6)
+- Order stream / harness: [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0)
 - Pluggable AI policy seam this phase's reference implementation is carved from:
-  [`pluggable-ai.md`](pluggable-ai.md) (A4)
+  [`a4-pluggable-ai.md`](a4-pluggable-ai.md) (A4)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 
 ---
@@ -225,7 +225,7 @@ classDiagram
 > require reading this section.
 
 ### The strategic AI is state-only (the gap)
-- `AIPlayer` is persisted fields only — counters, flags, an object id, a position — and `Persist(...)`;
+- `AIPlayer` is persisted fields only: counters, flags, an object id, a position, and `Persist(...)`;
   no update/decision loop (`src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154`).
 - `SkirmishAIPlayer` adds 4 persisted scalars + `Persist(...)`; no behavior
   (`Logic/AI/SkirmishAIPlayer.cs:3-31`).
@@ -246,7 +246,7 @@ classDiagram
 - `BuildListInfo` carries AI-only fields: `ResourceGatherers`, `IsSupplyBuilding`, `DesiredGatherers`,
   `CurrentGatherers`, `PriorityBuild`, `IsBuildable` (`Logic/Map/BuildListInfo.cs:10-237`).
 - `IniParser.BlockParsers.cs` parses `AIData`/`SkirmishAIData`; `SkirmishAIData.cs` exists (container).
-- ⇒ No code consumes `AIData.SkirmishBuildLists` yet — the build-order data is parsed and stranded.
+- ⇒ No code consumes `AIData.SkirmishBuildLists` yet. The build-order data is parsed and stranded.
 
 ### How actions are actuated (the P5 mechanism)
 - Human/scripted orders run through `OrderProcessor.Process(...)`

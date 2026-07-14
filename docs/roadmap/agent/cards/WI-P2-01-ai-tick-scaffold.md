@@ -1,9 +1,9 @@
-# Task Card: `WI-P2-01` — AI tick scaffold
+# Task Card `WI-P2-01`: AI tick scaffold
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-01` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md): sub-phase P2-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -16,14 +16,14 @@ Add a no-behavior strategic AI tick scaffold: `Player.LogicTick()` invokes `Skir
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:20-39` — design for the coarse-cadence decision loop and idempotence.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:228-233` — current gap: AI classes are persistence-only.
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154` — base AI player persistence; preserve every persist branch and guard.
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs:3-31` — skirmish AI subclass with no behavior.
-- `src/OpenSage.Game/Logic/Player.cs:84-109` — `AIPlayer` property and current `LogicTick()`.
-- `src/OpenSage.Game/Logic/Player.cs:763-775` — creation of `SkirmishAIPlayer` for skirmish AI slots.
-- `src/OpenSage.Game/Logic/PlayerManager.cs:145-150` — player tick loop.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:20-39`: design for the coarse-cadence decision loop and idempotence.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:228-233`: current gap: AI classes are persistence-only.
+- `src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154`: base AI player persistence; preserve every persist branch and guard.
+- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs:3-31`: skirmish AI subclass with no behavior.
+- `src/OpenSage.Game/Logic/Player.cs:84-109`: `AIPlayer` property and current `LogicTick()`.
+- `src/OpenSage.Game/Logic/Player.cs:763-775`: creation of `SkirmishAIPlayer` for skirmish AI slots.
+- `src/OpenSage.Game/Logic/PlayerManager.cs:145-150`: player tick loop.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 

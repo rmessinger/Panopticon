@@ -1,9 +1,9 @@
-# Task Card: `WI-P6-01` — Command coverage matrix
+# Task Card `WI-P6-01`: Command coverage matrix
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-01` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-1, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): sub-phase P6-1, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
@@ -16,16 +16,16 @@ Create a CI-running command coverage matrix proving every baseline control-bar a
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:56-95` — P6 goal, design, and P6-1 sub-phase.
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:132-144` — P6 order/faction matrix axes and expected observable effects.
-- `docs/roadmap/implementation-checklist.md:278-282` — checklist ACs for command coverage.
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:359-531` — control-bar command-set and special-power button wiring.
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:558-640` — selected-unit command and production-queue wiring.
-- `src/OpenSage.Mods.Generals/Gui/CommandButtonUtils.cs:15-37` — `CommandButton` callback entry point.
-- `src/OpenSage.Game/Gui/CommandButtonCallback.cs:27-190` — `CommandType` to `OrderType` mapping for baseline actions.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:73-430` and `:437-562` — handled `OrderType` cases and default unimplemented branch.
-- `src/OpenSage.Game/Logic/SelectionSystem.cs:113-165` — selection and rally-point APIs used by command assertions.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base; tests must run in CI, not only as skipped game-file tests.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:56-95`: P6 goal, design, and P6-1 sub-phase.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:132-144`: P6 order/faction matrix axes and expected observable effects.
+- `docs/roadmap/implementation-checklist.md:278-282`: checklist ACs for command coverage.
+- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:359-531`: control-bar command-set and special-power button wiring.
+- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:558-640`: selected-unit command and production-queue wiring.
+- `src/OpenSage.Mods.Generals/Gui/CommandButtonUtils.cs:15-37`: `CommandButton` callback entry point.
+- `src/OpenSage.Game/Gui/CommandButtonCallback.cs:27-190`: `CommandType` to `OrderType` mapping for baseline actions.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:73-430` and `:437-562`: handled `OrderType` cases and default unimplemented branch.
+- `src/OpenSage.Game/Logic/SelectionSystem.cs:113-165`: selection and rally-point APIs used by command assertions.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests must run in CI, not only as skipped game-file tests.
 
 ## Steps
 

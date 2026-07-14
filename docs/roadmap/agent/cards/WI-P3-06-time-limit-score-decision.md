@@ -1,9 +1,9 @@
-# Task Card: `WI-P3-06` — Time-limit score decision
+# Task Card `WI-P3-06`: Time-limit score decision
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-06` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-6, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-6, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,15 +16,15 @@ Add an optional frame-count time limit to `VictorySystem` that decides the match
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:68-72` — time-limit design in defeat detection.
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:93-103` — frame-limit and score-decision implementation notes.
-- `docs/roadmap/implementation-checklist.md:225-228` — score-decision AC.
-- `src/OpenSage.Game/IGame.cs:93-96` — map time surface if implementation uses elapsed game time.
-- `src/OpenSage.Game/Game.cs:899-927` and `src/OpenSage.Game/Game.cs:963-975` — logic tick timing and update flow.
-- `src/OpenSage.Game/Logic/GameLogic.cs:29-32` and `src/OpenSage.Game/Logic/GameLogic.cs:250-292` — current logic frame state and increment.
-- `src/OpenSage.Game/Logic/Player.cs:126-134` and `src/OpenSage.Game/Logic/Player.cs:807-839` — player counts available for simple score metrics.
-- `src/OpenSage.Game/Logic/Player.cs:1172-1249` — existing score manager persistence fields; preserve all persist branches if exposing any score data.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70` — headless test base; tests must run in CI.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:68-72`: time-limit design in defeat detection.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:93-103`: frame-limit and score-decision implementation notes.
+- `docs/roadmap/implementation-checklist.md:225-228`: score-decision AC.
+- `src/OpenSage.Game/IGame.cs:93-96`: map time surface if implementation uses elapsed game time.
+- `src/OpenSage.Game/Game.cs:899-927` and `src/OpenSage.Game/Game.cs:963-975`: logic tick timing and update flow.
+- `src/OpenSage.Game/Logic/GameLogic.cs:29-32` and `src/OpenSage.Game/Logic/GameLogic.cs:250-292`: current logic frame state and increment.
+- `src/OpenSage.Game/Logic/Player.cs:126-134` and `src/OpenSage.Game/Logic/Player.cs:807-839`: player counts available for simple score metrics.
+- `src/OpenSage.Game/Logic/Player.cs:1172-1249`: existing score manager persistence fields; preserve all persist branches if exposing any score data.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 

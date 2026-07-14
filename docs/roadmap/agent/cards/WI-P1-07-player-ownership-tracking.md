@@ -1,9 +1,9 @@
-# Task Card: `WI-P1-07` — Per-player object-ownership tracking
+# Task Card `WI-P1-07`: Per-player object-ownership tracking
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-07` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-5, see [deep dive §3.4](../../deep-dives/p1-skirmish-setup.md)) |
+| Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-5, see [deep dive §3.4](../../deep-dives/p1-skirmish-setup.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -20,28 +20,28 @@ can be implemented.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/Player.cs:92-104` — existing `OwnedObjects`, `BuildingCount`,
+- `src/OpenSage.Game/Logic/Player.cs:92-104`: existing `OwnedObjects`, `BuildingCount`,
   `UnitCount` (or equivalents) if present. Identify what already exists vs. what is missing.
   If there is nothing, you are adding from scratch.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs` — look for `Owner` property (the `Player`
+- `src/OpenSage.Game/Logic/Object/GameObject.cs`: look for `Owner` property (the `Player`
   that owns this object), `OnDie` or death-notification event/method, and any
   `Destroy`/dispose lifecycle hook. Note the exact names/signatures.
-- `src/OpenSage.Game/Logic/Object/GameObjectCollection.cs` (or equivalent) — how objects
+- `src/OpenSage.Game/Logic/Object/GameObjectCollection.cs` (or equivalent): how objects
   are added to and removed from the live collection; identify the hooks where ownership
   tracking can be wired (object creation + destruction).
-- `src/OpenSage.Game/Logic/PlayerManager.cs:50-76` — `CreatePlayers()`: the earliest point
+- `src/OpenSage.Game/Logic/PlayerManager.cs:50-76`: `CreatePlayers()`: the earliest point
   at which `Player` instances exist; confirm `OwnedObjects` should be initialized here or
   on the `Player` ctor.
 
 ## Steps
 
 1. Add to `Player`:
-   - `HashSet<GameObject> OwnedObjects` — the maintained owned-object set (initialize empty
+   - `HashSet<GameObject> OwnedObjects`: the maintained owned-object set (initialize empty
      in ctor or `OnNewGame`).
-   - `int BuildingCount` — count of owned objects that satisfy `IsBuilding` (or equivalent
+   - `int BuildingCount`: count of owned objects that satisfy `IsBuilding` (or equivalent
      object-kind predicate); keep as a cached derived count (increment/decrement instead of
      scanning).
-   - `int UnitCount` — count of owned units (non-building, non-neutral objects).
+   - `int UnitCount`: count of owned units (non-building, non-neutral objects).
    Both counts are derived from `OwnedObjects`; do not maintain them independently.
 
 2. Wire creation: wherever `GameObject` is added to the live game world (find the
@@ -67,8 +67,8 @@ can be implemented.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Player.cs` — add `OwnedObjects`, `BuildingCount`, `UnitCount`.
-- `src/OpenSage.Game/Logic/Object/GameObjectCollection.cs` (or `GameObject.cs`) — create/
+- `src/OpenSage.Game/Logic/Player.cs`: add `OwnedObjects`, `BuildingCount`, `UnitCount`.
+- `src/OpenSage.Game/Logic/Object/GameObjectCollection.cs` (or `GameObject.cs`): create/
   destroy hooks.
 - `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs` (new test file).
 
@@ -95,12 +95,12 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not implement AI targeting or defeat detection here — P2 and P3 will consume the API
+- Do not implement AI targeting or defeat detection here: P2 and P3 will consume the API
   you establish.
 - Do not redesign the `GameObject` ownership model; only add tracking hooks on top of the
   existing `Owner` property.
 - If `GameObject` has no lifecycle hook you can cleanly use, document the gap in Notes and
-  mark `Blocked` — do not invent a new lifecycle method without roadmap guidance.
+  mark `Blocked`. Do not invent a new lifecycle method without roadmap guidance.
 
 ## On completion
 

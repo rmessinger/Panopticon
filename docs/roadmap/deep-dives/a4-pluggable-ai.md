@@ -1,6 +1,6 @@
 # Deep Dive: Pluggable AI Decision Policy
 
-> Expands phase A4 of [Track A — Foundations](../track-a-foundations.md). Part of the
+> Expands phase A4 of [Track A: Foundations](../track-a-foundations.md). Part of the
 > [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the pluggable-AI design. Code references are in the
@@ -17,9 +17,9 @@ harness; §6 covers the follow-on work it unblocks.
 
 ## 1. Rationale
 
-[skirmish-ai.md §5](skirmish-ai.md#5-resolved-design-questions-and-open-work) already records the
+[skirmish-ai.md §5](p2-p5-skirmish-ai.md#5-resolved-design-questions-and-open-work) already records the
 key decision: a pluggable AI policy is an A4 experiment seam, not a P2 requirement. P2 lands one
-concrete policy, `SkirmishAIPlayer`, described in [skirmish-ai.md §1.1](skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai). That is the shape an
+concrete policy, `SkirmishAIPlayer`, described in [skirmish-ai.md §1.1](p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai). That is the shape an
 [A4](../track-a-foundations.md) seam needs: a stable interface with one reference
 implementation, sized so a very different implementation such as a neural net can sit behind the
 same interface and be selected or compared without caller changes.
@@ -27,7 +27,7 @@ same interface and be selected or compared without caller changes.
 The variation axis is narrow: how a player's per-tick strategic decisions are made. It is not
 per-object AI (`AIUpdate`/`DozerAIUpdate`/`SupplyAIUpdate`, etc.), and it is not the actuation
 path. Every implementation still emits `Order`s through `OrderProcessor`, per the P2 actuation
-decision in [skirmish-ai.md §1.3](skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor), so reproducibility (A2) and the recorded/replayed order stream stay intact.
+decision in [skirmish-ai.md §1.3](p2-p5-skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor), so reproducibility (A2) and the recorded/replayed order stream stay intact.
 
 ---
 
@@ -65,8 +65,8 @@ public readonly struct AIDecisionContext
 
 `AIPlayer` becomes a thin host: it owns the tick cadence and dispatches to an
 `IAIDecisionPolicy` instead of relying on subclass overrides. `SkirmishAIPlayer`'s existing state
-machine from [skirmish-ai.md §1.1](skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) becomes the reference implementation, either as a
-`RuleBasedAIDecisionPolicy` or via a refactored `SkirmishAIPlayer` that holds one — proving the
+machine from [skirmish-ai.md §1.1](p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) becomes the reference implementation, either as a
+`RuleBasedAIDecisionPolicy` or via a refactored `SkirmishAIPlayer` that holds one, proving the
 seam is real per the A4 definition ([seams.md](../seams.md#what-is-a-seam)).
 
 ### 2.1 Selection
@@ -100,25 +100,25 @@ A neural-network implementation of `IAIDecisionPolicy` is the motivating case:
   `Order`s a human or the rule-based policy would issue.
 - Determinism: because actuation is still orders through `OrderProcessor`, a match run with a
   given weight vector and a given map/seed is exactly as reproducible as today's rule-based
-  games (A2) — the network's forward pass is a pure function of its weights and the encoded
+  games (A2). The network's forward pass is a pure function of its weights and the encoded
   state, with no additional nondeterminism to audit beyond what A2 already covers.
 
 ## 4. What this unblocks: evolutionary training via seeded weight populations
 
-The user's training goal — generate multiple seed weight vectors and evolve them through repeated
-simulation runs — maps directly onto the [A4 experiment harness](../track-a-foundations.md), which
-already selects a seam implementation, runs it, and reports results. [A5](visualization.md)
+The user's training goal: generate multiple seed weight vectors and evolve them through repeated
+simulation runs, maps directly onto the [A4 experiment harness](../track-a-foundations.md), which
+already selects a seam implementation, runs it, and reports results. [A5](a5-visualization.md)
 visualizes those results. Applied here:
 
-1. Population — a set of weight vectors (genomes), one `IAIDecisionPolicy` instance per genome.
-2. Fitness — a full headless match per genome (via the [P0 harness](playable-baseline-harness.md)
-   and [A1 headless host](headless-host.md)), scored from the already-first-class
-   [`GameOutcome`](victory-defeat.md) (win/loss/score) plus auxiliary metrics (economy growth,
+1. Population: a set of weight vectors (genomes), one `IAIDecisionPolicy` instance per genome.
+2. Fitness: a full headless match per genome (via the [P0 harness](p0-playable-baseline-harness.md)
+   and [A1 headless host](a1-headless-host.md)), scored from the already-first-class
+   [`GameOutcome`](p3-victory-defeat.md) (win/loss/score) plus auxiliary metrics (economy growth,
    territory held, survival time) as a shaped fitness signal.
-3. Selection/variation — standard evolutionary-strategy moves (truncation/tournament selection,
+3. Selection/variation: standard evolutionary-strategy moves (truncation/tournament selection,
    Gaussian mutation, optional crossover) produce the next generation's weight vectors.
-4. Repeat — generations run as an A4 experiment sweep (matching the parameter-matrix mechanism
-   [A5](visualization.md) already drives for scenario authoring), with per-generation results
+4. Repeat: generations run as an A4 experiment sweep (matching the parameter-matrix mechanism
+   [A5](a5-visualization.md) already drives for scenario authoring), with per-generation results
    (best/mean/worst fitness, diversity) reported to the visualizer so evolution progress across
    seeds is inspectable, not just the final result.
 
@@ -138,9 +138,9 @@ way to construct an `IAIDecisionPolicy` from a weight vector and assign it to a 
   state machine (skirmish-ai.md §1.1), refactored behind the interface, no behavior change.
 - Selection: a policy-identifier config value (alongside the existing skirmish/`PlayerAIType`
   slot configuration in `Player.CreateNew`) resolved by a small factory.
-- Actuation: unchanged — every policy still emits `Order`s via `OrderProcessor` (skirmish-ai.md
+- Actuation: unchanged, every policy still emits `Order`s via `OrderProcessor` (skirmish-ai.md
   §2.3); this seam does not touch that decision.
-- Persistence: unchanged in shape — `AIPlayer.Persist`/`SkirmishAIPlayer.Persist` keep owning
+- Persistence: unchanged in shape, `AIPlayer.Persist`/`SkirmishAIPlayer.Persist` keep owning
   save/load; a stateful policy (e.g. a NN's activations, if ever persisted) would extend that
   same path, not a new one.
 
@@ -161,17 +161,17 @@ This doc formalizes the seam only. Follow-up work, each large enough for its own
   shape, order decoding).
 - Design and implement the evolutionary training harness (§4) as an A4 experiment: population
   management, fitness scoring off `GameOutcome`, selection/mutation, per-generation reporting
-  to [A5](visualization.md).
+  to [A5](a5-visualization.md).
 
 ---
 
 ## 7. Related
 - Seam registry entry: [`../seams.md`](../seams.md) (Experiment seams (A4) table).
-- Reference implementation this seam is carved from: [`skirmish-ai.md`](skirmish-ai.md) (P2).
-- Fitness signal: [`victory-defeat.md`](victory-defeat.md) (`GameOutcome`, P3).
-- Training-run execution surface: [`headless-host.md`](headless-host.md) (A1),
-  [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0).
-- Sweep/reporting mechanism the training harness would reuse: [`visualization.md`](visualization.md) (A5).
+- Reference implementation this seam is carved from: [`p2-p5-skirmish-ai.md`](p2-p5-skirmish-ai.md) (P2).
+- Fitness signal: [`p3-victory-defeat.md`](p3-victory-defeat.md) (`GameOutcome`, P3).
+- Training-run execution surface: [`a1-headless-host.md`](a1-headless-host.md) (A1),
+  [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0).
+- Sweep/reporting mechanism the training harness would reuse: [`a5-visualization.md`](a5-visualization.md) (A5).
 - Reproducibility guarantee every policy inherits: [open-questions.md](../open-questions.md)
   (relaxed-determinism Decision), [Track A A2](../track-a-foundations.md).
 
@@ -252,7 +252,7 @@ classDiagram
   AIPlayer ..> OrderProcessor : EnqueueOrder(s) -> DispatchOrders -> ... -> Process(...)
 ```
 
-Sequence — today's dispatch path (`AIPlayer.Update()` → `OnDecisionTick()` override), and the
+Sequence: today's dispatch path (`AIPlayer.Update()` → `OnDecisionTick()` override), and the
 planned path once `IAIDecisionPolicy` lands:
 
 ```mermaid
@@ -288,17 +288,17 @@ introduces `Pol` without changing this sequence's observable behavior.
 - `AIPlayer.OnDecisionTick()` is the current override point (`protected virtual`), dispatched
   from `AIPlayer.Update()` on a `DefaultDecisionCadenceFrames`-frame cadence
   (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`).
-- `SkirmishAIPlayer.OnDecisionTick()` overrides it with the reference state machine — economy
+- `SkirmishAIPlayer.OnDecisionTick()` overrides it with the reference state machine: economy
   (`RunEconomyAndBaseBuildout`), production (`RunUnitProduction`), military
-  (`RunMilitaryBehavior`) — reading `Owner.BankAccount`, `Owner.OwnedObjects`, `Owner.Enemies`,
+  (`RunMilitaryBehavior`), reading `Owner.BankAccount`, `Owner.OwnedObjects`, `Owner.Enemies`,
   `Game.AssetStore.AIData` (`src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`).
 - Actuation: `AIPlayer.EnqueueOrder(s)` → `DispatchOrders(...)` →
   `NetworkMessageBuffer.AddLocalOrder` (networked) or `Game.InjectOrders` (local), both ultimately
-  processed by `OrderProcessor.Process(...)` (`Logic/Orders/OrderProcessor.cs`) — the actuation
+  processed by `OrderProcessor.Process(...)` (`Logic/Orders/OrderProcessor.cs`). The actuation
   path every future policy must keep using.
 - Selection point: `Player.CreateNew(...)` chooses `SkirmishAIPlayer` vs. `AIPlayer` vs. `null`
-  based on `isHuman`/`isSkirmish`/`side` (`src/OpenSage.Game/Logic/Player.cs`) — this is where a
+  based on `isHuman`/`isSkirmish`/`side` (`src/OpenSage.Game/Logic/Player.cs`). This is where a
   policy-identifier config value would plug in (§2.1).
-- Fitness data source for future training: `GameOutcome` (victory-defeat.md, P3) — not yet
+- Fitness data source for future training: `GameOutcome` (victory-defeat.md, P3), not yet
   landed at time of writing; the training harness (§4) depends on it existing and being
   queryable headlessly.

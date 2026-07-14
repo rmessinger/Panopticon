@@ -1,9 +1,9 @@
-# Task Card: `WI-P1-01` — Map the player-relationship gap
+# Task Card `WI-P1-01`: Map the player-relationship gap
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-01` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) |
+| Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) |
 | Status | `Done` (superseded by deep-dive audit) |
 | Type | `investigation` |
 | Effort | `S` |
@@ -24,11 +24,11 @@ brief that a later implementation card will follow.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/PlayerManager.cs` — `OnNewGame()` (the `// TODO: Setup player
+- `src/OpenSage.Game/Logic/PlayerManager.cs`: `OnNewGame()` (the `// TODO: Setup player
   relationships.` at ~line 45) and how players are created/iterated.
-- `src/OpenSage.Game/Logic/Player.cs` — any existing relationship/ally/enemy/team fields or methods
+- `src/OpenSage.Game/Logic/Player.cs`: any existing relationship/ally/enemy/team fields or methods
   (search for `Relationship`, `Ally`, `Enemy`, `Team`).
-- `src/OpenSage.Game/Network/SkirmishManager.cs` — how skirmish player settings (teams/slots) are
+- `src/OpenSage.Game/Network/SkirmishManager.cs`: how skirmish player settings (teams/slots) are
   built and passed into game start.
 
 ## Steps
@@ -36,7 +36,7 @@ brief that a later implementation card will follow.
 1. Quote the `OnNewGame()` TODO and summarize what the method currently does and does not do for
    player relationships.
 2. List the relationship-related API that already exists on `Player`/`PlayerManager` (types, enums,
-   methods) — what's available to call vs. what's missing.
+   methods): what's available to call vs. what's missing.
 3. Identify where skirmish slot/team data originates (`SkirmishManager`) and how it would reach
    `OnNewGame` (the data path), without changing anything.
 4. Write a short implementation brief into Notes: the minimal set of relationships a
@@ -55,11 +55,11 @@ brief that a later implementation card will follow.
 
 ## Validation commands
 
-Read-only — no build/test. Verify the brief names concrete types/methods, not vague intentions.
+Read-only. No build/test. Verify the brief names concrete types/methods, not vague intentions.
 
 ## Out of scope / guardrails
 
-- Do not implement relationships yet — that's a follow-up implementation card. Survey + brief only.
+- Do not implement relationships yet: that's a follow-up implementation card. Survey + brief only.
 - If the relationship API itself looks missing/insufficient, say so and escalate; don't design it
   here.
 
@@ -68,7 +68,7 @@ Read-only — no build/test. Verify the brief names concrete types/methods, not 
 - Set Status to `Done`.
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
-  - `WI-P1-02` — implement player-relationship setup in `OnNewGame` per the brief (effort permitting,
+  - `WI-P1-02`: implement player-relationship setup in `OnNewGame` per the brief (effort permitting,
     may need a stronger model).
 
 ## Notes

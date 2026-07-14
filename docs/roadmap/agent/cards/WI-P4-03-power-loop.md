@@ -1,9 +1,9 @@
-# Task Card: `WI-P4-03` — Power loop verification
+# Task Card `WI-P4-03`: Power loop verification
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-03` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-3, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-3, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
@@ -16,15 +16,15 @@ Verify and close the power loop: owned objects' energy production/consumption dr
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55` — P4 power-loop design and the warning that the intended low-power effect must be verified.
-- `docs/roadmap/implementation-checklist.md:244-247` — checklist AC template for `_hasInsufficientPower` and its defined effect.
-- `src/OpenSage.Game/Logic/Player.cs:41-104` — `_hasInsufficientPower` field and `GetEnergy(...)` summing owned `EnergyProduction`.
-- `src/OpenSage.Game/Logic/Player.cs:550-554` — `_hasInsufficientPower` persistence; preserve field order.
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:100-111` — INI parse entries for `BuildCost`, `EnergyProduction`, and `EnergyBonus`.
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:512-517` — stored energy fields.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:390` and `src/OpenSage.Game/Logic/Object/GameObject.cs:1060-1068` — runtime energy field and construction completion adding energy production.
-- `src/OpenSage.Game/Logic/Object/Production/ProductionJob.cs:10-12` — existing low-energy production-speed TODO; use as evidence, not as a design mandate.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base; tests here run in CI.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 power-loop design and the warning that the intended low-power effect must be verified.
+- `docs/roadmap/implementation-checklist.md:244-247`: checklist AC template for `_hasInsufficientPower` and its defined effect.
+- `src/OpenSage.Game/Logic/Player.cs:41-104`: `_hasInsufficientPower` field and `GetEnergy(...)` summing owned `EnergyProduction`.
+- `src/OpenSage.Game/Logic/Player.cs:550-554`: `_hasInsufficientPower` persistence; preserve field order.
+- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:100-111`: INI parse entries for `BuildCost`, `EnergyProduction`, and `EnergyBonus`.
+- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:512-517`: stored energy fields.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:390` and `src/OpenSage.Game/Logic/Object/GameObject.cs:1060-1068`: runtime energy field and construction completion adding energy production.
+- `src/OpenSage.Game/Logic/Object/Production/ProductionJob.cs:10-12`: existing low-energy production-speed TODO; use as evidence, not as a design mandate.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 
@@ -69,7 +69,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not invent a new SAGE power design; the deep dive explicitly leaves the exact effect as "AC: TBD — verify intended effect."
+- Do not invent a new SAGE power design; the deep dive explicitly leaves the exact effect as "AC: TBD. Verify intended effect."
 - Do not implement UI warnings, audio, or visual power effects in this card.
 - Do not change build costs, build times, or object definitions beyond what is necessary for a mocked headless test.
 - If the intended effect cannot be verified from code/data, mark `Blocked` with findings instead of guessing.

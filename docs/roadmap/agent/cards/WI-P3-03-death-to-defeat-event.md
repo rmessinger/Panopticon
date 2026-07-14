@@ -1,9 +1,9 @@
-# Task Card: `WI-P3-03` — Death-to-defeat lifecycle event
+# Task Card `WI-P3-03`: Death-to-defeat lifecycle event
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-03` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-3, see [deep dive §1.3](../../deep-dives/p3-victory-defeat.md#13-death--defeat-plumbing) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-3, see [deep dive §1.3](../../deep-dives/p3-victory-defeat.md#13-death--defeat-plumbing) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -16,19 +16,19 @@ Add a death/destroy/ownership-change notification that lets `VictorySystem` reac
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80` — required event sources and incremental reaction.
-- `docs/roadmap/implementation-checklist.md:209-211` — lifecycle-event AC.
-- `src/OpenSage.Game/Logic/GameLogic.cs:71-128` — object creation and owned-object add hook.
-- `src/OpenSage.Game/Logic/GameLogic.cs:178-199` — destroy path, owned-object removal, and existing destroyed event.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291-297` — current owner and structure fields.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1281-1337` — `Kill(...)`/`OnDie(...)` death path.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1360-1366` — `Destroy()` path.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121` — one current owner assignment after construction.
-- `src/OpenSage.Game/Logic/Object/Contain/GarrisonContain.cs:40-53` — owner transfer through garrisoning.
-- `src/OpenSage.Game/Logic/Object/Behaviors/CastleBehavior.cs:76-126` — owner transfer through castle behavior.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:352-356` — owner assignment for produced units.
-- `src/OpenSage.Game/Logic/Player.cs:807-839` — owned-object add/remove idempotence and count maintenance.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70` — headless test base; tests must run in CI.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80`: required event sources and incremental reaction.
+- `docs/roadmap/implementation-checklist.md:209-211`: lifecycle-event AC.
+- `src/OpenSage.Game/Logic/GameLogic.cs:71-128`: object creation and owned-object add hook.
+- `src/OpenSage.Game/Logic/GameLogic.cs:178-199`: destroy path, owned-object removal, and existing destroyed event.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:291-297`: current owner and structure fields.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1281-1337`: `Kill(...)`/`OnDie(...)` death path.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1360-1366`: `Destroy()` path.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121`: one current owner assignment after construction.
+- `src/OpenSage.Game/Logic/Object/Contain/GarrisonContain.cs:40-53`: owner transfer through garrisoning.
+- `src/OpenSage.Game/Logic/Object/Behaviors/CastleBehavior.cs:76-126`: owner transfer through castle behavior.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:352-356`: owner assignment for produced units.
+- `src/OpenSage.Game/Logic/Player.cs:807-839`: owned-object add/remove idempotence and count maintenance.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 

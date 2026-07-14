@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-08` — P7 regression lock
+# Task Card `WI-P7-08`: P7 regression lock
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-08` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-8 Regression lock, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§5](../../deep-dives/p7-end-to-end-regression.md#5-regression-locking) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-8 Regression lock, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§5](../../deep-dives/p7-end-to-end-regression.md#5-regression-locking) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -16,17 +16,17 @@ Lock P7 as the standing playability regression suite by ensuring the six end-sta
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:91-103` — regression locking requirements.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:117-118` — P7-7/P7-8 sub-phase rows.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:210-240` — suite execution sequence diagram.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:284-287` — current `P7_ScenarioMatrixTests` methods to unblock.
-- `docs/roadmap/implementation-checklist.md:345-360` — P6b promotion, CI/standing regression, and matrix ACs.
-- `docs/roadmap/agent/README.md:66-75` — standard validation commands.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:222-254` — current P7 skipped stubs and method names.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55` — aggregate report fields used by the tests.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — canonical matrix runner.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127` — canonical harness run-and-assert path.
-- `.editorconfig:14-14` — new `.cs` files must be UTF-8 with BOM.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:91-103`: regression locking requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:117-118`: P7-7/P7-8 sub-phase rows.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:210-240`: suite execution sequence diagram.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:284-287`: current `P7_ScenarioMatrixTests` methods to unblock.
+- `docs/roadmap/implementation-checklist.md:345-360`: P6b promotion, CI/standing regression, and matrix ACs.
+- `docs/roadmap/agent/README.md:66-75`: standard validation commands.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:222-254`: current P7 skipped stubs and method names.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55`: aggregate report fields used by the tests.
+- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: canonical matrix runner.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: canonical harness run-and-assert path.
+- `.editorconfig:14-14`: new `.cs` files must be UTF-8 with BOM.
 
 ## Steps
 

@@ -1,6 +1,6 @@
 # Deep Dive: ReplaySketch Arbitrary-Command Harness (P0)
 
-> Expands phase P0 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
+> Expands phase P0 of [Track P: Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the harness design. Code references are in the agent-context appendix at the bottom.
@@ -17,8 +17,8 @@ later phases and the visualization layer share.
 
 Every other P phase needs a way to drive a scenario and check what happened. Today ReplaySketch
 can drive only five canned action shapes against two hardcoded factions, and it has no assertion
-layer. It exports a `.rep` and optionally round-trips the header. To validate that the AI built a
-base, the player was defeated, or money never went negative, we need arbitrary commands and a way
+layer. It exports a `.rep` and optionally round-trips the header. Validating that the AI built a
+base, the player was defeated, or money never went negative requires arbitrary commands and a way
 to read final or per-tick state and assert on it. P0 provides both.
 
 ---
@@ -38,8 +38,8 @@ non-MAUI test project (`OpenSage.Tools.ReplaySketch.Tests`) then covers the full
 `MainThread.BeginInvokeOnMainThread` (background-load completion, `StartBackgroundLoad`
 `Program`/`MainViewModel.cs:180-190`) and to `System.Diagnostics.Process.Start` /
 `LauncherLocatorService` (`ExecutePlayInGame`, `MainViewModel.cs:250-273`). While those statics
-remain inline, the agent-critical command flows — `ValidateCommand`, `ExportCommand`,
-`PlayInGameCommand`, and the apply-results half of the background load — cannot be exercised
+remain inline, the agent-critical command flows, `ValidateCommand`, `ExportCommand`,
+`PlayInGameCommand`, and the apply-results half of the background load, cannot be exercised
 headlessly, so changes to them have no fast deterministic check. Abstract each behind a small
 injectable seam, a dispatcher that runs the continuation synchronously in tests and a process
 launcher that records the request instead of spawning, so the full `MainViewModel` command surface
@@ -57,7 +57,7 @@ fixed gameplay verb:
 - Object-id arguments (e.g. `AttackObject`, `Enter`) need a way to reference runtime objects that
   don't exist until produced. Decision (see [open-questions](../open-questions.md)): objects an
   earlier command created are referenced by an implicit handle keyed to the producing command
-  (the author normally writes nothing — "the barracks built in command #3" resolves automatically at
+  (the author normally writes nothing, "the barracks built in command #3" resolves automatically at
   dispatch from production/build results), with an explicit name as opt-in sugar; objects the
   script did not create (enemy/world objects) use a small set of query selectors
   (faction/relationship/definition/proximity) resolved against `GameLogic`. This generalizes today's
@@ -78,11 +78,11 @@ settled in [open-questions](../open-questions.md): assertions are JSON predicate
 code-defined C# escape hatch for invariants that exceed that vocabulary. The three assertion kinds
 are:
 
-- Outcome assertions — match terminated; winner/loser/team; reason. (Consumes P3's queryable
-  `GameOutcome` — see [victory-defeat.md](victory-defeat.md).)
-- State assertions — predicates over `Player`/`GameLogic`/`BankAccount` at end-of-run or at a
+- Outcome assertions: match terminated; winner/loser/team; reason. (Consumes P3's queryable
+  `GameOutcome`, see [victory-defeat.md](p3-victory-defeat.md).)
+- State assertions: predicates over `Player`/`GameLogic`/`BankAccount` at end-of-run or at a
   trigger frame (e.g. `player[1].money >= 0`, `player[2].ownedBuildings > 0` after frame N).
-- Invariant assertions — predicates checked every tick via the `Game.Updating` hook (e.g. money
+- Invariant assertions: predicates checked every tick via the `Game.Updating` hook (e.g. money
   never negative, unit count never duplicated/leaked, AI made progress). A failing invariant records
   the frame and aborts.
 - Evaluation hooks: subscribe to `Game.Updating` for per-tick invariants; read final state after the
@@ -100,14 +100,14 @@ The matrix declares named sweep axes; the runner expands them into individual ru
 the results into one keyed report.
 
 Data model (`OpenSage.Tools.ReplaySketch.Core/Model`):
-- `ScenarioMatrix` — wraps a `BaseScenario` template, one or more named `SweepAxes`, optional
+- `ScenarioMatrix`: wraps a `BaseScenario` template, one or more named `SweepAxes`, optional
   `ConstraintFilters`, and a list of `AssertionTemplates`.
-- `SweepAxis` — a named list of values (strings, ints, or enum names). Each axis name corresponds
+- `SweepAxis`: a named list of values (strings, ints, or enum names). Each axis name corresponds
   to a token (`{faction}`, `{mapPath}`, `{playerCount}`, etc.) that can appear in the
   `BaseScenario` template or in assertion path/value fields.
-- `ConstraintFilter` — an optional predicate expression that prunes axis combinations before
+- `ConstraintFilter`: an optional predicate expression that prunes axis combinations before
   expansion (e.g. skip faction pairs that are not valid together).
-- `AssertionTemplate` — a JSON predicate where `path` and `value` fields may contain `{axisName}`
+- `AssertionTemplate`: a JSON predicate where `path` and `value` fields may contain `{axisName}`
   substitution tokens. Resolved per-cell after axis values are bound.
 
 Matrix expander algorithm:
@@ -147,7 +147,7 @@ comparison; P0-5b only provides expansion, execution, and keyed output.
 The model must support programmatic or procedural generation of large command sets and efficient
 `.rep` emission so the harness scales toward sim-scale runs. Full authoring and replay scaling,
 including streaming, bounded-memory loading, and throughput benchmarks, is finalized under
-[A5-5](visualization.md); P0 only needs the model to avoid assuming small hand-authored scenarios.
+[A5-5](a5-visualization.md); P0 only needs the model to avoid assuming small hand-authored scenarios.
 
 ### 2.7 Agent validation playbook (new)
 ReplaySketch lacks a reliable, specific, repeatable validation loop for low-effort and automated
@@ -191,10 +191,10 @@ validated.
 | P0-1. Open command model | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); `ActionType` is preserved as a convenience enum on `ActionEntry` only. | Done |
 | P0-1a. MAUI screenshot mode | Add screenshot-and-exit mode to `MainPage`: env-var `REPLAYSKETCH_SCREENSHOT_PATH` triggers capture via `Screenshot.Default.CaptureAsync()` after a configurable settle delay, then auto-exit. Env vars `REPLAYSKETCH_SCREENSHOT_TAB` (tree/map) and `REPLAYSKETCH_SCREENSHOT_DELAY` (seconds). Agents use this to verify MAUI-layer changes without manual app interaction. See `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`. | Done |
 | P0-1b. ViewModel testability | Extract `IPreferencesStore` from `MainViewModel`; inject it so `LoadMapFromFolder`'s unconditional path-persistence is unit-testable without a MAUI runtime. | Done |
-| P0-1c. MAUI command-flow testability | Abstract the remaining MAUI statics `MainViewModel` binds to — the `MainThread` dispatcher (background-load completion) and `Process.Start`/launcher (`ExecutePlayInGame`) — behind small injectable seams so `ValidateCommand`/`ExportCommand`/`PlayInGameCommand` and the apply-results half of the background load are unit-testable headlessly in `OpenSage.Tools.ReplaySketch.Tests`. | Not started |
+| P0-1c. MAUI command-flow testability | Abstract the remaining MAUI statics `MainViewModel` binds to: the `MainThread` dispatcher (background-load completion) and `Process.Start`/launcher (`ExecutePlayInGame`), behind small injectable seams so `ValidateCommand`/`ExportCommand`/`PlayInGameCommand` and the apply-results half of the background load are unit-testable headlessly in `OpenSage.Tools.ReplaySketch.Tests`. | Not started |
 | P0-2. Generic definition/player resolution | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
 | P0-3. Exporter generalization | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
-| P0-4. Assertion layer | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. (JSON predicates over a fixed vocabulary + code-defined escape hatch — decided.) | Not started |
+| P0-4. Assertion layer | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. (JSON predicates over a fixed vocabulary + code-defined escape hatch; decided.) | Not started |
 | P0-5. Run-and-assert entry point | One CLI/library call: scenario+commands in → headless run → report out (exit code + JSON). Wraps `RunHeadless` + the evaluator; terminates on P3 outcome. | Not started |
 | P0-5b. Scenario matrix runner | Accept a `ScenarioMatrix` file with named sweep axes; expand to one run per cartesian-product cell; emit a per-cell result keyed by axis combination and an aggregate JSON report. Wraps P0-5; provides the expansion primitive that A5-2 (tooling/visualizer) builds on. | Not started |
 | P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
@@ -207,33 +207,33 @@ validated.
   P0-1's model exists.
 - P0-1c continues the MAUI testability seam started by P0-1b and can land independently of the
   command-model work.
-- P0-4's outcome assertions depend on P3 ([victory-defeat.md](victory-defeat.md)) for a real
+- P0-4's outcome assertions depend on P3 ([victory-defeat.md](p3-victory-defeat.md)) for a real
   `GameOutcome`; until then P0-4 can assert state and invariants only.
 - P0-5b depends on and wraps P0-5, and is the final P0 sub-phase before P0-6.
 - A5-2 builds on P0-5b and does not re-implement expansion or execution.
 - P0-7 is done and documents the screenshot mode plus the test and format loop.
-- P0 unblocks P3, P6, and P7 and is later extended by [A5-3](visualization.md) and
-  [A5-5](visualization.md).
+- P0 unblocks P3, P6, and P7 and is later extended by [A5-3](a5-visualization.md) and
+  [A5-5](a5-visualization.md).
 
 ## 6. Resolved design questions
-- Runtime object references — Decided: implicit auto-handles keyed to the producing command,
+- Runtime object references: Decided: implicit auto-handles keyed to the producing command,
   with opt-in explicit names, for script-created objects; query selectors
   (faction/relationship/definition/proximity) for world or enemy objects. Generalizes
   `AfterActionTiming`. See [open-questions](../open-questions.md).
-- Assertion DSL shape — Decided: declarative JSON predicates over a fixed path and operator
+- Assertion DSL shape: Decided: declarative JSON predicates over a fixed path and operator
   vocabulary, with a code-defined C# predicate escape hatch for complex invariants. See
   [open-questions](../open-questions.md).
-- MAUI validation reach + agent playbook — Decided: ReplaySketch logic stays in `.Core` and is
+- MAUI validation reach + agent playbook: Decided: ReplaySketch logic stays in `.Core` and is
   validated headlessly via `OpenSage.Tools.ReplaySketch.Tests` plus the P0-5 run-and-assert flow.
   MAUI-only behaviour is minimized behind injectable seams (P0-1b/P0-1c), and the documented
   surface agents follow is the checked-in `ReplaySketch.Maui/AGENTS.md` playbook (P0-7). See
   [open-questions](../open-questions.md).
-- MAUI screenshot mode — Decided (P0-1a): agents capture MAUI-layer changes via an env-var-
+- MAUI screenshot mode: Decided (P0-1a): agents capture MAUI-layer changes via an env-var-
   triggered screenshot-and-exit mode (`REPLAYSKETCH_SCREENSHOT_PATH`) using
   `Microsoft.Maui.Media.Screenshot.Default.CaptureAsync()`. No external tooling, screen-recording
   permission, or human interaction is required. Implemented in `MainPage.OnLoaded`. See
   [open-questions](../open-questions.md).
-- ScenarioMatrix / sweep primitive placement — Decided (P0-5b): the cartesian-product matrix
+- ScenarioMatrix / sweep primitive placement: Decided (P0-5b): the cartesian-product matrix
   expansion primitive belongs in P0, not deferred to A5. A5-2 adds tooling and visualization on
   top; it does not re-implement expansion or execution. All axis dimensions are in scope, and the
   matrix is built out incrementally alongside implementation. See
@@ -537,8 +537,8 @@ sequenceDiagram
 
 ## 9. Related
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
-- Visualizer that extends this harness: [`visualization.md`](visualization.md) (A5-3/A5-5)
-- Outcome it asserts on: [`victory-defeat.md`](victory-defeat.md) (P3)
+- Visualizer that extends this harness: [`a5-visualization.md`](a5-visualization.md) (A5-3/A5-5)
+- Outcome it asserts on: [`p3-victory-defeat.md`](p3-victory-defeat.md) (P3)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 
 ---
@@ -550,7 +550,7 @@ sequenceDiagram
 > require reading this section.
 
 ### The closed authoring vocabulary
-- `ActionType` is a closed 5-value enum — `Construct, GatherResources, RecruitBasicUnit,
+- `ActionType` is a closed 5-value enum: `Construct, GatherResources, RecruitBasicUnit,
   AttackEnemyBase, EnemyBaseDestroyed` (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs:3-10`).
 - `ActionEntry` models one action with optional `BuildingDefinitionName`/`UnitDefinitionName`, a
   `PositionSpec`, and a `TimingConfig`
@@ -559,7 +559,7 @@ sequenceDiagram
   loads an embedded JSON profile (`Model/ReplayScenario.cs:6-31`).
 - `PositionSpec` is polymorphic (`NormalizedPosition`, `LandmarkRelativePosition`) resolved to world
   coordinates via a `PositionContext` (`Model/PositionSpec.cs:8-67`).
-- `TimingConfig` is polymorphic — `FixedTiming`, `RandomTiming`, `AfterActionTiming` (the latter
+- `TimingConfig` is polymorphic: `FixedTiming`, `RandomTiming`, `AfterActionTiming` (the latter
   carries `TriggerActionId`, `TriggerPhase`, `ExtraFrames`) (`Model/TimingConfig.cs:6-48`).
 - `PlayerSlotConfig` carries per-player `Name`, `FactionIndex`, `Color`, `StartPosition`, `Team`,
   `Actions` (`Model/PlayerSlotConfig.cs:6-30`).
@@ -605,7 +605,7 @@ sequenceDiagram
 - `OrderProcessor.Process(...)` is the dispatch switch (`Logic/Orders/OrderProcessor.cs:42-566`);
   it has real handlers for the above and `CreateGroup0-9`/`SelectGroup0-9`, and a default that
   logs `Unimplemented order type` (`:553-560`). This is the authoritative list of what a command
-  can actually do — the harness should target the handled subset first.
+  can actually do. The harness should target the handled subset first.
 
 ### The headless run + where to read state
 - `TestHarness` `RunHeadless(...)` boots `new Game(...)` (audio off), `LoadReplayFile(repEntry)`,

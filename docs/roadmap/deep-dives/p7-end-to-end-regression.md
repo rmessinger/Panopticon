@@ -1,6 +1,6 @@
 # Deep Dive: End-to-End Skirmish Regression Suite (P7)
 
-> Expands phase P7 of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
+> Expands phase P7 of [Track P: Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the P7 regression suite. Code references are in the agent-context appendix at the bottom.
@@ -70,7 +70,7 @@ with the offending frame number recorded in the aggregate report.
 
 ## 4. Scenario matrix
 
-P7 formalizes the six scenarios as a single `ScenarioMatrix` with one axis — `endState` — and
+P7 formalizes the six scenarios as a single `ScenarioMatrix` with one axis, `endState`, and
 universal invariants attached to all cells.
 
 | Axis | Values |
@@ -255,10 +255,10 @@ sequenceDiagram
 ## 9. Related
 
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
-- Harness (run-and-assert, matrix runner): [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
-- Victory detection & `GameOutcome`: [`victory-defeat.md`](victory-defeat.md) (P3)
-- Unit-contract scenarios that feed P7: [`unit-contract-validation.md`](unit-contract-validation.md) (P6b)
-- Headless host that depends on P7: [`headless-host.md`](headless-host.md) (A1)
+- Harness (run-and-assert, matrix runner): [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0)
+- Victory detection & `GameOutcome`: [`p3-victory-defeat.md`](p3-victory-defeat.md) (P3)
+- Unit-contract scenarios that feed P7: [`p6b-unit-contract-validation.md`](p6b-unit-contract-validation.md) (P6b)
+- Headless host that depends on P7: [`a1-headless-host.md`](a1-headless-host.md) (A1)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 
 ---

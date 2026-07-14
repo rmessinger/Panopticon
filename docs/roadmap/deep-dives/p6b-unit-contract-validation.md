@@ -1,6 +1,6 @@
 # Deep Dive: Unit-Contract Validation (P6b)
 
-> Expands phase P6b of [Track P — Playable Baseline](../track-p-playable-baseline.md). Part of
+> Expands phase P6b of [Track P: Playable Baseline](../track-p-playable-baseline.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the unit-contract design. Code references are in the agent-context appendix at the bottom.
@@ -43,21 +43,21 @@ without changing production code.
 
 Each archetype contract is a P0 harness assertion set. "Full contract" means:
 
-1. Produced — the unit is ordered, the production completes, and the unit exists in `GameLogic`.
+1. Produced: the unit is ordered, the production completes, and the unit exists in `GameLogic`.
    Assert: `player[X].ownedUnits contains a unit of definition D after frame N`.
-2. Mobile or static — for mobile archetypes: issue `MoveTo`, assert position delta after
+2. Mobile or static: for mobile archetypes: issue `MoveTo`, assert position delta after
    sufficient frames. For static archetypes (superweapon structure): assert it does not move.
-3. Basic attack — for combat archetypes: issue `AttackObject` against a dummy target, assert
+3. Basic attack: for combat archetypes: issue `AttackObject` against a dummy target, assert
    target health decreases within N frames. For builders/support: skip or assert attack is
    declined (if the unit has no weapon).
-4. Weapon modes — for each `WeaponSlot` the unit definition exposes: issue the matching
+4. Weapon modes: for each `WeaponSlot` the unit definition exposes: issue the matching
    `WeaponSetUpgrade` or `SpecialPower` order that activates it, then assert the unit fires with
    the expected slot (by observing health delta on a target or the order result).
-5. Special abilities — for each `SpecialPowerType` the unit's command set references: issue the
+5. Special abilities: for each `SpecialPowerType` the unit's command set references: issue the
    matching `SpecialPower*` order, assert the observable effect (e.g. health restored for
    ambulance heal, stealth toggled for stealth unit, garrison entered for infantry `Enter`, repair
    progress for dozer). If the handler is unimplemented, the assertion fails and logs it as a gap.
-6. Die correctly — kill the unit (via `ForceAttackObject` from a test attacker or
+6. Die correctly: kill the unit (via `ForceAttackObject` from a test attacker or
    `GameObject.Kill` stub), assert the unit is removed from `GameLogic`, ownership counts
    decrement, and any occupied transport/garrison is cleared.
 
@@ -97,7 +97,7 @@ expansion to additional factions without new scenario files.
 Constraints:
 - Not every archetype has a reference unit in every faction (e.g. `superweapon` is
   faction-specific). Cells without a valid reference unit are pruned by a `ConstraintFilter`.
-- The `contractPoint` (produce/move/attack/ability/die) is not a separate axis — all points
+- The `contractPoint` (produce/move/attack/ability/die) is not a separate axis; all points
   are asserted within each archetype × faction cell.
 
 Each cell runs the full archetype contract (all six contract points from §2.2) for the given
@@ -170,8 +170,8 @@ classDiagram
 ## 7. Related
 
 - Track overview: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md)
-- Harness used for authoring/asserting: [`playable-baseline-harness.md`](playable-baseline-harness.md) (P0)
-- Combat paths P6b builds on: [`economy-production-combat.md`](economy-production-combat.md) (P6)
+- Harness used for authoring/asserting: [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0)
+- Combat paths P6b builds on: [`p4-p6-economy-production-combat.md`](p4-p6-economy-production-combat.md) (P6)
 - Capstone that locks P6b scenarios as regression: [`../track-p-playable-baseline.md`](../track-p-playable-baseline.md) (P7)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 
@@ -212,7 +212,7 @@ P6b surfaces which are not yet handled.
 
 ### Death and ownership cleanup
 `GameObject.Kill`/`OnDie`/`Destroy` drive the death path; ownership changes are notified via the
-[P3-3](victory-defeat.md) death/ownership-change event. Correct cleanup means the unit is removed
+[P3-3](p3-victory-defeat.md) death/ownership-change event. Correct cleanup means the unit is removed
 from the owner's counts and from `GameLogic`'s object list, and any garrison/transport it held is
 cleared.
 

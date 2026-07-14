@@ -1,31 +1,31 @@
-# Task Card: `<CARD-ID>` — <short title>
+# Task Card `<CARD-ID>`: <short title>
 
 > Copy this file into [`cards/`](cards/) named `WI-<PHASE>-<NN>-<slug>.md`
 > (e.g. `WI-P0-01-catalog-replaysketch-vocabulary.md`). Fill every field. Delete this quote block and
-> any guidance in angle brackets. Keep the card small enough for a low-effort model — if it
+> any guidance in angle brackets. Keep the card small enough for a low-effort model. If it
 > needs deep design reasoning, split it or escalate to a roadmap deep dive.
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-<PHASE>-<NN>` (e.g. `WI-P0-01`) |
-| Roadmap phase | [`<phase>`](../../track-p-playable-baseline.md) — link to the exact phase row |
+| Roadmap phase | [`<phase>`](../track-p-playable-baseline.md): link to the exact phase row |
 | Status | `Ready` \| `In progress` \| `Done` \| `Blocked` |
 | Type | `investigation` \| `pattern-replication` \| `mechanical-refactor` \| `test-addition` |
-| Effort | `S` (suitable for a low-effort model) — if it isn't S, it doesn't belong here |
+| Effort | `S` (suitable for a low-effort model). If it isn't S, it doesn't belong here |
 | Prerequisites | other card ids that must be `Done` first, or `none` |
-| Diagrams | link to the `Architecture Diagrams` section of this phase's deep-dive — must be populated (not a placeholder stub) before this card is marked `Ready` |
+| Diagrams | link to the `Architecture Diagrams` section of this phase's deep-dive: must be populated (not a placeholder stub) before this card is marked `Ready` |
 
 ## Goal
 
-<1–2 sentences. What concrete, verifiable outcome does this card produce? Avoid strategy — link the
+<1–2 sentences. What concrete, verifiable outcome does this card produce? Avoid strategy: link the
 roadmap phase for the "why".>
 
 ## Context to read (and only this)
 
 <Exact files and line ranges. The agent should not need anything beyond these.>
 
-- `path/to/file.cs:10-60` — <why>
-- `path/to/other.cs` — <why>
+- `path/to/file.cs:10-60`: <why>
+- `path/to/other.cs`: <why>
 
 ## Steps
 
@@ -46,7 +46,7 @@ roadmap phase for the "why".>
 <Concrete, checkable. Include the specific assertions, not just "it works".>
 
 - [ ] <specific check>
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)) — omit for
+- [ ] Standard validation passes (see [guide](README.md#standard-validation)). Omit for
       investigation-only cards.
 
 ## Validation commands

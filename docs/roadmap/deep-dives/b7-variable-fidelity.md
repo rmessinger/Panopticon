@@ -1,6 +1,6 @@
 # Deep Dive: Variable Simulation Fidelity
 
-> Expands phase B7 of [Track B — Scale](../track-b-scale.md). Part of the
+> Expands phase B7 of [Track B: Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
 > Audience: human overview of the variable-fidelity design.
@@ -45,7 +45,7 @@ A fidelity policy maps context to level. Candidate inputs:
 - Distance from any player or active front.
 - Activity: idle/garrisoned vs. moving/fighting.
 - Local density: units in a dense crowd can share an aggregate.
-- Per-shard hint: in [distributed sim (B6)](distributed-simulation.md), a shard with no observing
+- Per-shard hint: in [distributed sim (B6)](b6-distributed-simulation.md), a shard with no observing
   client can run its whole region at reduced fidelity.
 
 For shared/distributed runs the policy must be driven by replicated state, see §4, and should
@@ -55,8 +55,8 @@ ideally be hysteretic so units do not thrash between levels frame to frame.
 
 ## 4. Interaction with reproducibility (important)
 
-Variable fidelity interacts with [A2 — Reproducibility & statistical stability](../track-a-foundations.md)
-and [B6 — Distributed simulation](distributed-simulation.md). Under the
+Variable fidelity interacts with [A2: Reproducibility & statistical stability](../track-a-foundations.md)
+and [B6: Distributed simulation](b6-distributed-simulation.md). Under the
 [relaxed-determinism Decision](../open-questions.md), the bar is bounded statistical error and
 cross-shard consistency rather than bit-exactness:
 
@@ -72,7 +72,7 @@ cross-shard consistency rather than bit-exactness:
     provisional and bounding the error. This is allowed only for single-node, non-distributed
     scaling experiments.
 
-The [result replayer/visualizer (A5-3)](visualization.md) should visualize fidelity levels, for
+The [result replayer/visualizer (A5-3)](a5-visualization.md) should visualize fidelity levels, for
 example by colouring units by level, and run comparison must account for expected fidelity-induced
 differences within tolerance.
 
@@ -87,7 +87,7 @@ differences within tolerance.
 | B7-3. Simplified behavior/physics | Provide low-fidelity update paths, cheap move/no fine collision/simplified AI, selected by fidelity level via module composition. | Not started |
 | B7-4. Group aggregation | Represent dense crowds of similar units as aggregate entities; expand to individuals on demand, such as combat or close interest. | Not started |
 | B7-5. Precision reduction (experimental) | Explore coarser numeric/spatial precision for low-fidelity units, gated by the §4 policy and the bounded-error tolerance. | Not started |
-| B7-6. Fidelity visualization & validation | Extend the [replayer/visualizer (A5-3)](visualization.md) to show per-unit fidelity levels and quantify the cost/accuracy trade-off across scaling experiments. | Not started |
+| B7-6. Fidelity visualization & validation | Extend the [replayer/visualizer (A5-3)](a5-visualization.md) to show per-unit fidelity levels and quantify the cost/accuracy trade-off across scaling experiments. | Not started |
 
 ---
 
@@ -99,11 +99,11 @@ differences within tolerance.
   frames and is low-risk.
 - B7-3/4 build on [B3](../track-b-scale.md) so low-fidelity paths and aggregates are cheap to store
   and iterate.
-- In [distributed sim (B6)](distributed-simulation.md), a shard-level fidelity hint, where a whole
+- In [distributed sim (B6)](b6-distributed-simulation.md), a shard-level fidelity hint, where a whole
   region runs at low fidelity when unobserved, is a powerful lever. Coordinate B7's per-unit policy
   with B6's per-shard policy.
 - Every B7 technique is measured against [B1](../track-b-scale.md) benchmarks and validated with the
-  [visualizer (A5-3)](visualization.md). Variable fidelity is explicitly a scaling experiment toolkit.
+  [visualizer (A5-3)](a5-visualization.md). Variable fidelity is explicitly a scaling experiment toolkit.
 
 ## 7. Scenario Matrix
 
@@ -183,6 +183,6 @@ classDiagram
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
 - Reproducibility & statistical stability: [`../track-a-foundations.md`](../track-a-foundations.md)
-- Distributed sim (per-shard fidelity): [`distributed-simulation.md`](distributed-simulation.md)
-- Replayer/visualizer (fidelity visualization): [`headless-host.md`](headless-host.md)
+- Distributed sim (per-shard fidelity): [`b6-distributed-simulation.md`](b6-distributed-simulation.md)
+- Replayer/visualizer (fidelity visualization): [`a1-headless-host.md`](a1-headless-host.md)
 - Open questions: [`../open-questions.md`](../open-questions.md)
