@@ -69,9 +69,7 @@ internal static class Cursors
         return orderType switch
         {
             OrderType.Zero => Arrow,
-            // Keep the plain arrow when merely hovering a selectable object; the dashed
-            // "Select" cursor is reserved for when a selection-rectangle drag is in progress.
-            OrderType.SetSelection => Arrow,
+            OrderType.SetSelection => Select,
             OrderType.SetRallyPoint => SetRallyPoint,
             OrderType.AttackObject => AttackObj,
             OrderType.ForceAttackObject => ForceAttackObj,
