@@ -69,7 +69,9 @@ internal static class Cursors
         return orderType switch
         {
             OrderType.Zero => Arrow,
-            OrderType.SetSelection => Select,
+            // Keep the plain arrow when merely hovering a selectable object; Scene25D draws a
+            // screen-space outline around the pointer instead of switching cursor shape.
+            OrderType.SetSelection => Arrow,
             OrderType.SetRallyPoint => SetRallyPoint,
             OrderType.AttackObject => AttackObj,
             OrderType.ForceAttackObject => ForceAttackObj,

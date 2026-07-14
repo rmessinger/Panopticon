@@ -110,6 +110,8 @@ public class Scene25D(IScene3D scene3D, AssetStore assetStore)
 
             // transient animations are not tied to a specific object
             DrawTransientAnimations(drawingContext, scene3D.GameEngine.GameLogic.CurrentFrame.Value);
+
+            DrawHoverCursorOutline(drawingContext);
         }
     }
 
@@ -131,6 +133,29 @@ public class Scene25D(IScene3D scene3D, AssetStore assetStore)
         }
 
         return new BoundingSphere(gameObject.Translation, geometrySize);
+    }
+
+    /// <summary>
+    /// Draws a small screen-space outline centred on the mouse pointer whenever it is hovering
+    /// a selectable object, as a lightweight visual cue that doesn't require swapping the OS
+    /// cursor shape (the cursor stays the plain arrow — see <c>Cursors.CursorForOrder</c>).
+    /// </summary>
+    private void DrawHoverCursorOutline(DrawingContext2D drawingContext)
+    {
+        if (LocalPlayer.HoveredUnit is not { IsSelectable: true })
+        {
+            return;
+        }
+
+        const float size = 20f;
+        var mousePosition = GameEngine.Game.InputMessageBuffer.MousePosition;
+        var rect = new RectangleF(
+            mousePosition.X - size / 2f,
+            mousePosition.Y - size / 2f,
+            size,
+            size);
+
+        drawingContext.DrawRectangle(rect, new ColorRgbaF(1, 1, 1, 0.8f), 2);
     }
 
     private void DrawHealthBox(DrawingContext2D drawingContext, GameObject gameObject)
