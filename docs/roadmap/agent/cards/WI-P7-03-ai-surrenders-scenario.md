@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-03` — AISurrenders regression scenario
+# Task Card `WI-P7-03`: AISurrenders regression scenario
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-03` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-3 AISurrenders, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-3 AISurrenders, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,19 +16,19 @@ Create the checked-in P7 AISurrenders scenario where the scripted AI player issu
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — AISurrenders expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — scripted deterministic AI progress requirement.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariants, including AI progress.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:113-113` — P7-3 sub-phase row.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300` — `OrderType.EndGame` dependency on P3-4.
-- `docs/roadmap/implementation-checklist.md:337-351` — outcome and invariant ACs.
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs:3-6` — `EndGame` enum value.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:426-428` — `EndGame` processing path.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24` — AI slot configuration fields.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20` — action entries for scripted AI orders.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127` — run-and-assert entry point.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73` — invariant subscription and early abort behavior.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — outcome assertion surface to wire to P3 `GameOutcome`.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: AISurrenders expected outcome.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scripted deterministic AI progress requirement.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants, including AI progress.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:113-113`: P7-3 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300`: `OrderType.EndGame` dependency on P3-4.
+- `docs/roadmap/implementation-checklist.md:337-351`: outcome and invariant ACs.
+- `src/OpenSage.Game/Logic/Orders/OrderType.cs:3-6`: `EndGame` enum value.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:426-428`: `EndGame` processing path.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: AI slot configuration fields.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries for scripted AI orders.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73`: invariant subscription and early abort behavior.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to wire to P3 `GameOutcome`.
 
 ## Steps
 

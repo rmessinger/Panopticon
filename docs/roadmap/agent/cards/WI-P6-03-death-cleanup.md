@@ -1,9 +1,9 @@
-# Task Card: `WI-P6-03` — Death cleanup
+# Task Card `WI-P6-03`: Death cleanup
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-03` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — sub-phase P6-3, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): sub-phase P6-3, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,17 +16,17 @@ Ensure dying or destroyed objects leave no dangling references: remove them from
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:82-87` — death cleanup design and P3-4 sharing requirement.
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:89-112` — P6-3 sub-phase and sequencing dependency.
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80` — death→defeat event that P6-3 must share.
-- `docs/roadmap/implementation-checklist.md:287-289` — checklist ACs for death cleanup.
-- `src/OpenSage.Game/Logic/SelectionSystem.cs:113-165` — selection mutation APIs.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291` — current `Owner` property shape.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1284-1366` — `Kill`, `OnDie`, and `Destroy`.
-- `src/OpenSage.Game/Logic/GameLogic.cs:180-201` — destroy lifecycle, owner removal, and object-destroyed event.
-- `src/OpenSage.Game/IGame.cs:140-144`, `src/OpenSage.Game/Game.cs:128-139`, and `src/OpenSage.Game/Logic/GameObjectDestroyedEventArgs.cs:6-14` — existing object-destroyed event surface.
-- `src/OpenSage.Game/Logic/Player.cs:130-134` and `:807-839` — `OwnedObjects`, `BuildingCount`, `UnitCount`, add/remove helpers from P1.
-- `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs:8-35` — ownership-tracking test style.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:82-87`: death cleanup design and P3-4 sharing requirement.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:89-112`: P6-3 sub-phase and sequencing dependency.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80`: death→defeat event that P6-3 must share.
+- `docs/roadmap/implementation-checklist.md:287-289`: checklist ACs for death cleanup.
+- `src/OpenSage.Game/Logic/SelectionSystem.cs:113-165`: selection mutation APIs.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:291`: current `Owner` property shape.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1284-1366`: `Kill`, `OnDie`, and `Destroy`.
+- `src/OpenSage.Game/Logic/GameLogic.cs:180-201`: destroy lifecycle, owner removal, and object-destroyed event.
+- `src/OpenSage.Game/IGame.cs:140-144`, `src/OpenSage.Game/Game.cs:128-139`, and `src/OpenSage.Game/Logic/GameObjectDestroyedEventArgs.cs:6-14`: existing object-destroyed event surface.
+- `src/OpenSage.Game/Logic/Player.cs:130-134` and `:807-839`: `OwnedObjects`, `BuildingCount`, `UnitCount`, add/remove helpers from P1.
+- `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs:8-35`: ownership-tracking test style.
 
 ## Steps
 

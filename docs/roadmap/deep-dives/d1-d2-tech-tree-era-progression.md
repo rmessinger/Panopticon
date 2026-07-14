@@ -1,6 +1,6 @@
 # Deep Dive: Tech Trees & Era Progression (D1/D2)
 
-> Expands phases D1 and D2 of [Track D — Gameplay Content Expansion](../track-d-gameplay-expansion.md).
+> Expands phases D1 and D2 of [Track D: Gameplay Content Expansion](../track-d-gameplay-expansion.md).
 > Part of the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the tech-tree and era-progression design. Code references are in the
@@ -77,7 +77,7 @@ EraDefinition {
 ```
 
 Age-up is issued as an order through the normal player-command pipeline. See the
-[P0 harness](playable-baseline-harness.md) for how orders are authored and asserted. The order is
+[P0 harness](p0-playable-baseline-harness.md) for how orders are authored and asserted. The order is
 validated against `EraDefinition.RequiredTechNodeIds` and cost, then resolves after
 `AgeUpDurationFrames` via the existing scheduled/update-module pattern used by production queues.
 On completion, `EraState.CurrentEra` increments and any `TechNode`/`ObjectDefinition` gated by
@@ -104,13 +104,13 @@ across sharded runs.
   C1's import abstraction. It turns the D1/D2 mechanism into actual AoE/Empire Earth-flavored
   content.
 - D4 is the integration proof: one small tech tree plus one era transition, authored and asserted
-  through ReplaySketch. See [`deep-dives/p0-playable-baseline-harness.md`](playable-baseline-harness.md).
+  through ReplaySketch. See [`deep-dives/p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md).
 
 ---
 
 ## Architecture Diagrams
 
-Placeholder — phase D1/D2 is `Not started`. Per the [maintaining protocol](../agent/MAINTAINING.md),
+Placeholder: phase D1/D2 is `Not started`. Per the [maintaining protocol](../agent/MAINTAINING.md),
 a class diagram covering `TechNode`, `TechTreeState`, `EraDefinition`, and `EraState`, plus their
 relationship to `ObjectDefinition` and `UpgradeTemplate`, and a sequence diagram covering age-up
 order → validation → timed resolution → availability update, must replace this placeholder before
@@ -120,13 +120,13 @@ D1's first task card is marked `Ready`.
 
 ## Appendix: Current code (agent context)
 
-- `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs` — existing per-object upgrade template;
+- `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs`: existing per-object upgrade template;
   D1's adapter wraps this rather than replacing it.
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs` — build/produce prerequisite fields D1's
+- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs`: build/produce prerequisite fields D1's
   `TechNode.Requires` generalizes.
-- `src/OpenSage.Game/Logic/GameLogic.cs` — top-level per-match state; `TechTreeState`/`EraState`
+- `src/OpenSage.Game/Logic/GameLogic.cs`: top-level per-match state; `TechTreeState`/`EraState`
   are added as per-player state here, alongside existing `BankAccount`/player state.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs` — the existing timed-completion
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs`: the existing timed-completion
   pattern that age-up resolution should mirror rather than inventing a second timing mechanism.
 - Save/load: search `PersistVersion()` call sites in `Logic/` for the established
   `StatePersister` pattern D1/D2 state must follow.

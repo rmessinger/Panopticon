@@ -1,6 +1,6 @@
 # Deep Dive: Naval Warfare (E1/E2)
 
-> Expands phases E1 and E2 of [Track E — Naval Warfare](../track-e-naval-warfare.md). Part of
+> Expands phases E1 and E2 of [Track E: Naval Warfare](../track-e-naval-warfare.md). Part of
 > the [Large-Scale Simulation Roadmap](../README.md).
 >
 > Audience: human overview of the naval-warfare design. Code references are in the
@@ -82,13 +82,13 @@ or water tile by using E1's terrain-passability data instead of today's land-onl
   constrained to water first.
 - E3 depends on E1 because it needs water-adjacency placement checks, but not on E2.
 - E4 depends on E2 and E3. It is the integration proof, authored and asserted through ReplaySketch
-  using the [P0 harness](playable-baseline-harness.md) pattern.
+  using the [P0 harness](p0-playable-baseline-harness.md) pattern.
 
 ---
 
 ## Architecture Diagrams
 
-Placeholder — phase E1/E2 is `Not started`. Per the [maintaining protocol](../agent/MAINTAINING.md),
+Placeholder: phase E1/E2 is `Not started`. Per the [maintaining protocol](../agent/MAINTAINING.md),
 a class diagram covering the `TerrainLogic`/`PathfindLayerType`/`Pathfinder`/
 `Locomotor.Surfaces` relationship plus ship weapon and transport-module reuse, and a sequence
 diagram covering move order onto water → pathfinder layer resolution → locomotor validation →
@@ -98,23 +98,23 @@ movement, must replace this placeholder before E1's first task card is marked `R
 
 ## Appendix: Current code (agent context)
 
-- `src/OpenSage.Game/Terrain/TerrainLogic.cs:88,97` — `GetLayerForDestination`/
+- `src/OpenSage.Game/Terrain/TerrainLogic.cs:88,97`: `GetLayerForDestination`/
   `GetHighestLayerForDestination` unconditionally return `PathfindLayerType.Ground`; this is the
   stub E1 replaces with real water/ground resolution.
-- `src/OpenSage.Game/Logic/AI/Pathfinder.cs:22-26` — `ValidMovementTerrain` unconditionally
+- `src/OpenSage.Game/Logic/AI/Pathfinder.cs:22-26`: `ValidMovementTerrain` unconditionally
   returns `true` (`// TODO(Port): Implement this.`); this is the stub E1 implements against
   locomotor surface + water depth.
-- `src/OpenSage.Game/Logic/Object/LocomotorTemplate.cs:655-670` — `Surfaces` enum already has
+- `src/OpenSage.Game/Logic/Object/LocomotorTemplate.cs:655-670`: `Surfaces` enum already has
   `Ground`/`Water`/`Cliff`/`Air` bits; E1 makes `Water` actually constrain movement.
-- `src/OpenSage.Game/Logic/Object/Locomotor.cs:1336-1354` — existing `OverWater` flag/model
+- `src/OpenSage.Game/Logic/Object/Locomotor.cs:1336-1354`: existing `OverWater` flag/model
   condition tracking, visual-only today; E1's terrain data should drive this rather than each side
   computing water state independently.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:84,105,222,256` — `WadeWaterDepth`/`DeepWaterDepth`
+- `src/OpenSage.Game/Logic/AI/AIData.cs:84,105,222,256`: `WadeWaterDepth`/`DeepWaterDepth`
   already parsed from INI but unused for movement validation; E1 is their first real consumer.
-- `src/OpenSage.Game/Logic/Object/ObjectKinds.cs` — existing `SHIP`, `SHIP_BATTLESHIP`,
+- `src/OpenSage.Game/Logic/Object/ObjectKinds.cs`: existing `SHIP`, `SHIP_BATTLESHIP`,
   `SHIP_BOMBARD`, `SHIP_SUICIDE`, `SHIP_TRANSPORT`, `PORT`, `BOAT`, `AMPHIBIOUS` kinds
   (`AddedIn(SageGame.Bfme2)`/`Bfme2Rotwk`), the reference content E1-E4 validate against. No new
   `ObjectKind` values are needed for the initial reference scenario.
-- `src/OpenSage.Game/Logic/Object/Update/DockUpdate.cs` — existing dock/approach-position pattern
+- `src/OpenSage.Game/Logic/Object/Update/DockUpdate.cs`: existing dock/approach-position pattern
   used today for supply trucks; E3's `PORT` production building placement check follows the same
   module structure, distinct from this supply-specific behavior.

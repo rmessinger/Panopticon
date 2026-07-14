@@ -1,4 +1,4 @@
-# Task Card: `WI-MC-01` — Scaffold the ModCollector project
+# Task Card `WI-MC-01`: Scaffold the ModCollector project
 
 | Field | Value |
 |---|---|
@@ -8,7 +8,7 @@
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | N/A — standalone tool, see plan |
+| Diagrams | N/A: standalone tool, see plan |
 
 ## Goal
 
@@ -38,7 +38,7 @@ and is wired into the solution, matching the BigTool pattern exactly.
 </Project>
 ```
 
-Do NOT add `<TargetFramework>` — it is inherited from `src/Directory.Build.props` (`net10.0`).
+Do NOT add `<TargetFramework>`: it is inherited from `src/Directory.Build.props` (`net10.0`).
 
 2. Add the project to `src/OpenSage.sln`. Use `dotnet sln src/OpenSage.sln add src/OpenSage.Tools.ModCollector/OpenSage.Tools.ModCollector.csproj`.
 

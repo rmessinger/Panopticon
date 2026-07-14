@@ -1,9 +1,9 @@
-# Task Card: `WI-P4-05` — P4 economy scenario matrix
+# Task Card `WI-P4-05`: P4 economy scenario matrix
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-05` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — scenario matrix, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 Scenario Matrix](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): scenario matrix, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 Scenario Matrix](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,12 +16,12 @@ Replace the P4 scenario-matrix stub with a CI-running matrix test that expands a
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-131` — P4 matrix axes and per-cell assertions; use the checklist's 18-cell count where it corrects the arithmetic.
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:145-194` — P4 architecture diagram links for economy types.
-- `docs/roadmap/implementation-checklist.md:251-255` — checklist AC: 18 cells for `faction` × `supplyDensity` × `startingMoney`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152` — `SweepAxis`, assertion templates, and expansion.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — running expanded cells with `HarnessRunner.RunAndAssert`.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:100-128` — existing P4 matrix stub to replace.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-131`: P4 matrix axes and per-cell assertions; use the checklist's 18-cell count where it corrects the arithmetic.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:145-194`: P4 architecture diagram links for economy types.
+- `docs/roadmap/implementation-checklist.md:251-255`: checklist AC: 18 cells for `faction` × `supplyDensity` × `startingMoney`.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: `SweepAxis`, assertion templates, and expansion.
+- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: running expanded cells with `HarnessRunner.RunAndAssert`.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:100-128`: existing P4 matrix stub to replace.
 
 ## Steps
 

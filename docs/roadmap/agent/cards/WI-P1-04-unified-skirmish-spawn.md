@@ -1,9 +1,9 @@
-# Task Card: `WI-P1-04` — Unified skirmish spawn path
+# Task Card `WI-P1-04`: Unified skirmish spawn path
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-04` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-2, see [deep dive §3.2](../../deep-dives/p1-skirmish-setup.md)) |
+| Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-2, see [deep dive §3.2](../../deep-dives/p1-skirmish-setup.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -19,16 +19,16 @@ that the multiplayer branch uses, for every non-neutral player. Replace the ad-h
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Game.cs:717-802` — `StartGame()`: focus on lines 745-763 (the MP-only
+- `src/OpenSage.Game/Game.cs:717-802`: `StartGame()`: focus on lines 745-763 (the MP-only
   guard for starting buildings + camera) and 722-743 (player loop before the guard).
-- `src/OpenSage.Game/Scene3D.cs:430-455` — `CreateSkirmishPlayerStartingBuilding(...)`: takes a
+- `src/OpenSage.Game/Scene3D.cs:430-455`: `CreateSkirmishPlayerStartingBuilding(...)`: takes a
   `Player` and index, looks up `Player{i}_Start` waypoint, creates starting building + units.
-- `src/OpenSage.Game/Logic/PlayerManager.cs:39-46` — current `LocalPlayer` selection: falls back to
+- `src/OpenSage.Game/Logic/PlayerManager.cs:39-46`: current `LocalPlayer` selection: falls back to
   `_players[2]` when `isLocalForMultiplayer` not set. This is the ad-hoc indexing to fix.
-- `src/OpenSage.Game/Logic/PlayerSettings.cs:17-36` — `PlayerSetting.IsLocalForMultiplayer` flag.
-- `src/OpenSage.Game/Network/SkirmishManager.cs:55-93` — how `PlayerSetting.IsLocalForMultiplayer`
+- `src/OpenSage.Game/Logic/PlayerSettings.cs:17-36`: `PlayerSetting.IsLocalForMultiplayer` flag.
+- `src/OpenSage.Game/Network/SkirmishManager.cs:55-93`: how `PlayerSetting.IsLocalForMultiplayer`
   is already set for the human slot in the lobby path.
-- `src/OpenSage.Game/Scripting/Waypoints.cs:76-81` — `TryGetPlayerStart(int playerIndex)`.
+- `src/OpenSage.Game/Scripting/Waypoints.cs:76-81`: `TryGetPlayerStart(int playerIndex)`.
 
 ## Steps
 
@@ -43,15 +43,15 @@ that the multiplayer branch uses, for every non-neutral player. Replace the ad-h
    skirmish-type game, including SP. Change the guard condition so that it fires for both
    `SinglePlayer` and `MultiPlayer` skirmish starts (not for campaign/other modes).
    A safe condition is: `gameType == GameType.SinglePlayer || gameType == GameType.MultiPlayer`
-   (or an `IsSkirmish` predicate if one exists — check `GameType` enum values).
+   (or an `IsSkirmish` predicate if one exists: check `GameType` enum values).
 
 3. Do not alter the relationship setup, player-creation order, or the `SkirmishManager`
-   lobby code — only the spawn guard and `LocalPlayer` selection.
+   lobby code: only the spawn guard and `LocalPlayer` selection.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Game.cs` — spawn path guard (`~line 745-763`).
-- `src/OpenSage.Game/Logic/PlayerManager.cs` — `LocalPlayer` selection (`~line 39-46`).
+- `src/OpenSage.Game/Game.cs`: spawn path guard (`~line 745-763`).
+- `src/OpenSage.Game/Logic/PlayerManager.cs`: `LocalPlayer` selection (`~line 39-46`).
 
 ## Acceptance criteria
 
@@ -72,9 +72,9 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not touch relationship setup (`OnNewGame` TODO — that is `WI-P1-02`).
-- Do not change how slots are filled (faction/color/start) — that is `WI-P1-05`.
-- Do not add new tests here — the boot-validation test is `WI-P1-06`.
+- Do not touch relationship setup (`OnNewGame` TODO: that is `WI-P1-02`).
+- Do not change how slots are filled (faction/color/start): that is `WI-P1-05`.
+- Do not add new tests here: the boot-validation test is `WI-P1-06`.
 - If the `GameType` enum doesn't have a clean skirmish predicate, add a local `bool isSkirmish`
   variable and comment its definition; do not redesign the enum.
 

@@ -1,9 +1,9 @@
-# Task Card: `WI-P2-02` — Economy and base build-out
+# Task Card `WI-P2-02`: Economy and base build-out
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-02` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-2, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.2](../../deep-dives/p2-p5-skirmish-ai.md#12-consume-the-stranded-build-list-data-p5), and [§1.3](../../deep-dives/p2-p5-skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md): sub-phase P2-2, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.2](../../deep-dives/p2-p5-skirmish-ai.md#12-consume-the-stranded-build-list-data-p5), and [§1.3](../../deep-dives/p2-p5-skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,18 +16,18 @@ Teach the AI scaffold to issue legal order-stream actions for economy and base b
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:27-44` — economy and build-list planner rules.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:46-58` — decision: AI actuates via orders, not direct APIs.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:244-250` — `AIData`/`BuildListInfo` are parsed but stranded.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-274` — order/construction actuation surface.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:7-113` — `AIData` parser includes `SkirmishBuildList`.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:242-245` — `SkirmishBuildLists` storage.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:325-342` — `AISkirmishBuildList` and `Structures`.
-- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:65-82` — AI fields: supply/gatherers/priority.
-- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:194-236` — INI parse and `IsBuildable`.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121` — `BuildObject` handler.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:482-514` — `GatherDumpSupplies` handler.
-- `src/OpenSage.Game/Network/NetworkMessageBuffer.cs:33-43` and `:45-76` — local orders vs immediate injection.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:27-44`: economy and build-list planner rules.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:46-58`: decision: AI actuates via orders, not direct APIs.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:244-250`: `AIData`/`BuildListInfo` are parsed but stranded.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-274`: order/construction actuation surface.
+- `src/OpenSage.Game/Logic/AI/AIData.cs:7-113`: `AIData` parser includes `SkirmishBuildList`.
+- `src/OpenSage.Game/Logic/AI/AIData.cs:242-245`: `SkirmishBuildLists` storage.
+- `src/OpenSage.Game/Logic/AI/AIData.cs:325-342`: `AISkirmishBuildList` and `Structures`.
+- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:65-82`: AI fields: supply/gatherers/priority.
+- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:194-236`: INI parse and `IsBuildable`.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121`: `BuildObject` handler.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:482-514`: `GatherDumpSupplies` handler.
+- `src/OpenSage.Game/Network/NetworkMessageBuffer.cs:33-43` and `:45-76`: local orders vs immediate injection.
 
 ## Steps
 

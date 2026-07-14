@@ -1,9 +1,9 @@
-# Task Card: `WI-P3-01` — GameOutcome and VictorySystem scaffold
+# Task Card `WI-P3-01`: GameOutcome and VictorySystem scaffold
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-01` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — sub-phase P3-1, see [deep dive §1.1](../../deep-dives/p3-victory-defeat.md#11-a-gameoutcome-value-the-queryable-result) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-1, see [deep dive §1.1](../../deep-dives/p3-victory-defeat.md#11-a-gameoutcome-value-the-queryable-result) and [§4](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -16,16 +16,16 @@ Add the first-class `GameOutcome` value and a no-decision `VictorySystem : GameS
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:19-46` — `GameOutcome`, `OutcomeStatus`, `OutcomeReason`, and default outcome semantics.
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:118-127` — P3 sub-phase boundaries.
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:182-232` — P3 architecture diagram types.
-- `docs/roadmap/implementation-checklist.md:201-204` — checklist ACs for the scaffold.
-- `src/OpenSage.Game/GameSystem.cs:1-27` — how `GameSystem` instances self-register and initialize.
-- `src/OpenSage.Game/IGame.cs:23-33` and `src/OpenSage.Game/IGame.cs:119-123` — interface surface for systems and `GameLogic`.
-- `src/OpenSage.Game/Game.cs:598-633` — existing system construction/init order; preserve it when adding `VictorySystem`.
-- `src/OpenSage.Game/Logic/GameLogic.cs:12-69` and `src/OpenSage.Game/Logic/GameLogic.cs:250-292` — `GameLogic` construction and the logic update loop.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:72-79` — current placeholder outcome paths.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70` — headless test base; use `[Fact]`, not skipped tests.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:19-46`: `GameOutcome`, `OutcomeStatus`, `OutcomeReason`, and default outcome semantics.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:118-127`: P3 sub-phase boundaries.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:182-232`: P3 architecture diagram types.
+- `docs/roadmap/implementation-checklist.md:201-204`: checklist ACs for the scaffold.
+- `src/OpenSage.Game/GameSystem.cs:1-27`: how `GameSystem` instances self-register and initialize.
+- `src/OpenSage.Game/IGame.cs:23-33` and `src/OpenSage.Game/IGame.cs:119-123`: interface surface for systems and `GameLogic`.
+- `src/OpenSage.Game/Game.cs:598-633`: existing system construction/init order; preserve it when adding `VictorySystem`.
+- `src/OpenSage.Game/Logic/GameLogic.cs:12-69` and `src/OpenSage.Game/Logic/GameLogic.cs:250-292`: `GameLogic` construction and the logic update loop.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:72-79`: current placeholder outcome paths.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; use `[Fact]`, not skipped tests.
 
 ## Steps
 

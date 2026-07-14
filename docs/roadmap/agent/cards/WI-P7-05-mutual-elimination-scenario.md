@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-05` — MutualElimination regression scenario
+# Task Card `WI-P7-05`: MutualElimination regression scenario
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-05` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-5 MutualElimination, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-5 MutualElimination, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,17 +16,17 @@ Create the checked-in P7 MutualElimination scenario that reaches `SuddenDeath` a
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — MutualElimination expected two-stage outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — deterministic scenario authoring requirements.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariants and per-tick failure behavior.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:115-115` — P7-5 sub-phase row.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:243-257` — MutualElimination sequence diagram.
-- `docs/roadmap/implementation-checklist.md:337-344` — scenario and expected outcome ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/TimingConfig.cs:15-23` — fixed/random timing primitives; use fixed timing only.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20` — action entries for staged commands.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119` — update loop and timeout behavior.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — outcome assertion surface; extend for two-stage outcome if needed.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254` — final P7 matrix and invariant-violation gates.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: MutualElimination expected two-stage outcome.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and per-tick failure behavior.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:115-115`: P7-5 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:243-257`: MutualElimination sequence diagram.
+- `docs/roadmap/implementation-checklist.md:337-344`: scenario and expected outcome ACs.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/TimingConfig.cs:15-23`: fixed/random timing primitives; use fixed timing only.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries for staged commands.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119`: update loop and timeout behavior.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for two-stage outcome if needed.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254`: final P7 matrix and invariant-violation gates.
 
 ## Steps
 

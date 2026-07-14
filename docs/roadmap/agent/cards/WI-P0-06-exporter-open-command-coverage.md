@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-06` — Generalize ReplaySketch exporter for open `CommandSpec` commands
+# Task Card `WI-P0-06`: Generalize ReplaySketch exporter for open `CommandSpec` commands
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-06` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-3, see [deep dive §2.2/§3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-3, see [deep dive §2.2/§3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -14,24 +14,24 @@
 
 Ensure `ReplayExporter` correctly emits orders for open `CommandSpec` commands (those whose
 `ActionEntry.Type` is `null`) for all non-deferred timing types, and replaces the silent skip
-for open-command deferred triggers with an explicit exception — so authoring gaps are caught early
+for open-command deferred triggers with an explicit exception: so authoring gaps are caught early
 rather than producing a silently incomplete replay.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100` — `Export(...)`: the main
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100`: `Export(...)`: the main
   loop. Line ~67: deferred path (AfterActionTiming). Line ~87: non-deferred path. Line ~91 calls
   `BuildOrders(...)`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:200-270` — `BuildOrders(...)`:
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:200-270`: `BuildOrders(...)`:
   line ~206 is the open-command early exit (`action.Type == null → action.Command.ToOrder(...)`).
   Lines ~77-83: the silent skip for open-command deferred triggers (comment: "Open commands cannot
   yet be deferred triggers").
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` — the five `CommandArgument`
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: the five `CommandArgument`
   subtypes (`IntegerCommandArgument`, `FloatCommandArgument`, `BooleanCommandArgument`,
   `ObjectIdCommandArgument`, `PositionCommandArgument`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:32-45` — `ToOrder(...)`:
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:32-45`: `ToOrder(...)`:
   calls `arg.AppendTo(order, ctx, rng)` for each argument.
-- `src/OpenSage.Tools.ReplaySketch.Tests/` — existing `ReplaySketchTests` for test style.
+- `src/OpenSage.Tools.ReplaySketch.Tests/`: existing `ReplaySketchTests` for test style.
 
 ## Steps
 
@@ -56,8 +56,8 @@ rather than producing a silently incomplete replay.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` — replace silent skip with throw.
-- `src/OpenSage.Tools.ReplaySketch.Tests/` — two new unit tests.
+- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`. Replace silent skip with throw.
+- `src/OpenSage.Tools.ReplaySketch.Tests/`: two new unit tests.
 
 ## Acceptance criteria
 
@@ -80,7 +80,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not implement open-command deferred-trigger support — just make the gap explicit.
+- Do not implement open-command deferred-trigger support: just make the gap explicit.
 - Do not change `CommandSpec`, `CommandArgument`, `DeferredAction`, or the TestHarness injection path.
 - Do not change the legacy `ActionType` switch cases in `BuildOrders`.
 - `MapMetadataService.CreateForTesting` is already available in the test project; use it.

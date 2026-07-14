@@ -1,9 +1,9 @@
-# Task Card: `WI-P6-04` — P6 scenario matrix
+# Task Card `WI-P6-04`: P6 scenario matrix
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6-04` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md) — scenario matrix, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§Scenario Matrix](../../deep-dives/p4-p6-economy-production-combat.md#scenario-matrix) |
+| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): scenario matrix, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§Scenario Matrix](../../deep-dives/p4-p6-economy-production-combat.md#scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,15 +16,15 @@ Replace the P6 scenario-matrix stub with a CI-running 15-cell matrix sweeping or
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-144` — P6 matrix axes, constraints, and per-cell assertions.
-- `docs/roadmap/implementation-checklist.md:293-297` — checklist ACs for the P6 scenario matrix.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-152` — matrix expansion model.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — matrix runner.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:165-188` — current skipped P6 matrix stubs.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:374-425` — existing matrix expansion/report test style.
-- `docs/roadmap/agent/cards/WI-P6-01-command-coverage-matrix.md` — confirmed command/order coverage and gaps.
-- `docs/roadmap/agent/cards/WI-P6-02-combat-coverage.md` — verified combat assertions to reuse for attack cells.
-- `docs/roadmap/agent/cards/WI-P6-03-death-cleanup.md` — death cleanup assertions to reuse when combat cells kill targets.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-144`: P6 matrix axes, constraints, and per-cell assertions.
+- `docs/roadmap/implementation-checklist.md:293-297`: checklist ACs for the P6 scenario matrix.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-152`: matrix expansion model.
+- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix runner.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:165-188`: current skipped P6 matrix stubs.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:374-425`: existing matrix expansion/report test style.
+- `docs/roadmap/agent/cards/WI-P6-01-command-coverage-matrix.md`: confirmed command/order coverage and gaps.
+- `docs/roadmap/agent/cards/WI-P6-02-combat-coverage.md`: verified combat assertions to reuse for attack cells.
+- `docs/roadmap/agent/cards/WI-P6-03-death-cleanup.md`: death cleanup assertions to reuse when combat cells kill targets.
 
 ## Steps
 

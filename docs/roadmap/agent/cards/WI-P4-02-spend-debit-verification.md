@@ -1,9 +1,9 @@
-# Task Card: `WI-P4-02` — Spend/debit and refund verification
+# Task Card `WI-P4-02`: Spend/debit and refund verification
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-02` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-2, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-2, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
@@ -16,14 +16,14 @@ Verify that construction, unit production, and upgrades debit `BankAccount` corr
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55` — P4 design says debit/refund wiring was not confirmed and must be verified or closed.
-- `docs/roadmap/implementation-checklist.md:240-243` — checklist AC for debit, cancel refunds, insufficient-funds blocking, and never-negative balance.
-- `src/OpenSage.Game/Logic/BankAccount.cs:22-60` — `Withdraw` currently clamps to available money; do not rely on partial withdraw as purchase approval.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-130` — `BuildObject` withdraws and `CancelBuild` deposits.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:148-169` — upgrade debit and cancel refund path.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-224` — unit production debit, producer selection, queue, and cancel refund path.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:472-549` — production/upgrade queue and cancel methods; preserve all queue and parking-place behavior.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base; tests here run in CI.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 design says debit/refund wiring was not confirmed and must be verified or closed.
+- `docs/roadmap/implementation-checklist.md:240-243`: checklist AC for debit, cancel refunds, insufficient-funds blocking, and never-negative balance.
+- `src/OpenSage.Game/Logic/BankAccount.cs:22-60`: `Withdraw` currently clamps to available money; do not rely on partial withdraw as purchase approval.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-130`: `BuildObject` withdraws and `CancelBuild` deposits.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:148-169`: upgrade debit and cancel refund path.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-224`: unit production debit, producer selection, queue, and cancel refund path.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:472-549`: production/upgrade queue and cancel methods; preserve all queue and parking-place behavior.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 

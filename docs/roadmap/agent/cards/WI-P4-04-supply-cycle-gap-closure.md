@@ -1,9 +1,9 @@
-# Task Card: `WI-P4-04` — Supply, worker, and dozer cycle gap closure
+# Task Card `WI-P4-04`: Supply, worker, and dozer cycle gap closure
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P4-04` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md) — sub-phase P4-4, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
+| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-4, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
@@ -16,17 +16,17 @@ Close small gaps that leave supply trucks, workers, or dozers stuck in economy/b
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55` — P4 goal includes closing supply-truck/worker/dozer cycles.
-- `docs/roadmap/implementation-checklist.md:248-250` — checklist AC: worker/dozer/supply-truck complete full cycles without stuck states.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:15-28` — supply gather state enum.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257` — state transitions for gather, carry, target search, dump, and finish.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyTruckAIUpdate.cs:6-33` — supply-truck wrapper and persistence.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/ChinookAIUpdate.cs:9-52` — USA harvester subclass; preserve persistence branches.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:34-78` and `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:183-204` — worker reset/default-state behavior.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-72` — dozer build-target wiring and update.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAndWorkerState.cs:36-73` — shared builder state update and completion clearing.
-- `src/OpenSage.Game/Logic/AI/SupplyAIUpdateStateMachine.cs:16-47` — incomplete supply state-machine configuration.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base; tests here run in CI.
+- `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 goal includes closing supply-truck/worker/dozer cycles.
+- `docs/roadmap/implementation-checklist.md:248-250`: checklist AC: worker/dozer/supply-truck complete full cycles without stuck states.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:15-28`: supply gather state enum.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257`: state transitions for gather, carry, target search, dump, and finish.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyTruckAIUpdate.cs:6-33`: supply-truck wrapper and persistence.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/ChinookAIUpdate.cs:9-52`: USA harvester subclass; preserve persistence branches.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:34-78` and `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:183-204`: worker reset/default-state behavior.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-72`: dozer build-target wiring and update.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAndWorkerState.cs:36-73`: shared builder state update and completion clearing.
+- `src/OpenSage.Game/Logic/AI/SupplyAIUpdateStateMachine.cs:16-47`: incomplete supply state-machine configuration.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 

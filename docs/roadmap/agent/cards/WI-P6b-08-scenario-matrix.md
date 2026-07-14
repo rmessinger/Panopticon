@@ -1,9 +1,9 @@
-# Task Card: `WI-P6b-08` — P6b scenario matrix
+# Task Card `WI-P6b-08`: P6b scenario matrix
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P6b-08` |
-| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md) — P6b scenario matrix, see [deep dive §4](../../deep-dives/p6b-unit-contract-validation.md#4-scenario-matrix) |
+| Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md): P6b scenario matrix, see [deep dive §4](../../deep-dives/p6b-unit-contract-validation.md#4-scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,15 +16,15 @@ Create the P6b `ScenarioMatrix` test that sweeps `archetype × faction`, prunes 
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:31-45` — archetype definitions and USA reference units.
-- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:47-67` — full six-point contract each cell must assert.
-- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:92-119` — matrix axes, `ConstraintFilter`, per-cell assertions, and pass/fail purpose.
-- `docs/roadmap/implementation-checklist.md:330-335` — checklist AC for the P6b matrix.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152` — `SweepAxis`, `ConstraintFilter`, `AssertionTemplate`, and expansion.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — matrix execution via `HarnessRunner`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:7-56` — aggregate report shape and cell keys.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:372-448` — current matrix test style.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bInfantryContractTests.cs`, `P6bVehicleContractTests.cs`, `P6bAircraftContractTests.cs`, `P6bBuilderContractTests.cs`, `P6bSupportContractTests.cs`, `P6bSuperweaponContractTests.cs` — reusable per-archetype contract scenario builders/assertions.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:31-45`: archetype definitions and USA reference units.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:47-67`: full six-point contract each cell must assert.
+- `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:92-119`: matrix axes, `ConstraintFilter`, per-cell assertions, and pass/fail purpose.
+- `docs/roadmap/implementation-checklist.md:330-335`: checklist AC for the P6b matrix.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: `SweepAxis`, `ConstraintFilter`, `AssertionTemplate`, and expansion.
+- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix execution via `HarnessRunner`.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:7-56`: aggregate report shape and cell keys.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:372-448`: current matrix test style.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bInfantryContractTests.cs`, `P6bVehicleContractTests.cs`, `P6bAircraftContractTests.cs`, `P6bBuilderContractTests.cs`, `P6bSupportContractTests.cs`, `P6bSuperweaponContractTests.cs`: reusable per-archetype contract scenario builders/assertions.
 
 ## Steps
 

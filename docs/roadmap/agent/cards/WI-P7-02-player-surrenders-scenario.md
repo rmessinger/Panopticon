@@ -1,9 +1,9 @@
-# Task Card: `WI-P7-02` — PlayerSurrenders regression scenario
+# Task Card `WI-P7-02`: PlayerSurrenders regression scenario
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P7-02` |
-| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md) — P7-2 PlayerSurrenders, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
+| Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-2 PlayerSurrenders, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,19 +16,19 @@ Create the checked-in P7 PlayerSurrenders scenario where the human player issues
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45` — PlayerSurrenders expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54` — deterministic scenario authoring requirements.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70` — universal invariants and per-tick abort behavior.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:112-112` — P7-2 sub-phase row.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300` — `OrderType.EndGame` dependency on P3-4.
-- `docs/roadmap/implementation-checklist.md:337-344` — scenario and outcome ACs.
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs:3-6` — `EndGame` enum value.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:426-428` — `EndGame` processing path.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22` — scenario JSON shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96` — open command creation.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127` — run-and-assert entry point.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — outcome assertion surface to wire to P3 `GameOutcome`.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242` — final P7 matrix consumer.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: PlayerSurrenders expected outcome.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and per-tick abort behavior.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:112-112`: P7-2 sub-phase row.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300`: `OrderType.EndGame` dependency on P3-4.
+- `docs/roadmap/implementation-checklist.md:337-344`: scenario and outcome ACs.
+- `src/OpenSage.Game/Logic/Orders/OrderType.cs:3-6`: `EndGame` enum value.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:426-428`: `EndGame` processing path.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96`: open command creation.
+- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to wire to P3 `GameOutcome`.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
 
 ## Steps
 
