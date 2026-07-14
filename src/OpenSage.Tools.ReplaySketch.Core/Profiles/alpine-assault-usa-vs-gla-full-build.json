@@ -1,0 +1,376 @@
+// ReplaySketch Scenario Profile — Alpine Assault: USA vs GLA (Full Build-Out)
+// =============================================================================
+//
+// Variant of alpine-assault-usa-vs-gla.json that builds one of every buildable
+// structure and trains one of every trainable unit for each faction (see
+// BuildingCatalog.cs / UnitCatalog.cs for the authoritative per-faction lists),
+// then only attacks once everything has finished. The original profile is left
+// untouched so its hardcoded-action-count tests keep working.
+//
+// ─── DESIGN NOTES ────────────────────────────────────────────────────────────
+//
+// Each player's actions form ONE strictly linear chain:
+//   Gather Resources -> Building 1 -> Building 2 -> ... -> Building N
+//     -> Unit 1 -> Unit 2 -> ... -> Unit M -> Attack Enemy Base
+//
+// Buildings are chained on the PREVIOUS building's "Completed" phase (with a
+// short extraFrames buffer) so construction never overlaps and each build order
+// only fires once there has been time to bank more credits. Because every
+// building finishes before any unit is queued, prerequisite producer buildings
+// (Barracks for infantry, War Factory / Arms Dealer for vehicles, Airfield for
+// air units) are always already standing by the time their unit is recruited,
+// without needing per-unit prerequisite tracking.
+//
+// Resource gathering starts as soon as the FIRST building's order is dispatched
+// (same pattern as the standard scenario), giving the supply truck the maximum
+// possible runway to fund the rest of the build-out from the 10000 starting
+// credits plus trickle income over the scenario's ~10 minute (18000 frame)
+// timeout budget (see HarnessRunner.DefaultFrameTimeout).
+//
+// Every RecruitBasicUnit action sets "quantity": 1 (one of each unit, not the
+// standard scenario's default of 5 attackers).
+//
+// AttackEnemyBase is triggered by the very LAST unit's "Completed" phase, so it
+// literally cannot fire until every building and every unit exists.
+//
+{
+  "mapPath": "maps/alpine assault/alpine assault.map",
+  "baseRadiusWorldUnits": 120.0,
+
+  "players": [
+    {
+      "name": "Player1",
+      "factionIndex": 2,
+      "color": 0,
+      "startPosition": 1,
+      "team": 1,
+      "actions": [
+        {
+          "id": "p1-b-barracks",
+          "label": "Build Barracks",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaBarracks",
+          "timing": { "kind": "fixed", "frames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.0, "angle": { "kind": "fixed", "degrees": 225.0 } }
+        },
+        {
+          "id": "p1-gather",
+          "label": "Gather Resources",
+          "type": "GatherResources",
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-barracks", "triggerPhase": "Dispatched", "extraFrames": 0 },
+          "position": null
+        },
+        {
+          "id": "p1-b-warfactory",
+          "label": "Build War Factory",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaWarFactory",
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-barracks", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.2, "angle": { "kind": "fixed", "degrees": 200.0 } }
+        },
+        {
+          "id": "p1-b-supplycenter",
+          "label": "Build Supply Center",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaSupplyCenter",
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-warfactory", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.4, "angle": { "kind": "fixed", "degrees": 250.0 } }
+        },
+        {
+          "id": "p1-b-powerplant",
+          "label": "Build Power Plant",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaPowerPlant",
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-supplycenter", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.6, "angle": { "kind": "fixed", "degrees": 180.0 } }
+        },
+        {
+          "id": "p1-b-airfield",
+          "label": "Build Airfield",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaAirfield",
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-powerplant", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 3.0, "angle": { "kind": "fixed", "degrees": 270.0 } }
+        },
+        {
+          "id": "p1-b-strategycenter",
+          "label": "Build Strategy Center",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaStrategyCenter",
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-airfield", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.8, "angle": { "kind": "fixed", "degrees": 300.0 } }
+        },
+        {
+          "id": "p1-b-commandcenter",
+          "label": "Build Command Center",
+          "type": "Construct",
+          "buildingDefinitionName": "AmericaCommandCenter",
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-strategycenter", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 3.4, "angle": { "kind": "fixed", "degrees": 235.0 } }
+        },
+        {
+          "id": "p1-u-ranger",
+          "label": "Recruit Ranger",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaInfantryRanger",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-b-commandcenter", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-pathfinder",
+          "label": "Recruit Pathfinder",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaInfantryPathfinder",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-ranger", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-missiledefender",
+          "label": "Recruit Missile Defender",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaInfantryMissileDefender",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-pathfinder", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-humvee",
+          "label": "Recruit Humvee",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaVehicleHumvee",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-missiledefender", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-ambulance",
+          "label": "Recruit Ambulance",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaVehicleAmbulance",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-humvee", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-crusadertank",
+          "label": "Recruit Crusader Tank",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaVehicleCrusaderTank",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-ambulance", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-paladintank",
+          "label": "Recruit Paladin Tank",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaVehiclePaladinTank",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-crusadertank", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-tomahawk",
+          "label": "Recruit Tomahawk",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaVehicleTomahawk",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-paladintank", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-comanche",
+          "label": "Recruit Comanche",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaVehicleComanche",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-tomahawk", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-u-aurora",
+          "label": "Recruit Aurora Bomber",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "AmericaVehicleAuroraAlpha",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-comanche", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p1-attack",
+          "label": "Attack Enemy Base",
+          "type": "AttackEnemyBase",
+          // Only fires once the LAST unit in the chain (Aurora Bomber) has been produced,
+          // i.e. after every building and every unit for this player has been built.
+          "timing": { "kind": "afterAction", "triggerActionId": "p1-u-aurora", "triggerPhase": "Completed", "extraFrames": 0 },
+          "position": { "kind": "landmarkRelative", "landmark": "EnemyBase", "distanceInBaseWidths": 0.0, "angle": { "kind": "fixed", "degrees": 0.0 } }
+        }
+      ]
+    },
+    {
+      "name": "Player2",
+      "factionIndex": 4,
+      "color": 1,
+      "startPosition": 2,
+      "team": 2,
+      "actions": [
+        {
+          "id": "p2-b-barracks",
+          "label": "Build Barracks",
+          "type": "Construct",
+          "buildingDefinitionName": "GLABarracks",
+          "timing": { "kind": "fixed", "frames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.0, "angle": { "kind": "fixed", "degrees": 45.0 } }
+        },
+        {
+          "id": "p2-gather",
+          "label": "Gather Resources",
+          "type": "GatherResources",
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-b-barracks", "triggerPhase": "Dispatched", "extraFrames": 0 },
+          "position": null
+        },
+        {
+          "id": "p2-b-armsdealer",
+          "label": "Build Arms Dealer",
+          "type": "Construct",
+          "buildingDefinitionName": "GLAArmsDealer",
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-b-barracks", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.2, "angle": { "kind": "fixed", "degrees": 20.0 } }
+        },
+        {
+          "id": "p2-b-supplystash",
+          "label": "Build Supply Stash",
+          "type": "Construct",
+          "buildingDefinitionName": "GLASupplyStash",
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-b-armsdealer", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.4, "angle": { "kind": "fixed", "degrees": 70.0 } }
+        },
+        {
+          "id": "p2-b-tunnelnetwork",
+          "label": "Build Tunnel Network",
+          "type": "Construct",
+          "buildingDefinitionName": "GLATunnelNetwork",
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-b-supplystash", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.6, "angle": { "kind": "fixed", "degrees": 0.0 } }
+        },
+        {
+          "id": "p2-b-blackmarket",
+          "label": "Build Black Market",
+          "type": "Construct",
+          "buildingDefinitionName": "GLABlackMarket",
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-b-tunnelnetwork", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.8, "angle": { "kind": "fixed", "degrees": 90.0 } }
+        },
+        {
+          "id": "p2-b-commandcenter",
+          "label": "Build Command Center",
+          "type": "Construct",
+          "buildingDefinitionName": "GLACommandCenter",
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-b-blackmarket", "triggerPhase": "Completed", "extraFrames": 90 },
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 3.2, "angle": { "kind": "fixed", "degrees": 55.0 } }
+        },
+        {
+          "id": "p2-u-rebel",
+          "label": "Recruit Rebel",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAInfantryRebel",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-b-commandcenter", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-rpgtrooper",
+          "label": "Recruit RPG Trooper",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAInfantryRPGTrooper",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-rebel", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-hijacker",
+          "label": "Recruit Hijacker",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAInfantryHijacker",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-rpgtrooper", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-terrorist",
+          "label": "Recruit Terrorist",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAInfantryTerrorist",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-hijacker", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-angrymob",
+          "label": "Recruit Angry Mob",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAInfantryAngryMob",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-terrorist", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-technical",
+          "label": "Recruit Technical",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAVehicleTechnical",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-angrymob", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-quadcannon",
+          "label": "Recruit Quad Cannon",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAVehicleQuadCannon",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-technical", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-rocketbuggy",
+          "label": "Recruit Rocket Buggy",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAVehicleRocketBuggy",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-quadcannon", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-scorpiontank",
+          "label": "Recruit Scorpion Tank",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAVehicleScorpionTank",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-rocketbuggy", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-u-scudlauncher",
+          "label": "Recruit SCUD Launcher",
+          "type": "RecruitBasicUnit",
+          "unitDefinitionName": "GLAVehicleSCUDLauncher",
+          "quantity": 1,
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-scorpiontank", "triggerPhase": "Completed", "extraFrames": 60 },
+          "position": null
+        },
+        {
+          "id": "p2-attack",
+          "label": "Attack Enemy Base",
+          "type": "AttackEnemyBase",
+          // Only fires once the LAST unit in the chain (SCUD Launcher) has been produced,
+          // i.e. after every building and every unit for this player has been built.
+          "timing": { "kind": "afterAction", "triggerActionId": "p2-u-scudlauncher", "triggerPhase": "Completed", "extraFrames": 0 },
+          "position": { "kind": "landmarkRelative", "landmark": "EnemyBase", "distanceInBaseWidths": 0.0, "angle": { "kind": "fixed", "degrees": 0.0 } }
+        }
+      ]
+    }
+  ]
+}
