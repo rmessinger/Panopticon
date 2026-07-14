@@ -55,7 +55,7 @@ public sealed class TestHarnessConfig
     /// Multiplier applied to the game's default <c>MaxCameraHeight</c> INI value.
     /// 1.0 = game default; 2.0 (default) = double the zoom-out distance.
     /// </summary>
-    public float MaxCameraZoomMultiplier { get; set; } = 2.0f;
+    public float MaxCameraZoomMultiplier { get; set; } = 5.0f;
 
     /// <summary>
     /// Maximum number of logic frames to run before forcibly exiting.

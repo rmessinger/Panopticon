@@ -433,7 +433,7 @@ public static class Program
     {
         if (path == null)
         {
-            return ReplayScenario.CreateAlpineAssaultUSAvGLA();
+            return ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         }
 
         var json = File.ReadAllText(path);
