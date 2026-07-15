@@ -23,13 +23,13 @@ public static class UnitCatalog
         new("AmericaInfantryMissileDefender",  "Missile Defender"),
         // Vehicles (War Factory)
         new("AmericaVehicleHumvee",            "Humvee"),
-        new("AmericaVehicleAmbulance",         "Ambulance"),
-        new("AmericaVehicleCrusaderTank",      "Crusader Tank"),
-        new("AmericaVehiclePaladinTank",       "Paladin Tank"),
+        new("AmericaVehicleMedic",             "Ambulance"),
+        new("AmericaTankCrusader",             "Crusader Tank"),
+        new("AmericaTankPaladin",              "Paladin Tank"),
         new("AmericaVehicleTomahawk",          "Tomahawk"),
         // Air (Airfield)
         new("AmericaVehicleComanche",          "Comanche"),
-        new("AmericaVehicleAuroraAlpha",       "Aurora Bomber"),
+        new("AmericaJetAurora",                "Aurora Bomber"),
     ];
 
     // ── GLA (factionIndex 4) ──────────────────────────────────────────────────
@@ -37,15 +37,15 @@ public static class UnitCatalog
     [
         // Infantry (Barracks)
         new("GLAInfantryRebel",       "Rebel"),
-        new("GLAInfantryRPGTrooper",  "RPG Trooper"),
+        new("GLAInfantryTunnelDefender", "RPG Trooper"),
         new("GLAInfantryHijacker",    "Hijacker"),
         new("GLAInfantryTerrorist",   "Terrorist"),
-        new("GLAInfantryAngryMob",    "Angry Mob"),
+        new("GLAInfantryAngryMobNexus", "Angry Mob"),
         // Vehicles (Arms Dealer)
         new("GLAVehicleTechnical",    "Technical"),
         new("GLAVehicleQuadCannon",   "Quad Cannon"),
         new("GLAVehicleRocketBuggy",  "Rocket Buggy"),
-        new("GLAVehicleScorpionTank", "Scorpion Tank"),
+        new("GLATankScorpion",        "Scorpion Tank"),
         new("GLAVehicleSCUDLauncher", "SCUD Launcher"),
     ];
 
@@ -58,14 +58,14 @@ public static class UnitCatalog
         new("ChinaInfantryBlackLotus",      "Black Lotus"),
         new("ChinaInfantryHacker",          "Hacker"),
         // Vehicles (War Factory)
-        new("ChinaVehicleBattlemasterTank", "Battlemaster Tank"),
-        new("ChinaVehicleDragonTank",       "Dragon Tank"),
-        new("ChinaVehicleGattlingTank",     "Gattling Tank"),
+        new("ChinaTankBattleMaster",        "Battlemaster Tank"),
+        new("ChinaTankDragon",              "Dragon Tank"),
+        new("ChinaTankGattling",            "Gattling Tank"),
         new("ChinaVehicleTroopCrawler",     "Troop Crawler"),
         new("ChinaVehicleNukeLauncher",     "Nuke Cannon"),
-        new("ChinaVehicleOverlord",         "Overlord Tank"),
+        new("ChinaTankOverlord",            "Overlord Tank"),
         // Air (Airfield)
-        new("ChinaVehicleMiG",              "MiG Fighter"),
+        new("ChinaJetMIG",                  "MiG Fighter"),
         new("ChinaVehicleHelix",            "Helix"),
     ];
 

@@ -365,7 +365,8 @@ public static class Program
             {
                 if (deferred.Phase == ActionPhase.Dispatched
                     && deferred.Trigger == e.ActionType
-                    && deferred.PlayerIndex == (int?)e.Player?.Id)
+                    && deferred.PlayerIndex == (int?)e.Player?.Id
+                    && (deferred.TriggerDefinitionName == null || deferred.TriggerDefinitionName == e.DefinitionName))
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }
@@ -378,7 +379,8 @@ public static class Program
             {
                 if (deferred.Phase == ActionPhase.Completed
                     && deferred.Trigger == e.ActionType
-                    && deferred.PlayerIndex == (int?)e.Player?.Id)
+                    && deferred.PlayerIndex == (int?)e.Player?.Id
+                    && (deferred.TriggerDefinitionName == null || deferred.TriggerDefinitionName == e.DefinitionName))
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }

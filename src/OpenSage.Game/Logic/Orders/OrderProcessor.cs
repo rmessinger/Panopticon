@@ -113,6 +113,11 @@ public sealed class OrderProcessor
                         var objectDefinition = _game.AssetStore.ObjectDefinitions.GetByInstanceId(objectDefinitionId);
                         var position = order.Arguments[1].Value.Position;
                         var angle = order.Arguments[2].Value.Float;
+                        if (objectDefinition == null)
+                        {
+                            Logger.Error($"BuildObject order references unknown object definition id {objectDefinitionId}");
+                            continue;
+                        }
                         player.BankAccount.Withdraw((uint)objectDefinition.BuildCost);
 
                         var gameObject = _game.Scene3D.GameObjects.CreateObject(objectDefinition, player);
@@ -194,6 +199,11 @@ public sealed class OrderProcessor
                     {
                         var objectDefinitionId = (uint)order.Arguments[0].Value.Integer;
                         var objectDefinition = _game.AssetStore.ObjectDefinitions.GetByInstanceId(objectDefinitionId);
+                        if (objectDefinition == null)
+                        {
+                            Logger.Error($"CreateUnit order references unknown object definition id {objectDefinitionId}");
+                            continue;
+                        }
                         player.BankAccount.Withdraw((uint)objectDefinition.BuildCost);
 
                         // Find a producer among the currently selected units that has a UnitBuild

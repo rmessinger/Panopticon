@@ -148,7 +148,7 @@
           "id": "p1-u-ambulance",
           "label": "Recruit Ambulance",
           "type": "RecruitBasicUnit",
-          "unitDefinitionName": "AmericaVehicleAmbulance",
+          "unitDefinitionName": "AmericaVehicleMedic",
           "quantity": 1,
           "timing": { "kind": "afterAction", "triggerActionId": "p1-u-humvee", "triggerPhase": "Completed", "extraFrames": 60 },
           "position": null
@@ -157,7 +157,7 @@
           "id": "p1-u-crusadertank",
           "label": "Recruit Crusader Tank",
           "type": "RecruitBasicUnit",
-          "unitDefinitionName": "AmericaVehicleCrusaderTank",
+          "unitDefinitionName": "AmericaTankCrusader",
           "quantity": 1,
           "timing": { "kind": "afterAction", "triggerActionId": "p1-u-ambulance", "triggerPhase": "Completed", "extraFrames": 60 },
           "position": null
@@ -166,7 +166,7 @@
           "id": "p1-u-paladintank",
           "label": "Recruit Paladin Tank",
           "type": "RecruitBasicUnit",
-          "unitDefinitionName": "AmericaVehiclePaladinTank",
+          "unitDefinitionName": "AmericaTankPaladin",
           "quantity": 1,
           "timing": { "kind": "afterAction", "triggerActionId": "p1-u-crusadertank", "triggerPhase": "Completed", "extraFrames": 60 },
           "position": null
@@ -193,7 +193,7 @@
           "id": "p1-u-aurora",
           "label": "Recruit Aurora Bomber",
           "type": "RecruitBasicUnit",
-          "unitDefinitionName": "AmericaVehicleAuroraAlpha",
+          "unitDefinitionName": "AmericaJetAurora",
           "quantity": 1,
           "timing": { "kind": "afterAction", "triggerActionId": "p1-u-comanche", "triggerPhase": "Completed", "extraFrames": 60 },
           "position": null
@@ -284,7 +284,7 @@
           "id": "p2-u-rpgtrooper",
           "label": "Recruit RPG Trooper",
           "type": "RecruitBasicUnit",
-          "unitDefinitionName": "GLAInfantryRPGTrooper",
+          "unitDefinitionName": "GLAInfantryTunnelDefender",
           "quantity": 1,
           "timing": { "kind": "afterAction", "triggerActionId": "p2-u-rebel", "triggerPhase": "Completed", "extraFrames": 60 },
           "position": null
@@ -311,7 +311,7 @@
           "id": "p2-u-angrymob",
           "label": "Recruit Angry Mob",
           "type": "RecruitBasicUnit",
-          "unitDefinitionName": "GLAInfantryAngryMob",
+          "unitDefinitionName": "GLAInfantryAngryMobNexus",
           "quantity": 1,
           "timing": { "kind": "afterAction", "triggerActionId": "p2-u-terrorist", "triggerPhase": "Completed", "extraFrames": 60 },
           "position": null
@@ -347,7 +347,7 @@
           "id": "p2-u-scorpiontank",
           "label": "Recruit Scorpion Tank",
           "type": "RecruitBasicUnit",
-          "unitDefinitionName": "GLAVehicleScorpionTank",
+          "unitDefinitionName": "GLATankScorpion",
           "quantity": 1,
           "timing": { "kind": "afterAction", "triggerActionId": "p2-u-rocketbuggy", "triggerPhase": "Completed", "extraFrames": 60 },
           "position": null
