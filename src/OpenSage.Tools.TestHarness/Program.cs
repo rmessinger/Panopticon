@@ -123,7 +123,7 @@ public static class Program
 
     private static void Run(TestHarnessConfig config)
     {
-        var scenario = LoadScenario(config.ScenarioPath);
+        var scenario = LoadScenario(config.Scenario, config.ScenarioPath);
 
         var definition = GameDefinition.FromGame(config.Game);
         var effectiveGamePath = config.GamePath != null && Directory.Exists(config.GamePath)
@@ -429,11 +429,16 @@ public static class Program
         game.Updating += handler;
     }
 
-    private static ReplayScenario LoadScenario(string? path)
+    private static ReplayScenario LoadScenario(BuiltInScenario builtInScenario, string? path)
     {
         if (path == null)
         {
-            return ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
+            return builtInScenario switch
+            {
+                BuiltInScenario.AlpineAssaultUSAvGLA => ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA(),
+                BuiltInScenario.AlpineAssaultUSAvGLAFullBuild => ReplayScenarioFactory.CreateAlpineAssaultUSAvGLAFullBuild(),
+                _ => throw new ArgumentOutOfRangeException(nameof(builtInScenario), builtInScenario, "Unsupported built-in scenario."),
+            };
         }
 
         var json = File.ReadAllText(path);

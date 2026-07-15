@@ -11,8 +11,14 @@ namespace OpenSage.Tools.TestHarness;
 public sealed class TestHarnessConfig
 {
     /// <summary>
+    /// Built-in scenario profile to run when <see cref="ScenarioPath"/> is null.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public BuiltInScenario Scenario { get; set; } = BuiltInScenario.AlpineAssaultUSAvGLAFullBuild;
+
+    /// <summary>
     /// Path to a scenario JSON profile.
-    /// Null uses the built-in Alpine Assault USA vs GLA scenario.
+    /// Null uses the selected built-in <see cref="Scenario"/>.
     /// </summary>
     public string? ScenarioPath { get; set; } = null;
 
