@@ -227,8 +227,6 @@ public static class Program
 
         Console.WriteLine("Running replay — close the window or wait for it to finish.");
 
-        var maxLogicFrames = config.MaxReplayFrames > 0 ? (uint)config.MaxReplayFrames : uint.MaxValue;
-
         while (game.IsRunning)
         {
             if (!window.PumpEvents())
@@ -245,13 +243,6 @@ public static class Program
                 window.Swapchain.Framebuffer);
             window.MessageQueue.Clear();
             game.GraphicsDevice.SwapBuffers(window.Swapchain);
-
-            var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
-            if (logicFrame >= maxLogicFrames)
-            {
-                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxLogicFrames} logic frames). Forcing exit.");
-                break;
-            }
         }
 
         Console.WriteLine("Done.");
@@ -313,7 +304,6 @@ public static class Program
         }
 
         var frameRect = new OpenSage.Mathematics.Rectangle(0, 0, 1024, 768);
-        var maxLogicFrames = config.MaxReplayFrames > 0 ? (uint)config.MaxReplayFrames : uint.MaxValue;
 
         while (game.IsRunning)
         {
@@ -326,19 +316,13 @@ public static class Program
                 capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
             }
 
-            var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
-
             if (runoutEndLogicFrame != uint.MaxValue)
             {
+                var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
                 if (logicFrame >= runoutEndLogicFrame)
                 {
                     game.Exit();
                 }
-            }
-            else if (logicFrame >= maxLogicFrames)
-            {
-                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxLogicFrames} logic frames). Forcing exit.");
-                game.Exit();
             }
         }
 

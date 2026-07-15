@@ -133,6 +133,14 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     frame.
   - Note: follow-up to the "Allow box-selecting any object's stats while watching a replay" fix
     (`SelectionSystem.MultiSelect`); see `WI-P0-18`.
+- [ ] Add an inactivity monitor to `OpenSage.Tools.TestHarness` to replace the removed fixed
+      `MaxReplayFrames` cap: force-exit only when the replay stalls (no
+      `ActionDispatched`/`ActionCompleted` progress for a configurable window), not on total run
+      length, so long scenarios (e.g. the full-build replay) aren't truncated early.
+  - AC: a stalled scenario (no further action dispatch/completion) force-exits within the configured
+    window with a distinct `[inactivity-timeout]` log message; a scenario making steady progress to
+    its natural end is not cut off early.
+  - Note: see `WI-P0-19`.
 
 ### P1: Skirmish setup & player relationships ([deep dive](deep-dives/p1-skirmish-setup.md))
 - [x] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /

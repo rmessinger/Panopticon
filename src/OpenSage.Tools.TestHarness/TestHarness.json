@@ -22,6 +22,5 @@
   "Headless": true,
   "CaptureFrames": false,
   "KeepReplay": false,
-  "GamePath": null,
-  "MaxReplayFrames": 9000
+  "GamePath": null
 }
