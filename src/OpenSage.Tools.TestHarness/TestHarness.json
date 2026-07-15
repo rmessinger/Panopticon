@@ -9,6 +9,8 @@
   //                accepted values: Direct3D11, Vulkan, OpenGL, Metal, OpenGLES
   // Fullscreen   : start in fullscreen mode
   // Headless     : run without a window using an offscreen graphics device
+  // CaptureFrames: in headless mode, save a PNG after every completed replay action
+  //                (disabled by default)
   // KeepReplay   : keep the exported .rep file on disk after the run
   // GamePath     : override the game installation path (null = auto-detect)
 
@@ -18,6 +20,7 @@
   "Renderer": null,
   "Fullscreen": false,
   "Headless": true,
+  "CaptureFrames": false,
   "KeepReplay": false,
   "GamePath": null,
   "MaxReplayFrames": 9000

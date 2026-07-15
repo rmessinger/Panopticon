@@ -52,6 +52,13 @@ public sealed class TestHarnessConfig
     public bool Headless { get; set; } = false;
 
     /// <summary>
+    /// In headless mode, capture a frame after every completed replay action and write it
+    /// as a PNG under <see cref="FrameCaptureService.CaptureDirectory"/> for agent inspection.
+    /// Disabled by default to avoid accumulating capture files on routine headless runs.
+    /// </summary>
+    public bool CaptureFrames { get; set; } = false;
+
+    /// <summary>
     /// Override the game installation path instead of auto-detecting from the registry
     /// or standard environment variables.
     /// </summary>

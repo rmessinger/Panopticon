@@ -286,13 +286,16 @@ public static class Program
             var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
             Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
 
-            // Schedule a capture after every completed action so agents can verify
-            // the visual state immediately after each game event.
-            // The [CAPTURE] log line is emitted after the next render (FlushPending below).
-            capture.ScheduleCapture(
-                $"Action '{e.ActionType}' completed for player '{e.Player?.Name ?? "unknown"}'. " +
-                "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
-                "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
+            if (config.CaptureFrames)
+            {
+                // Schedule a capture after every completed action so agents can verify
+                // the visual state immediately after each game event.
+                // The [CAPTURE] log line is emitted after the next render (FlushPending below).
+                capture.ScheduleCapture(
+                    $"Action '{e.ActionType}' completed for player '{e.Player?.Name ?? "unknown"}'. " +
+                    "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
+                    "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
+            }
 
             if (e.ActionType == ActionType.EnemyBaseDestroyed && runoutEndLogicFrame == uint.MaxValue)
             {
@@ -302,8 +305,12 @@ public static class Program
 
         var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
 
-        Console.WriteLine($"Running headless replay. Captures written to: {FrameCaptureService.CaptureDirectory}");
-        Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
+        Console.WriteLine("Running headless replay.");
+        if (config.CaptureFrames)
+        {
+            Console.WriteLine($"Captures written to: {FrameCaptureService.CaptureDirectory}");
+            Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
+        }
 
         var frameRect = new OpenSage.Mathematics.Rectangle(0, 0, 1024, 768);
         var maxLogicFrames = config.MaxReplayFrames > 0 ? (uint)config.MaxReplayFrames : uint.MaxValue;
@@ -314,7 +321,10 @@ public static class Program
             game.Update(Array.Empty<OpenSage.Input.InputMessage>());
             game.Panel.EnsureFrame(frameRect);
             game.Render();
-            capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
+            if (config.CaptureFrames)
+            {
+                capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
+            }
 
             var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
 
