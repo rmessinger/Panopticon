@@ -8,6 +8,7 @@
   // Renderer     : graphics backend override, or null for platform default
   //                accepted values: Direct3D11, Vulkan, OpenGL, Metal, OpenGLES
   // Fullscreen   : start in fullscreen mode
+  // Headless     : run without a window using an offscreen graphics device
   // KeepReplay   : keep the exported .rep file on disk after the run
   // GamePath     : override the game installation path (null = auto-detect)
 
@@ -16,6 +17,7 @@
   "Game": "CncGenerals",
   "Renderer": null,
   "Fullscreen": false,
+  "Headless": true,
   "KeepReplay": false,
   "GamePath": null,
   "MaxReplayFrames": 9000
