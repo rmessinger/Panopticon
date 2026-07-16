@@ -51,7 +51,7 @@
           "type": "Construct",
           "buildingDefinitionName": "AmericaBarracks",
           "timing": { "kind": "fixed", "frames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.0, "angle": { "kind": "fixed", "degrees": 225.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.7, "angle": { "kind": "fixed", "degrees": 0.0 } }
         },
         {
           "id": "p1-gather",
@@ -66,7 +66,7 @@
           "type": "Construct",
           "buildingDefinitionName": "AmericaWarFactory",
           "timing": { "kind": "afterAction", "triggerActionId": "p1-b-barracks", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.2, "angle": { "kind": "fixed", "degrees": 200.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.8, "angle": { "kind": "fixed", "degrees": 58.0 } }
         },
         {
           "id": "p1-b-supplycenter",
@@ -74,7 +74,7 @@
           "type": "Construct",
           "buildingDefinitionName": "AmericaSupplyCenter",
           "timing": { "kind": "afterAction", "triggerActionId": "p1-b-warfactory", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.4, "angle": { "kind": "fixed", "degrees": 250.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.65, "angle": { "kind": "fixed", "degrees": 106.0 } }
         },
         {
           "id": "p1-b-powerplant",
@@ -82,7 +82,7 @@
           "type": "Construct",
           "buildingDefinitionName": "AmericaPowerPlant",
           "timing": { "kind": "afterAction", "triggerActionId": "p1-b-supplycenter", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.6, "angle": { "kind": "fixed", "degrees": 180.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.4, "angle": { "kind": "fixed", "degrees": 144.0 } }
         },
         {
           "id": "p1-b-airfield",
@@ -90,7 +90,7 @@
           "type": "Construct",
           "buildingDefinitionName": "AmericaAirfield",
           "timing": { "kind": "afterAction", "triggerActionId": "p1-b-powerplant", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 3.0, "angle": { "kind": "fixed", "degrees": 270.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.75, "angle": { "kind": "fixed", "degrees": 170.0 } }
         },
         {
           "id": "p1-b-strategycenter",
@@ -98,7 +98,7 @@
           "type": "Construct",
           "buildingDefinitionName": "AmericaStrategyCenter",
           "timing": { "kind": "afterAction", "triggerActionId": "p1-b-airfield", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.8, "angle": { "kind": "fixed", "degrees": 300.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.75, "angle": { "kind": "fixed", "degrees": 126.0 } }
         },
         {
           "id": "p1-b-commandcenter",
@@ -106,7 +106,7 @@
           "type": "Construct",
           "buildingDefinitionName": "AmericaCommandCenter",
           "timing": { "kind": "afterAction", "triggerActionId": "p1-b-strategycenter", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 3.4, "angle": { "kind": "fixed", "degrees": 235.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.95, "angle": { "kind": "fixed", "degrees": 88.0 } }
         },
         {
           "id": "p1-u-ranger",
@@ -222,7 +222,7 @@
           "type": "Construct",
           "buildingDefinitionName": "GLABarracks",
           "timing": { "kind": "fixed", "frames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.0, "angle": { "kind": "fixed", "degrees": 45.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.65, "angle": { "kind": "fixed", "degrees": -60.0 } }
         },
         {
           "id": "p2-gather",
@@ -237,7 +237,7 @@
           "type": "Construct",
           "buildingDefinitionName": "GLAArmsDealer",
           "timing": { "kind": "afterAction", "triggerActionId": "p2-b-barracks", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.2, "angle": { "kind": "fixed", "degrees": 20.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.7, "angle": { "kind": "fixed", "degrees": -12.0 } }
         },
         {
           "id": "p2-b-supplystash",
@@ -245,7 +245,7 @@
           "type": "Construct",
           "buildingDefinitionName": "GLASupplyStash",
           "timing": { "kind": "afterAction", "triggerActionId": "p2-b-armsdealer", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.4, "angle": { "kind": "fixed", "degrees": 70.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.55, "angle": { "kind": "fixed", "degrees": 32.0 } }
         },
         {
           "id": "p2-b-tunnelnetwork",
@@ -253,7 +253,7 @@
           "type": "Construct",
           "buildingDefinitionName": "GLATunnelNetwork",
           "timing": { "kind": "afterAction", "triggerActionId": "p2-b-supplystash", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.6, "angle": { "kind": "fixed", "degrees": 0.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.4, "angle": { "kind": "fixed", "degrees": 68.0 } }
         },
         {
           "id": "p2-b-blackmarket",
@@ -261,7 +261,7 @@
           "type": "Construct",
           "buildingDefinitionName": "GLABlackMarket",
           "timing": { "kind": "afterAction", "triggerActionId": "p2-b-tunnelnetwork", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 2.8, "angle": { "kind": "fixed", "degrees": 90.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.5, "angle": { "kind": "fixed", "degrees": 104.0 } }
         },
         {
           "id": "p2-b-commandcenter",
@@ -269,7 +269,7 @@
           "type": "Construct",
           "buildingDefinitionName": "GLACommandCenter",
           "timing": { "kind": "afterAction", "triggerActionId": "p2-b-blackmarket", "triggerPhase": "Completed", "extraFrames": 90 },
-          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 3.2, "angle": { "kind": "fixed", "degrees": 55.0 } }
+          "position": { "kind": "landmarkRelative", "landmark": "OwnBase", "distanceInBaseWidths": 1.85, "angle": { "kind": "fixed", "degrees": 150.0 } }
         },
         {
           "id": "p2-u-rebel",
