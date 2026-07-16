@@ -71,6 +71,54 @@ The session directory and a `validation_guide.md` are printed to stdout.
 
 ---
 
+## Engine-action results file
+
+Every TestHarness run (headless or windowed) writes a results text file recording every engine
+`Order` processed during the run, for diffing two identically-configured runs for parity. It's
+written unconditionally (no config flag) as a sibling of the exported replay, e.g.:
+
+```
+opensage_scenario_<guid>.rep         -> opensage_scenario_<guid>.results.txt
+```
+
+The path is printed to stdout at the end of the run (`Action results saved to: ...`). The file is
+flushed periodically during the run (every 20 lines or 5 seconds, whichever first), not just at
+exit, so a crash still leaves a usable partial file.
+
+### Format
+
+A `#`-prefixed header block carries non-comparable run metadata (scenario, game, host, wall-clock
+start time) — parity-diff tooling should skip `#` lines. The body is tab-separated:
+
+```
+logicFrame  state       orderType    player   details
+```
+
+`state` is `Dispatched` (single-shot, most order types), `Started`/`Completed` (two-part lifecycle:
+Move, object-targeted Attack, Build, CreateUnit), or `Aborted` (a `Started` action whose unit/target
+was destroyed before completing). `details` is a space-separated `key=value` list:
+
+| Order type(s) | Lifecycle | Details |
+|---|---|---|
+| `MoveTo` | Started + Completed per unit | `unit`, `pos`, `dir`, `speed`, `target` (Started); `unit`, `pos` (Completed) |
+| `AttackObject` / `ForceAttackObject` | Started + Completed per attacking unit | `unit`, `target`, `targetPos` (Started); `unit`, `target` (Completed, on target destroyed) |
+| `ForceAttackGround` | Dispatched only (composite move+maybe-attack; no lifecycle tracking) | `unit`, `targetPos`, optional `target` |
+| `BuildObject` | Started + Completed | `def`, `pos`, `angle` (Started); `def`, `pos`, `objectId` (Completed) |
+| `CreateUnit` | Started + Completed | `def` (Started); `def`, `objectId`, `pos` (Completed) |
+| Everything else | Dispatched only | `args=<raw Order.ToString() dump>` |
+
+Move completion is detected by polling `AIUpdate.TargetPoints.Count == 0` once per main-loop
+iteration (there's no engine "arrived" event). Build/CreateUnit completion is matched via a FIFO
+queue per `(player, definitionName)` against `ConstructionCompleted`/`ObjectCreated`. Attack
+completion is matched via `ObjectDestroyed` on the tracked target.
+
+Known quirk: `CreateUnit` `Completed` entries report `pos=(0.00,0.00,0.00)` because
+`ObjectCreated` fires before the unit is physically placed in the world; the `objectId` is still
+reliable for parity comparisons.
+
+See `ActionResultsWriter.cs` (I/O layer) and `EngineActionRecorder.cs` (semantic layer) for the
+implementation.
+
 ## How agents should validate visual output
 
 1. **Run the TestHarness** (or the headless `DefaultScenario_CapturesFrames_ForVisualValidation`

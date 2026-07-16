@@ -1,0 +1,310 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using OpenSage.Logic;
+using OpenSage.Logic.Object;
+using OpenSage.Logic.Orders;
+
+namespace OpenSage.Tools.TestHarness;
+
+/// <summary>
+/// Subscribes to low-level <see cref="IGame"/> events and records every engine <see cref="Order"/>
+/// (and its resolved outcome) to an <see cref="ActionResultsWriter"/>, to support diffing two
+/// identically-configured runs for parity.
+///
+/// Unlike <see cref="OpenSage.Tools.ReplaySketch.Services.ReplayActionMonitor"/> (which re-raises
+/// orders as a coarse, scenario-level <c>ActionType</c> vocabulary for deferred-action triggering),
+/// this recorder logs the raw engine command with resolved vectors/positions, for every
+/// <see cref="OrderType"/>:
+/// <list type="bullet">
+///   <item>Move: a Started entry per unit (position/direction/speed/target) and a Completed entry
+///     when the unit arrives (detected by polling <see cref="AIUpdate.TargetPoints"/> emptying —
+///     there is no engine "arrived" event).</item>
+///   <item>Attack (object-targeted): a Started entry per attacking unit and a Completed entry when
+///     the target is destroyed.</item>
+///   <item>ForceAttackGround: a single Dispatched entry per affected unit (no lifecycle tracking —
+///     this order is a move-then-maybe-attack composite).</item>
+///   <item>Build / CreateUnit: a Started entry and a Completed entry (FIFO-matched by
+///     player+definition against <c>ConstructionCompleted</c>/<c>ObjectCreated</c>).</item>
+///   <item>Everything else: a single Dispatched entry with the order's raw arguments, so no order
+///     type is silently missing from parity coverage.</item>
+/// </list>
+/// </summary>
+public sealed class EngineActionRecorder : IDisposable
+{
+    private readonly IGame _game;
+    private readonly ActionResultsWriter _writer;
+
+    private readonly HashSet<ObjectId> _pendingMoves = new();
+    private readonly Dictionary<ObjectId, HashSet<ObjectId>> _pendingAttacksByTarget = new();
+    private readonly Dictionary<(uint PlayerIndex, string DefinitionName), Queue<int>> _pendingBuilds = new();
+    private readonly Dictionary<(uint PlayerIndex, string DefinitionName), Queue<int>> _pendingCreateUnits = new();
+
+    public EngineActionRecorder(IGame game, ActionResultsWriter writer)
+    {
+        _game = game;
+        _writer = writer;
+
+        _game.OrderProcessed += OnOrderProcessed;
+        _game.ObjectCreated += OnObjectCreated;
+        _game.ObjectDestroyed += OnObjectDestroyed;
+        _game.ConstructionCompleted += OnConstructionCompleted;
+    }
+
+    /// <summary>
+    /// Polls for completion of in-flight moves. Call once per main-loop iteration — there is no
+    /// engine event for "unit finished moving" (<see cref="AIUpdate.IsMoving"/> is a hardcoded
+    /// stub), so this is the only available signal.
+    /// </summary>
+    public void PollPendingMoves()
+    {
+        if (_pendingMoves.Count == 0)
+        {
+            return;
+        }
+
+        List<ObjectId>? arrived = null;
+
+        foreach (var unitId in _pendingMoves)
+        {
+            var unit = _game.Scene3D?.GameObjects.GetObjectById(unitId);
+            if (unit == null)
+            {
+                // Destroyed mid-move; ObjectDestroyed already logged an Aborted entry and will
+                // remove this id from the set. Nothing more to do here.
+                continue;
+            }
+
+            if (unit.AIUpdate != null && unit.AIUpdate.TargetPoints.Count == 0)
+            {
+                (arrived ??= new List<ObjectId>()).Add(unitId);
+                Write("Completed", OrderType.MoveTo, unit.Owner, $"unit={unitId.Index} pos={Fmt(unit.Translation)}");
+            }
+        }
+
+        if (arrived != null)
+        {
+            foreach (var unitId in arrived)
+            {
+                _pendingMoves.Remove(unitId);
+            }
+        }
+    }
+
+    private void OnOrderProcessed(object? sender, OrderProcessedEventArgs e)
+    {
+        var order = e.Order;
+        var player = e.Player;
+
+        switch (order.OrderType)
+        {
+            case OrderType.MoveTo:
+                RecordMoveTo(order, player);
+                break;
+
+            case OrderType.AttackObject:
+            case OrderType.ForceAttackObject:
+                RecordAttackObject(order, player);
+                break;
+
+            case OrderType.ForceAttackGround:
+                RecordForceAttackGround(order, player);
+                break;
+
+            case OrderType.BuildObject:
+                RecordBuildObject(order, player);
+                break;
+
+            case OrderType.CreateUnit:
+                RecordCreateUnit(order, player);
+                break;
+
+            default:
+                Write("Dispatched", order.OrderType, player, $"args={order}");
+                break;
+        }
+    }
+
+    private void RecordMoveTo(Order order, Player player)
+    {
+        var targetPosition = order.Arguments[0].Value.Position;
+
+        foreach (var unit in player.SelectedUnits)
+        {
+            var pos = unit.Translation;
+            var direction = targetPosition - pos;
+            if (direction.LengthSquared() > 0f)
+            {
+                direction = Vector3.Normalize(direction);
+            }
+            var speed = unit.AIUpdate?.CurrentLocomotorSpeed ?? 0f;
+
+            Write("Started", OrderType.MoveTo, player,
+                $"unit={unit.Id.Index} pos={Fmt(pos)} dir={Fmt(direction)} speed={speed:F2} target={Fmt(targetPosition)}");
+
+            _pendingMoves.Add(unit.Id);
+        }
+    }
+
+    private void RecordAttackObject(Order order, Player player)
+    {
+        var targetId = order.Arguments[0].Value.ObjectId;
+        var target = _game.Scene3D?.GameObjects.GetObjectById(targetId);
+        var targetPos = target != null ? Fmt(target.Translation) : "?";
+
+        foreach (var unit in player.SelectedUnits)
+        {
+            if (!unit.CanAttack)
+            {
+                continue;
+            }
+
+            Write("Started", order.OrderType, player, $"unit={unit.Id.Index} target={targetId.Index} targetPos={targetPos}");
+
+            if (!_pendingAttacksByTarget.TryGetValue(targetId, out var attackers))
+            {
+                _pendingAttacksByTarget[targetId] = attackers = new HashSet<ObjectId>();
+            }
+            attackers.Add(unit.Id);
+        }
+    }
+
+    private void RecordForceAttackGround(Order order, Player player)
+    {
+        var targetPosition = order.Arguments[0].Value.Position;
+
+        const float searchRadius = 300f;
+        var targetObject = _game.Scene3D?.GameObjects.Objects
+            .Where(o => o.Owner != null
+                && player.Enemies.Contains(o.Owner)
+                && Vector3.DistanceSquared(o.Translation, targetPosition) <= searchRadius * searchRadius)
+            .MinBy(o => Vector3.DistanceSquared(o.Translation, targetPosition));
+
+        var units = player.SelectedUnits.Count > 0
+            ? (IEnumerable<GameObject>)player.SelectedUnits
+            : _game.Scene3D?.GameObjects.Objects.Where(u => u.Owner == player && u.CanAttack) ?? Array.Empty<GameObject>();
+
+        foreach (var unit in units)
+        {
+            if (!unit.CanAttack)
+            {
+                continue;
+            }
+
+            var details = targetObject != null
+                ? $"unit={unit.Id.Index} targetPos={Fmt(targetPosition)} target={targetObject.Id.Index}"
+                : $"unit={unit.Id.Index} targetPos={Fmt(targetPosition)}";
+
+            Write("Dispatched", order.OrderType, player, details);
+        }
+    }
+
+    private void RecordBuildObject(Order order, Player player)
+    {
+        var objectDefinitionId = (uint)order.Arguments[0].Value.Integer;
+        var objectDefinition = _game.AssetStore.ObjectDefinitions.GetByInstanceId(objectDefinitionId);
+        if (objectDefinition == null)
+        {
+            return;
+        }
+
+        var position = order.Arguments[1].Value.Position;
+        var angle = order.Arguments[2].Value.Float;
+
+        Write("Started", OrderType.BuildObject, player, $"def={objectDefinition.Name} pos={Fmt(position)} angle={angle:F2}");
+
+        var key = (player.Id, objectDefinition.Name);
+        if (!_pendingBuilds.TryGetValue(key, out var queue))
+        {
+            _pendingBuilds[key] = queue = new Queue<int>();
+        }
+        queue.Enqueue(0);
+    }
+
+    private void RecordCreateUnit(Order order, Player player)
+    {
+        var objectDefinitionId = (uint)order.Arguments[0].Value.Integer;
+        var objectDefinition = _game.AssetStore.ObjectDefinitions.GetByInstanceId(objectDefinitionId);
+        if (objectDefinition == null)
+        {
+            return;
+        }
+
+        Write("Started", OrderType.CreateUnit, player, $"def={objectDefinition.Name}");
+
+        var key = (player.Id, objectDefinition.Name);
+        if (!_pendingCreateUnits.TryGetValue(key, out var queue))
+        {
+            _pendingCreateUnits[key] = queue = new Queue<int>();
+        }
+        queue.Enqueue(0);
+    }
+
+    private void OnObjectCreated(object? sender, GameObjectCreatedEventArgs e)
+    {
+        var obj = e.GameObject;
+        if (obj.Owner == null)
+        {
+            return;
+        }
+
+        var key = (obj.Owner.Id, obj.Definition.Name);
+        if (_pendingCreateUnits.TryGetValue(key, out var queue) && queue.Count > 0)
+        {
+            queue.Dequeue();
+            Write("Completed", OrderType.CreateUnit, obj.Owner, $"def={obj.Definition.Name} objectId={obj.Id.Index} pos={Fmt(obj.Translation)}");
+        }
+    }
+
+    private void OnObjectDestroyed(object? sender, GameObjectDestroyedEventArgs e)
+    {
+        var obj = e.GameObject;
+
+        if (_pendingMoves.Remove(obj.Id))
+        {
+            Write("Aborted", OrderType.MoveTo, obj.Owner, $"unit={obj.Id.Index} pos={Fmt(obj.Translation)}");
+        }
+
+        if (_pendingAttacksByTarget.TryGetValue(obj.Id, out var attackers))
+        {
+            foreach (var attackerId in attackers)
+            {
+                Write("Completed", OrderType.AttackObject, obj.Owner, $"unit={attackerId.Index} target={obj.Id.Index}");
+            }
+            _pendingAttacksByTarget.Remove(obj.Id);
+        }
+    }
+
+    private void OnConstructionCompleted(object? sender, GameObjectConstructionCompletedEventArgs e)
+    {
+        var obj = e.GameObject;
+        if (obj.Owner == null)
+        {
+            return;
+        }
+
+        var key = (obj.Owner.Id, obj.Definition.Name);
+        if (_pendingBuilds.TryGetValue(key, out var queue) && queue.Count > 0)
+        {
+            queue.Dequeue();
+            Write("Completed", OrderType.BuildObject, obj.Owner, $"def={obj.Definition.Name} pos={Fmt(obj.Translation)} objectId={obj.Id.Index}");
+        }
+    }
+
+    private void Write(string state, OrderType orderType, Player? player, string details)
+    {
+        var frame = (uint)(_game.MapTime.TotalTime.TotalMilliseconds / _game.GameEngine.MsPerLogicFrame);
+        _writer.WriteLine(frame, state, orderType.ToString(), player?.Name ?? "?", details);
+    }
+
+    private static string Fmt(in Vector3 v) => $"({v.X:F2},{v.Y:F2},{v.Z:F2})";
+
+    public void Dispose()
+    {
+        _game.OrderProcessed -= OnOrderProcessed;
+        _game.ObjectCreated -= OnObjectCreated;
+        _game.ObjectDestroyed -= OnObjectDestroyed;
+        _game.ConstructionCompleted -= OnConstructionCompleted;
+    }
+}

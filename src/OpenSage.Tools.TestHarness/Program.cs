@@ -143,6 +143,7 @@ public static class Program
 
         var map = MapMetadataService.Load(installation, scenario.MapPath);
         var outputPath = Path.Combine(Path.GetTempPath(), $"opensage_scenario_{Guid.NewGuid()}.rep");
+        var resultsPath = Path.ChangeExtension(outputPath, null) + ".results.txt";
 
         try
         {
@@ -155,16 +156,18 @@ public static class Program
                 return;
             }
 
+            using var results = new ActionResultsWriter(resultsPath, config.Scenario.ToString(), config.ScenarioPath ?? "(built-in)", config.Game.ToString());
+
             if (config.Headless)
             {
-                RunReplay(installation, config, outputPath, deferredActions);
+                RunReplay(installation, config, outputPath, deferredActions, results);
             }
             else
             {
                 Platform.Start();
                 try
                 {
-                    RunReplay(installation, config, outputPath, deferredActions);
+                    RunReplay(installation, config, outputPath, deferredActions, results);
                 }
                 finally
                 {
@@ -182,24 +185,26 @@ public static class Program
             {
                 Console.WriteLine($"Replay saved to: {outputPath}");
             }
+
+            Console.WriteLine($"Action results saved to: {resultsPath}");
         }
     }
 
     private static void RunReplay(GameInstallation installation, TestHarnessConfig config, string replayPath,
-        IReadOnlyList<DeferredAction> deferredActions)
+        IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results)
     {
         if (config.Headless)
         {
-            RunHeadless(installation, config, replayPath, deferredActions);
+            RunHeadless(installation, config, replayPath, deferredActions, results);
         }
         else
         {
-            RunWindowed(installation, config, replayPath, deferredActions);
+            RunWindowed(installation, config, replayPath, deferredActions, results);
         }
     }
 
     private static void RunWindowed(GameInstallation installation, TestHarnessConfig config, string replayPath,
-        IReadOnlyList<DeferredAction> deferredActions)
+        IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results)
     {
         using var window = new GameWindow("OpenSAGE - TestHarness", 100, 100, 1024, 768, config.Fullscreen);
         using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, CameraControlScheme = config.CameraControlScheme, MouseClickMode = config.MouseClickMode }, window);
@@ -223,6 +228,7 @@ public static class Program
             var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
             Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
         };
+        using var recorder = new EngineActionRecorder(game, results);
         var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
 
         Console.WriteLine("Running replay — close the window or wait for it to finish.");
@@ -243,13 +249,16 @@ public static class Program
                 window.Swapchain.Framebuffer);
             window.MessageQueue.Clear();
             game.GraphicsDevice.SwapBuffers(window.Swapchain);
+
+            recorder.PollPendingMoves();
+            results.MaybeFlush();
         }
 
         Console.WriteLine("Done.");
     }
 
     private static void RunHeadless(GameInstallation installation, TestHarnessConfig config, string replayPath,
-        IReadOnlyList<DeferredAction> deferredActions)
+        IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results)
     {
         using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, CameraControlScheme = config.CameraControlScheme, MouseClickMode = config.MouseClickMode }, null);
 
@@ -295,6 +304,7 @@ public static class Program
         };
 
         var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
+        using var recorder = new EngineActionRecorder(game, results);
 
         Console.WriteLine("Running headless replay.");
         if (config.CaptureFrames)
@@ -315,6 +325,9 @@ public static class Program
             {
                 capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
             }
+
+            recorder.PollPendingMoves();
+            results.MaybeFlush();
 
             if (runoutEndLogicFrame != uint.MaxValue)
             {
