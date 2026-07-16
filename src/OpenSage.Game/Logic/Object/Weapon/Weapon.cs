@@ -57,7 +57,15 @@ public sealed class Weapon : IPersistableObject
                 currentTargetPosition.Value,
                 ParentGameObject.Translation);
 
-            return distance <= Template.AttackRange;
+            // Attack range is measured from the target's center, but large objects (e.g. buildings)
+            // have their own footprint radius. Without subtracting it, a vehicle can be blocked by
+            // the target's collision at its edge while still being reported "out of range" because
+            // its own position is farther from the target's center than a short-ranged weapon allows.
+            var targetRadius = CurrentTarget.TargetType == WeaponTargetType.Object
+                ? CurrentTarget.GetTargetObject()?.RoughCollider?.WorldBounds.Radius ?? 0f
+                : 0f;
+
+            return distance - targetRadius <= Template.AttackRange;
         }
     }
 
