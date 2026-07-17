@@ -133,6 +133,9 @@ object (the `orderType` column holds a category string instead of an `OrderType`
 | `ObjectLifecycle` | `Created` | `Game.ObjectCreated` | `objectId`, `def`, `pos`, `health` |
 | `ObjectLifecycle` | `Destroyed` | `Game.ObjectDestroyed` | `objectId`, `def`, `pos` |
 | `Health` | `Changed` | polled once per main-loop iteration | `objectId`, `def`, `previous`, `current`, `max` |
+| `SupplyCycle` | `State` | polled: `SupplyAIUpdate.SupplyGatherState` changed | `unit`, `def`, `state`, `prev` |
+| `SupplyCycle` | `ApproachStart` | polled: unit enters an `ApproachingSupply*` state | `unit`, `def`, `leg` (`Gather`/`Dump`), `goal`, `frame` |
+| `SupplyCycle` | `ApproachArrived` | polled: unit leaves an `ApproachingSupply*` state | `unit`, `def`, `leg`, `travelFrames`, `overshoots`, `closest` (2D units), `maxSpeed` |
 
 Health changes are detected by polling `BodyModule.Health` each iteration (there's no engine
 "health changed" event), the same pattern used for move completion. Objects already in the scene

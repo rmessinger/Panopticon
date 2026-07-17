@@ -5,6 +5,7 @@ using System.Numerics;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
+using OpenSage.Mathematics;
 
 namespace OpenSage.Tools.TestHarness;
 
@@ -35,11 +36,18 @@ namespace OpenSage.Tools.TestHarness;
 /// player-owned object enters the scene, a Destroyed entry when one leaves, and a Changed entry
 /// whenever a tracked object's health changes (detected by polling, since there's no engine
 /// "health changed" event — see <see cref="PollHealthChanges"/>).
+///
+/// Finally it tracks the supply gather/dump cycle of every <see cref="SupplyAIUpdate"/> unit (the
+/// Chinook, supply trucks, workers): a State entry per supply-state transition, and ApproachStart /
+/// ApproachArrived entries per approach leg carrying travel frames, closest approach, peak speed,
+/// and an overshoot count (the numeric signal for a unit that overshoots its dock and loops back).
+/// See <see cref="PollSupplyCycles"/>.
 /// </summary>
 public sealed class EngineActionRecorder : IDisposable
 {
     private const string ObjectLifecycleCategory = "ObjectLifecycle";
     private const string HealthCategory = "Health";
+    private const string SupplyCycleCategory = "SupplyCycle";
 
     private readonly IGame _game;
     private readonly ActionResultsWriter _writer;
@@ -49,6 +57,7 @@ public sealed class EngineActionRecorder : IDisposable
     private readonly Dictionary<(uint PlayerIndex, string DefinitionName), Queue<int>> _pendingBuilds = new();
     private readonly Dictionary<(uint PlayerIndex, string DefinitionName), Queue<int>> _pendingCreateUnits = new();
     private readonly Dictionary<ObjectId, float> _lastHealth = new();
+    private readonly Dictionary<ObjectId, SupplyCycleTracker> _supplyTrackers = new();
 
     public EngineActionRecorder(IGame game, ActionResultsWriter writer)
     {
@@ -162,6 +171,86 @@ public sealed class EngineActionRecorder : IDisposable
                 _lastHealth[obj.Id] = health;
             }
         }
+    }
+
+    /// <summary>
+    /// Polls every player-owned unit with a <see cref="SupplyAIUpdate"/> and records supply-cycle
+    /// timing for baseline comparison: each supply-state transition (with its frame), and per
+    /// approach-leg telemetry (travel frames, closest horizontal approach, peak speed, and an
+    /// overshoot count). The overshoot count is the numeric signal for a unit that misses its
+    /// dock and loops back: a clean arrival is 0, each close-in-then-recede reversal increments
+    /// it. Call once per main-loop iteration alongside <see cref="PollPendingMoves"/> — there is
+    /// no engine event for any of these.
+    /// </summary>
+    public void PollSupplyCycles()
+    {
+        var objects = _game.Scene3D?.GameObjects.Objects;
+        if (objects == null)
+        {
+            return;
+        }
+
+        foreach (var obj in objects)
+        {
+            if (obj.Owner == null)
+            {
+                continue;
+            }
+
+            if (obj.AIUpdate is not SupplyAIUpdate supply)
+            {
+                continue;
+            }
+
+            var tracker = GetOrCreateSupplyTracker(obj.Id);
+            var currentState = supply.SupplyGatherState;
+
+            if (currentState != tracker.LastState)
+            {
+                if (tracker.EverSeen)
+                {
+                    Write("State", SupplyCycleCategory, obj.Owner,
+                        $"unit={obj.Id.Index} def={obj.Definition.Name} state={currentState} prev={tracker.LastState}");
+                }
+                tracker.EverSeen = true;
+                tracker.LastState = currentState;
+            }
+
+            var isApproach = currentState == SupplyAIUpdate.SupplyGatherStates.ApproachingSupplySource
+                             || currentState == SupplyAIUpdate.SupplyGatherStates.ApproachingSupplyTarget;
+
+            if (isApproach)
+            {
+                var toTarget = currentState == SupplyAIUpdate.SupplyGatherStates.ApproachingSupplyTarget;
+                if (tracker.ActiveLeg == null || tracker.ActiveLeg.ToTarget != toTarget)
+                {
+                    var goal = obj.AIUpdate.TargetPoints.Count > 0
+                        ? obj.AIUpdate.TargetPoints[0]
+                        : obj.Translation;
+                    tracker.ActiveLeg = new ApproachLeg(toTarget, CurrentFrame(), goal);
+                    Write("ApproachStart", SupplyCycleCategory, obj.Owner,
+                        $"unit={obj.Id.Index} def={obj.Definition.Name} leg={(toTarget ? "Dump" : "Gather")} goal={Fmt(goal)} frame={tracker.ActiveLeg.StartFrame}");
+                }
+                tracker.ActiveLeg.Sample(obj.Translation, obj.AIUpdate);
+            }
+            else if (tracker.ActiveLeg != null)
+            {
+                var leg = tracker.ActiveLeg;
+                tracker.ActiveLeg = null;
+                var travelFrames = CurrentFrame() - leg.StartFrame;
+                Write("ApproachArrived", SupplyCycleCategory, obj.Owner,
+                    $"unit={obj.Id.Index} def={obj.Definition.Name} leg={(leg.ToTarget ? "Dump" : "Gather")} travelFrames={travelFrames} overshoots={leg.Overshoots} closest={MathF.Sqrt(leg.ClosestDistSq):F2} maxSpeed={leg.MaxSpeed:F2}");
+            }
+        }
+    }
+
+    private SupplyCycleTracker GetOrCreateSupplyTracker(ObjectId id)
+    {
+        if (!_supplyTrackers.TryGetValue(id, out var tracker))
+        {
+            _supplyTrackers[id] = tracker = new SupplyCycleTracker();
+        }
+        return tracker;
     }
 
     private void OnOrderProcessed(object? sender, OrderProcessedEventArgs e)
@@ -382,9 +471,11 @@ public sealed class EngineActionRecorder : IDisposable
 
     private void Write(string state, string category, Player? player, string details)
     {
-        var frame = (uint)(_game.MapTime.TotalTime.TotalMilliseconds / _game.GameEngine.MsPerLogicFrame);
-        _writer.WriteLine(frame, state, category, player?.Name ?? "?", details);
+        _writer.WriteLine(CurrentFrame(), state, category, player?.Name ?? "?", details);
     }
+
+    private uint CurrentFrame()
+        => (uint)(_game.MapTime.TotalTime.TotalMilliseconds / _game.GameEngine.MsPerLogicFrame);
 
     private static string Fmt(in Vector3 v) => $"({v.X:F2},{v.Y:F2},{v.Z:F2})";
 
@@ -394,5 +485,78 @@ public sealed class EngineActionRecorder : IDisposable
         _game.ObjectCreated -= OnObjectCreated;
         _game.ObjectDestroyed -= OnObjectDestroyed;
         _game.ConstructionCompleted -= OnConstructionCompleted;
+    }
+
+    private sealed class SupplyCycleTracker
+    {
+        public SupplyAIUpdate.SupplyGatherStates LastState = SupplyAIUpdate.SupplyGatherStates.Default;
+        public bool EverSeen;
+        public ApproachLeg? ActiveLeg;
+    }
+
+    /// <summary>
+    /// Accumulates telemetry for one supply approach leg (a unit moving toward a supply source to
+    /// gather, or a supply center to dump). Distances are horizontal (2D) so that aircraft holding
+    /// an altitude are judged by their ground-track approach, not their cruise height.
+    /// </summary>
+    private sealed class ApproachLeg
+    {
+        public readonly bool ToTarget;
+        public readonly uint StartFrame;
+        public float ClosestDistSq = float.MaxValue;
+        public float MaxSpeed;
+        public int Overshoots;
+
+        private Vector3 _goal;
+        private float _prevDistSq;
+        private bool _hasPrev;
+        private bool _wasDecreasing;
+
+        public ApproachLeg(bool toTarget, uint startFrame, Vector3 goal)
+        {
+            ToTarget = toTarget;
+            StartFrame = startFrame;
+            _goal = goal;
+        }
+
+        public void Sample(Vector3 unitPos, AIUpdate aiUpdate)
+        {
+            // The supply state machine can reissue the target point mid-leg (e.g. a waiting-bone
+            // reshuffle at a dock). Treat a large goal jump as a fresh close-in to avoid counting
+            // the discontinuity as an overshoot.
+            if (aiUpdate.TargetPoints.Count > 0)
+            {
+                var newGoal = aiUpdate.TargetPoints[0];
+                if ((newGoal - _goal).Vector2XY().LengthSquared() > 4.0f)
+                {
+                    _goal = newGoal;
+                    _hasPrev = false;
+                }
+            }
+
+            var speed = aiUpdate.CurrentLocomotorSpeed;
+            if (speed > MaxSpeed)
+            {
+                MaxSpeed = speed;
+            }
+
+            var dSq = (unitPos - _goal).Vector2XY().LengthSquared();
+            if (dSq < ClosestDistSq)
+            {
+                ClosestDistSq = dSq;
+            }
+
+            if (_hasPrev)
+            {
+                var decreasing = dSq < _prevDistSq;
+                if (_wasDecreasing && !decreasing)
+                {
+                    Overshoots++;
+                }
+                _wasDecreasing = decreasing;
+            }
+            _hasPrev = true;
+            _prevDistSq = dSq;
+        }
     }
 }

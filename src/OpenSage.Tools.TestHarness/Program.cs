@@ -252,6 +252,7 @@ public static class Program
 
             recorder.PollPendingMoves();
             recorder.PollHealthChanges();
+            recorder.PollSupplyCycles();
             results.MaybeFlush();
         }
 
@@ -329,6 +330,7 @@ public static class Program
 
             recorder.PollPendingMoves();
             recorder.PollHealthChanges();
+            recorder.PollSupplyCycles();
             results.MaybeFlush();
 
             if (runoutEndLogicFrame != uint.MaxValue)
