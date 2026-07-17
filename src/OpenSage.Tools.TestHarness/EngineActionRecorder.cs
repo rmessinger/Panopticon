@@ -30,9 +30,17 @@ namespace OpenSage.Tools.TestHarness;
 ///   <item>Everything else: a single Dispatched entry with the order's raw arguments, so no order
 ///     type is silently missing from parity coverage.</item>
 /// </list>
+///
+/// It also tracks general object lifecycle/state, independent of orders: a Created entry when a
+/// player-owned object enters the scene, a Destroyed entry when one leaves, and a Changed entry
+/// whenever a tracked object's health changes (detected by polling, since there's no engine
+/// "health changed" event — see <see cref="PollHealthChanges"/>).
 /// </summary>
 public sealed class EngineActionRecorder : IDisposable
 {
+    private const string ObjectLifecycleCategory = "ObjectLifecycle";
+    private const string HealthCategory = "Health";
+
     private readonly IGame _game;
     private readonly ActionResultsWriter _writer;
 
@@ -40,6 +48,7 @@ public sealed class EngineActionRecorder : IDisposable
     private readonly Dictionary<ObjectId, HashSet<ObjectId>> _pendingAttacksByTarget = new();
     private readonly Dictionary<(uint PlayerIndex, string DefinitionName), Queue<int>> _pendingBuilds = new();
     private readonly Dictionary<(uint PlayerIndex, string DefinitionName), Queue<int>> _pendingCreateUnits = new();
+    private readonly Dictionary<ObjectId, float> _lastHealth = new();
 
     public EngineActionRecorder(IGame game, ActionResultsWriter writer)
     {
@@ -50,6 +59,20 @@ public sealed class EngineActionRecorder : IDisposable
         _game.ObjectCreated += OnObjectCreated;
         _game.ObjectDestroyed += OnObjectDestroyed;
         _game.ConstructionCompleted += OnConstructionCompleted;
+
+        // Objects placed by the map/scenario at load time predate this recorder's subscription,
+        // so ObjectCreated never fires for them. Seed their health so PollHealthChanges has a
+        // baseline instead of reporting a spurious initial "change" for every one of them.
+        if (_game.Scene3D != null)
+        {
+            foreach (var obj in _game.Scene3D.GameObjects.Objects)
+            {
+                if (obj.Owner != null && obj.BodyModule != null)
+                {
+                    _lastHealth[obj.Id] = obj.BodyModule.Health;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -88,6 +111,44 @@ public sealed class EngineActionRecorder : IDisposable
             foreach (var unitId in arrived)
             {
                 _pendingMoves.Remove(unitId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Polls all tracked player-owned objects for health changes and logs a Changed entry for
+    /// each one whose health differs from the last observed value. Call once per main-loop
+    /// iteration alongside <see cref="PollPendingMoves"/> — there is no engine "health changed"
+    /// event, so polling is the only available signal.
+    /// </summary>
+    public void PollHealthChanges()
+    {
+        var objects = _game.Scene3D?.GameObjects.Objects;
+        if (objects == null)
+        {
+            return;
+        }
+
+        foreach (var obj in objects)
+        {
+            if (obj.Owner == null || obj.BodyModule == null)
+            {
+                continue;
+            }
+
+            var health = obj.BodyModule.Health;
+            if (_lastHealth.TryGetValue(obj.Id, out var previous))
+            {
+                if (health != previous)
+                {
+                    Write("Changed", HealthCategory, obj.Owner,
+                        $"objectId={obj.Id.Index} def={obj.Definition.Name} previous={previous:F1} current={health:F1} max={obj.BodyModule.MaxHealth:F1}");
+                    _lastHealth[obj.Id] = health;
+                }
+            }
+            else
+            {
+                _lastHealth[obj.Id] = health;
             }
         }
     }
@@ -249,6 +310,11 @@ public sealed class EngineActionRecorder : IDisposable
             return;
         }
 
+        var health = obj.BodyModule?.Health ?? 0f;
+        _lastHealth[obj.Id] = health;
+        Write("Created", ObjectLifecycleCategory, obj.Owner,
+            $"objectId={obj.Id.Index} def={obj.Definition.Name} pos={Fmt(obj.Translation)} health={health:F1}");
+
         var key = (obj.Owner.Id, obj.Definition.Name);
         if (_pendingCreateUnits.TryGetValue(key, out var queue) && queue.Count > 0)
         {
@@ -260,6 +326,14 @@ public sealed class EngineActionRecorder : IDisposable
     private void OnObjectDestroyed(object? sender, GameObjectDestroyedEventArgs e)
     {
         var obj = e.GameObject;
+
+        _lastHealth.Remove(obj.Id);
+
+        if (obj.Owner != null)
+        {
+            Write("Destroyed", ObjectLifecycleCategory, obj.Owner,
+                $"objectId={obj.Id.Index} def={obj.Definition.Name} pos={Fmt(obj.Translation)}");
+        }
 
         if (_pendingMoves.Remove(obj.Id))
         {
@@ -293,9 +367,12 @@ public sealed class EngineActionRecorder : IDisposable
     }
 
     private void Write(string state, OrderType orderType, Player? player, string details)
+        => Write(state, orderType.ToString(), player, details);
+
+    private void Write(string state, string category, Player? player, string details)
     {
         var frame = (uint)(_game.MapTime.TotalTime.TotalMilliseconds / _game.GameEngine.MsPerLogicFrame);
-        _writer.WriteLine(frame, state, orderType.ToString(), player?.Name ?? "?", details);
+        _writer.WriteLine(frame, state, category, player?.Name ?? "?", details);
     }
 
     private static string Fmt(in Vector3 v) => $"({v.X:F2},{v.Y:F2},{v.Z:F2})";

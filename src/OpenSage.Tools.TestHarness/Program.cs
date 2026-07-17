@@ -251,6 +251,7 @@ public static class Program
             game.GraphicsDevice.SwapBuffers(window.Swapchain);
 
             recorder.PollPendingMoves();
+            recorder.PollHealthChanges();
             results.MaybeFlush();
         }
 
@@ -327,6 +328,7 @@ public static class Program
             }
 
             recorder.PollPendingMoves();
+            recorder.PollHealthChanges();
             results.MaybeFlush();
 
             if (runoutEndLogicFrame != uint.MaxValue)

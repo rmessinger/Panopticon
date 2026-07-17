@@ -85,6 +85,13 @@ The path is printed to stdout at the end of the run (`Action results saved to: .
 flushed periodically during the run (every 20 lines or 5 seconds, whichever first), not just at
 exit, so a crash still leaves a usable partial file.
 
+`ActionResultsWriter.WriteLine` also emits each line through NLog automatically, so every result
+reaches both stdout and `opensage.log` (see `OpenSage.Core/NLog.config`'s catch-all rule) in real
+time as the scenario runs, not just in the dedicated results file at the end. This routing is
+centralized in the writer itself — callers (like `EngineActionRecorder`) only need to call
+`WriteLine`/`Write` once and get both destinations for free; no future recorder needs to
+duplicate the NLog call.
+
 ### Format
 
 A `#`-prefixed header block carries non-comparable run metadata (scenario, game, host, wall-clock
@@ -115,6 +122,23 @@ completion is matched via `ObjectDestroyed` on the tracked target.
 Known quirk: `CreateUnit` `Completed` entries report `pos=(0.00,0.00,0.00)` because
 `ObjectCreated` fires before the unit is physically placed in the world; the `objectId` is still
 reliable for parity comparisons.
+
+### Object lifecycle and health
+
+Alongside orders, the recorder also logs general object state changes for every player-owned
+object (the `orderType` column holds a category string instead of an `OrderType` for these):
+
+| Category | State | Trigger | Details |
+|---|---|---|---|
+| `ObjectLifecycle` | `Created` | `Game.ObjectCreated` | `objectId`, `def`, `pos`, `health` |
+| `ObjectLifecycle` | `Destroyed` | `Game.ObjectDestroyed` | `objectId`, `def`, `pos` |
+| `Health` | `Changed` | polled once per main-loop iteration | `objectId`, `def`, `previous`, `current`, `max` |
+
+Health changes are detected by polling `BodyModule.Health` each iteration (there's no engine
+"health changed" event), the same pattern used for move completion. Objects already in the scene
+when the recorder is constructed (map/scenario starting units) have their health seeded at
+construction time so they don't produce a spurious first "change" entry. Objects with no
+`BodyModule`, or no `Owner` (scenery/props), are skipped entirely.
 
 See `ActionResultsWriter.cs` (I/O layer) and `EngineActionRecorder.cs` (semantic layer) for the
 implementation.

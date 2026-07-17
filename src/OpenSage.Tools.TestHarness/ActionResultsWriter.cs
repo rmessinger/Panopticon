@@ -9,6 +9,10 @@ namespace OpenSage.Tools.TestHarness;
 /// This is a pure I/O layer: it knows nothing about game state, only how to write and
 /// periodically flush lines to disk. <see cref="EngineActionRecorder"/> decides what to log.
 ///
+/// Every line is also routed through NLog automatically, so it reaches stdout and
+/// <c>opensage.log</c> (per <c>OpenSage.Core/NLog.config</c>'s catch-all rule) in real time,
+/// in addition to the dedicated results file. Callers never need to log a result twice.
+///
 /// The file body is deterministic (logic-frame-based, not wall-clock) so two runs of the same
 /// scenario/config can be diffed directly. A leading block of <c>#</c>-prefixed lines carries
 /// non-comparable run metadata (scenario, game, host, wall-clock start time) — parity-diff
@@ -16,6 +20,8 @@ namespace OpenSage.Tools.TestHarness;
 /// </summary>
 public sealed class ActionResultsWriter : IDisposable
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
     private const int FlushEveryLines = 20;
     private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(5);
 
@@ -47,6 +53,7 @@ public sealed class ActionResultsWriter : IDisposable
 
     /// <summary>
     /// Writes one tab-separated result line: <c>logicFrame\tstate\torderType\tplayer\tdetails</c>.
+    /// Also logs the same result through NLog (stdout + opensage.log) automatically.
     /// </summary>
     public void WriteLine(uint logicFrame, string state, string orderType, string player, string details)
     {
@@ -54,6 +61,8 @@ public sealed class ActionResultsWriter : IDisposable
 
         _linesSinceFlush++;
         MaybeFlush();
+
+        Logger.Info($"[{state}] {orderType} frame={logicFrame} player={player} {details}");
     }
 
     /// <summary>
