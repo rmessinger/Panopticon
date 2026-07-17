@@ -155,9 +155,14 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     A` (test asserts symmetry).
   - Done: `WI-P1-02`/`WI-P1-03` (commit d5acbbb7). Reciprocity + symmetry covered by
     `PlayerRelationshipTests`.
-- [ ] Start a single-player skirmish without networking (`LocalSkirmishManager` path).
+- [x] Start a single-player skirmish without networking (`LocalSkirmishManager` path).
   - AC: `LocalSkirmishManager` reaches `Started` with no network connection; a headless boot reaches
     the first logic tick.
+  - Done: `SkirmishManager.Update()` now guards its lobby `PopWindow()` against an empty window
+    stack so the path boots headlessly (no menu window); `LocalSkirmishManager` already uses an
+    `EchoConnection` (no network). Covered by `LocalSkirmishManagerBootTests` (headless boot to
+    `Started` + first logic tick, skips on CI without a game install) and the always-on
+    `LocalSkirmishManagerStartTests` (start transition + `EchoConnection`, no game files).
 - [x] Unify SP/MP spawn onto one shared skirmish path (SP = one human + AI slots through the same
       start-position/building/camera code, `Game.cs:745-763`); identify the human via an explicit
       slot flag set at setup, not the `_players[2]` fallback (`PlayerManager.cs:39-46`).
