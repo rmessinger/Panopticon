@@ -137,6 +137,17 @@ public sealed class EngineActionRecorder : IDisposable
             }
 
             var health = obj.BodyModule.Health;
+
+            // Objects under construction gain health each tick as build progress advances
+            // (GameObject.AdvanceConstruction). That is build progress, not a damage/heal
+            // event, so don't log it -- but keep the baseline tracking silently so the
+            // transition to full health on completion doesn't read as a spurious change.
+            if (obj.TestStatus(ObjectStatus.UnderConstruction))
+            {
+                _lastHealth[obj.Id] = health;
+                continue;
+            }
+
             if (_lastHealth.TryGetValue(obj.Id, out var previous))
             {
                 if (health != previous)

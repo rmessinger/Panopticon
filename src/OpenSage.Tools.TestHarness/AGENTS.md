@@ -140,6 +140,11 @@ when the recorder is constructed (map/scenario starting units) have their health
 construction time so they don't produce a spurious first "change" entry. Objects with no
 `BodyModule`, or no `Owner` (scenery/props), are skipped entirely.
 
+Objects under construction (`ObjectStatus.UnderConstruction`) are also excluded from health
+logging: their health rises each tick with build progress (`GameObject.AdvanceConstruction`),
+which is not a damage/heal event. Their baseline is still tracked silently so the transition to
+full health on completion is not reported as a spurious change.
+
 See `ActionResultsWriter.cs` (I/O layer) and `EngineActionRecorder.cs` (semantic layer) for the
 implementation.
 
