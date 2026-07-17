@@ -19,7 +19,7 @@
   "Game": "CncGenerals",
   "Renderer": null,
   "Fullscreen": false,
-  "Headless": true,
+  "Headless": false,
   "CaptureFrames": false,
   "KeepReplay": false,
   "GamePath": null
