@@ -26,7 +26,7 @@ public sealed class HighlanderBody : ActiveBody
             modifiedDamageInput.Amount = Math.Min(damageInput.Amount, Health - 1);
         }
 
-        return AttemptDamage(modifiedDamageInput);
+        return base.AttemptDamage(modifiedDamageInput);
     }
 
     internal override void Load(StatePersister reader)

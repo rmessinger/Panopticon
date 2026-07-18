@@ -7,29 +7,24 @@ namespace OpenSage.Tests;
 public class GameFixture : IDisposable
 {
     private readonly Dictionary<SageGame, IGame> _games = new();
-    private bool _platformStarted = false;
 
     public GameFixture()
     {
-        // Do not call Platform.Start() here. xUnit v2 creates class fixtures even
-        // when all tests in the class are skipped (e.g. [Theory(Skip = "...")]). 
-        // Calling SDL_Init from an xUnit background thread causes an NSException on
-        // macOS. Platform.Start() is deferred to GetGame() so it only runs when a
-        // test actually needs a game instance.
     }
 
     public IGame GetGame(SageGame sageGame)
     {
-        if (!_platformStarted)
-        {
-            Platform.Start();
-            _platformStarted = true;
-        }
-
         if (!_games.TryGetValue(sageGame, out var game))
         {
             var installation = InstalledFilesTestData.GetInstallation(sageGame);
 
+            // Deliberately not calling Platform.Start() (SDL_Init) here: passing a null
+            // window makes Game create a headless GraphicsDevice directly via Veldrid
+            // (see GraphicsDeviceUtility.CreateGraphicsDevice), with no SDL2/Cocoa
+            // dependency at all. Calling Platform.Start() from an xUnit worker thread
+            // (not the process's actual main thread) crashes on macOS with
+            // "API misuse: setting the main menu on a non-main thread", since SDL2's
+            // Cocoa video backend requires AppKit calls to happen on the real main thread.
             game = new Game(installation);
 
             _games.Add(sageGame, game);
@@ -44,7 +39,6 @@ public class GameFixture : IDisposable
         {
             kvp.Value.Dispose();
         }
-
-        Platform.Stop();
     }
 }
+

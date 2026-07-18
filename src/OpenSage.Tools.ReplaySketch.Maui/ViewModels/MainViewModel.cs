@@ -23,7 +23,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IProcessLauncher _processLauncher;
 
     // ── State ─────────────────────────────────────────────────────────────
-    public ReplayScenario Scenario { get; } = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+    public ReplayScenario Scenario { get; } = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
 
     private ObservableCollection<string> _availableMaps = new();
     public ObservableCollection<string> AvailableMaps

@@ -17,8 +17,8 @@ The term follows Michael Feathers' sense of "a place where you can alter behavio
 editing in that place," specialized here for a framework that plugs in and measures
 simulation-optimization experiments. In this roadmap a seam has four properties:
 
-1. One axis of variation. Each seam abstracts exactly one decision: how do we partition, what is the
-   simulation domain, or how do we store entity data? It is not a grab-bag.
+1. One axis of variation. Each seam abstracts exactly one decision: the partition scheme, the
+   simulation domain, or the entity data storage layout. It is not a grab-bag.
 2. A stable interface. Callers depend on the interface, never on a concrete implementation.
 3. Swappable, comparable implementations. Two or more implementations can sit behind it, and
    the [A4 experiment harness](track-a-foundations.md) can select one, run it against

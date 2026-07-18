@@ -369,15 +369,27 @@ public class AIUpdate : UpdateModule
 
                     // TODO(Port): Use correct parameter values.
                     var blocked = false;
+                    var toTarget = TargetPoints[0] - GameObject.Translation;
+                    // onPathDistToGoal governs the locomotor's braking window. It must match the
+                    // arrival metric (CloseEnoughDist3D): aircraft hold PreferredHeight, so a 3D
+                    // distance stays dominated by altitude and braking never engages, leaving the
+                    // unit to overshoot the goal and loop back.
+                    var use3DArrival = CurrentLocomotor.LocomotorTemplate.CloseEnoughDist3D;
+                    var onPathDistToGoal = use3DArrival
+                        ? toTarget.Length()
+                        : toTarget.Vector2XY().Length();
                     CurrentLocomotor.LocoUpdateMoveTowardsPosition(
                         GameObject,
                         TargetPoints[0],
-                        Vector3.Distance(GameObject.Translation, TargetPoints[0]),
+                        onPathDistToGoal,
                         CurrentLocomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState),
                         ref blocked);
 
-                    // TODO(Port): This isn't right.
-                    var reachedPosition = (GameObject.Translation - TargetPoints[0]).Vector2XY().LengthSquared() < 0.25f;
+                    var distToTargetSq = use3DArrival
+                        ? toTarget.LengthSquared()
+                        : toTarget.Vector2XY().LengthSquared();
+                    var closeEnoughDist = CurrentLocomotor.LocomotorTemplate.CloseEnoughDist;
+                    var reachedPosition = distToTargetSq < closeEnoughDist * closeEnoughDist;
 
                     // this should be moved to LogicTick
                     if (reachedPosition)

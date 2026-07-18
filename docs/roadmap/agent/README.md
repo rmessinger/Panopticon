@@ -1,4 +1,4 @@
-# Agent Guide — incremental roadmap iteration
+# Agent Guide: incremental roadmap iteration
 
 > A parallel, agent-focused companion to the [roadmap](../README.md). The roadmap states what
 > to build and why; this guide states how a low-effort automated agent picks up a small, bounded
@@ -12,7 +12,7 @@
 ## Why this exists
 
 Roadmap phases (P, A, B, C) are large and design-heavy. Execution at that scale requires strong
-reasoning. Most phases decompose into many small, mechanical, low-ambiguity steps — cataloging
+reasoning. Most phases decompose into many small, mechanical, low-ambiguity steps: cataloging
 code, replicating an existing pattern, adding a test, or applying a narrow refactor. Those steps do
 not require a high-effort model when they are written down precisely. This guide stores them as task
 cards.
@@ -30,7 +30,7 @@ Every agent working from this guide follows the same loop:
    listed prerequisites are met. Do one card at a time.
 2. Read only what the card names. The card lists the exact files / line ranges and the roadmap
    phase it serves. Read those. Do not go spelunking the whole codebase.
-3. Make the change. Keep the diff small and surgical — scoped to the card's "Files likely to
+3. Make the change. Keep the diff small and surgical: scoped to the card's "Files likely to
    change". If the work turns out larger or more ambiguous than the card implies, stop and report
    (see step 6) rather than guessing.
 4. Validate. Run the card's validation commands (and the [standard checks](#standard-validation)).
@@ -53,9 +53,9 @@ Every agent working from this guide follows the same loop:
 The roadmap's SQL todo list lives in an orchestrator's session and is not in the repo, so agents
 in fresh sessions can't see it. Rely only on repo artifacts:
 
-- [`cards/`](cards/) — the executable units of work, each with a `Status`.
+- [`cards/`](cards/): the executable units of work, each with a `Status`.
 - The Status column in each [track document](../README.md#document-map) (`Not started` /
-  `In progress` / `Done`) — the authoritative phase state.
+  `In progress` / `Done`): the authoritative phase state.
 
 If no `Ready` card matches a phase that needs advancement, a new card can be written (using the
 [template](task-card-template.md)) by decomposing that phase into a small, high-leverage task.
@@ -89,7 +89,7 @@ output where the card specifies.
   fields, `nameof` over string literals.
 - Never edit generated files. Anything under `obj/`, `bin/`, or marked generated is off-limits.
 - Don't invent design. If a card requires a design decision the roadmap hasn't made, stop and
-  flag it for a high-effort model / the [open-questions log](../open-questions.md) — don't guess.
+  flag it for a high-effort model / the [open-questions log](../open-questions.md). Don't guess.
 - ReplaySketch is the primary test/validation tool. Prefer it (and the
   [P0 command harness](../track-p-playable-baseline.md)) over inventing one-off harnesses.
 
@@ -116,12 +116,12 @@ starts to avoid duplicate in-flight work.
 
 - When a roadmap phase is ready to be chipped at, ensure the phase's deep-dive `Architecture
   Diagrams` section contains a class diagram and at least one sequence diagram grounded in the
-  actual types and flows — replace any placeholder stubs before writing the first card. This is
+  actual types and flows. Replace any placeholder stubs before writing the first card. This is
   the gate; cards written without it lack the structural reference agents need to stay in scope.
-- Decompose the phase into cards here (don't wait for a full deep dive — small
+- Decompose the phase into cards here (don't wait for a full deep dive: small
   investigation/prep cards are valuable early, but the diagrams should still precede executable
   cards).
-- Keep each card small enough for a low-effort model — if a card needs deep reasoning, split it
+- Keep each card small enough for a low-effort model. If a card needs deep reasoning, split it
   or escalate it to a roadmap deep dive instead.
 - Keep card Status and the roadmap phase Status in sync.
-- Cards reference the roadmap for why; never duplicate roadmap rationale here — link to it.
+- Cards reference the roadmap for why; never duplicate roadmap rationale here: link to it.

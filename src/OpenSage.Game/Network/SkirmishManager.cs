@@ -43,7 +43,13 @@ public abstract class SkirmishManager
 
         if (Settings.Status == SkirmishGameStatus.ReadyToStart)
         {
-            Game.Scene2D.WndWindowManager.PopWindow();
+            // In the UI flow a lobby window is always open and gets popped here.
+            // Headless boots (e.g. LocalSkirmishManager driven without a menu)
+            // have no window on the stack, so guard against that.
+            if (Game.Scene2D.WndWindowManager.OpenWindowCount > 0)
+            {
+                Game.Scene2D.WndWindowManager.PopWindow();
+            }
             StartGame();
         }
     }

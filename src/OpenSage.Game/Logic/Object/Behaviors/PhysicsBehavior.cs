@@ -851,8 +851,8 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     public void SetBounceSound(AudioEvent bounceSound)
     {
-        // TODO(Port): Implement this.
-        throw new NotImplementedException();
+        // TODO(Port): Implement this. Sound playback for bounces isn't wired up yet
+        // (see the commented-out _bounceSound field above), so there's nothing to store.
     }
 
     public void SetAngles(float yaw, float pitch, float roll)
@@ -869,14 +869,9 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     private void DoBounceSound(in Vector3 prevPos)
     {
-        // TODO(Port): Implement this.
-        //if (_bounceSound == null)
-        //{
-        //    return;
-        //}
-
-        // TODO(Port): Implement this.
-        throw new NotImplementedException();
+        // TODO(Port): Implement bounce-sound playback once _bounceSound is wired up.
+        // No sound is configured yet, so this is a no-op rather than an error condition —
+        // landing after being airborne is a routine occurrence and must not throw.
     }
 
     private UpdateSleepTime CalculateSleepTime()

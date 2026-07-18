@@ -11,8 +11,14 @@ namespace OpenSage.Tools.TestHarness;
 public sealed class TestHarnessConfig
 {
     /// <summary>
+    /// Built-in scenario profile to run when <see cref="ScenarioPath"/> is null.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public BuiltInScenario Scenario { get; set; } = BuiltInScenario.AlpineAssaultUSAvGLAFullBuild;
+
+    /// <summary>
     /// Path to a scenario JSON profile.
-    /// Null uses the built-in Alpine Assault USA vs GLA scenario.
+    /// Null uses the selected built-in <see cref="Scenario"/>.
     /// </summary>
     public string? ScenarioPath { get; set; } = null;
 
@@ -46,6 +52,13 @@ public sealed class TestHarnessConfig
     public bool Headless { get; set; } = false;
 
     /// <summary>
+    /// In headless mode, capture a frame after every completed replay action and write it
+    /// as a PNG under <see cref="FrameCaptureService.CaptureDirectory"/> for agent inspection.
+    /// Disabled by default to avoid accumulating capture files on routine headless runs.
+    /// </summary>
+    public bool CaptureFrames { get; set; } = false;
+
+    /// <summary>
     /// Override the game installation path instead of auto-detecting from the registry
     /// or standard environment variables.
     /// </summary>
@@ -55,15 +68,7 @@ public sealed class TestHarnessConfig
     /// Multiplier applied to the game's default <c>MaxCameraHeight</c> INI value.
     /// 1.0 = game default; 2.0 (default) = double the zoom-out distance.
     /// </summary>
-    public float MaxCameraZoomMultiplier { get; set; } = 2.0f;
-
-    /// <summary>
-    /// Maximum number of logic frames to run before forcibly exiting.
-    /// Prevents the replay from running forever if an expected action never completes.
-    /// Generals logic runs at 30 fps, so 9000 frames ≈ 5 game-minutes.
-    /// Set to 0 to disable the limit (not recommended for CI).
-    /// </summary>
-    public int MaxReplayFrames { get; set; } = 9000;
+    public float MaxCameraZoomMultiplier { get; set; } = 5.0f;
 
     /// <summary>
     /// Camera control scheme to use in windowed mode.

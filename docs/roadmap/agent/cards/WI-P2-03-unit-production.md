@@ -1,9 +1,9 @@
-# Task Card: `WI-P2-03` — Unit production
+# Task Card `WI-P2-03`: Unit production
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P2-03` |
-| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md) — sub-phase P2-3, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
+| Roadmap phase | [Track P · P2](../../track-p-playable-baseline.md): sub-phase P2-3, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases) and [§1.1](../../deep-dives/p2-p5-skirmish-ai.md#11-add-a-strategic-decision-loop-to-the-skirmish-ai) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,15 +16,15 @@ Add the minimum AI production planner: from existing production structures, queu
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:31-38` — production planner and budget/idempotence rules.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-263` — `OrderProcessor` and `ProductionUpdate` production path.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271` — prerequisite and tech gating.
-- `src/OpenSage.Game/Logic/Player.cs:363-427` — `Player.CanProduceObject(...)` prerequisite/science checks.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192` — purchase and unit-construction gating.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291` — producer-local production gating.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-204` — `CreateUnit` order handler and producer fallback.
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs:3-31` — AI subclass to extend from the prior cards.
-- `src/OpenSage.Game/Logic/Player.cs:130-134` and `:807-839` — owned-object counts used to measure force size.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:31-38`: production planner and budget/idempotence rules.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-263`: `OrderProcessor` and `ProductionUpdate` production path.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271`: prerequisite and tech gating.
+- `src/OpenSage.Game/Logic/Player.cs:363-427`: `Player.CanProduceObject(...)` prerequisite/science checks.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192`: purchase and unit-construction gating.
+- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291`: producer-local production gating.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-204`: `CreateUnit` order handler and producer fallback.
+- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs:3-31`: AI subclass to extend from the prior cards.
+- `src/OpenSage.Game/Logic/Player.cs:130-134` and `:807-839`: owned-object counts used to measure force size.
 
 ## Steps
 

@@ -66,10 +66,13 @@ public sealed class MissileAIUpdate : AIUpdate
                         AddTargetPoint(pointToReachBeforeTurning);
                     }
 
-                    // TODO: What to do if target doesn't exist anymore?
-                    if (GameObject.CurrentWeapon.CurrentTarget != null)
+                    // If the target died before the missile finished igniting, there's nowhere
+                    // new to aim; keep whatever target point was already queued (e.g. the
+                    // pre-turn point above) instead of dereferencing a destroyed target.
+                    var currentTarget = GameObject.CurrentWeapon.CurrentTarget;
+                    if (currentTarget != null && !currentTarget.IsDestroyed)
                     {
-                        AddTargetPoint(GameObject.CurrentWeapon.CurrentTarget.TargetPosition);
+                        AddTargetPoint(currentTarget.TargetPosition);
                     }
 
                     GameObject.Speed = ModuleData.InitialVelocity;

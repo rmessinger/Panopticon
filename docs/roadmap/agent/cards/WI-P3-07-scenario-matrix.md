@@ -1,9 +1,9 @@
-# Task Card: `WI-P3-07` — P3 scenario matrix
+# Task Card `WI-P3-07`: P3 scenario matrix
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P3-07` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md) — P3 scenario matrix, see [deep dive §6](../../deep-dives/p3-victory-defeat.md#6-scenario-matrix) |
+| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): P3 scenario matrix, see [deep dive §6](../../deep-dives/p3-victory-defeat.md#6-scenario-matrix) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -16,14 +16,14 @@ Author and enable the P3 scenario matrix that sweeps end-state type by player co
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p3-victory-defeat.md:154-180` — matrix axes, constraints, and per-cell assertions.
-- `docs/roadmap/implementation-checklist.md:229-234` — scenario-matrix AC.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151` — matrix expansion, filters, and assertion templates.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23` — runner over expanded cells.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189` — outcome assertion surface to use.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:69-98` — existing P3 matrix stubs to replace/enable.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-240` — P7 dependency on P3 end-state assertions.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70` — headless test base; matrix validation must run in CI.
+- `docs/roadmap/deep-dives/p3-victory-defeat.md:154-180`: matrix axes, constraints, and per-cell assertions.
+- `docs/roadmap/implementation-checklist.md:229-234`: scenario-matrix AC.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151`: matrix expansion, filters, and assertion templates.
+- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: runner over expanded cells.
+- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to use.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:69-98`: existing P3 matrix stubs to replace/enable.
+- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-240`: P7 dependency on P3 end-state assertions.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; matrix validation must run in CI.
 
 ## Steps
 

@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-04` — Extract `IPreferencesStore` from ReplaySketch `MainViewModel`
+# Task Card `WI-P0-04`: Extract `IPreferencesStore` from ReplaySketch `MainViewModel`
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-04` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1b, see [deep dive §3.1](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1b, see [deep dive §3.1](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -19,20 +19,20 @@ for the ReplaySketch MAUI layer.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:114-137` — the constructor,
+- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:114-137`: the constructor,
   which calls `Preferences.Default.Get("cnc_generals_path", string.Empty)` (line ~131).
-- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:220-225` — `LoadMapFromFolder`,
+- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:220-225`: `LoadMapFromFolder`,
   which calls `Preferences.Default.Set("cnc_generals_path", folderPath)` (line ~223) before the
   map load is attempted (the unconditional-save behaviour under test).
-- `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md` — the MAUI seam table (validation context).
-- `src/OpenSage.Tools.ReplaySketch.Tests/GeneralsInstallationServiceTests.cs` — an existing test in
+- `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: the MAUI seam table (validation context).
+- `src/OpenSage.Tools.ReplaySketch.Tests/GeneralsInstallationServiceTests.cs`: an existing test in
   the target test project to mirror for style.
 
 ## Steps
 
 1. Add an `IPreferencesStore` interface (`string Get(string key, string defaultValue)` and
    `void Set(string key, string value)`). Place it where it is reachable from both the MAUI app
-   and the non-MAUI test project — prefer `OpenSage.Tools.ReplaySketch.Core` (so
+   and the non-MAUI test project: prefer `OpenSage.Tools.ReplaySketch.Core` (so
    `OpenSage.Tools.ReplaySketch.Tests` can reference it without a MAUI dependency).
 2. Add a `MemoryPreferencesStore` (dictionary-backed) in `.Core` for tests, and a
    `MauiPreferencesStore` adapter in `.Maui` that forwards to `Preferences.Default`.
@@ -45,10 +45,10 @@ for the ReplaySketch MAUI layer.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/` — new `IPreferencesStore` + `MemoryPreferencesStore`.
-- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs` — constructor injection.
-- `src/OpenSage.Tools.ReplaySketch.Maui/` — new `MauiPreferencesStore` adapter.
-- `src/OpenSage.Tools.ReplaySketch.Tests/` — new unit test.
+- `src/OpenSage.Tools.ReplaySketch.Core/`: new `IPreferencesStore` + `MemoryPreferencesStore`.
+- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`: constructor injection.
+- `src/OpenSage.Tools.ReplaySketch.Maui/`: new `MauiPreferencesStore` adapter.
+- `src/OpenSage.Tools.ReplaySketch.Tests/`: new unit test.
 
 ## Acceptance criteria
 
@@ -56,7 +56,7 @@ for the ReplaySketch MAUI layer.
       `Preferences.Default` adapter; no direct `Preferences.Default` call remains in `MainViewModel`.
 - [x] A unit test in `OpenSage.Tools.ReplaySketch.Tests` exercises `MemoryPreferencesStore` headlessly.
       The `LoadMapFromFolder` behavioral test is blocked by TFM mismatch (tests project is `net10.0`;
-      MAUI project is `net10.0-maccatalyst`) — tracked as a follow-up in P0-1c.
+      MAUI project is `net10.0-maccatalyst`): tracked as a follow-up in P0-1c.
 - [x] The test runs headlessly (no MAUI runtime) under `dotnet test src/OpenSage.Tools.ReplaySketch.Tests`.
 - [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
@@ -71,7 +71,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not abstract `MainThread` or `Process.Start` here — that is the follow-up card P0-1c.
+- Do not abstract `MainThread` or `Process.Start` here: that is the follow-up card P0-1c.
 - Do not change the command model, exporter, or any rendering/controller logic.
 - Keep `MainViewModel`'s ordering and behaviour identical apart from the injected store.
 - If the change pulls in unrelated files, mark `Blocked` and report.

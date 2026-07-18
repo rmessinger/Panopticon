@@ -1,6 +1,6 @@
 # Deep Dive: Larger Maps (via WorldBuilder)
 
-> Expands phase B4a of [Track B — Scale](../track-b-scale.md). Part of the
+> Expands phase B4a of [Track B: Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
 > Audience: human overview of the larger-maps design.
@@ -9,7 +9,7 @@ Purpose: scale WorldBuilder and map loading toward very large maps and large pop
 design treats terrain streaming and large-object authoring as the core requirements.
 
 > B4a assumes that WorldBuilder's basic author → save → load → play round-trip already
-> works at normal map sizes. That baseline is established in [A5-6](visualization.md), an
+> works at normal map sizes. That baseline is established in [A5-6](a5-visualization.md), an
 > early Track A sub-phase. B4a scales beyond those limits; it is not the first audit of basic
 > WorldBuilder functionality.
 
@@ -18,7 +18,7 @@ design treats terrain streaming and large-object authoring as the core requireme
 > sim-scale authoring path that can place and edit thousands to millions of objects, not just a large
 > heightmap. Terrain scaling (B4a-1…6) and large-population scenario authoring (B4a-7) are the two
 > halves of that. B4a-7 is the WorldBuilder counterpart to ReplaySketch's
-> [A5-5](visualization.md) authoring-at-scale work.
+> [A5-5](a5-visualization.md) authoring-at-scale work.
 
 ## Decisions
 
@@ -72,7 +72,7 @@ design treats terrain streaming and large-object authoring as the core requireme
 | B4a-4. Terrain streaming & LOD | Build terrain patches on demand around the camera, free distant patches, and add terrain LOD so render cost scales sub-linearly with map area (ties into B5). | Not started |
 | B4a-5. Chunked terrain storage & extended map format | Core requirement. Tile the heightmap/blend data into chunks so the whole grid need not be resident, and extend or replace the `.map` format to store chunked, arbitrarily large terrain. This resolves C1/C5/C6 and feeds B6 spatial sharding. | Not started |
 | B4a-6. Round-trip & play validation | Validate large maps author → save → reload in WorldBuilder → play in the engine; confirm partition/pathfinding/rendering behave at increasing sizes. | Not started |
-| B4a-7. Large-population scenario authoring | Scale WorldBuilder beyond terrain to placing and editing large object populations: bulk/procedural placement of units and structures, region-based multi-object edit/undo that extends B4a-2's dirty-region model from cells to objects, scalable selection/iteration, and instanced editor rendering that reuses [B5](../track-b-scale.md). This is the authoring counterpart to the engine-side [A5 scenario setup](visualization.md) and ReplaySketch's [A5-5](visualization.md). | Not started |
+| B4a-7. Large-population scenario authoring | Scale WorldBuilder beyond terrain to placing and editing large object populations: bulk/procedural placement of units and structures, region-based multi-object edit/undo that extends B4a-2's dirty-region model from cells to objects, scalable selection/iteration, and instanced editor rendering that reuses [B5](../track-b-scale.md). This is the authoring counterpart to the engine-side [A5 scenario setup](a5-visualization.md) and ReplaySketch's [A5-5](a5-visualization.md). | Not started |
 
 ## Sequencing notes
 
@@ -84,7 +84,7 @@ design treats terrain streaming and large-object authoring as the core requireme
 - B4a-5 is required by the no-cap decision and is the natural bridge to B6 distributed simulation
   through spatial sharding. Coordinate the chunk/region concept with B6-1.
 - B4a-7 reuses B4a-2's dirty-region edit/undo model, lifted from cells to objects, and B5's
-  instanced rendering. It pairs with the engine-side [A5-5](visualization.md) so the author and replay
+  instanced rendering. It pairs with the engine-side [A5-5](a5-visualization.md) so the author and replay
   tools scale together. It can proceed in parallel with terrain streaming once B4a-2 exists.
 
 ## Architecture Diagrams

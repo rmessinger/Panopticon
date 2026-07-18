@@ -1,9 +1,9 @@
-# Task Card: `WI-P1-03` — Unit test for reciprocal player relationships
+# Task Card `WI-P1-03`: Unit test for reciprocal player relationships
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-03` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/p1-skirmish-setup.md)) |
+| Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-1, see [deep dive §3.1](../../deep-dives/p1-skirmish-setup.md)) |
 | Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
@@ -19,13 +19,13 @@ invariant that P2/P3/P6 rely on.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-141` — the `MockedGameTest` base and its `Generals` /
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-141`: the `MockedGameTest` base and its `Generals` /
   `ZeroHour` `TestGame` (an `IGame` with a working `AssetStore`). Use it to satisfy the `Player` ctor.
-- `src/OpenSage.Game.Tests/Logic/Object/GameObjectTests.cs:1-23` — a minimal example of a
+- `src/OpenSage.Game.Tests/Logic/Object/GameObjectTests.cs:1-23`: a minimal example of a
   `MockedGameTest` subclass + xUnit `[Fact]`/`Assert` to replicate the shape of.
-- `src/OpenSage.Game/Logic/Player.cs:141-151` — the `Player(uint id, PlayerTemplate? template, in ColorRgb color, IGame game)`
+- `src/OpenSage.Game/Logic/Player.cs:141-151`: the `Player(uint id, PlayerTemplate? template, in ColorRgb color, IGame game)`
   ctor (initializes `Allies`/`Enemies`).
-- `src/OpenSage.Game/Logic/Player.cs:124-128,779-786` — `Allies`/`Enemies` sets and the
+- `src/OpenSage.Game/Logic/Player.cs:124-128,779-786`: `Allies`/`Enemies` sets and the
   `AddAlly`/`AddEnemy` methods under test.
 
 ## Steps
@@ -34,10 +34,10 @@ invariant that P2/P3/P6 rely on.
    `OpenSage.Tests.Logic`, class `PlayerRelationshipTests : MockedGameTest`.
 2. Add a helper that builds a `Player` via the ctor using the base's `Generals` game, e.g.
    `new Player(id, null, new ColorRgb(0, 0, 0), Generals)`.
-3. Test 1 — `AddEnemy` is reciprocal: create players `a` and `b`; call `a.AddEnemy(b)`; assert
+3. Test 1: `AddEnemy` is reciprocal: create players `a` and `b`; call `a.AddEnemy(b)`; assert
    `a.Enemies.Contains(b)` and `b.Enemies.Contains(a)`.
-4. Test 2 — `AddAlly` is reciprocal: same shape, assert both `Allies` sets contain the other.
-5. Test 3 — idempotent: call `a.AddEnemy(b)` twice; assert each `Enemies` set has exactly one
+4. Test 2: `AddAlly` is reciprocal: same shape, assert both `Allies` sets contain the other.
+5. Test 3: idempotent: call `a.AddEnemy(b)` twice; assert each `Enemies` set has exactly one
    entry (`Assert.Single`) and nothing was thrown.
 6. Keep it pure-unit: no map load, no `Scene3D`, no `[GameFact]`. These run in CI (no game files).
 
@@ -63,7 +63,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not test `OnNewGame`/team-derived relationships here (it needs map players + setup) — this
+- Do not test `OnNewGame`/team-derived relationships here (it needs map players + setup): this
   card covers the `AddAlly`/`AddEnemy` primitives only. A broader `OnNewGame` test can be a later card.
 - Do not modify production code; if a test can't pass because `WI-P1-02` isn't done/correct, mark
   `Blocked` and report (don't "fix" production from a test card).

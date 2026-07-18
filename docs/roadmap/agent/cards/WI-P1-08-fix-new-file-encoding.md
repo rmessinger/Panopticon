@@ -1,9 +1,9 @@
-# Task Card: `WI-P1-08` — Restore UTF-8 BOM on new P1 files (format gate)
+# Task Card `WI-P1-08`: Restore UTF-8 BOM on new P1 files (format gate)
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P1-08` |
-| Roadmap phase | [Track P · P1 — Skirmish setup & player relationships](../../track-p-playable-baseline.md) |
+| Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -20,11 +20,11 @@ criteria of every other P1 card.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Network/SkirmishSlot.cs:1` — a correctly-encoded sibling file; its first
+- `src/OpenSage.Game/Network/SkirmishSlot.cs:1`: a correctly-encoded sibling file; its first
   three bytes are `EF BB BF` (UTF-8 BOM). Use it as the reference encoding.
-- `.editorconfig` (repo root) — the `charset = utf-8-bom` rule that the format gate enforces.
+- `.editorconfig` (repo root): the `charset = utf-8-bom` rule that the format gate enforces.
 
-The offending files (all start with bytes `75 73 69` = `usi…`, i.e. **no BOM**):
+The offending files (all start with bytes `75 73 69` = `usi…`, i.e. no BOM):
 
 - `src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`
 - `src/OpenSage.Game.Tests/Logic/PlayerManagerTests.cs`
@@ -40,7 +40,7 @@ The offending files (all start with bytes `75 73 69` = `usi…`, i.e. **no BOM**
    correct `utf-8-bom` encoding). Alternatively, prepend the BOM bytes `EF BB BF` to each file.
 3. Re-run `dotnet format src --verify-no-changes` and confirm it now reports no `CHARSET`
    errors.
-4. Do **not** change any code content — encoding only. Confirm `git diff --stat` shows only the
+4. Do not change any code content: encoding only. Confirm `git diff --stat` shows only the
    five files and that their textual content is otherwise unchanged.
 
 ## Files likely to change
@@ -56,7 +56,7 @@ The offending files (all start with bytes `75 73 69` = `usi…`, i.e. **no BOM**
 - [ ] All five files begin with the UTF-8 BOM (`EF BB BF`).
 - [ ] `dotnet format src --verify-no-changes` reports no `CHARSET` errors.
 - [ ] `dotnet build src` and `dotnet test src --filter Category!=Interactive` still pass.
-- [ ] No textual code changes — encoding only.
+- [ ] No textual code changes: encoding only.
 
 ## Validation commands
 
@@ -69,7 +69,7 @@ dotnet test src --filter Category!=Interactive
 ## Out of scope / guardrails
 
 - Do not touch any other files flagged by the formatter for unrelated rules (e.g. `IDE1006`
-  naming warnings in `ReplaySketchLog.cs` / `MapMetadataService.cs` — those predate P1).
+  naming warnings in `ReplaySketchLog.cs` / `MapMetadataService.cs`: those predate P1).
 - Encoding only; do not reformat or edit code.
 
 ## On completion
@@ -80,6 +80,6 @@ dotnet test src --filter Category!=Interactive
 ## Result
 
 Fixed via `dotnet format src` (rewrote the five files with the UTF-8 BOM, no other content
-changes — confirmed via `git diff`, only the BOM byte was added). `dotnet format src
+changes: confirmed via `git diff`, only the BOM byte was added). `dotnet format src
 --verify-no-changes` no longer reports any `CHARSET` errors. `dotnet build src` and
 `dotnet test src --filter Category!=Interactive` pass.

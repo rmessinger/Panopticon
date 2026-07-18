@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-07` — Assertion layer: data model and evaluator
+# Task Card `WI-P0-07`: Assertion layer: data model and evaluator
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-07` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-4, see [deep dive §3.4](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -15,24 +15,24 @@
 Add a declarative assertion layer to the ReplaySketch harness: `ScenarioAssertion` subtypes
 serializable to/from JSON, an `AssertionEvaluator` that hooks into a running `Game` and produces
 a structured `AssertionReport` (pass/fail per assertion with frame + actual value on failure).
-This is the data model and evaluation logic only — the CLI entry point is WI-P0-08.
+This is the data model and evaluation logic only: the CLI entry point is WI-P0-08.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4` — the three assertion kinds
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4`: the three assertion kinds
   (outcome, state, invariant) and the JSON predicate vocabulary.
-- `src/OpenSage.Game/Game.cs:876-959` — `Game.Updating` event (per-tick hook for invariant assertions).
-- `src/OpenSage.Game/Logic/Player.cs` and `src/OpenSage.Game/Logic/BankAccount.cs` — state readable
+- `src/OpenSage.Game/Game.cs:876-959`: `Game.Updating` event (per-tick hook for invariant assertions).
+- `src/OpenSage.Game/Logic/Player.cs` and `src/OpenSage.Game/Logic/BankAccount.cs`: state readable
   for assertions (money, unit count, building count). Find property names by grepping for `public.*Money`
   and `public.*int` in those files.
-- `src/OpenSage.Tools.ReplaySketch.Core/` — this is where the new types live (already has `OpenSage.Game`
+- `src/OpenSage.Tools.ReplaySketch.Core/`: this is where the new types live (already has `OpenSage.Game`
   as a transitive dependency via `OpenSage.Game` project reference).
 
 ## Steps
 
 1. In `OpenSage.Tools.ReplaySketch.Core/Assertions/`, create:
 
-   `ScenarioAssertion.cs` — abstract base class with `string Id` property and abstract
+   `ScenarioAssertion.cs`: abstract base class with `string Id` property and abstract
    `AssertionResult Evaluate(Game game, uint frame)` method.
 
    Three concrete subtypes in the same file (or separate files in the same folder):
@@ -40,7 +40,7 @@ This is the data model and evaluation logic only — the CLI entry point is WI-P
    - `StateAssertion`: `string Path`, `string Op` (`"=="`,`"!="`,`">="`,`"<="`,`">"`,`"<"`),
      `double Value`. Evaluated once at end-of-run. `Path` vocabulary (implement as a switch):
      `player[N].money`, `player[N].unitCount`, `player[N].buildingCount`, `outcome.status`
-     (maps to `int` via `(int)game.Scene.LocalPlayer...` — see grounding step below),
+     (maps to `int` via `(int)game.Scene.LocalPlayer...`: see grounding step below),
      `outcome.reason`. Resolve `player[N]` by indexing `game.Scene.Players` (0-based).
    - `InvariantAssertion`: same fields as `StateAssertion` but checked every tick during the run.
      A failure records the failing frame.
@@ -85,8 +85,8 @@ This is the data model and evaluation logic only — the CLI entry point is WI-P
 - `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionResult.cs` (new)
 - `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs` (new)
 - `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` — add `Assertions` property.
-- `src/OpenSage.Tools.ReplaySketch.Tests/` — new unit tests.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: add `Assertions` property.
+- `src/OpenSage.Tools.ReplaySketch.Tests/`: new unit tests.
 
 ## Acceptance criteria
 
@@ -112,12 +112,12 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not implement the CLI entry point (that is WI-P0-08).
-- Do not implement real `GameOutcome` yet — `OutcomeAssertion` evaluates against a stub; real
+- Do not implement real `GameOutcome` yet: `OutcomeAssertion` evaluates against a stub; real
   support lands when P3 (`GameOutcome`) is implemented.
 - The code-defined (C#) predicate escape hatch is out of scope for this card; add it later
   as a follow-up once the JSON path is established.
 - If reading game state from `Game.Scene.Players` requires a running game, document the limitation
-  in the test rather than fighting it — the evaluator's logic test matters more than full integration.
+  in the test rather than fighting it: the evaluator's logic test matters more than full integration.
 
 ## On completion
 

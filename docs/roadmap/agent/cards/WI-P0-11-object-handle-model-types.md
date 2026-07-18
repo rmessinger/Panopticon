@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-11` — Object handle and query selector model types
+# Task Card `WI-P0-11`: Object handle and query selector model types
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-11` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) (sub-phase P0-1, see [deep dive §3.2](../../deep-dives/p0-playable-baseline-harness.md)) |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -23,15 +23,15 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` — the five existing
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: the five existing
   `CommandArgument` subtypes and their `AppendTo(Order, PositionContext, Random)` signature.
   `ObjectIdCommandArgument` (line ~52) is the type the resolver will return.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:26-38` — `ToOrder(...)`:
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:26-38`: `ToOrder(...)`:
   iterates `Arguments` calling `arg.AppendTo(...)`.
-- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.2` — the handle/selector design
+- `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.2`: the handle/selector design
   decision (implicit auto-handles keyed to the producing command; query selectors for
   world/enemy objects).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs` — test style reference.
+- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference.
 
 ## Steps
 
@@ -63,7 +63,7 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
 
 3. In `CommandArgument.cs`, add two new concrete subtypes after `PositionCommandArgument`:
 
-   `HandleCommandArgument` — references an object produced by an earlier command:
+   `HandleCommandArgument`: references an object produced by an earlier command:
    ```csharp
    public sealed class HandleCommandArgument : CommandArgument
    {
@@ -85,7 +85,7 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
    }
    ```
 
-   `QuerySelectorCommandArgument` — selects an object at runtime by filter:
+   `QuerySelectorCommandArgument`: selects an object at runtime by filter:
    ```csharp
    public sealed class QuerySelectorCommandArgument : CommandArgument
    {
@@ -142,8 +142,8 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` — new subtypes + `Resolve` method.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs` — `Resolve(IObjectReferenceResolver)`.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: new subtypes + `Resolve` method.
+- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs`: `Resolve(IObjectReferenceResolver)`.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs` (new).
 - `src/OpenSage.Tools.ReplaySketch.Tests/ObjectReferenceModelTests.cs` (new).
 
@@ -171,8 +171,8 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not wire this into the `HarnessRunner` run loop — that is WI-P0-12.
-- Do not implement a production `IObjectReferenceResolver` — only the interface and model
+- Do not wire this into the `HarnessRunner` run loop: that is WI-P0-12.
+- Do not implement a production `IObjectReferenceResolver`: only the interface and model
   types belong here.
 - Do not change `PositionContext`, `ActionEntry`, `ReplayExporter`, or existing argument types.
 - `ObjectId` lives in `OpenSage.Logic.Object`; import only what is needed. Do not change the

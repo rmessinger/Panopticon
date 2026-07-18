@@ -113,6 +113,11 @@ public sealed class OrderProcessor
                         var objectDefinition = _game.AssetStore.ObjectDefinitions.GetByInstanceId(objectDefinitionId);
                         var position = order.Arguments[1].Value.Position;
                         var angle = order.Arguments[2].Value.Float;
+                        if (objectDefinition == null)
+                        {
+                            Logger.Error($"BuildObject order references unknown object definition id {objectDefinitionId}");
+                            continue;
+                        }
                         player.BankAccount.Withdraw((uint)objectDefinition.BuildCost);
 
                         var gameObject = _game.Scene3D.GameObjects.CreateObject(objectDefinition, player);
@@ -194,6 +199,11 @@ public sealed class OrderProcessor
                     {
                         var objectDefinitionId = (uint)order.Arguments[0].Value.Integer;
                         var objectDefinition = _game.AssetStore.ObjectDefinitions.GetByInstanceId(objectDefinitionId);
+                        if (objectDefinition == null)
+                        {
+                            Logger.Error($"CreateUnit order references unknown object definition id {objectDefinitionId}");
+                            continue;
+                        }
                         player.BankAccount.Withdraw((uint)objectDefinition.BuildCost);
 
                         // Find a producer among the currently selected units that has a UnitBuild
@@ -302,11 +312,18 @@ public sealed class OrderProcessor
                 case OrderType.ForceAttackObject:
                     {
                         var objectId = order.Arguments[0].Value.ObjectId;
+                        var targetObject = _game.Scene3D.GameObjects.GetObjectById(objectId);
 
                         foreach (var unit in player.SelectedUnits)
                         {
                             if (unit.CanAttack)
                             {
+                                // Move into weapon range of the target, then the weapon will
+                                // stop the unit and fire once AIUpdate reports a valid target.
+                                if (targetObject != null)
+                                {
+                                    unit.AIUpdate?.SetTargetPoint(targetObject.Translation);
+                                }
                                 unit.CurrentWeapon?.SetTarget(new WeaponTarget(_game.Scene3D.GameObjects, objectId));
                             }
                         }

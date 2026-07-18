@@ -1,9 +1,9 @@
-# Task Card: `WI-P5-01` — Player + AI building placement
+# Task Card `WI-P5-01`: Player + AI building placement
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P5-01` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md) — sub-phase P5-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
+| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md): sub-phase P5-1, see [deep dive §4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), [§1.4](../../deep-dives/p2-p5-skirmish-ai.md#14-p5-construction-and-production-completeness), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -16,19 +16,19 @@ Verify and close the shared player/AI building-placement path: `OrderProcessor.B
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:257-260` — checklist item and exact AC to satisfy.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69` — P5 gap-closing scope.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93` — P5-1/P5-2 sub-phase mapping.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-258` — P5 action path through orders and builder AI.
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:272-274` — builder placement mechanism.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121` — `BuildObject` handler, debit, object creation, and builder target assignment.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:123-130` — cancel/refund path to preserve.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/IBuilderAIUpdate.cs:12-18` — builder interface contract.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-46` — dozer build-target wiring.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:48-54` — worker build-target wiring.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:991-1082` — construction lifecycle and completion event.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1298-1316` — builder cancellation when a construction target dies.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34` — headless test base.
+- `docs/roadmap/implementation-checklist.md:257-260`: checklist item and exact AC to satisfy.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 gap-closing scope.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-1/P5-2 sub-phase mapping.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-258`: P5 action path through orders and builder AI.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:272-274`: builder placement mechanism.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121`: `BuildObject` handler, debit, object creation, and builder target assignment.
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:123-130`: cancel/refund path to preserve.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/IBuilderAIUpdate.cs:12-18`: builder interface contract.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-46`: dozer build-target wiring.
+- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:48-54`: worker build-target wiring.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:991-1082`: construction lifecycle and completion event.
+- `src/OpenSage.Game/Logic/Object/GameObject.cs:1298-1316`: builder cancellation when a construction target dies.
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 

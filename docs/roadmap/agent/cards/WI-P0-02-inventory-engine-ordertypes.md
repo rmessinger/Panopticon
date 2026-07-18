@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-02` — Inventory the engine's `OrderType` vocabulary
+# Task Card `WI-P0-02`: Inventory the engine's `OrderType` vocabulary
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-02` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
 | Status | `Done` (superseded by deep-dive audit) |
 | Type | `investigation` |
 | Effort | `S` |
@@ -12,7 +12,7 @@
 
 > Superseded. The engine `OrderType`/argument inventory this card requested is captured in the
 > [P0 deep dive](../../deep-dives/p0-playable-baseline-harness.md) §2.3 (the `Order`/`OrderArgument*`
-> model, the ~110-value enum, and the `OrderProcessor.Process` handled subset — the authoritative
+> model, the ~110-value enum, and the `OrderProcessor.Process` handled subset: the authoritative
 > list of what a command can actually do). Do not redo this survey.
 
 ## Goal
@@ -23,10 +23,10 @@ list. Read-only; no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs` — the full enum (note the inline comments describing
+- `src/OpenSage.Game/Logic/Orders/OrderType.cs`: the full enum (note the inline comments describing
   each order's arguments).
-- `src/OpenSage.Game/Logic/Orders/Order.cs` — the `Order` object and how arguments are attached.
-- `src/OpenSage.Game/Logic/Orders/OrderArgumentType.cs` and `OrderArgumentValue.cs` — the argument
+- `src/OpenSage.Game/Logic/Orders/Order.cs`: the `Order` object and how arguments are attached.
+- `src/OpenSage.Game/Logic/Orders/OrderArgumentType.cs` and `OrderArgumentValue.cs`: the argument
   type system.
 
 ## Steps
@@ -54,11 +54,11 @@ list. Read-only; no code changes.
 
 ## Validation commands
 
-Read-only — no build/test. Verify every `OrderType` value appears in exactly one bucket in Notes.
+Read-only. No build/test. Verify every `OrderType` value appears in exactly one bucket in Notes.
 
 ## Out of scope / guardrails
 
-- Do not design the ReplaySketch model or change code — this is a survey that feeds the design.
+- Do not design the ReplaySketch model or change code: this is a survey that feeds the design.
 
 ## On completion
 

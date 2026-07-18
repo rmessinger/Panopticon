@@ -206,7 +206,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Phase | Progress | Items |
 |---|---|---|
-| P0 - ReplaySketch harness | `███░░░░░░░` | 4 / 14 |
+| P0 - ReplaySketch harness | `███░░░░░░░` | 4 / 15 |
 | P1 - Skirmish setup | `██████░░░░` | 5 / 8 |
 | P2 - Skirmish AI | `██████████` | 7 / 7 |
 | P3 - Victory & defeat | `░░░░░░░░░░` | 0 / 9 |
@@ -215,7 +215,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | P6 - Combat & command | `░░░░░░░░░░` | 0 / 5 |
 | P6b - Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
 | P7 - End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
-| Track P total | `██░░░░░░░░` | 16 / 67 |
+| Track P total | `██░░░░░░░░` | 16 / 68 |
 
 ### Tracks A / B / C (gated on Track P)
 
