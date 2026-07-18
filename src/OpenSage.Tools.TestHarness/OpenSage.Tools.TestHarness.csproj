@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
+    <ApplicationManifest>Resources\app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <!-- On macOS arm64, the Veldrid.Sdl2 NuGet only ships an x86_64 dylib.

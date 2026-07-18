@@ -36,10 +36,16 @@ public static class Program
 
         var config = LoadConfig();
 
-        // --headless overrides the config file (useful for VS Code launch configs and CI).
+        // --headless and --scenario override the config file (useful for VS Code launch configs and CI).
         if (Array.Exists(args, a => a.Equals("--headless", StringComparison.OrdinalIgnoreCase)))
         {
             config.Headless = true;
+        }
+
+        var scenarioPath = GetArgValue(args, "--scenario");
+        if (!string.IsNullOrEmpty(scenarioPath))
+        {
+            config.ScenarioPath = scenarioPath;
         }
 
         Run(config);
@@ -117,7 +123,7 @@ public static class Program
 
     private static void Run(TestHarnessConfig config)
     {
-        var scenario = LoadScenario(config.ScenarioPath);
+        var scenario = LoadScenario(config.Scenario, config.ScenarioPath);
 
         var definition = GameDefinition.FromGame(config.Game);
         var effectiveGamePath = config.GamePath != null && Directory.Exists(config.GamePath)
@@ -137,6 +143,7 @@ public static class Program
 
         var map = MapMetadataService.Load(installation, scenario.MapPath);
         var outputPath = Path.Combine(Path.GetTempPath(), $"opensage_scenario_{Guid.NewGuid()}.rep");
+        var resultsPath = Path.ChangeExtension(outputPath, null) + ".results.txt";
 
         try
         {
@@ -149,16 +156,18 @@ public static class Program
                 return;
             }
 
+            using var results = new ActionResultsWriter(resultsPath, config.Scenario.ToString(), config.ScenarioPath ?? "(built-in)", config.Game.ToString());
+
             if (config.Headless)
             {
-                RunReplay(installation, config, outputPath, deferredActions);
+                RunReplay(installation, config, outputPath, deferredActions, results);
             }
             else
             {
                 Platform.Start();
                 try
                 {
-                    RunReplay(installation, config, outputPath, deferredActions);
+                    RunReplay(installation, config, outputPath, deferredActions, results);
                 }
                 finally
                 {
@@ -176,24 +185,26 @@ public static class Program
             {
                 Console.WriteLine($"Replay saved to: {outputPath}");
             }
+
+            Console.WriteLine($"Action results saved to: {resultsPath}");
         }
     }
 
     private static void RunReplay(GameInstallation installation, TestHarnessConfig config, string replayPath,
-        IReadOnlyList<DeferredAction> deferredActions)
+        IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results)
     {
         if (config.Headless)
         {
-            RunHeadless(installation, config, replayPath, deferredActions);
+            RunHeadless(installation, config, replayPath, deferredActions, results);
         }
         else
         {
-            RunWindowed(installation, config, replayPath, deferredActions);
+            RunWindowed(installation, config, replayPath, deferredActions, results);
         }
     }
 
     private static void RunWindowed(GameInstallation installation, TestHarnessConfig config, string replayPath,
-        IReadOnlyList<DeferredAction> deferredActions)
+        IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results)
     {
         using var window = new GameWindow("OpenSAGE - TestHarness", 100, 100, 1024, 768, config.Fullscreen);
         using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, CameraControlScheme = config.CameraControlScheme, MouseClickMode = config.MouseClickMode }, window);
@@ -217,11 +228,10 @@ public static class Program
             var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
             Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
         };
+        using var recorder = new EngineActionRecorder(game, results);
         var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
 
         Console.WriteLine("Running replay — close the window or wait for it to finish.");
-
-        var maxLogicFrames = config.MaxReplayFrames > 0 ? (uint)config.MaxReplayFrames : uint.MaxValue;
 
         while (game.IsRunning)
         {
@@ -240,19 +250,17 @@ public static class Program
             window.MessageQueue.Clear();
             game.GraphicsDevice.SwapBuffers(window.Swapchain);
 
-            var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
-            if (logicFrame >= maxLogicFrames)
-            {
-                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxLogicFrames} logic frames). Forcing exit.");
-                break;
-            }
+            recorder.PollPendingMoves();
+            recorder.PollHealthChanges();
+            recorder.PollSupplyCycles();
+            results.MaybeFlush();
         }
 
         Console.WriteLine("Done.");
     }
 
     private static void RunHeadless(GameInstallation installation, TestHarnessConfig config, string replayPath,
-        IReadOnlyList<DeferredAction> deferredActions)
+        IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results)
     {
         using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, CameraControlScheme = config.CameraControlScheme, MouseClickMode = config.MouseClickMode }, null);
 
@@ -280,13 +288,16 @@ public static class Program
             var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
             Console.WriteLine($"  [completed]  {e.ActionType,-20} player: {e.Player?.Name ?? "?"} frame: {frame}");
 
-            // Schedule a capture after every completed action so agents can verify
-            // the visual state immediately after each game event.
-            // The [CAPTURE] log line is emitted after the next render (FlushPending below).
-            capture.ScheduleCapture(
-                $"Action '{e.ActionType}' completed for player '{e.Player?.Name ?? "unknown"}'. " +
-                "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
-                "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
+            if (config.CaptureFrames)
+            {
+                // Schedule a capture after every completed action so agents can verify
+                // the visual state immediately after each game event.
+                // The [CAPTURE] log line is emitted after the next render (FlushPending below).
+                capture.ScheduleCapture(
+                    $"Action '{e.ActionType}' completed for player '{e.Player?.Name ?? "unknown"}'. " +
+                    "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
+                    "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
+            }
 
             if (e.ActionType == ActionType.EnemyBaseDestroyed && runoutEndLogicFrame == uint.MaxValue)
             {
@@ -295,12 +306,16 @@ public static class Program
         };
 
         var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);
+        using var recorder = new EngineActionRecorder(game, results);
 
-        Console.WriteLine($"Running headless replay. Captures written to: {FrameCaptureService.CaptureDirectory}");
-        Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
+        Console.WriteLine("Running headless replay.");
+        if (config.CaptureFrames)
+        {
+            Console.WriteLine($"Captures written to: {FrameCaptureService.CaptureDirectory}");
+            Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
+        }
 
         var frameRect = new OpenSage.Mathematics.Rectangle(0, 0, 1024, 768);
-        var maxLogicFrames = config.MaxReplayFrames > 0 ? (uint)config.MaxReplayFrames : uint.MaxValue;
 
         while (game.IsRunning)
         {
@@ -308,21 +323,23 @@ public static class Program
             game.Update(Array.Empty<OpenSage.Input.InputMessage>());
             game.Panel.EnsureFrame(frameRect);
             game.Render();
-            capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
+            if (config.CaptureFrames)
+            {
+                capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
+            }
 
-            var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+            recorder.PollPendingMoves();
+            recorder.PollHealthChanges();
+            recorder.PollSupplyCycles();
+            results.MaybeFlush();
 
             if (runoutEndLogicFrame != uint.MaxValue)
             {
+                var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
                 if (logicFrame >= runoutEndLogicFrame)
                 {
                     game.Exit();
                 }
-            }
-            else if (logicFrame >= maxLogicFrames)
-            {
-                Console.Error.WriteLine($"[timeout] Reached MaxReplayFrames ({maxLogicFrames} logic frames). Forcing exit.");
-                game.Exit();
             }
         }
 
@@ -349,7 +366,8 @@ public static class Program
             {
                 if (deferred.Phase == ActionPhase.Dispatched
                     && deferred.Trigger == e.ActionType
-                    && deferred.PlayerIndex == (int?)e.Player?.Id)
+                    && deferred.PlayerIndex == (int?)e.Player?.Id
+                    && (deferred.TriggerDefinitionName == null || deferred.TriggerDefinitionName == e.DefinitionName))
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }
@@ -362,7 +380,8 @@ public static class Program
             {
                 if (deferred.Phase == ActionPhase.Completed
                     && deferred.Trigger == e.ActionType
-                    && deferred.PlayerIndex == (int?)e.Player?.Id)
+                    && deferred.PlayerIndex == (int?)e.Player?.Id
+                    && (deferred.TriggerDefinitionName == null || deferred.TriggerDefinitionName == e.DefinitionName))
                 {
                     pending.Add(((int)deferred.ExtraFrames, deferred.Orders));
                 }
@@ -423,11 +442,16 @@ public static class Program
         game.Updating += handler;
     }
 
-    private static ReplayScenario LoadScenario(string? path)
+    private static ReplayScenario LoadScenario(BuiltInScenario builtInScenario, string? path)
     {
         if (path == null)
         {
-            return ReplayScenario.CreateAlpineAssaultUSAvGLA();
+            return builtInScenario switch
+            {
+                BuiltInScenario.AlpineAssaultUSAvGLA => ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA(),
+                BuiltInScenario.AlpineAssaultUSAvGLAFullBuild => ReplayScenarioFactory.CreateAlpineAssaultUSAvGLAFullBuild(),
+                _ => throw new ArgumentOutOfRangeException(nameof(builtInScenario), builtInScenario, "Unsupported built-in scenario."),
+            };
         }
 
         var json = File.ReadAllText(path);

@@ -122,6 +122,25 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     (marks the P0-4/P0-5 run-and-assert flow as forthcoming) and is referenced from the P0 deep dive.
   - Completion: `AGENTS.md` created with all sections; screenshot mode (P0-1a) is the sole visual
     verification method; golden-image framework removed.
+- [ ] Decouple replay-driven selection state from interactive UI selection state, so a human
+      observer in `OpenSage.Tools.TestHarness` (or a live spectator) can drag-select units without
+      the recorded replay's own `SetSelection`/`ClearSelection` orders overwriting their selection or
+      `OrderGenerator.ActiveGenerator`.
+  - AC: while replaying a `.rep` with `OpenSage.Tools.TestHarness`, a human click-and-drag over units
+    shows the selection rectangle and yields the dragged units as selected, even on frames where the
+    replay itself issues a `SetSelection`/`ClearSelection` order for the same player; a headless test
+    asserts the human's `SelectionSystem` state survives a replay-issued selection order on the same
+    frame.
+  - Note: follow-up to the "Allow box-selecting any object's stats while watching a replay" fix
+    (`SelectionSystem.MultiSelect`); see `WI-P0-18`.
+- [ ] Add an inactivity monitor to `OpenSage.Tools.TestHarness` to replace the removed fixed
+      `MaxReplayFrames` cap: force-exit only when the replay stalls (no
+      `ActionDispatched`/`ActionCompleted` progress for a configurable window), not on total run
+      length, so long scenarios (e.g. the full-build replay) aren't truncated early.
+  - AC: a stalled scenario (no further action dispatch/completion) force-exits within the configured
+    window with a distinct `[inactivity-timeout]` log message; a scenario making steady progress to
+    its natural end is not cut off early.
+  - Note: see `WI-P0-19`.
 
 ### P1: Skirmish setup & player relationships ([deep dive](deep-dives/p1-skirmish-setup.md))
 - [x] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
@@ -136,9 +155,14 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     A` (test asserts symmetry).
   - Done: `WI-P1-02`/`WI-P1-03` (commit d5acbbb7). Reciprocity + symmetry covered by
     `PlayerRelationshipTests`.
-- [ ] Start a single-player skirmish without networking (`LocalSkirmishManager` path).
+- [x] Start a single-player skirmish without networking (`LocalSkirmishManager` path).
   - AC: `LocalSkirmishManager` reaches `Started` with no network connection; a headless boot reaches
     the first logic tick.
+  - Done: `SkirmishManager.Update()` now guards its lobby `PopWindow()` against an empty window
+    stack so the path boots headlessly (no menu window); `LocalSkirmishManager` already uses an
+    `EchoConnection` (no network). Covered by `LocalSkirmishManagerBootTests` (headless boot to
+    `Started` + first logic tick, skips on CI without a game install) and the always-on
+    `LocalSkirmishManagerStartTests` (start transition + `EchoConnection`, no game files).
 - [x] Unify SP/MP spawn onto one shared skirmish path (SP = one human + AI slots through the same
       start-position/building/camera code, `Game.cs:745-763`); identify the human via an explicit
       slot flag set at setup, not the `_players[2]` fallback (`PlayerManager.cs:39-46`).

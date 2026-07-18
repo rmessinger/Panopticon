@@ -86,6 +86,7 @@ public sealed class TacticalView : IPersistableObject
     }
 
     private float _groundLevel = 10.0f;
+    private float _zoomIncrement = 25.0f;
     private float _heightAboveGround;
     private float _minHeightAboveGround;
     private float _maxHeightAboveGround;
@@ -1546,13 +1547,10 @@ public sealed class TacticalView : IPersistableObject
             _heightAboveGround = Math.Clamp(_heightAboveGround, _minHeightAboveGround, _maxHeightAboveGround);
         }
 
-        // Immediately apply the desired zoom so it takes effect regardless of CameraAdjustSpeed.
-        if (_cameraOffset.Z > 0)
-        {
-            var terrainHeight = GetHeightAroundPos(_pos.Vector2XY());
-            var desiredZoom = (terrainHeight + _heightAboveGround) / _cameraOffset.Z;
-            _zoom = Math.Clamp(desiredZoom, _minZoom, _maxZoom);
-        }
+        // _zoom is intentionally left to ease toward the new _heightAboveGround via the
+        // CameraAdjustSpeed-driven convergence in Update(), matching the original engine's
+        // smooth zoom behavior. Snapping _zoom here directly fights that convergence and
+        // causes a visible overshoot/correction each time the desired height changes.
 
         ResetAnimationsAndFlags();
         SetCameraTransform();
@@ -1561,13 +1559,13 @@ public sealed class TacticalView : IPersistableObject
     // C++: View::zoomIn
     public void ZoomIn()
     {
-        SetHeightAboveGround((float)(_heightAboveGround - 10.0f));
+        SetHeightAboveGround((float)(_heightAboveGround - _zoomIncrement));
     }
 
     // C++: View::zoomOut
     public void ZoomOut()
     {
-        SetHeightAboveGround((float)(_heightAboveGround + 10.0f));
+        SetHeightAboveGround((float)(_heightAboveGround + _zoomIncrement));
     }
 
     private void ZoomCameraOneFrame(in TimeInterval gameTime)

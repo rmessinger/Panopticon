@@ -166,11 +166,22 @@ public sealed class ModelInstance : DisposableBase
                     : Matrix4x4.Identity;
 
                 RelativeBoneTransforms[i] = ModelBoneInstances[i].Matrix * parentTransform;
-
-                var parentVisible = bone.Parent == null || (BoneVisibilities[bone.Parent.Index] && BoneFrameVisibilities[bone.Parent.Index]);
-
-                BoneFrameVisibilities[i] = BoneVisibilities[i] && parentVisible && ModelBoneInstances[i].Visible;
             }
+        }
+
+        // Refresh per-frame bone visibility unconditionally. Render visibility is
+        // driven by BoneVisibilities[] (e.g. muzzle-flash toggling in W3dModelDraw)
+        // and ModelBoneInstance.Visible, neither of which dirties a bone transform.
+        // Gating this on isAnyModelBoneInstanceDirty left stale visibility in effect:
+        // a muzzle flash revealed while firing stayed rendered after firing stopped
+        // whenever no bone transform changed that frame.
+        for (var i = 0; i < Model.BoneHierarchy.Bones.Length; i++)
+        {
+            var bone = Model.BoneHierarchy.Bones[i];
+
+            var parentVisible = bone.Parent == null || (BoneVisibilities[bone.Parent.Index] && BoneFrameVisibilities[bone.Parent.Index]);
+
+            BoneFrameVisibilities[i] = BoneVisibilities[i] && parentVisible && ModelBoneInstances[i].Visible;
         }
 
         foreach (var modelBoneInstance in ModelBoneInstances)

@@ -229,8 +229,10 @@ public abstract class SupplyAIUpdate : AIUpdate
             case SupplyGatherStates.StartDumpingSupplies:
                 GameObject.ModelConditionFlags.Set(ModelConditionFlag.Docking, true);
                 SupplyGatherState = SupplyGatherStates.DumpingSupplies;
-                // todo: this might not be entirely accurate since partial loads can be deposited if unloading is manually aborted early
-                _waitUntil = GameEngine.GameLogic.CurrentFrame + ModuleData.SupplyCenterActionDelay * _numBoxes;
+                // SupplyCenterActionDelay is the total dump duration per its INI doc, not
+                // per-box. Scaling by _numBoxes made a full Chinook (8 boxes, 3000ms) sit
+                // idle ~24s after the dock animation had already finished.
+                _waitUntil = GameEngine.GameLogic.CurrentFrame + ModuleData.SupplyCenterActionDelay;
                 break;
 
             case SupplyGatherStates.DumpingSupplies:

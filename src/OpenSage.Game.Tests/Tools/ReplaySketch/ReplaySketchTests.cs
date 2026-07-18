@@ -14,7 +14,7 @@ public class ReplaySketchTests
     [Fact]
     public void DefaultScenario_UsaActions_AreInExpectedOrder()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var usa = scenario.Players[0];
 
         Assert.Equal(4, usa.Actions.Count);
@@ -102,7 +102,7 @@ public class ReplaySketchTests
     [Fact]
     public void LegacyConstruct_RoundTrip_PreservesType()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var construct = scenario.Players[0].Actions[0];
 
         Assert.Equal(ActionType.Construct, construct.Type);
@@ -144,7 +144,7 @@ public class ReplaySketchTests
     [Fact]
     public void DefaultScenario_GlaActions_AreInExpectedOrder()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var gla = scenario.Players[1];
 
         Assert.Equal(4, gla.Actions.Count);
@@ -157,7 +157,7 @@ public class ReplaySketchTests
     [Fact]
     public void DefaultScenario_GatherResources_TriggersOnConstructDispatched()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
 
         foreach (var player in scenario.Players)
         {
@@ -174,7 +174,7 @@ public class ReplaySketchTests
     [Fact]
     public void DefaultScenario_RecruitBasicUnit_TriggersOnConstructCompleted()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
 
         foreach (var player in scenario.Players)
         {
@@ -191,7 +191,7 @@ public class ReplaySketchTests
     [Fact]
     public void DefaultScenario_RecruitBasicUnit_HasUnitDefinitionName()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
 
         var usaRecruit = scenario.Players[0].Actions[2];
         Assert.Equal(ActionType.RecruitBasicUnit, usaRecruit.Type);
@@ -205,7 +205,7 @@ public class ReplaySketchTests
     [Fact]
     public void DefaultScenario_FixedTimedActions_HavePositiveFrameOffsets()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var rng = new Random(0);
 
         foreach (var player in scenario.Players)
@@ -224,7 +224,7 @@ public class ReplaySketchTests
     [Fact]
     public void DefaultScenario_PrebakedActions_HaveMonotonicallyIncreasingFrames()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var rng = new Random(0);
 
         foreach (var player in scenario.Players)
@@ -310,7 +310,7 @@ public class ActionTreeLayoutEngineTests
     [Fact]
     public void DefaultScenarioLayout_AllFourActionsPlaced()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var result = ActionTreeLayoutEngine.ComputeLayout(scenario.Players[0].Actions);
 
         Assert.Equal(4, result.Count);
@@ -319,7 +319,7 @@ public class ActionTreeLayoutEngineTests
     [Fact]
     public void DefaultScenarioLayout_Construct_IsRoot()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var result = ActionTreeLayoutEngine.ComputeLayout(scenario.Players[0].Actions);
 
         var barracks = result.Single(n => n.Action.Type == ActionType.Construct);
@@ -329,7 +329,7 @@ public class ActionTreeLayoutEngineTests
     [Fact]
     public void NodeCenters_AreInsideTheirOwnHitBounds()
     {
-        var scenario = ReplayScenario.CreateAlpineAssaultUSAvGLA();
+        var scenario = ReplayScenarioFactory.CreateAlpineAssaultUSAvGLA();
         var result = ActionTreeLayoutEngine.ComputeLayout(scenario.Players[0].Actions);
 
         foreach (var node in result)

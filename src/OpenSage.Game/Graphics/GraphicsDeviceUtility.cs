@@ -6,6 +6,17 @@ namespace OpenSage.Graphics;
 
 internal static class GraphicsDeviceUtility
 {
+    /// <summary>
+    /// Backends that Veldrid can create an offscreen <see cref="GraphicsDevice"/> for,
+    /// without an accompanying window/surface (OpenGL and OpenGL ES require a window-bound context).
+    /// </summary>
+    private static readonly GraphicsBackend[] HeadlessCapableBackends =
+    {
+        GraphicsBackend.Vulkan,
+        GraphicsBackend.Direct3D11,
+        GraphicsBackend.Metal,
+    };
+
     public static GraphicsDevice CreateGraphicsDevice(GraphicsBackend? preferredBackend, GameWindow window)
     {
 #if DEBUG
@@ -30,12 +41,29 @@ internal static class GraphicsDeviceUtility
             return window.CreateGraphicsDevice(options, backend);
         }
 
+        // Without a window there's no surface to create an OpenGL/OpenGLES context against.
+        // If the caller didn't explicitly request one of those, fall back to the first
+        // supported backend that Veldrid can create headlessly (e.g. Vulkan on Linux).
+        if ((backend == GraphicsBackend.OpenGL || backend == GraphicsBackend.OpenGLES) && preferredBackend == null)
+        {
+            foreach (var candidate in HeadlessCapableBackends)
+            {
+                if (GraphicsDevice.IsBackendSupported(candidate))
+                {
+                    backend = candidate;
+                    break;
+                }
+            }
+        }
+
         return backend switch
         {
             GraphicsBackend.Direct3D11 => GraphicsDevice.CreateD3D11(options),
             GraphicsBackend.Vulkan => GraphicsDevice.CreateVulkan(options),
             GraphicsBackend.Metal => GraphicsDevice.CreateMetal(options),
-            _ => throw new InvalidOperationException($"Cannot create a graphics device for {backend} backend without a window"),
+            _ => throw new InvalidOperationException(
+                $"Cannot create a graphics device for {backend} backend without a window. " +
+                "OpenGL and OpenGL ES require a window-bound context; pass a window or select a different backend."),
         };
     }
 }
