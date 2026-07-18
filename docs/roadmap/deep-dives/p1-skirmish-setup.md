@@ -86,7 +86,7 @@ object create/death hooks existing.
 | P1-1. Team & relationship setup | Implement `OnNewGame()` relationships: assign teams from slots, derive ally/enemy/neutral, wire reciprocally. | Done (cards: `WI-P1-02`, `WI-P1-03`) |
 | P1-2. Unified skirmish spawn | One start-position + starting-building + camera path for SP and MP; resolve player-array indexing and `LocalPlayer`. | Done (card: `WI-P1-04`) |
 | P1-3. AI slot fill | Ensure AI slots get faction/color/start filled before `StartGame` (lobby + local path). | Done (card: `WI-P1-05`; start-position collision fix: `WI-P1-09`) |
-| P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](p0-playable-baseline-harness.md)). | Not started (card: `WI-P1-06`) |
+    | P1-4. Boot validation | A human + ≥1 AI skirmish boots headlessly with correct relationships and spawns (assert via [P0](p0-playable-baseline-harness.md)). | Done (card: `WI-P1-06`) |
 | P1-5. Object-ownership tracking | Maintain per-`Player` building/unit counts + owned-object set via create/transfer/`OnDie`/`Destroy` hooks (O(1) checks); foundational, consumed by P2 (AI targets) and P3 (defeat). | Done (card: `WI-P1-07`; owner-transfer tracking: `WI-P1-11`) |
 
 ## 6. Sequencing

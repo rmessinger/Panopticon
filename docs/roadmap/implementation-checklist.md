@@ -178,11 +178,13 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     before `StartGame`; no slot has an unresolved faction/position at game start.
   - Done: `WI-P1-05` (commit 677b7bc9), with a start-position collision bug fixed by `WI-P1-09`
     (commit 583d09de). Shared `SkirmishSlotDefaults.ApplyDefaults(...)` helper used by both paths.
-- [ ] P1-4 Boot validation: a human + ≥1 AI skirmish boots headlessly via the P0 harness with
+- [x] P1-4 Boot validation: a human + ≥1 AI skirmish boots headlessly via the P0 harness with
       correct relationships, spawn positions, and faction assignments asserted.
   - AC: `P1BootValidationTests` passes (or skips cleanly on CI without game files); predicates for
-    symmetric relationships, non-empty spawn, and `LocalPlayer` identification all pass.
-  - Status: not started; see `WI-P1-06`.
+        symmetric relationships, non-empty spawn, and `LocalPlayer` identification all pass.
+  - Done: `WI-P1-06`. `P1BootValidationTests` registers three `CodeAssertion` predicates and runs
+        them through the P0 `HarnessRunner` (skips when no playable install); predicate logic is
+        additionally covered headlessly by `P1BootValidationPredicateTests` (mocked game, CI-runnable).
 - [x] P1-5 Object-ownership tracking (foundational): maintained per-`Player` building/unit counts +
       owned-object set, updated on create/transfer/`OnDie`/`Destroy` (decided, not an on-demand scan).
       Consumed by P2 (AI target selection) and P3 (defeat detection); friendly to the scale tracks.
