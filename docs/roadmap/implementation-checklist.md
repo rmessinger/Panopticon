@@ -435,6 +435,19 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 - [ ] A4-1 Simulation Domain Model seam (domain-agnostic entities/topology/interactions/metrics).
   - AC: TBD, a domain-agnostic seam interface exists; the RTS domain implements it and at least the
     transport/graph domain validates it against the same host.
+- [ ] A4-2 AI decision policy seam ([deep dive](deep-dives/a4-pluggable-ai.md)): extract
+      `IAIDecisionPolicy` from `AIPlayer.OnDecisionTick()`'s subclass override, with
+      `SkirmishAIPlayer`'s rule-based state machine as the reference implementation.
+  - AC: TBD, `IAIDecisionPolicy` exists and is selectable at runtime; `SkirmishAIPlayer` runs
+    behind it with no behavior change; a first neural-network policy is designed per the deep dive.
+- [ ] A4-3 Decentralized hierarchical AI seam
+      ([deep dive](deep-dives/a4-decentralized-hierarchical-ai.md)): general/commander/soldier
+      rank hierarchy of per-unit ANNs, composed behind the existing `IAIDecisionPolicy` seam via a
+      `HierarchicalAIDecisionPolicy` adapter.
+  - AC: TBD, squad/commander model with death-triggered promotion exists (A4-3a); per-rank
+    `ISoldierDecisionPolicy`/`ICommanderDecisionPolicy`/`IGeneralDecisionPolicy` interfaces exist
+    with rule-based reference implementations (A4-3b to A4-3d); actuation stays exclusively through
+    the soldier rank's `OrderProcessor` calls, matching A2/P2's actuation constraint.
 - [ ] Stable seams for pathfinding, partitioning, fidelity policy, storage layout, model import (see
       [seams.md](seams.md)).
   - AC: TBD, each seam has an interface + ≥1 swappable implementation selectable at runtime; all are

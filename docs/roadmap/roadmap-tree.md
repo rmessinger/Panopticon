@@ -75,6 +75,7 @@ mindmap
       A4 Experiment framework ⮕
         A4-1 Simulation Domain Model seam
         A4-2 AI decision policy seam
+        A4-3 Decentralized hierarchical AI seam ⮕
       A5 Scenario and visualization ⮕
         A5-1 Scenario authoring
         A5-2 Experiment matrix

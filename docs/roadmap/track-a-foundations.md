@@ -27,7 +27,7 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 | A1 | [Headless host](deep-dives/a1-headless-host.md) | [§5](deep-dives/a1-headless-host.md#5-architecture-diagrams) `†` | — |
 | A2 | — | — | — |
 | A3 | — | — | — |
-| A4 | [Pluggable AI policy](deep-dives/a4-pluggable-ai.md) | [§8](deep-dives/a4-pluggable-ai.md#8-architecture-diagrams) | [`WI-A4-01`](agent/cards/WI-A4-01-extract-ai-decision-policy-interface.md), [`WI-A4-02`](agent/cards/WI-A4-02-ai-policy-selection-factory.md), [`WI-A4-03`](agent/cards/WI-A4-03-design-neural-network-policy.md), [`WI-A4-04`](agent/cards/WI-A4-04-implement-neural-network-policy.md) |
+| A4 | [Pluggable AI policy](deep-dives/a4-pluggable-ai.md), [Decentralized hierarchical AI](deep-dives/a4-decentralized-hierarchical-ai.md) | [§8](deep-dives/a4-pluggable-ai.md#8-architecture-diagrams), [§9](deep-dives/a4-decentralized-hierarchical-ai.md#9-architecture-diagrams) `†` | [`WI-A4-01`](agent/cards/WI-A4-01-extract-ai-decision-policy-interface.md), [`WI-A4-02`](agent/cards/WI-A4-02-ai-policy-selection-factory.md), [`WI-A4-03`](agent/cards/WI-A4-03-design-neural-network-policy.md), [`WI-A4-04`](agent/cards/WI-A4-04-implement-neural-network-policy.md) |
 | A5 | [Visualization](deep-dives/a5-visualization.md) | [§8](deep-dives/a5-visualization.md#8-architecture-diagrams) `†` | — |
 
 ## Notes
@@ -36,6 +36,7 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 - A2 underpins B3 and B6. Per the [relaxed-determinism Decision](open-questions.md), it targets reproducibility-for-comparison, not bit-exactness.
 - A3 coordinates with C1 because both touch the presentation seam. The model-import abstraction should feed the same runtime `Model`/`ModelInstance` types the rendering refactor expects.
 - A4 depends on the [A1 host](deep-dives/a1-headless-host.md), [B1](track-b-scale.md) benchmarks as the run/measure surface, and A2 determinism for reproducible experiment comparisons.
+- Decentralized hierarchical AI (unit-level ANNs organized as general/commander/soldier ranks) is an A4 experiment, generalizing the flat single-policy seam rather than replacing it. See [deep-dives/a4-decentralized-hierarchical-ai.md](deep-dives/a4-decentralized-hierarchical-ai.md).
 - Simulation Domain Model is an A4 seam. The simulation domain, meaning what entities exist and how they interact and partition, is pluggable, so the scale infrastructure in the [A1 host](deep-dives/a1-headless-host.md) and [B6 distributed sim](track-b-scale.md) is not hard-wired to RTS and can host other models such as city builders, transportation/logistics sims, and agent-based sims. A domain model supplies:
   - Entity/component schema: the entity kinds and their state (RTS units/buildings; city
     zones/utilities; transport vehicles/passengers/links).
