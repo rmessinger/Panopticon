@@ -192,12 +192,16 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     kills objects and asserts counts) with O(1) per-check cost.
   - Done: `WI-P1-07` (commit 8518ed49) + `WI-P1-11` (commit 122ed1eb, owner-transfer tracking).
     Covered by `PlayerOwnershipTests`.
-- [ ] P1 scenario matrix: sweep playerCount × teamConfig × factionMix; assert relationships and
+- [x] P1 scenario matrix: sweep playerCount × teamConfig × factionMix; assert relationships and
       faction assignment are correct for every cell.
   - AC: a `ScenarioMatrix` (axes: `playerCount` ∈ {2,3,4,6,8}, `teamConfig` ∈ {FFA, 2v2, 3v1, 4v4},
-    `factionMix` ∈ {mirror, mixed}; invalid axis combinations pruned by ConstraintFilter) expands to
-    one boot-and-assert run per cell; every cell asserts correct ally/enemy relationships and faction
-    assignments; see the deep dive matrix section.
+    `factionMix` ∈ {mirror, mixed, all-factions}; invalid axis combinations pruned by ConstraintFilter)
+    expands to one boot-and-assert run per cell; every cell asserts correct ally/enemy relationships
+    and faction assignments; see the deep dive matrix section.
+  - Done: `P1_ScenarioMatrixTests` in `TrackPScenarioMatrixTests.cs`. The 60-cell cartesian space
+    prunes to 26 valid cells; each cell boots a mocked game via `PlayerManager.OnNewGame` and asserts
+    reciprocal relationships (same-team allies, different-team enemies), faction match per slot, and
+    neutral/civilian neutrality. CI-runnable (no install).
 
 ### P2: Skirmish AI opponent ([deep dive](deep-dives/p2-p5-skirmish-ai.md))
 - [x] Add a coarse-cadence `Update(...)` decision loop to `SkirmishAIPlayer`/`AIPlayer` (currently
