@@ -102,10 +102,13 @@ The three predicates (`P1.HumanPlayerIsLocal`, `P1.RelationshipsAreSymmetric`,
 `CodeAssertion` scenario (1 USA slot vs 1 GLA slot on opposing teams).
 
 The harness integration test (`SkirmishBoot_HumanPlusOneAI_HasCorrectRelationshipsAndSpawns`) runs
-the P0 `HarnessRunner` and skips cleanly when no playable install is present (the helper returns an
-empty report, matching the existing P0 interactive-test skip pattern). On this host the bundled
-`CNC_GENERALS_PATH` install lacks `generals.exe`, so the full game init cannot complete headlessly
-and the harness returns early; the test therefore reports pass/skip.
+the P0 `HarnessRunner` and skips cleanly when the harness cannot boot: the helper returns an empty
+report, matching the existing P0 interactive-test skip pattern. On this dev host the harness cannot
+initialize because Veldrid.Sdl2 4.9.0 ships no `linux-x64` native and the snap-confined dotnet SDK
+cannot preload the host SDL2, so the harness throws a `TypeInitializationException` (inner
+`FileNotFoundException` for the SDL2 native) that the helper swallows; the test therefore reports
+pass/skip. (The Generals install itself, at `/home/rmessinger/dev/Command and Conquer Generals/` with
+`Generals.exe`, is complete; the blocker is the SDL2/native-loading gap, not the install.)
 
 Because the full-harness boot needs a complete install, the predicate logic is additionally covered
 by `P1BootValidationPredicateTests` (CI-runnable, no install). These exercise each predicate against

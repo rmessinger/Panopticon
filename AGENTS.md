@@ -60,6 +60,10 @@ Builds on the repository-wide documentation style above. Additional rules specif
 * P6b validates unit archetypes via the P0 harness: 6 archetypes (infantry/vehicle/aircraft/builder/support/superweapon), full contract (produce/move/attack/all weapon modes/all special abilities/die), USA reference units, unimplemented handlers surface as explicit failures.
 * ReplaySketch validation: logic stays in `.Core` (tested headlessly by `ReplaySketch.Tests` + P0-5 run-and-assert); MAUI statics go behind injectable seams; agents follow `ReplaySketch.Maui/AGENTS.md` (P0-1b/1c/7).
 
+### Environment
+
+* A complete C&C Generals install lives at `/home/rmessinger/dev/Command and Conquer Generals/` (sibling of the OpenSAGE repo). The launcher is `Generals.exe` (capital G; Linux FS is case-sensitive). Set `CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals"` so `EnvironmentInstallationLocator` (env var `<IDENTIFIER>_PATH`, Generals identifier `cnc_generals`) finds it for P0 harness / TestHarness runs.
+
 ### Simulation domain model
 
 * P3 `GameOutcome` has `OutcomeStatus` (InProgress/SuddenDeath/Decided) and `OutcomeReason` (Eliminated/Surrendered/ScoreDecision); mutual elimination leads to `SuddenDeath` continuation; time-limit leads to `ScoreDecision` with a configurable score metric.
