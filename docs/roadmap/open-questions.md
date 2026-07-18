@@ -175,6 +175,18 @@
   extraction, a first NN policy, and the training harness) is follow-on work. Detailed design:
   [deep-dives/a4-pluggable-ai.md](deep-dives/a4-pluggable-ai.md). Affects
   [A4](track-a-foundations.md), [P2](track-p-playable-baseline.md).
+- Decentralized hierarchical AI. Decision: generalize the A4 AI decision policy seam with a
+  rank hierarchy (general, one per player; commander, one per squad; soldier, one per unit) of
+  per-rank neural networks, rather than a single flat policy per player. This is an alternative
+  policy family behind the same `IAIDecisionPolicy` seam, not a replacement for it: a
+  `HierarchicalAIDecisionPolicy` adapter runs the ranks and still emits every order through
+  `OrderProcessor`, so the actuation and reproducibility constraints already established for A4/P2
+  hold unchanged. Squads derive from the existing team/selection model; a squad's commander is
+  promoted from its highest-value surviving member on commander death. Network complexity scales
+  by rank (soldier smallest, general largest), not by total unit count. Design-only for now;
+  implementation and a co-evolutionary training scheme are follow-on work. Detailed design:
+  [deep-dives/a4-decentralized-hierarchical-ai.md](deep-dives/a4-decentralized-hierarchical-ai.md).
+  Affects [A4](track-a-foundations.md).
 - Single-player `LocalPlayer` identification. Decision: explicit human-slot flag at setup. The
   skirmish/lobby config marks which slot is the local human; `PlayerManager` reads that flag instead
   of the ad-hoc positional `_players[2]` fallback (`PlayerManager.cs:39-46`). Affects

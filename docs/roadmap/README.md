@@ -140,6 +140,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/p6b-unit-contract-validation.md`](deep-dives/p6b-unit-contract-validation.md) | Track P phase P6b - Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
 | [`deep-dives/a1-headless-host.md`](deep-dives/a1-headless-host.md) | Track A phase A1 - Headless simulation host. |
 | [`deep-dives/a4-pluggable-ai.md`](deep-dives/a4-pluggable-ai.md) | Track A phase A4 - Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
+| [`deep-dives/a4-decentralized-hierarchical-ai.md`](deep-dives/a4-decentralized-hierarchical-ai.md) | Track A phase A4 - Decentralized hierarchical AI (unit-level ANNs organized as general/commander/soldier ranks, generalizing the flat pluggable-AI policy seam). |
 | [`deep-dives/a5-visualization.md`](deep-dives/a5-visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
@@ -220,7 +221,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Track | Progress | Items |
 |---|---|---|
-| Track A - Foundations | `░░░░░░░░░░` | 0 / 18 |
+| Track A - Foundations | `░░░░░░░░░░` | 0 / 20 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 12 |
 | Track C - External Assets | `░░░░░░░░░░` | 0 / 6 |
 
