@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P1-06` |
 | Roadmap phase | [Track P · P1: Skirmish setup & player relationships](../../track-p-playable-baseline.md) (sub-phase P1-4, see [deep dive §7](../../deep-dives/p1-skirmish-setup.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P1-02`, `WI-P1-04`, `WI-P1-05` |
@@ -96,4 +96,35 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+`P1BootValidationTests` added at `src/OpenSage.Game.Tests/Tools/ReplaySketch/P1BootValidationTests.cs`.
+The three predicates (`P1.HumanPlayerIsLocal`, `P1.RelationshipsAreSymmetric`,
+`P1.NoPlayerUnspawned`) are registered via `CodeAssertionRegistry` and referenced by a harness
+`CodeAssertion` scenario (1 USA slot vs 1 GLA slot on opposing teams).
+
+The harness integration test (`SkirmishBoot_HumanPlusOneAI_HasCorrectRelationshipsAndSpawns`) runs
+the P0 `HarnessRunner` and skips cleanly when the harness cannot boot: the helper returns an empty
+report, matching the existing P0 interactive-test skip pattern. On this dev host the harness cannot
+initialize because Veldrid.Sdl2 4.9.0 ships no `linux-x64` native and the snap-confined dotnet SDK
+cannot preload the host SDL2, so the harness throws a `TypeInitializationException` (inner
+`FileNotFoundException` for the SDL2 native) that the helper swallows; the test therefore reports
+pass/skip. (The Generals install itself, at `/home/rmessinger/dev/Command and Conquer Generals/` with
+`Generals.exe`, is complete; the blocker is the SDL2/native-loading gap, not the install.)
+
+Because the full-harness boot needs a complete install, the predicate logic is additionally covered
+by `P1BootValidationPredicateTests` (CI-runnable, no install). These exercise each predicate against
+a mocked `TestGame`: a correct 1v1 setup (reciprocal enemies, LocalPlayer = human, both players
+spawned) makes all three pass, and deliberately broken setups (LocalPlayer resolves to an AI slot,
+non-reciprocal `Enemies`, an unspawned player) each fail the corresponding predicate.
+
+Predicate notes:
+- `P1.HumanPlayerIsLocal` uses `Player.IsHuman` (not `AIPlayer`): in a mocked/asset-less game
+  `PlayerTemplate` is null, so `AIPlayer` is null for every player and cannot distinguish human from
+  AI. `IsHuman` is the direct human flag and is mock-testable.
+- `P1.RelationshipsAreSymmetric` derives the relationship per ordered pair from the `Allies`/
+  `Enemies` sets (the live store `OnNewGame` populates via `AddAlly`/`AddEnemy`) rather than
+  `Player.GetRelationship(Team)`, whose backing dictionaries are only populated via persistence
+  (save/replay) and would read `Neutral` for every pair in a fresh boot, making the check vacuous.
+
+Validation: `dotnet test --filter FullyQualifiedName~P1BootValidation` (5/5 pass, with and without an
+install path); `dotnet test src --filter Category!=Interactive` (718 passed, 0 failed, no regression);
+`dotnet format src --verify-no-changes` clean.

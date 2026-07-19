@@ -24,29 +24,309 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 // ── P1: Skirmish setup ─────────────────────────────────────────────────────────
 // Matrix: playerCount × teamConfig × factionMix
 // Validates relationship and faction assignment across the full config space.
+// See docs/roadmap/deep-dives/p1-skirmish-setup.md §7 (Scenario Matrix).
 
-public class P1_ScenarioMatrixTests
+public class P1_ScenarioMatrixTests : MockedGameTest
 {
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
+    private const string Ffa = "FFA";
+    private const string TwoVTwo = "2v2";
+    private const string ThreeVOne = "3v1";
+    private const string FourVFour = "4v4";
+
+    private const string Mirror = "mirror";
+    private const string Mixed = "mixed";
+    private const string AllFactions = "all-factions";
+
+    // Generals playable factions; all-factions cells are constrained to playerCount <= this length.
+    private static readonly string[] FactionSides = ["FactionAmerica", "FactionGLA", "FactionChina"];
+
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_BootWithCorrectRelationships()
     {
-        // Arrange: ScenarioMatrix with axes playerCount × teamConfig × factionMix
-        //          (invalid combos pruned by ConstraintFilter, e.g. 2v2 requires playerCount >= 4).
-        // Act: expand and run all cells via P0-5b.
-        // Assert: every cell asserts all player pairs have a defined RelationshipType
-        //         and each player's faction matches its slot config.
+        var matrix = BuildP1Matrix();
+        var cells = matrix.Expand();
 
+        // 60-cell cartesian space pruned to 26 valid cells by the constraint filter.
+        Assert.Equal(26, cells.Count);
+
+        var results = new List<CellResult>(cells.Count);
+        foreach (var cell in cells)
+        {
+            var game = new TestGame(SageGame.CncGenerals);
+            var setup = ConfigureScenario(game, cell.Bindings);
+            results.Add(new CellResult(cell.Bindings, new AssertionReport(BuildAssertions(cell.Bindings, setup))));
+        }
+
+        var report = new MatrixReport(results);
+        Assert.True(report.AllPassed, report.ToJson());
+        Assert.Contains("\"failed\":0", report.ToJson(), StringComparison.Ordinal);
     }
 
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_InvalidCombinations_PrunedByConstraintFilter()
     {
-        // Arrange: ScenarioMatrix that includes a cell violating a constraint
-        //          (e.g. teamConfig=2v2, playerCount=2).
-        // Act: expand with ConstraintFilter applied.
-        // Assert: the invalid cell is not present in the expanded run list.
+        var matrix = BuildP1Matrix();
+        var all = ExpandAllBindings(matrix.Axes);
 
+        // The unfiltered cartesian product includes combinations that violate the constraints.
+        Assert.Equal(60, all.Count);
+        Assert.Contains(all, b => b["teamConfig"] == TwoVTwo && b["playerCount"] == "2");
+        Assert.Contains(all, b => b["teamConfig"] == FourVFour && b["playerCount"] == "4");
+        Assert.Contains(all, b => b["factionMix"] == AllFactions && b["playerCount"] == "4");
+
+        var cells = matrix.Expand();
+
+        // Pruned: 2v2/3v1 need >= 4 players, 4v4 needs exactly 8, all-factions needs <= 3 factions.
+        Assert.DoesNotContain(cells, c => c.Bindings["teamConfig"] == TwoVTwo && int.Parse(c.Bindings["playerCount"]) < 4);
+        Assert.DoesNotContain(cells, c => c.Bindings["teamConfig"] == ThreeVOne && int.Parse(c.Bindings["playerCount"]) < 4);
+        Assert.DoesNotContain(cells, c => c.Bindings["teamConfig"] == FourVFour && c.Bindings["playerCount"] != "8");
+        Assert.DoesNotContain(cells, c => c.Bindings["factionMix"] == AllFactions && int.Parse(c.Bindings["playerCount"]) > FactionSides.Length);
     }
+
+    private static ScenarioMatrix BuildP1Matrix()
+    {
+        return new ScenarioMatrix
+        {
+            Axes =
+            [
+                new SweepAxis { Name = "playerCount", Values = ["2", "3", "4", "6", "8"] },
+                new SweepAxis { Name = "teamConfig", Values = [Ffa, TwoVTwo, ThreeVOne, FourVFour] },
+                new SweepAxis { Name = "factionMix", Values = [Mirror, Mixed, AllFactions] },
+            ],
+            Filters =
+            [
+                new ConstraintFilter(
+                    "teamConfig fits playerCount and factionMix fits the faction count",
+                    IsCellAllowed),
+            ],
+        };
+    }
+
+    // 2v2/3v1 need at least 4 players, 4v4 needs exactly 8, and all-factions needs one distinct
+    // faction per slot (so playerCount <= FactionSides.Length). FFA and mirror/mixed always fit.
+    private static bool IsCellAllowed(IReadOnlyDictionary<string, string> bindings)
+    {
+        var playerCount = int.Parse(bindings["playerCount"]);
+        var teamOk = bindings["teamConfig"] switch
+        {
+            TwoVTwo => playerCount >= 4,
+            ThreeVOne => playerCount >= 4,
+            FourVFour => playerCount == 8,
+            _ => true,
+        };
+        var factionOk = bindings["factionMix"] != AllFactions || playerCount <= FactionSides.Length;
+        return teamOk && factionOk;
+    }
+
+    private static ScenarioSetup ConfigureScenario(TestGame game, IReadOnlyDictionary<string, string> bindings)
+    {
+        var playerCount = int.Parse(bindings["playerCount"]);
+        var teams = AssignTeams(playerCount, bindings["teamConfig"]);
+        var factionMix = bindings["factionMix"];
+
+        var mapPlayers = new List<OpenSage.Data.Map.Player>
+        {
+            OpenSage.Data.Map.Player.CreateNeutralPlayer(),
+            OpenSage.Data.Map.Player.CreateCivilianPlayer(),
+        };
+
+        var settings = new PlayerSetting[playerCount];
+        for (var i = 0; i < playerCount; i++)
+        {
+            var faction = FactionFor(i, factionMix);
+            mapPlayers.Add(new OpenSage.Data.Map.Player
+            {
+                Name = $"player{i}",
+                Faction = faction,
+                DisplayName = $"Player {i}",
+                IsHuman = i == 0,
+            });
+
+            settings[i] = new PlayerSetting(
+                startPosition: i + 1,
+                sideName: faction,
+                color: new ColorRgb((byte)(200 - i * 20), (byte)(100 + i * 10), (byte)(50 + i * 5)),
+                team: teams[i],
+                owner: i == 0 ? PlayerOwner.Player : PlayerOwner.EasyAi,
+                name: $"player{i}",
+                isLocalForMultiplayer: i == 0);
+        }
+
+        game.PlayerManager.OnNewGame(mapPlayers.ToArray(), GameType.Skirmish, settings);
+
+        var all = game.PlayerManager.Players;
+        var nonParticipants = all.Take(2).ToList();
+        var participants = all.Skip(2).Take(playerCount).ToList();
+        return new ScenarioSetup(participants, nonParticipants, teams, factionMix);
+    }
+
+    // FFA leaves every player on its own team. The paired configs seat the first team, then the
+    // second, then any overflow onto solo teams so 2v2/3v1 stay valid for playerCount > 4.
+    private static int[] AssignTeams(int playerCount, string teamConfig)
+    {
+        var teams = new int[playerCount];
+        for (var i = 0; i < playerCount; i++)
+        {
+            teams[i] = i;
+        }
+
+        var firstTeamSize = teamConfig switch
+        {
+            TwoVTwo => 2,
+            ThreeVOne => 3,
+            FourVFour => 4,
+            _ => 0,
+        };
+
+        if (firstTeamSize == 0)
+        {
+            return teams;
+        }
+
+        for (var i = 0; i < playerCount; i++)
+        {
+            teams[i] = i < firstTeamSize ? 0 : (i < 2 * firstTeamSize ? 1 : i);
+        }
+
+        return teams;
+    }
+
+    private static string FactionFor(int index, string factionMix)
+    {
+        return factionMix switch
+        {
+            Mirror => FactionSides[0],
+            Mixed => FactionSides[index % 2],
+            AllFactions => FactionSides[index],
+            _ => throw new InvalidOperationException($"Unsupported factionMix '{factionMix}'."),
+        };
+    }
+
+    private static IReadOnlyList<AssertionResult> BuildAssertions(
+        IReadOnlyDictionary<string, string> bindings,
+        ScenarioSetup setup)
+    {
+        var results = new List<AssertionResult>();
+        var participants = setup.Participants;
+        var cellKey = $"{bindings["playerCount"]}-{bindings["teamConfig"]}-{bindings["factionMix"]}";
+
+        for (var i = 0; i < participants.Count; i++)
+        {
+            for (var j = 0; j < participants.Count; j++)
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+                results.Add(AssertRelationship(cellKey, i, j, participants, setup.Teams));
+            }
+        }
+
+        for (var i = 0; i < participants.Count; i++)
+        {
+            var expected = FactionFor(i, setup.FactionMix);
+            var actual = participants[i].Side;
+            results.Add(new AssertionResult
+            {
+                AssertionId = $"p1-faction-{cellKey}-{i}",
+                Passed = actual == expected,
+                ActualValue = actual,
+                FailFrame = 0,
+                Message = actual == expected ? null : $"Player {i} faction '{actual}', expected '{expected}' for cell {cellKey}.",
+            });
+        }
+
+        // Neutral and civilian slots must remain neutral to every participant (not wired as ally/enemy).
+        for (var n = 0; n < setup.NonParticipants.Count; n++)
+        {
+            var nonParticipant = setup.NonParticipants[n];
+            for (var i = 0; i < participants.Count; i++)
+            {
+                var participant = participants[i];
+                var label = $"{RelationshipLabel(nonParticipant, participant)}/{RelationshipLabel(participant, nonParticipant)}";
+                results.Add(new AssertionResult
+                {
+                    AssertionId = $"p1-neutral-{cellKey}-{n}-{i}",
+                    Passed = label == "Neutral/Neutral",
+                    ActualValue = label,
+                    FailFrame = 0,
+                    Message = label == "Neutral/Neutral" ? null : $"Non-participant '{nonParticipant.Name}' should be neutral to player {i} for cell {cellKey}, got {label}.",
+                });
+            }
+        }
+
+        return results;
+    }
+
+    private static AssertionResult AssertRelationship(
+        string cellKey, int i, int j, IReadOnlyList<Player> participants, int[] teams)
+    {
+        var a = participants[i];
+        var b = participants[j];
+        var sameTeam = teams[i] == teams[j];
+        var actual = $"{RelationshipLabel(a, b)}/{RelationshipLabel(b, a)}";
+        var expected = sameTeam ? "Allies/Allies" : "Enemies/Enemies";
+
+        bool passed;
+        if (sameTeam)
+        {
+            passed = a.Allies.Contains(b) && b.Allies.Contains(a)
+                     && !a.Enemies.Contains(b) && !b.Enemies.Contains(a);
+        }
+        else
+        {
+            passed = a.Enemies.Contains(b) && b.Enemies.Contains(a)
+                     && !a.Allies.Contains(b) && !b.Allies.Contains(a);
+        }
+
+        return new AssertionResult
+        {
+            AssertionId = $"p1-rel-{cellKey}-{i}-{j}",
+            Passed = passed,
+            ActualValue = actual,
+            FailFrame = 0,
+            Message = passed ? null : $"Pair ({i},{j}) expected {expected}, got {actual} for cell {cellKey} (team {teams[i]} vs team {teams[j]}).",
+        };
+    }
+
+    private static string RelationshipLabel(Player a, Player b)
+    {
+        if (a.Allies.Contains(b))
+        {
+            return "Allies";
+        }
+        if (a.Enemies.Contains(b))
+        {
+            return "Enemies";
+        }
+        return "Neutral";
+    }
+
+    // Replicates ScenarioMatrix.Expand() without applying filters, so the pruned-combinations
+    // test can assert against the full cartesian product.
+    private static List<Dictionary<string, string>> ExpandAllBindings(IReadOnlyList<SweepAxis> axes)
+    {
+        var result = new List<Dictionary<string, string>> { new() };
+        foreach (var axis in axes)
+        {
+            var next = new List<Dictionary<string, string>>();
+            foreach (var binding in result)
+            {
+                foreach (var value in axis.Values)
+                {
+                    next.Add(new Dictionary<string, string>(binding) { [axis.Name] = value });
+                }
+            }
+            result = next;
+        }
+        return result;
+    }
+
+    private sealed record ScenarioSetup(
+        IReadOnlyList<Player> Participants,
+        IReadOnlyList<Player> NonParticipants,
+        int[] Teams,
+        string FactionMix);
 }
 
 // ── P2: Skirmish AI ───────────────────────────────────────────────────────────

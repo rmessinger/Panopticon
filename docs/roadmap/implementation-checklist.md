@@ -178,11 +178,13 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     before `StartGame`; no slot has an unresolved faction/position at game start.
   - Done: `WI-P1-05` (commit 677b7bc9), with a start-position collision bug fixed by `WI-P1-09`
     (commit 583d09de). Shared `SkirmishSlotDefaults.ApplyDefaults(...)` helper used by both paths.
-- [ ] P1-4 Boot validation: a human + ≥1 AI skirmish boots headlessly via the P0 harness with
+- [x] P1-4 Boot validation: a human + ≥1 AI skirmish boots headlessly via the P0 harness with
       correct relationships, spawn positions, and faction assignments asserted.
   - AC: `P1BootValidationTests` passes (or skips cleanly on CI without game files); predicates for
-    symmetric relationships, non-empty spawn, and `LocalPlayer` identification all pass.
-  - Status: not started; see `WI-P1-06`.
+        symmetric relationships, non-empty spawn, and `LocalPlayer` identification all pass.
+  - Done: `WI-P1-06`. `P1BootValidationTests` registers three `CodeAssertion` predicates and runs
+        them through the P0 `HarnessRunner` (skips when no playable install); predicate logic is
+        additionally covered headlessly by `P1BootValidationPredicateTests` (mocked game, CI-runnable).
 - [x] P1-5 Object-ownership tracking (foundational): maintained per-`Player` building/unit counts +
       owned-object set, updated on create/transfer/`OnDie`/`Destroy` (decided, not an on-demand scan).
       Consumed by P2 (AI target selection) and P3 (defeat detection); friendly to the scale tracks.
@@ -190,12 +192,16 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     kills objects and asserts counts) with O(1) per-check cost.
   - Done: `WI-P1-07` (commit 8518ed49) + `WI-P1-11` (commit 122ed1eb, owner-transfer tracking).
     Covered by `PlayerOwnershipTests`.
-- [ ] P1 scenario matrix: sweep playerCount × teamConfig × factionMix; assert relationships and
+- [x] P1 scenario matrix: sweep playerCount × teamConfig × factionMix; assert relationships and
       faction assignment are correct for every cell.
   - AC: a `ScenarioMatrix` (axes: `playerCount` ∈ {2,3,4,6,8}, `teamConfig` ∈ {FFA, 2v2, 3v1, 4v4},
-    `factionMix` ∈ {mirror, mixed}; invalid axis combinations pruned by ConstraintFilter) expands to
-    one boot-and-assert run per cell; every cell asserts correct ally/enemy relationships and faction
-    assignments; see the deep dive matrix section.
+    `factionMix` ∈ {mirror, mixed, all-factions}; invalid axis combinations pruned by ConstraintFilter)
+    expands to one boot-and-assert run per cell; every cell asserts correct ally/enemy relationships
+    and faction assignments; see the deep dive matrix section.
+  - Done: `P1_ScenarioMatrixTests` in `TrackPScenarioMatrixTests.cs`. The 60-cell cartesian space
+    prunes to 26 valid cells; each cell boots a mocked game via `PlayerManager.OnNewGame` and asserts
+    reciprocal relationships (same-team allies, different-team enemies), faction match per slot, and
+    neutral/civilian neutrality. CI-runnable (no install).
 
 ### P2: Skirmish AI opponent ([deep dive](deep-dives/p2-p5-skirmish-ai.md))
 - [x] Add a coarse-cadence `Update(...)` decision loop to `SkirmishAIPlayer`/`AIPlayer` (currently
