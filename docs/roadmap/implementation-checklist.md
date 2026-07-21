@@ -271,7 +271,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     `GameOutcome.Reason`, and winning/losing sides; see the deep dive matrix section.
 
 ### P4: Economy loop end-to-end ([deep dive](deep-dives/p4-p6-economy-production-combat.md))
-- [ ] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
+- [x] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
   - AC: a harness scenario with a harvester shows `BankAccount` balance increasing after a supply
     dump (assert positive delta).
 - [ ] Confirm/implement construction/production debit `BankAccount.Withdraw` with cancel

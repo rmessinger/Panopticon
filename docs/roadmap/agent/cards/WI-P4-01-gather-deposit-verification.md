@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P4-01` |
 | Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-1, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | P1 complete enough that player ownership, selected units, and headless harness assertions are reliable |
@@ -76,4 +76,4 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+2026-07-21: Renamed the broken in-progress file `P4EconomyTests.cs` to `GatherDepositTests.cs` per the card's "Files likely to change". Fixed two compile errors (helpers exposed `private protected TestGame` as `internal static`); replaced the broken reflection on a non-existent `_behaviors` field with the clean `ObjectDefinition.Behaviors` seam (`InternalsVisibleTo` already grants access). Direct `BankAccount.Deposit/Withdraw` tests use `playSound: false`; docked-path tests exercise `SupplyCenterDockUpdate.DumpBoxes -> BankAccount.Deposit` for the default, value-multiplier, and GLA `additionalAmountPerBox` vectors. The docked path's `playSound: true` default NRE'd in the headless host because `MockedGameTest.TestGame.Audio` was null and `MiscAudio.Current.MoneyDepositSound` was uninitialized; closed the env gap by initializing `Configuration`/`Audio` (`NoAudio=true`, PlayAudioEvent short-circuits) and pinning `MoneyDepositSound`/`MoneyWithdrawSound` to a non-null `LazyAssetReference` in the mocked TestGame ctor. Validation: dotnet build src (0 errors); dotnet test src --filter "FullyQualifiedName~GatherDepositTests" (6 passed); dotnet test src --filter Category!=Interactive (726 passed, 17 skipped, 0 failed); dotnet format src --verify-no-changes (clean).

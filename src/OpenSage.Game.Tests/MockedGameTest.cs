@@ -36,7 +36,7 @@ public abstract class MockedGameTest : IDisposable
     {
         public IGameDefinition Definition { get; }
         public SageGame SageGame { get; }
-        public Configuration Configuration { get; }
+        public Configuration Configuration { get; private set; }
         public GameOutcome CurrentOutcome => VictorySystem.CurrentOutcome;
         public string UserDataLeafName { get; }
         public string UserDataFolder { get; }
@@ -81,7 +81,7 @@ public abstract class MockedGameTest : IDisposable
         public TimeInterval RenderTime { get; }
         public TimeSpan CumulativeLogicUpdateError { get; }
         public OrderGeneratorSystem OrderGenerator { get; }
-        public AudioSystem Audio { get; }
+        public AudioSystem Audio { get; private set; }
         public SelectionSystem Selection { get; }
         public IGameEngine GameEngine { get; }
 #pragma warning disable CS0067 // The event 'Game.X' is never used
@@ -139,6 +139,21 @@ public abstract class MockedGameTest : IDisposable
             AssetStore.PushScope();
 
             AssetStore.Ranks.Add(new RankTemplate { InternalId = 1 });
+
+            // Headless test host: NoAudio=true short-circuits AudioSystem.PlayAudioEvent,
+            // and MoneyDepositSound/MoneyWithdrawSound are pinned to a non-null reference so
+            // BankAccount.Deposit/Withdraw's eager argument evaluation does not NRE when a
+            // docked path (e.g. SupplyCenterDockUpdate.DumpBoxes) exercises playSound=true.
+            Configuration = new Configuration { NoAudio = true };
+            Audio = new AudioSystem(this);
+            var stubAudioRef = new LazyAssetReference<BaseAudioEventInfo>(new AudioEvent());
+            var miscAudio = AssetStore.MiscAudio.Current;
+            typeof(MiscAudio)
+                .GetProperty(nameof(MiscAudio.MoneyDepositSound))!
+                .SetValue(miscAudio, stubAudioRef);
+            typeof(MiscAudio)
+                .GetProperty(nameof(MiscAudio.MoneyWithdrawSound))!
+                .SetValue(miscAudio, stubAudioRef);
 
             PlayerManager = new PlayerManager(this);
             PlayerManager.OnNewGame([OpenSage.Data.Map.Player.CreateNeutralPlayer(), OpenSage.Data.Map.Player.CreateCivilianPlayer()], GameType.Skirmish);
