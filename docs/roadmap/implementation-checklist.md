@@ -274,7 +274,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
   - AC: a harness scenario with a harvester shows `BankAccount` balance increasing after a supply
     dump (assert positive delta).
-- [ ] Confirm/implement construction/production debit `BankAccount.Withdraw` with cancel
+- [x] Confirm/implement construction/production debit `BankAccount.Withdraw` with cancel
       refunds (`ProductionUpdate.cs:472-549`, `OrderProcessor.BuildObject`). Audit could not confirm.
   - AC: queuing a unit/structure reduces `BankAccount` by its cost; cancel refunds; insufficient funds
     blocks the action; balance never < 0 (harness asserts all four).
