@@ -278,7 +278,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
       refunds (`ProductionUpdate.cs:472-549`, `OrderProcessor.BuildObject`). Audit could not confirm.
   - AC: queuing a unit/structure reduces `BankAccount` by its cost; cancel refunds; insufficient funds
     blocks the action; balance never < 0 (harness asserts all four).
-- [ ] Power model interactions (`Player.GetEnergy`/`_hasInsufficientPower`, `Player.cs:41,92-104`).
+- [x] Power model interactions (`Player.GetEnergy`/`_hasInsufficientPower`, `Player.cs:41,92-104`).
   - AC: TBD, verify intended effect. Rough template: when consumption > production,
     `_hasInsufficientPower` is set and has a defined effect (e.g. production slowdown/disabled
     structures); test toggles power and asserts the effect.

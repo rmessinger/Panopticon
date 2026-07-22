@@ -10,6 +10,9 @@ public sealed class ProductionJob : IPersistableObject
     // todo: this won't properly persist build time with modifiers - we should probably be fetching on-demand?
     // this will need to take into account things like MinLowEnergyProductionSpeed
     private LogicFrameSpan _buildTime;
+    // Sub-frame accumulator for low-power production slowdown (see ProductionUpdate.Update).
+    // Transient by design: re-evaluated from the owner's HasInsufficientPower flag each tick.
+    private float _subFrameProgress;
 
     private ProductionJobType _jobType;
     private string _templateName;
@@ -22,9 +25,17 @@ public sealed class ProductionJob : IPersistableObject
 
     public float Progress => Math.Max(0, Math.Min(1, _progressPercentage));
 
-    public void Update()
+    /// <param name="speedMultiplier">1.0 for normal power; less than 1.0 (typically
+    /// <c>GameData.MaxLowEnergyProductionSpeed</c>) when the owner has insufficient power,
+    /// applying the production-slowdown effect.</param>
+    public void Update(float speedMultiplier = 1.0f)
     {
-        _progressInFrames++;
+        _subFrameProgress += speedMultiplier;
+        while (_subFrameProgress >= 1.0f)
+        {
+            _progressInFrames++;
+            _subFrameProgress -= 1.0f;
+        }
         _progressPercentage = _progressInFrames / _buildTime;
     }
 
