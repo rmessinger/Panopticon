@@ -132,7 +132,6 @@ public abstract class MockedGameTest : IDisposable
         {
             SageGame = game;
             AssetStore = new AssetStore(game, null, null, null, null, null, null, OnDemandAssetLoadStrategy.None);
-            GameEngine = new GameEngine(AssetStore.LoadContext, null, null, null, null, null, null, null, Scene3D, this);
             IsLogicRunning = true;
             GameSystems = new List<GameSystem>();
 
@@ -144,8 +143,11 @@ public abstract class MockedGameTest : IDisposable
             // and MoneyDepositSound/MoneyWithdrawSound are pinned to a non-null reference so
             // BankAccount.Deposit/Withdraw's eager argument evaluation does not NRE when a
             // docked path (e.g. SupplyCenterDockUpdate.DumpBoxes) exercises playSound=true.
+            // Audio is constructed before GameEngine so GameEngine.AudioSystem is non-null
+            // (modules resolve audio through IGameEngine.AudioSystem, not IGame.Audio).
             Configuration = new Configuration { NoAudio = true };
             Audio = new AudioSystem(this);
+            GameEngine = new GameEngine(AssetStore.LoadContext, Audio, null, null, null, null, null, null, Scene3D, this);
             var stubAudioRef = new LazyAssetReference<BaseAudioEventInfo>(new AudioEvent());
             var miscAudio = AssetStore.MiscAudio.Current;
             typeof(MiscAudio)

@@ -282,7 +282,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: TBD, verify intended effect. Rough template: when consumption > production,
     `_hasInsufficientPower` is set and has a defined effect (e.g. production slowdown/disabled
     structures); test toggles power and asserts the effect.
-- [ ] Close gaps in supply-truck / worker / dozer cycles.
+- [x] Close gaps in supply-truck / worker / dozer cycles.
   - AC: worker/dozer/supply-truck complete a full gather→dump cycle without stalling over a sampled
     run (no stuck states).
 - [ ] P4 scenario matrix: sweep faction × supplyDensity × startingMoney; assert the economy
