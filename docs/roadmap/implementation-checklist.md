@@ -271,21 +271,21 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     `GameOutcome.Reason`, and winning/losing sides; see the deep dive matrix section.
 
 ### P4: Economy loop end-to-end ([deep dive](deep-dives/p4-p6-economy-production-combat.md))
-- [ ] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
+- [x] Verify/complete supply collection → `BankAccount.Deposit` cycle (`BankAccount.cs:41-60`).
   - AC: a harness scenario with a harvester shows `BankAccount` balance increasing after a supply
     dump (assert positive delta).
-- [ ] Confirm/implement construction/production debit `BankAccount.Withdraw` with cancel
+- [x] Confirm/implement construction/production debit `BankAccount.Withdraw` with cancel
       refunds (`ProductionUpdate.cs:472-549`, `OrderProcessor.BuildObject`). Audit could not confirm.
   - AC: queuing a unit/structure reduces `BankAccount` by its cost; cancel refunds; insufficient funds
     blocks the action; balance never < 0 (harness asserts all four).
-- [ ] Power model interactions (`Player.GetEnergy`/`_hasInsufficientPower`, `Player.cs:41,92-104`).
+- [x] Power model interactions (`Player.GetEnergy`/`_hasInsufficientPower`, `Player.cs:41,92-104`).
   - AC: TBD, verify intended effect. Rough template: when consumption > production,
     `_hasInsufficientPower` is set and has a defined effect (e.g. production slowdown/disabled
     structures); test toggles power and asserts the effect.
-- [ ] Close gaps in supply-truck / worker / dozer cycles.
+- [x] Close gaps in supply-truck / worker / dozer cycles.
   - AC: worker/dozer/supply-truck complete a full gather→dump cycle without stalling over a sampled
     run (no stuck states).
-- [ ] P4 scenario matrix: sweep faction × supplyDensity × startingMoney; assert the economy
+- [x] P4 scenario matrix: sweep faction × supplyDensity × startingMoney; assert the economy
       loop runs correctly for every combination.
   - AC: a `ScenarioMatrix` (axes: `faction` ∈ {USA, GLA, China}, `supplyDensity` ∈ {sparse, normal,
     rich}, `startingMoney` ∈ {low, normal}) runs 18 cells; each asserts `BankAccount >= 0` at all

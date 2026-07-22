@@ -118,7 +118,11 @@ public sealed class OrderProcessor
                             Logger.Error($"BuildObject order references unknown object definition id {objectDefinitionId}");
                             continue;
                         }
-                        player.BankAccount.Withdraw((uint)objectDefinition.BuildCost);
+                        if (!TryDebit(player.BankAccount, (uint)objectDefinition.BuildCost))
+                        {
+                            Logger.Warn($"BuildObject for player {order.PlayerIndex}: cannot afford {objectDefinition.Name} (cost {objectDefinition.BuildCost}, balance {player.BankAccount.Money})");
+                            break;
+                        }
 
                         var gameObject = _game.Scene3D.GameObjects.CreateObject(objectDefinition, player);
                         gameObject.Owner = player;
@@ -169,10 +173,14 @@ public sealed class OrderProcessor
                         var objectDefinitionId = order.Arguments[0].Value.ObjectId;
                         var upgradeDefinitionId = (uint)order.Arguments[1].Value.Integer;
 
-                        var gameObject = _game.Scene3D.GameObjects.GetObjectById(objectDefinitionId);
                         var upgradeDefinition = _game.AssetStore.Upgrades.GetByInstanceId(upgradeDefinitionId);
-                        player.BankAccount.Withdraw((uint)upgradeDefinition.BuildCost);
+                        if (!TryDebit(player.BankAccount, (uint)upgradeDefinition.BuildCost))
+                        {
+                            Logger.Warn($"BeginUpgrade for player {order.PlayerIndex}: cannot afford {upgradeDefinition.Name} (cost {upgradeDefinition.BuildCost}, balance {player.BankAccount.Money})");
+                            break;
+                        }
 
+                        var gameObject = _game.Scene3D.GameObjects.GetObjectById(objectDefinitionId);
                         gameObject?.ProductionUpdate.QueueUpgrade(upgradeDefinition);
                     }
                     break;
@@ -204,7 +212,11 @@ public sealed class OrderProcessor
                             Logger.Error($"CreateUnit order references unknown object definition id {objectDefinitionId}");
                             continue;
                         }
-                        player.BankAccount.Withdraw((uint)objectDefinition.BuildCost);
+                        if (!TryDebit(player.BankAccount, (uint)objectDefinition.BuildCost))
+                        {
+                            Logger.Warn($"CreateUnit for player {order.PlayerIndex}: cannot afford {objectDefinition.Name} (cost {objectDefinition.BuildCost}, balance {player.BankAccount.Money})");
+                            break;
+                        }
 
                         // Find a producer among the currently selected units that has a UnitBuild
                         // command button for the requested unit definition.  This guards against the
@@ -622,5 +634,22 @@ public sealed class OrderProcessor
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Affordability guard for purchase paths (BuildObject, CreateUnit, BeginUpgrade).
+    /// Returns false without debiting when the balance is below cost, so the caller
+    /// can skip the side effect (object creation, queue entry, upgrade start) and keep
+    /// the BankAccount non-negative invariant. Returns true and debits exactly cost
+    /// when the balance covers it.
+    /// </summary>
+    internal static bool TryDebit(BankAccount account, uint cost)
+    {
+        if (account.Money < cost)
+        {
+            return false;
+        }
+        account.Withdraw(cost);
+        return true;
     }
 }

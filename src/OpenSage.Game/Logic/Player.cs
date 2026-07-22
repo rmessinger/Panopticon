@@ -104,9 +104,39 @@ public class Player : IPersistableObject
         return energy;
     }
 
+    /// <summary>
+    /// Sum of <see cref="GameObject.EnergyProduction"/> over this player's owned objects.
+    /// Positive entries are power plants; negative entries are structures that consume
+    /// power (the SAGE INI convention). Negative net means insufficient power.
+    /// </summary>
+    public int EnergyBalance
+    {
+        get
+        {
+            var energy = 0;
+            foreach (var gameObject in OwnedObjects)
+            {
+                energy += gameObject.EnergyProduction;
+            }
+            return energy;
+        }
+    }
+
+    /// <summary>
+    /// True when owned power consumption exceeds owned power production. Drives the
+    /// production-slowdown effect (see <see cref="Object.Production.ProductionJob"/>).
+    /// </summary>
+    internal bool HasInsufficientPower => _hasInsufficientPower;
+
+    internal void UpdatePowerState()
+    {
+        _hasInsufficientPower = EnergyBalance < 0;
+    }
+
     public void LogicTick()
     {
         Rank.Update();
+        UpdatePowerState();
         AIPlayer?.Update();
     }
 

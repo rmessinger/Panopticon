@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P4-02` |
 | Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-2, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | P1 complete enough that player ownership, construction ownership, and headless harness assertions are reliable |
@@ -84,4 +84,4 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+2026-07-21: Audit findings: BuildObject/BeginUpgrade/CreateUnit all called `BankAccount.Withdraw` unconditionally with no affordability check; since Withdraw clamps at zero, the side effect proceeded on partial funds (exploit: queue a 500-cost item with 100 in the bank, Withdraw takes 100, building still goes up). Cancel paths already refunded exactly once per cancel invocation. Added `OrderProcessor.TryDebit(account, cost)` (internal static helper): returns false without debiting when balance < cost, otherwise withdraws exactly cost. Wired it into BuildObject, BeginUpgrade (reordered to do the AssetStore lookup and TryDebit before the Scene3D lookup so the unaffordable case exits without touching Scene3D), and CreateUnit. Tests cover: TryDebit unit behavior (affordable/zero/exact-cost/unaffordable), OrderProcessor integration for all three purchase paths blocking on insufficient funds, and CancelUnit/CancelUpgrade refund-once through OrderProcessor. CancelBuild's Kill path is more involved in the mocked host (needs BodyModule + Drawable); the refund mechanic itself is identical (Deposit(BuildCost) once per cancel) and is covered by the parallel CancelUnit/CancelUpgrade tests plus the GatherDeposit Deposit tests. Validation: dotnet build src (0 errors); dotnet test src --filter "FullyQualifiedName~SpendDebitTests" (9 passed); dotnet test src --filter Category!=Interactive (735 passed, 17 skipped, 0 failed); dotnet format src --verify-no-changes (clean).

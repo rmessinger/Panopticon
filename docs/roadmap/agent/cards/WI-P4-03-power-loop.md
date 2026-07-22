@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P4-03` |
 | Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-3, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | P1 complete enough that player ownership and owned-object energy scans are reliable |
@@ -83,4 +83,4 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+2026-07-21: Audit findings: (1) `_hasInsufficientPower` (Player.cs:42) was persisted but NEVER read or written outside of `Player.Persist` (dead field); (2) `Player.GetEnergy` summed `gameObject.EnergyProduction` over the full game-object collection (the SAGE convention: power plants have positive `EnergyProduction`, consumers negative); (3) `GameData.MinLowEnergyProductionSpeed`/`MaxLowEnergyProductionSpeed` documented a fractional production slowdown, and `ProductionJob.cs:11` had a TODO referencing it. The intended effect was therefore verifiable from code/data: production slowdown via `MaxLowEnergyProductionSpeed`. Wiring: added `Player.EnergyBalance` (sums `EnergyProduction` over `OwnedObjects`) and `Player.UpdatePowerState()` (sets `_hasInsufficientPower = EnergyBalance < 0`), called from `Player.LogicTick()` so it runs each per-player per-tick (the cadence the card prefers over a new subsystem). Exposed `internal bool HasInsufficientPower` for tests. Effect: `ProductionUpdate.Update` now passes `GameData.MaxLowEnergyProductionSpeed` as the speed multiplier to `ProductionJob.Update(float speedMultiplier = 1.0f)` when the owner has insufficient power; `ProductionJob` accumulates a transient `_subFrameProgress` (non-persisted; on save/load it restarts from integer progress) so fractional speeds work without changing the persisted `_progressInFrames` field type. Tests cover: no-consumer default (false), production-only (false), consumption>production (true), exact-balance boundary (false), insufficient-by-one (true), restoring clears flag (also covers teardown), and the production-slowdown effect (full-power job reaches Progress=1.0 in 10 ticks; low-power reaches ~0.5 in 10 ticks, then 1.0 after another 10). Validation: dotnet build src (0 errors); PowerLoopTests (7 passed); Category!=Interactive (742 passed, 17 skipped, 0 failed); dotnet format src --verify-no-changes (clean). Future follow-up: randomised slowdown within [MinLowEnergyProductionSpeed, MaxLowEnergyProductionSpeed] range, and structure-disable behavior (the deep dive's "TBD" alternate effect).

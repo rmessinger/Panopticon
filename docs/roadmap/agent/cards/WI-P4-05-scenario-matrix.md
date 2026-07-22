@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P4-05` |
 | Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): scenario matrix, see [P4 deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) and [P4 Scenario Matrix](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P4-01`, `WI-P4-02`, `WI-P4-03` |
@@ -82,4 +82,4 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+2026-07-21: Replaced the two P4 matrix stubs with non-skipped `[Fact]` runs in `TrackPScenarioMatrixTests.P4_ScenarioMatrixTests`. Built `ScenarioMatrix` with axes faction {USA, GLA, China} × supplyDensity {sparse, normal, rich} × startingMoney {low, normal}, no filters (3x3x2 = 18 cells, matching the checklist's correction of the deep-dive arithmetic). Per cell, a synthetic economy loop runs for 16 frames: income side calls `SupplyCenterDockUpdate.DumpBoxes` (boxes per frame = sparse 1 / normal 2 / rich 4, ValuePerSupplyBox pinned to 100); spend side calls `OrderProcessor.TryDebit(account, 1000)` and counts a queued production job on success. The full OrderProcessor CreateUnit path requires a real producer + Scene3D, which the mocked host does not provide; the test exercises the same TryDebit + ProductionJob queue logic directly. `Matrix_AllCells_EconomyInvariantsHold` asserts 18 cells pass three assertions each: balance non-negative at every sampled tick, total income deposited > 0, and at least one production job queued. `Matrix_LowStartingMoney_ProductionGatedUntilIncomeArrives` covers the 9 low-startingMoney cells with gating assertions (firstAffordableFrame > 0, balance non-negative). Per-cell failure output includes the faction-supplyDensity-startingMoney axis key plus the assertion message. Validation: dotnet build src (0 errors); P4_ScenarioMatrixTests (2 passed); Category!=Interactive (748 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).

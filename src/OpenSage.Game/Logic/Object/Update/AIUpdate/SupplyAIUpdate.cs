@@ -109,6 +109,18 @@ public abstract class SupplyAIUpdate : AIUpdate
     {
         var sleepTime = base.Update();
 
+        TickSupplyState();
+
+        return sleepTime;
+    }
+
+    /// <summary>
+    /// Advances the supply gather/dump state machine one tick. Extracted from
+    /// <see cref="Update"/> so headless cycle tests can drive the supply state machine
+    /// without invoking the full AIUpdate base path (locomotion, target acquisition, etc.).
+    /// </summary>
+    internal void TickSupplyState()
+    {
         var isMoving = GameObject.ModelConditionFlags.Get(ModelConditionFlag.Moving);
 
         switch (SupplyGatherState)
@@ -254,8 +266,6 @@ public abstract class SupplyAIUpdate : AIUpdate
             case SupplyGatherStates.FinishedDumpingSupplies:
                 break;
         }
-
-        return sleepTime;
     }
 }
 

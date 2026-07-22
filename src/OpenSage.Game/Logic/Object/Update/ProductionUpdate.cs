@@ -83,7 +83,13 @@ public sealed class ProductionUpdate : UpdateModule
         if (isProducing)
         {
             var front = _productionQueue[0];
-            front.Update();
+            // Low-power production slowdown: when the owner has insufficient power, advance
+            // the job at GameData.MaxLowEnergyProductionSpeed (e.g. 0.5 = half speed) instead
+            // of one full frame per tick.
+            var speedMultiplier = GameObject.Owner.HasInsufficientPower
+                ? GameEngine.Game.AssetStore.GameData.Current.MaxLowEnergyProductionSpeed
+                : 1.0f;
+            front.Update(speedMultiplier);
 
             if (ProductionExit is { CanProduce: true })
             {
