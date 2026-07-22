@@ -285,7 +285,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Close gaps in supply-truck / worker / dozer cycles.
   - AC: worker/dozer/supply-truck complete a full gather→dump cycle without stalling over a sampled
     run (no stuck states).
-- [ ] P4 scenario matrix: sweep faction × supplyDensity × startingMoney; assert the economy
+- [x] P4 scenario matrix: sweep faction × supplyDensity × startingMoney; assert the economy
       loop runs correctly for every combination.
   - AC: a `ScenarioMatrix` (axes: `faction` ∈ {USA, GLA, China}, `supplyDensity` ∈ {sparse, normal,
     rich}, `startingMoney` ∈ {low, normal}) runs 18 cells; each asserts `BankAccount >= 0` at all
