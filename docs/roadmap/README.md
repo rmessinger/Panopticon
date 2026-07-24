@@ -211,11 +211,11 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | P2 - Skirmish AI | `██████████` | 7 / 7 |
 | P3 - Victory & defeat | `░░░░░░░░░░` | 0 / 9 |
 | P4 - Economy loop | `░░░░░░░░░░` | 0 / 5 |
-| P5 - Construction & production | `░░░░░░░░░░` | 0 / 5 |
+| P5 - Construction & production | `██████████` | 5 / 5 |
 | P6 - Combat & command | `░░░░░░░░░░` | 0 / 5 |
 | P6b - Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
 | P7 - End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
-| Track P total | `██░░░░░░░░` | 16 / 68 |
+| Track P total | `███░░░░░░░` | 21 / 68 |
 
 ### Tracks A / B / C (gated on Track P)
 

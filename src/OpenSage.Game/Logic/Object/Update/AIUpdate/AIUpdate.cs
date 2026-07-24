@@ -179,7 +179,7 @@ public class AIUpdate : UpdateModule
     {
         TargetPoints.Add(targetPoint);
 
-        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, true);
+        GameObject.SetModelConditionState(ModelConditionFlag.Moving);
     }
 
     internal void AppendPathToTargetPoint(in Vector3 targetPoint)
@@ -191,6 +191,12 @@ public class AIUpdate : UpdateModule
 
         if (!GameObject.Definition.KindOf.Get(ObjectKinds.Aircraft) && targetPoint != GameObject.Translation)
         {
+            if (GameEngine.Navigation == null)
+            {
+                AddTargetPoint(targetPoint);
+                return;
+            }
+
             var start = GameObject.Translation;
             var path = GameEngine.Navigation.CalculatePath(start, targetPoint, out var endIsPassable);
             if (path.Count > 0)
@@ -203,7 +209,7 @@ public class AIUpdate : UpdateModule
                 TargetPoints[TargetPoints.Count - 1] = targetPoint;
             }
             Logger.Debug("Set new target points: " + TargetPoints.Count);
-            GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, true);
+            GameObject.SetModelConditionState(ModelConditionFlag.Moving);
         }
         else
         {

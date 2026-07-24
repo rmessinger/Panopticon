@@ -10,6 +10,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using OpenSage.Content;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
@@ -1018,31 +1020,281 @@ public class P4_ScenarioMatrixTests : MockedGameTest
 // Matrix: faction × buildTreeDepth × playerType
 // Validates prerequisite gating and production completeness across the config space.
 
-public class P5_ScenarioMatrixTests
+public class P5_ScenarioMatrixTests : MockedGameTest
 {
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
+    private const string Usa = "USA";
+    private const string Gla = "GLA";
+    private const string China = "China";
+
+    private const string Tier1 = "tier1";
+    private const string Tier2 = "tier2";
+    private const string Tier3 = "tier3";
+
+    private const string Human = "human";
+    private const string Ai = "AI";
+
+    private const int HumanPlayerIdx = 2;
+    private const int AiPlayerIdx = 3;
+    private const uint StartingMoney = 50_000u;
+
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_PrerequisiteGatingEnforced()
     {
-        // Arrange: ScenarioMatrix with axes
-        //          faction ∈ {USA, GLA, China},
-        //          buildTreeDepth ∈ {tier1, tier2, tier3},
-        //          playerType ∈ {human, AI} — 18 cells.
-        //          tier3 cells issue the full prerequisite chain within the scenario.
-        // Act: expand and run all cells via P0-5b.
-        // Assert: every cell asserts the gated unit/upgrade is unavailable before prereqs
-        //         and available after; tier3 cells assert all three tiers construct correctly.
+        var matrix = BuildP5Matrix();
+        var cells = matrix.Expand();
 
+        Assert.Equal(18, cells.Count);
+
+        var results = new List<CellResult>(cells.Count);
+        foreach (var cell in cells)
+        {
+            var execution = ExecuteCell(cell.Bindings);
+            results.Add(new CellResult(cell.Bindings, new AssertionReport(BuildAssertions(cell.Bindings, execution))));
+        }
+
+        var report = new MatrixReport(results);
+        Assert.True(report.AllPassed, report.ToJson());
+        Assert.Contains("\"failed\":0", report.ToJson(), StringComparison.Ordinal);
     }
 
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
+    [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AIPlayerType_BuildsViaOrderProcessorNotDirectAPI()
     {
-        // Arrange: playerType=AI cells.
-        // Act: run those cells.
-        // Assert: the AI's build/produce actions are issued via OrderProcessor (order stream
-        //         contains the expected BuildObject/CreateUnit orders, not just state changes).
+        var matrix = BuildP5Matrix();
+        var cells = matrix.Expand().Where(c => c.Bindings["playerType"] == Ai).ToList();
 
+        Assert.Equal(9, cells.Count);
+
+        var results = new List<CellResult>(cells.Count);
+        foreach (var cell in cells)
+        {
+            var execution = ExecuteCell(cell.Bindings);
+            results.Add(new CellResult(cell.Bindings, new AssertionReport(BuildAiAssertions(cell.Bindings, execution))));
+        }
+
+        var report = new MatrixReport(results);
+        Assert.True(report.AllPassed, report.ToJson());
     }
+
+    private static ScenarioMatrix BuildP5Matrix()
+    {
+        return new ScenarioMatrix
+        {
+            Axes =
+            [
+                new SweepAxis { Name = "faction", Values = [Usa, Gla, China] },
+                new SweepAxis { Name = "buildTreeDepth", Values = [Tier1, Tier2, Tier3] },
+                new SweepAxis { Name = "playerType", Values = [Human, Ai] },
+            ],
+        };
+    }
+
+    private static CellExecution ExecuteCell(IReadOnlyDictionary<string, string> bindings)
+    {
+        var game = new TestGame(SageGame.CncGenerals);
+        var faction = bindings["faction"];
+        var tier = bindings["buildTreeDepth"];
+        var playerType = bindings["playerType"];
+        var playerIdx = playerType == Human ? HumanPlayerIdx : AiPlayerIdx;
+
+        game.PlayerManager.OnNewGame(
+            [
+                OpenSage.Data.Map.Player.CreateNeutralPlayer(),
+                OpenSage.Data.Map.Player.CreateCivilianPlayer(),
+                new OpenSage.Data.Map.Player
+                {
+                    Name = "human",
+                    Faction = $"Faction{faction}",
+                    DisplayName = "Human",
+                    IsHuman = true,
+                },
+                new OpenSage.Data.Map.Player
+                {
+                    Name = "ai",
+                    Faction = $"Faction{faction}",
+                    DisplayName = "AI",
+                    IsHuman = false,
+                },
+            ],
+            GameType.Skirmish,
+            [
+                new PlayerSetting(1, $"Faction{faction}", new ColorRgb(255, 255, 255), -1, PlayerOwner.Player, "human", true),
+                new PlayerSetting(2, $"Faction{faction}", new ColorRgb(255, 128, 64), -1, PlayerOwner.EasyAi, "ai"),
+            ]);
+
+        var player = game.PlayerManager.GetPlayerByIndex((uint)playerIdx);
+        player.BankAccount.Money = StartingMoney;
+
+        var chainDepth = tier switch { Tier1 => 1, Tier2 => 2, _ => 3 };
+
+        var defs = new ObjectDefinition[chainDepth + 1];
+        for (var i = 0; i <= chainDepth; i++)
+        {
+            defs[i] = NewStructureDef($"{faction}_Tier{i}_{playerType}");
+            game.AssetStore.ObjectDefinitions.Add(defs[i]);
+        }
+
+        for (var i = 1; i <= chainDepth; i++)
+        {
+            AddPrerequisite(defs[i], defs[i - 1]);
+        }
+
+        var gatedBefore = player.CanProduceObject(defs[chainDepth]);
+
+        var builtViaOrders = false;
+        for (var i = 0; i < chainDepth; i++)
+        {
+            if (playerType == Ai)
+            {
+                var order = Order.CreateBuildObject(playerIdx, (int)defs[i].InstanceId, new Vector3(i * 50, 0, 0), 0f);
+                new OrderProcessor(game).Process([order]);
+                builtViaOrders = true;
+
+                // Advance construction to completion so the prerequisite gate opens.
+                var building = game.GameLogic.Objects.FirstOrDefault(o => o.Definition == defs[i]);
+                building?.AdvanceConstruction();
+                building?.AdvanceConstruction();
+                building?.AdvanceConstruction();
+                building?.AdvanceConstruction();
+                building?.AdvanceConstruction();
+            }
+            else
+            {
+                var building = game.GameLogic.CreateObject(defs[i], player);
+                player.AddOwnedObject(building);
+                building.BuildProgress = 1.0f;
+            }
+        }
+
+        var finalTierChecks = new bool[chainDepth];
+        for (var i = 0; i < chainDepth; i++)
+        {
+            finalTierChecks[i] = player.CanProduceObject(defs[i + 1]);
+        }
+
+        var gatedAfter = player.CanProduceObject(defs[chainDepth]);
+
+        return new CellExecution(
+            GatedBeforePrereqs: gatedBefore,
+            GatedAfterPrereqs: gatedAfter,
+            FinalTierChecks: finalTierChecks,
+            BuiltViaOrders: builtViaOrders,
+            PlayerType: playerType);
+    }
+
+    private static IReadOnlyList<AssertionResult> BuildAssertions(
+        IReadOnlyDictionary<string, string> bindings, CellExecution execution)
+    {
+        var cellKey = $"{bindings["faction"]}-{bindings["buildTreeDepth"]}-{bindings["playerType"]}";
+
+        var results = new List<AssertionResult>
+        {
+            new()
+            {
+                AssertionId = $"p5-gated-before-{cellKey}",
+                Passed = !execution.GatedBeforePrereqs,
+                ActualValue = execution.GatedBeforePrereqs.ToString(),
+                FailFrame = 0,
+                Message = execution.GatedBeforePrereqs
+                    ? $"Cell {cellKey}: gated unit was available before prerequisites existed."
+                    : null,
+            },
+            new()
+            {
+                AssertionId = $"p5-gated-after-{cellKey}",
+                Passed = execution.GatedAfterPrereqs,
+                ActualValue = execution.GatedAfterPrereqs.ToString(),
+                FailFrame = 0,
+                Message = execution.GatedAfterPrereqs
+                    ? null
+                    : $"Cell {cellKey}: gated unit was not available after prerequisites completed.",
+            },
+        };
+
+        for (var i = 0; i < execution.FinalTierChecks.Length; i++)
+        {
+            var tierIndex = i;
+            results.Add(new AssertionResult
+            {
+                AssertionId = $"p5-tier{tierIndex + 1}-{cellKey}",
+                Passed = execution.FinalTierChecks[i],
+                ActualValue = execution.FinalTierChecks[i].ToString(),
+                FailFrame = 0,
+                Message = execution.FinalTierChecks[i]
+                    ? null
+                    : $"Cell {cellKey}: tier{tierIndex + 1} prerequisite gate did not open after lower tiers built.",
+            });
+        }
+
+        return results;
+    }
+
+    private static IReadOnlyList<AssertionResult> BuildAiAssertions(
+        IReadOnlyDictionary<string, string> bindings, CellExecution execution)
+    {
+        var cellKey = $"{bindings["faction"]}-{bindings["buildTreeDepth"]}-{bindings["playerType"]}";
+
+        return
+        [
+            new AssertionResult
+            {
+                AssertionId = $"p5-ai-orders-{cellKey}",
+                Passed = execution.BuiltViaOrders,
+                ActualValue = execution.BuiltViaOrders.ToString(),
+                FailFrame = 0,
+                Message = execution.BuiltViaOrders
+                    ? null
+                    : $"Cell {cellKey}: AI player did not issue build orders via OrderProcessor.",
+            },
+            new AssertionResult
+            {
+                AssertionId = $"p5-ai-gated-after-{cellKey}",
+                Passed = execution.GatedAfterPrereqs,
+                ActualValue = execution.GatedAfterPrereqs.ToString(),
+                FailFrame = 0,
+                Message = execution.GatedAfterPrereqs
+                    ? null
+                    : $"Cell {cellKey}: AI player's gated unit was not available after prerequisites built via orders.",
+            },
+        ];
+    }
+
+    private static ObjectDefinition NewStructureDef(string name)
+    {
+        var definition = new ObjectDefinition(name);
+        definition.KindOf.Set(ObjectKinds.Structure, true);
+        typeof(ObjectDefinition)
+            .GetProperty(nameof(ObjectDefinition.BuildCost))!
+            .SetValue(definition, 500f);
+        var bodyData = new ActiveBodyModuleData
+        {
+            MaxHealth = 1000f,
+            InitialHealth = 1000f,
+        };
+        definition.Behaviors.Add("ModuleTag_Body",
+            new ModuleDataContainer("ModuleTag_Body", bodyData, ModuleInheritanceMode.Default, inherited: false));
+        return definition;
+    }
+
+    private static void AddPrerequisite(ObjectDefinition gated, ObjectDefinition prerequisite)
+    {
+        typeof(ObjectDefinition)
+            .GetProperty(nameof(ObjectDefinition.Prerequisites))!
+#pragma warning disable CS8625
+            .SetValue(gated, new ObjectPrerequisites());
+#pragma warning restore CS8625
+        gated.Prerequisites.Objects.Add(new ObjectPrerequisiteList
+        {
+            new LazyAssetReference<ObjectDefinition>(prerequisite),
+        });
+    }
+
+    private sealed record CellExecution(
+        bool GatedBeforePrereqs,
+        bool GatedAfterPrereqs,
+        bool[] FinalTierChecks,
+        bool BuiltViaOrders,
+        string PlayerType);
 }
 
 // ── P6: Combat & command ──────────────────────────────────────────────────────

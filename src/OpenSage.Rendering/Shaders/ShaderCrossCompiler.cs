@@ -60,11 +60,27 @@ internal static class ShaderCrossCompiler
             ? CrossCompileTarget.HLSL
             : GetCompilationTarget(backendType);
 
-        var compilationResult = SpirvCompilation.CompileVertexFragment(
-            vsSpvBytes,
-            fsSpvBytes,
-            compilationTarget,
-            new CrossCompileOptions());
+        VertexFragmentCompilationResult compilationResult;
+        try
+        {
+            compilationResult = SpirvCompilation.CompileVertexFragment(
+                vsSpvBytes,
+                fsSpvBytes,
+                compilationTarget,
+                new CrossCompileOptions());
+        }
+        catch (SpirvCompilationException ex) when (IsGlslEmitterNativeBug(ex, compilationTarget))
+        {
+            throw new SpirvCompilationException(
+                $"Cross-compiling shader '{shaderName}' to {compilationTarget} failed because the " +
+                $"bundled Veldrid.SPIRV 1.0.15 native has a bug in its GLSL/ESSL emitter " +
+                $"(it throws basic_string::replace with npos on shaders that use storage buffers). " +
+                $"The {backendType} backend requires {compilationTarget} output and cannot be used for this shader. " +
+                "Use a backend whose shaders cross-compile via the unaffected HLSL or MSL paths " +
+                "(Vulkan, Direct3D 11, or Metal). If the platform defaulted to OpenGL/OpenGLES, " +
+                "install a Vulkan-capable driver and/or run under a non-snap .NET SDK so Veldrid can " +
+                "select Vulkan. Original native error: " + ex.Message, ex);
+        }
 
         byte[] vsBytes, fsBytes;
 
@@ -170,6 +186,21 @@ internal static class ShaderCrossCompiler
             GraphicsBackend.OpenGLES => CrossCompileTarget.ESSL,
             _ => throw new SpirvCompilationException($"Invalid GraphicsBackend: {backend}"),
         };
+    }
+
+    // The GLSL and ESSL emitters in libveldrid-spirv 1.0.15 crash with a
+    // std::out_of_range from basic_string::replace (pos == npos) on shaders
+    // containing storage buffers. HLSL and MSL emitters are unaffected, so
+    // this only matters when the selected backend needs GLSL/ESSL output.
+    private static bool IsGlslEmitterNativeBug(SpirvCompilationException ex, CrossCompileTarget target)
+    {
+        if (target is not (CrossCompileTarget.GLSL or CrossCompileTarget.ESSL))
+        {
+            return false;
+        }
+
+        const string symptom = "basic_string::replace";
+        return ex.Message != null && ex.Message.Contains(symptom, StringComparison.Ordinal);
     }
 
     /// <summary>
