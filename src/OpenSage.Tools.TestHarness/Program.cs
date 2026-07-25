@@ -271,7 +271,7 @@ public static class Program
         game.StartRun();
         ApplyCameraZoomMultiplierOnce(game, config.MaxCameraZoomMultiplier);
 
-        var capture = new FrameCaptureService();
+        using var capture = new FrameCaptureService();
 
         // Once the first enemy Command Center is destroyed, run a short tail period then exit.
         const uint RunoutLogicFrames = 300; // 10 game-seconds at 30 fps
@@ -312,7 +312,7 @@ public static class Program
         if (config.CaptureFrames)
         {
             Console.WriteLine($"Captures written to: {FrameCaptureService.CaptureDirectory}");
-            Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines; open the PNG; validate; delete the file.");
+            Console.WriteLine("Agent: monitor stdout for [CAPTURE] lines and inspect during the run; files are deleted on exit.");
         }
 
         var frameRect = new OpenSage.Mathematics.Rectangle(0, 0, 1024, 768);

@@ -282,3 +282,19 @@
   be validated against existing built-in content first. Affects
   [Track D](track-d-gameplay-expansion.md),
   [deep-dives/d1-d2-tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md).
+- Deformable terrain & destruction scope — Decision: own track (Track F), not folded into an
+  existing track; destruction is physics-based, not model-swap. Runtime terrain deformation
+  (craters/scorch marks) does not exist in original SAGE, and Track F's destruction (F4/F5)
+  replaces the canned model-swap approach (rubble/damage-state model swaps, already covered under
+  P6-2/P6-3) with rigid-body physics simulation (debris/structural collapse via a new pluggable
+  physics seam). Both are new fidelity beyond what P6-2/P6-3 verify, so neither is gated by Track P
+  playable-baseline fidelity. The track is split out because it cuts across terrain storage
+  ([B4a](deep-dives/b4a-larger-maps.md)), rendering ([B5](track-b-scale.md)), a new physics substrate,
+  combat ([P6](deep-dives/p4-p6-economy-production-combat.md)), and save/replay/determinism
+  ([A2](track-a-foundations.md)) rather than fitting inside any single existing track — the same
+  reasoning that split gameplay content out as Track D. Named "Track F" (not "Track D"/"Track E")
+  to avoid collisions with two pending unmerged branches: `docs/track-d-gameplay-expansion`
+  (Gameplay Content Expansion) and `docs/track-e-naval-warfare` (Naval Warfare). The physics
+  engine/library is an open candidate, settled when F4 starts, mirroring how Track C left the
+  first external model format ([C4](track-c-external-assets.md)) as a candidate. Affects
+  [Track F](track-f-terrain-destruction.md).

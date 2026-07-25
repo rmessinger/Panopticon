@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using SixLabors.ImageSharp;
@@ -20,13 +21,11 @@ namespace OpenSage.Graphics;
 ///   [CAPTURE] /path/to/capture_0001.png | &lt;validation hint&gt;
 /// </code>
 ///
-/// Agent workflow:
-/// <list type="number">
-///   <item>Monitor stdout for lines starting with <c>[CAPTURE]</c>.</item>
-///   <item>Split on <c> | </c> to get the file path and the validation hint.</item>
-///   <item>Open the PNG and evaluate whether the scene matches the hint.</item>
-///   <item>Delete the file after inspection to avoid disk accumulation.</item>
-/// </list>
+/// Files written by an instance are deleted when the instance is disposed, so a
+/// <c>using</c> scope (the standard pattern in tests and the TestHarness) prevents
+/// disk accumulation. Inspect captures during the run via the <c>[CAPTURE]</c>
+/// stdout lines. <see cref="ClearCaptureDirectory"/> removes every file in the
+/// capture directory regardless of which instance wrote it (test teardown).
 ///
 /// Example (in a headless game loop):
 /// <code>
@@ -46,7 +45,7 @@ namespace OpenSage.Graphics;
 ///   }
 /// </code>
 /// </summary>
-public sealed class FrameCaptureService
+public sealed class FrameCaptureService : IDisposable
 {
     /// <summary>
     /// Directory where capture PNGs are written.
@@ -57,6 +56,8 @@ public sealed class FrameCaptureService
 
     private int _captureCount;
     private string _pendingHint;
+    private readonly List<string> _writtenPaths = new();
+    private bool _disposed;
 
     public FrameCaptureService()
     {
@@ -102,7 +103,50 @@ public sealed class FrameCaptureService
         using var image = ToImage(frame);
         image.SaveAsPng(path);
 
+        _writtenPaths.Add(path);
         Console.WriteLine($"[CAPTURE] {path} | {hint}");
+    }
+
+    /// <summary>
+    /// Deletes every file this instance wrote. Called automatically by <see cref="Dispose()"/>;
+    /// safe to call explicitly for mid-run cleanup. Missing files are ignored.
+    /// </summary>
+    public void DeleteCaptures()
+    {
+        foreach (var path in _writtenPaths)
+        {
+            try { File.Delete(path); }
+            catch (IOException) { }
+        }
+        _writtenPaths.Clear();
+    }
+
+    /// <summary>
+    /// Deletes every file in <see cref="CaptureDirectory"/>, regardless of which process or
+    /// instance wrote it. Intended for test teardown.
+    /// </summary>
+    public static void ClearCaptureDirectory()
+    {
+        if (!Directory.Exists(CaptureDirectory))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(CaptureDirectory))
+        {
+            try { File.Delete(file); }
+            catch (IOException) { }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+        _disposed = true;
+        DeleteCaptures();
     }
 
     // -------------------------------------------------------------------------

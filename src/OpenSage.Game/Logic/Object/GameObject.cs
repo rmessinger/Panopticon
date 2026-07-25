@@ -1036,11 +1036,16 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         ClearModelConditionFlags();
 
-        ModelConditionFlags.Set(ModelConditionFlag.ActivelyBeingConstructed, false);
-        ModelConditionFlags.Set(ModelConditionFlag.AwaitingConstruction, true);
-        ModelConditionFlags.Set(ModelConditionFlag.PartiallyConstructed, false);
+        ClearModelConditionState(ModelConditionFlag.ActivelyBeingConstructed);
+        SetModelConditionState(ModelConditionFlag.AwaitingConstruction);
+        ClearModelConditionState(ModelConditionFlag.PartiallyConstructed);
 
         _status.Set(ObjectStatus.UnderConstruction, true);
+
+        if (_gameEngine.Terrain == null)
+        {
+            return;
+        }
 
         // flatten terrain around object
         var centerPosition = _gameEngine.Terrain.HeightMap.GetTilePosition(Transform.Translation);
@@ -1057,11 +1062,14 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         // clear anything applicable in the build area (trees, rubble, etc)
         var toDelete = new BitArray<ObjectKinds>(ObjectKinds.Shrubbery, ObjectKinds.ClearedByBuild); // this may not be completely accurate
-        foreach (var intersecting in _gameEngine.Quadtree.FindIntersecting(ShapedCollider))
+        if (_gameEngine.Quadtree != null)
         {
-            if (intersecting.Definition.KindOf.Intersects(toDelete))
+            foreach (var intersecting in _gameEngine.Quadtree.FindIntersecting(ShapedCollider))
             {
-                _gameEngine.GameLogic.DestroyObject(intersecting);
+                if (intersecting.Definition.KindOf.Intersects(toDelete))
+                {
+                    _gameEngine.GameLogic.DestroyObject(intersecting);
+                }
             }
         }
 
@@ -1073,6 +1081,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
     /// </summary>
     internal void SetIsBeingConstructed()
     {
+        if (Drawable == null) return;
         ModelConditionFlags.Set(ModelConditionFlag.ActivelyBeingConstructed, true);
         ModelConditionFlags.Set(ModelConditionFlag.PartiallyConstructed, true);
         ModelConditionFlags.Set(ModelConditionFlag.AwaitingConstruction, false);
@@ -1152,17 +1161,20 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     public void ClearModelConditionState(ModelConditionFlag state)
     {
+        if (Drawable == null) return;
         ModelConditionFlags.Set(state, false);
     }
 
     public void ClearModelConditionFlags()
     {
+        if (Drawable == null) return;
         ModelConditionFlags.SetAll(false);
         // todo: maintain map-based flags, such as NIGHT, SNOW, etc
     }
 
     public void SetModelConditionState(ModelConditionFlag state)
     {
+        if (Drawable == null) return;
         ModelConditionFlags.Set(state, true);
     }
 
