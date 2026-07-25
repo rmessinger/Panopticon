@@ -376,14 +376,13 @@ public class AIUpdate : UpdateModule
                     // TODO(Port): Use correct parameter values.
                     var blocked = false;
                     var toTarget = TargetPoints[0] - GameObject.Translation;
-                    // onPathDistToGoal governs the locomotor's braking window. It must match the
-                    // arrival metric (CloseEnoughDist3D): aircraft hold PreferredHeight, so a 3D
-                    // distance stays dominated by altitude and braking never engages, leaving the
-                    // unit to overshoot the goal and loop back.
-                    var use3DArrival = CurrentLocomotor.LocomotorTemplate.CloseEnoughDist3D;
-                    var onPathDistToGoal = use3DArrival
-                        ? toTarget.Length()
-                        : toTarget.Vector2XY().Length();
+                    // onPathDistToGoal governs the locomotor's braking window and must always be
+                    // horizontal-only: Locomotor's own braking math (and e.g.
+                    // MoveTowardsPositionWings) operates in 2D, with altitude handled separately
+                    // via PreferredHeight. Passing a 3D distance here inflates the value with
+                    // altitude, so the braking check never engages and the unit overshoots the
+                    // goal and loops back. CloseEnoughDist3D only affects the arrival check below.
+                    var onPathDistToGoal = toTarget.Vector2XY().Length();
                     CurrentLocomotor.LocoUpdateMoveTowardsPosition(
                         GameObject,
                         TargetPoints[0],
@@ -391,6 +390,7 @@ public class AIUpdate : UpdateModule
                         CurrentLocomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState),
                         ref blocked);
 
+                    var use3DArrival = CurrentLocomotor.LocomotorTemplate.CloseEnoughDist3D;
                     var distToTargetSq = use3DArrival
                         ? toTarget.LengthSquared()
                         : toTarget.Vector2XY().LengthSquared();
