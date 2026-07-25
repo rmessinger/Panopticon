@@ -615,3 +615,39 @@ See [`track-e-naval-warfare.md`](track-e-naval-warfare.md) and the
 - [ ] E4 Reference naval scenario (port + ships fighting, via ReplaySketch).
   - AC: TBD, a ReplaySketch-authored scenario builds a ship from a port and wins a water
     engagement, asserted headlessly per the P0 harness pattern.
+
+## Track F: Deformable Terrain & Destruction
+
+See [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md). Gated on Track P (P7);
+coordinates with B4a (chunked terrain storage), B5 (rendering at scale), and B7 (variable
+fidelity, for destruction physics cost). Destruction is physics-based (rigid-body debris/
+collapse), not the existing canned model-swap rubble/damage-state system.
+
+- [ ] F1 Terrain deformation data model (deltas layered on the chunked heightmap).
+  - AC: TBD, a deformation delta applies to and is queryable from a chunked heightmap region in
+    isolation from rendering.
+- [ ] F2 Runtime mesh & rendering update for deformed regions.
+  - AC: TBD, a runtime deformation is visible within one frame budget, rebuilding only affected
+    `TerrainPatch`es.
+- [ ] F3 Weapon/combat-driven terrain deformation (explosive weapons via `DamageModule`).
+  - AC: TBD, an explosive weapon impact produces a crater of the expected radius/depth; non-
+    explosive weapons are unaffected.
+- [ ] F4 Physics engine integration (pluggable rigid-body seam, headless-capable).
+  - AC: TBD, a rigid-body test scene (e.g. falling/stacking debris) runs identically windowed and
+    headless and is measured by the B1 benchmark harness.
+- [ ] F5 Physics-based structural destruction (replaces canned `RubbleRiseUpdate`/`ToppleUpdate`
+      model swap for at least one building type).
+  - AC: TBD, a destroyed building collapses into simulated rigid-body debris that comes to rest
+    via physics, rather than swapping to a single pre-baked rubble model.
+- [ ] F6 Destruction-terrain interaction (settled debris/craters block pathing & placement).
+  - AC: TBD, a destroyed building's settled debris/crater blocks pathing and prevents
+    construction on the same footprint until cleared.
+- [ ] F7 Persistence, replay & determinism (`StatePersister` + ReplaySketch/P0 capture of
+      deformation and physics debris state).
+  - AC: TBD, a save/load round-trip preserves terrain deformation and debris resting state; a
+    ReplaySketch scenario with an explosive weapon and a destroyed building asserts the resulting
+    crater and debris state headlessly within tolerance.
+- [ ] F8 Authoring & validation tooling (extend ReplaySketch; no dedicated viewer).
+  - AC: TBD, ReplaySketch screenshot mode shows deformed terrain and settled debris, and a
+    headless assertion validates crater radius/depth and debris bounds against the triggering
+    weapon/building.
