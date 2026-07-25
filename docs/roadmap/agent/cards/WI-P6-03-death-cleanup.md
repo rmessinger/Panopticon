@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P6-03` |
 | Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): sub-phase P6-3, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | P1 owner tracking; share/reuse P3-4's death event from [victory/defeat §1.3](../../deep-dives/p3-victory-defeat.md#13-death--defeat-plumbing) |
@@ -85,5 +85,8 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Done. Wired cleanup onto both lifecycle seams, reusing the existing `Player.DeselectUnit`/`RemoveOwnedObject` and the shared `GameLogic.ObjectLifecycleChanged` notification (no new event bus):
+- `GameObject.OnDie` now calls `Owner?.RemoveOwnedObject(this)` right after the existing `Owner.DeselectUnit(this)` (and before the Died lifecycle event, so VictorySystem defeat evaluation sees correct counts). Previously OnDie deselected but left the object in OwnedObjects.
+- `GameLogic.DestroyObject` now calls `owner?.DeselectUnit(gameObject)` alongside the existing `owner?.RemoveOwnedObject(gameObject)`. Previously Destroy removed from ownership but not selection, and Destroy can run without a prior OnDie (Sell/CancelBuild/teardown).
+Both removals are idempotent, so the OnDie→Destroy flow double-removes safely and counts never go negative. Added `src/OpenSage.Game.Tests/Logic/Object/DeathCleanupTests.cs` (3 non-skipped `[Fact]`s): OnDie path (Kill a selected unit → absent from selection + OwnedObjects, counts drop by one, bystander untouched), Destroy path (Destroy a selected unit → same), and a mixed-path consistency test (2 buildings + 3 units removed through OnDie/Destroy/idempotent re-removal, counts stay consistent with OwnedObjects and never negative). Validation: dotnet build src (0 errors); DeathCleanupTests (3 passed); Category!=Interactive (760 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
 

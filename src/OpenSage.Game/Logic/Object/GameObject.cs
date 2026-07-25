@@ -1368,6 +1368,11 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         IsSelectable = false;
         Owner.DeselectUnit(this);
+        // A dying object must leave no dangling ownership references: drop it from the owner's
+        // tracked set (and building/unit counts) now, before the death event is raised, so
+        // subscribers (VictorySystem defeat evaluation) see correct counts. Idempotent with the
+        // later Destroy path, which removes again as a no-op.
+        Owner?.RemoveOwnedObject(this);
 
         if (!construction)
         {

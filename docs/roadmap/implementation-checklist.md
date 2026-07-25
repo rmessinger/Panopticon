@@ -321,7 +321,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
       (`Weapon`/`DamageModule`/`ActiveBody`/`FireWeaponUpdate`).
   - AC: for baseline units, weapon fire reduces target health via `DamageModule`/`ActiveBody` and
     triggers death at 0; harness asserts a kill.
-- [ ] Death cleanup: selection invalidation + owner-tracking removal (share P3-4's death event).
+- [x] Death cleanup: selection invalidation + owner-tracking removal (share P3-4's death event).
   - AC: a dying selected unit is removed from selection and owner tracking (reusing the P3-4 event);
     test asserts no dangling references.
 - [ ] Fill gaps surfaced by the P7 match run.
