@@ -317,7 +317,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
       `OrderProcessor` handler; assert each via the harness.
   - AC: each baseline control-bar action maps to a handled `OrderType`; a harness command per action
     produces the expected effect; the matrix is documented with pass/fail.
-- [ ] Verify weapon / damage-type / death coverage for baseline-match units
+- [x] Verify weapon / damage-type / death coverage for baseline-match units
       (`Weapon`/`DamageModule`/`ActiveBody`/`FireWeaponUpdate`).
   - AC: for baseline units, weapon fire reduces target health via `DamageModule`/`ActiveBody` and
     triggers death at 0; harness asserts a kill.

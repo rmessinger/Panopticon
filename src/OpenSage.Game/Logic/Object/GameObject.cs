@@ -1452,6 +1452,15 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             .Where(x => x.IsDieApplicable(damageInputCopy))
             .ToList();
 
+        // An object with no applicable SlowDeathBehavior modules (e.g. a baseline object whose
+        // death modules are not yet implemented, or one that dies through other die modules) has
+        // nothing to choose between. Return without touching the RNG, which would otherwise throw
+        // on Random.Next(0, -1).
+        if (slowDeathBehaviors.Count == 0)
+        {
+            return;
+        }
+
         var sumProbabilityModifiers = slowDeathBehaviors.Sum(x => x.ProbabilityModifier);
         var random = _gameEngine.GameLogic.Random.Next(0, sumProbabilityModifiers - 1);
         var cumulative = 0;
