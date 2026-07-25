@@ -86,8 +86,8 @@ The mechanism is largely present (see appendix §1.4). P5 closes the remaining g
 | P2-2. Economy & base build-out | Consume `SkirmishBuildLists`; ensure supply + harvesters; build prerequisite-satisfied, affordable structures in priority order. (Actuation = orders; decided.) | Not started |
 | P2-3. Unit production | Queue army units toward a target composition, money/prereq gated. | Not started |
 | P2-4. Military behavior | Threshold force → select enemy target (P1 relationships) → attack-move; basic defense. | Not started |
-| P5-1. Funding & gating verification | Confirm construction/production debit `BankAccount` and respect prerequisites for both player and AI; fix gaps. | Not started |
-| P5-2. Upgrades & buildability binding | Verify upgrade completion/application; locate + verify the control-bar buildability consumer. | Not started |
+| P5-1. Funding & gating verification | Confirm construction/production debit `BankAccount` and respect prerequisites for both player and AI; fix gaps. | Done |
+| P5-2. Upgrades & buildability binding | Verify upgrade completion/application; locate + verify the control-bar buildability consumer. | Done |
 
 ## 4. Sequencing and dependencies
 - P2 depends on P1 (related, spawned players + the foundational [P1-5](p1-skirmish-setup.md)

@@ -21,6 +21,10 @@ public sealed class OrderProcessor
 
     private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
+    // Scene3D.GameObjects and GameLogic are the same IGameObjectCollection instance;
+    // fall back to GameLogic so the headless test host (no Scene3D) can process orders.
+    private IGameObjectCollection GameObjects => _game.Scene3D?.GameObjects ?? _game.GameLogic;
+
     public void Process(IEnumerable<Order> orders)
     {
         foreach (var order in orders)
@@ -124,7 +128,7 @@ public sealed class OrderProcessor
                             break;
                         }
 
-                        var gameObject = _game.Scene3D.GameObjects.CreateObject(objectDefinition, player);
+                        var gameObject = GameObjects.CreateObject(objectDefinition, player);
                         gameObject.Owner = player;
                         gameObject.UpdateTransform(position, Quaternion.CreateFromAxisAngle(Vector3.UnitZ, angle));
 
@@ -134,7 +138,7 @@ public sealed class OrderProcessor
 
                         // In synthetic/scripted replays no dozer is pre-selected; fall back to the closest
                         // idle dozer owned by this player so construction starts without delay.
-                        dozer ??= _game.Scene3D.GameObjects.Objects
+                        dozer ??= GameObjects.Objects
                             .Where(u => u.Owner == player && u.Definition.KindOf.Get(ObjectKinds.Dozer))
                             .MinBy(u => Vector3.DistanceSquared(position, u.Transform.Translation));
 
@@ -157,7 +161,7 @@ public sealed class OrderProcessor
                 case OrderType.ResumeBuild:
                     {
                         var buildTargetId = order.Arguments[0].Value.ObjectId;
-                        var buildTarget = _game.Scene3D.GameObjects.GetObjectById(buildTargetId);
+                        var buildTarget = GameObjects.GetObjectById(buildTargetId);
 
                         var dozer = player.SelectedUnits.SingleOrDefault(u => u.IsKindOf(ObjectKinds.Dozer));
                         if (buildTarget != null)
@@ -180,7 +184,7 @@ public sealed class OrderProcessor
                             break;
                         }
 
-                        var gameObject = _game.Scene3D.GameObjects.GetObjectById(objectDefinitionId);
+                        var gameObject = GameObjects.GetObjectById(objectDefinitionId);
                         gameObject?.ProductionUpdate.QueueUpgrade(upgradeDefinition);
                     }
                     break;
@@ -227,13 +231,13 @@ public sealed class OrderProcessor
 
                         // In synthetic/scripted replays no producer building is pre-selected; fall
                         // back to the first player-owned building that can produce this unit.
-                        producer ??= _game.Scene3D.GameObjects.Objects
+                        producer ??= GameObjects.Objects
                             .FirstOrDefault(u => u.Owner == player && CanProduceUnit(u, objectDefinition));
 
                         if (producer != null)
                         {
                             // Select the producer so subsequent orders (e.g. CancelUnit) target it.
-                            _game.Selection.SetSelectedObjects(player, [producer], playAudio: false);
+                            _game.Selection?.SetSelectedObjects(player, [producer], playAudio: false);
                             producer.ProductionUpdate?.QueueProduction(objectDefinition);
                         }
                     }
@@ -266,7 +270,7 @@ public sealed class OrderProcessor
                     {
                         unit.Sell();
                         // todo: do not destroy or award money until sell teardown is complete
-                        _game.Scene3D.GameObjects.DestroyObject(unit);
+                        GameObjects.DestroyObject(unit);
                         // items which award free units, like a tunnel network or supply center, have refund value set which overrides SellPercentage
                         var sellAmount = unit.Definition.RefundValue;
 
@@ -284,7 +288,7 @@ public sealed class OrderProcessor
                     {
                         var repairer = player.SelectedUnits.SingleOrDefault(u => u.IsKindOf(ObjectKinds.Dozer));
                         var repairTargetId = order.Arguments[0].Value.ObjectId;
-                        var repairTarget = _game.Scene3D.GameObjects.GetObjectById(repairTargetId);
+                        var repairTarget = GameObjects.GetObjectById(repairTargetId);
 
                         if (repairTarget != null)
                         {
@@ -304,7 +308,7 @@ public sealed class OrderProcessor
                     {
                         var objectIds = order.Arguments.Skip(1)
                             .Select(x => x.Value.ObjectId)
-                            .Select(_game.Scene3D.GameObjects.GetObjectById)
+                            .Select(GameObjects.GetObjectById)
                             .ToArray();
 
                         _game.Selection.SetSelectedObjects(player, objectIds, order.Arguments[0].Value.Boolean);
@@ -324,7 +328,7 @@ public sealed class OrderProcessor
                 case OrderType.ForceAttackObject:
                     {
                         var objectId = order.Arguments[0].Value.ObjectId;
-                        var targetObject = _game.Scene3D.GameObjects.GetObjectById(objectId);
+                        var targetObject = GameObjects.GetObjectById(objectId);
 
                         foreach (var unit in player.SelectedUnits)
                         {
@@ -336,7 +340,7 @@ public sealed class OrderProcessor
                                 {
                                     unit.AIUpdate?.SetTargetPoint(targetObject.Translation);
                                 }
-                                unit.CurrentWeapon?.SetTarget(new WeaponTarget(_game.Scene3D.GameObjects, objectId));
+                                unit.CurrentWeapon?.SetTarget(new WeaponTarget(GameObjects, objectId));
                             }
                         }
 
@@ -361,7 +365,7 @@ public sealed class OrderProcessor
                         // all attackable units owned by this player so the attack order takes effect.
                         var units = player.SelectedUnits.Count > 0
                             ? (IEnumerable<GameObject>)player.SelectedUnits
-                            : _game.Scene3D.GameObjects.Objects
+                            : GameObjects.Objects
                                 .Where(u => u.Owner == player && u.CanAttack);
 
                         // Find the nearest enemy game object at or near the target position.
@@ -370,7 +374,7 @@ public sealed class OrderProcessor
                         // (position-targeted WeaponTarget.DoDamage currently deals no damage).
                         // Buildings are not inserted into the quadtree, so do a linear scan.
                         const float searchRadius = 300f;
-                        var targetObject = _game.Scene3D.GameObjects.Objects
+                        var targetObject = GameObjects.Objects
                             .Where(o => o.Owner != null
                                 && player.Enemies.Contains(o.Owner)
                                 && Vector3.DistanceSquared(o.Translation, targetPosition) <= searchRadius * searchRadius)
@@ -384,7 +388,7 @@ public sealed class OrderProcessor
                                 {
                                     unit.AIUpdate?.SetTargetPoint(targetObject.Translation);
                                     unit.CurrentWeapon?.SetTarget(
-                                        new WeaponTarget(_game.Scene3D.GameObjects, targetObject.Id));
+                                        new WeaponTarget(GameObjects, targetObject.Id));
                                 }
                                 else
                                 {
@@ -404,7 +408,7 @@ public sealed class OrderProcessor
                         if (order.Arguments.Count == 2)
                         {
                             var objId = order.Arguments[0].Value.ObjectId;
-                            var obj = _game.Scene3D.GameObjects.GetObjectById(objId);
+                            var obj = GameObjects.GetObjectById(objId);
 
                             var rallyPoint = order.Arguments[1].Value.Position;
                             if (obj != null)
@@ -416,7 +420,7 @@ public sealed class OrderProcessor
                         {
                             var objIds = order.Arguments.Skip(1)
                                 .Select(x => x.Value.ObjectId)
-                                .Select(_game.Scene3D.GameObjects.GetObjectById)
+                                .Select(GameObjects.GetObjectById)
                                 .ToArray();
                             _game.Selection.SetRallyPointForSelectedObjects(player, objIds, new Vector3());
                         }
@@ -501,7 +505,7 @@ public sealed class OrderProcessor
                         }
 
                         var objectDefinitionId = order.Arguments[1].Value.ObjectId;
-                        var gameObject = _game.Scene3D.GameObjects.GetObjectById(objectDefinitionId);
+                        var gameObject = GameObjects.GetObjectById(objectDefinitionId);
 
                         if (gameObject != null)
                         {
@@ -524,7 +528,7 @@ public sealed class OrderProcessor
                     }
                 case OrderType.GatherDumpSupplies:
                     var supplyPointId = order.Arguments[0].Value.ObjectId;
-                    var supplyPoint = _game.Scene3D.GameObjects.GetObjectById(supplyPointId);
+                    var supplyPoint = GameObjects.GetObjectById(supplyPointId);
 
                     foreach (var unit in player.SelectedUnits)
                     {

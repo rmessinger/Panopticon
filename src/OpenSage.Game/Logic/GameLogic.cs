@@ -119,9 +119,13 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
             }
         }
 
-        _game.Scene3D.Quadtree?.Insert(gameObject);
-        _game.Scene3D.Radar?.AddGameObject(gameObject);
-        _game.PartitionCellManager.OnObjectAdded(gameObject);
+        if (_game.Scene3D != null)
+        {
+            _game.Scene3D.Quadtree?.Insert(gameObject);
+            _game.Scene3D.Radar?.AddGameObject(gameObject);
+        }
+
+        _game.PartitionCellManager?.OnObjectAdded(gameObject);
 
         gameObject.Owner?.AddOwnedObject(gameObject);
 

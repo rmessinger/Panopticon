@@ -78,7 +78,14 @@ public sealed class ProductionUpdate : UpdateModule
         }
 
         var isProducing = _productionQueue.Count > 0;
-        GameObject.ModelConditionFlags.Set(ModelConditionFlag.ActivelyConstructing, isProducing);
+        if (isProducing)
+        {
+            GameObject.SetModelConditionState(ModelConditionFlag.ActivelyConstructing);
+        }
+        else
+        {
+            GameObject.ClearModelConditionState(ModelConditionFlag.ActivelyConstructing);
+        }
 
         if (isProducing)
         {
@@ -107,7 +114,7 @@ public sealed class ProductionUpdate : UpdateModule
 
                             SetDoorStateEndFrame(DoorState.Opening, GameEngine.GameLogic.CurrentFrame + _moduleData.DoorOpeningTime);
                             UpdateDoorModelConditionFlags();
-                            GameObject.ModelConditionFlags.Set(ModelConditionFlag.ConstructionComplete, true);
+                            GameObject.SetModelConditionState(ModelConditionFlag.ConstructionComplete);
 
                             // don't empty the queue - that's handled further up
                             // TODO(Port): Use correct value.
@@ -140,7 +147,7 @@ public sealed class ProductionUpdate : UpdateModule
         switch (currentDoorState)
         {
             case DoorState.WaitingOpen when GameEngine.GameLogic.CurrentFrame >= doorStateEndFrame:
-                GameObject.ModelConditionFlags.Set(ModelConditionFlag.ConstructionComplete, false);
+                GameObject.ClearModelConditionState(ModelConditionFlag.ConstructionComplete);
                 if (ProductionExit is ParkingPlaceBehaviour)
                 {
                     break; // Door is closed on aircraft death from JetAIUpdate
@@ -223,6 +230,8 @@ public sealed class ProductionUpdate : UpdateModule
         var (doorState, _) = GetDoorStatus();
 
         GetDoorConditionFlags(out var opening, out var waitingOpen, out var closing);
+
+        if (GameObject.Drawable == null) return;
 
         GameObject.ModelConditionFlags.Set(opening, doorState is DoorState.Opening);
         GameObject.ModelConditionFlags.Set(waitingOpen, doorState is DoorState.WaitingOpen);
@@ -361,7 +370,7 @@ public sealed class ProductionUpdate : UpdateModule
         producedUnit.Owner = GameObject.Owner;
         producedUnit.ParentHorde = ParentHorde;
 
-        if (playAudio)
+        if (playAudio && GameEngine.Scene3D != null)
         {
             GameEngine.Scene3D.Audio.PlayAudioEvent(producedUnit, producedUnit.Definition.UnitSpecificSounds?.VoiceCreate?.Value);
         }
@@ -429,7 +438,10 @@ public sealed class ProductionUpdate : UpdateModule
             producedUnit.AIUpdate.AddTargetPoint(GameObject.RallyPoint.Value);
         }
 
-        GameEngine.AudioSystem.PlayAudioEvent(producedUnit, producedUnit.Definition.SoundMoveStart.Value);
+        if (producedUnit.Definition.SoundMoveStart?.Value != null)
+        {
+            GameEngine.AudioSystem.PlayAudioEvent(producedUnit, producedUnit.Definition.SoundMoveStart.Value);
+        }
 
         HandleHordeCreation(producedUnit);
         HandleHarvesterUnitCreation(GameObject, producedUnit);

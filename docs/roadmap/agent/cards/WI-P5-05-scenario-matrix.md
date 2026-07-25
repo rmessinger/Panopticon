@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P5-05` |
 | Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md): scenario matrix for P5-1/P5-2, see [deep dive §6](../../deep-dives/p2-p5-skirmish-ai.md#6-scenario-matrix), [§4](../../deep-dives/p2-p5-skirmish-ai.md#3-sub-phases), and [Appendix](../../deep-dives/p2-p5-skirmish-ai.md#how-actions-are-actuated-the-p5-mechanism) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-P5-01`, `WI-P5-02`, `WI-P5-03`, `WI-P5-04` |

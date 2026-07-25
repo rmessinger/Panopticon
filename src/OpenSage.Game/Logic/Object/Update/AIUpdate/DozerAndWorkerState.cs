@@ -116,7 +116,7 @@ internal sealed class DozerAndWorkerState : IPersistableObject
 
     private void ClearBuildTarget()
     {
-        _gameObject.ModelConditionFlags.Set(ModelConditionFlag.ActivelyConstructing, false);
+        _gameObject.ClearModelConditionState(ModelConditionFlag.ActivelyConstructing);
         _dozerTargets[0] = new DozerTarget();
     }
 

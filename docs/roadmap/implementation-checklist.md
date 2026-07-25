@@ -292,20 +292,20 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     ticks, income increased at least once, and ≥1 unit was produced; see the deep dive matrix section.
 
 ### P5: Construction & production completeness ([deep dive](deep-dives/p2-p5-skirmish-ai.md) §1.4/§2.4)
-- [ ] Player and AI building placement (`OrderProcessor.BuildObject` + `IBuilderAIUpdate`).
+- [x] Player and AI building placement (`OrderProcessor.BuildObject` + `IBuilderAIUpdate`).
   - AC: both a player order and an AI request place and construct a structure to completion at a valid
     location; harness asserts a finished building for each.
-- [ ] Faction build trees with prerequisites / tech gating (`Player.CanProduceObject:357-420`).
+- [x] Faction build trees with prerequisites / tech gating (`Player.CanProduceObject:357-420`).
   - AC: a unit/structure with unmet prerequisites is non-buildable and becomes buildable once the
     prereqs exist; test asserts gating for ≥1 prereq chain.
-- [ ] Unit/upgrade production from structures, end-to-end (`ProductionUpdate.QueueProduction/QueueUpgrade`).
+- [x] Unit/upgrade production from structures, end-to-end (`ProductionUpdate.QueueProduction/QueueUpgrade`).
   - AC: a queued unit spawns at the rally point and a queued upgrade completes and applies its effect;
     harness asserts both.
-- [ ] Locate + verify the control-bar buildability consumer of
+- [x] Locate + verify the control-bar buildability consumer of
       `GameObject.CanPurchase/CanConstructUnit/CanEnqueueUpgrade` (audit did not find the UI binding).
   - AC: the UI consumer of those methods is identified and documented; buildable/unbuildable state in
     the control bar reflects prereqs + money.
-- [ ] P5 scenario matrix: sweep faction × buildTreeDepth × playerType; assert prerequisite gating
+- [x] P5 scenario matrix: sweep faction × buildTreeDepth × playerType; assert prerequisite gating
       and production work across all combinations.
   - AC: a `ScenarioMatrix` (axes: `faction` ∈ {USA, GLA, China}, `buildTreeDepth` ∈ {tier1, tier2,
     tier3}, `playerType` ∈ {human, AI}) runs 18 cells; each asserts the gated unit/upgrade is
