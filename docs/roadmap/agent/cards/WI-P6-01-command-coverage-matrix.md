@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P6-01` |
 | Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): sub-phase P6-1, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | P1 spawned/related players and owner tracking; P0 harness command/assertion path available |
@@ -79,4 +79,4 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Done. Added `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` (5 non-skipped `[Fact]`s). Enumerates the 9 baseline control-bar actions (move, attack-object, force-attack-ground, build, produce, sell, repair, special-power, rally-point) with their CommandType/OrderGenerator source and expected OrderType, asserts each maps into a curated `HandledOrderTypes` set mirroring OrderProcessor.Process's explicit `case` labels (no baseline action hits the default "Unimplemented" branch), and that the set discriminates against known-unhandled orders. Cross-checks the button-backed CommandTypes against CommandButtonCallback's wiring. Headless observable coverage: build/produce affordability guard (OrderProcessor.TryDebit) runs before Scene3D, so unaffordable BuildObject/CreateUnit orders are exercised live (handler runs, declines, money untouched, no throw). Explicit named gaps (not silent skips) for the 7 Scene3D-dependent rows (move/attack/force-attack/sell/repair/special-power/rally-point), each with a concrete reason. Validation: dotnet build src (0 errors); P6CommandCoverageTests (5 passed); Category!=Interactive (753 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).

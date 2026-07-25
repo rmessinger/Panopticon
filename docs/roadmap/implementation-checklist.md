@@ -313,7 +313,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     see the deep dive matrix section.
 
 ### P6: Combat & command verification ([deep dive](deep-dives/p4-p6-economy-production-combat.md) P6)
-- [ ] Command coverage matrix: every baseline control-bar action → `OrderType` → real
+- [x] Command coverage matrix: every baseline control-bar action → `OrderType` → real
       `OrderProcessor` handler; assert each via the harness.
   - AC: each baseline control-bar action maps to a handled `OrderType`; a harness command per action
     produces the expected effect; the matrix is documented with pass/fail.
