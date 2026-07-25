@@ -1046,34 +1046,7 @@ public class P5_ScenarioMatrixTests
 }
 
 // ── P6: Combat & command ──────────────────────────────────────────────────────
-// Matrix: orderType × faction
-// Validates each command type produces the expected OrderProcessor effect for every faction.
-
-public class P6_ScenarioMatrixTests
-{
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
-    public void Matrix_AllCells_OrderTypeProducesExpectedEffect()
-    {
-        // Arrange: ScenarioMatrix with axes
-        //          orderType ∈ {MoveTo, AttackObject, BuildObject, CreateUnit, SpecialPower},
-        //          faction ∈ {USA, GLA, China} — 15 cells.
-        // Act: expand and run all cells via P0-5b; each cell issues the given order for
-        //      the faction's reference unit.
-        // Assert: every cell asserts the observable effect for that faction's reference unit
-        //         (position delta / health decrease / building exists / unit spawned / ability effect).
-
-    }
-
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
-    public void Matrix_SpecialPowerCells_UnimplementedHandlersSurfaceAsFailures()
-    {
-        // Arrange: SpecialPower cells across all three factions.
-        // Act: run those cells.
-        // Assert: any SpecialPower order whose handler is unimplemented produces an explicit
-        //         assertion failure (not a silent no-op) in the per-cell report.
-
-    }
-}
+// Matrix: orderType × faction. Implemented in P6ScenarioMatrixTests.cs (WI-P6-04).
 
 // ── P6b: Unit-contract validation ────────────────────────────────────────────
 // Matrix: archetype × faction

@@ -327,7 +327,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [ ] Fill gaps surfaced by the P7 match run.
   - AC: TBD, populated as the P7 run surfaces defects. Rough template: each surfaced defect gets its
     own checklist item + a regression assertion in the harness.
-- [ ] P6 scenario matrix: sweep orderType × faction; assert each command type produces the correct
+- [x] P6 scenario matrix: sweep orderType × faction; assert each command type produces the correct
       `OrderProcessor` effect for every faction.
   - AC: a `ScenarioMatrix` (axes: `orderType` ∈ {MoveTo, AttackObject, BuildObject, CreateUnit,
     SpecialPower}, `faction` ∈ {USA, GLA, China}) runs 15 cells; each asserts the observable effect
