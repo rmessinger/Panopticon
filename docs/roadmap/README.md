@@ -121,6 +121,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
 | [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes the stubbed water/ground pathfinding layer and adds ship combat/production, validated against BFME2's existing ship content. Gated on Track P only. |
+| [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Deformable terrain & destruction: terrain deformation data model, runtime mesh/rendering update, weapon-driven terrain deformation, physics engine integration, physics-based structural destruction, destruction-terrain interaction, persistence/replay, authoring/validation tooling. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `OpenSage.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
 | [`implementation-checklist.md`](implementation-checklist.md) | human | Single granular change list: every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
@@ -153,8 +154,8 @@ human-readable problem/design/approach sections and agent-context file and test 
 ## Tracks at a glance
 
 Track layout: a prerequisite Playable Baseline track, a shared Foundations track, and parallel
-Scale and External Assets tracks. Phase order is approximate; cross-track dependencies appear in
-each track document.
+Scale, External Assets, Gameplay Content, Naval Warfare, and Deformable Terrain & Destruction
+tracks. Phase order is approximate; cross-track dependencies appear in each track document.
 
 - [Track P - Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
   arbitrary-command harness · P1 skirmish setup & player relationships · P2 skirmish AI opponent ·
@@ -180,12 +181,18 @@ each track document.
 - [Track E - Naval Warfare](track-e-naval-warfare.md): E1 water/ground terrain passability ·
   E2 ship combat · E3 naval production (`PORT`) · E4 reference naval scenario. Depends on Track
   P only.
+- [Track F - Deformable Terrain & Destruction](track-f-terrain-destruction.md): F1 terrain
+  deformation data model (chunked-heightmap deltas) · F2 runtime mesh/rendering update · F3
+  weapon/combat-driven terrain deformation · F4 physics engine integration (pluggable rigid-body
+  seam) · F5 physics-based structural destruction (replaces canned rubble/damage-state model
+  swap) · F6 destruction-terrain interaction (debris/craters block pathing & placement) · F7
+  persistence/replay/determinism · F8 authoring/validation tooling.
 
 ### Cross-track dependencies
 
 - Track P gates everything. [A1 (headless host)](track-a-foundations.md) depends on
   P7 - a validated, terminating skirmish loop is the headless host's unit of work; A2/A4 and
-  all of Tracks B/C inherit that prerequisite.
+  all of Tracks B/C/F inherit that prerequisite.
 - B5 (instanced rendering) should account for Track C models so instancing is not
   W3D-specific.
 - C1 and A3 both touch the presentation seam - coordinate so the import abstraction
@@ -195,6 +202,12 @@ each track document.
 - Track E depends only on Track P; it finishes an existing stub and exercises BFME2's existing
   ship content, so it needs neither Track C nor ModCollector. B4a (larger maps) should coordinate
   terrain streaming with E1's water-depth data once both land.
+- Track F's F1 (terrain deformation data model) depends on B4a-5 (chunked terrain storage) and
+  F2 (rendering update) coordinates with B5 - deformation should build on the chunked
+  representation and shared rendering-at-scale infrastructure rather than a parallel one.
+- Track F's F5/F6 (physics-based structural destruction, destruction-terrain interaction) depend
+  on Track P's P6 combat coverage and P6-3 death cleanup - destruction hooks into the same
+  weapon-hit and death-notification paths those phases verify.
 
 ---
 
@@ -244,6 +257,20 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | E3 - Naval production | `░░░░░░░░░░` | 0 / 1 |
 | E4 - Reference naval scenario | `░░░░░░░░░░` | 0 / 1 |
 | Track E total | `░░░░░░░░░░` | 0 / 4 |
+
+### Track F - Deformable Terrain & Destruction (gated on Track P)
+
+| Phase | Progress | Items |
+|---|---|---|
+| F1 - Terrain deformation data model | `░░░░░░░░░░` | 0 / 1 |
+| F2 - Runtime mesh & rendering update | `░░░░░░░░░░` | 0 / 1 |
+| F3 - Weapon-driven terrain deformation | `░░░░░░░░░░` | 0 / 1 |
+| F4 - Physics engine integration | `░░░░░░░░░░` | 0 / 1 |
+| F5 - Physics-based structural destruction | `░░░░░░░░░░` | 0 / 1 |
+| F6 - Destruction-terrain interaction | `░░░░░░░░░░` | 0 / 1 |
+| F7 - Persistence, replay & determinism | `░░░░░░░░░░` | 0 / 1 |
+| F8 - Authoring & validation tooling | `░░░░░░░░░░` | 0 / 1 |
+| Track F total | `░░░░░░░░░░` | 0 / 8 |
 
 ---
 

@@ -4,8 +4,8 @@
 > the roadmap: tracks → phases → sub-phases, with dependency flow. Keep it aligned with the track
 > documents ([A](track-a-foundations.md) · [B](track-b-scale.md) ·
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
-> [E](track-e-naval-warfare.md)) and the deep dives as phases, sub-phases, or dependencies change;
-> see [How to maintain](#how-to-maintain-this-tree).
+> [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md)) and the deep dives as phases,
+> sub-phases, or dependencies change; see [How to maintain](#how-to-maintain-this-tree).
 >
 > Audience: human overview of roadmap structure and dependency flow.
 
@@ -129,6 +129,15 @@ mindmap
       E2 Ship combat ⮕
       E3 Naval production
       E4 Reference naval scenario
+    F. Deformable terrain and destruction
+      F1 Deformation data model
+      F2 Runtime mesh and rendering update
+      F3 Weapon-driven terrain deformation
+      F4 Physics engine integration
+      F5 Physics-based structural destruction
+      F6 Destruction-terrain interaction
+      F7 Persistence replay and determinism
+      F8 Authoring and validation tooling
 ```
 
 ---
@@ -136,7 +145,7 @@ mindmap
 ## 2. Progression (dependency flow)
 
 This left-to-right progression shows when phases become workable. Arrows mean "must precede."
-Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal).
+Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal, F = red).
 The [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) gates the whole
 roadmap. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md) is its own highlighted
 node because it is an early prerequisite of A1 even though the rest of A4 follows A1.
@@ -148,6 +157,7 @@ flowchart LR
   classDef trackC fill:#fff6e9,stroke:#b5853a,color:#321;
   classDef trackD fill:#fdeef2,stroke:#a8477a,color:#310;
   classDef trackE fill:#e9f7fb,stroke:#2f8aa3,color:#032;
+  classDef trackF fill:#fdeaea,stroke:#b5453a,color:#321;
   classDef seam fill:#ffd9f2,stroke:#b3559a,stroke-width:2px,color:#312;
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
 
@@ -197,6 +207,8 @@ flowchart LR
     C4["C4 First format · static + skinned"]
     D3["D3 External content ingestion"]
     E4["E4 Reference naval scenario"]
+    F1["F1 Terrain deformation data model"]
+    F4["F4 Physics engine integration"]
   end
 
   subgraph S3["Stage 3 · Scenario, distribution & tooling"]
@@ -206,11 +218,21 @@ flowchart LR
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
     D4["D4 Reference non-SAGE scenario"]
+    F2["F2 Runtime mesh & rendering update"]
+    F3["F3 Weapon-driven terrain deformation"]
+    F5["F5 Physics-based structural destruction"]
   end
 
   subgraph S4["Stage 4 · Fidelity scaling"]
     direction TB
     B7["B7 Variable fidelity"]
+    F6["F6 Destruction-terrain interaction"]
+    F7["F7 Persistence, replay & determinism"]
+  end
+
+  subgraph S5["Stage 5 · Terrain/destruction tooling"]
+    direction TB
+    F8["F8 Authoring & validation tooling"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -267,6 +289,9 @@ flowchart LR
   C1 --> D3
   E2 --> E4
   E3 --> E4
+  B4A --> F1
+  A1 --> F4
+  B1 --> F4
 
   %% Stage 2 -> 3
   A1 --> A5
@@ -280,16 +305,33 @@ flowchart LR
   C4 --> C6
   D2 --> D4
   D3 --> D4
+  F1 --> F2
+  B5 --> F2
+  F1 --> F3
+  F4 --> F5
 
   %% Stage 3 -> 4
   B1 --> B7
   A2 --> B7
   B3 --> B7
   A5 --> B7
+  F1 --> F6
+  F3 --> F6
+  F5 --> F6
+  F1 --> F7
+  F3 --> F7
+  F5 --> F7
+  A2 --> F7
+
+  %% Stage 4 -> 5
+  F2 --> F8
+  F6 --> F8
+  F7 --> F8
 
   class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
+  class F1,F2,F3,F4,F5,F6,F7,F8 trackF;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;
