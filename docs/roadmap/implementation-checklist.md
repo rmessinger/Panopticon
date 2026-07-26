@@ -339,7 +339,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     contract points: produced, moves, garrison via `Enter`, basic attack reduces target health,
     every `SpecialPowerType` in its command set produces an observable effect, dies with ownership
     cleanup; unimplemented special-power handlers are logged as explicit gaps.
-- [ ] Vehicle archetype contract (P6b-2).
+- [x] Vehicle archetype contract (P6b-2).
   - AC: a P0 harness scenario for the reference vehicle unit asserts all six contract points:
     produced, moves, basic attack, weapon-mode upgrade activates the expected `WeaponSlot`, dies;
     unimplemented handlers logged.
