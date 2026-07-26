@@ -89,6 +89,10 @@ The mechanism is largely present (see appendix §1.4). P5 closes the remaining g
 | P5-1. Funding & gating verification | Confirm construction/production debit `BankAccount` and respect prerequisites for both player and AI; fix gaps. | Done |
 | P5-2. Upgrades & buildability binding | Verify upgrade completion/application; locate + verify the control-bar buildability consumer. | Done |
 
+The scenario matrix's synthetic-data and real-order-path gaps (see §6 below) are tracked as part of
+[Track P phase P8](../track-p-playable-baseline.md), not as a further P5 sub-phase. See
+[deep-dives/p8-implementation-delta-remediation.md](p8-implementation-delta-remediation.md).
+
 ## 4. Sequencing and dependencies
 - P2 depends on P1 (related, spawned players + the foundational [P1-5](p1-skirmish-setup.md)
   ownership tracking that P2-4 uses for target selection), P4 (a working economy to spend), and
@@ -139,9 +143,9 @@ Each cell runs the AI for a fixed number of frames through the P0 harness and as
 
 | Axis | Values | Notes |
 |---|---|---|
-| `faction` | `USA`, `GLA`, `China` | Each faction has a distinct build tree |
+| `faction` | `USA`, `GLA`, `China` | Currently only varies a name label on a synthetic reflection-built prerequisite chain; no distinct per-faction build tree is exercised yet. Tracked in [Track P phase P8](../track-p-playable-baseline.md). |
 | `buildTreeDepth` | `tier1`, `tier2`, `tier3` | How far up the tech tree prerequisites are exercised |
-| `playerType` | `human`, `AI` | Validates the path is accessible to both |
+| `playerType` | `human`, `AI` | Only the `AI` cell issues `Order.CreateBuildObject` through `OrderProcessor`; the `human` cell currently calls `GameLogic.CreateObject` + sets `BuildProgress` directly, bypassing the order path. Tracked in [Track P phase P8](../track-p-playable-baseline.md). |
 
 Constraints: `tier3` requires that `tier1` and `tier2` prerequisites are satisfied within the
 same cell run (the scenario issues the full prerequisite chain).
@@ -149,8 +153,12 @@ same cell run (the scenario issues the full prerequisite chain).
 Each cell asserts:
 - Each prerequisite structure at the requested tier exists and is fully constructed before the
   gated unit/upgrade is attempted.
-- The gated unit spawns or upgrade applies after prerequisites are met.
-- The build tree is accessible via `OrderProcessor` (not just through direct API calls).
+- `Player.CanProduceObject` returns true once prerequisites are met. It does not yet assert the
+  gated unit actually spawns or the upgrade actually applies; tracked in
+  [Track P phase P8](../track-p-playable-baseline.md).
+- The build tree is accessible via `OrderProcessor` (not just through direct API calls) for the
+  AI cell only; the human cell does not yet exercise this. Tracked in
+  [Track P phase P8](../track-p-playable-baseline.md).
 
 ## 7. Architecture Diagrams
 

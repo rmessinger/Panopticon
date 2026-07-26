@@ -50,14 +50,14 @@ Ensure dying or destroyed objects leave no dangling references: remove them from
 
 ## Acceptance criteria
 
-- [ ] A dying selected unit is removed from selection.
-- [ ] A dying selected unit is removed from `Player.OwnedObjects`, and building/unit counts remain correct.
-- [ ] The same cleanup works for both `OnDie` and `Destroy` paths.
-- [ ] Cleanup reuses the P3-4 death/destroy notification; no duplicate death event is introduced.
-- [ ] Tests assert no dangling selected-unit or owner-tracking references after death.
-- [ ] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A dying selected unit is removed from selection.
+- [x] A dying selected unit is removed from `Player.OwnedObjects`, and building/unit counts remain correct.
+- [x] The same cleanup works for both `OnDie` and `Destroy` paths.
+- [x] Cleanup reuses the P3-4 death/destroy notification; no duplicate death event is introduced.
+- [x] Tests assert no dangling selected-unit or owner-tracking references after death.
+- [x] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

@@ -115,12 +115,19 @@ and continue until the next elimination produces `Decided`.
 
 | Phase | Goal | Status |
 |---|---|---|
-| P3-1. `GameOutcome` + `VictorySystem` scaffold | Add the outcome type (`OutcomeStatus`, `OutcomeReason`, `WinningPlayer`/`WinningTeam`) and a `GameSystem` that ticks a check from the logic loop; exposes `InProgress`. | Not started |
-| P3-2. Defeat & win rules | Implement defeat (real Generals rule: no command/production structures + no rebuild, as the default, configurable) and win (all non-allies defeated, via P1 teams); consumes foundational [P1-5](p1-skirmish-setup.md) ownership tracking. | Not started |
-| P3-3. Death→defeat event | Emit a death/ownership-change notification from `GameObject.OnDie/Destroy`; `VictorySystem` reacts incrementally. | Not started |
-| P3-4. End-of-match flow | Stop sim, surface result, handle `OrderType.EndGame` (surrender by any player, human or AI), allow exit; expose `GameOutcome` for headless. | Not started |
-| P3-5. Mutual elimination → sudden death | Detect when all remaining active players are simultaneously eliminated in the same check window; set `Status = SuddenDeath` and continue play until the next elimination decides the match. | Not started |
-| P3-6. Time-limit → score decision | Implement the optional frame-count limit; on expiry, select the winner by a configurable score metric (buildings standing, units produced, etc.) and set `Reason = ScoreDecision`. | Not started |
+| P3-1. `GameOutcome` + `VictorySystem` scaffold | Add the outcome type (`OutcomeStatus`, `OutcomeReason`, `WinningPlayer`/`WinningTeam`) and a `GameSystem` that ticks a check from the logic loop; exposes `InProgress`. | Done |
+| P3-2. Defeat & win rules | Implement defeat (real Generals rule: no command/production structures + no rebuild, as the default, configurable) and win (all non-allies defeated, via P1 teams); consumes foundational [P1-5](p1-skirmish-setup.md) ownership tracking. | Done |
+| P3-3. Death→defeat event | Emit a death/ownership-change notification from `GameObject.OnDie/Destroy`; `VictorySystem` reacts incrementally. | Done |
+| P3-4. End-of-match flow | Stop sim, surface result, handle `OrderType.EndGame` (surrender by any player, human or AI), allow exit; expose `GameOutcome` for headless. | Done (headless flow only; UI/`TestHarness` integration tracked in Track P phase P8) |
+| P3-5. Mutual elimination → sudden death | Detect when all remaining active players are simultaneously eliminated in the same check window; set `Status = SuddenDeath` and continue play until the next elimination decides the match. | Done (repeat-elimination edge case tracked in Track P phase P8) |
+| P3-6. Time-limit → score decision | Implement the optional frame-count limit; on expiry, select the winner by a configurable score metric (buildings standing, units produced, etc.) and set `Reason = ScoreDecision`. | Done |
+| P3-7. Scenario matrix | Sweep `endState` × `playerCount` and assert the correct `GameOutcome` per cell. | Done |
+
+Remaining gaps against the design above (data-driven config seam, sudden-death repeat-elimination
+edge case, end-of-match UI/`TestHarness` integration) are tracked as part of
+[Track P phase P8](../track-p-playable-baseline.md), not as further P3 sub-phases, since they are
+implementation-delta remediation rather than new P3 design surface. See
+[deep-dives/p8-implementation-delta-remediation.md](p8-implementation-delta-remediation.md).
 
 ## 4. Sequencing & dependencies
 - P3 depends on P1 because teams/relationships decide who wins and loses, and

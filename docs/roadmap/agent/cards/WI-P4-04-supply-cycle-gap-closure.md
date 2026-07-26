@@ -53,14 +53,14 @@ Close small gaps that leave supply trucks, workers, or dozers stuck in economy/b
 
 ## Acceptance criteria
 
-- [ ] A non-skipped headless `[Fact]` proves a supply truck completes gather→dump without a stuck state.
-- [ ] A non-skipped headless `[Fact]` proves a worker completes gather→dump without a stuck state.
-- [ ] A non-skipped headless `[Fact]` proves worker builder mode completes construction and clears builder state.
-- [ ] A non-skipped headless `[Fact]` proves a dozer completes construction and clears builder state.
-- [ ] Stuck-state assertions fail loudly with actor type, state, and frame diagnostics.
-- [ ] Any refactor preserves existing state-machine branches, persistence order, guards, and default/sentinel values.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [ ] A non-skipped headless `[Fact]` proves a supply truck completes gather→dump without a stuck state (partial: Result verifies dump transition only, not the full gather cycle).
+- [ ] A non-skipped headless `[Fact]` proves a worker completes gather→dump without a stuck state (partial: Result verifies dump transition only, not the full gather cycle).
+- [x] A non-skipped headless `[Fact]` proves worker builder mode completes construction and clears builder state.
+- [x] A non-skipped headless `[Fact]` proves a dozer completes construction and clears builder state.
+- [ ] Stuck-state assertions fail loudly with actor type, state, and frame diagnostics (partial: builder tests include limited traces, not full actor/state/frame diagnostics).
+- [x] Any refactor preserves existing state-machine branches, persistence order, guards, and default/sentinel values.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

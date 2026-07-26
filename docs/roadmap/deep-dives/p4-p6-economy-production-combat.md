@@ -44,9 +44,15 @@ supply-truck/worker/dozer cycles and power.
 ### P4 sub-phases
 | Phase | Goal | Status |
 |---|---|---|
-| P4-1. Gather→deposit verification | Prove harvest/supply credits `BankAccount` for the baseline factions (harness scenario + assertions). | Not started |
-| P4-2. Spend/debit verification | Confirm construction/production/upgrade debit `BankAccount`, with cancel refunds; implement if missing. | Not started |
-| P4-3. Power loop | Confirm/implement energy production vs. consumption and its effect (`_hasInsufficientPower`). | Not started |
+| P4-1. Gather→deposit verification | Prove harvest/supply credits `BankAccount` for the baseline factions (harness scenario + assertions). | Done (synthetic dump/debit only; real gather cycle tracked in Track P phase P8) |
+| P4-2. Spend/debit verification | Confirm construction/production/upgrade debit `BankAccount`, with cancel refunds; implement if missing. | Done |
+| P4-3. Power loop | Confirm/implement energy production vs. consumption and its effect (`_hasInsufficientPower`). | Done |
+| P4-4. Supply cycle gap closure | Close remaining stalls in the worker/dozer/supply-truck dump-transition and builder cycle. | Done |
+| P4-5. Scenario matrix | Sweep `faction` × `supplyDensity` × `startingMoney` and assert the economy loop for every cell. | Done |
+
+The remaining gap (a real gather-cycle harness test in place of the synthetic dump/debit loop) is
+tracked as part of [Track P phase P8](../track-p-playable-baseline.md), not as a further P4
+sub-phase. See [deep-dives/p8-implementation-delta-remediation.md](p8-implementation-delta-remediation.md).
 
 ---
 
@@ -85,9 +91,16 @@ uses. Fill the gaps surfaced by P7's match run.
 ### P6 sub-phases
 | Phase | Goal | Status |
 |---|---|---|
-| P6-1. Command coverage matrix | Map every baseline control-bar action to a verified `OrderType` handler; assert each via the harness. | Not started |
-| P6-2. Combat coverage | Verify weapon→damage→health→death for baseline units/damage types; assert kills + cleanup. | Not started |
-| P6-3. Death cleanup | Selection invalidation + owner-tracking removal on death; share P3-4's death event. | Not started |
+| P6-1. Command coverage matrix | Map every baseline control-bar action to a verified `OrderType` handler; assert each via the harness. | Done (`OrderType` mapping only; live control-bar dispatch tracked in Track P phase P8) |
+| P6-2. Combat coverage | Verify weapon→damage→health→death for baseline units/damage types; assert kills + cleanup. | Done (`AttemptDamage`/`ActiveBody` path only; `FireWeaponUpdate` firing path tracked in Track P phase P8) |
+| P6-3. Death cleanup | Selection invalidation + owner-tracking removal on death; share P3-4's death event. | Done |
+| P6-4. Scenario matrix | Sweep `orderType` × `faction` and assert the observable effect per cell. | Done (9 of 15 cells assert a disclosed gap message rather than a real effect; tracked in Track P phase P8) |
+| P6-5. Attack-object approach | Approach to attack range for out-of-range `AttackObject`/`ForceAttackObject` targets. | Done |
+
+The remaining gaps (live control-bar dispatch, `FireWeaponUpdate` implementation, and real
+observable-effect assertions for the disclosed gap cells) are tracked as part of
+[Track P phase P8](../track-p-playable-baseline.md), not as further P6 sub-phases. See
+[deep-dives/p8-implementation-delta-remediation.md](p8-implementation-delta-remediation.md).
 
 ---
 
@@ -119,12 +132,14 @@ The P0-5b matrix runner validates P4 and P6 across faction × supply × order-ty
 | `supplyDensity` | `sparse` (1 supply source), `normal` (2), `rich` (4) | Tests harvester loop under different supply loads |
 | `startingMoney` | `low` (500), `normal` (10000) | Exercises production gating under money pressure |
 
-Constraints: none (all 3×2×2 = 12 cells are valid).
+Constraints: none (all 3×3×2 = 18 cells are valid).
 
-Each cell runs a supply-harvester scenario through the P0 harness for a fixed frame count and asserts:
+Each cell runs a synthetic supply-dump/debit loop for a fixed frame count (not yet a full P0/ReplaySketch
+harvester run through Scene3D; see Track P phase P8) and asserts:
 - `player.BankAccount >= 0` at every tick, the universal invariant.
 - `player.money` increased from its starting value at least once, proving harvesting is running.
-- At least one unit was produced, proving money was spent on production.
+- At least one production job was successfully debited, proving money was spent on production. This
+  does not yet assert a unit actually spawned; see Track P phase P8.
 
 ### P6: Combat and command verification
 
@@ -136,8 +151,10 @@ Each cell runs a supply-harvester scenario through the P0 harness for a fixed fr
 Constraints: none (all 5×3 = 15 cells are valid).
 
 Each cell issues the given `OrderType` for a reference unit of the given faction and asserts
-the expected observable effect: unit moves, target health decreases, building constructed,
-unit spawns, or ability effect observed.
+the mapping from control-bar action to `OrderType` handler. Move/attack/special-power cells
+currently record a disclosed gap instead of asserting the real observable effect (unit moves,
+target health decreases, ability effect observed); build/produce cells do assert a real effect
+(money debited). Closing the remaining gap cells is tracked in Track P phase P8.
 
 ## Architecture Diagrams
 

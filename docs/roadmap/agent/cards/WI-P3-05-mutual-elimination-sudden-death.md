@@ -43,13 +43,13 @@ Detect simultaneous mutual elimination in one victory check window, transition t
 
 ## Acceptance criteria
 
-- [ ] A scenario where all remaining active players' last qualifying structures are destroyed in the same check window transitions `GameOutcome.Status` to `SuddenDeath`.
-- [ ] The sudden-death transition does not terminate/stop the match; logic continues to tick.
-- [ ] Defeat flags/state are not permanently committed in a way that prevents continued play after sudden-death entry.
-- [ ] A subsequent elimination transitions to `GameOutcome.Status = Decided` with `Reason = Eliminated` and the correct winner.
-- [ ] Headless `[Fact]` tests are not skipped and do not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A scenario where all remaining active players' last qualifying structures are destroyed in the same check window transitions `GameOutcome.Status` to `SuddenDeath`.
+- [x] The sudden-death transition does not terminate/stop the match; logic continues to tick.
+- [x] Defeat flags/state are not permanently committed in a way that prevents continued play after sudden-death entry.
+- [x] A subsequent elimination transitions to `GameOutcome.Status = Decided` with `Reason = Eliminated` and the correct winner.
+- [x] Headless `[Fact]` tests are not skipped and do not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

@@ -49,14 +49,14 @@ Verify and close the power loop: owned objects' energy production/consumption dr
 
 ## Acceptance criteria
 
-- [ ] The card result documents the verified representation of power consumption and the verified low-power effect.
-- [ ] `_hasInsufficientPower` is false by default and becomes true when owned consumption exceeds owned production.
-- [ ] Restoring enough power clears `_hasInsufficientPower`.
-- [ ] A non-skipped headless `[Fact]` toggles power and asserts the defined effect; no skipped `[GameFact]` is used as the gate.
-- [ ] Any default/sentinel values are named or asserted: no consumers, exact balance point, insufficient by one unit, restored power.
-- [ ] Existing `Player.Persist(...)` field order and every existing construction/energy branch are preserved.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] The card result documents the verified representation of power consumption and the verified low-power effect.
+- [x] `_hasInsufficientPower` is false by default and becomes true when owned consumption exceeds owned production.
+- [x] Restoring enough power clears `_hasInsufficientPower`.
+- [x] A non-skipped headless `[Fact]` toggles power and asserts the defined effect; no skipped `[GameFact]` is used as the gate.
+- [x] Any default/sentinel values are named or asserted: no consumers, exact balance point, insufficient by one unit, restored power.
+- [x] Existing `Player.Persist(...)` field order and every existing construction/energy branch are preserved.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

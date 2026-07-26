@@ -44,15 +44,15 @@ Author and enable the P3 scenario matrix that sweeps end-state type by player co
 
 ## Acceptance criteria
 
-- [ ] The matrix includes `endState` values `{PlayerEliminated, PlayerSurrenders, AISurrenders, TeamWin, MutualElimination, ScoreDecision}` and `playerCount` values `{2, 3, 4}`.
-- [ ] Invalid combinations are pruned by `ConstraintFilter` or equivalent explicit filtering.
-- [ ] One scripted scenario runs per valid cell.
-- [ ] Every cell asserts `GameOutcome.Status`, `GameOutcome.Reason`, and winning/losing sides.
-- [ ] Mutual-elimination cells assert `SuddenDeath` first and `Decided`/`Eliminated` after the next elimination.
-- [ ] Every run terminates within a bounded frame count; infinite-loop failures are reported with the cell binding.
-- [ ] Matrix tests are non-skipped headless `[Fact]` tests and run in CI without game files.
-- [ ] Any new `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] The matrix includes `endState` values `{PlayerEliminated, PlayerSurrenders, AISurrenders, TeamWin, MutualElimination, ScoreDecision}` and `playerCount` values `{2, 3, 4}`.
+- [x] Invalid combinations are pruned by `ConstraintFilter` or equivalent explicit filtering.
+- [x] One scripted scenario runs per valid cell.
+- [x] Every cell asserts `GameOutcome.Status`, `GameOutcome.Reason`, and winning/losing sides.
+- [x] Mutual-elimination cells assert `SuddenDeath` first and `Decided`/`Eliminated` after the next elimination.
+- [x] Every run terminates within a bounded frame count; infinite-loop failures are reported with the cell binding.
+- [x] Matrix tests are non-skipped headless `[Fact]` tests and run in CI without game files.
+- [x] Any new `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

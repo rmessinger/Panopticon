@@ -139,6 +139,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/p3-victory-defeat.md`](deep-dives/p3-victory-defeat.md) | Track P phase P3 - Victory & defeat conditions (queryable `GameOutcome`, all six match end states). |
 | [`deep-dives/p4-p6-economy-production-combat.md`](deep-dives/p4-p6-economy-production-combat.md) | Track P phases P4 - Economy loop & P6 - Combat & command verification. |
 | [`deep-dives/p6b-unit-contract-validation.md`](deep-dives/p6b-unit-contract-validation.md) | Track P phase P6b - Per-archetype unit-contract validation (infantry/vehicle/aircraft/builder/support/superweapon full contracts). |
+| [`deep-dives/p8-implementation-delta-remediation.md`](deep-dives/p8-implementation-delta-remediation.md) | Track P phase P8 - Implementation delta remediation (closes named P3-P6 delta-audit gaps: data-driven victory config, sudden-death repeat-elimination fix, end-of-match UI/exit, real gather-cycle harness, real faction build trees, control-bar live dispatch, weapon-fire effects). |
 | [`deep-dives/a1-headless-host.md`](deep-dives/a1-headless-host.md) | Track A phase A1 - Headless simulation host. |
 | [`deep-dives/a4-pluggable-ai.md`](deep-dives/a4-pluggable-ai.md) | Track A phase A4 - Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
 | [`deep-dives/a4-decentralized-hierarchical-ai.md`](deep-dives/a4-decentralized-hierarchical-ai.md) | Track A phase A4 - Decentralized hierarchical AI (unit-level ANNs organized as general/commander/soldier ranks, generalizing the flat pluggable-AI policy seam). |
@@ -160,7 +161,8 @@ tracks. Phase order is approximate; cross-track dependencies appear in each trac
 - [Track P - Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
   arbitrary-command harness · P1 skirmish setup & player relationships · P2 skirmish AI opponent ·
   P3 victory/defeat conditions · P4 economy loop · P5 construction & production · P6 combat &
-  command · P6b unit-contract validation · P7 end-to-end skirmish validation. Gates all other tracks.
+  command · P6b unit-contract validation · P7 end-to-end skirmish validation · P8 implementation
+  delta remediation. Gates all other tracks.
 - [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 reproducibility &
   statistical stability · A3 simulation/presentation seam · A4 experiment framework seams & harness
   (incl. the Simulation Domain Model seam - RTS, city-builder, transport, …) · A5 scenario
@@ -222,13 +224,14 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | P0 - ReplaySketch harness | `███░░░░░░░` | 4 / 15 |
 | P1 - Skirmish setup | `██████░░░░` | 5 / 8 |
 | P2 - Skirmish AI | `██████████` | 7 / 7 |
-| P3 - Victory & defeat | `░░░░░░░░░░` | 0 / 9 |
-| P4 - Economy loop | `░░░░░░░░░░` | 0 / 5 |
+| P3 - Victory & defeat | `██████████` | 9 / 9 |
+| P4 - Economy loop | `██████████` | 5 / 5 |
 | P5 - Construction & production | `██████████` | 5 / 5 |
-| P6 - Combat & command | `░░░░░░░░░░` | 0 / 5 |
+| P6 - Combat & command | `████████░░` | 4 / 5 |
 | P6b - Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
 | P7 - End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
-| Track P total | `███░░░░░░░` | 21 / 68 |
+| P8 - Implementation delta remediation | `░░░░░░░░░░` | 0 / 7 |
+| Track P total | `█████░░░░░` | 39 / 75 |
 
 ### Tracks A / B / C (gated on Track P)
 

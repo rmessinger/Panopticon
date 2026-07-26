@@ -50,14 +50,14 @@ Complete the decided-match flow: a decided `GameOutcome` relaxes/stops simulatio
 
 ## Acceptance criteria
 
-- [ ] When all non-allies of player X are defeated, the decided outcome from `WI-P3-02` stops/relaxes simulation and remains queryable.
-- [ ] An `EndGame` order produces `GameOutcome.Status = Decided` and `Reason = Surrendered` for the issuing player instead of logging "Unimplemented order type".
-- [ ] `GameOutcome` exposes winner, loser, reason, and decided frame for headless assertion.
-- [ ] The P0 harness/outcome assertion can assert on the decided result and fails loudly for a wrong expected result.
-- [ ] Exit back to menu/clean headless termination remains possible; no hard process exit is introduced.
-- [ ] Headless `[Fact]` tests are not skipped and do not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] When all non-allies of player X are defeated, the decided outcome from `WI-P3-02` stops/relaxes simulation and remains queryable.
+- [x] An `EndGame` order produces `GameOutcome.Status = Decided` and `Reason = Surrendered` for the issuing player instead of logging "Unimplemented order type".
+- [x] `GameOutcome` exposes winner, loser, reason, and decided frame for headless assertion.
+- [x] The P0 harness/outcome assertion can assert on the decided result and fails loudly for a wrong expected result.
+- [x] Exit back to menu/clean headless termination remains possible; no hard process exit is introduced.
+- [x] Headless `[Fact]` tests are not skipped and do not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

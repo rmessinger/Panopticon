@@ -16,7 +16,7 @@ Verify and close structure production end-to-end: units queued through `Producti
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:264-266`: checklist item and exact AC to satisfy.
+- `docs/roadmap/implementation-checklist.md:300-302`: checklist item and exact AC to satisfy.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 production and upgrade scope.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-2 upgrades row.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:257-263`: queue/spawn mechanism.
@@ -53,13 +53,13 @@ Verify and close structure production end-to-end: units queued through `Producti
 
 ## Acceptance criteria
 
-- [ ] A queued unit spawns at the rally point and a queued upgrade completes and applies its effect; harness asserts both.
-- [ ] Unit and upgrade queue entries debit cost on enqueue and refund correctly on cancel without duplicating or losing ownership.
-- [ ] The test asserts queue-capacity/default sentinel behavior for `CanEnqueue()` and fails loudly if production silently ignores it.
-- [ ] Existing production, upgrade, cancel, and refund guards are preserved if code moves.
-- [ ] The new headless `[Fact]` runs in CI and does not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A queued unit spawns at the rally point and a queued upgrade completes and applies its effect; harness asserts both.
+- [x] Unit and upgrade queue entries debit cost on enqueue and refund correctly on cancel without duplicating or losing ownership.
+- [x] The test asserts queue-capacity/default sentinel behavior for `CanEnqueue()` and fails loudly if production silently ignores it.
+- [x] Existing production, upgrade, cancel, and refund guards are preserved if code moves.
+- [x] The new headless `[Fact]` runs in CI and does not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
@@ -86,5 +86,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01, -02, -04, -05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Logic/Production/UnitUpgradeProductionTests.cs` (9 non-skipped `[Fact]`s: unit spawn/rally, player/object upgrade completion, cancel/refund, queue capacity, order-path debit). `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

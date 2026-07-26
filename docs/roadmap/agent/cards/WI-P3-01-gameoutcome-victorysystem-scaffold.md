@@ -49,13 +49,13 @@ Add the first-class `GameOutcome` value and a no-decision `VictorySystem : GameS
 
 ## Acceptance criteria
 
-- [ ] `GameOutcome` is queryable off both `GameLogic` and `IGame`.
-- [ ] During play, the default outcome reads `Status = OutcomeStatus.InProgress` and the default reason/sentinel is explicitly verified not to represent a decided outcome.
-- [ ] `VictorySystem : GameSystem` is registered and ticks from the logic loop at the named cadence; a test asserts it runs.
-- [ ] No match can become `Decided` in this scaffold card.
-- [ ] A headless `[Fact]` test runs in CI, is not skipped, and does not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] `GameOutcome` is queryable off both `GameLogic` and `IGame`.
+- [x] During play, the default outcome reads `Status = OutcomeStatus.InProgress` and the default reason/sentinel is explicitly verified not to represent a decided outcome.
+- [x] `VictorySystem : GameSystem` is registered and ticks from the logic loop at the named cadence; a test asserts it runs.
+- [x] No match can become `Decided` in this scaffold card.
+- [x] A headless `[Fact]` test runs in CI, is not skipped, and does not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
