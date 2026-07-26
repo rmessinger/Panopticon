@@ -43,13 +43,13 @@ Prove the baseline supply collection loop credits `Player.BankAccount` through `
 
 ## Acceptance criteria
 
-- [ ] A non-skipped headless `[Fact]` runs in CI and exercises gather→dump through `SupplyCenterDockUpdate.DumpBoxes` and `BankAccount.Deposit`.
-- [ ] The test asserts a positive `BankAccount.Money` delta after a supply dump.
-- [ ] The test samples each tick and asserts `BankAccount.Money >= 0`.
-- [ ] The test fails loudly on a stuck harvester or timeout; it is not replaced by a skipped `[GameFact]`.
-- [ ] No refactor drops existing supply-state guards or branch behavior.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [ ] A non-skipped headless `[Fact]` runs in CI and exercises gather→dump through `SupplyCenterDockUpdate.DumpBoxes` and `BankAccount.Deposit` (partial: Result verifies docked dump/deposit only, not the full gather loop).
+- [x] The test asserts a positive `BankAccount.Money` delta after a supply dump.
+- [x] The test samples each tick and asserts `BankAccount.Money >= 0`.
+- [ ] The test fails loudly on a stuck harvester or timeout; it is not replaced by a skipped `[GameFact]` (partial: no live harvester or timeout path is exercised).
+- [x] No refactor drops existing supply-state guards or branch behavior.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

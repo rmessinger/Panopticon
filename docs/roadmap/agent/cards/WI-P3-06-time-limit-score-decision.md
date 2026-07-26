@@ -45,14 +45,14 @@ Add an optional frame-count time limit to `VictorySystem` that decides the match
 
 ## Acceptance criteria
 
-- [ ] With the default configuration, no time-limit score decision occurs.
-- [ ] A scenario with a configured frame-count limit expires and sets `GameOutcome.Status = Decided` and `Reason = ScoreDecision`.
-- [ ] A clear highest-score side sets the correct `WinningPlayer`/`WinningTeam` per the configured metric.
-- [ ] A tied score produces a shared-victory representation and is covered by a test.
-- [ ] The frame-limit sentinel/default is named and verified end-to-end.
-- [ ] Headless `[Fact]` tests are not skipped and do not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] With the default configuration, no time-limit score decision occurs.
+- [ ] A scenario with a configured frame-count limit expires and sets `GameOutcome.Status = Decided` and `Reason = ScoreDecision` (partial: frame limit is test-settable internal state, not scenario/data config).
+- [ ] A clear highest-score side sets the correct `WinningPlayer`/`WinningTeam` per the configured metric (partial: score metric is test-settable internal state, not scenario/data config).
+- [x] A tied score produces a shared-victory representation and is covered by a test.
+- [x] The frame-limit sentinel/default is named and verified end-to-end.
+- [x] Headless `[Fact]` tests are not skipped and do not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

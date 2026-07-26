@@ -45,13 +45,13 @@ Create a CI-running command coverage matrix proving every baseline control-bar a
 
 ## Acceptance criteria
 
-- [ ] Every baseline control-bar action maps to an expected `OrderType`.
-- [ ] Each mapped `OrderType` is proven to have a real `OrderProcessor` handler, not the default unimplemented branch.
-- [ ] A harness command per action produces the expected observable effect.
-- [ ] The coverage matrix is documented with pass/fail per action and lists unhandled order types as explicit gaps.
-- [ ] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Every baseline control-bar action maps to an expected `OrderType`.
+- [x] Each mapped `OrderType` is proven to have a real `OrderProcessor` handler, not the default unimplemented branch.
+- [ ] A harness command per action produces the expected observable effect (partial: live observable effects are only exercised for BuildObject/CreateUnit affordability guards).
+- [x] The coverage matrix is documented with pass/fail per action and lists unhandled order types as explicit gaps.
+- [x] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

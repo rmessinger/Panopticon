@@ -16,7 +16,7 @@ Verify and close faction prerequisite/tech gating so `Player.CanProduceObject(..
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:261-263`: checklist item and exact AC to satisfy.
+- `docs/roadmap/implementation-checklist.md:297-299`: checklist item and exact AC to satisfy.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 gating scope.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-1 funding/gating row.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271`: `Player.CanProduceObject` and `GameObject` gating entry points.
@@ -45,13 +45,13 @@ Verify and close faction prerequisite/tech gating so `Player.CanProduceObject(..
 
 ## Acceptance criteria
 
-- [ ] A unit/structure with unmet prerequisites is non-buildable and becomes buildable once the prereqs exist; test asserts gating for ≥1 prereq chain.
-- [ ] The test verifies the default false path for unmet prerequisites and the true path after completed prerequisite structures exist.
-- [ ] Money gating through `GameObject.CanConstructUnit(...)` is asserted separately from prerequisite gating.
-- [ ] Existing AND-of-OR object/science prerequisite semantics are preserved without dropping any branch or guard.
-- [ ] The new headless `[Fact]` runs in CI and does not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A unit/structure with unmet prerequisites is non-buildable and becomes buildable once the prereqs exist; test asserts gating for ≥1 prereq chain.
+- [x] The test verifies the default false path for unmet prerequisites and the true path after completed prerequisite structures exist.
+- [x] Money gating through `GameObject.CanConstructUnit(...)` is asserted separately from prerequisite gating.
+- [x] Existing AND-of-OR object/science prerequisite semantics are preserved without dropping any branch or guard.
+- [x] The new headless `[Fact]` runs in CI and does not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
@@ -72,11 +72,11 @@ dotnet format src --verify-no-changes
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Tick the "Faction build trees with prerequisites / tech gating (`Player.CanProduceObject:357-420`)" P5 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
+- Tick the "Faction build trees with prerequisites / tech gating (`Player.CanProduceObject`, `src/OpenSage.Game/Logic/Player.cs:395`)" P5 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
 - Confirm `src/OpenSage.Game.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` was created and runs in CI.
 
 ## Result
 
-<!-- append after completing -->
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01, -03..05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` (8 non-skipped `[Fact]`s: AND/OR prerequisite gating, partial-build gating, money-vs-prereq separation). Caveat surfaced by the P3-P6 delta audit (2026-07-25): `MockedGameTest` has no loaded game files, so these tests exercise a synthetic 2-3-node `ObjectDefinition` prerequisite chain fabricated in-test rather than a real faction build tree; see WI-P5-06 for closing that gap. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

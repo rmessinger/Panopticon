@@ -49,15 +49,15 @@ Verify that construction, unit production, and upgrades debit `BankAccount` corr
 
 ## Acceptance criteria
 
-- [ ] A non-skipped headless test proves queuing a unit reduces `BankAccount.Money` by exactly that unit's cost.
-- [ ] A non-skipped headless test proves queuing a structure reduces `BankAccount.Money` by exactly that structure's cost.
-- [ ] A non-skipped headless test proves queuing an upgrade reduces `BankAccount.Money` by exactly that upgrade's cost.
-- [ ] Cancel paths refund exactly once for unit, structure, and upgrade work; pending-object death/destruction used as cancellation also refunds exactly once if applicable.
-- [ ] Insufficient funds block construction, production, and upgrades before side effects; queues and object counts are unchanged.
-- [ ] `BankAccount.Money` never goes below zero, including low-balance and zero-balance sentinel cases.
-- [ ] Existing production queue, parking-place, producer-selection, and upgrade-status branches are preserved.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A non-skipped headless test proves queuing a unit reduces `BankAccount.Money` by exactly that unit's cost.
+- [x] A non-skipped headless test proves queuing a structure reduces `BankAccount.Money` by exactly that structure's cost.
+- [x] A non-skipped headless test proves queuing an upgrade reduces `BankAccount.Money` by exactly that upgrade's cost.
+- [ ] Cancel paths refund exactly once for unit, structure, and upgrade work; pending-object death/destruction used as cancellation also refunds exactly once if applicable (partial: CancelBuild kill-path cancellation is not exercised headlessly).
+- [x] Insufficient funds block construction, production, and upgrades before side effects; queues and object counts are unchanged.
+- [x] `BankAccount.Money` never goes below zero, including low-balance and zero-balance sentinel cases.
+- [x] Existing production queue, parking-place, producer-selection, and upgrade-status branches are preserved.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

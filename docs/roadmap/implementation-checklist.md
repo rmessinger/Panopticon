@@ -334,37 +334,37 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     for that faction's reference unit; see the deep dive matrix section.
 
 ### P6b: Unit-contract validation ([deep dive](deep-dives/p6b-unit-contract-validation.md))
-- [ ] Infantry archetype contract (P6b-1).
+- [x] Infantry archetype contract (P6b-1).
   - AC: a P0 harness scenario for the reference infantry unit (e.g. USA Ranger) asserts all six
     contract points: produced, moves, garrison via `Enter`, basic attack reduces target health,
     every `SpecialPowerType` in its command set produces an observable effect, dies with ownership
     cleanup; unimplemented special-power handlers are logged as explicit gaps.
-- [ ] Vehicle archetype contract (P6b-2).
+- [x] Vehicle archetype contract (P6b-2).
   - AC: a P0 harness scenario for the reference vehicle unit asserts all six contract points:
     produced, moves, basic attack, weapon-mode upgrade activates the expected `WeaponSlot`, dies;
     unimplemented handlers logged.
-- [ ] Aircraft archetype contract (P6b-3).
+- [x] Aircraft archetype contract (P6b-3).
   - AC: a P0 harness scenario for the reference aircraft unit asserts all six contract points:
     produced, moves (airborne), attack, land/takeoff cycle, special ability (if applicable), dies;
     unimplemented handlers logged.
-- [ ] Builder archetype contract (P6b-4).
+- [x] Builder archetype contract (P6b-4).
   - AC: a P0 harness scenario for the reference dozer/builder asserts all six contract points:
     produced, moves, constructs a building to completion, repairs a structure, dies; no production
     or construction order left unhandled.
-- [ ] Support archetype contract (P6b-5).
+- [x] Support archetype contract (P6b-5).
   - AC: a P0 harness scenario for the reference support unit asserts all six contract points:
     produced, moves, primary special ability produces an observable effect (health restored,
     hacking applied, ECM active, etc.), dies; unimplemented handlers logged.
-- [ ] Superweapon archetype contract (P6b-6).
+- [x] Superweapon archetype contract (P6b-6).
   - AC: a P0 harness scenario for the reference superweapon structure asserts all six contract
     points: built, charge cycle advances per tick, `SpecialPowerAtLocation` fires and produces
     area effect, cooldown state is set post-fire, structure can be sold; unimplemented handlers
     logged.
-- [ ] All unimplemented special-power handlers surfaced by P6b-1 through P6b-6 are fixed or
+- [x] All unimplemented special-power handlers surfaced by P6b-1 through P6b-6 are fixed or
       documented as explicit out-of-scope gaps with a follow-up item.
   - AC: every `SpecialPower*` order exercised by the six scenarios either passes its assertion or
     has a documented gap item; none silently succeed without effect.
-- [ ] P6b scenario matrix: sweep archetype × faction; assert the full unit contract for every
+- [x] P6b scenario matrix: sweep archetype × faction; assert the full unit contract for every
       archetype-faction combination via the P0 harness.
   - AC: a `ScenarioMatrix` (axes: `archetype` ∈ {infantry, vehicle, aircraft, builder, support,
     superweapon}, `faction` ∈ {USA, GLA, China}; cells without a valid reference unit pruned by

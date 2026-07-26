@@ -51,13 +51,13 @@ Add a death/destroy/ownership-change notification that lets `VictorySystem` reac
 
 ## Acceptance criteria
 
-- [ ] A death/ownership-change notification fires from `OnDie`, from `Destroy`, and from ownership transfer.
-- [ ] Each notification fires once per lifecycle event; tests fail on duplicate firing.
-- [ ] `VictorySystem` reacts incrementally to affected players and does not perform a full-object scan.
-- [ ] `Player.OwnedObjects`, `BuildingCount`, and `UnitCount` remain consistent across create, death, destroy, and owner transfer.
-- [ ] Headless `[Fact]` tests are not skipped and do not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A death/ownership-change notification fires from `OnDie`, from `Destroy`, and from ownership transfer.
+- [x] Each notification fires once per lifecycle event; tests fail on duplicate firing.
+- [x] `VictorySystem` reacts incrementally to affected players and does not perform a full-object scan.
+- [x] `Player.OwnedObjects`, `BuildingCount`, and `UnitCount` remain consistent across create, death, destroy, and owner transfer.
+- [x] Headless `[Fact]` tests are not skipped and do not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

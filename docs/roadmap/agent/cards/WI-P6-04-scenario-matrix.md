@@ -46,13 +46,13 @@ Replace the P6 scenario-matrix stub with a CI-running 15-cell matrix sweeping or
 
 ## Acceptance criteria
 
-- [ ] The P6 `ScenarioMatrix` has axes `orderType` × `faction` with the five order families and three factions from the deep dive.
-- [ ] The matrix expands to exactly 15 cells.
-- [ ] Each cell asserts the observable effect for that faction's reference unit.
-- [ ] Unimplemented handlers and no-op special-power cells fail loudly with explicit `orderType`/`faction` gap names.
-- [ ] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] The P6 `ScenarioMatrix` has axes `orderType` × `faction` with the five order families and three factions from the deep dive.
+- [x] The matrix expands to exactly 15 cells.
+- [ ] Each cell asserts the observable effect for that faction's reference unit (partial: 9 cells are recorded as explicit gaps instead of asserting a real effect).
+- [x] Unimplemented handlers and no-op special-power cells fail loudly with explicit `orderType`/`faction` gap names.
+- [x] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

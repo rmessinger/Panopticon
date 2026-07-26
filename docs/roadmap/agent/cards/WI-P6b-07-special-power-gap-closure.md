@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P6b-07` |
 | Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md): P6b gap closure, see [deep dive §2.3](../../deep-dives/p6b-unit-contract-validation.md#23-surfacing-unimplemented-handlers-as-gaps-not-silent-failures) and [§4 Sub-phases](../../deep-dives/p6b-unit-contract-validation.md#3-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-P6b-01`, `WI-P6b-02`, `WI-P6b-03`, `WI-P6b-04`, `WI-P6b-05`, `WI-P6b-06` |
@@ -79,7 +79,12 @@ dotnet format src --verify-no-changes
 - Tick the "All unimplemented special-power handlers surfaced by P6b-1 through P6b-6" item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` listing fixed handlers and documented follow-ups.
 - List follow-up cards to create here:
-  - None unless an accepted out-of-scope special-power gap remains.
+- None unless an accepted out-of-scope special-power gap remains.
+  - Accepted out-of-scope gaps (deep cross-cutting area-effect/superweapon systems, applicator arms
+    throw NotImplementedException): CleanupArea, ParticleUplinkCannon, NuclearMissile, ScudStorm.
+    Tracked in `P6bAcceptedGaps` (src/OpenSage.Tools.ReplaySketch.Core/Model/P6bAcceptedGaps.cs)
+    under follow-up "special-power/area-effect handler track (P6b follow-up)". Scenario failures
+    for these stay explicit until the follow-up lands.
 
 ## Result
 

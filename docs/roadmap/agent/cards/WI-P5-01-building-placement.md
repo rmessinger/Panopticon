@@ -16,7 +16,7 @@ Verify and close the shared player/AI building-placement path: `OrderProcessor.B
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:257-260`: checklist item and exact AC to satisfy.
+- `docs/roadmap/implementation-checklist.md:294-296`: checklist item and exact AC to satisfy.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 gap-closing scope.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-1/P5-2 sub-phase mapping.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-258`: P5 action path through orders and builder AI.
@@ -48,13 +48,13 @@ Verify and close the shared player/AI building-placement path: `OrderProcessor.B
 
 ## Acceptance criteria
 
-- [ ] Both a player order and an AI request place and construct a structure to completion at a valid location; harness asserts a finished building for each.
-- [ ] Both paths enter through `OrderProcessor.BuildObject` and assign a builder via `IBuilderAIUpdate`; no direct construction-only shortcut is used for AI.
-- [ ] Build-cost debit, cancel/refund, ownership, and destroyed-target cleanup remain covered and unchanged.
-- [ ] Defaults/sentinels used by the test are explicit and asserted, including starting money and expected final `BuildProgress`.
-- [ ] The new headless `[Fact]` runs in CI and does not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Both a player order and an AI request place and construct a structure to completion at a valid location; harness asserts a finished building for each.
+- [x] Both paths enter through `OrderProcessor.BuildObject` and assign a builder via `IBuilderAIUpdate`; no direct construction-only shortcut is used for AI.
+- [x] Build-cost debit, cancel/refund, ownership, and destroyed-target cleanup remain covered and unchanged.
+- [x] Defaults/sentinels used by the test are explicit and asserted, including starting money and expected final `BuildProgress`.
+- [x] The new headless `[Fact]` runs in CI and does not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
@@ -81,5 +81,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Implemented on branch `track-p5-construction-production` alongside WI-P5-02..05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Logic/Construction/BuildingPlacementTests.cs` (5 non-skipped `[Fact]`s: human/AI `BuildObject` order path, cost debit, builder assignment, construction completion, cancel/refund). Required headless test-host enablers: `GameLogic.CreateObject` null-guards for `Scene3D`/`PartitionCellManager`, `OrderProcessor` guarded `GameObjects` helper, `AIUpdate.AppendPathToTargetPoint` null-guard, `GameObject`/`ProductionUpdate`/`DozerAndWorkerState` guarded model-condition-flag setters for a null `Drawable`. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed (781 passed, 0 failed); `dotnet format src --verify-no-changes` clean.
 
