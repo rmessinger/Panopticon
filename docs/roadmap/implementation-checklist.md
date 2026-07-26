@@ -334,7 +334,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     for that faction's reference unit; see the deep dive matrix section.
 
 ### P6b: Unit-contract validation ([deep dive](deep-dives/p6b-unit-contract-validation.md))
-- [ ] Infantry archetype contract (P6b-1).
+- [x] Infantry archetype contract (P6b-1).
   - AC: a P0 harness scenario for the reference infantry unit (e.g. USA Ranger) asserts all six
     contract points: produced, moves, garrison via `Enter`, basic attack reduces target health,
     every `SpecialPowerType` in its command set produces an observable effect, dies with ownership
