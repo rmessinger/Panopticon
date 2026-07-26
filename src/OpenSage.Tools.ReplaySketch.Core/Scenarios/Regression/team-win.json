@@ -1,0 +1,61 @@
+{
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "BaseRadiusWorldUnits": 120,
+  "Players": [
+    {
+      "Name": "P1-Human",
+      "FactionIndex": 2,
+      "Color": 1,
+      "StartPosition": 1,
+      "Team": 1,
+      "Actions": [
+        {
+          "id": "team-a-attack",
+          "label": "TeamAAttacksB",
+          "command": {
+            "orderType": "ForceAttackGround",
+            "arguments": [
+              {
+                "kind": "position",
+                "Spec": {
+                  "kind": "normalized",
+                  "NormX": 0.7,
+                  "NormY": 0.7
+                }
+              }
+            ]
+          },
+          "timing": {
+            "kind": "fixed",
+            "Frames": 60
+          }
+        }
+      ]
+    },
+    {
+      "Name": "P2-Ally",
+      "FactionIndex": 2,
+      "Color": 1,
+      "StartPosition": 2,
+      "Team": 1,
+      "Actions": []
+    },
+    {
+      "Name": "P3-EnemyA",
+      "FactionIndex": 4,
+      "Color": 2,
+      "StartPosition": 3,
+      "Team": 2,
+      "Actions": []
+    },
+    {
+      "Name": "P4-EnemyB",
+      "FactionIndex": 4,
+      "Color": 2,
+      "StartPosition": 4,
+      "Team": 2,
+      "Actions": []
+    }
+  ],
+  "Assertions": []
+}
