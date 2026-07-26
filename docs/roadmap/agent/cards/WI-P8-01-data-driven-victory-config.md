@@ -1,14 +1,14 @@
-# Task Card `WI-P3-08`: Data-driven victory configuration seam
+# Task Card `WI-P8-01`: Data-driven victory configuration seam
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-P3-08` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-8, see [deep dive §1.2/§1.5](../../deep-dives/p3-victory-defeat.md#12-defeat-detection) and [§3](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Card ID | `WI-P8-01` |
+| Roadmap phase | [Track P · P8](../../track-p-playable-baseline.md): sub-phase P8-1, see [deep dive](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases); remediates a gap in [P3 victory/defeat](../../deep-dives/p3-victory-defeat.md#12-defeat-detection) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-02`, `WI-P3-06` |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
+| Diagrams | [P8 Architecture Diagrams](../../deep-dives/p8-implementation-delta-remediation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -71,7 +71,7 @@ dotnet format src --verify-no-changes
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Update the P3-8 row in [`deep-dives/p3-victory-defeat.md`](../../deep-dives/p3-victory-defeat.md#3-sub-phases).
+- Update the P8-1 row in [`deep-dives/p8-implementation-delta-remediation.md`](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases).
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
   - Full `VictoryConditionRule` pluggability (Track A / A4), if not covered by this card.

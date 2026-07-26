@@ -1,14 +1,14 @@
-# Task Card `WI-P3-09`: Sudden-death repeat-elimination fix
+# Task Card `WI-P8-02`: Sudden-death repeat-elimination fix
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-P3-09` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-9, see [deep dive §1.5](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) and [§3](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Card ID | `WI-P8-02` |
+| Roadmap phase | [Track P · P8](../../track-p-playable-baseline.md): sub-phase P8-2, see [deep dive](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases); remediates a gap in [P3 victory/defeat](../../deep-dives/p3-victory-defeat.md#15-sudden-death-and-time-limit-implementation-notes) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-05` |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
+| Diagrams | [P8 Architecture Diagrams](../../deep-dives/p8-implementation-delta-remediation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -66,7 +66,7 @@ dotnet format src --verify-no-changes
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Update the P3-9 row in [`deep-dives/p3-victory-defeat.md`](../../deep-dives/p3-victory-defeat.md#3-sub-phases).
+- Update the P8-2 row in [`deep-dives/p8-implementation-delta-remediation.md`](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases).
 - Append a result line to repo-root `.exchange`.
 
 ## Result

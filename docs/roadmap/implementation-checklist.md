@@ -397,6 +397,36 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     report is the standing "is the game still playable?" check; all cells pass before P7 is marked
     Done.
 
+### P8: Implementation delta remediation ([deep dive](deep-dives/p8-implementation-delta-remediation.md))
+- [ ] Data-driven victory configuration seam (P8-1).
+  - AC: `VictorySystem.FrameLimit`/`ScoreMetric` are settable through a real skirmish/scenario
+    configuration path, not only via direct `internal` property assignment in test code; default
+    behavior is unchanged; a headless test starts a match through the configuration path and
+    asserts the configured values took effect.
+- [ ] Sudden-death repeat-elimination fix (P8-2).
+  - AC: a scenario where the elimination check immediately following a `SuddenDeath` transition
+    also mutually eliminates all remaining active players resolves to `Decided` rather than hanging
+    in `SuddenDeath` indefinitely; test covers the repeat-elimination case.
+- [ ] End-of-match UI and `TestHarness` integration (P8-3).
+  - AC: a real UI/exit consumer of `GameOutcome` exists for interactive play; `OpenSage.Tools.TestHarness`
+    exits through the same `GameOutcome`-driven path rather than its pre-`GameOutcome` ad hoc exit.
+- [ ] Real gather-cycle harness verification (P8-4).
+  - AC: the P4 scenario matrix's economy assertion drives a harvester through the real
+    `SupplyAIUpdate` state machine (`SearchingForSupplySource → Approaching → Requesting →
+    Gathering → DumpingSupplies`) via `Scene3D`, not a synthetic dump/debit shortcut.
+- [ ] Real per-faction build trees and production assertions (P8-5).
+  - AC: the P5 scenario matrix exercises real per-faction (`USA`/`GLA`/`China`) build trees instead
+    of a reflection-built synthetic prerequisite chain; each cell asserts an actual unit/upgrade
+    spawn, not only `CanProduceObject`; the `human` `playerType` cell routes through
+    `OrderProcessor` like the `AI` cell.
+- [ ] Control-bar live dispatch verification (P8-6).
+  - AC: the P6 command-coverage matrix dispatches through `GeneralsControlBar` end to end rather
+    than asserting only the `OrderType` mapping.
+- [ ] `FireWeaponUpdate` and real observable-effect assertions (P8-7).
+  - AC: `FireWeaponUpdate.Update()` is a real implementation, not a no-op stub; the 9 of 15 P6
+    scenario matrix cells that previously asserted a disclosed "GAP" message now assert a real
+    observable effect.
+
 ---
 
 ## Track A: Foundations

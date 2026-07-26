@@ -1,14 +1,14 @@
-# Task Card `WI-P6-07`: FireWeaponUpdate implementation and real observable-effect assertions
+# Task Card `WI-P8-07`: FireWeaponUpdate implementation and real observable-effect assertions
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-P6-07` |
-| Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): see [deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification), sub-phase P6-7 |
+| Card ID | `WI-P8-07` |
+| Roadmap phase | [Track P · P8](../../track-p-playable-baseline.md): sub-phase P8-7, see [deep dive](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases); remediates a gap in [P6 combat/command](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P6-02`, `WI-P6-04` |
-| Diagrams | [P4/P6 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P8 Architecture Diagrams](../../deep-dives/p8-implementation-delta-remediation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -73,7 +73,7 @@ dotnet format src --verify-no-changes
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Update the P6-7 row in [`deep-dives/p4-p6-economy-production-combat.md`](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases).
+- Update the P8-7 row in [`deep-dives/p8-implementation-delta-remediation.md`](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases).
 - Append a result line to repo-root `.exchange`.
 
 ## Result

@@ -1,14 +1,14 @@
-# Task Card `WI-P5-06`: Real per-faction build trees and production assertions
+# Task Card `WI-P8-05`: Real per-faction build trees and production assertions
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-P5-06` |
-| Roadmap phase | [Track P · P5](../../track-p-playable-baseline.md): see [deep dive §1.4/§2.4](../../deep-dives/p2-p5-skirmish-ai.md#6-scenario-matrix), sub-phase P5-3 |
+| Card ID | `WI-P8-05` |
+| Roadmap phase | [Track P · P8](../../track-p-playable-baseline.md): sub-phase P8-5, see [deep dive](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases); remediates a gap in [P5 construction/production](../../deep-dives/p2-p5-skirmish-ai.md#6-scenario-matrix) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P5-02`, `WI-P5-05` |
-| Diagrams | [P2/P5 Architecture Diagrams](../../deep-dives/p2-p5-skirmish-ai.md#7-architecture-diagrams) |
+| Diagrams | [P8 Architecture Diagrams](../../deep-dives/p8-implementation-delta-remediation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -71,7 +71,7 @@ dotnet format src --verify-no-changes
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Update the P5-3 row in [`deep-dives/p2-p5-skirmish-ai.md`](../../deep-dives/p2-p5-skirmish-ai.md#5-sub-phases).
+- Update the P8-5 row in [`deep-dives/p8-implementation-delta-remediation.md`](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases).
 - Append a result line to repo-root `.exchange`.
 
 ## Result

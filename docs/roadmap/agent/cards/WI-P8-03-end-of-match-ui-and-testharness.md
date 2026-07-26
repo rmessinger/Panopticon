@@ -1,14 +1,14 @@
-# Task Card `WI-P3-10`: End-of-match UI and TestHarness integration
+# Task Card `WI-P8-03`: End-of-match UI and TestHarness integration
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-P3-10` |
-| Roadmap phase | [Track P · P3](../../track-p-playable-baseline.md): sub-phase P3-10, see [deep dive §1.4](../../deep-dives/p3-victory-defeat.md#14-end-of-match-flow) and [§3](../../deep-dives/p3-victory-defeat.md#3-sub-phases) |
+| Card ID | `WI-P8-03` |
+| Roadmap phase | [Track P · P8](../../track-p-playable-baseline.md): sub-phase P8-3, see [deep dive](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases); remediates a gap in [P3 victory/defeat](../../deep-dives/p3-victory-defeat.md#14-end-of-match-flow) |
 | Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-P3-04` |
-| Diagrams | [P3 Architecture Diagrams](../../deep-dives/p3-victory-defeat.md#7-architecture-diagrams) |
+| Diagrams | [P8 Architecture Diagrams](../../deep-dives/p8-implementation-delta-remediation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -70,13 +70,13 @@ dotnet format src --verify-no-changes
 
 - Do not build new GUI asset/layout infrastructure; reuse existing `Mods.Generals` GUI patterns.
 - Do not remove the "tail period" behavior in `TestHarness`; only change the trigger condition.
-- Do not change `GameOutcome`/`VictorySystem` semantics established by `WI-P3-01` through `WI-P3-09`; this card only adds a notification/consumer on top.
+- Do not change `GameOutcome`/`VictorySystem` semantics established by `WI-P3-01` through `WI-P3-07` and `WI-P8-02`; this card only adds a notification/consumer on top.
 - If a full win/lose dialog is genuinely out of scope for this card's effort budget, that must be explicit in the Result section with a named follow-up, not silently absent.
 
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Update the P3-10 row in [`deep-dives/p3-victory-defeat.md`](../../deep-dives/p3-victory-defeat.md#3-sub-phases).
+- Update the P8-3 row in [`deep-dives/p8-implementation-delta-remediation.md`](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases).
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
   - Full win/lose dialog UI, if only a minimal hook was built here.

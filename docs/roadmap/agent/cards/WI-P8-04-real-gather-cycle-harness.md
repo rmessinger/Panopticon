@@ -1,14 +1,14 @@
-# Task Card `WI-P4-06`: Real gather-cycle harness verification
+# Task Card `WI-P8-04`: Real gather-cycle harness verification
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-P4-06` |
-| Roadmap phase | [Track P · P4](../../track-p-playable-baseline.md): sub-phase P4-6, see [deep dive](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) |
+| Card ID | `WI-P8-04` |
+| Roadmap phase | [Track P · P8](../../track-p-playable-baseline.md): sub-phase P8-4, see [deep dive](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases); remediates a gap in [P4 economy loop](../../deep-dives/p4-p6-economy-production-combat.md#p4-economy-loop-end-to-end) |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P4-01`, `WI-P4-04`, `WI-P4-05` |
-| Diagrams | [P4/P6 Architecture Diagrams](../../deep-dives/p4-p6-economy-production-combat.md#architecture-diagrams) |
+| Diagrams | [P8 Architecture Diagrams](../../deep-dives/p8-implementation-delta-remediation.md#6-architecture-diagrams) |
 
 ## Goal
 
@@ -74,7 +74,7 @@ dotnet format src --verify-no-changes
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Update the P4-6 row in [`deep-dives/p4-p6-economy-production-combat.md`](../../deep-dives/p4-p6-economy-production-combat.md#p4-sub-phases).
+- Update the P8-4 row in [`deep-dives/p8-implementation-delta-remediation.md`](../../deep-dives/p8-implementation-delta-remediation.md#3-sub-phases).
 - Append a result line to repo-root `.exchange`.
 
 ## Result
