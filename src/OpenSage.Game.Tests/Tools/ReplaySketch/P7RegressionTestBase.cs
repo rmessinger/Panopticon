@@ -141,6 +141,42 @@ public abstract class P7RegressionTestBase : MockedGameTest
         }
     }
 
+    // ── Matrix helpers shared by P7RegressionMatrixTests and the canonical gate ─
+
+    private static AssertionResult WithId(AssertionResult result, string id) => new()
+    {
+        AssertionId = id,
+        Passed = result.Passed,
+        ActualValue = result.ActualValue,
+        FailFrame = result.FailFrame,
+        Message = result.Message,
+    };
+
+    /// <summary>Runs one end-state cell (outcome + three invariants) on a fresh game.</summary>
+    private protected static CellResult RunRegressionCell(EndState endState)
+    {
+        var game = CreateGame();
+        var bindings = new Dictionary<string, string> { ["endState"] = endState.ToString() };
+        var results = new List<AssertionResult>
+        {
+            WithId(DriveAndAssertOutcome(endState, game), $"{endState}.outcome"),
+        };
+        foreach (var invariantResult in EvaluateInvariants(game, 0))
+        {
+            results.Add(WithId(invariantResult, $"{endState}.{invariantResult.AssertionId}"));
+        }
+        return new CellResult(bindings, new AssertionReport(results));
+    }
+
+    /// <summary>Runs all six end-state cells and aggregates into the harness report.</summary>
+    private protected static MatrixReport RunRegressionMatrix() =>
+        new(RegressionSuite.BuildMatrix().Expand()
+            .Select(cell => RunRegressionCell(ParseEndState(cell.Bindings["endState"])))
+            .ToList());
+
+    private protected static EndState ParseEndState(string value) =>
+        System.Enum.Parse<EndState>(value, ignoreCase: true);
+
     // ── VictoryConditionRule stubs for deterministic headless defeat ──────────
 
     internal sealed class DefeatPlayerRule : VictoryConditionRule

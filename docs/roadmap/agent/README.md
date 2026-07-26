@@ -72,6 +72,26 @@ These apply to every code-change card unless the card says otherwise (run from t
 | Tests | `dotnet test src --filter Category!=Interactive` | pass (no new failures) |
 | Format | `dotnet format src --verify-no-changes` | report no changes (run `dotnet format src` to fix) |
 
+### Standing playability regression (P7)
+
+The P7 end-to-end regression suite is the standing "is the game still playable?" gate. It runs
+six end-state scenarios (player eliminated, player surrenders, AI surrenders, team win, mutual
+elimination, sudden death, score decision) through the P0 harness, each asserting its terminal
+`GameOutcome` plus the universal invariants (money never negative, no unit duplication, AI made
+progress). Run it with:
+
+```sh
+dotnet test src --filter "FullyQualifiedName~P7_ScenarioMatrixTests"
+```
+
+The P6b archetype-contract scenarios are the companion gate for per-unit contracts:
+
+```sh
+dotnet test src --filter "FullyQualifiedName~P6bScenarioMatrixTests"
+```
+
+Both run under `dotnet test src --filter Category!=Interactive` (no game install required).
+
 Investigation-only cards (read-only, produce notes) skip build/test but must still leave their
 output where the card specifies.
 

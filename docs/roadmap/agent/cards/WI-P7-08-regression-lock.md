@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P7-08` |
 | Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-8 Regression lock, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§5](../../deep-dives/p7-end-to-end-regression.md#5-regression-locking) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | Track P phases `P0`, `P2`, `P3`, `P4`, `P5`, `P6`, `P6b` complete; `WI-P7-07` done |
