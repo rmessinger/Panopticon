@@ -360,7 +360,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     points: built, charge cycle advances per tick, `SpecialPowerAtLocation` fires and produces
     area effect, cooldown state is set post-fire, structure can be sold; unimplemented handlers
     logged.
-- [ ] All unimplemented special-power handlers surfaced by P6b-1 through P6b-6 are fixed or
+- [x] All unimplemented special-power handlers surfaced by P6b-1 through P6b-6 are fixed or
       documented as explicit out-of-scope gaps with a follow-up item.
   - AC: every `SpecialPower*` order exercised by the six scenarios either passes its assertion or
     has a documented gap item; none silently succeed without effect.
