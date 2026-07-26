@@ -53,13 +53,13 @@ Verify and close structure production end-to-end: units queued through `Producti
 
 ## Acceptance criteria
 
-- [ ] A queued unit spawns at the rally point and a queued upgrade completes and applies its effect; harness asserts both.
-- [ ] Unit and upgrade queue entries debit cost on enqueue and refund correctly on cancel without duplicating or losing ownership.
-- [ ] The test asserts queue-capacity/default sentinel behavior for `CanEnqueue()` and fails loudly if production silently ignores it.
-- [ ] Existing production, upgrade, cancel, and refund guards are preserved if code moves.
-- [ ] The new headless `[Fact]` runs in CI and does not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A queued unit spawns at the rally point and a queued upgrade completes and applies its effect; harness asserts both.
+- [x] Unit and upgrade queue entries debit cost on enqueue and refund correctly on cancel without duplicating or losing ownership.
+- [x] The test asserts queue-capacity/default sentinel behavior for `CanEnqueue()` and fails loudly if production silently ignores it.
+- [x] Existing production, upgrade, cancel, and refund guards are preserved if code moves.
+- [x] The new headless `[Fact]` runs in CI and does not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

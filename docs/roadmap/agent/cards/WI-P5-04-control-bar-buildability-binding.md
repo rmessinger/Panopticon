@@ -42,11 +42,11 @@ Locate and verify the Generals control-bar consumer for buildability state so co
 
 ## Acceptance criteria
 
-- [ ] The UI consumer of those methods is identified and documented; buildable/unbuildable state in the control bar reflects prereqs + money.
-- [ ] Dozer construct, unit build, and player/object upgrade buttons are each covered by either `CanPurchase(...)` or the equivalent `CanConstructUnit(...)` / `CanEnqueueUpgrade(...)` call.
-- [ ] The test or investigation artifact distinguishes missing prerequisites from missing money and asserts both states.
-- [ ] Existing UI behavior for dozers already building, container slots, purchased/enqueued upgrade overlays, and script-only commands is preserved.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes if a test/code change is made.
+- [x] The UI consumer of those methods is identified and documented; buildable/unbuildable state in the control bar reflects prereqs + money.
+- [x] Dozer construct, unit build, and player/object upgrade buttons are each covered by either `CanPurchase(...)` or the equivalent `CanConstructUnit(...)` / `CanEnqueueUpgrade(...)` call.
+- [x] The test or investigation artifact distinguishes missing prerequisites from missing money and asserts both states.
+- [ ] Existing UI behavior for dozers already building, container slots, purchased/enqueued upgrade overlays, and script-only commands is preserved (partial: result does not verify those branches end to end).
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes if a test/code change is made.
 
 ## Validation commands
 

@@ -45,13 +45,13 @@ Verify and close faction prerequisite/tech gating so `Player.CanProduceObject(..
 
 ## Acceptance criteria
 
-- [ ] A unit/structure with unmet prerequisites is non-buildable and becomes buildable once the prereqs exist; test asserts gating for ≥1 prereq chain.
-- [ ] The test verifies the default false path for unmet prerequisites and the true path after completed prerequisite structures exist.
-- [ ] Money gating through `GameObject.CanConstructUnit(...)` is asserted separately from prerequisite gating.
-- [ ] Existing AND-of-OR object/science prerequisite semantics are preserved without dropping any branch or guard.
-- [ ] The new headless `[Fact]` runs in CI and does not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A unit/structure with unmet prerequisites is non-buildable and becomes buildable once the prereqs exist; test asserts gating for ≥1 prereq chain.
+- [x] The test verifies the default false path for unmet prerequisites and the true path after completed prerequisite structures exist.
+- [x] Money gating through `GameObject.CanConstructUnit(...)` is asserted separately from prerequisite gating.
+- [x] Existing AND-of-OR object/science prerequisite semantics are preserved without dropping any branch or guard.
+- [x] The new headless `[Fact]` runs in CI and does not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

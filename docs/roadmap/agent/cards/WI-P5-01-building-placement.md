@@ -48,13 +48,13 @@ Verify and close the shared player/AI building-placement path: `OrderProcessor.B
 
 ## Acceptance criteria
 
-- [ ] Both a player order and an AI request place and construct a structure to completion at a valid location; harness asserts a finished building for each.
-- [ ] Both paths enter through `OrderProcessor.BuildObject` and assign a builder via `IBuilderAIUpdate`; no direct construction-only shortcut is used for AI.
-- [ ] Build-cost debit, cancel/refund, ownership, and destroyed-target cleanup remain covered and unchanged.
-- [ ] Defaults/sentinels used by the test are explicit and asserted, including starting money and expected final `BuildProgress`.
-- [ ] The new headless `[Fact]` runs in CI and does not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Both a player order and an AI request place and construct a structure to completion at a valid location; harness asserts a finished building for each.
+- [x] Both paths enter through `OrderProcessor.BuildObject` and assign a builder via `IBuilderAIUpdate`; no direct construction-only shortcut is used for AI.
+- [x] Build-cost debit, cancel/refund, ownership, and destroyed-target cleanup remain covered and unchanged.
+- [x] Defaults/sentinels used by the test are explicit and asserted, including starting money and expected final `BuildProgress`.
+- [x] The new headless `[Fact]` runs in CI and does not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

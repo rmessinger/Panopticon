@@ -49,13 +49,13 @@ Verify and close the baseline combat path: weapon fire applies damage through `D
 
 ## Acceptance criteria
 
-- [ ] For baseline units, weapon fire reduces target health via `DamageModule`/`ActiveBody`.
-- [ ] Lethal weapon damage triggers death at health `0` and the test asserts a kill.
-- [ ] Damage-type defaults/sentinels in the tests are named and verified.
-- [ ] `FireWeaponUpdate` participation is either verified through the real path or listed as a loud explicit gap.
-- [ ] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [ ] For baseline units, weapon fire reduces target health via `DamageModule`/`ActiveBody` (partial: tests verify the damage terminal directly, not live weapon-fire execution).
+- [x] Lethal weapon damage triggers death at health `0` and the test asserts a kill.
+- [x] Damage-type defaults/sentinels in the tests are named and verified.
+- [x] `FireWeaponUpdate` participation is either verified through the real path or listed as a loud explicit gap.
+- [x] Tests run in CI as non-skipped `[Fact]` tests; no gate is satisfied only by `[GameFact]` or an Interactive-only test.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

@@ -48,14 +48,14 @@ Implement the default configurable defeat rule and win rule: a player is defeate
 
 ## Acceptance criteria
 
-- [ ] A harness/headless scenario that removes a player's qualifying structures and rebuild means flags that player defeated within the configured check cadence.
-- [ ] The default defeat rule is selectable via config/rule seam and remains the default.
-- [ ] Defeat checks consume `Player.OwnedObjects`/counts and incremental notifications, not a full-object scan.
-- [ ] When all non-allies of player X are defeated, `GameOutcome.Status = Decided` with X or X's team as winner and `Reason = Eliminated`.
-- [ ] Outcome assertions fail loudly if the expected winner/reason is wrong.
-- [ ] Headless `[Fact]` tests are not skipped and do not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A harness/headless scenario that removes a player's qualifying structures and rebuild means flags that player defeated within the configured check cadence.
+- [ ] The default defeat rule is selectable via config/rule seam and remains the default (partial: rule seam is test-settable, not data-driven config).
+- [x] Defeat checks consume `Player.OwnedObjects`/counts and incremental notifications, not a full-object scan.
+- [x] When all non-allies of player X are defeated, `GameOutcome.Status = Decided` with X or X's team as winner and `Reason = Eliminated`.
+- [x] Outcome assertions fail loudly if the expected winner/reason is wrong.
+- [x] Headless `[Fact]` tests are not skipped and do not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

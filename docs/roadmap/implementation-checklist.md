@@ -351,7 +351,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: a P0 harness scenario for the reference dozer/builder asserts all six contract points:
     produced, moves, constructs a building to completion, repairs a structure, dies; no production
     or construction order left unhandled.
-- [ ] Support archetype contract (P6b-5).
+- [x] Support archetype contract (P6b-5).
   - AC: a P0 harness scenario for the reference support unit asserts all six contract points:
     produced, moves, primary special ability produces an observable effect (health restored,
     hacking applied, ECM active, etc.), dies; unimplemented handlers logged.

@@ -46,16 +46,16 @@ Replace the P4 scenario-matrix stub with a CI-running matrix test that expands a
 
 ## Acceptance criteria
 
-- [ ] P4 scenario matrix axes are exactly `faction` ∈ {`USA`, `GLA`, `China`}, `supplyDensity` ∈ {`sparse`, `normal`, `rich`}, and `startingMoney` ∈ {`low`, `normal`}.
-- [ ] The matrix expands to exactly 18 cells and the test asserts that count.
-- [ ] Every cell runs headlessly in CI; the P4 matrix tests are not skipped `[GameFact]` tests.
-- [ ] Every cell asserts `BankAccount.Money >= 0` at all sampled ticks.
-- [ ] Every cell asserts income increased from starting money at least once.
-- [ ] Every cell asserts at least one unit was produced.
-- [ ] Low-starting-money cells assert production is gated until enough income arrives and money never goes negative.
-- [ ] Per-cell failure output includes the full axis key.
-- [ ] New `.cs` files, if any, are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] P4 scenario matrix axes are exactly `faction` ∈ {`USA`, `GLA`, `China`}, `supplyDensity` ∈ {`sparse`, `normal`, `rich`}, and `startingMoney` ∈ {`low`, `normal`}.
+- [x] The matrix expands to exactly 18 cells and the test asserts that count.
+- [x] Every cell runs headlessly in CI; the P4 matrix tests are not skipped `[GameFact]` tests.
+- [x] Every cell asserts `BankAccount.Money >= 0` at all sampled ticks.
+- [x] Every cell asserts income increased from starting money at least once.
+- [ ] Every cell asserts at least one unit was produced (partial: matrix asserts successful debit and a queued job, not a real spawned unit).
+- [x] Low-starting-money cells assert production is gated until enough income arrives and money never goes negative.
+- [x] Per-cell failure output includes the full axis key.
+- [x] New `.cs` files, if any, are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

@@ -45,13 +45,13 @@ Replace the P5 scenario-matrix stub with an executable 18-cell matrix covering f
 
 ## Acceptance criteria
 
-- [ ] A `ScenarioMatrix` (axes: `faction` ∈ {USA, GLA, China}, `buildTreeDepth` ∈ {tier1, tier2, tier3}, `playerType` ∈ {human, AI}) runs 18 cells; each asserts the gated unit/upgrade is unavailable before prereqs and available after; tier3 cells issue the full prerequisite chain; see the deep dive matrix section.
-- [ ] `Matrix_AllCells_PrerequisiteGatingEnforced` is no longer skipped and fails if any cell does not run.
-- [ ] `Matrix_AIPlayerType_BuildsViaOrderProcessorNotDirectAPI` asserts AI cells use the order stream rather than direct object/production mutation.
-- [ ] The matrix uses existing faction/build-tree data; no invented definitions are introduced to make cells pass.
-- [ ] The new or updated headless `[Fact]` tests run in CI and do not require game files.
-- [ ] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [ ] A `ScenarioMatrix` (axes: `faction` ∈ {USA, GLA, China}, `buildTreeDepth` ∈ {tier1, tier2, tier3}, `playerType` ∈ {human, AI}) runs 18 cells; each asserts the gated unit/upgrade is unavailable before prereqs and available after; tier3 cells issue the full prerequisite chain; see the deep dive matrix section (partial: matrix uses synthetic chains and asserts `CanProduceObject` toggling, not real unit or upgrade availability).
+- [x] `Matrix_AllCells_PrerequisiteGatingEnforced` is no longer skipped and fails if any cell does not run.
+- [x] `Matrix_AIPlayerType_BuildsViaOrderProcessorNotDirectAPI` asserts AI cells use the order stream rather than direct object/production mutation.
+- [ ] The matrix uses existing faction/build-tree data; no invented definitions are introduced to make cells pass (partial: matrix fabricates synthetic prerequisite definitions instead of real faction data).
+- [x] The new or updated headless `[Fact]` tests run in CI and do not require game files.
+- [x] New `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and `dotnet format src --verify-no-changes` passes.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
