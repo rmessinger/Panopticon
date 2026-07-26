@@ -66,7 +66,7 @@ public class P7RegressionScenarioTests : P7RegressionTestBase
     public void PlayerEliminated_Outcome_FailsAgainstDefaultSentinelOutcome()
     {
         // An unset GameOutcome (InProgress / None) must NOT satisfy the assertion.
-        ConfigureSkirmish(2);
+        ConfigureSkirmish(Generals, 2);
         var assertion = Descriptor(ScenarioEndState).BuildOutcomeAssertion();
 
         var result = assertion.Evaluate(Generals, 0);
@@ -118,7 +118,7 @@ public class P7PlayerSurrendersTests : P7RegressionTestBase
     [Fact]
     public void PlayerSurrenders_Outcome_FailsAgainstDefaultSentinelOutcome()
     {
-        ConfigureSkirmish(2);
+        ConfigureSkirmish(Generals, 2);
         var assertion = Descriptor(ScenarioEndState).BuildOutcomeAssertion();
 
         var result = assertion.Evaluate(Generals, 0);
@@ -226,7 +226,7 @@ public class P7MutualEliminationTests : P7RegressionTestBase
     public void MutualElimination_SimultaneousElimination_EntersSuddenDeath()
     {
         // The SuddenDeath transition is a required acceptance point, not only the final Decided.
-        ConfigureSkirmish(2);
+        ConfigureSkirmish(Generals, 2);
         Generals.VictorySystem.ConditionRule = new DefeatPlayersRule(HumanPlayer, AiPlayer);
         Generals.VictorySystem.QueuePlayerForEvaluation(HumanPlayer);
         Generals.VictorySystem.QueuePlayerForEvaluation(AiPlayer);
@@ -267,7 +267,7 @@ public class P7ScoreDecisionTests : P7RegressionTestBase
     public void ScoreDecision_Outcome_NotReachedBeforeFrameLimit()
     {
         // Sentinel: the default NoFrameLimit value must not produce a ScoreDecision.
-        ConfigureSkirmish(2);
+        ConfigureSkirmish(Generals, 2);
         Generals.VictorySystem.ConditionRule = new DefeatNobodyRule();
         Generals.VictorySystem.Tick(new LogicFrame(30));
 

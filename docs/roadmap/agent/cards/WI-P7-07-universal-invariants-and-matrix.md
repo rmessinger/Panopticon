@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P7-07` |
 | Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-7 Universal invariants + matrix run, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases), [§3](../../deep-dives/p7-end-to-end-regression.md#3-universal-invariants), and [§4](../../deep-dives/p7-end-to-end-regression.md#4-scenario-matrix) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | Track P phases `P0`, `P2`, `P3`, `P4`, `P5`, `P6`, `P6b` complete; `WI-P7-01`, `WI-P7-02`, `WI-P7-03`, `WI-P7-04`, `WI-P7-05`, and `WI-P7-06` done |

@@ -382,7 +382,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [ ] Promote P6b archetype-contract scenarios into the regression suite.
   - AC: the six P6b archetype scenarios run as part of the P7 suite and all pass; any P6b gap
     items still open are resolved before P7 is marked Done.
-- [ ] Assert invariants across all scenarios (no negative money, no lost/duplicated units, AI made
+- [x] Assert invariants across all scenarios (no negative money, no lost/duplicated units, AI made
       progress where applicable).
   - AC: invariant assertions (money never negative, unit counts not duplicated, AI-issued orders
     where AI participates) are attached to every scenario; failures report offending frame.
