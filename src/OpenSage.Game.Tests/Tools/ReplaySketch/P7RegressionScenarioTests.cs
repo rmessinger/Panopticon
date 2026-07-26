@@ -84,3 +84,44 @@ public class P7RegressionScenarioTests : P7RegressionTestBase
         Assert.All(results, r => Assert.True(r.Passed, r.Message ?? "(no message)"));
     }
 }
+
+// ── WI-P7-02: PlayerSurrenders ──────────────────────────────────────────────
+
+public class P7PlayerSurrendersTests : P7RegressionTestBase
+{
+    private const EndState ScenarioEndState = EndState.PlayerSurrenders;
+
+    [Fact]
+    public void PlayerSurrenders_ScenarioFile_LoadsAsStaticData()
+    {
+        var scenario = RegressionSuite.LoadScenario(ScenarioEndState);
+
+        Assert.NotNull(scenario);
+        var human = scenario.Players.Single(p => p.Name == "P1-Human");
+        var endGame = Assert.Single(human.Actions);
+        Assert.Equal(OrderType.EndGame, endGame.Command.OrderType);
+    }
+
+    [Fact]
+    public void PlayerSurrenders_Outcome_PassesWhenHumanSurrenders()
+    {
+        var result = DriveAndAssertOutcome(ScenarioEndState);
+
+        Assert.True(result.Passed, result.Message ?? "(no message)");
+        Assert.Equal(OutcomeStatus.Decided, CurrentOutcome.Status);
+        Assert.Equal(OutcomeReason.Surrendered, CurrentOutcome.Reason);
+        Assert.Equal(AiPlayer, CurrentOutcome.WinningPlayer);
+        Assert.Equal(HumanPlayer, CurrentOutcome.LosingPlayer);
+    }
+
+    [Fact]
+    public void PlayerSurrenders_Outcome_FailsAgainstDefaultSentinelOutcome()
+    {
+        ConfigureSkirmish(2);
+        var assertion = Descriptor(ScenarioEndState).BuildOutcomeAssertion();
+
+        var result = assertion.Evaluate(Generals, 0);
+
+        Assert.False(result.Passed);
+    }
+}

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P7-02` |
 | Roadmap phase | [Track P · P7](../../track-p-playable-baseline.md): P7-2 PlayerSurrenders, see [deep dive §6](../../deep-dives/p7-end-to-end-regression.md#6-sub-phases) and [§2](../../deep-dives/p7-end-to-end-regression.md#2-the-six-end-state-scenarios) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | Track P phases `P0`, `P2`, `P3`, `P4`, `P5`, `P6`, `P6b` complete; `WI-P3-04` done for `OrderType.EndGame` surrender/end-of-match flow |
