@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Text.Json;
 using OpenSage.Logic;
+using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Assertions;
 using OpenSage.Tools.ReplaySketch.Model;
@@ -123,5 +124,154 @@ public class P7PlayerSurrendersTests : P7RegressionTestBase
         var result = assertion.Evaluate(Generals, 0);
 
         Assert.False(result.Passed);
+    }
+}
+
+// ── WI-P7-03: AISurrenders ──────────────────────────────────────────────────
+
+public class P7AISurrendersTests : P7RegressionTestBase
+{
+    private const EndState ScenarioEndState = EndState.AISurrenders;
+
+    [Fact]
+    public void AISurrenders_ScenarioFile_LoadsAsStaticData()
+    {
+        var scenario = RegressionSuite.LoadScenario(ScenarioEndState);
+
+        Assert.NotNull(scenario);
+        var ai = scenario.Players.Single(p => p.Name == "P2-AI");
+        var endGame = Assert.Single(ai.Actions);
+        Assert.Equal(OrderType.EndGame, endGame.Command.OrderType);
+    }
+
+    [Fact]
+    public void AISurrenders_Outcome_PassesWhenAISurrenders()
+    {
+        var result = DriveAndAssertOutcome(ScenarioEndState);
+
+        Assert.True(result.Passed, result.Message ?? "(no message)");
+        Assert.Equal(OutcomeStatus.Decided, CurrentOutcome.Status);
+        Assert.Equal(OutcomeReason.Surrendered, CurrentOutcome.Reason);
+        Assert.Equal(HumanPlayer, CurrentOutcome.WinningPlayer);
+        Assert.Equal(AiPlayer, CurrentOutcome.LosingPlayer);
+    }
+}
+
+// ── WI-P7-04: TeamWin ───────────────────────────────────────────────────────
+
+public class P7TeamWinTests : P7RegressionTestBase
+{
+    private const EndState ScenarioEndState = EndState.TeamWin;
+
+    [Fact]
+    public void TeamWin_ScenarioFile_LoadsAsStaticData()
+    {
+        var scenario = RegressionSuite.LoadScenario(ScenarioEndState);
+
+        Assert.NotNull(scenario);
+        // Four players across two teams.
+        Assert.Equal(4, scenario.Players.Count);
+        var attacker = scenario.Players.Single(p => p.Name == "P1-Human");
+        Assert.Equal(1, attacker.Team);
+        Assert.NotEmpty(attacker.Actions);
+    }
+
+    [Fact]
+    public void TeamWin_Outcome_PassesWhenLosingTeamEliminated()
+    {
+        var result = DriveAndAssertOutcome(ScenarioEndState);
+
+        Assert.True(result.Passed, result.Message ?? "(no message)");
+        Assert.Equal(OutcomeStatus.Decided, CurrentOutcome.Status);
+        Assert.Equal(OutcomeReason.Eliminated, CurrentOutcome.Reason);
+        // The human (team 1) is on the winning side; team wins resolve multiple WinningPlayers.
+        Assert.Contains(HumanPlayer, CurrentOutcome.WinningPlayers);
+    }
+}
+
+// ── WI-P7-05: MutualElimination ─────────────────────────────────────────────
+
+public class P7MutualEliminationTests : P7RegressionTestBase
+{
+    private const EndState ScenarioEndState = EndState.MutualElimination;
+
+    [Fact]
+    public void MutualElimination_ScenarioFile_LoadsAsStaticData()
+    {
+        var scenario = RegressionSuite.LoadScenario(ScenarioEndState);
+
+        Assert.NotNull(scenario);
+        // Both players attack each other in the same window.
+        foreach (var player in scenario.Players)
+        {
+            Assert.NotEmpty(player.Actions);
+        }
+    }
+
+    [Fact]
+    public void MutualElimination_Outcome_ReachesSuddenDeathThenDecided()
+    {
+        // Drive the full two-stage path: simultaneous elimination -> SuddenDeath, then one side
+        // re-eliminated -> Decided/Eliminated. The outcome assertion targets the terminal Decided.
+        var result = DriveAndAssertOutcome(ScenarioEndState);
+
+        Assert.True(result.Passed, result.Message ?? "(no message)");
+        Assert.Equal(OutcomeStatus.Decided, CurrentOutcome.Status);
+        Assert.Equal(OutcomeReason.Eliminated, CurrentOutcome.Reason);
+        Assert.Equal(AiPlayer, CurrentOutcome.WinningPlayer);
+        Assert.Equal(HumanPlayer, CurrentOutcome.LosingPlayer);
+    }
+
+    [Fact]
+    public void MutualElimination_SimultaneousElimination_EntersSuddenDeath()
+    {
+        // The SuddenDeath transition is a required acceptance point, not only the final Decided.
+        ConfigureSkirmish(2);
+        Generals.VictorySystem.ConditionRule = new DefeatPlayersRule(HumanPlayer, AiPlayer);
+        Generals.VictorySystem.QueuePlayerForEvaluation(HumanPlayer);
+        Generals.VictorySystem.QueuePlayerForEvaluation(AiPlayer);
+        Generals.VictorySystem.Tick(new LogicFrame(30));
+
+        Assert.Equal(OutcomeStatus.SuddenDeath, CurrentOutcome.Status);
+    }
+}
+
+// ── WI-P7-06: ScoreDecision ─────────────────────────────────────────────────
+
+public class P7ScoreDecisionTests : P7RegressionTestBase
+{
+    private const EndState ScenarioEndState = EndState.ScoreDecision;
+
+    [Fact]
+    public void ScoreDecision_ScenarioFile_LoadsAsStaticData()
+    {
+        var scenario = RegressionSuite.LoadScenario(ScenarioEndState);
+
+        Assert.NotNull(scenario);
+        var human = scenario.Players.Single(p => p.Name == "P1-Human");
+        Assert.NotEmpty(human.Actions);
+    }
+
+    [Fact]
+    public void ScoreDecision_Outcome_PassesAtFrameLimitByScore()
+    {
+        var result = DriveAndAssertOutcome(ScenarioEndState);
+
+        Assert.True(result.Passed, result.Message ?? "(no message)");
+        Assert.Equal(OutcomeStatus.Decided, CurrentOutcome.Status);
+        Assert.Equal(OutcomeReason.ScoreDecision, CurrentOutcome.Reason);
+        Assert.Equal(HumanPlayer, CurrentOutcome.WinningPlayer);
+    }
+
+    [Fact]
+    public void ScoreDecision_Outcome_NotReachedBeforeFrameLimit()
+    {
+        // Sentinel: the default NoFrameLimit value must not produce a ScoreDecision.
+        ConfigureSkirmish(2);
+        Generals.VictorySystem.ConditionRule = new DefeatNobodyRule();
+        Generals.VictorySystem.Tick(new LogicFrame(30));
+
+        Assert.Equal(OutcomeStatus.InProgress, CurrentOutcome.Status);
+        Assert.False(Descriptor(ScenarioEndState).BuildOutcomeAssertion().Evaluate(Generals, 0).Passed);
     }
 }

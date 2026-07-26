@@ -60,7 +60,9 @@ public static class RegressionSuite
             ScenarioFileName = "team-win.json",
             ExpectedStatus = "Decided",
             ExpectedReason = "Eliminated",
-            ExpectedWinningPlayerIndex = HumanPlayerIndex,
+            // Team win resolves multiple WinningPlayers; WinningTeam needs DefaultTeam wiring that
+            // only save/load populates, so the assertion checks status+reason and the test verifies
+            // the human is among WinningPlayers directly.
         },
         new RegressionScenario
         {

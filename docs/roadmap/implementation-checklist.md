@@ -372,11 +372,11 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     (produce/move/attack/abilities/die); see the deep dive matrix section.
 
 ### P7: End-to-end skirmish validation
-- [~] Author one end-state scenario per match outcome (six total).
+- [x] Author one end-state scenario per match outcome (six total).
   - AC: six scenario files exist, one per end state (player eliminated, player surrenders, AI
     surrenders, team win, mutual elimination → sudden death, time-limit → score decision); each
     runs on the P0 harness to headless completion.
-- [ ] All six scenarios assert their expected `GameOutcome`.
+- [x] All six scenarios assert their expected `GameOutcome`.
   - AC: each scenario terminates with the correct `OutcomeStatus`, `OutcomeReason`, and
     `WinningPlayer`/`WinningTeam`/`LosingPlayer`; exit code reflects pass/fail.
 - [ ] Promote P6b archetype-contract scenarios into the regression suite.

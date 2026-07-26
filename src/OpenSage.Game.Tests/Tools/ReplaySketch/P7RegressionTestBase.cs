@@ -31,24 +31,26 @@ public abstract class P7RegressionTestBase : MockedGameTest
     /// </summary>
     protected void ConfigureSkirmish(int competitivePlayers, bool aiIsHuman = true)
     {
-        var players = new List<OpenSage.Data.Map.Player>
+        // Map players: index 0 = neutral, 1 = civilian, then competitive players at 2..
+        var mapPlayers = new List<OpenSage.Data.Map.Player>
         {
             OpenSage.Data.Map.Player.CreateNeutralPlayer(),
             OpenSage.Data.Map.Player.CreateCivilianPlayer(),
         };
-        var settings = new List<PlayerSetting>
-        {
-            new(0, "FactionNeutral", new ColorRgb(255, 255, 255), -1, PlayerOwner.Player, "neutral"),
-            new(1, "FactionCivilian", new ColorRgb(255, 255, 255), -1, PlayerOwner.Player, "civilian"),
-        };
 
+        // PlayerSettings apply starting at competitive index 2 (OnNewGame offsets them), so the
+        // settings list contains ONLY the competitive players, not neutral/civilian.
+        var settings = new List<PlayerSetting>();
         var factions = new[] { "FactionAmerica", "FactionGLA", "FactionChina", "FactionAmerica" };
+
         for (var i = 0; i < competitivePlayers; i++)
         {
             var idx = i + 2;
-            var team = (i % 2 == 0) ? 1 : 2;
+            // First half of competitive players on team 1, second half on team 2, so 2-player and
+            // 4-player setups both form two opposing teams.
+            var team = i < competitivePlayers / 2 ? 1 : 2;
             var owner = aiIsHuman ? PlayerOwner.Player : (i == 0 ? PlayerOwner.Player : PlayerOwner.EasyAi);
-            players.Add(new OpenSage.Data.Map.Player
+            mapPlayers.Add(new OpenSage.Data.Map.Player
             {
                 Name = $"player{idx}",
                 Faction = factions[i % factions.Length],
@@ -59,14 +61,13 @@ public abstract class P7RegressionTestBase : MockedGameTest
                 idx,
                 factions[i % factions.Length],
                 new ColorRgb(255, (byte)(64 + i * 40), 64),
-                -1,
+                team,
                 owner,
                 $"player{idx}"));
         }
 
-        Generals.PlayerManager.OnNewGame(players.ToArray(), GameType.Skirmish, settings.ToArray());
+        Generals.PlayerManager.OnNewGame(mapPlayers.ToArray(), GameType.Skirmish, settings.ToArray());
 
-        // The VictorySystem needs at least one Tick cadence to process pending evaluations.
         // Reset any prior outcome so each test starts from InProgress.
         Generals.VictorySystem.CurrentOutcome.Reset();
     }
