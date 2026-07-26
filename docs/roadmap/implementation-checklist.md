@@ -355,7 +355,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: a P0 harness scenario for the reference support unit asserts all six contract points:
     produced, moves, primary special ability produces an observable effect (health restored,
     hacking applied, ECM active, etc.), dies; unimplemented handlers logged.
-- [ ] Superweapon archetype contract (P6b-6).
+- [x] Superweapon archetype contract (P6b-6).
   - AC: a P0 harness scenario for the reference superweapon structure asserts all six contract
     points: built, charge cycle advances per tick, `SpecialPowerAtLocation` fires and produces
     area effect, cooldown state is set post-fire, structure can be sold; unimplemented handlers
