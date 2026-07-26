@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P6b-08` |
 | Roadmap phase | [Track P · P6b](../../track-p-playable-baseline.md): P6b scenario matrix, see [deep dive §4](../../deep-dives/p6b-unit-contract-validation.md#4-scenario-matrix) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P6b-01`, `WI-P6b-02`, `WI-P6b-03`, `WI-P6b-04`, `WI-P6b-05`, `WI-P6b-06`, `WI-P6b-07` |

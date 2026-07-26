@@ -228,10 +228,10 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | P4 - Economy loop | `██████████` | 5 / 5 |
 | P5 - Construction & production | `██████████` | 5 / 5 |
 | P6 - Combat & command | `████████░░` | 4 / 5 |
-| P6b - Unit-contract validation | `░░░░░░░░░░` | 0 / 8 |
+| P6b - Unit-contract validation | `██████████` | 8 / 8 |
 | P7 - End-to-end validation | `░░░░░░░░░░` | 0 / 6 |
 | P8 - Implementation delta remediation | `░░░░░░░░░░` | 0 / 7 |
-| Track P total | `█████░░░░░` | 39 / 75 |
+| Track P total | `██████░░░░` | 47 / 75 |
 
 ### Tracks A / B / C (gated on Track P)
 
