@@ -198,6 +198,10 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         gameObject.Drawable?.Destroy();
 
         var owner = gameObject.Owner;
+        // A destroyed object must leave no dangling selection reference. Destroy can run without
+        // a prior OnDie (e.g. Sell, CancelBuild, scenario teardown), so deselect explicitly here.
+        // Idempotent with OnDie's DeselectUnit, which is a no-op if already deselected.
+        owner?.DeselectUnit(gameObject);
         owner?.RemoveOwnedObject(gameObject);
         gameObject.RaiseLifecycleEvent(GameObjectLifecycleEventReason.Destroyed, owner, owner);
         gameObject.OnDestroy();

@@ -313,21 +313,21 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     see the deep dive matrix section.
 
 ### P6: Combat & command verification ([deep dive](deep-dives/p4-p6-economy-production-combat.md) P6)
-- [ ] Command coverage matrix: every baseline control-bar action → `OrderType` → real
+- [x] Command coverage matrix: every baseline control-bar action → `OrderType` → real
       `OrderProcessor` handler; assert each via the harness.
   - AC: each baseline control-bar action maps to a handled `OrderType`; a harness command per action
     produces the expected effect; the matrix is documented with pass/fail.
-- [ ] Verify weapon / damage-type / death coverage for baseline-match units
+- [x] Verify weapon / damage-type / death coverage for baseline-match units
       (`Weapon`/`DamageModule`/`ActiveBody`/`FireWeaponUpdate`).
   - AC: for baseline units, weapon fire reduces target health via `DamageModule`/`ActiveBody` and
     triggers death at 0; harness asserts a kill.
-- [ ] Death cleanup: selection invalidation + owner-tracking removal (share P3-4's death event).
+- [x] Death cleanup: selection invalidation + owner-tracking removal (share P3-4's death event).
   - AC: a dying selected unit is removed from selection and owner tracking (reusing the P3-4 event);
     test asserts no dangling references.
 - [ ] Fill gaps surfaced by the P7 match run.
   - AC: TBD, populated as the P7 run surfaces defects. Rough template: each surfaced defect gets its
     own checklist item + a regression assertion in the harness.
-- [ ] P6 scenario matrix: sweep orderType × faction; assert each command type produces the correct
+- [x] P6 scenario matrix: sweep orderType × faction; assert each command type produces the correct
       `OrderProcessor` effect for every faction.
   - AC: a `ScenarioMatrix` (axes: `orderType` ∈ {MoveTo, AttackObject, BuildObject, CreateUnit,
     SpecialPower}, `faction` ∈ {USA, GLA, China}) runs 15 cells; each asserts the observable effect

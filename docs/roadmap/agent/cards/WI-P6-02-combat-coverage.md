@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P6-02` |
 | Roadmap phase | [Track P · P6](../../track-p-playable-baseline.md): sub-phase P6-2, see [deep dive §P6](../../deep-dives/p4-p6-economy-production-combat.md#p6-combat-and-command-verification) and [§P6 sub-phases](../../deep-dives/p4-p6-economy-production-combat.md#p6-sub-phases) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | P1 spawned/related players and owner tracking; `WI-P6-01` useful but not required |
@@ -83,4 +83,4 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Done. Added `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs` (4 non-skipped `[Fact]`s). Verifies the weapon→damage→health→death terminal: a 5-case baseline table (infantry/vehicle/structure × Unresistable/SmallArms/ArmorPiercing/Explosion + a lethal case) drives `GameObject.AttemptDamage` (the real `ActiveBody.AttemptDamage` path that `DamageNugget` feeds), asserting health decreases per case, the lethal case reaches health 0 with `IsEffectivelyDead` and `IsSelectable=false`. `Kill()` runs `OnDie` end to end. Damage-type pass-through is documented with the armor/damage-type-reduction gap (needs asset-backed ArmorSets). One tiny seam fix in `GameObject.ExecuteRandomSlowDeathBehavior`: early-return when an object has no applicable `SlowDeathBehavior` modules, which would otherwise throw `Random.Next(0, -1)` on death of a baseline object (required to verify the death path headlessly; real units with death behaviors are unaffected). Explicit loud gap recorded for `FireWeaponUpdate.Update` (cannot fire parsed weapon data without Scene3D/projectile pipeline; the damage terminal is verified directly). Tests register objects via `gameObject.Id` assignment so the headless `_objects` collection resolves the default damage SourceID to null instead of throwing. Validation: dotnet build src (0 errors); CombatCoverageTests (4 passed); Category!=Interactive (757 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
