@@ -1301,35 +1301,7 @@ public class P5_ScenarioMatrixTests : MockedGameTest
 // Matrix: orderType × faction. Implemented in P6ScenarioMatrixTests.cs (WI-P6-04).
 
 // ── P6b: Unit-contract validation ────────────────────────────────────────────
-// Matrix: archetype × faction
-// Validates the full unit contract for every archetype-faction combination.
-
-public class P6b_ScenarioMatrixTests
-{
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
-    public void Matrix_AllValidCells_FullContractPasses()
-    {
-        // Arrange: ScenarioMatrix with axes
-        //          archetype ∈ {infantry, vehicle, aircraft, builder, support, superweapon},
-        //          faction ∈ {USA, GLA, China};
-        //          cells without a valid reference unit pruned by ConstraintFilter.
-        // Act: expand and run all valid cells via P0-5b; each cell runs the full archetype
-        //      contract (produce/move/attack/all abilities/die).
-        // Assert: every valid cell asserts all six contract points; unimplemented special-power
-        //         handlers are reported as explicit gaps (not silent passes).
-
-    }
-
-    [Fact(Skip = "Stub — blocked on the named phase; implement when that phase lands"), Trait("Category", "Roadmap")]
-    public void Matrix_GapCells_ReportedInAggregateWithAxisKey()
-    {
-        // Arrange: introduce a known-unimplemented SpecialPower into one cell's archetype.
-        // Act: run the matrix.
-        // Assert: the aggregate JSON report identifies the failing cell by its
-        //         archetype × faction key and includes the assertion detail.
-
-    }
-}
+// Matrix: archetype × faction. Implemented in P6bScenarioMatrixTests.cs (WI-P6b-08).
 
 // ── P7: End-to-end regression ─────────────────────────────────────────────────
 // Matrix: endState (with universal invariants attached to all cells)

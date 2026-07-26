@@ -364,7 +364,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
       documented as explicit out-of-scope gaps with a follow-up item.
   - AC: every `SpecialPower*` order exercised by the six scenarios either passes its assertion or
     has a documented gap item; none silently succeed without effect.
-- [ ] P6b scenario matrix: sweep archetype × faction; assert the full unit contract for every
+- [x] P6b scenario matrix: sweep archetype × faction; assert the full unit contract for every
       archetype-faction combination via the P0 harness.
   - AC: a `ScenarioMatrix` (axes: `archetype` ∈ {infantry, vehicle, aircraft, builder, support,
     superweapon}, `faction` ∈ {USA, GLA, China}; cells without a valid reference unit pruned by
