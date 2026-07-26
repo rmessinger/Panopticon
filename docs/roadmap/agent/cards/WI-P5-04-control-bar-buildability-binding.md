@@ -16,7 +16,7 @@ Locate and verify the Generals control-bar consumer for buildability state so co
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:267-270`: checklist item and exact AC to satisfy.
+- `docs/roadmap/implementation-checklist.md:303-306`: checklist item and exact AC to satisfy.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:68-69`: audit gap for UI buildability binding.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271`: buildability methods to verify.
 - `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1222`: `CanPurchase`, `CanConstructUnit`, and `CanEnqueueUpgrade`.
@@ -74,5 +74,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01..03, -05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` (9 non-skipped `[Fact]`s covering `CanConstructUnit`/`CanEnqueueUpgrade`/`CanPurchase` with prereq+money states). Buildability consumer identified as `GeneralsControlBar.ApplyCommandSet` (`GeneralsControlBar.cs:441,485,493`); `CanPurchase` itself is confirmed unused by the Generals control bar, gating is done via the other two methods, which this card's revised AC explicitly permitted. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

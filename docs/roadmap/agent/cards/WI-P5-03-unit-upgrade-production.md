@@ -16,7 +16,7 @@ Verify and close structure production end-to-end: units queued through `Producti
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:264-266`: checklist item and exact AC to satisfy.
+- `docs/roadmap/implementation-checklist.md:300-302`: checklist item and exact AC to satisfy.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 production and upgrade scope.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-2 upgrades row.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:257-263`: queue/spawn mechanism.
@@ -86,5 +86,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01, -02, -04, -05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Logic/Production/UnitUpgradeProductionTests.cs` (9 non-skipped `[Fact]`s: unit spawn/rally, player/object upgrade completion, cancel/refund, queue capacity, order-path debit). `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

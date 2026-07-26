@@ -16,7 +16,7 @@ Replace the P5 scenario-matrix stub with an executable 18-cell matrix covering f
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation-checklist.md:271-276`: checklist item and exact AC to satisfy.
+- `docs/roadmap/implementation-checklist.md:307-313`: checklist item and exact AC to satisfy.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:120-156`: P2/P5 matrix model and P5 axes/assertions.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-277`: P5 order, construction, production, gating, and upgrade mechanisms.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-152`: matrix expansion and assertion templates.
@@ -78,5 +78,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-<!-- append after completing -->
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01..04 (see `.exchange` 2026-07-22 entry). The 18-cell matrix (`faction` × `buildTreeDepth` × `playerType`) lives as the `P5_ScenarioMatrixTests` class inside `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` rather than a separate `P5ScenarioMatrixTests.cs` file. Caveat surfaced by the P3-P6 delta audit (2026-07-25): the matrix fabricates a synthetic per-cell prerequisite chain via reflection (`NewStructureDef`/`AddPrerequisite`); the `faction` axis only varies a name label, not a real distinct build tree; each cell asserts only `Player.CanProduceObject` toggling, not an actual unit spawn or upgrade application; and the `human` `playerType` cell creates the object directly via `GameLogic.CreateObject` + `BuildProgress = 1.0f` rather than through `OrderProcessor`, unlike the `AI` cell. WI-P5-06 tracks closing these three gaps. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

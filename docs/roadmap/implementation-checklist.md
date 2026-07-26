@@ -343,7 +343,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: a P0 harness scenario for the reference vehicle unit asserts all six contract points:
     produced, moves, basic attack, weapon-mode upgrade activates the expected `WeaponSlot`, dies;
     unimplemented handlers logged.
-- [ ] Aircraft archetype contract (P6b-3).
+- [x] Aircraft archetype contract (P6b-3).
   - AC: a P0 harness scenario for the reference aircraft unit asserts all six contract points:
     produced, moves (airborne), attack, land/takeoff cycle, special ability (if applicable), dies;
     unimplemented handlers logged.
