@@ -273,7 +273,7 @@ public static class Program
 
         using var capture = new FrameCaptureService();
 
-        // Once the first enemy Command Center is destroyed, run a short tail period then exit.
+        // Once the match reaches a decided outcome, run a short tail period then exit.
         const uint RunoutLogicFrames = 300; // 10 game-seconds at 30 fps
         var runoutEndLogicFrame = uint.MaxValue;
 
@@ -298,11 +298,18 @@ public static class Program
                     "Terrain should be visible. Units and buildings should be 3-D models (not invisible). " +
                     "No solid-colour triangle artefacts. UI chrome should be present at the bottom.");
             }
+        };
 
-            if (e.ActionType == ActionType.EnemyBaseDestroyed && runoutEndLogicFrame == uint.MaxValue)
+        game.MatchOutcomeDecided += (_, _) =>
+        {
+            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
+            var outcome = game.CurrentOutcome;
+            if (runoutEndLogicFrame == uint.MaxValue)
             {
                 runoutEndLogicFrame = frame + RunoutLogicFrames;
             }
+            Console.WriteLine($"  [match-decided] status: {outcome.Status} reason: {outcome.Reason} " +
+                              $"winner: {outcome.WinningPlayer?.Name ?? "(shared)"} frame: {frame}");
         };
 
         var pendingInjections = BuildDeferredInjector(game, monitor, deferredActions);

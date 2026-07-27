@@ -42,6 +42,31 @@ public sealed class SuddenDeathOutcomeTests : MockedGameTest
         Assert.Same(scenario.SecondPlayer, Generals.CurrentOutcome.LosingPlayer);
     }
 
+    [Fact]
+    public void SuddenDeath_RepeatMutualElimination_ResolvesToSharedDefeat()
+    {
+        var scenario = ConfigureSuddenDeathScenario();
+
+        // First full mutual elimination -> sudden death.
+        scenario.FirstCommandCenter.Destroy();
+        scenario.SecondCommandCenter.Destroy();
+        RunVictoryCadence();
+        Assert.Equal(OutcomeStatus.SuddenDeath, Generals.CurrentOutcome.Status);
+
+        // Second full mutual elimination while already in sudden death: no survivor.
+        scenario.FirstUnit.Destroy();
+        scenario.SecondUnit.Destroy();
+        RunVictoryCadence();
+
+        Assert.False(Generals.IsLogicRunning);
+        Assert.Equal(OutcomeStatus.Decided, Generals.CurrentOutcome.Status);
+        Assert.Equal(OutcomeReason.Eliminated, Generals.CurrentOutcome.Reason);
+        Assert.Null(Generals.CurrentOutcome.WinningPlayer);
+        Assert.Equal(2, Generals.CurrentOutcome.WinningPlayers.Count);
+        Assert.Contains(scenario.FirstPlayer, Generals.CurrentOutcome.WinningPlayers);
+        Assert.Contains(scenario.SecondPlayer, Generals.CurrentOutcome.WinningPlayers);
+    }
+
     private SuddenDeathScenario ConfigureSuddenDeathScenario()
     {
         Generals.PlayerManager.OnNewGame(

@@ -107,6 +107,9 @@ public interface IGame
     SageGame SageGame { get; }
     Configuration Configuration { get; }
     GameOutcome CurrentOutcome { get; }
+    VictoryOptions VictoryOptions { get; set; }
+
+    event EventHandler MatchOutcomeDecided;
     string UserDataLeafName { get; }
     string UserDataFolder { get; }
     string UserAppDataFolder { get; }

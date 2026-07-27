@@ -461,6 +461,19 @@ public sealed class Game : DisposableBase, IGame
 
     public GameOutcome CurrentOutcome => VictorySystem.CurrentOutcome;
 
+    public event EventHandler MatchOutcomeDecided;
+
+    public VictoryOptions VictoryOptions
+    {
+        get => _victoryOptions;
+        set
+        {
+            _victoryOptions = value ?? VictoryOptions.Default;
+            VictorySystem.ApplyOptions(_victoryOptions);
+        }
+    }
+    private VictoryOptions _victoryOptions = VictoryOptions.Default;
+
     GameLogic IGame.GameLogic => GameLogic;
     internal GameLogic GameLogic { get; }
 
@@ -620,6 +633,7 @@ public sealed class Game : DisposableBase, IGame
             OrderGenerator = AddDisposable(new OrderGeneratorSystem(this));
 
             VictorySystem = AddDisposable(new VictorySystem(this));
+            VictorySystem.OutcomeDecided += (_, _) => MatchOutcomeDecided?.Invoke(this, EventArgs.Empty);
 
             Panel.ClientSizeChanged += OnPanelSizeChanged;
             Panel.EnsureFrame(window?.ClientBounds ?? new Mathematics.Rectangle(0, 0, 1, 1)); // fallback set for sav2json tool
