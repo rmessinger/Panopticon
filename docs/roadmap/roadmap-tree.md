@@ -62,7 +62,17 @@ mindmap
         P6b-4 Builder archetype
         P6b-5 Support archetype
         P6b-6 Superweapon archetype
-      P7 End-to-end skirmish validation
+      P7 End-to-end skirmish validation ⮕
+      P8 Implementation delta remediation ⮕
+      P9 Unit validation ground ⮕
+        P9-1 Primary-action model
+        P9-2 Scenario and layout
+        P9-3 Direct-spawn host
+        P9-4 Action timer
+        P9-5 TestHarness wiring
+        P9-6 Report output
+        P9-7 Baseline and regression gate
+        P9-8 Test coverage
     A. Foundations
       A1 Headless host ⮕
         A1-1 Seam audit
@@ -171,7 +181,9 @@ flowchart LR
     P3["P3 Victory & defeat"]
     P6["P6 Combat & command"]
     P6B["P6b Unit-contract validation"]
+    P8["P8 Implementation delta remediation"]
     P7["P7 End-to-end skirmish validation"]
+    P9["P9 Unit validation ground"]
   end
 
   subgraph S0["Stage 0 · Foundations & seams"]
@@ -253,6 +265,14 @@ flowchart LR
   P5 --> P7
   P6B --> P7
   P0 --> P7
+  P3 --> P8
+  P4 --> P8
+  P5 --> P8
+  P6 --> P8
+  P8 --> P7
+  P0 --> P9
+  P6 --> P9
+  P6B --> P9
   P7 --> A2
   P7 --> A3
   P7 --> A4S
@@ -332,7 +352,7 @@ flowchart LR
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
   class F1,F2,F3,F4,F5,F6,F7,F8 trackF;
-  class P0,P1,P2,P3,P4,P5,P6,P6B,P7 trackP;
+  class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;
   class A4S seam;
