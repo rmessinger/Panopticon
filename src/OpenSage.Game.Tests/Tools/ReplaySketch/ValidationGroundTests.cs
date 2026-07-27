@@ -1,11 +1,15 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using OpenSage.Data;
+using OpenSage.Logic.Object;
+using OpenSage.Mathematics;
 using OpenSage.Mods.Generals;
 using OpenSage.Tests.Data;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;
 
@@ -16,6 +20,13 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 // is owned by TestHarness (BuiltInScenario.UnitValidationGround), documented in its AGENTS.md.
 public class ValidationGroundTests
 {
+    private readonly ITestOutputHelper _output;
+
+    public ValidationGroundTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
     private static readonly string BaselinePath = FindBaselineFile();
 
     private static string FindBaselineFile()
@@ -108,5 +119,70 @@ public class ValidationGroundTests
         {
             Platform.Stop();
         }
+    }
+
+    // Data-grounded accuracy gate for the baseline: every Attack entry's golden frame count must be
+    // consistent with the unit's primary WeaponTemplate as authored in the install's INI. A unit
+    // cannot reduce target health before its weapon's PreAttackDelay, so a golden value below that
+    // delay is impossible and means the capture is wrong (no matter how reproducible). Requires a
+    // real install; skipped in CI without one. See TestHarness/AGENTS.md "Verifying accuracy".
+    [GameFact(SageGame.CncGenerals)]
+    public void BaselineGoldenFrames_AreConsistentWithWeaponIniData()
+    {
+        var baseline = UnitTimingBaseline.Load(BaselinePath);
+        var rootFolder = InstalledFilesTestData.GetInstallationDirectory(SageGame.CncGenerals);
+        var installation = new GameInstallation(new GeneralsDefinition(), rootFolder);
+
+        Platform.Start();
+        var impossible = new List<string>();
+        try
+        {
+            using var game = new Game(installation);
+            foreach (var entry in baseline.Entries.Where(e => e.ActionKind == "Attack"))
+            {
+                var definition = game.AssetStore.ObjectDefinitions.GetByName(entry.DefinitionName);
+                if (definition == null)
+                {
+                    impossible.Add($"{entry.DefinitionName}: definition does not resolve in the install.");
+                    continue;
+                }
+
+                var weapon = ResolvePrimaryWeapon(definition);
+                if (weapon == null)
+                {
+                    impossible.Add($"{entry.DefinitionName}: no primary WeaponTemplate in the install.");
+                    continue;
+                }
+
+                var preAttack = weapon.PreAttackDelay.Min.Value;
+                var delayBetweenShots = weapon.CoolDownDelayBetweenShots.Min.Value;
+                _output.WriteLine(
+                    $"{entry.DefinitionName,-32} golden={entry.GoldenFrames,-4} preAttack={preAttack,-4} " +
+                    $"delayBetweenShots={delayBetweenShots,-4} range={weapon.AttackRange}");
+
+                if (entry.GoldenFrames < preAttack)
+                {
+                    impossible.Add(
+                        $"{entry.DefinitionName}: golden {entry.GoldenFrames} < weapon PreAttackDelay {preAttack}; " +
+                        "the unit cannot damage a target that fast, so the baseline value is wrong.");
+                }
+            }
+        }
+        finally
+        {
+            Platform.Stop();
+        }
+
+        Assert.Empty(impossible);
+    }
+
+    private static WeaponTemplate? ResolvePrimaryWeapon(ObjectDefinition definition)
+    {
+        if (!definition.WeaponSets.TryGetValue(new BitArray<WeaponSetConditions>(), out var set))
+        {
+            return null;
+        }
+
+        return set.Slots[(int)WeaponSlot.Primary]?.Weapon?.Value;
     }
 }

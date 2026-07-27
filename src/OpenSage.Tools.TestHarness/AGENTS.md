@@ -226,6 +226,103 @@ commit the result. Never widen a tolerance to make a failing unit pass; a genuin
 signal this phase exists to produce. Before committing, run headless twice and confirm the two JSON
 reports are byte-identical (the determinism check).
 
+### Live capture and accuracy verification
+
+Full guide: see "Validation ground baseline — capture & verification" below. The short version:
+the timer counts logic frames (Generals runs at 30 Hz, so `MsPerLogicFrame` ≈ 33.33 ms), and every
+action's measured duration has a direct anchor in the game's own INI data (weapon delays,
+locomotor speed, build time, supply delays, special-power reload). Verify each golden value against
+its INI anchor; set tolerances around the anchor to cover only approach/pathing jitter.
+
+#### Validation ground baseline — capture & verification
+
+##### Prerequisites
+
+- A real C&C Generals install, located via `CNC_GENERALS_PATH` or `GamePath` in `TestHarness.json`.
+- A graphics backend the host process can actually create:
+  - Windowed mode works wherever the engine renders normally.
+  - Headless mode needs an offscreen-capable backend. Vulkan requires `libdl`; snap-confined .NET
+    SDKs cannot load it, so on Linux use a non-snap .NET install or confirm `libvulkan`/`libdl`
+    resolve. On Windows prefer D3D11; on macOS use Metal.
+- The roster resolves against the install: the `[GameFact]`
+  `EveryCatalogUnit_ResolvesAgainstRealInstall` test must pass (it fails the run if any catalog
+  definition name is invalid).
+
+##### Capture workflow
+
+1. Configure `TestHarness.json` for a refresh capture:
+
+   ```jsonc
+   {
+     "Scenario": "UnitValidationGround",
+     "Game": "CncGenerals",
+     "Headless": true,
+     "GamePath": "/path/to/Command and Conquer Generals",
+     "ValidationGroundBaselinePath": "src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json",
+     "ValidationGroundRefreshBaseline": true,
+     "ValidationGroundReportPath": "/tmp/vg_report_run1.json"
+   }
+   ```
+
+2. Run once: `dotnet run --project src/OpenSage.Tools.TestHarness --no-build`. Inspect the stdout
+   table for gaps/timeouts before trusting any captured value. A unit reported `GAP` or `TIMEOUT`
+   has no valid measurement; fix or escalate it (see "Reading gaps and timeouts") before capturing.
+
+3. **Determinism check (mandatory before commit).** Re-run with `ValidationGroundRefreshBaseline:
+   false` and `ValidationGroundReportPath` pointing at a second file, then diff the two JSON
+   reports:
+
+   ```sh
+   diff /tmp/vg_report_run1.json /tmp/vg_report_run2.json
+   ```
+
+   They must be byte-identical. If they differ, the run is nondeterministic: find and fix the cause
+   (unsettled spawn transients, RNG, target-assignment drift) rather than widening tolerances to
+   absorb it.
+
+4. Commit the refreshed baseline and one report JSON for the record.
+
+##### Verifying accuracy — the timings must come from the game files
+
+The timer counts logic frames, never wall-clock. Generals ticks at 30 Hz, so
+`MsPerLogicFrame ≈ 33.33 ms` and INI millisecond durations are converted to frames at INI parse
+time. Every measured dispatch→completion duration therefore has a direct, checkable anchor in the
+installed game data. A golden value that is inconsistent with its INI anchor is wrong, regardless of
+how reproducible the capture was.
+
+| Action kind | INI anchor (read from the install) | What the measured frames should be |
+|---|---|---|
+| Attack | unit's primary `WeaponTemplate`: `PreAttackDelay.Min`, `CoolDownDelayBetweenShots.Min`, `AttackRange` | ≥ `PreAttackDelay.Min` (hard floor — a unit cannot reduce target health before its pre-attack delay); ≈ close-to-range frames + preAttack + first shot |
+| Move | unit's `LocomotorTemplate.MaxSpeed` (world-units per frame) | `distance(layout) / MaxSpeed`; distance is deterministic from the `SpawnPlan` |
+| Build | target `ObjectDefinition.BuildTime` (already in frames) | ≈ `BuildTime` + dozer approach |
+| Gather | `SupplyAIUpdateModuleData.SupplyWarehouseActionDelay` × boxes + `SupplyCenterActionDelay` | sum + two travel legs |
+| SpecialPower | unit's `SpecialPower.ReloadTime` (and power-specific effect delay) | ≥ the power's delay |
+
+Worked example — a Ranger (USA infantry) attacking the target cluster:
+
+- Spawn row sits 250 world-units from the cluster centre (`LayoutConfig.FactionRowDistance`).
+- Ranger's primary weapon `PreAttackDelay` and `AttackRange` come straight from
+  `WeaponTemplate` in `Data/INI/Weapon/*.ini`.
+- Expected measured frames ≈ `(250 − AttackRange) / locomotorMaxSpeed + PreAttackDelay.Min`.
+- The committed golden must be at least `PreAttackDelay.Min`; the tolerance band covers only the
+  approach/pathing jitter above that anchor.
+
+Automated, data-grounded gate: the `[GameFact]` test
+`BaselineGoldenFrames_AreConsistentWithWeaponIniData` loads the install, resolves each Attack
+entry's primary `WeaponTemplate`, and fails if the golden frame count is below the weapon's
+`PreAttackDelay.Min` (an impossible value) or missing a resolvable weapon. Run it after every
+refresh; it is the proof the baseline is grounded in the game's own action-speed data.
+
+Setting tolerances:
+
+- Per entry, never global. A single global tolerance is simultaneously too loose for short actions
+  and too tight for long ones.
+- Combine a percentage of the INI-anchored golden with a minimum absolute frame floor (the
+  `UnitTimingBaselineEntry.TolerancePercent` + `MinimumFrameFloor`), so a one-frame jitter on a
+  20-frame action does not fail while a real slowdown on a 150-frame action does.
+- Tune around the INI anchor, not the single capture: if the measured value drifts far from the
+  anchor, investigate before accepting it.
+
 ### Reading gaps and timeouts
 
 The stdout table has one row per roster unit. Verdicts:
