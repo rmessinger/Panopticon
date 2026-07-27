@@ -168,14 +168,14 @@ and owns the parts requiring a live `IGame`.
 
 | Phase | Goal | Status |
 |---|---|---|
-| P9-1. Primary-action model | `PrimaryAction` kinds plus per-unit resolution covering every `UnitCatalog` entry, with `MoveTo` as the universal fallback. Completeness is test-enforced. | Not started |
-| P9-2. Scenario and layout model | `ValidationGroundScenario` plus `ValidationGroundBuilder`: deterministic per-faction rows, target cluster, supply sources, target assignment by index. Engine-free and headlessly tested. | Not started |
-| P9-3. Direct-spawn host | `ValidationGroundHost` creates the planned units, targets, and supply sources on a live `IGame` through `GameLogic.CreateObject` with terrain-height sampling, and runs the settle stage. | Not started |
-| P9-4. Action timer | `UnitActionTimer` measures dispatch-to-completion in logic frames per unit, with per-action completion signals and per-unit frame budgets. | Not started |
-| P9-5. TestHarness wiring | New built-in scenario value and config knobs; the ground runs in both the windowed and headless loops without disturbing the existing replay-driven path. | Not started |
-| P9-6. Report output | Per-unit stdout table and JSON artifact, reporting gaps and timeouts distinctly from durations. | Not started |
-| P9-7. Baseline and regression gate | `UnitTimingBaseline` with per-entry tolerance, an explicit refresh mode, a committed baseline captured against a real install, and a non-zero exit code on regression. | Not started |
-| P9-8. Test coverage | Install-free tests for layout determinism, roster completeness, action-mapping totality, and baseline comparison; an install-gated end-to-end test for the live run. | Not started |
+| P9-1. Primary-action model | `PrimaryAction` kinds plus per-unit resolution covering every `UnitCatalog` entry, with `MoveTo` as the universal fallback. Completeness is test-enforced. | Done |
+| P9-2. Scenario and layout model | `ValidationGroundScenario` plus `ValidationGroundBuilder`: deterministic per-faction rows, target cluster, supply sources, target assignment by index. Engine-free and headlessly tested. | Done |
+| P9-3. Direct-spawn host | `ValidationGroundHost` creates the planned units, targets, and supply sources on a live `IGame` through `GameLogic.CreateObject` with terrain-height sampling, and runs the settle stage. | Done |
+| P9-4. Action timer | `UnitActionTimer` measures dispatch-to-completion in logic frames per unit, with per-action completion signals and per-unit frame budgets. | Done |
+| P9-5. TestHarness wiring | New built-in scenario value and config knobs; the ground runs in both the windowed and headless loops without disturbing the existing replay-driven path. | Done |
+| P9-6. Report output | Per-unit stdout table and JSON artifact, reporting gaps and timeouts distinctly from durations. | Done |
+| P9-7. Baseline and regression gate | `UnitTimingBaseline` with per-entry tolerance, an explicit refresh mode, a committed baseline captured against a real install, and a non-zero exit code on regression. | Done (first-estimate baseline committed; live capture pending an environment with GPU access) |
+| P9-8. Test coverage | Install-free tests for layout determinism, roster completeness, action-mapping totality, and baseline comparison; an install-gated end-to-end test for the live run. | Done |
 
 ---
 
