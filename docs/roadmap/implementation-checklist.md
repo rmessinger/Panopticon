@@ -372,24 +372,24 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     (produce/move/attack/abilities/die); see the deep dive matrix section.
 
 ### P7: End-to-end skirmish validation
-- [ ] Author one end-state scenario per match outcome (six total).
+- [x] Author one end-state scenario per match outcome (six total).
   - AC: six scenario files exist, one per end state (player eliminated, player surrenders, AI
     surrenders, team win, mutual elimination → sudden death, time-limit → score decision); each
     runs on the P0 harness to headless completion.
-- [ ] All six scenarios assert their expected `GameOutcome`.
+- [x] All six scenarios assert their expected `GameOutcome`.
   - AC: each scenario terminates with the correct `OutcomeStatus`, `OutcomeReason`, and
     `WinningPlayer`/`WinningTeam`/`LosingPlayer`; exit code reflects pass/fail.
-- [ ] Promote P6b archetype-contract scenarios into the regression suite.
+- [x] Promote P6b archetype-contract scenarios into the regression suite.
   - AC: the six P6b archetype scenarios run as part of the P7 suite and all pass; any P6b gap
     items still open are resolved before P7 is marked Done.
-- [ ] Assert invariants across all scenarios (no negative money, no lost/duplicated units, AI made
+- [x] Assert invariants across all scenarios (no negative money, no lost/duplicated units, AI made
       progress where applicable).
   - AC: invariant assertions (money never negative, unit counts not duplicated, AI-issued orders
     where AI participates) are attached to every scenario; failures report offending frame.
-- [ ] Lock the full suite as the standing "is the game still playable?" regression check.
+- [x] Lock the full suite as the standing "is the game still playable?" regression check.
   - AC: all P7 scenarios (end-state + archetype-contract) run in CI (or a documented command) as
     the standing playability check, documented in the repo.
-- [ ] P7 scenario matrix: sweep the full end-state × invariant space as the canonical regression
+- [x] P7 scenario matrix: sweep the full end-state × invariant space as the canonical regression
       gate.
   - AC: a `ScenarioMatrix` (axis: `endState` ∈ {PlayerEliminated, PlayerSurrenders, AISurrenders,
     TeamWin, MutualElimination, ScoreDecision}) with universal invariant assertions (money never

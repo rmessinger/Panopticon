@@ -1,0 +1,67 @@
+{
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "BaseRadiusWorldUnits": 120,
+  "Players": [
+    {
+      "Name": "P1-Human",
+      "FactionIndex": 2,
+      "Color": 1,
+      "StartPosition": 1,
+      "Team": 1,
+      "Actions": [
+        {
+          "id": "human-attack",
+          "label": "HumanAttacksAI",
+          "command": {
+            "orderType": "ForceAttackGround",
+            "arguments": [
+              {
+                "kind": "position",
+                "Spec": {
+                  "kind": "normalized",
+                  "NormX": 0.7,
+                  "NormY": 0.7
+                }
+              }
+            ]
+          },
+          "timing": {
+            "kind": "fixed",
+            "Frames": 60
+          }
+        }
+      ]
+    },
+    {
+      "Name": "P2-AI",
+      "FactionIndex": 4,
+      "Color": 2,
+      "StartPosition": 2,
+      "Team": 2,
+      "Actions": [
+        {
+          "id": "ai-attack",
+          "label": "AIAttacksHuman",
+          "command": {
+            "orderType": "ForceAttackGround",
+            "arguments": [
+              {
+                "kind": "position",
+                "Spec": {
+                  "kind": "normalized",
+                  "NormX": 0.3,
+                  "NormY": 0.3
+                }
+              }
+            ]
+          },
+          "timing": {
+            "kind": "fixed",
+            "Frames": 60
+          }
+        }
+      ]
+    }
+  ],
+  "Assertions": []
+}

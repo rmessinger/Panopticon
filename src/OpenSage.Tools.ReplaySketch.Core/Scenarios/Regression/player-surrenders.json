@@ -1,0 +1,36 @@
+{
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "BaseRadiusWorldUnits": 120,
+  "Players": [
+    {
+      "Name": "P1-Human",
+      "FactionIndex": 2,
+      "Color": 1,
+      "StartPosition": 1,
+      "Team": 1,
+      "Actions": [
+        {
+          "id": "human-endgame",
+          "label": "HumanSurrenders",
+          "command": {
+            "orderType": "EndGame",
+            "arguments": []
+          },
+          "timing": {
+            "kind": "fixed",
+            "Frames": 30
+          }
+        }
+      ]
+    },
+    {
+      "Name": "P2-AI",
+      "FactionIndex": 4,
+      "Color": 2,
+      "StartPosition": 2,
+      "Team": 2,
+      "Actions": []
+    }
+  ],
+  "Assertions": []
+}

@@ -1,0 +1,53 @@
+{
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "BaseRadiusWorldUnits": 120,
+  "Players": [
+    {
+      "Name": "P1-Human",
+      "FactionIndex": 2,
+      "Color": 1,
+      "StartPosition": 1,
+      "Team": 1,
+      "Actions": [
+        {
+          "id": "human-build",
+          "label": "HumanBuildsForScore",
+          "command": {
+            "orderType": "BuildObject",
+            "arguments": [
+              {
+                "kind": "integer",
+                "Value": -1726605785
+              },
+              {
+                "kind": "position",
+                "Spec": {
+                  "kind": "normalized",
+                  "NormX": 0.5,
+                  "NormY": 0.5
+                }
+              },
+              {
+                "kind": "float",
+                "Value": 0
+              }
+            ]
+          },
+          "timing": {
+            "kind": "fixed",
+            "Frames": 10
+          }
+        }
+      ]
+    },
+    {
+      "Name": "P2-AI",
+      "FactionIndex": 4,
+      "Color": 2,
+      "StartPosition": 2,
+      "Team": 2,
+      "Actions": []
+    }
+  ],
+  "Assertions": []
+}
