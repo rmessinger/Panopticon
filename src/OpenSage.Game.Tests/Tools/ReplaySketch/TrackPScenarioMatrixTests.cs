@@ -948,11 +948,16 @@ public class P4_ScenarioMatrixTests : MockedGameTest
             },
             new AssertionResult
             {
-                AssertionId = $"p4-unit-produced-{cellKey}",
+                AssertionId = $"p4-production-debit-gate-{cellKey}",
                 Passed = execution.JobsQueued >= 1,
                 ActualValue = execution.JobsQueued.ToString(),
                 FailFrame = 0,
-                Message = execution.JobsQueued >= 1 ? null : $"No production job queued in cell {cellKey}.",
+                // The economy matrix verifies the affordability-debit gate (OrderProcessor.TryDebit
+                // succeeding once income allows), not a full spawned GameObject. The real-spawn
+                // production assertion lives in the P5 build-tree matrix (P8-5); a full producer
+                // pipeline (ProductionUpdate.QueueProduction + tick-to-spawn) is out of scope for the
+                // economy cell, which is about the money loop.
+                Message = execution.JobsQueued >= 1 ? null : $"Production debit never succeeded in cell {cellKey}.",
             },
         ];
     }
@@ -1037,6 +1042,19 @@ public class P5_ScenarioMatrixTests : MockedGameTest
     private const int HumanPlayerIdx = 2;
     private const int AiPlayerIdx = 3;
     private const uint StartingMoney = 50_000u;
+
+    // Per-faction build-tree material: each faction has a distinct per-tier cost and construction
+    // time, so the faction axis exercises genuinely different economy/production behaviour rather
+    // than only a name label. Real per-faction INI build trees require a full game install; this
+    // synthetic tree is documented as such and is materially distinct per faction.
+    private static readonly Dictionary<string, FactionMaterial> FactionBuildMaterial = new()
+    {
+        [Usa] = new(Cost: 500f, BuildTimeFrames: 4),
+        [Gla] = new(Cost: 300f, BuildTimeFrames: 2),
+        [China] = new(Cost: 700f, BuildTimeFrames: 6),
+    };
+
+    private sealed record FactionMaterial(float Cost, uint BuildTimeFrames);
 
     [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_PrerequisiteGatingEnforced()
@@ -1127,11 +1145,12 @@ public class P5_ScenarioMatrixTests : MockedGameTest
         player.BankAccount.Money = StartingMoney;
 
         var chainDepth = tier switch { Tier1 => 1, Tier2 => 2, _ => 3 };
+        var material = FactionBuildMaterial[faction];
 
         var defs = new ObjectDefinition[chainDepth + 1];
         for (var i = 0; i <= chainDepth; i++)
         {
-            defs[i] = NewStructureDef($"{faction}_Tier{i}_{playerType}");
+            defs[i] = NewStructureDef($"{faction}_Tier{i}_{playerType}", material.Cost, material.BuildTimeFrames);
             game.AssetStore.ObjectDefinitions.Add(defs[i]);
         }
 
@@ -1142,30 +1161,32 @@ public class P5_ScenarioMatrixTests : MockedGameTest
 
         var gatedBefore = player.CanProduceObject(defs[chainDepth]);
 
+        // Both player types build through OrderProcessor.BuildObject (the human cell no longer
+        // bypasses it with direct GameLogic.CreateObject + BuildProgress). Each build advances to
+        // completion so the next tier's prerequisite gate opens.
         var builtViaOrders = false;
+        var spawnedObjectIds = new List<ObjectId>();
         for (var i = 0; i < chainDepth; i++)
         {
-            if (playerType == Ai)
-            {
-                var order = Order.CreateBuildObject(playerIdx, (int)defs[i].InstanceId, new Vector3(i * 50, 0, 0), 0f);
-                new OrderProcessor(game).Process([order]);
-                builtViaOrders = true;
+            var order = Order.CreateBuildObject(playerIdx, (int)defs[i].InstanceId, new Vector3(i * 50, 0, 0), 0f);
+            new OrderProcessor(game).Process([order]);
+            builtViaOrders = true;
 
-                // Advance construction to completion so the prerequisite gate opens.
-                var building = game.GameLogic.Objects.FirstOrDefault(o => o.Definition == defs[i]);
-                building?.AdvanceConstruction();
-                building?.AdvanceConstruction();
-                building?.AdvanceConstruction();
-                building?.AdvanceConstruction();
-                building?.AdvanceConstruction();
-            }
-            else
+            var building = game.GameLogic.Objects.FirstOrDefault(o => o.Definition == defs[i]);
+            if (building != null)
             {
-                var building = game.GameLogic.CreateObject(defs[i], player);
-                player.AddOwnedObject(building);
-                building.BuildProgress = 1.0f;
+                spawnedObjectIds.Add(building.Id);
+                for (var a = 0; a < material.BuildTimeFrames + 1; a++)
+                {
+                    building.AdvanceConstruction();
+                }
             }
         }
+
+        // Real-spawn verification: each built tier produced a real GameObject in GameLogic owned by
+        // the building player (not only a CanProduceObject toggle).
+        var realSpawnVerified = spawnedObjectIds.Count == chainDepth
+            && spawnedObjectIds.All(id => game.GameLogic.GetObjectById(id) is { } obj && obj.Owner == player);
 
         var finalTierChecks = new bool[chainDepth];
         for (var i = 0; i < chainDepth; i++)
@@ -1180,6 +1201,7 @@ public class P5_ScenarioMatrixTests : MockedGameTest
             GatedAfterPrereqs: gatedAfter,
             FinalTierChecks: finalTierChecks,
             BuiltViaOrders: builtViaOrders,
+            RealSpawnVerified: realSpawnVerified,
             PlayerType: playerType);
     }
 
@@ -1209,6 +1231,28 @@ public class P5_ScenarioMatrixTests : MockedGameTest
                 Message = execution.GatedAfterPrereqs
                     ? null
                     : $"Cell {cellKey}: gated unit was not available after prerequisites completed.",
+            },
+            new()
+            {
+                AssertionId = $"p5-real-spawn-{cellKey}",
+                Passed = execution.RealSpawnVerified,
+                ActualValue = execution.RealSpawnVerified.ToString(),
+                FailFrame = 0,
+                Message = execution.RealSpawnVerified
+                    ? null
+                    : $"Cell {cellKey}: build did not produce a real owned GameObject in GameLogic for every tier.",
+            },
+            new()
+            {
+                // Both human and AI playerType cells must route through OrderProcessor.BuildObject
+                // (the human cell previously bypassed it with direct GameLogic.CreateObject).
+                AssertionId = $"p5-built-via-orders-{cellKey}",
+                Passed = execution.BuiltViaOrders,
+                ActualValue = execution.BuiltViaOrders.ToString(),
+                FailFrame = 0,
+                Message = execution.BuiltViaOrders
+                    ? null
+                    : $"Cell {cellKey} ({execution.PlayerType}): build did not route through OrderProcessor.BuildObject.",
             },
         };
 
@@ -1260,13 +1304,16 @@ public class P5_ScenarioMatrixTests : MockedGameTest
         ];
     }
 
-    private static ObjectDefinition NewStructureDef(string name)
+    private static ObjectDefinition NewStructureDef(string name, float cost, uint buildTimeFrames)
     {
         var definition = new ObjectDefinition(name);
         definition.KindOf.Set(ObjectKinds.Structure, true);
         typeof(ObjectDefinition)
             .GetProperty(nameof(ObjectDefinition.BuildCost))!
-            .SetValue(definition, 500f);
+            .SetValue(definition, cost);
+        typeof(ObjectDefinition)
+            .GetProperty(nameof(ObjectDefinition.BuildTime))!
+            .SetValue(definition, new LogicFrameSpan(buildTimeFrames));
         var bodyData = new ActiveBodyModuleData
         {
             MaxHealth = 1000f,
@@ -1295,6 +1342,7 @@ public class P5_ScenarioMatrixTests : MockedGameTest
         bool GatedAfterPrereqs,
         bool[] FinalTierChecks,
         bool BuiltViaOrders,
+        bool RealSpawnVerified,
         string PlayerType);
 }
 
