@@ -85,4 +85,25 @@ public sealed class TestHarnessConfig
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public MouseClickMode MouseClickMode { get; set; } = MouseClickMode.Standard;
+
+    // ── Unit validation ground (P9) ──────────────────────────────────────────
+    // All optional with defaults so an existing TestHarness.json needs no edit.
+
+    /// <summary>Map path override for the validation ground. Empty uses a default map.</summary>
+    public string? ValidationGroundMapPath { get; set; } = null;
+
+    /// <summary>Frames to settle after spawn before issuing orders.</summary>
+    public int ValidationGroundSettleFrames { get; set; } = 30;
+
+    /// <summary>Seed for deterministic layout (informational; the builder is already deterministic).</summary>
+    public int ValidationGroundSeed { get; set; } = 1;
+
+    /// <summary>Path to the checked-in golden baseline JSON. Empty skips baseline comparison.</summary>
+    public string? ValidationGroundBaselinePath { get; set; } = null;
+
+    /// <summary>When true, the run refreshes (overwrites) the baseline instead of comparing.</summary>
+    public bool ValidationGroundRefreshBaseline { get; set; } = false;
+
+    /// <summary>Path to write the validation-ground JSON report to. Empty writes none.</summary>
+    public string? ValidationGroundReportPath { get; set; } = null;
 }

@@ -174,3 +174,67 @@ $TMPDIR/opensage_frames/<test_name>_<timestamp>/
 
 Look for the `[FrameCaptureSession] Session started:` line in test stdout to get the
 exact path.
+
+## Unit Validation Ground (P9)
+
+A non-skirmish sandbox that stands up the whole unit roster side by side on a real map, orders
+each unit to perform its primary action against a shared target cluster, and measures how long
+that action takes in logic frames. Measurements are compared against a checked-in golden baseline.
+
+### Running it
+
+Set `Scenario: "UnitValidationGround"` in `TestHarness.json` (or pass `--scenario` for the replay
+path; the validation ground is selected only when `Scenario == UnitValidationGround` and
+`ScenarioPath` is null). Both modes share one scenario definition, spawn host, and timer.
+
+Windowed (a human watches the roster act):
+
+```sh
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+  dotnet run --project src/OpenSage.Tools.TestHarness
+```
+
+Headless (CI regression gate, exits non-zero on regression or timeout):
+
+```sh
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+  dotnet run --project src/OpenSage.Tools.TestHarness -- --headless
+```
+
+Exit codes: `0` pass, `2` baseline regression or timeout when a baseline is configured,
+`3` timeout with no baseline configured.
+
+### Config knobs
+
+All optional with defaults, in `TestHarness.json`:
+
+| Knob | Purpose |
+|---|---|
+| `ValidationGroundMapPath` | Map to run on (default: Alpine Assault) |
+| `ValidationGroundSettleFrames` | Frames to settle after spawn before issuing orders |
+| `ValidationGroundBaselinePath` | Path to the golden baseline JSON (empty skips comparison) |
+| `ValidationGroundRefreshBaseline` | `true` overwrites the baseline from the run instead of comparing |
+| `ValidationGroundReportPath` | Where to write the JSON report artifact |
+
+### Refreshing the baseline
+
+The baseline lives at
+`src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json`. The checked-in
+values are first estimates: capture real values by running headless once with
+`ValidationGroundRefreshBaseline: true` and `ValidationGroundBaselinePath` pointed at the file, then
+commit the result. Never widen a tolerance to make a failing unit pass; a genuine regression is the
+signal this phase exists to produce. Before committing, run headless twice and confirm the two JSON
+reports are byte-identical (the determinism check).
+
+### Reading gaps and timeouts
+
+The stdout table has one row per roster unit. Verdicts:
+
+- `OK` / `PASS` / `NEW`: completed within tolerance (NEW = unit not yet in the baseline).
+- `REGRESSED`: completed but slower than the tolerance allows; headless exits non-zero.
+- `TIMEOUT`: the action never completed within its frame budget; distinct from a regression.
+- `GAP`: the unit/action could not be measured (unimplemented handler, unresolved definition, or
+  spawn-versus-production misbehaviour). The reason is printed on the following line.
+
+Gaps surfaced by a run escalate to P6b (unimplemented handlers) or P5 (spawn-versus-production
+differences); record them in `.exchange`, do not fix them inside the validation ground.

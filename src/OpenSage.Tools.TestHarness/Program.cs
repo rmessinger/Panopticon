@@ -123,8 +123,6 @@ public static class Program
 
     private static void Run(TestHarnessConfig config)
     {
-        var scenario = LoadScenario(config.Scenario, config.ScenarioPath);
-
         var definition = GameDefinition.FromGame(config.Game);
         var effectiveGamePath = config.GamePath != null && Directory.Exists(config.GamePath)
             ? config.GamePath
@@ -141,6 +139,13 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.UnitValidationGround && config.ScenarioPath == null)
+        {
+            RunValidationGround(installation, config);
+            return;
+        }
+
+        var scenario = LoadScenario(config.Scenario, config.ScenarioPath);
         var map = MapMetadataService.Load(installation, scenario.MapPath);
         var outputPath = Path.Combine(Path.GetTempPath(), $"opensage_scenario_{Guid.NewGuid()}.rep");
         var resultsPath = Path.ChangeExtension(outputPath, null) + ".results.txt";
@@ -202,6 +207,175 @@ public static class Program
             RunWindowed(installation, config, replayPath, deferredActions, results);
         }
     }
+
+    private static void RunValidationGround(GameInstallation installation, TestHarnessConfig config)
+    {
+        var scenario = new ValidationGroundScenario
+        {
+            MapPath = string.IsNullOrEmpty(config.ValidationGroundMapPath)
+                ? "maps/alpine assault/alpine assault.map"
+                : config.ValidationGroundMapPath,
+            SettleFrames = config.ValidationGroundSettleFrames,
+            Seed = config.ValidationGroundSeed,
+        };
+        var plan = ValidationGroundBuilder.Build(scenario);
+        var totalUnits = plan.UnitPlacements.Count;
+
+        // Three competitive slots (USA/China/GLA) become player indices 2/3/4 after neutral/civilian.
+        var playerSettings = new OpenSage.Logic.PlayerSetting[]
+        {
+            new(0, "America", new Mathematics.ColorRgb(255, 0, 0), 0, OpenSage.Logic.PlayerOwner.EasyAi, "USA"),
+            new(1, "China", new Mathematics.ColorRgb(0, 255, 0), 0, OpenSage.Logic.PlayerOwner.EasyAi, "China"),
+            new(2, "GLASide", new Mathematics.ColorRgb(0, 0, 255), 0, OpenSage.Logic.PlayerOwner.EasyAi, "GLA"),
+        };
+
+        Game? game = null;
+        GameWindow? window = null;
+        try
+        {
+            if (config.Headless)
+            {
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, null);
+            }
+            else
+            {
+                Platform.Start();
+                window = new GameWindow("OpenSAGE - Unit Validation Ground", 100, 100, 1280, 800, config.Fullscreen);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, window);
+            }
+
+            game.StartSkirmishOrMultiPlayerGame(scenario.MapPath, new Network.EchoConnection(), playerSettings, scenario.Seed, isMultiPlayer: false);
+            game.StartRun();
+
+            var host = new ValidationGroundHost();
+            host.Spawn(plan, game);
+
+            var timer = new UnitActionTimer();
+            foreach (var gap in host.Gaps)
+            {
+                timer.RecordGap(gap.DefinitionName, gap.FactionIndex, gap.ActionKind, gap.Reason);
+            }
+
+            // Settle stage: no orders until this many frames have elapsed.
+            for (var i = 0; i < scenario.SettleFrames; i++)
+            {
+                StepOnce(game, window);
+            }
+
+            host.IssueOrders(game, timer);
+            var observe = host.BuildObservationSeam(game);
+
+            // Run until every unit has resolved (timed out, completed, or gapped) or the cap hits.
+            const uint MaxRunFrames = 5_000;
+            var startFrame = CurrentLogicFrame(game);
+            while (game.IsRunning)
+            {
+                StepOnce(game, window);
+                var frame = CurrentLogicFrame(game);
+                timer.Poll(frame, observe);
+
+                var report = timer.BuildReport();
+                if (report.TotalUnitCount >= totalUnits || frame - startFrame > MaxRunFrames)
+                {
+                    break;
+                }
+            }
+
+            FinishValidationGround(timer, config);
+        }
+        finally
+        {
+            game?.Dispose();
+            window?.Dispose();
+            if (!config.Headless)
+            {
+                Platform.Stop();
+            }
+        }
+    }
+
+    private static void FinishValidationGround(UnitActionTimer timer, TestHarnessConfig config)
+    {
+        var report = timer.BuildReport();
+        UnitTimingBaseline? baseline = null;
+        if (!string.IsNullOrEmpty(config.ValidationGroundBaselinePath))
+        {
+            baseline = UnitTimingBaseline.Load(config.ValidationGroundBaselinePath!);
+        }
+
+        Console.Write(ValidationGroundReportWriter.WriteTextReport(report, baseline));
+
+        if (!string.IsNullOrEmpty(config.ValidationGroundReportPath))
+        {
+            ValidationGroundReportWriter.WriteJson(report, baseline, config.ValidationGroundReportPath!);
+            Console.WriteLine($"Report JSON saved to: {config.ValidationGroundReportPath}");
+        }
+
+        if (baseline != null)
+        {
+            if (config.ValidationGroundRefreshBaseline)
+            {
+                RefreshBaseline(baseline, report, config.ValidationGroundBaselinePath!);
+                return;
+            }
+
+            if (baseline.HasRegression(report) || report.Timeouts.Count > 0)
+            {
+                Environment.ExitCode = 2;
+            }
+        }
+        else if (report.Timeouts.Count > 0)
+        {
+            Environment.ExitCode = 3;
+        }
+    }
+
+    private static void RefreshBaseline(UnitTimingBaseline baseline, ValidationGroundReport report, string path)
+    {
+        // Capture measured timings as the new golden values. Only run under the explicit refresh flag.
+        baseline.Entries.Clear();
+        foreach (var timing in report.Timings)
+        {
+            baseline.Entries.Add(new UnitTimingBaselineEntry
+            {
+                DefinitionName = timing.DefinitionName,
+                FactionIndex = timing.FactionIndex,
+                ActionKind = timing.ActionKind.ToString(),
+                GoldenFrames = timing.Frames,
+                TolerancePercent = 10.0,
+                MinimumFrameFloor = 3,
+            });
+        }
+        baseline.Save(path);
+        Console.WriteLine($"Baseline refreshed at: {path}");
+    }
+
+    private static void StepOnce(Game game, GameWindow? window)
+    {
+        if (window != null)
+        {
+            if (!window.PumpEvents())
+            {
+                game.Exit();
+                return;
+            }
+
+            game.Update(window.MessageQueue);
+            game.Panel.EnsureFrame(window.ClientBounds);
+            game.Render();
+            game.GraphicsDevice.SwapBuffers(window.Swapchain);
+            window.MessageQueue.Clear();
+        }
+        else
+        {
+            game.Update(Array.Empty<Input.InputMessage>());
+            game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, 1280, 800));
+            game.Render();
+        }
+    }
+
+    private static uint CurrentLogicFrame(Game game) =>
+        unchecked((uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame));
 
     private static void RunWindowed(GameInstallation installation, TestHarnessConfig config, string replayPath,
         IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results)
