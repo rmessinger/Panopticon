@@ -210,6 +210,16 @@ public static class Program
 
     private static void RunValidationGround(GameInstallation installation, TestHarnessConfig config)
     {
+        // The validation ground runs thousands of frames with the full roster fighting; the engine's
+        // per-frame Info logs (weapon/animation state transitions) would otherwise produce gigabytes
+        // of output and dominate run time. The measurement is logic-frame counts, unaffected by log
+        // verbosity, so drop the Info level (Warn/Error still flow).
+        foreach (var rule in NLog.LogManager.Configuration.LoggingRules)
+        {
+            rule.DisableLoggingForLevel(NLog.LogLevel.Info);
+        }
+        NLog.LogManager.ReconfigExistingLoggers();
+
         var scenario = new ValidationGroundScenario
         {
             MapPath = string.IsNullOrEmpty(config.ValidationGroundMapPath)
@@ -222,11 +232,13 @@ public static class Program
         var totalUnits = plan.UnitPlacements.Count;
 
         // Three competitive slots (USA/China/GLA) become player indices 2/3/4 after neutral/civilian.
+        // SideName uses the Faction-prefixed PlayerTemplate name, matching every other call site;
+        // the skirmish-AI script path resolves PlayerTemplates by this name (SidesListUtility).
         var playerSettings = new OpenSage.Logic.PlayerSetting[]
         {
-            new(0, "America", new Mathematics.ColorRgb(255, 0, 0), 0, OpenSage.Logic.PlayerOwner.EasyAi, "USA"),
-            new(1, "China", new Mathematics.ColorRgb(0, 255, 0), 0, OpenSage.Logic.PlayerOwner.EasyAi, "China"),
-            new(2, "GLASide", new Mathematics.ColorRgb(0, 0, 255), 0, OpenSage.Logic.PlayerOwner.EasyAi, "GLA"),
+            new(0, "FactionAmerica", new Mathematics.ColorRgb(255, 0, 0), 0, OpenSage.Logic.PlayerOwner.EasyAi, "USA"),
+            new(1, "FactionChina", new Mathematics.ColorRgb(0, 255, 0), 0, OpenSage.Logic.PlayerOwner.EasyAi, "China"),
+            new(2, "FactionGLA", new Mathematics.ColorRgb(0, 0, 255), 0, OpenSage.Logic.PlayerOwner.EasyAi, "GLA"),
         };
 
         Game? game = null;
@@ -247,8 +259,21 @@ public static class Program
             game.StartSkirmishOrMultiPlayerGame(scenario.MapPath, new Network.EchoConnection(), playerSettings, scenario.Seed, isMultiPlayer: false);
             game.StartRun();
 
+            // The validation ground spawns and orders units directly; an active skirmish AI would
+            // both dominate per-frame cost and override those orders. Per deep dive §2.1 ("no AI,
+            // no economy"), disable AI on the three roster players (neutral/civilian at 0/1 have none).
+            foreach (var idx in new[] { 2, 3, 4 })
+            {
+                game.Scene3D.Players[idx].DisableAI();
+            }
+
+            // Fixed-timestep: each Update advances exactly one logic frame, independent of wall-clock,
+            // so logic-frame measurements are reproducible (deep dive §2.9).
+            game.EnableFixedLogicTimestep();
+
             var host = new ValidationGroundHost();
             host.Spawn(plan, game);
+            host.SpawnKeepAliveStructures(game);
 
             var timer = new UnitActionTimer();
             foreach (var gap in host.Gaps)
@@ -256,10 +281,12 @@ public static class Program
                 timer.RecordGap(gap.DefinitionName, gap.FactionIndex, gap.ActionKind, gap.Reason);
             }
 
-            // Settle stage: no orders until this many frames have elapsed.
+            // Settle stage: no orders until this many frames have elapsed. Logic-only stepping
+            // (no Render) keeps the ground fast; the measurement is logic-frame counts, unaffected
+            // by rendering.
             for (var i = 0; i < scenario.SettleFrames; i++)
             {
-                StepOnce(game, window);
+                StepLogicOnly(game);
             }
 
             host.IssueOrders(game, timer);
@@ -270,7 +297,7 @@ public static class Program
             var startFrame = CurrentLogicFrame(game);
             while (game.IsRunning)
             {
-                StepOnce(game, window);
+                StepLogicOnly(game);
                 var frame = CurrentLogicFrame(game);
                 timer.Poll(frame, observe);
 
@@ -348,6 +375,17 @@ public static class Program
         }
         baseline.Save(path);
         Console.WriteLine($"Baseline refreshed at: {path}");
+    }
+
+    /// <summary>
+    /// Advances the simulation without rendering. Used by the validation ground, whose measurement
+    /// is logic-frame counts: rendering a full scene with the roster fighting dominates run time
+    /// and adds nothing to the timing. MapTime still advances via the game's delta timer, so logic
+    /// frames tick as Update is called.
+    /// </summary>
+    private static void StepLogicOnly(Game game)
+    {
+        game.Update(Array.Empty<Input.InputMessage>());
     }
 
     private static void StepOnce(Game game, GameWindow? window)

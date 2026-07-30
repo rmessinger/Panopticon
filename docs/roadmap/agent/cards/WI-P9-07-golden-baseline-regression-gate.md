@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-P9-07` |
 | Roadmap phase | [Track P · P9](../../track-p-playable-baseline.md): P9-7 Baseline and regression gate, see [deep dive §2.7](../../deep-dives/p9-unit-validation-ground.md#27-baseline-and-regression-gate) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-P9-06` |
@@ -57,18 +57,18 @@ real install, and make headless mode exit non-zero when a unit regresses beyond 
 
 ## Acceptance criteria
 
-- [ ] Tolerance is per entry, combining a percentage with a minimum absolute frame floor.
-- [ ] A one-frame jitter on a short action does not fail, and a genuine slowdown on a long action
+- [x] Tolerance is per entry, combining a percentage with a minimum absolute frame floor.
+- [x] A one-frame jitter on a short action does not fail, and a genuine slowdown on a long action
       does.
-- [ ] The baseline file is written only under the explicit refresh flag; a normal run leaves it
+- [x] The baseline file is written only under the explicit refresh flag; a normal run leaves it
       untouched.
-- [ ] Two consecutive headless runs produce identical JSON reports; this was verified before the
+- [x] Two consecutive headless runs produce identical JSON reports; this was verified before the
       baseline was committed.
-- [ ] The committed baseline was captured against a real Generals install, and tolerances were set
+- [x] The committed baseline was captured against a real Generals install, and tolerances were set
       deliberately rather than copied from the capture.
-- [ ] Headless exits non-zero on regression, and separately on timeout.
-- [ ] A unit missing from the baseline is reported as new rather than failing the run.
-- [ ] Any new `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and
+- [x] Headless exits non-zero on regression, and separately on timeout.
+- [x] A unit missing from the baseline is reported as new rather than failing the run.
+- [x] Any new `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and
       `dotnet format src --verify-no-changes` passes.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
@@ -102,4 +102,20 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 
 ## Result
 
-<!-- append after completing -->
+Live-captured against a real Generals install on this environment (AMD Radeon RX 7600, Vulkan
+offscreen). The capture had never run before: the "pending GPU" framing was a misdiagnosis, and the
+validation ground had ~9 integration defects that were fixed in this change (faction-side names,
+Helix ZH unit, argument-less SpecialPower/Gather orders, unlinked target ids, per-unit selection,
+NLog log spam, render cost, shared-target measurement flaw). Two deeper blockers were also fixed:
+non-determinism (the engine's wall-clock delta timer gated logic ticks, so frame counts varied per
+run; fixed by an opt-in fixed-timestep mode on `DeltaTimer`/`Game`) and vehicle units never firing
+(the `AttackObject` order's move step suppresses fire for several units; in-range attackers now get a
+direct weapon command).
+
+Outcome: 22 units measured deterministically (two consecutive runs byte-identical), 0 timeouts,
+10 gaps. Gaps: SpecialPower units (AmericaVehicleMedic, ChinaInfantryBlackLotus,
+ChinaInfantryHacker, GLAInfantryHijacker) with no implemented order path; the Zero Hour unit
+ChinaVehicleHelix; and five units the sandbox cannot measure (AmericaInfantryPathfinder,
+AmericaJetAurora, ChinaVehicleTroopCrawler, GLAInfantryAngryMobNexus, GLAInfantryTerrorist), listed
+in `PrimaryActionCatalog.UnmeasurableAttackReasons`. Headless gate exits 0 with 22 pass, 0 regressed.
+Tolerances are per entry by weapon timing class (30/20/15 percent, floors 2/3/4).

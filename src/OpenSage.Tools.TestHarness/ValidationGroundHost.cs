@@ -31,6 +31,34 @@ public sealed class ValidationGroundHost
         SpawnSupplySources(plan, game);
     }
 
+    /// <summary>
+    /// Stands up one CommandCenter per roster faction in a far corner. With AI disabled the
+    /// factions never build, so without a qualifying structure the victory system's defeat rule
+    /// (no builder unit and no structure) would mark each faction defeated immediately and freeze
+    /// logic. The validation ground runs with no victory condition (deep dive §2.1); these
+    /// structures are out of weapon range and never attacked.
+    /// </summary>
+    public void SpawnKeepAliveStructures(IGame game)
+    {
+        var factionCenters = new (int PlayerIndex, string Definition)[]
+        {
+            (2, "AmericaCommandCenter"),
+            (3, "ChinaCommandCenter"),
+            (4, "GLACommandCenter"),
+        };
+
+        foreach (var (playerIndex, definitionName) in factionCenters)
+        {
+            var player = ResolvePlayer(game, playerIndex);
+            if (player == null)
+            {
+                continue;
+            }
+
+            CreateAt(game, definitionName, new Vector3(30f + playerIndex * 10f, 30f, 0f), player);
+        }
+    }
+
     private void SpawnTargets(SpawnPlan plan, IGame game)
     {
         // Targets are neutral (civilian) so any faction can legally attack them.
@@ -59,6 +87,15 @@ public sealed class ValidationGroundHost
         for (var i = 0; i < plan.UnitPlacements.Count; i++)
         {
             var placement = plan.UnitPlacements[i];
+
+            if (placement.Action.Kind == PrimaryActionKind.Attack
+                && PrimaryActionCatalog.UnmeasurableAttackReasons.TryGetValue(placement.DefinitionName, out var reason))
+            {
+                _gaps.Add(new UnitGap(placement.DefinitionName, placement.FactionIndex,
+                    placement.Action.Kind, reason));
+                continue;
+            }
+
             var player = ResolvePlayer(game, placement.PlayerIndex);
             if (player == null)
             {
@@ -80,8 +117,12 @@ public sealed class ValidationGroundHost
     }
 
     /// <summary>
-    /// Dispatches each unit's primary action as a real engine order on a single frame and records
-    /// the dispatch with the timer. Call only after the settle stage has elapsed.
+    /// Commands each unit's primary action on a single frame and records the dispatch with the
+    /// timer. Call only after the settle stage has elapsed. Attack units are placed within weapon
+    /// range by the builder, so the weapon is commanded directly: this isolates the measured
+    /// duration to the weapon's own delay (PreAttackDelay + first shot, the INI-anchored signal)
+    /// and avoids an engine limitation where the AttackObject order's move step suppresses fire for
+    /// several units. Other actions dispatch through OrderProcessor as real engine orders.
     /// </summary>
     public void IssueOrders(IGame game, UnitActionTimer timer)
     {
@@ -92,15 +133,44 @@ public sealed class ValidationGroundHost
         {
             var player = ResolvePlayer(game, unit.Placement.PlayerIndex)!;
             var playerIndex = game.Scene3D.GetPlayerIndex(player);
-            var order = BuildOrder(unit, playerIndex, game);
-            if (order == null)
+
+            // Link the unit to its assigned target so the observation seam can poll target health
+            // for attack-completion detection. Uses the same TargetIndex BuildOrder resolves below.
+            var targetIdx = unit.Placement.TargetIndex;
+            if (targetIdx >= 0 && targetIdx < _targets.Count)
             {
-                timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
-                    unit.Placement.Action.Kind, $"no order builder for {unit.Placement.Action.Kind}");
-                continue;
+                unit.TargetObjectId = _targets[targetIdx].Id;
             }
 
-            processor.Process([order]);
+            // OrderProcessor applies non-attack orders to the player's current selection, so select
+            // just this unit before dispatching. The validation ground issues one action per unit.
+            var unitObject = game.Scene3D.GameObjects.GetObjectById(unit.ObjectId);
+            if (unitObject != null)
+            {
+                player.SelectUnits(new[] { unitObject });
+            }
+
+            var targetObject = unit.TargetObjectId.HasValue
+                ? game.Scene3D.GameObjects.GetObjectById(unit.TargetObjectId.Value)
+                : null;
+
+            if (unit.Placement.Action.Kind == PrimaryActionKind.Attack && unitObject != null && targetObject != null)
+            {
+                unitObject.CurrentWeapon?.SetTarget(new WeaponTarget(game.Scene3D.GameObjects, targetObject.Id));
+            }
+            else
+            {
+                var order = BuildOrder(unit, playerIndex, game);
+                if (order == null)
+                {
+                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                        unit.Placement.Action.Kind, $"no order builder for {unit.Placement.Action.Kind}");
+                    continue;
+                }
+
+                processor.Process([order]);
+            }
+
             timer.OnDispatched(
                 unitKey: unit.ObjectId.Index,
                 unit.Placement.DefinitionName,
@@ -126,10 +196,14 @@ public sealed class ValidationGroundHost
             PrimaryActionKind.Build =>
                 Order.CreateBuildObject(playerIndex, (int)ResolveDefinitionId(game, placement.Action.TargetDefinitionName),
                     placement.Position, 0f),
-            PrimaryActionKind.Gather when target != null =>
-                new Order(playerIndex, OrderType.GatherDumpSupplies),
-            PrimaryActionKind.SpecialPower when target != null =>
-                new Order(playerIndex, OrderType.SpecialPowerAtObject),
+            // SpecialPower and Gather orders need per-unit argument construction (SpecialPowerType,
+            // supply-point id, host-side unit selection) that is not yet implemented. Returning null
+            // surfaces these as named gaps via IssueOrders (deep dive §2.6) instead of dispatching a
+            // malformed, argument-less order that crashes OrderProcessor.
+            PrimaryActionKind.SpecialPower =>
+                null,
+            PrimaryActionKind.Gather =>
+                null,
             _ => MoveToOrder(playerIndex, placement.Position),
         };
     }

@@ -6,23 +6,24 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 
 /// <summary>
 /// Builds a deterministic <see cref="SpawnPlan"/> from a <see cref="ValidationGroundScenario"/>:
-/// one row per faction facing the shared target cluster, target assignment by index
-/// (<c>unitIndex % targetCount</c>), and each unit's primary action resolved through
-/// <see cref="PrimaryActionCatalog"/>. No <c>IGame</c>/<c>Scene3D</c>/<c>GameLogic</c> dependency;
-/// positions are planar and the host samples terrain height. See deep dive P9 §2.1, §2.4, §2.9.
+/// one row per faction facing the shared target cluster, one target per attacker (so each unit's
+/// first-damage completion reflects its own weapon), and each unit's primary action resolved
+/// through <see cref="PrimaryActionCatalog"/>. No <c>IGame</c>/<c>Scene3D</c>/<c>GameLogic</c>
+/// dependency; positions are planar and the host samples terrain height. See deep dive P9 §2.1,
+/// §2.4, §2.9.
 /// </summary>
 public static class ValidationGroundBuilder
 {
     public static SpawnPlan Build(ValidationGroundScenario scenario)
     {
         var layout = scenario.Layout;
-        var targets = BuildTargetCluster(scenario, layout);
+        var definitions = scenario.TargetDefinitions;
+        var center = layout.TargetClusterCenter;
         var supplySources = BuildSupplySources(scenario, layout);
-        var targetCount = targets.Count > 0 ? targets.Count : 1;
 
         var units = new List<UnitPlacement>();
+        var targets = new List<TargetPlacement>();
         var globalUnitIndex = 0;
-
         for (var row = 0; row < scenario.FactionIndices.Count; row++)
         {
             var factionIndex = scenario.FactionIndices[row];
@@ -38,7 +39,20 @@ public static class ValidationGroundBuilder
                     0f);
 
                 var action = PrimaryActionCatalog.Resolve(unit);
-                var targetIndex = globalUnitIndex % targetCount;
+
+                // One target per unit, placed a short, fixed distance in front of the unit toward
+                // the cluster centre. A shared target would complete every unit assigned to it on
+                // the first hit (conflating timings), and a far target would make the measurement
+                // travel-dominated; a short, per-unit approach keeps each unit's first-damage
+                // duration close to its weapon delay. See deep dive P9 §2.4, §2.5.
+                var toCenter = new Vector2(center.X - position.X, center.Y - position.Y);
+                var dir = toCenter.Length() > 0f ? Vector2.Normalize(toCenter) : new Vector2(1f, 0f);
+                var targetPos = new Vector3(
+                    position.X + dir.X * layout.TargetApproachDistance,
+                    position.Y + dir.Y * layout.TargetApproachDistance,
+                    0f);
+                var targetDef = definitions[globalUnitIndex % definitions.Count];
+                targets.Add(new TargetPlacement(targetDef, targetPos));
 
                 units.Add(new UnitPlacement(
                     unit.DefinitionName,
@@ -46,7 +60,7 @@ public static class ValidationGroundBuilder
                     PlayerIndex: factionIndex,
                     Position: position,
                     Action: action,
-                    TargetIndex: targetIndex));
+                    TargetIndex: globalUnitIndex));
 
                 globalUnitIndex++;
             }
@@ -58,23 +72,6 @@ public static class ValidationGroundBuilder
             TargetPlacements = targets,
             SupplySourcePlacements = supplySources,
         };
-    }
-
-    private static List<TargetPlacement> BuildTargetCluster(ValidationGroundScenario scenario, LayoutConfig layout)
-    {
-        var targets = new List<TargetPlacement>();
-        var count = scenario.TargetDefinitions.Count;
-        for (var i = 0; i < count; i++)
-        {
-            var angle = (System.MathF.PI * 2 * i) / System.Math.Max(1, count);
-            var position = new Vector3(
-                layout.TargetClusterCenter.X + layout.TargetClusterRadius * System.MathF.Cos(angle),
-                layout.TargetClusterCenter.Y + layout.TargetClusterRadius * System.MathF.Sin(angle),
-                0f);
-            targets.Add(new TargetPlacement(scenario.TargetDefinitions[i], position));
-        }
-
-        return targets;
     }
 
     private static List<TargetPlacement> BuildSupplySources(ValidationGroundScenario scenario, LayoutConfig layout)

@@ -220,11 +220,23 @@ All optional with defaults, in `TestHarness.json`:
 
 The baseline lives at
 `src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json`. The checked-in
-values are first estimates: capture real values by running headless once with
+values are a live capture against a real install, taken with fixed-timestep deterministic stepping.
+Re-capture after an engine change that could affect weapon timings by running headless once with
 `ValidationGroundRefreshBaseline: true` and `ValidationGroundBaselinePath` pointed at the file, then
 commit the result. Never widen a tolerance to make a failing unit pass; a genuine regression is the
 signal this phase exists to produce. Before committing, run headless twice and confirm the two JSON
 reports are byte-identical (the determinism check).
+
+The capture relies on a few non-obvious mechanics, all wired in `Program.RunValidationGround` and
+`ValidationGroundHost`: fixed-timestep logic stepping (`Game.EnableFixedLogicTimestep`) so frame
+counts are reproducible; skirmish AI disabled on the roster players (per the "no AI" design); an
+untouched CommandCenter per faction so the victory system does not defeat factions that start with no
+buildings; one target per attacker, placed in weapon range, so each unit's first-damage completion is
+its own; and direct weapon targeting for attackers (the `AttackObject` order's move step suppresses
+fire for several units, so in-range attackers are commanded directly to isolate the weapon delay).
+Units the sandbox cannot measure (suicide, bomber, horde, transport, sniper that will not fire at the
+structure target) are listed in `PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as gaps;
+SpecialPower units have no implemented order path and are also gaps.
 
 ### Live capture and accuracy verification
 

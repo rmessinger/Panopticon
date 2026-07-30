@@ -84,6 +84,14 @@ public class Player : IPersistableObject
 
     public AIPlayer? AIPlayer { get; private set; }
 
+    /// <summary>
+    /// Drops any attached AI controller so this player's units are driven only by explicit orders.
+    /// Used by the Unit Validation Ground (P9), which spawns and orders units directly and runs with
+    /// no AI/economy (deep dive §2.1); an active skirmish AI would both dominate per-frame cost and
+    /// override the ground's per-unit orders.
+    /// </summary>
+    internal void DisableAI() => AIPlayer = null;
+
     public AcademyStats AcademyStats { get; }
 
     // TODO(Port): Implement this.

@@ -40,16 +40,17 @@ public class ValidationGroundBuilderTests
     }
 
     [Fact, Trait("Category", "Roadmap")]
-    public void TargetAssignment_IsByIndexAndStable()
+    public void EveryAttacker_GetsADistinctTarget()
     {
         var plan = Build();
-        var targetCount = plan.TargetPlacements.Count;
 
-        for (var i = 0; i < plan.UnitPlacements.Count; i++)
-        {
-            Assert.Equal(i % targetCount, plan.UnitPlacements[i].TargetIndex);
-            Assert.InRange(plan.UnitPlacements[i].TargetIndex, 0, targetCount - 1);
-        }
+        // The cluster has one target per unit, and each unit's TargetIndex is its unique global
+        // index, so no two attackers share a target. A shared target would complete every unit
+        // assigned to it on the first hit, conflating their timings. See deep dive P9 §2.4, §2.5.
+        Assert.Equal(plan.UnitPlacements.Count, plan.TargetPlacements.Count);
+        var assigned = plan.UnitPlacements.Select(p => p.TargetIndex).ToList();
+        Assert.Equal(assigned.Count, assigned.Distinct().Count());
+        Assert.All(plan.UnitPlacements, p => Assert.InRange(p.TargetIndex, 0, plan.TargetPlacements.Count - 1));
     }
 
     [Fact, Trait("Category", "Roadmap")]

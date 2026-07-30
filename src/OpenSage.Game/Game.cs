@@ -1010,6 +1010,17 @@ public sealed class Game : DisposableBase, IGame
         _isStepping = true;
     }
 
+    /// <summary>
+    /// Switches the map timer to fixed-timestep mode, advancing exactly one logic frame per
+    /// <see cref="Update"/> call regardless of wall-clock time. Used by deterministic headless
+    /// measurement (the Unit Validation Ground) so logic-frame counts are reproducible across
+    /// machines and runs. See deep dive P9 §2.9.
+    /// </summary>
+    internal void EnableFixedLogicTimestep()
+    {
+        _mapTimer.FixedDelta = TimeSpan.FromMilliseconds(GameEngine.MsPerLogicFrame);
+    }
+
     public void Render()
     {
         Graphics.Draw(RenderTime);

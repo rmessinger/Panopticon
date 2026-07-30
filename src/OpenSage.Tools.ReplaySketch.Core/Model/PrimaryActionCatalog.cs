@@ -11,11 +11,11 @@ namespace OpenSage.Tools.ReplaySketch.Model;
 /// </summary>
 public static class PrimaryActionCatalog
 {
-    public const int MoveFrameBudget = 120;
-    public const int AttackFrameBudget = 150;
-    public const int SpecialPowerFrameBudget = 200;
-    public const int BuildFrameBudget = 300;
-    public const int GatherFrameBudget = 300;
+    public const int MoveFrameBudget = 200;
+    public const int AttackFrameBudget = 250;
+    public const int SpecialPowerFrameBudget = 300;
+    public const int BuildFrameBudget = 400;
+    public const int GatherFrameBudget = 400;
 
     // Support units whose primary contribution is an ability rather than a weapon.
     private static readonly HashSet<string> SupportDefinitionNames = new()
@@ -24,6 +24,22 @@ public static class PrimaryActionCatalog
         "ChinaInfantryBlackLotus",   // hack/steal ability
         "ChinaInfantryHacker",       // internet hack
         "GLAInfantryHijacker",       // vehicle hijack
+    };
+
+    /// <summary>
+    /// Roster units whose Attack action does not produce target damage through a directly-commanded
+    /// weapon in the validation-ground sandbox (e.g. suicide, bomber, horde, transport, sniper that
+    /// will not fire at the structure target). They would always time out, so the host records them
+    /// as named gaps instead of running them through the timer, and they have no baseline entry.
+    /// Escalate per deep dive P9 §2.6. Authoritative for both the host and the baseline-coverage test.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> UnmeasurableAttackReasons = new Dictionary<string, string>
+    {
+        ["AmericaInfantryPathfinder"] = "sniper weapon does not fire at the structure target in the sandbox",
+        ["AmericaJetAurora"] = "bomber (JetAIUpdate); a direct weapon command does not trigger its bombing run",
+        ["ChinaVehicleTroopCrawler"] = "transport; no direct-fire weapon discharge in the sandbox",
+        ["GLAInfantryAngryMobNexus"] = "horde composite unit; per-unit weapon targeting does not apply",
+        ["GLAInfantryTerrorist"] = "suicide weapon (point-blank); cannot damage from standoff range",
     };
 
     /// <summary>

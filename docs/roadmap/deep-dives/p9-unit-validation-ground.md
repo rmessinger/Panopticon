@@ -174,7 +174,7 @@ and owns the parts requiring a live `IGame`.
 | P9-4. Action timer | `UnitActionTimer` measures dispatch-to-completion in logic frames per unit, with per-action completion signals and per-unit frame budgets. | Done |
 | P9-5. TestHarness wiring | New built-in scenario value and config knobs; the ground runs in both the windowed and headless loops without disturbing the existing replay-driven path. | Done |
 | P9-6. Report output | Per-unit stdout table and JSON artifact, reporting gaps and timeouts distinctly from durations. | Done |
-| P9-7. Baseline and regression gate | `UnitTimingBaseline` with per-entry tolerance, an explicit refresh mode, a committed baseline captured against a real install, and a non-zero exit code on regression. | Done (first-estimate baseline committed; live capture pending an environment with GPU access) |
+| P9-7. Baseline and regression gate | `UnitTimingBaseline` with per-entry tolerance, an explicit refresh mode, a committed baseline captured against a real install, and a non-zero exit code on regression. | Done (live-captured baseline against a real install; fixed-timestep deterministic stepping; 22 units measured, 10 gaps escalated) |
 | P9-8. Test coverage | Install-free tests for layout determinism, roster completeness, action-mapping totality, and baseline comparison; an install-gated end-to-end test for the live run. | Done |
 
 ---
