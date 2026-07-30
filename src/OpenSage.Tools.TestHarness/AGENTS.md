@@ -250,6 +250,8 @@ its INI anchor; set tolerances around the anchor to cover only approach/pathing 
 
 ##### Prerequisites
 
+Do not assume these prerequisites are absent. The TestHarness and the Unit Validation Ground run in any environment that has a game install, a GPU, and a non-snap .NET; CI lacks them, but dev and agent environments often do not. Verify before skipping: the install path env var (e.g. `CNC_GENERALS_PATH`) resolves; `vulkaninfo --summary` lists a discrete GPU; `which dotnet` is not under `/snap`. When all three are present, windowed mode, `--headless`, and the validation ground all work here.
+
 - A real C&C Generals install, located via `CNC_GENERALS_PATH` or `GamePath` in `TestHarness.json`.
 - A graphics backend the host process can actually create:
   - Windowed mode works wherever the engine renders normally.
