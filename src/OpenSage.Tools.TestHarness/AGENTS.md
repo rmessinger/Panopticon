@@ -231,9 +231,11 @@ The capture relies on a few non-obvious mechanics, all wired in `Program.RunVali
 `ValidationGroundHost`: fixed-timestep logic stepping (`Game.EnableFixedLogicTimestep`) so frame
 counts are reproducible; skirmish AI disabled on the roster players (per the "no AI" design); an
 untouched CommandCenter per faction so the victory system does not defeat factions that start with no
-buildings; one target per attacker, placed in weapon range, so each unit's first-damage completion is
-its own; and direct weapon targeting for attackers (the `AttackObject` order's move step suppresses
-fire for several units, so in-range attackers are commanded directly to isolate the weapon delay).
+buildings; one target per attacker, placed in weapon range and standardized to a low HP
+(`ValidationGroundScenario.TargetHp`), so each unit's target-destruction completion is its own and
+feasible for the whole roster; and direct weapon targeting for attackers (the `AttackObject` order's
+move step suppresses fire for several units, so in-range attackers are commanded directly to isolate
+the weapon delay). A unit that destroys its target has its weapon cleared so it stops firing.
 Units the sandbox cannot measure (suicide, bomber, horde, transport, sniper that will not fire at the
 structure target) are listed in `PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as gaps;
 SpecialPower units have no implemented order path and are also gaps.

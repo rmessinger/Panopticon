@@ -76,7 +76,7 @@ would produce meaningless timings for them. Each unit resolves to one primary ac
 
 | Unit group | Primary action | Completion signal |
 |---|---|---|
-| Combat units | `AttackObject` against its assigned target | Target health first decreases |
+| Combat units | `AttackObject` against its assigned target | Target is destroyed |
 | Dozers and workers | `BuildObject` for a fixed cheap structure | Construction completes |
 | Supply units | `GatherDumpSupplies` | One full `SupplyAIUpdate` state cycle returns to its start state |
 | Support units with an implemented ability | `SpecialPowerAtObject` or `SpecialPowerAtLocation` | The ability's observable effect |
@@ -97,10 +97,13 @@ windowed or headless; logic frames are identical across all of those as long as 
 deterministic.
 
 A unit's timer starts on the frame its order is dispatched and stops on the frame its completion
-signal is first observed. The completion signals reuse the patterns already proven in
-`EngineActionRecorder`, which tracks pending moves, per-target health deltas, pending builds, and
-supply approach legs for the existing scenarios. P9 generalizes that per unit rather than
-reimplementing it.
+signal is first observed. For combat units the signal is the assigned target being destroyed, not the
+first damaging shot: a unit has finished its attack command only once the target is gone. Attack
+targets are standardized to a low HP at spawn so destroying them is feasible for the whole roster and
+the measured duration reflects each weapon's real damage and fire rate. The completion signals reuse
+the patterns already proven in `EngineActionRecorder`, which tracks pending moves, per-target health
+deltas, pending builds, and supply approach legs for the existing scenarios. P9 generalizes that per
+unit rather than reimplementing it.
 
 Each unit has a frame budget. Exceeding it records a timeout, which is a distinct result from a
 regression: a timeout means the action never happened, a regression means it happened too slowly.

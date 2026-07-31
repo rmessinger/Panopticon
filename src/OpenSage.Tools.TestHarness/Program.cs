@@ -272,7 +272,7 @@ public static class Program
             game.EnableFixedLogicTimestep();
 
             var host = new ValidationGroundHost();
-            host.Spawn(plan, game);
+            host.Spawn(plan, game, scenario.TargetHp);
             host.SpawnKeepAliveStructures(game);
 
             var timer = new UnitActionTimer();
@@ -300,6 +300,9 @@ public static class Program
                 StepLogicOnly(game);
                 var frame = CurrentLogicFrame(game);
                 timer.Poll(frame, observe);
+                // A unit that destroys its target has finished; clear its weapon so it stops firing
+                // (and its turret stops auto-acquiring new enemies), keeping the run bounded.
+                host.DisarmUnitsWhoseTargetIsDestroyed(game);
 
                 var report = timer.BuildReport();
                 if (report.TotalUnitCount >= totalUnits || frame - startFrame > MaxRunFrames)

@@ -35,18 +35,17 @@ public class UnitActionTimerTests
     }
 
     [Fact, Trait("Category", "Roadmap")]
-    public void AttackCompletes_OnFirstTargetHealthDecrease()
+    public void AttackCompletes_WhenTargetDestroyed()
     {
         var timer = new UnitActionTimer();
         timer.OnDispatched(2, "Attacker", 2, AttackAction, frame: 0, targetKey: 9);
 
-        var health = 100f;
-        UnitObservation Obs() => new() { TargetHealth = health };
+        // Attack completes only when the target is destroyed, not on the first damaging shot.
+        UnitObservation Obs(bool destroyed) => new() { TargetHealth = destroyed ? (float?)null : 100f, TargetDestroyed = destroyed };
 
-        timer.Poll(5, _ => Obs());   // baseline captured
-        timer.Poll(10, _ => Obs());  // unchanged
-        health = 85f;
-        timer.Poll(12, _ => Obs());  // decrease -> complete
+        timer.Poll(5, _ => Obs(false));   // alive, taking damage
+        timer.Poll(10, _ => Obs(false));  // still alive
+        timer.Poll(12, _ => Obs(true));   // destroyed -> complete
 
         var report = timer.BuildReport();
         var timing = Assert.Single(report.Timings);
