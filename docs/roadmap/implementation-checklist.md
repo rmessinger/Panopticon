@@ -718,3 +718,48 @@ collapse), not the existing canned model-swap rubble/damage-state system.
   - AC: TBD, ReplaySketch screenshot mode shows deformed terrain and settled debris, and a
     headless assertion validates crater radius/depth and debris bounds against the triggering
     weapon/building.
+
+## Track G: Rendering Clarity & Image Quality
+
+See [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md). Not gated on Track P
+(presentation only, no simulation behaviour change). Coordinates with B5 (rendering at scale, same
+pipeline-description plumbing) and A3 (sim/presentation seam). Every visual change lands behind the
+G2 preset layer so the `Faithful` preset reproduces the original look.
+
+- [ ] G1 High-DPI drawable & resolution correctness (`ALLOW_HIGHDPI`, drawable-size swapchain,
+      one pixels-versus-points convention across `GameWindow`/`RenderTarget`/input).
+  - AC: TBD, on a display with a non-unity scale factor the swapchain and a captured frame match
+    the window's native pixel dimensions, and cursor/input hit-testing stays correct.
+- [ ] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`, wired through
+      `StaticGameLod`; settings layer, not an experiment seam).
+  - AC: TBD, switching presets at runtime changes active pipeline state, and `Faithful`
+    reproduces the pre-track captured frame.
+- [ ] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
+      with sharpness/edge-aliasing metrics; extends `FrameCapturer` + ReplaySketch screenshot mode).
+  - AC: TBD, a headless run compares the fixed scene set against stored goldens per preset and
+    fails on regression; the metrics separate an aliased frame from an antialiased one.
+- [ ] G4 Multisample antialiasing (sample count through `GameOutputDescription`, intermediate
+      colour/depth targets and every pipeline description, plus a resolve before the final blit).
+  - AC: TBD, 4x MSAA renders and resolves across the 3D, terrain, water, road and particle
+    pipelines, and the G3 edge-aliasing metric improves against the same frame at 1x.
+- [ ] G5 Cutout & alpha-test clarity (alpha-to-coverage under MSAA, coverage-preserving mips for
+      alpha-tested textures, per-mip threshold rescale, replacing the fixed `0x60` cutoff in
+      `Common.h`).
+  - AC: TBD, minified alpha-tested foliage and fencing show no dissolve-to-dots at distance under
+    `Enhanced`, while `Faithful` still produces the original hard-cutoff result.
+- [ ] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, sRGB/tonemapped output,
+      linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output).
+  - AC: TBD, a fog/sky gradient shows no visible banding under `Enhanced` and mip chains no longer
+    darken with distance; `Faithful` retains gamma-space shading.
+- [ ] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
+      quality terrain texture-array resample/mip path in `Terrain.cs`).
+  - AC: TBD, terrain stays legible at grazing angles at 16x with no shimmer under camera motion,
+    measured by the G3 metrics.
+- [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, slope-scaled/
+      normal-offset bias replacing the constant bias in `ShadowSettings`).
+  - AC: TBD, shadow edges show no acne speckle or cascade blockiness at the default camera zoom,
+    with cascade transitions not visible in the captured frame.
+- [ ] G9 Resolution-independent 2D & UI (native-resolution 2D, resolution-independent layout
+      anchored in logical points, higher-quality WND/APT upscaling).
+  - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
+    layout and hit regions unchanged relative to the pre-track build.

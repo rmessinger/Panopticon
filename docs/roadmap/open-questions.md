@@ -294,7 +294,34 @@
   ([A2](track-a-foundations.md)) rather than fitting inside any single existing track — the same
   reasoning that split gameplay content out as Track D. Named "Track F" (not "Track D"/"Track E")
   to avoid collisions with two pending unmerged branches: `docs/track-d-gameplay-expansion`
-  (Gameplay Content Expansion) and `docs/track-e-naval-warfare` (Naval Warfare). The physics
+  (Gameplay Content Expansion) and `docs/track-e-naval-warfare` (Naval Warfare). Since superseded
+  by events: both branches merged (PRs #5 and #6), so Tracks D and E are on `main` and the letter
+  assignment stands on that basis rather than on pending work. The physics
   engine/library is an open candidate, settled when F4 starts, mirroring how Track C left the
   first external model format ([C4](track-c-external-assets.md)) as a candidate. Affects
   [Track F](track-f-terrain-destruction.md).
+- Rendering clarity & image quality scope — Decision: own track (Track G), not folded into
+  [B5 rendering at scale](track-b-scale.md), and not gated on Track P. The current renderer is
+  faithful to the original game but grainy on high-resolution displays, with a screen-door pattern
+  on alpha-tested geometry. The causes span a genuine correctness bug (no
+  `SDL_WINDOW_ALLOW_HIGHDPI`, so the swapchain is sized from logical points and the frame is
+  rendered below native resolution and resampled), plus absent capability across antialiasing,
+  cutout filtering, colour space, texture filtering, shadow provisioning, and 2D scaling. B5 is
+  about throughput at entity scale, so image quality would be a grab-bag inside it, the same
+  reasoning that split Tracks D, E, and F out. Track G touches presentation only and changes no
+  simulation behaviour, so unlike Tracks A/B/C it does not need a playable skirmish loop first.
+  Named "Track G" because D, E, and F are all merged on `main`
+  ([Track D](track-d-gameplay-expansion.md), [Track E](track-e-naval-warfare.md),
+  [Track F](track-f-terrain-destruction.md)). Affects
+  [Track G](track-g-rendering-clarity.md).
+- Original-look compatibility under Track G — Decision: two presets, `Faithful` and `Enhanced`,
+  with `Enhanced` as the default and the target of future work. `Faithful` pins sample count 1,
+  the hard `0x60` alpha-test cutoff, gamma-space shading, 4x anisotropy, and a single 1024²
+  shadow cascade, reproducing the pre-track output exactly; the G1 high-DPI fix applies to both
+  because it is a correctness bug rather than a look change. Presets are a settings layer rather
+  than an [experiment seam](seams.md): they select fixed pipeline state, not swappable
+  implementations measured by the A4 harness, so they stay out of that harness. The alternative,
+  a single unconditional visual upgrade, was rejected because reproducing the original look is a
+  standing requirement, and the alternative of a full per-feature settings matrix without presets
+  was rejected as untestable: G3 golden frames are captured per preset. Affects
+  [Track G](track-g-rendering-clarity.md).

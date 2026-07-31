@@ -4,7 +4,8 @@
 > the roadmap: tracks → phases → sub-phases, with dependency flow. Keep it aligned with the track
 > documents ([A](track-a-foundations.md) · [B](track-b-scale.md) ·
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
-> [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md)) and the deep dives as phases,
+> [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md) ·
+> [G](track-g-rendering-clarity.md)) and the deep dives as phases,
 > sub-phases, or dependencies change; see [How to maintain](#how-to-maintain-this-tree).
 >
 > Audience: human overview of roadmap structure and dependency flow.
@@ -148,6 +149,16 @@ mindmap
       F6 Destruction-terrain interaction
       F7 Persistence replay and determinism
       F8 Authoring and validation tooling
+    G. Rendering clarity and image quality
+      G1 High-DPI drawable and resolution correctness
+      G2 Graphics settings and fidelity presets
+      G3 Visual regression harness
+      G4 Multisample antialiasing
+      G5 Cutout and alpha-test clarity
+      G6 Gamma-correct rendering
+      G7 Texture filtering and mip quality
+      G8 Shadow quality tier
+      G9 Resolution-independent 2D and UI
 ```
 
 ---
@@ -155,7 +166,8 @@ mindmap
 ## 2. Progression (dependency flow)
 
 This left-to-right progression shows when phases become workable. Arrows mean "must precede."
-Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal, F = red).
+Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal,
+F = red, G = violet). Track G is the one track not gated by Stage P: it changes presentation only.
 The [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) gates the whole
 roadmap. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md) is its own highlighted
 node because it is an early prerequisite of A1 even though the rest of A4 follows A1.
@@ -168,6 +180,7 @@ flowchart LR
   classDef trackD fill:#fdeef2,stroke:#a8477a,color:#310;
   classDef trackE fill:#e9f7fb,stroke:#2f8aa3,color:#032;
   classDef trackF fill:#fdeaea,stroke:#b5453a,color:#321;
+  classDef trackG fill:#f3eefb,stroke:#7a5aa8,color:#221;
   classDef seam fill:#ffd9f2,stroke:#b3559a,stroke-width:2px,color:#312;
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
 
@@ -196,6 +209,8 @@ flowchart LR
     C1["C1 Import abstraction"]
     D1["D1 Tech tree prerequisite graph"]
     E1["E1 Water and ground terrain passability"]
+    G1["G1 High-DPI & resolution correctness"]
+    G2["G2 Graphics settings & presets"]
   end
 
   subgraph S1["Stage 1 · Core host & cleanup"]
@@ -210,6 +225,7 @@ flowchart LR
     D2["D2 Era and age progression"]
     E2["E2 Ship combat"]
     E3["E3 Naval production"]
+    G3["G3 Visual regression harness"]
   end
 
   subgraph S2["Stage 2 · Harness & core scale"]
@@ -221,6 +237,11 @@ flowchart LR
     E4["E4 Reference naval scenario"]
     F1["F1 Terrain deformation data model"]
     F4["F4 Physics engine integration"]
+    G4["G4 Multisample antialiasing"]
+    G6["G6 Gamma-correct rendering"]
+    G7["G7 Texture filtering & mip quality"]
+    G8["G8 Shadow quality tier"]
+    G9["G9 Resolution-independent 2D & UI"]
   end
 
   subgraph S3["Stage 3 · Scenario, distribution & tooling"]
@@ -233,6 +254,7 @@ flowchart LR
     F2["F2 Runtime mesh & rendering update"]
     F3["F3 Weapon-driven terrain deformation"]
     F5["F5 Physics-based structural destruction"]
+    G5["G5 Cutout & alpha-test clarity"]
   end
 
   subgraph S4["Stage 4 · Fidelity scaling"]
@@ -312,6 +334,8 @@ flowchart LR
   B4A --> F1
   A1 --> F4
   B1 --> F4
+  G1 --> G3
+  G2 --> G3
 
   %% Stage 2 -> 3
   A1 --> A5
@@ -329,6 +353,16 @@ flowchart LR
   B5 --> F2
   F1 --> F3
   F4 --> F5
+  G2 --> G4
+  G3 --> G4
+  G2 --> G6
+  G3 --> G6
+  G2 --> G7
+  G3 --> G7
+  G2 --> G8
+  G3 --> G8
+  G1 --> G9
+  G3 --> G9
 
   %% Stage 3 -> 4
   B1 --> B7
@@ -342,6 +376,7 @@ flowchart LR
   F3 --> F7
   F5 --> F7
   A2 --> F7
+  G4 --> G5
 
   %% Stage 4 -> 5
   F2 --> F8
@@ -352,6 +387,7 @@ flowchart LR
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
   class F1,F2,F3,F4,F5,F6,F7,F8 trackF;
+  class G1,G2,G3,G4,G5,G6,G7,G8,G9 trackG;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;
