@@ -139,7 +139,7 @@ public static class Program
             return;
         }
 
-        if (config.Scenario == BuiltInScenario.UnitValidationGround && config.ScenarioPath == null)
+        if (config.Scenario == BuiltInScenario.UnitValidationGround)
         {
             RunValidationGround(installation, config);
             return;

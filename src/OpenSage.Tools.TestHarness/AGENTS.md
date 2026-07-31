@@ -183,9 +183,9 @@ that action takes in logic frames. Measurements are compared against a checked-i
 
 ### Running it
 
-Set `Scenario: "UnitValidationGround"` in `TestHarness.json` (or pass `--scenario` for the replay
-path; the validation ground is selected only when `Scenario == UnitValidationGround` and
-`ScenarioPath` is null). Both modes share one scenario definition, spawn host, and timer.
+Set `Scenario: "UnitValidationGround"` in `TestHarness.json` (the `Scenario` field is the single
+toggle; `ScenarioPath`/`--scenario` only overrides the map for the replay scenarios and is ignored
+for the validation ground). Both modes share one scenario definition, spawn host, and timer.
 
 Windowed (a human watches the roster act):
 

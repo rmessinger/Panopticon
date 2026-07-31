@@ -33,6 +33,14 @@
               "--map", "maps\\Tournament Island\\Tournament Island.map"
           ]
         },
+        // TestHarness scenario is selected by the "Scenario" field in
+        // src/OpenSage.Tools.TestHarness/TestHarness.json (copied to the output dir on build).
+        // Valid BuiltInScenario values:
+        //   AlpineAssaultUSAvGLA
+        //   AlpineAssaultUSAvGLAFullBuild
+        //   UnitValidationGround
+        // The Scenario field is the single toggle; ScenarioPath/--scenario only overrides the map
+        // for the two replay scenarios and is ignored when Scenario is UnitValidationGround.
         {
             "name": "TestHarness",
             "type": "coreclr",
