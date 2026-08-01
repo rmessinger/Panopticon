@@ -31,12 +31,12 @@
 ## Phase resources
 
 A navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
-Diagrams are required before any phase's first task card is marked `Ready`; all G-phase deep
-dives are yet to be written.
+Diagrams are required before any phase's first task card is marked `Ready`; deep dives for G2
+onward are yet to be written.
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| G1 | — | — | — |
+| G1 | [`g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | [Architecture Diagrams](deep-dives/g1-high-dpi-resolution.md#5-architecture-diagrams) | [`WI-G1-01`](agent/cards/WI-G1-01-audit-size-consumers.md), [`WI-G1-02`](agent/cards/WI-G1-02-allow-highdpi-drawable-size.md), [`WI-G1-03`](agent/cards/WI-G1-03-route-render-surfaces-to-pixels.md), [`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md) |
 | G2 | — | — | — |
 | G3 | — | — | — |
 | G4 | — | — | — |
