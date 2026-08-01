@@ -728,8 +728,25 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
 
 - [ ] G1 High-DPI drawable & resolution correctness (`ALLOW_HIGHDPI`, drawable-size swapchain,
       one pixels-versus-points convention across `GameWindow`/`RenderTarget`/input).
-  - AC: TBD, on a display with a non-unity scale factor the swapchain and a captured frame match
+  - AC: on a display with a non-unity scale factor the swapchain and a captured frame match
     the window's native pixel dimensions, and cursor/input hit-testing stays correct.
+  - [ ] G1-1 Classify every window/panel size consumer as logical points or physical pixels
+        ([`WI-G1-01`](agent/cards/WI-G1-01-audit-size-consumers.md)).
+    - AC: every `ClientBounds`/`WindowScale`/`CursorScale`/`Frame`/`Viewport` read in `src/` is
+      classified, and sites feeding both spaces are called out.
+  - [ ] G1-2 `AllowHighDpi` window creation, `SDL_GetWindowSizeInPixels` interop,
+        `DrawableBounds`/`DpiScale`, swapchain sized in pixels
+        ([`WI-G1-02`](agent/cards/WI-G1-02-allow-highdpi-drawable-size.md)).
+    - AC: the window is created with `AllowHighDpi` via `new Sdl2Window(...)`, no `WindowScale`
+      pre-multiplication remains, and `Swapchain.Resize` is fed `DrawableBounds`.
+  - [ ] G1-3 Render target and 3D viewport in pixels, GUI layout on points
+        ([`WI-G1-03`](agent/cards/WI-G1-03-route-render-surfaces-to-pixels.md)).
+    - AC: all three `EnsureFrame` call sites pass `DrawableBounds`, `Game.Viewport` is in pixels,
+      and the WND/APT managers receive a logical size.
+  - [ ] G1-4 Scale 2D drawing and mouse picking by `DpiScale`
+        ([`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md)).
+    - AC: picking resolves to the same world position at `DpiScale` 1 and 2, and the GUI occupies
+      the same fraction of the frame at both scales.
 - [ ] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`, wired through
       `StaticGameLod`; settings layer, not an experiment seam).
   - AC: TBD, switching presets at runtime changes active pipeline state, and `Faithful`

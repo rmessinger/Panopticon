@@ -24,9 +24,9 @@ public sealed class ValidationGroundHost
     public IReadOnlyList<UnitGap> Gaps => _gaps;
     public IReadOnlyList<GameObject> Targets => _targets;
 
-    public void Spawn(SpawnPlan plan, IGame game)
+    public void Spawn(SpawnPlan plan, IGame game, float targetHp = 0f)
     {
-        SpawnTargets(plan, game);
+        SpawnTargets(plan, game, targetHp);
         SpawnUnits(plan, game);
         SpawnSupplySources(plan, game);
     }
@@ -59,7 +59,7 @@ public sealed class ValidationGroundHost
         }
     }
 
-    private void SpawnTargets(SpawnPlan plan, IGame game)
+    private void SpawnTargets(SpawnPlan plan, IGame game, float targetHp = 0f)
     {
         // Targets are neutral (civilian) so any faction can legally attack them.
         var civilian = game.Scene3D.Players[1];
@@ -68,6 +68,12 @@ public sealed class ValidationGroundHost
             var obj = CreateAt(game, placement.DefinitionName, placement.Position, civilian);
             if (obj != null)
             {
+                // Standardize HP so attack completion (target destruction) is feasible for the whole
+                // roster and weapon-differentiated rather than dominated by a structure's native HP.
+                if (targetHp > 0f)
+                {
+                    obj.BodyModule?.SetMaxHealth(targetHp);
+                }
                 _targets.Add(obj);
             }
         }
@@ -120,9 +126,9 @@ public sealed class ValidationGroundHost
     /// Commands each unit's primary action on a single frame and records the dispatch with the
     /// timer. Call only after the settle stage has elapsed. Attack units are placed within weapon
     /// range by the builder, so the weapon is commanded directly: this isolates the measured
-    /// duration to the weapon's own delay (PreAttackDelay + first shot, the INI-anchored signal)
-    /// and avoids an engine limitation where the AttackObject order's move step suppresses fire for
-    /// several units. Other actions dispatch through OrderProcessor as real engine orders.
+    /// duration to the weapon's own fire rate and damage (the time to destroy the standardized-HP
+    /// target), and avoids an engine limitation where the AttackObject order's move step suppresses
+    /// fire for several units. Other actions dispatch through OrderProcessor as real engine orders.
     /// </summary>
     public void IssueOrders(IGame game, UnitActionTimer timer)
     {
@@ -257,6 +263,29 @@ public sealed class ValidationGroundHost
         unchecked((uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame));
 
     /// <summary>
+    /// Clears the weapon target of any unit whose assigned target has been destroyed, so the unit
+    /// stops firing once it has finished its command. Without this, a unit that destroys its target
+    /// keeps firing (and its turret auto-acquires new enemies), flooding the simulation with
+    /// projectiles and preventing timely completion.
+    /// </summary>
+    public void DisarmUnitsWhoseTargetIsDestroyed(IGame game)
+    {
+        foreach (var unit in _units)
+        {
+            if (!unit.TargetObjectId.HasValue)
+            {
+                continue;
+            }
+
+            var target = game.Scene3D.GameObjects.GetObjectById(unit.TargetObjectId.Value);
+            if (target == null || target.IsEffectivelyDead)
+            {
+                game.Scene3D.GameObjects.GetObjectById(unit.ObjectId)?.CurrentWeapon?.SetTarget(null);
+            }
+        }
+    }
+
+    /// <summary>
     /// Builds the per-frame observation seam the timer polls: for each tracked unit, reads the
     /// live-game signals that map to its action's completion predicate.
     /// </summary>
@@ -284,6 +313,7 @@ public sealed class ValidationGroundHost
             {
                 TargetPointsEmpty = obj.AIUpdate?.TargetPoints.Count == 0,
                 TargetHealth = target?.BodyModule?.Health,
+                TargetDestroyed = target == null || target.IsEffectivelyDead,
                 BuildComplete = obj.IsEffectivelyDead == false && obj.BuildProgress >= 1.0f,
             };
         };

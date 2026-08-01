@@ -106,6 +106,7 @@ internal sealed class WeaponStateMachine
 
     public void Update()
     {
+        var transitions = 0;
         while (true)
         {
             // TODO: Fix timing. Need to use actual time that previous state ended.
@@ -113,6 +114,15 @@ internal sealed class WeaponStateMachine
 
             if (nextState != null)
             {
+                // Guard against a zero-min-duration fire cycle oscillating forever within one tick
+                // (CurrentFrame does not advance inside this loop). Diagnostic: surface the weapon.
+                if (++transitions > 10_000)
+                {
+                    throw new InvalidOperationException(
+                        $"Weapon state machine stuck transitioning: weapon='{_context.Weapon.Template.Name}' " +
+                        $"on object='{_context.GameObject.Definition.Name}' current={_currentState} next={nextState}");
+                }
+
                 TransitionToState(nextState.Value);
             }
             else

@@ -151,6 +151,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (scaling toolkit). |
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
 | [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
+| [`deep-dives/g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | Track G phase G1 - High-DPI drawable & resolution correctness (logical points versus physical pixels across window, panel, viewport and GUI). |
 
 ---
 
@@ -293,7 +294,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Phase | Progress | Items |
 |---|---|---|
-| G1 - High-DPI & resolution correctness | `░░░░░░░░░░` | 0 / 1 |
+| G1 - High-DPI & resolution correctness | `░░░░░░░░░░` | 0 / 4 |
 | G2 - Graphics settings & fidelity presets | `░░░░░░░░░░` | 0 / 1 |
 | G3 - Visual regression harness | `░░░░░░░░░░` | 0 / 1 |
 | G4 - Multisample antialiasing | `░░░░░░░░░░` | 0 / 1 |
@@ -302,7 +303,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G7 - Texture filtering & mip quality | `░░░░░░░░░░` | 0 / 1 |
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
 | G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 1 |
-| Track G total | `░░░░░░░░░░` | 0 / 9 |
+| Track G total | `░░░░░░░░░░` | 0 / 12 |
 
 ---
 

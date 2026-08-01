@@ -27,6 +27,15 @@ public sealed class ValidationGroundScenario
     /// <summary>Supply-source definition names placed for gather-action units.</summary>
     public IReadOnlyList<string> SupplySourceDefinitions { get; set; } = ["AmericaSupplyCenter"];
 
+    /// <summary>
+    /// HP each attack target is standardized to at spawn. Attack completion is target destruction,
+    /// so a real structure's full HP (a barracks is ~1000) makes the metric HP-dominated and
+    /// unfinishable for low-DPS units within the frame budget. A standardized low HP keeps the
+    /// measurement weapon-differentiated (shots-to-kill from real INI damage and fire rate) and
+    /// feasible for the whole roster. Zero/null leaves the target at its native HP.
+    /// </summary>
+    public float TargetHp { get; set; } = 30f;
+
     public int SettleFrames { get; set; } = 30;
 
     public int Seed { get; set; } = 1;

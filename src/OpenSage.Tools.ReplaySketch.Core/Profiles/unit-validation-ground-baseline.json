@@ -1,8 +1,16 @@
 {
-  "_note": "Golden frames captured live against a real C&C Generals install via the headless Unit Validation Ground (BuiltInScenario.UnitValidationGround), using fixed-timestep deterministic stepping and direct weapon targeting for in-range attackers. Two consecutive runs produce byte-identical reports. Tolerances are deliberate per entry, not a global value: fast direct-fire weapons (golden <= 4) use 30% + floor 2; medium (golden 5-9) use 20% + floor 3; slow/spin-up (golden >= 13) use 15% + floor 4. The band covers minor engine evolution; the floor protects short actions from one-frame jitter. Units absent from this file are either Zero Hour only (ChinaVehicleHelix), unmeasurable in the sandbox (PrimaryActionCatalog.UnmeasurableAttackReasons), or SpecialPower units with no implemented order path. See deep dive P9 2.7.",
+  "_note": "Golden frames = dispatch-to-target-destruction in logic frames, captured live against a real C&C Generals install via the headless Unit Validation Ground (BuiltInScenario.UnitValidationGround), using fixed-timestep deterministic stepping. Two consecutive runs produce byte-identical reports. Targets are standardized to TargetHp=30 at spawn so attack completion (destroying the target) is feasible for the whole roster; the measured duration reflects each weapon's real INI damage and fire rate against that HP. Tolerances are deliberate per entry by timing class: fast one-shot destroyers (golden <= 4) use 30% + floor 2; medium multi-shot (golden 9-58) use 20% + floor 3; slow grinders (golden >= 100) use 15% + floor 4. Units absent here are Zero Hour only (ChinaVehicleHelix), unmeasurable in the sandbox (PrimaryActionCatalog.UnmeasurableAttackReasons), or SpecialPower units with no implemented order path. See deep dive P9 2.5/2.7.",
   "Entries": [
     {
       "DefinitionName": "AmericaInfantryRanger",
+      "FactionIndex": 2,
+      "ActionKind": "Attack",
+      "GoldenFrames": 111,
+      "TolerancePercent": 15.0,
+      "MinimumFrameFloor": 4
+    },
+    {
+      "DefinitionName": "AmericaInfantryMissileDefender",
       "FactionIndex": 2,
       "ActionKind": "Attack",
       "GoldenFrames": 4,
@@ -10,18 +18,10 @@
       "MinimumFrameFloor": 2
     },
     {
-      "DefinitionName": "AmericaInfantryMissileDefender",
-      "FactionIndex": 2,
-      "ActionKind": "Attack",
-      "GoldenFrames": 3,
-      "TolerancePercent": 30.0,
-      "MinimumFrameFloor": 2
-    },
-    {
       "DefinitionName": "AmericaVehicleHumvee",
       "FactionIndex": 2,
       "ActionKind": "Attack",
-      "GoldenFrames": 7,
+      "GoldenFrames": 58,
       "TolerancePercent": 20.0,
       "MinimumFrameFloor": 3
     },
@@ -53,15 +53,15 @@
       "DefinitionName": "AmericaVehicleComanche",
       "FactionIndex": 2,
       "ActionKind": "Attack",
-      "GoldenFrames": 4,
-      "TolerancePercent": 30.0,
-      "MinimumFrameFloor": 2
+      "GoldenFrames": 47,
+      "TolerancePercent": 20.0,
+      "MinimumFrameFloor": 3
     },
     {
       "DefinitionName": "ChinaInfantryRedGuard",
       "FactionIndex": 3,
       "ActionKind": "Attack",
-      "GoldenFrames": 32,
+      "GoldenFrames": 101,
       "TolerancePercent": 15.0,
       "MinimumFrameFloor": 4
     },
@@ -69,7 +69,7 @@
       "DefinitionName": "ChinaInfantryTankHunter",
       "FactionIndex": 3,
       "ActionKind": "Attack",
-      "GoldenFrames": 3,
+      "GoldenFrames": 4,
       "TolerancePercent": 30.0,
       "MinimumFrameFloor": 2
     },
@@ -85,15 +85,15 @@
       "DefinitionName": "ChinaTankDragon",
       "FactionIndex": 3,
       "ActionKind": "Attack",
-      "GoldenFrames": 3,
-      "TolerancePercent": 30.0,
-      "MinimumFrameFloor": 2
+      "GoldenFrames": 12,
+      "TolerancePercent": 20.0,
+      "MinimumFrameFloor": 3
     },
     {
       "DefinitionName": "ChinaTankGattling",
       "FactionIndex": 3,
       "ActionKind": "Attack",
-      "GoldenFrames": 13,
+      "GoldenFrames": 198,
       "TolerancePercent": 15.0,
       "MinimumFrameFloor": 4
     },
@@ -117,7 +117,7 @@
       "DefinitionName": "ChinaJetMIG",
       "FactionIndex": 3,
       "ActionKind": "Attack",
-      "GoldenFrames": 4,
+      "GoldenFrames": 2,
       "TolerancePercent": 30.0,
       "MinimumFrameFloor": 2
     },
@@ -125,15 +125,15 @@
       "DefinitionName": "GLAInfantryRebel",
       "FactionIndex": 4,
       "ActionKind": "Attack",
-      "GoldenFrames": 4,
-      "TolerancePercent": 30.0,
-      "MinimumFrameFloor": 2
+      "GoldenFrames": 111,
+      "TolerancePercent": 15.0,
+      "MinimumFrameFloor": 4
     },
     {
       "DefinitionName": "GLAInfantryTunnelDefender",
       "FactionIndex": 4,
       "ActionKind": "Attack",
-      "GoldenFrames": 3,
+      "GoldenFrames": 4,
       "TolerancePercent": 30.0,
       "MinimumFrameFloor": 2
     },
@@ -141,7 +141,7 @@
       "DefinitionName": "GLAVehicleTechnical",
       "FactionIndex": 4,
       "ActionKind": "Attack",
-      "GoldenFrames": 7,
+      "GoldenFrames": 58,
       "TolerancePercent": 20.0,
       "MinimumFrameFloor": 3
     },
@@ -149,15 +149,15 @@
       "DefinitionName": "GLAVehicleQuadCannon",
       "FactionIndex": 4,
       "ActionKind": "Attack",
-      "GoldenFrames": 4,
-      "TolerancePercent": 30.0,
-      "MinimumFrameFloor": 2
+      "GoldenFrames": 27,
+      "TolerancePercent": 20.0,
+      "MinimumFrameFloor": 3
     },
     {
       "DefinitionName": "GLAVehicleRocketBuggy",
       "FactionIndex": 4,
       "ActionKind": "Attack",
-      "GoldenFrames": 3,
+      "GoldenFrames": 4,
       "TolerancePercent": 30.0,
       "MinimumFrameFloor": 2
     },
@@ -165,7 +165,7 @@
       "DefinitionName": "GLATankScorpion",
       "FactionIndex": 4,
       "ActionKind": "Attack",
-      "GoldenFrames": 2,
+      "GoldenFrames": 3,
       "TolerancePercent": 30.0,
       "MinimumFrameFloor": 2
     },
@@ -174,8 +174,8 @@
       "FactionIndex": 4,
       "ActionKind": "Attack",
       "GoldenFrames": 17,
-      "TolerancePercent": 15.0,
-      "MinimumFrameFloor": 4
+      "TolerancePercent": 20.0,
+      "MinimumFrameFloor": 3
     }
   ]
 }

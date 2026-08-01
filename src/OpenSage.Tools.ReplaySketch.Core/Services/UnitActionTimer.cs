@@ -15,8 +15,11 @@ public struct UnitObservation
     /// <summary>Whether the unit's target-point queue has emptied (move completion).</summary>
     public bool TargetPointsEmpty;
 
-    /// <summary>Current health of the unit's assigned target (attack completion via first decrease).</summary>
+    /// <summary>Current health of the unit's assigned target.</summary>
     public float? TargetHealth;
+
+    /// <summary>Whether the unit's assigned target has been destroyed (attack completion).</summary>
+    public bool TargetDestroyed;
 
     /// <summary>Whether the structure the unit is building has finished construction.</summary>
     public bool BuildComplete;
@@ -127,22 +130,11 @@ public sealed class UnitActionTimer
 
     private static bool IsComplete(TrackedUnit unit, UnitObservation observation)
     {
-        // Attack completes on the first observed decrease in target health. The baseline is
-        // captured lazily on the first poll where a target health is available.
+        // Attack completes when the assigned target is destroyed: a unit has finished its attack
+        // command only once the target is gone, not on the first damaging shot.
         if (unit.Action.Kind == PrimaryActionKind.Attack)
         {
-            if (observation.TargetHealth is { } health)
-            {
-                if (!unit.BaselineTargetHealth.HasValue)
-                {
-                    unit.BaselineTargetHealth = health;
-                    return false;
-                }
-
-                return health < unit.BaselineTargetHealth.Value;
-            }
-
-            return false;
+            return observation.TargetDestroyed;
         }
 
         return unit.Action.Kind switch
@@ -167,6 +159,5 @@ public sealed class UnitActionTimer
         public bool Completed;
         public bool TimedOut;
         public uint? MeasuredFrames;
-        public float? BaselineTargetHealth;
     }
 }
