@@ -22,7 +22,7 @@
   // ValidationGroundRefreshBaseline: true overwrites the baseline from the run instead of comparing
   // ValidationGroundReportPath     : where to write the JSON report artifact
 
-  "Scenario": "AlpineAssaultUSAvGLAFullBuild",
+  "Scenario": "UnitValidationGround",
   "ScenarioPath": null,
   "Game": "CncGenerals",
   "Renderer": null,
