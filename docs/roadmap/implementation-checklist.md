@@ -463,6 +463,12 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     totality, and baseline comparison including the tolerance floor; an install-gated
     `[GameFact(SageGame.CncGenerals)]` test runs the ground end to end and asserts every unit either
     completes within tolerance or is a reported gap.
+- [ ] Windowed visual validation without a physical display.
+  - AC: the TestHarness windowed mode (and the validation ground's non-headless path) runs in a
+    headless/CI/agent shell by providing a virtual display (e.g. `Xvfb`), so a window is not
+    required to exercise the renderer and capture frames. Document the exact command in
+    `src/OpenSage.Tools.TestHarness/AGENTS.md`. Today a `tty`-type shell has no `DISPLAY` and cannot
+    authorize against the host's X server, so only the headless path runs there.
 
 ---
 

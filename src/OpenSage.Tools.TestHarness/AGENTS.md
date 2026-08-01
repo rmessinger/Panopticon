@@ -256,7 +256,10 @@ Do not assume these prerequisites are absent. The TestHarness and the Unit Valid
 
 - A real C&C Generals install, located via `CNC_GENERALS_PATH` or `GamePath` in `TestHarness.json`.
 - A graphics backend the host process can actually create:
-  - Windowed mode works wherever the engine renders normally.
+  - Windowed mode works wherever the engine renders normally. It additionally needs an accessible
+    display: a `tty`-type shell with no `DISPLAY` cannot authorize against the host's X server, so
+    windowed (and frame capture) need a graphical session or a virtual framebuffer (`Xvfb`); the
+    headless path needs no display. Tracked as a roadmap follow-up.
   - Headless mode needs an offscreen-capable backend. Vulkan requires `libdl`; snap-confined .NET
     SDKs cannot load it, so on Linux use a non-snap .NET install or confirm `libvulkan`/`libdl`
     resolve. On Windows prefer D3D11; on macOS use Metal.

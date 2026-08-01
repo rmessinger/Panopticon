@@ -267,9 +267,16 @@ public static class Program
                 game.Scene3D.Players[idx].DisableAI();
             }
 
-            // Fixed-timestep: each Update advances exactly one logic frame, independent of wall-clock,
-            // so logic-frame measurements are reproducible (deep dive §2.9).
-            game.EnableFixedLogicTimestep();
+            // Headless runs deterministically (fixed-timestep, logic-only) for the regression gate.
+            // Windowed renders every frame at real-time pace so a human can watch the roster act, and
+            // only issues orders after the settle stage has rendered the scene.
+            if (config.Headless)
+            {
+                game.EnableFixedLogicTimestep();
+            }
+
+            var renders = !config.Headless;
+            Action step = renders ? () => StepOnce(game, window) : () => StepLogicOnly(game);
 
             var host = new ValidationGroundHost();
             host.Spawn(plan, game, scenario.TargetHp);
@@ -281,12 +288,11 @@ public static class Program
                 timer.RecordGap(gap.DefinitionName, gap.FactionIndex, gap.ActionKind, gap.Reason);
             }
 
-            // Settle stage: no orders until this many frames have elapsed. Logic-only stepping
-            // (no Render) keeps the ground fast; the measurement is logic-frame counts, unaffected
-            // by rendering.
+            // Settle stage: no orders until this many frames have elapsed. In windowed mode this also
+            // renders the scene before any order is issued.
             for (var i = 0; i < scenario.SettleFrames; i++)
             {
-                StepLogicOnly(game);
+                step();
             }
 
             host.IssueOrders(game, timer);
@@ -297,7 +303,7 @@ public static class Program
             var startFrame = CurrentLogicFrame(game);
             while (game.IsRunning)
             {
-                StepLogicOnly(game);
+                step();
                 var frame = CurrentLogicFrame(game);
                 timer.Poll(frame, observe);
                 // A unit that destroys its target has finished; clear its weapon so it stops firing
