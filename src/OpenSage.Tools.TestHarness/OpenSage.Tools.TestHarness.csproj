@@ -25,7 +25,7 @@
   </Target>
 
   <ItemGroup>
-    <Content Include="TestHarness.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="TestHarness.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>

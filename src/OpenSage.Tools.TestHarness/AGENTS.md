@@ -267,6 +267,14 @@ Do not assume these prerequisites are absent. The TestHarness and the Unit Valid
   `EveryCatalogUnit_ResolvesAgainstRealInstall` test must pass (it fails the run if any catalog
   definition name is invalid).
 
+Known-good local environments, for reference when verifying the prerequisites above:
+
+- Linux: install at `/home/rmessinger/dev/Command and Conquer Generals/` (`Generals.exe`; Linux FS
+  is case-sensitive). Set `CNC_GENERALS_PATH` to that path.
+- macOS: Steam install at `/Users/rmessinger/Library/Application Support/Steam/steamapps/common/Command and Conquer Generals`
+  (`Generals.exe` and `.big` archives directly in that directory). Metal GPU, non-snap Homebrew
+  dotnet. Set `CNC_GENERALS_PATH` to that path.
+
 ##### Capture workflow
 
 1. Configure `TestHarness.json` for a refresh capture:
