@@ -33,5 +33,6 @@
   "Headless": false,
   "CaptureFrames": false,
   "KeepReplay": false,
-  "GamePath": null
+  "GamePath": null,
+  "ExitAfterTargetsDestroyed": false
 }

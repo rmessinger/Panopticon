@@ -130,6 +130,12 @@ public sealed class Weapon : IPersistableObject
         else
         {
             ParentGameObject.ModelConditionFlags.Set(ModelConditionFlag.Attacking, false);
+
+            // Clearing Attacking stops GameObject.LogicTick from calling LogicTick (and hence
+            // Update) on this weapon, so a state machine caught mid fire-cycle would otherwise
+            // never run OnExitState, leaving flags like FiringA stuck on forever (e.g. a
+            // persisting muzzle flash). Force it back to Inactive so those flags always clear.
+            _stateMachine.ForceInactive();
         }
     }
 
@@ -139,7 +145,7 @@ public sealed class Weapon : IPersistableObject
 
         if (CurrentTarget != null && CurrentTarget.IsDestroyed)
         {
-            CurrentTarget = null;
+            SetTarget(null);
         }
     }
 
