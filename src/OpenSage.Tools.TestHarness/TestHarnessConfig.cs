@@ -106,4 +106,13 @@ public sealed class TestHarnessConfig
 
     /// <summary>Path to write the validation-ground JSON report to. Empty writes none.</summary>
     public string? ValidationGroundReportPath { get; set; } = null;
+
+    /// <summary>
+    /// When true (default), the run exits once every measurable unit has resolved (its target
+    /// destroyed) or the frame cap is reached, then writes the report/baseline. When false, the run
+    /// does not auto-exit: the game keeps running so the roster can be observed, and the report is
+    /// written when the window is closed. Only honoured in windowed mode; headless always exits on
+    /// completion, since a never-exiting headless run has no window to close and would hang.
+    /// </summary>
+    public bool ExitAfterTargetsDestroyed { get; set; } = true;
 }

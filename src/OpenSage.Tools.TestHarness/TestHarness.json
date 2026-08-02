@@ -21,6 +21,9 @@
   // ValidationGroundBaselinePath   : golden baseline JSON (null/empty skips comparison)
   // ValidationGroundRefreshBaseline: true overwrites the baseline from the run instead of comparing
   // ValidationGroundReportPath     : where to write the JSON report artifact
+  // ExitAfterTargetsDestroyed      : true (default) exits once all targets are destroyed/cap hit;
+  //                                  false keeps the game running until the window is closed
+  //                                  (windowed only; headless always exits)
 
   "Scenario": "UnitValidationGround",
   "ScenarioPath": null,

@@ -15,7 +15,8 @@ namespace OpenSage.Tools.TestHarness;
 /// </summary>
 public static class ValidationGroundRunner
 {
-    // Run until every unit has resolved (timed out, completed, or gapped) or the cap hits.
+    // Run until every unit has resolved (timed out, completed, or gapped) or the cap hits, unless
+    // ExitAfterTargetsDestroyed is false (windowed), in which case it runs until the window closes.
     private const uint MaxRunFrames = 5_000;
 
     public static void Run(GameInstallation installation, TestHarnessConfig config, ValidationGroundRunPlan runPlan, ITestHarnessReporter reporter)
@@ -94,6 +95,16 @@ public static class ValidationGroundRunner
             host.IssueOrders(game, timer);
             var observe = host.BuildObservationSeam(game);
 
+            // Headless always exits on completion: there is no window to close, so suppressing the
+            // exit would hang. In windowed mode, ExitAfterTargetsDestroyed=false keeps the game
+            // running after the roster has acted so it can be observed; the loop then ends only when
+            // the window is closed (game.IsRunning flips to false).
+            var exitOnCompletion = config.ExitAfterTargetsDestroyed || config.Headless;
+            if (!exitOnCompletion)
+            {
+                reporter.Info("ExitAfterTargetsDestroyed is false; the game will remain running until the window is closed.");
+            }
+
             var startFrame = CurrentLogicFrame(game);
             while (game.IsRunning)
             {
@@ -104,10 +115,13 @@ public static class ValidationGroundRunner
                 // (and its turret stops auto-acquiring new enemies), keeping the run bounded.
                 host.DisarmUnitsWhoseTargetIsDestroyed(game);
 
-                var report = timer.BuildReport();
-                if (report.TotalUnitCount >= totalUnits || frame - startFrame > MaxRunFrames)
+                if (exitOnCompletion)
                 {
-                    break;
+                    var report = timer.BuildReport();
+                    if (report.TotalUnitCount >= totalUnits || frame - startFrame > MaxRunFrames)
+                    {
+                        break;
+                    }
                 }
             }
 

@@ -215,6 +215,7 @@ All optional with defaults, in `TestHarness.json`:
 | `ValidationGroundBaselinePath` | Path to the golden baseline JSON (empty skips comparison) |
 | `ValidationGroundRefreshBaseline` | `true` overwrites the baseline from the run instead of comparing |
 | `ValidationGroundReportPath` | Where to write the JSON report artifact |
+| `ExitAfterTargetsDestroyed` | `true` (default) exits once all targets are destroyed or the frame cap hits; `false` keeps the game running until the window is closed (windowed only; headless always exits) |
 
 ### Refreshing the baseline
 
