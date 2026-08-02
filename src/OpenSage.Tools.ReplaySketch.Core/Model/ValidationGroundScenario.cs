@@ -44,10 +44,10 @@ public sealed class ValidationGroundScenario
 /// <summary>Planar layout parameters. The host samples terrain height; the builder is 2-D.</summary>
 public sealed class LayoutConfig
 {
-    public Vector3 TargetClusterCenter { get; set; } = new(500f, 500f, 0f);
+    public Vector3 TargetClusterCenter { get; set; } = new(1000f, 1000f, 0f);
     public float TargetClusterRadius { get; set; } = 40f;
-    public float UnitSpacing { get; set; } = 25f;
-    public float FactionRowOffset { get; set; } = 80f;
+    public float UnitSpacing { get; set; } = 80f;
+    public float FactionRowOffset { get; set; } = 150f;
     public float FactionRowDistance { get; set; } = 250f;
 
     /// <summary>
