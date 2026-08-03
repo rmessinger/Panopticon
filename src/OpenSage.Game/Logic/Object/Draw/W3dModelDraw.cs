@@ -233,14 +233,9 @@ public class W3dModelDraw : DrawModule
             {
                 foreach (var weaponMuzzleFlash in bestConditionState.WeaponMuzzleFlashes)
                 {
-                    for (var i = 0; i < _activeModelDrawConditionState.Model.ModelBoneInstances.Length; i++)
+                    foreach (var i in FindMuzzleFlashBoneIndices(_activeModelDrawConditionState, weaponMuzzleFlash.BoneName))
                     {
-                        var bone = _activeModelDrawConditionState.Model.ModelBoneInstances[i];
-                        // StartsWith is a bit awkward here, but for instance AVCommance has WeaponMuzzleFlashes = { TurretFX }, and Bones = { TURRETFX01 }
-                        if (bone.Name.StartsWith(weaponMuzzleFlash.BoneName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            _activeModelDrawConditionState.Model.BoneVisibilities[i] = true;
-                        }
+                        _activeModelDrawConditionState.Model.BoneVisibilities[i] = true;
                     }
                 }
             }
@@ -257,18 +252,42 @@ public class W3dModelDraw : DrawModule
             return;
         }
 
-        var bones = drawState.Model.ModelBoneInstances;
         foreach (var condState in _data.ConditionStates)
         {
             foreach (var muzzleFlash in condState.WeaponMuzzleFlashes)
             {
-                for (var i = 0; i < bones.Length; i++)
+                foreach (var i in FindMuzzleFlashBoneIndices(drawState, muzzleFlash.BoneName))
                 {
-                    if (bones[i].Name.StartsWith(muzzleFlash.BoneName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        drawState.Model.BoneVisibilities[i] = false;
-                    }
+                    drawState.Model.BoneVisibilities[i] = false;
                 }
+            }
+        }
+    }
+
+    // A WeaponMuzzleFlash name declared in INI can refer to either a skeleton bone directly
+    // (common for vehicles, e.g. AVHUMMER's turret has a bone literally named MUZZLEFX01) or a
+    // sub-object mesh parented to a differently-named generic bone (common for infantry, e.g. the
+    // Ranger's MUZZLEFX01 flash mesh is parented to a bone named MUZZLE01, not MUZZLEFX01). Bone
+    // names alone miss the latter, which left infantry muzzle flashes permanently visible since
+    // neither hiding nor showing them ever matched. Check both, keyed on the same BoneVisibilities
+    // index (sub-objects and their parent bone share one visibility slot).
+    private static IEnumerable<int> FindMuzzleFlashBoneIndices(W3dModelDrawConditionState drawState, string boneName)
+    {
+        var bones = drawState.Model.ModelBoneInstances;
+        for (var i = 0; i < bones.Length; i++)
+        {
+            // StartsWith is a bit awkward here, but for instance AVCommanche has WeaponMuzzleFlashes = { TurretFX }, and Bones = { TURRETFX01 }
+            if (bones[i].Name.StartsWith(boneName, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return i;
+            }
+        }
+
+        foreach (var subObject in drawState.Model.Model.SubObjects)
+        {
+            if (subObject.Name.StartsWith(boneName, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return subObject.Bone.Index;
             }
         }
     }
