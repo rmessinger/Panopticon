@@ -167,7 +167,7 @@ public class GeneralsControlBarBuildabilityTests : MockedGameTest
         return producer;
     }
 
-    private static ObjectDefinition NewStructureDef(string name, ObjectDefinition prerequisite = null, float buildCost = 0f)
+    private static ObjectDefinition NewStructureDef(string name, ObjectDefinition? prerequisite = null, float buildCost = 0f)
     {
         var definition = new ObjectDefinition(name);
         definition.KindOf.Set(ObjectKinds.Structure, true);
@@ -209,7 +209,7 @@ public class GeneralsControlBarBuildabilityTests : MockedGameTest
         return template;
     }
 
-    private static CommandButton NewCommandButton(ObjectDefinition objectDef = null, UpgradeTemplate upgrade = null)
+    private static CommandButton NewCommandButton(ObjectDefinition? objectDef = null, UpgradeTemplate? upgrade = null)
     {
         var button = new CommandButton();
         if (objectDef != null)

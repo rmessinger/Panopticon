@@ -25,11 +25,15 @@ public static class ValidationGroundRunner
         // per-frame Info logs (weapon/animation state transitions) would otherwise produce gigabytes
         // of output and dominate run time. The measurement is logic-frame counts, unaffected by log
         // verbosity, so drop the Info level (Warn/Error still flow).
-        foreach (var rule in NLog.LogManager.Configuration.LoggingRules)
+        var loggingConfig = NLog.LogManager.Configuration;
+        if (loggingConfig != null)
         {
-            rule.DisableLoggingForLevel(NLog.LogLevel.Info);
+            foreach (var rule in loggingConfig.LoggingRules)
+            {
+                rule.DisableLoggingForLevel(NLog.LogLevel.Info);
+            }
+            NLog.LogManager.ReconfigExistingLoggers();
         }
-        NLog.LogManager.ReconfigExistingLoggers();
 
         var scenario = runPlan.Scenario;
         var plan = runPlan.SpawnPlan;

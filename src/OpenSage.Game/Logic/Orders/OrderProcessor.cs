@@ -311,7 +311,7 @@ public sealed class OrderProcessor
                             .Select(GameObjects.GetObjectById)
                             .ToArray();
 
-                        _game.Selection.SetSelectedObjects(player, objectIds, order.Arguments[0].Value.Boolean);
+                        _game.Selection!.SetSelectedObjects(player, objectIds, order.Arguments[0].Value.Boolean);
                     }
                     catch (Exception e)
                     {
@@ -321,7 +321,7 @@ public sealed class OrderProcessor
                     break;
 
                 case OrderType.ClearSelection:
-                    _game.Selection.ClearSelectedObjects(player);
+                    _game.Selection!.ClearSelectedObjects(player);
                     break;
 
                 case OrderType.AttackObject:
@@ -422,7 +422,7 @@ public sealed class OrderProcessor
                                 .Select(x => x.Value.ObjectId)
                                 .Select(GameObjects.GetObjectById)
                                 .ToArray();
-                            _game.Selection.SetRallyPointForSelectedObjects(player, objIds, new Vector3());
+                            _game.Selection!.SetRallyPointForSelectedObjects(player, objIds, new Vector3());
                         }
 
                         _game.Audio.PlayAudioEvent("RallyPointSet");
