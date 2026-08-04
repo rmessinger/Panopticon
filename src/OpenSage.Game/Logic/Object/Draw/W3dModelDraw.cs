@@ -28,6 +28,10 @@ public class W3dModelDraw : DrawModule
 
     private W3dModelDrawConditionState _activeModelDrawConditionState;
 
+    // Union of every WeaponMuzzleFlash BoneName across all condition states. Static INI data, so it
+    // is computed once and reused to build the per-model MuzzleFlashBoneIndices cache at creation.
+    private List<string> _muzzleFlashBoneNames;
+
     private readonly List<W3dModelDrawSomething>[] _unknownSomething;
     private bool _hasUnknownThing;
     private int _unknownInt;
@@ -220,24 +224,19 @@ public class W3dModelDraw : DrawModule
         var bestConditionState = FindBestFittingConditionState(_data.ConditionStates, flags);
         SetActiveConditionState(bestConditionState, random);
 
+        // Muzzle flash visibility mirrors the FiringA flag. The bone indices (skeleton bones and
+        // sub-object meshes alike) are resolved once per model instance (MuzzleFlashBoneIndices) so
+        // this is O(M') -- a handful of indices -- rather than re-scanning every bone and sub-object
+        // against every condition state's muzzle flashes each update. Runs after
+        // SetActiveConditionState/UpdateBoneVisibilities, which can re-enable bones, so it always
+        // reasserts the correct state.
         if (_activeModelDrawConditionState != null)
         {
-            // Hide every muzzle flash bone known across all condition states first. Only
-            // updating bones listed under bestConditionState left a previously-revealed
-            // flash stuck visible whenever the newly active condition state (e.g. one with
-            // no WeaponMuzzleFlashes at all, such as interacting with a structure) didn't
-            // redeclare that bone.
-            HideMuzzleFlashBones(_activeModelDrawConditionState);
-
-            if (flags.Get(ModelConditionFlag.FiringA))
+            var firingA = flags.Get(ModelConditionFlag.FiringA);
+            var visibilities = _activeModelDrawConditionState.Model.BoneVisibilities;
+            foreach (var i in _activeModelDrawConditionState.MuzzleFlashBoneIndices)
             {
-                foreach (var weaponMuzzleFlash in bestConditionState.WeaponMuzzleFlashes)
-                {
-                    foreach (var i in FindMuzzleFlashBoneIndices(_activeModelDrawConditionState, weaponMuzzleFlash.BoneName))
-                    {
-                        _activeModelDrawConditionState.Model.BoneVisibilities[i] = true;
-                    }
-                }
+                visibilities[i] = firingA;
             }
         }
 
@@ -245,51 +244,61 @@ public class W3dModelDraw : DrawModule
         SetActiveAnimationState(bestAnimationState, random);
     }
 
-    private void HideMuzzleFlashBones(W3dModelDrawConditionState drawState)
+    private List<string> GetMuzzleFlashBoneNames()
     {
-        if (drawState?.Model == null)
+        if (_muzzleFlashBoneNames == null)
         {
-            return;
+            _muzzleFlashBoneNames = _data.ConditionStates
+                .SelectMany(cs => cs.WeaponMuzzleFlashes)
+                .Select(mf => mf.BoneName)
+                .Distinct()
+                .ToList();
+        }
+        return _muzzleFlashBoneNames;
+    }
+
+    // Resolves the bone visibility slots every muzzle flash maps to, for one model instance. A
+    // WeaponMuzzleFlash name can refer to either a skeleton bone directly (vehicles, e.g. AVHUMMER's
+    // MUZZLEFX01 bone) or a sub-object mesh parented to a differently-named bone (infantry, e.g. the
+    // Ranger's MUZZLEFX01 mesh is parented to bone MUZZLE01). Both are keyed on the same
+    // BoneVisibilities index, so check bones and sub-objects and collect the matching indices.
+    private int[] ResolveMuzzleFlashBoneIndices(ModelInstance modelInstance)
+    {
+        var prefixes = GetMuzzleFlashBoneNames();
+        if (prefixes.Count == 0)
+        {
+            return Array.Empty<int>();
         }
 
-        foreach (var condState in _data.ConditionStates)
+        var bones = modelInstance.ModelBoneInstances;
+        var indices = new HashSet<int>();
+        for (var i = 0; i < bones.Length; i++)
         {
-            foreach (var muzzleFlash in condState.WeaponMuzzleFlashes)
+            var name = bones[i].Name;
+            foreach (var prefix in prefixes)
             {
-                foreach (var i in FindMuzzleFlashBoneIndices(drawState, muzzleFlash.BoneName))
+                if (name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 {
-                    drawState.Model.BoneVisibilities[i] = false;
+                    indices.Add(i);
+                    break;
                 }
             }
         }
-    }
 
-    // A WeaponMuzzleFlash name declared in INI can refer to either a skeleton bone directly
-    // (common for vehicles, e.g. AVHUMMER's turret has a bone literally named MUZZLEFX01) or a
-    // sub-object mesh parented to a differently-named generic bone (common for infantry, e.g. the
-    // Ranger's MUZZLEFX01 flash mesh is parented to a bone named MUZZLE01, not MUZZLEFX01). Bone
-    // names alone miss the latter, which left infantry muzzle flashes permanently visible since
-    // neither hiding nor showing them ever matched. Check both, keyed on the same BoneVisibilities
-    // index (sub-objects and their parent bone share one visibility slot).
-    private static IEnumerable<int> FindMuzzleFlashBoneIndices(W3dModelDrawConditionState drawState, string boneName)
-    {
-        var bones = drawState.Model.ModelBoneInstances;
-        for (var i = 0; i < bones.Length; i++)
+        foreach (var subObject in modelInstance.Model.SubObjects)
         {
-            // StartsWith is a bit awkward here, but for instance AVCommanche has WeaponMuzzleFlashes = { TurretFX }, and Bones = { TURRETFX01 }
-            if (bones[i].Name.StartsWith(boneName, StringComparison.OrdinalIgnoreCase))
+            var name = subObject.Name;
+            foreach (var prefix in prefixes)
             {
-                yield return i;
+                if (name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    indices.Add(subObject.Bone.Index);
+                    break;
+                }
             }
         }
 
-        foreach (var subObject in drawState.Model.Model.SubObjects)
-        {
-            if (subObject.Name.StartsWith(boneName, StringComparison.OrdinalIgnoreCase))
-            {
-                yield return subObject.Bone.Index;
-            }
-        }
+        return indices.ToArray();
     }
 
     private void UpdateBoneVisibilities(ModelConditionState conditionState, W3dModelDrawConditionState drawState)
@@ -348,11 +357,10 @@ public class W3dModelDraw : DrawModule
         var drawState = new W3dModelDrawConditionState(modelInstance, particleSystems, _gameEngine);
         UpdateBoneVisibilities(conditionState, drawState);
 
-        // Muzzle flash bones must start hidden; UpdateConditionState will reveal them only
-        // when FiringA is active.  Without this, bones that default to visible in the W3D
-        // data stay lit permanently when transitioning to a state whose WeaponMuzzleFlashes
-        // list is empty (e.g. the idle state after firing).
-        HideMuzzleFlashBones(drawState);
+        // Cache the muzzle-flash bone indices for this model once. Muzzle flash bones default to
+        // visible (ModelInstance inits BoneVisibilities to true), so they are hidden by the toggle
+        // in UpdateConditionState (which runs right after creation) rather than here.
+        drawState.MuzzleFlashBoneIndices = ResolveMuzzleFlashBoneIndices(modelInstance);
 
         return drawState;
     }
@@ -486,6 +494,12 @@ internal sealed class W3dModelDrawConditionState : DisposableBase
     private readonly IGameEngine _gameEngine;
 
     public readonly ModelInstance Model;
+
+    // Bone indices in Model that match any condition state's WeaponMuzzleFlash BoneName (skeleton
+    // bones and sub-object meshes). Resolved once at creation (ResolveMuzzleFlashBoneIndices) and
+    // reused by UpdateConditionState so the per-frame muzzle-flash toggle is O(M'), not
+    // O(conditionStates * muzzleFlashes * (bones + subObjects)).
+    public int[] MuzzleFlashBoneIndices = Array.Empty<int>();
 
     public W3dModelDrawConditionState(
         ModelInstance modelInstance,
