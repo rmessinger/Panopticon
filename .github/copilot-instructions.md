@@ -1,6 +1,6 @@
 # OpenSAGE Copilot Instructions
 
-OpenSAGE is a C# (.NET 8) open-source reimplementation of the SAGE game engine (Command & Conquer: Generals, Battle for Middle-earth, etc.). It reads original game data files but contains no game assets.
+OpenSAGE is a C# (.NET 8) simulation framework built on the SAGE game engine (Command & Conquer: Generals, Battle for Middle-earth, etc.). See `docs/roadmap/README.md` for the project vision and roadmap.
 
 ## Response Style
 
