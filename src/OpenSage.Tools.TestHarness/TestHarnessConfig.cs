@@ -92,6 +92,14 @@ public sealed class TestHarnessConfig
     /// <summary>Map path override for the validation ground. Empty uses a default map.</summary>
     public string? ValidationGroundMapPath { get; set; } = null;
 
+    /// <summary>
+    /// Path to a validation-ground scenario JSON (layout + placement overrides) written by the
+    /// ReplaySketch editor. When set, the run loads it verbatim -- its map, layout, overrides, and
+    /// target definitions all apply -- and ValidationGroundMapPath/SettleFrames/Seed are ignored.
+    /// When empty, the run builds the default scenario from those knobs.
+    /// </summary>
+    public string? ValidationGroundScenarioPath { get; set; } = null;
+
     /// <summary>Frames to settle after spawn before issuing orders.</summary>
     public int ValidationGroundSettleFrames { get; set; } = 30;
 

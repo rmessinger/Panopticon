@@ -172,4 +172,38 @@ public class ValidationGroundBuilderTests
         Assert.Empty(loaded.PlacementOverrides);
         Assert.NotEmpty(loaded.FactionIndices);
     }
+
+    [Fact]
+    public void LoadThenBuild_AppliesOverridenPositionToEndToEnd()
+    {
+        // Mirrors the TestHarness path (BuildValidationGroundRun): Load a JSON scenario, then Build,
+        // and confirm a hand-edited override reaches the generated SpawnPlan. Regression for the
+        // Phase 2 wiring that feeds ReplaySketch-edited layouts into a run.
+        var source = SingleFactionScenario();
+        source.PlacementOverrides.Add(new PlacementOverride
+        {
+            FactionIndex = 2,
+            RosterIndex = 0,
+            IsTarget = false,
+            X = 1234f,
+            Y = 567f,
+        });
+        var path = Path.Combine(Path.GetTempPath(), $"vg_loadbuild_{System.Guid.NewGuid():N}.json");
+
+        try
+        {
+            source.Save(path);
+            var loaded = ValidationGroundScenario.Load(path);
+            var plan = ValidationGroundBuilder.Build(loaded);
+
+            Assert.Equal(new Vector3(1234f, 567f, 0f), plan.UnitPlacements[0].Position);
+        }
+        finally
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+    }
 }
