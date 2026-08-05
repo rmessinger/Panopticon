@@ -76,19 +76,31 @@ public sealed class ValidationGroundScenario
     public void Save(string path) => File.WriteAllText(path, ToJson());
 }
 
-/// <summary>Planar layout parameters. The host samples terrain height; the builder is 2-D.</summary>
+/// <summary>
+/// Planar layout parameters for the interleaved row formation. The host samples terrain height;
+/// the builder is 2-D. The formation is six parallel rows: for each faction a unit row then its
+/// target row (units, targets, units, targets, ...), running east-west and centred on
+/// <see cref="TargetClusterCenter"/>. Each unit's target sits directly ahead (perpendicular to the
+/// row) so units never interleave with their own or a neighbour faction's targets.
+/// </summary>
 public sealed class LayoutConfig
 {
+    /// <summary>Centre of the formation; the interleaved row stack is centred on this point.</summary>
     public Vector3 TargetClusterCenter { get; set; } = new(1000f, 1000f, 0f);
+
+    /// <summary>Offset of the supply sources east of the formation centre.</summary>
     public float TargetClusterRadius { get; set; } = 40f;
+
+    /// <summary>Spacing between units within a row, and between targets within a target row.</summary>
     public float UnitSpacing { get; set; } = 80f;
+
+    /// <summary>Gap between one faction's target row and the next faction's unit row.</summary>
     public float FactionRowOffset { get; set; } = 150f;
-    public float FactionRowDistance { get; set; } = 250f;
 
     /// <summary>
-    /// Distance each unit's assigned target is placed in front of it (toward the cluster centre).
-    /// Kept short so the measured dispatch-to-first-damage duration is dominated by the unit's
-    /// weapon delay, not a long travel leg. See deep dive P9 §2.5.
+    /// Gap between a faction's unit row and its target row, i.e. the unit-to-target distance. Kept
+    /// short so the measured dispatch-to-first-damage duration is dominated by the unit's weapon
+    /// delay, not a long travel leg, and within weapon range. See deep dive P9 §2.5.
     /// </summary>
     public float TargetApproachDistance { get; set; } = 90f;
 }

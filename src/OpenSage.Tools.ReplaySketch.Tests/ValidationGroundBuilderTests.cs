@@ -24,9 +24,12 @@ public class ValidationGroundBuilderTests
 
         var plan = ValidationGroundBuilder.Build(scenario);
 
-        // Row 0 (USA, faction 2): origin (750, 850) with the default centre (1000,1000) and
-        // FactionRowOffset 150; unit 0 sits at the row origin.
-        Assert.Equal(new Vector3(750f, 850f, 0f), plan.UnitPlacements[0].Position);
+        // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 1000 - 285 = 715 (totalSpan =
+        // 3*TargetApproach + 2*FactionRowOffset = 270 + 300). Row origin X centres the 10-unit
+        // roster on centre.X: 1000 - 9*80/2 = 640. Unit 0 is at the row origin; its target is on the
+        // target row (unitRowY + TargetApproach = 805) at the same X.
+        Assert.Equal(new Vector3(640f, 715f, 0f), plan.UnitPlacements[0].Position);
+        Assert.Equal(new Vector3(640f, 805f, 0f), plan.TargetPlacements[0].Position);
     }
 
     [Fact]
@@ -48,10 +51,10 @@ public class ValidationGroundBuilderTests
     }
 
     [Fact]
-    public void Build_UnitOverride_RepositionsLinkedTargetInFrontUnlessAlsoOverridden()
+    public void Build_UnitOverride_TargetTracksUnitXOnTargetRow()
     {
-        // The target derives from the (possibly overridden) unit position, so moving a unit keeps
-        // its target TargetApproachDistance in front of it toward the cluster centre.
+        // The target sits on the faction's target row at the unit's X; moving a unit keeps its
+        // target on that row, tracking the unit's X (here 500), unless a target override pins it.
         var scenario = SingleFactionScenario();
         scenario.PlacementOverrides.Add(new PlacementOverride
         {
@@ -64,8 +67,8 @@ public class ValidationGroundBuilderTests
 
         var plan = ValidationGroundBuilder.Build(scenario);
 
-        // centre (1000,1000): direction from (500,1000) is +X; target at 500 + 90 = 590.
-        Assert.Equal(new Vector3(590f, 1000f, 0f), plan.TargetPlacements[0].Position);
+        // Single faction: unit row Y = 1000 - 90/2 = 955, target row Y = 955 + 90 = 1045.
+        Assert.Equal(new Vector3(500f, 1045f, 0f), plan.TargetPlacements[0].Position);
     }
 
     [Fact]
@@ -108,16 +111,19 @@ public class ValidationGroundBuilderTests
     }
 
     [Fact]
-    public void Build_SingleFactionRow_IsCentredOnClusterY()
+    public void Build_SingleFaction_UnitTargetPairIsCentredOnCentre()
     {
-        // Regression for the hard-coded rowCount=3 bug: with one faction the row block height is
-        // zero, so the lone row sits on the cluster Y rather than being offset by the old 3-row
-        // centring math.
+        // With one faction the formation is one unit row + one target row; the pair is centred on
+        // the centre Y (unit row below, target row above), so neither sits exactly on centre.Y.
         var scenario = SingleFactionScenario();
 
         var plan = ValidationGroundBuilder.Build(scenario);
 
-        Assert.Equal(1000f, plan.UnitPlacements[0].Position.Y);
+        var unitY = plan.UnitPlacements[0].Position.Y;
+        var targetY = plan.TargetPlacements[0].Position.Y;
+        Assert.Equal(955f, unitY);
+        Assert.Equal(1045f, targetY);
+        Assert.Equal(1000f, (unitY + targetY) / 2f);
     }
 
     [Fact]

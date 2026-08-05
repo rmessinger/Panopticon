@@ -327,14 +327,18 @@ how reproducible the capture was.
 | Gather | `SupplyAIUpdateModuleData.SupplyWarehouseActionDelay` × boxes + `SupplyCenterActionDelay` | sum + two travel legs |
 | SpecialPower | unit's `SpecialPower.ReloadTime` (and power-specific effect delay) | ≥ the power's delay |
 
-Worked example — a Ranger (USA infantry) attacking the target cluster:
+Worked example — a Ranger (USA infantry) attacking its assigned target:
 
-- Spawn row sits 250 world-units from the cluster centre (`LayoutConfig.FactionRowDistance`).
+- The formation is six interleaved parallel rows (units, targets, units, targets, ...); each unit's
+  target sits `TargetApproachDistance` (90 world-units) ahead on an adjacent row, within weapon
+  range. See `LayoutConfig` and `ValidationGroundBuilder`.
 - Ranger's primary weapon `PreAttackDelay` and `AttackRange` come straight from
   `WeaponTemplate` in `Data/INI/Weapon/*.ini`.
-- Expected measured frames ≈ `(250 − AttackRange) / locomotorMaxSpeed + PreAttackDelay.Min`.
+- Attackers are commanded directly (`CurrentWeapon.SetTarget` on the in-range target), so the
+  measured frames are weapon-dominated: ≈ `PreAttackDelay.Min` + shots-to-kill at the standardized
+  `TargetHp`. There is no travel leg for attack.
 - The committed golden must be at least `PreAttackDelay.Min`; the tolerance band covers only the
-  approach/pathing jitter above that anchor.
+  first-shot jitter above that anchor.
 
 Automated, data-grounded gate: the `[GameFact]` test
 `BaselineGoldenFrames_AreConsistentWithWeaponIniData` loads the install, resolves each Attack

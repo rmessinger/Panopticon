@@ -281,7 +281,6 @@ public partial class ValidationGroundEditorView : ContentView
         ClusterYEntry.Text = l.TargetClusterCenter.Y.ToString("0.#", CultureInfo.InvariantCulture);
         UnitSpacingEntry.Text = l.UnitSpacing.ToString("0.#", CultureInfo.InvariantCulture);
         FactionRowOffsetEntry.Text = l.FactionRowOffset.ToString("0.#", CultureInfo.InvariantCulture);
-        FactionRowDistanceEntry.Text = l.FactionRowDistance.ToString("0.#", CultureInfo.InvariantCulture);
         TargetApproachEntry.Text = l.TargetApproachDistance.ToString("0.#", CultureInfo.InvariantCulture);
     }
 
@@ -295,7 +294,6 @@ public partial class ValidationGroundEditorView : ContentView
             l.TargetClusterCenter = new System.Numerics.Vector3(cx, cy, 0f);
         if (TryReadFloat(UnitSpacingEntry, out var us)) l.UnitSpacing = us;
         if (TryReadFloat(FactionRowOffsetEntry, out var fro)) l.FactionRowOffset = fro;
-        if (TryReadFloat(FactionRowDistanceEntry, out var frd)) l.FactionRowDistance = frd;
         if (TryReadFloat(TargetApproachEntry, out var ta)) l.TargetApproachDistance = ta;
 
         _model.Regenerate();

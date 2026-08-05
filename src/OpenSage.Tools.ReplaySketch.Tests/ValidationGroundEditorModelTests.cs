@@ -32,10 +32,11 @@ public class ValidationGroundEditorModelTests
     public void HitTest_AtUnitMarker_ReturnsUnit()
     {
         var model = NewModelWithSingleFaction();
-        // Unit 0 is at world (750, 1000); with extent 0..2000 into a 400px preview that is (150, 200).
-        Assert.Equal(new Vector3(750f, 1000f, 0f), model.Plan!.UnitPlacements[0].Position);
+        // Single-faction unit 0 is at world (640, 955) with the default layout; with extent 0..2000
+        // into a 400px preview that projects to (128, 209).
+        Assert.Equal(new Vector3(640f, 955f, 0f), model.Plan!.UnitPlacements[0].Position);
 
-        var hit = model.HitTest(canvasX: 150f, canvasY: 200f, offsetX: 0, offsetY: 0, previewSize: 400f);
+        var hit = model.HitTest(canvasX: 128f, canvasY: 209f, offsetX: 0, offsetY: 0, previewSize: 400f);
 
         Assert.NotNull(hit);
         Assert.True(hit!.Value.IsTarget == false);

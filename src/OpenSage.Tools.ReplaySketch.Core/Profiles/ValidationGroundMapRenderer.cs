@@ -26,12 +26,14 @@ public static class ValidationGroundMapRenderer
     private static readonly SKColor UsaColor = new(0xFF, 0x44, 0x44, 0xFF);
     private static readonly SKColor ChinaColor = new(0x44, 0xFF, 0x44, 0xFF);
     private static readonly SKColor GlaColor = new(0x44, 0x99, 0xFF, 0xFF);
-    private static readonly SKColor TargetColor = new(0xDD, 0xDD, 0xDD, 0xFF);
+    // Hollow orange outline so destructible targets read as distinct markers (not a grey mass that
+    // hides the terrain) while staying clearly different from the filled faction-coloured unit circles.
+    private static readonly SKColor TargetColor = new(0xFF, 0x8C, 0x00, 0xFF);
     private static readonly SKColor LinkColor = new(0xFF, 0xFF, 0xFF, 0x44);
     private static readonly SKColor SelectionColor = SKColors.White;
 
     private const float UnitRadius = 7f;
-    private const float TargetHalfSize = 5f;
+    private const float TargetHalfSize = 6f;
     private const float SelectionRingRadius = UnitRadius + 3f;
 
     /// <summary>Display colour for a roster faction (2=USA, 3=China, 4=GLA); white for any other.</summary>
@@ -152,12 +154,14 @@ public static class ValidationGroundMapRenderer
 
     private static void DrawMarkers(SKCanvas canvas, IReadOnlyList<PlacementMarker> markers)
     {
-        using var targetPaint = new SKPaint { Color = TargetColor, Style = SKPaintStyle.Fill, IsAntialias = true };
+        // Targets: hollow orange outlines (terrain shows through; distinct from unit circles).
+        using var targetPaint = new SKPaint { Color = TargetColor, Style = SKPaintStyle.Stroke, StrokeWidth = 2, IsAntialias = true };
         foreach (var m in markers)
         {
             if (m.IsTarget)
             {
-                canvas.DrawRect(m.ScreenX - TargetHalfSize, m.ScreenY - TargetHalfSize, m.ScreenX + TargetHalfSize, m.ScreenY + TargetHalfSize, targetPaint);
+                var rect = new SKRect(m.ScreenX - TargetHalfSize, m.ScreenY - TargetHalfSize, m.ScreenX + TargetHalfSize, m.ScreenY + TargetHalfSize);
+                canvas.DrawRect(rect, targetPaint);
             }
         }
 
