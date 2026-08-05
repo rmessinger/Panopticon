@@ -331,7 +331,9 @@ Worked example — a Ranger (USA infantry) attacking its assigned target:
 
 - The formation is six interleaved parallel rows (units, targets, units, targets, ...); each unit's
   target sits `TargetApproachDistance` (90 world-units) ahead on an adjacent row, within weapon
-  range. See `LayoutConfig` and `ValidationGroundBuilder`.
+  range. The formation geometry is configured (not in source) by the checked-in
+  `src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-scenario.json`, loaded via
+  `ValidationGroundScenario.Standard()`; `ValidationGroundBuilder` turns it into the spawn plan.
 - Ranger's primary weapon `PreAttackDelay` and `AttackRange` come straight from
   `WeaponTemplate` in `Data/INI/Weapon/*.ini`.
 - Attackers are commanded directly (`CurrentWeapon.SetTarget` on the in-range target), so the

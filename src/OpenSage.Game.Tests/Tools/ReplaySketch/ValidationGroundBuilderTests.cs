@@ -8,12 +8,13 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 public class ValidationGroundBuilderTests
 {
     private static SpawnPlan Build(ValidationGroundScenario? scenario = null) =>
-        ValidationGroundBuilder.Build(scenario ?? new ValidationGroundScenario());
+        ValidationGroundBuilder.Build(scenario ?? ValidationGroundScenario.Standard());
 
     [Fact, Trait("Category", "Roadmap")]
     public void Build_IsDeterministicAcrossInvocations()
     {
-        var scenario = new ValidationGroundScenario { Seed = 7 };
+        var scenario = ValidationGroundScenario.Standard();
+        scenario.Seed = 7;
         var a = Build(scenario);
         var b = Build(scenario);
 

@@ -1,0 +1,17 @@
+{
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "FactionIndices": [2, 3, 4],
+  "Layout": {
+    "TargetClusterCenter": { "x": 1000, "y": 1000, "z": 0 },
+    "TargetClusterRadius": 40,
+    "UnitSpacing": 80,
+    "FactionRowOffset": 150,
+    "TargetApproachDistance": 90
+  },
+  "TargetDefinitions": ["AmericaBarracks"],
+  "SupplySourceDefinitions": ["AmericaSupplyCenter"],
+  "TargetHp": 30,
+  "SettleFrames": 30,
+  "Seed": 1,
+  "PlacementOverrides": []
+}

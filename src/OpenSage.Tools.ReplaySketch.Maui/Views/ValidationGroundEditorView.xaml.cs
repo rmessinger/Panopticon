@@ -51,7 +51,7 @@ public partial class ValidationGroundEditorView : ContentView
         _vm = vm;
 
         _model = new ValidationGroundEditorModel();
-        _model.LoadScenario(new ValidationGroundScenario());
+        _model.LoadScenario(ValidationGroundScenario.Standard());
         _model.PropertyChanged += (_, _) => Canvas.InvalidateSurface();
         PopulateKnobs();
 

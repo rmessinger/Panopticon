@@ -14,7 +14,9 @@ public class ValidationGroundEditorModelTests
     private static ValidationGroundEditorModel NewModelWithSingleFaction()
     {
         var model = new ValidationGroundEditorModel();
-        model.LoadScenario(new ValidationGroundScenario { FactionIndices = [2], TargetDefinitions = ["AmericaBarracks"] });
+        var scenario = ValidationGroundScenario.Standard();
+        scenario.FactionIndices = [2];
+        model.LoadScenario(scenario);
         model.AttachMap(MapMetadataService.CreateForTesting(Min, Max));
         return model;
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
@@ -68,12 +69,35 @@ public sealed class ValidationGroundScenario
     public static ValidationGroundScenario FromJson(string json) =>
         JsonSerializer.Deserialize<ValidationGroundScenario>(json, JsonOptions) ?? new ValidationGroundScenario();
 
-    /// <summary>Loads a scenario from JSON, or returns a default instance if the file is absent.</summary>
+    /// <summary>Loads a scenario from JSON, or the standard embedded scenario if the file is absent.</summary>
     public static ValidationGroundScenario Load(string path) =>
-        File.Exists(path) ? FromJson(File.ReadAllText(path)) : new ValidationGroundScenario();
+        File.Exists(path) ? FromJson(File.ReadAllText(path)) : Standard();
 
     /// <summary>Saves the scenario (layout + overrides) to JSON for the TestHarness to load.</summary>
     public void Save(string path) => File.WriteAllText(path, ToJson());
+
+    /// <summary>
+    /// The standard validation-ground scenario: the formation, roster, target definitions, and run
+    /// values, loaded from the checked-in
+    /// <c>Profiles/unit-validation-ground-scenario.json</c> embedded resource. This is the single
+    /// source of truth for the standard configuration (no formation values live in source).
+    /// </summary>
+    public static ValidationGroundScenario Standard()
+    {
+        var assembly = typeof(ValidationGroundScenario).Assembly;
+        var name = Array.Find(assembly.GetManifestResourceNames(),
+            n => n.EndsWith(".Profiles.unit-validation-ground-scenario.json", StringComparison.Ordinal));
+        if (name == null)
+        {
+            throw new InvalidOperationException(
+                "Embedded standard validation-ground scenario not found. "
+                + "Ensure Profiles/unit-validation-ground-scenario.json is an embedded resource.");
+        }
+
+        using var stream = assembly.GetManifestResourceStream(name);
+        using var reader = new StreamReader(stream ?? Stream.Null);
+        return FromJson(reader.ReadToEnd());
+    }
 }
 
 /// <summary>
@@ -83,24 +107,30 @@ public sealed class ValidationGroundScenario
 /// <see cref="TargetClusterCenter"/>. Each unit's target sits directly ahead (perpendicular to the
 /// row) so units never interleave with their own or a neighbour faction's targets.
 /// </summary>
+/// <remarks>
+/// These are pure POCO slots; the standard values are NOT defined here. The authoritative
+/// configuration lives in <c>Profiles/unit-validation-ground-scenario.json</c>, loaded via
+/// <see cref="ValidationGroundScenario.Standard"/>. The zero defaults exist only so an empty
+/// <see cref="LayoutConfig"/> is not mistaken for a real formation.
+/// </remarks>
 public sealed class LayoutConfig
 {
     /// <summary>Centre of the formation; the interleaved row stack is centred on this point.</summary>
-    public Vector3 TargetClusterCenter { get; set; } = new(1000f, 1000f, 0f);
+    public Vector3 TargetClusterCenter { get; set; }
 
     /// <summary>Offset of the supply sources east of the formation centre.</summary>
-    public float TargetClusterRadius { get; set; } = 40f;
+    public float TargetClusterRadius { get; set; }
 
     /// <summary>Spacing between units within a row, and between targets within a target row.</summary>
-    public float UnitSpacing { get; set; } = 80f;
+    public float UnitSpacing { get; set; }
 
     /// <summary>Gap between one faction's target row and the next faction's unit row.</summary>
-    public float FactionRowOffset { get; set; } = 150f;
+    public float FactionRowOffset { get; set; }
 
     /// <summary>
     /// Gap between a faction's unit row and its target row, i.e. the unit-to-target distance. Kept
     /// short so the measured dispatch-to-first-damage duration is dominated by the unit's weapon
     /// delay, not a long travel leg, and within weapon range. See deep dive P9 §2.5.
     /// </summary>
-    public float TargetApproachDistance { get; set; } = 90f;
+    public float TargetApproachDistance { get; set; }
 }

@@ -7,22 +7,20 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 
 public class ValidationGroundBuilderTests
 {
-    private static ValidationGroundScenario SingleFactionScenario() => new()
+    private static ValidationGroundScenario SingleFactionScenario()
     {
-        FactionIndices = [2],
-        TargetDefinitions = ["AmericaBarracks"],
-    };
+        // The formation lives in the standard JSON; clone it and restrict to one faction so per-unit
+        // assertions are stable. (LayoutConfig has no source defaults anymore.)
+        var scenario = ValidationGroundScenario.Standard();
+        scenario.FactionIndices = [2];
+        return scenario;
+    }
 
     [Fact]
     public void Build_WithoutOverrides_DerivesPositionsFromLayout()
     {
-        var scenario = new ValidationGroundScenario
-        {
-            FactionIndices = [2, 3, 4],
-            TargetDefinitions = ["AmericaBarracks"],
-        };
-
-        var plan = ValidationGroundBuilder.Build(scenario);
+        // The standard scenario (loaded from JSON) carries the formation; no overrides applied.
+        var plan = ValidationGroundBuilder.Build(ValidationGroundScenario.Standard());
 
         // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 1000 - 285 = 715 (totalSpan =
         // 3*TargetApproach + 2*FactionRowOffset = 270 + 300). Row origin X centres the 10-unit
@@ -171,12 +169,30 @@ public class ValidationGroundBuilderTests
     }
 
     [Fact]
-    public void Load_NonexistentFile_ReturnsDefault()
+    public void Load_NonexistentFile_ReturnsStandard()
     {
+        // A missing scenario file falls back to the standard embedded configuration, not an empty
+        // scenario, so a typo never silently produces a degenerate (zero-layout) run.
         var loaded = ValidationGroundScenario.Load(Path.Combine(Path.GetTempPath(), "does_not_exist.json"));
 
-        Assert.Empty(loaded.PlacementOverrides);
+        Assert.Equal(ValidationGroundScenario.Standard().Layout.TargetClusterCenter, loaded.Layout.TargetClusterCenter);
         Assert.NotEmpty(loaded.FactionIndices);
+        Assert.True(loaded.Layout.UnitSpacing > 0f);
+    }
+
+    [Fact]
+    public void Standard_LoadsCheckedInFormation()
+    {
+        // The formation is configured by the checked-in JSON, not source. Pin a few values so a
+        // silent change to the file (or an accidental re-introduction of source defaults) is caught.
+        var standard = ValidationGroundScenario.Standard();
+
+        Assert.Equal(new Vector3(1000f, 1000f, 0f), standard.Layout.TargetClusterCenter);
+        Assert.Equal(80f, standard.Layout.UnitSpacing);
+        Assert.Equal(150f, standard.Layout.FactionRowOffset);
+        Assert.Equal(90f, standard.Layout.TargetApproachDistance);
+        Assert.Equal([2, 3, 4], standard.FactionIndices);
+        Assert.Empty(standard.PlacementOverrides);
     }
 
     [Fact]

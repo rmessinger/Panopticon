@@ -76,20 +76,21 @@ public static class ScenarioBuilder
     /// </summary>
     public static ValidationGroundRunPlan BuildValidationGroundRun(TestHarnessConfig config)
     {
-        // When a scenario JSON is configured (e.g. a layout hand-edited in the ReplaySketch map
-        // editor), load it verbatim: its layout, placement overrides, target definitions, and map
-        // are authoritative, so the per-knob map/settle/seed values are ignored. Otherwise build the
-        // default scenario from those knobs.
+        // The standard formation/scenario lives in the checked-in
+        // Profiles/unit-validation-ground-scenario.json (loaded via Standard()), not in source. A
+        // custom ValidationGroundScenarioPath overrides it (e.g. a layout hand-edited in the
+        // ReplaySketch map editor). The MapPath/SettleFrames/Seed knobs remain run-level overrides
+        // on top of whichever file was loaded.
         var scenario = !string.IsNullOrEmpty(config.ValidationGroundScenarioPath)
             ? ValidationGroundScenario.Load(config.ValidationGroundScenarioPath)
-            : new ValidationGroundScenario
-            {
-                MapPath = string.IsNullOrEmpty(config.ValidationGroundMapPath)
-                    ? "maps/alpine assault/alpine assault.map"
-                    : config.ValidationGroundMapPath,
-                SettleFrames = config.ValidationGroundSettleFrames,
-                Seed = config.ValidationGroundSeed,
-            };
+            : ValidationGroundScenario.Standard();
+
+        if (!string.IsNullOrEmpty(config.ValidationGroundMapPath))
+        {
+            scenario.MapPath = config.ValidationGroundMapPath;
+        }
+        scenario.SettleFrames = config.ValidationGroundSettleFrames;
+        scenario.Seed = config.ValidationGroundSeed;
 
         // A loaded scenario may carry an empty map path; fall back to the default rather than
         // failing the run inside the engine.
