@@ -50,6 +50,15 @@
                             BorderWidth="0"
                             BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2A2A2A}"
                             TextColor="{AppThemeBinding Light=#888, Dark=#888}"/>
+                    <Button x:Name="ValidationGroundTabBtn"
+                            Text="Validation Ground"
+                            Clicked="OnValidationGroundTabClicked"
+                            FontSize="12"
+                            Padding="16,6"
+                            CornerRadius="0"
+                            BorderWidth="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2A2A2A}"
+                            TextColor="{AppThemeBinding Light=#888, Dark=#888}"/>
                 </HorizontalStackLayout>
 
                 <!-- Content: tree view and map view share the same cell -->
@@ -69,6 +78,14 @@
                             StrokeShape="RoundRectangle 0"
                             IsVisible="False">
                         <views:MapPreviewView x:Name="MapPreviewView"/>
+                    </Border>
+                    <Border x:Name="ValidationGroundFrame"
+                            Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                            BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#252525}"
+                            Padding="0"
+                            StrokeShape="RoundRectangle 0"
+                            IsVisible="False">
+                        <views:ValidationGroundEditorView x:Name="ValidationGroundEditorView"/>
                     </Border>
                 </Grid>
 

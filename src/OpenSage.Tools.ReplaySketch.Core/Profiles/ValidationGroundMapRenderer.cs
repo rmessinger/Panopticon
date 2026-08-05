@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
@@ -197,14 +198,14 @@ public static class ValidationGroundMapRenderer
         }
     }
 
-    private static bool TryGetTarget(SpawnPlan plan, int targetIndex, out TargetPlacement target)
+    private static bool TryGetTarget(SpawnPlan plan, int targetIndex, [NotNullWhen(true)] out TargetPlacement? target)
     {
         if (targetIndex >= 0 && targetIndex < plan.TargetPlacements.Count)
         {
             target = plan.TargetPlacements[targetIndex];
             return true;
         }
-        target = default;
+        target = null;
         return false;
     }
 }

@@ -61,24 +61,19 @@ public sealed class ValidationGroundScenario
         Converters = { new JsonStringEnumConverter(), new Vector3JsonConverter() },
     };
 
-    /// <summary>Loads a scenario from JSON, or returns a default instance if the file is absent.</summary>
-    public static ValidationGroundScenario Load(string path)
-    {
-        if (!File.Exists(path))
-        {
-            return new ValidationGroundScenario();
-        }
+    /// <summary>Serializes the scenario (layout + overrides) to a JSON string.</summary>
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
-        var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<ValidationGroundScenario>(json, JsonOptions) ?? new ValidationGroundScenario();
-    }
+    /// <summary>Deserializes a scenario from a JSON string; returns a default on a null result.</summary>
+    public static ValidationGroundScenario FromJson(string json) =>
+        JsonSerializer.Deserialize<ValidationGroundScenario>(json, JsonOptions) ?? new ValidationGroundScenario();
+
+    /// <summary>Loads a scenario from JSON, or returns a default instance if the file is absent.</summary>
+    public static ValidationGroundScenario Load(string path) =>
+        File.Exists(path) ? FromJson(File.ReadAllText(path)) : new ValidationGroundScenario();
 
     /// <summary>Saves the scenario (layout + overrides) to JSON for the TestHarness to load.</summary>
-    public void Save(string path)
-    {
-        var json = JsonSerializer.Serialize(this, JsonOptions);
-        File.WriteAllText(path, json);
-    }
+    public void Save(string path) => File.WriteAllText(path, ToJson());
 }
 
 /// <summary>Planar layout parameters. The host samples terrain height; the builder is 2-D.</summary>
