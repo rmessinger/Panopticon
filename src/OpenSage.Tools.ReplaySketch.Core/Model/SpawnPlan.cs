@@ -21,7 +21,8 @@ public sealed record UnitPlacement(
     int PlayerIndex,
     Vector3 Position,
     PrimaryAction Action,
-    int TargetIndex);
+    int TargetIndex,
+    int RosterIndex);
 
 public sealed record TargetPlacement(
     string DefinitionName,

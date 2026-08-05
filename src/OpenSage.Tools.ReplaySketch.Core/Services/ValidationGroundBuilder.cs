@@ -79,7 +79,8 @@ public static class ValidationGroundBuilder
                     PlayerIndex: factionIndex,
                     Position: position,
                     Action: action,
-                    TargetIndex: globalUnitIndex));
+                    TargetIndex: globalUnitIndex,
+                    RosterIndex: i));
 
                 globalUnitIndex++;
             }
