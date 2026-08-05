@@ -398,71 +398,77 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     Done.
 
 ### P8: Implementation delta remediation ([deep dive](deep-dives/p8-implementation-delta-remediation.md))
-- [ ] Data-driven victory configuration seam (P8-1).
+- [x] Data-driven victory configuration seam (P8-1).
   - AC: `VictorySystem.FrameLimit`/`ScoreMetric` are settable through a real skirmish/scenario
     configuration path, not only via direct `internal` property assignment in test code; default
     behavior is unchanged; a headless test starts a match through the configuration path and
     asserts the configured values took effect.
-- [ ] Sudden-death repeat-elimination fix (P8-2).
+- [x] Sudden-death repeat-elimination fix (P8-2).
   - AC: a scenario where the elimination check immediately following a `SuddenDeath` transition
     also mutually eliminates all remaining active players resolves to `Decided` rather than hanging
     in `SuddenDeath` indefinitely; test covers the repeat-elimination case.
-- [ ] End-of-match UI and `TestHarness` integration (P8-3).
+- [x] End-of-match UI and `TestHarness` integration (P8-3).
   - AC: a real UI/exit consumer of `GameOutcome` exists for interactive play; `OpenSage.Tools.TestHarness`
     exits through the same `GameOutcome`-driven path rather than its pre-`GameOutcome` ad hoc exit.
-- [ ] Real gather-cycle harness verification (P8-4).
+- [x] Real gather-cycle harness verification (P8-4).
   - AC: the P4 scenario matrix's economy assertion drives a harvester through the real
     `SupplyAIUpdate` state machine (`SearchingForSupplySource → Approaching → Requesting →
     Gathering → DumpingSupplies`) via `Scene3D`, not a synthetic dump/debit shortcut.
-- [ ] Real per-faction build trees and production assertions (P8-5).
+- [x] Real per-faction build trees and production assertions (P8-5).
   - AC: the P5 scenario matrix exercises real per-faction (`USA`/`GLA`/`China`) build trees instead
     of a reflection-built synthetic prerequisite chain; each cell asserts an actual unit/upgrade
     spawn, not only `CanProduceObject`; the `human` `playerType` cell routes through
     `OrderProcessor` like the `AI` cell.
-- [ ] Control-bar live dispatch verification (P8-6).
+- [x] Control-bar live dispatch verification (P8-6).
   - AC: the P6 command-coverage matrix dispatches through `GeneralsControlBar` end to end rather
     than asserting only the `OrderType` mapping.
-- [ ] `FireWeaponUpdate` and real observable-effect assertions (P8-7).
+- [x] `FireWeaponUpdate` and real observable-effect assertions (P8-7).
   - AC: `FireWeaponUpdate.Update()` is a real implementation, not a no-op stub; the 9 of 15 P6
     scenario matrix cells that previously asserted a disclosed "GAP" message now assert a real
     observable effect.
 
 ### P9: Unit validation ground ([deep dive](deep-dives/p9-unit-validation-ground.md))
-- [ ] Primary-action model (P9-1).
+- [x] Primary-action model (P9-1).
   - AC: every `UnitCatalog` entry resolves to exactly one `PrimaryAction` (attack, build, gather,
     special power, or the move fallback); a test fails if any catalog entry is unresolved, so adding
     a unit to the catalog without deciding its action cannot silently drop it from the ground.
-- [ ] Scenario and deterministic layout builder (P9-2).
+- [x] Scenario and deterministic layout builder (P9-2).
   - AC: `ValidationGroundBuilder.Build` returns an identical `SpawnPlan` (unit positions, target
     positions, target assignment by index, order sequence) for the same scenario and seed across
     repeated invocations, and has no dependency on `IGame` or `Scene3D`.
-- [ ] Direct-spawn host (P9-3).
+- [x] Direct-spawn host (P9-3).
   - AC: the whole roster plus the destructible-target cluster and supply sources exist in
     `GameLogic` after the spawn stage, created through `GameLogic.CreateObject` at the planned
     positions with terrain-sampled height, and the settle stage runs for the configured frame count
     before any order is issued.
-- [ ] Per-unit action timer (P9-4).
+- [x] Per-unit action timer (P9-4).
   - AC: each unit's duration is recorded in logic frames derived from `MapTime`/`MsPerLogicFrame`
     (never wall-clock), starting on the dispatch frame and stopping on the first observed completion
     signal for its action kind; exceeding the unit's frame budget records a timeout that is a
     distinct result from a regression.
-- [ ] TestHarness wiring for both run modes (P9-5).
+- [x] TestHarness wiring for both run modes (P9-5).
   - AC: a new built-in scenario value runs the ground both windowed and headless from one scenario
     definition, spawn host, and timer; the existing replay-driven scenarios still run unchanged.
-- [ ] Timing report output (P9-6).
+- [x] Timing report output (P9-6).
   - AC: the run emits a per-unit stdout table and a JSON artifact listing unit, faction, action,
     measured frames, baseline frames, delta, and verdict; unimplemented handlers and
     spawn-versus-production misbehaviour appear as named gaps rather than passes.
-- [ ] Golden baseline and regression gate (P9-7).
+- [x] Golden baseline and regression gate (P9-7).
   - AC: a baseline with per-entry tolerance (percentage plus a minimum absolute frame floor) is
     checked in, captured only through an explicit refresh mode and never rewritten by a normal run;
     two consecutive headless runs produce identical reports; headless exits non-zero when any unit
     regresses beyond its tolerance.
-- [ ] Validation-ground test coverage (P9-8).
+- [x] Validation-ground test coverage (P9-8).
   - AC: install-free `[Fact]` tests cover layout determinism, roster completeness, action-mapping
     totality, and baseline comparison including the tolerance floor; an install-gated
     `[GameFact(SageGame.CncGenerals)]` test runs the ground end to end and asserts every unit either
     completes within tolerance or is a reported gap.
+- [ ] Windowed visual validation without a physical display.
+  - AC: the TestHarness windowed mode (and the validation ground's non-headless path) runs in a
+    headless/CI/agent shell by providing a virtual display (e.g. `Xvfb`), so a window is not
+    required to exercise the renderer and capture frames. Document the exact command in
+    `src/OpenSage.Tools.TestHarness/AGENTS.md`. Today a `tty`-type shell has no `DISPLAY` and cannot
+    authorize against the host's X server, so only the headless path runs there.
 
 ---
 
@@ -718,3 +724,65 @@ collapse), not the existing canned model-swap rubble/damage-state system.
   - AC: TBD, ReplaySketch screenshot mode shows deformed terrain and settled debris, and a
     headless assertion validates crater radius/depth and debris bounds against the triggering
     weapon/building.
+
+## Track G: Rendering Clarity & Image Quality
+
+See [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md). Not gated on Track P
+(presentation only, no simulation behaviour change). Coordinates with B5 (rendering at scale, same
+pipeline-description plumbing) and A3 (sim/presentation seam). Every visual change lands behind the
+G2 preset layer so the `Faithful` preset reproduces the original look.
+
+- [ ] G1 High-DPI drawable & resolution correctness (`ALLOW_HIGHDPI`, drawable-size swapchain,
+      one pixels-versus-points convention across `GameWindow`/`RenderTarget`/input).
+  - AC: on a display with a non-unity scale factor the swapchain and a captured frame match
+    the window's native pixel dimensions, and cursor/input hit-testing stays correct.
+  - [ ] G1-1 Classify every window/panel size consumer as logical points or physical pixels
+        ([`WI-G1-01`](agent/cards/WI-G1-01-audit-size-consumers.md)).
+    - AC: every `ClientBounds`/`WindowScale`/`CursorScale`/`Frame`/`Viewport` read in `src/` is
+      classified, and sites feeding both spaces are called out.
+  - [ ] G1-2 `AllowHighDpi` window creation, `SDL_GetWindowSizeInPixels` interop,
+        `DrawableBounds`/`DpiScale`, swapchain sized in pixels
+        ([`WI-G1-02`](agent/cards/WI-G1-02-allow-highdpi-drawable-size.md)).
+    - AC: the window is created with `AllowHighDpi` via `new Sdl2Window(...)`, no `WindowScale`
+      pre-multiplication remains, and `Swapchain.Resize` is fed `DrawableBounds`.
+  - [ ] G1-3 Render target and 3D viewport in pixels, GUI layout on points
+        ([`WI-G1-03`](agent/cards/WI-G1-03-route-render-surfaces-to-pixels.md)).
+    - AC: all three `EnsureFrame` call sites pass `DrawableBounds`, `Game.Viewport` is in pixels,
+      and the WND/APT managers receive a logical size.
+  - [ ] G1-4 Scale 2D drawing and mouse picking by `DpiScale`
+        ([`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md)).
+    - AC: picking resolves to the same world position at `DpiScale` 1 and 2, and the GUI occupies
+      the same fraction of the frame at both scales.
+- [ ] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`, wired through
+      `StaticGameLod`; settings layer, not an experiment seam).
+  - AC: TBD, switching presets at runtime changes active pipeline state, and `Faithful`
+    reproduces the pre-track captured frame.
+- [ ] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
+      with sharpness/edge-aliasing metrics; extends `FrameCapturer` + ReplaySketch screenshot mode).
+  - AC: TBD, a headless run compares the fixed scene set against stored goldens per preset and
+    fails on regression; the metrics separate an aliased frame from an antialiased one.
+- [ ] G4 Multisample antialiasing (sample count through `GameOutputDescription`, intermediate
+      colour/depth targets and every pipeline description, plus a resolve before the final blit).
+  - AC: TBD, 4x MSAA renders and resolves across the 3D, terrain, water, road and particle
+    pipelines, and the G3 edge-aliasing metric improves against the same frame at 1x.
+- [ ] G5 Cutout & alpha-test clarity (alpha-to-coverage under MSAA, coverage-preserving mips for
+      alpha-tested textures, per-mip threshold rescale, replacing the fixed `0x60` cutoff in
+      `Common.h`).
+  - AC: TBD, minified alpha-tested foliage and fencing show no dissolve-to-dots at distance under
+    `Enhanced`, while `Faithful` still produces the original hard-cutoff result.
+- [ ] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, sRGB/tonemapped output,
+      linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output).
+  - AC: TBD, a fog/sky gradient shows no visible banding under `Enhanced` and mip chains no longer
+    darken with distance; `Faithful` retains gamma-space shading.
+- [ ] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
+      quality terrain texture-array resample/mip path in `Terrain.cs`).
+  - AC: TBD, terrain stays legible at grazing angles at 16x with no shimmer under camera motion,
+    measured by the G3 metrics.
+- [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, slope-scaled/
+      normal-offset bias replacing the constant bias in `ShadowSettings`).
+  - AC: TBD, shadow edges show no acne speckle or cascade blockiness at the default camera zoom,
+    with cascade transitions not visible in the captured frame.
+- [ ] G9 Resolution-independent 2D & UI (native-resolution 2D, resolution-independent layout
+      anchored in logical points, higher-quality WND/APT upscaling).
+  - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
+    layout and hit regions unchanged relative to the pre-track build.

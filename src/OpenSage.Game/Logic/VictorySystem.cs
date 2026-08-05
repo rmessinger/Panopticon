@@ -19,6 +19,8 @@ public sealed class VictorySystem : GameSystem
 
     public GameOutcome CurrentOutcome { get; } = new();
 
+    internal event EventHandler OutcomeDecided;
+
     public int CheckTickCount { get; private set; }
     internal int FrameLimit { get; set; } = NoFrameLimit;
     internal VictoryConditionRule ConditionRule
@@ -42,6 +44,17 @@ public sealed class VictorySystem : GameSystem
     public VictorySystem(IGame game)
         : base(game)
     {
+    }
+
+    internal void ApplyOptions(VictoryOptions options)
+    {
+        if (options == null)
+        {
+            return;
+        }
+
+        FrameLimit = options.FrameLimit;
+        ScoreMetric = VictoryScoreMetrics.ToSelector(options.ScoreMetric);
     }
 
     internal void Attach(GameLogic gameLogic)
@@ -175,6 +188,29 @@ public sealed class VictorySystem : GameSystem
             TrySetDecidedOutcome(OutcomeReason.Eliminated, winningPlayers, defeatedPlayer);
             break;
         }
+
+        // A repeat full mutual elimination while already in sudden death leaves no
+        // survivor to declare winner; resolve it as a shared defeat among the last
+        // cohort instead of looping in sudden death indefinitely.
+        ResolveAllPlayersEliminated(newlyDefeatedPlayers);
+    }
+
+    private void ResolveAllPlayersEliminated(List<Player> lastDefeatedCohort)
+    {
+        if (CurrentOutcome.Status == OutcomeStatus.Decided)
+        {
+            return;
+        }
+
+        foreach (var player in GetCompetitivePlayers())
+        {
+            if (!_defeatedPlayers.Contains(player))
+            {
+                return;
+            }
+        }
+
+        TrySetDecidedOutcome(OutcomeReason.Eliminated, lastDefeatedCohort, null);
     }
 
     private List<Player> TryResolveWinningPlayers(Player defeatedPlayer)
@@ -269,6 +305,7 @@ public sealed class VictorySystem : GameSystem
         CurrentOutcome.WinningTeam = TryResolveWinningTeam(winningPlayers);
         CurrentOutcome.DecidedOnFrame = unchecked((int)Game.GameLogic.CurrentFrame.Value);
         Game.IsLogicRunning = false;
+        OutcomeDecided?.Invoke(this, EventArgs.Empty);
         return true;
     }
 

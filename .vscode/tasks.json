@@ -12,6 +12,22 @@
             "problemMatcher": "$tsc"
         },
         {
+            "label": "build-testharness",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/OpenSage.Tools.TestHarness/OpenSage.Tools.TestHarness.csproj"
+            ],
+            "problemMatcher": "$tsc"
+        },
+        {
+            "label": "build-testharness-all",
+            "dependsOn": ["build", "build-testharness"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
             "label": "publish",
             "command": "dotnet",
             "type": "process",

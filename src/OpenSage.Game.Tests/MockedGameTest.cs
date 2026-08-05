@@ -38,6 +38,16 @@ public abstract class MockedGameTest : IDisposable
         public SageGame SageGame { get; }
         public Configuration Configuration { get; private set; }
         public GameOutcome CurrentOutcome => VictorySystem.CurrentOutcome;
+        public VictoryOptions VictoryOptions
+        {
+            get => _victoryOptions;
+            set
+            {
+                _victoryOptions = value ?? VictoryOptions.Default;
+                VictorySystem.ApplyOptions(_victoryOptions);
+            }
+        }
+        private VictoryOptions _victoryOptions = VictoryOptions.Default;
         public string UserDataLeafName { get; }
         public string UserDataFolder { get; }
         public string UserAppDataFolder { get; }
@@ -91,6 +101,7 @@ public abstract class MockedGameTest : IDisposable
         public event EventHandler<GameObjectCreatedEventArgs> ObjectCreated;
         public event EventHandler<GameObjectDestroyedEventArgs> ObjectDestroyed;
         public event EventHandler<GameObjectConstructionCompletedEventArgs> ConstructionCompleted;
+        public event EventHandler MatchOutcomeDecided;
 #pragma warning restore CS0067 // The event 'Game.X' is never used
         public List<Order> InjectedOrders { get; } = new();
         public void InjectOrders(IEnumerable<Order> orders)
@@ -166,6 +177,7 @@ public abstract class MockedGameTest : IDisposable
             VictorySystem = new VictorySystem(this);
             GameSystems.ForEach(gs => gs.Initialize());
             GameLogic = new GameLogic(this);
+            VictorySystem.OutcomeDecided += (_, _) => MatchOutcomeDecided?.Invoke(this, EventArgs.Empty);
         }
 #pragma warning restore CS8618
 

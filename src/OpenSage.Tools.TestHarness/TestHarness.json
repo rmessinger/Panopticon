@@ -1,9 +1,10 @@
 {
   // TestHarness configuration
   // ------------------------------------
-  // Scenario     : built-in scenario to use when ScenarioPath is null
-  //                (AlpineAssaultUSAvGLA, AlpineAssaultUSAvGLAFullBuild)
+  // Scenario     : built-in scenario to run
+  //                (AlpineAssaultUSAvGLA, AlpineAssaultUSAvGLAFullBuild, UnitValidationGround)
   // ScenarioPath : path to a scenario JSON profile, or null to use Scenario
+  //                (ignored when Scenario is UnitValidationGround)
   // Game         : SAGE game to run (CncGenerals, CncGeneralsZeroHour, Bfme, Bfme2, Bfme2Rotwk)
   // Renderer     : graphics backend override, or null for platform default
   //                accepted values: Direct3D11, Vulkan, OpenGL, Metal, OpenGLES
@@ -13,8 +14,18 @@
   //                (disabled by default)
   // KeepReplay   : keep the exported .rep file on disk after the run
   // GamePath     : override the game installation path (null = auto-detect)
+  //
+  // Unit Validation Ground (Scenario = UnitValidationGround) knobs, all optional with defaults:
+  // ValidationGroundMapPath        : map override (default: Alpine Assault)
+  // ValidationGroundSettleFrames   : frames to settle after spawn before ordering units
+  // ValidationGroundBaselinePath   : golden baseline JSON (null/empty skips comparison)
+  // ValidationGroundRefreshBaseline: true overwrites the baseline from the run instead of comparing
+  // ValidationGroundReportPath     : where to write the JSON report artifact
+  // ExitAfterTargetsDestroyed      : true (default) exits once all targets are destroyed/cap hit;
+  //                                  false keeps the game running until the window is closed
+  //                                  (windowed only; headless always exits)
 
-  "Scenario": "AlpineAssaultUSAvGLAFullBuild",
+  "Scenario": "UnitValidationGround",
   "ScenarioPath": null,
   "Game": "CncGenerals",
   "Renderer": null,
@@ -22,5 +33,6 @@
   "Headless": false,
   "CaptureFrames": false,
   "KeepReplay": false,
-  "GamePath": null
+  "GamePath": null,
+  "ExitAfterTargetsDestroyed": false
 }

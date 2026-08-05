@@ -85,4 +85,34 @@ public sealed class TestHarnessConfig
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public MouseClickMode MouseClickMode { get; set; } = MouseClickMode.Standard;
+
+    // ── Unit validation ground (P9) ──────────────────────────────────────────
+    // All optional with defaults so an existing TestHarness.json needs no edit.
+
+    /// <summary>Map path override for the validation ground. Empty uses a default map.</summary>
+    public string? ValidationGroundMapPath { get; set; } = null;
+
+    /// <summary>Frames to settle after spawn before issuing orders.</summary>
+    public int ValidationGroundSettleFrames { get; set; } = 30;
+
+    /// <summary>Seed for deterministic layout (informational; the builder is already deterministic).</summary>
+    public int ValidationGroundSeed { get; set; } = 1;
+
+    /// <summary>Path to the checked-in golden baseline JSON. Empty skips baseline comparison.</summary>
+    public string? ValidationGroundBaselinePath { get; set; } = null;
+
+    /// <summary>When true, the run refreshes (overwrites) the baseline instead of comparing.</summary>
+    public bool ValidationGroundRefreshBaseline { get; set; } = false;
+
+    /// <summary>Path to write the validation-ground JSON report to. Empty writes none.</summary>
+    public string? ValidationGroundReportPath { get; set; } = null;
+
+    /// <summary>
+    /// When true (default), the run exits once every measurable unit has resolved (its target
+    /// destroyed) or the frame cap is reached, then writes the report/baseline. When false, the run
+    /// does not auto-exit: the game keeps running so the roster can be observed, and the report is
+    /// written when the window is closed. Only honoured in windowed mode; headless always exits on
+    /// completion, since a never-exiting headless run has no window to close and would hang.
+    /// </summary>
+    public bool ExitAfterTargetsDestroyed { get; set; } = true;
 }

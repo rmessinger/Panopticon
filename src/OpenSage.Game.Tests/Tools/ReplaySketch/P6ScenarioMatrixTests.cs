@@ -2,10 +2,11 @@
 // Replaces the skipped P6 stubs in TrackPScenarioMatrixTests with a CI-running 15-cell matrix
 // sweeping orderType x faction (5 x 3 = 15), per the deep dive P6 Scenario Matrix. Each cell
 // asserts the order type has a real (non-default) OrderProcessor handler; the Build/CreateUnit
-// cells additionally exercise the headless affordability-debit seam (OrderProcessor.TryDebit) for
-// that faction's reference definition. The Move/Attack/SpecialPower end-to-end effects run
-// through `_game.Scene3D.GameObjects` (null in the headless TestGame host) and are recorded as
-// explicit named orderType+faction gaps in the per-cell report, never silent skips.
+// cells exercise the headless affordability-debit seam (OrderProcessor.TryDebit); the
+// MoveTo/AttackObject cells drive the real OrderProcessor path and assert the AIUpdate target-point
+// effect (Navigation's null fallback adds the point directly, so the effect is observable without
+// Scene3D). The SpecialPower end-to-end effect requires loaded power/object asset data and is
+// recorded as an explicit named orderType+faction gap in the per-cell report, never a silent skip.
 //
 // See docs/roadmap/deep-dives/p4-p6-economy-production-combat.md P6 Scenario Matrix.
 //
@@ -14,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
@@ -54,9 +56,14 @@ public class P6ScenarioMatrixTests : MockedGameTest
 
     // Order families whose end-to-end effect is verifiable headlessly: the purchase handlers
     // (BuildObject/CreateUnit) exit through OrderProcessor.TryDebit before touching Scene3D, so the
-    // affordability debit is observable in the mocked host. The others dereference
-    // _game.Scene3D.GameObjects and are documented as gaps.
+    // affordability debit is observable in the mocked host. MoveTo and AttackObject set an
+    // AIUpdate target point through the OrderProcessor path (Navigation falls back to a direct
+    // AddTargetPoint when null, so the effect is observable without Scene3D).
     private static readonly HashSet<string> HeadlessEffectOrderTypes = [BuildObject, CreateUnit];
+
+    // Order families driven live through OrderProcessor and asserting a real AIUpdate target-point
+    // effect (rather than only an OrderType-mapping check or a disclosed gap).
+    private static readonly HashSet<string> RealOrderEffectTypes = [MoveTo, AttackObject];
 
     [Fact, Trait("Category", "Roadmap")]
     public void Matrix_AllCells_OrderTypeProducesExpectedEffect()
@@ -159,11 +166,70 @@ public class P6ScenarioMatrixTests : MockedGameTest
             debitVerified = debited && player.BankAccount.Money == before - ReferenceCost;
         }
 
-        var gapMessage = HeadlessEffectOrderTypes.Contains(orderType)
+        // Real order effect: drive MoveTo/AttackObject through OrderProcessor and observe the
+        // AIUpdate target point being set (the Navigation-null fallback adds the point directly).
+        var orderEffectVerified = false;
+        string? effectDetail = null;
+        if (RealOrderEffectTypes.Contains(orderType))
+        {
+            (orderEffectVerified, effectDetail) = DriveRealOrderEffect(game, player, orderType, faction);
+        }
+
+        var gapMessage = HeadlessEffectOrderTypes.Contains(orderType) || RealOrderEffectTypes.Contains(orderType)
             ? null
             : Scene3DImpact(orderType);
 
-        return new CellExecution(orderType, faction, handlerPresent, debitVerified, gapMessage);
+        return new CellExecution(orderType, faction, handlerPresent, debitVerified, orderEffectVerified, effectDetail, gapMessage);
+    }
+
+    private static (bool Verified, string? Detail) DriveRealOrderEffect(
+        TestGame game, Player player, string orderType, string faction)
+    {
+        var attacker = CreateAiUnit(game, player, $"P6Matrix_{faction}_{orderType}_attacker");
+        player.SelectUnits(new[] { attacker });
+        var orderProcessor = new OrderProcessor(game);
+
+        if (orderType == MoveTo)
+        {
+            var target = new Vector3(42f, 17f, 0f);
+            var order = new Order(PlayerHumanIndex, OrderType.MoveTo);
+            order.AddPositionArgument(target);
+            orderProcessor.Process(new[] { order });
+
+            var hit = attacker.AIUpdate?.TargetPoints.Contains(target) ?? false;
+            return (hit, hit ? null : $"MoveTo did not set AIUpdate target point for {faction}.");
+        }
+
+        // AttackObject: resolve a target object by id and assert the attacker moves to engage it
+        // (AIUpdate target point == target translation) through the real OrderProcessor path.
+        var targetObject = CreateAiUnit(game, player, $"P6Matrix_{faction}_{orderType}_target");
+        var order2 = new Order(PlayerHumanIndex, OrderType.AttackObject);
+        order2.AddObjectIdArgument(targetObject.Id);
+        orderProcessor.Process(new[] { order2 });
+
+        var reached = attacker.AIUpdate?.TargetPoints.Contains(targetObject.Translation) ?? false;
+        return (reached, reached ? null : $"AttackObject did not set an engage target point for {faction}.");
+    }
+
+    private const int PlayerHumanIndex = 2;
+
+    private static GameObject CreateAiUnit(TestGame game, Player owner, string definitionName)
+    {
+        var definition = new ObjectDefinition(definitionName);
+        definition.KindOf.Set(ObjectKinds.Vehicle, true);
+        definition.KindOf.Set(ObjectKinds.CanAttack, true);
+        definition.Behaviors.Add("ModuleTag_Body",
+            new ModuleDataContainer("ModuleTag_Body",
+                new ActiveBodyModuleData { MaxHealth = 100f, InitialHealth = 100f },
+                ModuleInheritanceMode.Default, inherited: false));
+        definition.Behaviors.Add("ModuleTag_AI",
+            new ModuleDataContainer("ModuleTag_AI",
+                new AIUpdateModuleData(),
+                ModuleInheritanceMode.Default, inherited: false));
+
+        var gameObject = game.GameLogic.CreateObject(definition, owner);
+        gameObject.Owner = owner;
+        return gameObject;
     }
 
     private static IReadOnlyList<AssertionResult> BuildAssertions(
@@ -196,6 +262,22 @@ public class P6ScenarioMatrixTests : MockedGameTest
                 Message = execution.DebitVerified
                     ? null
                     : $"Purchase debit was not applied for {execution.OrderType}/{execution.Faction}.",
+            };
+        }
+        else if (RealOrderEffectTypes.Contains(execution.OrderType))
+        {
+            // Real OrderProcessor-driven effect: the unit's AIUpdate target point is set to the
+            // ordered destination (MoveTo) or the target's position (AttackObject), observable
+            // headlessly because Navigation's null fallback adds the point directly.
+            effectAssertion = new AssertionResult
+            {
+                AssertionId = $"p6-observable-effect-{key}",
+                Passed = execution.OrderEffectVerified,
+                ActualValue = $"orderEffectVerified={execution.OrderEffectVerified}",
+                FailFrame = 0,
+                Message = execution.OrderEffectVerified
+                    ? null
+                    : (execution.EffectDetail ?? $"{execution.OrderType} did not produce its AIUpdate effect for {execution.Faction}."),
             };
         }
         else
@@ -268,5 +350,12 @@ public class P6ScenarioMatrixTests : MockedGameTest
         return definition;
     }
 
-    private sealed record CellExecution(string OrderType, string Faction, bool HandlerPresent, bool DebitVerified, string GapMessage);
+    private sealed record CellExecution(
+        string OrderType,
+        string Faction,
+        bool HandlerPresent,
+        bool DebitVerified,
+        bool OrderEffectVerified,
+        string? EffectDetail,
+        string? GapMessage);
 }

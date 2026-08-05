@@ -25,3 +25,12 @@ Source of truth: [deep-dives/p0-playable-baseline-harness.md](../deep-dives/p0-p
 | [track-p-p0-5-assertion-layer.md](track-p-p0-5-assertion-layer.md) | P0-4 | Validation/assertion layer |
 | [track-p-p0-6-run-and-assert-entry-point.md](track-p-p0-6-run-and-assert-entry-point.md) | P0-5 | Run-and-assert entry point + end-to-end test |
 | [track-p-p0-7-procedural-authoring.md](track-p-p0-7-procedural-authoring.md) | P0-6 | Procedural authoring at scale |
+
+## Track G · G1 : High-DPI drawable & resolution correctness
+
+Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :
+[Architecture diagrams §5](../deep-dives/g1-high-dpi-resolution.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g1-high-dpi.md](track-g-g1-high-dpi.md) | G1-1…G1-4 | High-DPI drawable & resolution correctness |

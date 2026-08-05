@@ -191,7 +191,7 @@ public class PrerequisiteTechGatingTests : MockedGameTest
         return producer;
     }
 
-    private static ObjectDefinition NewObjectDefinition(string name, ObjectDefinition prerequisite = null, float buildCost = 0f)
+    private static ObjectDefinition NewObjectDefinition(string name, ObjectDefinition? prerequisite = null, float buildCost = 0f)
     {
         var definition = new ObjectDefinition(name);
         definition.KindOf.Set(ObjectKinds.Structure, true);
@@ -221,7 +221,7 @@ public class PrerequisiteTechGatingTests : MockedGameTest
 #pragma warning restore CS8625
         }
 
-        gated.Prerequisites.Objects.Add(new ObjectPrerequisiteList
+        gated.Prerequisites!.Objects.Add(new ObjectPrerequisiteList
         {
             new LazyAssetReference<ObjectDefinition>(prerequisite),
         });

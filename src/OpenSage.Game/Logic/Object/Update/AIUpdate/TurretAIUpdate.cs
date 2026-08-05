@@ -51,7 +51,11 @@ public class TurretAIUpdate : UpdateModule
 
     internal void Update(BitArray<AutoAcquireEnemiesType> autoAcquireEnemiesWhenIdle)
     {
-        var target = GameObject.CurrentWeapon?.CurrentTarget;
+        // Treat a destroyed target as no target, matching AIUpdate's non-turret path. Without this,
+        // reading target.TargetPosition below dereferences the now-null target object (NRE) in the
+        // frame the target dies, before Weapon.LogicTick clears it.
+        var weaponTarget = GameObject.CurrentWeapon?.CurrentTarget;
+        var target = weaponTarget != null && !weaponTarget.IsDestroyed ? weaponTarget : null;
         float targetYaw;
 
         var currentFrame = GameEngine.GameLogic.CurrentFrame;

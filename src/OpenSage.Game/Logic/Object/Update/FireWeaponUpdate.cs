@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using OpenSage.Content;
 using OpenSage.Data.Ini;
@@ -6,6 +7,8 @@ namespace OpenSage.Logic.Object;
 
 public sealed class FireWeaponUpdate : UpdateModule
 {
+    private readonly FireWeaponUpdateModuleData _moduleData;
+
     private byte _unknownByte;
     private string _weaponTemplate;
 
@@ -22,14 +25,70 @@ public sealed class FireWeaponUpdate : UpdateModule
     private uint _unknownUInt4;
     private uint _unknownUInt5;
 
-    public FireWeaponUpdate(GameObject gameObject, IGameEngine gameEngine) : base(gameObject, gameEngine)
+    public FireWeaponUpdate(GameObject gameObject, IGameEngine gameEngine, FireWeaponUpdateModuleData moduleData)
+        : base(gameObject, gameEngine)
     {
+        _moduleData = moduleData;
     }
 
     public override UpdateSleepTime Update()
     {
-        // TODO(Port): Use correct value.
-        return UpdateSleepTime.None;
+        var template = _moduleData?.Weapon?.Value;
+        if (template == null)
+        {
+            return UpdateSleepTime.Forever;
+        }
+
+        FireAreaWeapon(GameObject.Translation, template);
+
+        // Re-fire on the weapon's shot cooldown. A zero/unset cooldown fires every frame,
+        // which is correct for continuous area weapons (radiation fields, scorch marks).
+        var cooldown = template.CoolDownDelayBetweenShots.Min;
+        var frames = cooldown.Value > 0 ? cooldown : LogicFrameSpan.One;
+        return UpdateSleepTime.Frames(frames);
+    }
+
+    private void FireAreaWeapon(Vector3 origin, WeaponTemplate template)
+    {
+        foreach (var nugget in template.Nuggets.OfType<DamageNugget>())
+        {
+            ApplyRadiusDamage(nugget, origin);
+        }
+    }
+
+    private void ApplyRadiusDamage(DamageNugget nugget, Vector3 origin)
+    {
+        var radius = nugget.Radius;
+        if (radius <= 0f)
+        {
+            return;
+        }
+
+        var radiusSq = radius * radius;
+        foreach (var candidate in GameEngine.GameLogic.Objects)
+        {
+            if (candidate == null || ReferenceEquals(candidate, GameObject))
+            {
+                continue;
+            }
+
+            if (candidate.IsEffectivelyDead || candidate.BodyModule == null)
+            {
+                continue;
+            }
+
+            if (Vector3.DistanceSquared(candidate.Translation, origin) > radiusSq)
+            {
+                continue;
+            }
+
+            candidate.AttemptDamage(new DamageInfoInput(GameObject)
+            {
+                DamageType = nugget.DamageType,
+                DeathType = nugget.DeathType,
+                Amount = nugget.Damage,
+            });
+        }
     }
 
     internal override void Load(StatePersister reader)
@@ -119,7 +178,7 @@ public sealed class FireWeaponUpdateModuleData : UpdateModuleData
 
     internal override FireWeaponUpdate CreateModule(GameObject gameObject, IGameEngine gameEngine)
     {
-        return new FireWeaponUpdate(gameObject, gameEngine);
+        return new FireWeaponUpdate(gameObject, gameEngine, this);
     }
 }
 

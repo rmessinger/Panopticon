@@ -47,6 +47,28 @@ public sealed class EndOfMatchFlowTests : MockedGameTest
     }
 
     [Fact]
+    public void MatchOutcomeDecided_FiresExactlyOnceOnTransitionToDecided()
+    {
+        ConfigureTwoPlayerSkirmish();
+        var losingPlayer = Generals.PlayerManager.Players[3];
+        var losingCommandCenter = CreateGameObject(CreateCommandCenterDefinition(500), losingPlayer);
+        losingPlayer.AddOwnedObject(losingCommandCenter);
+
+        var fireCount = 0;
+        Generals.MatchOutcomeDecided += (_, _) => fireCount++;
+
+        losingCommandCenter.Destroy();
+        RunVictoryCadence();
+
+        Assert.Equal(OutcomeStatus.Decided, Generals.CurrentOutcome.Status);
+        Assert.Equal(1, fireCount);
+
+        // A second cadence tick must not re-fire: the match is already decided.
+        RunVictoryCadence();
+        Assert.Equal(1, fireCount);
+    }
+
+    [Fact]
     public void OutcomeAssertion_WrongExpectedResult_FailsLoudly()
     {
         ConfigureTwoPlayerSkirmish();

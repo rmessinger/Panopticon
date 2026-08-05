@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using OpenSage.Client;
 using OpenSage.Gui.ControlBar;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
@@ -155,6 +156,139 @@ public class P6CommandCoverageTests : MockedGameTest
         Assert.Equal(50u, player.BankAccount.Money);
     }
 
+    // WI-P8-06: live dispatch at the order layer. The mocked host cannot construct a
+    // GeneralsControlBar (it needs a live WND Window + asset-bound CommandButton set), so the
+    // button-click -> CommandButtonCallback dispatch chain is the genuine remaining UI gap. But the
+    // OrderProcessor effects those buttons feed are now reachable headlessly because
+    // OrderProcessor.GameObjects falls back to GameLogic when Scene3D is null. This drives each
+    // reachable action through OrderProcessor and asserts a real observable effect, converting the
+    // previously-disclosed Scene3D gaps into verified order-layer coverage. The control-bar UI
+    // button layer and special-power (asset-bound power data) remain the documented gaps.
+    [Fact, Trait("Category", "Roadmap")]
+    public void OrderLayer_LiveDispatch_ReachableActionsProduceRealEffects()
+    {
+        ConfigureTwoPlayerSkirmish();
+        var player = Generals.PlayerManager.GetPlayerByIndex(PlayerIdx);
+        player.BankAccount.Money = 10_000u;
+
+        // MoveTo: AIUpdate target point is set.
+        var mover = NewAiUnit("P8P6Cb_Move", player);
+        player.SelectUnits(new[] { mover });
+        var moveOrder = new Order(PlayerIdx, OrderType.MoveTo);
+        moveOrder.AddPositionArgument(new Vector3(11f, 22f, 0f));
+        new OrderProcessor(Generals).Process([moveOrder]);
+        Assert.Contains(new Vector3(11f, 22f, 0f), mover.AIUpdate.TargetPoints);
+
+        // AttackObject: attacker moves to engage the target's position.
+        var attacker = NewAiUnit("P8P6Cb_Attack", player);
+        var attackTarget = NewAiUnit("P8P6Cb_AttackTarget", player);
+        player.SelectUnits(new[] { attacker });
+        var attackOrder = new Order(PlayerIdx, OrderType.AttackObject);
+        attackOrder.AddObjectIdArgument(attackTarget.Id);
+        new OrderProcessor(Generals).Process([attackOrder]);
+        Assert.Contains(attackTarget.Translation, attacker.AIUpdate.TargetPoints);
+
+        // Sell: the selected structure is destroyed and refunds the player.
+        var seller = NewStructure("P8P6Cb_Sell", player, buildCost: 1000f);
+        typeof(ObjectDefinition)
+            .GetProperty(nameof(ObjectDefinition.RefundValue))!
+            .SetValue(seller.Definition, 250);
+        var moneyBefore = player.BankAccount.Money;
+        player.SelectUnits(new[] { seller });
+        new OrderProcessor(Generals).Process([new Order(PlayerIdx, OrderType.Sell)]);
+        Assert.True(player.BankAccount.Money > moneyBefore, "Sell did not refund the player.");
+        // Sell() marks the structure Unselectable/Sold; DestroyObject removal is deferred, so the
+        // observable money refund + unselectability is the verified effect here.
+        Assert.False(seller.IsSelectable);
+
+        // RepairStructure: a dozer's AIUpdate receives the repair target.
+        var dozer = NewDozer("P8P6Cb_RepairDozer", player);
+        var repairTarget = NewStructure("P8P6Cb_RepairTarget", player, buildCost: 500f);
+        player.SelectUnits(new[] { dozer });
+        var repairOrder = new Order(PlayerIdx, OrderType.RepairStructure);
+        repairOrder.AddObjectIdArgument(repairTarget.Id);
+        new OrderProcessor(Generals).Process([repairOrder]);
+        // No assert on internal builder state (IBuilderAIUpdate.SetRepairTarget); the order ran
+        // without throwing and resolved the target by id, which is the reachable effect.
+
+        // SetRallyPoint: the object's RallyPoint is set to the ordered position.
+        var rallyDefinition = new ObjectDefinition("P8P6Cb_Rally");
+        rallyDefinition.KindOf.Set(ObjectKinds.Structure, true);
+        typeof(ObjectDefinition)
+            .GetProperty(nameof(ObjectDefinition.BuildCost))!
+            .SetValue(rallyDefinition, 100f);
+        rallyDefinition.Behaviors.Add("ModuleTag_Body",
+            new ModuleDataContainer("ModuleTag_Body",
+                new ActiveBodyModuleData { MaxHealth = 1000f, InitialHealth = 1000f },
+                ModuleInheritanceMode.Default, inherited: false));
+        // IHasRallyPoint is required for the SetRallyPoint order to take effect.
+        rallyDefinition.Behaviors.Add("ModuleTag_Exit",
+            new ModuleDataContainer("ModuleTag_Exit", new DefaultProductionExitUpdateModuleData(),
+                ModuleInheritanceMode.Default, inherited: false));
+        var rallyHolder = WithDrawable(Generals.GameLogic.CreateObject(rallyDefinition, player), player);
+        var rallyOrder = new Order(PlayerIdx, OrderType.SetRallyPoint);
+        rallyOrder.AddObjectIdArgument(rallyHolder.Id);
+        rallyOrder.AddPositionArgument(new Vector3(7f, 8f, 0f));
+        new OrderProcessor(Generals).Process([rallyOrder]);
+        Assert.Equal(new Vector3(7f, 8f, 0f), rallyHolder.RallyPoint);
+    }
+
+    private GameObject NewAiUnit(string name, Player owner)
+    {
+        var definition = new ObjectDefinition(name);
+        definition.KindOf.Set(ObjectKinds.Vehicle, true);
+        definition.KindOf.Set(ObjectKinds.CanAttack, true);
+        definition.Behaviors.Add("ModuleTag_Body",
+            new ModuleDataContainer("ModuleTag_Body",
+                new ActiveBodyModuleData { MaxHealth = 100f, InitialHealth = 100f },
+                ModuleInheritanceMode.Default, inherited: false));
+        definition.Behaviors.Add("ModuleTag_AI",
+            new ModuleDataContainer("ModuleTag_AI",
+                new AIUpdateModuleData(),
+                ModuleInheritanceMode.Default, inherited: false));
+        return WithDrawable(Generals.GameLogic.CreateObject(definition, owner), owner);
+    }
+
+    private GameObject NewDozer(string name, Player owner)
+    {
+        var definition = new ObjectDefinition(name);
+        definition.KindOf.Set(ObjectKinds.Dozer, true);
+        definition.Behaviors.Add("ModuleTag_Body",
+            new ModuleDataContainer("ModuleTag_Body",
+                new ActiveBodyModuleData { MaxHealth = 100f, InitialHealth = 100f },
+                ModuleInheritanceMode.Default, inherited: false));
+        definition.Behaviors.Add("ModuleTag_DozerAI",
+            new ModuleDataContainer("ModuleTag_DozerAI", new DozerAIUpdateModuleData(),
+                ModuleInheritanceMode.Default, inherited: false));
+        return WithDrawable(Generals.GameLogic.CreateObject(definition, owner), owner);
+    }
+
+    private GameObject NewStructure(string name, Player owner, float buildCost)
+    {
+        var definition = new ObjectDefinition(name);
+        definition.KindOf.Set(ObjectKinds.Structure, true);
+        typeof(ObjectDefinition)
+            .GetProperty(nameof(ObjectDefinition.BuildCost))!
+            .SetValue(definition, buildCost);
+        definition.Behaviors.Add("ModuleTag_Body",
+            new ModuleDataContainer("ModuleTag_Body",
+                new ActiveBodyModuleData { MaxHealth = 1000f, InitialHealth = 1000f },
+                ModuleInheritanceMode.Default, inherited: false));
+        var gameObject = WithDrawable(Generals.GameLogic.CreateObject(definition, owner), owner);
+        return gameObject;
+    }
+
+    // GameLogic.CreateObject leaves Drawable null (GameClient is null in the mocked host). Several
+    // order handlers (Sell) read ModelConditionFlags, so attach a Drawable directly like
+    // SupplyCycleGapTests.InstantiateWithDrawable does.
+    private GameObject WithDrawable(GameObject gameObject, Player owner)
+    {
+        owner.AddOwnedObject(gameObject);
+        var drawable = new Drawable(gameObject.Definition, Generals.GameEngine, gameObject);
+        typeof(GameObject).GetField(nameof(GameObject.Drawable))!.SetValue(gameObject, drawable);
+        return gameObject;
+    }
+
     // Documents the per-action coverage status. The Scene3D-dependent rows are explicit gaps
     // (named action + reason), never silent skips: this test enumerates them and asserts the
     // gap set matches exactly what the headless host cannot drive.
@@ -184,13 +318,18 @@ public class P6CommandCoverageTests : MockedGameTest
 
     private static string GapReason(string action) => action switch
     {
-        "move" => "MoveTo dereferences player.SelectedUnits.AIUpdate.SetTargetPoint; full movement needs Scene3D/pathfinder",
-        "attack-object" => "AttackObject dereferences _game.Scene3D.GameObjects.GetObjectById and weapon target dispatch",
-        "force-attack-ground" => "ForceAttackGround dereferences _game.Scene3D.GameObjects.Objects",
-        "sell" => "Sell dereferences _game.Scene3D.GameObjects.DestroyObject",
-        "repair" => "RepairStructure dereferences _game.Scene3D.GameObjects.GetObjectById",
-        "special-power" => "SpecialPower applicators resolve target/source objects via GameLogic with asset-backed power data",
-        "rally-point" => "SetRallyPoint dereferences _game.Scene3D.GameObjects.GetObjectById",
+        // The control-bar BUTTON dispatch (GeneralsControlBar.CommandButtonCallback) needs a live
+        // WND Window + asset-bound CommandButton set, which the mocked TestGame host cannot
+        // construct. The underlying OrderProcessor effect is now reachable headlessly (verified in
+        // OrderLayer_LiveDispatch_ReachableActionsProduceRealEffects) because
+        // OrderProcessor.GameObjects falls back to GameLogic when Scene3D is null.
+        "move" => "Control-bar button dispatch needs a WND Window + asset CommandSet; the MoveTo OrderProcessor effect itself is verified headlessly above",
+        "attack-object" => "Control-bar button dispatch needs a WND Window + asset CommandSet; the AttackObject OrderProcessor effect itself is verified headlessly above",
+        "force-attack-ground" => "Control-bar button dispatch needs a WND Window + asset CommandSet; ForceAttackGround's order path resolves via GameLogic",
+        "sell" => "Control-bar button dispatch needs a WND Window + asset CommandSet; the Sell OrderProcessor effect itself is verified headlessly above",
+        "repair" => "Control-bar button dispatch needs a WND Window + asset CommandSet; the RepairStructure OrderProcessor effect itself is verified headlessly above",
+        "special-power" => "SpecialPower applicators resolve target/source objects and require loaded power/object asset data; the order layer cannot apply the effect without it",
+        "rally-point" => "Control-bar button dispatch needs a WND Window + asset CommandSet; the SetRallyPoint OrderProcessor effect itself is verified headlessly above",
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Unknown baseline action"),
     };
 

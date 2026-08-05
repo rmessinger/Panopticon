@@ -15,7 +15,7 @@ internal sealed class WeaponTarget
 
     public Vector3 TargetPosition => TargetType == WeaponTargetType.Position
         ? TargetGroundPosition.Value
-        : GetTargetObject().Translation;
+        : GetTargetObject()?.Translation ?? Vector3.Zero;
 
     internal WeaponTarget(in Vector3 targetGroundPosition)
     {
@@ -35,9 +35,11 @@ internal sealed class WeaponTarget
 
     public void DoDamage(DamageType damageType, Fix64 amount, DeathType deathType, GameObject damageDealer)
     {
-        if (TargetType == WeaponTargetType.Object)
+        // A projectile may detonate after its target object has already been destroyed and removed;
+        // in that case there is nothing to damage.
+        if (TargetType == WeaponTargetType.Object && GetTargetObject() is { } targetObject)
         {
-            GetTargetObject().AttemptDamage(new DamageInfoInput(damageDealer)
+            targetObject.AttemptDamage(new DamageInfoInput(damageDealer)
             {
                 DamageType = damageType,
                 DeathType = deathType,

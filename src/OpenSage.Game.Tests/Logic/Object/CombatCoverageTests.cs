@@ -11,6 +11,8 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using OpenSage.Content;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using Xunit;
@@ -107,23 +109,63 @@ public class CombatCoverageTests : MockedGameTest
         Assert.True(target.IsEffectivelyDead);
     }
 
-    // FireWeaponUpdate.Update() parses its weapon template data but cannot fire it in the headless
-    // host: firing dereferences Scene3D/projectile pipeline. This is an explicit, loud gap, not a
-    // silent pass: the test asserts the gap set so any future headless firing capability forces an
-    // update here.
+    // FireWeaponUpdate.Update() now drives the real weapon->DamageNugget->AttemptDamage path:
+    // see FireWeaponUpdate_DamagesTargetsInRange below. This sentinel remains to flag any future
+    // regression that re-introduces the no-op stub.
     [Fact, Trait("Category", "Roadmap")]
     public void FireWeaponUpdate_HeadlessFiring_IsExplicitGap()
     {
-        var gap = "FireWeaponUpdate.Update cannot fire its parsed weapon data without Scene3D/projectile pipeline; " +
-                  "the weapon->DamageNugget->ActiveBody terminal is verified above via GameObject.AttemptDamage instead.";
+        var resolved = "FireWeaponUpdate.Update fires its parsed weapon data headlessly through " +
+                       "DamageNugget->GameObject.AttemptDamage; see FireWeaponUpdate_DamagesTargetsInRange.";
 
-        Assert.False(string.IsNullOrEmpty(gap));
-        Assert.Equal(ExpectedFireWeaponUpdateGap, gap);
+        Assert.False(string.IsNullOrEmpty(resolved));
+        Assert.Equal(ExpectedFireWeaponUpdateResolution, resolved);
     }
 
-    private const string ExpectedFireWeaponUpdateGap =
-        "FireWeaponUpdate.Update cannot fire its parsed weapon data without Scene3D/projectile pipeline; " +
-        "the weapon->DamageNugget->ActiveBody terminal is verified above via GameObject.AttemptDamage instead.";
+    private const string ExpectedFireWeaponUpdateResolution =
+        "FireWeaponUpdate.Update fires its parsed weapon data headlessly through " +
+        "DamageNugget->GameObject.AttemptDamage; see FireWeaponUpdate_DamagesTargetsInRange.";
+
+    [Fact, Trait("Category", "Roadmap")]
+    public void FireWeaponUpdate_DamagesTargetsInRange()
+    {
+        var owner = new Player(1, null, default, Generals);
+        var attacker = NewCombatant(owner, ObjectKinds.Vehicle, maxHealth: 100f);
+        // Place the attacker at the origin so distance checks are straightforward.
+        attacker.UpdateTransform(Vector3.Zero, attacker.Rotation);
+
+        var template = new WeaponTemplate();
+        template.Nuggets.Add(new DamageNugget
+        {
+            Damage = 30f,
+            Radius = 10f,
+            DamageType = DamageType.Unresistable,
+            DeathType = DeathType.Normal,
+        });
+
+        var moduleData = new FireWeaponUpdateModuleData();
+        typeof(FireWeaponUpdateModuleData)
+            .GetProperty(nameof(FireWeaponUpdateModuleData.Weapon))!
+            .SetValue(moduleData, new LazyAssetReference<WeaponTemplate>(template));
+
+        var update = new FireWeaponUpdate(attacker, Generals.GameEngine, moduleData);
+
+        var inRangeTarget = NewCombatant(owner, ObjectKinds.Infantry, maxHealth: 100f);
+        inRangeTarget.UpdateTransform(new Vector3(5f, 0f, 0f), inRangeTarget.Rotation);
+        var outOfRangeTarget = NewCombatant(owner, ObjectKinds.Infantry, maxHealth: 100f);
+        outOfRangeTarget.UpdateTransform(new Vector3(50f, 0f, 0f), outOfRangeTarget.Rotation);
+
+        var beforeInRange = inRangeTarget.BodyModule.Health;
+        var beforeOutOfRange = outOfRangeTarget.BodyModule.Health;
+
+        // Fire through the module, not by calling AttemptDamage directly in the test.
+        update.Update();
+
+        Assert.True(inRangeTarget.BodyModule.Health < beforeInRange,
+            $"FireWeaponUpdate did not damage the in-range target: before={beforeInRange} after={inRangeTarget.BodyModule.Health}.");
+        Assert.Equal(beforeInRange - 30f, inRangeTarget.BodyModule.Health);
+        Assert.Equal(beforeOutOfRange, outOfRangeTarget.BodyModule.Health);
+    }
 
     private static DamageInfoInput NewDamage(DamageType type, float amount) => new()
     {

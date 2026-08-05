@@ -104,8 +104,26 @@ internal sealed class WeaponStateMachine
         _currentState.OnEnterState();
     }
 
+    /// <summary>
+    /// Forces the state machine back to Inactive outside of the normal <see cref="Update"/> loop.
+    /// GameObject.LogicTick only calls Weapon.LogicTick (and hence Update) while the weapon's
+    /// Attacking flag is set; whenever the target is cleared while mid fire-cycle (e.g. a turret
+    /// recentering, an order clearing the target, or a killed target being disarmed), Attacking is
+    /// cleared immediately and Update would never run again, leaving whichever state was active
+    /// (e.g. Firing) - and its ModelConditionFlags such as FiringA - stuck forever. Called by
+    /// Weapon.SetTarget(null) so OnExitState always runs and those flags always clear.
+    /// </summary>
+    public void ForceInactive()
+    {
+        if (!IsInactive)
+        {
+            TransitionToState(WeaponState.Inactive);
+        }
+    }
+
     public void Update()
     {
+        var transitions = 0;
         while (true)
         {
             // TODO: Fix timing. Need to use actual time that previous state ended.
@@ -113,6 +131,15 @@ internal sealed class WeaponStateMachine
 
             if (nextState != null)
             {
+                // Guard against a zero-min-duration fire cycle oscillating forever within one tick
+                // (CurrentFrame does not advance inside this loop). Diagnostic: surface the weapon.
+                if (++transitions > 10_000)
+                {
+                    throw new InvalidOperationException(
+                        $"Weapon state machine stuck transitioning: weapon='{_context.Weapon.Template.Name}' " +
+                        $"on object='{_context.GameObject.Definition.Name}' current={_currentState} next={nextState}");
+                }
+
                 TransitionToState(nextState.Value);
             }
             else

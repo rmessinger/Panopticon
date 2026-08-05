@@ -4,4 +4,5 @@ public enum BuiltInScenario
 {
     AlpineAssaultUSAvGLA,
     AlpineAssaultUSAvGLAFullBuild,
+    UnitValidationGround,
 }

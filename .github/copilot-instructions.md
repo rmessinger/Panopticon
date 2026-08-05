@@ -1,6 +1,6 @@
 # OpenSAGE Copilot Instructions
 
-OpenSAGE is a C# (.NET 8) open-source reimplementation of the SAGE game engine (Command & Conquer: Generals, Battle for Middle-earth, etc.). It reads original game data files but contains no game assets.
+OpenSAGE is a C# (.NET 8) simulation framework built on the SAGE game engine (Command & Conquer: Generals, Battle for Middle-earth, etc.). See `docs/roadmap/README.md` for the project vision and roadmap.
 
 ## Response Style
 
@@ -30,6 +30,8 @@ dotnet run --project src/OpenSage.Launcher
 ```
 
 Tests that need actual game files installed are annotated with `[GameFact(SageGame.X)]`. These are skipped in CI. Tests without game files extend `MockedGameTest`.
+
+"Skipped in CI" means CI runners have no game install (or GPU), not that these tests are unrunnable locally. Before assuming an install- or GPU-dependent test cannot run in the current environment, check: a game install via its env var (e.g. `CNC_GENERALS_PATH`) or `GameInstallation.FindAll`; a usable graphics device via `vulkaninfo --summary` (or D3D11 on Windows / Metal on macOS); and a non-snap .NET via `which dotnet`. Dev and agent environments frequently have all three, in which case `[GameFact]` tests, the TestHarness (windowed and `--headless`), and the Unit Validation Ground run normally.
 
 CI (`CI`, `Debug Build`, `Format`) only runs on pushes to `main`, not on branches or pull requests, to conserve Actions usage. Before pushing any commit, run the build, the non-interactive test suite, and the format check locally (the three commands above) and fix any failures — this is the only verification those changes get before landing on `main`.
 

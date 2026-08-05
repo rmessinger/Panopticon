@@ -122,6 +122,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
 | [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes the stubbed water/ground pathfinding layer and adds ship combat/production, validated against BFME2's existing ship content. Gated on Track P only. |
 | [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Deformable terrain & destruction: terrain deformation data model, runtime mesh/rendering update, weapon-driven terrain deformation, physics engine integration, physics-based structural destruction, destruction-terrain interaction, persistence/replay, authoring/validation tooling. |
+| [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md) | human | Rendering clarity & image quality: high-DPI/resolution correctness, graphics settings & fidelity presets, visual regression harness, MSAA, cutout/alpha-test clarity, gamma-correct rendering, texture filtering & mip quality, shadow quality tier, resolution-independent 2D/UI. Not gated on Track P. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `OpenSage.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
 | [`implementation-checklist.md`](implementation-checklist.md) | human | Single granular change list: every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
@@ -150,14 +151,16 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (scaling toolkit). |
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
 | [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
+| [`deep-dives/g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | Track G phase G1 - High-DPI drawable & resolution correctness (logical points versus physical pixels across window, panel, viewport and GUI). |
 
 ---
 
 ## Tracks at a glance
 
 Track layout: a prerequisite Playable Baseline track, a shared Foundations track, and parallel
-Scale, External Assets, Gameplay Content, Naval Warfare, and Deformable Terrain & Destruction
-tracks. Phase order is approximate; cross-track dependencies appear in each track document.
+Scale, External Assets, Gameplay Content, Naval Warfare, Deformable Terrain & Destruction, and
+Rendering Clarity tracks. Phase order is approximate; cross-track dependencies appear in each
+track document.
 
 - [Track P - Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
   arbitrary-command harness · P1 skirmish setup & player relationships · P2 skirmish AI opponent ·
@@ -190,6 +193,12 @@ tracks. Phase order is approximate; cross-track dependencies appear in each trac
   seam) · F5 physics-based structural destruction (replaces canned rubble/damage-state model
   swap) · F6 destruction-terrain interaction (debris/craters block pathing & placement) · F7
   persistence/replay/determinism · F8 authoring/validation tooling.
+- [Track G - Rendering Clarity & Image Quality](track-g-rendering-clarity.md): G1 high-DPI
+  drawable & resolution correctness · G2 graphics settings & fidelity presets
+  (`Faithful`/`Enhanced`) · G3 visual regression harness · G4 multisample antialiasing · G5
+  cutout & alpha-test clarity (the screen-door fix) · G6 gamma-correct rendering · G7 texture
+  filtering & mip quality · G8 shadow quality tier · G9 resolution-independent 2D & UI. Not gated
+  on Track P.
 
 ### Cross-track dependencies
 
@@ -211,6 +220,10 @@ tracks. Phase order is approximate; cross-track dependencies appear in each trac
 - Track F's F5/F6 (physics-based structural destruction, destruction-terrain interaction) depend
   on Track P's P6 combat coverage and P6-3 death cleanup - destruction hooks into the same
   weapon-hit and death-notification paths those phases verify.
+- Track G is the only track not gated on Track P: it changes presentation only and no simulation
+  behaviour. It coordinates with B5 (rendering at scale) over pipeline-description plumbing and
+  with A3 (sim/presentation seam) over the pixel-versus-logical-point split, and its G3 golden
+  frames guard Track F's terrain-rendering changes (F2/F8).
 
 ---
 
@@ -276,6 +289,21 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | F7 - Persistence, replay & determinism | `░░░░░░░░░░` | 0 / 1 |
 | F8 - Authoring & validation tooling | `░░░░░░░░░░` | 0 / 1 |
 | Track F total | `░░░░░░░░░░` | 0 / 8 |
+
+### Track G - Rendering Clarity & Image Quality (not gated on Track P)
+
+| Phase | Progress | Items |
+|---|---|---|
+| G1 - High-DPI & resolution correctness | `░░░░░░░░░░` | 0 / 4 |
+| G2 - Graphics settings & fidelity presets | `░░░░░░░░░░` | 0 / 1 |
+| G3 - Visual regression harness | `░░░░░░░░░░` | 0 / 1 |
+| G4 - Multisample antialiasing | `░░░░░░░░░░` | 0 / 1 |
+| G5 - Cutout & alpha-test clarity | `░░░░░░░░░░` | 0 / 1 |
+| G6 - Gamma-correct rendering | `░░░░░░░░░░` | 0 / 1 |
+| G7 - Texture filtering & mip quality | `░░░░░░░░░░` | 0 / 1 |
+| G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
+| G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 1 |
+| Track G total | `░░░░░░░░░░` | 0 / 12 |
 
 ---
 

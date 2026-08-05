@@ -11,6 +11,14 @@ public sealed class DeltaTimer : IDisposable
 
     public TimeInterval CurrentGameTime { get; private set; }
 
+    /// <summary>
+    /// When set, <see cref="Update"/> advances game time by this fixed delta instead of measuring
+    /// real elapsed time. Used by deterministic, headless measurement (the Unit Validation Ground)
+    /// so each call advances exactly one fixed step regardless of machine speed; null (default) uses
+    /// the real stopwatch. See deep dive P9 §2.9.
+    /// </summary>
+    public TimeSpan? FixedDelta { get; set; }
+
     public DeltaTimer()
     {
         _stopwatch = new Stopwatch();
@@ -37,6 +45,12 @@ public sealed class DeltaTimer : IDisposable
 
     public void Update()
     {
+        if (FixedDelta is { } fixedDelta)
+        {
+            CurrentGameTime = new TimeInterval(CurrentGameTime.TotalTime + fixedDelta, fixedDelta);
+            return;
+        }
+
         var now = GetTimeNow();
         var deltaTime = now - _lastUpdate;
         _lastUpdate = now;

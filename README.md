@@ -5,9 +5,9 @@
 [![Discord Chat](https://img.shields.io/discord/398393968234332161.svg?logo=discord)](https://discord.gg/G2FhZUT)
 [![codecov](https://codecov.io/gh/OpenSAGE/OpenSAGE/branch/master/graph/badge.svg)](https://codecov.io/gh/OpenSAGE/OpenSAGE)
 
-**OpenSAGE**: a free, open source re-implementation of [SAGE](https://en.wikipedia.org/wiki/SAGE_(game_engine)), the 3D 
+**OpenSAGE**: a free, open source simulation framework built on [SAGE](https://en.wikipedia.org/wiki/SAGE_(game_engine)), the 3D 
 real time strategy (RTS) engine used in Command & Conquer™: Generals and other 
-RTS titles from EA Pacific.
+RTS titles from EA Pacific. See [docs/roadmap/README.md](docs/roadmap/README.md) for the project vision and roadmap.
 
 This project is being developed with an initial focus on Command & Conquer:
 Generals and Command & Conquer: Generals Zero Hour. Support for other SAGE-based
