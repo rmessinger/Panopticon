@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Override the global net10.0 TFM only to keep Avalonia's multi-targeting happy; Avalonia 12
+         runs as a normal Exe on Linux/macOS/Windows. -->
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>OpenSage.Tools.ReplaySketch.Avalonia</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenSage.Tools.ReplaySketch.Core\OpenSage.Tools.ReplaySketch.Core.csproj" />
+  </ItemGroup>
+
+</Project>
