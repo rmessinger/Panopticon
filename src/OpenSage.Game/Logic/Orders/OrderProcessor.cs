@@ -89,6 +89,7 @@ public sealed class OrderProcessor
                     break;
                 // TODO
                 case OrderType.MoveTo:
+                case OrderType.AttackMove:
                     {
                         var targetPosition = order.Arguments[0].Value.Position;
                         GameObject? lastUnit = null;

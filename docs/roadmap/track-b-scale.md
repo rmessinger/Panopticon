@@ -36,10 +36,10 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 | B2 | — | — | — |
 | B3 | — | — | — |
 | B4 | — | — | — |
-| B4a | [Larger maps](deep-dives/b4a-larger-maps.md) | [§](deep-dives/b4a-larger-maps.md#architecture-diagrams) `†` | — |
+| B4a | [Larger maps](deep-dives/b4a-larger-maps.md) | [§](deep-dives/b4a-larger-maps.md#architecture-diagrams) | — |
 | B5 | — | — | — |
-| B6 | [Distributed sim](deep-dives/b6-distributed-simulation.md) | [§6](deep-dives/b6-distributed-simulation.md#6-architecture-diagrams) `†` | — |
-| B7 | [Variable fidelity](deep-dives/b7-variable-fidelity.md) | [§8](deep-dives/b7-variable-fidelity.md#8-architecture-diagrams) `†` | — |
+| B6 | [Distributed sim](deep-dives/b6-distributed-simulation.md) | [§6](deep-dives/b6-distributed-simulation.md#6-architecture-diagrams) | — |
+| B7 | [Variable fidelity](deep-dives/b7-variable-fidelity.md) | [§8](deep-dives/b7-variable-fidelity.md#8-architecture-diagrams) | — |
 
 ## Cross-track dependencies
 

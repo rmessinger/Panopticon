@@ -135,6 +135,15 @@ public sealed class Order
         return order;
     }
 
+    public static Order CreateAttackMove(int playerId, in Vector3 targetPosition)
+    {
+        var order = new Order(playerId, OrderType.AttackMove);
+
+        order.AddPositionArgument(targetPosition);
+
+        return order;
+    }
+
     public static Order CreateSetRallyPointOrder(int playerId, List<ObjectId> objectIds, in Vector3 targetPosition)
     {
         var order = new Order(playerId, OrderType.SetRallyPoint);

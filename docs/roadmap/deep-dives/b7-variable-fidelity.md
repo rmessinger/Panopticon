@@ -133,50 +133,216 @@ trade-off across matrix cells side by side.
 
 ## 8. Architecture Diagrams
 
-Diagrams for this phase will be elaborated once B7 moves to active implementation. The
-placeholder below captures the key types variable fidelity introduces.
+Variable fidelity attaches to the existing per-object update path. `GameLogic.Update` drains a
+sleepy-update queue of `UpdateModule` instances, each of which returns an `UpdateSleepTime` that
+sets its next wake frame (`src/OpenSage.Game/Logic/GameLogic.cs`,
+`src/OpenSage.Game/Logic/Object/Update/UpdateModule.cs`). B7 does not fork this loop. It adds a
+fidelity policy seam (the A4 `Fidelity policy` seam in [seams.md](../seams.md)) that classifies each
+`GameObject` by importance, then leans on machinery that already exists: temporal LOD widens the
+wake stride through `AwakenUpdateModule`, simplified behavior substitutes a cheaper `UpdateModule`
+via module composition, and aggregation clusters units using `PartitionCellManager`. The engine's
+`StaticGameLod`/`LodType` machinery (`src/OpenSage.Game/Lod/`) is presentation-only (particles,
+shadows, model detail) and is orthogonal: B7 introduces simulation-side fidelity and reuses the LOD
+naming convention without touching that path.
+
+Types marked `<<engine>>` exist today. Types marked `<<B7-n>>` are B7 deliverables for the numbered
+sub-phase in [§5](#5-sub-phases). Cross-phase types are marked with their owning phase.
+
+### 8.1 Types
 
 ```mermaid
 classDiagram
+  class GameLogic {
+    <<engine>>
+    +IEnumerable~GameObject~ Objects
+    +Update()
+    +CreateObject(definition, player) GameObject
+    +AwakenUpdateModule(obj, module, whenToWakeUp)
+  }
+  class GameObject {
+    <<engine>>
+    +ObjectId Id
+    +IReadOnlyList~BehaviorModule~ BehaviorModules
+    +Update()
+  }
+  class UpdateModule {
+    <<engine>>
+    +Update() UpdateSleepTime
+    +NextCallFrame LogicFrame
+    #SetWakeFrame(UpdateSleepTime)
+  }
+  class AIUpdate {
+    <<engine>>
+  }
+  class PartitionCellManager {
+    <<engine>>
+    +QueryObjects(obj, pos, radius, query) IEnumerable~GameObject~
+  }
+  class Camera {
+    <<engine>>
+    +Position Vector3
+    +BoundingFrustum
+  }
+
   class FidelityLevel {
-    <<enum, pending B7>>
+    <<enum, B7-1>>
     Full
-    Reduced
-    Statistical
+    TemporalLod
+    SimplifiedBehavior
+    Aggregated
+  }
+  class FidelityContext {
+    <<B7-1>>
+    +Vector3 Position
+    +bool IsActive
+    +float LocalDensity
+    +int ShardHint
+  }
+  class IFidelityPolicy {
+    <<A4 seam, B7-1>>
+    +Classify(FidelityContext) FidelityLevel
+  }
+  class FullFidelityPolicy {
+    <<B7-1>>
+  }
+  class ReplicatedStateFidelityPolicy {
+    <<B7-1>>
+  }
+  class ViewDrivenFidelityPolicy {
+    <<B7-1>>
+  }
+  class FidelityManager {
+    <<B7-1>>
+    +Classify(objects)
+    +LevelOf(ObjectId) FidelityLevel
+  }
+  class TemporalLodController {
+    <<B7-2>>
+    +StrideFor(FidelityLevel) LogicFrameSpan
+    +Apply(obj, module)
+  }
+  class SimplifiedAIUpdate {
+    <<B7-3>>
+  }
+  class UnitAggregate {
+    <<B7-4>>
+    +Expand() IReadOnlyList~GameObject~
+  }
+  class SimShard {
+    <<B6>>
+  }
+  class ToleranceComparison {
+    <<A2>>
   }
 
-  class FidelityConfig {
-    <<pending B7>>
-    +FidelityLevel Default
-    +IReadOnlyList~ImportanceRule~ Rules
-  }
+  UpdateModule <|-- AIUpdate
+  AIUpdate <|-- SimplifiedAIUpdate
+  IFidelityPolicy <|.. FullFidelityPolicy
+  IFidelityPolicy <|.. ReplicatedStateFidelityPolicy
+  IFidelityPolicy <|.. ViewDrivenFidelityPolicy
 
-  class ImportanceRule {
-    <<pending B7>>
-    +string Selector
-    +FidelityLevel AssignedLevel
-  }
+  FidelityManager --> IFidelityPolicy : selected via A4
+  FidelityManager ..> GameLogic : classifies Objects
+  FidelityManager ..> FidelityContext : builds per object
+  FidelityContext ..> PartitionCellManager : density query
+  ReplicatedStateFidelityPolicy ..> SimShard : replicated inputs only
+  ViewDrivenFidelityPolicy ..> Camera : single-node only
+  FidelityManager ..> TemporalLodController : B7-2 wake stride
+  TemporalLodController ..> GameLogic : AwakenUpdateModule
+  FidelityManager ..> SimplifiedAIUpdate : B7-3 module swap
+  FidelityManager ..> UnitAggregate : B7-4 cluster
+  UnitAggregate ..> GameObject : expands to members
+  ToleranceComparison ..> FidelityManager : bounds error vs full baseline
 
-  class FidelityScheduler {
-    <<pending B7>>
-    +Assign(objects, config)
-    +Reclassify(objects, newContext)
-  }
+  classDef engine fill:#e8eef7,stroke:#33517a,color:#12233d
+  classDef newtype fill:#f3e8d8,stroke:#9a6b1f,color:#3d2a08
+  class GameLogic engine
+  class GameObject engine
+  class UpdateModule engine
+  class AIUpdate engine
+  class PartitionCellManager engine
+  class Camera engine
+  class FidelityLevel newtype
+  class FidelityContext newtype
+  class IFidelityPolicy newtype
+  class FullFidelityPolicy newtype
+  class ReplicatedStateFidelityPolicy newtype
+  class ViewDrivenFidelityPolicy newtype
+  class FidelityManager newtype
+  class TemporalLodController newtype
+  class SimplifiedAIUpdate newtype
+  class UnitAggregate newtype
+```
 
-  class ReducedFidelityModel {
-    <<pending B7>>
-    +Tick(dt) : statistical approximation
-  }
+`FullFidelityPolicy` is the seam's reference implementation: it classifies every object as `Full`,
+so the seam is a no-op until a reducing policy is selected. `ReplicatedStateFidelityPolicy` is the
+policy required for shared and distributed runs; it reads only replicated simulation state
+(position, activity, density, per-shard hint from [B6](b6-distributed-simulation.md)).
+`ViewDrivenFidelityPolicy` may additionally read `Camera` and is restricted to single-node scaling
+experiments, per the [§4](#4-interaction-with-reproducibility-important) decision.
 
-  class FullFidelityModel {
-    <<existing>>
-    +Tick(dt) : full simulation
-  }
+### 8.2 Classified logic tick
 
-  FidelityConfig "1" --> "N" ImportanceRule
-  FidelityScheduler --> FidelityConfig
-  FidelityScheduler ..> ReducedFidelityModel : switches to
-  FidelityScheduler ..> FullFidelityModel : switches to
+A single logic frame after classification. A high-importance object runs the full path every frame;
+a low-importance object runs a cheaper path on a widened wake stride.
+
+```mermaid
+sequenceDiagram
+  participant GL as GameLogic
+  participant FM as FidelityManager
+  participant POL as IFidelityPolicy
+  participant TLC as TemporalLodController
+  participant HI as UpdateModule (high importance)
+  participant LO as SimplifiedAIUpdate (low importance)
+
+  Note over FM,POL: B7-1 classification, hysteretic, replicated-state inputs
+  GL->>FM: Classify(Objects)
+  loop each GameObject
+    FM->>POL: Classify(FidelityContext)
+    POL-->>FM: FidelityLevel
+  end
+  FM->>TLC: apply wake stride by level
+  Note over TLC: B7-2 widens NextCallFrame to stride N for reduced levels
+
+  Note over GL: GameLogic.Update drains due sleepy modules
+  GL->>HI: Update()
+  HI-->>GL: UpdateSleepTime.None, full path, every frame
+  GL->>LO: Update()
+  Note over LO: B7-3 cheap straight-line move, no fine collision
+  LO-->>GL: UpdateSleepTime.Frames(N), sleeps N frames
+```
+
+### 8.3 Promotion and reconciliation
+
+An object gains importance (enters combat, a replicated activity change) and is promoted back to
+`Full`. Its approximated state is reconciled and the result is bounded against the full-fidelity
+baseline. Combat is replicated state, so this path holds for shared and distributed runs; a camera
+trigger is single-node only.
+
+```mermaid
+sequenceDiagram
+  participant SRC as Activity change (replicated)
+  participant FM as FidelityManager
+  participant POL as IFidelityPolicy
+  participant AGG as UnitAggregate
+  participant GL as GameLogic
+  participant TLC as TemporalLodController
+  participant CMP as ToleranceComparison
+
+  SRC->>FM: activity/density changed
+  FM->>POL: Classify(FidelityContext)
+  POL-->>FM: FidelityLevel.Full
+  Note over FM: hysteresis threshold crossed, promote to Full
+  alt was Aggregated (B7-4)
+    FM->>AGG: Expand()
+    AGG->>GL: CreateObject per member
+    GL-->>AGG: GameObject
+  end
+  FM->>TLC: reset stride to every frame
+  TLC->>GL: AwakenUpdateModule(obj, module, currentFrame)
+  Note over FM,CMP: reconcile approximated position and precision
+  FM->>CMP: check reconciled state
+  CMP-->>FM: within A2 bounded error vs full baseline
 ```
 
 ## 9. Related

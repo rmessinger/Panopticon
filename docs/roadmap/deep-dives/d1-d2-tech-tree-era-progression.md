@@ -110,11 +110,155 @@ across sharded runs.
 
 ## Architecture Diagrams
 
-Placeholder: phase D1/D2 is `Not started`. Per the [maintaining protocol](../agent/MAINTAINING.md),
-a class diagram covering `TechNode`, `TechTreeState`, `EraDefinition`, and `EraState`, plus their
-relationship to `ObjectDefinition` and `UpgradeTemplate`, and a sequence diagram covering age-up
-order → validation → timed resolution → availability update, must replace this placeholder before
-D1's first task card is marked `Ready`.
+Types stereotyped `<<D1>>` or `<<D2>>` are deliverables of this phase and do not yet exist in `src/`.
+All other types are existing engine types (see the [appendix](#appendix-current-code-agent-context)
+for their files). Design rationale lives in [section 2](#2-design); the diagrams show structure and
+flow only.
+
+### Types
+
+```mermaid
+classDiagram
+  class TechNode {
+    <<D1>>
+    +string Id
+    +TechNodeKind Kind
+    +IReadOnlyList~string~ Requires
+    +int? RequiredEra
+  }
+  class TechNodeKind {
+    <<D1, enum>>
+    Unit
+    Building
+    Upgrade
+    Era
+  }
+  class TechTreeState {
+    <<D1>>
+    +IsAvailable(nodeId) bool
+    +Unlock(nodeId) void
+    +Persist(StatePersister) void
+  }
+  class EraDefinition {
+    <<D2>>
+    +int Era
+    +string DisplayName
+    +IReadOnlyList~string~ RequiredTechNodeIds
+    +int AgeUpCost
+    +LogicFrameSpan AgeUpDuration
+  }
+  class EraState {
+    <<D2>>
+    +int CurrentEra
+    +bool IsAgingUp
+    +Persist(StatePersister) void
+  }
+
+  class ObjectDefinition {
+    +string Name
+    +ObjectPrerequisites Prerequisites
+    +LogicFrameSpan BuildTime
+    +float BuildCost
+  }
+  class UpgradeTemplate {
+    +UpgradeType Type
+    +string DisplayName
+    +LogicFrameSpan BuildTime
+    +float BuildCost
+  }
+  class ObjectPrerequisites {
+    +List~ObjectPrerequisiteList~ Objects
+    +List~SciencePrerequisiteList~ Sciences
+  }
+  class Player {
+    +BankAccount BankAccount
+    +CanProduceObject(ObjectDefinition) bool
+    +Persist(StatePersister) void
+  }
+  class GameLogic {
+    +LogicFrame CurrentFrame
+    +Persist(StatePersister) void
+  }
+
+  Player "1" --> "1" TechTreeState : new per-player state
+  Player "1" --> "1" EraState : new per-player state
+  GameLogic "1" --> "N" Player : per-match players
+  TechTreeState ..> TechNode : tracks unlocked ids
+  TechNode ..> ObjectDefinition : adapts (Kind Unit/Building)
+  TechNode ..> UpgradeTemplate : adapts (Kind Upgrade)
+  TechNode ..> ObjectPrerequisites : generalizes Requires from
+  ObjectDefinition "1" --> "0..1" ObjectPrerequisites : existing per-object graph
+  EraState ..> EraDefinition : current + target era
+  EraDefinition ..> TechNode : RequiredTechNodeIds
+  TechTreeState ..> EraState : RequiredEra gate reads CurrentEra
+```
+
+### Age-up flow (D2)
+
+Actuation routes through the existing order pipeline (`OrderProcessor.Process`), reusing
+`OrderProcessor.TryDebit` for cost and the `ProductionJob` timing pattern for the time gate. `OrderType.AgeUp`
+is a new D2 enum member; the timed resolution mirrors `ProductionUpdate.Update` calling
+`ProductionJob.Update` then `ProductionJob.Produce` each logic frame.
+
+```mermaid
+sequenceDiagram
+  participant SRC as ReplaySketch or ControlBar
+  participant OP as OrderProcessor
+  participant TT as TechTreeState
+  participant BA as BankAccount
+  participant ES as EraState
+  participant GL as GameLogic
+  participant PU as ProductionUpdate-style tick
+
+  SRC->>OP: Order(playerIndex, OrderType.AgeUp)
+  OP->>OP: Process(orders)
+  Note over OP: case OrderType.AgeUp
+  loop each EraDefinition.RequiredTechNodeIds
+    OP->>TT: IsAvailable(nodeId)
+    TT-->>OP: bool
+  end
+  OP->>BA: TryDebit(account, EraDefinition.AgeUpCost)
+  BA-->>OP: debited or rejected
+  alt validated and affordable
+    OP->>ES: begin age-up (IsAgingUp = true, target era)
+    loop each logic frame until AgeUpDuration
+      PU->>PU: Update()
+      Note over PU: progress += 1 frame (ProductionJob.Update pattern)
+    end
+    PU->>ES: CurrentEra++, IsAgingUp = false
+    Note over ES,TT: TechNode.RequiredEra gates now pass for the new era
+  else rejected
+    OP-->>SRC: no state change
+  end
+```
+
+### Prerequisite evaluation on a build/produce availability check (D1)
+
+The existing buildability predicate `GameObject.CanConstructUnit` already ANDs `Player.CanProduceObject`
+(object/science prerequisites) with `ProductionUpdate.CanProduceObject`. D1 adds a `TechTreeState.IsAvailable`
+gate in the same predicate, so `TechNode.Requires` and `RequiredEra` gate the command button alongside the
+existing checks.
+
+```mermaid
+sequenceDiagram
+  participant CB as ControlBar command button
+  participant GO as GameObject
+  participant PL as Player
+  participant PU as ProductionUpdate
+  participant TT as TechTreeState
+
+  CB->>GO: CanConstructUnit(ObjectDefinition)
+  GO->>GO: HasEnoughMoney(BuildCost)
+  GO->>PL: CanProduceObject(ObjectDefinition)
+  Note over PL: existing ObjectPrerequisites (Objects AND'd, each OR'd) + Sciences
+  PL-->>GO: bool
+  GO->>PU: CanProduceObject(ObjectDefinition)
+  PU-->>GO: bool
+  GO->>TT: IsAvailable(nodeId for definition)
+  Note over TT: every Requires unlocked AND CurrentEra >= RequiredEra
+  TT-->>GO: bool
+  GO-->>CB: enabled only if all checks pass
+```
 
 ---
 
@@ -123,10 +267,18 @@ D1's first task card is marked `Ready`.
 - `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs`: existing per-object upgrade template;
   D1's adapter wraps this rather than replacing it.
 - `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs`: build/produce prerequisite fields D1's
-  `TechNode.Requires` generalizes.
+  `TechNode.Requires` generalizes. The `Prerequisites` field (line 524) is an
+  `ObjectPrerequisites` (`src/OpenSage.Game/Logic/Object/ObjectPrerequisites.cs`): AND'd lists of
+  OR'd `ObjectPrerequisiteList`/`SciencePrerequisiteList`, evaluated by `Player.CanProduceObject`
+  (`src/OpenSage.Game/Logic/Player.cs:403`) and gated in `GameObject.CanConstructUnit`
+  (`src/OpenSage.Game/Logic/Object/GameObject.cs:1238`).
 - `src/OpenSage.Game/Logic/GameLogic.cs`: top-level per-match state; `TechTreeState`/`EraState`
   are added as per-player state here, alongside existing `BankAccount`/player state.
 - `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs`: the existing timed-completion
   pattern that age-up resolution should mirror rather than inventing a second timing mechanism.
+  `Update()` (line 59) advances the front `ProductionJob` each frame via `ProductionJob.Update`
+  then `ProductionJob.Produce` (`src/OpenSage.Game/Logic/Object/Production/ProductionJob.cs`).
+- Orders: `src/OpenSage.Game/Logic/Orders/Order.cs`, `OrderType.cs`, and `OrderProcessor.cs`
+  (`Process` at line 28, `TryDebit` at line 651) are the pipeline the age-up order flows through.
 - Save/load: search `PersistVersion()` call sites in `Logic/` for the established
   `StatePersister` pattern D1/D2 state must follow.

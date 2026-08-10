@@ -42,7 +42,7 @@ internal sealed class UnitOrderGenerator(IGame game) : OrderGenerator(game)
             OrderType.RepairStructure => Order.CreateRepairStructure(playerId, targetId),
             OrderType.Enter => Order.CreateEnter(playerId, targetId),
             OrderType.GatherDumpSupplies => Order.CreateSupplyGatherDump(playerId, targetId),
-            OrderType.AttackMove => throw new NotImplementedException(),
+            OrderType.AttackMove => Order.CreateAttackMove(playerId, WorldPosition),
             OrderType.AddWaypoint => throw new NotImplementedException(),
             _ => null,
         };
