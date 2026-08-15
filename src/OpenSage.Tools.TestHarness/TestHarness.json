@@ -21,6 +21,9 @@
   // ValidationGroundBaselinePath   : golden baseline JSON (null/empty skips comparison)
   // ValidationGroundRefreshBaseline: true overwrites the baseline from the run instead of comparing
   // ValidationGroundReportPath     : where to write the JSON report artifact
+  // ValidationGroundHoldOrders     : true (default) starts a windowed run paused with orders held;
+  //                                  Space or the overlay button resumes (settle + attack orders),
+  //                                  then toggles active pause. Ignored by headless runs.
   // ExitAfterTargetsDestroyed      : true (default) exits once all targets are destroyed/cap hit;
   //                                  false keeps the game running until the window is closed
   //                                  (windowed only; headless always exits)
@@ -34,5 +37,6 @@
   "CaptureFrames": false,
   "KeepReplay": false,
   "GamePath": null,
+  "ValidationGroundHoldOrders": true,
   "ExitAfterTargetsDestroyed": false
 }

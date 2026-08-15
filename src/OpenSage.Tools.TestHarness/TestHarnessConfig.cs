@@ -116,6 +116,14 @@ public sealed class TestHarnessConfig
     public string? ValidationGroundReportPath { get; set; } = null;
 
     /// <summary>
+    /// When true (default), a windowed validation-ground run starts paused with the orders held so
+    /// the starting conditions can be inspected; Space (or the overlay button) resumes, which runs
+    /// the settle stage and issues the attack orders. Afterwards Space toggles active pause.
+    /// Ignored by headless runs, which always auto-issue for byte-identical reports.
+    /// </summary>
+    public bool ValidationGroundHoldOrders { get; set; } = true;
+
+    /// <summary>
     /// When true (default), the run exits once every measurable unit has resolved (its target
     /// destroyed) or the frame cap is reached, then writes the report/baseline. When false, the run
     /// does not auto-exit: the game keeps running so the roster can be observed, and the report is

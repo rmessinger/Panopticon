@@ -194,6 +194,13 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
   dotnet run --project src/OpenSage.Tools.TestHarness
 ```
 
+A windowed run starts paused with the orders held, so the formation's starting conditions can be
+inspected before anything acts (the camera pans/zooms while paused). Space, or the overlay button,
+resumes: the settle stage runs and every unit is ordered to attack its target. Afterwards Space
+toggles active pause; paused logic frames do not advance, so pausing never consumes a unit's frame
+budget or perturbs the measurement. `ValidationGroundHoldOrders: false` restores immediate
+auto-issue after the settle stage.
+
 Headless (CI regression gate, exits non-zero on regression or timeout):
 
 ```sh
@@ -216,6 +223,7 @@ All optional with defaults, in `TestHarness.json`:
 | `ValidationGroundBaselinePath` | Path to the golden baseline JSON (empty skips comparison) |
 | `ValidationGroundRefreshBaseline` | `true` overwrites the baseline from the run instead of comparing |
 | `ValidationGroundReportPath` | Where to write the JSON report artifact |
+| `ValidationGroundHoldOrders` | `true` (default) starts a windowed run paused with orders held; Space or the overlay button resumes (settle + attack orders), then toggles active pause. Ignored by headless runs |
 | `ExitAfterTargetsDestroyed` | `true` (default) exits once all targets are destroyed or the frame cap hits; `false` keeps the game running until the window is closed (windowed only; headless always exits) |
 
 ### Refreshing the baseline
