@@ -240,6 +240,10 @@ public sealed class ValidationGroundHost
         var position = new Vector3(planarPosition.X, planarPosition.Y, height);
         var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
         gameObject.UpdateTransform(position, gameObject.Rotation);
+        // Colliders are built at the origin and only refreshed on the next logic tick; a run held
+        // paused at start (ValidationGroundHoldOrders) never ticks logic, so frustum culling would
+        // cull every spawned model off-camera until resume. Refresh immediately after placement.
+        gameObject.UpdateColliders();
         return gameObject;
     }
 

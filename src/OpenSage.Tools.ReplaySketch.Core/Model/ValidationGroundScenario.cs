@@ -28,14 +28,14 @@ public sealed class ValidationGroundScenario
     /// cycles this list to give every attacking unit its own target (one target per attacker), so
     /// each unit's first-damage completion reflects its own attack rather than a sibling's.
     /// </summary>
-    public IReadOnlyList<string> TargetDefinitions { get; set; } = ["AmericaBarracks"];
+    public IReadOnlyList<string> TargetDefinitions { get; set; } = ["CarAsian1"];
 
     /// <summary>Supply-source definition names placed for gather-action units.</summary>
     public IReadOnlyList<string> SupplySourceDefinitions { get; set; } = ["AmericaSupplyCenter"];
 
     /// <summary>
     /// HP each attack target is standardized to at spawn. Attack completion is target destruction,
-    /// so a real structure's full HP (a barracks is ~1000) makes the metric HP-dominated and
+    /// so a target at its native HP (a structure's is ~1000) makes the metric HP-dominated and
     /// unfinishable for low-DPS units within the frame budget. A standardized low HP keeps the
     /// measurement weapon-differentiated (shots-to-kill from real INI damage and fire rate) and
     /// feasible for the whole roster. Zero/null leaves the target at its native HP.

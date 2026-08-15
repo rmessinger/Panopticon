@@ -6,9 +6,9 @@
     "TargetClusterRadius": 40,
     "UnitSpacing": 80,
     "FactionRowOffset": 150,
-    "TargetApproachDistance": 90
+    "TargetApproachDistance": 80
   },
-  "TargetDefinitions": ["AmericaBarracks"],
+  "TargetDefinitions": ["CarAsian1"],
   "SupplySourceDefinitions": ["AmericaSupplyCenter"],
   "TargetHp": 30,
   "SettleFrames": 30,

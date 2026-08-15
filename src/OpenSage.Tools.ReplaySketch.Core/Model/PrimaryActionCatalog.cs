@@ -35,7 +35,7 @@ public static class PrimaryActionCatalog
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> UnmeasurableAttackReasons = new Dictionary<string, string>
     {
-        ["AmericaInfantryPathfinder"] = "sniper weapon does not fire at the structure target in the sandbox",
+        ["AmericaInfantryPathfinder"] = "sniper weapon does not fire at the assigned target in the sandbox",
         ["AmericaJetAurora"] = "bomber (JetAIUpdate); a direct weapon command does not trigger its bombing run",
         ["ChinaVehicleTroopCrawler"] = "transport; no direct-fire weapon discharge in the sandbox",
         ["GLAInfantryAngryMobNexus"] = "horde composite unit; per-unit weapon targeting does not apply",
