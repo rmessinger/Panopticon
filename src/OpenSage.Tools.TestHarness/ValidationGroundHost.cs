@@ -31,33 +31,6 @@ public sealed class ValidationGroundHost
         SpawnSupplySources(plan, game);
     }
 
-    /// <summary>
-    /// Stands up one China CommandCenter in a far corner as the victory-system safety net: with AI
-    /// disabled a faction that ends up with neither a builder unit nor a structure would be marked
-    /// defeated and logic frozen (deep dive §2.1). The skirmish setup already places a starting
-    /// structure for every faction at its map start (or the fallback corner), so the roster
-    /// factions are covered; this one exists in case that spawn ever changes on a different map.
-    /// It is out of weapon range and never attacked.
-    /// </summary>
-    public void SpawnKeepAliveStructures(IGame game)
-    {
-        var factionCenters = new (int PlayerIndex, string Definition)[]
-        {
-            (3, "ChinaCommandCenter"),
-        };
-
-        foreach (var (playerIndex, definitionName) in factionCenters)
-        {
-            var player = ResolvePlayer(game, playerIndex);
-            if (player == null)
-            {
-                continue;
-            }
-
-            CreateAt(game, definitionName, new Vector3(30f + playerIndex * 10f, 30f, 0f), player);
-        }
-    }
-
     private void SpawnTargets(SpawnPlan plan, IGame game, float targetHp = 0f)
     {
         // Targets are neutral (civilian) so any faction can legally attack them.

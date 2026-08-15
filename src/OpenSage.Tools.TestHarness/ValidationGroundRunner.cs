@@ -50,19 +50,25 @@ public static class ValidationGroundRunner
         {
             if (config.Headless)
             {
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, null);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, null);
             }
             else
             {
                 Platform.Start();
                 window = new GameWindow("OpenSAGE - Unit Validation Ground", 100, 100, 1280, 800, config.Fullscreen);
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, window);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, window);
                 textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
             }
 
             game.StartSkirmishOrMultiPlayerGame(scenario.MapPath, new Network.EchoConnection(), runPlan.PlayerSettings, scenario.Seed, isMultiPlayer: false);
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
+
+            // The validation ground's ending criteria are foreign to the skirmish victory system
+            // (every unit resolved, frame cap, or window close), so make it inert rather than
+            // appeasing its defeat rule with spawned structures: with no starting buildings and no
+            // economy, the default rule would mark every roster player defeated and freeze logic.
+            game.VictorySystem.ConditionRule = new OpenSage.Logic.NeverDefeatedVictoryConditionRule();
 
             // The default tactical view looks at the map's authored centre; the validation-ground
             // formation is placed away from the civilian town there, so re-aim the camera at it
@@ -94,7 +100,6 @@ public static class ValidationGroundRunner
 
             var host = new ValidationGroundHost();
             host.Spawn(plan, game, scenario.TargetHp);
-            host.SpawnKeepAliveStructures(game);
 
             var timer = new UnitActionTimer();
             foreach (var gap in host.Gaps)

@@ -782,7 +782,7 @@ public sealed class Game : DisposableBase, IGame
             throw new Exception($"Failed to load Scene3D \"{mapFileName}\"");
         }
 
-        if (gameType != GameType.SinglePlayer)
+        if (gameType != GameType.SinglePlayer && !Configuration.SkipStartingBuildings)
         {
             var cameraSet = false;
             for (var i = 0; i < playerSettings.Length; i++)

@@ -239,16 +239,18 @@ reports are byte-identical (the determinism check).
 
 The capture relies on a few non-obvious mechanics, all wired in `Program.RunValidationGround` and
 `ValidationGroundHost`: fixed-timestep logic stepping (`Game.EnableFixedLogicTimestep`) so frame
-counts are reproducible; skirmish AI disabled on the roster players (per the "no AI" design); an
-untouched CommandCenter per faction so the victory system does not defeat factions that start with no
-buildings; one target per attacker, placed in weapon range and standardized to a low HP
+counts are reproducible; skirmish AI disabled on the roster players (per the "no AI" design); the
+victory system made inert (`NeverDefeatedVictoryConditionRule` plus
+`Configuration.SkipStartingBuildings`) so no command centers are needed and the sandbox's own
+ending criteria (all units resolved, frame cap, window close) govern; one target per attacker,
+placed in weapon range and standardized to a low HP
 (`ValidationGroundScenario.TargetHp`), so each unit's target-destruction completion is its own and
 feasible for the whole roster; and direct weapon targeting for attackers (the `AttackObject` order's
 move step suppresses fire for several units, so in-range attackers are commanded directly to isolate
 the weapon delay). A unit that destroys its target has its weapon cleared so it stops firing.
-Units the sandbox cannot measure (suicide, bomber, horde, transport, sniper that will not fire at the
-structure target) are listed in `PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as gaps;
-SpecialPower units have no implemented order path and are also gaps.
+Units the sandbox cannot measure (suicide, bomber, horde, transport, sniper that will not fire at
+the assigned target) are listed in `PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as
+gaps; SpecialPower units have no implemented order path and are also gaps.
 
 ### Live capture and accuracy verification
 

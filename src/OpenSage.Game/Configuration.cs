@@ -45,4 +45,11 @@ public sealed class Configuration
     /// to this filename inside the game's <c>Replays</c> user-data folder.
     /// </summary>
     public string SaveReplayFile { get; set; } = null;
+
+    /// <summary>
+    /// Skips the per-player skirmish starting-building (and starting-unit) spawn and the
+    /// initial camera placement on it. For sandboxes that place their own objects and aim
+    /// the camera themselves (e.g. the Unit Validation Ground).
+    /// </summary>
+    public bool SkipStartingBuildings { get; set; } = false;
 }
