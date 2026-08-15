@@ -7,7 +7,7 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 
 public class ValidationGroundEditorModelTests
 {
-    // Extent large enough that the default layout (cluster at 1000,1000) sits inside it.
+    // Extent large enough that the default layout (cluster at 600,600) sits inside it.
     private static readonly Vector3 Min = new(0f, 0f, 0f);
     private static readonly Vector3 Max = new(2000f, 2000f, 0f);
 
@@ -34,11 +34,11 @@ public class ValidationGroundEditorModelTests
     public void HitTest_AtUnitMarker_ReturnsUnit()
     {
         var model = NewModelWithSingleFaction();
-        // Single-faction unit 0 is at world (640, 960) with the default layout; with extent 0..2000
-        // into a 400px preview that projects to (128, 208).
-        Assert.Equal(new Vector3(640f, 960f, 0f), model.Plan!.UnitPlacements[0].Position);
+        // Single-faction unit 0 is at world (240, 560) with the default layout; with extent 0..2000
+        // into a 400px preview that projects to (48, 288).
+        Assert.Equal(new Vector3(240f, 560f, 0f), model.Plan!.UnitPlacements[0].Position);
 
-        var hit = model.HitTest(canvasX: 128f, canvasY: 208f, offsetX: 0, offsetY: 0, previewSize: 400f);
+        var hit = model.HitTest(canvasX: 48f, canvasY: 288f, offsetX: 0, offsetY: 0, previewSize: 400f);
 
         Assert.NotNull(hit);
         Assert.True(hit!.Value.IsTarget == false);

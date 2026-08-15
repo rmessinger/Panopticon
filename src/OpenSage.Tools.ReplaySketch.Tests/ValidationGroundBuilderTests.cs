@@ -22,12 +22,12 @@ public class ValidationGroundBuilderTests
         // The standard scenario (loaded from JSON) carries the formation; no overrides applied.
         var plan = ValidationGroundBuilder.Build(ValidationGroundScenario.Standard());
 
-        // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 1000 - 270 = 730 (totalSpan =
+        // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 600 - 270 = 330 (totalSpan =
         // 3*TargetApproach + 2*FactionRowOffset = 240 + 300). Row origin X centres the 10-unit
-        // roster on centre.X: 1000 - 9*80/2 = 640. Unit 0 is at the row origin; its target is on the
-        // target row (unitRowY + TargetApproach = 810) at the same X.
-        Assert.Equal(new Vector3(640f, 730f, 0f), plan.UnitPlacements[0].Position);
-        Assert.Equal(new Vector3(640f, 810f, 0f), plan.TargetPlacements[0].Position);
+        // roster on centre.X: 600 - 9*80/2 = 240. Unit 0 is at the row origin; its target is on the
+        // target row (unitRowY + TargetApproach = 410) at the same X.
+        Assert.Equal(new Vector3(240f, 330f, 0f), plan.UnitPlacements[0].Position);
+        Assert.Equal(new Vector3(240f, 410f, 0f), plan.TargetPlacements[0].Position);
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public class ValidationGroundBuilderTests
 
         var plan = ValidationGroundBuilder.Build(scenario);
 
-        // Single faction: unit row Y = 1000 - 80/2 = 960, target row Y = 960 + 80 = 1040.
-        Assert.Equal(new Vector3(500f, 1040f, 0f), plan.TargetPlacements[0].Position);
+        // Single faction: unit row Y = 600 - 80/2 = 560, target row Y = 560 + 80 = 640.
+        Assert.Equal(new Vector3(500f, 640f, 0f), plan.TargetPlacements[0].Position);
     }
 
     [Fact]
@@ -119,9 +119,9 @@ public class ValidationGroundBuilderTests
 
         var unitY = plan.UnitPlacements[0].Position.Y;
         var targetY = plan.TargetPlacements[0].Position.Y;
-        Assert.Equal(960f, unitY);
-        Assert.Equal(1040f, targetY);
-        Assert.Equal(1000f, (unitY + targetY) / 2f);
+        Assert.Equal(560f, unitY);
+        Assert.Equal(640f, targetY);
+        Assert.Equal(600f, (unitY + targetY) / 2f);
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public class ValidationGroundBuilderTests
         // silent change to the file (or an accidental re-introduction of source defaults) is caught.
         var standard = ValidationGroundScenario.Standard();
 
-        Assert.Equal(new Vector3(1000f, 1000f, 0f), standard.Layout.TargetClusterCenter);
+        Assert.Equal(new Vector3(600f, 600f, 0f), standard.Layout.TargetClusterCenter);
         Assert.Equal(80f, standard.Layout.UnitSpacing);
         Assert.Equal(150f, standard.Layout.FactionRowOffset);
         Assert.Equal(80f, standard.Layout.TargetApproachDistance);

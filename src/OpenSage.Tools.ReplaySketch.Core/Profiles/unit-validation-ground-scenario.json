@@ -2,7 +2,7 @@
   "MapPath": "maps/alpine assault/alpine assault.map",
   "FactionIndices": [2, 3, 4],
   "Layout": {
-    "TargetClusterCenter": { "x": 1000, "y": 1000, "z": 0 },
+    "TargetClusterCenter": { "x": 600, "y": 600, "z": 0 },
     "TargetClusterRadius": 40,
     "UnitSpacing": 80,
     "FactionRowOffset": 150,

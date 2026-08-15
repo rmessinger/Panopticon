@@ -64,6 +64,18 @@ public static class ValidationGroundRunner
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
 
+            // The default tactical view looks at the map's authored centre; the validation-ground
+            // formation is placed away from the civilian town there, so re-aim the camera at it
+            // (windowed runs, especially the starting hold, would otherwise open off-formation).
+            var view = game.Scene3D.TacticalView;
+            view.LookAt(new System.Numerics.Vector3(
+                scenario.Layout.TargetClusterCenter.X,
+                scenario.Layout.TargetClusterCenter.Y,
+                0f));
+            view.InitHeightForMap();
+            view.SetAngleAndPitchToDefault();
+            view.SetZoomToDefault();
+
             // The validation ground spawns and orders units directly; an active skirmish AI would
             // both dominate per-frame cost and override those orders. Per deep dive §2.1 ("no AI,
             // no economy"), disable AI on the three roster players (neutral/civilian at 0/1 have none).

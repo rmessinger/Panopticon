@@ -32,19 +32,18 @@ public sealed class ValidationGroundHost
     }
 
     /// <summary>
-    /// Stands up one CommandCenter per roster faction in a far corner. With AI disabled the
-    /// factions never build, so without a qualifying structure the victory system's defeat rule
-    /// (no builder unit and no structure) would mark each faction defeated immediately and freeze
-    /// logic. The validation ground runs with no victory condition (deep dive §2.1); these
-    /// structures are out of weapon range and never attacked.
+    /// Stands up one China CommandCenter in a far corner as the victory-system safety net: with AI
+    /// disabled a faction that ends up with neither a builder unit nor a structure would be marked
+    /// defeated and logic frozen (deep dive §2.1). The skirmish setup already places a starting
+    /// structure for every faction at its map start (or the fallback corner), so the roster
+    /// factions are covered; this one exists in case that spawn ever changes on a different map.
+    /// It is out of weapon range and never attacked.
     /// </summary>
     public void SpawnKeepAliveStructures(IGame game)
     {
         var factionCenters = new (int PlayerIndex, string Definition)[]
         {
-            (2, "AmericaCommandCenter"),
             (3, "ChinaCommandCenter"),
-            (4, "GLACommandCenter"),
         };
 
         foreach (var (playerIndex, definitionName) in factionCenters)
