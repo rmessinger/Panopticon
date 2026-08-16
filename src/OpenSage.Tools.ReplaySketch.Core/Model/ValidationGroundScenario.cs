@@ -1,18 +1,14 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Numerics;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace OpenSage.Tools.ReplaySketch.Model;
 
 /// <summary>
 /// Configuration for the unit validation ground: the map, roster source, deterministic layout
 /// parameters, the target/supply definitions, and the settle/seed values. Engine-free; the host
-/// applies it to a live game. See deep dive P9 §2.1, §2.9, §3. Round-trips to JSON via
-/// <see cref="Load"/>/<see cref="Save"/> so layouts hand-edited in the ReplaySketch map editor can be
-/// consumed by the TestHarness run.
+/// applies it to a live game. See deep dive P9 §2.1, §2.9, §3. JSON persistence lives in
+/// <see cref="Services.ValidationGroundScenarioStore"/> so layouts hand-edited in the ReplaySketch
+/// map editor can be consumed by the TestHarness run.
 /// </summary>
 public sealed class ValidationGroundScenario
 {
@@ -53,51 +49,6 @@ public sealed class ValidationGroundScenario
     /// <see cref="Services.ValidationGroundBuilder"/>. Empty by default (pure knob-derived layout).
     /// </summary>
     public List<PlacementOverride> PlacementOverrides { get; set; } = new();
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        Converters = { new JsonStringEnumConverter(), new Vector3JsonConverter() },
-    };
-
-    /// <summary>Serializes the scenario (layout + overrides) to a JSON string.</summary>
-    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
-
-    /// <summary>Deserializes a scenario from a JSON string; returns a default on a null result.</summary>
-    public static ValidationGroundScenario FromJson(string json) =>
-        JsonSerializer.Deserialize<ValidationGroundScenario>(json, JsonOptions) ?? new ValidationGroundScenario();
-
-    /// <summary>Loads a scenario from JSON, or the standard embedded scenario if the file is absent.</summary>
-    public static ValidationGroundScenario Load(string path) =>
-        File.Exists(path) ? FromJson(File.ReadAllText(path)) : Standard();
-
-    /// <summary>Saves the scenario (layout + overrides) to JSON for the TestHarness to load.</summary>
-    public void Save(string path) => File.WriteAllText(path, ToJson());
-
-    /// <summary>
-    /// The standard validation-ground scenario: the formation, roster, target definitions, and run
-    /// values, loaded from the checked-in
-    /// <c>Profiles/unit-validation-ground-scenario.json</c> embedded resource. This is the single
-    /// source of truth for the standard configuration (no formation values live in source).
-    /// </summary>
-    public static ValidationGroundScenario Standard()
-    {
-        var assembly = typeof(ValidationGroundScenario).Assembly;
-        var name = Array.Find(assembly.GetManifestResourceNames(),
-            n => n.EndsWith(".Profiles.unit-validation-ground-scenario.json", StringComparison.Ordinal));
-        if (name == null)
-        {
-            throw new InvalidOperationException(
-                "Embedded standard validation-ground scenario not found. "
-                + "Ensure Profiles/unit-validation-ground-scenario.json is an embedded resource.");
-        }
-
-        using var stream = assembly.GetManifestResourceStream(name);
-        using var reader = new StreamReader(stream ?? Stream.Null);
-        return FromJson(reader.ReadToEnd());
-    }
 }
 
 /// <summary>
@@ -110,8 +61,8 @@ public sealed class ValidationGroundScenario
 /// <remarks>
 /// These are pure POCO slots; the standard values are NOT defined here. The authoritative
 /// configuration lives in <c>Profiles/unit-validation-ground-scenario.json</c>, loaded via
-/// <see cref="ValidationGroundScenario.Standard"/>. The zero defaults exist only so an empty
-/// <see cref="LayoutConfig"/> is not mistaken for a real formation.
+/// <see cref="Services.ValidationGroundScenarioStore.Standard"/>. The zero defaults exist only so an
+/// empty <see cref="LayoutConfig"/> is not mistaken for a real formation.
 /// </remarks>
 public sealed class LayoutConfig
 {

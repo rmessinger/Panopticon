@@ -11,7 +11,7 @@ public class ValidationGroundBuilderTests
     {
         // The formation lives in the standard JSON; clone it and restrict to one faction so per-unit
         // assertions are stable. (LayoutConfig has no source defaults anymore.)
-        var scenario = ValidationGroundScenario.Standard();
+        var scenario = ValidationGroundScenarioStore.Standard();
         scenario.FactionIndices = [2];
         return scenario;
     }
@@ -20,7 +20,7 @@ public class ValidationGroundBuilderTests
     public void Build_WithoutOverrides_DerivesPositionsFromLayout()
     {
         // The standard scenario (loaded from JSON) carries the formation; no overrides applied.
-        var plan = ValidationGroundBuilder.Build(ValidationGroundScenario.Standard());
+        var plan = ValidationGroundBuilder.Build(ValidationGroundScenarioStore.Standard());
 
         // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 600 - 270 = 330 (totalSpan =
         // 3*TargetApproach + 2*FactionRowOffset = 240 + 300). Row origin X centres the 10-unit
@@ -150,8 +150,8 @@ public class ValidationGroundBuilderTests
 
         try
         {
-            scenario.Save(path);
-            var loaded = ValidationGroundScenario.Load(path);
+            ValidationGroundScenarioStore.Save(scenario, path);
+            var loaded = ValidationGroundScenarioStore.Load(path);
 
             Assert.Equal(new Vector3(1234f, 5678f, 0f), loaded.Layout.TargetClusterCenter);
             Assert.Equal(42f, loaded.Layout.UnitSpacing);
@@ -173,9 +173,9 @@ public class ValidationGroundBuilderTests
     {
         // A missing scenario file falls back to the standard embedded configuration, not an empty
         // scenario, so a typo never silently produces a degenerate (zero-layout) run.
-        var loaded = ValidationGroundScenario.Load(Path.Combine(Path.GetTempPath(), "does_not_exist.json"));
+        var loaded = ValidationGroundScenarioStore.Load(Path.Combine(Path.GetTempPath(), "does_not_exist.json"));
 
-        Assert.Equal(ValidationGroundScenario.Standard().Layout.TargetClusterCenter, loaded.Layout.TargetClusterCenter);
+        Assert.Equal(ValidationGroundScenarioStore.Standard().Layout.TargetClusterCenter, loaded.Layout.TargetClusterCenter);
         Assert.NotEmpty(loaded.FactionIndices);
         Assert.True(loaded.Layout.UnitSpacing > 0f);
     }
@@ -185,7 +185,7 @@ public class ValidationGroundBuilderTests
     {
         // The formation is configured by the checked-in JSON, not source. Pin a few values so a
         // silent change to the file (or an accidental re-introduction of source defaults) is caught.
-        var standard = ValidationGroundScenario.Standard();
+        var standard = ValidationGroundScenarioStore.Standard();
 
         Assert.Equal(new Vector3(600f, 600f, 0f), standard.Layout.TargetClusterCenter);
         Assert.Equal(80f, standard.Layout.UnitSpacing);
@@ -215,8 +215,8 @@ public class ValidationGroundBuilderTests
 
         try
         {
-            source.Save(path);
-            var loaded = ValidationGroundScenario.Load(path);
+            ValidationGroundScenarioStore.Save(source, path);
+            var loaded = ValidationGroundScenarioStore.Load(path);
             var plan = ValidationGroundBuilder.Build(loaded);
 
             Assert.Equal(new Vector3(1234f, 567f, 0f), plan.UnitPlacements[0].Position);

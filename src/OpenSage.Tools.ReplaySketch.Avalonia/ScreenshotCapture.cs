@@ -37,7 +37,7 @@ internal static class ScreenshotCapture
             var map = MapMetadataService.Load(install, DefaultMapPath);
 
             var model = new ValidationGroundEditorModel();
-            model.LoadScenario(ValidationGroundScenario.Standard());
+            model.LoadScenario(ValidationGroundScenarioStore.Standard());
             model.AttachMap(map);
 
             using var previewBitmap = BuildPreviewBitmap(map);

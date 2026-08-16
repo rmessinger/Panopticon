@@ -14,7 +14,7 @@ public class ValidationGroundEditorModelTests
     private static ValidationGroundEditorModel NewModelWithSingleFaction()
     {
         var model = new ValidationGroundEditorModel();
-        var scenario = ValidationGroundScenario.Standard();
+        var scenario = ValidationGroundScenarioStore.Standard();
         scenario.FactionIndices = [2];
         model.LoadScenario(scenario);
         model.AttachMap(MapMetadataService.CreateForTesting(Min, Max));

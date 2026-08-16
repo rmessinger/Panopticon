@@ -44,16 +44,16 @@ public sealed class ValidationGroundEditorModel : INotifyPropertyChanged
     }
 
     /// <summary>Loads a scenario from a JSON file and rebuilds.</summary>
-    public void LoadScenarioFile(string path) => LoadScenario(ValidationGroundScenario.Load(path));
+    public void LoadScenarioFile(string path) => LoadScenario(ValidationGroundScenarioStore.Load(path));
 
     /// <summary>Loads a scenario from a JSON string and rebuilds (used by the MAUI file picker).</summary>
-    public void LoadScenarioJson(string json) => LoadScenario(ValidationGroundScenario.FromJson(json));
+    public void LoadScenarioJson(string json) => LoadScenario(ValidationGroundScenarioStore.FromJson(json));
 
     /// <summary>Saves the scenario (layout + overrides) to JSON.</summary>
-    public void SaveScenario(string path) => Scenario.Save(path);
+    public void SaveScenario(string path) => ValidationGroundScenarioStore.Save(Scenario, path);
 
     /// <summary>Serializes the scenario to a JSON string (used by the MAUI file picker).</summary>
-    public string GetScenarioJson() => Scenario.ToJson();
+    public string GetScenarioJson() => ValidationGroundScenarioStore.ToJson(Scenario);
 
     /// <summary>Attaches a loaded map; the MAUI side resolves the install and builds the service.</summary>
     public void AttachMap(MapMetadataService map)

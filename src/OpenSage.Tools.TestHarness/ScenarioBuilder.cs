@@ -82,8 +82,8 @@ public static class ScenarioBuilder
         // ReplaySketch map editor). The MapPath/SettleFrames/Seed knobs remain run-level overrides
         // on top of whichever file was loaded.
         var scenario = !string.IsNullOrEmpty(config.ValidationGroundScenarioPath)
-            ? ValidationGroundScenario.Load(config.ValidationGroundScenarioPath)
-            : ValidationGroundScenario.Standard();
+            ? ValidationGroundScenarioStore.Load(config.ValidationGroundScenarioPath)
+            : ValidationGroundScenarioStore.Standard();
 
         if (!string.IsNullOrEmpty(config.ValidationGroundMapPath))
         {
