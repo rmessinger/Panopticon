@@ -8,7 +8,7 @@
 > The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context)) contains file:line code references. Skip it if reading for design intent.
 
 Purpose: a non-skirmish sandbox that stands up one of every unit in the reference game side by side,
-orders each to perform its primary action against a shared target cluster, and measures how long that
+orders each to perform its primary action against its own assigned target, and measures how long that
 action takes in logic frames. The measurement is compared against a checked-in golden baseline, so
 unit behaviour becomes a watchable demonstration and a numeric regression signal at the same time.
 
@@ -41,7 +41,7 @@ Not a skirmish and not a replay. There is no AI, no economy, no victory conditio
 export. The ground is a fixed arena on a real map with three faction rows facing a shared cluster of
 destructible objects and supply sources in the middle. A run has four stages:
 
-1. Spawn. Every unit in the roster is created directly, along with the target cluster.
+1. Spawn. Every unit in the roster is created directly, along with one destructible target per unit.
 2. Settle. A fixed number of frames pass so spawn-time transients (settling to terrain height,
    aircraft reaching a stable state) do not pollute the measurement.
 3. Order. Each unit receives its primary action as a real engine `Order`, all on the same frame.

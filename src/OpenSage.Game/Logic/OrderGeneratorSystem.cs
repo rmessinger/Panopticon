@@ -180,6 +180,11 @@ public class OrderGeneratorSystem : GameSystem
         ActiveGenerator = new RallyPointOrderGenerator(Game, Game.PlayerManager.LocalPlayer.SelectedUnits.Single());
     }
 
+    public void StartAttackMove()
+    {
+        ActiveGenerator = new AttackMoveOrderGenerator(Game);
+    }
+
     public void CancelOrderGenerator()
     {
         ActiveGenerator = new UnitOrderGenerator(Game);

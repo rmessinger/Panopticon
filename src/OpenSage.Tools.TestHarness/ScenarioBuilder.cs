@@ -76,14 +76,29 @@ public static class ScenarioBuilder
     /// </summary>
     public static ValidationGroundRunPlan BuildValidationGroundRun(TestHarnessConfig config)
     {
-        var scenario = new ValidationGroundScenario
+        // The standard formation/scenario lives in the checked-in
+        // Profiles/unit-validation-ground-scenario.json (loaded via Standard()), not in source. A
+        // custom ValidationGroundScenarioPath overrides it (e.g. a layout hand-edited in the
+        // ReplaySketch map editor). The MapPath/SettleFrames/Seed knobs remain run-level overrides
+        // on top of whichever file was loaded.
+        var scenario = !string.IsNullOrEmpty(config.ValidationGroundScenarioPath)
+            ? ValidationGroundScenarioStore.Load(config.ValidationGroundScenarioPath)
+            : ValidationGroundScenarioStore.Standard();
+
+        if (!string.IsNullOrEmpty(config.ValidationGroundMapPath))
         {
-            MapPath = string.IsNullOrEmpty(config.ValidationGroundMapPath)
-                ? "maps/alpine assault/alpine assault.map"
-                : config.ValidationGroundMapPath,
-            SettleFrames = config.ValidationGroundSettleFrames,
-            Seed = config.ValidationGroundSeed,
-        };
+            scenario.MapPath = config.ValidationGroundMapPath;
+        }
+        scenario.SettleFrames = config.ValidationGroundSettleFrames;
+        scenario.Seed = config.ValidationGroundSeed;
+
+        // A loaded scenario may carry an empty map path; fall back to the default rather than
+        // failing the run inside the engine.
+        if (string.IsNullOrEmpty(scenario.MapPath))
+        {
+            scenario.MapPath = "maps/alpine assault/alpine assault.map";
+        }
+
         var plan = ValidationGroundBuilder.Build(scenario);
 
         // Three competitive slots (USA/China/GLA) become player indices 2/3/4 after neutral/civilian.

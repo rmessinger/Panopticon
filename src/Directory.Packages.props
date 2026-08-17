@@ -38,5 +38,10 @@
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />
     <PackageVersion Include="SkiaSharp.Views.Maui.Controls" Version="3.119.2" />
     <PackageVersion Include="CommunityToolkit.Maui" Version="14.1.1" />
+
+    <!-- ReplaySketch Avalonia front-end (true cross-platform; runs on Linux) -->
+    <PackageVersion Include="Avalonia" Version="12.1.1" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.1" />
   </ItemGroup>
 </Project>

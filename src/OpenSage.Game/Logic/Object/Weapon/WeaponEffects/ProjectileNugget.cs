@@ -72,15 +72,29 @@ public sealed class ProjectileNugget : WeaponEffectNugget
 
         projectileObject.Speed = ParentWeaponTemplate.WeaponSpeed;
 
+        // Record the firing unit so projectile collision can skip it (otherwise a vehicle
+        // launcher detonates its own projectile at the muzzle).
+        var launcherId = context.Weapon.ParentGameObject.Id;
+
+        var bezierProjectileBehavior = projectileObject.FindBehavior<BezierProjectileBehavior>();
+        if (bezierProjectileBehavior != null)
+        {
+            bezierProjectileBehavior.LauncherObjectId = launcherId;
+        }
+
+        var missileAIUpdate = projectileObject.FindBehavior<MissileAIUpdate>();
+        if (missileAIUpdate != null)
+        {
+            missileAIUpdate.LauncherObjectId = launcherId;
+        }
+
         if (IsConvertedFromLegacyData)
         {
-            var bezierProjectileBehavior = projectileObject.FindBehavior<BezierProjectileBehavior>();
             if (bezierProjectileBehavior != null)
             {
                 bezierProjectileBehavior.DetonationFX = ParentWeaponTemplate.ProjectileDetonationFX?.Value;
             }
 
-            var missileAIUpdate = projectileObject.FindBehavior<MissileAIUpdate>();
             if (missileAIUpdate != null)
             {
                 missileAIUpdate.DetonationFX = ParentWeaponTemplate.ProjectileDetonationFX?.Value;

@@ -70,3 +70,16 @@ internal sealed class DefaultVictoryConditionRule : VictoryConditionRule
         return false;
     }
 }
+
+/// <summary>
+/// A rule that never defeats anyone: the victory system goes inert and the run's ending
+/// criteria live entirely with the host. For sandboxes (e.g. the Unit Validation Ground)
+/// whose completion rules are foreign to the skirmish defeat logic.
+/// </summary>
+internal sealed class NeverDefeatedVictoryConditionRule : VictoryConditionRule
+{
+    internal override bool IsPlayerDefeated(Player player, VictorySystem victorySystem)
+    {
+        return false;
+    }
+}

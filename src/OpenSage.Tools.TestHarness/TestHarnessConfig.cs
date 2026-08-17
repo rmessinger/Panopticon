@@ -92,6 +92,14 @@ public sealed class TestHarnessConfig
     /// <summary>Map path override for the validation ground. Empty uses a default map.</summary>
     public string? ValidationGroundMapPath { get; set; } = null;
 
+    /// <summary>
+    /// Path to a validation-ground scenario JSON (layout + placement overrides) written by the
+    /// ReplaySketch editor. When set, the run loads it verbatim -- its map, layout, overrides, and
+    /// target definitions all apply -- and ValidationGroundMapPath/SettleFrames/Seed are ignored.
+    /// When empty, the run builds the default scenario from those knobs.
+    /// </summary>
+    public string? ValidationGroundScenarioPath { get; set; } = null;
+
     /// <summary>Frames to settle after spawn before issuing orders.</summary>
     public int ValidationGroundSettleFrames { get; set; } = 30;
 
@@ -106,6 +114,14 @@ public sealed class TestHarnessConfig
 
     /// <summary>Path to write the validation-ground JSON report to. Empty writes none.</summary>
     public string? ValidationGroundReportPath { get; set; } = null;
+
+    /// <summary>
+    /// When true (default), a windowed validation-ground run starts paused with the orders held so
+    /// the starting conditions can be inspected; Space (or the overlay button) resumes, which runs
+    /// the settle stage and issues the attack orders. Afterwards Space toggles active pause.
+    /// Ignored by headless runs, which always auto-issue for byte-identical reports.
+    /// </summary>
+    public bool ValidationGroundHoldOrders { get; set; } = true;
 
     /// <summary>
     /// When true (default), the run exits once every measurable unit has resolved (its target

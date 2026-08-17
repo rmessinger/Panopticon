@@ -782,7 +782,7 @@ public sealed class Game : DisposableBase, IGame
             throw new Exception($"Failed to load Scene3D \"{mapFileName}\"");
         }
 
-        if (gameType != GameType.SinglePlayer)
+        if (gameType != GameType.SinglePlayer && !Configuration.SkipStartingBuildings)
         {
             var cameraSet = false;
             for (var i = 0; i < playerSettings.Length; i++)
@@ -974,7 +974,10 @@ public sealed class Game : DisposableBase, IGame
 
         // We pass RenderTime to Scene2D so that the UI remains responsive even when the game is paused.
         Scene2D.LocalLogicTick(RenderTime, Scene3D?.LocalPlayer);
-        Scene3D?.LocalLogicTick(MapTime, tickT);
+
+        // Same idea for the camera: while logic is paused the map timer is frozen, so input-driven
+        // camera motion (keyboard scroll, zoom settle) is driven by render time instead.
+        Scene3D?.LocalLogicTick(MapTime, tickT, IsLogicRunning ? null : RenderTime);
 
         Audio.Update(Scene3D?.Camera);
         Cursors.Update(RenderTime);

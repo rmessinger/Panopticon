@@ -10,7 +10,7 @@ public partial class MainPage : ContentPage
 
     // Screenshot-and-exit mode. Set environment variables before launching:
     //   REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png   (required to activate)
-    //   REPLAYSKETCH_SCREENSHOT_TAB=tree|map         (optional, default: tree)
+    //   REPLAYSKETCH_SCREENSHOT_TAB=tree|map|validationground  (optional, default: tree)
     //   REPLAYSKETCH_SCREENSHOT_DELAY=N              (optional seconds, default: 3)
     private static readonly string? ScreenshotPath =
         Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_PATH");
@@ -30,6 +30,7 @@ public partial class MainPage : ContentPage
         ActionTreeView.SetExternalDetailPanel(ActionDetail.ContentPanel);
         MapPreviewView.BindViewModel(_vm);
         MapPreviewView.SetActionTreeBridge(ActionTreeView);
+        ValidationGroundEditorView.BindViewModel(_vm);
         ExportView.BindViewModel(_vm);
 
         // When scenario or map changes, refresh the action tree and map
@@ -55,6 +56,8 @@ public partial class MainPage : ContentPage
             var tab = Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_TAB")?.ToLowerInvariant();
             if (tab == "map")
                 SwitchToMap();
+            else if (tab == "validationground")
+                SwitchToValidationGround();
             Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(ScreenshotDelaySec), () => _ = TakeScreenshotAsync());
         }
     }
@@ -94,22 +97,38 @@ public partial class MainPage : ContentPage
 
     private void OnTreeTabClicked(object? sender, EventArgs e) => SwitchToTree();
     private void OnMapTabClicked(object? sender, EventArgs e) => SwitchToMap();
+    private void OnValidationGroundTabClicked(object? sender, EventArgs e) => SwitchToValidationGround();
 
     private void SwitchToTree()
     {
         TreeFrame.IsVisible = true;
         MapFrame.IsVisible = false;
+        ValidationGroundFrame.IsVisible = false;
         SetTabActive(TreeTabBtn, true);
         SetTabActive(MapTabBtn, false);
+        SetTabActive(ValidationGroundTabBtn, false);
     }
 
     private void SwitchToMap()
     {
         TreeFrame.IsVisible = false;
         MapFrame.IsVisible = true;
+        ValidationGroundFrame.IsVisible = false;
         SetTabActive(TreeTabBtn, false);
         SetTabActive(MapTabBtn, true);
+        SetTabActive(ValidationGroundTabBtn, false);
         MapPreviewView.Invalidate();
+    }
+
+    private void SwitchToValidationGround()
+    {
+        TreeFrame.IsVisible = false;
+        MapFrame.IsVisible = false;
+        ValidationGroundFrame.IsVisible = true;
+        SetTabActive(TreeTabBtn, false);
+        SetTabActive(MapTabBtn, false);
+        SetTabActive(ValidationGroundTabBtn, true);
+        ValidationGroundEditorView.Invalidate();
     }
 
     private static void SetTabActive(Button btn, bool active)

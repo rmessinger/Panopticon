@@ -37,14 +37,10 @@ Diagrams are required before any phase's first task card is marked `Ready`. D1/D
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| D1 | [tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md) | placeholder† | — |
-| D2 | [tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md) | placeholder† | — |
+| D1 | [tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md) | [Architecture diagrams](deep-dives/d1-d2-tech-tree-era-progression.md#architecture-diagrams) | — |
+| D2 | [tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md) | [Architecture diagrams](deep-dives/d1-d2-tech-tree-era-progression.md#architecture-diagrams) | — |
 | D3 | — | — | — |
 | D4 | — | — | — |
-
-† Placeholder: see the deep dive's [Architecture Diagrams](deep-dives/d1-d2-tech-tree-era-progression.md#architecture-diagrams)
-section. A class + sequence diagram must replace it before D1's first task card is written, per
-[`agent/MAINTAINING.md`](agent/MAINTAINING.md).
 
 ## Cross-track dependencies
 

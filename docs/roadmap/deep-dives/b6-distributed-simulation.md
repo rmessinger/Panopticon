@@ -131,53 +131,217 @@ Each cell runs the scenario with the given shard configuration and asserts:
 
 ## 6. Architecture Diagrams
 
-Diagrams for this phase will be elaborated once B6 moves to active implementation. The
-placeholder below captures the key types the distributed simulation introduces.
+The diagrams anchor B6 to the real engine seams a shard owns: `IGameEngine` (the logic-side
+services `GameLogic`, `Navigation`, `Quadtree`, `PartitionCellManager`), the `Order` /
+`OrderProcessor` pipeline, and the frame-ordered `NetworkMessageBuffer` / `IConnection` transport.
+New B6 types wrap those seams rather than replacing them; borrowed Track A types (`SimulationHost`
+from [A1](a1-headless-host.md), `TieredRecording` from [A1-5](a1-headless-host.md)) are the host and
+recording substrate. Stereotypes mark provenance: `<<engine>>` types exist in `src/` today,
+`<<A1>>` / `<<A1-5>>` belong to Track A, and `<<B6-n>>` types are B6 deliverables introduced in the
+named sub-phase.
+
+Per the [relaxed-determinism Decision](../open-questions.md), boundary exchange and handoff carry
+state and events, not a bit-exact lockstep hash. Correctness is invariant-based and tolerance-based,
+validated against a single-shard reference via the [T0/T1 tiered recording (A1-5)](a5-visualization.md)
+and [A5-4 divergence localization](a5-visualization.md).
+
+### 6.1 Types
 
 ```mermaid
 classDiagram
-  class SimShard {
-    <<pending B6>>
+  class IGameEngine {
+    <<engine>>
+    +GameLogic GameLogic
+    +Navigation Navigation
+    +IQuadtree~GameObject~ Quadtree
+    +Terrain Terrain
+  }
+
+  class GameLogic {
+    <<engine>>
+    +IEnumerable~GameObject~ Objects
+    +GetObjectById(ObjectId) GameObject
+    +CreateObject(definition, player) GameObject
+    +Update()
+  }
+
+  class PartitionCellManager {
+    <<engine>>
+    +float PartitionCellSize
+    +int NumCellsX
+    +int NumCellsY
+    +Update()
+  }
+
+  class OrderProcessor {
+    <<engine>>
+    +Process(IEnumerable~Order~)
+  }
+
+  class NetworkMessageBuffer {
+    <<engine>>
+    +IReadOnlyDictionary FrameOrders
+    +uint CurrentFrame
+    +AddLocalOrder(Order)
+    +Tick()
+  }
+
+  class SimulationHost {
+    <<A1>>
+    +GameLogic Logic
+    +Run(scenario) RunOutput
+  }
+
+  class TieredRecording {
+    <<A1-5>>
+    +T0 FrameHashes
+    +T1 StateDelta
+    +T2 FullSnapshot
+  }
+
+  class IPartitionScheme {
+    <<interface, B6-1>>
+    +Assign(ObjectId, position) int
+    +HaloExtent() float
+    +Neighbours(shardId) IReadOnlyList~int~
+  }
+
+  class SpatialGridPartition {
+    <<B6-1>>
+    +Rectangle Region
+  }
+
+  class GraphCutPartition {
+    <<B6-1>>
+  }
+
+  class Shard {
+    <<B6-2>>
     +int ShardId
-    +Rectangle SpatialPartition
-    +IReadOnlyList~GameObject~ OwnedObjects
-    +Tick(dt)
+    +IGameEngine Engine
+    +SimulationHost Host
+    +IReadOnlyList~GameObject~ Owned
+    +IReadOnlyList~GameObject~ Halo
+    +Tick()
   }
 
   class ShardCoordinator {
-    <<pending B6>>
-    +IReadOnlyList~SimShard~ Shards
-    +Route(order) SimShard
-    +SynchronizeEdges()
+    <<B6-2>>
+    +IReadOnlyList~Shard~ Shards
+    +RouteOrder(Order) int
+    +ExchangeBoundaries(frame)
   }
 
-  class EdgeMessage {
-    <<pending B6>>
+  class BoundaryMessage {
+    <<B6-1>>
     +int SourceShardId
     +int TargetShardId
-    +IReadOnlyList~StateUpdate~ Updates
+    +uint Frame
+    +IReadOnlyList~HaloState~ Halo
+    +IReadOnlyList~HandoffEvent~ Handoffs
   }
 
-  class SnapshotDeltaStream {
-    <<pending B6>>
-    +Record(frame, shardId, delta)
-    +Replay(fromFrame)
+  class HandoffEvent {
+    <<B6-3>>
+    +ObjectId ObjectId
+    +int FromShardId
+    +int ToShardId
+    +uint Frame
   }
 
-  class PartitionStrategy {
-    <<interface, pending B6>>
-    +Partition(objects) IReadOnlyList~SimShard~
+  class IShardTransport {
+    <<interface, B6-2>>
+    +Send(BoundaryMessage)
+    +Receive(frame) IReadOnlyList~BoundaryMessage~
   }
 
-  class GraphCutPartitioner {
-    <<pending B6>>
+  class ConservationCheck {
+    <<B6-3>>
+    +CompareToReference(TieredRecording) ToleranceVerdict
   }
 
-  ShardCoordinator "1" --> "N" SimShard
-  ShardCoordinator --> SnapshotDeltaStream
-  ShardCoordinator ..> EdgeMessage : exchanges between shards
-  PartitionStrategy <|.. GraphCutPartitioner
-  ShardCoordinator --> PartitionStrategy
+  IGameEngine --> GameLogic
+  IGameEngine --> PartitionCellManager : spatial-grid source
+  Shard --> IGameEngine : owns logic slice
+  Shard --> SimulationHost : headless step
+  IPartitionScheme <|.. SpatialGridPartition
+  IPartitionScheme <|.. GraphCutPartition
+  SpatialGridPartition ..> PartitionCellManager : reuses cell grid
+  ShardCoordinator "1" --> "N" Shard
+  ShardCoordinator --> IPartitionScheme : assigns ownership
+  ShardCoordinator --> IShardTransport : per-frame exchange
+  ShardCoordinator ..> OrderProcessor : routed orders resolve here
+  IShardTransport ..> NetworkMessageBuffer : B6-6 reuses frame-ordered pattern
+  IShardTransport ..> BoundaryMessage : carries
+  BoundaryMessage "1" --> "N" HandoffEvent
+  ConservationCheck ..> TieredRecording : reads T0/T1 vs reference
+```
+
+### 6.2 One sharded tick
+
+Order routing reuses the real `Order` / `OrderProcessor` pipeline: the coordinator routes each order
+to the owning shard rather than running a parallel command path. Halo exchange and the consistency
+check are frame-aligned at the seams.
+
+```mermaid
+sequenceDiagram
+  participant SC as ShardCoordinator
+  participant PS as IPartitionScheme
+  participant SA as Shard A
+  participant SB as Shard B
+  participant OP as OrderProcessor
+  participant GL as GameLogic
+  participant XP as IShardTransport
+  participant CC as ConservationCheck
+
+  Note over SC: frame N begins
+  SC->>PS: RouteOrder(order) by owner
+  PS-->>SC: owning shardId
+  SC->>SA: deliver owned orders
+  SA->>OP: Process(orders)
+  OP->>GL: apply to owned GameObjects
+  par shard-local logic tick
+    SA->>GL: Update()
+  and
+    SB->>GL: Update()
+  end
+  Note over SA,SB: each steps only its owned slice
+  SA->>XP: Send(BoundaryMessage halo state)
+  SB->>XP: Send(BoundaryMessage halo state)
+  SC->>XP: ExchangeBoundaries(N)
+  XP-->>SA: neighbour halo state
+  XP-->>SB: neighbour halo state
+  Note over SA,SB: halo replicas are read-only, not re-simulated
+  SC->>CC: CompareToReference(T0/T1)
+  CC-->>SC: ToleranceVerdict (no dup/loss, metrics in band)
+  Note over SC: A5-4 localizes any drifting cell/entity
+```
+
+### 6.3 Cross-boundary ownership handoff
+
+When an object crosses a partition boundary its ownership transfers on an agreed frame with no
+duplication and no loss. The source shard drops the object only once the target confirms adoption, so
+the object is owned by exactly one shard across the transition.
+
+```mermaid
+sequenceDiagram
+  participant SA as Shard A (owner)
+  participant PS as IPartitionScheme
+  participant XP as IShardTransport
+  participant SB as Shard B (neighbour)
+
+  Note over SA: object moves past region edge at frame N
+  SA->>PS: Assign(objectId, newPosition)
+  PS-->>SA: shardId = B
+  SA->>XP: Send(HandoffEvent objectId, A->B, frame N+1)
+  Note over SA: object stays owned by A through frame N,<br/>mirrored to B as read-only halo
+  XP-->>SB: HandoffEvent
+  Note over SB: at agreed frame N+1, adopt as owned<br/>promote halo replica to owned GameObject
+  SB->>XP: Send(BoundaryMessage ack for objectId)
+  XP-->>SA: adoption ack
+  Note over SA: drop from owned set after ack<br/>invariant: owned by exactly one shard, never zero
+  SA->>XP: Send(BoundaryMessage halo of former object)
+  Note over SA,SB: roles reverse: B now owns, A holds read-only halo
 ```
 
 ## 7. Related

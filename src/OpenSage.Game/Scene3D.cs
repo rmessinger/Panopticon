@@ -361,7 +361,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
         GameObjects.DeleteDestroyed();
     }
 
-    public void LocalLogicTick(in TimeInterval gameTime, float tickT)
+    public void LocalLogicTick(in TimeInterval gameTime, float tickT, in TimeInterval? cameraTime = null)
     {
         _orderGeneratorInputHandler?.Update();
 
@@ -373,7 +373,9 @@ public sealed class Scene3D : DisposableBase, IScene3D
         // TODO: Remove or refactor these
         //_editorCameraInputMessageHandler?.UpdateInputState(ref _editorCameraInputState);
         //EditorCameraController?.UpdateCamera(Camera, _editorCameraInputState, gameTime);
-        TacticalView.Update(gameTime);
+        // While the game is paused the map timer is frozen, which would freeze input-driven
+        // camera motion with it; cameraTime substitutes a still-running clock for that case.
+        TacticalView.Update(cameraTime ?? gameTime);
 
         DebugOverlay.Update(gameTime);
 

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using OpenSage.Content;
 using OpenSage.Data.Ini;
@@ -18,6 +19,13 @@ public class BezierProjectileBehavior : UpdateModule
     private uint _unknown2;
 
     internal FXList DetonationFX { get; set; }
+
+    // The firing unit, assigned at spawn (see ProjectileNugget) so collision can skip it.
+    internal ObjectId LauncherObjectId
+    {
+        get => _launcherObjectId;
+        set => _launcherObjectId = value;
+    }
 
     internal BezierProjectileBehavior(GameObject gameObject, IGameEngine gameEngine, BezierProjectileBehaviorData moduleData)
         : base(gameObject, gameEngine)
@@ -43,7 +51,8 @@ public class BezierProjectileBehavior : UpdateModule
             GameObject,
             GameEngine,
             _moduleData.DetonateCallsKill,
-            DetonationFX ?? _moduleData.GroundHitFX?.Value);
+            DetonationFX ?? _moduleData.GroundHitFX?.Value,
+            _launcherObjectId);
 
         // TODO: Use proper value.
         return UpdateSleepTime.None;
@@ -53,10 +62,21 @@ public class BezierProjectileBehavior : UpdateModule
         GameObject gameObject,
         IGameEngine gameEngine,
         bool detonateCallsKill,
-        FXList groundHitFX)
+        FXList groundHitFX,
+        ObjectId launcherId)
     {
-        // Did we hit an object?
-        // TODO: Proper projectile-vs-object collision detection along the flight path.
+        // Object collision: a projectile detonates on the first object it reaches whose kind or
+        // allegiance matches the warhead's ProjectileCollidesWith. Vehicles are always collided
+        // with regardless of relationship. The swept sphere (bounding radius + this frame's
+        // travel) prevents fast projectiles tunneling through small targets between frames.
+        var hitObject = FindObjectCollision(gameObject, gameEngine, launcherId);
+        if (hitObject != null)
+        {
+            Detonate(gameObject, gameEngine, new WeaponTarget(gameEngine.Scene3D.GameObjects, hitObject.Id), detonateCallsKill, groundHitFX);
+            return;
+        }
+
+        // TODO: Replace the per-frame sphere overlap with a precise segment-vs-geometry test.
 
         if (DidHitGround(gameObject, gameEngine))
         {
@@ -70,6 +90,80 @@ public class BezierProjectileBehavior : UpdateModule
 
             Detonate(gameObject, gameEngine, detonationTarget, detonateCallsKill, groundHitFX);
         }
+    }
+
+    private static GameObject FindObjectCollision(GameObject gameObject, IGameEngine gameEngine, ObjectId launcherId)
+    {
+        var quadtree = gameEngine.Quadtree;
+        if (quadtree == null)
+        {
+            return null;
+        }
+
+        var filter = gameObject.CurrentWeapon?.Template.ProjectileCollidesWith ?? WeaponCollideTypes.None;
+        var stepDistance = gameObject.Speed * (gameEngine.MsPerLogicFrame / 1000.0f);
+        var radius = gameObject.Geometry.BoundingCircleRadius + stepDistance;
+
+        return quadtree
+            .FindIntersecting(new SphereCollider(gameObject.Transform, radius))
+            .FirstOrDefault(o => o != gameObject
+                && o.Id != launcherId
+                && !o.IsEffectivelyDead
+                && !o.IsProjectile
+                && ShouldCollide(o, gameObject, filter));
+    }
+
+    private static bool ShouldCollide(GameObject target, GameObject projectile, WeaponCollideTypes filter)
+    {
+        // Vehicles always stop a projectile, regardless of relationship.
+        if (target.IsKindOf(ObjectKinds.Vehicle))
+        {
+            return true;
+        }
+
+        if (target.IsKindOf(ObjectKinds.Structure) && filter.HasFlag(WeaponCollideTypes.Structures))
+        {
+            return true;
+        }
+
+        if (target.IsKindOf(ObjectKinds.Shrubbery) && filter.HasFlag(WeaponCollideTypes.Shrubbery))
+        {
+            return true;
+        }
+
+        if ((target.IsKindOf(ObjectKinds.Wall) || target.IsKindOf(ObjectKinds.DefensiveWall))
+            && filter.HasFlag(WeaponCollideTypes.Walls))
+        {
+            return true;
+        }
+
+        if (target.IsKindOf(ObjectKinds.Monster) && filter.HasFlag(WeaponCollideTypes.Monsters))
+        {
+            return true;
+        }
+
+        // Relationship tokens (Enemies/Allies/Neutral) match objects of any kind.
+        return filter.HasFlag(RelationshipFlag(projectile.Owner, target.Owner));
+    }
+
+    private static WeaponCollideTypes RelationshipFlag(Player owner, Player targetOwner)
+    {
+        if (owner == null || targetOwner == null)
+        {
+            return WeaponCollideTypes.None;
+        }
+
+        if (owner == targetOwner || owner.Allies.Contains(targetOwner))
+        {
+            return WeaponCollideTypes.Allies;
+        }
+
+        if (owner.Enemies.Contains(targetOwner))
+        {
+            return WeaponCollideTypes.Enemies;
+        }
+
+        return WeaponCollideTypes.Neutral;
     }
 
     private static bool DidHitGround(GameObject gameObject, IGameEngine gameEngine)

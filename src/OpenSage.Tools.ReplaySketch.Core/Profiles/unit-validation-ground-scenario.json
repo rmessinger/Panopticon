@@ -1,0 +1,17 @@
+{
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "FactionIndices": [2, 3, 4],
+  "Layout": {
+    "TargetClusterCenter": { "x": 600, "y": 600, "z": 0 },
+    "TargetClusterRadius": 40,
+    "UnitSpacing": 80,
+    "FactionRowOffset": 150,
+    "TargetApproachDistance": 80
+  },
+  "TargetDefinitions": ["CarAsian1"],
+  "SupplySourceDefinitions": ["AmericaSupplyCenter"],
+  "TargetHp": 30,
+  "SettleFrames": 30,
+  "Seed": 1,
+  "PlacementOverrides": []
+}

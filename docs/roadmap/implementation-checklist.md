@@ -753,36 +753,54 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
         ([`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md)).
     - AC: picking resolves to the same world position at `DpiScale` 1 and 2, and the GUI occupies
       the same fraction of the frame at both scales.
-- [ ] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`, wired through
-      `StaticGameLod`; settings layer, not an experiment seam).
+- [ ] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`; settings layer, not an
+      experiment seam). The parsed `StaticGameLod` assets name several knobs but have no runtime
+      consumer, so G2 builds the application layer
+      ([`WI-G2-01`](agent/cards/WI-G2-01-audit-render-state-knobs.md),
+      [`WI-G2-02`](agent/cards/WI-G2-02-graphics-settings-type-and-presets.md),
+      [`WI-G2-03`](agent/cards/WI-G2-03-wire-settings-into-render-construction.md)).
   - AC: TBD, switching presets at runtime changes active pipeline state, and `Faithful`
     reproduces the pre-track captured frame.
 - [ ] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
-      with sharpness/edge-aliasing metrics; extends `FrameCapturer` + ReplaySketch screenshot mode).
+      with sharpness/edge-aliasing metrics; extends `FrameCapturer` + ReplaySketch screenshot mode)
+      ([`WI-G3-01`](agent/cards/WI-G3-01-audit-frame-capture-paths.md),
+      [`WI-G3-02`](agent/cards/WI-G3-02-image-quality-metrics.md),
+      [`WI-G3-03`](agent/cards/WI-G3-03-golden-frame-comparison.md)).
   - AC: TBD, a headless run compares the fixed scene set against stored goldens per preset and
     fails on regression; the metrics separate an aliased frame from an antialiased one.
 - [ ] G4 Multisample antialiasing (sample count through `GameOutputDescription`, intermediate
-      colour/depth targets and every pipeline description, plus a resolve before the final blit).
+      colour/depth targets and every pipeline description, plus a resolve before the final blit)
+      ([`WI-G4-01`](agent/cards/WI-G4-01-inventory-sample-count-sites.md),
+      [`WI-G4-02`](agent/cards/WI-G4-02-thread-sample-count-and-resolve.md)).
   - AC: TBD, 4x MSAA renders and resolves across the 3D, terrain, water, road and particle
     pipelines, and the G3 edge-aliasing metric improves against the same frame at 1x.
 - [ ] G5 Cutout & alpha-test clarity (alpha-to-coverage under MSAA, coverage-preserving mips for
       alpha-tested textures, per-mip threshold rescale, replacing the fixed `0x60` cutoff in
-      `Common.h`).
+      `Common.h`) ([`WI-G5-01`](agent/cards/WI-G5-01-audit-alpha-test-materials.md),
+      [`WI-G5-02`](agent/cards/WI-G5-02-alpha-to-coverage-and-cutout-mips.md)).
   - AC: TBD, minified alpha-tested foliage and fencing show no dissolve-to-dots at distance under
     `Enhanced`, while `Faithful` still produces the original hard-cutoff result.
 - [ ] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, sRGB/tonemapped output,
-      linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output).
+      linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output)
+      ([`WI-G6-01`](agent/cards/WI-G6-01-audit-colour-space-handling.md),
+      [`WI-G6-02`](agent/cards/WI-G6-02-linear-space-shading-and-dither.md)).
   - AC: TBD, a fog/sky gradient shows no visible banding under `Enhanced` and mip chains no longer
     darken with distance; `Faithful` retains gamma-space shading.
 - [ ] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
-      quality terrain texture-array resample/mip path in `Terrain.cs`).
+      quality terrain texture-array resample/mip path in `Terrain.cs`)
+      ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
+      [`WI-G7-02`](agent/cards/WI-G7-02-configurable-anisotropy-and-mip-bias.md)).
   - AC: TBD, terrain stays legible at grazing angles at 16x with no shimmer under camera motion,
     measured by the G3 metrics.
 - [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, slope-scaled/
-      normal-offset bias replacing the constant bias in `ShadowSettings`).
+      normal-offset bias replacing the constant bias in `ShadowSettings`)
+      ([`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md),
+      [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md)).
   - AC: TBD, shadow edges show no acne speckle or cascade blockiness at the default camera zoom,
     with cascade transitions not visible in the captured frame.
 - [ ] G9 Resolution-independent 2D & UI (native-resolution 2D, resolution-independent layout
-      anchored in logical points, higher-quality WND/APT upscaling).
+      anchored in logical points, higher-quality WND/APT upscaling)
+      ([`WI-G9-01`](agent/cards/WI-G9-01-audit-2d-ui-resolution-path.md),
+      [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
   - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
     layout and hit regions unchanged relative to the pre-track build.

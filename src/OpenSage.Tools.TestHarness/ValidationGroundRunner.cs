@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using OpenSage.Data;
 using OpenSage.Graphics;
+using OpenSage.Input;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
+using Veldrid;
 
 namespace OpenSage.Tools.TestHarness;
 
@@ -42,23 +45,42 @@ public static class ValidationGroundRunner
         Game? game = null;
         GameWindow? window = null;
         TextureCopier? textureCopier = null;
+        ValidationGroundOverlay? overlay = null;
         try
         {
             if (config.Headless)
             {
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, null);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, null);
             }
             else
             {
                 Platform.Start();
                 window = new GameWindow("OpenSAGE - Unit Validation Ground", 100, 100, 1280, 800, config.Fullscreen);
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true }, window);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, window);
                 textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
             }
 
             game.StartSkirmishOrMultiPlayerGame(scenario.MapPath, new Network.EchoConnection(), runPlan.PlayerSettings, scenario.Seed, isMultiPlayer: false);
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
+
+            // The validation ground's ending criteria are foreign to the skirmish victory system
+            // (every unit resolved, frame cap, or window close), so make it inert rather than
+            // appeasing its defeat rule with spawned structures: with no starting buildings and no
+            // economy, the default rule would mark every roster player defeated and freeze logic.
+            game.VictorySystem.ConditionRule = new OpenSage.Logic.NeverDefeatedVictoryConditionRule();
+
+            // The default tactical view looks at the map's authored centre; the validation-ground
+            // formation is placed away from the civilian town there, so re-aim the camera at it
+            // (windowed runs, especially the starting hold, would otherwise open off-formation).
+            var view = game.Scene3D.TacticalView;
+            view.LookAt(new System.Numerics.Vector3(
+                scenario.Layout.TargetClusterCenter.X,
+                scenario.Layout.TargetClusterCenter.Y,
+                0f));
+            view.InitHeightForMap();
+            view.SetAngleAndPitchToDefault();
+            view.SetZoomToDefault();
 
             // The validation ground spawns and orders units directly; an active skirmish AI would
             // both dominate per-frame cost and override those orders. Per deep dive §2.1 ("no AI,
@@ -76,12 +98,8 @@ public static class ValidationGroundRunner
                 game.EnableFixedLogicTimestep();
             }
 
-            var renders = !config.Headless;
-            Action step = renders ? () => StepOnce(game, window, textureCopier!) : () => StepLogicOnly(game);
-
             var host = new ValidationGroundHost();
             host.Spawn(plan, game, scenario.TargetHp);
-            host.SpawnKeepAliveStructures(game);
 
             var timer = new UnitActionTimer();
             foreach (var gap in host.Gaps)
@@ -89,15 +107,36 @@ public static class ValidationGroundRunner
                 timer.RecordGap(gap.DefinitionName, gap.FactionIndex, gap.ActionKind, gap.Reason);
             }
 
-            // Settle stage: no orders until this many frames have elapsed. In windowed mode this also
-            // renders the scene before any order is issued.
-            for (var i = 0; i < scenario.SettleFrames; i++)
+            // In windowed hold mode the run starts paused with the orders held: the formation can be
+            // inspected (camera pans/zooms while paused), and Space (or the overlay button) resumes,
+            // runs the settle stage, and issues the orders. Headless always auto-issues after the
+            // settle stage for byte-identical regression reports.
+            var holdOrders = !config.Headless && config.ValidationGroundHoldOrders;
+            var ordersIssued = false;
+            var observe = host.BuildObservationSeam(game);
+            uint startFrame = 0;
+
+            Action step;
+            if (config.Headless)
             {
-                step();
+                step = () => StepLogicOnly(game);
+            }
+            else
+            {
+                overlay = new ValidationGroundOverlay(game, window!);
+                step = () => StepOnce(game, window!, textureCopier!, overlay!);
             }
 
-            host.IssueOrders(game, timer);
-            var observe = host.BuildObservationSeam(game);
+            if (holdOrders)
+            {
+                game.IsLogicRunning = false;
+                reporter.Info($"Holding orders: the scenario starts paused. Resume (and attack) with Space or the overlay button. ValidationGroundHoldOrders=false disables this.");
+            }
+            else
+            {
+                RunSettleStage(step, scenario.SettleFrames);
+                IssueOrders(host, game, timer, ref ordersIssued, ref startFrame);
+            }
 
             // Headless always exits on completion: there is no window to close, so suppressing the
             // exit would hang. In windowed mode, ExitAfterTargetsDestroyed=false keeps the game
@@ -109,22 +148,53 @@ public static class ValidationGroundRunner
                 reporter.Info("ExitAfterTargetsDestroyed is false; the game will remain running until the window is closed.");
             }
 
-            var startFrame = CurrentLogicFrame(game);
             while (game.IsRunning)
             {
-                step();
-                var frame = CurrentLogicFrame(game);
-                timer.Poll(frame, observe);
-                // A unit that destroys its target has finished; clear its weapon so it stops firing
-                // (and its turret stops auto-acquiring new enemies), keeping the run bounded.
-                host.DisarmUnitsWhoseTargetIsDestroyed(game);
-
-                if (exitOnCompletion)
+                if (overlay != null)
                 {
-                    var report = timer.BuildReport();
-                    if (report.TotalUnitCount >= totalUnits || frame - startFrame > MaxRunFrames)
+                    var progress = timer.BuildReport();
+                    overlay.State = new ValidationGroundOverlayState(
+                        HoldingOrders: holdOrders && !ordersIssued,
+                        Paused: !game.IsLogicRunning,
+                        ResolvedUnits: progress.TotalUnitCount,
+                        TotalUnits: totalUnits,
+                        Gaps: progress.Gaps.Count);
+                }
+
+                step();
+
+                // Space / the overlay button: resumes from the starting hold (issuing the orders),
+                // or toggles active pause once the run is under way. Paused logic frames do not
+                // advance, so pausing never consumes a unit's frame budget.
+                if (overlay?.PrimaryActionRequested == true)
+                {
+                    if (holdOrders && !ordersIssued)
                     {
-                        break;
+                        game.IsLogicRunning = true;
+                        RunSettleStage(step, scenario.SettleFrames);
+                        IssueOrders(host, game, timer, ref ordersIssued, ref startFrame);
+                    }
+                    else
+                    {
+                        game.IsLogicRunning = !game.IsLogicRunning;
+                    }
+                }
+
+                var frame = CurrentLogicFrame(game);
+                if (ordersIssued)
+                {
+                    timer.Poll(frame, observe);
+                    // A unit that destroys its target has finished; clear its weapon so it stops firing
+                    // (and its turret stops auto-acquiring new enemies), keeping the run bounded.
+                    host.DisarmUnitsWhoseTargetIsDestroyed(game);
+
+                    if (exitOnCompletion)
+                    {
+                        var report = timer.BuildReport();
+                        if (report.TotalUnitCount >= totalUnits || frame - startFrame > MaxRunFrames)
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -133,6 +203,7 @@ public static class ValidationGroundRunner
         }
         finally
         {
+            overlay?.Dispose();
             textureCopier?.Dispose();
             game?.Dispose();
             window?.Dispose();
@@ -141,6 +212,28 @@ public static class ValidationGroundRunner
                 Platform.Stop();
             }
         }
+    }
+
+    private static void RunSettleStage(Action step, int settleFrames)
+    {
+        // Settle stage: no orders until this many frames have elapsed. In windowed mode this also
+        // renders the scene before any order is issued.
+        for (var i = 0; i < settleFrames; i++)
+        {
+            step();
+        }
+    }
+
+    private static void IssueOrders(ValidationGroundHost host, Game game, UnitActionTimer timer, ref bool ordersIssued, ref uint startFrame)
+    {
+        if (ordersIssued)
+        {
+            return;
+        }
+
+        host.IssueOrders(game, timer);
+        startFrame = CurrentLogicFrame(game);
+        ordersIssued = true;
     }
 
     private static void Finish(UnitActionTimer timer, TestHarnessConfig config, ITestHarnessReporter reporter)
@@ -210,30 +303,62 @@ public static class ValidationGroundRunner
         game.Update(Array.Empty<Input.InputMessage>());
     }
 
-    private static void StepOnce(Game game, GameWindow? window, TextureCopier textureCopier)
+    private static void StepOnce(Game game, GameWindow window, TextureCopier textureCopier, ValidationGroundOverlay overlay)
     {
-        if (window != null)
+        if (!window.PumpEvents())
         {
-            if (!window.PumpEvents())
+            game.Exit();
+            return;
+        }
+
+        overlay.Update((float)game.RenderTime.DeltaTime.TotalSeconds, window.CurrentInputSnapshot);
+        FilterOverlayInput(window, overlay);
+
+        game.Update(window.MessageQueue);
+        game.Panel.EnsureFrame(window.ClientBounds);
+        game.Render();
+        textureCopier.Execute(
+            game.Panel.Framebuffer.ColorTargets[0].Target,
+            window.Swapchain.Framebuffer);
+        overlay.Render(game.GraphicsDevice);
+        game.GraphicsDevice.SwapBuffers(window.Swapchain);
+        window.MessageQueue.Clear();
+    }
+
+    /// <summary>
+    /// Space is the overlay's hotkey and never reaches the game; mouse input is dropped on frames
+    /// where ImGui captures the mouse, so clicking the overlay does not select units or issue
+    /// orders in the world.
+    /// </summary>
+    private static void FilterOverlayInput(GameWindow window, ValidationGroundOverlay overlay)
+    {
+        if (window.MessageQueue.Count == 0)
+        {
+            return;
+        }
+
+        var kept = new List<InputMessage>(window.MessageQueue.Count);
+        while (window.MessageQueue.TryDequeue(out var message))
+        {
+            var isSpaceKey = message.MessageType is InputMessageType.KeyDown or InputMessageType.KeyUp
+                && message.Value.Key == Key.Space;
+            var isMouse = message.MessageType
+                is InputMessageType.MouseMove or InputMessageType.MouseWheel
+                or InputMessageType.MouseLeftButtonDown or InputMessageType.MouseLeftButtonUp
+                or InputMessageType.MouseRightButtonDown or InputMessageType.MouseRightButtonUp
+                or InputMessageType.MouseMiddleButtonDown or InputMessageType.MouseMiddleButtonUp;
+
+            if (isSpaceKey || (isMouse && overlay.WantCaptureMouse))
             {
-                game.Exit();
-                return;
+                continue;
             }
 
-            game.Update(window.MessageQueue);
-            game.Panel.EnsureFrame(window.ClientBounds);
-            game.Render();
-            textureCopier.Execute(
-                game.Panel.Framebuffer.ColorTargets[0].Target,
-                window.Swapchain.Framebuffer);
-            game.GraphicsDevice.SwapBuffers(window.Swapchain);
-            window.MessageQueue.Clear();
+            kept.Add(message);
         }
-        else
+
+        foreach (var message in kept)
         {
-            game.Update(Array.Empty<Input.InputMessage>());
-            game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, 1280, 800));
-            game.Render();
+            window.MessageQueue.Enqueue(message);
         }
     }
 

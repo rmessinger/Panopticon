@@ -89,41 +89,199 @@ design treats terrain streaming and large-object authoring as the core requireme
 
 ## Architecture Diagrams
 
-Diagrams for this phase will be elaborated once B4a moves to active implementation. The
-placeholder below captures the key types larger-map support introduces.
+These diagrams show the current map and terrain types, and the types B4a adds on top of them.
+Types that exist today carry no stereotype. Types B4a introduces carry a sub-phase stereotype
+(`<<B4a-4>>`, `<<B4a-5>>`, `<<B4a-7>>`) matching the [sub-phase table](#sub-phases), and are drawn
+with a colored accent via `classDef`. For the rationale behind streaming, chunking, and
+large-population authoring, see the sections above; these diagrams cover only structure and flow.
+
+### Current types and B4a additions
+
+`MapFile` (`src/OpenSage.Game/Data/Map/MapFile.cs`) owns the resident map data. `HeightMapData`
+holds the full `ushort[,] Elevations` grid and validates `Width * Height == Area`; `BlendTileData`
+holds per-cell tile arrays; `ObjectsList` holds the flat `MapObject[]`. `Terrain`
+(`src/OpenSage.Game/Terrain/Terrain.cs`) builds one `TerrainPatch` per `PatchSize` (17) block over
+the whole `HeightMap` up front in `CreatePatches`. On the editor side, `EditorMap` wraps a `MapFile`
+and an `UndoRedoStack~IMapEdit~`; tools push region-scoped `IMapEdit` records. B4a-5 replaces the
+single resident grid with chunked storage, B4a-4 builds patches on demand, and B4a-7 lifts the
+region-edit model from cells to objects.
 
 ```mermaid
 classDiagram
-  class ChunkedHeightMap {
-    <<pending B4a>>
+  class MapFile {
+    +HeightMapData HeightMapData
+    +BlendTileData BlendTileData
+    +ObjectsList ObjectsList
+    +FromFileSystemEntry(entry) MapFile
+    +WriteTo(stream)
+  }
+  class HeightMapData {
+    +uint Width
+    +uint Height
+    +uint Area
+    +uint BorderWidth
+    +bool ElevationsAre16Bit
+    +ushort[,] Elevations
+  }
+  class BlendTileData {
+    +ushort[,] Tiles
+    +uint[,] Blends
+  }
+  class ObjectsList {
+    +MapObject[] Objects
+    +AddObject(mapObject)
+    +RemoveObject(mapObject)
+  }
+  class Terrain {
+    +HeightMap HeightMap
+    +int PatchSize$
+    -List~TerrainPatch~ _patches
+    +OnHeightMapChanged()
+    -CreatePatches()
+  }
+  class TerrainPatch {
+    +Rectangle Bounds
+    +AxisAlignedBoundingBox BoundingBox
+  }
+  class HeightMap {
+    +int HorizontalScale$
+    +int Width
+    +int Height
+    +GetHeight(x, y) float
+  }
+  class EditorMap {
+    +MapFile MapFile
+    +UndoRedoStack~IMapEdit~ UndoStack
+    +CreateNew(mapFile) EditorMap
+    +Open(mapFile, path) EditorMap
+    +Save()
+  }
+  class IMapEdit {
+    <<interface>>
+    +Apply()
+    +Revert()
+  }
+  class HeightMapEdit {
+    -int _startX
+    -int _startY
+    -ushort[,] _before
+    -ushort[,] _after
+    +Capture(data, startX, startY, w, h, apply, desc) HeightMapEdit
+  }
+
+  class ChunkedHeightMap:::b4a {
+    <<B4a-5>>
     +int ChunkSize
     +IReadOnlyList~HeightMapChunk~ Chunks
     +LoadRegion(bounds) IEnumerable~HeightMapChunk~
   }
-
-  class HeightMapChunk {
-    <<pending B4a>>
+  class HeightMapChunk:::b4a {
+    <<B4a-5>>
     +Rectangle WorldBounds
     +ushort[,] Elevations
+    +bool IsResident
     +bool IsDirty
   }
-
-  class RegionBasedEditor {
-    <<pending B4a, WorldBuilder>>
-    +LoadRegion(bounds)
-    +SaveRegion(bounds)
-    +PaintTerrain(stroke)
+  class TerrainPatchStreamer:::b4a {
+    <<B4a-4>>
+    +UpdateVisible(cameraBounds)
+    +BuildPatch(bounds) TerrainPatch
+    +FreePatch(bounds)
+  }
+  class ObjectPopulationEdit:::b4a {
+    <<B4a-7>>
+    +IReadOnlyList~MapObject~ Before
+    +IReadOnlyList~MapObject~ After
+    +Apply()
+    +Revert()
   }
 
-  class LargeObjectPopulation {
-    <<pending B4a, WorldBuilder>>
-    +Serialize(objects) StreamingObjectList
-    +Load(region) IEnumerable~ObjectDefinition~
-  }
-
+  MapFile *-- HeightMapData
+  MapFile *-- BlendTileData
+  MapFile *-- ObjectsList
+  ObjectsList "1" --> "N" MapObject
+  Terrain --> HeightMap
+  Terrain "1" --> "N" TerrainPatch
+  EditorMap --> MapFile
+  EditorMap --> IMapEdit : UndoRedoStack
+  HeightMapEdit ..|> IMapEdit
+  ObjectPopulationEdit ..|> IMapEdit
   ChunkedHeightMap "1" --> "N" HeightMapChunk
-  RegionBasedEditor --> ChunkedHeightMap
-  RegionBasedEditor --> LargeObjectPopulation
+  ChunkedHeightMap ..> HeightMapData : replaces resident grid
+  TerrainPatchStreamer ..> ChunkedHeightMap : reads region
+  TerrainPatchStreamer ..> TerrainPatch : builds on demand
+  ObjectPopulationEdit ..> ObjectsList : bulk edit
+
+  classDef b4a fill:#eef,stroke:#55f,stroke-width:2px
+```
+
+### Map load path for a large map with streaming
+
+Today `Game.LoadMap` reads the whole `MapFile`, seeds `TerrainLogic.HeightMap`, then `Scene3D`
+builds every `TerrainPatch` up front through `Terrain.CreatePatches`. B4a-5 makes the parse hydrate
+`ChunkedHeightMap` instead of one resident grid, and B4a-4 has `TerrainPatchStreamer` build patches
+only for chunks near the camera and free distant ones.
+
+```mermaid
+sequenceDiagram
+  participant G as Game.LoadMap
+  participant MF as MapFile
+  participant HD as HeightMapData
+  participant TL as TerrainLogic
+  participant S as Scene3D
+  participant T as Terrain
+  participant STR as TerrainPatchStreamer
+  participant CH as ChunkedHeightMap
+
+  G->>MF: FromFileSystemEntry(entry)
+  MF->>HD: Parse(reader)
+  Note over HD,CH: B4a-5: parse into ChunkedHeightMap<br/>rather than one resident ushort[,]
+  MF-->>G: MapFile
+  G->>TL: SetHeightMapData(mapFile.HeightMapData)
+  TL-->>TL: new HeightMap
+  G->>S: new Scene3D(mapFile, ...)
+  S->>T: new Terrain(mapFile, heightMap, ...)
+  alt today
+    T->>T: CreatePatches() over whole grid
+    T->>T: new TerrainPatch per 17x17 block
+  else B4a-4 streaming
+    S->>STR: UpdateVisible(cameraBounds)
+    STR->>CH: LoadRegion(cameraBounds)
+    CH-->>STR: resident HeightMapChunks
+    STR->>T: BuildPatch(bounds) for near chunks
+    STR->>T: FreePatch(bounds) for distant chunks
+  end
+```
+
+### WorldBuilder region edit and save
+
+A height brush stroke captures only the affected rectangle. `HeightMapEdit.Capture` already records
+a region `before`/`after` pair rather than the whole grid, and `UndoRedoStack.Push` applies it. The
+remaining full-grid cost is in `HeightBrushTool`, which still clones the entire `Elevations` array
+per stroke (`_strokeBefore = Elevations.Clone()`); B4a-2 removes that clone so stroke cost is
+O(brush), not O(map area). `EditorMap.Save` writes the map back through `MapFile.WriteTo`.
+
+```mermaid
+sequenceDiagram
+  participant U as User (pointer)
+  participant HB as HeightBrushTool
+  participant HD as HeightMapData
+  participant HE as HeightMapEdit
+  participant US as UndoRedoStack
+  participant EM as EditorMap
+  participant MF as MapFile
+
+  U->>HB: OnPointerDown / OnPointerMove
+  Note over HB: B4a-2: capture only the stroke rectangle,<br/>drop the full Elevations.Clone()
+  HB->>HD: apply brush to cells in radius
+  HB->>HB: track stroke min/max X and Y
+  U->>HB: OnPointerUp
+  HB->>HE: Capture(data, startX, startY, w, h, apply, desc)
+  HE->>HD: read region before and after
+  HB->>US: Push(edit)
+  US->>HE: Apply()
+  U->>EM: Save
+  EM->>MF: WriteTo(stream)
 ```
 
 ## Related

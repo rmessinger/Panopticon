@@ -31,34 +31,6 @@ public sealed class ValidationGroundHost
         SpawnSupplySources(plan, game);
     }
 
-    /// <summary>
-    /// Stands up one CommandCenter per roster faction in a far corner. With AI disabled the
-    /// factions never build, so without a qualifying structure the victory system's defeat rule
-    /// (no builder unit and no structure) would mark each faction defeated immediately and freeze
-    /// logic. The validation ground runs with no victory condition (deep dive §2.1); these
-    /// structures are out of weapon range and never attacked.
-    /// </summary>
-    public void SpawnKeepAliveStructures(IGame game)
-    {
-        var factionCenters = new (int PlayerIndex, string Definition)[]
-        {
-            (2, "AmericaCommandCenter"),
-            (3, "ChinaCommandCenter"),
-            (4, "GLACommandCenter"),
-        };
-
-        foreach (var (playerIndex, definitionName) in factionCenters)
-        {
-            var player = ResolvePlayer(game, playerIndex);
-            if (player == null)
-            {
-                continue;
-            }
-
-            CreateAt(game, definitionName, new Vector3(30f + playerIndex * 10f, 30f, 0f), player);
-        }
-    }
-
     private void SpawnTargets(SpawnPlan plan, IGame game, float targetHp = 0f)
     {
         // Targets are neutral (civilian) so any faction can legally attack them.
@@ -240,6 +212,10 @@ public sealed class ValidationGroundHost
         var position = new Vector3(planarPosition.X, planarPosition.Y, height);
         var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
         gameObject.UpdateTransform(position, gameObject.Rotation);
+        // Colliders are built at the origin and only refreshed on the next logic tick; a run held
+        // paused at start (ValidationGroundHoldOrders) never ticks logic, so frustum culling would
+        // cull every spawned model off-camera until resume. Refresh immediately after placement.
+        gameObject.UpdateColliders();
         return gameObject;
     }
 

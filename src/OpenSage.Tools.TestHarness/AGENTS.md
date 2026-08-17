@@ -194,6 +194,13 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
   dotnet run --project src/OpenSage.Tools.TestHarness
 ```
 
+A windowed run starts paused with the orders held, so the formation's starting conditions can be
+inspected before anything acts (the camera pans/zooms while paused). Space, or the overlay button,
+resumes: the settle stage runs and every unit is ordered to attack its target. Afterwards Space
+toggles active pause; paused logic frames do not advance, so pausing never consumes a unit's frame
+budget or perturbs the measurement. `ValidationGroundHoldOrders: false` restores immediate
+auto-issue after the settle stage.
+
 Headless (CI regression gate, exits non-zero on regression or timeout):
 
 ```sh
@@ -210,11 +217,13 @@ All optional with defaults, in `TestHarness.json`:
 
 | Knob | Purpose |
 |---|---|
+| `ValidationGroundScenarioPath` | Validation-ground scenario JSON (layout + placement overrides) from the ReplaySketch editor; when set, loaded verbatim and `ValidationGroundMapPath`/`SettleFrames`/`Seed` are ignored |
 | `ValidationGroundMapPath` | Map to run on (default: Alpine Assault) |
 | `ValidationGroundSettleFrames` | Frames to settle after spawn before issuing orders |
 | `ValidationGroundBaselinePath` | Path to the golden baseline JSON (empty skips comparison) |
 | `ValidationGroundRefreshBaseline` | `true` overwrites the baseline from the run instead of comparing |
 | `ValidationGroundReportPath` | Where to write the JSON report artifact |
+| `ValidationGroundHoldOrders` | `true` (default) starts a windowed run paused with orders held; Space or the overlay button resumes (settle + attack orders), then toggles active pause. Ignored by headless runs |
 | `ExitAfterTargetsDestroyed` | `true` (default) exits once all targets are destroyed or the frame cap hits; `false` keeps the game running until the window is closed (windowed only; headless always exits) |
 
 ### Refreshing the baseline
@@ -230,16 +239,18 @@ reports are byte-identical (the determinism check).
 
 The capture relies on a few non-obvious mechanics, all wired in `Program.RunValidationGround` and
 `ValidationGroundHost`: fixed-timestep logic stepping (`Game.EnableFixedLogicTimestep`) so frame
-counts are reproducible; skirmish AI disabled on the roster players (per the "no AI" design); an
-untouched CommandCenter per faction so the victory system does not defeat factions that start with no
-buildings; one target per attacker, placed in weapon range and standardized to a low HP
+counts are reproducible; skirmish AI disabled on the roster players (per the "no AI" design); the
+victory system made inert (`NeverDefeatedVictoryConditionRule` plus
+`Configuration.SkipStartingBuildings`) so no command centers are needed and the sandbox's own
+ending criteria (all units resolved, frame cap, window close) govern; one target per attacker,
+placed in weapon range and standardized to a low HP
 (`ValidationGroundScenario.TargetHp`), so each unit's target-destruction completion is its own and
 feasible for the whole roster; and direct weapon targeting for attackers (the `AttackObject` order's
 move step suppresses fire for several units, so in-range attackers are commanded directly to isolate
 the weapon delay). A unit that destroys its target has its weapon cleared so it stops firing.
-Units the sandbox cannot measure (suicide, bomber, horde, transport, sniper that will not fire at the
-structure target) are listed in `PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as gaps;
-SpecialPower units have no implemented order path and are also gaps.
+Units the sandbox cannot measure (suicide, bomber, horde, transport, sniper that will not fire at
+the assigned target) are listed in `PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as
+gaps; SpecialPower units have no implemented order path and are also gaps.
 
 ### Live capture and accuracy verification
 
@@ -326,14 +337,20 @@ how reproducible the capture was.
 | Gather | `SupplyAIUpdateModuleData.SupplyWarehouseActionDelay` × boxes + `SupplyCenterActionDelay` | sum + two travel legs |
 | SpecialPower | unit's `SpecialPower.ReloadTime` (and power-specific effect delay) | ≥ the power's delay |
 
-Worked example — a Ranger (USA infantry) attacking the target cluster:
+Worked example — a Ranger (USA infantry) attacking its assigned target:
 
-- Spawn row sits 250 world-units from the cluster centre (`LayoutConfig.FactionRowDistance`).
+- The formation is six interleaved parallel rows (units, targets, units, targets, ...); each unit's
+  target sits `TargetApproachDistance` (90 world-units) ahead on an adjacent row, within weapon
+  range. The formation geometry is configured (not in source) by the checked-in
+  `src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-scenario.json`, loaded via
+  `ValidationGroundScenario.Standard()`; `ValidationGroundBuilder` turns it into the spawn plan.
 - Ranger's primary weapon `PreAttackDelay` and `AttackRange` come straight from
   `WeaponTemplate` in `Data/INI/Weapon/*.ini`.
-- Expected measured frames ≈ `(250 − AttackRange) / locomotorMaxSpeed + PreAttackDelay.Min`.
+- Attackers are commanded directly (`CurrentWeapon.SetTarget` on the in-range target), so the
+  measured frames are weapon-dominated: ≈ `PreAttackDelay.Min` + shots-to-kill at the standardized
+  `TargetHp`. There is no travel leg for attack.
 - The committed golden must be at least `PreAttackDelay.Min`; the tolerance band covers only the
-  approach/pathing jitter above that anchor.
+  first-shot jitter above that anchor.
 
 Automated, data-grounded gate: the `[GameFact]` test
 `BaselineGoldenFrames_AreConsistentWithWeaponIniData` loads the install, resolves each Attack

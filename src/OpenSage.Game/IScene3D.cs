@@ -62,7 +62,7 @@ public interface IScene3D : IDisposable
     RadarDrawUtil RadarDrawUtil { get; }
     int GetPlayerIndex(Player player);
     void LogicTick(in TimeInterval time);
-    void LocalLogicTick(in TimeInterval gameTime, float tickT);
+    void LocalLogicTick(in TimeInterval gameTime, float tickT, in TimeInterval? cameraTime = null);
     void BuildRenderList(RenderList renderList, Camera camera, in TimeInterval gameTime);
     void Render(DrawingContext2D drawingContext);
     GameObject CreateSkirmishPlayerStartingBuilding(in PlayerSetting playerSetting, Player player);

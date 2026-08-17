@@ -79,6 +79,10 @@ public static class CommandButtonCallback
                 game.OrderGenerator.SetRallyPoint();
                 break;
 
+            case CommandType.AttackMove:
+                game.OrderGenerator.StartAttackMove();
+                break;
+
             case CommandType.PlayerUpgrade:
             case CommandType.ObjectUpgrade:
                 if (cancel)

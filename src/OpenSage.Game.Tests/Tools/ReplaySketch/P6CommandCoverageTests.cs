@@ -44,6 +44,7 @@ public class P6CommandCoverageTests : MockedGameTest
             OrderType.SelectGroup4, OrderType.SelectGroup5, OrderType.SelectGroup6, OrderType.SelectGroup7,
             OrderType.SelectGroup8, OrderType.SelectGroup9,
         OrderType.MoveTo,
+        OrderType.AttackMove,
         OrderType.BuildObject, OrderType.CancelBuild, OrderType.ResumeBuild,
         OrderType.BeginUpgrade, OrderType.CancelUpgrade,
         OrderType.StopMoving,
@@ -86,7 +87,6 @@ public class P6CommandCoverageTests : MockedGameTest
     [
         OrderType.Unknown1,
         OrderType.Unknown1005,
-        OrderType.AttackMove,
     ];
 
     [Fact, Trait("Category", "Roadmap")]

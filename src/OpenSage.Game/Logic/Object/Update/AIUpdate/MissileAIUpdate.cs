@@ -31,6 +31,13 @@ public sealed class MissileAIUpdate : AIUpdate
 
     internal FXList DetonationFX { get; set; }
 
+    // The firing unit, assigned at spawn (see ProjectileNugget) so collision can skip it.
+    internal ObjectId LauncherObjectId
+    {
+        get => _launcherObjectId;
+        set => _launcherObjectId = value;
+    }
+
     internal MissileAIUpdate(GameObject gameObject, IGameEngine gameEngine, MissileAIUpdateModuleData moduleData)
         : base(gameObject, gameEngine, moduleData)
     {
@@ -83,7 +90,7 @@ public sealed class MissileAIUpdate : AIUpdate
 
             case MissileState.Moving:
                 // TODO: TryToFollowTarget
-                BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX);
+                BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX, _launcherObjectId);
                 break;
 
             default:

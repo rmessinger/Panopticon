@@ -24,11 +24,11 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| A1 | [Headless host](deep-dives/a1-headless-host.md) | [§5](deep-dives/a1-headless-host.md#5-architecture-diagrams) `†` | — |
-| A2 | — | — | — |
-| A3 | — | — | — |
+| A1 | [Headless host](deep-dives/a1-headless-host.md) | [§5](deep-dives/a1-headless-host.md#5-architecture-diagrams) `†` | [`WI-A1-01`](agent/cards/WI-A1-01-audit-graphics-device-couplings.md), [`WI-A1-02`](agent/cards/WI-A1-02-audit-tick-presentation-couplings.md), [`WI-A1-03`](agent/cards/WI-A1-03-populate-architecture-diagrams.md), [`WI-A1-04`](agent/cards/WI-A1-04-data-only-asset-loading.md), [`WI-A1-05`](agent/cards/WI-A1-05-extract-logic-stepper.md), [`WI-A1-06`](agent/cards/WI-A1-06-simulation-host.md), [`WI-A1-07`](agent/cards/WI-A1-07-run-outputs-metrics-stream.md) |
+| A2 | — | — | [`WI-A2-01`](agent/cards/WI-A2-01-audit-randomness-sources.md), [`WI-A2-02`](agent/cards/WI-A2-02-audit-nonrandom-nondeterminism.md), [`WI-A2-03`](agent/cards/WI-A2-03-route-randomness-through-seeded-source.md), [`WI-A2-04`](agent/cards/WI-A2-04-stability-verification-harness.md) |
+| A3 | — | — | [`WI-A3-01`](agent/cards/WI-A3-01-audit-logic-presentation-reads.md), [`WI-A3-02`](agent/cards/WI-A3-02-logic-presentation-boundary-test.md) |
 | A4 | [Pluggable AI policy](deep-dives/a4-pluggable-ai.md), [Decentralized hierarchical AI](deep-dives/a4-decentralized-hierarchical-ai.md) | [§8](deep-dives/a4-pluggable-ai.md#8-architecture-diagrams), [§9](deep-dives/a4-decentralized-hierarchical-ai.md#9-architecture-diagrams) `†` | [`WI-A4-01`](agent/cards/WI-A4-01-extract-ai-decision-policy-interface.md), [`WI-A4-02`](agent/cards/WI-A4-02-ai-policy-selection-factory.md), [`WI-A4-03`](agent/cards/WI-A4-03-design-neural-network-policy.md), [`WI-A4-04`](agent/cards/WI-A4-04-implement-neural-network-policy.md) |
-| A5 | [Visualization](deep-dives/a5-visualization.md) | [§8](deep-dives/a5-visualization.md#8-architecture-diagrams) `†` | — |
+| A5 | [Visualization](deep-dives/a5-visualization.md) | [§8](deep-dives/a5-visualization.md#8-architecture-diagrams) `†` | [`WI-A5-01`](agent/cards/WI-A5-01-worldbuilder-functional-audit.md), [`WI-A5-02`](agent/cards/WI-A5-02-worldbuilder-roundtrip-test.md), [`WI-A5-03`](agent/cards/WI-A5-03-scenario-artifact-and-loader.md), [`WI-A5-04`](agent/cards/WI-A5-04-results-replayer-load-and-scrub.md), [`WI-A5-05`](agent/cards/WI-A5-05-divergence-localization.md) |
 
 ## Notes
 
