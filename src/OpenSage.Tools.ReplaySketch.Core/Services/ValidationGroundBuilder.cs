@@ -20,6 +20,11 @@ public static class ValidationGroundBuilder
     private const float ClusterSearchStep = 100f;
     // Margin kept between a cluster's outermost placement and the playable extent border.
     private const float ClusterBorderMargin = 30f;
+    // Height spreads within this many units count as equally flat when scoring candidates, so the
+    // tie breaks by proximity to the layout centre. Without it, a strictly-flatter first cluster
+    // can sit next to the only other flat disc on the map and box later factions into the hills
+    // (observed on Alpine Assault: spread 0 vs 2 chose the 0 and left none flat for faction 3).
+    private const float FlatnessBucket = 5f;
 
     public static SpawnPlan Build(ValidationGroundScenario scenario, MapMetadataService? map = null)
     {
@@ -242,9 +247,12 @@ public static class ValidationGroundBuilder
         var rowsCount = Math.Max(1, (int)Math.Ceiling(Math.Max(1, rosterCount) / (float)cols));
         var clusterRadius = Math.Max((cols - 1), (rowsCount - 1)) * spacing / 2f + standoff + ClusterBorderMargin;
 
-        // Any two cluster centres must be far enough apart that their discs (units + standoff
-        // targets + margin) cannot touch or interleave.
-        var separation = Math.Max(layout.FactionRowOffset, 2 * clusterRadius + layout.FactionRowOffset);
+        // Two cluster centres must be far enough apart that their discs (units block + standoff
+        // target ring + margin) cannot touch or interleave. Exact disc non-overlap is sufficient:
+        // the standoff targets are inside their own cluster's disc. A larger gap (adding
+        // FactionRowOffset on top) can exhaust the map's flat ground — on Alpine Assault only two
+        // mutually 610-apart flat discs exist, forcing the third cluster into the hills.
+        var separation = Math.Max(layout.FactionRowOffset, 2 * clusterRadius);
 
         float minX, minY, maxX, maxY;
         if (map != null)
@@ -265,7 +273,7 @@ public static class ValidationGroundBuilder
         }
 
         var preferred = new Vector2(layout.TargetClusterCenter.X, layout.TargetClusterCenter.Y);
-        (float Spread, float Dist, Vector2 Center)? best = null;
+        (int Bucket, float Dist, Vector2 Center)? best = null;
 
         for (var y = minY; y <= maxY; y += ClusterSearchStep)
         {
@@ -295,9 +303,13 @@ public static class ValidationGroundBuilder
                 var spread = map != null ? HeightSpread(map, candidate, clusterRadius) : 0f;
                 var dist = Vector2.Distance(candidate, preferred);
 
-                if (best == null || spread < best.Value.Spread || (spread == best.Value.Spread && dist < best.Value.Dist))
+                // Flatness dominates, bucketed so near-equal spreads tie-break by proximity.
+                var bucket = (int)(spread / FlatnessBucket);
+                if (best == null
+                    || bucket < best.Value.Bucket
+                    || (bucket == best.Value.Bucket && dist < best.Value.Dist))
                 {
-                    best = (spread, dist, candidate);
+                    best = (bucket, dist, candidate);
                 }
             }
         }
