@@ -28,18 +28,19 @@ public static class PrimaryActionCatalog
 
     /// <summary>
     /// Roster units whose Attack action does not produce target damage through a directly-commanded
-    /// weapon in the validation-ground sandbox (e.g. suicide, bomber, horde, transport, sniper that
-    /// will not fire at the structure target). They would always time out, so the host records them
-    /// as named gaps instead of running them through the timer, and they have no baseline entry.
-    /// Escalate per deep dive P9 §2.6. Authoritative for both the host and the baseline-coverage test.
+    /// weapon in the validation-ground sandbox. Re-verified against the CarAsian1 target
+    /// (TruckArmor) per the gap-closure plan WI-VG-01. They would always time out, so the host
+    /// records them as named gaps instead of running them through the timer, and they have no
+    /// baseline entry. Escalate per deep dive P9 §2.6. Authoritative for both the host and the
+    /// baseline-coverage test.
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> UnmeasurableAttackReasons = new Dictionary<string, string>
     {
-        ["AmericaInfantryPathfinder"] = "sniper weapon does not fire at the assigned target in the sandbox",
+        ["AmericaInfantryPathfinder"] = "sniper weapon (FLESHY_SNIPER) does 0% to the TruckArmor car target; anti-personnel only",
         ["AmericaJetAurora"] = "bomber (JetAIUpdate); a direct weapon command does not trigger its bombing run",
         ["ChinaVehicleTroopCrawler"] = "transport; no direct-fire weapon discharge in the sandbox",
         ["GLAInfantryAngryMobNexus"] = "horde composite unit; per-unit weapon targeting does not apply",
-        ["GLAInfantryTerrorist"] = "suicide weapon (point-blank); cannot damage from standoff range",
+        ["GLAInfantryTerrorist"] = "suicide weapon (point-blank, self-destruct); cannot damage from standoff range",
     };
 
     /// <summary>

@@ -247,4 +247,45 @@ public class ValidationGroundTests
 
         return null;
     }
+
+    // WI-VG-01: every cataloged "unmeasurable" verdict must be backed by the install's own data
+    // against the current sandbox target. The Pathfinder verdict is armor-based (FLESHY_SNIPER
+    // does 0% to TruckArmor), so it is verifiable from INI alone: if the armor or damage type ever
+    // changes (different target, patch, remaster), this fails and the entry must be re-measured
+    // rather than silently keeping a stale gap. The other four verdicts are mechanics-based
+    // (suicide/bomber/transport/horde) and re-verified by live runs instead.
+    [GameFact(SageGame.CncGenerals)]
+    public void PathfinderGap_IsBackedByArmorIniData()
+    {
+        var rootFolder = InstalledFilesTestData.GetInstallationDirectory(SageGame.CncGenerals);
+        var installation = new GameInstallation(new GeneralsDefinition(), rootFolder);
+
+        Platform.Start();
+        try
+        {
+            using var game = new Game(installation);
+
+            var target = game.AssetStore.ObjectDefinitions.GetByName(
+                ValidationGroundScenarioStore.Standard().TargetDefinitions[0]);
+            Assert.NotNull(target);
+
+            var armor = target.ArmorSets.FirstOrDefault()?.Armor?.Value;
+            Assert.NotNull(armor);
+
+            var pathfinder = game.AssetStore.ObjectDefinitions.GetByName("AmericaInfantryPathfinder");
+            var weapon = ResolvePrimaryWeapon(pathfinder!);
+            Assert.NotNull(weapon);
+
+            var damageType = weapon.Nuggets.OfType<DamageNugget>().FirstOrDefault()?.DamageType;
+
+            Assert.Equal(DamageType.FleshySniper, damageType);
+            Assert.True(armor.Values[(int)DamageType.FleshySniper].IsZero,
+                "FLESHY_SNIPER no longer does zero damage to the sandbox target armor; " +
+                "re-measure the Pathfinder and promote or reclassify its gap entry.");
+        }
+        finally
+        {
+            Platform.Stop();
+        }
+    }
 }
