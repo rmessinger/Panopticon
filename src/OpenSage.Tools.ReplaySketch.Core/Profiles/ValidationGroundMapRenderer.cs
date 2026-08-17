@@ -34,7 +34,12 @@ public static class ValidationGroundMapRenderer
 
     private const float UnitRadius = 7f;
     private const float TargetHalfSize = 6f;
+    private const float StructureHalfSize = 4.5f;
     private const float SelectionRingRadius = UnitRadius + 3f;
+
+    // Neutral, semi-transparent so the terrain preview shows through; distinct from the faction
+    // unit circles and the orange target outlines, reading as scenery rather than an actor.
+    private static readonly SKColor StructureColor = new(0xC0, 0xC0, 0xC0, 0x99);
 
     /// <summary>Display colour for a roster faction (2=USA, 3=China, 4=GLA); white for any other.</summary>
     public static SKColor FactionColor(int factionIndex) => factionIndex switch
@@ -106,6 +111,7 @@ public static class ValidationGroundMapRenderer
 
         var markers = ComputeMarkers(map, plan, offsetX, offsetY, previewSize);
 
+        DrawStructures(canvas, map, offsetX, offsetY, previewSize);
         DrawLinks(canvas, plan, map, offsetX, offsetY, previewSize);
         DrawMarkers(canvas, markers);
         DrawSelectionRing(canvas, markers, selected);
@@ -127,6 +133,34 @@ public static class ValidationGroundMapRenderer
             StrokeWidth = 1,
         };
         canvas.DrawRect(previewRect, borderPaint);
+    }
+
+    /// <summary>
+    /// Projects every map-author-placed civilian structure into the preview area, so hand-placing
+    /// the formation (or eyeballing the generated layout) happens against the real town footprint.
+    /// </summary>
+    public static IReadOnlyList<SKRect> ComputeStructureRects(
+        MapMetadataService map,
+        float offsetX,
+        float offsetY,
+        float previewSize)
+    {
+        var rects = new List<SKRect>(map.CivilianStructures.Count);
+        foreach (var structure in map.CivilianStructures)
+        {
+            var p = Project(map.ExtentMin, map.ExtentMax, structure.Position, offsetX, offsetY, previewSize);
+            rects.Add(new SKRect(p.X - StructureHalfSize, p.Y - StructureHalfSize, p.X + StructureHalfSize, p.Y + StructureHalfSize));
+        }
+        return rects;
+    }
+
+    private static void DrawStructures(SKCanvas canvas, MapMetadataService map, float offsetX, float offsetY, float previewSize)
+    {
+        using var paint = new SKPaint { Color = StructureColor, Style = SKPaintStyle.Fill, IsAntialias = true };
+        foreach (var rect in ComputeStructureRects(map, offsetX, offsetY, previewSize))
+        {
+            canvas.DrawRect(rect, paint);
+        }
     }
 
     private static void DrawLinks(SKCanvas canvas, SpawnPlan plan, MapMetadataService map, float offsetX, float offsetY, float previewSize)

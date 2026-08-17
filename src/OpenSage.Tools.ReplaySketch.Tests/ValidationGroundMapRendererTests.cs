@@ -92,4 +92,45 @@ public class ValidationGroundMapRendererTests
         Assert.Single(markers);
         Assert.False(markers[0].IsTarget);
     }
+
+    [Fact]
+    public void ComputeStructureRects_ProjectsEveryCivilianStructure()
+    {
+        var structures = new[]
+        {
+            new MapStructure("GermanPub01", new Vector3(500f, 500f, 0f)),
+            new MapStructure("CivilianBunker01", new Vector3(1000f, 0f, 0f)),
+        };
+        var map = MapMetadataService.CreateForTesting(Min, Max, structures);
+
+        var rects = ValidationGroundMapRenderer.ComputeStructureRects(map, 0, 0, 200f);
+
+        Assert.Equal(2, rects.Count);
+        var center = ValidationGroundMapRenderer.Project(Min, Max, structures[0].Position, 0, 0, 200f);
+        Assert.Equal(center.X, (rects[0].Left + rects[0].Right) / 2f, precision: 1);
+        Assert.Equal(center.Y, (rects[0].Top + rects[0].Bottom) / 2f, precision: 1);
+    }
+
+    [Fact]
+    public void CivilianStructureCatalog_MatchesCivilianFamiliesOnly()
+    {
+        foreach (var civilian in new[]
+                 {
+                     "GermanTownHouse1", "GermanTownHouseBib2", "GermanPub01", "GermanCotage01",
+                     "GermanCottageBib1", "CivilianBunker01", "StanSchoolhouse02", "StanGasStation",
+                     "QuonsetHut01", "CivilianTEROilDepot",
+                 })
+        {
+            Assert.True(CivilianStructureCatalog.IsCivilianStructure(civilian), civilian);
+        }
+
+        foreach (var other in new[]
+                 {
+                     "AmericaBarracks", "ChinaCommandCenter", "GLAInfantryRebel", "CarAsian1",
+                     "MonumentTrainBridge", "BridgeTowerConcreteLeft01", "SupplyPileSmall",
+                 })
+        {
+            Assert.False(CivilianStructureCatalog.IsCivilianStructure(other), other);
+        }
+    }
 }

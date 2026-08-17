@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -13,6 +14,7 @@ using OpenSage.Data.Tga;
 using OpenSage.IO;
 using OpenSage.Scripting;
 using OpenSage.Terrain;
+using OpenSage.Tools.ReplaySketch.Model;
 
 namespace OpenSage.Tools.ReplaySketch.Services;
 
@@ -27,10 +29,14 @@ public sealed class MapMetadataService
 
     private readonly HeightMap? _heightMap;
     private readonly Vector3[] _playerStarts;
+    private readonly MapStructure[] _civilianStructures;
 
     public Vector3 ExtentMin { get; }
     public Vector3 ExtentMax { get; }
     public Vector3 MapCenter => (ExtentMin + ExtentMax) * 0.5f;
+
+    /// <summary>Map-author-placed civilian structures (the town), for the validation-ground map view.</summary>
+    public IReadOnlyList<MapStructure> CivilianStructures => _civilianStructures;
 
     /// <summary>
     /// RGBA8 pixel data for the bird's-eye preview thumbnail, or <c>null</c> if unavailable.
@@ -50,10 +56,12 @@ public sealed class MapMetadataService
         Vector3[] playerStarts,
         byte[]? previewImagePixels = null,
         int previewImageWidth = 0,
-        int previewImageHeight = 0)
+        int previewImageHeight = 0,
+        MapStructure[]? civilianStructures = null)
     {
         _heightMap = heightMap;
         _playerStarts = playerStarts;
+        _civilianStructures = civilianStructures ?? [];
         ExtentMin = extentMin;
         ExtentMax = extentMax;
         PreviewImagePixels = previewImagePixels;
@@ -68,6 +76,11 @@ public sealed class MapMetadataService
     public static MapMetadataService CreateForTesting(
         Vector3 extentMin, Vector3 extentMax, params Vector3[] playerStarts)
         => new(null, extentMin, extentMax, playerStarts);
+
+    /// <summary>Test instance with explicit civilian structures (map view drawing tests).</summary>
+    public static MapMetadataService CreateForTesting(
+        Vector3 extentMin, Vector3 extentMax, MapStructure[] civilianStructures, params Vector3[] playerStarts)
+        => new(null, extentMin, extentMax, playerStarts, civilianStructures: civilianStructures);
 
     /// <summary>
     /// Loads the given map file from the installation's virtual file system.
@@ -184,8 +197,13 @@ public sealed class MapMetadataService
             }
         }
 
+        var civilianStructures = mapFile.ObjectsList?.Objects
+            .Where(o => CivilianStructureCatalog.IsCivilianStructure(o.TypeName))
+            .Select(o => new MapStructure(o.TypeName, o.Position))
+            .ToArray() ?? [];
+
         return new MapMetadataService(heightMap, extentMin, extentMax, playerStarts,
-            previewPixels, previewWidth, previewHeight);
+            previewPixels, previewWidth, previewHeight, civilianStructures);
     }
 
     /// <summary>
