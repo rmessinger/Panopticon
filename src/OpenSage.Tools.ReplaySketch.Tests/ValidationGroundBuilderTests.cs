@@ -57,6 +57,42 @@ public class ValidationGroundBuilderTests
     }
 
     [Fact]
+    public void Build_Clusters_TargetsClearOfUnitsAndOtherTargets()
+    {
+        // Regression for the map-view overlap (target square drawn on a unit circle): a purely
+        // radial placement lands interior units' targets exactly on their neighbours. The builder
+        // must rotate each target to clear every block unit and every other target.
+        var scenario = ValidationGroundScenarioStore.Standard();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        var unitPositions = plan.UnitPlacements
+            .Select(p => new Vector2(p.Position.X, p.Position.Y)).ToList();
+        var targetPositions = plan.TargetPlacements
+            .Select(p => new Vector2(p.Position.X, p.Position.Y)).ToList();
+
+        // Each target is checked against every unit except its own (the terrorist's own target is
+        // deliberately 8 units away) and against every other target.
+        for (var i = 0; i < targetPositions.Count; i++)
+        {
+            var ownUnit = unitPositions[i];
+            foreach (var unit in unitPositions)
+            {
+                if (unit == ownUnit) continue;
+                Assert.True(Vector2.Distance(targetPositions[i], unit) >= 30f,
+                    $"target {targetPositions[i]} overlaps a unit ({Vector2.Distance(targetPositions[i], unit):F0} away)");
+            }
+            for (var j = 0; j < targetPositions.Count; j++)
+            {
+                if (i == j) continue;
+                Assert.True(Vector2.Distance(targetPositions[i], targetPositions[j]) >= 30f,
+                    $"target {targetPositions[i]} overlaps another target");
+            }
+        }
+    }
+
+    [Fact]
     public void Build_ClustersOnFlatMap_FactionsDoNotOverlap()
     {
         var scenario = ValidationGroundScenarioStore.Standard();

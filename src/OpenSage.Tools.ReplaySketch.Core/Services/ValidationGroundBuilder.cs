@@ -30,9 +30,6 @@ public static class ValidationGroundBuilder
     {
         var layout = scenario.Layout;
         var definitions = scenario.TargetDefinitions;
-        var center = layout.TargetClusterCenter;
-        var factionCount = scenario.FactionIndices.Count;
-        var supplySources = BuildSupplySources(scenario, layout);
 
         // Index placement overrides for O(1) lookup by (faction, roster slot, isTarget). An override
         // with no matching generated placement is ignored (e.g. after the roster shrinks), so stale
@@ -46,15 +43,20 @@ public static class ValidationGroundBuilder
         var units = new List<UnitPlacement>();
         var targets = new List<TargetPlacement>();
         var globalUnitIndex = 0;
+        var clusterInfos = new List<(Vector2 Center, float Radius)>();
 
         if (layout.Mode == LayoutMode.Clusters)
         {
-            BuildClusters(scenario, map, overrides, definitions, units, targets, ref globalUnitIndex);
+            BuildClusters(scenario, map, overrides, definitions, units, targets, ref globalUnitIndex, clusterInfos);
         }
         else
         {
             BuildRows(scenario, overrides, definitions, units, targets, ref globalUnitIndex);
         }
+
+        // Supply sources are placed after the formation: in cluster mode they must clear the
+        // cluster discs, which are only known once clusters are chosen.
+        var supplySources = BuildSupplySources(scenario, layout, clusterInfos);
 
         return new SpawnPlan
         {
@@ -112,8 +114,9 @@ public static class ValidationGroundBuilder
     /// Clusters mode: one cluster per faction. Each cluster centre is chosen by a deterministic
     /// scan that minimises local height spread and avoids map structures and the other clusters,
     /// preferring ground near <see cref="LayoutConfig.TargetClusterCenter"/>. Units form a compact
-    /// block around the centre; each unit's target sits the standoff distance away on the block's
-    /// outside, so targets never sit inside a neighbouring cluster.
+    /// block around the centre; each unit's target sits the standoff distance away in the outward
+    /// direction rotated to maximise clearance from the block's units and already-placed targets
+    /// (a purely radial placement lands interior units' targets exactly on their neighbours).
     /// </summary>
     private static void BuildClusters(
         ValidationGroundScenario scenario,
@@ -122,49 +125,53 @@ public static class ValidationGroundBuilder
         IReadOnlyList<string> definitions,
         List<UnitPlacement> units,
         List<TargetPlacement> targets,
-        ref int globalUnitIndex)
+        ref int globalUnitIndex,
+        List<(Vector2 Center, float Radius)> clusterInfos)
     {
         var layout = scenario.Layout;
         var chosen = new List<Vector2>();
+        var placedTargetPositions = new List<Vector2>();
 
         for (var row = 0; row < scenario.FactionIndices.Count; row++)
         {
             var factionIndex = scenario.FactionIndices[row];
             var roster = UnitCatalog.ForFaction(factionIndex);
-            var activeCount = 0;
+            var activeIndices = new List<int>();
             for (var i = 0; i < roster.Count; i++)
             {
                 if (!SkipForGame(roster[i], scenario))
                 {
-                    activeCount++;
+                    activeIndices.Add(i);
                 }
             }
+            var activeCount = activeIndices.Count;
 
             var clusterCenter = FindClusterCenter(map, layout, activeCount, chosen);
             chosen.Add(clusterCenter);
+            clusterInfos.Add((clusterCenter, ClusterRadius(layout, activeCount)));
 
-            var cols = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(activeCount)));
-            var rowsCount = Math.Max(1, (int)Math.Ceiling(activeCount / (float)cols));
+            var cols = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(Math.Max(1, activeCount))));
+            var rowsCount = Math.Max(1, (int)Math.Ceiling(Math.Max(1, activeCount) / (float)cols));
             var originX = clusterCenter.X - (cols - 1) * layout.UnitSpacing / 2f;
             var originY = clusterCenter.Y - (rowsCount - 1) * layout.UnitSpacing / 2f;
 
-            var placed = 0;
-            for (var i = 0; i < roster.Count; i++)
+            // All block positions are computed upfront: target placement needs the full block
+            // footprint for its clearance checks, not just the units emitted so far.
+            var blockPositions = new List<Vector2>(Math.Max(1, activeCount));
+            for (var slot = 0; slot < activeCount; slot++)
             {
-                var unit = roster[i];
-                if (SkipForGame(unit, scenario))
-                {
-                    continue;
-                }
+                var col = slot % cols;
+                var gridRow = slot / cols;
+                blockPositions.Add(new Vector2(originX + col * layout.UnitSpacing, originY + gridRow * layout.UnitSpacing));
+            }
 
-                var col = placed % cols;
-                var gridRow = placed / cols;
-                placed++;
-
-                var derived = new Vector2(originX + col * layout.UnitSpacing, originY + gridRow * layout.UnitSpacing);
-                AddPlacement(unit, factionIndex, i, derived, layout.TargetApproachDistance, 0f,
+            for (var slot = 0; slot < activeCount; slot++)
+            {
+                var unit = roster[activeIndices[slot]];
+                AddPlacement(unit, factionIndex, activeIndices[slot], blockPositions[slot], layout.TargetApproachDistance, 0f,
                     overrides, definitions, units, targets, ref globalUnitIndex,
-                    rowsMode: false, clusterCenter: clusterCenter);
+                    rowsMode: false, clusterCenter: clusterCenter,
+                    blockUnitPositions: blockPositions, placedTargetPositions: placedTargetPositions);
             }
         }
     }
@@ -188,7 +195,9 @@ public static class ValidationGroundBuilder
         List<TargetPlacement> targets,
         ref int globalUnitIndex,
         bool rowsMode,
-        Vector2? clusterCenter = null)
+        Vector2? clusterCenter = null,
+        IReadOnlyList<Vector2>? blockUnitPositions = null,
+        List<Vector2>? placedTargetPositions = null)
     {
         overrides.TryGetValue((factionIndex, rosterIndex, false), out var unitOverride);
         overrides.TryGetValue((factionIndex, rosterIndex, true), out var targetOverride);
@@ -211,12 +220,13 @@ public static class ValidationGroundBuilder
         }
         else
         {
-            // Cluster mode: the target sits on the outside of the block relative to its unit, so
-            // targets ring the cluster instead of crossing through it.
-            var outward = unitPos - clusterCenter!.Value;
-            var direction = outward == Vector2.Zero ? Vector2.UnitY : Vector2.Normalize(outward);
-            targetPos = unitPos + direction * effectiveStandoff;
+            // Cluster mode: the target sits the standoff away in the outward direction rotated to
+            // maximise clearance from the block's units and already-placed targets; a purely
+            // radial placement lands interior units' targets exactly on their neighbours.
+            targetPos = ChooseClearedTargetPosition(
+                unitPos, clusterCenter!.Value, effectiveStandoff, blockUnitPositions!, placedTargetPositions!);
         }
+        placedTargetPositions?.Add(targetPos);
 
         var action = PrimaryActionCatalog.Resolve(unit);
         targets.Add(new TargetPlacement(definitions[globalUnitIndex % definitions.Count], new Vector3(targetPos.X, targetPos.Y, 0f)));
@@ -233,6 +243,70 @@ public static class ValidationGroundBuilder
     }
 
     /// <summary>
+    /// Candidate target positions at the exact standoff from the unit in the outward direction and
+    /// its rotations; the one with the greatest minimum distance to the block's units and the
+    /// already-placed targets wins (first candidate breaks ties, so pure-outward is preferred).
+    /// Distance is always exactly the standoff, preserving weapon-range and timing semantics.
+    /// </summary>
+    private static Vector2 ChooseClearedTargetPosition(
+        Vector2 unitPos,
+        Vector2 clusterCenter,
+        float standoff,
+        IReadOnlyList<Vector2> blockUnitPositions,
+        List<Vector2> placedTargetPositions)
+    {
+        var outward = unitPos - clusterCenter;
+        var baseDirection = outward == Vector2.Zero ? Vector2.UnitY : Vector2.Normalize(outward);
+
+        // Rotation candidates in preference order: straight out, then progressively further around.
+        var rotations = new[] { 0f, 45f, -45f, 90f, -90f, 135f, -135f, 180f };
+
+        var bestPos = unitPos + baseDirection * standoff;
+        var bestClearance = -1f;
+        foreach (var rotation in rotations)
+        {
+            var direction = Vector2.Transform(baseDirection, System.Numerics.Matrix3x2.CreateRotation(MathF.PI * rotation / 180f));
+            var candidate = unitPos + direction * standoff;
+
+            var clearance = MinDistance(candidate, blockUnitPositions);
+            if (placedTargetPositions.Count > 0)
+            {
+                clearance = MathF.Min(clearance, MinDistance(candidate, placedTargetPositions));
+            }
+
+            if (clearance > bestClearance)
+            {
+                bestClearance = clearance;
+                bestPos = candidate;
+            }
+        }
+
+        return bestPos;
+    }
+
+    private static float MinDistance(Vector2 point, IReadOnlyList<Vector2> others)
+    {
+        var min = float.MaxValue;
+        foreach (var other in others)
+        {
+            min = MathF.Min(min, Vector2.Distance(point, other));
+        }
+        return min;
+    }
+
+    /// <summary>
+    /// Radius of a faction cluster's disc: the units-block half-extent plus the standoff target
+    /// ring plus a border margin. Cluster separation and structure avoidance both use this.
+    /// </summary>
+    private static float ClusterRadius(LayoutConfig layout, int rosterCount)
+    {
+        var cols = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(Math.Max(1, rosterCount))));
+        var rowsCount = Math.Max(1, (int)Math.Ceiling(Math.Max(1, rosterCount) / (float)cols));
+        return Math.Max((cols - 1), (rowsCount - 1)) * layout.UnitSpacing / 2f
+            + layout.TargetApproachDistance + ClusterBorderMargin;
+    }
+
+    /// <summary>
     /// Deterministic cluster-centre search: probe candidates on a fixed grid over the playable
     /// extent, score each by height spread over the cluster disc (structures inside the disc
     /// disqualify), prefer proximity to the layout centre, and keep clear of already-chosen
@@ -241,11 +315,7 @@ public static class ValidationGroundBuilder
     /// </summary>
     private static Vector2 FindClusterCenter(MapMetadataService? map, LayoutConfig layout, int rosterCount, List<Vector2> chosen)
     {
-        var spacing = layout.UnitSpacing;
-        var standoff = layout.TargetApproachDistance;
-        var cols = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(Math.Max(1, rosterCount))));
-        var rowsCount = Math.Max(1, (int)Math.Ceiling(Math.Max(1, rosterCount) / (float)cols));
-        var clusterRadius = Math.Max((cols - 1), (rowsCount - 1)) * spacing / 2f + standoff + ClusterBorderMargin;
+        var clusterRadius = ClusterRadius(layout, rosterCount);
 
         // Two cluster centres must be far enough apart that their discs (units block + standoff
         // target ring + margin) cannot touch or interleave. Exact disc non-overlap is sufficient:
@@ -352,17 +422,73 @@ public static class ValidationGroundBuilder
         return min == float.MaxValue ? float.MaxValue : max - min;
     }
 
-    private static List<TargetPlacement> BuildSupplySources(ValidationGroundScenario scenario, LayoutConfig layout)
+    private static List<TargetPlacement> BuildSupplySources(
+        ValidationGroundScenario scenario,
+        LayoutConfig layout,
+        List<(Vector2 Center, float Radius)> clusterInfos)
     {
         var sources = new List<TargetPlacement>();
         var center = layout.TargetClusterCenter;
+
+        // Rows mode (or no clusters chosen): the historical offset east of the layout centre.
+        if (layout.Mode != LayoutMode.Clusters || clusterInfos.Count == 0)
+        {
+            for (var i = 0; i < scenario.SupplySourceDefinitions.Count; i++)
+            {
+                var position = new Vector3(
+                    center.X + layout.TargetClusterRadius * 2 + i * layout.UnitSpacing,
+                    center.Y,
+                    0f);
+                sources.Add(new TargetPlacement(scenario.SupplySourceDefinitions[i], position));
+            }
+            return sources;
+        }
+
+        // Cluster mode: the layout-centre offset can land inside a terrain-derived cluster disc,
+        // spawning a supply building on top of the roster. Deterministic search for the nearest
+        // grid point to the layout centre that clears every disc (plus a margin) and every
+        // already-placed source.
+        const float sourceStep = 50f;
+        const float sourceMargin = 60f;
+        var placed = new List<Vector2>();
         for (var i = 0; i < scenario.SupplySourceDefinitions.Count; i++)
         {
-            var position = new Vector3(
-                center.X + layout.TargetClusterRadius * 2 + i * layout.UnitSpacing,
-                center.Y,
-                0f);
-            sources.Add(new TargetPlacement(scenario.SupplySourceDefinitions[i], position));
+            (float Dist, Vector2 Pos)? best = null;
+            for (var y = center.Y - 1000f; y <= center.Y + 1000f; y += sourceStep)
+            {
+                for (var x = center.X - 1000f; x <= center.X + 1000f; x += sourceStep)
+                {
+                    var candidate = new Vector2(x, y);
+                    var clear = true;
+                    foreach (var (clusterCenter, radius) in clusterInfos)
+                    {
+                        if (Vector2.Distance(candidate, clusterCenter) < radius + sourceMargin)
+                        {
+                            clear = false;
+                            break;
+                        }
+                    }
+                    if (!clear)
+                    {
+                        continue;
+                    }
+                    if (placed.Count > 0 && MinDistance(candidate, placed) < layout.UnitSpacing)
+                    {
+                        continue;
+                    }
+
+                    var dist = Vector2.Distance(candidate, new Vector2(center.X, center.Y));
+                    if (best == null || dist < best.Value.Dist)
+                    {
+                        best = (dist, candidate);
+                    }
+                }
+            }
+
+            var position = best?.Pos
+                ?? new Vector2(center.X + layout.TargetClusterRadius * 2 + i * layout.UnitSpacing, center.Y);
+            placed.Add(position);
+            sources.Add(new TargetPlacement(scenario.SupplySourceDefinitions[i], new Vector3(position.X, position.Y, 0f)));
         }
 
         return sources;
