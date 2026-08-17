@@ -5,7 +5,7 @@
 > documents ([A](track-a-foundations.md) · [B](track-b-scale.md) ·
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
 > [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md) ·
-> [G](track-g-rendering-clarity.md)) and the deep dives as phases,
+> [G](track-g-rendering-clarity.md) · [H](track-h-storage-formats.md)) and the deep dives as phases,
 > sub-phases, or dependencies change; see [How to maintain](#how-to-maintain-this-tree).
 >
 > Audience: human overview of roadmap structure and dependency flow.
@@ -163,6 +163,14 @@ mindmap
       G7 Texture filtering and mip quality
       G8 Shadow quality tier
       G9 Resolution-independent 2D and UI
+    H. Map and unit storage formats
+      H1 Format requirements and current-state audit
+      H2 Format-agnostic interchange abstraction
+      H3 New map storage format
+      H4 New object and unit-definition storage format
+      H5 Legacy migration and compatibility tooling
+      H6 Authoring and pipeline integration
+      H7 Validation and round-trip regression
 ```
 
 ---
@@ -171,7 +179,8 @@ mindmap
 
 This left-to-right progression shows when phases become workable. Arrows mean "must precede."
 Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal,
-F = red, G = violet). Track G is the one track not gated by Stage P: it changes presentation only.
+F = red, G = violet, H = olive). Track G is the one track not gated by Stage P: it changes
+presentation only.
 The [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) gates the whole
 roadmap. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md) is its own highlighted
 node because it is an early prerequisite of A1 even though the rest of A4 follows A1.
@@ -185,6 +194,7 @@ flowchart LR
   classDef trackE fill:#e9f7fb,stroke:#2f8aa3,color:#032;
   classDef trackF fill:#fdeaea,stroke:#b5453a,color:#321;
   classDef trackG fill:#f3eefb,stroke:#7a5aa8,color:#221;
+  classDef trackH fill:#f6f9e8,stroke:#7a8a2f,color:#122;
   classDef seam fill:#ffd9f2,stroke:#b3559a,stroke-width:2px,color:#312;
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
 
@@ -215,6 +225,7 @@ flowchart LR
     E1["E1 Water and ground terrain passability"]
     G1["G1 High-DPI & resolution correctness"]
     G2["G2 Graphics settings & presets"]
+    H1["H1 Format requirements & audit"]
   end
 
   subgraph S1["Stage 1 · Core host & cleanup"]
@@ -230,6 +241,7 @@ flowchart LR
     E2["E2 Ship combat"]
     E3["E3 Naval production"]
     G3["G3 Visual regression harness"]
+    H2["H2 Format-agnostic interchange abstraction"]
   end
 
   subgraph S2["Stage 2 · Harness & core scale"]
@@ -246,6 +258,8 @@ flowchart LR
     G7["G7 Texture filtering & mip quality"]
     G8["G8 Shadow quality tier"]
     G9["G9 Resolution-independent 2D & UI"]
+    H3["H3 New map storage format"]
+    H4["H4 New object/unit-definition storage format"]
   end
 
   subgraph S3["Stage 3 · Scenario, distribution & tooling"]
@@ -259,6 +273,7 @@ flowchart LR
     F3["F3 Weapon-driven terrain deformation"]
     F5["F5 Physics-based structural destruction"]
     G5["G5 Cutout & alpha-test clarity"]
+    H5["H5 Legacy migration & compatibility tooling"]
   end
 
   subgraph S4["Stage 4 · Fidelity scaling"]
@@ -266,11 +281,13 @@ flowchart LR
     B7["B7 Variable fidelity"]
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence, replay & determinism"]
+    H6["H6 Authoring & pipeline integration"]
   end
 
   subgraph S5["Stage 5 · Terrain/destruction tooling"]
     direction TB
     F8["F8 Authoring & validation tooling"]
+    H7["H7 Validation & round-trip regression"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -307,6 +324,7 @@ flowchart LR
   P7 --> C1
   P7 --> D1
   P7 --> E1
+  P7 --> H1
 
   %% Stage 0 -> 1
   A4S --> A1
@@ -321,6 +339,7 @@ flowchart LR
   D1 --> D2
   E1 --> E2
   E1 --> E3
+  H1 --> H2
 
   %% Stage 1 -> 2
   A1 --> A4
@@ -340,6 +359,8 @@ flowchart LR
   B1 --> F4
   G1 --> G3
   G2 --> G3
+  H2 --> H3
+  H2 --> H4
 
   %% Stage 2 -> 3
   A1 --> A5
@@ -367,6 +388,8 @@ flowchart LR
   G3 --> G8
   G1 --> G9
   G3 --> G9
+  H3 --> H5
+  H4 --> H5
 
   %% Stage 3 -> 4
   B1 --> B7
@@ -381,17 +404,21 @@ flowchart LR
   F5 --> F7
   A2 --> F7
   G4 --> G5
+  H5 --> H6
 
   %% Stage 4 -> 5
   F2 --> F8
   F6 --> F8
   F7 --> F8
+  H5 --> H7
+  H6 --> H7
 
   class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
   class F1,F2,F3,F4,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9 trackG;
+  class H1,H2,H3,H4,H5,H6,H7 trackH;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;
@@ -402,7 +429,10 @@ flowchart LR
 > should account for C4 (Track C) models. Those are coordination points, not strict dependencies,
 > so they are omitted from the arrows above; see the [cross-track dependencies](README.md#cross-track-dependencies)
 > note. D3 also depends on the standalone [ModCollector tool](plans/mod-collector.md), which is not
-> part of a lettered track and has no engine dependency, so it is omitted as a node.
+> part of a lettered track and has no engine dependency, so it is omitted as a node. H3 (new map
+> storage format) coordinates with B4a-5 (chunked terrain storage) on the map-format terrain
+> section; this is likewise a coordination point rather than a strict dependency, so no arrow
+> connects them.
 
 ---
 

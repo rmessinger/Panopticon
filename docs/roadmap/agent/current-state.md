@@ -61,6 +61,25 @@
 
 See the [larger-maps deep dive](../deep-dives/b4a-larger-maps.md) for how this constrains map size.
 
+## Map file & object-definition storage (relevant to Track H)
+
+- Map file container: `MapFile` (`src/OpenSage.Game/Data/Map/MapFile.cs`) reads/writes the
+  binary `.map` format via `FromFileSystemEntry` (line 168); a `GlobalVersion` asset
+  (line 24) is the only versioning signal, checked ad hoc per section rather than through one
+  schema-version story.
+- Object/unit templates: `ObjectDefinition` (`src/OpenSage.Game/Logic/Object/ObjectDefinition.cs`,
+  line 16) is parsed from per-game `.ini` text by a static `FieldParseTable`
+  (`IniParseTable<ObjectDefinition>`, line 82) via `IniParser`
+  (`src/OpenSage.Game/Data/Ini/IniParser.cs`). There is no binary/structured alternative; INI is
+  the only object-definition storage format today.
+- Asset registry: `AssetStore` (`src/OpenSage.Game/Content/AssetStore.cs`) holds parsed
+  `ObjectDefinition`s in a `ScopedAssetCollection<ObjectDefinition>` (`ObjectDefinitions`,
+  lines 147/316); scopes layer base-game content under mod content but there is no format-level
+  validation or diff/merge support beyond whichever file loads last winning.
+
+See [Track H](../track-h-storage-formats.md) for the on-disk storage-format redesign this
+grounds.
+
 ## Mod acquisition tooling (ModCollector)
 
 - `OpenSage.Tools.ModCollector` does not yet exist in the repo. It will be created by the

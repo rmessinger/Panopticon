@@ -804,3 +804,42 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
   - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
     layout and hit regions unchanged relative to the pre-track build.
+
+## Track H: Map & Unit Storage Formats
+
+See [`track-h-storage-formats.md`](track-h-storage-formats.md). Gated on Track P (P7) only.
+Persistence/schema-design track: on-disk map and object/unit-definition storage formats, distinct
+from B3 (runtime unit storage) and B4a-5 (chunked terrain runtime storage), which this track
+coordinates with rather than duplicates.
+
+- [ ] H1 Format requirements & current-state audit (`.map`/`MapFile` and INI/`ObjectDefinition`
+  limitations; format-design Decisions recorded in `open-questions.md`).
+  - AC: a written audit cites every current-state limitation by file:line, and each format-design
+    question (read/write scope, human-editable vs. binary, shared vs. separate containers) has a
+    recorded Decision.
+- [ ] H2 Format-agnostic interchange abstraction (`IMapFormat`/`IObjectTemplateFormat`-style seam
+  behind `AssetStore`/`OnDemandAssetLoadStrategy`, mirroring the C1 pattern).
+  - AC: the legacy `.map` reader and INI `ObjectDefinition` parser load entirely as one
+    implementation of the new format seam, with no behavior change.
+- [ ] H3 New map storage format (versioned container; terrain section reserved for B4a-5's
+  chunked heightmap representation).
+  - AC: a map authored in the new format round-trips (write, reload) with terrain, blend, and
+    placed-object data intact.
+- [ ] H4 New object/unit-definition storage format (`ObjectDefinition` plus weapons/upgrades/
+  locomotors; INI stays a permanent legacy read path).
+  - AC: a unit authored in the new format loads with full parity to its INI-authored equivalent,
+    and a new schema field does not break loading older content.
+- [ ] H5 Legacy migration & compatibility tooling (`.map`/INI → new formats, round-trip
+  validator).
+  - AC: a converted legacy map and unit roster load through the new formats and play identically
+    (per the P0 assertion layer) to the original `.map`/INI content.
+- [ ] H6 Authoring & pipeline integration (WorldBuilder read/write; ModCollector/`AssetStore`
+  scope layering).
+  - AC: WorldBuilder authors, saves, and reloads a map in the new format, and a ModCollector-
+    staged content pack's object definitions load through the new format alongside built-in
+    content.
+- [ ] H7 Validation & round-trip regression (automated round-trip suite; ReplaySketch scenario on
+  new-format content asserted headlessly).
+  - AC: a regression suite catches a round-trip mismatch for maps or object definitions, and a
+    ReplaySketch scenario using new-format content passes the same headless assertions as its
+    legacy-format equivalent.

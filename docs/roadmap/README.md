@@ -123,6 +123,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes the stubbed water/ground pathfinding layer and adds ship combat/production, validated against BFME2's existing ship content. Gated on Track P only. |
 | [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Deformable terrain & destruction: terrain deformation data model, runtime mesh/rendering update, weapon-driven terrain deformation, physics engine integration, physics-based structural destruction, destruction-terrain interaction, persistence/replay, authoring/validation tooling. |
 | [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md) | human | Rendering clarity & image quality: high-DPI/resolution correctness, graphics settings & fidelity presets, visual regression harness, MSAA, cutout/alpha-test clarity, gamma-correct rendering, texture filtering & mip quality, shadow quality tier, resolution-independent 2D/UI. Not gated on Track P. |
+| [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Map & unit storage formats: a new on-disk storage system for maps and object/unit template data. Format-agnostic interchange abstraction, a versioned successor to the `.map` format, a versioned successor to per-game INI object-definition storage, legacy migration/compatibility tooling, authoring/pipeline integration, round-trip regression. Persistence/schema concern, distinct from B3/B4a-5's runtime-performance focus. Gated on Track P. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `OpenSage.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
 | [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
@@ -200,6 +201,12 @@ track document.
   cutout & alpha-test clarity (the screen-door fix) · G6 gamma-correct rendering · G7 texture
   filtering & mip quality · G8 shadow quality tier · G9 resolution-independent 2D & UI. Not gated
   on Track P.
+- [Track H - Map & Unit Storage Formats](track-h-storage-formats.md): H1 format requirements &
+  current-state audit · H2 format-agnostic interchange abstraction · H3 new map storage format ·
+  H4 new object/unit-definition storage format · H5 legacy migration & compatibility tooling · H6
+  authoring & pipeline integration (WorldBuilder, ModCollector) · H7 validation & round-trip
+  regression. A persistence/schema-design track, distinct from B3/B4a-5's runtime-performance
+  focus. Depends on Track P only.
 
 ### Cross-track dependencies
 
@@ -225,6 +232,13 @@ track document.
   behaviour. It coordinates with B5 (rendering at scale) over pipeline-description plumbing and
   with A3 (sim/presentation seam) over the pixel-versus-logical-point split, and its G3 golden
   frames guard Track F's terrain-rendering changes (F2/F8).
+- Track H depends only on Track P. Its H3 (new map storage format) reserves a terrain section for
+  [B4a-5's chunked heightmap representation](deep-dives/b4a-larger-maps.md) rather than competing
+  with it: B4a-5 owns the runtime chunking/streaming model, H3 owns the on-disk container and
+  versioning. H2's format-agnostic interchange abstraction mirrors [C1](track-c-external-assets.md)'s
+  import-abstraction pattern applied to map/object-definition data instead of models/animations.
+  H4/H6 feed Track D's D3 external content ingestion and the standalone
+  [ModCollector tool](plans/mod-collector.md) once the new object-definition format exists.
 
 ---
 
@@ -305,6 +319,19 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
 | G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 1 |
 | Track G total | `░░░░░░░░░░` | 0 / 12 |
+
+### Track H - Map & Unit Storage Formats (gated on Track P only)
+
+| Phase | Progress | Items |
+|---|---|---|
+| H1 - Format requirements & current-state audit | `░░░░░░░░░░` | 0 / 1 |
+| H2 - Format-agnostic interchange abstraction | `░░░░░░░░░░` | 0 / 1 |
+| H3 - New map storage format | `░░░░░░░░░░` | 0 / 1 |
+| H4 - New object/unit-definition storage format | `░░░░░░░░░░` | 0 / 1 |
+| H5 - Legacy migration & compatibility tooling | `░░░░░░░░░░` | 0 / 1 |
+| H6 - Authoring & pipeline integration | `░░░░░░░░░░` | 0 / 1 |
+| H7 - Validation & round-trip regression | `░░░░░░░░░░` | 0 / 1 |
+| Track H total | `░░░░░░░░░░` | 0 / 7 |
 
 ---
 
