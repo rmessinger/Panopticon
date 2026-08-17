@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using OpenSage.Tools.ReplaySketch.Model;
@@ -56,6 +57,16 @@ public static class ValidationGroundBuilder
             for (var i = 0; i < roster.Count; i++)
             {
                 var unit = roster[i];
+
+                // Game-aware roster: skip entries the target game's data does not contain (Zero
+                // Hour-only units on a vanilla Generals run) rather than spawning a resolution gap.
+                // The slot keeps its place in the row math so placement-override indices stay
+                // stable; only the unit and its target are omitted.
+                if (unit.ZeroHourOnly && !GameHasZeroHourRoster(scenario))
+                {
+                    continue;
+                }
+
                 var unitPosX = rowOriginX + i * layout.UnitSpacing;
                 // A per-object override replaces the knob-derived unit position; otherwise the row
                 // math stands.
@@ -111,5 +122,11 @@ public static class ValidationGroundBuilder
         }
 
         return sources;
+    }
+
+    private static bool GameHasZeroHourRoster(ValidationGroundScenario scenario)
+    {
+        return Enum.TryParse<SageGame>(scenario.Game, ignoreCase: true, out var game)
+            && game == SageGame.CncGeneralsZeroHour;
     }
 }

@@ -5,8 +5,10 @@ namespace OpenSage.Tools.ReplaySketch.Model;
 
 /// <summary>
 /// A trainable unit definition that can be targeted by a <see cref="ActionType.RecruitBasicUnit"/> action.
+/// <paramref name="zeroHourOnly"/> marks entries whose definition exists only in Zero Hour, so a
+/// run against a vanilla Generals install skips them instead of reporting a resolution gap.
 /// </summary>
-public sealed record UnitOption(string DefinitionName, string DisplayName);
+public sealed record UnitOption(string DefinitionName, string DisplayName, bool ZeroHourOnly = false);
 
 /// <summary>
 /// Known trainable units per faction for the Generals / Zero Hour scope.
@@ -66,7 +68,7 @@ public static class UnitCatalog
         new("ChinaTankOverlord",            "Overlord Tank"),
         // Air (Airfield)
         new("ChinaJetMIG",                  "MiG Fighter"),
-        new("ChinaVehicleHelix",            "Helix"),
+        new("ChinaVehicleHelix",            "Helix", ZeroHourOnly: true),
     ];
 
     /// <summary>

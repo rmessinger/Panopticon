@@ -197,6 +197,30 @@ public class ValidationGroundBuilderTests
     }
 
     [Fact]
+    public void Build_VanillaGame_SkipsZeroHourOnlyUnits()
+    {
+        // WI-VG-03: Zero Hour-only roster entries are skipped on a vanilla Generals run (no unit,
+        // no target, no resolution gap) and included when the scenario targets Zero Hour. The USA
+        // roster has no Zero Hour-only entries, so assert on the China roster.
+        var vanilla = SingleFactionScenario();
+        vanilla.Game = "CncGenerals";
+        vanilla.FactionIndices = [3];
+
+        var zh = SingleFactionScenario();
+        zh.Game = "CncGeneralsZeroHour";
+        zh.FactionIndices = [3];
+
+        var vanillaPlan = ValidationGroundBuilder.Build(vanilla);
+        var zhPlan = ValidationGroundBuilder.Build(zh);
+
+        Assert.DoesNotContain(vanillaPlan.UnitPlacements, p => p.DefinitionName == "ChinaVehicleHelix");
+        Assert.Equal(vanillaPlan.UnitPlacements.Count, vanillaPlan.TargetPlacements.Count);
+
+        Assert.Contains(zhPlan.UnitPlacements, p => p.DefinitionName == "ChinaVehicleHelix");
+        Assert.Equal(zhPlan.UnitPlacements.Count, zhPlan.TargetPlacements.Count);
+    }
+
+    [Fact]
     public void LoadThenBuild_AppliesOverridenPositionToEndToEnd()
     {
         // Mirrors the TestHarness path (BuildValidationGroundRun): Load a JSON scenario, then Build,

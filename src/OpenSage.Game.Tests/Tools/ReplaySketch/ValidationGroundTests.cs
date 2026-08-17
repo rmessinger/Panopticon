@@ -33,10 +33,12 @@ public class ValidationGroundTests
     // Generals install, so the validation ground reports them as gaps at run time and never
     // measures them (see ValidationGroundHost.SpawnUnits). Every other catalog entry must resolve,
     // so a typo or stale name still fails the gate rather than being silently dropped.
-    private static readonly HashSet<string> ZeroHourOnlyDefinitions = new()
-    {
-        "ChinaVehicleHelix",
-    };
+    // Single-sourced from the catalog's ZeroHourOnly flags: entries valid only in Zero Hour
+    // (absent from a vanilla Generals install).
+    private static readonly HashSet<string> ZeroHourOnlyDefinitions = new(
+        PrimaryActionCatalog.AllEntries()
+            .Where(e => e.Unit.ZeroHourOnly)
+            .Select(e => e.Unit.DefinitionName));
 
     // Catalog entries permitted to lack a baseline entry. ZeroHourOnlyDefinitions are valid only in
     // Zero Hour (absent from a vanilla Generals install); UnmeasurableAttackReasons are units whose

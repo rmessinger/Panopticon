@@ -22,6 +22,10 @@ Source: headless run 2026-08-15, targets `CarAsian1` at `TargetHp=30`, standoff 
 | 9 | `GLAInfantryTerrorist` | Attack | cataloged: suicide weapon, point-blank only | B |
 | 10 | `ChinaVehicleHelix` | Attack | Zero Hour-only definition; absent from a vanilla Generals install | C |
 
+Bucket C is resolved: `UnitOption.ZeroHourOnly` tags the entry, the scenario carries the target
+game (set from the harness config), and the builder skips such entries on runs whose game lacks
+them, so a vanilla run no longer reports the gap (31 total, 9 gaps).
+
 ## Work items
 
 | Card | Title | Effort | Depends on |

@@ -14,6 +14,13 @@ public sealed class ValidationGroundScenario
 {
     public string MapPath { get; set; } = "";
 
+    /// <summary>
+    /// SAGE game the run targets (a <c>SageGame</c> value name, e.g. <c>CncGenerals</c>). Set by the
+    /// TestHarness from its config so the builder can skip roster entries that do not exist in that
+    /// game (see <see cref="UnitOption.ZeroHourOnly"/>) instead of reporting resolution gaps.
+    /// </summary>
+    public string Game { get; set; } = "CncGenerals";
+
     /// <summary>Faction indices (per <see cref="UnitCatalog"/>) to stand up, one row each.</summary>
     public IReadOnlyList<int> FactionIndices { get; set; } = [2, 3, 4];
 

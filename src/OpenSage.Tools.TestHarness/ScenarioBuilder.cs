@@ -85,6 +85,10 @@ public static class ScenarioBuilder
             ? ValidationGroundScenarioStore.Load(config.ValidationGroundScenarioPath)
             : ValidationGroundScenarioStore.Standard();
 
+        // The harness config is the authority on which game is installed; the builder uses it to
+        // skip roster entries that game's data does not contain (e.g. Zero Hour-only units).
+        scenario.Game = config.Game.ToString();
+
         if (!string.IsNullOrEmpty(config.ValidationGroundMapPath))
         {
             scenario.MapPath = config.ValidationGroundMapPath;
