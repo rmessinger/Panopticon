@@ -59,11 +59,29 @@ public sealed class ValidationGroundScenario
 }
 
 /// <summary>
-/// Planar layout parameters for the interleaved row formation. The host samples terrain height;
-/// the builder is 2-D. The formation is six parallel rows: for each faction a unit row then its
-/// target row (units, targets, units, targets, ...), running east-west and centred on
-/// <see cref="TargetClusterCenter"/>. Each unit's target sits directly ahead (perpendicular to the
-/// row) so units never interleave with their own or a neighbour faction's targets.
+/// How the builder arranges factions on the map. <see cref="Rows"/> is the interleaved row
+/// formation (no terrain knowledge); <see cref="Clusters"/> packs each faction's units and
+/// targets into a terrain-flat, structure-free region found via height sampling.
+/// </summary>
+public enum LayoutMode
+{
+    /// <summary>Six parallel rows centred on <see cref="LayoutConfig.TargetClusterCenter"/>.</summary>
+    Rows = 0,
+
+    /// <summary>
+    /// One cluster per faction: each faction's units form a compact block and each unit's target
+    /// sits <see cref="LayoutConfig.TargetApproachDistance"/> away on the cluster's outside, in the
+    /// flattest nearby region that avoids map structures and the other clusters.
+    /// </summary>
+    Clusters = 1,
+}
+
+/// <summary>
+/// Planar layout parameters for the formation. The host samples terrain height; the builder is
+/// 2-D. In <see cref="LayoutMode.Rows"/> the formation is six parallel rows (units, targets,
+/// units, targets, ...) running east-west and centred on
+/// <see cref="TargetClusterCenter"/>. In <see cref="LayoutMode.Clusters"/> that point is the
+/// preferred (not forced) search origin for the faction clusters.
 /// </summary>
 /// <remarks>
 /// These are pure POCO slots; the standard values are NOT defined here. The authoritative
@@ -73,22 +91,28 @@ public sealed class ValidationGroundScenario
 /// </remarks>
 public sealed class LayoutConfig
 {
-    /// <summary>Centre of the formation; the interleaved row stack is centred on this point.</summary>
+    /// <summary>Centre of the formation (rows) or preferred cluster search origin (clusters).</summary>
     public Vector3 TargetClusterCenter { get; set; }
 
     /// <summary>Offset of the supply sources east of the formation centre.</summary>
     public float TargetClusterRadius { get; set; }
 
-    /// <summary>Spacing between units within a row, and between targets within a target row.</summary>
+    /// <summary>Spacing between units within a cluster (or row), and between targets.</summary>
     public float UnitSpacing { get; set; }
 
-    /// <summary>Gap between one faction's target row and the next faction's unit row.</summary>
+    /// <summary>
+    /// Rows: gap between one faction's target row and the next faction's unit row. Clusters:
+    /// minimum distance between two faction cluster centres.
+    /// </summary>
     public float FactionRowOffset { get; set; }
 
     /// <summary>
-    /// Gap between a faction's unit row and its target row, i.e. the unit-to-target distance. Kept
-    /// short so the measured dispatch-to-first-damage duration is dominated by the unit's weapon
-    /// delay, not a long travel leg, and within weapon range. See deep dive P9 §2.5.
+    /// Unit-to-target distance. Kept short so the measured dispatch-to-first-damage duration is
+    /// dominated by the unit's weapon delay, not a travel leg, and within weapon range. See deep
+    /// dive P9 §2.5.
     /// </summary>
     public float TargetApproachDistance { get; set; }
+
+    /// <summary>Formation arrangement; see <see cref="LayoutMode"/>.</summary>
+    public LayoutMode Mode { get; set; } = LayoutMode.Rows;
 }

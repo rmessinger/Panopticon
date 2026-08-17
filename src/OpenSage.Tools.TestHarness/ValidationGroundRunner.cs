@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenSage.Data;
 using OpenSage.Graphics;
 using OpenSage.Input;
@@ -70,14 +71,17 @@ public static class ValidationGroundRunner
             // economy, the default rule would mark every roster player defeated and freeze logic.
             game.VictorySystem.ConditionRule = new OpenSage.Logic.NeverDefeatedVictoryConditionRule();
 
-            // The default tactical view looks at the map's authored centre; the validation-ground
-            // formation is placed away from the civilian town there, so re-aim the camera at it
-            // (windowed runs, especially the starting hold, would otherwise open off-formation).
+            // The default tactical view looks at the map's authored centre; re-aim the camera at
+            // the formation (cluster centroid, or the layout centre for row mode) so windowed runs,
+            // especially the starting hold, open on the roster.
+            var placements = runPlan.SpawnPlan.UnitPlacements;
+            var lookAt = placements.Count > 0
+                ? new System.Numerics.Vector2(
+                    placements.Average(p => p.Position.X),
+                    placements.Average(p => p.Position.Y))
+                : new System.Numerics.Vector2(scenario.Layout.TargetClusterCenter.X, scenario.Layout.TargetClusterCenter.Y);
             var view = game.Scene3D.TacticalView;
-            view.LookAt(new System.Numerics.Vector3(
-                scenario.Layout.TargetClusterCenter.X,
-                scenario.Layout.TargetClusterCenter.Y,
-                0f));
+            view.LookAt(new System.Numerics.Vector3(lookAt.X, lookAt.Y, 0f));
             view.InitHeightForMap();
             view.SetAngleAndPitchToDefault();
             view.SetZoomToDefault();

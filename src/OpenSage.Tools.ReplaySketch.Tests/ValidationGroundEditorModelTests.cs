@@ -16,6 +16,9 @@ public class ValidationGroundEditorModelTests
         var model = new ValidationGroundEditorModel();
         var scenario = ValidationGroundScenarioStore.Standard();
         scenario.FactionIndices = [2];
+        // Editor-mechanics tests pin row mode so marker positions are the simple row math,
+        // independent of the standard scenario's layout mode.
+        scenario.Layout.Mode = LayoutMode.Rows;
         model.LoadScenario(scenario);
         model.AttachMap(MapMetadataService.CreateForTesting(Min, Max));
         return model;

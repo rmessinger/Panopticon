@@ -10,17 +10,21 @@ public class ValidationGroundBuilderTests
     private static ValidationGroundScenario SingleFactionScenario()
     {
         // The formation lives in the standard JSON; clone it and restrict to one faction so per-unit
-        // assertions are stable. (LayoutConfig has no source defaults anymore.)
+        // assertions are stable. Most tests exercise Rows mode explicitly so the row math stays
+        // pinned regardless of what the checked-in standard scenario uses.
         var scenario = ValidationGroundScenarioStore.Standard();
         scenario.FactionIndices = [2];
+        scenario.Layout.Mode = LayoutMode.Rows;
         return scenario;
     }
 
     [Fact]
     public void Build_WithoutOverrides_DerivesPositionsFromLayout()
     {
-        // The standard scenario (loaded from JSON) carries the formation; no overrides applied.
-        var plan = ValidationGroundBuilder.Build(ValidationGroundScenarioStore.Standard());
+        // Row math pinned: the standard centre (600,600) with 3 factions.
+        var scenario = ValidationGroundScenarioStore.Standard();
+        scenario.Layout.Mode = LayoutMode.Rows;
+        var plan = ValidationGroundBuilder.Build(scenario);
 
         // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 600 - 270 = 330 (totalSpan =
         // 3*TargetApproach + 2*FactionRowOffset = 240 + 300). Row origin X centres the 10-unit
@@ -28,6 +32,84 @@ public class ValidationGroundBuilderTests
         // target row (unitRowY + TargetApproach = 410) at the same X.
         Assert.Equal(new Vector3(240f, 330f, 0f), plan.UnitPlacements[0].Position);
         Assert.Equal(new Vector3(240f, 410f, 0f), plan.TargetPlacements[0].Position);
+    }
+
+    [Fact]
+    public void Build_ClustersOnFlatMap_PlacesBlocksAtLayoutStandoff()
+    {
+        // Cluster mode without a map: terrain term is uniform, so the first cluster lands on the
+        // grid point nearest the layout centre. Relational assertions only — exact coordinates
+        // depend on the search grid.
+        var scenario = SingleFactionScenario();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        Assert.Equal(plan.UnitPlacements.Count, plan.TargetPlacements.Count);
+        foreach (var unit in plan.UnitPlacements)
+        {
+            var target = plan.TargetPlacements[unit.TargetIndex];
+            var distance = Vector2.Distance(
+                new Vector2(unit.Position.X, unit.Position.Y),
+                new Vector2(target.Position.X, target.Position.Y));
+            Assert.Equal(scenario.Layout.TargetApproachDistance, distance, precision: 0);
+        }
+    }
+
+    [Fact]
+    public void Build_ClustersOnFlatMap_FactionsDoNotOverlap()
+    {
+        var scenario = ValidationGroundScenarioStore.Standard();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        // Cluster centres (faction unit centroids) must respect the separation knob.
+        foreach (var factionA in scenario.FactionIndices)
+        {
+            foreach (var factionB in scenario.FactionIndices)
+            {
+                if (factionA >= factionB) continue;
+                var centroidA = Centroid(plan, factionA);
+                var centroidB = Centroid(plan, factionB);
+                Assert.True(Vector2.Distance(centroidA, centroidB) >= scenario.Layout.FactionRowOffset,
+                    $"clusters {factionA}/{factionB} overlap: {Vector2.Distance(centroidA, centroidB)}");
+            }
+        }
+    }
+
+    private static Vector2 Centroid(SpawnPlan plan, int factionIndex)
+    {
+        var placements = plan.UnitPlacements.Where(p => p.FactionIndex == factionIndex).ToList();
+        return new Vector2(
+            placements.Average(p => p.Position.X),
+            placements.Average(p => p.Position.Y));
+    }
+
+    [Fact]
+    public void Build_Clusters_TargetDistanceOverrideReplacesStandoff()
+    {
+        // The terrorist's proximity pin: unit-side TargetDistance overrides the standoff without
+        // pinning any absolute position (cluster placement stays terrain-derived).
+        var scenario = SingleFactionScenario();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        scenario.PlacementOverrides.Add(new PlacementOverride
+        {
+            FactionIndex = 2,
+            RosterIndex = 0,
+            IsTarget = false,
+            TargetDistance = 8f,
+        });
+
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        var unit = plan.UnitPlacements[0];
+        var target = plan.TargetPlacements[unit.TargetIndex];
+        var distance = Vector2.Distance(
+            new Vector2(unit.Position.X, unit.Position.Y),
+            new Vector2(target.Position.X, target.Position.Y));
+        Assert.Equal(8f, distance, precision: 0);
     }
 
     [Fact]

@@ -32,7 +32,9 @@ public sealed class ValidationGroundEditorModel : INotifyPropertyChanged
     /// <summary>Rebuilds the spawn plan from the current scenario (knobs + overrides).</summary>
     public void Regenerate()
     {
-        Plan = ValidationGroundBuilder.Build(Scenario);
+        // The attached map (when present) feeds terrain-aware cluster placement; without one the
+        // builder falls back to layout-only placement.
+        Plan = ValidationGroundBuilder.Build(Scenario, Map);
         PropertyChanged?.Invoke(this, PlanChangedArgs);
     }
 
