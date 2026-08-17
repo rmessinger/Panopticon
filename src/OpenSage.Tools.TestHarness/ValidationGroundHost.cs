@@ -84,7 +84,18 @@ public sealed class ValidationGroundHost
                 continue;
             }
 
-            var obj = CreateAt(game, placement.DefinitionName, placement.Position, player);
+            // Face the assigned target so the formation opens looking at what it will act on
+            // (and any facing-dependent fire gating starts satisfied).
+            var targetPlacement = placement.TargetIndex >= 0 && placement.TargetIndex < plan.TargetPlacements.Count
+                ? plan.TargetPlacements[placement.TargetIndex]
+                : null;
+            var facing = targetPlacement != null
+                ? MathF.Atan2(
+                    targetPlacement.Position.Y - placement.Position.Y,
+                    targetPlacement.Position.X - placement.Position.X)
+                : (float?)null;
+
+            var obj = CreateAt(game, placement.DefinitionName, placement.Position, player, facing);
             if (obj == null)
             {
                 _gaps.Add(new UnitGap(placement.DefinitionName, placement.FactionIndex,
@@ -276,7 +287,7 @@ public sealed class ValidationGroundHost
         return order;
     }
 
-    private static GameObject? CreateAt(IGame game, string definitionName, Vector3 planarPosition, Player owner)
+    private static GameObject? CreateAt(IGame game, string definitionName, Vector3 planarPosition, Player owner, float? facingYaw = null)
     {
         var definition = game.AssetStore.ObjectDefinitions.GetByName(definitionName);
         if (definition == null)
@@ -287,7 +298,12 @@ public sealed class ValidationGroundHost
         var height = game.Scene3D.Terrain.GetGroundHeight(new Vector2(planarPosition.X, planarPosition.Y)) ?? 0f;
         var position = new Vector3(planarPosition.X, planarPosition.Y, height);
         var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
-        gameObject.UpdateTransform(position, gameObject.Rotation);
+        // Yaw 0 faces +X (MathUtility.GetYawFromDirection); targets sit on the +Y target row, so
+        // units spawned without a facing would open 90 degrees off their targets.
+        var rotation = facingYaw.HasValue
+            ? System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, facingYaw.Value)
+            : gameObject.Rotation;
+        gameObject.UpdateTransform(position, rotation);
         // Colliders are built at the origin and only refreshed on the next logic tick; a run held
         // paused at start (ValidationGroundHoldOrders) never ticks logic, so frustum culling would
         // cull every spawned model off-camera until resume. Refresh immediately after placement.
