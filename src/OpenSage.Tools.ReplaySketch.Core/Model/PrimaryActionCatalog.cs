@@ -40,7 +40,6 @@ public static class PrimaryActionCatalog
         ["AmericaJetAurora"] = "bomber (JetAIUpdate); a direct weapon command does not trigger its bombing run",
         ["ChinaVehicleTroopCrawler"] = "transport; no direct-fire weapon discharge in the sandbox",
         ["GLAInfantryAngryMobNexus"] = "horde composite unit; per-unit weapon targeting does not apply",
-        ["GLAInfantryTerrorist"] = "suicide weapon (point-blank, self-destruct); cannot damage from standoff range",
     };
 
     /// <summary>

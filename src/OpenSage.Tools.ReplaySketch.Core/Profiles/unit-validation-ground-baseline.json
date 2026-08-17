@@ -137,6 +137,14 @@
       "MinimumFrameFloor": 3
     },
     {
+      "DefinitionName": "GLAInfantryTerrorist",
+      "FactionIndex": 4,
+      "ActionKind": "Attack",
+      "GoldenFrames": 2,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
       "DefinitionName": "GLAVehicleTechnical",
       "FactionIndex": 4,
       "ActionKind": "Attack",

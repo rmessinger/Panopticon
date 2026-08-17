@@ -63,7 +63,10 @@ public class ValidationGroundEditorModelTests
         model.MovePlacement(factionIndex: 2, rosterIndex: 0, isTarget: false, worldX: 500f, worldY: 600f);
 
         Assert.Equal(new Vector3(500f, 600f, 0f), model.Plan!.UnitPlacements[0].Position);
-        Assert.Single(model.Scenario.PlacementOverrides);
+        // The standard scenario carries the terrorist's close-quarters override; a single-faction
+        // (USA) model cannot produce another, so the moved override is the only faction-2 one.
+        Assert.Contains(model.Scenario.PlacementOverrides,
+            o => o.FactionIndex == 2 && o.RosterIndex == 0 && !o.IsTarget);
     }
 
     [Fact]
@@ -74,7 +77,7 @@ public class ValidationGroundEditorModelTests
         model.MovePlacement(2, 0, false, 100f, 100f);
         model.MovePlacement(2, 0, false, 200f, 200f);
 
-        Assert.Single(model.Scenario.PlacementOverrides);
+        Assert.Single(model.Scenario.PlacementOverrides, o => o.FactionIndex == 2 && o.RosterIndex == 0);
         Assert.Equal(new Vector3(200f, 200f, 0f), model.Plan!.UnitPlacements[0].Position);
     }
 

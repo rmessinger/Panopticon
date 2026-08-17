@@ -192,8 +192,13 @@ public class ValidationGroundBuilderTests
         Assert.Equal(150f, standard.Layout.FactionRowOffset);
         Assert.Equal(80f, standard.Layout.TargetApproachDistance);
         Assert.Equal([2, 3, 4], standard.FactionIndices);
-        Assert.Empty(standard.PlacementOverrides);
         Assert.Equal(["CarAsian1"], standard.TargetDefinitions);
+        // The terrorist's close-quarters override (WI-VG-04): its suicide weapon has range 1, so
+        // the unit is hand-placed next to its target instead of the 80-unit standoff.
+        var terrorist = Assert.Single(standard.PlacementOverrides);
+        Assert.Equal(4, terrorist.FactionIndex);
+        Assert.Equal(3, terrorist.RosterIndex);
+        Assert.False(terrorist.IsTarget);
     }
 
     [Fact]

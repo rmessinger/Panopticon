@@ -13,5 +13,13 @@
   "TargetHp": 30,
   "SettleFrames": 30,
   "Seed": 1,
-  "PlacementOverrides": []
+  "PlacementOverrides": [
+    {
+      "FactionIndex": 4,
+      "RosterIndex": 3,
+      "IsTarget": false,
+      "X": 480,
+      "Y": 862
+    }
+  ]
 }
