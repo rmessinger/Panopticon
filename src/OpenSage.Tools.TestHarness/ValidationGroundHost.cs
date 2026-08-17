@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
@@ -138,15 +140,35 @@ public sealed class ValidationGroundHost
             }
             else
             {
-                var order = BuildOrder(unit, playerIndex, game);
+                var order = BuildOrder(unit, playerIndex, game, unitObject, timer);
                 if (order == null)
                 {
-                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
-                        unit.Placement.Action.Kind, $"no order builder for {unit.Placement.Action.Kind}");
+                    // BuildOrder records the precise reason for null (e.g. which engine piece is
+                    // missing) before returning it.
                     continue;
                 }
 
-                processor.Process([order]);
+                try
+                {
+                    processor.Process([order]);
+                }
+                catch (NotImplementedException)
+                {
+                    // The engine's SpecialPower applicators throw for unimplemented powers. The
+                    // order itself was well-formed, so surface the missing engine piece rather
+                    // than the generic "no order builder" gap.
+                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                        unit.Placement.Action.Kind,
+                        $"engine applicator does not implement {order.OrderType} for this unit's power");
+                    continue;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                        unit.Placement.Action.Kind,
+                        $"engine has no {order.OrderType} handler for this unit's power");
+                    continue;
+                }
             }
 
             timer.OnDispatched(
@@ -159,7 +181,7 @@ public sealed class ValidationGroundHost
         }
     }
 
-    private Order? BuildOrder(SpawnedUnit unit, int playerIndex, IGame game)
+    private Order? BuildOrder(SpawnedUnit unit, int playerIndex, IGame game, GameObject? unitObject, UnitActionTimer timer)
     {
         var placement = unit.Placement;
         var targetIndex = placement.TargetIndex;
@@ -174,16 +196,70 @@ public sealed class ValidationGroundHost
             PrimaryActionKind.Build =>
                 Order.CreateBuildObject(playerIndex, (int)ResolveDefinitionId(game, placement.Action.TargetDefinitionName),
                     placement.Position, 0f),
-            // SpecialPower and Gather orders need per-unit argument construction (SpecialPowerType,
-            // supply-point id, host-side unit selection) that is not yet implemented. Returning null
-            // surfaces these as named gaps via IssueOrders (deep dive §2.6) instead of dispatching a
-            // malformed, argument-less order that crashes OrderProcessor.
             PrimaryActionKind.SpecialPower =>
-                null,
+                BuildSpecialPowerOrder(unit, playerIndex, target, unitObject, timer),
+            // Gather needs per-unit argument construction (supply-point id, host-side unit
+            // selection) that is not yet implemented; surfaced as a named gap instead of a
+            // malformed, argument-less order that crashes OrderProcessor.
             PrimaryActionKind.Gather =>
                 null,
             _ => MoveToOrder(playerIndex, placement.Position),
         };
+    }
+
+    /// <summary>
+    /// Builds a real SpecialPower order for the unit's first special-power module, mapped to the
+    /// applicator family the power belongs to (location powers vs object powers). Well-formed
+    /// orders are dispatched and only fail when the engine applicator itself is unimplemented,
+    /// which IssueOrders reports precisely. Units with no power module (e.g. the Hijacker, whose
+    /// hijack is a context-mode command) are recorded as engine gaps here.
+    /// </summary>
+    private Order? BuildSpecialPowerOrder(SpawnedUnit unit, int playerIndex, GameObject? target, GameObject? unitObject, UnitActionTimer timer)
+    {
+        const string noModuleReason =
+            "no SpecialPower module on the unit; the ability is a context-mode command whose engine module is a stub (HijackerUpdate)";
+
+        if (unitObject == null)
+        {
+            timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                unit.Placement.Action.Kind, "unit object missing at order time");
+            return null;
+        }
+
+        var powerModule = unitObject.FindBehaviors<SpecialPowerModule>().FirstOrDefault();
+        if (powerModule == null)
+        {
+            timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                unit.Placement.Action.Kind, noModuleReason);
+            return null;
+        }
+
+        var powerType = powerModule.SpecialPowerType;
+        switch (powerType)
+        {
+            case SpecialPowerType.CleanupArea:
+                // Location power: the ambulance detox field is cast at the target's position.
+                var position = target?.Translation ?? unitObject.Translation;
+                return Order.CreateSpecialPowerAtLocation(playerIndex, (int)powerType, position,
+                    SpecialPowerOrderFlags.NeedTargetPosition, ObjectId.Invalid);
+
+            case SpecialPowerType.BlackLotusCaptureBuilding:
+            case SpecialPowerType.HackerDisableBuilding:
+                if (target == null)
+                {
+                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                        unit.Placement.Action.Kind, $"{powerType} needs a target object; none assigned");
+                    return null;
+                }
+                return Order.CreateSpecialPowerAtObject(playerIndex, (int)powerType, target.Id,
+                    SpecialPowerOrderFlags.NeedTargetEnemyObject
+                    | SpecialPowerOrderFlags.NeedTargetNeutralObject, ObjectId.Invalid);
+
+            default:
+                timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                    unit.Placement.Action.Kind, $"{powerType} has no validation-ground order mapping yet");
+                return null;
+        }
     }
 
     private static Order AttackObjectOrder(int playerIndex, ObjectId targetId)
