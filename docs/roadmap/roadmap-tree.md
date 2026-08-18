@@ -163,6 +163,7 @@ mindmap
       G7 Texture filtering and mip quality
       G8 Shadow quality tier
       G9 Resolution-independent 2D and UI
+      G10 Realistic proportions
 ```
 
 ---
@@ -246,6 +247,7 @@ flowchart LR
     G7["G7 Texture filtering & mip quality"]
     G8["G8 Shadow quality tier"]
     G9["G9 Resolution-independent 2D & UI"]
+    G10["G10 Realistic proportions"]
   end
 
   subgraph S3["Stage 3 · Scenario, distribution & tooling"]
@@ -359,6 +361,8 @@ flowchart LR
   F4 --> F5
   G2 --> G4
   G3 --> G4
+  G2 --> G10
+  G3 --> G10
   G2 --> G6
   G3 --> G6
   G2 --> G7
@@ -391,7 +395,7 @@ flowchart LR
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
   class F1,F2,F3,F4,F5,F6,F7,F8 trackF;
-  class G1,G2,G3,G4,G5,G6,G7,G8,G9 trackG;
+  class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;

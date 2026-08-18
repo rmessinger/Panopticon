@@ -322,6 +322,20 @@
   than an [experiment seam](seams.md): they select fixed pipeline state, not swappable
   implementations measured by the A4 harness, so they stay out of that harness. The alternative,
   a single unconditional visual upgrade, was rejected because reproducing the original look is a
-  standing requirement, and the alternative of a full per-feature settings matrix without presets
+  standing requirement, and the alternative of   a full per-feature settings matrix without presets
   was rejected as untestable: G3 golden frames are captured per preset. Affects
   [Track G](track-g-rendering-clarity.md).
+- Realistic proportions scope. Decision: presentation-only scale correction in Track G (G10),
+  grounded in a measured reference scale; weapon ranges and collision geometry stay untouched.
+  Measured against installed assets (INI `Geometry` cross-checked with W3D mesh bounds, FX meshes
+  excluded), infantry, ground vehicles, and civilian/faction buildings are already mutually
+  proportionate at roughly 5 world units per meter (terrain cell 10 units ≈ 2 m); aircraft models
+  are the offenders, undersized roughly 2-2.5x versus real counterparts (MiG ≈ 6.6 m in-game
+  versus ≈ 17.3 m real). G10 documents the reference scale and adds an opt-in visual model-scale
+  correction for the aircraft class behind the G2 settings layer, in the spirit of the `Enhanced`
+  preset. Attack-range compression (≈ 100x, e.g. `CrusaderTankGun AttackRange = 150` ≈ 30 m
+  versus 2.5+ km real) is deliberate gameplay and map-scale data rather than presentation, so it
+  is explicitly out of scope, as are `Geometry` collision boxes (selection/pathing consumers such
+  as `Scene25D.GetBoundingSphere`). Chosen over rescaling assets (mutates original data) and over
+  simulation-side scaling (would change gameplay and break the A3 seam). Affects
+  [Track G](track-g-rendering-clarity.md) (G10).

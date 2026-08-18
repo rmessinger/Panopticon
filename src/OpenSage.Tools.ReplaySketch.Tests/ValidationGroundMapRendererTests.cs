@@ -72,6 +72,56 @@ public class ValidationGroundMapRendererTests
     }
 
     [Fact]
+    public void ComputeMarkers_DisplacesTargetSquareWhenPairOverlapsScreen()
+    {
+        // A proximity-pinned pair (WI-VG-04 terrorist: target 8 world units away) projects ~1.6px
+        // apart at this scale, under the circle; the drawn square must be nudged out to the
+        // minimum separation while keeping its identity (drag/hit-test still resolve to it).
+        var plan = PlanWith((new Vector3(500f, 500f, 0f), new Vector3(508f, 500f, 0f)));
+        var map = MapMetadataService.CreateForTesting(Min, Max);
+
+        var markers = ValidationGroundMapRenderer.ComputeMarkers(map, plan, 0, 0, 200f);
+
+        var unit = markers.Single(m => !m.IsTarget);
+        var target = markers.Single(m => m.IsTarget);
+        var distance = MathF.Sqrt(
+            MathF.Pow(unit.ScreenX - target.ScreenX, 2f) + MathF.Pow(unit.ScreenY - target.ScreenY, 2f));
+        Assert.True(distance >= ValidationGroundMapRenderer.MinimumMarkerSeparationPx - 0.01f,
+            $"pair drawn {distance:F1}px apart, need {ValidationGroundMapRenderer.MinimumMarkerSeparationPx}");
+        Assert.Equal((2, 0, true), (target.FactionIndex, target.RosterIndex, target.IsTarget));
+    }
+
+    [Fact]
+    public void ComputeMarkers_EveryUnitTargetPairClearsMinimumSeparation()
+    {
+        // Stress: the full standard plan (all three factions, 80-unit standoffs and the pinned
+        // terrorist) rendered into a small preview where even normal pairs project inside the
+        // marker sizes; every pair must still be drawn at or beyond the minimum separation.
+        var scenario = ValidationGroundScenarioStore.Standard();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+        var map = MapMetadataService.CreateForTesting(new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f));
+
+        var markers = ValidationGroundMapRenderer.ComputeMarkers(map, plan, 0, 0, 200f);
+
+        for (var i = 0; i < markers.Count - 1; i++)
+        {
+            var target = markers[i];
+            if (!target.IsTarget) continue;
+            var unit = markers[i + 1];
+            if (unit.IsTarget || unit.FactionIndex != target.FactionIndex || unit.RosterIndex != target.RosterIndex)
+            {
+                continue;
+            }
+            var distance = MathF.Sqrt(
+                MathF.Pow(unit.ScreenX - target.ScreenX, 2f) + MathF.Pow(unit.ScreenY - target.ScreenY, 2f));
+            Assert.True(distance >= ValidationGroundMapRenderer.MinimumMarkerSeparationPx - 0.01f,
+                $"faction {unit.FactionIndex} roster {unit.RosterIndex} pair drawn {distance:F1}px apart");
+        }
+    }
+
+    [Fact]
     public void ComputeMarkers_HandlesUnitWithoutReachableTarget()
     {
         // A unit whose TargetIndex is out of range still produces its own marker; only the target

@@ -804,3 +804,23 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
   - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
     layout and hit regions unchanged relative to the pre-track build.
+- [ ] G10 Realistic proportions (optional scale-correct presentation: reference-scale
+      documentation plus per-definition visual model-scale overrides for the undersized aircraft
+      class, behind the G2 settings layer; `Geometry` collision and `AttackRange` gameplay data
+      untouched).
+  - [ ] G10-1 Proportion audit and reference scale: measure per-class model bounds (W3D mesh
+        bounds, FX meshes excluded) against INI `Geometry` and real-world counterparts; check in
+        the deviation table and pin the world-units-per-meter reference (measured basis: ≈ 5
+        units/m; aircraft undersized ≈ 2-2.5x, e.g. MiG ≈ 6.6 m in-game vs ≈ 17.3 m real).
+    - AC: a checked-in table covers a representative set spanning infantry, ground vehicles,
+      buildings, and aircraft, and a data test re-derives its numbers from the installed
+      INI/W3D assets so a changed asset fails the test.
+  - [ ] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
+        the proportions option, correcting the aircraft class.
+    - AC: with the option enabled only aircraft visuals change size; existing P0/P9 scenario
+      assertions pass identically with the option on and off, and selection rings still match the
+      visible models.
+  - [ ] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
+        layer and add proportion-mode captures to the G3 golden set.
+    - AC: golden frames captured under the proportions mode catch an injected rescale regression,
+      and `Faithful` output is identical to the pre-phase capture.
