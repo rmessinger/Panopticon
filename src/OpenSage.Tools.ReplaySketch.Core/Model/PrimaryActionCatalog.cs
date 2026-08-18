@@ -29,17 +29,18 @@ public static class PrimaryActionCatalog
     /// <summary>
     /// Roster units whose Attack action does not produce target damage through a directly-commanded
     /// weapon in the validation-ground sandbox. Re-verified against the CarAsian1 target
-    /// (TruckArmor) per the gap-closure plan WI-VG-01. They would always time out, so the host
-    /// records them as named gaps instead of running them through the timer, and they have no
-    /// baseline entry. Escalate per deep dive P9 §2.6. Authoritative for both the host and the
-    /// baseline-coverage test.
+    /// (TruckArmor) per the gap-closure plan WI-VG-01, and each reason is grounded in the install's
+    /// own INI data. They would always time out, so the host records them as named gaps instead of
+    /// running them through the timer, and they have no baseline entry. Escalate per deep dive
+    /// P9 §2.6. Authoritative for both the host and the baseline-coverage test. Units whose only
+    /// obstacle is the shared target's armor (the Pathfinder's FLESHY_SNIPER versus TruckArmor)
+    /// carry a per-unit UnitOption.TargetOverride instead and are measured normally.
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> UnmeasurableAttackReasons = new Dictionary<string, string>
     {
-        ["AmericaInfantryPathfinder"] = "sniper weapon (FLESHY_SNIPER) does 0% to the TruckArmor car target; anti-personnel only",
-        ["AmericaJetAurora"] = "bomber (JetAIUpdate); a direct weapon command does not trigger its bombing run",
-        ["ChinaVehicleTroopCrawler"] = "transport; no direct-fire weapon discharge in the sandbox",
-        ["GLAInfantryAngryMobNexus"] = "horde composite unit; per-unit weapon targeting does not apply",
+        ["AmericaJetAurora"] = "bomber: JetAIUpdate has no attack state in the engine, so the bombing run cannot be commanded (AuroraBombWeapon is only delivered by the run)",
+        ["ChinaVehicleTroopCrawler"] = "transport: its only weapon (TroopCrawlerAssault, 1e-5 damage of type Deploy) is the passenger assault signal, not a damage source",
+        ["GLAInfantryAngryMobNexus"] = "horde composite: the nexus weapon (GLAAngryMobNexusHarmlessWeapon, 0.001 damage) is harmless by design; damage comes from SpawnBehavior members that receive no attack order",
     };
 
     /// <summary>

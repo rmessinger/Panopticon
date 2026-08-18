@@ -371,6 +371,26 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     ConstraintFilter) runs one full-contract scenario per cell; each asserts all six contract points
     (produce/move/attack/abilities/die); see the deep dive matrix section.
 
+### P6c: Special-power implementation ([plan](plans/validation-ground-gap-closure.md))
+- [x] Cleanup-area location power (P6c-1).
+  - AC: `SpecialPowerAtLocation` with `SPECIAL_CLEANUP_AREA` heals friendly objects within the
+    power's radius of the target location (observable health increase on a damaged friendly); the
+    Ambulance's P6b support contract asserts the effect instead of reporting a gap.
+- [x] Object-target hack powers (P6c-2).
+  - AC: `SpecialPowerAtObject` implements `SPECIAL_BLACKLOTUS_CAPTURE_BUILDING` (target building
+    ownership transfers to the caster's player), `SPECIAL_HACKER_DISABLE_BUILDING` and
+    `SPECIAL_BLACKLOTUS_DISABLE_VEHICLE_HACK` (target disabled for the ability's effect duration),
+    `SPECIAL_BLACKLOTUS_STEAL_CASH` (cash transfer mirroring `CashHackSpecialPower`), and
+    infantry building capture; each has an observable-effect assertion.
+- [x] Hijacker contact hijack (P6c-3).
+  - AC: `HijackerUpdate` transfers an enemy vehicle's ownership to the hijacker's player on
+    contact and consumes the hijacker; the validation ground's hijacker completes on ownership
+    transfer.
+- [x] Validation-ground measurement of the ability units (P6c-4).
+  - AC: the Medic, Black Lotus, Hacker, and Hijacker each perform their ability in the validation
+    ground with a per-power completion predicate (heal observed, ownership changed, target
+    disabled, vehicle hijacked), carry baseline entries, and two headless runs are byte-identical.
+
 ### P7: End-to-end skirmish validation
 - [x] Author one end-state scenario per match outcome (six total).
   - AC: six scenario files exist, one per end state (player eliminated, player surrenders, AI

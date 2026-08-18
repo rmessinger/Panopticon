@@ -245,10 +245,11 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | P5 - Construction & production | `██████████` | 5 / 5 |
 | P6 - Combat & command | `████████░░` | 4 / 5 |
 | P6b - Unit-contract validation | `██████████` | 8 / 8 |
+| P6c - Special-power implementation | `██████████` | 4 / 4 |
 | P7 - End-to-end validation | `██████████` | 8 / 8 |
 | P8 - Implementation delta remediation | `░░░░░░░░░░` | 0 / 7 |
 | P9 - Unit validation ground | `░░░░░░░░░░` | 0 / 8 |
-| Track P total | `██████░░░░` | 47 / 83 |
+| Track P total | `██████▌░░░` | 51 / 87 |
 
 ### Tracks A / B / C (gated on Track P)
 

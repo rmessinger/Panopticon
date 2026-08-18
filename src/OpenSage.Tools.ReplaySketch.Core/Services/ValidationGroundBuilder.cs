@@ -229,7 +229,8 @@ public static class ValidationGroundBuilder
         placedTargetPositions?.Add(targetPos);
 
         var action = PrimaryActionCatalog.Resolve(unit);
-        targets.Add(new TargetPlacement(definitions[globalUnitIndex % definitions.Count], new Vector3(targetPos.X, targetPos.Y, 0f)));
+        var targetDefinition = unit.TargetOverride ?? definitions[globalUnitIndex % definitions.Count];
+        targets.Add(new TargetPlacement(targetDefinition, new Vector3(targetPos.X, targetPos.Y, 0f)));
         units.Add(new UnitPlacement(
             unit.DefinitionName,
             factionIndex,

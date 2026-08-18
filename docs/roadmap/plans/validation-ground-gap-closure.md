@@ -7,24 +7,27 @@
 
 ## Current gap inventory
 
-Source: headless run 2026-08-15, targets `CarAsian1` at `TargetHp=30`, standoff 80.
+Source: headless run 2026-08-15, targets `CarAsian1` at `TargetHp=30`, standoff 80. Updated
+2026-08-18: the Pathfinder is measured (per-unit target override, see WI-VG-04), the remaining
+verdicts are re-grounded in the install's INI data, and bucket A is closed by P6c (implemented
+handlers; see [track P](../track-p-playable-baseline.md)).
 
 | # | Unit | Kind | Root cause | Bucket |
 |---|---|---|---|---|
-| 1 | `AmericaVehicleMedic` | SpecialPower | `ValidationGroundHost.BuildOrder` returns null; no per-unit `SpecialPowerType` argument construction | A |
-| 2 | `ChinaInfantryBlackLotus` | SpecialPower | same | A |
-| 3 | `ChinaInfantryHacker` | SpecialPower | same | A |
-| 4 | `GLAInfantryHijacker` | SpecialPower | same | A |
-| 5 | `AmericaInfantryPathfinder` | Attack | cataloged as unmeasurable: sniper weapon vs target armor | B |
-| 6 | `AmericaJetAurora` | Attack | cataloged: `JetAIUpdate` bombing run not triggered by a direct weapon command | B |
-| 7 | `ChinaVehicleTroopCrawler` | Attack | cataloged: transport, no direct-fire weapon discharge | B |
-| 8 | `GLAInfantryAngryMobNexus` | Attack | cataloged: horde composite, per-unit weapon targeting does not apply | B |
-| 9 | `GLAInfantryTerrorist` | Attack | cataloged: suicide weapon, point-blank only | B |
+| 1 | `AmericaVehicleMedic` | SpecialPower | closed 2026-08-18 (P6c): `SPECIAL_CLEANUP_AREA` heals friendlies in the power radius; measured (1 frame) | A |
+| 2 | `ChinaInfantryBlackLotus` | SpecialPower | closed 2026-08-18 (P6c): capture-building transfers ownership; measured (1 frame) | A |
+| 3 | `ChinaInfantryHacker` | SpecialPower | closed 2026-08-18 (P6c): disable-building disables the target; measured (1 frame) | A |
+| 4 | `GLAInfantryHijacker` | SpecialPower | closed 2026-08-18 (P6c): `HijackerUpdate` contact hijack; measured (51 frames) | A |
+| 5 | `AmericaInfantryPathfinder` | Attack | closed 2026-08-18: see WI-VG-04 | B |
+| 6 | `AmericaJetAurora` | Attack | `JetAIUpdate` has no attack state, so the bombing run cannot be commanded; `AuroraBombWeapon` is only delivered by the run | B |
+| 7 | `ChinaVehicleTroopCrawler` | Attack | its only weapon (`TroopCrawlerAssault`, 1e-5 damage of type Deploy) is the passenger assault signal, not a damage source | B |
+| 8 | `GLAInfantryAngryMobNexus` | Attack | the nexus weapon (0.001 damage) is harmless by design; damage comes from `SpawnBehavior` members that receive no attack order | B |
+| 9 | `GLAInfantryTerrorist` | Attack | closed: point-blank placement override; measured | B |
 | 10 | `ChinaVehicleHelix` | Attack | Zero Hour-only definition; absent from a vanilla Generals install | C |
 
 Bucket C is resolved: `UnitOption.ZeroHourOnly` tags the entry, the scenario carries the target
 game (set from the harness config), and the builder skips such entries on runs whose game lacks
-them, so a vanilla run no longer reports the gap (31 total, 9 gaps).
+them, so a vanilla run no longer reports the gap (31 total, 3 gaps, 28 measured).
 
 ## Work items
 
@@ -56,26 +59,12 @@ baseline.
 
 ### WI-VG-02: SpecialPower order construction in the host
 
-`ValidationGroundHost.BuildOrder` deliberately returns null for
-`PrimaryActionKind.SpecialPower` instead of dispatching a malformed order. The engine-side
-applicators exist and were hardened in `WI-P6b-07`
-(`src/OpenSage.Game/Logic/Orders/SpecialPower/`); the missing piece is per-unit argument
-construction in the host:
-
-1. Resolve the unit's `SpecialPower` module (`GameObject.FindBehavior<SpecialPowerModule>` or the
-   definition's `SpecialPower` list) to a concrete `SpecialPowerType`.
-2. Map the type to the order path the applicators implement (`SpecialPowerAtObject`,
-   `SpecialPowerAtLocation`, no-target `SpecialPower`) and build the `Order` with the arguments
-   the applicator parses (power id, target object id or position, flags).
-3. Completion predicates in `UnitActionTimer`/observation seam per power class: heal amount
-   (`Medic`), cash delta or hack completion (`BlackLotus`, `Hacker`), vehicle ownership transfer
-   (`Hijacker`). Spawn a suitable subject object per unit (a damaged friendly for the medic, an
-   enemy vehicle for the hijacker) the way targets are spawned today.
-4. Any power whose applicator throws `NotImplementedException` stays a gap, with the reason
-   promoted from the exception message rather than a generic string.
-
-Exit: the four bucket-A units are either measured with baselines or carry engine-specific gap
-reasons pointing at the unimplemented applicator.
+Done 2026-08-18, together with P6c (the engine-side handlers). The host builds real
+SpecialPower orders (location powers at the subject position, object powers against a per-unit
+subject), spawns ability subjects (damaged friendly for the Medic, neutral building for Black
+Lotus and the Hacker, enemy vehicle for the Hijacker), and completes each unit on its per-power
+observable effect (heal observed, ownership changed, target disabled). All four bucket-A units
+carry baseline entries; two headless runs are byte-identical.
 
 ### WI-VG-03: Game-aware unit catalog
 
@@ -97,13 +86,24 @@ For bucket-B units that `WI-VG-01` confirms unmeasurable, close them by adding s
 rather than leaving permanent gaps. Candidate mechanics, each independently shippable:
 
 - Close-quarters placement: per-unit `PlacementOverride` shrinking the standoff for point-blank
-  units (`Terrorist`) below their weapon range, instead of the global 80.
+  units (`Terrorist`) below their weapon range, instead of the global 80. Done: the Terrorist is
+  measured.
+- Per-unit target override: `UnitOption.TargetOverride` replaces the shared car target for units
+  whose weapon cannot damage it. Done 2026-08-18 for the Pathfinder (`GLAInfantryRebel` target,
+  2-frame golden), and this surfaced an engine bug: Generals' `FLESHY_SNIPER` and Zero Hour's
+  `SUBDUAL_MISSILE` share enum value 31, so every Generals sniper hit was classified as subdual
+  damage and silently dropped (`DamageConstants.IsSubdualDamage`, fixed with a game-aware check;
+  regression test `src/OpenSage.Game.Tests/Logic/DamageTypeCollisionTests.cs`). The
+  `TargetOverrides_AreDamageableByPrimaryWeapon` data test keeps every override consistent with
+  the install's weapon and armor INI.
 - Bombing-run trigger: command `JetAIUpdate` aircraft through their AI update (attack order to a
   position/object) rather than a direct weapon command (`Aurora`), once the jet attack state
-  machine supports it.
+  machine supports it. Open: `JetAIUpdate` has no attack state.
 - Transport load/fire: issue a load-then-attack sequence or fire-on-move command
   (`TroopCrawler`); horde members inherit the nexus target (`AngryMobNexus`) if the horde
-  containment model exposes per-member weapons.
+  containment model exposes per-member weapons. Open: the TroopCrawler's only weapon is the
+  Deploy-type passenger signal, and the mob nexus is a `SpawnBehavior` controller whose members
+  receive no attack order.
 
 Each mechanic lands with its unit promoted to the baseline. Items that require engine work beyond
 the sandbox stay recorded gaps and escalate to the owning roadmap track (P6b for order paths,

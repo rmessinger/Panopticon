@@ -63,6 +63,11 @@ mindmap
         P6b-4 Builder archetype
         P6b-5 Support archetype
         P6b-6 Superweapon archetype
+      P6c Special-power implementation ⮕
+        P6c-1 Cleanup area
+        P6c-2 Object hack powers
+        P6c-3 Hijacker hijack
+        P6c-4 Validation-ground measurement
       P7 End-to-end skirmish validation ⮕
       P8 Implementation delta remediation ⮕
       P9 Unit validation ground ⮕
@@ -199,6 +204,7 @@ flowchart LR
     P3["P3 Victory & defeat"]
     P6["P6 Combat & command"]
     P6B["P6b Unit-contract validation"]
+    P6C["P6c Special-power implementation"]
     P8["P8 Implementation delta remediation"]
     P7["P7 End-to-end skirmish validation"]
     P9["P9 Unit validation ground"]
@@ -300,7 +306,8 @@ flowchart LR
   P8 --> P7
   P0 --> P9
   P6 --> P9
-  P6B --> P9
+  P6B --> P6C
+  P6C --> P9
   P7 --> A2
   P7 --> A3
   P7 --> A4S

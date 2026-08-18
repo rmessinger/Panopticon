@@ -33,6 +33,9 @@ public class SpecialPowerModule : BehaviorModule, IUpgradableScienceModule
 
     public SpecialPowerType SpecialPowerType => _moduleData.SpecialPower.Value.Type;
 
+    /// <summary>The special-power asset this module instance is configured with.</summary>
+    internal SpecialPower Template => _moduleData.SpecialPower.Value;
+
     internal SpecialPowerModule(GameObject gameObject, IGameEngine gameEngine, SpecialPowerModuleData moduleData) : base(gameObject, gameEngine)
     {
         _moduleData = moduleData;
