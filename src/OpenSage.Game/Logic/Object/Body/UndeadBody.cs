@@ -38,7 +38,7 @@ public sealed class UndeadBody : ActiveBody
         if (damageInput.DamageType != DamageType.Unresistable
             && !_isSecondLife
             && damageInput.Amount >= Health
-            && damageInput.DamageType.IsHealthDamagingDamage())
+            && damageInput.DamageType.IsHealthDamagingDamage(GameEngine.SageGame))
         {
             modifiedDamageInput.Amount = Math.Min(damageInput.Amount, Health - 1);
             shouldStartSecondLife = true;

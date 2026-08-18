@@ -203,7 +203,7 @@ public class ActiveBody : BodyModule
                 }
         }
 
-        if (damageInput.DamageType.IsSubdualDamage())
+        if (damageInput.DamageType.IsSubdualDamage(GameEngine.SageGame))
         {
             if (!CanBeSubdued)
             {
@@ -467,7 +467,7 @@ public class ActiveBody : BodyModule
         ValidateArmorAndDamageFX();
 
         // Subdual damage can't affect you if you can't be subdued.
-        if (damageInput.DamageType.IsSubdualDamage() && !CanBeSubdued)
+        if (damageInput.DamageType.IsSubdualDamage(GameEngine.SageGame) && !CanBeSubdued)
         {
             return 0.0f;
         }

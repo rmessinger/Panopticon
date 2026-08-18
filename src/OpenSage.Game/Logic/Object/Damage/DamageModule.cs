@@ -52,10 +52,13 @@ public static class DamageConstants
 {
     public const float HugeDamageAmount = 999999.0f;
 
-    public static bool IsHealthDamagingDamage(this DamageType damageType) => damageType switch
+    // Generals' FLESHY_SNIPER and Zero Hour's SUBDUAL_MISSILE share enum value 31 (the original
+    // engine reused the slot), so value-based checks must be disambiguated by the running game.
+
+    public static bool IsHealthDamagingDamage(this DamageType damageType, SageGame game) => damageType switch
     {
         DamageType.Status => false,
-        DamageType.SubdualMissile => false,
+        DamageType.SubdualMissile => game == SageGame.CncGenerals,
         DamageType.SubdualVehicle => false,
         DamageType.SubdualBuilding => false,
         DamageType.SubdualUnresistable => false,
@@ -64,9 +67,9 @@ public static class DamageConstants
         _ => true,
     };
 
-    public static bool IsSubdualDamage(this DamageType damageType) => damageType switch
+    public static bool IsSubdualDamage(this DamageType damageType, SageGame game) => damageType switch
     {
-        DamageType.SubdualMissile => true,
+        DamageType.SubdualMissile => game != SageGame.CncGenerals,
         DamageType.SubdualVehicle => true,
         DamageType.SubdualBuilding => true,
         DamageType.SubdualUnresistable => true,
