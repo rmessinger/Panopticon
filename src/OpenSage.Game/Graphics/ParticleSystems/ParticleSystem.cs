@@ -370,7 +370,7 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
 
         particle.Lifetime = Template.Lifetime.GetRandomInt();
 
-        particle.ColorScale = Template.Colors.ColorScale.GetRandomFloat();
+        particle.ColorScale = Template.Colors.ColorScale.GetRandomFloat() / 255.0f;
 
         particle.Size = startSize + Template.Size.GetRandomFloat();
         particle.SizeRate = update.SizeRate.GetRandomFloat();
@@ -439,10 +439,11 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
         {
             particle.Color = prevC.Color;
         }
-        var colorVal = particle.ColorScale * particle.Timer / 255.0f;
-        particle.Color.X += colorVal;
-        particle.Color.Y += colorVal;
-        particle.Color.Z += colorVal;
+        particle.Color.X += particle.ColorScale;
+        particle.Color.Y += particle.ColorScale;
+        particle.Color.Z += particle.ColorScale;
+
+        particle.Color = Vector3.Clamp(particle.Color, Vector3.Zero, Vector3.One);
 
         if (particle.AlphaKeyframes.Length > 1)
         {
