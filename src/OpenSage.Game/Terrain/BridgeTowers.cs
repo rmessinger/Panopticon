@@ -53,6 +53,9 @@ public sealed class BridgeTowers
                 worldMatrix);
 
             tower.UpdateTransform(translation, rotation);
+            // Same paused-start culling concern as map-placed objects: refresh the collider now
+            // rather than waiting for the first logic tick.
+            tower.UpdateColliders();
         }
 
         CreateTower(template.TowerObjectNameFromLeft.Value, startX, startY);

@@ -53,6 +53,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 ### Validation
 
 * Always use ReplaySketch screenshot mode to verify any ReplaySketch fix or feature. Run: `REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png [REPLAYSKETCH_SCREENSHOT_TAB=map] dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui`
+* To share a screenshot with the user, write it into `/mnt/pit2/Network Storage/temp/` (path contains spaces, quote it) instead of `/tmp`, e.g. `REPLAYSKETCH_SCREENSHOT_PATH="/mnt/pit2/Network Storage/temp/shot.png"`. That directory is served read-only by the live viewer at `https://files.reid-corp.com/viewer/`, which shows the newest image automatically; no manual refresh, upload, or login needed. Overwrite the same file for iteration snapshots so the viewer swaps instantly.
 * Always verify ReplaySketch fixes without breaking the map panel.
 
 ### Tooling

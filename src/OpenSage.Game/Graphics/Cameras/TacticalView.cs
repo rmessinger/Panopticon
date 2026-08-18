@@ -1556,6 +1556,28 @@ public sealed class TacticalView : IPersistableObject
         SetCameraTransform();
     }
 
+    /// <summary>
+    /// Snaps the camera to the given height above ground with no zoom easing, raising
+    /// <see cref="MaxHeightAboveGround"/> when the height exceeds it. Tooling uses this to
+    /// frame content deterministically on the first frame (e.g. the validation ground opening
+    /// on the whole formation); player-driven zoom keeps using
+    /// <see cref="ZoomIn"/>/<see cref="ZoomOut"/>.
+    /// </summary>
+    public void SnapHeightAboveGround(float heightAboveGround)
+    {
+        if (heightAboveGround > _maxHeightAboveGround)
+        {
+            MaxHeightAboveGround = heightAboveGround;
+        }
+        _heightAboveGround = heightAboveGround;
+
+        var terrainHeightMax = GetHeightAroundPos(_pos.Vector2XY());
+        _zoom = (terrainHeightMax + _heightAboveGround) / _cameraOffset.Z;
+
+        ResetAnimationsAndFlags();
+        SetCameraTransform();
+    }
+
     // C++: View::zoomIn
     public void ZoomIn()
     {
