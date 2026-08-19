@@ -73,6 +73,14 @@
       "MinimumFrameFloor": 3
     },
     {
+      "DefinitionName": "AmericaJetAurora",
+      "FactionIndex": 2,
+      "ActionKind": "Attack",
+      "GoldenFrames": 2,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
       "DefinitionName": "ChinaInfantryRedGuard",
       "FactionIndex": 3,
       "ActionKind": "Attack",
@@ -181,6 +189,14 @@
       "FactionIndex": 4,
       "ActionKind": "Attack",
       "GoldenFrames": 2,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
+      "DefinitionName": "GLAInfantryAngryMobNexus",
+      "FactionIndex": 4,
+      "ActionKind": "Attack",
+      "GoldenFrames": 17,
       "TolerancePercent": 10,
       "MinimumFrameFloor": 3
     },

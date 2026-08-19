@@ -33,14 +33,14 @@ public static class PrimaryActionCatalog
     /// own INI data. They would always time out, so the host records them as named gaps instead of
     /// running them through the timer, and they have no baseline entry. Escalate per deep dive
     /// P9 §2.6. Authoritative for both the host and the baseline-coverage test. Units whose only
-    /// obstacle is the shared target's armor (the Pathfinder's FLESHY_SNIPER versus TruckArmor)
-    /// carry a per-unit UnitOption.TargetOverride instead and are measured normally.
+    /// obstacle was the shared target's armor (the Pathfinder), delivery mechanics (the Aurora:
+    /// JetAIUpdate attack pursuit is implemented), or horde composition (the Angry Mob:
+    /// SpawnBehavior member maintenance and MobMemberSlavedUpdate attack propagation are
+    /// implemented) are measured normally instead.
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> UnmeasurableAttackReasons = new Dictionary<string, string>
     {
-        ["AmericaJetAurora"] = "bomber: JetAIUpdate has no attack state in the engine, so the bombing run cannot be commanded (AuroraBombWeapon is only delivered by the run)",
         ["ChinaVehicleTroopCrawler"] = "transport: its only weapon (TroopCrawlerAssault, 1e-5 damage of type Deploy) is the passenger assault signal, not a damage source",
-        ["GLAInfantryAngryMobNexus"] = "horde composite: the nexus weapon (GLAAngryMobNexusHarmlessWeapon, 0.001 damage) is harmless by design; damage comes from SpawnBehavior members that receive no attack order",
     };
 
     /// <summary>

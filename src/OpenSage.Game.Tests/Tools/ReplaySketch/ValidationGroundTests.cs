@@ -18,6 +18,10 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 // sibling P9-1/2/4/7 test classes). The [GameFact] test is the live authority: it verifies the
 // roster and baseline are valid against a real install, and the full end-to-end spawn+measure run
 // is owned by TestHarness (BuiltInScenario.UnitValidationGround), documented in its AGENTS.md.
+// Serial-game collection: the [GameFact] tests create real Game instances, which collide on
+// static state (road texture atlas) with parallel Game-creating classes.
+
+[Collection("SerialGameTests")]
 public class ValidationGroundTests
 {
     private readonly ITestOutputHelper _output;

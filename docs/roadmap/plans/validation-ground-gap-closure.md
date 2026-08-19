@@ -19,9 +19,9 @@ handlers; see [track P](../track-p-playable-baseline.md)).
 | 3 | `ChinaInfantryHacker` | SpecialPower | closed 2026-08-18 (P6c): disable-building disables the target; measured (1 frame) | A |
 | 4 | `GLAInfantryHijacker` | SpecialPower | closed 2026-08-18 (P6c): `HijackerUpdate` contact hijack; measured (51 frames) | A |
 | 5 | `AmericaInfantryPathfinder` | Attack | closed 2026-08-18: see WI-VG-04 | B |
-| 6 | `AmericaJetAurora` | Attack | `JetAIUpdate` has no attack state, so the bombing run cannot be commanded; `AuroraBombWeapon` is only delivered by the run | B |
+| 6 | `AmericaJetAurora` | Attack | closed 2026-08-18: `JetAIUpdate` attack pursuit implemented (out-of-range weapon targets are flown to on the attack locomotor; `AuroraBombWeapon`'s projectile chain delivers the damage); measured at 2 frames | B |
 | 7 | `ChinaVehicleTroopCrawler` | Attack | its only weapon (`TroopCrawlerAssault`, 1e-5 damage of type Deploy) is the passenger assault signal, not a damage source | B |
-| 8 | `GLAInfantryAngryMobNexus` | Attack | the nexus weapon (0.001 damage) is harmless by design; damage comes from `SpawnBehavior` members that receive no attack order | B |
+| 8 | `GLAInfantryAngryMobNexus` | Attack | closed 2026-08-19: `SpawnBehavior` member maintenance (multi-template pool, InitialBurst, ExitByBudding, replace cadence) and `MobMemberSlavedUpdate` attack propagation implemented; members destroy the nexus's target; measured at 17 frames | B |
 | 9 | `GLAInfantryTerrorist` | Attack | closed: point-blank placement override; measured | B |
 | 10 | `ChinaVehicleHelix` | Attack | Zero Hour-only definition; absent from a vanilla Generals install | C |
 
@@ -98,12 +98,20 @@ rather than leaving permanent gaps. Candidate mechanics, each independently ship
   the install's weapon and armor INI.
 - Bombing-run trigger: command `JetAIUpdate` aircraft through their AI update (attack order to a
   position/object) rather than a direct weapon command (`Aurora`), once the jet attack state
-  machine supports it. Open: `JetAIUpdate` has no attack state.
+  machine supports it. Done 2026-08-18: `JetAIUpdate.UpdateAttackPursuit` flies a jet to an
+  out-of-range weapon target on `AttackLocomotorType` (airfield-parked jets still taxi and take
+  off first), and the `AuroraBomb` projectile chain delivers the weapon damage; the Aurora is
+  measured at 2 frames (engine test: `JetAIUpdateAttackTests`).
 - Transport load/fire: issue a load-then-attack sequence or fire-on-move command
   (`TroopCrawler`); horde members inherit the nexus target (`AngryMobNexus`) if the horde
-  containment model exposes per-member weapons. Open: the TroopCrawler's only weapon is the
-  Deploy-type passenger signal, and the mob nexus is a `SpawnBehavior` controller whose members
-  receive no attack order.
+  containment model exposes per-member weapons. Done for the mob 2026-08-19: `SpawnBehavior`
+  now parses the multi-template pool (previously only the last `SpawnTemplateName` survived),
+  spawns `InitialBurst` immediately with `ExitByBudding` placement, tops up toward `SpawnNumber`
+  on the `SpawnReplaceDelay` cadence, and the new `MobMemberSlavedUpdate` module ties members to
+  the nexus (follow radii, attack propagation from the nexus's harmless controller weapon).
+  `ProjectileNugget` gained the object-transform fallback for models without a weapon-launch
+  bone (the mob's rock/molotov throwers). Open: the TroopCrawler's only weapon is the
+  Deploy-type passenger signal, so it needs load-then-fire passenger mechanics (Track D).
 
 Each mechanic lands with its unit promoted to the baseline. Items that require engine work beyond
 the sandbox stay recorded gaps and escalate to the owning roadmap track (P6b for order paths,
