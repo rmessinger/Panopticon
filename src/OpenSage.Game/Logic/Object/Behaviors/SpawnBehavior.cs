@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using OpenSage.Content;
 using OpenSage.Data.Ini;
 
@@ -13,6 +15,7 @@ internal sealed class SpawnBehavior : UpdateModule
 
     private List<GameObject> _spawnedUnits;
     private bool _initial;
+    private LogicFrame _nextReplaceFrame;
     private IProductionExit? _productionExit;
     private OpenContainModule? _openContain;
 
@@ -35,20 +38,58 @@ internal sealed class SpawnBehavior : UpdateModule
         _initial = true;
     }
 
+    // Ring radius for ExitByBudding spawns: members bud off scattered around the spawner
+    // instead of marching out of a production door.
+    private const float BuddingRadius = 35f;
+
     private void SpawnUnit()
     {
-        var spawnedObject = GameEngine.GameLogic.CreateObject(_moduleData.SpawnTemplate?.Value, GameObject.Owner);
+        var spawnedObject = GameEngine.GameLogic.CreateObject(PickSpawnTemplate()?.Value, GameObject.Owner);
         _spawnedUnits.Add(spawnedObject);
 
         spawnedObject.CreatedByObjectID = GameObject.Id;
         var slavedUpdate = spawnedObject.FindBehavior<SlavedUpdateModule>();
         slavedUpdate?.SetMaster(GameObject);
+        spawnedObject.FindBehavior<MobMemberSlavedUpdate>()?.SetMaster(GameObject);
+
+        if (_moduleData.ExitByBudding)
+        {
+            var angle = GameEngine.GameLogic.Random.NextSingle(0, MathF.PI * 2);
+            var offset = new Vector3(
+                MathF.Cos(angle) * BuddingRadius,
+                MathF.Sin(angle) * BuddingRadius,
+                0f);
+            spawnedObject.SetTranslation(GameObject.Translation + offset);
+            return;
+        }
 
         if (!TryTransformViaProductionExit(spawnedObject) &&
             !TryTransformViaOpenContainer(spawnedObject))
         {
             throw new Exception("Unable to set spawn point for spawned unit");
         }
+    }
+
+    private LazyAssetReference<ObjectDefinition>? PickSpawnTemplate()
+    {
+        // Multiple SpawnTemplateName lines define a pool the spawner draws from randomly
+        // (e.g. the Angry Mob's pistol/rock/molotov mix). The draw uses the deterministic
+        // logic RNG so replays and the validation ground stay reproducible.
+        var templates = _moduleData.SpawnTemplates;
+        if (templates.Count == 0)
+        {
+            return null;
+        }
+
+        return templates.Count == 1
+            ? templates[0]
+            : templates[GameEngine.GameLogic.Random.Next(0, templates.Count - 1)];
+    }
+
+    private int AliveSpawnedCount()
+    {
+        _spawnedUnits.RemoveAll(u => u.IsEffectivelyDead);
+        return _spawnedUnits.Count;
     }
 
     private bool TryTransformViaProductionExit(GameObject spawnedObject)
@@ -115,10 +156,20 @@ internal sealed class SpawnBehavior : UpdateModule
 
     public void SpawnInitial()
     {
-        for (var i = 0; i < _moduleData.SpawnNumber; i++)
+        // InitialBurst units appear immediately (the Angry Mob's first five members); when no
+        // burst is configured, the full SpawnNumber appears as before.
+        var count = _moduleData.InitialBurst > 0 ? _moduleData.InitialBurst : _moduleData.SpawnNumber;
+        for (var i = 0; i < count && AliveSpawnedCount() < _moduleData.SpawnNumber; i++)
         {
             SpawnUnit();
         }
+        _nextReplaceFrame = GameEngine.GameLogic.CurrentFrame + ReplaceDelayFrames();
+    }
+
+    private LogicFrameSpan ReplaceDelayFrames()
+    {
+        // SpawnReplaceDelay is authored in milliseconds.
+        return LogicFrameSpan.FromMilliseconds(_moduleData.SpawnReplaceDelay, GameEngine.SageGame);
     }
 
     public override UpdateSleepTime Update()
@@ -129,9 +180,18 @@ internal sealed class SpawnBehavior : UpdateModule
             _initial = false;
         }
 
-        // TODO: respawn killed/dead units
+        // Maintenance: top the spawn count back up toward SpawnNumber (covering both the burst
+        // trickle-up and replacing killed members) on the SpawnReplaceDelay cadence. OneShot
+        // spawners stop once SpawnNumber has been reached even if members die later.
+        if (!_initial
+            && !_moduleData.OneShot
+            && AliveSpawnedCount() < _moduleData.SpawnNumber
+            && GameEngine.GameLogic.CurrentFrame >= _nextReplaceFrame)
+        {
+            SpawnUnit();
+            _nextReplaceFrame = GameEngine.GameLogic.CurrentFrame + ReplaceDelayFrames();
+        }
 
-        // TODO(Port): Use correct value.
         return UpdateSleepTime.None;
     }
 
@@ -203,7 +263,7 @@ public sealed class SpawnBehaviorModuleData : UpgradeModuleData
         {
             { "SpawnNumber", (parser, x) => x.SpawnNumber = parser.ParseInteger() },
             { "SpawnReplaceDelay", (parser, x) => x.SpawnReplaceDelay = parser.ParseLong() },
-            { "SpawnTemplateName", (parser, x) => x.SpawnTemplate = parser.ParseObjectReference() },
+            { "SpawnTemplateName", (parser, x) => x.SpawnTemplates.Add(parser.ParseObjectReference()!) },
             { "OneShot", (parser, x) => x.OneShot = parser.ParseBoolean() },
             { "CanReclaimOrphans", (parser, x) => x.CanReclaimOrphans = parser.ParseBoolean() },
             { "SpawnedRequireSpawner", (parser, x) => x.SpawnedRequireSpawner = parser.ParseBoolean() },
@@ -220,7 +280,15 @@ public sealed class SpawnBehaviorModuleData : UpgradeModuleData
 
     public int SpawnNumber { get; private set; }
     public long SpawnReplaceDelay { get; private set; }
-    public LazyAssetReference<ObjectDefinition>? SpawnTemplate { get; private set; }
+
+    /// <summary>
+    /// The spawn template pool: one entry per SpawnTemplateName line. Spawners with a single
+    /// entry behave as before; multiple entries (the Angry Mob's member mix) draw randomly.
+    /// </summary>
+    public List<LazyAssetReference<ObjectDefinition>> SpawnTemplates { get; } = new();
+
+    /// <summary>Single-template convenience over <see cref="SpawnTemplates"/>.</summary>
+    public LazyAssetReference<ObjectDefinition>? SpawnTemplate => SpawnTemplates.FirstOrDefault();
     public bool OneShot { get; private set; }
     public bool CanReclaimOrphans { get; private set; }
     public bool SpawnedRequireSpawner { get; private set; }
