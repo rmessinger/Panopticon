@@ -824,6 +824,12 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
   - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
     layout and hit regions unchanged relative to the pre-track build.
+  - [ ] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
+        dynamically drawn equivalents (vector/procedural panels, buttons, and frames; live text)
+        behind the `Enhanced` preset, `Faithful` keeps the original art.
+    - AC: under `Enhanced` the control bar contains no HUD bitmap draws; captured frames are sharp
+      at 4x native with no upscaled-art blur, and `Faithful` is pixel-identical to the pre-rework
+      capture.
 - [ ] G10 Realistic proportions (optional scale-correct presentation: reference-scale
       documentation plus per-definition visual model-scale overrides for the undersized aircraft
       class, behind the G2 settings layer; `Geometry` collision and `AttackRange` gameplay data

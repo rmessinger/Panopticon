@@ -319,9 +319,9 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G6 - Gamma-correct rendering | `░░░░░░░░░░` | 0 / 1 |
 | G7 - Texture filtering & mip quality | `░░░░░░░░░░` | 0 / 1 |
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
-| G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 1 |
+| G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 2 |
 | G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
-| Track G total | `░░░░░░░░░░` | 0 / 15 |
+| Track G total | `░░░░░░░░░░` | 0 / 16 |
 
 ### Track H - Map & Unit Storage Formats (gated on Track P only)
 
