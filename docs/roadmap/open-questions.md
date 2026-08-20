@@ -339,3 +339,23 @@
   as `Scene25D.GetBoundingSphere`). Chosen over rescaling assets (mutates original data) and over
   simulation-side scaling (would change gameplay and break the A3 seam). Affects
   [Track G](track-g-rendering-clarity.md) (G10).
+- Map & unit storage-format scope. Decision: own track (Track H), scoped to on-disk persistence
+  and schema design, not runtime performance. A new storage system for maps and unit/object
+  definitions is a genuine gap: no roadmap phase designs a successor on-disk format for the
+  `.map` file or per-game INI `ObjectDefinition` data. This is deliberately kept separate from
+  [B3](track-b-scale.md) (data-oriented runtime layout for unit/`GameObject` state) and
+  [B4a-5](deep-dives/b4a-larger-maps.md) (chunked terrain runtime storage for scale), which
+  already own the in-memory/streaming side of "storage" for units and maps respectively. Track H
+  instead answers a different question: what does content look like on disk, how does its schema
+  version and evolve, and how do maps and object definitions get authored, converted, and
+  validated against that schema. B4a-5's "extend or replace the `.map` format" milestone stays
+  scale-driven (chunking so the whole grid need not be resident); Track H's H3 designs the
+  general-purpose container/versioning envelope and reserves a terrain section for B4a-5's
+  chunk representation, so the two efforts converge on one map format rather than competing.
+  Split out as its own track for the same reason as Tracks D/E/F/G: it cuts across terrain
+  storage (B4a-5), the external-asset import pattern ([C1](track-c-external-assets.md)), the
+  modding/content pipeline ([Track D](track-d-gameplay-expansion.md),
+  [ModCollector](plans/mod-collector.md)), and authoring tooling (WorldBuilder), rather than
+  fitting inside any single existing track. Named "Track H" because A–G are already assigned on
+  `main`. Gated on Track P (P7) only, like Tracks B, C, D, E, and F. Affects
+  [Track H](track-h-storage-formats.md).
