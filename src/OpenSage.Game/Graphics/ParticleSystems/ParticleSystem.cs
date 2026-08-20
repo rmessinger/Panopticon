@@ -370,6 +370,9 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
 
         particle.Lifetime = Template.Lifetime.GetRandomInt();
 
+        // The original engine realizes this random range as raw/255 once when building the
+        // runtime particle system from its template (see Thyme's ParticleSystem construction),
+        // so the value picked per particle here must be divided by 255 too.
         particle.ColorScale = Template.Colors.ColorScale.GetRandomFloat() / 255.0f;
 
         particle.Size = startSize + Template.Size.GetRandomFloat();
@@ -439,9 +442,13 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
         {
             particle.Color = prevC.Color;
         }
-        particle.Color.X += particle.ColorScale;
-        particle.Color.Y += particle.ColorScale;
-        particle.Color.Z += particle.ColorScale;
+        // particle.Color is recomputed from the keyframe table every frame rather than carried
+        // over from the previous frame, so ColorScale (a flat per-frame increment in the original
+        // engine) must be scaled by elapsed frames here to reproduce the same cumulative total.
+        var colorScaleTotal = particle.ColorScale * particle.Timer;
+        particle.Color.X += colorScaleTotal;
+        particle.Color.Y += colorScaleTotal;
+        particle.Color.Z += colorScaleTotal;
 
         particle.Color = Vector3.Clamp(particle.Color, Vector3.Zero, Vector3.One);
 
@@ -476,8 +483,25 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
         prev = keyFrames[0];
         next = prev;
 
-        foreach (var keyFrame in keyFrames)
+        for (var i = 1; i < keyFrames.Length; i++)
         {
+            var keyFrame = keyFrames[i];
+
+            // A Time of 0 on any keyframe after the first marks an unused slot - either an
+            // explicit sentinel in the INI data, or a trailing entry the template never assigned
+            // (see Thyme's Particle::Compute_Color_Rate/Compute_Alpha_Rate, which checks
+            // "frame != 0" on the target keyframe to decide whether a further transition exists).
+            // There is no further real keyframe to move towards, so freeze at the last one
+            // reached (`prev`) instead of interpolating. Without this, `next` would fall through
+            // to its initial value (keyFrames[0]), which can have a different value than `prev`
+            // despite sharing Time == 0, causing a divide-by-zero (and NaN/Infinity color/alpha)
+            // in the interpolation below.
+            if (keyFrame.Time == 0)
+            {
+                next = prev;
+                break;
+            }
+
             if (keyFrame.Time >= timer)
             {
                 next = keyFrame;
@@ -485,6 +509,7 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
             }
 
             prev = keyFrame;
+            next = keyFrame;
         }
     }
 
