@@ -29,6 +29,13 @@ public static class CivilianStructureCatalog
         "StanGasStation",
         "QuonsetHut",
         "CivilianTEROilDepot",
+        // Neutral supply structures (docs/worldbuilder-requirements.md §8.1): if left unlisted,
+        // cluster placement can pack a faction's roster on top of one (observed on Alpine
+        // Assault's southern SupplyDock), since these otherwise carry no owner/kind the map view
+        // could use to treat them as obstacles.
+        "SupplyDock",
+        "SupplyPile",
+        "SupplyWarehouse",
     ];
 
     public static bool IsCivilianStructure(string typeName) =>

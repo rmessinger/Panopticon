@@ -168,7 +168,8 @@ public class ValidationGroundMapRendererTests
                  {
                      "GermanTownHouse1", "GermanTownHouseBib2", "GermanPub01", "GermanCotage01",
                      "GermanCottageBib1", "CivilianBunker01", "StanSchoolhouse02", "StanGasStation",
-                     "QuonsetHut01", "CivilianTEROilDepot",
+                     "QuonsetHut01", "CivilianTEROilDepot", "SupplyDock", "SupplyPile",
+                     "SupplyPileSmall", "SupplyWarehouse",
                  })
         {
             Assert.True(CivilianStructureCatalog.IsCivilianStructure(civilian), civilian);
@@ -177,7 +178,7 @@ public class ValidationGroundMapRendererTests
         foreach (var other in new[]
                  {
                      "AmericaBarracks", "ChinaCommandCenter", "GLAInfantryRebel", "CarAsian1",
-                     "MonumentTrainBridge", "BridgeTowerConcreteLeft01", "SupplyPileSmall",
+                     "MonumentTrainBridge", "BridgeTowerConcreteLeft01",
                  })
         {
             Assert.False(CivilianStructureCatalog.IsCivilianStructure(other), other);
