@@ -122,7 +122,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
 | [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes the stubbed water/ground pathfinding layer and adds ship combat/production, validated against BFME2's existing ship content. Gated on Track P only. |
 | [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Deformable terrain & destruction: terrain deformation data model, runtime mesh/rendering update, weapon-driven terrain deformation, physics engine integration, physics-based structural destruction, destruction-terrain interaction, persistence/replay, authoring/validation tooling. |
-| [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md) | human | Rendering clarity & image quality: high-DPI/resolution correctness, graphics settings & fidelity presets, visual regression harness, MSAA, cutout/alpha-test clarity, gamma-correct rendering, texture filtering & mip quality, shadow quality tier, resolution-independent 2D/UI. Not gated on Track P. |
+| [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md) | human | Rendering clarity & image quality: high-DPI/resolution correctness, graphics settings & fidelity presets, visual regression harness, MSAA, cutout/alpha-test clarity, gamma-correct rendering, texture filtering & mip quality, shadow quality tier, resolution-independent 2D/UI, optional realistic proportions. Not gated on Track P. |
 | [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Map & unit storage formats: a new on-disk storage system for maps and object/unit template data. Format-agnostic interchange abstraction, a versioned successor to the `.map` format, a versioned successor to per-game INI object-definition storage, legacy migration/compatibility tooling, authoring/pipeline integration, round-trip regression. Persistence/schema concern, distinct from B3/B4a-5's runtime-performance focus. Gated on Track P. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `OpenSage.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
@@ -199,7 +199,8 @@ track document.
   drawable & resolution correctness · G2 graphics settings & fidelity presets
   (`Faithful`/`Enhanced`) · G3 visual regression harness · G4 multisample antialiasing · G5
   cutout & alpha-test clarity (the screen-door fix) · G6 gamma-correct rendering · G7 texture
-  filtering & mip quality · G8 shadow quality tier · G9 resolution-independent 2D & UI. Not gated
+  filtering & mip quality · G8 shadow quality tier · G9 resolution-independent 2D & UI ·
+  G10 realistic proportions (optional scale-correct aircraft presentation). Not gated
   on Track P.
 - [Track H - Map & Unit Storage Formats](track-h-storage-formats.md): H1 format requirements &
   current-state audit · H2 format-agnostic interchange abstraction · H3 new map storage format ·
@@ -258,10 +259,11 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | P5 - Construction & production | `██████████` | 5 / 5 |
 | P6 - Combat & command | `████████░░` | 4 / 5 |
 | P6b - Unit-contract validation | `██████████` | 8 / 8 |
+| P6c - Special-power implementation | `██████████` | 4 / 4 |
 | P7 - End-to-end validation | `██████████` | 8 / 8 |
 | P8 - Implementation delta remediation | `░░░░░░░░░░` | 0 / 7 |
 | P9 - Unit validation ground | `░░░░░░░░░░` | 0 / 8 |
-| Track P total | `██████░░░░` | 47 / 83 |
+| Track P total | `██████▌░░░` | 51 / 87 |
 
 ### Tracks A / B / C (gated on Track P)
 
@@ -317,8 +319,9 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G6 - Gamma-correct rendering | `░░░░░░░░░░` | 0 / 1 |
 | G7 - Texture filtering & mip quality | `░░░░░░░░░░` | 0 / 1 |
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
-| G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 1 |
-| Track G total | `░░░░░░░░░░` | 0 / 12 |
+| G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 2 |
+| G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
+| Track G total | `░░░░░░░░░░` | 0 / 16 |
 
 ### Track H - Map & Unit Storage Formats (gated on Track P only)
 

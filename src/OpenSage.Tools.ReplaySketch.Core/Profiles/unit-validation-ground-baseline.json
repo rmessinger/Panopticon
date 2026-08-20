@@ -9,6 +9,14 @@
       "MinimumFrameFloor": 3
     },
     {
+      "DefinitionName": "AmericaInfantryPathfinder",
+      "FactionIndex": 2,
+      "ActionKind": "Attack",
+      "GoldenFrames": 2,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
       "DefinitionName": "AmericaInfantryMissileDefender",
       "FactionIndex": 2,
       "ActionKind": "Attack",
@@ -21,6 +29,14 @@
       "FactionIndex": 2,
       "ActionKind": "Attack",
       "GoldenFrames": 58,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
+      "DefinitionName": "AmericaVehicleMedic",
+      "FactionIndex": 2,
+      "ActionKind": "SpecialPower",
+      "GoldenFrames": 1,
       "TolerancePercent": 10,
       "MinimumFrameFloor": 3
     },
@@ -57,6 +73,14 @@
       "MinimumFrameFloor": 3
     },
     {
+      "DefinitionName": "AmericaJetAurora",
+      "FactionIndex": 2,
+      "ActionKind": "Attack",
+      "GoldenFrames": 2,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
       "DefinitionName": "ChinaInfantryRedGuard",
       "FactionIndex": 3,
       "ActionKind": "Attack",
@@ -69,6 +93,22 @@
       "FactionIndex": 3,
       "ActionKind": "Attack",
       "GoldenFrames": 4,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
+      "DefinitionName": "ChinaInfantryBlackLotus",
+      "FactionIndex": 3,
+      "ActionKind": "SpecialPower",
+      "GoldenFrames": 1,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
+      "DefinitionName": "ChinaInfantryHacker",
+      "FactionIndex": 3,
+      "ActionKind": "SpecialPower",
+      "GoldenFrames": 1,
       "TolerancePercent": 10,
       "MinimumFrameFloor": 3
     },
@@ -133,6 +173,30 @@
       "FactionIndex": 4,
       "ActionKind": "Attack",
       "GoldenFrames": 4,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
+      "DefinitionName": "GLAInfantryHijacker",
+      "FactionIndex": 4,
+      "ActionKind": "SpecialPower",
+      "GoldenFrames": 51,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
+      "DefinitionName": "GLAInfantryTerrorist",
+      "FactionIndex": 4,
+      "ActionKind": "Attack",
+      "GoldenFrames": 2,
+      "TolerancePercent": 10,
+      "MinimumFrameFloor": 3
+    },
+    {
+      "DefinitionName": "GLAInfantryAngryMobNexus",
+      "FactionIndex": 4,
+      "ActionKind": "Attack",
+      "GoldenFrames": 17,
       "TolerancePercent": 10,
       "MinimumFrameFloor": 3
     },

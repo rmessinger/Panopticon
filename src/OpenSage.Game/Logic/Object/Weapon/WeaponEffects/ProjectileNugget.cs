@@ -64,7 +64,10 @@ public sealed class ProjectileNugget : WeaponEffectNugget
         var launchBoneTransform = context.Weapon.ParentGameObject.Drawable.GetWeaponLaunchBoneTransform(
             context.Weapon.Slot, context.Weapon.WeaponIndex);
 
-        projectileObject.SetTransformMatrix(launchBoneTransform.Value);
+        // Models without a weapon-launch bone (e.g. the Angry Mob's rock and molotov throwers)
+        // launch from the object's own transform, matching the original engine's fallback.
+        projectileObject.SetTransformMatrix(
+            launchBoneTransform ?? context.Weapon.ParentGameObject.Transform.Matrix);
 
         projectileObject.SetWarhead(warheadTemplate);
 

@@ -43,12 +43,19 @@ internal class SpecialPowerAtLocationApplicator
             SpecialPowerType.Ambush => ExecuteAmbush,
             SpecialPowerType.RepairVehicles => throw new NotImplementedException(),
             SpecialPowerType.ParticleUplinkCannon => throw new NotImplementedException(),
-            SpecialPowerType.CleanupArea => throw new NotImplementedException(),
+            SpecialPowerType.CleanupArea => ExecuteCleanupArea,
             _ => throw new ArgumentOutOfRangeException(nameof(specialPower),
                 $"{specialPower} is not a supported location power"),
         };
 
         executor(arguments, selectedObjects);
+    }
+
+    private static void ExecuteCleanupArea(LocationArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
+    {
+        // todo: first object where special power is ready, since we could have multiple selected
+        selectedObjects.FirstOrDefault()?.FindSpecialPowerBehavior<CleanupAreaPower>(SpecialPowerType.CleanupArea)
+            ?.Activate(arguments.Location);
     }
 
     private static void ExecuteSpySatellite(LocationArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)

@@ -371,6 +371,26 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     ConstraintFilter) runs one full-contract scenario per cell; each asserts all six contract points
     (produce/move/attack/abilities/die); see the deep dive matrix section.
 
+### P6c: Special-power implementation ([plan](plans/validation-ground-gap-closure.md))
+- [x] Cleanup-area location power (P6c-1).
+  - AC: `SpecialPowerAtLocation` with `SPECIAL_CLEANUP_AREA` heals friendly objects within the
+    power's radius of the target location (observable health increase on a damaged friendly); the
+    Ambulance's P6b support contract asserts the effect instead of reporting a gap.
+- [x] Object-target hack powers (P6c-2).
+  - AC: `SpecialPowerAtObject` implements `SPECIAL_BLACKLOTUS_CAPTURE_BUILDING` (target building
+    ownership transfers to the caster's player), `SPECIAL_HACKER_DISABLE_BUILDING` and
+    `SPECIAL_BLACKLOTUS_DISABLE_VEHICLE_HACK` (target disabled for the ability's effect duration),
+    `SPECIAL_BLACKLOTUS_STEAL_CASH` (cash transfer mirroring `CashHackSpecialPower`), and
+    infantry building capture; each has an observable-effect assertion.
+- [x] Hijacker contact hijack (P6c-3).
+  - AC: `HijackerUpdate` transfers an enemy vehicle's ownership to the hijacker's player on
+    contact and consumes the hijacker; the validation ground's hijacker completes on ownership
+    transfer.
+- [x] Validation-ground measurement of the ability units (P6c-4).
+  - AC: the Medic, Black Lotus, Hacker, and Hijacker each perform their ability in the validation
+    ground with a per-power completion predicate (heal observed, ownership changed, target
+    disabled, vehicle hijacked), carry baseline entries, and two headless runs are byte-identical.
+
 ### P7: End-to-end skirmish validation
 - [x] Author one end-state scenario per match outcome (six total).
   - AC: six scenario files exist, one per end state (player eliminated, player surrenders, AI
@@ -804,6 +824,32 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
   - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
     layout and hit regions unchanged relative to the pre-track build.
+  - [ ] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
+        dynamically drawn equivalents (vector/procedural panels, buttons, and frames; live text)
+        behind the `Enhanced` preset, `Faithful` keeps the original art.
+    - AC: under `Enhanced` the control bar contains no HUD bitmap draws; captured frames are sharp
+      at 4x native with no upscaled-art blur, and `Faithful` is pixel-identical to the pre-rework
+      capture.
+- [ ] G10 Realistic proportions (optional scale-correct presentation: reference-scale
+      documentation plus per-definition visual model-scale overrides for the undersized aircraft
+      class, behind the G2 settings layer; `Geometry` collision and `AttackRange` gameplay data
+      untouched).
+  - [ ] G10-1 Proportion audit and reference scale: measure per-class model bounds (W3D mesh
+        bounds, FX meshes excluded) against INI `Geometry` and real-world counterparts; check in
+        the deviation table and pin the world-units-per-meter reference (measured basis: ≈ 5
+        units/m; aircraft undersized ≈ 2-2.5x, e.g. MiG ≈ 6.6 m in-game vs ≈ 17.3 m real).
+    - AC: a checked-in table covers a representative set spanning infantry, ground vehicles,
+      buildings, and aircraft, and a data test re-derives its numbers from the installed
+      INI/W3D assets so a changed asset fails the test.
+  - [ ] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
+        the proportions option, correcting the aircraft class.
+    - AC: with the option enabled only aircraft visuals change size; existing P0/P9 scenario
+      assertions pass identically with the option on and off, and selection rings still match the
+      visible models.
+  - [ ] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
+        layer and add proportion-mode captures to the G3 golden set.
+    - AC: golden frames captured under the proportions mode catch an injected rescale regression,
+      and `Faithful` output is identical to the pre-phase capture.
 
 ## Track H: Map & Unit Storage Formats
 

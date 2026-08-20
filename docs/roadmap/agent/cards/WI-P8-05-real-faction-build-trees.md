@@ -15,18 +15,18 @@
 `WI-P5-05`'s scenario matrix fabricates a synthetic reflection-built prerequisite chain
 (`NewStructureDef`/`AddPrerequisite`) rather than exercising real per-faction build-tree data; the
 `faction` axis only changes a name label, so USA/GLA/China cells run the identical synthetic tree.
-The matrix also asserts only `Player.CanProduceObject` toggling — never a real unit spawn or
-upgrade application — and the `human` `playerType` cell bypasses `OrderProcessor`, calling
+The matrix also asserts only `Player.CanProduceObject` toggling; never a real unit spawn or
+upgrade application; and the `human` `playerType` cell bypasses `OrderProcessor`, calling
 `GameLogic.CreateObject` + setting `BuildProgress` directly, which is exactly what the deep-dive
 matrix assertion says not to rely on. Close all three gaps.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:138-153`: the P5 scenario matrix design — real distinct per-faction build trees, real spawn/upgrade application, `OrderProcessor` accessibility for both player types.
+- `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:138-153`: the P5 scenario matrix design: real distinct per-faction build trees, real spawn/upgrade application, `OrderProcessor` accessibility for both player types.
 - `docs/roadmap/agent/cards/WI-P5-05-scenario-matrix.md`: prior card; its Result section documents exactly what was faked and why.
 - `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` (the `P5_ScenarioMatrixTests` class, roughly lines 1020-1300): the current synthetic-chain implementation to replace.
 - `docs/roadmap/agent/cards/WI-P5-02-prerequisite-tech-gating.md`: notes the same synthetic-definition limitation exists in unit-level tests because `MockedGameTest` loads no real game files; read its Result section for the root cause.
-- `src/OpenSage.Content/` or wherever faction INI definitions are loaded from disk in non-mocked tests (search for `[GameFact]`-based tests that do load real definitions, e.g. under `src/OpenSage.Game.Tests` for any existing pattern of loading real `.ini` object definitions without a full game install) — determine whether any subset of real USA/GLA/China build-tree data can be loaded headlessly (e.g. from the repo's own test fixture INI files, if any exist, or from `OpenSage.Mods.Generals`'s bundled built-in rules) without requiring a full game install.
+- `src/OpenSage.Content/` or wherever faction INI definitions are loaded from disk in non-mocked tests (search for `[GameFact]`-based tests that do load real definitions, e.g. under `src/OpenSage.Game.Tests` for any existing pattern of loading real `.ini` object definitions without a full game install); determine whether any subset of real USA/GLA/China build-tree data can be loaded headlessly (e.g. from the repo's own test fixture INI files, if any exist, or from `OpenSage.Mods.Generals`'s bundled built-in rules) without requiring a full game install.
 - `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs` (`BuildObject`, around lines 96-160): the real order path the `human` matrix cell should route through instead of direct `GameLogic.CreateObject`.
 
 ## Steps

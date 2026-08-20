@@ -65,8 +65,10 @@ public class ValidationGroundBuilderTests
         Assert.Equal(positions.Count, positions.Distinct().Count());
     }
 
+    // The standard scenario targets vanilla Generals, so Zero Hour-only entries (the Helix) are
+    // skipped by the builder (WI-VG-03) and must not be counted here.
     private static int TotalRosterCount =>
-        UnitCatalog.ForFaction(2).Count
-        + UnitCatalog.ForFaction(3).Count
-        + UnitCatalog.ForFaction(4).Count;
+        UnitCatalog.ForFaction(2).Count(u => !u.ZeroHourOnly)
+        + UnitCatalog.ForFaction(3).Count(u => !u.ZeroHourOnly)
+        + UnitCatalog.ForFaction(4).Count(u => !u.ZeroHourOnly);
 }

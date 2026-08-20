@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenSage.Data;
 using OpenSage.Graphics;
 using OpenSage.Input;
@@ -70,17 +71,35 @@ public static class ValidationGroundRunner
             // economy, the default rule would mark every roster player defeated and freeze logic.
             game.VictorySystem.ConditionRule = new OpenSage.Logic.NeverDefeatedVictoryConditionRule();
 
-            // The default tactical view looks at the map's authored centre; the validation-ground
-            // formation is placed away from the civilian town there, so re-aim the camera at it
-            // (windowed runs, especially the starting hold, would otherwise open off-formation).
+            // The default tactical view looks at the map's authored centre at the game's default
+            // zoom; re-aim the camera at the formation and zoom out until every cluster (units,
+            // standoff targets, and supply sources) fits on screen, so windowed runs open on the
+            // whole roster. Cluster placement spreads factions hundreds of world units apart.
+            var placements = runPlan.SpawnPlan.UnitPlacements;
+            var framed = new List<System.Numerics.Vector2>(placements.Count + runPlan.SpawnPlan.TargetPlacements.Count + runPlan.SpawnPlan.SupplySourcePlacements.Count);
+            foreach (var p in placements)
+            {
+                framed.Add(new System.Numerics.Vector2(p.Position.X, p.Position.Y));
+            }
+            foreach (var p in runPlan.SpawnPlan.TargetPlacements)
+            {
+                framed.Add(new System.Numerics.Vector2(p.Position.X, p.Position.Y));
+            }
+            foreach (var p in runPlan.SpawnPlan.SupplySourcePlacements)
+            {
+                framed.Add(new System.Numerics.Vector2(p.Position.X, p.Position.Y));
+            }
             var view = game.Scene3D.TacticalView;
-            view.LookAt(new System.Numerics.Vector3(
-                scenario.Layout.TargetClusterCenter.X,
-                scenario.Layout.TargetClusterCenter.Y,
-                0f));
+            view.LookAt(framed.Count > 0
+                ? new System.Numerics.Vector3(
+                    framed.Average(p => p.X),
+                    framed.Average(p => p.Y),
+                    0f)
+                : new System.Numerics.Vector3(scenario.Layout.TargetClusterCenter.X, scenario.Layout.TargetClusterCenter.Y, 0f));
             view.InitHeightForMap();
             view.SetAngleAndPitchToDefault();
             view.SetZoomToDefault();
+            ValidationGroundCamera.FrameFormation(game.Scene3D, framed);
 
             // The validation ground spawns and orders units directly; an active skirmish AI would
             // both dominate per-frame cost and override those orders. Per deep dive §2.1 ("no AI,

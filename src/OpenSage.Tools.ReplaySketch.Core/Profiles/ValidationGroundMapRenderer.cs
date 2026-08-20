@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
@@ -34,7 +35,19 @@ public static class ValidationGroundMapRenderer
 
     private const float UnitRadius = 7f;
     private const float TargetHalfSize = 6f;
+    private const float StructureHalfSize = 4.5f;
     private const float SelectionRingRadius = UnitRadius + 3f;
+
+    // Screen gap kept between a unit circle and its own target square when the pair is too close
+    // to draw separately (see <see cref="SeparateFromUnit"/>).
+    private const float MinimumPairScreenGap = 3f;
+
+    /// <summary>Closest drawn distance between a unit marker and its own target marker, in px.</summary>
+    public const float MinimumMarkerSeparationPx = UnitRadius + TargetHalfSize + MinimumPairScreenGap;
+
+    // Neutral, semi-transparent so the terrain preview shows through; distinct from the faction
+    // unit circles and the orange target outlines, reading as scenery rather than an actor.
+    private static readonly SKColor StructureColor = new(0xC0, 0xC0, 0xC0, 0x99);
 
     /// <summary>Display colour for a roster faction (2=USA, 3=China, 4=GLA); white for any other.</summary>
     public static SKColor FactionColor(int factionIndex) => factionIndex switch
@@ -56,7 +69,9 @@ public static class ValidationGroundMapRenderer
     /// <summary>
     /// Computes the hit-testable marker positions for every placement without touching SkiaSharp
     /// drawing state, so the geometry is exercised headlessly by tests. <see cref="Render"/> draws
-    /// from the same marker list.
+    /// from the same marker list. A target square whose true projection lands inside its unit's
+    /// circle (a proximity-pinned pair, e.g. the WI-VG-04 terrorist at 8 world units) is drawn at a
+    /// displaced position along the pair axis instead; only the marker moves, never the plan.
     /// </summary>
     public static IReadOnlyList<PlacementMarker> ComputeMarkers(
         MapMetadataService map,
@@ -73,13 +88,13 @@ public static class ValidationGroundMapRenderer
 
         foreach (var unit in plan.UnitPlacements)
         {
+            var up = ToScreen(unit.Position);
             if (TryGetTarget(plan, unit.TargetIndex, out var target))
             {
-                var tp = ToScreen(target.Position);
+                var tp = SeparateFromUnit(up, ToScreen(target.Position));
                 markers.Add(new PlacementMarker(unit.FactionIndex, unit.RosterIndex, IsTarget: true, tp.X, tp.Y));
             }
 
-            var up = ToScreen(unit.Position);
             markers.Add(new PlacementMarker(unit.FactionIndex, unit.RosterIndex, IsTarget: false, up.X, up.Y));
         }
 
@@ -106,7 +121,8 @@ public static class ValidationGroundMapRenderer
 
         var markers = ComputeMarkers(map, plan, offsetX, offsetY, previewSize);
 
-        DrawLinks(canvas, plan, map, offsetX, offsetY, previewSize);
+        DrawStructures(canvas, map, offsetX, offsetY, previewSize);
+        DrawLinks(canvas, markers);
         DrawMarkers(canvas, markers);
         DrawSelectionRing(canvas, markers, selected);
         return markers;
@@ -129,7 +145,35 @@ public static class ValidationGroundMapRenderer
         canvas.DrawRect(previewRect, borderPaint);
     }
 
-    private static void DrawLinks(SKCanvas canvas, SpawnPlan plan, MapMetadataService map, float offsetX, float offsetY, float previewSize)
+    /// <summary>
+    /// Projects every map-author-placed civilian structure into the preview area, so hand-placing
+    /// the formation (or eyeballing the generated layout) happens against the real town footprint.
+    /// </summary>
+    public static IReadOnlyList<SKRect> ComputeStructureRects(
+        MapMetadataService map,
+        float offsetX,
+        float offsetY,
+        float previewSize)
+    {
+        var rects = new List<SKRect>(map.CivilianStructures.Count);
+        foreach (var structure in map.CivilianStructures)
+        {
+            var p = Project(map.ExtentMin, map.ExtentMax, structure.Position, offsetX, offsetY, previewSize);
+            rects.Add(new SKRect(p.X - StructureHalfSize, p.Y - StructureHalfSize, p.X + StructureHalfSize, p.Y + StructureHalfSize));
+        }
+        return rects;
+    }
+
+    private static void DrawStructures(SKCanvas canvas, MapMetadataService map, float offsetX, float offsetY, float previewSize)
+    {
+        using var paint = new SKPaint { Color = StructureColor, Style = SKPaintStyle.Fill, IsAntialias = true };
+        foreach (var rect in ComputeStructureRects(map, offsetX, offsetY, previewSize))
+        {
+            canvas.DrawRect(rect, paint);
+        }
+    }
+
+    private static void DrawLinks(SKCanvas canvas, IReadOnlyList<PlacementMarker> markers)
     {
         using var linkPaint = new SKPaint
         {
@@ -138,18 +182,48 @@ public static class ValidationGroundMapRenderer
             StrokeWidth = 1,
             IsAntialias = true,
         };
-        var extentMin = map.ExtentMin;
-        var extentMax = map.ExtentMax;
-        foreach (var unit in plan.UnitPlacements)
+        // A target marker is always emitted immediately before its own unit marker, so pairs are
+        // adjacent; the line ends at the (possibly displaced) drawn square position.
+        for (var i = 0; i < markers.Count - 1; i++)
         {
-            if (!TryGetTarget(plan, unit.TargetIndex, out var target))
+            var target = markers[i];
+            if (!target.IsTarget)
             {
                 continue;
             }
-            var a = Project(extentMin, extentMax, unit.Position, offsetX, offsetY, previewSize);
-            var b = Project(extentMin, extentMax, target.Position, offsetX, offsetY, previewSize);
-            canvas.DrawLine(a, b, linkPaint);
+            var unit = markers[i + 1];
+            if (unit.IsTarget || unit.FactionIndex != target.FactionIndex || unit.RosterIndex != target.RosterIndex)
+            {
+                continue;
+            }
+            canvas.DrawLine(
+                new SKPoint(unit.ScreenX, unit.ScreenY),
+                new SKPoint(target.ScreenX, target.ScreenY),
+                linkPaint);
         }
+    }
+
+    /// <summary>
+    /// A proximity-pinned pair (target deliberately a few world units from its unit) projects
+    /// closer than the marker sizes at every usable preview scale, hiding the square under the
+    /// circle. The square is nudged outward along the pair axis to the minimum drawn separation;
+    /// the plan's world positions stay untouched.
+    /// </summary>
+    private static SKPoint SeparateFromUnit(SKPoint unitScreen, SKPoint targetScreen)
+    {
+        var dx = targetScreen.X - unitScreen.X;
+        var dy = targetScreen.Y - unitScreen.Y;
+        var distance = MathF.Sqrt(dx * dx + dy * dy);
+        if (distance >= MinimumMarkerSeparationPx)
+        {
+            return targetScreen;
+        }
+        if (distance < 0.0001f)
+        {
+            return new SKPoint(unitScreen.X + MinimumMarkerSeparationPx, unitScreen.Y);
+        }
+        var scale = MinimumMarkerSeparationPx / distance;
+        return new SKPoint(unitScreen.X + dx * scale, unitScreen.Y + dy * scale);
     }
 
     private static void DrawMarkers(SKCanvas canvas, IReadOnlyList<PlacementMarker> markers)

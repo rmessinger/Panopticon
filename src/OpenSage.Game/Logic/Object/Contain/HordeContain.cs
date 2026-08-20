@@ -69,6 +69,9 @@ public sealed class HordeContainBehavior : UpdateModule
                 _payload.Add(createdObject);
 
                 createdObject.UpdateTransform(GameObject.Translation + position.Position, GameObject.Rotation);
+                // Map-load placement: refresh the collider now (see SetMapObjectProperties) so the
+                // member renders before the first logic tick, e.g. on a paused start.
+                createdObject.UpdateColliders();
             }
         }
     }

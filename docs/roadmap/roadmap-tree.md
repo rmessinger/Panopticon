@@ -63,6 +63,11 @@ mindmap
         P6b-4 Builder archetype
         P6b-5 Support archetype
         P6b-6 Superweapon archetype
+      P6c Special-power implementation ⮕
+        P6c-1 Cleanup area
+        P6c-2 Object hack powers
+        P6c-3 Hijacker hijack
+        P6c-4 Validation-ground measurement
       P7 End-to-end skirmish validation ⮕
       P8 Implementation delta remediation ⮕
       P9 Unit validation ground ⮕
@@ -163,6 +168,7 @@ mindmap
       G7 Texture filtering and mip quality
       G8 Shadow quality tier
       G9 Resolution-independent 2D and UI
+      G10 Realistic proportions
     H. Map and unit storage formats
       H1 Format requirements and current-state audit
       H2 Format-agnostic interchange abstraction
@@ -208,6 +214,7 @@ flowchart LR
     P3["P3 Victory & defeat"]
     P6["P6 Combat & command"]
     P6B["P6b Unit-contract validation"]
+    P6C["P6c Special-power implementation"]
     P8["P8 Implementation delta remediation"]
     P7["P7 End-to-end skirmish validation"]
     P9["P9 Unit validation ground"]
@@ -258,6 +265,7 @@ flowchart LR
     G7["G7 Texture filtering & mip quality"]
     G8["G8 Shadow quality tier"]
     G9["G9 Resolution-independent 2D & UI"]
+    G10["G10 Realistic proportions"]
     H3["H3 New map storage format"]
     H4["H4 New object/unit-definition storage format"]
   end
@@ -315,7 +323,8 @@ flowchart LR
   P8 --> P7
   P0 --> P9
   P6 --> P9
-  P6B --> P9
+  P6B --> P6C
+  P6C --> P9
   P7 --> A2
   P7 --> A3
   P7 --> A4S
@@ -380,6 +389,8 @@ flowchart LR
   F4 --> F5
   G2 --> G4
   G3 --> G4
+  G2 --> G10
+  G3 --> G10
   G2 --> G6
   G3 --> G6
   G2 --> G7
@@ -417,7 +428,7 @@ flowchart LR
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
   class F1,F2,F3,F4,F5,F6,F7,F8 trackF;
-  class G1,G2,G3,G4,G5,G6,G7,G8,G9 trackG;
+  class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class H1,H2,H3,H4,H5,H6,H7 trackH;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;

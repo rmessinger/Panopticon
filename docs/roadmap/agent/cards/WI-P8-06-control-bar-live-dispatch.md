@@ -15,7 +15,7 @@
 The track-p goal for P6 is orders issued "through the control bar end-to-end". `WI-P6-01`'s
 `P6CommandCoverageTests` only asserts that each `CommandType` maps to an expected `OrderType` with
 a real (non-default) `OrderProcessor` handler, and statically cross-checks `CommandButtonCallback`
-wiring — it never executes a real `GeneralsControlBar` button click/dispatch. 7 of 9 baseline
+wiring; it never executes a real `GeneralsControlBar` button click/dispatch. 7 of 9 baseline
 actions (move, attack, force-attack, sell, repair, special-power, rally point) are recorded as
 named Scene3D-dependent gaps rather than driven. Close this gap: exercise real control-bar dispatch
 headlessly for as many of these 7 actions as the mocked host can support.
@@ -25,9 +25,9 @@ headlessly for as many of these 7 actions as the mocked host can support.
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:55-64` and `:74-78`: the button→`OrderType`→handler design intent.
 - `docs/roadmap/agent/cards/WI-P6-01-command-coverage-matrix.md`: prior card; its Result section documents exactly which actions are gaps and why (Scene3D dependency).
 - `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs`: the existing static-mapping tests and the `HandledOrderTypes` curated set to build real dispatch coverage on top of.
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs`: `ApplyCommandSet`, `CommandButtonCallback`, and how a button click ultimately calls into order generation — the real path to drive instead of asserting only the static mapping.
+- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs`: `ApplyCommandSet`, `CommandButtonCallback`, and how a button click ultimately calls into order generation; the real path to drive instead of asserting only the static mapping.
 - `src/OpenSage.Game/Logic/OrderGenerators/OrderGenerator.cs` and concrete order generators: what stands between a control-bar click and an `Order` being created; identify the minimum Scene3D/selection state the mocked host needs to drive this live.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; check what `Scene3D`/selection seams already exist (note: `WI-P5-01`'s Result section added several null-guards for headless object creation — check if those are sufficient here, or if more are needed).
+- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; check what `Scene3D`/selection seams already exist (note: `WI-P5-01`'s Result section added several null-guards for headless object creation; check if those are sufficient here, or if more are needed).
 
 ## Steps
 

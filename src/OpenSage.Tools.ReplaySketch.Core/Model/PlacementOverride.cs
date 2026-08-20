@@ -23,12 +23,26 @@ public sealed class PlacementOverride
     /// </summary>
     public bool IsTarget { get; set; }
 
-    /// <summary>Planar world position. Z is ignored (terrain-sampled at spawn).</summary>
-    public float X { get; set; }
+    /// <summary>
+    /// Planar world position, or null to keep the layout-derived position. Z is ignored
+    /// (terrain-sampled at spawn). Null lets an override carry only
+    /// <see cref="TargetDistance"/> (e.g. a proximity pin for a contact-range unit whose cluster
+    /// position is terrain-derived and cannot be pre-pinned by hand).
+    /// </summary>
+    public float? X { get; set; }
 
-    /// <summary>Planar world position. Z is ignored (terrain-sampled at spawn).</summary>
-    public float Y { get; set; }
+    /// <summary>See <see cref="X"/>.</summary>
+    public float? Y { get; set; }
+
+    /// <summary>
+    /// Overrides <see cref="LayoutConfig.TargetApproachDistance"/> for this unit's linked target
+    /// only (unit-side override). Null keeps the layout standoff.
+    /// </summary>
+    public float? TargetDistance { get; set; }
+
+    /// <summary>True when this override pins a position (rather than only a target distance).</summary>
+    public bool HasPosition => X.HasValue && Y.HasValue;
 
     /// <summary>Convenience view over <see cref="X"/>/<see cref="Y"/> as a planar vector.</summary>
-    public Vector2 PlanarPosition => new(X, Y);
+    public Vector2 PlanarPosition => new(X ?? 0f, Y ?? 0f);
 }

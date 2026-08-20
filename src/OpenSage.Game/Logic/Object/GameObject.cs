@@ -93,6 +93,12 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         UpdateTransform(new Vector3(position.X, position.Y, height), rotation,
             Definition.Scale);
 
+        // Colliders are created against the identity transform, so without this refresh they sit
+        // at the world origin until the object's first logic tick (LogicTick flushes _objectMoved).
+        // A game that renders before ticking logic — e.g. a paused start — would frustum-cull every
+        // map-placed object off-camera (Scene3D.BuildRenderList culls on RoughCollider).
+        UpdateColliders();
+
         if (Definition.IsBridge)
         {
             BridgeTowers.CreateForLandmarkBridge(_gameEngine, this);
@@ -1059,6 +1065,8 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         var maxHeight = _gameEngine.Terrain.HeightMap.GetHeight(centerX, centerY);
         // on slopes, the height map isn't always exactly where our cursor is (our cursor is a float, and the heightmap is always a ushort), so snap the building to the nearest heightmap value
         UpdateTransform(Transform.Translation with { Z = maxHeight }, Transform.Rotation);
+        // The re-snap moved the object; keep colliders in sync (paused-start culling, see SetMapObjectProperties).
+        UpdateColliders();
 
         // clear anything applicable in the build area (trees, rubble, etc)
         var toDelete = new BitArray<ObjectKinds>(ObjectKinds.Shrubbery, ObjectKinds.ClearedByBuild); // this may not be completely accurate

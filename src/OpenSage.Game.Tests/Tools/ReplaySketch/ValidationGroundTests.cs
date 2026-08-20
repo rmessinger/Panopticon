@@ -18,6 +18,10 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 // sibling P9-1/2/4/7 test classes). The [GameFact] test is the live authority: it verifies the
 // roster and baseline are valid against a real install, and the full end-to-end spawn+measure run
 // is owned by TestHarness (BuiltInScenario.UnitValidationGround), documented in its AGENTS.md.
+// Serial-game collection: the [GameFact] tests create real Game instances, which collide on
+// static state (road texture atlas) with parallel Game-creating classes.
+
+[Collection("SerialGameTests")]
 public class ValidationGroundTests
 {
     private readonly ITestOutputHelper _output;
@@ -33,15 +37,19 @@ public class ValidationGroundTests
     // Generals install, so the validation ground reports them as gaps at run time and never
     // measures them (see ValidationGroundHost.SpawnUnits). Every other catalog entry must resolve,
     // so a typo or stale name still fails the gate rather than being silently dropped.
-    private static readonly HashSet<string> ZeroHourOnlyDefinitions = new()
-    {
-        "ChinaVehicleHelix",
-    };
+    // Single-sourced from the catalog's ZeroHourOnly flags: entries valid only in Zero Hour
+    // (absent from a vanilla Generals install).
+    private static readonly HashSet<string> ZeroHourOnlyDefinitions = new(
+        PrimaryActionCatalog.AllEntries()
+            .Where(e => e.Unit.ZeroHourOnly)
+            .Select(e => e.Unit.DefinitionName));
 
     // Catalog entries permitted to lack a baseline entry. ZeroHourOnlyDefinitions are valid only in
     // Zero Hour (absent from a vanilla Generals install); UnmeasurableAttackReasons are units whose
     // attack the validation-ground sandbox cannot measure (recorded as gaps at run time). Every other
-    // catalog unit must have a golden entry, so a stale/missing name still fails the gate.
+    // catalog unit must have a golden entry, so a stale/missing name still fails the gate. The
+    // SpecialPower units are measured since P6c implemented their ability handlers, so they require
+    // baseline entries like every other unit.
     private static bool IsExcludedFromBaseline(string definitionName)
     {
         if (ZeroHourOnlyDefinitions.Contains(definitionName))
@@ -50,13 +58,7 @@ public class ValidationGroundTests
         }
 
         // Units whose attack the sandbox cannot measure are recorded as gaps and have no entry.
-        if (PrimaryActionCatalog.UnmeasurableAttackReasons.ContainsKey(definitionName))
-        {
-            return true;
-        }
-
-        // SpecialPower/support units have no implemented order path yet (gap), so no entry.
-        return PrimaryActionCatalog.Resolve(definitionName).Kind == PrimaryActionKind.SpecialPower;
+        return PrimaryActionCatalog.UnmeasurableAttackReasons.ContainsKey(definitionName);
     }
 
     private static string FindBaselineFile()
@@ -246,5 +248,59 @@ public class ValidationGroundTests
         }
 
         return null;
+    }
+
+    // WI-VG-04: every per-unit TargetOverride must be a target the unit's primary weapon can
+    // actually damage, verified from the install's INI (weapon damage type versus the override
+    // target's armor). If a weapon, armor, or override changes, this fails so the override is
+    // re-chosen rather than silently producing a unit that can never destroy its target.
+    [GameFact(SageGame.CncGenerals)]
+    public void TargetOverrides_AreDamageableByPrimaryWeapon()
+    {
+        var rootFolder = InstalledFilesTestData.GetInstallationDirectory(SageGame.CncGenerals);
+        var installation = new GameInstallation(new GeneralsDefinition(), rootFolder);
+
+        var overrides = new List<(string Unit, string Target)>();
+        foreach (var faction in new[] { 2, 3, 4 })
+        {
+            foreach (var option in UnitCatalog.ForFaction(faction).Where(u => u.TargetOverride != null))
+            {
+                overrides.Add((option.DefinitionName, option.TargetOverride!));
+            }
+        }
+
+        Assert.NotEmpty(overrides);
+
+        Platform.Start();
+        try
+        {
+            using var game = new Game(installation);
+            foreach (var (unitName, targetName) in overrides)
+            {
+                var unit = game.AssetStore.ObjectDefinitions.GetByName(unitName);
+                Assert.NotNull(unit);
+
+                var target = game.AssetStore.ObjectDefinitions.GetByName(targetName);
+                Assert.NotNull(target);
+
+                var weapon = ResolvePrimaryWeapon(unit);
+                Assert.NotNull(weapon);
+
+                var damageNugget = weapon.Nuggets.OfType<DamageNugget>().FirstOrDefault();
+                Assert.NotNull(damageNugget);
+
+                var armor = target.ArmorSets.FirstOrDefault()?.Armor?.Value;
+                Assert.NotNull(armor);
+
+                Assert.False(armor.Values[(int)damageNugget.DamageType].IsZero,
+                    $"{unitName}'s primary weapon deals {damageNugget.DamageType} damage, which the " +
+                    $"override target {targetName}'s {armor.Name} resists completely; " +
+                    "the override cannot be destroyed by this unit.");
+            }
+        }
+        finally
+        {
+            Platform.Stop();
+        }
     }
 }

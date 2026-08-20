@@ -30,8 +30,14 @@ public static class SpecialPowerImplementation
         "SpyDrone",
         "RadarVanScan",
         "Ambush",
-        // SpecialPowerAtObjectApplicator (real executor).
+        "CleanupArea",
+        // SpecialPowerAtObjectApplicator (real executors).
         "CashHack",
+        "BlackLotusCaptureBuilding",
+        "InfantryCaptureBuilding",
+        "HackerDisableBuilding",
+        "BlackLotusDisableVehicleHack",
+        "BlackLotusStealCashHack",
         // SpecialPowerApplicator (real executor).
         "ChangeBattlePlans",
     };

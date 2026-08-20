@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
@@ -82,7 +84,18 @@ public sealed class ValidationGroundHost
                 continue;
             }
 
-            var obj = CreateAt(game, placement.DefinitionName, placement.Position, player);
+            // Face the assigned target so the formation opens looking at what it will act on
+            // (and any facing-dependent fire gating starts satisfied).
+            var targetPlacement = placement.TargetIndex >= 0 && placement.TargetIndex < plan.TargetPlacements.Count
+                ? plan.TargetPlacements[placement.TargetIndex]
+                : null;
+            var facing = targetPlacement != null
+                ? MathF.Atan2(
+                    targetPlacement.Position.Y - placement.Position.Y,
+                    targetPlacement.Position.X - placement.Position.X)
+                : (float?)null;
+
+            var obj = CreateAt(game, placement.DefinitionName, placement.Position, player, facing);
             if (obj == null)
             {
                 _gaps.Add(new UnitGap(placement.DefinitionName, placement.FactionIndex,
@@ -90,8 +103,92 @@ public sealed class ValidationGroundHost
                 continue;
             }
 
-            _units.Add(new SpawnedUnit(placement, obj.Id));
+            var spawned = new SpawnedUnit(placement, obj.Id);
+
+            // Ability units act on a dedicated subject object rather than the destructible car:
+            // a damaged friendly for the heal field, a neutral building for the capture/disable
+            // hacks, an enemy vehicle for the hijack. Spawned next to the unit's car-target
+            // position; the observation seam completes on the per-power effect.
+            if (placement.Action.Kind == PrimaryActionKind.SpecialPower)
+            {
+                SpawnAbilitySubject(game, spawned, obj, placement);
+            }
+
+            _units.Add(spawned);
         }
+    }
+
+    private void SpawnAbilitySubject(IGame game, SpawnedUnit unit, GameObject unitObject, UnitPlacement placement)
+    {
+        var anchor = placement.TargetIndex >= 0 && placement.TargetIndex < _targets.Count
+            ? _targets[placement.TargetIndex].Translation
+            : placement.Position;
+        var subjectPosition = anchor + new Vector3(SubjectOffset, 0f, 0f);
+
+        switch (unitObject.Definition.Name)
+        {
+            case "AmericaVehicleMedic":
+                {
+                    var subject = CreateAt(game, "AmericaInfantryRanger", subjectPosition, unitObject.Owner);
+                    if (subject?.BodyModule != null)
+                    {
+                        subject.BodyModule.InternalChangeHealth(-MathF.Max(1f, subject.BodyModule.Health - SubjectDamagedHealth));
+                        unit.SubjectObjectId = subject.Id;
+                        unit.ExpectedEffect = AbilityEffect.SubjectHealed;
+                        unit.SubjectInitialHealth = subject.BodyModule.Health;
+                    }
+                    break;
+                }
+
+            case "ChinaInfantryBlackLotus":
+                {
+                    var subject = CreateAt(game, CaptureSubjectDefinition, subjectPosition, game.Scene3D.Players[1]);
+                    if (subject != null)
+                    {
+                        unit.SubjectObjectId = subject.Id;
+                        unit.ExpectedEffect = AbilityEffect.SubjectOwned;
+                    }
+                    break;
+                }
+
+            case "ChinaInfantryHacker":
+                {
+                    var subject = CreateAt(game, CaptureSubjectDefinition, subjectPosition, game.Scene3D.Players[1]);
+                    if (subject != null)
+                    {
+                        unit.SubjectObjectId = subject.Id;
+                        unit.ExpectedEffect = AbilityEffect.SubjectDisabled;
+                    }
+                    break;
+                }
+
+            case "GLAInfantryHijacker":
+                {
+                    // Enemy vehicle (the hijacker is GLA; USA is a roster enemy) placed at the
+                    // subject position; the hijacker is ordered to walk into it.
+                    var enemy = ResolvePlayer(game, HijackVehicleOwnerFactionIndex);
+                    var subject = CreateAt(game, "AmericaVehicleHumvee", subjectPosition, enemy);
+                    if (subject != null)
+                    {
+                        unit.SubjectObjectId = subject.Id;
+                        unit.ExpectedEffect = AbilityEffect.SubjectOwned;
+                    }
+                    break;
+                }
+        }
+    }
+
+    private const float SubjectOffset = 30f;
+    private const float SubjectDamagedHealth = 30f;
+    private const string CaptureSubjectDefinition = "AmericaPowerPlant";
+    private const int HijackVehicleOwnerFactionIndex = 2;
+
+    public enum AbilityEffect
+    {
+        None,
+        SubjectHealed,
+        SubjectOwned,
+        SubjectDisabled,
     }
 
     /// <summary>
@@ -138,15 +235,35 @@ public sealed class ValidationGroundHost
             }
             else
             {
-                var order = BuildOrder(unit, playerIndex, game);
+                var order = BuildOrder(unit, playerIndex, game, unitObject, timer);
                 if (order == null)
                 {
-                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
-                        unit.Placement.Action.Kind, $"no order builder for {unit.Placement.Action.Kind}");
+                    // BuildOrder records the precise reason for null (e.g. which engine piece is
+                    // missing) before returning it.
                     continue;
                 }
 
-                processor.Process([order]);
+                try
+                {
+                    processor.Process([order]);
+                }
+                catch (NotImplementedException)
+                {
+                    // The engine's SpecialPower applicators throw for unimplemented powers. The
+                    // order itself was well-formed, so surface the missing engine piece rather
+                    // than the generic "no order builder" gap.
+                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                        unit.Placement.Action.Kind,
+                        $"engine applicator does not implement {order.OrderType} for this unit's power");
+                    continue;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                        unit.Placement.Action.Kind,
+                        $"engine has no {order.OrderType} handler for this unit's power");
+                    continue;
+                }
             }
 
             timer.OnDispatched(
@@ -159,7 +276,7 @@ public sealed class ValidationGroundHost
         }
     }
 
-    private Order? BuildOrder(SpawnedUnit unit, int playerIndex, IGame game)
+    private Order? BuildOrder(SpawnedUnit unit, int playerIndex, IGame game, GameObject? unitObject, UnitActionTimer timer)
     {
         var placement = unit.Placement;
         var targetIndex = placement.TargetIndex;
@@ -174,16 +291,79 @@ public sealed class ValidationGroundHost
             PrimaryActionKind.Build =>
                 Order.CreateBuildObject(playerIndex, (int)ResolveDefinitionId(game, placement.Action.TargetDefinitionName),
                     placement.Position, 0f),
-            // SpecialPower and Gather orders need per-unit argument construction (SpecialPowerType,
-            // supply-point id, host-side unit selection) that is not yet implemented. Returning null
-            // surfaces these as named gaps via IssueOrders (deep dive §2.6) instead of dispatching a
-            // malformed, argument-less order that crashes OrderProcessor.
             PrimaryActionKind.SpecialPower =>
-                null,
+                BuildSpecialPowerOrder(unit, playerIndex, game, target, unitObject, timer),
+            // Gather needs per-unit argument construction (supply-point id, host-side unit
+            // selection) that is not yet implemented; surfaced as a named gap instead of a
+            // malformed, argument-less order that crashes OrderProcessor.
             PrimaryActionKind.Gather =>
                 null,
             _ => MoveToOrder(playerIndex, placement.Position),
         };
+    }
+
+    /// <summary>
+    /// Builds a real SpecialPower order for the unit's first special-power module, mapped to the
+    /// applicator family the power belongs to (location powers vs object powers), targeting the
+    /// unit's ability subject where one was spawned. The Hijacker has no power module (its hijack
+    /// is a context-mode command): it is ordered to walk into its subject vehicle and completes on
+    /// the ownership transfer. Well-formed orders are dispatched and only fail when the engine
+    /// applicator itself is unimplemented, which IssueOrders reports precisely.
+    /// </summary>
+    private Order? BuildSpecialPowerOrder(SpawnedUnit unit, int playerIndex, IGame game, GameObject? target, GameObject? unitObject, UnitActionTimer timer)
+    {
+        if (unitObject == null)
+        {
+            timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                unit.Placement.Action.Kind, "unit object missing at order time");
+            return null;
+        }
+
+        var subject = unit.SubjectObjectId.HasValue
+            ? game.Scene3D.GameObjects.GetObjectById(unit.SubjectObjectId.Value)
+            : null;
+
+        var powerModule = unitObject.FindBehaviors<SpecialPowerModule>().FirstOrDefault();
+        if (powerModule == null)
+        {
+            if (unitObject.FindBehavior<HijackerUpdate>() != null && subject != null)
+            {
+                return MoveToOrder(playerIndex, subject.Transform.Translation);
+            }
+
+            timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                unit.Placement.Action.Kind, "no SpecialPower module on the unit and no hijacker subject");
+            return null;
+        }
+
+        var powerType = powerModule.SpecialPowerType;
+        switch (powerType)
+        {
+            case SpecialPowerType.CleanupArea:
+                // Location power: the ambulance detox field is cast at the heal subject's
+                // position (or the assigned target's position when no subject was spawned).
+                var position = subject?.Transform.Translation ?? target?.Translation ?? unitObject.Translation;
+                return Order.CreateSpecialPowerAtLocation(playerIndex, (int)powerType, position,
+                    SpecialPowerOrderFlags.NeedTargetPosition, ObjectId.Invalid);
+
+            case SpecialPowerType.BlackLotusCaptureBuilding:
+            case SpecialPowerType.HackerDisableBuilding:
+                var powerTarget = subject ?? target;
+                if (powerTarget == null)
+                {
+                    timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                        unit.Placement.Action.Kind, $"{powerType} needs a target object; none assigned");
+                    return null;
+                }
+                return Order.CreateSpecialPowerAtObject(playerIndex, (int)powerType, powerTarget.Id,
+                    SpecialPowerOrderFlags.NeedTargetEnemyObject
+                    | SpecialPowerOrderFlags.NeedTargetNeutralObject, ObjectId.Invalid);
+
+            default:
+                timer.RecordGap(unit.Placement.DefinitionName, unit.Placement.FactionIndex,
+                    unit.Placement.Action.Kind, $"{powerType} has no validation-ground order mapping yet");
+                return null;
+        }
     }
 
     private static Order AttackObjectOrder(int playerIndex, ObjectId targetId)
@@ -200,7 +380,7 @@ public sealed class ValidationGroundHost
         return order;
     }
 
-    private static GameObject? CreateAt(IGame game, string definitionName, Vector3 planarPosition, Player owner)
+    private static GameObject? CreateAt(IGame game, string definitionName, Vector3 planarPosition, Player owner, float? facingYaw = null)
     {
         var definition = game.AssetStore.ObjectDefinitions.GetByName(definitionName);
         if (definition == null)
@@ -211,7 +391,12 @@ public sealed class ValidationGroundHost
         var height = game.Scene3D.Terrain.GetGroundHeight(new Vector2(planarPosition.X, planarPosition.Y)) ?? 0f;
         var position = new Vector3(planarPosition.X, planarPosition.Y, height);
         var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
-        gameObject.UpdateTransform(position, gameObject.Rotation);
+        // Yaw 0 faces +X (MathUtility.GetYawFromDirection); targets sit on the +Y target row, so
+        // units spawned without a facing would open 90 degrees off their targets.
+        var rotation = facingYaw.HasValue
+            ? System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, facingYaw.Value)
+            : gameObject.Rotation;
+        gameObject.UpdateTransform(position, rotation);
         // Colliders are built at the origin and only refreshed on the next logic tick; a run held
         // paused at start (ValidationGroundHoldOrders) never ticks logic, so frustum culling would
         // cull every spawned model off-camera until resume. Refresh immediately after placement.
@@ -285,18 +470,43 @@ public sealed class ValidationGroundHost
                 ? game.Scene3D.GameObjects.GetObjectById(unit.TargetObjectId.Value)
                 : null;
 
+            var subject = unit.SubjectObjectId.HasValue
+                ? game.Scene3D.GameObjects.GetObjectById(unit.SubjectObjectId.Value)
+                : null;
+
             return new UnitObservation
             {
                 TargetPointsEmpty = obj.AIUpdate?.TargetPoints.Count == 0,
                 TargetHealth = target?.BodyModule?.Health,
                 TargetDestroyed = target == null || target.IsEffectivelyDead,
                 BuildComplete = obj.IsEffectivelyDead == false && obj.BuildProgress >= 1.0f,
+                SpecialPowerEffectObserved = subject != null && IsAbilityEffectObserved(unit, obj, subject),
             };
+        };
+    }
+
+    private static bool IsAbilityEffectObserved(SpawnedUnit unit, GameObject unitObject, GameObject subject)
+    {
+        return unit.ExpectedEffect switch
+        {
+            AbilityEffect.SubjectHealed =>
+                subject.BodyModule != null && subject.BodyModule.Health > unit.SubjectInitialHealth,
+            AbilityEffect.SubjectOwned =>
+                subject.Owner != null && subject.Owner == unitObject.Owner,
+            AbilityEffect.SubjectDisabled =>
+                subject.IsDisabledByType(DisabledType.UserParalyzed),
+            _ => false,
         };
     }
 
     public sealed record SpawnedUnit(UnitPlacement Placement, ObjectId ObjectId)
     {
         public ObjectId? TargetObjectId { get; set; }
+
+        public ObjectId? SubjectObjectId { get; set; }
+
+        public AbilityEffect ExpectedEffect { get; set; }
+
+        public float SubjectInitialHealth { get; set; }
     }
 }

@@ -18,7 +18,7 @@ shipped schema headers (`zips/hdrs.zip` → `DbHdrs/*.h`).
 | `.nifcache` | Binary (Gamebryo) | Compiled/optimized unit & building meshes with LODs | `cache/nifcache/` in `graphics.zip` | 1638 (+170 EE2X) |
 | `.kf` | Binary (Gamebryo) | Keyframe animation sequences | `Graphics/{Animals,Humans,Vehicles,Building}/` in `graphics.zip` | 1371 (+453 EE2X) |
 
-Source `.nif` meshes are **not shipped** — only the compiled `.nifcache` versions.
+Source `.nif` meshes are **not shipped**; only the compiled `.nifcache` versions.
 Every `.nif` reference in a `.ddf` resolves at runtime to
 `cache/nifcache/<lowercased name>.nifcache` (case-insensitive match, extension swapped).
 
@@ -28,7 +28,7 @@ Every `.nif` reference in a `.ddf` resolves at runtime to
 
 A proprietary Mad Doc **Data Definition File**: UTF-8 text with C-like braces,
 records, key/value pairs, and arrays. Each line of a record maps to a field
-declared in a `DbHdrs/*.h` `DATACLASS` — the headers are the parser's schema.
+declared in a `DbHdrs/*.h` `DATACLASS`; the headers are the parser's schema.
 
 ```text
 RecordType RecordName            // e.g. UnitType, UnitModel, ShadowData, UpgradeAbilities
@@ -39,7 +39,7 @@ RecordType RecordName            // e.g. UnitType, UnitModel, ShadowData, Upgrad
 }
 ```
 
-Example — `db/Units/LightTank.ddf`:
+Example, `db/Units/LightTank.ddf`:
 
 ```cpp
 UnitType LightTank
@@ -59,9 +59,9 @@ UnitType LightTank
 
 Key schema headers (extracted in `/tmp/opencode/ee2/hdrs/DbHdrs/`):
 
-- `DbUnitDefs.h` — `DbUnitTypeProperties` (hitpoints, mass, footprint, popCount...), ability blocks
-- `DBVisualDefs.h` — `StateMachineModel`, `StateDatabase`, `ModelState`, `TextKey`, `CompositeModel`
-- `DbVisualStateDefs.h` — the state-name database (`Idle`, `Walk`, `Attack1`, `Death`, ...)
+- `DbUnitDefs.h`: `DbUnitTypeProperties` (hitpoints, mass, footprint, popCount...), ability blocks
+- `DBVisualDefs.h`: `StateMachineModel`, `StateDatabase`, `ModelState`, `TextKey`, `CompositeModel`
+- `DbVisualStateDefs.h`: the state-name database (`Idle`, `Walk`, `Attack1`, `Death`, ...)
 
 ---
 
@@ -69,8 +69,8 @@ Key schema headers (extracted in `/tmp/opencode/ee2/hdrs/DbHdrs/`):
 
 A unit is split into two parallel records that share a name space:
 
-- **`UnitType <Name>`** — gameplay: stats, cost, abilities, sounds.
-- **`UnitModel <Name>`** — visuals: a `StateDatabase` mapping animation states
+- **`UnitType <Name>`**: gameplay: stats, cost, abilities, sounds.
+- **`UnitModel <Name>`**: visuals: a `StateDatabase` mapping animation states
   to a `.nif` mesh plus `.kf` animations.
 
 ```mermaid
@@ -103,23 +103,23 @@ erDiagram
 
 `HIDE_NODE`, `SHOW_NODE`, `PLAY_SOUND`, `START_SOUND`, `STOP_SOUND`,
 `START_CONTROLLER`, `STOP_CONTROLLER`, `ATTACH_VISUAL`, `DETACH_VISUAL_BY_NAME`,
-`HIDE_VISUAL`, `SHOW_VISUAL` — fired when animation playback crosses `KeyTime`.
+`HIDE_VISUAL`, `SHOW_VISUAL`, fired when animation playback crosses `KeyTime`.
 
 ---
 
 ## 4. Worked Example: the Bomber
 
-**Step 1 — gameplay record.** `db/Units/bomber.ddf` defines `UnitType Bomber`
+**Step 1, gameplay record.** `db/Units/bomber.ddf` defines `UnitType Bomber`
 (parent `Aircraft`, stats, `Attack` ability with `missileName = "Bomb"`).
 
-**Step 2 — epoch → visual binding.** `db/TechTree/upgrade_unittypes.csv` row:
+**Step 2, epoch → visual binding.** `db/TechTree/upgrade_unittypes.csv` row:
 
 ```csv
 BomberUpgradeEpoch11,Bomber,"Unit",11,800,tx_utn_bomber11_pname,Bomber_11, ...
                                        (unit) (epoch)            (VISUAL column)
 ```
 
-**Step 3 — visual record.** Same `bomber.ddf` defines `UnitModel Bomber_11`:
+**Step 3, visual record.** Same `bomber.ddf` defines `UnitModel Bomber_11`:
 
 ```cpp
 UnitModel Bomber_11
@@ -140,7 +140,7 @@ UnitModel Bomber_11
 }
 ```
 
-**Step 4 — assets on disk.**
+**Step 4, assets on disk.**
 
 ```text
 zips/graphics.zip
@@ -185,7 +185,7 @@ patch and `zips/Graphics_160/` inject replacement assets.
 
 ### Build-time pipeline (why `.nif` → `.nifcache`)
 
-`db/Visuals/db_model_convert.csv` holds the artist-side conversion rules — per
+`db/Visuals/db_model_convert.csv` holds the artist-side conversion rules; per
 source folder: vertex budget, LOD count, bone LODs, max texture size, scale:
 
 ```csv
@@ -201,7 +201,7 @@ generates LODs/bone LODs, rescales, and emits the optimized `.nifcache`.
 
 ## 6. Binary Formats: `.nifcache` and `.kf`
 
-Both are **Gamebryo/NetImmerse "File Format, Version 10.1.0.0"** streams —
+Both are **Gamebryo/NetImmerse "File Format, Version 10.1.0.0"** streams;
 little-endian, chunked, with a string table of Ni class names near the top.
 
 ### `.nifcache` (mesh)
@@ -238,7 +238,7 @@ little-endian, chunked, with a string table of Ni class names near the top.
   supplements these with engine events (`PLAY_SOUND`, `ATTACH_VISUAL`, ...)
 
 Because binding is by node name, any `.kf` whose node names match can drive any
-mesh — the shared `AnimVariants` system (with weights) just picks alternates.
+mesh; the shared `AnimVariants` system (with weights) just picks alternates.
 
 ---
 
@@ -255,10 +255,10 @@ so a UP1.6 unit = new `UnitModel` record + new `.nifcache`/`.kf` in the later zi
 
 ---
 
-## 8. Quick Reference — Counted Records (base game)
+## 8. Quick Reference: Counted Records (base game)
 
 - `UnitType` records: **438**
-- `UnitModel` (StateDatabase) records: **598** (more than unit types — epoch
+- `UnitModel` (StateDatabase) records: **598** (more than unit types; epoch
   variants like `Bomber_11..15`, plus ambients/props)
 - Animation states used: `Idle`, `Walk`, `Run`, `Attack1..3`, `Death`,
   `TakeOff`, `Land`, `Work`, `Garrison`, ...

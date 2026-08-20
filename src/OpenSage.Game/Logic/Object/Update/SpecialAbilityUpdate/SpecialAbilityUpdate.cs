@@ -13,6 +13,13 @@ public class SpecialAbilityUpdate : UpdateModule
     private bool _unknownBool3;
     private float _unknownFloat;
 
+    /// <summary>
+    /// The parsed INI data for this ability (durations, effect value). Set by
+    /// <see cref="SpecialAbilityUpdateModuleData.CreateModule"/>; null only for modules created
+    /// outside module parsing.
+    /// </summary>
+    internal SpecialAbilityUpdateModuleData? ModuleData { get; set; }
+
     public SpecialAbilityUpdate(GameObject gameObject, IGameEngine gameEngine) : base(gameObject, gameEngine)
     {
     }
@@ -222,6 +229,6 @@ public class SpecialAbilityUpdateModuleData : UpdateModuleData
 
     internal override BehaviorModule CreateModule(GameObject gameObject, IGameEngine gameEngine)
     {
-        return new SpecialAbilityUpdate(gameObject, gameEngine);
+        return new SpecialAbilityUpdate(gameObject, gameEngine) { ModuleData = this };
     }
 }

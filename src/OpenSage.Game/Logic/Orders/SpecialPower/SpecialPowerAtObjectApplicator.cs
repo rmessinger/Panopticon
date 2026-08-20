@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenSage.Logic.Object;
 
 namespace OpenSage.Logic.Orders.SpecialPower;
@@ -30,11 +31,11 @@ internal abstract class SpecialPowerAtObjectApplicator
             SpecialPowerType.TankHunterTntAttack => throw new NotImplementedException(),
             SpecialPowerType.RemoteCharges => throw new NotImplementedException(),
             SpecialPowerType.TimedCharges => throw new NotImplementedException(),
-            SpecialPowerType.HackerDisableBuilding => throw new NotImplementedException(),
-            SpecialPowerType.BlackLotusCaptureBuilding => throw new NotImplementedException(),
-            SpecialPowerType.InfantryCaptureBuilding => throw new NotImplementedException(),
-            SpecialPowerType.BlackLotusDisableVehicleHack => throw new NotImplementedException(),
-            SpecialPowerType.BlackLotusStealCashHack => throw new NotImplementedException(),
+            SpecialPowerType.HackerDisableBuilding => ExecuteHackerDisableBuilding,
+            SpecialPowerType.BlackLotusCaptureBuilding => ExecuteBlackLotusCaptureBuilding,
+            SpecialPowerType.InfantryCaptureBuilding => ExecuteInfantryCaptureBuilding,
+            SpecialPowerType.BlackLotusDisableVehicleHack => ExecuteBlackLotusDisableVehicleHack,
+            SpecialPowerType.BlackLotusStealCashHack => ExecuteBlackLotusStealCashHack,
             SpecialPowerType.DisguiseAsVehicle => throw new NotImplementedException(),
             _ => throw new ArgumentOutOfRangeException(nameof(specialPower),
                 $"{specialPower} is not a supported object power"),
@@ -46,6 +47,38 @@ internal abstract class SpecialPowerAtObjectApplicator
     private static void ExecuteCashHack(ObjectArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
     {
         arguments.CommandCenter?.FindBehavior<CashHackSpecialPower>()?.Activate(arguments.Target);
+    }
+
+    private static void ExecuteHackerDisableBuilding(ObjectArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
+    {
+        ExecuteSpecialAbility(SpecialPowerType.HackerDisableBuilding, arguments, selectedObjects);
+    }
+
+    private static void ExecuteBlackLotusCaptureBuilding(ObjectArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
+    {
+        ExecuteSpecialAbility(SpecialPowerType.BlackLotusCaptureBuilding, arguments, selectedObjects);
+    }
+
+    private static void ExecuteInfantryCaptureBuilding(ObjectArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
+    {
+        ExecuteSpecialAbility(SpecialPowerType.InfantryCaptureBuilding, arguments, selectedObjects);
+    }
+
+    private static void ExecuteBlackLotusDisableVehicleHack(ObjectArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
+    {
+        ExecuteSpecialAbility(SpecialPowerType.BlackLotusDisableVehicleHack, arguments, selectedObjects);
+    }
+
+    private static void ExecuteBlackLotusStealCashHack(ObjectArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
+    {
+        ExecuteSpecialAbility(SpecialPowerType.BlackLotusStealCashHack, arguments, selectedObjects);
+    }
+
+    private static void ExecuteSpecialAbility(SpecialPowerType specialPower, ObjectArguments arguments, IReadOnlyCollection<GameObject> selectedObjects)
+    {
+        // todo: first object where special power is ready, since we could have multiple selected
+        selectedObjects.FirstOrDefault()?.FindSpecialPowerBehavior<SpecialAbilityModule>(specialPower)
+            ?.Activate(arguments.Target);
     }
 }
 

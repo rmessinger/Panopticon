@@ -63,6 +63,57 @@ public sealed class JetAIUpdate : AIUpdate
         CurrentJetAIState = JetAIState.Parked;
     }
 
+    /// <summary>
+    /// Whether the attack run is currently using <see cref="JetAIUpdateModuleData.AttackLocomotorType"/>.
+    /// Derived state (the weapon target and current locomotor set are themselves persisted), so
+    /// it is not persisted.
+    /// </summary>
+    private bool _attackLocomotorActive;
+
+    /// <summary>
+    /// Attack pursuit: a jet whose current weapon target is out of range flies toward it, on the
+    /// attack locomotor when the object defines one; AIUpdate's base movement then stops the jet
+    /// and the weapon fires once the target is in range. Jets parked at an airfield do not fly
+    /// directly: the taxi/takeoff flow below (driven by <see cref="SetTargetPoint"/>'s
+    /// unpark request) delivers them into the air first, and pursuit takes over once airborne.
+    /// Jets with no airfield (spawned directly, e.g. map objects and the validation ground) start
+    /// pursuing immediately.
+    /// </summary>
+    private void UpdateAttackPursuit()
+    {
+        var weapon = GameObject.CurrentWeapon;
+        var target = weapon?.CurrentTarget;
+
+        if (target != null && !target.IsDestroyed && !weapon!.HasValidTarget)
+        {
+            var canFlyDirect = Base == null
+                || CurrentJetAIState is JetAIState.Started
+                    or JetAIState.MovingTowardsTarget
+                    or JetAIState.ReachedTargetPoint
+                    or JetAIState.ReturningToBase
+                    or JetAIState.Landing;
+
+            if (!canFlyDirect)
+            {
+                return;
+            }
+
+            if (!_attackLocomotorActive
+                && ModuleData.AttackLocomotorType is not (LocomotorSetType.Invalid or LocomotorSetType.Normal))
+            {
+                SetLocomotor(ModuleData.AttackLocomotorType);
+                _attackLocomotorActive = true;
+            }
+
+            base.SetTargetPoint(target.TargetPosition);
+        }
+        else if (_attackLocomotorActive)
+        {
+            _attackLocomotorActive = false;
+            SetLocomotor(LocomotorSetType.Normal);
+        }
+    }
+
     internal override void Load(StatePersister reader)
     {
         reader.PersistVersion(2);
@@ -114,6 +165,8 @@ public sealed class JetAIUpdate : AIUpdate
 
     public override UpdateSleepTime Update()
     {
+        UpdateAttackPursuit();
+
         var sleepTime = base.Update();
 
         if (!ModuleData.KeepsParkingSpaceWhenAirborne)

@@ -6,12 +6,20 @@
     "TargetClusterRadius": 40,
     "UnitSpacing": 80,
     "FactionRowOffset": 150,
-    "TargetApproachDistance": 80
+    "TargetApproachDistance": 80,
+    "Mode": "Clusters"
   },
   "TargetDefinitions": ["CarAsian1"],
   "SupplySourceDefinitions": ["AmericaSupplyCenter"],
   "TargetHp": 30,
   "SettleFrames": 30,
   "Seed": 1,
-  "PlacementOverrides": []
+  "PlacementOverrides": [
+    {
+      "FactionIndex": 4,
+      "RosterIndex": 3,
+      "IsTarget": false,
+      "TargetDistance": 8.0
+    }
+  ]
 }

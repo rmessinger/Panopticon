@@ -10,17 +10,21 @@ public class ValidationGroundBuilderTests
     private static ValidationGroundScenario SingleFactionScenario()
     {
         // The formation lives in the standard JSON; clone it and restrict to one faction so per-unit
-        // assertions are stable. (LayoutConfig has no source defaults anymore.)
+        // assertions are stable. Most tests exercise Rows mode explicitly so the row math stays
+        // pinned regardless of what the checked-in standard scenario uses.
         var scenario = ValidationGroundScenarioStore.Standard();
         scenario.FactionIndices = [2];
+        scenario.Layout.Mode = LayoutMode.Rows;
         return scenario;
     }
 
     [Fact]
     public void Build_WithoutOverrides_DerivesPositionsFromLayout()
     {
-        // The standard scenario (loaded from JSON) carries the formation; no overrides applied.
-        var plan = ValidationGroundBuilder.Build(ValidationGroundScenarioStore.Standard());
+        // Row math pinned: the standard centre (600,600) with 3 factions.
+        var scenario = ValidationGroundScenarioStore.Standard();
+        scenario.Layout.Mode = LayoutMode.Rows;
+        var plan = ValidationGroundBuilder.Build(scenario);
 
         // Faction 0 (USA): unit row Y = centre.Y - totalSpan/2 = 600 - 270 = 330 (totalSpan =
         // 3*TargetApproach + 2*FactionRowOffset = 240 + 300). Row origin X centres the 10-unit
@@ -28,6 +32,120 @@ public class ValidationGroundBuilderTests
         // target row (unitRowY + TargetApproach = 410) at the same X.
         Assert.Equal(new Vector3(240f, 330f, 0f), plan.UnitPlacements[0].Position);
         Assert.Equal(new Vector3(240f, 410f, 0f), plan.TargetPlacements[0].Position);
+    }
+
+    [Fact]
+    public void Build_ClustersOnFlatMap_PlacesBlocksAtLayoutStandoff()
+    {
+        // Cluster mode without a map: terrain term is uniform, so the first cluster lands on the
+        // grid point nearest the layout centre. Relational assertions only — exact coordinates
+        // depend on the search grid.
+        var scenario = SingleFactionScenario();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        Assert.Equal(plan.UnitPlacements.Count, plan.TargetPlacements.Count);
+        foreach (var unit in plan.UnitPlacements)
+        {
+            var target = plan.TargetPlacements[unit.TargetIndex];
+            var distance = Vector2.Distance(
+                new Vector2(unit.Position.X, unit.Position.Y),
+                new Vector2(target.Position.X, target.Position.Y));
+            Assert.Equal(scenario.Layout.TargetApproachDistance, distance, precision: 0);
+        }
+    }
+
+    [Fact]
+    public void Build_Clusters_TargetsClearOfUnitsAndOtherTargets()
+    {
+        // Regression for the map-view overlap (target square drawn on a unit circle): a purely
+        // radial placement lands interior units' targets exactly on their neighbours. The builder
+        // must rotate each target to clear every block unit and every other target.
+        var scenario = ValidationGroundScenarioStore.Standard();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        var unitPositions = plan.UnitPlacements
+            .Select(p => new Vector2(p.Position.X, p.Position.Y)).ToList();
+        var targetPositions = plan.TargetPlacements
+            .Select(p => new Vector2(p.Position.X, p.Position.Y)).ToList();
+
+        // Each target is checked against every unit except its own (the terrorist's own target is
+        // deliberately 8 units away) and against every other target.
+        for (var i = 0; i < targetPositions.Count; i++)
+        {
+            var ownUnit = unitPositions[i];
+            foreach (var unit in unitPositions)
+            {
+                if (unit == ownUnit) continue;
+                Assert.True(Vector2.Distance(targetPositions[i], unit) >= 30f,
+                    $"target {targetPositions[i]} overlaps a unit ({Vector2.Distance(targetPositions[i], unit):F0} away)");
+            }
+            for (var j = 0; j < targetPositions.Count; j++)
+            {
+                if (i == j) continue;
+                Assert.True(Vector2.Distance(targetPositions[i], targetPositions[j]) >= 30f,
+                    $"target {targetPositions[i]} overlaps another target");
+            }
+        }
+    }
+
+    [Fact]
+    public void Build_ClustersOnFlatMap_FactionsDoNotOverlap()
+    {
+        var scenario = ValidationGroundScenarioStore.Standard();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        // Cluster centres (faction unit centroids) must respect the separation knob.
+        foreach (var factionA in scenario.FactionIndices)
+        {
+            foreach (var factionB in scenario.FactionIndices)
+            {
+                if (factionA >= factionB) continue;
+                var centroidA = Centroid(plan, factionA);
+                var centroidB = Centroid(plan, factionB);
+                Assert.True(Vector2.Distance(centroidA, centroidB) >= scenario.Layout.FactionRowOffset,
+                    $"clusters {factionA}/{factionB} overlap: {Vector2.Distance(centroidA, centroidB)}");
+            }
+        }
+    }
+
+    private static Vector2 Centroid(SpawnPlan plan, int factionIndex)
+    {
+        var placements = plan.UnitPlacements.Where(p => p.FactionIndex == factionIndex).ToList();
+        return new Vector2(
+            placements.Average(p => p.Position.X),
+            placements.Average(p => p.Position.Y));
+    }
+
+    [Fact]
+    public void Build_Clusters_TargetDistanceOverrideReplacesStandoff()
+    {
+        // The terrorist's proximity pin: unit-side TargetDistance overrides the standoff without
+        // pinning any absolute position (cluster placement stays terrain-derived).
+        var scenario = SingleFactionScenario();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        scenario.PlacementOverrides.Add(new PlacementOverride
+        {
+            FactionIndex = 2,
+            RosterIndex = 0,
+            IsTarget = false,
+            TargetDistance = 8f,
+        });
+
+        var plan = ValidationGroundBuilder.Build(scenario, MapMetadataService.CreateForTesting(
+            new Vector3(0f, 0f, 0f), new Vector3(2390f, 2590f, 0f)));
+
+        var unit = plan.UnitPlacements[0];
+        var target = plan.TargetPlacements[unit.TargetIndex];
+        var distance = Vector2.Distance(
+            new Vector2(unit.Position.X, unit.Position.Y),
+            new Vector2(target.Position.X, target.Position.Y));
+        Assert.Equal(8f, distance, precision: 0);
     }
 
     [Fact]
@@ -192,8 +310,37 @@ public class ValidationGroundBuilderTests
         Assert.Equal(150f, standard.Layout.FactionRowOffset);
         Assert.Equal(80f, standard.Layout.TargetApproachDistance);
         Assert.Equal([2, 3, 4], standard.FactionIndices);
-        Assert.Empty(standard.PlacementOverrides);
         Assert.Equal(["CarAsian1"], standard.TargetDefinitions);
+        // The terrorist's close-quarters override (WI-VG-04): its suicide weapon has range 1, so
+        // the unit is hand-placed next to its target instead of the 80-unit standoff.
+        var terrorist = Assert.Single(standard.PlacementOverrides);
+        Assert.Equal(4, terrorist.FactionIndex);
+        Assert.Equal(3, terrorist.RosterIndex);
+        Assert.False(terrorist.IsTarget);
+    }
+
+    [Fact]
+    public void Build_VanillaGame_SkipsZeroHourOnlyUnits()
+    {
+        // WI-VG-03: Zero Hour-only roster entries are skipped on a vanilla Generals run (no unit,
+        // no target, no resolution gap) and included when the scenario targets Zero Hour. The USA
+        // roster has no Zero Hour-only entries, so assert on the China roster.
+        var vanilla = SingleFactionScenario();
+        vanilla.Game = "CncGenerals";
+        vanilla.FactionIndices = [3];
+
+        var zh = SingleFactionScenario();
+        zh.Game = "CncGeneralsZeroHour";
+        zh.FactionIndices = [3];
+
+        var vanillaPlan = ValidationGroundBuilder.Build(vanilla);
+        var zhPlan = ValidationGroundBuilder.Build(zh);
+
+        Assert.DoesNotContain(vanillaPlan.UnitPlacements, p => p.DefinitionName == "ChinaVehicleHelix");
+        Assert.Equal(vanillaPlan.UnitPlacements.Count, vanillaPlan.TargetPlacements.Count);
+
+        Assert.Contains(zhPlan.UnitPlacements, p => p.DefinitionName == "ChinaVehicleHelix");
+        Assert.Equal(zhPlan.UnitPlacements.Count, zhPlan.TargetPlacements.Count);
     }
 
     [Fact]

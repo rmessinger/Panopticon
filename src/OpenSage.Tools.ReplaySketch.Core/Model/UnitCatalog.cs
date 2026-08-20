@@ -5,8 +5,14 @@ namespace OpenSage.Tools.ReplaySketch.Model;
 
 /// <summary>
 /// A trainable unit definition that can be targeted by a <see cref="ActionType.RecruitBasicUnit"/> action.
+/// <paramref name="zeroHourOnly"/> marks entries whose definition exists only in Zero Hour, so a
+/// run against a vanilla Generals install skips them instead of reporting a resolution gap.
+/// <paramref name="targetOverride"/> names a per-unit attack target definition that replaces the
+/// scenario's shared target for this unit, for weapons that cannot damage the shared target
+/// (e.g. a sniper rifle versus TruckArmor); the override must be damageable by the unit's
+/// primary weapon, enforced by the TargetOverrides data test.
 /// </summary>
-public sealed record UnitOption(string DefinitionName, string DisplayName);
+public sealed record UnitOption(string DefinitionName, string DisplayName, bool ZeroHourOnly = false, string? TargetOverride = null);
 
 /// <summary>
 /// Known trainable units per faction for the Generals / Zero Hour scope.
@@ -19,7 +25,7 @@ public static class UnitCatalog
     [
         // Infantry (Barracks)
         new("AmericaInfantryRanger",          "Ranger"),
-        new("AmericaInfantryPathfinder",       "Pathfinder"),
+        new("AmericaInfantryPathfinder",       "Pathfinder", TargetOverride: "GLAInfantryRebel"),
         new("AmericaInfantryMissileDefender",  "Missile Defender"),
         // Vehicles (War Factory)
         new("AmericaVehicleHumvee",            "Humvee"),
@@ -66,7 +72,7 @@ public static class UnitCatalog
         new("ChinaTankOverlord",            "Overlord Tank"),
         // Air (Airfield)
         new("ChinaJetMIG",                  "MiG Fighter"),
-        new("ChinaVehicleHelix",            "Helix"),
+        new("ChinaVehicleHelix",            "Helix", ZeroHourOnly: true),
     ];
 
     /// <summary>

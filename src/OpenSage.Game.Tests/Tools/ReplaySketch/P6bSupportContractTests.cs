@@ -6,9 +6,10 @@ using Xunit;
 namespace OpenSage.Tests.Tools.ReplaySketch;
 
 // WI-P6b-05: USA Ambulance (Support) full six-point archetype contract.
-// Runs as a real CI [Fact] (no game install). The Ambulance's CleanupArea special power has no
-// live handler (SpecialPowerAtLocationApplicator throws NotImplementedException), so the
-// WeaponModesAndAbilities contract point surfaces an explicit P6b gap rather than a silent pass.
+// Runs as a real CI [Fact] (no game install). The Ambulance's CleanupArea special power gained a
+// live handler in P6c (heal friendlies in the target radius), so the WeaponModesAndAbilities
+// contract point passes and the full six-point contract holds; the live observable effect is
+// asserted by the install-gated P6cSpecialPowerTests.
 
 public class P6bSupportContractTests : P6bContractTestBase
 {
@@ -46,41 +47,34 @@ public class P6bSupportContractTests : P6bContractTestBase
     }
 
     [Fact]
-    public void Support_CleanupArea_IsExplicitGapNotSilentPass()
+    public void Support_CleanupArea_IsImplemented_PassesAllSixPoints()
     {
-        // The Ambulance's primary support ability is CleanupArea (detox/cleanup-area). Its handler
-        // is unimplemented (SpecialPowerAtLocationApplicator.CleanupArea => throw
-        // NotImplementedException), so the contract must report it as an explicit "P6b gap:" and
-        // must NOT pass the abilities point silently.
+        // P6c implemented the Ambulance's CleanupArea handler (SpecialPowerAtLocationApplicator
+        // heals friendlies in the power radius), so the abilities point passes and no gap is
+        // reported anywhere in the contract.
         var scenario = BuildScenario(Archetype, DefaultFaction);
 
         var report = RunContract(scenario, Generals);
 
-        Assert.True(report.HasGaps);
-        Assert.False(report.AllContractPointsPassed);
+        Assert.False(report.HasGaps);
+        Assert.True(report.AllContractPointsPassed);
 
-        var abilityGap = AssertPointIsGap(report, ContractPoint.WeaponModesAndAbilities);
-        Assert.Contains(ReferenceUnit, abilityGap.Detail);
-        Assert.Contains(CleanupAreaPower, abilityGap.Detail);
-
-        // The other five contract points are unaffected.
         AssertPointPassed(report, ContractPoint.Produced);
         AssertPointPassed(report, ContractPoint.MoveOrStatic);
         AssertPointPassed(report, ContractPoint.ArchetypeAction);
         AssertPointPassed(report, ContractPoint.AttackOrDecline);
+        AssertPointPassed(report, ContractPoint.WeaponModesAndAbilities);
         AssertPointPassed(report, ContractPoint.DieWithCleanup);
     }
 
     [Fact]
-    public void Support_GapIsTheOnlyGap()
+    public void Support_NoGapsAfterP6c()
     {
-        // Lock that exactly one gap is surfaced and it names the unimplemented special power.
+        // Lock that the P6c implementation removed the last support-contract gap.
         var scenario = BuildScenario(Archetype, DefaultFaction);
 
         var report = RunContract(scenario, Generals);
 
-        var gap = Assert.Single(report.Gaps);
-        Assert.Equal(ContractPoint.WeaponModesAndAbilities, gap.Point);
-        Assert.Contains(CleanupAreaPower, gap.Detail);
+        Assert.Empty(report.Gaps);
     }
 }

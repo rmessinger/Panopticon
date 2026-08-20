@@ -131,7 +131,7 @@ public static class Program
 
         if (config.Scenario == BuiltInScenario.UnitValidationGround)
         {
-            var groundPlan = ScenarioBuilder.BuildValidationGroundRun(config);
+            var groundPlan = ScenarioBuilder.BuildValidationGroundRun(config, installation, reporter);
             ValidationGroundRunner.Run(installation, config, groundPlan, reporter);
             return;
         }

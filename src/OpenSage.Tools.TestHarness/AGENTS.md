@@ -248,9 +248,12 @@ placed in weapon range and standardized to a low HP
 feasible for the whole roster; and direct weapon targeting for attackers (the `AttackObject` order's
 move step suppresses fire for several units, so in-range attackers are commanded directly to isolate
 the weapon delay). A unit that destroys its target has its weapon cleared so it stops firing.
-Units the sandbox cannot measure (suicide, bomber, horde, transport, sniper that will not fire at
-the assigned target) are listed in `PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as
-gaps; SpecialPower units have no implemented order path and are also gaps.
+Units the sandbox cannot measure (the TroopCrawler transport) are listed in
+`PrimaryActionCatalog.UnmeasurableAttackReasons` and recorded as gaps. SpecialPower units (Medic,
+Black Lotus, Hacker, Hijacker) act on per-unit ability subjects (damaged friendly, neutral
+building, enemy vehicle) and complete on each power's observable effect (heal, ownership transfer,
+disabled state), implemented by P6c; point-blank and armor-mismatched attackers use per-unit
+placement/target overrides (`UnitOption`).
 
 ### Live capture and accuracy verification
 

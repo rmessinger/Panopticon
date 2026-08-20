@@ -39,12 +39,12 @@ from `AIPlayer.Update()`, that reads game state and enqueues `Order`s. Today it 
 strategy so a policy is a pluggable collaborator instead of a base-class override:
 
 ```csharp
-// Illustrative — not implemented by this doc.
+// Illustrative; not implemented by this doc.
 public interface IAIDecisionPolicy
 {
     // Called at the AI's decision cadence (AIPlayer.DefaultDecisionCadenceFrames).
     // Reads whatever state it needs from the context; returns orders to enqueue.
-    // Must not mutate game state directly — same actuation-via-orders constraint as P2 (§2.3
+    // Must not mutate game state directly; same actuation-via-orders constraint as P2 (§2.3
     // of skirmish-ai.md) so every policy stays replay/record-compatible and A2-reproducible.
     IReadOnlyList<Order> DecideNextOrders(AIDecisionContext context);
 }
@@ -194,7 +194,7 @@ classDiagram
   }
 
   class AIPlayer {
-    <<host, existing — becomes thin dispatcher>>
+    <<host, existing; becomes thin dispatcher>>
     -Player _owner
     -uint _countdownSomething1
     +Update()
@@ -218,20 +218,20 @@ classDiagram
   }
 
   class RuleBasedAIDecisionPolicy {
-    <<planned — extracted from SkirmishAIPlayer>>
+    <<planned; extracted from SkirmishAIPlayer>>
     -RunEconomyAndBaseBuildout()
     -RunUnitProduction()
     -RunMilitaryBehavior()
   }
 
   class SkirmishAIPlayer {
-    <<existing — today's OnDecisionTick override>>
+    <<existing; today's OnDecisionTick override>>
     +int DecisionTickCount
     #OnDecisionTick() override
   }
 
   class NeuralNetworkAIDecisionPolicy {
-    <<future — depends on RuleBasedAIDecisionPolicy landing first>>
+    <<future; depends on RuleBasedAIDecisionPolicy landing first>>
     -float[] Weights
     -EncodeState(AIDecisionContext) float[]
     -DecodeActions(float[]) IReadOnlyList~Order~

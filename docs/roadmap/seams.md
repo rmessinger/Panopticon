@@ -61,7 +61,7 @@ graph TD
         ALOAD["A1-2 · Asset load strategy\non-demand → data-only / none"]
     end
 
-    subgraph SIM["Simulation / Logic  —  SimulationHost"]
+    subgraph SIM["Simulation / Logic: SimulationHost"]
         DOM["★ A4-1 · Simulation Domain Model\nRTS · transport/graph · city-builder · …"]
         STORE["B3 · Entity storage layout\nmodule-objects → data-oriented SoA"]
         PART["B6-1 · Partition scheme\nspatial grid → graph-cut → zone-adj"]

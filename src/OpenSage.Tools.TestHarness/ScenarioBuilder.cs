@@ -73,8 +73,9 @@ public static class ScenarioBuilder
 
     /// <summary>
     /// Builds the Unit Validation Ground's scenario, spawn plan, and roster player settings.
+    /// The installation loads the map metadata used for terrain-aware cluster placement.
     /// </summary>
-    public static ValidationGroundRunPlan BuildValidationGroundRun(TestHarnessConfig config)
+    public static ValidationGroundRunPlan BuildValidationGroundRun(TestHarnessConfig config, GameInstallation? installation = null, ITestHarnessReporter? reporter = null)
     {
         // The standard formation/scenario lives in the checked-in
         // Profiles/unit-validation-ground-scenario.json (loaded via Standard()), not in source. A
@@ -84,6 +85,10 @@ public static class ScenarioBuilder
         var scenario = !string.IsNullOrEmpty(config.ValidationGroundScenarioPath)
             ? ValidationGroundScenarioStore.Load(config.ValidationGroundScenarioPath)
             : ValidationGroundScenarioStore.Standard();
+
+        // The harness config is the authority on which game is installed; the builder uses it to
+        // skip roster entries that game's data does not contain (e.g. Zero Hour-only units).
+        scenario.Game = config.Game.ToString();
 
         if (!string.IsNullOrEmpty(config.ValidationGroundMapPath))
         {
@@ -99,7 +104,23 @@ public static class ScenarioBuilder
             scenario.MapPath = "maps/alpine assault/alpine assault.map";
         }
 
-        var plan = ValidationGroundBuilder.Build(scenario);
+        // Terrain data for cluster placement (flatness scoring); null leaves the builder on
+        // layout-only placement.
+        MapMetadataService? map = null;
+        if (installation != null)
+        {
+            try
+            {
+                map = MapMetadataService.Load(installation, scenario.MapPath);
+            }
+            catch (Exception ex)
+            {
+                // Cluster placement is best-effort; a metadata failure must not sink the run.
+                reporter?.Info($"Map metadata unavailable ({ex.Message}); falling back to layout-only placement.");
+            }
+        }
+
+        var plan = ValidationGroundBuilder.Build(scenario, map);
 
         // Three competitive slots (USA/China/GLA) become player indices 2/3/4 after neutral/civilian.
         // SideName uses the Faction-prefixed PlayerTemplate name, matching every other call site;

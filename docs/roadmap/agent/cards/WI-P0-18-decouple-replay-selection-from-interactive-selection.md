@@ -1,9 +1,9 @@
-# Task Card: `WI-P0-18` — Decouple replay selection from interactive UI selection
+# Task Card: `WI-P0-18`: Decouple replay selection from interactive UI selection
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P0-18` |
-| Roadmap phase | [Track P · P0 — ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
+| Roadmap phase | [Track P · P0: ReplaySketch arbitrary-command harness](../../track-p-playable-baseline.md) |
 | Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
@@ -21,17 +21,17 @@ is only broken when the replayer has a game object selected."
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/SelectionSystem.cs` — `SetSelectedObjects` (called by both the replay's
+- `src/OpenSage.Game/Logic/SelectionSystem.cs`: `SetSelectedObjects` (called by both the replay's
   `OrderProcessor` and the interactive `SingleSelect`/`MultiSelect` paths), and
   `OnStartDragSelection`/`OnDragSelection`/`OnEndDragSelection` (interactive drag state machine).
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:280-300` — `OrderType.SetSelection` and
+- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:280-300`: `OrderType.SetSelection` and
   `OrderType.ClearSelection` handling; both call `_game.Selection.SetSelectedObjects(...)`.
-- `src/OpenSage.Game/Logic/SelectionMessageHandler.cs` — routes real mouse input into
+- `src/OpenSage.Game/Logic/SelectionMessageHandler.cs`: routes real mouse input into
   `SelectionSystem`.
-- `src/OpenSage.Game/Network/NetworkMessageBuffer.cs:26` — `IsReplay`, already used by
+- `src/OpenSage.Game/Network/NetworkMessageBuffer.cs:26`: `IsReplay`, already used by
   `SelectionSystem.MultiSelect` for the "box-select any object while watching a replay" fix; the
   same signal is the natural gate for this card.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md` — TestHarness is a windowed replay viewer; this is the
+- `src/OpenSage.Tools.TestHarness/AGENTS.md`: TestHarness is a windowed replay viewer; this is the
   primary place a human interacts with a running replay.
 
 ## Steps
@@ -87,7 +87,7 @@ dotnet format src --verify-no-changes
   object's stats while watching a replay); this card is about state ownership/timing, not who can
   be selected.
 - Do not add a general pub/sub or event-bus refactor of `SelectionSystem`; keep the fix localized.
-- Do not change `OpenSage.Tools.ReplaySketch` scenario authoring/export — this is purely a runtime
+- Do not change `OpenSage.Tools.ReplaySketch` scenario authoring/export; this is purely a runtime
   playback/UI concern.
 
 ## On completion

@@ -282,7 +282,7 @@
   be validated against existing built-in content first. Affects
   [Track D](track-d-gameplay-expansion.md),
   [deep-dives/d1-d2-tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md).
-- Deformable terrain & destruction scope — Decision: own track (Track F), not folded into an
+- Deformable terrain & destruction scope, Decision: own track (Track F), not folded into an
   existing track; destruction is physics-based, not model-swap. Runtime terrain deformation
   (craters/scorch marks) does not exist in original SAGE, and Track F's destruction (F4/F5)
   replaces the canned model-swap approach (rubble/damage-state model swaps, already covered under
@@ -291,7 +291,7 @@
   playable-baseline fidelity. The track is split out because it cuts across terrain storage
   ([B4a](deep-dives/b4a-larger-maps.md)), rendering ([B5](track-b-scale.md)), a new physics substrate,
   combat ([P6](deep-dives/p4-p6-economy-production-combat.md)), and save/replay/determinism
-  ([A2](track-a-foundations.md)) rather than fitting inside any single existing track — the same
+  ([A2](track-a-foundations.md)) rather than fitting inside any single existing track; the same
   reasoning that split gameplay content out as Track D. Named "Track F" (not "Track D"/"Track E")
   to avoid collisions with two pending unmerged branches: `docs/track-d-gameplay-expansion`
   (Gameplay Content Expansion) and `docs/track-e-naval-warfare` (Naval Warfare). Since superseded
@@ -300,7 +300,7 @@
   engine/library is an open candidate, settled when F4 starts, mirroring how Track C left the
   first external model format ([C4](track-c-external-assets.md)) as a candidate. Affects
   [Track F](track-f-terrain-destruction.md).
-- Rendering clarity & image quality scope — Decision: own track (Track G), not folded into
+- Rendering clarity & image quality scope, Decision: own track (Track G), not folded into
   [B5 rendering at scale](track-b-scale.md), and not gated on Track P. The current renderer is
   faithful to the original game but grainy on high-resolution displays, with a screen-door pattern
   on alpha-tested geometry. The causes span a genuine correctness bug (no
@@ -314,7 +314,7 @@
   ([Track D](track-d-gameplay-expansion.md), [Track E](track-e-naval-warfare.md),
   [Track F](track-f-terrain-destruction.md)). Affects
   [Track G](track-g-rendering-clarity.md).
-- Original-look compatibility under Track G — Decision: two presets, `Faithful` and `Enhanced`,
+- Original-look compatibility under Track G, Decision: two presets, `Faithful` and `Enhanced`,
   with `Enhanced` as the default and the target of future work. `Faithful` pins sample count 1,
   the hard `0x60` alpha-test cutoff, gamma-space shading, 4x anisotropy, and a single 1024²
   shadow cascade, reproducing the pre-track output exactly; the G1 high-DPI fix applies to both
@@ -322,9 +322,23 @@
   than an [experiment seam](seams.md): they select fixed pipeline state, not swappable
   implementations measured by the A4 harness, so they stay out of that harness. The alternative,
   a single unconditional visual upgrade, was rejected because reproducing the original look is a
-  standing requirement, and the alternative of a full per-feature settings matrix without presets
+  standing requirement, and the alternative of   a full per-feature settings matrix without presets
   was rejected as untestable: G3 golden frames are captured per preset. Affects
   [Track G](track-g-rendering-clarity.md).
+- Realistic proportions scope. Decision: presentation-only scale correction in Track G (G10),
+  grounded in a measured reference scale; weapon ranges and collision geometry stay untouched.
+  Measured against installed assets (INI `Geometry` cross-checked with W3D mesh bounds, FX meshes
+  excluded), infantry, ground vehicles, and civilian/faction buildings are already mutually
+  proportionate at roughly 5 world units per meter (terrain cell 10 units ≈ 2 m); aircraft models
+  are the offenders, undersized roughly 2-2.5x versus real counterparts (MiG ≈ 6.6 m in-game
+  versus ≈ 17.3 m real). G10 documents the reference scale and adds an opt-in visual model-scale
+  correction for the aircraft class behind the G2 settings layer, in the spirit of the `Enhanced`
+  preset. Attack-range compression (≈ 100x, e.g. `CrusaderTankGun AttackRange = 150` ≈ 30 m
+  versus 2.5+ km real) is deliberate gameplay and map-scale data rather than presentation, so it
+  is explicitly out of scope, as are `Geometry` collision boxes (selection/pathing consumers such
+  as `Scene25D.GetBoundingSphere`). Chosen over rescaling assets (mutates original data) and over
+  simulation-side scaling (would change gameplay and break the A3 seam). Affects
+  [Track G](track-g-rendering-clarity.md) (G10).
 - Map & unit storage-format scope. Decision: own track (Track H), scoped to on-disk persistence
   and schema design, not runtime performance. A new storage system for maps and unit/object
   definitions is a genuine gap: no roadmap phase designs a successor on-disk format for the
@@ -345,3 +359,15 @@
   fitting inside any single existing track. Named "Track H" because A–G are already assigned on
   `main`. Gated on Track P (P7) only, like Tracks B, C, D, E, and F. Affects
   [Track H](track-h-storage-formats.md).
+- HUD rework scope. Decision: replacing the pre-rendered HUD is in scope for G9, as an additional
+  work item rather than a new track or phase. G9's original scope (native-resolution 2D,
+  logical-point layout, better upscaling) makes the legacy 800x600 WND/APT bitmaps look as good as
+  upscaling allows, but the HUD remains pre-rendered art. G9-3 replaces the control bar's bitmaps
+  with dynamically drawn equivalents (vector/procedural panels, buttons, frames; live text), which
+  is the genuine resolution independence the phase is named for. Chosen over a separate UI track
+  because the work shares G9's whole substrate (the 2D layer, logical-point layout, the G2 preset
+  switch, and the G3 golden frames that gate it) and has no scope beyond rendering clarity; a
+  UI-framework or UX redesign stays out of scope and would be new roadmap material if ever
+  wanted. Gated behind the `Enhanced` preset with `Faithful` pixel-identical to the pre-rework
+  capture, consistent with the rendering-clarity scope Decision. Affects
+  [Track G](track-g-rendering-clarity.md) (G9).

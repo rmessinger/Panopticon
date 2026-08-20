@@ -32,7 +32,9 @@ public sealed class ValidationGroundEditorModel : INotifyPropertyChanged
     /// <summary>Rebuilds the spawn plan from the current scenario (knobs + overrides).</summary>
     public void Regenerate()
     {
-        Plan = ValidationGroundBuilder.Build(Scenario);
+        // The attached map (when present) feeds terrain-aware cluster placement; without one the
+        // builder falls back to layout-only placement.
+        Plan = ValidationGroundBuilder.Build(Scenario, Map);
         PropertyChanged?.Invoke(this, PlanChangedArgs);
     }
 
@@ -55,10 +57,15 @@ public sealed class ValidationGroundEditorModel : INotifyPropertyChanged
     /// <summary>Serializes the scenario to a JSON string (used by the MAUI file picker).</summary>
     public string GetScenarioJson() => ValidationGroundScenarioStore.ToJson(Scenario);
 
-    /// <summary>Attaches a loaded map; the MAUI side resolves the install and builds the service.</summary>
+    /// <summary>
+    /// Attaches a loaded map and regenerates the plan: cluster placement is terrain-aware, so the
+    /// plan built before a map existed (uniform terrain term) is stale the moment terrain becomes
+    /// available. The MAUI/Avalonia side resolves the install and builds the service.
+    /// </summary>
     public void AttachMap(MapMetadataService map)
     {
         Map = map;
+        Regenerate();
         PropertyChanged?.Invoke(this, MapChangedArgs);
     }
 
