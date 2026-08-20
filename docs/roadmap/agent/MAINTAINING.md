@@ -96,7 +96,7 @@ Find your change type; update every box listed. Then run the [validation](#valid
 ## Validation (every time)
 
 ```sh
-# From docs/roadmap/ — both Mermaid diagrams must report ✅
+# From docs/roadmap/: both Mermaid diagrams must report ✅
 npx -y @mermaid-js/mermaid-cli@latest -i roadmap-tree.md -o /tmp/rt.svg && rm -f /tmp/rt*.svg rt-*.svg
 
 # Quick internal-link existence check for a doc you edited (adjust the file)

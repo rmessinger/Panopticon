@@ -18,7 +18,7 @@ all connects. Companion to `EE2_UNIT_VISUAL_PIPELINE.md`. Based on analysis of
 | `.dll` | PE DLL | Compiled scenario scripts, referenced by `.scn` files (`ScriptLibs/American1.dll`) | `scriptlibs/`, `scriptlibs_ee2x/` | ~30 |
 | `.ddf` | Text (same DDF lang as units) | Terrain DBs: climate/weather, forests, random-map generator | `db/Terrain/` in `db.zip` | ~15 |
 | `.csv` | Comma-separated | Terrain-type tables per climate; seasonal texture sets; cliffs; atmosphere | `db/Terrain/` + loose in `zips/` | ~15 |
-| `.cfg` | Text list | `dbterrainclimates.cfg` — the climate registry | `db/Terrain/` | 1 |
+| `.cfg` | Text list | `dbterrainclimates.cfg`: the climate registry | `db/Terrain/` | 1 |
 
 ---
 
@@ -40,12 +40,12 @@ Chunk tags observed (via byte scan of `maps/!(2)Highland.map` and
 | Tag | Present in | Content (deduced from bytes) |
 |---|---|---|
 | `Vers` | both | version record (numbers only) |
-| `Wrld` | both | world/root chunk — its `A` field = total file size |
+| `Wrld` | both | world/root chunk; its `A` field = total file size |
 | `SPSL` | `.map` | start-position list; count = number of players |
 | `SPos` | `.map` | one chunk per player start: map-size int + X/Y float coords |
 | `MPVC` | `.map` | map preview / minimap color data |
 | `Terr` | both | terrain (see §3) |
-| `MpSt` | both | map stats — includes display name string (`Highland`) |
+| `MpSt` | both | map stats; includes display name string (`Highland`) |
 | `Plyr` | both | player setup (names, civs, diplomacy) |
 | `TeTr` | both | territory definition (region polygons → the `territory.ddf` rules) |
 | `RPwr`,`PlLT`,`PSts`,`AnmM`,`TNmT` | `.map` | resource power / placement / animal / territory-name tables |
@@ -60,14 +60,14 @@ Chunk tags observed (via byte scan of `maps/!(2)Highland.map` and
 | `LStL`,`LStP`,`LStT`,`EtyM`,`UtNm`,`GpNm` | `.scn` | leader stats, entity/unit/group name tables |
 
 `maps/` vs `mapx/`: same-named maps differ by a few header bytes (version/
-checksum) and small size deltas — `mapx/` is the expansion's re-saved copy;
+checksum) and small size deltas; `mapx/` is the expansion's re-saved copy;
 EE2X.exe reads it, EE2.exe reads `maps/`. The in-game editor's "Save As Map"
 writes `.map`; scenario saves write `.scn` (per `Map Making Walkthrough.txt`,
 scenarios are not selectable in the multiplayer lobby).
 
 ---
 
-## 3. Inside the `Terr` Chunk — Verified Layout
+## 3. Inside the `Terr` Chunk: Verified Layout
 
 Decoded from `maps/!(2)Highland.map` (`Terr` @ offset 0xB8):
 
@@ -82,7 +82,7 @@ payload:
       80 FF 80 80 appear just before [4])
   [4] climate string: int16 length + chars -> "Temperate"
       (must be one of dbterrainclimates.cfg: Temperate / Arid / Tropical)
-  [5] terrain-type palette: 33 strings — an EXACT copy of the row names in
+  [5] terrain-type palette: 33 strings, an EXACT copy of the row names in
       dbterrain_temperate.csv: Grass, Beach, GrassRocky, MountainTop,
       OceanFloor, ..., MidEpochsPath, EndEpochsPath, UnderBuilding_1..3
 ```
@@ -114,12 +114,12 @@ flowchart LR
 Key schema facts from `DbTerrainDefs.h`:
 
 - `eTerrainMoveType`: Land, Swamp, Cliff, Mountain, Forest, Coast, River,
-  Ocean — each map tile's palette entry carries one of these; pathing uses the
+  Ocean: each map tile's palette entry carries one of these; pathing uses the
   mirror enum `eMovementSpeedType` (+Bridge, +Road).
 - `DbTerrainDbInfo` = one CSV row: high/medium/low-detail textures, 12 monthly
   dust types, minimap bitmap, autopaint elevations, move type, grass layer.
 - `DbTerrainTextureDef`: seasonal texture index, alpha mask, 12 monthly tint
-  fractions — the engine interpolates the 12-month texture list evenly across
+  fractions; the engine interpolates the 12-month texture list evenly across
   the year (hence `Preview Seasons` in the editor).
 
 Territory rules live in `db/Simulation/Misc/territory.ddf`
@@ -152,7 +152,7 @@ flowchart TD
 
 Cross-link to the unit pipeline: the `Unit`/`Reso` chunks store **UnitType
 names** (e.g. `Gold`, `Boar`, `Wolf`, `Iron`), which are looked up in the same
-`.ddf`-built unit database — then `UnitModel` → `.nifcache` + `.kf` as
+`.ddf`-built unit database, then `UnitModel` → `.nifcache` + `.kf` as
 documented in `EE2_UNIT_VISUAL_PIPELINE.md`.
 
 ---
@@ -162,12 +162,12 @@ documented in `EE2_UNIT_VISUAL_PIPELINE.md`.
 `File → New → Random map` in the editor (and random-map skirmish games) is
 driven by text data, not the binary format:
 
-- `db/Terrain/dbmapgen.ddf` — `MapGeography` records (`SmallIslands`,
+- `db/Terrain/dbmapgen.ddf`: `MapGeography` records (`SmallIslands`,
   `LargeIslands`, `Continents`, `Plains`, ...) with Perlin land/water
   parameters, forced land/water stamps, start-location radii
-- `DbMapGenDefs.h` — the schema: `eMapType` (Islands / Continents /
+- `DbMapGenDefs.h`: the schema: `eMapType` (Islands / Continents /
   OneLandMass / Waterless), `eMapBorder`, `DbBitmaskStamp`
-- `eWaterLevel` (None/Low/Medium/High) in `DbTerrainDefs.h` — the
+- `eWaterLevel` (None/Low/Medium/High) in `DbTerrainDefs.h`: the
   water-level slider
 
 The generator produces the same terrain structures that `.map` files persist,
@@ -187,10 +187,10 @@ so a generated map can be saved and reloaded losslessly.
 | Terrain | `Terr` @0xB8: 121×121 grid, heights −1.0…9.484, climate `Temperate`, 33-name palette == `dbterrain_temperate.csv` |
 | Stats | `MpSt` @0x25FC8 containing display name `Highland` |
 | Territories | `TeTr` @0x26122 |
-| Objects | hundreds of `UAbD`/`Unit` records from 0x271F2 on — boars, wolves, resource nodes (`Gold`, `Iron`, `Stone`, `Pete`, `Uran`), trees by species (`daphne`, `birch`, `aspen`, `cedar`...) |
+| Objects | hundreds of `UAbD`/`Unit` records from 0x271F2 on: boars, wolves, resource nodes (`Gold`, `Iron`, `Stone`, `Pete`, `Uran`), trees by species (`daphne`, `birch`, `aspen`, `cedar`...) |
 | Animals map | `AnmM` @0x4695B, trailing `TNmT` table @0x54F01 |
 
-Its `mapx/` twin is 137 bytes larger with a different checksum — the
+Its `mapx/` twin is 137 bytes larger with a different checksum; the
 expansion's re-encoded copy of the same map.
 
 ---
@@ -206,7 +206,7 @@ A scenario wraps the full map data plus, in `American1.scn` (748,979 B):
 - `VCnd` victory conditions, `Goal`/objective areas (`Esc apePointArea`,
   `SpanishAreUpsetArea`, ...)
 - `Cine` cinematics, camera state `CmSt`
-- **Script binding**: string `ScriptLibs/American1.dll` — compiled from
+- **Script binding**: string `ScriptLibs/American1.dll`, compiled from
   `.ies` source (see `Scripting Docs/EE2 SCRIPTING.doc`,
   `ScriptExampleTutorial1.ies`: `RULES FOR WORLD` / `SCENARIO` / `OBJECTIVE`
   blocks with name/desc/text refs into `db/Text`)
@@ -225,7 +225,7 @@ secondary / lose) and target locations/units/areas/territories.
 - Tile grid is `(N+1)×(N+1)` vertices for an `N×N`-tile map (120→121)
 - Climates: `Temperate`, `Arid`, `Tropical` (registry: `dbterrainclimates.cfg`)
 - Terrain palette in-file always mirrors `dbterrain_<climate>.csv` row names
-- Move types drive pathing; textures/seasons drive rendering — both from the
+- Move types drive pathing; textures/seasons drive rendering; both from the
   same CSV row
 - Editor flow (official): generate (flat/random) → paint terrain/water/cliffs
   → forests/objects/starts/territories → set season+time of day → **Save As

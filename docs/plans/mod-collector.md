@@ -1,6 +1,6 @@
 # ModCollector Tool Plan
 
-Status: Work in progress — last updated 2026-06-22.
+Status: work in progress; last updated 2026-06-22.
 
 ## What it is
 
@@ -12,9 +12,9 @@ collection from ModDB for use with OpenSAGE. It follows the same pattern as
 
 ### Tool type
 
-CLI — `CommandLine` + `CommandParser`, `Program.cs` entry point. Match
+CLI: `CommandLine` + `CommandParser`, `Program.cs` entry point. Match
 `src/OpenSage.Tools.BigTool/OpenSage.Tools.BigTool.csproj` exactly (no game install required).
-TFM is inherited from `src/Directory.Build.props` (`net10.0`) — do not set it in the project file.
+TFM is inherited from `src/Directory.Build.props` (`net10.0`); do not set it in the project file.
 
 Suggested project path: `src/OpenSage.Tools.ModCollector/`
 
@@ -32,7 +32,7 @@ All supported games:
 
 ### Source
 
-ModDB only. No official REST API exists — scraping is the only programmatic option.
+ModDB only. No official REST API exists; scraping is the only programmatic option.
 
 First version: curated static manifest (JSON embedded resource) of known-good download
 URLs, names, game, and category. This is more robust than scraping for an initial
@@ -60,18 +60,18 @@ Leave `.big` files engine-ready so the user can point `CNC_GENERALS_ZH_PATH` (et
 at a game+category directory and OpenSAGE picks them up via `SkudefReader`.
 
 Key refs:
-- `src/OpenSage.IO/SkudefReader.cs` — recursively scans a root dir for `.big` files
+- `src/OpenSage.IO/SkudefReader.cs`: recursively scans a root dir for `.big` files
   in alphabetical order.
-- `src/OpenSage.FileFormats.Big/` — `BigArchive` reads the `.big` format.
-- `src/OpenSage.Tools.BigTool/Program.cs:201-221` — `ExtractMode` logic to borrow.
+- `src/OpenSage.FileFormats.Big/`: `BigArchive` reads the `.big` format.
+- `src/OpenSage.Tools.BigTool/Program.cs:201-221`: `ExtractMode` logic to borrow.
 
 ### ModDB access strategy
 
 Three options evaluated:
 
-1. Call the Python `moddb` PyPI library as a subprocess — fragile, adds a Python dep.
-2. Reimplement the relevant HTTP scraping in C# — maintainable long-term.
-3. Curated static JSON manifest of known-good download URLs — most robust for v1.
+1. Call the Python `moddb` PyPI library as a subprocess; fragile, adds a Python dep.
+2. Reimplement the relevant HTTP scraping in C#; maintainable long-term.
+3. Curated static JSON manifest of known-good download URLs; most robust for v1.
 
 Decision: start with option 3 (curated manifest). Upgrade to option 2 later.
 
@@ -107,7 +107,7 @@ JSON embedded resource. Initial entries:
 | Age of the Ring | Bfme2Rotwk | mods |
 | (handful of map packs per game) | all | maps |
 
-Actual ModDB download URLs to be filled in during implementation — verify each link
+Actual ModDB download URLs to be filled in during implementation; verify each link
 is a direct `.zip` download before committing.
 
 ## Implementation steps

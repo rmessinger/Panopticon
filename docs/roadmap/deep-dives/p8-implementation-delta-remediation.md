@@ -74,12 +74,12 @@ audit, in the existing subsystem the gap was found in:
 
 ## 5. Related
 
-- [P3 victory/defeat](p3-victory-defeat.md) — source of the P8-1/P8-2/P8-3 gaps.
-- [P2/P5 skirmish AI](p2-p5-skirmish-ai.md) — source of the P8-5 gap (and background for P8-4's
+- [P3 victory/defeat](p3-victory-defeat.md): source of the P8-1/P8-2/P8-3 gaps.
+- [P2/P5 skirmish AI](p2-p5-skirmish-ai.md): source of the P8-5 gap (and background for P8-4's
   supply-AI state machine).
-- [P4/P6 economy, production, combat](p4-p6-economy-production-combat.md) — source of the P8-4,
+- [P4/P6 economy, production, combat](p4-p6-economy-production-combat.md): source of the P8-4,
   P8-6, and P8-7 gaps.
-- [P7 end-to-end regression](p7-end-to-end-regression.md) — depends on this phase's matrices being real.
+- [P7 end-to-end regression](p7-end-to-end-regression.md): depends on this phase's matrices being real.
 
 ## 6. Architecture Diagrams
 

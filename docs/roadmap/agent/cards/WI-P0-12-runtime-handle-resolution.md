@@ -85,7 +85,7 @@ or filtered from the live game world, without the author specifying a raw `Objec
                    // ownerIdx 0; relationship filtering is best-effort here).
                    // "enemy": owner must be in Enemies of player[2]; "ally": in Allies.
                    // If relationship checking requires a specific player context, skip filter.
-                   // Do not throw — return the first definition-matched object instead.
+                   // Do not throw; return the first definition-matched object instead.
                }
                return obj.Id;
            }

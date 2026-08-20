@@ -54,7 +54,7 @@ class Program
 {
     static int Main(string[] args)
     {
-        Console.WriteLine("ModCollector — not yet implemented");
+        Console.WriteLine("ModCollector: not yet implemented");
         return 0;
     }
 }

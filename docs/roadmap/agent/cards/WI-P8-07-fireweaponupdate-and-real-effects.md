@@ -24,9 +24,9 @@ gap-message cells with real effect assertions.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:65-72` and the P6 scenario-matrix section: weapon-fire→damage design intent and the "expected observable effect" assertion the matrix is supposed to make.
-- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs`: the no-op stub to implement — trace what should invoke it (weapon cooldown/range checks) and what it should call into (`Weapon`/`WeaponTemplate`/`DamageModule`).
+- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs`: the no-op stub to implement; trace what should invoke it (weapon cooldown/range checks) and what it should call into (`Weapon`/`WeaponTemplate`/`DamageModule`).
 - `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs`, `WeaponTemplate.cs`: the weapon-fire model `FireWeaponUpdate` should drive.
-- `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs`: existing damage-terminal tests (`WI-P6-02`) — extend these once real weapon fire exists, without breaking the existing direct-`AttemptDamage` assertions.
+- `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs`: existing damage-terminal tests (`WI-P6-02`); extend these once real weapon fire exists, without breaking the existing direct-`AttemptDamage` assertions.
 - `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs:180-220` (or wherever the 9 gap-message cells live): the current "GAP" placeholder assertions to replace with real effect checks for move/attack/special-power cells.
 - `docs/roadmap/agent/cards/WI-P6-02-combat-coverage.md` and `WI-P6-04-scenario-matrix.md`: prior cards; their Result sections document exactly what was skipped and why.
 
@@ -34,7 +34,7 @@ gap-message cells with real effect assertions.
 
 1. Implement `FireWeaponUpdate.Update()` so it drives real weapon fire (cooldown/range/ammo as applicable) into the existing `DamageModule`/`ActiveBody` path already covered by `WI-P6-02`. Keep scope tight: this closes the specific disclosed gap, not a general weapons-system rewrite.
 2. Add a headless test that fires a weapon through `FireWeaponUpdate` (not by calling `AttemptDamage` directly) and asserts the target's health decreases, extending `CombatCoverageTests.cs`.
-3. In the P6 scenario matrix, replace the 9 gap-message cells (move/attack/special-power × faction) with real observable-effect assertions: unit position changes for `MoveTo`, target health decreases for `AttackObject` (now backed by step 1's real fire path), and a concrete ability effect for `SpecialPower` (or a narrower, explicitly-scoped effect if a given special power genuinely cannot be asserted headlessly — document exactly which and why, per cell).
+3. In the P6 scenario matrix, replace the 9 gap-message cells (move/attack/special-power × faction) with real observable-effect assertions: unit position changes for `MoveTo`, target health decreases for `AttackObject` (now backed by step 1's real fire path), and a concrete ability effect for `SpecialPower` (or a narrower, explicitly-scoped effect if a given special power genuinely cannot be asserted headlessly; document exactly which and why, per cell).
 4. Update `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md`'s P6 scenario-matrix notes once gap cells are closed, removing stale "GAP"/caveat language for cells that are fixed.
 5. Run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 

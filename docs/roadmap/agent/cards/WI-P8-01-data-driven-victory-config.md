@@ -23,7 +23,7 @@ skirmish setup already uses (map settings or `PlayerSetting`-adjacent skirmish o
 
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:46-68`: defeat rule / score metric / frame limit design intent as "configurable/data-driven".
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:133-145`: resolved design questions confirming these are meant to be config-driven, not hardcoded.
-- `src/OpenSage.Game/Logic/VictorySystem.cs:17-34`: current `internal` `ConditionRule`, `ScoreMetric`, `FrameLimit` properties — the seam that needs a real configuration entry point.
+- `src/OpenSage.Game/Logic/VictorySystem.cs:17-34`: current `internal` `ConditionRule`, `ScoreMetric`, `FrameLimit` properties: the seam that needs a real configuration entry point.
 - `src/OpenSage.Game/Logic/VictoryConditionRule.cs`: the rule type hierarchy (`VictoryConditionRule`, `DefaultVictoryConditionRule`).
 - `src/OpenSage.Network/SkirmishManager.cs` (or wherever skirmish/game-start settings are assembled): existing skirmish configuration surface to extend, e.g. a `GameOptions`/`SkirmishSettings`-like type if one exists.
 - `src/OpenSage.Game.Tests/Logic/Victory/VictoryRuleTests.cs` and `src/OpenSage.Game.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs`: existing tests that set these properties directly; keep them passing (they may continue to set the properties directly for isolated unit tests) while adding a new higher-level path.
@@ -33,7 +33,7 @@ skirmish setup already uses (map settings or `PlayerSetting`-adjacent skirmish o
 1. Identify (or add, if none exists) a lightweight configuration object for match-level settings that is already threaded through skirmish start (e.g. alongside `PlayerSetting[]` in `PlayerManager.OnNewGame`), or add a single new optional parameter/settings type if no natural home exists.
 2. Add a frame-limit value (defaulting to `VictorySystem.NoFrameLimit`) and a named score-metric selector (e.g. an enum with at least `BuildingCount`, defaulting to the current behavior) to that configuration surface.
 3. Wire it so constructing/starting a match sets `VictorySystem.FrameLimit`/`ScoreMetric` from the configuration instead of requiring test code to set them directly afterward.
-4. Leave `ConditionRule` selection as an internal/test-only seam if there is no natural data-driven representation for swapping the whole defeat-rule algorithm yet (a full `VictoryConditionRule` plugin system is a larger design question — do not over-build it here); document this explicitly as a known remaining gap in the Result section if so.
+4. Leave `ConditionRule` selection as an internal/test-only seam if there is no natural data-driven representation for swapping the whole defeat-rule algorithm yet (a full `VictoryConditionRule` plugin system is a larger design question; do not over-build it here); document this explicitly as a known remaining gap in the Result section if so.
 5. Add a headless `[Fact]` test that starts a match through the real skirmish/config path with a non-default frame limit and score metric and asserts `VictorySystem.FrameLimit`/`ScoreMetric` reflect the configuration, not just that setting the properties directly still works.
 6. Run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
