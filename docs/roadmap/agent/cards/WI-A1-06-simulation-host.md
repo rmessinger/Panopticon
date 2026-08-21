@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A1-06` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, sub-phase A1-4 |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-05` (the stepper is the host's engine) |
-| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) (placeholder until `WI-A1-03` is `Done`) |
+| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) |
 
 ## Goal
 

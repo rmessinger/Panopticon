@@ -66,6 +66,7 @@ public static class HarnessRunner
                 window: null);
             using var replayFileSystem = new DiskFileSystem(Path.GetDirectoryName(replayPath)!);
             var replayEntry = replayFileSystem.GetFile(Path.GetFileName(replayPath));
+            var replayFile = OpenSage.Data.Rep.ReplayFile.FromFileSystemEntry(replayEntry);
 
             game.LoadReplayFile(replayEntry);
             game.StartRun();
@@ -77,7 +78,10 @@ public static class HarnessRunner
             var pendingInjections = BuildDeferredInjector(monitor, deferredActions);
 
             var resolver = new ObjectReferenceResolver(game);
-            var dispatchRng = new Random();
+            // Seed the dispatch RNG from the replay's recorded run seed so harness runs are
+            // reproducible (A2, WI-A2-03); the engine's GameLogic.Random is seeded from the
+            // same value when the replay is loaded.
+            var dispatchRng = new Random(replayFile.Header.Metadata.SD);
             try
             {
                 while (game.IsRunning)

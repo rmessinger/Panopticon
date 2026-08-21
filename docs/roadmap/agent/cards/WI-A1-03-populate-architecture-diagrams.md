@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-03` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, sub-phase A1-1 |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-01`, `WI-A1-02` |

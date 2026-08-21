@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A2-04` |
 | Roadmap phase | [Track A · A2](../../track-a-foundations.md): Reproducibility & statistical stability |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A2-03` (randomness must be seeded before stability can be asserted) |
-| Diagrams | Blocked on the A2 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Diagrams | [A2 §5](../../deep-dives/a2-reproducibility.md#5-architecture-diagrams) |
 
 ## Goal
 

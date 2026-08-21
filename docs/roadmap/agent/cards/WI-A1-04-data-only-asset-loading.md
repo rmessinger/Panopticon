@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A1-04` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, sub-phase A1-2 |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-03` (blocked on it: the §5 diagrams must be grounded before A1 code lands) |
-| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) (placeholder until `WI-A1-03` is `Done`) |
+| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) |
 
 ## Goal
 

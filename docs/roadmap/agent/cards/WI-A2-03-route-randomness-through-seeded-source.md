@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A2-03` |
 | Roadmap phase | [Track A · A2](../../track-a-foundations.md): Reproducibility & statistical stability |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A2-01`, `WI-A2-02`, plus an A2 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |

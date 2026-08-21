@@ -99,11 +99,11 @@ specified in [visualization.md §5](a5-visualization.md).
 
 | Phase | Goal | Status |
 |---|---|---|
-| A1-1. Headless seam audit & approach | Confirm exactly what the logic/asset-data path needs from `GraphicsDevice`/graphics resources, then scope the null device abstraction (chosen §2.1 approach) and document the target "logic-only" surface. | Not started |
-| A1-2. Data-only asset loading | Allow `AssetStore`/`ContentManager` to load logic-relevant data without GPU upload (H2), generalizing the `OnDemandAssetLoadStrategy.None` path. | Not started |
-| A1-3. Logic-tick extraction | Extract the deterministic logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Not started |
-| A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Not started |
-| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered divergence recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay (input) recordings from a headless run (builds on [A2](../track-a-foundations.md) for seeded, comparable runs). | Not started |
+| A1-1. Headless seam audit & approach | Confirm exactly what the logic/asset-data path needs from `GraphicsDevice`/graphics resources, then scope the null device abstraction (chosen §2.1 approach) and document the target "logic-only" surface. | Done |
+| A1-2. Data-only asset loading | Allow `AssetStore`/`ContentManager` to load logic-relevant data without GPU upload (H2), generalizing the `OnDemandAssetLoadStrategy.None` path. | Done |
+| A1-3. Logic-tick extraction | Extract the deterministic logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Done |
+| A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Done (domain seam parameterized pending A4) |
+| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered divergence recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay (input) recordings from a headless run (builds on [A2](../track-a-foundations.md) for seeded, comparable runs). | In progress (T0 metrics/events + terminal outcome done; snapshots/deltas, T1, T2 are follow-up cards) |
 
 > Result analysis, visualization, and scenario authoring were previously sketched here as
 > A1-6/A1-7; they now live in their own phase, [A5](a5-visualization.md) (A5-1 scenario authoring,
@@ -122,50 +122,136 @@ specified in [visualization.md §5](a5-visualization.md).
 
 ## 5. Architecture Diagrams
 
-Diagrams for this phase will be elaborated once A1 moves to active implementation. The
-placeholder below captures the key types the headless simulation host introduces.
+Grounded in the A1-1 audits
+([implementation plan](../implementation/track-a-a1-headless-host.md)). Types marked `<<A1-3>>`,
+`<<A1-4>>`, or `<<A1-5>>` are sub-phase deliverables; everything else exists in `src/` today.
+
+The null-device question resolved by the audit: the logic and asset-data path uses so little of
+`GraphicsDevice` (see the
+[candidate surface](../implementation/track-a-a1-headless-host.md#candidate-null-device-surface))
+that A1-2 makes the `AssetStore` graphics parameters optional instead of introducing a null-device
+interface. A null device remains the fallback if a later phase needs full map load without a GPU;
+its member list is the audit's candidate surface, still open.
 
 ```mermaid
 classDiagram
   class SimulationHost {
-    <<pending A1>>
-    +GameLogic Logic
-    +FixedTickRate float
-    +Run(scenario) RunOutput
-    +event TickComplete
+    <<A1-4>>
+    +IGameEngine GameEngine
+    +LogicStepper Stepper
+    +Run(int frameBudget, Func~bool~ stopPredicate) SimulationHostRunResult
+    +InjectOrders(int frame, IEnumerable~Order~ orders)
+    +event EventHandler~SimulationHostTickEventArgs~ TickComplete
   }
 
-  class RunOutput {
-    <<pending A1>>
-    +TieredRecording Recording
-    +GameOutcome Outcome
-    +PerformanceMetrics Metrics
-  }
-
-  class TieredRecording {
-    <<pending A1>>
-    +T0 FrameHashes
-    +T1 StateDelta
-    +T2 FullSnapshot
-  }
-
-  class PerformanceMetrics {
-    <<pending A1>>
-    +TimeSpan TotalWallTime
-    +double LogicTicksPerSecond
-    +long PeakMemoryBytes
+  class LogicStepper {
+    <<A1-3>>
+    +IGame Game
+    +AdvanceLogic(TimeInterval mapTime) bool
   }
 
   class Game {
     <<engine>>
-    +GameLogic Logic
-    +Update(dt)
+    +GameLogic GameLogic
+    +ScriptingSystem Scripting
+    +Update(messages)
+    +EnableFixedLogicTimestep()
   }
 
-  SimulationHost --> RunOutput
-  RunOutput --> TieredRecording
-  RunOutput --> PerformanceMetrics
-  SimulationHost ..> Game : wraps without renderer/audio
+  class IGameEngine {
+    <<engine>>
+    +GameLogic GameLogic
+    +GameClient GameClient
+    +Scene3D Scene3D
+    +Terrain Terrain
+    +Navigation Navigation
+    +Quadtree Quadtree
+    +AssetLoadContext AssetLoadContext
+  }
+
+  class GameLogic {
+    <<engine>>
+    +LogicFrame CurrentFrame
+    +IRandom Random
+    +Update()
+  }
+
+  class AssetStore {
+    <<engine>>
+    +AssetLoadContext LoadContext
+  }
+
+  class RunOutput {
+    <<A1-5>>
+    +string RunId
+    +uint Seed
+    +string ScenarioId
+    +uint TotalLogicFrames
+    +TimeSpan WallClockDuration
+    +GameOutcome Outcome
+    +List~MetricSample~ MetricSamples
+  }
+
+  class GameOutcome {
+    <<engine>>
+    +OutcomeStatus Status
+    +OutcomeReason Reason
+  }
+
+  SimulationHost --> LogicStepper : drives
+  SimulationHost --> IGameEngine : owns world via
+  LogicStepper --> Game : reads GameLogic, NetworkMessageBuffer, Scene3D, PartitionCellManager, Scripting
+  LogicStepper ..> GameLogic : LogicTick order
+  IGameEngine --> GameLogic
+  IGameEngine --> AssetStore
+  SimulationHost ..> RunOutput : emits <<A1-5>>
+  RunOutput --> GameOutcome
+```
+
+One headless tick. The presentation calls from the tick-path audit are explicitly not invoked;
+the stepper performs exactly the `logic` rows of the audit, in their existing order.
+
+```mermaid
+sequenceDiagram
+  participant Host as SimulationHost
+  participant Stepper as LogicStepper
+  participant GL as GameLogic
+  participant NMB as NetworkMessageBuffer
+  participant S3D as Scene3D
+  participant PCM as PartitionCellManager
+  participant Scr as ScriptingSystem
+
+  Host->>Host: advance MapTime by one fixed step
+  Host->>Stepper: AdvanceLogic(MapTime)
+  Stepper->>GL: Update()
+  Stepper->>NMB: Tick()
+  Stepper->>S3D: LogicTick(timeInterval)
+  S3D->>S3D: PlayerManager.LogicTick, GameObject.LogicTick, DeleteDestroyed
+  Stepper->>PCM: Update()
+  Stepper->>Scr: ScriptingTick()
+  Host->>Host: raise TickComplete(frame, logic state)
+  Note over Host,Scr: Not invoked: InputMessageBuffer.PumpEvents, Scene2D.LocalLogicTick, Scene3D.LocalLogicTick, Audio.Update, Cursors.Update, Updating event, Game.Render
+```
+
+Headless startup, following the construction order of `Game.cs:510-600` with the graphics
+dependencies absent (A1-2):
+
+```mermaid
+sequenceDiagram
+  participant Driver as Run driver
+  participant Store as AssetStore
+  participant CM as ContentManager
+  participant Game as Game / mocked IGame
+  participant Host as SimulationHost
+
+  Driver->>Store: new AssetStore(sageGame, fileSystem, language, graphicsDevice: null, standardGraphicsResources: null, shaderResources: null, shaderSetStore: null, OnDemandAssetLoadStrategy.None)
+  Store->>Store: AssetLoadContext with null graphics fields
+  Driver->>CM: new ContentManager(game, fileSystem, graphicsDevice: null, sageGame)
+  CM->>Store: SubsystemLoader loads INI (objects, weapons, locomotors)
+  Note over CM,Store: No GPU upload: None strategy passes null on-demand loaders
+  Driver->>Game: construct logic services (GameLogic, PlayerManager, PartitionCellManager, ScriptingSystem)
+  Driver->>Host: new SimulationHost(game.GameEngine, new LogicStepper(game))
+  Driver->>Host: Run(frameBudget, stopPredicate)
 ```
 
 ## 6. Related

@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A1-05` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, sub-phase A1-3 |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-03` (diagrams), `WI-A1-04` (data-only asset loading, so the stepper can be exercised without a device) |
-| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) (placeholder until `WI-A1-03` is `Done`) |
+| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) |
 
 ## Goal
 

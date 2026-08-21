@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A1-07` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, sub-phase A1-5 |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-06` (the host), `WI-A2-03` (seeded randomness, so runs are comparable per the [relaxed-determinism Decision](../../open-questions.md)) |
-| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) (placeholder until `WI-A1-03` is `Done`) |
+| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) |
 
 ## Goal
 

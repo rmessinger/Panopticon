@@ -44,8 +44,6 @@ public sealed class Game : DisposableBase, IGame
 
     private InputLoggerMessageHandler _inputLoggerHandler;
 
-    private readonly double _scriptingUpdateInterval;
-
     private readonly FileSystem _fileSystem;
     private readonly WndCallbackResolver _wndCallbackResolver;
 
@@ -178,6 +176,12 @@ public sealed class Game : DisposableBase, IGame
 
     public float LogicUpdateScaleFactor { get; set; } = 1f;
 
+    /// <summary>
+    /// The renderer-free logic stepper (A1-3). Owns the fixed-rate logic and scripting step
+    /// previously embedded in <see cref="Update"/>.
+    /// </summary>
+    internal LogicStepper LogicStepper { get; }
+
     public void LoadSaveFile(FileSystemEntry entry)
     {
         SaveFile.Load(entry, this);
@@ -194,7 +198,7 @@ public sealed class Game : DisposableBase, IGame
         if (!mapFilename.EndsWith(".map", StringComparison.OrdinalIgnoreCase))
             mapFilename += ".map";
 
-        var pSettings = ParseReplayMetaToPlayerSettings(replayFile.Header.Metadata.Slots);
+        var pSettings = ParseReplayMetaToPlayerSettings(replayFile.Header.Metadata.Slots, replayFile.Header.Metadata.SD);
 
         StartSkirmishOrMultiPlayerGame(
             mapFilename,
@@ -204,9 +208,11 @@ public sealed class Game : DisposableBase, IGame
             isMultiPlayer: false); // TODO
     }
 
-    private List<PlayerSetting> ParseReplayMetaToPlayerSettings(ReplaySlot[] slots)
+    private List<PlayerSetting> ParseReplayMetaToPlayerSettings(ReplaySlot[] slots, int seed)
     {
-        var random = new Random();
+        // Seeded from the replay's recorded run seed so re-loading a replay re-rolls the same
+        // factions for slots recorded as random (A2, WI-A2-03).
+        var random = new Random(seed);
 
         // TODO: set the correct factions & colors
         var pSettings = new List<PlayerSetting>();
@@ -329,7 +335,7 @@ public sealed class Game : DisposableBase, IGame
         set
         {
             _isLogicRunning = value;
-            _isStepping = false;
+            LogicStepper?.CancelStepping();
 
             if (!_isLogicRunning)
             {
@@ -342,9 +348,6 @@ public sealed class Game : DisposableBase, IGame
         }
     }
     private bool _isLogicRunning;
-
-    // Are we in the middle of stepping until the next logic frame?
-    private bool _isStepping;
 
     // Measures time when IsLogicRunning == true.
     // Is reset when the map changes.
@@ -372,14 +375,7 @@ public sealed class Game : DisposableBase, IGame
     /// </summary>
     public TimeInterval RenderTime { get; private set; }
 
-    // The time of the next logic update.
-    private TimeSpan _nextLogicUpdate;
-
-    // When is the next scripting update?
-    private TimeSpan _nextScriptingUpdate;
-
-    // TODO: Move this to somewhere else, or remove it.
-    public TimeSpan CumulativeLogicUpdateError { get; private set; }
+    public TimeSpan CumulativeLogicUpdateError => LogicStepper.CumulativeLogicUpdateError;
 
     public IGameDefinition Definition { get; }
     public SageGame SageGame => Definition.Game;
@@ -620,8 +616,6 @@ public sealed class Game : DisposableBase, IGame
 
             Graphics = AddDisposable(new GraphicsSystem(this));
 
-            _scriptingUpdateInterval = 1000.0 / installation.Game.ScriptingTicksPerSecond;
-
             Scripting = AddDisposable(new ScriptingSystem(this));
 
             Lua = AddDisposable(new LuaScriptEngine(this));
@@ -648,6 +642,8 @@ public sealed class Game : DisposableBase, IGame
             _mapTimer.Reset();
 
             LobbyManager = new LobbyManager(this);
+
+            LogicStepper = new LogicStepper(this);
 
             IsRunning = true;
             IsLogicRunning = true;
@@ -782,6 +778,12 @@ public sealed class Game : DisposableBase, IGame
             throw new Exception($"Failed to load Scene3D \"{mapFileName}\"");
         }
 
+        // The run seed determines the simulation's random stream (A2, deep dive
+        // a2-reproducibility §2.1). Replay loads pass the seed recorded in the replay metadata.
+        var runSeed = unchecked((uint)seed);
+        GameLogic.Random.Initialize(runSeed);
+        GameClient.Random.Initialize(runSeed);
+
         if (gameType != GameType.SinglePlayer && !Configuration.SkipStartingBuildings)
         {
             var cameraSet = false;
@@ -833,9 +835,7 @@ public sealed class Game : DisposableBase, IGame
 
         // Reset everything, and run the first update on the first frame.
         _mapTimer.Reset();
-        _nextLogicUpdate = TimeSpan.Zero;
-        _nextScriptingUpdate = TimeSpan.Zero;
-        CumulativeLogicUpdateError = TimeSpan.Zero;
+        LogicStepper.Reset();
 
         // Scripts should be enabled in all games, even replays
         Scripting.Active = true;
@@ -914,8 +914,7 @@ public sealed class Game : DisposableBase, IGame
     public void StartRun()
     {
         var totalGameTime = MapTime.TotalTime;
-        _nextLogicUpdate = totalGameTime;
-        _nextScriptingUpdate = totalGameTime;
+        LogicStepper.StartRun(totalGameTime);
     }
 
     public void Update(IEnumerable<InputMessage> messages)
@@ -925,27 +924,7 @@ public sealed class Game : DisposableBase, IGame
 
         var totalGameTime = MapTime.TotalTime;
 
-        // If the game is not paused and it's time to do a logic update, do so.
-        if (IsLogicRunning && totalGameTime >= _nextLogicUpdate)
-        {
-            LogicTick();
-            CumulativeLogicUpdateError += (totalGameTime - _nextLogicUpdate);
-            // Logic updates happen at 5Hz.
-            _nextLogicUpdate += TimeSpan.FromMilliseconds(LogicUpdateInterval);
-
-            if (_isStepping)
-            {
-                IsLogicRunning = false;
-            }
-        }
-
-        // TODO: Which update should be performed first?
-        if (IsLogicRunning && totalGameTime >= _nextScriptingUpdate)
-        {
-            Scripting.ScriptingTick();
-            // Scripting updates happen at 30Hz / 5Hz depending on game.
-            _nextScriptingUpdate += TimeSpan.FromMilliseconds(_scriptingUpdateInterval);
-        }
+        LogicStepper.AdvanceLogic(totalGameTime);
     }
 
     private void LocalLogicTick(IEnumerable<InputMessage> messages)
@@ -969,7 +948,7 @@ public sealed class Game : DisposableBase, IGame
         }
 
         // How close are we to the next logic frame?
-        var tickT = (float)(1.0 - TimeSpanUtility.Max(_nextLogicUpdate - MapTime.TotalTime, TimeSpan.Zero)
+        var tickT = (float)(1.0 - TimeSpanUtility.Max(LogicStepper.NextLogicUpdate - MapTime.TotalTime, TimeSpan.Zero)
                                  .TotalMilliseconds / LogicUpdateInterval);
 
         // We pass RenderTime to Scene2D so that the UI remains responsive even when the game is paused.
@@ -985,32 +964,14 @@ public sealed class Game : DisposableBase, IGame
         Updating?.Invoke(this, new GameUpdatingEventArgs(RenderTime));
     }
 
-    private void LogicTick()
-    {
-        GameLogic.Update();
-
-        NetworkMessageBuffer?.Tick();
-
-        // TODO: What is the order?
-        // TODO: Calculate time correctly.
-        var timeInterval = GetTimeInterval();
-        Scene3D?.LogicTick(timeInterval);
-
-        PartitionCellManager.Update();
-    }
-
-    private TimeInterval GetTimeInterval() => new(MapTime.TotalTime, TimeSpan.FromMilliseconds(GameEngine.MsPerLogicFrame));
-
     private void ToggleLogicRunning()
     {
         IsLogicRunning = !IsLogicRunning;
-        _isStepping = false;
     }
 
     public void Step()
     {
-        IsLogicRunning = true;
-        _isStepping = true;
+        LogicStepper.StepOnce();
     }
 
     /// <summary>

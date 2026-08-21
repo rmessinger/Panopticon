@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A1-01` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, sub-phase A1-1 |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) (placeholder; populated by `WI-A1-03`, which this card feeds) |
+| Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) |
 
 ## Goal
 
