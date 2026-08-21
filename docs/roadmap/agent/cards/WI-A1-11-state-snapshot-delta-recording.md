@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-11` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, A1-5 remainder |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-07` (the run-output framework it extends) |

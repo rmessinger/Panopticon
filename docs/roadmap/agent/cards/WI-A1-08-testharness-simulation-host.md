@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-08` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, A1-4 follow-up |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-06` |
@@ -42,9 +42,24 @@ with the `SimulationHost` run loop, so the harness and the host share one steppi
 
 ## Acceptance criteria
 
-- [ ] Headless TestHarness runs produce byte-identical `.results.txt` output before and after.
-- [ ] No `Game.Render` call remains on the headless path.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Headless TestHarness runs produce byte-identical `.results.txt` output before and after,
+      with a documented deviation: the frame column changed source (MapTime approximation → the
+      exact tick counter `NetworkMessageBuffer.CurrentFrame`, which reads 0 under host stepping
+      otherwise), and polled diagnostic categories (Health grouping, SupplyCycle Approach
+      fields) depend on poll cadence. Measured on AlpineAssaultUSAvGLA headless, pristine main
+      vs this branch: 4804 lines each; bodies identical except 33 SupplyCycle polled
+      diagnostics; frame column deltas within [-4, +2]. All Dispatched/Started/Completed and
+      lifecycle entries are identical in sequence and content.
+- [x] No `Game.Render` call remains on the headless path (capture mode renders offscreen on
+      `TickComplete` by necessity; the logic-only default path renders nothing).
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
+
+## Discovered defect (not this card's scope)
+
+Both the pristine-main and the migrated headless run deterministically stall at logic frame
+10435 of this scenario (after `GLAHoleCommandCenter` destruction): the migrated run spins in
+`SleepyUpdateList.RebalanceChild`; the old run hangs in headless `Render`
+(`ShadowMapRenderer`). Tracked by `WI-A1-12`.
 
 ## Validation commands
 

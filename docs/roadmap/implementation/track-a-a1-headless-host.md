@@ -24,6 +24,10 @@ output (A1-5, metrics/events tier only; T1/T2 stay gated on A2 tolerances and A5
 | A1-3 | [`WI-A1-05`](../agent/cards/WI-A1-05-extract-logic-stepper.md) | `LogicStepper` extracted from `Game.Update`; presentation stays in `Game`. |
 | A1-4 | [`WI-A1-06`](../agent/cards/WI-A1-06-simulation-host.md) | `SimulationHost`: FTRT run loop, order injection, per-tick hook. |
 | A1-5 | [`WI-A1-07`](../agent/cards/WI-A1-07-run-outputs-metrics-stream.md) | T0 run output: JSON with seed, frames, terminal `GameOutcome`, bounded metric series. |
+| A1-5 | [`WI-A1-08`](../agent/cards/WI-A1-08-testharness-simulation-host.md) | TestHarness headless + P0 `HarnessRunner` onto `SimulationHost`. |
+| A1-5 | [`WI-A1-09`](../agent/cards/WI-A1-09-t1-signature-tree-recording.md) | T1 signature trees. |
+| A1-5 | [`WI-A1-10`](../agent/cards/WI-A1-10-t2-triggered-detail-capture.md) | T2 triggered detail capture. |
+| A1-5 | [`WI-A1-11`](../agent/cards/WI-A1-11-state-snapshot-delta-recording.md) | Snapshot and delta recording. |
 
 ---
 
@@ -204,3 +208,31 @@ advances map time itself (fixed delta per step for deterministic hosts, wall-clo
 rather than relying on `Game.Update` to have done it. Generalization required: none to the
 arithmetic; the stepper must keep `FixedDelta` behavior byte-identical when driven through
 `Game.Update`.
+
+## A1-5 tier implementation
+
+All tiers feed from one `WorldStateSampler` pass per tick (`src/OpenSage.Game/Recording/`):
+a `WorldStateSummary` (per-object id/definition/owner/position/health plus the player money
+vector, id-sorted) and the frame `WorldStateDelta` against the previous tick. Types:
+
+| Tier | Type | Design |
+|---|---|---|
+| T0 | `RunOutputRecorder` → `RunOutput.MetricSamples` | Per-player metrics at a bounded sample interval; terminal `GameOutcome`. |
+| T1 | `TieredSignatureRecorder` → `RunOutput.SignatureTrees` | `SignatureTreeBuilder` builds a root + spatial-cell-bucket tree per sampled frame. Bucket keys are origin-anchored grid cells (`cell:x,y`, default 100 world units), the stable domain-topology address for the RTS grid domain; entity signatures hash definition, owner, position/health quantized to `SignatureTolerances` (position ε 0.5, health ε 1.0; strict mode hashes exact bits per the A2 strict-hash scope Decision). Bucket and root hashes are order-independent combines (sum of mixed member hashes), so differently-iterated or partitioned runs compare. Per-frame trees are built only while a T2 trigger is armed. |
+| T2 | `TriggeredDetailCapture` → `RunOutput.TriggeredCaptures` | Ring buffer (default depth 30 frames) of per-frame deltas, tripped live by the armed trigger with the diverged subtree keys recorded; cooldown of one ring depth between trips, max 8 windows, plus pre-marked windows (`WithMarkedWindow`). |
+| Snapshots | `SnapshotDeltaRecorder` → `RunOutput.SnapshotArtifactPath` + `SnapshotFrames` | Full summaries at a snapshot interval (default 300) streamed to a binary artifact (`WorldStateArtifactWriter`, save-format `StatePersister` primitives, flushed per record) plus per-frame deltas; `WorldStateArtifact.Reconstruct` rebuilds any frame from the latest baseline plus deltas. Whole-object save blobs were rejected: `GameObject.Persist` needs live team/map context and cannot round-trip standalone. |
+
+`RunRecording.Attach(host, game, seed, ...)` wires sampler + all recorders onto a host;
+`Complete()` fills the `RunOutput` DTOs. `SignatureTreeComparer.FindDivergedSubtrees` is the
+emission-side localization helper; the comparator UI remains A5-4.
+
+WI-A1-08 (`SimulationHost` migration): `ReplayScenarioRunner.RunHeadless` and the P0
+`HarnessRunner.RunAndAssert` loop step through `SimulationHost` (fixed-timestep FTRT) with
+per-frame work on `TickStarting` (pre-step dispatch: scheduled actions, deferred-injection
+drain) and `TickComplete` (recorder polls, runout/timeout checks). Frame counters that read
+`MapTime` now read `NetworkMessageBuffer.CurrentFrame` (order-frame counter, tick-aligned) or
+the host frame. Deferred-injection countdowns are per logic frame now, deterministic where the
+wall-clock loop was not. Capture mode (`CaptureFrames: true`) is the documented render
+exception: it renders offscreen frames on `TickComplete` so `FrameCaptureService` can inspect
+them. Windowed mode and the validation ground (already fixed-timestep, interactive pause
+semantics) are unchanged.

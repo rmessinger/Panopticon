@@ -475,7 +475,9 @@ public sealed class EngineActionRecorder : IDisposable
     }
 
     private uint CurrentFrame()
-        => (uint)(_game.MapTime.TotalTime.TotalMilliseconds / _game.GameEngine.MsPerLogicFrame);
+        // The order-frame counter is tick-aligned and valid in every mode; MapTime-derived
+        // frames read 0 under SimulationHost stepping, which owns the map clock (WI-A1-08).
+        => _game.NetworkMessageBuffer?.CurrentFrame ?? 0;
 
     private static string Fmt(in Vector3 v) => $"({v.X:F2},{v.Y:F2},{v.Z:F2})";
 

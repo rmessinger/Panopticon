@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-09` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, A1-5 remainder |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-07` (the per-tick hook and T0 format it builds on), plus the A5-4 bucketing design |
@@ -25,8 +25,10 @@ partition to entity bucket) suitable for tolerance-aware divergence screening, p
 
 ## Steps
 
-Blocked until A5-4 defines the bucketing (how the tree partitions entities) and the tolerance
-format. Do not guess the bucket design here.
+Unblocked: [a5-visualization.md §5.2](../../deep-dives/a5-visualization.md#52-design-points)
+specifies the bucketing (stable keys from the domain topology: spatial cells for the RTS grid
+domain, stable entity ids) and the tolerance shape (per-quantity ε, opt-in strict hashes), which
+was the blocker this card was waiting on. The comparator UI stays A5-4.
 
 ## Files likely to change
 

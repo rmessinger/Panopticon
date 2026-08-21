@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using OpenSage.Logic;
@@ -39,10 +40,12 @@ public sealed class RunMetricSample
 }
 
 /// <summary>
-/// T0 (aggregate) run output of a headless <see cref="SimulationHost"/> run (A1-5): run
+/// Run output of a headless <see cref="SimulationHost"/> run (A1-5). T0 (aggregate): run
 /// identity, seed, frame count, wall-clock duration, terminal outcome, and a bounded per-player
-/// metric time series. Serialized with the P0 harness JSON conventions (camelCase, string
-/// enums, indented) so the A5 visualizer reads one format. T1/T2 tiers are separate follow-ups.
+/// metric time series. T1: tolerance-quantized hierarchical signature trees per sampled frame.
+/// T2: bounded triggered detail windows. Snapshot/delta recording streams to a sibling binary
+/// artifact referenced by <see cref="SnapshotArtifactPath"/>. Serialized with the P0 harness
+/// JSON conventions (camelCase, string enums, indented) so the A5 visualizer reads one format.
 /// </summary>
 public sealed class RunOutput
 {
@@ -53,6 +56,18 @@ public sealed class RunOutput
     public double WallClockDurationMilliseconds { get; set; }
     public RunOutcomeRecord? Outcome { get; set; }
     public List<RunMetricSample> MetricSamples { get; set; } = new();
+
+    // T1 tier: one signature tree per sampled frame (WI-A1-09).
+    public uint T1SampleInterval { get; set; }
+    public List<SignatureTreeSample> SignatureTrees { get; set; } = new();
+
+    // T2 tier: bounded triggered detail windows (WI-A1-10).
+    public List<TriggeredDetailWindowRecord> TriggeredCaptures { get; set; } = new();
+
+    // Snapshot/delta recording (WI-A1-11): binary artifact + index.
+    public uint SnapshotInterval { get; set; }
+    public string? SnapshotArtifactPath { get; set; }
+    public List<uint> SnapshotFrames { get; set; } = new();
 
     internal static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -76,6 +91,94 @@ public sealed class RunOutput
         }
         File.WriteAllText(path, ToJson());
     }
+
+    internal static SignatureTreeSample ToDto(Recording.SignatureTreeFrame tree) => new()
+    {
+        Frame = tree.Frame,
+        Nodes = tree.Nodes.Select(n => new SignatureNodeRecord
+        {
+            Key = n.Key,
+            Level = n.Level,
+            Hash = n.Hash,
+            MemberCount = n.MemberCount,
+        }).ToList(),
+    };
+
+    internal static TriggeredDetailWindowRecord ToDto(Recording.TriggeredDetailWindow window) => new()
+    {
+        Marked = window.Marked,
+        TriggeredAtFrame = window.TriggeredAtFrame,
+        StartFrame = window.StartFrame,
+        EndFrame = window.EndFrame,
+        DivergedSubtrees = window.DivergedSubtrees?.ToList(),
+        Frames = window.Frames.Select(ToDto).ToList(),
+    };
+
+    private static WorldStateDeltaRecord ToDto(Recording.WorldStateDelta delta) => new()
+    {
+        Frame = delta.Frame,
+        Added = delta.Added.Select(ToDto).ToList(),
+        Removed = delta.Removed.ToList(),
+        Changed = delta.Changed.Select(ToDto).ToList(),
+        PlayerMoney = delta.PlayerMoney.ToList(),
+    };
+
+    private static WorldObjectStateRecord ToDto(Recording.WorldObjectState obj) => new()
+    {
+        ObjectId = obj.ObjectId,
+        DefinitionName = obj.DefinitionName,
+        OwnerIndex = obj.OwnerIndex,
+        X = obj.Position.X,
+        Y = obj.Position.Y,
+        Z = obj.Position.Z,
+        Health = obj.Health,
+        MaxHealth = obj.MaxHealth,
+    };
+}
+
+public sealed class SignatureTreeSample
+{
+    public uint Frame { get; set; }
+    public List<SignatureNodeRecord> Nodes { get; set; } = new();
+}
+
+public sealed class SignatureNodeRecord
+{
+    public string Key { get; set; } = "";
+    public int Level { get; set; }
+    public ulong Hash { get; set; }
+    public int MemberCount { get; set; }
+}
+
+public sealed class TriggeredDetailWindowRecord
+{
+    public bool Marked { get; set; }
+    public uint TriggeredAtFrame { get; set; }
+    public uint StartFrame { get; set; }
+    public uint EndFrame { get; set; }
+    public List<string>? DivergedSubtrees { get; set; }
+    public List<WorldStateDeltaRecord> Frames { get; set; } = new();
+}
+
+public sealed class WorldStateDeltaRecord
+{
+    public uint Frame { get; set; }
+    public List<WorldObjectStateRecord> Added { get; set; } = new();
+    public List<uint> Removed { get; set; } = new();
+    public List<WorldObjectStateRecord> Changed { get; set; } = new();
+    public List<uint> PlayerMoney { get; set; } = new();
+}
+
+public sealed class WorldObjectStateRecord
+{
+    public uint ObjectId { get; set; }
+    public string DefinitionName { get; set; } = "";
+    public int OwnerIndex { get; set; }
+    public float X { get; set; }
+    public float Y { get; set; }
+    public float Z { get; set; }
+    public float Health { get; set; }
+    public float MaxHealth { get; set; }
 }
 
 /// <summary>

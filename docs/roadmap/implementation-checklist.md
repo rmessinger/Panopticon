@@ -516,14 +516,16 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     a benchmark shows faster-than-real-time execution.
   - Done: `WI-A1-06`; `SimulationHostTests`. The benchmark clause belongs to B1; the domain seam is
     parameterized as the A4 comment-seam pending the domain-model phase.
-- [ ] A1-5 Run outputs: state snapshots/deltas, metrics/events stream, tiered divergence recording
+- [x] A1-5 Run outputs: state snapshots/deltas, metrics/events stream, tiered divergence recording
       (T0/T1/T2), replay export.
   - AC: a run emits snapshots/deltas + metrics/events + tiered (T0/T1/T2) recording + replay export;
     artifacts are reloadable by the A5 visualizer.
-  - Partial: `WI-A1-07` delivered the metrics/events stream, terminal `GameOutcome`, and the T0
-    aggregate tier (`RunOutput` JSON, round-trip tested). Remaining: state snapshots/deltas, the T1
-    signature tree (needs A5-4 bucketing), T2 triggered detail capture; replay export already exists
-    via the `.rep` path.
+  - Done: `WI-A1-07` (T0 metrics/events + terminal `GameOutcome`), `WI-A1-09` (T1 tolerance-quantized
+    spatial-cell signature trees), `WI-A1-10` (T2 ring-buffer triggered detail + pre-marked windows),
+    `WI-A1-11` (snapshot/delta binary artifact with frame reconstruction), `WI-A1-08` (TestHarness
+    headless + P0 `HarnessRunner` onto `SimulationHost`). Replay input recording is the existing
+    `.rep` path. Milestone test: headless run to a decided outcome with all tiers written and
+    reloadable (`TieredRecordingTests.HeadlessRun_ReachesMatchEnd_AndWritesAllTiers`).
 
 ### A2: Reproducibility & statistical stability
 - [x] Centralize all randomness through a seeded source; audit uncontrolled nondeterminism.

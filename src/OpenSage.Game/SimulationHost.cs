@@ -59,8 +59,15 @@ public sealed class SimulationHost
     private TimeSpan _mapTime;
 
     /// <summary>
-    /// Raised after each completed frame step. The recording formats built on this hook are the
-    /// A1-5 run outputs; do not add recording state to the host itself.
+    /// Raised before each frame step: before due orders dispatch and before the logic tick.
+    /// The frame the step is about to produce is <see cref="SimulationHostTickEventArgs.Frame"/>;
+    /// <see cref="SimulationHostTickEventArgs.LogicFrame"/> is the world's current (pre-step)
+    /// frame. Callers inject frame-scheduled work here.
+    /// </summary>
+    public event EventHandler<SimulationHostTickEventArgs>? TickStarting;
+
+    /// <summary>
+    /// Raised after each completed frame step.
     /// </summary>
     public event EventHandler<SimulationHostTickEventArgs>? TickComplete;
 
@@ -115,7 +122,6 @@ public sealed class SimulationHost
 
         for (var i = 0; i < frameBudget; i++)
         {
-            DispatchDueOrders();
             StepOnce();
             framesCompleted++;
 
@@ -134,6 +140,8 @@ public sealed class SimulationHost
 
     private void StepOnce()
     {
+        TickStarting?.Invoke(this, new SimulationHostTickEventArgs(_frame + 1, LogicFrame, _mapTime + _frameInterval));
+        DispatchDueOrders();
         _mapTime += _frameInterval;
         _stepper.AdvanceLogic(_mapTime);
         _frame++;

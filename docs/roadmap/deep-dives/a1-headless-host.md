@@ -103,7 +103,7 @@ specified in [visualization.md §5](a5-visualization.md).
 | A1-2. Data-only asset loading | Allow `AssetStore`/`ContentManager` to load logic-relevant data without GPU upload (H2), generalizing the `OnDemandAssetLoadStrategy.None` path. | Done |
 | A1-3. Logic-tick extraction | Extract the deterministic logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Done |
 | A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Done (domain seam parameterized pending A4) |
-| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered divergence recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay (input) recordings from a headless run (builds on [A2](../track-a-foundations.md) for seeded, comparable runs). | In progress (T0 metrics/events + terminal outcome done; snapshots/deltas, T1, T2 are follow-up cards) |
+| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered divergence recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay (input) recordings from a headless run (builds on [A2](../track-a-foundations.md) for seeded, comparable runs). | Done (T0 metrics/events + terminal outcome; T1 tolerance-quantized spatial-cell signature trees; T2 ring-buffer triggered detail with pre-marked windows; snapshot/delta binary artifact with reconstruction; replay input recording via the existing `.rep` path) |
 
 > Result analysis, visualization, and scenario authoring were previously sketched here as
 > A1-6/A1-7; they now live in their own phase, [A5](a5-visualization.md) (A5-1 scenario authoring,
@@ -190,6 +190,9 @@ classDiagram
     +TimeSpan WallClockDuration
     +GameOutcome Outcome
     +List~MetricSample~ MetricSamples
+    +List~SignatureTreeSample~ SignatureTrees
+    +List~TriggeredDetailWindowRecord~ TriggeredCaptures
+    +string SnapshotArtifactPath
   }
 
   class GameOutcome {

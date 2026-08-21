@@ -293,6 +293,9 @@ public sealed class StateReader : StatePersister
 {
     private readonly BinaryReader _binaryReader;
 
+    /// <summary>Underlying stream, exposed so streaming formats can detect record boundaries.</summary>
+    public Stream BaseStream => _binaryReader.BaseStream;
+
     internal StateReader(Stream stream, IGame game)
         : base(game, StatePersistMode.Read)
     {
@@ -420,6 +423,9 @@ public sealed class StateReader : StatePersister
 public sealed class StateWriter : StatePersister
 {
     private readonly BinaryWriter _binaryWriter;
+
+    /// <summary>Underlying stream, exposed so streaming formats can flush per record.</summary>
+    public Stream BaseStream => _binaryWriter.BaseStream;
 
     internal StateWriter(Stream stream, IGame game)
         : base(game, StatePersistMode.Read)

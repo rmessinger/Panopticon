@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-10` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): Headless simulation host, A1-5 remainder |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-09` (the T1 signature tree trips the capture) |
@@ -24,8 +24,9 @@ buffer, live during the run (a re-run will not reproduce the divergence).
 
 ## Steps
 
-Blocked until `WI-A1-09` exists. Implement the ring buffer bounded by frame window and entity
-count; wire the trigger to the T1 tolerance check on the host's per-tick hook.
+Unblocked with `WI-A1-09` done: the T1 trees trip the capture. The ring buffer is bounded by
+frame window depth (default 30) and total windows (default 8), with a one-ring-depth cooldown
+between trips and pre-marked windows via `WithMarkedWindow`.
 
 ## Files likely to change
 
