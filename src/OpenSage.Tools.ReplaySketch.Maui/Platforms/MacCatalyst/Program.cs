@@ -1,4 +1,4 @@
-﻿using ObjCRuntime;
+using ObjCRuntime;
 using OpenSage.Tools.ReplaySketch.Maui.Platforms.MacCatalyst;
 using UIKit;
 

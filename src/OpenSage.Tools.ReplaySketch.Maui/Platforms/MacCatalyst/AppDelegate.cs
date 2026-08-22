@@ -1,4 +1,4 @@
-﻿using Foundation;
+using Foundation;
 
 namespace OpenSage.Tools.ReplaySketch.Maui.Platforms.MacCatalyst;
 
