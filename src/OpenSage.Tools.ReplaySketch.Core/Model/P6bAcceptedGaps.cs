@@ -45,9 +45,8 @@ public static class P6bAcceptedGaps
 
     private static readonly P6bAcceptedGap[] Accepted =
     [
-        new("CleanupArea", GapClassification.OutOfScopeFollowUp,
-            "Ambulance detox/cleanup area needs OCL + radius area-effect behaviour.",
-            FollowUpTrack),
+        // CleanupArea was retired from this registry by P6c: its applicator handler is
+        // implemented and the Ambulance contract passes without a gap.
         new("ParticleUplinkCannon", GapClassification.OutOfScopeFollowUp,
             "USA particle cannon fire needs beam OCL + sustained area damage + visuals.",
             FollowUpTrack),

@@ -179,17 +179,22 @@ public class P6bScenarioMatrixTests : P6bContractTestBase
         }
 
         // The failing cells are exactly the superweapon archetypes (USA/China/GLA, each fires an
-        // unimplemented particle/nuclear/scud power) plus the USA Ambulance support (CleanupArea).
-        // China support (Hacker) and GLA support are not failing: the Hacker has no command-set
+        // unimplemented particle/nuclear/scud power). The USA Ambulance support no longer fails:
+        // P6c implemented its CleanupArea handler (see P6bSupportContractTests). China support
+        // (Hacker) and GLA support are not failing: the Hacker has no command-set
         // SpecialPowerType, and GLA support is pruned.
         var failingKeys = failingCells
             .Select(c => (archetype: c.Key["archetype"], faction: c.Key["faction"]))
             .OrderBy(t => t.archetype)
             .ThenBy(t => t.faction)
             .ToList();
-        Assert.Contains((UnitArchetype.Superweapon.ToString(), UnitArchetypeCatalog.FactionUSA), failingKeys);
-        Assert.Contains((UnitArchetype.Superweapon.ToString(), UnitArchetypeCatalog.FactionChina), failingKeys);
-        Assert.Contains((UnitArchetype.Superweapon.ToString(), UnitArchetypeCatalog.FactionGLA), failingKeys);
-        Assert.Contains((UnitArchetype.Support.ToString(), UnitArchetypeCatalog.FactionUSA), failingKeys);
+        Assert.Equal(
+            new[]
+            {
+                (UnitArchetype.Superweapon.ToString(), UnitArchetypeCatalog.FactionChina),
+                (UnitArchetype.Superweapon.ToString(), UnitArchetypeCatalog.FactionGLA),
+                (UnitArchetype.Superweapon.ToString(), UnitArchetypeCatalog.FactionUSA),
+            },
+            failingKeys);
     }
 }

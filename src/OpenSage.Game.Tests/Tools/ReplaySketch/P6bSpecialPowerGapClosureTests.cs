@@ -70,8 +70,8 @@ public class P6bSpecialPowerGapClosureTests : P6bContractTestBase
             Assert.False(string.IsNullOrWhiteSpace(accepted.FollowUp));
         }
 
-        // The full documented set must be surfaced (CleanupArea, ParticleUplinkCannon,
-        // NuclearMissile, ScudStorm) across the matrix.
+        // The full documented set must be surfaced (ParticleUplinkCannon, NuclearMissile,
+        // ScudStorm) across the matrix. CleanupArea is implemented (P6c) and must not surface.
         var surfacedNames = gaps.Select(g => g.SpecialPower).Distinct().OrderBy(n => n).ToList();
         var documentedNames = P6bAcceptedGaps.All
             .Select(g => g.SpecialPowerName)
