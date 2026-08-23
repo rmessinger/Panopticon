@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using System.Text;
 using OpenSage.Content.Translation;
@@ -16,7 +17,11 @@ public sealed class ContentManager : DisposableBase
 
     public SubsystemLoader SubsystemLoader { get; }
 
-    public GraphicsDevice GraphicsDevice { get; }
+    /// <summary>
+    /// Null under data-only loading (A1-2). Only read today by <c>Scene3D</c> map load
+    /// (<c>WaitForIdle</c>), which is not reached without render-resource construction.
+    /// </summary>
+    public GraphicsDevice? GraphicsDevice { get; }
 
     public SageGame SageGame { get; }
 
@@ -26,7 +31,7 @@ public sealed class ContentManager : DisposableBase
     public IniDataContext IniDataContext { get; }
 
     public ITranslationManager TranslationManager { get; }
-    // LocaleSpecificEncoding is Mainly used by "9x" ini files
+    // LocaleSpecificEncoding is mainaly used by "9x" ini files
     public Encoding LocaleSpecificEncoding { get; private set; }
 
     public FontManager FontManager { get; }
@@ -36,7 +41,7 @@ public sealed class ContentManager : DisposableBase
     public ContentManager(
         IGame game,
         FileSystem fileSystem,
-        GraphicsDevice graphicsDevice,
+        GraphicsDevice? graphicsDevice,
         SageGame sageGame)
     {
         using (GameTrace.TraceDurationEvent("ContentManager()"))

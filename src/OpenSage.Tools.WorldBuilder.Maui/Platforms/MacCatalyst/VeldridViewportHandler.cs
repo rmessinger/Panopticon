@@ -1,4 +1,4 @@
-﻿#if MACCATALYST
+#if MACCATALYST
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;

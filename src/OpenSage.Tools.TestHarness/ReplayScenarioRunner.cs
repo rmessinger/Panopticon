@@ -95,6 +95,12 @@ public static class ReplayScenarioRunner
         reporter.Info("Done.");
     }
 
+    /// <summary>
+    /// Headless run driven by the A1-4 <see cref="SimulationHost"/>: fixed-timestep,
+    /// faster-than-real-time logic stepping with no <c>Game.Render</c> call on the logic-only
+    /// path (WI-A1-08). Capture mode is the documented exception: it renders offscreen frames
+    /// on the per-frame hook so <see cref="FrameCaptureService"/> can inspect them.
+    /// </summary>
     private static void RunHeadless(GameInstallation installation, TestHarnessConfig config, string replayPath,
         IReadOnlyList<DeferredAction> deferredActions, ActionResultsWriter results, ITestHarnessReporter reporter)
     {
@@ -116,13 +122,11 @@ public static class ReplayScenarioRunner
         using var monitor = new ReplayActionMonitor(game);
         monitor.ActionDispatched += (_, e) =>
         {
-            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
-            reporter.ActionDispatched(e.ActionType, e.Player?.Name, frame);
+            reporter.ActionDispatched(e.ActionType, e.Player?.Name, game.NetworkMessageBuffer.CurrentFrame);
         };
         monitor.ActionCompleted += (_, e) =>
         {
-            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
-            reporter.ActionCompleted(e.ActionType, e.Player?.Name, frame);
+            reporter.ActionCompleted(e.ActionType, e.Player?.Name, game.NetworkMessageBuffer.CurrentFrame);
 
             if (config.CaptureFrames)
             {
@@ -138,11 +142,12 @@ public static class ReplayScenarioRunner
 
         game.MatchOutcomeDecided += (_, _) =>
         {
-            var frame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
             var outcome = game.CurrentOutcome;
+            var frame = game.NetworkMessageBuffer.CurrentFrame;
             if (runoutEndLogicFrame == uint.MaxValue)
             {
-                runoutEndLogicFrame = frame + RunoutLogicFrames;
+                var decidedOn = (uint)(outcome.DecidedOnFrame ?? (int)frame);
+                runoutEndLogicFrame = decidedOn + RunoutLogicFrames;
             }
             reporter.MatchOutcomeDecided(outcome.Status, outcome.Reason, outcome.WinningPlayer?.Name, frame);
         };
@@ -158,15 +163,19 @@ public static class ReplayScenarioRunner
         }
 
         var frameRect = new Mathematics.Rectangle(0, 0, 1024, 768);
+        var host = new SimulationHost(game.GameEngine);
 
-        while (game.IsRunning)
+        // Deferred orders inject before the frame that consumes them, matching the pre-Update
+        // drain position of the previous loop; the countdown is per logic frame now, which is
+        // deterministic where the wall-clock loop was not.
+        host.TickStarting += (_, _) => DrainPendingInjections(game, pendingInjections);
+
+        host.TickComplete += (_, _) =>
         {
-            DrainPendingInjections(game, pendingInjections);
-            game.Update(Array.Empty<Input.InputMessage>());
-            game.Panel.EnsureFrame(frameRect);
-            game.Render();
             if (config.CaptureFrames)
             {
+                game.Panel.EnsureFrame(frameRect);
+                game.Render();
                 capture.FlushPending(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target);
             }
 
@@ -175,15 +184,16 @@ public static class ReplayScenarioRunner
             recorder.PollSupplyCycles();
             results.MaybeFlush();
 
-            if (runoutEndLogicFrame != uint.MaxValue)
+            if (runoutEndLogicFrame != uint.MaxValue
+                && game.NetworkMessageBuffer.CurrentFrame >= runoutEndLogicFrame)
             {
-                var logicFrame = (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
-                if (logicFrame >= runoutEndLogicFrame)
-                {
-                    game.Exit();
-                }
+                game.Exit();
             }
-        }
+        };
+
+        host.Run(
+            int.MaxValue,
+            h => !game.IsRunning);
 
         reporter.Info("Done.");
     }

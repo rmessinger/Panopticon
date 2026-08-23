@@ -473,8 +473,9 @@ public sealed class LuaScriptEngine : GameSystem
 
     public double GetRandomNumber()  //attention for multiplayer sync
     {
-        var random = new Random();
-        return random.NextDouble();
+        // Draw from the seeded logic stream so scripting randomness is determined by the run
+        // seed (A2, WI-A2-03). One draw per call, as before.
+        return Game.GameLogic.Random.NextSingle(0.0f, 1.0f);
     }
 
     public int GetFrame()

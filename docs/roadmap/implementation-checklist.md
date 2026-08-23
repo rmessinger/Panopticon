@@ -497,27 +497,44 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 
 ### A1: Headless simulation host ([deep dive](deep-dives/a1-headless-host.md))
-- [ ] A1-1 Headless seam audit & approach.
+- [x] A1-1 Headless seam audit & approach.
   - AC: TBD, a written audit (in the headless-host deep dive) lists renderer/audio/window couplings
     in the logic tick with a removal approach per coupling.
-- [ ] A1-2 Data-only asset loading (no GPU/audio device).
+  - Done: audits in [`implementation/track-a-a1-headless-host.md`](implementation/track-a-a1-headless-host.md)
+    (`WI-A1-01`, `WI-A1-02`); grounded diagrams in the deep dive (`WI-A1-03`).
+- [x] A1-2 Data-only asset loading (no GPU/audio device).
   - AC: core assets load with no GPU/audio device present; a headless smoke test loads them without a
     window.
-- [ ] A1-3 Extract the logic tick from `Game.cs` into a renderer-free path.
+  - Done: `WI-A1-04`; `DataOnlyAssetLoadingTests` resolves object/weapon/locomotor INI with null
+    graphics, non-Interactive.
+- [x] A1-3 Extract the logic tick from `Game.cs` into a renderer-free path.
   - AC: the logic tick runs via a renderer-free entry point; a headless test advances N ticks with no
     renderer constructed.
-- [ ] A1-4 `SimulationHost` fixed-rate FTRT host (via the domain-model seam).
+  - Done: `WI-A1-05`; `LogicStepper` extracted from `Game.Update`, `LogicStepperTests`.
+- [x] A1-4 `SimulationHost` fixed-rate FTRT host (via the domain-model seam).
   - AC: `SimulationHost` ticks at a fixed rate decoupled from render, parameterized by the domain seam;
     a benchmark shows faster-than-real-time execution.
-- [ ] A1-5 Run outputs: state snapshots/deltas, metrics/events stream, tiered divergence recording
+  - Done: `WI-A1-06`; `SimulationHostTests`. The benchmark clause belongs to B1; the domain seam is
+    parameterized as the A4 comment-seam pending the domain-model phase.
+- [x] A1-5 Run outputs: state snapshots/deltas, metrics/events stream, tiered divergence recording
       (T0/T1/T2), replay export.
   - AC: a run emits snapshots/deltas + metrics/events + tiered (T0/T1/T2) recording + replay export;
     artifacts are reloadable by the A5 visualizer.
+  - Done: `WI-A1-07` (T0 metrics/events + terminal `GameOutcome`), `WI-A1-09` (T1 tolerance-quantized
+    spatial-cell signature trees), `WI-A1-10` (T2 ring-buffer triggered detail + pre-marked windows),
+    `WI-A1-11` (snapshot/delta binary artifact with frame reconstruction), `WI-A1-08` (TestHarness
+    headless + P0 `HarnessRunner` onto `SimulationHost`). Replay input recording is the existing
+    `.rep` path. Milestone test: headless run to a decided outcome with all tiers written and
+    reloadable (`TieredRecordingTests.HeadlessRun_ReachesMatchEnd_AndWritesAllTiers`).
 
 ### A2: Reproducibility & statistical stability
-- [ ] Centralize all randomness through a seeded source; audit uncontrolled nondeterminism.
+- [x] Centralize all randomness through a seeded source; audit uncontrolled nondeterminism.
   - AC: all randomness flows through a seeded source; an audit lists any uncontrolled sources; two
     seeded runs match within tolerance on key metrics.
+  - Done: audits and conversion in [`implementation/track-a-a2-reproducibility.md`](implementation/track-a-a2-reproducibility.md);
+    `Game.StartGame` seeds `GameLogic.Random`/`GameClient.Random` from the run seed; the two
+    simulation-affecting uncontrolled sites converted; `SeededRunTests` verifies same-seed T-exact
+    agreement. Remaining presentation-only sources stay uncontrolled by design (listed in the audit).
 - [ ] Define the conflict-resolution rules for concurrent writes.
   - AC: TBD, rules documented; concurrent writes resolve deterministically per the rule; a test
     exercises a conflicting-write case.

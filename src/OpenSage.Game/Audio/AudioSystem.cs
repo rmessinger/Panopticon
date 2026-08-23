@@ -38,13 +38,18 @@ public sealed class AudioSystem : GameSystem
         _mixers = new Dictionary<AudioVolumeSlider, Submixer>();
         _settings = game.AssetStore.AudioSettings.Current;
 
-        try
+        // NoAudio (test harness, headless hosts) skips audio-device creation entirely:
+        // parallel test games deadlock some OpenAL implementations in alcCreateContext.
+        if (!_noAudio)
         {
-            _engine = AddDisposable(AudioEngine.CreateDefault());
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn($"Audio engine initialization failed, disabling audio: {ex.Message}");
+            try
+            {
+                _engine = AddDisposable(AudioEngine.CreateDefault());
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Audio engine initialization failed, disabling audio: {ex.Message}");
+            }
         }
 
         if (_engine == null)

@@ -66,6 +66,7 @@ public static class HarnessRunner
                 window: null);
             using var replayFileSystem = new DiskFileSystem(Path.GetDirectoryName(replayPath)!);
             var replayEntry = replayFileSystem.GetFile(Path.GetFileName(replayPath));
+            var replayFile = OpenSage.Data.Rep.ReplayFile.FromFileSystemEntry(replayEntry);
 
             game.LoadReplayFile(replayEntry);
             game.StartRun();
@@ -77,49 +78,64 @@ public static class HarnessRunner
             var pendingInjections = BuildDeferredInjector(monitor, deferredActions);
 
             var resolver = new ObjectReferenceResolver(game);
-            var dispatchRng = new Random();
-            try
+            // Seed the dispatch RNG from the replay's recorded run seed so harness runs are
+            // reproducible (A2, WI-A2-03); the engine's GameLogic.Random is seeded from the
+            // same value when the replay is loaded.
+            var dispatchRng = new Random(replayFile.Header.Metadata.SD);
+
+            // A1-4 SimulationHost stepping (WI-A1-08): fixed-timestep, faster-than-real-time.
+            // Frame alignment: TickStarting fires before step k (k = e.Frame), when the world
+            // has completed k-1 frames — matching the pre-Update ComputeLogicFrame of the
+            // previous loop.
+            var host = new SimulationHost(game.GameEngine);
+            var openCommands = 0;
+            var timedOut = false;
+
+            host.TickStarting += (_, e) =>
             {
-                while (game.IsRunning)
+                var logicFrame = e.Frame - 1;
+
+                // For every action whose scheduled frame matches the current frame:
+                //   - Call BeginCommand to start tracking any objects this action creates.
+                //   - For handle-dependent actions: also resolve args and inject directly,
+                //     since they were replaced with no-ops in the exported .rep.
+                var frameActions = schedule.Where(s => s.Frame == logicFrame).ToList();
+                foreach (var item in frameActions)
                 {
-                    var logicFrame = ComputeLogicFrame(game);
-
-                    // For every action whose scheduled frame matches the current frame:
-                    //   - Call BeginCommand to start tracking any objects this action creates.
-                    //   - For handle-dependent actions: also resolve args and inject directly,
-                    //     since they were replaced with no-ops in the exported .rep.
-                    var frameActions = schedule.Where(s => s.Frame == logicFrame).ToList();
-                    foreach (var item in frameActions)
+                    resolver.BeginCommand(item.CommandId);
+                    openCommands++;
+                    if (item.DirectDispatch is { } action)
                     {
-                        resolver.BeginCommand(item.CommandId);
-                        if (item.DirectDispatch is { } action)
-                        {
-                            var resolved = action.Command.Resolve(resolver);
-                            var order = resolved.ToOrder(item.PlayerIndex, item.Ctx, dispatchRng);
-                            game.InjectOrders(new[] { order });
-                        }
-                    }
-
-                    DrainPendingInjections(game, pendingInjections);
-                    game.Update(Array.Empty<OpenSage.Input.InputMessage>());
-
-                    if (evaluator.IsAborted)
-                    {
-                        break;
-                    }
-
-                    // End command tracking after the update so any ObjectCreated events fired
-                    // during the update are correctly attributed to their command.
-                    foreach (var _ in frameActions)
-                    {
-                        resolver.EndCommand();
-                    }
-
-                    if (logicFrame >= DefaultFrameTimeout)
-                    {
-                        break;
+                        var resolved = action.Command.Resolve(resolver);
+                        var order = resolved.ToOrder(item.PlayerIndex, item.Ctx, dispatchRng);
+                        game.InjectOrders(new[] { order });
                     }
                 }
+
+                DrainPendingInjections(game, pendingInjections);
+            };
+
+            host.TickComplete += (_, e) =>
+            {
+                // End command tracking after the update so any ObjectCreated events fired
+                // during the update are correctly attributed to their command.
+                for (var i = 0; i < openCommands; i++)
+                {
+                    resolver.EndCommand();
+                }
+                openCommands = 0;
+
+                if (e.Frame - 1 >= DefaultFrameTimeout)
+                {
+                    timedOut = true;
+                }
+            };
+
+            try
+            {
+                host.Run(
+                    (int)DefaultFrameTimeout + 1,
+                    h => !game.IsRunning || evaluator.IsAborted || timedOut);
             }
             finally
             {
@@ -229,9 +245,6 @@ public static class HarnessRunner
 
         return schedule;
     }
-
-    private static uint ComputeLogicFrame(Game game) =>
-        (uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame);
 
     // ──────────────────────────────────────────────────────────────────────────
     // Deferred injection (AfterActionTiming, existing mechanism)

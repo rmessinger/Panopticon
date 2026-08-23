@@ -26,6 +26,24 @@ Source of truth: [deep-dives/p0-playable-baseline-harness.md](../deep-dives/p0-p
 | [track-p-p0-6-run-and-assert-entry-point.md](track-p-p0-6-run-and-assert-entry-point.md) | P0-5 | Run-and-assert entry point + end-to-end test |
 | [track-p-p0-7-procedural-authoring.md](track-p-p0-7-procedural-authoring.md) | P0-6 | Procedural authoring at scale |
 
+## Track A · A1 : Headless simulation host
+
+Source of truth: [deep-dives/a1-headless-host.md](../deep-dives/a1-headless-host.md) :
+[Architecture diagrams §5](../deep-dives/a1-headless-host.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a1-headless-host.md](track-a-a1-headless-host.md) | A1-1…A1-5 | Headless simulation host |
+
+## Track A · A2 : Reproducibility & statistical stability
+
+Source of truth: [deep-dives/a2-reproducibility.md](../deep-dives/a2-reproducibility.md) :
+[Architecture diagrams §5](../deep-dives/a2-reproducibility.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a2-reproducibility.md](track-a-a2-reproducibility.md) | audits + seeded-source conversion | Reproducibility & statistical stability |
+
 ## Track G · G1 : High-DPI drawable & resolution correctness
 
 Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :

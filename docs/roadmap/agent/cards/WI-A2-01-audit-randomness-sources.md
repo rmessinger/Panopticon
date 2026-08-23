@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A2-01` |
 | Roadmap phase | [Track A · A2](../../track-a-foundations.md): Reproducibility & statistical stability |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |

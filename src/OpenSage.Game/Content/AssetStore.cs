@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System.Collections.Generic;
 using OpenSage.Audio;
 using OpenSage.Content.Loaders;
@@ -171,14 +172,19 @@ public sealed class AssetStore
     public ScopedAssetCollection<WeatherData> WeatherDatas { get; }
     public ScopedAssetCollection<WindowTransition> WindowTransitions { get; }
 
+    /// <summary>
+    /// All graphics parameters may be null for data-only loading (A1-2): the INI/object/map parse
+    /// path performs no GPU work, and <see cref="OnDemandAssetLoadStrategy.None"/> supplies null
+    /// on-demand loaders so texture/model/audio requests return null instead of uploading.
+    /// </summary>
     internal AssetStore(
         SageGame sageGame,
         FileSystem fileSystem,
-        string language,
-        GraphicsDevice graphicsDevice,
-        StandardGraphicsResources standardGraphicsResources,
-        ShaderResourceManager shaderResources,
-        ShaderSetStore shaderSetStore,
+        string? language,
+        GraphicsDevice? graphicsDevice,
+        StandardGraphicsResources? standardGraphicsResources,
+        ShaderResourceManager? shaderResources,
+        ShaderSetStore? shaderSetStore,
         OnDemandAssetLoadStrategy loadStrategy)
     {
         LoadContext = new AssetLoadContext(

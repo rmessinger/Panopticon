@@ -15,6 +15,7 @@ using OpenSage.Input.Cursors;
 using OpenSage.IO;
 using OpenSage.Logic;
 using OpenSage.Logic.Orders;
+using OpenSage.Mods.BuiltIn;
 using OpenSage.Network;
 using OpenSage.Scripting;
 using OpenSage.Terrain;
@@ -142,6 +143,8 @@ public abstract class MockedGameTest : IDisposable
         public TestGame(SageGame game)
         {
             SageGame = game;
+            Definition = GameDefinition.FromGame(game);
+            LogicUpdateScaleFactor = 1f;
             AssetStore = new AssetStore(game, null, null, null, null, null, null, OnDemandAssetLoadStrategy.None);
             IsLogicRunning = true;
             GameSystems = new List<GameSystem>();
