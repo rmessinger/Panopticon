@@ -91,14 +91,21 @@ public static class ControlBarCallbacks
 
         // In minimal-HUD mode the pre-rendered bar frame is gone; outline the minimap so it
         // reads against the terrain behind it. The outline follows the aspect-fitted radar
-        // rectangle, not the control bounds, so it hugs the drawn image.
+        // rectangle, not the control bounds, so it hugs the drawn image, and is expanded
+        // outward by the stroke width so the stroke straddles the image edge instead of
+        // covering its outermost pixel row/column.
         if (control.Window.Game.Scene2D.ControlBar is GeneralsControlBar { MinimalHud: true } &&
             control.Window.Game.Scene3D.RadarDrawUtil.GetMinimapRectangle(control.ClientRectangle) is { } minimapRect)
         {
+            const float strokeWidth = 2;
             drawingContext.DrawRectangle(
-                new Mathematics.RectangleF(minimapRect.X, minimapRect.Y, minimapRect.Width, minimapRect.Height),
+                new Mathematics.RectangleF(
+                    minimapRect.X - strokeWidth,
+                    minimapRect.Y - strokeWidth,
+                    minimapRect.Width + 2 * strokeWidth,
+                    minimapRect.Height + 2 * strokeWidth),
                 new Mathematics.ColorRgbaF(0, 0, 0, 1),
-                2);
+                strokeWidth);
         }
     }
 }
