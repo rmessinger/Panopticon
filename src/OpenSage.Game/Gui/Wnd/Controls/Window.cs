@@ -11,6 +11,13 @@ public class Window : Control
 {
     private readonly Size _creationResolution;
 
+    /// <summary>
+    /// The creation resolution this window's coordinate space is defined in. Controls laying
+    /// out custom drawing that must align to physical pixels scale by
+    /// <c>Size / CreationResolution</c>.
+    /// </summary>
+    public Size CreationResolution => _creationResolution;
+
     private Matrix3x2 _rootTransform;
     private Matrix3x2 _rootTransformInverse;
 

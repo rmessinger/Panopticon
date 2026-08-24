@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using OpenSage.Gui;
 using OpenSage.Gui.Wnd;
 using OpenSage.Gui.Wnd.Controls;
@@ -91,23 +93,35 @@ public static class ControlBarCallbacks
 
         // In minimal-HUD mode the pre-rendered bar frame is gone; outline the minimap so it
         // reads against the terrain behind it. The outline follows the aspect-fitted radar
-        // rectangle, not the control bounds, so it hugs the drawn image, and is expanded
-        // outward by half the stroke width so the stroke straddles the image edge. Raster
-        // rounding of the image quad leaves up to a pixel of background on the right/bottom
-        // when the stroke is fully outside; straddling covers that seam on every side.
+        // rectangle, not the control bounds. The ring's screen-space edges are snapped to
+        // whole pixels (the window scales fractional client coords, which rendered the left
+        // edge thinner than the rest) and extend 3px past the image edge to cover raster seams.
         if (control.Window.Game.Scene2D.ControlBar is GeneralsControlBar { MinimalHud: true } &&
             control.Window.Game.Scene3D.RadarDrawUtil.GetMinimapRectangle(control.ClientRectangle) is { } minimapRect)
         {
-            const float strokeWidth = 3;
-            var half = strokeWidth / 2;
+            var window = control.Window;
+            var scale = MathF.Min(
+                (float)window.Size.Width / window.CreationResolution.Width,
+                (float)window.Size.Height / window.CreationResolution.Height);
+            var origin = new Vector2(control.Bounds.X, control.Bounds.Y);
+
+            var left = MathF.Floor((origin.X + minimapRect.X) * scale) - 3;
+            var top = MathF.Floor((origin.Y + minimapRect.Y) * scale) - 3;
+            var right = MathF.Ceiling((origin.X + minimapRect.Right) * scale) + 3;
+            var bottom = MathF.Ceiling((origin.Y + minimapRect.Bottom) * scale) + 3;
+
+            // DrawRectangle strokes inward from the rect boundary and scales the stroke width
+            // by the window transform, so divide by the scale to get whole-pixel thickness.
+            // The stroke band's outer edge is the snapped rect boundary; the rect extends 3
+            // screen px past the image edge, so the ring covers raster seams.
             drawingContext.DrawRectangle(
                 new Mathematics.RectangleF(
-                    minimapRect.X - half,
-                    minimapRect.Y - half,
-                    minimapRect.Width + strokeWidth,
-                    minimapRect.Height + strokeWidth),
+                    left / scale - origin.X,
+                    top / scale - origin.Y,
+                    (right - left) / scale,
+                    (bottom - top) / scale),
                 new Mathematics.ColorRgbaF(0, 0, 0, 1),
-                strokeWidth);
+                3 / scale);
         }
     }
 }
