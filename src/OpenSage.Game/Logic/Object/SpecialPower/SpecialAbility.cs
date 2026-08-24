@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using OpenSage.Data.Ini;
 

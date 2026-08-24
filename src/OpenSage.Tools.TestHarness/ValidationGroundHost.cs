@@ -167,7 +167,9 @@ public sealed class ValidationGroundHost
                     // Enemy vehicle (the hijacker is GLA; USA is a roster enemy) placed at the
                     // subject position; the hijacker is ordered to walk into it.
                     var enemy = ResolvePlayer(game, HijackVehicleOwnerFactionIndex);
-                    var subject = CreateAt(game, "AmericaVehicleHumvee", subjectPosition, enemy);
+                    var subject = enemy != null
+                        ? CreateAt(game, "AmericaVehicleHumvee", subjectPosition, enemy)
+                        : null;
                     if (subject != null)
                     {
                         unit.SubjectObjectId = subject.Id;

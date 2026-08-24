@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System.Numerics;
 using OpenSage.Data.Ini;
 using OpenSage.Mathematics;
