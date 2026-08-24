@@ -196,7 +196,9 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 
 A windowed run starts paused with the orders held, so the formation's starting conditions can be
 inspected before anything acts (the camera pans/zooms while paused). Space, or the overlay button,
-resumes: the settle stage runs and every unit is ordered to attack its target. Afterwards Space
+resumes: the settle stage runs and every unit is ordered to attack its target. The status window
+is hidden by default; F1 toggles it. Hovering any object shows an ImGui tooltip with its name,
+owner, HP, and position. Afterwards Space
 toggles active pause; paused logic frames do not advance, so pausing never consumes a unit's frame
 budget or perturbs the measurement. `ValidationGroundHoldOrders: false` restores immediate
 auto-issue after the settle stage.
