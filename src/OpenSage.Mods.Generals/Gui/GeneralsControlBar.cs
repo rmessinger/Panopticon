@@ -104,6 +104,9 @@ public sealed class GeneralsControlBar : IControlBar
 
     private bool _minimalHud;
 
+    /// <summary>True when the HUD is in minimap-only mode; the minimap draws an outline then.</summary>
+    internal bool MinimalHud => _minimalHud;
+
     private readonly LocalizedString _moneyString = new("GUI:ControlBarMoneyDisplay");
 
     private Control FindControl(string name) => _window.Controls.FindControl($"ControlBar.wnd:{name}");

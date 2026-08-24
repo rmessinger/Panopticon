@@ -88,5 +88,16 @@ public static class ControlBarCallbacks
         control.Window.Game.Scene3D.RadarDrawUtil.Draw(
             drawingContext,
             control.ClientRectangle);
+
+        // In minimal-HUD mode the pre-rendered bar frame is gone; outline the minimap so it
+        // reads against the terrain behind it.
+        if (control.Window.Game.Scene2D.ControlBar is GeneralsControlBar { MinimalHud: true })
+        {
+            var rect = control.ClientRectangle;
+            drawingContext.DrawRectangle(
+                new Mathematics.RectangleF(rect.X + 1, rect.Y + 1, rect.Width - 2, rect.Height - 2),
+                new Mathematics.ColorRgbaF(0, 0, 0, 1),
+                2);
+        }
     }
 }
