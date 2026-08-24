@@ -256,6 +256,32 @@ public sealed class DrawingContext2D : DisposableBase
         drawLine(new RectangleF(rect.Right - strokeWidth, rect.Y, strokeWidth, rect.Height)); // Right
     }
 
+    /// <summary>
+    /// Strokes a rectangle snapped to whole screen pixels: the rect's edges are snapped outward
+    /// in screen space (extended past the fractional edges of an image quad underneath so the
+    /// ring covers them) and the stroke width is compensated for the current transform's scale.
+    /// Use for UI chrome around image quads drawn from fractional coordinates, where a plain
+    /// <see cref="DrawRectangle"/> would alpha-blend thin or seamed edges. The rendered band is
+    /// exactly <paramref name="strokeWidth"/> screen pixels thick, overlapping the snapped rect
+    /// edge by one pixel.
+    /// </summary>
+    public void DrawPixelSnappedRectangle(in RectangleF rect, in ColorRgbaF strokeColor, float strokeWidth)
+    {
+        var screen = RectangleF.Transform(rect, _currentTransform);
+
+        var left = MathF.Floor(screen.X) - (strokeWidth - 1);
+        var top = MathF.Floor(screen.Y) - (strokeWidth - 1);
+        var right = MathF.Ceiling(screen.Right) + (strokeWidth - 1);
+        var bottom = MathF.Ceiling(screen.Bottom) + (strokeWidth - 1);
+
+        Matrix3x2.Invert(_currentTransform, out var inverse);
+        var snapped = RectangleF.Transform(
+            new RectangleF(left, top, right - left, bottom - top),
+            inverse);
+
+        DrawRectangle(snapped, strokeColor, strokeWidth / _currentScale);
+    }
+
     private ColorRgbaF GetModifiedColorWithCurrentOpacity(in ColorRgbaF color)
     {
         return color.WithA(color.A * _currentOpacity);
