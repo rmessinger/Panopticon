@@ -268,11 +268,10 @@ public sealed class GeneralsControlBar : IControlBar
         // minimap lives in the control-bar window, which has no background of its own.
         _background.Visible = false;
 
-        // Hide every control in the control-bar window except the minimap. Hiding the
-        // containers (not just leaf buttons) matters: rendering skips a hidden control's whole
-        // subtree, so later per-tick Show() calls on leaf buttons stay invisible.
+        // Hide every .wnd child except the minimap: _window.Controls holds the single Root
+        // node, and hiding Root would suppress the whole window including LeftHUD.
         var leftHud = FindControl("LeftHUD");
-        foreach (var control in _window.Controls.AsList())
+        foreach (var control in _window.Root.Controls.AsList())
         {
             HideControlTree(control, leftHud);
         }
