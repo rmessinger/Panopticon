@@ -49,6 +49,8 @@ When the TestHarness window opens, you should see:
 
 ## Capturing frames for visual validation
 
+Environment-specific capture and sharing recipes (headless PNG captures, windowed runs under Xvfb + llvmpipe, synthetic mouse hover for the ImGui overlay) live in [`docs/screenshots.md`](../../docs/screenshots.md); amend that file when a new capability or limitation is found.
+
 The `FrameCapturer` utility in `OpenSage.Game` reads back any GPU texture to CPU memory.
 You can add capture calls directly in `Program.cs` to dump frames to disk:
 

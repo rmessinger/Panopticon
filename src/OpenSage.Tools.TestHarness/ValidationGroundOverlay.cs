@@ -30,13 +30,33 @@ public sealed class ValidationGroundOverlay : IDisposable
 {
     private readonly ImGuiRenderer _imgui;
     private readonly CommandList _commandList;
-    private readonly GameWindow _window;
+    private readonly GameWindow? _window;
     private readonly Game _game;
     private readonly Action _unsubscribeResize;
 
     private bool _spaceDown;
     private bool _f1Down;
     private bool _statusWindowVisible;
+
+    private static readonly Vector2? HoverPosition = ParseHoverPosition(
+        Environment.GetEnvironmentVariable("TESTHARNESS_VG_HOVER"));
+
+    private static readonly string? HoverObjectDefinition =
+        Environment.GetEnvironmentVariable("TESTHARNESS_VG_HOVER_OBJECT");
+
+    private static Vector2? ParseHoverPosition(string? value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        var parts = value.Split(',');
+        return parts.Length == 2
+            && float.TryParse(parts[0], out var x)
+            && float.TryParse(parts[1], out var y)
+            ? new Vector2(x, y)
+            : null;
+    }
 
     public ValidationGroundOverlayState State { get; set; } = new(false, false, 0, 0, 0);
 
@@ -68,6 +88,27 @@ public sealed class ValidationGroundOverlay : IDisposable
         _commandList = game.GraphicsDevice.ResourceFactory.CreateCommandList();
     }
 
+    /// <summary>
+    /// Windowless construction for offscreen overlay screenshots (docs/screenshots.md): renders
+    /// into the game panel's framebuffer instead of a window swapchain. The output description
+    /// must come from the panel framebuffer after <c>EnsureFrame</c>, not from
+    /// <see cref="Graphics.Rendering.RenderPipeline.GameOutputDescription"/>, or the ImGui
+    /// pipeline mismatches the framebuffer at draw time.
+    /// </summary>
+    internal ValidationGroundOverlay(Game game, Veldrid.OutputDescription outputDescription, int width, int height)
+    {
+        _game = game;
+        _imgui = new ImGuiRenderer(
+            game.GraphicsDevice,
+            outputDescription,
+            width,
+            height);
+
+        _unsubscribeResize = () => { };
+
+        _commandList = game.GraphicsDevice.ResourceFactory.CreateCommandList();
+    }
+
     public void Update(float deltaSeconds, InputSnapshot snapshot)
     {
         PrimaryActionRequested = DetectSpace(snapshot);
@@ -78,6 +119,8 @@ public sealed class ValidationGroundOverlay : IDisposable
 
         _imgui.Update(deltaSeconds, snapshot);
 
+        InjectSyntheticHover();
+
         if (_statusWindowVisible)
         {
             DrawStatusWindow();
@@ -86,6 +129,49 @@ public sealed class ValidationGroundOverlay : IDisposable
         DrawObjectTooltip();
 
         WantCaptureMouse = _statusWindowVisible && ImGui.GetIO().WantCaptureMouse;
+    }
+
+    /// <summary>
+    /// Synthetic hover for screenshot capture (docs/screenshots.md): TESTHARNESS_VG_HOVER=x,y
+    /// pins the mouse at a screen position, TESTHARNESS_VG_HOVER_OBJECT=&lt;definition&gt; pins
+    /// it on the first object with that definition (recomputed each frame, so it follows camera
+    /// motion). Assigned directly to <c>io.MousePos</c> after the renderer's NewFrame consumed
+    /// the (windowless Xvfb: fixed) snapshot position, so the tooltip renders for capture.
+    /// </summary>
+    private void InjectSyntheticHover()
+    {
+        var scene = _game.Scene3D;
+        if (scene == null)
+        {
+            return;
+        }
+
+        var io = ImGui.GetIO();
+        if (HoverObjectDefinition != null)
+        {
+            foreach (var gameObject in scene.GameObjects.Objects)
+            {
+                if (gameObject.Definition.Name != HoverObjectDefinition)
+                {
+                    continue;
+                }
+                var screen = scene.Camera.WorldToScreenPoint(gameObject.Transform.Translation);
+                if (screen.Z < 0 || screen.Z > 1)
+                {
+                    continue;
+                }
+                io.MousePos = new Vector2(
+                    Math.Clamp(screen.X, 0, io.DisplaySize.X - 1),
+                    Math.Clamp(screen.Y, 0, io.DisplaySize.Y - 1));
+                return;
+            }
+            return;
+        }
+
+        if (HoverPosition != null)
+        {
+            io.MousePos = HoverPosition.Value;
+        }
     }
 
     private void DrawStatusWindow()
@@ -126,8 +212,14 @@ public sealed class ValidationGroundOverlay : IDisposable
             return;
         }
 
-        var mouse = ImGui.GetIO().MousePos;
-        ImGui.SetNextWindowPos(new Vector2(mouse.X + 16, mouse.Y + 12), ImGuiCond.Always, Vector2.Zero);
+        // Docked at the right edge above the bottom HUD (the control bar occupies roughly the
+        // bottom fifth of the screen), independent of mouse position; only the trigger is
+        // hover-based. Pivot (1,0) anchors the window's top-right corner.
+        var display = ImGui.GetIO().DisplaySize;
+        ImGui.SetNextWindowPos(
+            new Vector2(display.X - 12, display.Y * 0.80f),
+            ImGuiCond.Always,
+            new Vector2(1, 0));
         ImGui.SetNextWindowBgAlpha(0.85f);
         ImGui.Begin(
             "##object-tooltip",
@@ -252,7 +344,7 @@ public sealed class ValidationGroundOverlay : IDisposable
     public void Render(GraphicsDevice graphicsDevice)
     {
         _commandList.Begin();
-        _commandList.SetFramebuffer(_window.Swapchain.Framebuffer);
+        _commandList.SetFramebuffer(_window?.Swapchain.Framebuffer ?? _game.Panel.Framebuffer);
         _imgui.Render(graphicsDevice, _commandList);
         _commandList.End();
         graphicsDevice.SubmitCommands(_commandList);
