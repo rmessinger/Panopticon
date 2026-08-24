@@ -33,6 +33,8 @@
   "Game": "CncGenerals",
   "Renderer": null,
   "Fullscreen": false,
+  // FullHud: render the full control bar (buttons, money/power, background); false shows only the minimap
+  "FullHud": false,
   "Headless": false,
   "CaptureFrames": false,
   "KeepReplay": false,

@@ -102,6 +102,8 @@ public sealed class GeneralsControlBar : IControlBar
 
     private ControlBarSize _size = ControlBarSize.Maximized;
 
+    private bool _minimalHud;
+
     private readonly LocalizedString _moneyString = new("GUI:ControlBarMoneyDisplay");
 
     private Control FindControl(string name) => _window.Controls.FindControl($"ControlBar.wnd:{name}");
@@ -217,6 +219,13 @@ public sealed class GeneralsControlBar : IControlBar
             return;
         }
 
+        // Minimal HUD: everything the update maintains (money, power, command buttons) is
+        // hidden, and the state machine would re-show buttons every tick. Skip it entirely.
+        if (_minimalHud)
+        {
+            return;
+        }
+
         _moneyDisplay.Text = _moneyString.Localize(player.BankAccount.Money);
 
         var powerBarProgress = player.GetEnergy(this._window.Game.Scene3D.GameObjects) / 100.0f;
@@ -244,6 +253,49 @@ public sealed class GeneralsControlBar : IControlBar
         // TODO: Only do this when command set changes.
         GeneralsExpPointsCallbacks.Update(player, this);
         State.Update(player, this);
+    }
+
+    /// <summary>
+    /// Hides every HUD element except the minimap (<c>LeftHUD</c>): the control-bar background
+    /// image, all command buttons, the money/power/experience displays, and the special-power
+    /// shortcut bar. Driven by <see cref="OpenSage.Configuration.MinimalHud"/>.
+    /// </summary>
+    internal void ApplyMinimalHud()
+    {
+        _minimalHud = true;
+
+        // The background window carries the full-width pre-rendered bar image; hide it. The
+        // minimap lives in the control-bar window, which has no background of its own.
+        _background.Visible = false;
+
+        // Hide every control in the control-bar window except the minimap. Hiding the
+        // containers (not just leaf buttons) matters: rendering skips a hidden control's whole
+        // subtree, so later per-tick Show() calls on leaf buttons stay invisible.
+        var leftHud = FindControl("LeftHUD");
+        foreach (var control in _window.Controls.AsList())
+        {
+            HideControlTree(control, leftHud);
+        }
+
+        // Hide the special-power shortcut bar (its buttons are already hidden separately).
+        foreach (var control in _powerShortcutWindow.Controls.AsList())
+        {
+            HideControlTree(control, except: null);
+        }
+    }
+
+    private static void HideControlTree(Control control, Control? except)
+    {
+        if (control == except)
+        {
+            return;
+        }
+
+        control.Hide();
+        foreach (var child in control.Controls.AsList())
+        {
+            HideControlTree(child, except);
+        }
     }
 
     public void ToggleSize()
@@ -831,6 +883,13 @@ public sealed class GeneralsControlBarSource : IControlBarSource
         FindControl("ExpBarForeground").BackgroundImage = controlBarWindow.ImageLoader.CreateFromMappedImageReference(scheme.ExpBarForegroundImage);
 
         var powersShortcutBar = game.LoadWindow(game.Scene3D.LocalPlayer.Template!.SpecialPowerShortcutWinName);
-        return new GeneralsControlBar(backgroundWindow, controlBarWindow, controlBarDescriptionWindow, powersShortcutBar, scheme, game.ContentManager, game.AssetStore);
+        var controlBar = new GeneralsControlBar(backgroundWindow, controlBarWindow, controlBarDescriptionWindow, powersShortcutBar, scheme, game.ContentManager, game.AssetStore);
+
+        if (!game.Configuration.FullHud)
+        {
+            controlBar.ApplyMinimalHud();
+        }
+
+        return controlBar;
     }
 }

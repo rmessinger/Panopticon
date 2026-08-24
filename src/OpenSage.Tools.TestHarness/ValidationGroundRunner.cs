@@ -51,13 +51,13 @@ public static class ValidationGroundRunner
         {
             if (config.Headless)
             {
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, null);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud }, null);
             }
             else
             {
                 Platform.Start();
                 window = new GameWindow("OpenSAGE - Unit Validation Ground", 100, 100, 1280, 800, config.Fullscreen);
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, window);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud }, window);
                 textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
             }
 

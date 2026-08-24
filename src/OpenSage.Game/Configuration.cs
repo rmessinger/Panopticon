@@ -52,4 +52,11 @@ public sealed class Configuration
     /// the camera themselves (e.g. the Unit Validation Ground).
     /// </summary>
     public bool SkipStartingBuildings { get; set; } = false;
+
+    /// <summary>
+    /// When <c>false</c>, the in-game HUD renders only the minimap: the control-bar background,
+    /// command buttons, money/power/experience displays, and special-power shortcut bar are
+    /// hidden. Default <c>true</c> restores the full HUD.
+    /// </summary>
+    public bool FullHud { get; set; } = false;
 }

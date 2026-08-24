@@ -39,6 +39,13 @@ public sealed class TestHarnessConfig
     public bool Fullscreen { get; set; } = false;
 
     /// <summary>
+    /// Renders the full in-game control bar (buttons, money/power displays, pre-rendered
+    /// background). Default false shows only the minimap. Maps to
+    /// <see cref="OpenSage.Configuration.FullHud"/>.
+    /// </summary>
+    public bool FullHud { get; set; } = false;
+
+    /// <summary>
     /// Keep the exported .rep file on disk after the run instead of deleting it.
     /// </summary>
     public bool KeepReplay { get; set; } = false;
