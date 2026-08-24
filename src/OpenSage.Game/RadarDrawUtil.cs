@@ -104,9 +104,10 @@ public class RadarDrawUtil
     }
 
     /// <summary>
-    /// The rectangle the minimap texture occupies inside <paramref name="destinationRectangle"/>
-    /// after aspect fitting (centered), in the same client-relative coordinates
-    /// <see cref="Draw"/> draws into. Null when no minimap texture exists.
+    /// The rectangle the minimap texture occupies after aspect fitting, in the same
+    /// control-relative coordinates <see cref="Draw"/> renders into: Draw computes the fitted
+    /// rectangle from the destination's size alone and ignores its X/Y, so this must not add
+    /// them either. Null when no minimap texture exists.
     /// </summary>
     public Mathematics.Rectangle? GetMinimapRectangle(in Mathematics.Rectangle destinationRectangle)
     {
@@ -120,11 +121,7 @@ public class RadarDrawUtil
             new SizeF(_miniMapTexture.Width, _miniMapTexture.Height),
             destinationRectangle.Size);
 
-        return new Mathematics.Rectangle(
-            destinationRectangle.X + fitted.X,
-            destinationRectangle.Y + fitted.Y,
-            fitted.Width,
-            fitted.Height);
+        return fitted;
     }
 
     public void DrawRadarMinimap(DrawingContext2D drawingContext, in Mathematics.Rectangle rectangle, bool flip = false)

@@ -105,10 +105,10 @@ public static class ControlBarCallbacks
                 (float)window.Size.Height / window.CreationResolution.Height);
             var origin = new Vector2(control.Bounds.X, control.Bounds.Y);
 
-            var left = MathF.Floor((origin.X + minimapRect.X) * scale) - 3;
-            var top = MathF.Floor((origin.Y + minimapRect.Y) * scale) - 3;
-            var right = MathF.Ceiling((origin.X + minimapRect.Right) * scale) + 3;
-            var bottom = MathF.Ceiling((origin.Y + minimapRect.Bottom) * scale) + 3;
+            var left = MathF.Floor((origin.X + minimapRect.X) * scale) - 2;
+            var top = MathF.Floor((origin.Y + minimapRect.Y) * scale) - 2;
+            var right = MathF.Ceiling((origin.X + minimapRect.Right) * scale) + 2;
+            var bottom = MathF.Ceiling((origin.Y + minimapRect.Bottom) * scale) + 2;
 
             // DrawRectangle strokes inward from the rect boundary and scales the stroke width
             // by the window transform, so divide by the scale to get whole-pixel thickness.
