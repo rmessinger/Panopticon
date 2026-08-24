@@ -44,9 +44,11 @@ public sealed class ValidationGroundHost
             {
                 // Standardize HP so attack completion (target destruction) is feasible for the whole
                 // roster and weapon-differentiated rather than dominated by a structure's native HP.
+                // FullyHeal: the current HP must be raised too, otherwise SameCurrentHealth leaves
+                // it at the native value and TargetHp only inflates the maximum.
                 if (targetHp > 0f)
                 {
-                    obj.BodyModule?.SetMaxHealth(targetHp);
+                    obj.BodyModule?.SetMaxHealth(targetHp, MaxHealthChangeType.FullyHeal);
                 }
                 _targets.Add(obj);
             }
