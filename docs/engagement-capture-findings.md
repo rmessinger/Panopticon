@@ -128,8 +128,8 @@ The annotator reserves exact annotation colors in the shared palette (markers an
 flashes stay saturated), draws a crosshair on the moving projectile, and flashes
 `IMPACT -N HP` for three frames on every damage frame. The target's HP lives in its label.
 
-Some image viewers loop GIFs early or clip the tail; capture a few seconds past the last
-expected impact (default 192 frames) so the final hit is comfortably mid-sequence.
+Capture a few seconds past the last expected impact (default 192 frames) so the final hit's
+FX and smoke conclude before the sequence ends.
 
 ## Verifying a capture before sharing
 
