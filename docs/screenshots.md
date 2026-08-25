@@ -88,6 +88,25 @@ dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
   right edge above the bottom HUD, with a bright owner-colored text line (red for USA in the
   validation ground) and white text below; a crop and 3x upscale makes it reviewable.
 
+## Known limitation: W3D unit meshes render as specks in headless captures
+
+Terrain, water, FX (particles, tracers), the 2D HUD, health bars, and selection brackets all
+render correctly offscreen, but object model meshes (infantry, vehicles) draw as a ~10px speck
+or nothing at all. Confirmed by an in-test A/B: hiding two spawned units via
+`GameObject.Hidden` changes only ~260 pixels of a 1024x768 frame (a selection bracket and a
+dense 11x10 dark speck), even though both units' `W3dModelDraw`s submit valid render items
+(correct world-space bounding boxes, frustum-cull visible) to the opaque bucket. The drop is
+therefore downstream of `Scene3D.BuildRenderList`: the draw itself produces degenerate
+geometry (suspects: `ModelMeshPartInstance.BeforeRenderCallback` per-item constants, or the
+mesh vertex path on the offscreen Vulkan device). Not a recent regression: disabling the
+`ModelInstance` bind-pose seeding (commit c88af49d) does not change the result, and no headless
+capture in this repo's history shows a full-size unit model. The validation ground's default
+camera height (1600+) makes a correctly rendered unit ~10px, which masked the bug.
+
+Consequences: unit-level visual validation (model states, animations, treads) is not possible
+in headless captures until this is fixed. Scene-level work (terrain, FX, HUD, minimap) is
+unaffected. GIFs assembled from headless frames will not show recognizable units.
+
 ## Recipe: ReplaySketch validation-ground editor (2D, no display)
 
 ```sh
