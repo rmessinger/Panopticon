@@ -91,41 +91,46 @@ dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
 ## Recipe: annotated unit GIFs (headless, reliable)
 
 Captures an animated action (e.g. a unit firing) with per-frame screen positions of chosen
-objects logged from inside the game, so overlays can be drawn exactly on the units even when
-they are only a few pixels large. Works at validation-ground camera heights (1600+), where
-unit meshes render correctly.
+objects logged from inside the game, so overlays can be drawn exactly on the units. Works at
+any framing height when the camera contract above is followed; at close heights (~180) the
+units are large enough that annotations are optional.
 
 1. In a scratch `GameFact` test (model: `MissileGifScratchTests` in git history), spawn the
    actors via the `ValidationGroundHost.CreateAt` pattern (terrain-height sampling +
-   `UpdateColliders`), set the camera with `LookAt` → `InitHeightForMap` →
-   `SetAngleAndPitchToDefault` → `SnapHeightAboveGround(1600)`, then per frame project each
-   actor with `Vector4.Transform(world, Camera.ViewProjection)` (NDC → `0.5*v+0.5`, Y flipped)
-   and append `frame dx dy tx ty hp` to a log file, capturing a PNG per frame via
-   `FrameCaptureService` (copy files out before disposing it; it deletes its captures).
-2. Annotate with PIL: crop a box spanning the actors plus the action corridor, upscale 4-5x
-   (`Image.LANCZOS`), draw crosshairs/labels at `(proj - cropOrigin) * scale`, quantize all
-   frames against a single base-frame palette (`quantize(palette=...)`, no dither) to avoid
-   palette flicker, save with `save_all=True, duration=170, optimize=True`.
+   `UpdateColliders`), set the camera with the height-first order above, then per frame
+   project each actor with `Vector4.Transform(world, Camera.ViewProjection)` (NDC →
+   `0.5*v+0.5`, Y flipped) and append `frame dx dy tx ty hp` to a log file, capturing a PNG
+   per frame via `FrameCaptureService` (copy files out before disposing it; it deletes its
+   captures).
+2. Annotate with PIL if wanted: crop a box spanning the actors plus the action corridor,
+   upscale (`Image.LANCZOS`), draw crosshairs/labels at `(proj - cropOrigin) * scale`,
+   quantize all frames against a single base-frame palette (`quantize(palette=...)`, no
+   dither) to avoid palette flicker, save with `save_all=True, duration=170, optimize=True`.
 3. Verify content before sharing: the target's health-bar pixel count should shrink as damage
    lands, and frame-diffs should show activity in the corridor between the two projections.
 
-## Known limitation: unit meshes do not respond to close-up camera heights
+## Camera framing contract for close-ups
 
-Unit models render correctly at validation-ground camera heights (~1600+ world units above
-ground): house-color pixels, hulls, shadows, and health bars all appear (visible in
-`vg_minimalhud_frame.png`). But when the tactical camera is snapped below that range
-(`SnapHeightAboveGround(220)` and lower, tested 70-850), meshes draw collapsed to ~10px specks
-or vanish while terrain and 2D UI zoom correctly — verified with an in-test A/B
-(`GameObject.Hidden` toggle): render items are still submitted with correct world-space
-bounding boxes and pass frustum culling, so the defect is in the mesh draw path's use of the
-camera transform, not submission. Global shader constants (`GlobalShaderResourceData`) update
-every frame, so the stale-constant theory is excluded; root cause still open (Track G
-material). The terrain pass has a separate hole: heights roughly 900-1500 render fog gray
-(see `ValidationGroundCamera.MinimumSafeCameraHeight`).
+Unit meshes render at any camera height once they are actually in view. The failure mode that
+looks like "meshes draw as specks at close zoom" is the tactical camera's map constraint: when
+the visible ground exceeds the map (far zoom), the constraint pins the look-at point to the
+map centre, and `LookAt` calls are clamped against the constraint for the CURRENT height. So
+aiming before changing the height lands the camera hundreds of units off target, off-screen
+objects are frustum-culled, and nothing of the subject renders.
 
-Practical consequence: headless close-ups of units (model states, animations) are not
-possible until the mesh-pass camera bug is fixed; scene-level work (terrain, FX, HUD, minimap)
-and formation-scale unit captures work fine at VG heights.
+Working order (see `TacticalViewConstraintTests`):
+
+```csharp
+view.InitHeightForMap();
+view.SetAngleAndPitchToDefault();
+view.SnapHeightAboveGround(180f);   // height FIRST
+view.LookAt(new Vector3(630, 600, 0)); // then aim
+```
+
+At height 180 a tank renders ~120px and an infantryman ~40px, large enough for unit-level GIFs
+without upscaling. The terrain pass still has a separate hole: heights roughly 900-1500 render
+fog gray instead of terrain (see `ValidationGroundCamera.MinimumSafeCameraHeight`); pick
+framing heights outside that band.
 
 ## Recipe: ReplaySketch validation-ground editor (2D, no display)
 
