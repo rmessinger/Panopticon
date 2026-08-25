@@ -124,6 +124,13 @@ The crop is grown to a minimum fraction of the viewport so labels fit, the font 
 longest label and capped, labels are placed on whichever side of the marker has room, and
 overlapping boxes are nudged apart.
 
+The annotator reserves exact annotation colors in the shared palette (markers and impact
+flashes stay saturated), draws a crosshair on the moving projectile, and flashes
+`IMPACT -N HP` for three frames on every damage frame. The target's HP lives in its label.
+
+Some image viewers loop GIFs early or clip the tail; capture a few seconds past the last
+expected impact (default 192 frames) so the final hit is comfortably mid-sequence.
+
 ## Verifying a capture before sharing
 
 Check the manifest, not just the pictures. Target `Health` should fall across the sequence and a
