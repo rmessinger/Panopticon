@@ -129,6 +129,9 @@ public sealed class MissileAIUpdate : AIUpdate
         {
             if (ModuleData.DetonateOnNoFuel)
             {
+                // Detonating means the warhead is delivered where the missile dies, not just
+                // a death animation: fire it at the target before the kill.
+                BezierProjectileBehavior.DeliverWarhead(GameObject, GameEngine, DetonationFX);
                 GameObject.Kill(deathType: DeathType.Detonated);
             }
             return;

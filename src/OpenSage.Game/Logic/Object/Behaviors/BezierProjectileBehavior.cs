@@ -45,7 +45,8 @@ public class BezierProjectileBehavior : UpdateModule
         var direction = Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix);
         var velocity = direction * GameObject.Speed;
 
-        GameObject.SetTranslation(GameObject.Translation + velocity * (GameEngine.MsPerLogicFrame / 1000.0f));
+        // Speed is already in distance per logic frame (ParseVelocityToLogicFrames).
+        GameObject.SetTranslation(GameObject.Translation + velocity);
 
         CheckForHit(
             GameObject,
@@ -101,8 +102,7 @@ public class BezierProjectileBehavior : UpdateModule
         }
 
         var filter = gameObject.CurrentWeapon?.Template.ProjectileCollidesWith ?? WeaponCollideTypes.None;
-        var stepDistance = gameObject.Speed * (gameEngine.MsPerLogicFrame / 1000.0f);
-        var radius = gameObject.Geometry.BoundingCircleRadius + stepDistance;
+        var radius = gameObject.Geometry.BoundingCircleRadius + DistancePerFrame(gameObject);
 
         return quadtree
             .FindIntersecting(new SphereCollider(gameObject.Transform, radius))
@@ -111,6 +111,21 @@ public class BezierProjectileBehavior : UpdateModule
                 && !o.IsEffectivelyDead
                 && !o.IsProjectile
                 && ShouldCollide(o, gameObject, filter));
+    }
+
+    // How far the projectile travels in one logic frame. Bezier projectiles move kinematically
+    // by Speed (units per frame) with physics adding gravity; MissileAIUpdate missiles move
+    // only through their physics velocity (Speed is not their actual travel rate).
+    private static float DistancePerFrame(GameObject gameObject)
+    {
+        var physicsVelocity = gameObject.Physics?.Velocity ?? Vector3.Zero;
+        if (gameObject.FindBehavior<BezierProjectileBehavior>() == null)
+        {
+            return physicsVelocity.Length();
+        }
+
+        var direction = Vector3.TransformNormal(Vector3.UnitX, gameObject.TransformMatrix);
+        return (physicsVelocity + direction * gameObject.Speed).Length();
     }
 
     private static bool ShouldCollide(GameObject target, GameObject projectile, WeaponCollideTypes filter)
@@ -177,12 +192,23 @@ public class BezierProjectileBehavior : UpdateModule
         return translation.Z <= terrainHeight;
     }
 
-    private static void Detonate(
-        GameObject gameObject,
-        IGameEngine gameEngine,
-        WeaponTarget target,
-        bool detonateCallsKill,
-        FXList groundHitFX)
+    // Fires the projectile's warhead at its current target (or its own position when the
+    // target is gone) and executes the detonation FX for position hits. Used by the
+    // fuel-exhaustion detonation path.
+    internal static void DeliverWarhead(GameObject gameObject, IGameEngine gameEngine, FXList detonationFX)
+    {
+        // If the projectile was fired at a specific object, preserve that target so that
+        // DamageNugget.Execute applies damage to the object. WeaponTarget.DoDamage only
+        // deals damage when the target type is Object; a position target does nothing.
+        var currentTarget = gameObject.CurrentWeapon?.CurrentTarget;
+        var detonationTarget = currentTarget?.TargetType == WeaponTargetType.Object
+            ? currentTarget
+            : new WeaponTarget(gameObject.Translation);
+
+        FireWarhead(gameObject, gameEngine, detonationTarget, detonationFX);
+    }
+
+    private static void FireWarhead(GameObject gameObject, IGameEngine gameEngine, WeaponTarget target, FXList fx)
     {
         // TODO: Should this ever be null?
         if (gameObject.CurrentWeapon != null)
@@ -193,11 +219,21 @@ public class BezierProjectileBehavior : UpdateModule
 
         if (target.TargetType == WeaponTargetType.Position)
         {
-            groundHitFX?.Execute(new FXListExecutionContext(
+            fx?.Execute(new FXListExecutionContext(
                 gameObject.Rotation,
                 gameObject.Translation,
                 gameEngine));
         }
+    }
+
+    private static void Detonate(
+        GameObject gameObject,
+        IGameEngine gameEngine,
+        WeaponTarget target,
+        bool detonateCallsKill,
+        FXList groundHitFX)
+    {
+        FireWarhead(gameObject, gameEngine, target, groundHitFX);
 
         if (detonateCallsKill)
         {

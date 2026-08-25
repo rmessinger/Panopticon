@@ -128,3 +128,29 @@ overlapping boxes are nudged apart.
 
 Check the manifest, not just the pictures. Target `Health` should fall across the sequence and a
 non-trivial number of frames should list a projectile. The runner prints both.
+
+## Follow-up bug found by this capture: impact effect at launch
+
+The first capture with this framework showed the target's damage FX playing the moment the
+missile was fired. Cause: `FiringWeaponState` executed every weapon nugget at fire time,
+including the `DamageNugget`s of legacy-converted Generals weapons, so the warhead's damage
+(and the victim's hit FX) landed at launch while the missile was still at the muzzle. The
+projectile's warhead then fired the same nuggets again at detonation (double damage).
+
+Fix: a weapon whose template contains a `ProjectileNugget` skips its `DamageNugget`s at fire
+time (`WeaponTemplate.DeliversDamageViaProjectile`); the projectile delivers them at
+detonation. `ProjectileDamageTimingTests` pins it: damage lands on the frame the missile
+reaches the target, never the launch frame.
+
+Removing the launch-damage crutch exposed two projectile types that never delivered at all:
+
+- `DragonTankFlameProjectile` (`DetonateOnNoFuel = true`): fuel exhaustion killed the missile
+  without firing its warhead. Fuel-out now delivers the warhead where the missile dies.
+- `NukeCannonShell` (`BezierProjectileBehavior`): movement multiplied the per-frame `Speed`
+  by frame duration again, a 30x slowdown, so the shell crawled and never reached anything.
+  The collision sweep had the same units bug; it now uses actual per-frame travel (kinematic
+  step for Bezier projectiles, physics velocity for MissileAIUpdate missiles).
+
+The validation-ground baseline was re-captured after these changes: projectile weapons gained
+their real flight frames (e.g. Missile Defender 4 to 47, Nuke Launcher 2 to 216, Dragon 6 to
+18), and the Angry Mob got faster (17 to 2) because its molotovs no longer crawl.

@@ -99,9 +99,13 @@ served at https://files.reid-corp.com/viewer/):
 A vision-capable model reviewing new captures should answer:
 
 1. Does the missile render as a visible projectile in flight between the two units at close
-   framing? Confirmed on this branch: the manifest records a projectile
-   (`MissileDefenderMissile`) in 36 of 110 frames, and it is visible in the annotated GIF.
-2. Are muzzle flash and detonation FX visible per shot cycle at close framing?
+   framing? Confirmed on this branch: the engagement manifest records a projectile
+   (`MissileDefenderMissile`) in 88 of 150 frames, and it is visible in the annotated GIF.
+2. Are muzzle flash and detonation FX visible per shot cycle at close framing? Confirmed in
+   pixel analysis of the current GIF: launch bloom at the attacker frames 5-12, impact FX at
+   the target peaking on the damage frame (19), smoke persisting after. A launch-time impact
+   bug (damage FX at the muzzle) was found by this capture and fixed; damage now lands on the
+   missile's arrival frame (see `docs/engagement-capture-findings.md`).
 3. Does the missile trajectory arc (thrust + gravity) rather than drop or fly straight?
 4. Does the tank show damage reactions (health bar drain is expected; death FX if HP reaches
    zero)?
