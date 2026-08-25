@@ -138,4 +138,10 @@ public sealed class TestHarnessConfig
     /// completion, since a never-exiting headless run has no window to close and would hang.
     /// </summary>
     public bool ExitAfterTargetsDestroyed { get; set; } = true;
+
+    /// <summary>
+    /// Options for <see cref="BuiltInScenario.EngagementCapture"/>. Null uses the defaults
+    /// (a USA Missile Defender firing at a China BattleMaster).
+    /// </summary>
+    public EngagementCaptureOptions? EngagementCapture { get; set; } = null;
 }

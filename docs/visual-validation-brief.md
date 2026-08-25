@@ -55,10 +55,11 @@ Defender (red selection bracket when selected) fires at a China BattleMaster tan
 
 Reference artifacts in the shared viewer directory (`/mnt/pit2/Network Storage/temp/`,
 served at https://files.reid-corp.com/viewer/):
-- `vg_missile_defender.gif`: current best capture (75 frames, camera height 180). Shows both
-  units at full model size and the HP annotation draining, but FX are sub-pixel and the
-  annotation rings were muted by palette quantization. It demonstrates the engagement but
-  not the flight visually.
+- `vg_missile_defender.gif`: current capture (110 frames, camera height 90, 789x393 crop),
+  produced by the `EngagementCapture` scenario plus `scripts/annotate_engagement_gif.py`.
+  Both units are recognizable at model scale and labelled ATTACKER / TARGET from translated
+  display names; the missile is ringed in the 36 frames where it is airborne. The target's
+  health drains 300 to 0 and it is destroyed on camera.
 - `vg_minimalhud_frame.png`: formation-scale frame with visible units across three faction
   clusters (red USA, green China, blue GLA), minimal HUD with outlined minimap bottom-left.
 
@@ -69,7 +70,8 @@ served at https://files.reid-corp.com/viewer/):
 | Per-frame terrain flicker | Open rendering bug, terrain pass re-renders with slight noise | All headless captures |
 | Fog gray `(105,105,105)` instead of terrain | Open bug for camera heights ~900-1500 | Framing outside that band avoids it |
 | Camera look-at clamped to map centre | By design when visible ground exceeds the map; set height before `LookAt` | `TacticalViewConstraintTests` documents the contract |
-| Missile/FX sub-pixel at far zoom | Expected at validation-ground heights (1600+); close-ups (height ~180) fix scale | GIF recipes in `docs/screenshots.md` |
+| Missile/FX sub-pixel at far zoom | Expected at validation-ground heights (1600+); close-ups (height ~90-180) fix scale | GIF recipes in `docs/screenshots.md` |
+| Shared global constants buffer across passes | Fixed on this branch; was rendering the forward pass with the shadow pass's light-space matrix on Vulkan | `GlobalShaderResourceData.AcquireSlot` / `BeginFrame` |
 | Minimap bottom-left, black outline ring | Intentional minimal-HUD design | `vg_minimalhud_frame.png` |
 | Animating cloud shadows | Normal | All daytime captures |
 
@@ -79,10 +81,11 @@ served at https://files.reid-corp.com/viewer/):
   needed. Captures write PNGs to `/tmp/opensage_captures/`.
 - Env hooks: `TESTHARNESS_VG_CAPTURE=1` (per-frame captures), `TESTHARNESS_VG_OVERLAY_SHOT=1`,
   `TESTHARNESS_VG_HOVER_OBJECT=<definition>`, `TESTHARNESS_VG_HOVER=x,y`.
-- Scratch capture tests live briefly under
-  `src/OpenSage.Game.Tests/Logic/Object/Update/` (pattern: `MissileGifScratchTests` in git
-  history) because `InternalsVisibleTo` only covers the test assembly. They are deleted
-  after use; the durable recipe is in `docs/screenshots.md`.
+- Engagement captures use the committed `EngagementCapture` built-in scenario
+  (`dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario
+  EngagementCapture`), configured under `EngagementCapture` in `TestHarness.json`. It writes
+  PNGs plus a `manifest.json` of per-frame screen projections; `scripts/annotate_engagement_gif.py`
+  renders the annotated GIF. Full recipe in `docs/screenshots.md`.
 - Camera framing order that works: `InitHeightForMap()` → `SetAngleAndPitchToDefault()` →
   `SnapHeightAboveGround(h)` → `LookAt(pos)`. At height ~180 a tank renders ~120px, an
   infantryman ~40px.
@@ -94,8 +97,8 @@ served at https://files.reid-corp.com/viewer/):
 A vision-capable model reviewing new captures should answer:
 
 1. Does the missile render as a visible projectile in flight between the two units at close
-   framing (height ~120-200, corridor crop)? It has not been visually confirmed yet; only
-   logic-level assertions prove flight.
+   framing? Confirmed on this branch: the manifest records a projectile
+   (`MissileDefenderMissile`) in 36 of 110 frames, and it is visible in the annotated GIF.
 2. Are muzzle flash and detonation FX visible per shot cycle at close framing?
 3. Does the missile trajectory arc (thrust + gravity) rather than drop or fly straight?
 4. Does the tank show damage reactions (health bar drain is expected; death FX if HP reaches
@@ -106,7 +109,11 @@ A vision-capable model reviewing new captures should answer:
 
 - Minimap outline ring: fixed and refactored to `DrawingContext2D.DrawPixelSnappedRectangle`,
   pixel-identical to the approved golden capture.
-- Missile flight: fixed, logic-verified; visual capture still weak (see section 3).
+- Missile flight: fixed, logic-verified, and now visually confirmed (see section 3).
+- Global shader constants: each render pass now gets its own constants buffer and resource
+  set per frame. Previously all passes shared one buffer, so on Vulkan the shadow pass's
+  light-space matrix won and every capture rendered a map-wide view whatever the camera did.
+  This, not framing, was why earlier close-ups showed unidentifiable specks.
 - Camera investigation: concluded no engine bug; ordering contract documented and tested.
 - Map inventory: `docs/maps.md` (55 maps; note grid cells are 10 world units).
 - The earlier "unit meshes never render headlessly" and "meshes collapse at close zoom"

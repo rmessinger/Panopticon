@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Veldrid;
 
 namespace OpenSage.Graphics;
@@ -99,9 +97,7 @@ public sealed class FrameCaptureService : IDisposable
         var count = Interlocked.Increment(ref _captureCount);
         var path = Path.Combine(CaptureDirectory, $"capture_{count:D4}.png");
 
-        var frame = FrameCapturer.Capture(graphicsDevice, texture);
-        using var image = ToImage(frame);
-        image.SaveAsPng(path);
+        FrameCapturer.CaptureToPng(graphicsDevice, texture, path);
 
         _writtenPaths.Add(path);
         Console.WriteLine($"[CAPTURE] {path} | {hint}");
@@ -147,30 +143,5 @@ public sealed class FrameCaptureService : IDisposable
         }
         _disposed = true;
         DeleteCaptures();
-    }
-
-    // -------------------------------------------------------------------------
-
-    private static Image<Rgba32> ToImage(CapturedFrame frame)
-    {
-        var image = new Image<Rgba32>(frame.Width, frame.Height);
-        var isBgra = frame.Format is PixelFormat.B8_G8_R8_A8_UNorm
-                                  or PixelFormat.B8_G8_R8_A8_UNorm_SRgb;
-        var pixels = frame.PixelData;
-        var stride = frame.Width * 4;
-
-        for (var y = 0; y < frame.Height; y++)
-        {
-            var row = image.Frames[0].PixelBuffer.DangerousGetRowSpan(y);
-            for (var x = 0; x < frame.Width; x++)
-            {
-                var i = y * stride + x * 4;
-                row[x] = isBgra
-                    ? new Rgba32(r: pixels[i + 2], g: pixels[i + 1], b: pixels[i], a: pixels[i + 3])
-                    : new Rgba32(r: pixels[i], g: pixels[i + 1], b: pixels[i + 2], a: pixels[i + 3]);
-            }
-        }
-
-        return image;
     }
 }

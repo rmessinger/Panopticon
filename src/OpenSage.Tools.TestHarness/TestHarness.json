@@ -2,7 +2,8 @@
   // TestHarness configuration
   // ------------------------------------
   // Scenario     : built-in scenario to run
-  //                (AlpineAssaultUSAvGLA, AlpineAssaultUSAvGLAFullBuild, UnitValidationGround)
+  //                (AlpineAssaultUSAvGLA, AlpineAssaultUSAvGLAFullBuild, UnitValidationGround,
+  //                 EngagementCapture); --built-in-scenario <name> overrides it
   // ScenarioPath : path to a scenario JSON profile, or null to use Scenario
   //                (ignored when Scenario is UnitValidationGround)
   // Game         : SAGE game to run (CncGenerals, CncGeneralsZeroHour, Bfme, Bfme2, Bfme2Rotwk)
@@ -27,6 +28,11 @@
   // ExitAfterTargetsDestroyed      : true (default) exits once all targets are destroyed/cap hit;
   //                                  false keeps the game running until the window is closed
   //                                  (windowed only; headless always exits)
+  //
+  // Engagement capture (Scenario = EngagementCapture) knobs live under "EngagementCapture";
+  // all optional, see EngagementCaptureOptions. Headless only. Writes a PNG sequence plus a
+  // manifest.json of per-frame actor projections; scripts/annotate_engagement_gif.py turns
+  // those into an annotated GIF.
 
   "Scenario": "UnitValidationGround",
   "ScenarioPath": null,

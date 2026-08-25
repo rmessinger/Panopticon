@@ -88,26 +88,43 @@ dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
   right edge above the bottom HUD, with a bright owner-colored text line (red for USA in the
   validation ground) and white text below; a crop and 3x upscale makes it reviewable.
 
-## Recipe: annotated unit GIFs (headless, reliable)
+## Recipe: annotated engagement GIFs (headless, reliable)
 
-Captures an animated action (e.g. a unit firing) with per-frame screen positions of chosen
-objects logged from inside the game, so overlays can be drawn exactly on the units. Works at
-any framing height when the camera contract above is followed; at close heights (~180) the
-units are large enough that annotations are optional.
+Captures one unit attacking another, with per-frame screen projections computed inside the
+engine so overlays land exactly on the units. Two committed pieces:
 
-1. In a scratch `GameFact` test (model: `MissileGifScratchTests` in git history), spawn the
-   actors via the `ValidationGroundHost.CreateAt` pattern (terrain-height sampling +
-   `UpdateColliders`), set the camera with the height-first order above, then per frame
-   project each actor with `Vector4.Transform(world, Camera.ViewProjection)` (NDC →
-   `0.5*v+0.5`, Y flipped) and append `frame dx dy tx ty hp` to a log file, capturing a PNG
-   per frame via `FrameCaptureService` (copy files out before disposing it; it deletes its
-   captures).
-2. Annotate with PIL if wanted: crop a box spanning the actors plus the action corridor,
-   upscale (`Image.LANCZOS`), draw crosshairs/labels at `(proj - cropOrigin) * scale`,
-   quantize all frames against a single base-frame palette (`quantize(palette=...)`, no
-   dither) to avoid palette flicker, save with `save_all=True, duration=170, optimize=True`.
-3. Verify content before sharing: the target's health-bar pixel count should shrink as damage
-   lands, and frame-diffs should show activity in the corridor between the two projections.
+- `EngagementCapture`, a TestHarness built-in scenario
+  (`src/OpenSage.Tools.TestHarness/EngagementCaptureRunner.cs`). It spawns an attacker and a
+  target, auto-fits the camera to them, commands the weapon directly, writes one PNG per logic
+  frame, and writes `manifest.json` with per-frame screen positions, radii, health, and
+  projectile positions.
+- `scripts/annotate_engagement_gif.py`, which turns that directory into an annotated GIF.
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  --headless --built-in-scenario EngagementCapture
+
+python3 scripts/annotate_engagement_gif.py /tmp/opensage_engagement \
+  "/mnt/pit2/Network Storage/temp/engagement.gif"
+```
+
+Tuning lives under `EngagementCapture` in `TestHarness.json` (map, attacker/target definition
+names, labels, separation, `TargetHp`, frame count, `DesiredSpanFraction`, output directory).
+
+Two options matter for recognizability. `AxisAngleDegrees` rotates the attacker-to-target axis:
+firing FX such as an infantry backblast expand behind the attacker, so the default 90 puts the
+attacker in the foreground with the blast venting away from the camera instead of covering him.
+`HideHud` closes every GUI window before capturing so the minimap does not intrude on the crop.
+The runner exits non-zero when a definition is missing, the camera cannot be fitted, the
+attacker has no weapon, or no projectile is ever observed, so a silent empty capture is not
+possible.
+Labels come from `ObjectDefinition.DisplayName` run through `.Translate()`; the raw value is a
+localization key. `Player.Side` returns raw faction names ("FactionCivilian") and is not
+suitable for labels; the annotator uses ATTACKER/TARGET/MISSILE roles instead.
+
+Verify content before sharing: the manifest's target `Health` should fall across the sequence
+and a non-trivial number of frames should list a projectile.
 
 ## Camera framing contract for close-ups
 
@@ -131,6 +148,13 @@ At height 180 a tank renders ~120px and an infantryman ~40px, large enough for u
 without upscaling. The terrain pass still has a separate hole: heights roughly 900-1500 render
 fog gray instead of terrain (see `ValidationGroundCamera.MinimumSafeCameraHeight`); pick
 framing heights outside that band.
+
+A second cause of the same symptom was fixed in `GlobalShaderResourceData`: every render pass
+shared one global constants buffer, so on Vulkan the forward pass drew with the shadow pass's
+light-space matrix and the frame showed a map-wide view regardless of camera height. Each pass
+now acquires its own buffer and resource set per frame (`AcquireSlot`, reset by `BeginFrame`
+from `RenderPipeline.Execute`). If a "camera is ignored" symptom reappears, check that
+`BeginFrame` is still being called once per frame.
 
 ## Recipe: ReplaySketch validation-ground editor (2D, no display)
 

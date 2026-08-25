@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Numerics;
 using OpenSage.Data.Map;
 using OpenSage.Graphics.Rendering;
@@ -12,12 +13,23 @@ internal sealed class GlobalShaderResourceData : DisposableBase
     private readonly GlobalShaderResources _globalShaderResources;
     private readonly StandardGraphicsResources _standardGraphicsResources;
 
-    private readonly ConstantBuffer<GlobalShaderResources.GlobalConstants> _globalConstantBuffer;
+    // One constants buffer per pass per frame rather than one rewritten between passes: on Vulkan a
+    // second write to a uniform buffer is not guaranteed to be visible to draws recorded after it in
+    // the same command list, so every pass ended up rendering with the first pass's matrix (the
+    // shadow map's light-space view-projection), which is why the scene ignored the camera entirely.
+    private readonly List<GlobalConstantsSlot> _globalConstantSlots = new();
+    private int _currentSlot = -1;
+    private int _nextSlot;
 
     private readonly ConstantBuffer<GlobalShaderResources.LightingConstantsVS> _globalLightingBufferVS;
     private readonly ConstantBuffer<GlobalShaderResources.LightingConstantsPS> _globalLightingBufferPS;
 
-    public readonly ResourceSet GlobalConstantsResourceSet;
+    /// <summary>
+    /// Resource set holding the constants written by the most recent
+    /// <see cref="UpdateGlobalConstantBuffers"/> call. Each pass gets its own, so recording a later
+    /// pass never disturbs the draws already recorded for an earlier one.
+    /// </summary>
+    public ResourceSet GlobalConstantsResourceSet => _globalConstantSlots[_currentSlot < 0 ? AcquireSlot() : _currentSlot].ResourceSet;
 
     private ResourceSet _forwardPassResourceSet;
     private Texture _cachedCloudTexture;
@@ -34,17 +46,36 @@ internal sealed class GlobalShaderResourceData : DisposableBase
         _globalShaderResources = globalShaderResources;
         _standardGraphicsResources = standardGraphicsResources;
 
-        _globalConstantBuffer = AddDisposable(new ConstantBuffer<GlobalShaderResources.GlobalConstants>(graphicsDevice, "GlobalConstants"));
-
-        GlobalConstantsResourceSet = AddDisposable(graphicsDevice.ResourceFactory.CreateResourceSet(
-            new ResourceSetDescription(
-                globalShaderResources.GlobalConstantsResourceLayout,
-                _globalConstantBuffer.Buffer)));
-
         _globalLightingBufferVS = AddDisposable(new ConstantBuffer<GlobalShaderResources.LightingConstantsVS>(graphicsDevice, "GlobalLightingConstantsVS"));
         SetGlobalLightingBufferVS(graphicsDevice);
 
         _globalLightingBufferPS = AddDisposable(new ConstantBuffer<GlobalShaderResources.LightingConstantsPS>(graphicsDevice, "GlobalLightingConstantsPS"));
+    }
+
+    /// <summary>
+    /// Starts a new frame's constants: subsequent passes acquire slots from the start of the pool
+    /// again, so the pool stays as small as the busiest frame.
+    /// </summary>
+    public void BeginFrame()
+    {
+        _nextSlot = 0;
+        _currentSlot = -1;
+    }
+
+    private int AcquireSlot()
+    {
+        if (_nextSlot == _globalConstantSlots.Count)
+        {
+            var buffer = AddDisposable(new ConstantBuffer<GlobalShaderResources.GlobalConstants>(
+                _graphicsDevice,
+                $"GlobalConstants{_nextSlot}"));
+            var resourceSet = AddDisposable(_graphicsDevice.ResourceFactory.CreateResourceSet(
+                new ResourceSetDescription(_globalShaderResources.GlobalConstantsResourceLayout, buffer.Buffer)));
+            _globalConstantSlots.Add(new GlobalConstantsSlot(buffer, resourceSet));
+        }
+
+        _currentSlot = _nextSlot++;
+        return _currentSlot;
     }
 
     public ResourceSet GetForwardPassResourceSet(
@@ -103,22 +134,24 @@ internal sealed class GlobalShaderResourceData : DisposableBase
         in Vector4? clippingPlane1,
         in Vector4? clippingPlane2)
     {
-        var cameraPosition = Matrix4x4Utility.Invert(context.Scene3D.Camera.View).Translation;
-        _globalConstantBuffer.Value.CameraPosition = cameraPosition;
+        var slot = _globalConstantSlots[AcquireSlot()];
+        var constants = slot.Buffer;
 
-        _globalConstantBuffer.Value.TimeInSeconds = (float)context.GameTime.TotalTime.TotalSeconds;
+        constants.Value.CameraPosition = Matrix4x4Utility.Invert(context.Scene3D.Camera.View).Translation;
 
-        _globalConstantBuffer.Value.ViewProjection = viewProjection;
+        constants.Value.TimeInSeconds = (float)context.GameTime.TotalTime.TotalSeconds;
 
-        _globalConstantBuffer.Value.ClippingPlane1 = clippingPlane1 ?? Vector4.Zero;
-        _globalConstantBuffer.Value.ClippingPlane2 = clippingPlane2 ?? Vector4.Zero;
+        constants.Value.ViewProjection = viewProjection;
 
-        _globalConstantBuffer.Value.HasClippingPlane1 = clippingPlane1 != null;
-        _globalConstantBuffer.Value.HasClippingPlane2 = clippingPlane2 != null;
+        constants.Value.ClippingPlane1 = clippingPlane1 ?? Vector4.Zero;
+        constants.Value.ClippingPlane2 = clippingPlane2 ?? Vector4.Zero;
 
-        _globalConstantBuffer.Value.ViewportSize = new Vector2(context.RenderTarget.Width, context.RenderTarget.Height);
+        constants.Value.HasClippingPlane1 = clippingPlane1 != null;
+        constants.Value.HasClippingPlane2 = clippingPlane2 != null;
 
-        _globalConstantBuffer.Update(commandList);
+        constants.Value.ViewportSize = new Vector2(context.RenderTarget.Width, context.RenderTarget.Height);
+
+        constants.Update(commandList);
 
         if (_cachedTimeOfDay != context.Scene3D.Lighting.TimeOfDay)
         {
@@ -128,4 +161,8 @@ internal sealed class GlobalShaderResourceData : DisposableBase
             _cachedTimeOfDay = context.Scene3D.Lighting.TimeOfDay;
         }
     }
+
+    private readonly record struct GlobalConstantsSlot(
+        ConstantBuffer<GlobalShaderResources.GlobalConstants> Buffer,
+        ResourceSet ResourceSet);
 }
