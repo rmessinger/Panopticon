@@ -167,7 +167,7 @@ public static class Matrix4x4Utility
         tmp2 = value.M22;
 
         value.M12 = c * tmp1 + s * tmp2;
-        value.M32 = -s * tmp1 + c * tmp2;
+        value.M22 = -s * tmp1 + c * tmp2;
 
         tmp1 = value.M13;
         tmp2 = value.M23;
@@ -182,7 +182,9 @@ public static class Matrix4x4Utility
     /// </summary>
     public static Matrix4x4 CreateTransformMatrix(in Vector3 pos, in Vector3 dir)
     {
-        Debug.Assert(dir == Vector3.Normalize(dir));
+        // Tolerance instead of exact equality: a vector that was normalized once can differ
+        // from its own re-normalization by an ulp. Also fails for NaN/zero directions.
+        Debug.Assert(MathF.Abs(dir.Length() - 1.0f) < 0.001f);
 
         var len2 = MathF.Sqrt((dir.X * dir.X) + (dir.Y * dir.Y));
 

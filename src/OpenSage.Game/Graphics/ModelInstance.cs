@@ -75,6 +75,19 @@ public sealed class ModelInstance : DisposableBase
         RelativeBoneTransforms = new Matrix4x4[model.BoneHierarchy.Bones.Length];
         AbsoluteBoneTransforms = new Matrix4x4[model.BoneHierarchy.Bones.Length];
 
+        // Seed the bind pose so bone transforms are valid before the first render (logic-side
+        // queries like weapon launch bones read AbsoluteBoneTransforms, and headless runs
+        // never render). Bones are ordered parents-before-children, matching Update().
+        for (var i = 0; i < model.BoneHierarchy.Bones.Length; i++)
+        {
+            var bone = model.BoneHierarchy.Bones[i];
+            var parentTransform = bone.Parent != null
+                ? RelativeBoneTransforms[bone.Parent.Index]
+                : Matrix4x4.Identity;
+            RelativeBoneTransforms[i] = ModelBoneInstances[i].Matrix * parentTransform;
+            AbsoluteBoneTransforms[i] = RelativeBoneTransforms[i];
+        }
+
         BoneVisibilities = new bool[model.BoneHierarchy.Bones.Length];
         BoneFrameVisibilities = new bool[model.BoneHierarchy.Bones.Length];
 

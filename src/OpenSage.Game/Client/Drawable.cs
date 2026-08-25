@@ -312,7 +312,12 @@ public sealed class Drawable : Entity, IPersistableObject
                 var (modelInstance, bone) = drawModule.FindBone(fireFXBone + (index + 1).ToString("D2"));
                 if (bone != null)
                 {
-                    return modelInstance.AbsoluteBoneTransforms[bone.Index];
+                    // Compose the bone's root-relative transform with the object's current
+                    // transform: this is called from logic (projectile launch), which cannot
+                    // depend on render-time AbsoluteBoneTransforms having been refreshed.
+                    return modelInstance.RelativeBoneTransforms[bone.Index]
+                        * GameObject.ModelTransform.Matrix
+                        * GameObject.Transform.Matrix;
                 }
                 break;
             }
