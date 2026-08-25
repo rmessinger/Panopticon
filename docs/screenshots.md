@@ -88,6 +88,27 @@ dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
   right edge above the bottom HUD, with a bright owner-colored text line (red for USA in the
   validation ground) and white text below; a crop and 3x upscale makes it reviewable.
 
+## Recipe: annotated unit GIFs (headless, reliable)
+
+Captures an animated action (e.g. a unit firing) with per-frame screen positions of chosen
+objects logged from inside the game, so overlays can be drawn exactly on the units even when
+they are only a few pixels large. Works at validation-ground camera heights (1600+), where
+unit meshes render correctly.
+
+1. In a scratch `GameFact` test (model: `MissileGifScratchTests` in git history), spawn the
+   actors via the `ValidationGroundHost.CreateAt` pattern (terrain-height sampling +
+   `UpdateColliders`), set the camera with `LookAt` → `InitHeightForMap` →
+   `SetAngleAndPitchToDefault` → `SnapHeightAboveGround(1600)`, then per frame project each
+   actor with `Vector4.Transform(world, Camera.ViewProjection)` (NDC → `0.5*v+0.5`, Y flipped)
+   and append `frame dx dy tx ty hp` to a log file, capturing a PNG per frame via
+   `FrameCaptureService` (copy files out before disposing it; it deletes its captures).
+2. Annotate with PIL: crop a box spanning the actors plus the action corridor, upscale 4-5x
+   (`Image.LANCZOS`), draw crosshairs/labels at `(proj - cropOrigin) * scale`, quantize all
+   frames against a single base-frame palette (`quantize(palette=...)`, no dither) to avoid
+   palette flicker, save with `save_all=True, duration=170, optimize=True`.
+3. Verify content before sharing: the target's health-bar pixel count should shrink as damage
+   lands, and frame-diffs should show activity in the corridor between the two projections.
+
 ## Known limitation: unit meshes do not respond to close-up camera heights
 
 Unit models render correctly at validation-ground camera heights (~1600+ world units above
