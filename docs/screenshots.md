@@ -88,24 +88,23 @@ dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
   right edge above the bottom HUD, with a bright owner-colored text line (red for USA in the
   validation ground) and white text below; a crop and 3x upscale makes it reviewable.
 
-## Known limitation: W3D unit meshes render as specks in headless captures
+## Known limitation: unit meshes do not respond to close-up camera heights
 
-Terrain, water, FX (particles, tracers), the 2D HUD, health bars, and selection brackets all
-render correctly offscreen, but object model meshes (infantry, vehicles) draw as a ~10px speck
-or nothing at all. Confirmed by an in-test A/B: hiding two spawned units via
-`GameObject.Hidden` changes only ~260 pixels of a 1024x768 frame (a selection bracket and a
-dense 11x10 dark speck), even though both units' `W3dModelDraw`s submit valid render items
-(correct world-space bounding boxes, frustum-cull visible) to the opaque bucket. The drop is
-therefore downstream of `Scene3D.BuildRenderList`: the draw itself produces degenerate
-geometry (suspects: `ModelMeshPartInstance.BeforeRenderCallback` per-item constants, or the
-mesh vertex path on the offscreen Vulkan device). Not a recent regression: disabling the
-`ModelInstance` bind-pose seeding (commit c88af49d) does not change the result, and no headless
-capture in this repo's history shows a full-size unit model. The validation ground's default
-camera height (1600+) makes a correctly rendered unit ~10px, which masked the bug.
+Unit models render correctly at validation-ground camera heights (~1600+ world units above
+ground): house-color pixels, hulls, shadows, and health bars all appear (visible in
+`vg_minimalhud_frame.png`). But when the tactical camera is snapped below that range
+(`SnapHeightAboveGround(220)` and lower, tested 70-850), meshes draw collapsed to ~10px specks
+or vanish while terrain and 2D UI zoom correctly — verified with an in-test A/B
+(`GameObject.Hidden` toggle): render items are still submitted with correct world-space
+bounding boxes and pass frustum culling, so the defect is in the mesh draw path's use of the
+camera transform, not submission. Global shader constants (`GlobalShaderResourceData`) update
+every frame, so the stale-constant theory is excluded; root cause still open (Track G
+material). The terrain pass has a separate hole: heights roughly 900-1500 render fog gray
+(see `ValidationGroundCamera.MinimumSafeCameraHeight`).
 
-Consequences: unit-level visual validation (model states, animations, treads) is not possible
-in headless captures until this is fixed. Scene-level work (terrain, FX, HUD, minimap) is
-unaffected. GIFs assembled from headless frames will not show recognizable units.
+Practical consequence: headless close-ups of units (model states, animations) are not
+possible until the mesh-pass camera bug is fixed; scene-level work (terrain, FX, HUD, minimap)
+and formation-scale unit captures work fine at VG heights.
 
 ## Recipe: ReplaySketch validation-ground editor (2D, no display)
 
