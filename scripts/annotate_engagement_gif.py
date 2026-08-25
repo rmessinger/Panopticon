@@ -153,25 +153,6 @@ def target_health(frame):
     return None
 
 
-def draw_health_bar(draw, actor, bounds):
-    """Prominent top-centre bar: the engagement's whole point is the target's health dropping,
-    and a small number inside a label box is easy to miss."""
-    if not actor or actor["MaxHealth"] <= 0:
-        return
-    width = int(bounds[0] * 0.56)
-    height = 26
-    x0 = (bounds[0] - width) // 2
-    y0 = 10
-    fill = int(width * actor["Health"] / actor["MaxHealth"])
-    draw.rectangle((x0, y0, x0 + width, y0 + height), fill=(0, 0, 0, 200),
-                   outline=ROLE_COLORS["target"], width=2)
-    draw.rectangle((x0 + 2, y0 + 2, x0 + fill - 3, y0 + height - 3),
-                   fill=ROLE_COLORS["target"])
-    label = f"TARGET {actor['Health']:.0f} / {actor['MaxHealth']:.0f} HP"
-    draw.text((x0 + width / 2 - 7 * len(label) / 2, y0 + height + 6), label,
-              font=load_font(18), fill=ROLE_COLORS["target"])
-
-
 def annotate(capture_dir, output, scale, duration, padding):
     with open(os.path.join(capture_dir, "manifest.json")) as handle:
         manifest = json.load(handle)
@@ -198,9 +179,6 @@ def annotate(capture_dir, output, scale, duration, padding):
         image = Image.open(path).convert("RGB").crop((left, top, right, bottom)).resize(out_size, Image.LANCZOS)
         overlay = Image.new("RGBA", out_size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
-
-        target = target_health(record)
-        draw_health_bar(draw, target, out_size)
 
         index = record["Index"]
         for offset in range(3):
