@@ -113,9 +113,10 @@ Tuning lives under `EngagementCapture` in `TestHarness.json` (map, attacker/targ
 names, labels, separation, `TargetHp`, frame count, `DesiredSpanFraction`, output directory).
 
 Two options matter for recognizability. `AxisAngleDegrees` rotates the attacker-to-target axis:
-firing FX such as an infantry backblast expand behind the attacker, so the default 90 puts the
-attacker in the foreground with the blast venting away from the camera instead of covering him.
-`HideHud` closes every GUI window before capturing so the minimap does not intrude on the crop.
+firing FX are far larger than the unit firing them, so the default 180 orients the pair left to
+right with the backblast venting behind the attacker rather than over him. `HideHud` closes every
+GUI window before capturing so the minimap does not intrude on the crop. Measured comparisons of
+other angles are in `docs/engagement-capture-findings.md`.
 The runner exits non-zero when a definition is missing, the camera cannot be fitted, the
 attacker has no weapon, or no projectile is ever observed, so a silent empty capture is not
 possible.

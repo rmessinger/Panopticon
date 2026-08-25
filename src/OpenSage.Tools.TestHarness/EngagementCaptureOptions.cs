@@ -28,14 +28,14 @@ public sealed class EngagementCaptureOptions
     public float CenterY { get; set; } = 600f;
 
     /// <summary>World-unit distance between the two units. Must be inside the attacker's weapon range.</summary>
-    public float Separation { get; set; } = 60f;
+    public float Separation { get; set; } = 120f;
 
     /// <summary>
     /// Compass rotation of the attacker-to-target axis around the midpoint. Firing FX such as an
     /// infantry backblast expand behind the attacker, so this controls whether they land on top of
     /// the attacker on screen or behind him.
     /// </summary>
-    public float AxisAngleDegrees { get; set; } = 90f;
+    public float AxisAngleDegrees { get; set; } = 180f;
 
     /// <summary>Close every GUI window before capturing, so no HUD element intrudes on the crop.</summary>
     public bool HideHud { get; set; } = true;
@@ -50,7 +50,7 @@ public sealed class EngagementCaptureOptions
     public int Frames { get; set; } = 150;
 
     /// <summary>Fraction of the viewport width the two units should span after the camera fit.</summary>
-    public float DesiredSpanFraction { get; set; } = 0.45f;
+    public float DesiredSpanFraction { get; set; } = 0.70f;
 
     /// <summary>Starting height for the camera fit iteration.</summary>
     public float InitialCameraHeight { get; set; } = 180f;

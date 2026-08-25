@@ -35,6 +35,7 @@ def load_font(size):
 
 
 MIN_CROP_FRACTION = 0.62
+MAX_FONT_SIZE = 28
 
 
 def crop_box(manifest, padding):
@@ -69,9 +70,10 @@ def _grow(low, high, minimum, limit):
     return int(max(0, high - minimum)), high
 
 
-def fit_font(draw, labels, max_width):
-    """Largest font from the preferred size down that keeps every label inside `max_width`."""
-    size = max(13, int(max_width / 22))
+def fit_font(draw, labels, size_px):
+    """Largest font from the preferred size down that keeps every label inside the frame width."""
+    max_width = size_px[0]
+    size = max(13, min(MAX_FONT_SIZE, int(min(size_px) / 18)))
     while size > 11:
         font = load_font(size)
         if all(draw.textbbox((0, 0), label, font=font)[2] + 24 <= max_width for label in labels):
@@ -140,7 +142,7 @@ def annotate(capture_dir, output, scale, duration, padding):
     left, top, right, bottom = crop_box(manifest, padding)
     width, height = right - left, bottom - top
     out_size = (int(width * scale), int(height * scale))
-    font = fit_font(ImageDraw.Draw(Image.new("RGB", (1, 1))), label_texts(manifest), out_size[0])
+    font = fit_font(ImageDraw.Draw(Image.new("RGB", (1, 1))), label_texts(manifest), out_size)
 
     frames = []
     for record in manifest["Frames"]:
@@ -163,10 +165,12 @@ def annotate(capture_dir, output, scale, duration, padding):
             draw_label(
                 draw,
                 text,
-                (x, y - radius if actor["Role"] != "projectile" else y + radius),
+                (x, y - radius if y > out_size[1] / 2 else y + radius),
                 color,
                 font,
-                above=actor["Role"] != "projectile",
+                # Label on whichever side of the marker has room: anchoring everything above
+                # crams every box against the top edge of a wide, short crop.
+                above=y > out_size[1] / 2,
                 bounds=out_size,
                 placed=placed,
             )

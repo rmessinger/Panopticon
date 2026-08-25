@@ -55,11 +55,13 @@ Defender (red selection bracket when selected) fires at a China BattleMaster tan
 
 Reference artifacts in the shared viewer directory (`/mnt/pit2/Network Storage/temp/`,
 served at https://files.reid-corp.com/viewer/):
-- `vg_missile_defender.gif`: current capture (110 frames, camera height 90, 789x393 crop),
-  produced by the `EngagementCapture` scenario plus `scripts/annotate_engagement_gif.py`.
-  Both units are recognizable at model scale and labelled ATTACKER / TARGET from translated
-  display names; the missile is ringed in the 36 frames where it is airborne. The target's
-  health drains 300 to 0 and it is destroyed on camera.
+- `vg_missile_defender.gif`: current capture (86 frames, camera height 115, 986x477 crop),
+  produced by the `EngagementCapture` scenario plus `scripts/annotate_engagement_gif.py`. The
+  units stand 120 units apart on a left-to-right axis, so the missile crosses the frame
+  horizontally; it is ringed in 54 of the 86 frames. Both units are recognizable at model scale
+  and labelled ATTACKER / TARGET from translated display names. The target's health drains 300
+  to 0 and it is destroyed on camera. Findings and composition rules:
+  `docs/engagement-capture-findings.md`.
 - `vg_minimalhud_frame.png`: formation-scale frame with visible units across three faction
   clusters (red USA, green China, blue GLA), minimal HUD with outlined minimap bottom-left.
 

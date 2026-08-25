@@ -38,8 +38,9 @@ Spawns the attacker and target, fits the camera to both, commands the weapon dir
 `AttackObject` order would move the attacker and drift the framing), captures one PNG per
 logic frame, and writes `manifest.json` with per-frame screen projections, radii, health, and
 projectile positions. Knobs live under `EngagementCapture` in `TestHarness.json`; notably
-`AxisAngleDegrees` (orients the pair so firing FX vent away from the camera rather than over the
-attacker) and `HideHud` (closes GUI windows so the minimap stays out of the crop).
+`AxisAngleDegrees` (orients the pair so firing FX vent behind the attacker rather than over him)
+and `HideHud` (closes GUI windows so the minimap stays out of the crop). Background and measured
+angle comparisons: `docs/engagement-capture-findings.md`.
 
 Exit codes: 1 unknown object definition, 4 camera could not be fitted or attacker has no
 weapon, 5 no projectile ever observed. Render `scripts/annotate_engagement_gif.py <captureDir>
