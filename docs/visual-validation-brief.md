@@ -1,0 +1,114 @@
+# Visual validation brief: OpenSAGE minor-visuals
+
+Context document for a vision-capable model validating recent rendering and simulation work.
+Read together with `docs/screenshots.md` (capture recipes) and `docs/maps.md` (map data).
+Facts are current as of commit `1d5fbe5f` on branch `minor-visuals` (PR #28).
+
+## 1. Repository state
+
+- Repo: OpenSAGE (C# port of the SAGE engine, C&C Generals). Branch `minor-visuals`.
+- Merged earlier: headless logic host (A1), tracer rounds, P6b test fixes.
+- On this branch: validation-ground overlay tooltip, screenshot infrastructure, minimal HUD
+  (minimap-only default) with pixel-snapped minimap outline, Missile Defender flight fix,
+  camera framing contract test, capture documentation.
+- Gates at HEAD: build 0 warnings, 918 tests passed (7 skipped Interactive), format clean,
+  validation-ground headless run exit 0 (30 measured, 0 regressed, 1 known gap).
+- One recovered git stash exists (`stash@{0}`, "RECOVERED"): unrelated roadmap-doc WIP from
+  the `docs/p3-p6-delta-fixes` branch. Do not drop it.
+
+## 2. The headline change to validate: missile flight
+
+Bug: `MissileAIUpdate` handled ignition FX and hit checks but never moved the missile. The
+THUST locomotor was never driven, so gravity was unopposed: the missile appeared at the
+muzzle and fell straight down through the ground.
+
+Fix (commit `c88af49d`): on ignition, apply the `InitialVelocity` impulse along the muzzle
+direction, then each frame steer the SET_NORMAL (THRUST) locomotor toward queued target
+points (pre-turn point, then a point tracking the live target while `TryToFollowTarget`),
+until `FuelLifetime` expires. Waypoints are consumed when reached or passed.
+
+Latent engine bugs fixed in the same commit:
+- `Matrix4x4Utility.RotateZ(s, c)` wrote row 2's result into `M32` instead of `M22`
+  (non-orthonormal rotations, orientation matrices failing Decompose).
+- `Drawable.GetWeaponLaunchBoneTransform` returned render-computed `AbsoluteBoneTransforms`
+  (all-zero before the first render); now composes root-relative bone transform with the
+  object transform.
+- `ModelInstance` seeds bind-pose bone transforms at construction.
+- `CreateTransformMatrix` direction assert uses a length tolerance instead of exact equality.
+
+Logic-level proof: `MissileAIUpdateFlightTests` (Alpine Assault, Missile Defender vs
+BattleMaster 120 units apart) asserts the missile closes to within 30 units of the target and
+the warhead damages it. It passes. This is the strongest current evidence the fix works.
+
+## 3. Expected visuals for the engagement
+
+Scene: Alpine Assault, two spawned units on flat ground near world (600,600). USA Missile
+Defender (red selection bracket when selected) fires at a China BattleMaster tank roughly
+40-60 units away. Expected per shot cycle (~1s at 30 logic fps):
+
+1. Muzzle flash at the defender (FiringA model condition, `FX_BuggyMissileIgnition`).
+2. Missile model (`ExMsslTm`, a small rocket) launching roughly horizontally, arcing slightly
+   up then over toward the tank; flight lasts ~6 logic frames.
+3. Impact: detonation FX (`WeaponFX_RocketBuggyMissileDetonation`) and tank health bar drop
+   (~40 HP per hit from 50000 in test setups).
+4. Reload pause, then repeat.
+
+Reference artifacts in the shared viewer directory (`/mnt/pit2/Network Storage/temp/`,
+served at https://files.reid-corp.com/viewer/):
+- `vg_missile_defender.gif`: current best capture (75 frames, camera height 180). Shows both
+  units at full model size and the HP annotation draining, but FX are sub-pixel and the
+  annotation rings were muted by palette quantization. It demonstrates the engagement but
+  not the flight visually.
+- `vg_minimalhud_frame.png`: formation-scale frame with visible units across three faction
+  clusters (red USA, green China, blue GLA), minimal HUD with outlined minimap bottom-left.
+
+## 4. Known rendering facts (do not misreport as regressions)
+
+| Artifact | Status | Where seen |
+|---|---|---|
+| Per-frame terrain flicker | Open rendering bug, terrain pass re-renders with slight noise | All headless captures |
+| Fog gray `(105,105,105)` instead of terrain | Open bug for camera heights ~900-1500 | Framing outside that band avoids it |
+| Camera look-at clamped to map centre | By design when visible ground exceeds the map; set height before `LookAt` | `TacticalViewConstraintTests` documents the contract |
+| Missile/FX sub-pixel at far zoom | Expected at validation-ground heights (1600+); close-ups (height ~180) fix scale | GIF recipes in `docs/screenshots.md` |
+| Minimap bottom-left, black outline ring | Intentional minimal-HUD design | `vg_minimalhud_frame.png` |
+| Animating cloud shadows | Normal | All daytime captures |
+
+## 5. Capture environment facts
+
+- Headless offscreen Vulkan rendering through the TestHarness (`--headless`); no display
+  needed. Captures write PNGs to `/tmp/opensage_captures/`.
+- Env hooks: `TESTHARNESS_VG_CAPTURE=1` (per-frame captures), `TESTHARNESS_VG_OVERLAY_SHOT=1`,
+  `TESTHARNESS_VG_HOVER_OBJECT=<definition>`, `TESTHARNESS_VG_HOVER=x,y`.
+- Scratch capture tests live briefly under
+  `src/OpenSage.Game.Tests/Logic/Object/Update/` (pattern: `MissileGifScratchTests` in git
+  history) because `InternalsVisibleTo` only covers the test assembly. They are deleted
+  after use; the durable recipe is in `docs/screenshots.md`.
+- Camera framing order that works: `InitHeightForMap()` → `SetAngleAndPitchToDefault()` →
+  `SnapHeightAboveGround(h)` → `LookAt(pos)`. At height ~180 a tank renders ~120px, an
+  infantryman ~40px.
+- Spawn units via the `ValidationGroundHost.CreateAt` pattern: sample terrain height, then
+  `UpdateColliders()` immediately (colliders build at the origin and would frustum-cull).
+
+## 6. Open validation questions
+
+A vision-capable model reviewing new captures should answer:
+
+1. Does the missile render as a visible projectile in flight between the two units at close
+   framing (height ~120-200, corridor crop)? It has not been visually confirmed yet; only
+   logic-level assertions prove flight.
+2. Are muzzle flash and detonation FX visible per shot cycle at close framing?
+3. Does the missile trajectory arc (thrust + gravity) rather than drop or fly straight?
+4. Does the tank show damage reactions (health bar drain is expected; death FX if HP reaches
+   zero)?
+5. Any new artifacts at close framing not listed in section 4?
+
+## 7. Session log summary
+
+- Minimap outline ring: fixed and refactored to `DrawingContext2D.DrawPixelSnappedRectangle`,
+  pixel-identical to the approved golden capture.
+- Missile flight: fixed, logic-verified; visual capture still weak (see section 3).
+- Camera investigation: concluded no engine bug; ordering contract documented and tested.
+- Map inventory: `docs/maps.md` (55 maps; note grid cells are 10 world units).
+- The earlier "unit meshes never render headlessly" and "meshes collapse at close zoom"
+  diagnoses were wrong and are corrected in `docs/screenshots.md`; the real cause was camera
+  constraint clamping putting subjects off-screen.
