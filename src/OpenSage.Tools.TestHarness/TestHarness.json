@@ -46,5 +46,8 @@
   "KeepReplay": false,
   "GamePath": null,
   "ValidationGroundHoldOrders": true,
-  "ExitAfterTargetsDestroyed": false
+  "ExitAfterTargetsDestroyed": false,
+  "EngagementCapture": {
+    "Frames": 192
+  }
 }

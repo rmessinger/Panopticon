@@ -132,7 +132,44 @@ def build_palette(frames, samples=12):
     montage = Image.new("RGB", (thumb[0] * len(sampled), thumb[1]))
     for index, frame in enumerate(sampled):
         montage.paste(frame.resize(thumb, Image.LANCZOS), (index * thumb[0], 0))
-    return montage.quantize(colors=255, method=Image.MEDIANCUT)
+    base = montage.quantize(colors=250, method=Image.MEDIANCUT)
+
+    # The montage is mostly terrain, so the annotation colors get remapped to pale lookalikes
+    # (the projectile marker quantizes to a cream indistinguishable from ground). Reserve the
+    # last palette slots for the exact overlay colors; markers and labels then quantize to
+    # themselves while the scene keeps the montage-derived colors.
+    palette = base.getpalette()
+    reserved = list(ROLE_COLORS.values()) + [(255, 60, 40)]
+    for slot, color in enumerate(reserved):
+        palette[(250 + slot) * 3:(250 + slot) * 3 + 3] = list(color)
+    base.putpalette(palette)
+    return base
+
+
+def target_health(frame):
+    for actor in frame["Actors"]:
+        if actor["Role"] == "target":
+            return actor
+    return None
+
+
+def draw_health_bar(draw, actor, bounds):
+    """Prominent top-centre bar: the engagement's whole point is the target's health dropping,
+    and a small number inside a label box is easy to miss."""
+    if not actor or actor["MaxHealth"] <= 0:
+        return
+    width = int(bounds[0] * 0.56)
+    height = 26
+    x0 = (bounds[0] - width) // 2
+    y0 = 10
+    fill = int(width * actor["Health"] / actor["MaxHealth"])
+    draw.rectangle((x0, y0, x0 + width, y0 + height), fill=(0, 0, 0, 200),
+                   outline=ROLE_COLORS["target"], width=2)
+    draw.rectangle((x0 + 2, y0 + 2, x0 + fill - 3, y0 + height - 3),
+                   fill=ROLE_COLORS["target"])
+    label = f"TARGET {actor['Health']:.0f} / {actor['MaxHealth']:.0f} HP"
+    draw.text((x0 + width / 2 - 7 * len(label) / 2, y0 + height + 6), label,
+              font=load_font(18), fill=ROLE_COLORS["target"])
 
 
 def annotate(capture_dir, output, scale, duration, padding):
@@ -144,12 +181,44 @@ def annotate(capture_dir, output, scale, duration, padding):
     out_size = (int(width * scale), int(height * scale))
     font = fit_font(ImageDraw.Draw(Image.new("RGB", (1, 1))), label_texts(manifest), out_size)
 
+    # Frames where the target's health drops: the impact moments. Each gets a held flash so a
+    # viewer cannot miss that the warhead landed (the impact FX itself is small next to launch).
+    damage_frames = {}
+    previous = None
+    for record in manifest["Frames"]:
+        target = target_health(record)
+        health = target["Health"] if target else None
+        if previous is not None and health is not None and health < previous:
+            damage_frames[record["Index"]] = previous - health
+        previous = health
+
     frames = []
     for record in manifest["Frames"]:
         path = os.path.join(capture_dir, record["File"])
         image = Image.open(path).convert("RGB").crop((left, top, right, bottom)).resize(out_size, Image.LANCZOS)
         overlay = Image.new("RGBA", out_size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
+
+        target = target_health(record)
+        draw_health_bar(draw, target, out_size)
+
+        index = record["Index"]
+        for offset in range(3):
+            if index - offset in damage_frames:
+                amount = damage_frames[index - offset]
+                tx = next((actor["X"] - left for actor in record["Actors"]
+                           if actor["Role"] == "target"), out_size[0] / 2) * scale
+                ty = next((actor["Y"] - top for actor in record["Actors"]
+                           if actor["Role"] == "target"), out_size[1] / 2) * scale
+                fade = 255 - offset * 60
+                flash = load_font(34)
+                text = f"IMPACT -{amount:.0f} HP"
+                box = draw.textbbox((0, 0), text, font=flash)
+                draw.rectangle((tx - (box[2] - box[0]) / 2 - 10, ty - 120,
+                                tx + (box[2] - box[0]) / 2 + 10, ty - 52),
+                               fill=(0, 0, 0, 200), outline=(255, 60, 40, fade), width=3)
+                draw.text((tx - (box[2] - box[0]) / 2, ty - 112), text,
+                          font=flash, fill=(255, 60, 40, fade))
 
         placed = []
         for actor in record["Actors"] + record["Projectiles"]:
@@ -158,6 +227,12 @@ def annotate(capture_dir, output, scale, duration, padding):
             y = (actor["Y"] - top) * scale
             radius = max(8.0, actor["RadiusPixels"] * scale * 0.7)
             draw.ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=3)
+            if actor["Role"] == "projectile":
+                # A moving projectile needs a trackable marker, not just a ring: crosshair
+                # bars extending past the ellipse so it reads against any background.
+                reach = radius * 1.6
+                draw.line([(x - reach, y), (x + reach, y)], fill=color, width=3)
+                draw.line([(x, y - reach), (x, y + reach)], fill=color, width=3)
 
             text = actor["Label"] if actor["Role"] == "projectile" else f"{actor['Role'].upper()}: {actor['Label']}"
             if actor["MaxHealth"] > 0:
