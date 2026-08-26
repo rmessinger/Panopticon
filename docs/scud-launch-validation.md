@@ -3,7 +3,7 @@
 Handoff document for a vision-capable agent validating the SCUD launcher's launch animation
 on branch `minor-visuals`. Companion context: `docs/visual-validation-brief.md` (general
 known-good artifacts and rendering gotchas), `docs/engagement-capture-findings.md` (capture
-framework).
+framework), `docs/scud-launch-transfer.md` (status summary and open items).
 
 ## 1. What is being validated
 
