@@ -100,9 +100,9 @@ Nothing blocking, but these were noticed and not addressed.
   other missiles were re-oriented through the same broken helper and are worth a visual pass.
 - `EngagementCapture` frames the camera from actor positions only, so a tall trajectory
   leaves the viewport. Consider fitting the camera to projectile positions from a first pass.
-- The capture defaults still describe a missile-defender engagement
-  (`docs/engagement-capture-findings.md`). The SCUD configuration lives only in
-  `docs/scud-launch-validation.md`.
+- Per-unit capture tuning (artillery ranges and frame counts, the SCUD's separation above its
+  minimum attack range) is recorded in `docs/engagement-capture-findings.md`; the SCUD's full
+  configuration also lives in `docs/scud-launch-validation.md`.
 
 ## 7. Pathing
 

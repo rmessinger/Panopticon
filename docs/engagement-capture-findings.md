@@ -113,6 +113,23 @@ intrudes on the crop.
 Separation 120 with `DesiredSpanFraction` 0.70 settles the camera at height 115 and puts a
 projectile in 54 of 86 frames. The earlier 60-unit separation gave only 36 of 110.
 
+The code defaults describe the original missile-defender engagement
+(`AmericaInfantryMissileDefender` vs `ChinaTankBattleMaster`, separation 120, 150 frames).
+Other units need per-unit tuning:
+
+- Artillery has long pre-attack plus slow, lofted flight: Nuke Launcher and SCUD want 220+
+  frames. The SCUD additionally needs `Separation` above its `MinimumAttackRange` of 200
+  (300 works) and a wider fit (`DesiredSpanFraction` 0.52); its full configuration lives in
+  `docs/scud-launch-transfer.md`.
+- Short-range flame weapons (Dragon Tank, Angry Mob) need separation 60 or less.
+- Instant-hit weapons (machine guns, Ranger, Pathfinder) produce no logic projectile: the
+  runner exits 5 with the manifest still written; the capture shows tracers and muzzle FX.
+- Armor matchups matter: the Pathfinder's sniper rifle does near-zero damage to a vehicle
+  target (TruckArmor); pick a target the weapon can actually hurt.
+
+The camera is fitted to the two actors only, so a tall trajectory (SCUD arc) leaves the
+viewport mid-flight; fitting to projectile positions needs a probe pass (open item).
+
 ## Annotator details worth keeping
 
 The GIF uses one shared palette; per-frame palettes make static scenery shimmer. The palette is
@@ -124,9 +141,11 @@ The crop is grown to a minimum fraction of the viewport so labels fit, the font 
 longest label and capped, labels are placed on whichever side of the marker has room, and
 overlapping boxes are nudged apart.
 
-The annotator reserves exact annotation colors in the shared palette (markers and impact
-flashes stay saturated), draws a crosshair on the moving projectile, and flashes
-`IMPACT -N HP` for three frames on every damage frame. The target's HP lives in its label.
+The annotator reserves exact annotation colors in the shared palette so markers and impact
+flashes stay saturated, and flashes `IMPACT -N HP` for three frames on every damage frame.
+The target's HP lives in its label. Projectiles are not annotated: the engine draws them
+(mesh, tracer streak, or stream ribbon), and the overlay crosshair only obscured the flight.
+They still size the GIF crop so the whole trajectory stays in frame.
 
 Capture a few seconds past the last expected impact (default 192 frames) so the final hit's
 FX and smoke conclude before the sequence ends.
