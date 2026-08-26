@@ -124,6 +124,22 @@ public sealed class MissileAIUpdate : AIUpdate
             TargetPoints[^1] = target.TargetPosition;
         }
 
+        // Terminal dive: once within DistanceToTargetBeforeDiving, the remaining flight
+        // points straight at the target. Cruising locomotors hold a PreferredHeight cruise
+        // altitude (the SCUD missile's is 120); the dive must also disable that hold so the
+        // goal's actual Z is flown.
+        var liveTarget = GameObject.CurrentWeapon?.CurrentTarget;
+        var diving = ModuleData.DistanceToTargetBeforeDiving > 0
+            && liveTarget != null
+            && !liveTarget.IsDestroyed
+            && Vector3.Distance(GameObject.Translation, liveTarget.TargetPosition) < ModuleData.DistanceToTargetBeforeDiving;
+        if (diving)
+        {
+            TargetPoints.Clear();
+            AddTargetPoint(liveTarget.TargetPosition);
+        }
+        CurrentLocomotor?.SetPreciseZPosition(diving);
+
         // Out of fuel: thrust stops and gravity takes over, unless configured to detonate.
         if (currentFrame >= _fuelExhaustionFrame)
         {
@@ -147,13 +163,15 @@ public sealed class MissileAIUpdate : AIUpdate
             return;
         }
 
-        // Consume waypoints that were reached or overshot before steering toward them: a
-        // missile moving several units per frame can cross a nearby waypoint mid-step and
-        // never enter its arrival radius, which would otherwise leave it trying to U-turn
-        // back toward the point behind it.
+        // Consume intermediate waypoints that were reached or overshot: a missile moving
+        // several units per frame can cross a nearby waypoint mid-step and never enter its
+        // arrival radius, which would otherwise leave it trying to U-turn back toward the
+        // point behind it. The FINAL point is exempt: it is the target itself, and a missile
+        // that flew past it (e.g. lofted above) must still home back onto it, not discard it
+        // and cruise away ballistic.
         var closeEnoughDist = locomotor.LocomotorTemplate.CloseEnoughDist;
         var velocity = GameObject.Physics?.Velocity ?? Vector3.Zero;
-        while (TargetPoints.Count > 0)
+        while (TargetPoints.Count > 1)
         {
             var toPoint = TargetPoints[0] - GameObject.Translation;
             if (toPoint.LengthSquared() < closeEnoughDist * closeEnoughDist

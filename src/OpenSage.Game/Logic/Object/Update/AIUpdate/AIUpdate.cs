@@ -143,6 +143,14 @@ public class AIUpdate : UpdateModule
         }
     }
 
+    /// <summary>
+    /// Whether the turret (if any) is trained on the current target, including pitch
+    /// (e.g. the SCUD launcher's erector arm reaching FirePitch). Weapons on
+    /// turret-controlled slots wait for this before firing so projectiles launch from the
+    /// aimed launch bone. Always true for objects without a turret.
+    /// </summary>
+    internal bool IsTurretAimed => _turretAIUpdate?.IsAimed ?? true;
+
     private protected virtual AIUpdateStateMachine CreateStateMachine()
     {
         var result = new AIUpdateStateMachine(GameObject, GameEngine, this);

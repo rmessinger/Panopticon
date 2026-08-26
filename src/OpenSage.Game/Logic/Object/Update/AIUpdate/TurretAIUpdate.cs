@@ -32,6 +32,14 @@ public class TurretAIUpdate : UpdateModule
         Recentering
     }
 
+    /// <summary>
+    /// True when firing would launch from an aimed turret: either the turret is trained on
+    /// its target (Turning completed), or it does not restrict firing. Weapons on controlled
+    /// slots gate their fire on this.
+    /// </summary>
+    internal bool IsAimed => _moduleData.FiresWhileTurning
+        || _turretAIstate is TurretAIStates.Attacking or TurretAIStates.Disabled;
+
     internal TurretAIUpdate(GameObject gameObject, IGameEngine gameEngine, TurretAIUpdateModuleData moduleData)
         : base(gameObject, gameEngine)
     {
@@ -116,7 +124,7 @@ public class TurretAIUpdate : UpdateModule
                 var directionToTarget = (target.TargetPosition - GameObject.Translation).Vector2XY();
                 targetYaw = MathUtility.GetYawFromDirection(directionToTarget) - GameObject.Yaw;
 
-                if (Rotate(targetYaw))
+                if (Rotate(targetYaw) || RotatePitch(GetTargetPitch(target)))
                 {
                     break;
                 }
@@ -165,6 +173,42 @@ public class TurretAIUpdate : UpdateModule
             return true;
         }
         GameObject.TurretYaw -= deltaYaw;
+        return false;
+    }
+
+    // Pitch to aim at: FirePitch overrides target tracking ("instead of aiming pitchwise at
+    // the target, it will aim here") — the SCUD launcher's erector arm raises to FirePitch
+    // for launch regardless of where the target is.
+    private float GetTargetPitch(WeaponTarget target)
+    {
+        if (!_moduleData.AllowsPitch)
+        {
+            return MathUtility.ToRadians(_moduleData.NaturalTurretPitch);
+        }
+
+        if (_moduleData.FirePitch != 0)
+        {
+            return MathUtility.ToRadians(_moduleData.FirePitch);
+        }
+
+        var delta = target.TargetPosition - GameObject.Translation;
+        return MathF.Atan2(delta.Z, delta.Vector2XY().Length());
+    }
+
+    private bool RotatePitch(float targetPitch)
+    {
+        // TurretPitchRate is degrees per second.
+        var ratePerFrame = MathUtility.ToRadians(_moduleData.TurretPitchRate) / GameEngine.LogicFramesPerSecond;
+
+        var deltaPitch = MathUtility.CalculateAngleDelta(GameObject.TurretPitch, targetPitch);
+
+        if (MathF.Abs(deltaPitch) > 0.05f)
+        {
+            var step = MathF.Min(ratePerFrame, MathF.Abs(deltaPitch));
+            GameObject.TurretPitch -= MathF.Sign(deltaPitch) * step;
+            return true;
+        }
+        GameObject.TurretPitch -= deltaPitch;
         return false;
     }
 
