@@ -93,13 +93,36 @@ the first frame, discards the `DistanceToTravelBeforeTurning` climb point, and f
 at the target. Capture the SCUD at 300 units, which is a legal firing range, to see the
 lofted arc.
 
-## 4c. Verified result
+## 4c. Fourth defect: the in-flight missile's pitch oscillated every frame
 
-Capture after the fixes (119 frames, SCUD vs `CarAsian1` at 300 units,
-`DesiredSpanFraction` 0.8): the stowed missile is visible on the deck, the erector raises it
-to vertical over frames 0 to 44, it launches at frame 45, climbs to an apex around frame 90,
-dives, and destroys the car (300 to 0 HP). Artifact:
-`/mnt/pit2/Network Storage/temp/scud_launch.gif`.
+`Matrix4x4Utility.CreateTransformMatrix(pos, dir)` is supposed to build a transform whose
+local +X axis is `dir`. It composed a pitch and a yaw rotation in an order that does not
+survive the row-vector convention `Matrix4x4` uses here, producing row 1 of
+`(cosy*cosp, siny, cosy*sinp)` where `dir` is `(cosy*cosp, siny*cosp, sinp)`.
+
+The THRUST locomotor calls it every frame through `TryToOrientInThisDirection3D`, so each
+frame read back a wrong forward vector, rotated from it, and stored another wrong one: the
+missile's pitch flipped between roughly +45 and -45 degrees on alternating frames while its
+velocity climbed smoothly.
+
+Building the basis directly (row 1 = `dir`, row 2 = the horizontal perpendicular, row 3 =
+their cross product) fixes it. The forward vector now equals the normalized velocity every
+frame.
+
+`GetYVector` had a related typo, returning `M32` for its third component instead of `M23`.
+It had no callers.
+
+## 4d. Verified result
+
+Capture after the fixes (163 frames, SCUD vs `CarAsian1` at 300 units,
+`DesiredSpanFraction` 0.52): the stowed missile is visible on the deck, the erector raises it
+to vertical over frames 0 to 44, it launches at frame 45 nose-up and holds a steady attitude,
+climbs the 200 units of `DistanceToTravelBeforeTurning`, turns over, dives, and destroys the
+car (300 to 0 HP). Artifact: `/mnt/pit2/Network Storage/temp/scud_launch.gif`.
+
+The arc is tall: the missile climbs roughly 200 world units, so a capture framed tightly
+enough to read the launcher loses the missile off the top of the viewport. Span 0.52 is the
+compromise used above.
 
 ## 5. Reproducing and analyzing
 
@@ -112,7 +135,7 @@ config, copy it into `src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/` yoursel
   "AttackerDefinition": "GLAVehicleScudLauncher",
   "TargetDefinition": "CarAsian1",
   "Separation": 300,
-  "DesiredSpanFraction": 0.8,
+  "DesiredSpanFraction": 0.52,
   "Frames": 220
 }
 ```

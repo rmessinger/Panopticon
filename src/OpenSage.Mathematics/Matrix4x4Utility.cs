@@ -36,7 +36,7 @@ public static class Matrix4x4Utility
 
     public static Vector3 GetYVector(in this Matrix4x4 value)
     {
-        return new Vector3(value.M21, value.M22, value.M32);
+        return new Vector3(value.M21, value.M22, value.M23);
     }
 
     public static Vector3 GetZVector(in this Matrix4x4 value)
@@ -186,34 +186,23 @@ public static class Matrix4x4Utility
         // from its own re-normalization by an ulp. Also fails for NaN/zero directions.
         Debug.Assert(MathF.Abs(dir.Length() - 1.0f) < 0.001f);
 
-        var len2 = MathF.Sqrt((dir.X * dir.X) + (dir.Y * dir.Y));
+        // Rows are the basis vectors, because Matrix4x4 here is row-vector (v * M): row 1 is
+        // what the local +X axis maps to, so it must be `dir` exactly. Building the basis
+        // directly avoids the yaw/pitch decomposition, which is easy to compose in the wrong
+        // order and then feeds a wrong forward vector back into the next frame's steering.
+        var lateral = new Vector3(-dir.Y, dir.X, 0.0f);
+        var lateralLength = lateral.Length();
+        lateral = lateralLength > 0.0001f
+            ? lateral / lateralLength
+            : Vector3.UnitY; // Straight up or down: any perpendicular will do.
 
-        // Sine and cosine of the pitch ("up-down" tilt about y).
-        var sinp = dir.Z;
-        var cosp = len2;
+        var up = Vector3.Cross(dir, lateral);
 
-        // Sine and cosine of the yaw ("left-right" tilt about z).
-        float siny, cosy;
-        if (len2 != 0.0f)
-        {
-            siny = dir.Y / len2;
-            cosy = dir.X / len2;
-        }
-        else
-        {
-            siny = 0.0f;
-            cosy = 1.0f;
-        }
-
-        var result = Matrix4x4.Identity;
-
-        // Pitch rotation.
-        result.RotateY(-sinp, cosp);
-
-        // Yaw rotation to projection of target in x-y plane.
-        result.RotateZ(siny, cosy);
-
-        result.Translation = pos;
+        var result = new Matrix4x4(
+            dir.X, dir.Y, dir.Z, 0.0f,
+            lateral.X, lateral.Y, lateral.Z, 0.0f,
+            up.X, up.Y, up.Z, 0.0f,
+            pos.X, pos.Y, pos.Z, 1.0f);
 
         return result;
     }
