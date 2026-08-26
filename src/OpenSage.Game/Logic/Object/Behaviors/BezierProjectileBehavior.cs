@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Numerics;
 using OpenSage.Content;
@@ -17,6 +18,13 @@ public class BezierProjectileBehavior : UpdateModule
     private readonly float[] _unknownFloats = new float[7];
     private string _weaponThatFiredThis;
     private uint _unknown2;
+
+    // Flight path state (not persisted; recomputed on load from the current frame).
+    private bool _flightInitialized;
+    private Vector3 _launchPosition;
+    private Vector3 _flightTarget;
+    private float _flightDistance;
+    private float _traveled;
 
     internal FXList DetonationFX { get; set; }
 
@@ -42,11 +50,39 @@ public class BezierProjectileBehavior : UpdateModule
             return UpdateSleepTime.None;
         }
 
-        var direction = Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix);
-        var velocity = direction * GameObject.Speed;
+        if (TryInitializeFlight())
+        {
+            // Prescribed arc from launcher to target: horizontal interpolation plus a
+            // sinusoidal hump sized by the module's control-point heights. Artillery shells
+            // launch from an elevated muzzle; flying the raw launch ray would sail over the
+            // target, so the flight is defined by its endpoints, not the launch elevation.
+            _traveled += GameObject.Speed;
+            var t = MathF.Min(_traveled / _flightDistance, 1.0f);
+            var position = Vector3.Lerp(_launchPosition, _flightTarget, t);
+            var arcHeight = MathF.Max(
+                MathF.Max(_moduleData.FirstHeight, _moduleData.SecondHeight),
+                0.0f);
+            position.Z += MathF.Sin(MathF.PI * t) * arcHeight;
 
-        // Speed is already in distance per logic frame (ParseVelocityToLogicFrames).
-        GameObject.SetTranslation(GameObject.Translation + velocity);
+            var delta = position - GameObject.Translation;
+            if (delta.LengthSquared() > 1e-6f)
+            {
+                // Orient along the flight path so the shell model points nose-first.
+                GameObject.UpdateTransform(
+                    position,
+                    Quaternion.CreateFromYawPitchRoll(0, 0, MathF.Atan2(delta.Y, delta.X)));
+            }
+            else
+            {
+                GameObject.SetTranslation(position);
+            }
+        }
+        else
+        {
+            // No target to steer by (dead and gone before the first update): straight ray.
+            var direction = Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix);
+            GameObject.SetTranslation(GameObject.Translation + direction * GameObject.Speed);
+        }
 
         CheckForHit(
             GameObject,
@@ -58,6 +94,41 @@ public class BezierProjectileBehavior : UpdateModule
 
         // TODO: Use proper value.
         return UpdateSleepTime.None;
+    }
+
+    private bool TryInitializeFlight()
+    {
+        if (_flightInitialized)
+        {
+            return true;
+        }
+
+        var currentTarget = GameObject.CurrentWeapon?.CurrentTarget;
+        Vector3 targetPosition;
+        if (currentTarget?.TargetType == WeaponTargetType.Object
+            && !currentTarget.IsDestroyed)
+        {
+            targetPosition = currentTarget.TargetPosition;
+        }
+        else if (currentTarget?.TargetType == WeaponTargetType.Position)
+        {
+            targetPosition = currentTarget.TargetPosition;
+        }
+        else
+        {
+            return false;
+        }
+
+        _launchPosition = GameObject.Translation;
+        _flightTarget = targetPosition;
+        _flightDistance = Vector3.Distance(_launchPosition, _flightTarget);
+        if (_flightDistance < 1e-3f)
+        {
+            return false;
+        }
+
+        _flightInitialized = true;
+        return true;
     }
 
     internal static void CheckForHit(
