@@ -308,17 +308,22 @@ public class W3dModelDraw : DrawModule
 
         foreach (var subObject in model.SubObjects)
         {
-            var name = subObject.Name;
+            // The dictionaries record a state, not just an intent: WeaponHideShowBone feedback
+            // writes MISSILE=false while a round is loaded, so testing for the key alone would
+            // hide the SCUD's stowed missile forever.
+            var forcedHidden = IsSubObjectFlagged(Drawable.HiddenSubObjects, subObject);
+            var forcedShown = IsSubObjectFlagged(Drawable.ShownSubObjects, subObject);
 
-            if ((subObject.RenderObject.Hidden && !Drawable.ShownSubObjects.ContainsKey(name))
-                || Drawable.HiddenSubObjects.ContainsKey(name))
-            {
-                drawState.Model.BoneVisibilities[subObject.Bone.Index] = false;
-                continue;
-            }
-
-            drawState.Model.BoneVisibilities[subObject.Bone.Index] = true;
+            drawState.Model.BoneVisibilities[subObject.Bone.Index] =
+                !forcedHidden && (!subObject.RenderObject.Hidden || forcedShown);
         }
+    }
+
+    // Entries are keyed by sub-object name or by bone name, matching ModelInstance's own lookup.
+    private static bool IsSubObjectFlagged(Dictionary<string, bool> flags, ModelSubObject subObject)
+    {
+        return (flags.TryGetValue(subObject.Name, out var byName) && byName)
+            || (subObject.Bone?.Name != null && flags.TryGetValue(subObject.Bone.Name, out var byBone) && byBone);
     }
 
     private W3dModelDrawConditionState CreateModelDrawConditionStateInstance(ModelConditionState conditionState, IRandom random)

@@ -7,7 +7,7 @@ framework).
 
 ## 1. What is being validated
 
-The GLA SCUD Launcher (`GLAVehicleSCUDLauncher`) attacking a civilian car (`CarAsian1`) at 90
+The GLA SCUD Launcher (`GLAVehicleSCUDLauncher`) attacking a civilian car (`CarAsian1`) at 300
 world units, captured headlessly one PNG per logic frame (30 fps). Current capture:
 `/mnt/pit2/Network Storage/temp/scud_launch.gif`, with the raw frames and manifest under
 `/tmp/opensage_engagement/` from the latest run.
@@ -73,17 +73,33 @@ only from `Drawable.BuildRenderList`, that is, during the render pass. A logic-o
 test that calls `game.Update([])` without rendering never advances turret animation at all.
 Instrument the headless capture scenario instead of writing logic-only scratch tests.
 
-The `MISSILE` sub-object was also suspected of not rendering. It renders: its local bounding
-box is roughly 4 by 4 by 35 units, a slender rod, and it reads as a thin beam on the erector
-rail at this camera distance. Hide and show feedback reports `hidden=False` while a round is
-loaded, as expected.
+## 4a. Second defect: the stowed missile never rendered
 
-## 4a. Verified result
+The erector rose empty. `W3dModelDraw.UpdateBoneVisibilities` tested
+`Drawable.HiddenSubObjects.ContainsKey(name)`, hiding the bone whenever a key was present
+regardless of its value. `UpdateProjectileBoneFeedback` writes `MISSILE = false` every frame
+while a round is loaded, so the stowed missile was hidden permanently from the first
+condition-state update onward. `ShownSubObjects` had the same key-presence bug.
 
-Capture after the fix (72 frames, SCUD vs `CarAsian1` at 90 units, `DesiredSpanFraction`
-0.45): the erector rises from flat to vertical over frames 0 to 44, the missile lifts
-vertically off the rail at frame 45, arcs across the frame, and destroys the car (300 to 0
-HP). Artifact: `/mnt/pit2/Network Storage/temp/scud_launch.gif`.
+Both dictionaries record a state, not an intent, so the fix reads the value. The lookup also
+matches the bone name as well as the sub-object name, matching `ModelInstance.IsHidden`.
+
+## 4b. Third defect: no launch arc at 90 units
+
+`SCUDLauncherGunExplosive` and `SCUDLauncherGunToxin` have `AttackRange = 350` and
+`MinimumAttackRange = 200`. At the original 90-unit separation the missile spawns already
+inside `DistanceToTargetBeforeDiving` (200), so `MissileAIUpdate` enters its terminal dive on
+the first frame, discards the `DistanceToTravelBeforeTurning` climb point, and flies straight
+at the target. Capture the SCUD at 300 units, which is a legal firing range, to see the
+lofted arc.
+
+## 4c. Verified result
+
+Capture after the fixes (119 frames, SCUD vs `CarAsian1` at 300 units,
+`DesiredSpanFraction` 0.8): the stowed missile is visible on the deck, the erector raises it
+to vertical over frames 0 to 44, it launches at frame 45, climbs to an apex around frame 90,
+dives, and destroys the car (300 to 0 HP). Artifact:
+`/mnt/pit2/Network Storage/temp/scud_launch.gif`.
 
 ## 5. Reproducing and analyzing
 
@@ -95,9 +111,9 @@ config, copy it into `src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/` yoursel
 "EngagementCapture": {
   "AttackerDefinition": "GLAVehicleScudLauncher",
   "TargetDefinition": "CarAsian1",
-  "Separation": 90,
-  "DesiredSpanFraction": 0.45,
-  "Frames": 192
+  "Separation": 300,
+  "DesiredSpanFraction": 0.8,
+  "Frames": 220
 }
 ```
 
