@@ -19,5 +19,8 @@ jobs:
       with:
         dotnet-version: '8.x'
 
+    - name: Check brace newline rule
+      run: python3 scripts/check_brace_newline.py .
+
     - name: Check formatting
       run: dotnet format src --verify-no-changes --verbosity diagnostic
