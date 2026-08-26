@@ -75,6 +75,7 @@ served at https://files.reid-corp.com/viewer/):
 | Missile/FX sub-pixel at far zoom | Expected at validation-ground heights (1600+); close-ups (height ~90-180) fix scale | GIF recipes in `docs/screenshots.md` |
 | Shared global constants buffer across passes | Fixed on this branch; was rendering the forward pass with the shadow pass's light-space matrix on Vulkan | `GlobalShaderResourceData.AcquireSlot` / `BeginFrame` |
 | Minimap bottom-left, black outline ring | Intentional minimal-HUD design | `vg_minimalhud_frame.png` |
+| Projectile tracer streams not rendered | Open gap: `W3dProjectileStreamDraw.BuildRenderList` is a stub, so continuous streams (Dragon Tank flame ribbon, Toxin Truck spray, Black Lotus/Hacker hack beams, hazard cleanup) are invisible. Tank shells are unaffected: in the original data they are plain 2-3 frame shell meshes with no stream, which is correct behavior | `src/OpenSage.Game/Logic/Object/Draw/W3dProjectileStreamDraw.cs` |
 | Animating cloud shadows | Normal | All daytime captures |
 
 ## 5. Capture environment facts
