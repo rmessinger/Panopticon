@@ -131,6 +131,29 @@ flashes stay saturated), draws a crosshair on the moving projectile, and flashes
 Capture a few seconds past the last expected impact (default 192 frames) so the final hit's
 FX and smoke conclude before the sequence ends.
 
+## Projectile visuals: streams, shell tracers, impact FX
+
+The engagement capture surfaced that projectile-weapon visuals had three holes, all fixed on
+this branch:
+
+1. The weapon's `ProjectileDetonationFX` only executed for ground (position) hits; object
+   hits played nothing unless the victim's armor carried its own DamageFX. The missile
+   defender's detonation now plays on the car (2300-4600 bright pixels per impact).
+2. `W3dProjectileStreamDraw` was an unimplemented stub, so the flame/toxin/cleanup ribbons
+   never rendered. `ProjectileStreamManager` now draws them: one camera-facing textured
+   ribbon per live stream projectile, parameters (Texture, Width, TileFactor, ScrollRate,
+   MaxSegments) from the stream object definition's module data, additive-blended. The hack
+   "beam" weapons reuse stream data but fire no projectile, so they still show nothing.
+3. Tank cannons use NoTracer FireFX in the original data (the shell mesh was the only flight
+   visual). Engines wanting a streak get one: `ProjectileNugget.CreateShellTracer` attaches a
+   tracer that follows the shell, scaled from the data's own tank-tracer values
+   (`WeaponFX_GenericTankGun`: Length 20, Width 0.5) against the shell's speed and radius.
+   Weapons with a stream or an exhaust trail are excluded.
+
+Render-bucket gotcha that cost an hour: `RenderBucket.AddObject` skips objects whose
+`MaterialPass.ForwardPass` is null, so a manager whose material depends on runtime data (the
+first ribbon's texture) must defer `AddObject` until that material exists.
+
 ## Verifying a capture before sharing
 
 Check the manifest, not just the pictures. Target `Health` should fall across the sequence and a

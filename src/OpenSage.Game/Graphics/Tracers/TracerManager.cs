@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using OpenSage.Content.Loaders;
 using OpenSage.Graphics.Shaders;
+using OpenSage.Logic.Object;
 using OpenSage.Mathematics;
 using OpenSage.Rendering;
 using OpenSage.Utilities.Extensions;
@@ -27,6 +28,7 @@ internal sealed class TracerManager : RenderObject
     private const float DefaultSpeed = 300.0f;
 
     private readonly AssetLoadContext _loadContext;
+    private readonly IScene3D _scene;
     private readonly RenderBucket _renderBucket;
 
     private readonly List<Tracer> _tracers = new();
@@ -40,6 +42,8 @@ internal sealed class TracerManager : RenderObject
 
     private struct Tracer
     {
+        public ObjectId FollowObject;
+
         public Vector3 Origin;
         public Vector3 Direction;
         public Vector3 Color;
@@ -65,6 +69,7 @@ internal sealed class TracerManager : RenderObject
     public TracerManager(IScene3D scene, AssetLoadContext loadContext)
     {
         _loadContext = loadContext;
+        _scene = scene;
 
         // Draw after particles.
         _renderBucket = scene.RenderScene.CreateRenderBucket("Tracers", 16);
@@ -100,6 +105,36 @@ internal sealed class TracerManager : RenderObject
         });
     }
 
+    /// <summary>
+    /// A tracer that follows a live projectile object (e.g. a tank shell) instead of flying
+    /// on a ballistic path. The streak tracks the shell until it detonates; the weapon's
+    /// detonation FX covers the end of the flight.
+    /// </summary>
+    internal void CreateTracking(GameObject projectile, in ColorRgb color, float length, float width)
+    {
+        if (_tracers.Count >= MaxTracers)
+        {
+            return;
+        }
+
+        var direction = Vector3.TransformNormal(Vector3.UnitX, projectile.TransformMatrix);
+        if (direction.LengthSquared() < 1e-6f)
+        {
+            direction = Vector3.UnitX;
+        }
+
+        _tracers.Add(new Tracer
+        {
+            FollowObject = projectile.Id,
+            Origin = projectile.Translation,
+            Direction = Vector3.Normalize(direction),
+            Color = color.ToVector3(),
+            Length = MathF.Max(length, 0.1f),
+            Width = MathF.Max(width, 0.05f),
+            DecayAt = 1.0f,
+        });
+    }
+
     internal void Update(in TimeInterval gameTime)
     {
         EnsureGraphicsResources();
@@ -112,13 +147,38 @@ internal sealed class TracerManager : RenderObject
                 for (var i = 0; i < _tracers.Count; i++)
                 {
                     var tracer = _tracers[i];
+
+                    if (tracer.FollowObject != ObjectId.Invalid)
+                    {
+                        // Shell tracer: the head is wherever the projectile now is, and the
+                        // streak points back along the path actually flown.
+                        var projectile = _scene.GameObjects.GetObjectById(tracer.FollowObject);
+                        if (projectile == null || projectile.IsEffectivelyDead)
+                        {
+                            _tracers.RemoveAt(i);
+                            i--;
+                            continue;
+                        }
+
+                        var head = projectile.Translation;
+                        var step = head - tracer.Origin;
+                        if (step.LengthSquared() > 1e-4f)
+                        {
+                            tracer.Direction = Vector3.Normalize(step);
+                        }
+                        tracer.Origin = head;
+                        _tracers[i] = tracer;
+                        continue;
+                    }
+
                     tracer.Traveled += tracer.Speed * deltaTime;
                     _tracers[i] = tracer;
                 }
 
                 for (var i = _tracers.Count - 1; i >= 0; i--)
                 {
-                    if (_tracers[i].Traveled >= MaxFlightDistance)
+                    if (_tracers[i].FollowObject == ObjectId.Invalid
+                        && _tracers[i].Traveled >= MaxFlightDistance)
                     {
                         _tracers.RemoveAt(i);
                     }
@@ -192,24 +252,43 @@ internal sealed class TracerManager : RenderObject
         var vertexIndex = 0;
         foreach (var tracer in _tracers)
         {
-            var alpha = 1.0f;
-            var flightFraction = tracer.Traveled / MaxFlightDistance;
-            if (flightFraction > tracer.DecayAt)
-            {
-                var fadeRange = 1.0f - tracer.DecayAt;
-                alpha = fadeRange > 0
-                    ? MathF.Max(1.0f - (flightFraction - tracer.DecayAt) / fadeRange, 0.0f)
-                    : 0.0f;
-            }
+            float alpha;
+            Vector3 head;
+            float length;
 
-            var head = tracer.Origin + tracer.Direction * tracer.Traveled;
+            if (tracer.FollowObject != ObjectId.Invalid)
+            {
+                // Shell tracer: follows the live projectile, full brightness for its whole
+                // flight; the detonation FX ends the streak.
+                alpha = 1.0f;
+                head = tracer.Origin;
+                length = tracer.Length;
+            }
+            else
+            {
+                var flightFraction = tracer.Traveled / MaxFlightDistance;
+                if (flightFraction > tracer.DecayAt)
+                {
+                    var fadeRange = 1.0f - tracer.DecayAt;
+                    alpha = fadeRange > 0
+                        ? MathF.Max(1.0f - (flightFraction - tracer.DecayAt) / fadeRange, 0.0f)
+                        : 0.0f;
+                }
+                else
+                {
+                    alpha = 1.0f;
+                }
+
+                head = tracer.Origin + tracer.Direction * tracer.Traveled;
+                length = MathF.Min(tracer.Length, tracer.Traveled);
+            }
 
             var tracerVertex = new TracerShaderResources.TracerVertex
             {
                 Position = head,
                 Direction = tracer.Direction,
                 Color = new Vector4(tracer.Color, alpha),
-                Length = MathF.Min(tracer.Length, tracer.Traveled),
+                Length = length,
                 Width = tracer.Width,
             };
 

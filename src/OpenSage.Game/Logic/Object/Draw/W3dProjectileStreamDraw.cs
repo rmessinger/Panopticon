@@ -11,13 +11,19 @@ using OpenSage.Mathematics;
 
 namespace OpenSage.Logic.Object;
 
+/// <summary>
+/// Rendering for this module is implemented by <see cref="OpenSage.Graphics.ProjectileStreams.ProjectileStreamManager"/>,
+/// driven from the weapon's ProjectileStreamName: the stream object definitions are INERT and
+/// never instantiated, so the manager consumes the module data directly and draws one camera-
+/// facing ribbon per live stream projectile.
+/// </summary>
 public sealed class W3dProjectileStreamDraw : DrawModule
 {
     public override IEnumerable<BitArray<ModelConditionFlag>> ModelConditionStates { get; } = Array.Empty<BitArray<ModelConditionFlag>>();
 
     internal override void BuildRenderList(RenderList renderList, Camera camera, bool castsShadow, MeshShaderResources.RenderItemConstantsPS renderItemConstantsPS, Dictionary<string, bool> shownSubObjects = null, Dictionary<string, bool> hiddenSubObjects = null)
     {
-        // TODO
+        // See the class doc: rendering happens in ProjectileStreamManager.
     }
 
     internal override (ModelInstance, ModelBone) FindBone(string boneName)

@@ -52,7 +52,8 @@ public class BezierProjectileBehavior : UpdateModule
             GameObject,
             GameEngine,
             _moduleData.DetonateCallsKill,
-            DetonationFX ?? _moduleData.GroundHitFX?.Value,
+            DetonationFX,
+            _moduleData.GroundHitFX?.Value,
             _launcherObjectId);
 
         // TODO: Use proper value.
@@ -63,6 +64,7 @@ public class BezierProjectileBehavior : UpdateModule
         GameObject gameObject,
         IGameEngine gameEngine,
         bool detonateCallsKill,
+        FXList detonationFX,
         FXList groundHitFX,
         ObjectId launcherId)
     {
@@ -73,7 +75,7 @@ public class BezierProjectileBehavior : UpdateModule
         var hitObject = FindObjectCollision(gameObject, gameEngine, launcherId);
         if (hitObject != null)
         {
-            Detonate(gameObject, gameEngine, new WeaponTarget(gameEngine.Scene3D.GameObjects, hitObject.Id), detonateCallsKill, groundHitFX);
+            Detonate(gameObject, gameEngine, new WeaponTarget(gameEngine.Scene3D.GameObjects, hitObject.Id), detonateCallsKill, detonationFX);
             return;
         }
 
@@ -89,7 +91,7 @@ public class BezierProjectileBehavior : UpdateModule
                 ? currentTarget
                 : new WeaponTarget(gameObject.Translation);
 
-            Detonate(gameObject, gameEngine, detonationTarget, detonateCallsKill, groundHitFX);
+            Detonate(gameObject, gameEngine, detonationTarget, detonateCallsKill, detonationFX, groundHitFX);
         }
     }
 
@@ -193,8 +195,7 @@ public class BezierProjectileBehavior : UpdateModule
     }
 
     // Fires the projectile's warhead at its current target (or its own position when the
-    // target is gone) and executes the detonation FX for position hits. Used by the
-    // fuel-exhaustion detonation path.
+    // target is gone). Used by the fuel-exhaustion detonation path.
     internal static void DeliverWarhead(GameObject gameObject, IGameEngine gameEngine, FXList detonationFX)
     {
         // If the projectile was fired at a specific object, preserve that target so that
@@ -208,7 +209,9 @@ public class BezierProjectileBehavior : UpdateModule
         FireWarhead(gameObject, gameEngine, detonationTarget, detonationFX);
     }
 
-    private static void FireWarhead(GameObject gameObject, IGameEngine gameEngine, WeaponTarget target, FXList fx)
+    // The weapon's ProjectileDetonationFX plays on every detonation (object hit, ground hit,
+    // fuel exhaustion); only the Bezier-specific GroundHitFX is position-only.
+    private static void FireWarhead(GameObject gameObject, IGameEngine gameEngine, WeaponTarget target, FXList detonationFX)
     {
         // TODO: Should this ever be null?
         if (gameObject.CurrentWeapon != null)
@@ -217,13 +220,10 @@ public class BezierProjectileBehavior : UpdateModule
             gameObject.CurrentWeapon.Fire();
         }
 
-        if (target.TargetType == WeaponTargetType.Position)
-        {
-            fx?.Execute(new FXListExecutionContext(
-                gameObject.Rotation,
-                gameObject.Translation,
-                gameEngine));
-        }
+        detonationFX?.Execute(new FXListExecutionContext(
+            gameObject.Rotation,
+            gameObject.Translation,
+            gameEngine));
     }
 
     private static void Detonate(
@@ -231,9 +231,18 @@ public class BezierProjectileBehavior : UpdateModule
         IGameEngine gameEngine,
         WeaponTarget target,
         bool detonateCallsKill,
-        FXList groundHitFX)
+        FXList detonationFX,
+        FXList groundHitFX = null)
     {
-        FireWarhead(gameObject, gameEngine, target, groundHitFX);
+        FireWarhead(gameObject, gameEngine, target, detonationFX);
+
+        if (target.TargetType == WeaponTargetType.Position)
+        {
+            groundHitFX?.Execute(new FXListExecutionContext(
+                gameObject.Rotation,
+                gameObject.Translation,
+                gameEngine));
+        }
 
         if (detonateCallsKill)
         {

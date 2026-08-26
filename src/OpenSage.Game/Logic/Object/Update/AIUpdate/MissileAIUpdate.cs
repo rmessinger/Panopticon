@@ -102,7 +102,7 @@ public sealed class MissileAIUpdate : AIUpdate
             case MissileState.Moving:
                 SteerTowardTargetPoints(currentFrame);
                 // TODO: DistanceToTargetBeforeDiving
-                BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX, _launcherObjectId);
+                BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX, groundHitFX: null, _launcherObjectId);
                 break;
 
             default:

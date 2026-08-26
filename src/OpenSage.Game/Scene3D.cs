@@ -9,6 +9,7 @@ using OpenSage.Data.Map;
 using OpenSage.DataStructures;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Graphics.ParticleSystems;
+using OpenSage.Graphics.ProjectileStreams;
 using OpenSage.Graphics.Rendering;
 using OpenSage.Graphics.Rendering.Shadows;
 using OpenSage.Graphics.Rendering.Water;
@@ -51,6 +52,9 @@ public sealed class Scene3D : DisposableBase, IScene3D
 
     TracerManager IScene3D.TracerManager => TracerManager;
     internal TracerManager TracerManager { get; }
+
+    ProjectileStreamManager IScene3D.ProjectileStreamManager => ProjectileStreamManager;
+    internal ProjectileStreamManager ProjectileStreamManager { get; }
 
     private readonly OrderGeneratorSystem _orderGeneratorSystem;
 
@@ -316,6 +320,8 @@ public sealed class Scene3D : DisposableBase, IScene3D
 
         TracerManager = AddDisposable(new TracerManager(this, game.AssetStore.LoadContext));
 
+        ProjectileStreamManager = AddDisposable(new ProjectileStreamManager(this, game.AssetStore.LoadContext));
+
         Radar = new Radar();
 
         if (mapFile != null)
@@ -395,6 +401,8 @@ public sealed class Scene3D : DisposableBase, IScene3D
         ParticleSystemManager?.Update(gameTime);
 
         TracerManager?.Update(gameTime);
+
+        ProjectileStreamManager?.Update(gameTime);
     }
 
     public void BuildRenderList(RenderList renderList, Camera camera, in TimeInterval gameTime)

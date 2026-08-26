@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Numerics;
 using OpenSage.Content;
@@ -91,6 +92,9 @@ public sealed class ProjectileNugget : WeaponEffectNugget
             missileAIUpdate.LauncherObjectId = launcherId;
         }
 
+        CreateShellTracer(context, projectileObject);
+        CreateProjectileStream(context, projectileObject);
+
         if (IsConvertedFromLegacyData)
         {
             if (bezierProjectileBehavior != null)
@@ -103,5 +107,52 @@ public sealed class ProjectileNugget : WeaponEffectNugget
                 missileAIUpdate.DetonationFX = ParentWeaponTemplate.ProjectileDetonationFX?.Value;
             }
         }
+    }
+
+    // Tank cannons and artillery use "NoTracer" FireFX variants in the original data, so the
+    // shell itself is the only flight visual. Engines that want a visible shell streak add a
+    // tracer that follows the projectile. Weapons that already have a flight visual are
+    // excluded: stream weapons draw a ribbon, and missiles with an exhaust trail already show
+    // one. Scale follows the game's own tracer data (WeaponFX_GenericTankGun): a tank shell
+    // tracer is twice an infantry tracer's length and width, tied to the shell's speed.
+    private void CreateShellTracer(WeaponEffectExecutionContext context, GameObject projectileObject)
+    {
+        var weapon = ParentWeaponTemplate;
+        if (!string.IsNullOrEmpty(weapon.ProjectileStreamName)
+            || !string.IsNullOrEmpty(weapon.ProjectileExhaust))
+        {
+            return;
+        }
+
+        context.GameEngine.Scene3D?.TracerManager.CreateTracking(
+            projectileObject,
+            new ColorRgb(255, 230, 170),
+            length: Math.Clamp(weapon.WeaponSpeed * 1.5f, 15f, 30f),
+            width: Math.Clamp(projectileObject.Geometry.BoundingCircleRadius * 0.5f, 0.4f, 0.8f));
+    }
+
+    // Stream weapons (ProjectileStreamName, e.g. the Dragon Tank's flame) draw a textured
+    // ribbon trailing the projectile instead of a tracer streak. The stream object definition
+    // carries the rendering parameters in its W3dProjectileStreamDraw module.
+    private void CreateProjectileStream(WeaponEffectExecutionContext context, GameObject projectileObject)
+    {
+        var streamName = ParentWeaponTemplate.ProjectileStreamName;
+        if (string.IsNullOrEmpty(streamName))
+        {
+            return;
+        }
+
+        var streamDefinition = context.GameEngine.AssetStore.ObjectDefinitions.GetByName(streamName);
+        var streamData = streamDefinition?.Draws.Values
+            .Select(b => b.Data)
+            .OfType<W3dProjectileStreamDrawModuleData>()
+            .FirstOrDefault();
+        if (streamData == null)
+        {
+            return;
+        }
+
+        var texture = context.GameEngine.AssetStore.Textures.GetByName(streamData.Texture)?.Texture;
+        context.GameEngine.Scene3D?.ProjectileStreamManager.Create(projectileObject, streamData, texture);
     }
 }
