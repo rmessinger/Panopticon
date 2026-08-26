@@ -85,8 +85,8 @@ def fit_font(draw, labels, size_px):
 def label_texts(manifest):
     seen = set()
     for frame in manifest["Frames"]:
-        for actor in frame["Actors"] + frame["Projectiles"]:
-            text = actor["Label"] if actor["Role"] == "projectile" else f"{actor['Role'].upper()}: {actor['Label']}"
+        for actor in frame["Actors"]:
+            text = f"{actor['Role'].upper()}: {actor['Label']}"
             if actor["MaxHealth"] > 0:
                 text += f"  {actor['Health']:.0f}/{actor['MaxHealth']:.0f} HP"
             seen.add(text)
@@ -199,20 +199,17 @@ def annotate(capture_dir, output, scale, duration, padding):
                           font=flash, fill=(255, 60, 40, fade))
 
         placed = []
-        for actor in record["Actors"] + record["Projectiles"]:
+        # Projectiles are drawn by the engine (mesh, tracer, or stream ribbon); annotating
+        # them on top only obscures the flight. They still size the crop (crop_box) so the
+        # whole trajectory stays in frame.
+        for actor in record["Actors"]:
             color = ROLE_COLORS.get(actor["Role"], (255, 255, 255))
             x = (actor["X"] - left) * scale
             y = (actor["Y"] - top) * scale
             radius = max(8.0, actor["RadiusPixels"] * scale * 0.7)
             draw.ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=3)
-            if actor["Role"] == "projectile":
-                # A moving projectile needs a trackable marker, not just a ring: crosshair
-                # bars extending past the ellipse so it reads against any background.
-                reach = radius * 1.6
-                draw.line([(x - reach, y), (x + reach, y)], fill=color, width=3)
-                draw.line([(x, y - reach), (x, y + reach)], fill=color, width=3)
 
-            text = actor["Label"] if actor["Role"] == "projectile" else f"{actor['Role'].upper()}: {actor['Label']}"
+            text = f"{actor['Role'].upper()}: {actor['Label']}"
             if actor["MaxHealth"] > 0:
                 text += f"  {actor['Health']:.0f}/{actor['MaxHealth']:.0f} HP"
             draw_label(
