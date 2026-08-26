@@ -442,9 +442,10 @@ public class W3dModelDraw : DrawModule
         }
         if (_turretPitchBone != null)
         {
-            // Positive pitch elevates the arm: rotation about the model's lateral (Y) axis
-            // tips the forward (+X) direction upward.
-            _turretPitchBone.AnimatedOffset.Rotation = Quaternion.CreateFromYawPitchRoll(0, -GameObject.TurretPitch, 0);
+            // Positive pitch elevates the arm: rotate about the model's lateral (Y) axis so the
+            // forward (+X) direction tips up toward +Z. CreateFromYawPitchRoll's "pitch"
+            // parameter is rotation about X, which only rolls the arm about its own length.
+            _turretPitchBone.AnimatedOffset.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -GameObject.TurretPitch);
         }
     }
 

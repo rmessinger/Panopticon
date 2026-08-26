@@ -9,8 +9,8 @@ framework).
 
 The GLA SCUD Launcher (`GLAVehicleSCUDLauncher`) attacking a civilian car (`CarAsian1`) at 90
 world units, captured headlessly one PNG per logic frame (30 fps). Current capture:
-`/mnt/pit2/Network Storage/temp/vg_attack_GLAVehicleSCUDLauncher.gif` (67 frames, 170 ms per
-frame; also frames under `/tmp/opensage_engagement/` from the latest run, if still present).
+`/mnt/pit2/Network Storage/temp/scud_launch.gif`, with the raw frames and manifest under
+`/tmp/opensage_engagement/` from the latest run.
 
 Expected sequence, from the game's own data:
 
@@ -25,68 +25,83 @@ Expected sequence, from the game's own data:
 Reference: original-game SCUD launcher footage exists publicly (search "Generals SCUD
 launcher"); the arm raises well before launch and the missile lifts vertically off the arm.
 
-## 2. Reported problem (current state, commit afdc46b5)
+## 2. Reported problem (as of commit afdc46b5, now fixed)
 
-User review of the current GIF:
+User review of the GIF captured at that commit:
 
-- About 80 percent of the animation appears to be "the missile bay on top of the truck
+- About 80 percent of the animation appeared to be "the missile bay on top of the truck
   closing".
-- The missile then fires directly from the front of the truck into the target.
+- The missile then fired directly from the front of the truck into the target.
 
-## 3. Verified facts (logic traces, not guesses)
+## 3. Root cause
 
-- Turret pitch DOES converge: pitch rises 0 to 1.57 rad at ~0.035 rad per frame from frame 15
-  to 45. The fire gate holds the shot until aimed.
-- The arm DOES move on screen: pixel-diff of the launcher region shows changed pixels rising
-  about 120 px above the launcher between frames 10 and 44. (Whether the motion reads as
-  "raising" or "closing" needs a vision judgment; the axis or sign applied in
-  `W3dModelDraw.UpdateTurretAim` (`Quaternion.CreateFromYawPitchRoll(0, -TurretPitch, 0)`,
-  src/OpenSage.Game/Logic/Object/Draw/W3dModelDraw.cs) is the suspect if it looks wrong.)
-- Bone hierarchy is correct: `WEAPONA01` child of `TURRETEL`, child of `TURRET`, child of
-  `CHASSIS`. `MISSILE` is also a child of `TURRETEL`.
-- DEFECT (proven): the logic-side launch transform never sees the elevation.
-  `Drawable.GetWeaponLaunchBoneTransform` returns the bone's `RelativeBoneTransforms` entry,
-  and a frame-by-frame trace shows it frozen at `<577.9, 600.0, 30.6>` with forward `+X`
-  while pitch rises to 90 deg. The missile therefore spawns at the unelevated bone: low, at
-  the truck's front, pointing horizontally at the target. This exactly matches "fires
-  directly from the front of the truck".
-- The flight itself is correct after spawn: 21 frames, homing, dive, kill
-  (logic-verified; warhead delivers, car destroyed).
-- The stowed-missile hide sets the right dictionary values (verified by instrumentation);
-  visual magnitude at this camera distance is only about 22 px, so judge it in the GIF.
+`W3dModelDraw.UpdateTurretAim` applied the turret pitch with
+`Quaternion.CreateFromYawPitchRoll(0, -TurretPitch, 0)`.
 
-## 4. Root-cause hypothesis for the launch bone (for the fixing agent, after visual review)
+`CreateFromYawPitchRoll(yaw, pitch, roll)` maps yaw to Y, pitch to X, roll to Z. W3D model
+space is X forward, Y lateral, Z up. Passing the turret pitch as the second argument
+therefore rotated `TURRETEL` about its own long axis, a roll, which on screen reads as the
+erector rolling in place like a lid closing over the bay. The rotation left `+X` unchanged,
+so the child launch bone `WEAPONA01` stayed at deck height pointing at the target and the
+missile spawned horizontally out of the truck's front.
 
-`W3dModelDraw.Update` sets `TURRETEL.AnimatedOffset.Rotation` during the render pass, and
-`ModelInstance.Update` recomputes `RelativeBoneTransforms` from `ModelBoneInstance.Matrix`
-(which includes `AnimatedOffset`). The logic-time query in `GetWeaponLaunchBoneTransform`
-(src/OpenSage.Game/Client/Drawable.cs:305) evidently reads transforms that were never
-recomputed from the animated offset, or recomputed before the offset was applied. Check:
+The fix is a rotation about the lateral axis:
 
-1. Who calls `ModelInstance.Update` and in what order relative to
-   `W3dModelDraw.Update` within a frame (`Scene3D.Update` vs `Drawable.Update` inside
-   `BuildRenderList`).
-2. Whether `ModelBoneInstance.IsDirty` propagation marks parents' children when only the
-   parent's `AnimatedOffset` changes.
-3. The simplest robust fix may be composing the launch transform from the yaw and pitch bone
-   offsets directly at query time, independent of render timing.
+```csharp
+_turretPitchBone.AnimatedOffset.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -GameObject.TurretPitch);
+```
 
-Secondary question for the vision agent: does the arm motion itself look like a correct
-vertical raise (arm pivot at the rear, missile tipping up), or does it rotate the wrong way
-or about the wrong axis (which would read as a lid closing over the bay)? Compare against
-reference footage.
+At 90 degrees this maps `+X` to `+Z`, so the arm and the launch bone both point straight up.
 
-Timing note: 45 frames of elevation before a 21-frame flight is data-consistent
-(TurretPitchRate 60 deg/sec at 30 fps for 90 deg). The "80 percent is the animation" feeling
-is partly this proportion, partly the launch defect hiding the payoff. If the original game
-elevates during its approach or pre-attack concurrently, that is a fidelity follow-up, not a
-defect in the mechanism.
+The adjacent yaw line, `Quaternion.CreateFromYawPitchRoll(0, 0, TurretYaw)`, is correct: its
+third parameter is rotation about Z, the model's up axis.
+
+## 4. Corrections to the original analysis
+
+The earlier hypothesis (stale `RelativeBoneTransforms`, `ModelInstance.Update` ordering,
+`IsDirty` propagation) was a red herring. Verified by instrumenting the real render path:
+
+- `ModelBoneInstance.IsDirty` includes `AnimatedOffset.IsDirty`, and `ModelInstance.Update`
+  recomputes every `RelativeBoneTransforms` entry when any bone is dirty.
+- `W3dModelDraw.Update` calls `UpdateTurretAim()` before the condition state's `Update`,
+  which is what calls `Model.Update`.
+- Children of `TURRETEL` demonstrably inherit the offset once the axis is right: the launch
+  bone's world forward went from `<-1, 0, 0>` to `<-0.035, 0, 0.999>`.
+
+The trace that showed a frozen launch bone was misleading because `drawModule.Update` runs
+only from `Drawable.BuildRenderList`, that is, during the render pass. A logic-only scratch
+test that calls `game.Update([])` without rendering never advances turret animation at all.
+Instrument the headless capture scenario instead of writing logic-only scratch tests.
+
+The `MISSILE` sub-object was also suspected of not rendering. It renders: its local bounding
+box is roughly 4 by 4 by 35 units, a slender rod, and it reads as a thin beam on the erector
+rail at this camera distance. Hide and show feedback reports `hidden=False` while a round is
+loaded, as expected.
+
+## 4a. Verified result
+
+Capture after the fix (72 frames, SCUD vs `CarAsian1` at 90 units, `DesiredSpanFraction`
+0.45): the erector rises from flat to vertical over frames 0 to 44, the missile lifts
+vertically off the rail at frame 45, arcs across the frame, and destroys the car (300 to 0
+HP). Artifact: `/mnt/pit2/Network Storage/temp/scud_launch.gif`.
 
 ## 5. Reproducing and analyzing
 
-Reproduce the capture (config in `src/OpenSage.Tools.TestHarness/TestHarness.json` under
-`EngagementCapture`; `--no-build` does NOT copy an edited config, copy it into
-`src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/` yourself):
+Reproduce the capture with this `EngagementCapture` block in
+`src/OpenSage.Tools.TestHarness/TestHarness.json` (`--no-build` does NOT copy an edited
+config, copy it into `src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/` yourself):
+
+```json
+"EngagementCapture": {
+  "AttackerDefinition": "GLAVehicleScudLauncher",
+  "TargetDefinition": "CarAsian1",
+  "Separation": 90,
+  "DesiredSpanFraction": 0.45,
+  "Frames": 192
+}
+```
+
+( ):
 
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
