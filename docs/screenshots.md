@@ -8,8 +8,10 @@
 
 Copy the PNG into `/mnt/pit2/Network Storage/temp/` (the path contains spaces; quote it). That
 directory is served read-only by the live viewer at `https://files.reid-corp.com/viewer/`, which
-shows the newest image automatically: no refresh, upload, or login. Overwrite the same filename
-for iteration snapshots so the viewer swaps instantly.
+shows the newest image automatically: no refresh, upload, or login. Never overwrite an existing
+file: the directory is the progress record, and the viewer sorts by mtime, so a new filename is
+displayed immediately anyway. First share uses the plain name (`shot.png`); each regeneration
+appends the next revision number (`shot_v2.png`, `shot_v3.png`, ...).
 
 ```sh
 cp /tmp/opensage_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/shot.png"
