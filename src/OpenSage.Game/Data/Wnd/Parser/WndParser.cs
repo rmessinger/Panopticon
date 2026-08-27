@@ -24,7 +24,8 @@ internal sealed class WndParser
         do
         {
             _tokens.Add(token = lexer.Lex());
-        } while (token.TokenType != WndTokenType.EndOfFile);
+        }
+        while (token.TokenType != WndTokenType.EndOfFile);
     }
 
     private WndToken Current => _tokens[_tokenIndex];
@@ -104,7 +105,8 @@ internal sealed class WndParser
             {
                 NextToken(WndTokenType.Comma);
             }
-        } while (Current.TokenType != WndTokenType.Semicolon);
+        }
+        while (Current.TokenType != WndTokenType.Semicolon);
     }
 
     public WndFile ParseFile()

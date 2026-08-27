@@ -4,6 +4,7 @@ using OpenSage.Content;
 using OpenSage.Data.Ini;
 using OpenSage.FX;
 using OpenSage.Graphics.ParticleSystems;
+using OpenSage.Mathematics;
 
 namespace OpenSage.Logic.Object;
 
@@ -13,6 +14,7 @@ public sealed class MissileAIUpdate : AIUpdate
 
     private MissileState _state;
     private LogicFrame _nextStateChangeTime;
+    private LogicFrame _fuelExhaustionFrame;
 
     private Vector3 _unknownPosition;
     private uint _stateMaybe;
@@ -82,15 +84,25 @@ public sealed class MissileAIUpdate : AIUpdate
                         AddTargetPoint(currentTarget.TargetPosition);
                     }
 
-                    GameObject.Speed = ModuleData.InitialVelocity;
+                    // Ignition impulse along the muzzle direction. ApplyForce adds mass * deltaV
+                    // to the acceleration, which physics integrates into velocity exactly once
+                    // (acceleration is reset at the end of each physics update).
+                    if (GameObject.Physics is { } physics)
+                    {
+                        var forward = Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix);
+                        physics.ApplyForce(forward * (physics.Mass * ModuleData.InitialVelocity));
+                    }
+
+                    _fuelExhaustionFrame = currentFrame + ModuleData.FuelLifetime;
 
                     _state = MissileState.Moving;
                 }
                 break;
 
             case MissileState.Moving:
-                // TODO: TryToFollowTarget
-                BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX, _launcherObjectId);
+                SteerTowardTargetPoints(currentFrame);
+                // TODO: DistanceToTargetBeforeDiving
+                BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX, groundHitFX: null, _launcherObjectId);
                 break;
 
             default:
@@ -99,6 +111,95 @@ public sealed class MissileAIUpdate : AIUpdate
 
         // TODO(Port): Use correct value.
         return UpdateSleepTime.None;
+    }
+
+    private void SteerTowardTargetPoints(LogicFrame currentFrame)
+    {
+        // Keep homing on a moving target: the final target point tracks its live position.
+        if (ModuleData.TryToFollowTarget
+            && TargetPoints.Count > 0
+            && GameObject.CurrentWeapon?.CurrentTarget is { } target
+            && !target.IsDestroyed)
+        {
+            TargetPoints[^1] = target.TargetPosition;
+        }
+
+        // Terminal dive: once within DistanceToTargetBeforeDiving, the remaining flight
+        // points straight at the target. Cruising locomotors hold a PreferredHeight cruise
+        // altitude (the SCUD missile's is 120); the dive must also disable that hold so the
+        // goal's actual Z is flown.
+        var liveTarget = GameObject.CurrentWeapon?.CurrentTarget;
+        var diving = ModuleData.DistanceToTargetBeforeDiving > 0
+            && liveTarget != null
+            && !liveTarget.IsDestroyed
+            && Vector3.Distance(GameObject.Translation, liveTarget.TargetPosition) < ModuleData.DistanceToTargetBeforeDiving;
+        if (diving)
+        {
+            TargetPoints.Clear();
+            AddTargetPoint(liveTarget.TargetPosition);
+        }
+        CurrentLocomotor?.SetPreciseZPosition(diving);
+
+        // Out of fuel: thrust stops and gravity takes over, unless configured to detonate.
+        if (currentFrame >= _fuelExhaustionFrame)
+        {
+            if (ModuleData.DetonateOnNoFuel)
+            {
+                // Detonating means the warhead is delivered where the missile dies, not just
+                // a death animation: fire it at the target before the kill.
+                BezierProjectileBehavior.DeliverWarhead(GameObject, GameEngine, DetonationFX);
+                GameObject.Kill(deathType: DeathType.Detonated);
+            }
+            return;
+        }
+
+        // The missile's THRUST locomotor does the steering: it accelerates along its forward
+        // vector toward the target point (bounded by MaxThrustAngle), compensating for the
+        // gravity physics applies. This mirrors AIUpdate.Update's movement block, minus the
+        // infantry braking/waypoint behavior missiles don't use.
+        var locomotor = CurrentLocomotor;
+        if (locomotor == null || TargetPoints.Count == 0)
+        {
+            return;
+        }
+
+        // Consume intermediate waypoints that were reached or overshot: a missile moving
+        // several units per frame can cross a nearby waypoint mid-step and never enter its
+        // arrival radius, which would otherwise leave it trying to U-turn back toward the
+        // point behind it. The FINAL point is exempt: it is the target itself, and a missile
+        // that flew past it (e.g. lofted above) must still home back onto it, not discard it
+        // and cruise away ballistic.
+        var closeEnoughDist = locomotor.LocomotorTemplate.CloseEnoughDist;
+        var velocity = GameObject.Physics?.Velocity ?? Vector3.Zero;
+        while (TargetPoints.Count > 1)
+        {
+            var toPoint = TargetPoints[0] - GameObject.Translation;
+            if (toPoint.LengthSquared() < closeEnoughDist * closeEnoughDist
+                || (velocity != Vector3.Zero && Vector3.Dot(toPoint, velocity) < 0))
+            {
+                TargetPoints.RemoveAt(0);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (TargetPoints.Count == 0)
+        {
+            return;
+        }
+
+        locomotor.SetPhysicsOptions(GameObject);
+
+        // TODO(Port): Use correct parameter values.
+        var blocked = false;
+        locomotor.LocoUpdateMoveTowardsPosition(
+            GameObject,
+            TargetPoints[0],
+            (TargetPoints[0] - GameObject.Translation).Vector2XY().Length(),
+            locomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState),
+            ref blocked);
     }
 
     internal override void Load(StatePersister reader)

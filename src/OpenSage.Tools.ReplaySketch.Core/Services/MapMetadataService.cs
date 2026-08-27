@@ -241,7 +241,11 @@ public sealed class MapMetadataService
         catch
         {
             var fallback = Path.Combine(Path.GetTempPath(), "OpenSAGE-ReplaySketch", "previews");
-            try { Directory.CreateDirectory(fallback); } catch { }
+            try
+            {
+                Directory.CreateDirectory(fallback);
+            }
+            catch { }
             return fallback;
         }
     }

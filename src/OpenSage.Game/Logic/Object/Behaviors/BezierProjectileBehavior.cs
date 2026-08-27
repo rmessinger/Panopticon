@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Numerics;
 using OpenSage.Content;
@@ -17,6 +18,13 @@ public class BezierProjectileBehavior : UpdateModule
     private readonly float[] _unknownFloats = new float[7];
     private string _weaponThatFiredThis;
     private uint _unknown2;
+
+    // Flight path state (not persisted; recomputed on load from the current frame).
+    private bool _flightInitialized;
+    private Vector3 _launchPosition;
+    private Vector3 _flightTarget;
+    private float _flightDistance;
+    private float _traveled;
 
     internal FXList DetonationFX { get; set; }
 
@@ -42,26 +50,92 @@ public class BezierProjectileBehavior : UpdateModule
             return UpdateSleepTime.None;
         }
 
-        var direction = Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix);
-        var velocity = direction * GameObject.Speed;
+        if (TryInitializeFlight())
+        {
+            // Prescribed arc from launcher to target: horizontal interpolation plus a
+            // sinusoidal hump sized by the module's control-point heights. Artillery shells
+            // launch from an elevated muzzle; flying the raw launch ray would sail over the
+            // target, so the flight is defined by its endpoints, not the launch elevation.
+            _traveled += GameObject.Speed;
+            var t = MathF.Min(_traveled / _flightDistance, 1.0f);
+            var position = Vector3.Lerp(_launchPosition, _flightTarget, t);
+            var arcHeight = MathF.Max(
+                MathF.Max(_moduleData.FirstHeight, _moduleData.SecondHeight),
+                0.0f);
+            position.Z += MathF.Sin(MathF.PI * t) * arcHeight;
 
-        GameObject.SetTranslation(GameObject.Translation + velocity * (GameEngine.MsPerLogicFrame / 1000.0f));
+            var delta = position - GameObject.Translation;
+            if (delta.LengthSquared() > 1e-6f)
+            {
+                // Orient along the flight path so the shell model points nose-first.
+                GameObject.UpdateTransform(
+                    position,
+                    Quaternion.CreateFromYawPitchRoll(0, 0, MathF.Atan2(delta.Y, delta.X)));
+            }
+            else
+            {
+                GameObject.SetTranslation(position);
+            }
+        }
+        else
+        {
+            // No target to steer by (dead and gone before the first update): straight ray.
+            var direction = Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix);
+            GameObject.SetTranslation(GameObject.Translation + direction * GameObject.Speed);
+        }
 
         CheckForHit(
             GameObject,
             GameEngine,
             _moduleData.DetonateCallsKill,
-            DetonationFX ?? _moduleData.GroundHitFX?.Value,
+            DetonationFX,
+            _moduleData.GroundHitFX?.Value,
             _launcherObjectId);
 
         // TODO: Use proper value.
         return UpdateSleepTime.None;
     }
 
+    private bool TryInitializeFlight()
+    {
+        if (_flightInitialized)
+        {
+            return true;
+        }
+
+        var currentTarget = GameObject.CurrentWeapon?.CurrentTarget;
+        Vector3 targetPosition;
+        if (currentTarget?.TargetType == WeaponTargetType.Object
+            && !currentTarget.IsDestroyed)
+        {
+            targetPosition = currentTarget.TargetPosition;
+        }
+        else if (currentTarget?.TargetType == WeaponTargetType.Position)
+        {
+            targetPosition = currentTarget.TargetPosition;
+        }
+        else
+        {
+            return false;
+        }
+
+        _launchPosition = GameObject.Translation;
+        _flightTarget = targetPosition;
+        _flightDistance = Vector3.Distance(_launchPosition, _flightTarget);
+        if (_flightDistance < 1e-3f)
+        {
+            return false;
+        }
+
+        _flightInitialized = true;
+        return true;
+    }
+
     internal static void CheckForHit(
         GameObject gameObject,
         IGameEngine gameEngine,
         bool detonateCallsKill,
+        FXList detonationFX,
         FXList groundHitFX,
         ObjectId launcherId)
     {
@@ -72,7 +146,7 @@ public class BezierProjectileBehavior : UpdateModule
         var hitObject = FindObjectCollision(gameObject, gameEngine, launcherId);
         if (hitObject != null)
         {
-            Detonate(gameObject, gameEngine, new WeaponTarget(gameEngine.Scene3D.GameObjects, hitObject.Id), detonateCallsKill, groundHitFX);
+            Detonate(gameObject, gameEngine, new WeaponTarget(gameEngine.Scene3D.GameObjects, hitObject.Id), detonateCallsKill, detonationFX);
             return;
         }
 
@@ -88,7 +162,7 @@ public class BezierProjectileBehavior : UpdateModule
                 ? currentTarget
                 : new WeaponTarget(gameObject.Translation);
 
-            Detonate(gameObject, gameEngine, detonationTarget, detonateCallsKill, groundHitFX);
+            Detonate(gameObject, gameEngine, detonationTarget, detonateCallsKill, detonationFX, groundHitFX);
         }
     }
 
@@ -101,8 +175,7 @@ public class BezierProjectileBehavior : UpdateModule
         }
 
         var filter = gameObject.CurrentWeapon?.Template.ProjectileCollidesWith ?? WeaponCollideTypes.None;
-        var stepDistance = gameObject.Speed * (gameEngine.MsPerLogicFrame / 1000.0f);
-        var radius = gameObject.Geometry.BoundingCircleRadius + stepDistance;
+        var radius = gameObject.Geometry.BoundingCircleRadius + DistancePerFrame(gameObject);
 
         return quadtree
             .FindIntersecting(new SphereCollider(gameObject.Transform, radius))
@@ -111,6 +184,21 @@ public class BezierProjectileBehavior : UpdateModule
                 && !o.IsEffectivelyDead
                 && !o.IsProjectile
                 && ShouldCollide(o, gameObject, filter));
+    }
+
+    // How far the projectile travels in one logic frame. Bezier projectiles move kinematically
+    // by Speed (units per frame) with physics adding gravity; MissileAIUpdate missiles move
+    // only through their physics velocity (Speed is not their actual travel rate).
+    private static float DistancePerFrame(GameObject gameObject)
+    {
+        var physicsVelocity = gameObject.Physics?.Velocity ?? Vector3.Zero;
+        if (gameObject.FindBehavior<BezierProjectileBehavior>() == null)
+        {
+            return physicsVelocity.Length();
+        }
+
+        var direction = Vector3.TransformNormal(Vector3.UnitX, gameObject.TransformMatrix);
+        return (physicsVelocity + direction * gameObject.Speed).Length();
     }
 
     private static bool ShouldCollide(GameObject target, GameObject projectile, WeaponCollideTypes filter)
@@ -177,12 +265,24 @@ public class BezierProjectileBehavior : UpdateModule
         return translation.Z <= terrainHeight;
     }
 
-    private static void Detonate(
-        GameObject gameObject,
-        IGameEngine gameEngine,
-        WeaponTarget target,
-        bool detonateCallsKill,
-        FXList groundHitFX)
+    // Fires the projectile's warhead at its current target (or its own position when the
+    // target is gone). Used by the fuel-exhaustion detonation path.
+    internal static void DeliverWarhead(GameObject gameObject, IGameEngine gameEngine, FXList detonationFX)
+    {
+        // If the projectile was fired at a specific object, preserve that target so that
+        // DamageNugget.Execute applies damage to the object. WeaponTarget.DoDamage only
+        // deals damage when the target type is Object; a position target does nothing.
+        var currentTarget = gameObject.CurrentWeapon?.CurrentTarget;
+        var detonationTarget = currentTarget?.TargetType == WeaponTargetType.Object
+            ? currentTarget
+            : new WeaponTarget(gameObject.Translation);
+
+        FireWarhead(gameObject, gameEngine, detonationTarget, detonationFX);
+    }
+
+    // The weapon's ProjectileDetonationFX plays on every detonation (object hit, ground hit,
+    // fuel exhaustion); only the Bezier-specific GroundHitFX is position-only.
+    private static void FireWarhead(GameObject gameObject, IGameEngine gameEngine, WeaponTarget target, FXList detonationFX)
     {
         // TODO: Should this ever be null?
         if (gameObject.CurrentWeapon != null)
@@ -190,6 +290,22 @@ public class BezierProjectileBehavior : UpdateModule
             gameObject.CurrentWeapon.SetTarget(target);
             gameObject.CurrentWeapon.Fire();
         }
+
+        detonationFX?.Execute(new FXListExecutionContext(
+            gameObject.Rotation,
+            gameObject.Translation,
+            gameEngine));
+    }
+
+    private static void Detonate(
+        GameObject gameObject,
+        IGameEngine gameEngine,
+        WeaponTarget target,
+        bool detonateCallsKill,
+        FXList detonationFX,
+        FXList groundHitFX = null)
+    {
+        FireWarhead(gameObject, gameEngine, target, detonationFX);
 
         if (target.TargetType == WeaponTargetType.Position)
         {

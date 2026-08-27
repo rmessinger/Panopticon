@@ -103,6 +103,27 @@ public class RadarDrawUtil
         DrawRadarOverlay(drawingContext, objectTransform, fittedRectangle.ToRectangleF());
     }
 
+    /// <summary>
+    /// The rectangle the minimap texture occupies after aspect fitting, in the same
+    /// control-relative coordinates <see cref="Draw"/> renders into: Draw computes the fitted
+    /// rectangle from the destination's size alone and ignores its X/Y, so this must not add
+    /// them either. Null when no minimap texture exists.
+    /// </summary>
+    public Mathematics.Rectangle? GetMinimapRectangle(in Mathematics.Rectangle destinationRectangle)
+    {
+        if (_miniMapTexture == null)
+        {
+            return null;
+        }
+
+        var fitted = RectangleF.CalculateRectangleFittingAspectRatio(
+            new RectangleF(0, 0, _miniMapTexture.Width, _miniMapTexture.Height),
+            new SizeF(_miniMapTexture.Width, _miniMapTexture.Height),
+            destinationRectangle.Size);
+
+        return fitted;
+    }
+
     public void DrawRadarMinimap(DrawingContext2D drawingContext, in Mathematics.Rectangle rectangle, bool flip = false)
     {
         drawingContext.DrawImage(_miniMapTexture, null, rectangle, flip);

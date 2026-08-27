@@ -36,6 +36,15 @@ internal sealed class FiringWeaponState : FixedDurationWeaponState
         var weaponEffectExecutionContext = new WeaponEffectExecutionContext(Context.Weapon, Context.GameEngine);
         foreach (var nugget in Context.Weapon.Template.Nuggets)
         {
+            // Projectile weapons carry their damage nuggets on the projectile's warhead,
+            // which executes them at detonation (see ProjectileNugget). Executing them
+            // here as well would damage the target at launch, playing the impact effect
+            // before the projectile has left the muzzle.
+            if (Context.Weapon.Template.DeliversDamageViaProjectile && nugget is DamageNugget)
+            {
+                continue;
+            }
+
             nugget.Execute(weaponEffectExecutionContext);
         }
 

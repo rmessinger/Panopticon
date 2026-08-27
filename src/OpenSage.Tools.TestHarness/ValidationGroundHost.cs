@@ -44,9 +44,11 @@ public sealed class ValidationGroundHost
             {
                 // Standardize HP so attack completion (target destruction) is feasible for the whole
                 // roster and weapon-differentiated rather than dominated by a structure's native HP.
+                // FullyHeal: the current HP must be raised too, otherwise SameCurrentHealth leaves
+                // it at the native value and TargetHp only inflates the maximum.
                 if (targetHp > 0f)
                 {
-                    obj.BodyModule?.SetMaxHealth(targetHp);
+                    obj.BodyModule?.SetMaxHealth(targetHp, MaxHealthChangeType.FullyHeal);
                 }
                 _targets.Add(obj);
             }
@@ -167,7 +169,9 @@ public sealed class ValidationGroundHost
                     // Enemy vehicle (the hijacker is GLA; USA is a roster enemy) placed at the
                     // subject position; the hijacker is ordered to walk into it.
                     var enemy = ResolvePlayer(game, HijackVehicleOwnerFactionIndex);
-                    var subject = CreateAt(game, "AmericaVehicleHumvee", subjectPosition, enemy);
+                    var subject = enemy != null
+                        ? CreateAt(game, "AmericaVehicleHumvee", subjectPosition, enemy)
+                        : null;
                     if (subject != null)
                     {
                         unit.SubjectObjectId = subject.Id;

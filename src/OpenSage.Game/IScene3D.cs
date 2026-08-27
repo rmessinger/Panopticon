@@ -6,9 +6,11 @@ using OpenSage.Data.Map;
 using OpenSage.DataStructures;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Graphics.ParticleSystems;
+using OpenSage.Graphics.ProjectileStreams;
 using OpenSage.Graphics.Rendering;
 using OpenSage.Graphics.Rendering.Shadows;
 using OpenSage.Graphics.Rendering.Water;
+using OpenSage.Graphics.Tracers;
 using OpenSage.Gui;
 using OpenSage.Gui.DebugUI;
 using OpenSage.Logic;
@@ -29,6 +31,8 @@ public interface IScene3D : IDisposable
     SelectionGui SelectionGui { get; }
     DebugOverlay DebugOverlay { get; }
     internal ParticleSystemManager ParticleSystemManager { get; }
+    internal TracerManager TracerManager { get; }
+    internal ProjectileStreamManager ProjectileStreamManager { get; }
     Camera Camera { get; }
     TacticalView TacticalView { get; }
     MapFile MapFile { get; }

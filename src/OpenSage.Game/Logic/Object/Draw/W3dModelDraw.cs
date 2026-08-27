@@ -308,17 +308,22 @@ public class W3dModelDraw : DrawModule
 
         foreach (var subObject in model.SubObjects)
         {
-            var name = subObject.Name;
+            // The dictionaries record a state, not just an intent: WeaponHideShowBone feedback
+            // writes MISSILE=false while a round is loaded, so testing for the key alone would
+            // hide the SCUD's stowed missile forever.
+            var forcedHidden = IsSubObjectFlagged(Drawable.HiddenSubObjects, subObject);
+            var forcedShown = IsSubObjectFlagged(Drawable.ShownSubObjects, subObject);
 
-            if ((subObject.RenderObject.Hidden && !Drawable.ShownSubObjects.ContainsKey(name))
-                || Drawable.HiddenSubObjects.ContainsKey(name))
-            {
-                drawState.Model.BoneVisibilities[subObject.Bone.Index] = false;
-                continue;
-            }
-
-            drawState.Model.BoneVisibilities[subObject.Bone.Index] = true;
+            drawState.Model.BoneVisibilities[subObject.Bone.Index] =
+                !forcedHidden && (!subObject.RenderObject.Hidden || forcedShown);
         }
+    }
+
+    // Entries are keyed by sub-object name or by bone name, matching ModelInstance's own lookup.
+    private static bool IsSubObjectFlagged(Dictionary<string, bool> flags, ModelSubObject subObject)
+    {
+        return (flags.TryGetValue(subObject.Name, out var byName) && byName)
+            || (subObject.Bone?.Name != null && flags.TryGetValue(subObject.Bone.Name, out var byBone) && byBone);
     }
 
     private W3dModelDrawConditionState CreateModelDrawConditionStateInstance(ModelConditionState conditionState, IRandom random)
@@ -402,7 +407,99 @@ public class W3dModelDraw : DrawModule
             GameObject.VerticalOffset = -((1.0f - progress) * GameObject.Geometry.MaxZ);
         }
 
+        UpdateTurretAim();
+        UpdateProjectileBoneFeedback();
+
         _activeModelDrawConditionState?.Update(gameTime);
+    }
+
+    // Turret aiming: the condition state names the yaw bone (Turret) and pitch bone
+    // (TurretPitch, e.g. the SCUD launcher's erector arm); their animated offsets follow the
+    // logic-side turret angles so every model draw gets data-driven turrets. Children of the
+    // pitch bone (the WeaponLaunchBone) inherit the elevation.
+    private ModelBoneInstance _turretYawBone;
+    private ModelBoneInstance _turretPitchBone;
+    private string _turretYawBoneName;
+    private string _turretPitchBoneName;
+
+    private void UpdateTurretAim()
+    {
+        if (GameObject == null || _activeConditionState == null)
+        {
+            return;
+        }
+
+        // Bone instances belong to the active condition state's model; re-resolve when it changes.
+        if (!ReferenceEquals(_turretYawBoneName, _activeConditionState.Turret))
+        {
+            _turretYawBoneName = _activeConditionState.Turret;
+            _turretYawBone = _turretYawBoneName != null ? FindBoneInstance(_turretYawBoneName) : null;
+        }
+        if (!ReferenceEquals(_turretPitchBoneName, _activeConditionState.TurretPitch))
+        {
+            _turretPitchBoneName = _activeConditionState.TurretPitch;
+            _turretPitchBone = _turretPitchBoneName != null ? FindBoneInstance(_turretPitchBoneName) : null;
+        }
+
+        if (_turretYawBone != null)
+        {
+            _turretYawBone.AnimatedOffset.Rotation = Quaternion.CreateFromYawPitchRoll(0, 0, GameObject.TurretYaw);
+        }
+        if (_turretPitchBone != null)
+        {
+            // Positive pitch elevates the arm: rotate about the model's lateral (Y) axis so the
+            // forward (+X) direction tips up toward +Z. CreateFromYawPitchRoll's "pitch"
+            // parameter is rotation about X, which only rolls the arm about its own length.
+            _turretPitchBone.AnimatedOffset.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -GameObject.TurretPitch);
+        }
+    }
+
+    // ProjectileBoneFeedbackEnabledSlots + WeaponHideShowBone: while a weapon's clip is
+    // spent (fired, not yet reloaded), its hide-show bone is hidden. This is what makes the
+    // SCUD launcher's stowed missile disappear for the flight and return after reload.
+    private void UpdateProjectileBoneFeedback()
+    {
+        if (GameObject == null
+            || _activeConditionState == null
+            || _data.ProjectileBoneFeedbackEnabledSlots == null
+            || _activeConditionState.WeaponHideShowBones.Count == 0)
+        {
+            return;
+        }
+
+        // The same bone can be declared for several weapon slots (the SCUD's PRIMARY and
+        // SECONDARY both use MISSILE): the bone hides while ANY of them has a spent clip,
+        // and shows again once every clip has reloaded.
+        var hiddenByBone = new Dictionary<string, bool>();
+        foreach (var hideShowBone in _activeConditionState.WeaponHideShowBones)
+        {
+            if (!_data.ProjectileBoneFeedbackEnabledSlots.Get(hideShowBone.WeaponSlot))
+            {
+                continue;
+            }
+
+            var weapon = FindWeaponForSlot(hideShowBone.WeaponSlot);
+            var hidden = weapon != null && weapon.UsesClip && weapon.CurrentRounds < weapon.Template.ClipSize;
+            hiddenByBone.TryGetValue(hideShowBone.BoneName, out var alreadyHidden);
+            hiddenByBone[hideShowBone.BoneName] = alreadyHidden || hidden;
+        }
+
+        foreach (var (boneName, hidden) in hiddenByBone)
+        {
+            Drawable.HiddenSubObjects[boneName] = hidden;
+        }
+    }
+
+    private Weapon FindWeaponForSlot(WeaponSlot slot)
+    {
+        foreach (var weapon in GameObject.ActiveWeaponSet.Weapons)
+        {
+            if (weapon != null && weapon.Slot == slot)
+            {
+                return weapon;
+            }
+        }
+        return null;
     }
 
     internal override void SetWorldMatrix(in Matrix4x4 worldMatrix)

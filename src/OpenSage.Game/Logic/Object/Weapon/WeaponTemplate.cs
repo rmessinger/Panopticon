@@ -231,6 +231,12 @@ public sealed class WeaponTemplate : BaseAsset
         return Nuggets.OfType<DamageNugget>();
     }
 
+    /// <summary>
+    /// True when this weapon delivers its warhead via a projectile object. The damage
+    /// nuggets are carried by the projectile and execute at detonation, not at fire time.
+    /// </summary>
+    public bool DeliversDamageViaProjectile => Nuggets.Any(n => n is ProjectileNugget);
+
     private DamageNugget EnsureDammageNugget(int index)
     {
         var damageNuggets = GetDamageNuggets().ToList();

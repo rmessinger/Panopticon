@@ -1,3 +1,4 @@
+#nullable enable annotations
 using OpenSage.Data.Ini;
 using OpenSage.Mathematics;
 

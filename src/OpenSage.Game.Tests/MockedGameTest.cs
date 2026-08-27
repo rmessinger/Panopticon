@@ -139,7 +139,7 @@ public abstract class MockedGameTest : IDisposable
             throw new NotImplementedException();
         }
 
-#pragma warning disable CS8618 // Non-nullable properties not initialized in constructor (intentional mock)
+#pragma warning disable CS8618, CS8625 // Non-nullable properties not initialized in constructor; nulls passed to mock AssetStore (intentional mock)
         public TestGame(SageGame game)
         {
             SageGame = game;
@@ -182,7 +182,7 @@ public abstract class MockedGameTest : IDisposable
             GameLogic = new GameLogic(this);
             VictorySystem.OutcomeDecided += (_, _) => MatchOutcomeDecided?.Invoke(this, EventArgs.Empty);
         }
-#pragma warning restore CS8618
+#pragma warning restore CS8618, CS8625
 
         public void StartCampaign(string campaignName, string missionName)
         {

@@ -1,4 +1,6 @@
 using System;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Veldrid;
 
 namespace OpenSage.Graphics;
@@ -51,6 +53,42 @@ public static class FrameCapturer
         graphicsDevice.Unmap(staging, 0);
 
         return new CapturedFrame(pixels, (int)width, (int)height, format);
+    }
+
+    /// <summary>
+    /// Captures <paramref name="source"/> and writes it to <paramref name="path"/> as a PNG.
+    /// </summary>
+    public static void CaptureToPng(GraphicsDevice graphicsDevice, Texture source, string path)
+    {
+        var frame = Capture(graphicsDevice, source);
+        using var image = ToImage(frame);
+        image.SaveAsPng(path);
+    }
+
+    /// <summary>
+    /// Converts a captured frame's raw pixels into an RGBA image, normalizing BGRA sources.
+    /// </summary>
+    public static Image<Rgba32> ToImage(CapturedFrame frame)
+    {
+        var image = new Image<Rgba32>(frame.Width, frame.Height);
+        var isBgra = frame.Format is PixelFormat.B8_G8_R8_A8_UNorm
+                                  or PixelFormat.B8_G8_R8_A8_UNorm_SRgb;
+        var pixels = frame.PixelData;
+        var stride = frame.Width * 4;
+
+        for (var y = 0; y < frame.Height; y++)
+        {
+            var row = image.Frames[0].PixelBuffer.DangerousGetRowSpan(y);
+            for (var x = 0; x < frame.Width; x++)
+            {
+                var i = y * stride + x * 4;
+                row[x] = isBgra
+                    ? new Rgba32(r: pixels[i + 2], g: pixels[i + 1], b: pixels[i], a: pixels[i + 3])
+                    : new Rgba32(r: pixels[i], g: pixels[i + 1], b: pixels[i + 2], a: pixels[i + 3]);
+            }
+        }
+
+        return image;
     }
 
     private static int GetBytesPerPixel(PixelFormat format) => format switch

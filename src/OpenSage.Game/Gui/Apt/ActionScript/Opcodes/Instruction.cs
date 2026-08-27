@@ -214,7 +214,11 @@ public abstract class InstructionBase
 {
     public abstract InstructionType Type { get; }
     //the size in bytes for this instruction (not including the opcode size)
-    public virtual uint Size { get { return 0; } set { } }
+    public virtual uint Size
+    {
+        get { return 0; }
+        set { }
+    }
     public virtual List<Value> Parameters { get; set; }
 
     public abstract void Execute(ActionContext context);

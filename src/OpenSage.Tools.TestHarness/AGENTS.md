@@ -21,6 +21,31 @@ dotnet run --project src/OpenSage.Tools.TestHarness
 Configuration is in `TestHarness.json` (copied to the output directory on build).
 Set `GamePath` to your game installation if auto-detection fails.
 
+`BuiltInScenario` in the config selects what runs; `--built-in-scenario <name>` overrides it
+for a single run.
+
+### `EngagementCapture` scenario
+
+Headless capture of one unit attacking another, used to produce annotated engagement GIFs.
+
+```bash
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  --headless --built-in-scenario EngagementCapture
+```
+
+Spawns the attacker and target, fits the camera to both, commands the weapon directly (an
+`AttackObject` order would move the attacker and drift the framing), captures one PNG per
+logic frame, and writes `manifest.json` with per-frame screen projections, radii, health, and
+projectile positions. Knobs live under `EngagementCapture` in `TestHarness.json`; notably
+`AxisAngleDegrees` (orients the pair so firing FX vent behind the attacker rather than over him)
+and `HideHud` (closes GUI windows so the minimap stays out of the crop). Background and measured
+angle comparisons: `docs/engagement-capture-findings.md`.
+
+Exit codes: 1 unknown object definition, 4 camera could not be fitted or attacker has no
+weapon, 5 no projectile ever observed. Render `scripts/annotate_engagement_gif.py <captureDir>
+<out.gif>` to get the labelled GIF. Full recipe: `docs/screenshots.md`.
+
 ---
 
 ## What to observe
@@ -48,6 +73,8 @@ When the TestHarness window opens, you should see:
 ---
 
 ## Capturing frames for visual validation
+
+Environment-specific capture and sharing recipes (headless PNG captures, windowed runs under Xvfb + llvmpipe, synthetic mouse hover for the ImGui overlay) live in [`docs/screenshots.md`](../../docs/screenshots.md); amend that file when a new capability or limitation is found.
 
 The `FrameCapturer` utility in `OpenSage.Game` reads back any GPU texture to CPU memory.
 You can add capture calls directly in `Program.cs` to dump frames to disk:
@@ -196,7 +223,9 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 
 A windowed run starts paused with the orders held, so the formation's starting conditions can be
 inspected before anything acts (the camera pans/zooms while paused). Space, or the overlay button,
-resumes: the settle stage runs and every unit is ordered to attack its target. Afterwards Space
+resumes: the settle stage runs and every unit is ordered to attack its target. The status window
+is hidden by default; F1 toggles it. Hovering any object shows an ImGui tooltip with its name,
+owner, HP, and position. Afterwards Space
 toggles active pause; paused logic frames do not advance, so pausing never consumes a unit's frame
 budget or perturbs the measurement. `ValidationGroundHoldOrders: false` restores immediate
 auto-issue after the settle stage.

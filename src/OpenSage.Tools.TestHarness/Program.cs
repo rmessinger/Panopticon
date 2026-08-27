@@ -42,6 +42,19 @@ public static class Program
             config.ScenarioPath = scenarioPath;
         }
 
+        var builtInScenario = GetArgValue(args, "--built-in-scenario");
+        if (!string.IsNullOrEmpty(builtInScenario))
+        {
+            if (!Enum.TryParse<BuiltInScenario>(builtInScenario, ignoreCase: true, out var parsed))
+            {
+                reporter.Error($"Unknown built-in scenario '{builtInScenario}'. Valid values: {string.Join(", ", Enum.GetNames<BuiltInScenario>())}.");
+                Environment.Exit(1);
+                return;
+            }
+
+            config.Scenario = parsed;
+        }
+
         Run(config, reporter);
     }
 
@@ -126,6 +139,12 @@ public static class Program
         if (installation == null)
         {
             Environment.Exit(1);
+            return;
+        }
+
+        if (config.Scenario == BuiltInScenario.EngagementCapture)
+        {
+            EngagementCaptureRunner.Run(installation, config, reporter);
             return;
         }
 

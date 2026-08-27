@@ -88,5 +88,18 @@ public static class ControlBarCallbacks
         control.Window.Game.Scene3D.RadarDrawUtil.Draw(
             drawingContext,
             control.ClientRectangle);
+
+        // In minimal-HUD mode the pre-rendered bar frame is gone; outline the minimap so it
+        // reads against the terrain behind it. The ring follows the aspect-fitted radar
+        // rectangle (what Draw renders into) and is pixel-snapped so every side is the same
+        // solid width over the image's fractional edges.
+        if (control.Window.Game.Scene2D.ControlBar is GeneralsControlBar { MinimalHud: true } &&
+            control.Window.Game.Scene3D.RadarDrawUtil.GetMinimapRectangle(control.ClientRectangle) is { } minimapRect)
+        {
+            drawingContext.DrawPixelSnappedRectangle(
+                minimapRect.ToRectangleF(),
+                new Mathematics.ColorRgbaF(0, 0, 0, 1),
+                3);
+        }
     }
 }

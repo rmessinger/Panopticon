@@ -108,6 +108,7 @@ internal sealed class RenderPipeline : DisposableBase
         EnsureIntermediateFramebuffer(context.GraphicsDevice, context.RenderTarget);
 
         _renderList.Clear();
+        _globalShaderResourceData.BeginFrame();
 
         context.Scene3D?.BuildRenderList(
             _renderList,

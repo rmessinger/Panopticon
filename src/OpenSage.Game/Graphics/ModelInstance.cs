@@ -75,6 +75,19 @@ public sealed class ModelInstance : DisposableBase
         RelativeBoneTransforms = new Matrix4x4[model.BoneHierarchy.Bones.Length];
         AbsoluteBoneTransforms = new Matrix4x4[model.BoneHierarchy.Bones.Length];
 
+        // Seed the bind pose so bone transforms are valid before the first render (logic-side
+        // queries like weapon launch bones read AbsoluteBoneTransforms, and headless runs
+        // never render). Bones are ordered parents-before-children, matching Update().
+        for (var i = 0; i < model.BoneHierarchy.Bones.Length; i++)
+        {
+            var bone = model.BoneHierarchy.Bones[i];
+            var parentTransform = bone.Parent != null
+                ? RelativeBoneTransforms[bone.Parent.Index]
+                : Matrix4x4.Identity;
+            RelativeBoneTransforms[i] = ModelBoneInstances[i].Matrix * parentTransform;
+            AbsoluteBoneTransforms[i] = RelativeBoneTransforms[i];
+        }
+
         BoneVisibilities = new bool[model.BoneHierarchy.Bones.Length];
         BoneFrameVisibilities = new bool[model.BoneHierarchy.Bones.Length];
 
@@ -214,6 +227,26 @@ public sealed class ModelInstance : DisposableBase
         }
     }
 
+    // A visibility dictionary entry applies to a sub-object when it is keyed by either the
+    // sub-object's own name or its bone's name. With invert, the entry's meaning flips
+    // (shown-dictionary entries with value false hide the sub-object).
+    private static bool IsHidden(Dictionary<string, bool> visibility, ModelSubObject subObject, bool invert = false)
+    {
+        if (visibility == null)
+        {
+            return false;
+        }
+
+        var value = visibility.TryGetValue(subObject.Name, out var byName)
+            || (subObject.Bone?.Name != null && visibility.TryGetValue(subObject.Bone.Name, out byName));
+        if (!value)
+        {
+            return false;
+        }
+
+        return invert ? !byName : byName;
+    }
+
     internal void BuildRenderList(
         RenderList renderList,
         Camera camera,
@@ -231,6 +264,15 @@ public sealed class ModelInstance : DisposableBase
         for (var i = 0; i < Model.SubObjects.Length; i++)
         {
             var subObject = Model.SubObjects[i];
+
+            // Sub-object visibility is controlled by name: forced-hidden (WeaponHideShowBone
+            // projectile feedback, e.g. the SCUD's stowed missile) or forced-shown
+            // (SubObjectsUpgrade) entries override the model default. Entries are keyed by
+            // bone name, so match the sub-object's bone as well as its own name.
+            if (IsHidden(hiddenSubObjects, subObject) || IsHidden(shownSubObjects, subObject, invert: true))
+            {
+                continue;
+            }
 
             subObject.RenderObject.BuildRenderList(
                 renderList,
@@ -254,7 +296,6 @@ public sealed class ModelInstance : DisposableBase
             {
                 animationInstance.DrawInspector();
             }
-
             ImGui.TreePop();
         }
     }

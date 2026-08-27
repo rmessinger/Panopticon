@@ -51,13 +51,13 @@ public static class ValidationGroundRunner
         {
             if (config.Headless)
             {
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, null);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud }, null);
             }
             else
             {
                 Platform.Start();
                 window = new GameWindow("OpenSAGE - Unit Validation Ground", 100, 100, 1280, 800, config.Fullscreen);
-                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true }, window);
+                game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud }, window);
                 textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
             }
 
@@ -138,7 +138,11 @@ public static class ValidationGroundRunner
             Action step;
             if (config.Headless)
             {
-                step = () => StepLogicOnly(game);
+                // Offscreen overlay screenshots (docs/screenshots.md): lazily construct the ImGui
+                // overlay windowless inside the step (the panel framebuffer must exist to supply
+                // its output description) and render it onto the scene for capture. Reuses the
+                // overlay local so the finally block disposes it.
+                step = () => StepLogicOnly(game, ref overlay);
             }
             else
             {
@@ -317,10 +321,60 @@ public static class ValidationGroundRunner
     /// and adds nothing to the timing. MapTime still advances via the game's delta timer, so logic
     /// frames tick as Update is called.
     /// </summary>
-    private static void StepLogicOnly(Game game)
+    private static void StepLogicOnly(Game game, ref ValidationGroundOverlay? overlayShot)
     {
         game.Update(Array.Empty<Input.InputMessage>());
+
+        // Env-gated offscreen capture for visual validation (docs/screenshots.md): renders every
+        // logic step and writes a PNG, capped so a frame-capped run cannot fill the disk. The
+        // overlay, when present, renders on top of the scene before the capture.
+        var captureRequested = overlayShot != null
+            || Environment.GetEnvironmentVariable("TESTHARNESS_VG_CAPTURE") is not null
+            || Environment.GetEnvironmentVariable("TESTHARNESS_VG_OVERLAY_SHOT") is not null;
+        if (captureRequested && VgCaptureCount < MaxVgCaptures)
+        {
+            game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, 1024, 768));
+            if (overlayShot == null && Environment.GetEnvironmentVariable("TESTHARNESS_VG_OVERLAY_SHOT") is not null)
+            {
+                overlayShot = new ValidationGroundOverlay(
+                    game,
+                    game.Panel.Framebuffer.OutputDescription,
+                    (int)game.Panel.Framebuffer.Width,
+                    (int)game.Panel.Framebuffer.Height);
+            }
+            game.Render();
+            if (overlayShot != null)
+            {
+                overlayShot.Update(1 / 30f, new EmptyInputSnapshot());
+                overlayShot.Render(game.GraphicsDevice);
+            }
+            VgCapture ??= new FrameCaptureService();
+            VgCaptureCount++;
+            VgCapture!.Capture(
+                game.GraphicsDevice,
+                game.Panel.Framebuffer.ColorTargets[0].Target,
+                $"vg frame {VgCaptureCount}");
+        }
     }
+
+    private sealed class EmptyInputSnapshot : InputSnapshot
+    {
+        public IReadOnlyList<KeyEvent> KeyEvents { get; } = Array.Empty<KeyEvent>();
+
+        public IReadOnlyList<MouseEvent> MouseEvents { get; } = Array.Empty<MouseEvent>();
+
+        public IReadOnlyList<char> KeyCharPresses { get; } = Array.Empty<char>();
+
+        public System.Numerics.Vector2 MousePosition { get; } = new(-100, -100);
+
+        public float WheelDelta { get; }
+
+        public bool IsMouseDown(MouseButton button) => false;
+    }
+
+    private const int MaxVgCaptures = 500;
+    private static FrameCaptureService? VgCapture;
+    private static int VgCaptureCount;
 
     private static void StepOnce(Game game, GameWindow window, TextureCopier textureCopier, ValidationGroundOverlay overlay)
     {

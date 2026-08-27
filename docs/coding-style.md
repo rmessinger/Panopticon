@@ -29,6 +29,13 @@ The general rule we follow is "use Visual Studio defaults".
 15. When including non-ASCII characters in the source code use Unicode escape sequences (\uXXXX) instead of literal characters. Literal non-ASCII characters occasionally get garbled by a tool or editor.
 16. When using labels (for goto), indent the label one less than the current indentation.
 17. Comments should explain non-obvious intent, not restate what the code already says. Prefer a clear name over a comment; avoid comments that would go stale as soon as the code changes.
+18. Code following a closing brace starts on the next line, unless what follows is another
+    closing brace (nested block ends may stay adjacent) or punctuation (`};`, `}),`). So
+    `} while (x);` and `try { ... } catch { }` on one line are not used; write the `while`,
+    `catch`, `else`, `finally`, or statement on its own line. Property patterns (`x is { } y`,
+    `x is { Count: > 0 } y`) are exempt: the braces are a pattern, not a block. Enforced by
+    `scripts/check_brace_newline.py` in CI (the `else`/`catch`/`finally` cases are also
+    covered by `.editorconfig`'s `csharp_new_line_before_*` through `dotnet format`).
 
 An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been provided at the root of the OpenSage repository, enabling C# auto-formatting conforming to the above guidelines.
 

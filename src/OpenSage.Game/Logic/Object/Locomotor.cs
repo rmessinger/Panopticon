@@ -2116,6 +2116,15 @@ public sealed class Locomotor : IPersistableObject
         }
     }
 
+    /// <summary>
+    /// When set, the locomotor aims at the goal's actual Z instead of holding its
+    /// PreferredHeight; used by missiles for their terminal dive.
+    /// </summary>
+    public void SetPreciseZPosition(bool value)
+    {
+        SetFlag(LocomotorFlags.PreciseZPosition, value);
+    }
+
     private bool GetFlag(LocomotorFlags flag) => (_flags & flag) != 0;
 
     internal void DrawInspector()

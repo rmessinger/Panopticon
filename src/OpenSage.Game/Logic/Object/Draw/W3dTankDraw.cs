@@ -12,16 +12,6 @@ public class W3dTankDraw : W3dModelDraw
     private readonly W3dTankDrawModuleData _data;
     private readonly FXParticleSystemTemplate _treadDebrisLeft;
     private readonly FXParticleSystemTemplate _treadDebrisRight;
-    private readonly ModelBoneInstance _turretBone;
-    private readonly ModelBoneInstance _barrelBone;
-    private readonly bool _hasTurret;
-    private readonly bool _hasBarrel;
-
-    private static readonly string[] MeshNames = new[]
-    {
-        "TREADSL01",
-        "TREADSR01",
-    };
 
     internal W3dTankDraw(W3dTankDrawModuleData data, Drawable drawable, IGameEngine gameEngine)
         : base(data, drawable, gameEngine)
@@ -29,36 +19,14 @@ public class W3dTankDraw : W3dModelDraw
         _data = data;
         _treadDebrisLeft = data.TreadDebrisLeft?.Value ?? gameEngine.AssetLoadContext.AssetStore.FXParticleSystemTemplates.GetByName("TrackDebrisDirtLeft");
         _treadDebrisRight = data.TreadDebrisRight?.Value ?? gameEngine.AssetLoadContext.AssetStore.FXParticleSystemTemplates.GetByName("TrackDebrisDirtRight");
-
-        _turretBone = FindBoneInstance("Turret");
-        _hasTurret = _turretBone != null;
-        _barrelBone = FindBoneInstance("Barrel01");
-        _hasBarrel = _barrelBone != null;
     }
 
     internal override void Update(in TimeInterval gameTime)
     {
         base.Update(gameTime);
 
-        // TODO: Tread debris
-
-        // Animate treads
-        var animationRate = _data.TreadAnimationRate * GameObject.Speed;
-        foreach (var meshName in MeshNames)
-        {
-            // TODO: We need to update FixedFunctionShaderResources.TextureMapping.UVPerSec.X with animationRate.
-            // But right now that value is shared amongst all model instances that use this model.
-            // We need to make it a per-model-instance value.
-        }
-
-        if (_hasTurret)
-        {
-            _turretBone.AnimatedOffset.Rotation = Quaternion.CreateFromYawPitchRoll(0, 0, GameObject.TurretYaw);
-            if (_hasBarrel)
-            {
-                _barrelBone.AnimatedOffset.Rotation = Quaternion.CreateFromYawPitchRoll(GameObject.TurretPitch, 0, 0);
-            }
-        }
+        // Turret yaw/pitch is applied by W3dModelDraw.Update from the condition state's
+        // Turret/TurretPitch bones. TODO: Tread debris and tread texture animation.
     }
 
     internal override void Load(StatePersister reader)
