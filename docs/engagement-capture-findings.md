@@ -137,15 +137,14 @@ derived from a montage sampled across the whole sequence. Deriving it from frame
 quantizes mid-sequence colors, the projectile marker and the launch and impact FX, into gray
 blotches. Forcing role colors into a reduced palette instead produces harsh banding in the smoke.
 
-The crop is grown to a minimum fraction of the viewport so labels fit, the font is fitted to the
-longest label and capped, labels are placed on whichever side of the marker has room, and
-overlapping boxes are nudged apart.
+The crop is grown to a minimum fraction of the viewport so the subject and its FX stay framed.
 
-The annotator reserves exact annotation colors in the shared palette so markers and impact
-flashes stay saturated, and flashes `IMPACT -N HP` for three frames on every damage frame.
-The target's HP lives in its label. Projectiles are not annotated: the engine draws them
-(mesh, tracer streak, or stream ribbon), and the overlay crosshair only obscured the flight.
-They still size the GIF crop so the whole trajectory stays in frame.
+The annotator draws nothing on the units or the projectile (the engine renders them; overlays
+only obscure). Two overlays remain: an `IMPACT -N HP` flash held for three frames on every
+damage frame, and a bottom-left target health readout (`TARGET x/y HP`, red `TARGET
+DESTROYED` once dead). Their exact colors are reserved in the shared palette so they stay
+saturated after quantization. Actors and projectiles still size the GIF crop so the whole
+trajectory stays in frame.
 
 Capture a few seconds past the last expected impact (default 192 frames) so the final hit's
 FX and smoke conclude before the sequence ends.

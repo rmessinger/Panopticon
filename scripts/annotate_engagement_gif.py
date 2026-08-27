@@ -16,11 +16,11 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-ROLE_COLORS = {
-    "attacker": (255, 90, 70),
-    "target": (120, 220, 255),
-    "projectile": (255, 220, 60),
-}
+# Exact overlay colors reserved in the shared GIF palette (see build_palette).
+RESERVED_COLORS = [
+    (255, 60, 40),    # IMPACT flash, DESTROYED readout
+    (255, 255, 255),  # health readout
+]
 
 
 def load_font(size):
@@ -35,7 +35,6 @@ def load_font(size):
 
 
 MIN_CROP_FRACTION = 0.62
-MAX_FONT_SIZE = 28
 
 
 def crop_box(manifest, padding):
@@ -70,61 +69,6 @@ def _grow(low, high, minimum, limit):
     return int(max(0, high - minimum)), high
 
 
-def fit_font(draw, labels, size_px):
-    """Largest font from the preferred size down that keeps every label inside the frame width."""
-    max_width = size_px[0]
-    size = max(13, min(MAX_FONT_SIZE, int(min(size_px) / 18)))
-    while size > 11:
-        font = load_font(size)
-        if all(draw.textbbox((0, 0), label, font=font)[2] + 24 <= max_width for label in labels):
-            return font
-        size -= 1
-    return load_font(12)
-
-
-def label_texts(manifest):
-    seen = set()
-    for frame in manifest["Frames"]:
-        for actor in frame["Actors"]:
-            text = f"{actor['Role'].upper()}: {actor['Label']}"
-            if actor["MaxHealth"] > 0:
-                text += f"  {actor['Health']:.0f}/{actor['MaxHealth']:.0f} HP"
-            seen.add(text)
-    return seen
-
-
-def overlaps(a, b):
-    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
-
-
-def draw_label(draw, text, anchor, color, font, above, bounds, placed):
-    """Draw a label box near an anchor, with a leader line back to the anchor.
-
-    The box is kept inside `bounds` so a label never runs off the crop, and is nudged away from
-    boxes already in `placed` so two labels never sit on top of each other.
-    """
-    tw, th = draw.textbbox((0, 0), text, font=font)[2:]
-    x = min(max(anchor[0] - tw / 2, 8), bounds[0] - tw - 8)
-    y = anchor[1] - th - 18 if above else anchor[1] + 18
-    y = min(max(y, 8), bounds[1] - th - 8)
-
-    step = th + 12
-    for _ in range(8):
-        box = (x - 6, y - 4, x + tw + 6, y + th + 4)
-        if not any(overlaps(box, other) for other in placed):
-            break
-        y += -step if above else step
-        if y < 8 or y > bounds[1] - th - 8:
-            y = max(8, min(y, bounds[1] - th - 8))
-            break
-
-    box = (x - 6, y - 4, x + tw + 6, y + th + 4)
-    placed.append(box)
-    draw.line([anchor, (min(max(anchor[0], box[0]), box[2]), box[3] if above else box[1])], fill=color, width=2)
-    draw.rectangle(box, fill=(0, 0, 0, 200), outline=color, width=2)
-    draw.text((x, y), text, font=font, fill=color)
-
-
 def build_palette(frames, samples=12):
     step = max(1, len(frames) // samples)
     sampled = frames[::step]
@@ -134,13 +78,12 @@ def build_palette(frames, samples=12):
         montage.paste(frame.resize(thumb, Image.LANCZOS), (index * thumb[0], 0))
     base = montage.quantize(colors=250, method=Image.MEDIANCUT)
 
-    # The montage is mostly terrain, so the annotation colors get remapped to pale lookalikes
-    # (the projectile marker quantizes to a cream indistinguishable from ground). Reserve the
-    # last palette slots for the exact overlay colors; markers and labels then quantize to
-    # themselves while the scene keeps the montage-derived colors.
+    # The montage is mostly terrain, so the overlay colors get remapped to pale lookalikes
+    # (white text would quantize to a cream indistinguishable from ground). Reserve the
+    # last palette slots for the exact overlay colors; they then quantize to themselves
+    # while the scene keeps the montage-derived colors.
     palette = base.getpalette()
-    reserved = list(ROLE_COLORS.values()) + [(255, 60, 40)]
-    for slot, color in enumerate(reserved):
+    for slot, color in enumerate(RESERVED_COLORS):
         palette[(250 + slot) * 3:(250 + slot) * 3 + 3] = list(color)
     base.putpalette(palette)
     return base
@@ -160,7 +103,6 @@ def annotate(capture_dir, output, scale, duration, padding):
     left, top, right, bottom = crop_box(manifest, padding)
     width, height = right - left, bottom - top
     out_size = (int(width * scale), int(height * scale))
-    font = fit_font(ImageDraw.Draw(Image.new("RGB", (1, 1))), label_texts(manifest), out_size)
 
     # Frames where the target's health drops: the impact moments. Each gets a held flash so a
     # viewer cannot miss that the warhead landed (the impact FX itself is small next to launch).
@@ -174,11 +116,25 @@ def annotate(capture_dir, output, scale, duration, padding):
         previous = health
 
     frames = []
+    health_font = load_font(max(16, min(28, out_size[1] // 18)))
     for record in manifest["Frames"]:
         path = os.path.join(capture_dir, record["File"])
         image = Image.open(path).convert("RGB").crop((left, top, right, bottom)).resize(out_size, Image.LANCZOS)
         overlay = Image.new("RGBA", out_size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
+
+        # Target health readout, bottom-left: the engagement's scoreboard. The target
+        # actor disappears from the manifest once dead, hence the DESTROYED fallback.
+        target = target_health(record)
+        destroyed = target is None or target["Health"] <= 0
+        health_text = ("TARGET DESTROYED" if destroyed
+                       else f"TARGET {target['Health']:.0f}/{target['MaxHealth']:.0f} HP")
+        box = draw.textbbox((0, 0), health_text, font=health_font)
+        x0, y0 = 10, out_size[1] - (box[3] - box[1]) - 12
+        draw.rectangle((x0 - 6, y0 - 6, x0 + (box[2] - box[0]) + 6, out_size[1]),
+                       fill=(0, 0, 0, 200))
+        draw.text((x0, y0 - box[1]), health_text, font=health_font,
+                  fill=(255, 60, 40) if destroyed else (255, 255, 255))
 
         index = record["Index"]
         for offset in range(3):
@@ -198,32 +154,10 @@ def annotate(capture_dir, output, scale, duration, padding):
                 draw.text((tx - (box[2] - box[0]) / 2, ty - 112), text,
                           font=flash, fill=(255, 60, 40, fade))
 
-        placed = []
-        # Projectiles are drawn by the engine (mesh, tracer, or stream ribbon); annotating
-        # them on top only obscures the flight. They still size the crop (crop_box) so the
-        # whole trajectory stays in frame.
-        for actor in record["Actors"]:
-            color = ROLE_COLORS.get(actor["Role"], (255, 255, 255))
-            x = (actor["X"] - left) * scale
-            y = (actor["Y"] - top) * scale
-            radius = max(8.0, actor["RadiusPixels"] * scale * 0.7)
-            draw.ellipse((x - radius, y - radius, x + radius, y + radius), outline=color, width=3)
-
-            text = f"{actor['Role'].upper()}: {actor['Label']}"
-            if actor["MaxHealth"] > 0:
-                text += f"  {actor['Health']:.0f}/{actor['MaxHealth']:.0f} HP"
-            draw_label(
-                draw,
-                text,
-                (x, y - radius if y > out_size[1] / 2 else y + radius),
-                color,
-                font,
-                # Label on whichever side of the marker has room: anchoring everything above
-                # crams every box against the top edge of a wide, short crop.
-                above=y > out_size[1] / 2,
-                bounds=out_size,
-                placed=placed,
-            )
+        # Nothing is drawn on the units themselves: the engine renders the units, the
+        # projectile, and the FX, and overlays only obscure them. The manifest still
+        # sizes the crop (crop_box) and drives the IMPACT flashes and verification
+        # (damage frames, projectile sightings).
 
         frames.append(Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB"))
 
