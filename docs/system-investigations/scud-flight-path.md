@@ -3,8 +3,8 @@
 How the flight path of a ballistic missile (the GLA SCUD Launcher's `SCUDMissile`) is
 calculated. Sources: base Generals `INI.big` (`Data/INI/Object/FactionUnit.ini`,
 `Data/INI/Locomotor.ini`, `Data/INI/GameData.ini`), the engine code, and a measured
-300-unit engagement trace. Related: `docs/scud-launch-transfer.md` (launch sequence
-defects), `docs/engagement-capture-findings.md` (capture tuning).
+300-unit engagement trace. Related: `docs/system-investigations/scud-launch-transfer.md` (launch sequence
+defects), `docs/system-investigations/engagement-capture-findings.md` (capture tuning).
 
 ## 1. Summary
 
@@ -87,7 +87,7 @@ MissileAIUpdate (steer):
    `PreferredHeight`) and, in the current implementation, also discards all queued
    waypoints and aims straight at the target. The original engine treats the setting as
    "ignore PreferredHeight" only; this divergence and its trigger condition are
-   recorded in `docs/scud-launch-transfer.md` section 6.
+   recorded in `docs/system-investigations/scud-launch-transfer.md` section 6.
 2. Waypoint consumption. Intermediate waypoints are dropped when the missile is within
    `CloseEnoughDist` (1.0) or has overshot them (velocity dot to-waypoint negative).
    A missile covering ~6 units per frame would otherwise U-turn back toward a waypoint
