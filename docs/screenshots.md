@@ -137,8 +137,7 @@ completion) and `capture-impulse.json` (a physics impulse slides a civilian car)
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
   --built-in-scenario ScenarioCapture --scenario capture-construction.json
-python3 scripts/annotate_capture_gif.py /tmp/opensage_capture_construction out.gif \
-  --duration 340 --labels
+python3 scripts/annotate_capture_gif.py /tmp/opensage_capture_construction out.gif --labels
 ```
 
 `--scenario` takes a file path or an embedded profile name; the profile schema and failure
@@ -146,8 +145,10 @@ behavior are documented in `src/OpenSage.Tools.TestHarness/AGENTS.md`. Output la
 `$TMPDIR/opensage_capture_<name>/` (PNG sequence plus a schema-2 manifest that extends the
 engagement manifest with world positions, velocities, construction state, and command/
 expectation results). Exit codes: 1 profile or setup error, 4 camera fit failure, 5 unmet
-expectation. The generic annotator crops and scales like the engagement one but draws no
-engagement-specific overlays; `--labels` adds a static actor legend.
+expectation. Playback defaults to real time (each PNG held for the logic frames it covers at
+30 Hz, derived from the manifest); `--speed` scales it and `--frame-ms` overrides it. The
+generic annotator crops and scales like the engagement one but draws no engagement-specific
+overlays; `--labels` adds a static actor legend.
 
 Verify content before sharing: the manifest's target `Health` should fall across the sequence
 and a non-trivial number of frames should list a projectile.

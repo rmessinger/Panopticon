@@ -6,8 +6,12 @@ Generic companion to annotate_engagement_gif.py: same crop/palette machinery, bu
 engagement-specific overlays (no target-health readout, no IMPACT flashes). Optional
 --labels draws a static legend of tracked actor labels.
 
+Playback defaults to real time: each captured frame is held for the number of logic
+frames it covers (manifest AbsoluteLogicFrame delta) at the game's 30 logic frames per
+second. --speed scales that (0.5 = half speed), --frame-ms overrides it absolutely.
+
 Usage:
-    python3 scripts/annotate_capture_gif.py <captureDir> <out.gif> [--duration 170] [--labels]
+    python3 scripts/annotate_capture_gif.py <captureDir> <out.gif> [--speed 1.0] [--labels]
 """
 
 import argparse
@@ -70,8 +74,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture_dir")
     parser.add_argument("output")
-    parser.add_argument("--duration", type=int, default=170,
-                        help="total GIF duration in milliseconds per frame slice")
+    parser.add_argument("--speed", type=float, default=1.0,
+                        help="playback speed multiplier over real time (0.5 = half speed; default 1.0)")
+    parser.add_argument("--frame-ms", type=int, default=None,
+                        help="explicit per-frame delay in milliseconds, overriding real-time pacing")
     parser.add_argument("--labels", action="store_true",
                         help="draw a static legend of tracked actor labels")
     args = parser.parse_args()
@@ -116,7 +122,8 @@ def main():
         frames.append(im)
 
     base = build_palette(frames)
-    per_frame_ms = max(20, round(args.duration / max(1, len(frames))))
+    per_frame_ms = args.frame_ms if args.frame_ms is not None else realtime_frame_ms(manifest) / args.speed
+    per_frame_ms = max(10, round(per_frame_ms))
     frames[0].save(
         args.output,
         save_all=True,
@@ -125,8 +132,18 @@ def main():
         loop=0,
         palette=base,
     )
-    print(f"{args.output}: {len(frames)} frames, {out_w}x{out_h}, crop {left},{top},{right},{bottom}")
+    print(f"{args.output}: {len(frames)} frames, {out_w}x{out_h}, crop {left},{top},{right},{bottom}, {per_frame_ms} ms/frame")
     return 0
+
+
+def realtime_frame_ms(manifest):
+    """Per-frame delay matching real time: captured logic frames per PNG times the
+    30-frames-per-second logic clock (Generals and Zero Hour both tick at 30 Hz)."""
+    import statistics
+    logic_frames = [f["AbsoluteLogicFrame"] for f in manifest["Frames"]]
+    deltas = [b - a for a, b in zip(logic_frames, logic_frames[1:]) if b > a]
+    stride = statistics.median(deltas) if deltas else 1
+    return stride * 1000.0 / 30.0
 
 
 if __name__ == "__main__":
