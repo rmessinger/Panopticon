@@ -3,9 +3,11 @@
   // ------------------------------------
   // Scenario     : built-in scenario to run
   //                (AlpineAssaultUSAvGLA, AlpineAssaultUSAvGLAFullBuild, UnitValidationGround,
-  //                 EngagementCapture); --built-in-scenario <name> overrides it
+  //                 EngagementCapture, ScenarioCapture); --built-in-scenario <name> overrides it
   // ScenarioPath : path to a scenario JSON profile, or null to use Scenario
-  //                (ignored when Scenario is UnitValidationGround)
+  //                (ignored when Scenario is UnitValidationGround;
+  //                 for ScenarioCapture it selects the capture profile JSON, or an embedded
+  //                 profile name such as "capture-construction.json" / "capture-impulse.json")
   // Game         : SAGE game to run (CncGenerals, CncGeneralsZeroHour, Bfme, Bfme2, Bfme2Rotwk)
   // Renderer     : graphics backend override, or null for platform default
   //                accepted values: Direct3D11, Vulkan, OpenGL, Metal, OpenGLES
@@ -20,11 +22,11 @@
   // ValidationGroundMapPath        : map override (default: Alpine Assault)
   // ValidationGroundSettleFrames   : frames to settle after spawn before ordering units
   // ValidationGroundBaselinePath   : golden baseline JSON (null/empty skips comparison)
-  // ValidationGroundRefreshBaseline: true overwrites the baseline from the run instead of comparing
+  // ValidationGroundRefreshBaseline: true overwrites the baseline instead of comparing
   // ValidationGroundReportPath     : where to write the JSON report artifact
   // ValidationGroundHoldOrders     : true (default) starts a windowed run paused with orders held;
-  //                                  Space or the overlay button resumes (settle + attack orders),
-  //                                  then toggles active pause. Ignored by headless runs.
+  //                                  Space or the overlay button resumes, then toggles active
+  //                                  pause. Ignored by headless runs.
   // ExitAfterTargetsDestroyed      : true (default) exits once all targets are destroyed/cap hit;
   //                                  false keeps the game running until the window is closed
   //                                  (windowed only; headless always exits)
@@ -33,6 +35,13 @@
   // all optional, see EngagementCaptureOptions. Headless only. Writes a PNG sequence plus a
   // manifest.json of per-frame actor projections; scripts/annotate_engagement_gif.py turns
   // those into an annotated GIF.
+  //
+  // Generic scenario capture (Scenario = ScenarioCapture): ScenarioPath selects a capture
+  // profile JSON (actors, fixed/auto-fit camera, frame-scheduled Attack/Construct/ApplyImpulse
+  // commands, expectations). Headless only. Writes a PNG sequence plus a schema-2 manifest;
+  // scripts/annotate_capture_gif.py renders a generic cropped GIF. Checked-in example
+  // profiles: capture-construction.json, capture-impulse.json. Exit codes: 1 profile/setup
+  // error, 4 camera fit failed or attack source has no weapon, 5 expectation not met.
 
   "Scenario": "UnitValidationGround",
   "ScenarioPath": null,

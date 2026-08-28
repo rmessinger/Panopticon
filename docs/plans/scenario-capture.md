@@ -1,6 +1,6 @@
 # Generalized Scenario Capture Plan
 
-Status: planned; last updated 2026-08-27.
+Status: implemented on branch `projectile-behavior`; last updated 2026-08-27.
 
 ## Problem and approach
 

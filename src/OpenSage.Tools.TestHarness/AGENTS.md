@@ -46,6 +46,33 @@ Exit codes: 1 unknown object definition, 4 camera could not be fitted or attacke
 weapon, 5 no projectile ever observed. Render `scripts/annotate_engagement_gif.py <captureDir>
 <out.gif>` to get the labelled GIF. Full recipe: `docs/screenshots.md`.
 
+### `ScenarioCapture` scenario (generic)
+
+Declarative capture of any small scripted scene: a profile JSON describes players, actors, a
+fixed or auto-fitted camera, frame-scheduled commands, and expectations; the runner executes it
+headlessly and writes a PNG sequence plus a schema-2 `manifest.json` (an additive superset of the
+engagement manifest: world positions, velocities, construction state, command/expectation
+results). `EngagementCapture` is now an adapter onto this runner.
+
+```bash
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  --headless --built-in-scenario ScenarioCapture --scenario capture-construction.json
+```
+
+`--scenario` takes a file path or an embedded profile name (checked-in examples:
+`capture-construction.json`, `capture-impulse.json`). Commands: `Attack` (direct weapon
+targeting, no movement order), `Construct` (real `Order.CreateBuildObject` dispatch; the created
+building binds to the command's result ID and is tracked), `ApplyImpulse` (mass-independent
+delta velocity via `PhysicsBehavior.ApplyForce`). Expectations: `ProjectileObserved`,
+`ActorDamaged`, `ActorDestroyed`, `ConstructionProgressed`, `ConstructionCompleted`,
+`MinDisplacement`; unmet expectations fail the run. Exit codes: 1 profile/setup error
+(invalid references, unknown definitions, non-builder, no physics, insufficient funds),
+4 camera could not frame the subjects or an attack source has no weapon, 5 expectation not met.
+`scripts/annotate_capture_gif.py <captureDir> <out.gif>` renders a generic cropped GIF
+(`--labels` adds a legend). Camera fitting pauses logic and consumes zero logic ticks; warm-up
+belongs in the profile's `SettleFrames`.
+
 ---
 
 ## What to observe

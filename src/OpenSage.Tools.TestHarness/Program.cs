@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using OpenSage.Tools.ReplaySketch.Model.Capture;
 using OpenSage.Tools.ReplaySketch.Services;
 
 namespace OpenSage.Tools.TestHarness;
@@ -56,6 +57,50 @@ public static class Program
         }
 
         Run(config, reporter);
+    }
+
+    /// <summary>
+    /// Runs a generic capture profile: <see cref="TestHarnessConfig.ScenarioPath"/> (or
+    /// <c>--scenario</c>) holds either a path to a capture profile JSON or the bare filename of an
+    /// embedded one (e.g. <c>capture-construction.json</c>).
+    /// </summary>
+    private static void RunScenarioCapture(TestHarnessConfig config, ITestHarnessReporter reporter)
+    {
+        var installation = ScenarioBuilder.ResolveInstallation(config, reporter, ConfigFileName);
+        if (installation == null)
+        {
+            Environment.Exit(1);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(config.ScenarioPath))
+        {
+            var embedded = string.Join(", ", CaptureProfileLoader.EmbeddedCaptureProfileNames());
+            reporter.Error(
+                "ScenarioCapture needs a capture profile: set ScenarioPath (or pass --scenario) to a capture profile JSON file or an embedded profile name.");
+            reporter.Error($"Embedded capture profiles: {embedded}");
+            Environment.Exit(1);
+            return;
+        }
+
+        var path = config.ScenarioPath!;
+        CaptureProfile profile;
+        try
+        {
+            profile = File.Exists(path)
+                ? CaptureProfileLoader.LoadCaptureFromFile(path)
+                : CaptureProfileLoader.LoadEmbeddedCapture(Path.GetFileName(path));
+        }
+        catch (Exception ex)
+        {
+            reporter.Error($"Could not load capture profile '{path}': {ex.Message}");
+            Environment.Exit(1);
+            return;
+        }
+
+        var settings = new CaptureRunSettings(config.Renderer, config.FullHud, null);
+        var result = ScenarioCaptureRunner.Run(installation, profile, settings, reporter);
+        Environment.ExitCode = result.ExitCode;
     }
 
     private static int RunAndAssertCommand(string[] args, ITestHarnessReporter reporter)
@@ -145,6 +190,12 @@ public static class Program
         if (config.Scenario == BuiltInScenario.EngagementCapture)
         {
             EngagementCaptureRunner.Run(installation, config, reporter);
+            return;
+        }
+
+        if (config.Scenario == BuiltInScenario.ScenarioCapture)
+        {
+            RunScenarioCapture(config, reporter);
             return;
         }
 
