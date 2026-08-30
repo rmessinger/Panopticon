@@ -6,7 +6,7 @@
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
 > [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md) ·
 > [G](track-g-rendering-clarity.md) · [H](track-h-storage-formats.md)) and the deep dives as phases,
-> sub-phases, or dependencies change; see [How to maintain](#how-to-maintain-this-tree).
+> sub-phases, or dependencies change; see [Tree maintenance](#tree-maintenance).
 >
 > Audience: human overview of roadmap structure and dependency flow.
 
@@ -27,7 +27,7 @@ Status is not encoded here. The authoritative status for each phase lives in its
 
 ## 1. Structure tree
 
-Tracks → phases → sub-phases. Phases with a dedicated deep dive are marked ⮕.
+Tracks → phases → sub-phases. Phases with a dedicated design document are marked ⮕.
 
 ```mermaid
 mindmap
@@ -145,11 +145,20 @@ mindmap
       E2 Ship combat ⮕
       E3 Naval production
       E4 Reference naval scenario
-    F. Deformable terrain and destruction
+    F. Object physics terrain and destruction
       F1 Deformation data model
       F2 Runtime mesh and rendering update
       F3 Weapon-driven terrain deformation
-      F4 Physics engine integration
+      F4 Physics engine integration ⮕
+      F4a Game-object physics adoption ⮕
+        PS-2 Participation lifecycle and contacts
+        PS-3 Loose dynamics
+        PS-4 Ground movers
+        PS-5 Airborne objects
+        PS-6 Static and kinematic objects
+        PS-7 Projectile policy
+        PS-8 Watercraft
+        PS-9 Bepu default cutover
       F5 Physics-based structural destruction
       F6 Destruction-terrain interaction
       F7 Persistence and replay
@@ -245,7 +254,6 @@ flowchart LR
     C2["C2 Skeleton retargeting"]
     C3["C3 Material mapping"]
     D2["D2 Era and age progression"]
-    E2["E2 Ship combat"]
     E3["E3 Naval production"]
     G3["G3 Visual regression harness"]
     H2["H2 Format-agnostic interchange abstraction"]
@@ -257,7 +265,6 @@ flowchart LR
     B3["B3 Parallel logic"]
     C4["C4 First format · static + skinned"]
     D3["D3 External content ingestion"]
-    E4["E4 Reference naval scenario"]
     F1["F1 Terrain deformation data model"]
     F4["F4 Physics engine integration"]
     G4["G4 Multisample antialiasing"]
@@ -270,32 +277,39 @@ flowchart LR
     H4["H4 New object/unit-definition storage format"]
   end
 
-  subgraph S3["Stage 3 · Scenario, distribution & tooling"]
+  subgraph S3["Stage 3 · Adoption, scenario & tooling"]
     direction TB
     A5["A5 Scenario & visualization"]
-    B6["B6 Distributed simulation"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
     D4["D4 Reference non-SAGE scenario"]
     F2["F2 Runtime mesh & rendering update"]
     F3["F3 Weapon-driven terrain deformation"]
-    F5["F5 Physics-based structural destruction"]
+    F4A["F4a Game-object physics adoption"]
     G5["G5 Cutout & alpha-test clarity"]
     H5["H5 Legacy migration & compatibility tooling"]
   end
 
-  subgraph S4["Stage 4 · Fidelity scaling"]
+  subgraph S4["Stage 4 · Fidelity scaling & physics consumers"]
     direction TB
+    B6["B6 Distributed simulation"]
     B7["B7 Variable fidelity"]
-    F6["F6 Destruction-terrain interaction"]
-    F7["F7 Persistence & replay"]
+    E2["E2 Ship combat"]
+    F5["F5 Physics-based structural destruction"]
     H6["H6 Authoring & pipeline integration"]
   end
 
-  subgraph S5["Stage 5 · Terrain/destruction tooling"]
+  subgraph S5["Stage 5 · Integration & round-trip validation"]
+    direction TB
+    E4["E4 Reference naval scenario"]
+    F6["F6 Destruction-terrain interaction"]
+    F7["F7 Persistence & replay"]
+    H7["H7 Validation & round-trip regression"]
+  end
+
+  subgraph S6["Stage 6 · Terrain/destruction tooling"]
     direction TB
     F8["F8 Authoring & validation tooling"]
-    H7["H7 Validation & round-trip regression"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -346,7 +360,6 @@ flowchart LR
   C1 --> C2
   C1 --> C3
   D1 --> D2
-  E1 --> E2
   E1 --> E3
   H1 --> H2
 
@@ -361,8 +374,6 @@ flowchart LR
   C3 --> C4
   D1 --> D3
   C1 --> D3
-  E2 --> E4
-  E3 --> E4
   B4A --> F1
   A1 --> F4
   B1 --> F4
@@ -374,11 +385,6 @@ flowchart LR
   %% Stage 2 -> 3
   A1 --> A5
   A4 --> A5
-  A4S --> B6
-  B4A --> B6
-  A1 --> B6
-  A2 --> B6
-  B3 --> B6
   C4 --> C5
   C4 --> C6
   D2 --> D4
@@ -386,7 +392,8 @@ flowchart LR
   F1 --> F2
   B5 --> F2
   F1 --> F3
-  F4 --> F5
+  F4 --> F4A
+  P6B --> F4A
   G2 --> G4
   G3 --> G4
   G2 --> G10
@@ -403,31 +410,46 @@ flowchart LR
   H4 --> H5
 
   %% Stage 3 -> 4
+  A4S --> B6
+  B4A --> B6
+  A1 --> B6
+  A2 --> B6
+  B3 --> B6
+  F4A --> B6
   B1 --> B7
   A2 --> B7
   B3 --> B7
   A5 --> B7
-  F1 --> F6
-  F3 --> F6
-  F5 --> F6
-  F1 --> F7
-  F3 --> F7
-  F5 --> F7
-  A2 --> F7
-  G4 --> G5
+  F4A --> B7
+  E1 --> E2
+  F4A --> E2
+  F4A --> F5
   H5 --> H6
 
   %% Stage 4 -> 5
+  E2 --> E4
+  E3 --> E4
+  F1 --> F6
+  F3 --> F6
+  F4A --> F6
+  F5 --> F6
+  F1 --> F7
+  F3 --> F7
+  F4A --> F7
+  F5 --> F7
+  G4 --> G5
+  H5 --> H7
+  H6 --> H7
+
+  %% Stage 5 -> 6
   F2 --> F8
   F6 --> F8
   F7 --> F8
-  H5 --> H7
-  H6 --> H7
 
   class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C5,C6 trackC;
-  class F1,F2,F3,F4,F5,F6,F7,F8 trackF;
+  class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class H1,H2,H3,H4,H5,H6,H7 trackH;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;

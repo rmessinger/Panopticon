@@ -54,7 +54,8 @@ shaders, model buffers) so a headless host loads only the logic-side data it nee
 Separate the fixed-rate logic step (`GameLogic.Update`, network tick, `Scene3D.LogicTick`,
 `PartitionCellManager.Update`, scripting) from the local or render tick (input, Scene2D, audio,
 cursors) so a host can call logic-only (H3). The fixed-rate stepping already lives in
-`Game.Update`; extract it into a reusable stepper.
+`Game.Update`; extract it into a reusable stepper. F4/F4a object physics stays inside this logic
+step: the same per-engine `IPhysicsWorld` steps windowed and headless, with no presentation input.
 
 ### 2.4 `SimulationHost`
 A lightweight host that owns the logic-side world through the existing `IGameEngine` seam,
@@ -163,6 +164,7 @@ classDiagram
     +Terrain Terrain
     +Navigation Navigation
     +Quadtree Quadtree
+    +IPhysicsWorld PhysicsWorld
     +AssetLoadContext AssetLoadContext
   }
 
@@ -218,6 +220,7 @@ sequenceDiagram
   participant GL as GameLogic
   participant NMB as NetworkMessageBuffer
   participant S3D as Scene3D
+  participant PW as IPhysicsWorld
   participant PCM as PartitionCellManager
   participant Scr as ScriptingSystem
 
@@ -227,6 +230,7 @@ sequenceDiagram
   Stepper->>NMB: Tick()
   Stepper->>S3D: LogicTick(timeInterval)
   S3D->>S3D: PlayerManager.LogicTick, GameObject.LogicTick, DeleteDestroyed
+  S3D->>PW: Timestep(deltaTime) + publish contacts/transforms
   Stepper->>PCM: Update()
   Stepper->>Scr: ScriptingTick()
   Host->>Host: raise TickComplete(frame, logic state)
@@ -249,7 +253,7 @@ sequenceDiagram
   Driver->>CM: new ContentManager(game, fileSystem, graphicsDevice: null, sageGame)
   CM->>Store: SubsystemLoader loads INI (objects, weapons, locomotors)
   Note over CM,Store: No GPU upload: None strategy passes null on-demand loaders
-  Driver->>Game: construct logic services (GameLogic, PlayerManager, PartitionCellManager, ScriptingSystem)
+  Driver->>Game: construct logic services and configured IPhysicsWorld
   Driver->>Host: new SimulationHost(game.GameEngine, new LogicStepper(game))
   Driver->>Host: Run(frameBudget, stopPredicate)
 ```
@@ -292,7 +296,8 @@ A surprising amount of headless plumbing already exists and should be reused:
   persist save state.
 - An engine seam. `IGameEngine` and `GameEngine` (`src/OpenSage.Game/GameEngine.cs`) already
   abstract the logic-side services (`AssetLoadContext`, `GameLogic`, `Terrain`, `Navigation`,
-  `Quadtree`, `Scene3D`) behind an interface, which is a natural foundation for a host.
+  `Quadtree`, `Scene3D`, `IPhysicsWorld`) behind an interface, which is a natural foundation for a
+  host.
 
 Today, headless means no window but still requires a real GPU and still runs the full
 `Game.Update` → `Render` path. True GPU-less, logic-only simulation is not yet possible.

@@ -269,9 +269,9 @@
   be validated against existing built-in content first. Affects
   [Track D](track-d-gameplay-expansion.md),
   [deep-dives/d1-d2-tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md).
-- Deformable terrain & destruction scope, Decision: own track (Track F), not folded into an
-  existing track; destruction is physics-based, not model-swap. Runtime terrain deformation
-  (craters/scorch marks) does not exist in original SAGE, and Track F's destruction (F4/F5)
+- Object physics, deformable terrain & destruction scope, Decision: own track (Track F), not folded
+  into an existing track; destruction is physics-based, not model-swap. Runtime terrain deformation
+  (craters/scorch marks) does not exist in original SAGE, and Track F's destruction (F4a/F5)
   replaces the canned model-swap approach (rubble/damage-state model swaps, already covered under
   P6-2/P6-3) with rigid-body physics simulation (debris/structural collapse via a new pluggable
   physics seam). Both are new fidelity beyond what P6-2/P6-3 verify, so neither is gated by Track P
@@ -290,14 +290,21 @@
   [Track F](track-f-terrain-destruction.md).
 - Object physics engine, Decision: BepuPhysics2, consumed as NuGet packages `BepuPhysics` +
   `BepuUtilities` 2.4.0 (Apache-2.0, GPLv3-compatible) behind an engine-internal object physics
-  seam, settling the F4 candidate. SAGE behavioral fidelity is no longer binding for physics, so
-  the seam covers all object dynamics (debris, airborne dynamics, unit collision response,
-  ballistics) migrated incrementally per object category, not destruction-only; the current
-  `PhysicsBehavior` Euler integrator is the seam's reference implementation. Bepu-driven state may
-  drive gameplay-decisive reads, and physics outcomes are validated by loose authored bounds.
-  Design:
-  [physics-seam plan](plans/physics-seam.md). Affects
-  [Track F](track-f-terrain-destruction.md).
+  seam, settling the F4 candidate. SAGE behavioral fidelity is no longer binding for physics.
+  Every instantiated `GameObject` resolves through one engine-level participation policy:
+  dynamic, kinematic, static, sensor, or no physics. Physical units, projectiles, loose objects,
+  structures, bridges, props, and watercraft use Bepu as applicable; drawable-only effects,
+  script markers, and other objects with no physical role remain outside the solver. Bepu owns
+  solid contact generation/response while `PartitionCellManager` retains gameplay queries and
+  non-physical regions. Each `GameEngine` receives one backend through injected configuration;
+  the proof-of-concept process-global selector is retired. Migration is incremental by category
+  inside Bepu worlds, with the current `PhysicsBehavior` Euler integrator retained as the reference
+  backend. Bepu becomes the default only after the F4a cross-game classification and scenario
+  matrix passes.
+  Gameplay-decisive reads may consume contact state and are validated by invariants and loose
+  authored bounds. Design: [physics-seam plan](plans/physics-seam.md). Affects
+  [Track F](track-f-terrain-destruction.md), [Track E](track-e-naval-warfare.md),
+  [Track B](track-b-scale.md), and [Track H](track-h-storage-formats.md).
 - Rendering clarity & image quality scope, Decision: own track (Track G), not folded into
   [B5 rendering at scale](track-b-scale.md), and not gated on Track P. The current renderer is
   faithful to the original game but grainy on high-resolution displays, with a screen-door pattern
@@ -355,7 +362,8 @@
   modding/content pipeline ([Track D](track-d-gameplay-expansion.md),
   [ModCollector](plans/mod-collector.md)), and authoring tooling (WorldBuilder), rather than
   fitting inside any single existing track. Named "Track H" because A–G are already assigned on
-  `main`. Gated on Track P (P7) only, like Tracks B, C, D, E, and F. Affects
+  `main`. Its hard dependency is Track P (P7); coordination with F4a concerns optional
+  engine-level physics fields and does not gate the format seam. Affects
   [Track H](track-h-storage-formats.md).
 - HUD rework scope. Decision: replacing the pre-rendered HUD is in scope for G9, as an additional
   work item rather than a new track or phase. G9's original scope (native-resolution 2D,

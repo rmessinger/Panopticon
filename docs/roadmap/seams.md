@@ -3,7 +3,7 @@
 > Part of the [Large-Scale Simulation Roadmap](README.md). This document defines a seam and
 > maintains the seam registry. It names each seam, states what it abstracts, and tracks the
 > interface and implementations. Keep it aligned as seams are introduced or changed; see
-> [How to maintain](#how-to-maintain-this-registry).
+> [Registry maintenance](#registry-maintenance).
 >
 > Audience: human and agent overview of the roadmap's pluggable seams.
 
@@ -66,6 +66,7 @@ graph TD
         STORE["B3 · Entity storage layout\nmodule-objects → data-oriented SoA"]
         PART["B6-1 · Partition scheme\nspatial grid → graph-cut → zone-adj"]
         PATH["B4 / B6-5 · Pathfinding / routing\nA* → hierarchical / flow-field → cross-shard"]
+        PHYS["F4 / F4a · Object physics\nlegacy Euler → Bepu participation + contacts"]
         FID["B7-1 · Fidelity policy\nfull → temporal LOD → aggregation"]
         RNG["A2 / B3 · Randomness & conflict resolution\nseed control → intent-buffer merge + authority rules"]
     end
@@ -81,6 +82,7 @@ graph TD
     DOM --> STORE
     DOM --> PART
     DOM --> PATH
+    DOM --> PHYS
     DOM --> FID
     DOM --> RNG
 ```
@@ -115,7 +117,7 @@ Code references point at the current types the seam is, or will be, carved from.
 | Map / object-definition format | On-disk serialization of map data and object/unit template data | `IMapFormat` / `IObjectTemplateFormat`-style abstraction (planned) behind `AssetStore` / `OnDemandAssetLoadStrategy` | Reference: legacy `.map` reader + INI `ObjectDefinition` parser (refactored to one implementation) · Planned: new versioned OpenSAGE format | [H2](track-h-storage-formats.md) | [track-h](track-h-storage-formats.md) |
 | Randomness / conflict resolution | Source of randomness and how concurrent writes are reconciled | `IGame.CreateRandom()` seam + B3 intent/command buffers + merge/authority rules | Reference: selectable seed · Planned: intent-buffer merge + cross-shard authority rules | [A2](track-a-foundations.md) / [B3](track-b-scale.md) | [open-questions](open-questions.md), [distributed-sim](deep-dives/b6-distributed-simulation.md) |
 | AI decision policy | How a player's strategic decisions get made (what to build/produce/attack), independent of actuation (always `Order`s) | `IAIDecisionPolicy` (planned), hosted by `AIPlayer.OnDecisionTick()` in place of today's subclass override | Reference: rule-based state machine (`SkirmishAIPlayer`, [P2](track-p-playable-baseline.md)) · Future: flat neural-network policy with weights evolved across seeded self-play populations, or a decentralized rank hierarchy (general/commander/soldier) of per-unit networks composed behind the same seam | A4 (design: [pluggable-ai](deep-dives/a4-pluggable-ai.md), [decentralized-hierarchical-ai](deep-dives/a4-decentralized-hierarchical-ai.md)) | [pluggable-ai](deep-dives/a4-pluggable-ai.md), [decentralized-hierarchical-ai](deep-dives/a4-decentralized-hierarchical-ai.md), [skirmish-ai](deep-dives/p2-p5-skirmish-ai.md) |
-| Object dynamics substrate | How object rigid-body dynamics are stepped and resolved | `IPhysicsWorld` / `IPhysicsBody` in `src/OpenSage.Physics/`, selected per run by `PhysicsBackendPolicy`, stepped once per logic tick from `Scene3D.LogicTick` | Reference: legacy Euler backend (`Legacy/LegacyPhysicsBody`) · Available: BepuPhysics 2.4 backend (`Bepu/BepuPhysicsWorld`) | [F4](track-f-terrain-destruction.md) | [track-f](track-f-terrain-destruction.md), [physics-seam plan](plans/physics-seam.md) |
+| Object physics model | How each object participates in physical simulation and how contacts/dynamics are resolved | `IPhysicsWorld` / `IPhysicsBody` in `src/OpenSage.Physics/` plus the planned game-side participation registry and contact dispatcher; one backend injected per `GameEngine` and stepped once per logic tick | Reference: legacy `PhysicsBehavior` Euler backend · Available: BepuPhysics 2.4 proof of concept · Planned: Bepu default with complete cross-game object classification, lifecycle, filtering, and contact dispatch | [F4/F4a](track-f-terrain-destruction.md) | [track-f](track-f-terrain-destruction.md), [physics adoption plan](plans/physics-seam.md) |
 
 > Derived, not separate: the [visualization](deep-dives/a5-visualization.md) layer's views and
 > divergence-bucketing keys are parameterized by the Simulation Domain Model seam. The domain
