@@ -14,6 +14,7 @@ using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
 using OpenSage.Mathematics;
 using OpenSage.Network;
+using OpenSage.Physics;
 using OpenSage.Tools.ReplaySketch.Model.Capture;
 using Veldrid;
 
@@ -43,6 +44,30 @@ public static class ScenarioCaptureRunner
     };
 
     public static CaptureRunResult Run(
+        GameInstallation installation,
+        CaptureProfile profile,
+        in CaptureRunSettings settings,
+        ITestHarnessReporter reporter)
+    {
+        PhysicsBackendPolicy.Current = ParsePhysicsBackend(profile.PhysicsBackend);
+        try
+        {
+            return RunInternal(installation, profile, settings, reporter);
+        }
+        finally
+        {
+            PhysicsBackendPolicy.Current = PhysicsBackendKind.Legacy;
+        }
+    }
+
+    private static PhysicsBackendKind ParsePhysicsBackend(string? name)
+    {
+        return string.Equals(name, "Bepu", StringComparison.OrdinalIgnoreCase)
+            ? PhysicsBackendKind.Bepu
+            : PhysicsBackendKind.Legacy;
+    }
+
+    private static CaptureRunResult RunInternal(
         GameInstallation installation,
         CaptureProfile profile,
         in CaptureRunSettings settings,
@@ -100,6 +125,11 @@ public static class ScenarioCaptureRunner
         }
 
         game.EnableFixedLogicTimestep();
+
+        if (PhysicsBackendPolicy.Current == PhysicsBackendKind.Bepu)
+        {
+            TerrainPhysicsChunks.Feed(game.Scene3D.Terrain.HeightMap, game.Scene3D.GameEngine.PhysicsWorld);
+        }
 
         if (profile.HideHud)
         {
@@ -327,7 +357,7 @@ public static class ScenarioCaptureRunner
     private static GameObject Spawn(Game game, ObjectDefinition definition, Player owner, CaptureActor actor)
     {
         var planar = new Vector2(actor.X, actor.Y);
-        var height = game.Scene3D.Terrain.GetGroundHeight(planar) ?? 0f;
+        var height = actor.Z ?? (game.Scene3D.Terrain.GetGroundHeight(planar) ?? 0f);
         var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
         gameObject.UpdateTransform(
             new Vector3(planar.X, planar.Y, height),

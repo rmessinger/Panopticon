@@ -298,7 +298,19 @@
   by events: both branches merged (PRs #5 and #6), so Tracks D and E are on `main` and the letter
   assignment stands on that basis rather than on pending work. The physics
   engine/library is an open candidate, settled when F4 starts, mirroring how Track C left the
-  first external model format ([C4](track-c-external-assets.md)) as a candidate. Affects
+  first external model format ([C4](track-c-external-assets.md)) as a candidate. Since settled:
+  BepuPhysics2, see the object physics engine Decision below. Affects
+  [Track F](track-f-terrain-destruction.md).
+- Object physics engine, Decision: BepuPhysics2, consumed as NuGet packages `BepuPhysics` +
+  `BepuUtilities` 2.4.0 (Apache-2.0, GPLv3-compatible) behind an engine-internal object physics
+  seam, settling the F4 candidate. SAGE behavioral fidelity is no longer binding for physics, so
+  the seam covers all object dynamics (debris, airborne dynamics, unit collision response,
+  ballistics) migrated incrementally per object category, not destruction-only; the current
+  `PhysicsBehavior` Euler integrator is the seam's reference implementation. No determinism is
+  asserted for Bepu-driven state: it may drive gameplay-decisive reads without waiting on A2
+  tolerance definitions, and physics outcomes are validated by loose authored bounds rather than
+  cross-run identity (supersedes the earlier cosmetic-until-A2 stance). Design:
+  [physics-seam plan](plans/physics-seam.md). Affects
   [Track F](track-f-terrain-destruction.md).
 - Rendering clarity & image quality scope, Decision: own track (Track G), not folded into
   [B5 rendering at scale](track-b-scale.md), and not gated on Track P. The current renderer is

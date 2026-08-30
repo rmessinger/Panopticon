@@ -7,6 +7,7 @@ using OpenSage.Graphics.ParticleSystems;
 using OpenSage.Logic;
 using OpenSage.Logic.AI;
 using OpenSage.Logic.Object;
+using OpenSage.Physics;
 
 namespace OpenSage;
 
@@ -37,4 +38,5 @@ public interface IGameEngine
     AI AI { get; }
     IQuadtree<GameObject> Quadtree { get; }
     IScene3D Scene3D { get; }
+    IPhysicsWorld PhysicsWorld { get; }
 }

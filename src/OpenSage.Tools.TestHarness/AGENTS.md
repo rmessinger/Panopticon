@@ -71,7 +71,28 @@ delta velocity via `PhysicsBehavior.ApplyForce`). Expectations: `ProjectileObser
 4 camera could not frame the subjects or an attack source has no weapon, 5 expectation not met.
 `scripts/annotate_capture_gif.py <captureDir> <out.gif>` renders a generic cropped GIF
 (`--labels` adds a legend). Camera fitting pauses logic and consumes zero logic ticks; warm-up
-belongs in the profile's `SettleFrames`.
+belongs in the profile's `SettleFrames`. A profile selects the physics backend for the whole run
+with `"PhysicsBackend": "Bepu"` (example: `capture-impulse-bepu.json`), and actor `"Z"` spawns
+height above ground for falling/stacking scenes.
+
+### `PhysicsStack` scenario (physics seam)
+
+Headless validation of the object physics seam (`docs/roadmap/plans/physics-seam.md`), PS-1.
+Two phases: a pure-seam Bepu benchmark (stacked boxes at 100/1k/10k bodies; ms per `Timestep`,
+loose settle bounds, run-to-run stability probe compared by loose center-of-mass bounds), then
+the embedded `capture-physics-stack.json` profile (40 cars stacked in columns fall and settle
+through the game on the Bepu backend), post-validated against a loose scatter bound around the
+stack center.
+
+```sh
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario PhysicsStack
+```
+
+Exit codes: 0 pass, 1 setup/manifest error, 5 unmet settle or scatter bound. Visual frames and
+manifest land in `/tmp/opensage_physics_stack/`; `scripts/annotate_capture_gif.py` renders the
+GIF. Reference timings (single-threaded, this repo's dev host): ~0.03/0.1/3.1 ms per `Timestep`
+at 100/1k/10k bodies.
 
 ---
 

@@ -7,4 +7,5 @@ public enum BuiltInScenario
     UnitValidationGround,
     EngagementCapture,
     ScenarioCapture,
+    PhysicsStack,
 }

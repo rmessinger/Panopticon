@@ -1,6 +1,8 @@
 <Project>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageVersion Include="BepuPhysics" Version="2.4.0" />
+    <PackageVersion Include="BepuUtilities" Version="2.4.0" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="ConsoleTables" Version="2.7.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />

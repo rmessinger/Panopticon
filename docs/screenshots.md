@@ -153,6 +153,27 @@ overlays; `--labels` adds a static actor legend.
 Verify content before sharing: the manifest's target `Health` should fall across the sequence
 and a non-trivial number of frames should list a projectile.
 
+## Recipe: physics seam test scene (headless)
+
+The `PhysicsStack` built-in scenario validates the object physics seam
+(`docs/roadmap/plans/physics-seam.md`). Two phases: a pure-seam Bepu benchmark (100/1k/10k
+stacked boxes, ms per `Timestep`, loose settle bounds, run-to-run stability probe), then a
+visual stack of 40 cars falling and settling through the game on the Bepu backend,
+post-validated against loose scatter bounds. Exit codes: 0 pass, 1 setup error, 5 unmet bound.
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario PhysicsStack
+python3 scripts/annotate_capture_gif.py /tmp/opensage_physics_stack \
+  "/mnt/pit2/Network Storage/temp/physics_stack.gif" --labels
+```
+
+A capture profile selects the Bepu backend for a whole run via `"PhysicsBackend": "Bepu"`
+(checked-in example: `capture-impulse-bepu.json`, the impulse car on Bepu for loose comparison
+against the legacy `capture-impulse.json`; actor `"Z"` spawns height above ground for
+falling/stacking scenes).
+
 ## Camera framing contract for close-ups
 
 Unit meshes render at any camera height once they are actually in view. The failure mode that
@@ -211,6 +232,12 @@ diff = [(x, y) for y in range(a.height) for x in range(a.width)
 
 Runs are near-deterministic, so the diff isolates exactly the change's pixels. Brighter-in-enabled
 counts confirm additive effects (tracers, muzzle flashes).
+
+Caveat (measured on alpine assault): full-frame pixel identity does not hold between runs of the
+same binary on maps with ambient effects; two same-binary runs differ by 300k-550k pixels per
+frame (ambient particles, water shimmer). For behavior-level A/B verification compare manifest
+trajectories instead (bit-identical when the simulation is unchanged); reserve pixel diffs for
+controlled scenes without ambient effects.
 
 ## History
 

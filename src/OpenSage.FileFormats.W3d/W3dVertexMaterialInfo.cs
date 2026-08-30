@@ -23,7 +23,7 @@ public sealed record W3dVertexMaterialInfo(
     ColorRgb Emissive,
     float Shininess,
     float Opacity,
-    float Translucency) : W3dChunk(W3dChunkType.W3D_CHUNK_MATERIAL_INFO)
+    float Translucency) : W3dChunk(W3dChunkType.W3D_CHUNK_VERTEX_MATERIAL_INFO)
 {
     internal static W3dVertexMaterialInfo Parse(BinaryReader reader, W3dParseContext context)
     {

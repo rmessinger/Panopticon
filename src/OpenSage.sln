@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.8.11925.187 insiders
+VisualStudioVersion = 18.8.11925.187
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSage.Game", "OpenSage.Game\OpenSage.Game.csproj", "{65414137-B69D-42ED-9950-0428974D54CE}"
 EndProject
@@ -52,6 +52,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSage.Rendering", "OpenS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSage.Mathematics.Tests", "OpenSage.Mathematics.Tests\OpenSage.Mathematics.Tests.csproj", "{DCD60D8E-36FF-4C5C-B71B-19EA41A5FDF3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSage.Physics", "OpenSage.Physics\OpenSage.Physics.csproj", "{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSage.IO", "OpenSage.IO\OpenSage.IO.csproj", "{CE6B09A7-CE42-4F9F-9274-B16979DC61A1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Config", "Config", "{C0257C6F-2554-414D-BDF5-FFFC35C7CC39}"
@@ -75,6 +77,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.WorldBuilder.Maui", "OpenSage.Tools.WorldBuilder.Maui\OpenSage.Tools.WorldBuilder.Maui.csproj", "{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch.Tests", "OpenSage.Tools.ReplaySketch.Tests\OpenSage.Tools.ReplaySketch.Tests.csproj", "{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.W3dPatcher", "OpenSage.Tools.W3dPatcher\OpenSage.Tools.W3dPatcher.csproj", "{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -326,6 +330,18 @@ Global
 		{DCD60D8E-36FF-4C5C-B71B-19EA41A5FDF3}.Release|x64.Build.0 = Release|Any CPU
 		{DCD60D8E-36FF-4C5C-B71B-19EA41A5FDF3}.Release|x86.ActiveCfg = Release|Any CPU
 		{DCD60D8E-36FF-4C5C-B71B-19EA41A5FDF3}.Release|x86.Build.0 = Release|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Debug|x64.Build.0 = Debug|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Debug|x86.Build.0 = Debug|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Release|x64.ActiveCfg = Release|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Release|x64.Build.0 = Release|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Release|x86.ActiveCfg = Release|Any CPU
+		{8F1E4B77-39C6-4B53-9A8E-6D5C0F2A17D0}.Release|x86.Build.0 = Release|Any CPU
 		{CE6B09A7-CE42-4F9F-9274-B16979DC61A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CE6B09A7-CE42-4F9F-9274-B16979DC61A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CE6B09A7-CE42-4F9F-9274-B16979DC61A1}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -434,6 +450,18 @@ Global
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}.Release|x64.Build.0 = Release|Any CPU
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}.Release|x86.ActiveCfg = Release|Any CPU
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}.Release|x86.Build.0 = Release|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Debug|x64.Build.0 = Debug|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Debug|x86.Build.0 = Debug|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x64.ActiveCfg = Release|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x64.Build.0 = Release|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x86.ActiveCfg = Release|Any CPU
+		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -206,6 +206,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.PhysicsStack)
+        {
+            Environment.ExitCode = PhysicsStackRunner.Run(installation, config, reporter);
+            return;
+        }
+
         var plan = ScenarioBuilder.BuildReplayRun(installation, config, reporter);
         if (plan == null)
         {

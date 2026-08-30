@@ -45,6 +45,7 @@
     <ProjectReference Include="..\OpenSage.IO\OpenSage.IO.csproj" />
     <ProjectReference Include="..\OpenSage.Mods.BuiltIn\OpenSage.Mods.BuiltIn.csproj" />
     <ProjectReference Include="..\OpenSage.Tools.ReplaySketch.Core\OpenSage.Tools.ReplaySketch.Core.csproj" />
+    <ProjectReference Include="..\OpenSage.Tools.W3dPatcher\OpenSage.Tools.W3dPatcher.csproj" />
   </ItemGroup>
   
   <ItemGroup>

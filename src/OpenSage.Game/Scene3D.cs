@@ -371,6 +371,10 @@ public sealed class Scene3D : DisposableBase, IScene3D
         }
 
         GameObjects.DeleteDestroyed();
+
+        // Steps every body once per logic tick, after behavior updates
+        // (PhysicsBehavior runs at Order1). The legacy backend no-ops here.
+        GameEngine.PhysicsWorld.Timestep(GameEngine.MsPerLogicFrame / 1000f);
     }
 
     public void LocalLogicTick(in TimeInterval gameTime, float tickT, in TimeInterval? cameraTime = null)

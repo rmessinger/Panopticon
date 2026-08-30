@@ -122,15 +122,20 @@ def main():
         frames.append(im)
 
     base = build_palette(frames)
+    # Frames must be quantized to the shared palette before saving. Pillow's
+    # `palette=` save argument accepts only bytes/list/ImagePalette, so passing the
+    # P-mode image is silently ignored and each RGB frame gets its own adaptive
+    # palette, displayed through frame 0's global palette: hues drift as the scene
+    # changes (blue props turning green, labels quantized off pure white).
+    quantized = [frame.quantize(palette=base, dither=Image.NONE) for frame in frames]
     per_frame_ms = args.frame_ms if args.frame_ms is not None else realtime_frame_ms(manifest) / args.speed
     per_frame_ms = max(10, round(per_frame_ms))
-    frames[0].save(
+    quantized[0].save(
         args.output,
         save_all=True,
-        append_images=frames[1:],
+        append_images=quantized[1:],
         duration=per_frame_ms,
         loop=0,
-        palette=base,
     )
     print(f"{args.output}: {len(frames)} frames, {out_w}x{out_h}, crop {left},{top},{right},{bottom}, {per_frame_ms} ms/frame")
     return 0

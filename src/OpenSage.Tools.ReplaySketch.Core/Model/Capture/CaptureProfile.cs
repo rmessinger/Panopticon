@@ -54,6 +54,12 @@ public class CaptureProfile
     public string? StopWhenActorDestroyed { get; set; } = null;
 
     /// <summary>
+    /// Physics backend for the run: <c>Legacy</c> (default) or <c>Bepu</c>. Selects the whole
+    /// game's object-dynamics backend before the game is created.
+    /// </summary>
+    public string? PhysicsBackend { get; set; } = null;
+
+    /// <summary>
     /// Owner ID reserved for the scene's civilian player; actors with this owner never
     /// retaliate through player AI. Cannot be declared as a player slot ID.
     /// </summary>
@@ -92,6 +98,12 @@ public class CaptureActor
     public float X { get; set; }
 
     public float Y { get; set; }
+
+    /// <summary>
+    /// Spawn height in world units above the ground. Null places the actor on the ground;
+    /// a value spawns it airborne (falling/stacking scenes).
+    /// </summary>
+    public float? Z { get; set; } = null;
 
     /// <summary>Spawn facing in degrees; 0 faces +X, 90 faces +Y.</summary>
     public float FacingDegrees { get; set; } = 0f;
