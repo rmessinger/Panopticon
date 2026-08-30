@@ -46,12 +46,12 @@ fields directly inform steps 1–2.
 Two actuation styles were considered:
 - (a) Via `Order`s through `OrderProcessor`: the AI emits the same `Order`s a human would
   (`BuildObject`, `CreateUnit`, `ForceAttack…`). Pro: one code path, automatically replay/record
-  compatible (matches the [P0 harness](p0-playable-baseline-harness.md) and A2 reproducibility). Con:
+  compatible (matches the [P0 harness](p0-playable-baseline-harness.md)). Con:
   must synthesize valid order arguments (positions, object ids).
 - (b) Direct API calls: `GameLogic.CreateObject`, `PrepareConstruction`,
   `ProductionUpdate.QueueProduction/QueueUpgrade`, `IBuilderAIUpdate.SetBuildTarget`. Pro: simpler
   to author. Con: bypasses the order stream, so AI actions wouldn't appear in replays/recordings.
-  a problem for A2/B-track reproducibility.
+  a problem for replay inspection and experiment attribution.
 - Decision: use (a). AI actions live in the same order stream the framework records and
   replays, keeping Track P's loop honest for the scaling tracks (the argument-synthesis cost is
   accepted). Settled before P2-2. See [open-questions](../open-questions.md).
@@ -99,7 +99,7 @@ The scenario matrix's synthetic-data and real-order-path gaps (see §6 below) ar
   P5 (construction/production mechanism). P2-1 can scaffold in parallel; P2-2+ need P4/P5.
 - Actuation = orders (§1.3, decided): the AI emits `Order`s through `OrderProcessor`, reusing the
   engine order path the [P0 harness](p0-playable-baseline-harness.md) drives. P2's recorded-stream
-  check therefore runs through P0, which A2/B reproducibility requires.
+  check therefore runs through P0, which the experiment tooling already uses.
 - P2 feeds P7 (the AI must "make progress", an asserted invariant in the
   [P0 harness](p0-playable-baseline-harness.md)).
 

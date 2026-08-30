@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-A2-03` |
-| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Reproducibility & statistical stability |
+| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Statistical validation |
 | Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
@@ -13,7 +13,7 @@
 ## Goal
 
 Convert every simulation-affecting `uncontrolled` randomness source found by `WI-A2-01` to draw
-from the seeded `GameLogic.Random`, so a run's random stream is fully determined by its seed.
+from the seeded `GameLogic.Random`, providing a selectable experiment input.
 
 ## Context to read (and only this)
 
@@ -30,12 +30,9 @@ from the seeded `GameLogic.Random`, so a run's random stream is fully determined
    not add a static or ambient accessor.
 2. Leave presentation-only sources alone, including `ParticleSystemUtility` and `AudioSystem`,
    unless the audit classified them as simulation-affecting.
-3. Do not change draw order or the number of draws at any converted site. Reproducibility depends on
-   the stream being stable, so an extra or reordered draw is a defect even if the distribution is
-   unchanged.
+3. Preserve draw order and count to keep this refactor behavior-safe.
 4. Do not change `IRandom`, `SystemRandom`, or the `Seed` semantics.
-5. Add a test that runs the same scenario twice with the same seed through the P0 harness and
-   asserts the key metrics match, per the tolerance the A2 deep dive defines.
+5. Add a test that verifies the configured seed reaches `GameLogic.Random` and converted consumers.
 6. Run `dotnet format src` and confirm `dotnet format src --verify-no-changes`.
 
 ## Files likely to change
@@ -46,7 +43,7 @@ from the seeded `GameLogic.Random`, so a run's random stream is fully determined
 ## Acceptance criteria
 
 - [ ] No simulation-affecting code path constructs its own `Random` or uses `Random.Shared`.
-- [ ] Two same-seed runs of one scenario agree on the key metrics within the deep dive's tolerance.
+- [ ] The configured seed reaches `GameLogic.Random` and converted consumers.
 - [ ] The P7 regression suite passes unchanged:
       `dotnet test src --filter "FullyQualifiedName~P7_ScenarioMatrixTests"`.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
@@ -62,8 +59,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not attempt bit-exact determinism or a strict-hash mode. The strict-hash mode is opt-in and
-  belongs to the verification harness, `WI-A2-04`.
+- Do not add cross-run equality requirements.
 - Do not fix non-random nondeterminism from `WI-A2-02` here.
 - Do not change save or replay format to carry the seed unless the audit found it is already
   missing and the deep dive specifies the field.

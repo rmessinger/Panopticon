@@ -1,4 +1,4 @@
-# Track A · A2: Reproducibility & statistical stability
+# Track A · A2: Statistical validation
 
 > Audience: human overview above the divider; agent-context detail below it.
 
@@ -8,10 +8,9 @@ Implements the A2 row of [Track A](../track-a-foundations.md). Design source of 
 
 ## Scope
 
-Make runs comparable, not bit-exact (the relaxed-determinism Decision): route simulation-affecting
-randomness through the seeded `GameLogic.Random` stream determined by the run seed, and audit the
-remaining nondeterminism. The verification harness with tolerance checks and the opt-in strict-hash
-mode are `WI-A2-04`, out of scope here.
+Document the completed seed-control work and execution-variation audits. Seed selection is an
+experiment control, not a reproducibility guarantee. The multi-sample metrics and per-run invariant
+harness is `WI-A2-04`, out of scope here.
 
 ## Sub-phase to card mapping
 
@@ -19,9 +18,9 @@ mode are `WI-A2-04`, out of scope here.
 |---|---|---|
 | audit | [`WI-A2-01`](../agent/cards/WI-A2-01-audit-randomness-sources.md) | Randomness source audit (below). |
 | audit | [`WI-A2-02`](../agent/cards/WI-A2-02-audit-nonrandom-nondeterminism.md) | Non-random nondeterminism audit (below). |
-| design | A2 deep dive | Seeded-source design, tolerance model, conflict-rule scope. |
+| design | A2 deep dive | Seed-control design, statistical validation model, conflict-rule scope. |
 | convert | [`WI-A2-03`](../agent/cards/WI-A2-03-route-randomness-through-seeded-source.md) | Seed `GameLogic.Random` from the run seed; convert the uncontrolled simulation-affecting sites. |
-| harness | [`WI-A2-04`](../agent/cards/WI-A2-04-stability-verification-harness.md) | Tolerance verification harness (blocked). |
+| harness | [`WI-A2-04`](../agent/cards/WI-A2-04-stability-verification-harness.md) | Multi-sample statistical harness. |
 
 ---
 

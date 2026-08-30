@@ -25,11 +25,8 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 
 - [A1 Headless host](a1-headless-host.md): a shard is a headless `SimulationHost` instance;
   no shard renders. The host's logic-only step and run-output hooks are prerequisites.
-- [A2 Reproducibility & statistical stability](../track-a-foundations.md): per the
-  [relaxed-determinism Decision](../open-questions.md), shards do not agree bit-for-bit.
-  Correctness is defined by invariants and statistical closeness to a single-shard reference.
-  The hierarchical signature tree (A1-5) plus [A5-4 divergence localization](a5-visualization.md)
-  screen for drift and localize it instead of acting as an equality gate.
+- [A2 Statistical validation](../track-a-foundations.md): supplies optional distribution reports
+  for sharded experiments. It is not an implementation gate.
 - [B3 Parallel/data-oriented logic](../track-b-scale.md): the data-oriented storage and
   safe-parallel update model are what make a region's slice cheap to step and to serialize.
 - [B4a-5 Chunked terrain storage](b4a-larger-maps.md): the chunk/region concept used for
@@ -53,11 +50,9 @@ Spatial sharding is the last major scale phase because it composes the earlier w
    for city builders.
 3. Ownership handoff. When an entity crosses a partition boundary (a region edge, a graph
    node/edge, or a district border), ownership transfers to the neighbouring shard with no
-   duplication or loss, on an agreed frame (conservation is an invariant, even though state
-   need not be bit-identical).
+   duplication or loss, on an agreed frame.
 4. Boundary synchronization. Per-frame exchange of halo state and handoff events, frame-
-   aligned so neighbouring shards stay in step at the region seams (frame-sync at seams is
-   required structurally, independent of the relaxed bit-exactness stance).
+   aligned so neighbouring shards stay in step at the region seams.
 5. Cross-shard interactions. Effects that span a boundary: combat/abilities (RTS), a vehicle
    traversing a cut edge or a passenger trip (transport), a utility/resource flow across districts
    (city), need a domain-defined resolution-authority rule (RTS: initiator's shard;
@@ -66,12 +61,8 @@ Spatial sharding is the last major scale phase because it composes the earlier w
    for routing + local per-shard refinement (RTS pathing and transport routing), or relayed
    requests; for flow domains this is cross-boundary flow/conservation rather than path
    requests.
-7. Partition-independence (within tolerance). Results should be statistically equivalent
-   regardless of how the world is partitioned, not bit-identical (per the
-   [relaxed-determinism Decision](../open-questions.md)). Validated by checking conservation
-   invariants and comparing aggregate metrics against a single-shard reference within tolerance,
-   using the hierarchical signature tree ([A5-4 divergence localization](a5-visualization.md)) to
-   pinpoint any region/entity that drifts.
+7. Partition correctness. Validate conservation and ownership invariants for each shard layout.
+   Aggregate comparison against a single-shard run is diagnostic, not a parity requirement.
 8. Fault/latency model. What happens if a shard stalls or drops, does the whole sim block
    (true single-sim) or degrade? First pass: block (correctness over availability).
 
@@ -83,7 +74,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 |---|---|---|
 | B6-1. Partition model & boundary spec | Define the partitioning against the [domain topology model (A4)](../track-a-foundations.md): a `IPartitionScheme`-style abstraction with a spatial-grid implementation first (built on B4a-5 chunks), then a graph-cut implementation as the first non-RTS validation domain (per the [domain-scope Decision](../open-questions.md)), with zone-adjacency for later domains, plus halo-extent derivation and the boundary message format. Pure design + simulation-on-paper. | Not started |
 | B6-2. Single-process multi-shard | Run N shards in one process over a partitioned world, with halo exchange + handoff through an in-memory transport. Validates correctness without networking. | Not started |
-| B6-3. Handoff & halo correctness | Make ownership handoff and halo sync frame-aligned and conservation-correct (no duplication/loss); verify aggregate metrics and the hierarchical signature tree (A1-5 recording / A5-4 localization) stay within tolerance of a single-shard reference, drilling down to localize any drifting region/entity. | Not started |
+| B6-3. Handoff & halo correctness | Make ownership handoff and halo sync frame-aligned and conservation-correct with no duplication or loss; use A1-5 recording and A5-4 diagnostics to inspect failures. | Not started |
 | B6-4. Cross-shard interactions | Implement the domain-defined resolution-authority rule for boundary-spanning effects (RTS combat/abilities, transport edge traversal, city flows), so each is resolved exactly once. | Not started |
 | B6-5. Cross-shard routing/flow | Coarse global routing + per-shard local refinement (RTS pathing, transport routing) or relayed requests; cross-boundary flow/conservation for flow domains. | Not started |
 | B6-6. Multi-process transport | Replace the in-memory transport with a real inter-process/network transport (reusing the frame-ordered `NetworkMessageBuffer` pattern). | Not started |
@@ -94,7 +85,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 ## 4. Sequencing notes
 
 - B6-1 is design-only and can begin early (it informs B4a-5's chunk boundaries), but
-  implementation waits on A1/A2/B3.
+  implementation waits on A1/B3.
 - B6-2/3 run in one process first so handoff and conflict resolution can be debugged against a
   single-shard reference before networking is introduced.
 - The [result replayer/visualizer (A5-3)](a5-visualization.md) is the validation surface. Its
@@ -109,8 +100,7 @@ Spatial sharding is the last major scale phase because it composes the earlier w
 ## 5. Scenario Matrix
 
 The P0-5b-style matrix runner validates B6 by sweeping over shard count and partition
-configurations, confirming that sharded runs stay within tolerance of a single-shard reference and
-produce no unit duplication or loss. This matrix uses a benchmarking runner, via the A1 headless
+configurations and checking each run for unit duplication or loss. This matrix uses a benchmarking runner, via the A1 headless
 host and B1 harness, rather than the P0 game-scenario harness, but it follows the same
 `ScenarioMatrix` data model and axis-expansion pattern.
 
@@ -126,8 +116,8 @@ Constraints:
 
 Each cell runs the scenario with the given shard configuration and asserts:
 - Unit count at end of run equals the reference (no units duplicated or lost across shards).
-- All unit positions are consistent with the single-shard reference within spatial tolerance.
-- Aggregate metrics (unit count, money totals) are within the A2 tolerance band.
+- Ownership and conservation invariants hold for every shard configuration.
+- Aggregate metrics are reported for analysis without an equality assertion.
 
 ## 6. Architecture Diagrams
 
@@ -140,10 +130,9 @@ recording substrate. Stereotypes mark provenance: `<<engine>>` types exist in `s
 `<<A1>>` / `<<A1-5>>` belong to Track A, and `<<B6-n>>` types are B6 deliverables introduced in the
 named sub-phase.
 
-Per the [relaxed-determinism Decision](../open-questions.md), boundary exchange and handoff carry
-state and events, not a bit-exact lockstep hash. Correctness is invariant-based and tolerance-based,
-validated against a single-shard reference via the [T0/T1 tiered recording (A1-5)](a5-visualization.md)
-and [A5-4 divergence localization](a5-visualization.md).
+Boundary exchange and handoff carry state and events. Correctness is validated through ownership
+and conservation invariants. The [T0/T1 tiered recording (A1-5)](a5-visualization.md) and
+[A5-4 diagnostics](a5-visualization.md) support investigation.
 
 ### 6.1 Types
 
@@ -365,6 +354,6 @@ sequenceDiagram
 | Spatial partitioning | `PartitionCellManager`, `Quadtree` (`src/OpenSage.Game/DataStructures/`) | Already cell-based; the partition grid is the candidate boundary primitive for the spatial-grid domain. Graph/zone domains plug in a different partition primitive (graph cut / district set) behind the same B6 boundary interface. |
 | Pathfinding | `Navigation` A* graph (`src/OpenSage.Game/Navigation/`) | Cross-shard paths need either a shared coarse graph or per-shard graphs with boundary stitching. Generalizes to domain routing/flow (transport routing, utility flow) via the domain model. |
 | Order/frame model | `NetworkMessageBuffer`, `ReplayConnection` (`src/OpenSage.Game/Network/`) | Frame-ordered lockstep-style processing; the transport pattern for exchanging boundary/handoff messages. |
-| Conflict resolution | `IGame.CreateRandom()` seam + the B3 intent/merge model | Per-shard randomness must be seeded per deterministic-context so a handed-off object behaves consistently (not bit-identically) on its new shard; cross-shard write conflicts use the same [B3](../track-b-scale.md) conflict-resolution/authority rules. |
+| Conflict resolution | B3 intent/merge model | Cross-shard write conflicts use the same [B3](../track-b-scale.md) conflict-resolution and authority rules. |
 
 ---

@@ -17,7 +17,7 @@ Create the checked-in P7 AISurrenders scenario where the scripted AI player issu
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: AISurrenders expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scripted deterministic AI progress requirement.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scripted AI progress requirement.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants, including AI progress.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:113-113`: P7-3 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300`: `OrderType.EndGame` dependency on P3-4.
@@ -32,7 +32,7 @@ Create the checked-in P7 AISurrenders scenario where the scripted AI player issu
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json` as static deterministic scenario data.
+1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json` as static scenario data.
 2. Configure one human and one AI/scripted opponent slot. Before surrender, script at least one AI order so the AI-progress invariant has meaningful data.
 3. Emit `OrderType.EndGame` from the AI player's command stream via the P0 open command model.
 4. Assert `OutcomeStatus.Decided`, `OutcomeReason.Surrendered`, human side as winner, and the AI player as loser. Verify default/sentinel `GameOutcome` values do not pass.
@@ -70,7 +70,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not depend on nondeterministic live AI deciding to surrender; the EndGame order is scripted.
+- Script the `EndGame` order rather than depending on AI strategy to decide when to surrender.
 - Do not implement missing P3-4 surrender logic here; block instead.
 - Do not bypass ReplaySketch by setting `GameOutcome` directly in test code.
 

@@ -40,7 +40,7 @@ non-MAUI test project (`OpenSage.Tools.ReplaySketch.Tests`) then covers the full
 `LauncherLocatorService` (`ExecutePlayInGame`, `MainViewModel.cs:250-273`). While those statics
 remain inline, the agent-critical command flows, `ValidateCommand`, `ExportCommand`,
 `PlayInGameCommand`, and the apply-results half of the background load, cannot be exercised
-headlessly, so changes to them have no fast deterministic check. Abstract each behind a small
+headlessly, so changes to them have no fast automated check. Abstract each behind a small
 injectable seam, a dispatcher that runs the continuation synchronously in tests and a process
 launcher that records the request instead of spawning, so the full `MainViewModel` command surface
 is unit-testable in `OpenSage.Tools.ReplaySketch.Tests` without a MAUI runtime. This is the

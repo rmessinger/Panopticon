@@ -7,7 +7,7 @@
 | Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-A1-06` (the host), `WI-A2-03` (seeded randomness, so runs are comparable per the [relaxed-determinism Decision](../../open-questions.md)) |
+| Prerequisites | `WI-A1-06` (the host) |
 | Diagrams | [A1 §5](../../deep-dives/a1-headless-host.md#5-architecture-diagrams) |
 
 ## Goal

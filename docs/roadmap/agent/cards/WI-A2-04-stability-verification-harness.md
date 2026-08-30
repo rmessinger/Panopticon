@@ -1,26 +1,24 @@
-# Task Card `WI-A2-04`: Stability verification harness with opt-in strict-hash mode
+# Task Card `WI-A2-04`: Statistical verification harness
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-A2-04` |
-| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Reproducibility & statistical stability |
+| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Statistical validation |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `WI-A2-03` (randomness must be seeded before stability can be asserted) |
+| Prerequisites | A1-5 run metrics and invariants |
 | Diagrams | [A2 §5](../../deep-dives/a2-reproducibility.md#5-architecture-diagrams) |
 
 ## Goal
 
-Add the A2 verification harness: re-run one scenario N times with a fixed seed through the P0
-harness and assert the recorded metrics and invariants stay within tolerance, with an opt-in
-strict-hash mode for same-platform, same-build debugging.
+Add the A2 verification harness: run one scenario N times through the P0 harness, check every
+run's correctness invariants, and report aggregate metric distributions.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/open-questions.md`: the relaxed-determinism Decision and the A2 strict-hash scope
-  Decision. Strict-hash is best-effort and must not be a gating assertion.
-- The A2 deep dive: the tolerance model and which metrics are the stability signal.
+- `docs/roadmap/open-questions.md`: the determinism-priority Decision.
+- The A2 deep dive: the statistical validation model and selected metrics.
 - `docs/roadmap/implementation/track-a-a2-reproducibility.md`: both audits.
 - The P7 scenario matrix tests under `src/OpenSage.Game.Tests/`: the existing multi-scenario
   run-and-assert pattern to replicate. Find them with
@@ -30,13 +28,12 @@ strict-hash mode for same-platform, same-build debugging.
 
 ## Steps
 
-1. Add a harness that runs one P0 scenario N times with the same seed and collects the metric set
-   the deep dive names as the stability signal.
-2. Assert each metric's spread across runs is within the deep-dive tolerance. Report the actual
-   spread on failure, not just a boolean.
-3. Add an opt-in strict mode, off by default, that additionally compares a per-frame state hash and
-   reports the first differing frame. It must be enabled by an explicit flag and must never run in
-   the default test pass.
+1. Add a harness that runs one P0 scenario N times and collects the metric set named by the deep
+   dive. Seeds may vary or be explicitly selected as experiment inputs.
+2. Check correctness invariants independently for every run. Report the run and invariant on
+   failure.
+3. Report each metric's mean, variance, confidence interval, and outliers. Do not assert equality
+   between runs.
 4. Reuse the P0 assertion primitives and the P7 matrix structure. Do not invent a parallel harness;
    the [agent guide guardrails](../README.md#guardrails-do-not-violate) require ReplaySketch and the
    P0 harness to be the validation surface.
@@ -50,9 +47,9 @@ strict-hash mode for same-platform, same-build debugging.
 
 ## Acceptance criteria
 
-- [ ] N same-seed runs of one scenario are asserted within tolerance, with the observed spread
-      reported on failure.
-- [ ] Strict-hash mode exists, is off by default, and reports the first divergent frame when on.
+- [ ] N runs of one scenario check all configured per-run invariants.
+- [ ] Aggregate metrics report mean, variance, confidence interval, and outliers.
+- [ ] No assertion requires same-seed agreement or state-hash parity.
 - [ ] The default run stays inside `dotnet test src --filter Category!=Interactive` without a
       noticeable runtime regression.
 - [ ] No new assertion primitive duplicates one the P0 layer already provides.
@@ -68,11 +65,9 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not make strict-hash a gating assertion. Parallelism may legitimately diverge.
-- Do not extend the harness across platforms or builds; same-platform, same-build only.
+- Do not add cross-run equality or deterministic-execution requirements.
 - Do not add the A1-5 tiered recording or divergence localization. Those are A1-5 and A5-4.
-- If the deep dive does not specify a tolerance for a metric, exclude that metric and note it,
-  rather than picking a number.
+- If the deep dive does not select a metric, exclude it rather than expanding scope.
 
 ## On completion
 
@@ -80,6 +75,4 @@ dotnet format src --verify-no-changes
 - Tick the A2 verification-harness clause in
   [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Follow-up cards to create:
-  - A card implementing the concurrent-write conflict-resolution rules once the deep dive defines
-    them (the remaining A2 checklist item).
+- Follow-up cards: none.

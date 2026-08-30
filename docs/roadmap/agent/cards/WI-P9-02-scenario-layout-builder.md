@@ -1,9 +1,9 @@
-# Task Card `WI-P9-02`: Scenario and deterministic layout builder
+# Task Card `WI-P9-02`: Scenario and fixed layout builder
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-P9-02` |
-| Roadmap phase | [Track P · P9](../../track-p-playable-baseline.md): P9-2 Scenario and layout model, see [deep dive §2.1](../../deep-dives/p9-unit-validation-ground.md#21-shape-of-the-scenario) and [§2.9](../../deep-dives/p9-unit-validation-ground.md#29-determinism) |
+| Roadmap phase | [Track P · P9](../../track-p-playable-baseline.md): P9-2 Scenario and layout model, see [deep dive §2.1](../../deep-dives/p9-unit-validation-ground.md#21-shape-of-the-scenario) and [§2.9](../../deep-dives/p9-unit-validation-ground.md#29-controlled-scenario-inputs) |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -12,9 +12,9 @@
 
 ## Goal
 
-Add `ValidationGroundScenario` and `ValidationGroundBuilder` so a fixed scenario plus seed produces a
-byte-identical `SpawnPlan` (unit positions, target positions, target assignment, order sequence) with
-no engine dependency.
+Add `ValidationGroundScenario` and `ValidationGroundBuilder` so a scenario produces a complete
+`SpawnPlan` (unit positions, target positions, target assignment, order sequence) with no engine
+dependency.
 
 ## Context to read (and only this)
 

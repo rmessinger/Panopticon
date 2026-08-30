@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-A2-02` |
-| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Reproducibility & statistical stability |
+| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Statistical validation |
 | Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
@@ -20,8 +20,7 @@ Read-only: no code changes.
 ## Context to read (and only this)
 
 - `docs/roadmap/track-a-foundations.md`: the A2 phase row.
-- `docs/roadmap/open-questions.md`: the relaxed-determinism Decision, which bounds what counts as a
-  defect versus acceptable variation.
+- `docs/roadmap/open-questions.md`: the determinism-priority Decision.
 - `src/OpenSage.Game/Game.cs:914-1000`: the tick path whose reachable code is in scope.
 - `src/OpenSage.Game/Logic/GameLogic.cs`: object storage and iteration during the logic update.
 - `src/OpenSage.Game/Logic/Player.cs`: player and owned-object collections iterated per tick.
@@ -69,18 +68,17 @@ git status --short -- 'src/*'
 ## Out of scope / guardrails
 
 - Do not fix anything found, however small.
-- Do not audit floating-point associativity or cross-platform math differences: the
-  relaxed-determinism Decision already accepts those.
+- Do not treat run-to-run variation as a defect without an independent correctness violation.
 - Do not define the conflict-resolution rules; escalate that to a deep dive.
 
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Tick the A2 "audit uncontrolled nondeterminism" clause in
+- Tick the A2 experiment-controls audit clause in
   [`implementation-checklist.md`](../../implementation-checklist.md) once both `WI-A2-01` and
   `WI-A2-02` are `Done`.
 - Append a result line to repo-root `.exchange`, including the count of simulation-affecting
   entries.
 - Follow-up cards to create:
-  - An A2 deep dive covering the seeded-source design, the tolerance model, and the
-    concurrent-write conflict rules. It is a high-effort design task, not a card.
+  - An A2 deep dive covering seed controls, statistical validation, and concurrent-write
+    correctness. It is a high-effort design task, not a card.

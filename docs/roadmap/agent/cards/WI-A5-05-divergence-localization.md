@@ -19,8 +19,8 @@ that makes B3 parallelism and B6 sharding debuggable.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a5-visualization.md` §5, §5.1, §5.2, §6 (A5-4 row), §8.
-- `docs/roadmap/open-questions.md`: the relaxed-determinism Decision. The comparison is
-  tolerance-based, never equality-based.
+- `docs/roadmap/open-questions.md`: the determinism-priority Decision. Comparison is diagnostic,
+  never a correctness gate.
 - The T1 signature-tree recording produced by A1-5: the input format.
 - `src/OpenSage.Tools.ReplaySketch.Core/`: where the comparison logic lives, headlessly testable.
 

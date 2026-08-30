@@ -31,8 +31,8 @@ A code-first authoring API plus a throughput check, reusing the landed open comm
   - convenience generators that emit many `CommandSpec`s over a frame range (e.g. "spawn N units of
     def D for player P across frames F0..F1"), all funnelling into the existing
     `CommandSpec` (`OrderType` + `CommandArgument[]`) so no new order plumbing is needed;
-  - deterministic: takes an explicit `seed` so generated scenarios are reproducible (the harness
-    already threads `rng` into `CommandSpec.ToOrder`).
+  - accepts an explicit `seed` as a procedural-generation input (the harness already threads `rng`
+    into `CommandSpec.ToOrder`).
 - Output is an ordinary `ReplayScenario`, so it flows through the existing `ReplayExporter` and the
   [run-and-assert entry point](track-p-p0-6-run-and-assert-entry-point.md) unchanged.
 
@@ -70,7 +70,7 @@ A code-first authoring API plus a throughput check, reusing the landed open comm
 ## Tests
 
 - Builder: a small generated scenario produces the expected `CommandSpec` count, frames, and player
-  attribution; same seed → identical scenario (determinism).
+  attribution.
 - Round-trip: ≥10k generated orders export to `.rep` and reload with the order count preserved.
 - Budget: export+load of the 10k set completes within the documented time/allocation bound.
 

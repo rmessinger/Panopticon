@@ -70,15 +70,11 @@ Scope notes:
   reference domain rather than a baked-in assumption.
 - Scale and extensibility win over original-engine fidelity when they conflict. Reading
   original SAGE data remains valuable, but it must not block the architectural changes scale
-  requires. The [relaxed-determinism Decision](open-questions.md) trades bit-exact,
-  re-simulatable replays for parallel scale; recorded state rather than input re-simulation backs
-  run analysis.
+  requires. Recorded state rather than input re-simulation backs run analysis.
 - Separate simulation from presentation cleanly. Headless and distributed scenarios need a
   logic core that runs without a renderer, audio, or window.
-- Reproducibility is for comparison rather than bit-exactness. Runs must be seeded,
-  re-runnable, and metric/invariant-stable enough to compare experiments. The trade-off is
-  aggressive intra-tick parallelism with explicit conflict resolution rather than bit-exact
-  replays.
+- Determinism is not a roadmap requirement. Validation uses per-run invariants, authored bounds,
+  aggregate distributions, and performance statistics. Seeds remain optional experiment inputs.
 - Incremental, always-shippable: each phase leaves the engine building and the existing games
   playable.
 - Single-operator scope: the framework is a personal research tool for one operator for the
@@ -116,7 +112,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`roadmap-tree.md`](roadmap-tree.md) | human | Visual tree of the whole roadmap: tracks → phases → sub-phases hierarchy + the branching dependency flow. |
 | [`seams.md`](seams.md) | human + agent | Definition of a "seam" and the maintained registry of all framework seams (structural + A4 experiment seams). Pending split into a human overview and an agent registry. |
 | [`track-p-playable-baseline.md`](track-p-playable-baseline.md) | human | Prerequisite track: make the reference game (Generals/ZH) a fully playable end-to-end skirmish (setup, AI, economy, production, combat, win/lose). Gates Tracks A/B/C. |
-| [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, reproducibility & statistical stability, sim/presentation seam, experiment framework, scenario authoring & visualization. |
+| [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, statistical validation, sim/presentation seam, experiment framework, scenario authoring & visualization. |
 | [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
 | [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
@@ -171,8 +167,8 @@ track document.
   P3 victory/defeat conditions · P4 economy loop · P5 construction & production · P6 combat &
   command · P6b unit-contract validation · P7 end-to-end skirmish validation · P8 implementation
   delta remediation · P9 unit validation ground. Gates all other tracks.
-- [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 reproducibility &
-  statistical stability · A3 simulation/presentation seam · A4 experiment framework seams & harness
+- [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 statistical
+  validation · A3 simulation/presentation seam · A4 experiment framework seams & harness
   (incl. the Simulation Domain Model seam - RTS, city-builder, transport, …) · A5 scenario
   authoring & visualization (incl. authoring/visualization at scale - the ReplaySketch tooling
   scales with the sim).
@@ -196,7 +192,7 @@ track document.
   weapon/combat-driven terrain deformation · F4 physics engine integration (pluggable rigid-body
   seam) · F5 physics-based structural destruction (replaces canned rubble/damage-state model
   swap) · F6 destruction-terrain interaction (debris/craters block pathing & placement) · F7
-  persistence/replay/determinism · F8 authoring/validation tooling.
+  persistence/replay · F8 authoring/validation tooling.
 - [Track G - Rendering Clarity & Image Quality](track-g-rendering-clarity.md): G1 high-DPI
   drawable & resolution correctness · G2 graphics settings & fidelity presets
   (`Faithful`/`Enhanced`) · G3 visual regression harness · G4 multisample antialiasing · G5
@@ -305,7 +301,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | F4 - Physics engine integration | `░░░░░░░░░░` | 0 / 1 |
 | F5 - Physics-based structural destruction | `░░░░░░░░░░` | 0 / 1 |
 | F6 - Destruction-terrain interaction | `░░░░░░░░░░` | 0 / 1 |
-| F7 - Persistence, replay & determinism | `░░░░░░░░░░` | 0 / 1 |
+| F7 - Persistence & replay | `░░░░░░░░░░` | 0 / 1 |
 | F8 - Authoring & validation tooling | `░░░░░░░░░░` | 0 / 1 |
 | Track F total | `░░░░░░░░░░` | 0 / 8 |
 

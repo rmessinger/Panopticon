@@ -30,7 +30,7 @@ Add the minimum AI production planner: from existing production structures, queu
 
 1. Add a production step after economy/base build-out in the AI decision hook. The default target army size for this card is `3` attack-capable, non-builder units; define it as a named constant and verify that default in tests.
 2. Identify AI-owned production structures from `Player.OwnedObjects`. Skip incomplete structures, structures without `ProductionUpdate`, and structures that cannot enqueue.
-3. Select a legal unit to produce from the structure's command set or existing production metadata. Keep the first implementation minimal and deterministic; if a richer target-composition design is needed, stop at the seam and point to the deep dive rather than inventing a strategy.
+3. Select the first legal unit from the structure's command set or existing production metadata. Keep the first implementation minimal; if a richer target-composition design is needed, stop at the seam and point to the deep dive rather than inventing a strategy.
 4. Before emitting `CreateUnit`, require all gates to pass: `Player.CanProduceObject(...)`, producer `CanConstructUnit(...)`/`CanProduceObject(...)`, no duplicate queued job for that unit beyond the target count, and `BankAccount` can afford the cost.
 5. Emit unit production only as `OrderType.CreateUnit` through the AI order-actuation seam from `WI-P2-02`; do not call `ProductionUpdate.QueueProduction(...)` directly from the planner.
 6. Add `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIUnitProductionTests.cs` with headless `[Fact]` tests. Cover both affordable production and an unaffordable case where no order is emitted and money never goes negative.
@@ -65,7 +65,7 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not implement attack/defense behavior here.
-- Do not hard-code a full faction strategy table. A deterministic "first legal army unit from an owned producer" is enough for Track P unless the deep dive is updated.
+- Do not hard-code a full faction strategy table. "First legal army unit from an owned producer" is enough for Track P unless the deep dive is updated.
 - If you refactor producer-selection logic out of `OrderProcessor`, preserve every existing fallback and guard.
 - Any new sentinel such as "no producer" or "no selected unit" must have a stated default and a test that exercises it.
 
@@ -79,7 +79,7 @@ dotnet format src --verify-no-changes
 ## Result
 
 - Added unit-production planning to `SkirmishAIPlayer` after the economy/base-build step.
-- Implemented deterministic producer/unit selection from command sets, affordability/prerequisite gating, and duplicate queue suppression.
+- Implemented first-legal producer/unit selection from command sets, affordability/prerequisite gating, and duplicate queue suppression.
 - Enforced the default army target size with `DefaultTargetArmySize = 3`.
 - Added `SkirmishAIUnitProductionTests` covering affordable production order emission and unaffordable no-op behavior with non-negative bank balance.
 - Validation is blocked in this environment by missing .NET targeting-pack data (`Microsoft.NETCore.App.Ref/10.0.9/data/FrameworkList.xml`).

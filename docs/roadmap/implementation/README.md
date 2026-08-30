@@ -35,14 +35,14 @@ Source of truth: [deep-dives/a1-headless-host.md](../deep-dives/a1-headless-host
 |---|---|---|
 | [track-a-a1-headless-host.md](track-a-a1-headless-host.md) | A1-1…A1-5 | Headless simulation host |
 
-## Track A · A2 : Reproducibility & statistical stability
+## Track A · A2 : Statistical validation
 
 Source of truth: [deep-dives/a2-reproducibility.md](../deep-dives/a2-reproducibility.md) :
 [Architecture diagrams §5](../deep-dives/a2-reproducibility.md#5-architecture-diagrams).
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-a-a2-reproducibility.md](track-a-a2-reproducibility.md) | audits + seeded-source conversion | Reproducibility & statistical stability |
+| [track-a-a2-reproducibility.md](track-a-a2-reproducibility.md) | audits + seeded-source conversion | Statistical validation |
 
 ## Track G · G1 : High-DPI drawable & resolution correctness
 

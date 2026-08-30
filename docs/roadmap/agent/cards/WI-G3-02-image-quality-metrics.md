@@ -67,7 +67,7 @@ dotnet format src --verify-no-changes
 
 - Do not add golden images, capture code, or a comparison runner. That is `WI-G3-03`.
 - Do not change `FrameCapturer` or `FrameCaptureService`.
-- Do not add a perceptual or learned metric. Both metrics must be simple, deterministic, and
+- Do not add a perceptual or learned metric. Both metrics must be simple, formula-defined, and
   explainable from the code.
 - If a metric cannot be made resolution-independent, document the constraint rather than comparing
   across dimensions.

@@ -86,7 +86,7 @@ dotnet format src --verify-no-changes
 - Do not modify production code; if a predicate can't pass, mark `Blocked` with the
   specific failure and the card that must fix it.
 - Do not add the scenario-matrix sweep here (that is a later card if needed). One
-  deterministic 1v1 boot test is the acceptance gate for P1-4.
+  fixed 1v1 boot test is the acceptance gate for P1-4.
 
 ## On completion
 

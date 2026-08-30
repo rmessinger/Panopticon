@@ -50,7 +50,7 @@ All data from a vanilla Generals install (`INI.big`):
 - [x] Each power has an observable-effect assertion (heal amount, owner change, disabled state,
       cash delta, vehicle ownership) in `OpenSage.Game.Tests`.
 - [x] The four validation-ground units complete with per-power completion predicates and carry
-      baseline entries; two headless runs are byte-identical.
+      baseline entries.
 - [x] `dotnet build src`, `dotnet test` (non-Interactive suites), `dotnet format src
       --verify-no-changes` all pass.
 - [x] Checklist items P6c-1 through P6c-4 are ticked with ACs met.

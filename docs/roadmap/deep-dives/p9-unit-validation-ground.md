@@ -86,7 +86,7 @@ Every unit additionally performs a measured `MoveTo` leg before its primary acti
 metric directly comparable across the entire roster, and means a unit whose primary action is
 unimplemented still contributes a useful number instead of only a gap.
 
-Targets are assigned deterministically by index rather than by proximity or threat, so assignment
+Targets are assigned by index rather than by proximity or threat, so assignment
 cannot drift when target ordering or unit stats change.
 
 ### 2.5 Measuring duration
@@ -94,7 +94,7 @@ cannot drift when target ordering or unit stats change.
 Duration is counted in logic frames derived from `MapTime` and `MsPerLogicFrame`, never in wall-clock
 time. Wall-clock would make the baseline depend on machine speed, renderer, and whether the run is
 windowed or headless; logic frames are identical across all of those as long as the simulation is
-deterministic.
+fixed.
 
 A unit's timer starts on the frame its order is dispatched and stops on the frame its completion
 signal is first observed. For combat units the signal is the assigned target being destroyed, not the
@@ -125,8 +125,7 @@ and too tight for slow ones, and a percentage alone would flag a twenty-frame ac
 of jitter.
 
 The baseline is captured by an explicit refresh mode and is never rewritten by a normal run;
-otherwise a regression would quietly become the new normal. Before a baseline is committed the
-headless run is executed twice and the reports diffed, which is the phase's determinism check.
+otherwise a regression would quietly become the new normal.
 
 ### 2.8 Two run modes, one definition
 
@@ -139,13 +138,11 @@ Both modes drive the same scenario definition, spawn host, and timer. Only prese
 terminal assertion differ, so a discrepancy between what a human sees and what CI reports is not
 possible by construction.
 
-### 2.9 Determinism
+### 2.9 Controlled scenario inputs
 
-The baseline is only meaningful if a run is reproducible. Fixed spawn positions, fixed target
-assignment, a fixed order-issue frame, a fixed settle duration, and a fixed RNG seed are all
-required. This is a scenario-local determinism requirement satisfied by removing variation from the
-scenario itself; it is not the engine-wide reproducibility guarantee, which arrives later in
-[A2](../track-a-foundations.md).
+Fixed spawn positions, target assignment, order-issue frame, settle duration, and RNG seed keep the
+baseline workload well-defined. Cross-run identity is not required; per-entry tolerances absorb
+normal execution variation.
 
 ---
 
@@ -161,7 +158,7 @@ and owns the parts requiring a live `IGame`.
 | `ValidationGroundScenario` | `ReplaySketch.Core/Model` | Roster, layout parameters, target and supply-source set, per-unit frame budgets |
 | `UnitTimingBaseline` | `ReplaySketch.Core/Model` | Golden frame counts, per-entry tolerance, load/save, comparison |
 | `ValidationGroundReport` | `ReplaySketch.Core/Model` | Per-unit results, gaps, timeouts, baseline verdicts |
-| `ValidationGroundBuilder` | `ReplaySketch.Core/Services` | Deterministic spawn plan: positions, target assignment, order sequence. No engine dependency |
+| `ValidationGroundBuilder` | `ReplaySketch.Core/Services` | Fixed spawn plan: positions, target assignment, order sequence. No engine dependency |
 | `UnitActionTimer` | `ReplaySketch.Core/Services` | Per-unit dispatch-to-completion frame measurement and timeout handling |
 | `ValidationGroundHost` | `TestHarness` | Applies the spawn plan to a live `IGame`, issues orders, drives the poll loop |
 
@@ -172,13 +169,13 @@ and owns the parts requiring a live `IGame`.
 | Phase | Goal | Status |
 |---|---|---|
 | P9-1. Primary-action model | `PrimaryAction` kinds plus per-unit resolution covering every `UnitCatalog` entry, with `MoveTo` as the universal fallback. Completeness is test-enforced. | Done |
-| P9-2. Scenario and layout model | `ValidationGroundScenario` plus `ValidationGroundBuilder`: deterministic per-faction rows, target cluster, supply sources, target assignment by index. Engine-free and headlessly tested. | Done |
+| P9-2. Scenario and layout model | `ValidationGroundScenario` plus `ValidationGroundBuilder`: fixed per-faction rows, target cluster, supply sources, target assignment by index. Engine-free and headlessly tested. | Done |
 | P9-3. Direct-spawn host | `ValidationGroundHost` creates the planned units, targets, and supply sources on a live `IGame` through `GameLogic.CreateObject` with terrain-height sampling, and runs the settle stage. | Done |
 | P9-4. Action timer | `UnitActionTimer` measures dispatch-to-completion in logic frames per unit, with per-action completion signals and per-unit frame budgets. | Done |
 | P9-5. TestHarness wiring | New built-in scenario value and config knobs; the ground runs in both the windowed and headless loops without disturbing the existing replay-driven path. | Done |
 | P9-6. Report output | Per-unit stdout table and JSON artifact, reporting gaps and timeouts distinctly from durations. | Done |
-| P9-7. Baseline and regression gate | `UnitTimingBaseline` with per-entry tolerance, an explicit refresh mode, a committed baseline captured against a real install, and a non-zero exit code on regression. | Done (live-captured baseline against a real install; fixed-timestep deterministic stepping; 22 units measured, 10 gaps escalated) |
-| P9-8. Test coverage | Install-free tests for layout determinism, roster completeness, action-mapping totality, and baseline comparison; an install-gated end-to-end test for the live run. | Done |
+| P9-7. Baseline and regression gate | `UnitTimingBaseline` with per-entry tolerance, an explicit refresh mode, a committed baseline captured against a real install, and a non-zero exit code on regression. | Done (live-captured baseline against a real install; fixed-timestep stepping; 22 units measured, 10 gaps escalated) |
+| P9-8. Test coverage | Install-free tests for layout rules, roster completeness, action-mapping totality, and baseline comparison; an install-gated end-to-end test for the live run. | Done |
 
 ---
 

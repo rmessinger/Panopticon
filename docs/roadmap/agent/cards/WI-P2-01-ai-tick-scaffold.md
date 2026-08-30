@@ -27,7 +27,7 @@ Add a no-behavior strategic AI tick scaffold: `Player.LogicTick()` invokes `Skir
 
 ## Steps
 
-1. In `AIPlayer`, add a virtual coarse-cadence update method called from player ticks. State the default cadence as a named constant, e.g. `DefaultDecisionCadenceFrames = 60`, and keep the default deterministic.
+1. In `AIPlayer`, add a virtual coarse-cadence update method called from player ticks. State the default cadence as a named constant, e.g. `DefaultDecisionCadenceFrames = 60`.
 2. Implement the scaffold so every player tick advances an internal countdown, calls a protected decision hook only when the countdown reaches zero, then resets to the default cadence. No orders or gameplay decisions are emitted in this card.
 3. Override or inherit the scaffold in `SkirmishAIPlayer` without changing the existing `Persist(...)` layout. If you move any persistence code, preserve every existing branch, guard, exception, skipped-byte count, and default value exactly.
 4. Wire `Player.LogicTick()` to call `AIPlayer?.Update()` after `Rank.Update()`. Do not tick neutral/human players that have `AIPlayer == null`.
@@ -77,7 +77,7 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-- Added `AIPlayer.DefaultDecisionCadenceFrames` and `AIPlayer.Update()` with a deterministic countdown + `OnDecisionTick()` hook.
+- Added `AIPlayer.DefaultDecisionCadenceFrames` and `AIPlayer.Update()` with a frame countdown plus `OnDecisionTick()` hook.
 - Wired `Player.LogicTick()` to call `AIPlayer?.Update()` after rank updates.
 - Added `SkirmishAIPlayer.DecisionTickCount` and an override for decision-hook observation.
 - Added headless tests in `SkirmishAIPlayerTickTests` for cadence count and non-AI player behavior.

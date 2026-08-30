@@ -30,7 +30,7 @@ end-to-end test for the live run, and document the workflow in the TestHarness a
 ## Steps
 
 1. Consolidate or add `[Fact]` coverage so the following hold without a game install: layout
-   determinism, roster completeness against `UnitCatalog`, primary-action mapping totality, and
+   layout rules, roster completeness against `UnitCatalog`, primary-action mapping totality, and
    baseline comparison including the minimum frame floor.
 2. Add a `[GameFact(SageGame.CncGenerals)]` test running the validation ground headless end to end
    and asserting every roster unit either completes within its baseline tolerance or is a reported
@@ -51,7 +51,7 @@ end-to-end test for the live run, and document the workflow in the TestHarness a
 
 ## Acceptance criteria
 
-- [ ] Install-free `[Fact]` tests cover layout determinism, roster completeness, action-mapping
+- [ ] Install-free `[Fact]` tests cover layout rules, roster completeness, action-mapping
       totality, and baseline comparison including the frame floor.
 - [ ] A `[GameFact(SageGame.CncGenerals)]` test runs the ground end to end and asserts every unit
       completes within tolerance or is a reported gap or timeout.

@@ -86,7 +86,7 @@ mindmap
         A1-3 Logic-tick extraction
         A1-4 SimulationHost FTRT
         A1-5 Run outputs T0/T1/T2
-      A2 Reproducibility and stability
+      A2 Statistical validation
       A3 Sim/presentation seam
       A4 Experiment framework ⮕
         A4-1 Simulation Domain Model seam
@@ -152,7 +152,7 @@ mindmap
       F4 Physics engine integration
       F5 Physics-based structural destruction
       F6 Destruction-terrain interaction
-      F7 Persistence replay and determinism
+      F7 Persistence and replay
       F8 Authoring and validation tooling
     G. Rendering clarity and image quality
       G1 High-DPI drawable and resolution correctness ⮕
@@ -222,7 +222,7 @@ flowchart LR
 
   subgraph S0["Stage 0 · Foundations & seams"]
     direction TB
-    A2["A2 Reproducibility & stability"]
+    A2["A2 Statistical validation"]
     A4S["A4-1 Domain Model seam"]
     A3["A3 Sim/presentation seam"]
     A5WB["A5-6 WorldBuilder baseline"]
@@ -288,7 +288,7 @@ flowchart LR
     direction TB
     B7["B7 Variable fidelity"]
     F6["F6 Destruction-terrain interaction"]
-    F7["F7 Persistence, replay & determinism"]
+    F7["F7 Persistence & replay"]
     H6["H6 Authoring & pipeline integration"]
   end
 

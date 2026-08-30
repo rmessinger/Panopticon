@@ -38,7 +38,7 @@ behavior change for the windowed game.
 4. Preserve the existing tick order exactly: `LocalLogicTick`, then logic step, then scripting step.
    Do not resolve the two `// TODO: What is the order?` comments; carry them across unchanged.
 5. Keep `EnableFixedLogicTimestep` working: the P9 Unit Validation Ground depends on fixed-timestep
-   logic-frame counts being reproducible.
+   logic-frame counts being explicit.
 6. Add a test under `src/OpenSage.Game.Tests/` that drives the stepper directly for N steps with no
    `Game.Render` call and asserts the logic frame count advances by N.
 7. Run `dotnet format src` and confirm `dotnet format src --verify-no-changes`.

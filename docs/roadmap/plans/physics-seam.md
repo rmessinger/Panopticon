@@ -37,7 +37,6 @@ Two implementations sit behind the seam:
 | Library | BepuPhysics2 (`BepuPhysics` + `BepuUtilities`) | Pure C#, Apache-2.0 (GPLv3-compatible), headless-capable, needed shapes present (box, sphere, cylinder, convex hull, mesh) |
 | Version | Stable 2.4.0 | 2.5.0 is a long-running beta series |
 | Incorporation | NuGet package references through central package management | Matches repo convention; no fork or submodule needed |
-| Determinism | None asserted for Bepu-backed categories | Cross-run divergence of physics outcomes is acceptable; validation uses loose authored bounds |
 
 ---
 
@@ -125,12 +124,11 @@ Empirical constraints found while building the backend (verified against the 2.4
 The 30 Hz logic tick calls `Timestep(1 / 30f)`. The Bepu `Simulation` runs single-threaded first;
 an `IThreadDispatcher` is added only if benchmarks show need.
 
-### Determinism, persistence, replay
+### Persistence and replay
 
-- No determinism is asserted for Bepu-backed categories, on any machine or build. Cross-run
-  divergence of physics outcomes is acceptable.
-- Gameplay-decisive reads (fall-damage kills, push-apart displacement feeding pathing) are not
-  gated on A2 tolerance definitions; they are validated by loose authored bounds.
+- Cross-run divergence of Bepu outcomes is acceptable.
+- Gameplay-decisive reads such as fall-damage kills and push-apart displacement are validated by
+  loose authored bounds.
 - Persistence (F7): resting state per body through `StatePersister` (transform, velocities, sleep
   flag).
 
@@ -190,7 +188,7 @@ Dependencies: `BepuPhysics`, `BepuUtilities` (2.4.0), `OpenSage.Mathematics`. Re
 ## Non-goals
 
 - Replacing locomotor steering or pathfinding; they keep applying forces through the seam.
-- Any determinism guarantee, including single-machine run-to-run identity.
+- Cross-run outcome guarantees.
 - Per-infantry character controllers (revisit after PS-4).
 - Bepu 2.5.0-beta features.
 
@@ -203,7 +201,7 @@ their exit evidence here instead.
 
 | Card | Description | Status |
 |---|---|---|
-| `WI-PS-01` | Seam interfaces and legacy backend carve-out (PS-0) | Complete: `src/OpenSage.Physics` seam + `LegacyPhysicsBody`; physics tests pass; impulse capture trajectories bit-identical before/after |
+| `WI-PS-01` | Seam interfaces and legacy backend carve-out (PS-0) | Complete: `src/OpenSage.Physics` seam + `LegacyPhysicsBody`; physics tests pass; impulse capture regression remains unchanged |
 | `WI-PS-02` | Bepu backend and test scene (PS-1) | Complete: `BepuPhysicsWorld` + `PhysicsStack` built-in scenario; loose settle bounds, stability probe, and ms/Timestep at 100/1k/10k bodies pass headlessly (windowed parity run pending, environment cannot present) |
 | `WI-PS-03` | Benchmark scenarios | Partial: ms/Timestep measured in-scenario (0.03/0.1/3.1 ms at 100/1k/10k); B1-harness scenarios (chunk rebuild cost, full-map broadphase) not started |
 | `WI-PS-04` | Debris migration (PS-2) | Not started |

@@ -389,7 +389,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Validation-ground measurement of the ability units (P6c-4).
   - AC: the Medic, Black Lotus, Hacker, and Hijacker each perform their ability in the validation
     ground with a per-power completion predicate (heal observed, ownership changed, target
-    disabled, vehicle hijacked), carry baseline entries, and two headless runs are byte-identical.
+    disabled, vehicle hijacked) and carry baseline entries.
 
 ### P7: End-to-end skirmish validation
 - [x] Author one end-state scenario per match outcome (six total).
@@ -452,7 +452,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: every `UnitCatalog` entry resolves to exactly one `PrimaryAction` (attack, build, gather,
     special power, or the move fallback); a test fails if any catalog entry is unresolved, so adding
     a unit to the catalog without deciding its action cannot silently drop it from the ground.
-- [x] Scenario and deterministic layout builder (P9-2).
+- [x] Scenario and fixed layout builder (P9-2).
   - AC: `ValidationGroundBuilder.Build` returns an identical `SpawnPlan` (unit positions, target
     positions, target assignment by index, order sequence) for the same scenario and seed across
     repeated invocations, and has no dependency on `IGame` or `Scene3D`.
@@ -476,10 +476,9 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Golden baseline and regression gate (P9-7).
   - AC: a baseline with per-entry tolerance (percentage plus a minimum absolute frame floor) is
     checked in, captured only through an explicit refresh mode and never rewritten by a normal run;
-    two consecutive headless runs produce identical reports; headless exits non-zero when any unit
-    regresses beyond its tolerance.
+    headless exits non-zero when any unit regresses beyond its tolerance.
 - [x] Validation-ground test coverage (P9-8).
-  - AC: install-free `[Fact]` tests cover layout determinism, roster completeness, action-mapping
+  - AC: install-free `[Fact]` tests cover layout rules, roster completeness, action-mapping
     totality, and baseline comparison including the tolerance floor; an install-gated
     `[GameFact(SageGame.CncGenerals)]` test runs the ground end to end and asserts every unit either
     completes within tolerance or is a reported gap.
@@ -527,20 +526,17 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     `.rep` path. Milestone test: headless run to a decided outcome with all tiers written and
     reloadable (`TieredRecordingTests.HeadlessRun_ReachesMatchEnd_AndWritesAllTiers`).
 
-### A2: Reproducibility & statistical stability
-- [x] Centralize all randomness through a seeded source; audit uncontrolled nondeterminism.
-  - AC: all randomness flows through a seeded source; an audit lists any uncontrolled sources; two
-    seeded runs match within tolerance on key metrics.
+### A2: Statistical validation
+- [x] Add seed controls and audit randomness sources.
+  - AC: experiments can select a seed and the audit classifies simulation and presentation sources.
   - Done: audits and conversion in [`implementation/track-a-a2-reproducibility.md`](implementation/track-a-a2-reproducibility.md);
     `Game.StartGame` seeds `GameLogic.Random`/`GameClient.Random` from the run seed; the two
-    simulation-affecting uncontrolled sites converted; `SeededRunTests` verifies same-seed T-exact
-    agreement. Remaining presentation-only sources stay uncontrolled by design (listed in the audit).
-- [ ] Define the conflict-resolution rules for concurrent writes.
-  - AC: TBD, rules documented; concurrent writes resolve deterministically per the rule; a test
-    exercises a conflicting-write case.
-- [ ] Verification harness: metric/invariant stability within tolerance (+ opt-in strict-hash mode).
-  - AC: a harness re-runs a scenario and asserts metric/invariant stability within tolerance, with an
-    opt-in strict-hash mode.
+    simulation-affecting uncontrolled sites converted. Remaining presentation-only sources stay
+    uncontrolled by design (listed in the audit). This is an available control, not a
+    reproducibility requirement.
+- [ ] Verification harness: multi-sample metrics and per-run invariants.
+  - AC: a harness runs a scenario sample set, checks each run's invariants, and reports aggregate
+    distributions without requiring runs to agree.
 
 ### A3: Simulation/presentation seam
 - [ ] Formalize the logic↔presentation boundary; ensure logic never reads render-only state.
@@ -752,7 +748,7 @@ collapse), not the existing canned model-swap rubble/damage-state system.
 - [ ] F6 Destruction-terrain interaction (settled debris/craters block pathing & placement).
   - AC: TBD, a destroyed building's settled debris/crater blocks pathing and prevents
     construction on the same footprint until cleared.
-- [ ] F7 Persistence, replay & determinism (`StatePersister` + ReplaySketch/P0 capture of
+- [ ] F7 Persistence & replay (`StatePersister` + ReplaySketch/P0 capture of
       deformation and physics debris state).
   - AC: TBD, a save/load round-trip preserves terrain deformation and debris resting state; a
     ReplaySketch scenario with an explosive weapon and a destroyed building asserts the resulting

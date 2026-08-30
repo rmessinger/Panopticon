@@ -24,9 +24,9 @@ The host is domain-agnostic. It owns a simulation world through the [Simulation 
 | H1 | `Game` constructor unconditionally creates a `GraphicsDevice` and graphics resources (`StandardGraphicsResources`, `ShaderSetStore`, `ShaderResourceManager`) | `Game.cs` ctor (~L481–532) | No GPU → no `Game`. Blocks CI/cloud nodes without a GPU. |
 | H2 | `AssetStore` requires a `GraphicsDevice` and graphics load context | `AssetStore` ctor (`Content/AssetStore.cs`), `Game.cs` L534–542 | Asset data (INI/object defs) is entangled with GPU upload of textures/shaders/models. |
 | H3 | `Game.Update` interleaves presentation with logic | `Game.cs` `Update`/`LocalLogicTick` (L881–943) | Each tick runs input pumping, Scene2D UI, audio, cursors before the logic tick. A host wants only logic + scripting + network. |
-| H4 | No `SimulationHost` abstraction owning the logic step | None | The deterministic step is embedded in `Game`; batch/distributed drivers must instantiate the full `Game`. |
+| H4 | No `SimulationHost` abstraction owning the logic step | None | The logic step is embedded in `Game`; batch/distributed drivers must instantiate the full `Game`. |
 | H5 | Audio/Graphics `GameSystem`s always constructed and ticked | `Game.cs` L583–585, `LocalLogicTick` audio update | Presentation systems run even when nothing is displayed. |
-| H6 | Reproducibility not yet guaranteed | see [A2](../track-a-foundations.md) | Headless results and analysis are only meaningful if runs are seeded and metric or invariant stable per the [relaxed-determinism Decision](../open-questions.md). Bit-exactness is not required. |
+| H6 | Statistical experiment analysis is missing | see [A2](../track-a-foundations.md) | Headless results need structured metrics, per-run invariants, and aggregate analysis. |
 
 ---
 
@@ -64,10 +64,9 @@ frames or until a stop condition at FTRT speed and exposes hooks for input or or
 (H4/H5) and avoid RTS-specific assumptions so a non-RTS domain can supply its own entity and step
 model.
 
-### 2.5 Reproducibility and result outputs
-Build on [A2](../track-a-foundations.md): a seeded, re-runnable stepper plus structured run
-outputs that the analysis layer consumes. Per the [relaxed-determinism Decision](../open-questions.md), runs are comparable, not bit-exact, so outputs lean on recorded state and metrics
-instead of input-only re-simulation:
+### 2.5 Result outputs
+Emit structured run outputs that the analysis layer consumes. Recorded state supports inspection
+without requiring input-only re-simulation:
 - Recorded state snapshots and deltas: periodic world snapshots and per-frame deltas so any
   frame can be reconstructed for analysis without assuming a re-run reproduces it bit-for-bit.
 - Metrics and events stream: domain-defined probes for RTS, city, or transport runs, and the
@@ -75,14 +74,13 @@ instead of input-only re-simulation:
 - Hierarchical state signature per frame: a tolerance-aware signature tree, from world to
   partition to entity bucket, so divergence screening can be drilled down to a locus rather than
   only flagged globally. The tier design is in [visualization.md §5](a5-visualization.md). An opt-in
-  strict-hash mode remains available for bit-exact debugging.
-- Triggered detail capture: when the signature tree trips a tolerance threshold, the host writes
+- Triggered detail capture: when the signature tree trips a configured threshold, the host writes
   detailed per-entity and per-system deltas for the affected frame and region window into a
   bounded ring buffer. Captured live because a re-run will not reproduce the same divergence, as
   described in [visualization.md §5](a5-visualization.md).
 - Replay recording of inputs, including orders, seed, and map, reusing the existing `.rep` path
-  (`ReplayConnection`, TestHarness export). This is useful for re-running an experiment, with the
-  caveat that the re-run is statistically equivalent, not identical.
+  (`ReplayConnection`, TestHarness export). This is useful for launching another experiment run,
+  not reconstructing an authoritative prior run.
 - Optional frame captures via `FrameCaptureService` when a GPU is available.
 
 ### 2.6 Result analysis and visualization: see phase A5
@@ -101,9 +99,9 @@ specified in [visualization.md §5](a5-visualization.md).
 |---|---|---|
 | A1-1. Headless seam audit & approach | Confirm exactly what the logic/asset-data path needs from `GraphicsDevice`/graphics resources, then scope the null device abstraction (chosen §2.1 approach) and document the target "logic-only" surface. | Done |
 | A1-2. Data-only asset loading | Allow `AssetStore`/`ContentManager` to load logic-relevant data without GPU upload (H2), generalizing the `OnDemandAssetLoadStrategy.None` path. | Done |
-| A1-3. Logic-tick extraction | Extract the deterministic logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Done |
+| A1-3. Logic-tick extraction | Extract the logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Done |
 | A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Done (domain seam parameterized pending A4) |
-| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered divergence recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay (input) recordings from a headless run (builds on [A2](../track-a-foundations.md) for seeded, comparable runs). | Done (T0 metrics/events + terminal outcome; T1 tolerance-quantized spatial-cell signature trees; T2 ring-buffer triggered detail with pre-marked windows; snapshot/delta binary artifact with reconstruction; replay input recording via the existing `.rep` path) |
+| A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered diagnostic recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay input recordings from a headless run. | Done (T0 metrics/events + terminal outcome; T1 tolerance-quantized spatial-cell signature trees; T2 ring-buffer triggered detail with pre-marked windows; snapshot/delta binary artifact with reconstruction; replay input recording via the existing `.rep` path) |
 
 > Result analysis, visualization, and scenario authoring were previously sketched here as
 > A1-6/A1-7; they now live in their own phase, [A5](a5-visualization.md) (A5-1 scenario authoring,
@@ -116,9 +114,8 @@ specified in [visualization.md §5](a5-visualization.md).
 - A1-1 gates the rest; everything depends on the chosen graphics seam.
 - A1-2/3/4 are the core host and can land incrementally behind the existing windowless path.
   The TestHarness `RunHeadless` loop is the integration target throughout.
-- A1-5 depends on [A2: Reproducibility and statistical stability](../track-a-foundations.md)
-  so runs are seeded and comparable. Its outputs lean on recorded state rather than bit-exact
-  re-simulation and are consumed by [A5 visualization](a5-visualization.md).
+- A1-5 outputs are consumed by [A2 statistical validation](../track-a-foundations.md) and
+  [A5 visualization](a5-visualization.md).
 
 ## 5. Architecture Diagrams
 
@@ -262,7 +259,7 @@ sequenceDiagram
 - Track A overview: [`../track-a-foundations.md`](../track-a-foundations.md)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 - Scenario authoring & visualization (consumes A1 outputs): [`a5-visualization.md`](a5-visualization.md)
-- Relaxed-determinism Decision (was an open question): [`../open-questions.md`](../open-questions.md)
+- Determinism-priority Decision: [`../open-questions.md`](../open-questions.md)
 
 ---
 

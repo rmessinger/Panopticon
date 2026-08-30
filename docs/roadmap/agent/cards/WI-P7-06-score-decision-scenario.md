@@ -17,7 +17,7 @@ Create the checked-in P7 ScoreDecision scenario that reaches a small configured 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: ScoreDecision expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scenario authoring requirements.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and failure reporting.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:116-116`: P7-6 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:302-304`: `MatchConfig.FrameLimit` dependency on P3-6.
@@ -29,9 +29,9 @@ Create the checked-in P7 ScoreDecision scenario that reaches a small configured 
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json` as static deterministic scenario data.
+1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json` as static scenario data.
 2. Configure the P3-6 `MatchConfig.FrameLimit` to a small explicit value. Verify the default/sentinel frame-limit value still means no score-decision limit and is not accidentally used by this scenario.
-3. Script deterministic early play that makes the intended winner have the higher score by the configured frame limit.
+3. Script early play that makes the intended winner have the higher score by the configured frame limit.
 4. Assert the match terminates because the configured frame limit expires, not because `HarnessRunner` hit its default timeout.
 5. Assert `OutcomeStatus.Decided`, `OutcomeReason.ScoreDecision`, and the expected `WinningPlayer`/`WinningTeam` selected by the score metric. Verify default/sentinel `GameOutcome` values cannot pass.
 6. Add or extend focused P7 scenario test wiring so this JSON runs through `HarnessRunner.RunAndAssert` as a real non-skipped pass/fail test.
@@ -70,7 +70,7 @@ dotnet format src --verify-no-changes
 
 - Do not implement P3-6 score-decision logic here; block if `MatchConfig.FrameLimit` or score metrics are unavailable.
 - Do not confuse the P0 harness timeout with the game match frame limit.
-- Do not use random scoring inputs; the score winner must be deterministic.
+- Keep scoring inputs explicit so the expected winner is well-defined.
 
 ## On completion
 

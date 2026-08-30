@@ -57,8 +57,7 @@ scenarios and replaying runs.
 ## 3. Scenario setup & authoring
 
 ### 3.1 What a scenario is
-A scenario is a versioned, declarative artifact containing everything needed to make a run
-reproducible-for-comparison, not bit-exact; see the [relaxed-determinism Decision](../open-questions.md):
+A scenario is a versioned, declarative artifact containing the inputs needed to launch a run:
 
 - Domain selection: which [domain model (A4)](../track-a-foundations.md) (RTS / city /
   transport / …) and its configuration.
@@ -70,7 +69,7 @@ reproducible-for-comparison, not bit-exact; see the [relaxed-determinism Decisio
 - Parameters: domain + experiment knobs (counts, economy rates, AI profiles, fidelity
   policy, partition scheme, pathfinder choice, i.e. the [A4 seam](../track-a-foundations.md)
   selections under test).
-- Seed: the master RNG seed (A2) so the scenario is re-runnable.
+- Seed: an optional RNG input recorded with the run.
 - Input/order timeline: scripted orders/events injected over time via the host's
   `InjectOrders` hook (A1-4).
 - Stop conditions & probes: end criteria (frame cap, victory, steady-state) and which
@@ -110,10 +109,8 @@ batch runs are inspectable rather than opaque.
   metrics/events/signature stream from [A1-5 run outputs](a1-headless-host.md) (and/or the `.rep`
   inputs for re-running).
 - State reconstruction from recorded snapshots/deltas: reconstruct any frame from what was
-  recorded. Re-simulation through the `SimulationHost` is available for approximate
-  reconstruction or re-running, but (per the [relaxed-determinism Decision](../open-questions.md))
-  it yields a statistically-equivalent run, not a bit-identical one; authoritative analysis
-  uses the recorded state.
+  recorded. A new `SimulationHost` execution is a separate run; authoritative analysis of a prior
+  run uses its recorded state.
 - Timeline scrubbing: step/seek to any logic frame; play/pause/fast-forward.
 - Visualizations, domain-parameterized as the domain model supplies the view:
   - A spatial 2-D overview/heatmap of entity positions/movement for grid domains (RTS), a
@@ -134,12 +131,9 @@ batch runs are inspectable rather than opaque.
 
 ## 5. Run comparison & divergence localization
 
-Detecting divergence is cheap. Localizing it by frame, partition, entity, and system is what
-makes the framework useful for validating parallelism ([B3](../track-b-scale.md)) and sharding
-([B6](b6-distributed-simulation.md)). The [relaxed-determinism Decision](../open-questions.md)
-makes this harder than in a bit-exact engine: re-running with tracing and binary-searching the
-first divergent frame is unreliable because a re-run is only statistically equivalent. Localization
-detail therefore often has to be captured in the original run.
+Comparing runs by frame, partition, entity, and system helps investigate an experiment without
+making cross-run agreement a correctness gate. Diagnostic detail must be captured in the original
+run because another execution may follow a different path.
 
 ### 5.1 Tiered recording (emitted by [A1-5](a1-headless-host.md), consumed here)
 The recording is tiered so always-on cost stays proportional to the scale this roadmap targets:
@@ -154,19 +148,16 @@ The recording is tiered so always-on cost stays proportional to the scale this r
 - Hierarchical, addressable signatures (T1). A single global hash only answers "diverged
   yes/no at frame N." A tree keyed by partition and entity-bucket lets the comparator descend to
   the smallest node that diverged, turning O(world) inspection into O(log) drill-down.
-- Live triggering (T2), not re-run. Because re-runs don't reproduce divergence, T2 is armed
+- Live triggering (T2), not re-run. T2 is armed
   before a run and fires when a T1 subtree (or a T0 invariant) breaches tolerance, snapshotting
   recent detailed deltas from a ring buffer. A user can also pre-mark a frame/region window.
 - Tolerance-aware comparison. "Divergence" is first place drift exceeds a configured
   tolerance, reported per subtree, not first non-identical bit. Tolerances are per-quantity
   (e.g. position ε, health ε) and surfaced in the comparator.
-- Stable bucketing across runs. For two runs to be comparable, partition/entity buckets must
+- Stable bucketing across runs. For optional diagnostic comparison, partition/entity buckets must
   be addressed by stable keys drawn from the domain topology (spatial cell, graph node/edge,
   or district id + stable entity id), not by iteration order or memory layout, so the same bucket
   lines up across runs that parallelized or partitioned differently.
-- Strict-mode interplay. When the opt-in strict-hash mode is on (small scenarios), T1 nodes
-  carry exact hashes and divergence localizes to the exact first frame/entity; best-of-both for
-  debugging, at small scale.
 - Budgeted overhead. T1 granularity (bucket size) and T2 ring-buffer depth are configurable so
   recording cost is bounded; at extreme scale T1 can coarsen and T2 can be armed only for suspect
   regions.
@@ -268,4 +259,4 @@ classDiagram
 - Distributed sim (validated via §5 localization): [`b6-distributed-simulation.md`](b6-distributed-simulation.md)
 - Variable fidelity (fidelity overlay): [`b7-variable-fidelity.md`](b7-variable-fidelity.md)
 - Larger maps (spatial authoring substrate): [`b4a-larger-maps.md`](b4a-larger-maps.md)
-- Relaxed-determinism Decision: [`../open-questions.md`](../open-questions.md)
+- Determinism-priority Decision: [`../open-questions.md`](../open-questions.md)

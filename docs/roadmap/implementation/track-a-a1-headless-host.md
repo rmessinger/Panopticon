@@ -11,7 +11,7 @@ Implements the A1 row of [Track A](../track-a-foundations.md). Design source of 
 Run the logic core with no renderer, audio, or window: audit the graphics and tick-path
 couplings (A1-1), make asset loading data-only (A1-2), extract the fixed-rate logic step from
 `Game.Update` (A1-3), introduce the domain-agnostic `SimulationHost` (A1-4), and emit the T0 run
-output (A1-5, metrics/events tier only; T1/T2 stay gated on A2 tolerances and A5-4 bucketing).
+output (A1-5, metrics/events tier only; T1/T2 use A5-4 bucketing).
 
 ## Sub-phase to card mapping
 
@@ -204,7 +204,7 @@ MsPerLogicFrame`, so each `LocalLogicTick` advances `MapTime` by exactly one log
 scripting interval divides evenly into the frame interval; for Generals both are 30 Hz). This is
 the P9 Unit Validation Ground mechanism and is a special case of the A1-3 stepper, not a
 replacement: the stepper owns the same `_nextLogicUpdate`/`_nextScriptingUpdate` arithmetic but
-advances map time itself (fixed delta per step for deterministic hosts, wall-clock when windowed),
+advances map time itself (fixed delta per step for fixed-step hosts, wall-clock when windowed),
 rather than relying on `Game.Update` to have done it. Generalization required: none to the
 arithmetic; the stepper must keep `FixedDelta` behavior byte-identical when driven through
 `Game.Update`.
@@ -218,7 +218,7 @@ vector, id-sorted) and the frame `WorldStateDelta` against the previous tick. Ty
 | Tier | Type | Design |
 |---|---|---|
 | T0 | `RunOutputRecorder` → `RunOutput.MetricSamples` | Per-player metrics at a bounded sample interval; terminal `GameOutcome`. |
-| T1 | `TieredSignatureRecorder` → `RunOutput.SignatureTrees` | `SignatureTreeBuilder` builds a root + spatial-cell-bucket tree per sampled frame. Bucket keys are origin-anchored grid cells (`cell:x,y`, default 100 world units), the stable domain-topology address for the RTS grid domain; entity signatures hash definition, owner, position/health quantized to `SignatureTolerances` (position ε 0.5, health ε 1.0; strict mode hashes exact bits per the A2 strict-hash scope Decision). Bucket and root hashes are order-independent combines (sum of mixed member hashes), so differently-iterated or partitioned runs compare. Per-frame trees are built only while a T2 trigger is armed. |
+| T1 | `TieredSignatureRecorder` → `RunOutput.SignatureTrees` | `SignatureTreeBuilder` builds a root + spatial-cell-bucket tree per sampled frame. Bucket keys are origin-anchored grid cells (`cell:x,y`, default 100 world units), the stable domain-topology address for the RTS grid domain; entity signatures hash definition, owner, position/health quantized to `SignatureTolerances` (position ε 0.5, health ε 1.0). Bucket and root hashes are order-independent combines (sum of mixed member hashes), so differently-iterated or partitioned runs can be inspected. Per-frame trees are built only while a T2 trigger is armed. |
 | T2 | `TriggeredDetailCapture` → `RunOutput.TriggeredCaptures` | Ring buffer (default depth 30 frames) of per-frame deltas, tripped live by the armed trigger with the diverged subtree keys recorded; cooldown of one ring depth between trips, max 8 windows, plus pre-marked windows (`WithMarkedWindow`). |
 | Snapshots | `SnapshotDeltaRecorder` → `RunOutput.SnapshotArtifactPath` + `SnapshotFrames` | Full summaries at a snapshot interval (default 300) streamed to a binary artifact (`WorldStateArtifactWriter`, save-format `StatePersister` primitives, flushed per record) plus per-frame deltas; `WorldStateArtifact.Reconstruct` rebuilds any frame from the latest baseline plus deltas. Whole-object save blobs were rejected: `GameObject.Persist` needs live team/map context and cannot round-trip standalone. |
 
@@ -231,7 +231,7 @@ WI-A1-08 (`SimulationHost` migration): `ReplayScenarioRunner.RunHeadless` and th
 per-frame work on `TickStarting` (pre-step dispatch: scheduled actions, deferred-injection
 drain) and `TickComplete` (recorder polls, runout/timeout checks). Frame counters that read
 `MapTime` now read `NetworkMessageBuffer.CurrentFrame` (order-frame counter, tick-aligned) or
-the host frame. Deferred-injection countdowns are per logic frame now, deterministic where the
+the host frame. Deferred-injection countdowns are per logic frame now, frame-based where the
 wall-clock loop was not. Capture mode (`CaptureFrames: true`) is the documented render
 exception: it renders offscreen frames on `TickComplete` so `FrameCaptureService` can inspect
 them. Windowed mode and the validation ground (already fixed-timestep, interactive pause

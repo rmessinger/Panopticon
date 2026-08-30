@@ -51,8 +51,8 @@ re-tested. Known data points to check, not assume:
 
 Method: remove one unit from `UnmeasurableAttackReasons`, run the headless ground, and read the
 verdict (`OK`/`REGRESSED`/`TIMEOUT`). A `TIMEOUT` with zero target damage confirms the gap; restore
-the entry. An `OK`/`NEW` measurement promotes the unit to the baseline (refresh + determinism check
-per the standard capture workflow). Record each verdict in `.exchange`.
+the entry. An `OK`/`NEW` measurement promotes the unit to the baseline through the standard refresh
+workflow. Record each verdict in `.exchange`.
 
 Exit: every bucket-B entry carries a current, target-specific verdict; promoted units are in the
 baseline.
@@ -64,7 +64,7 @@ SpecialPower orders (location powers at the subject position, object powers agai
 subject), spawns ability subjects (damaged friendly for the Medic, neutral building for Black
 Lotus and the Hacker, enemy vehicle for the Hijacker), and completes each unit on its per-power
 observable effect (heal observed, ownership changed, target disabled). All four bucket-A units
-carry baseline entries; two headless runs are byte-identical.
+carry baseline entries.
 
 ### WI-VG-03: Game-aware unit catalog
 
@@ -121,7 +121,7 @@ Track D content expansion for horde/transport behaviors).
 
 `WI-VG-01` first (cheap, reclassifies the bucket-B list and may promote units for free).
 `WI-VG-02` and `WI-VG-03` are independent and can proceed in parallel. `WI-VG-04` consumes
-`WI-VG-01` verdicts. After every promotion: baseline refresh, two-run determinism diff, and the
+`WI-VG-01` verdicts. After every promotion: baseline refresh and the
 `BaselineGoldenFrames_AreConsistentWithWeaponIniData` gate, per the P9 capture workflow.
 
 ## Non-goals

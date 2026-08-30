@@ -22,9 +22,9 @@
 - Spatial / pathing: generic `Quadtree` (`src/OpenSage.Game/DataStructures/`),
   `PartitionCellManager` for coarse cell partitioning + collision pair generation, and A*
   pathfinding in `src/OpenSage.Game/Navigation/Navigation.cs`.
-- Determinism / networking: frame-ordered `NetworkMessageBuffer` and `ReplayConnection`
+- Networking / replay: frame-ordered `NetworkMessageBuffer` and `ReplayConnection`
   implement lockstep-style order processing. A random-source abstraction exists
-  (`IGame.CreateRandom()`) but there are TODOs around full determinism guarantees.
+  (`IGame.CreateRandom()`).
 - Rendering: `RenderScene` (`src/OpenSage.Rendering/RenderScene.cs`) buckets
   `RenderObject`s; each `GameObject` has a `Drawable` with `DrawModule[]`. No GPU
   instancing today; rendering is per-object/per-draw-module.
