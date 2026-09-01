@@ -1,0 +1,61 @@
+{
+  // The SCUD launcher's missile must keep its nose pivot aligned through cruise and terminal dive.
+  "Name": "projectile-orientation-scud",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 180,
+  "SettleFrames": 30,
+  "CaptureStride": 2,
+  "HideHud": true,
+  "Players": [
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" },
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" }
+  ],
+  "Actors": [
+    {
+      "Id": "launcher",
+      "Definition": "GLAVehicleSCUDLauncher",
+      "Owner": "gla",
+      "X": 520,
+      "Y": 600,
+      "FacingDegrees": 0,
+      "Label": "SCUD Launcher",
+      "Role": "attacker"
+    },
+    {
+      "Id": "target",
+      "Definition": "AmericaTankCrusader",
+      "Owner": "usa",
+      "X": 820,
+      "Y": 600,
+      "FacingDegrees": 180,
+      "Label": "Target",
+      "Role": "target",
+      "MaxHealth": 100000
+    }
+  ],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 670, "Y": 600 },
+    "Height": 450
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "launcher",
+      "TargetActorId": "target"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" },
+    {
+      "Type": "ProjectileOrientation",
+      "Definition": "SCUDMissile",
+      "MinimumAlignmentDot": 0.99,
+      "MinimumSamples": 30,
+      "RequireAscending": true,
+      "RequireDescending": true
+    }
+  ],
+  "StopWhenActorDestroyed": null
+}

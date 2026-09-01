@@ -99,6 +99,27 @@ public sealed class Drawable : Entity, IPersistableObject
         }
     }
 
+    internal bool TryGetModelSpaceBounds(out AxisAlignedBoundingBox bounds)
+    {
+        bounds = default;
+
+        var foundBounds = false;
+        foreach (var drawModule in DrawModules)
+        {
+            if (!drawModule.TryGetModelSpaceBounds(out var drawBounds))
+            {
+                continue;
+            }
+
+            bounds = foundBounds
+                ? AxisAlignedBoundingBox.CreateMerged(bounds, drawBounds)
+                : drawBounds;
+            foundBounds = true;
+        }
+
+        return foundBounds;
+    }
+
     // TODO(Port): Unify this, Drawable._transformMatrix, and GameObject.ModelTransform.
     public Matrix4x4 InstanceMatrix = Matrix4x4.Identity;
 

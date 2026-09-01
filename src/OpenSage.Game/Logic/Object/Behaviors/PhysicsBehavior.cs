@@ -48,6 +48,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     private LogicFrame _motiveForceExpires;
     private float _extraBounciness;
     private float _extraFriction;
+    private bool _orientToVelocityRequested;
 
     /// <summary>
     /// The legacy backend body holding this module's integration state
@@ -61,10 +62,14 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     // object transform at the last update, so external moves can be detected.
     private Vector3 _bepuSyncedPosition;
     private bool _bepuPoseValid;
+    // Collision-volume half extents in object space, and the center of the collision
+    // volume relative to the object origin (the upright ground contact point), so a
+    // spawned object rests on its collision shape, not inside it. The offset rotates
+    // with the object: a rolled car collides with its roof, not a floating box.
+    private readonly Vector3 _bepuHalfExtents;
+    private readonly Vector3 _bepuBodyOffset;
 
-    // Distance from the object origin (ground contact point) to the Bepu body
-    // center, so a spawned object rests on its collision shape, not inside it.
-    private readonly float _bepuBodyOffsetZ;
+    internal bool OrientsToFlightPath => _moduleData.OrientToFlightPath;
 
     protected override UpdateOrder UpdateOrder => UpdateOrder.Order1;
 
@@ -245,13 +250,14 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         Mass = moduleData.Mass;
 
         var shape = CreateShape(gameObject);
-        _bepuBodyOffsetZ = shape switch
+        _bepuHalfExtents = shape switch
         {
-            PhysicsShape.Sphere sphere => sphere.Radius,
-            PhysicsShape.Box box => box.HalfExtents.Z,
-            PhysicsShape.Cylinder cylinder => cylinder.Height * 0.5f,
-            _ => 0.0f,
+            PhysicsShape.Sphere sphere => new Vector3(sphere.Radius, sphere.Radius, sphere.Radius),
+            PhysicsShape.Box box => box.HalfExtents,
+            PhysicsShape.Cylinder cylinder => new Vector3(cylinder.Radius, cylinder.Radius, cylinder.Height * 0.5f),
+            _ => Vector3.Zero,
         };
+        _bepuBodyOffset = new Vector3(0.0f, 0.0f, _bepuHalfExtents.Z);
         _body = gameEngine.PhysicsWorld.CreateBody(new PhysicsBodyDescription
         {
             Shape = shape,
@@ -280,7 +286,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         var minorRadius = Math.Max(shape?.MinorRadius ?? majorRadius, 1.0f);
         return shape?.Type switch
         {
-            GeometryType.Box => new PhysicsShape.Box(new Vector3(majorRadius, minorRadius, majorRadius)),
+            GeometryType.Box => new PhysicsShape.Box(new Vector3(majorRadius, minorRadius, Math.Max(shape.Height, 1.0f) * 0.5f)),
             GeometryType.Cylinder => new PhysicsShape.Cylinder(majorRadius, Math.Max(shape.Height, 1.0f)),
             _ => new PhysicsShape.Sphere(majorRadius),
         };
@@ -482,6 +488,12 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 obj.SetTransformMatrix(mtx);
             }
+
+            if (d.OrientToFlightPath || _orientToVelocityRequested)
+            {
+                OrientToVelocity();
+            }
+            _orientToVelocityRequested = false;
         } // if not held
 
         // Reset the acceleration for accumulation next frame.
@@ -600,37 +612,49 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         {
             // Something other than physics moved the object, or this is the first
             // update (spawn placement, scripted repositioning): the object pose is
-            // authoritative, so push it into the body. The body center sits one
-            // body half height above the object origin (its ground contact point).
+            // authoritative, so push it into the body. The body center sits at the
+            // collision-volume center, rotated with the object.
             var matrix = obj.TransformMatrix;
-            body.Position = matrix.Translation + new Vector3(0.0f, 0.0f, _bepuBodyOffsetZ);
-            body.Rotation = Quaternion.CreateFromRotationMatrix(matrix);
+            var rotation = Quaternion.CreateFromRotationMatrix(matrix);
+            body.Position = matrix.Translation + Vector3.Transform(_bepuBodyOffset, rotation);
+            body.Rotation = rotation;
         }
         else
         {
             var pose = Matrix4x4.CreateFromQuaternion(body.Rotation);
-            pose.Translation = body.Position - new Vector3(0.0f, 0.0f, _bepuBodyOffsetZ);
+            pose.Translation = body.Position - Vector3.Transform(_bepuBodyOffset, body.Rotation);
             obj.SetTransformMatrix(pose);
         }
         _bepuSyncedPosition = obj.Translation;
         _bepuPoseValid = true;
 
         var position = body.Position;
-        var groundZ = GameEngine.Game.TerrainLogic.GetLayerHeight(
-            position.X,
-            position.Y,
-            obj.Layer);
 
-        if (obj.TestStatus(ObjectStatus.DeckHeightOffset))
+        var rotationMatrix = Matrix4x4.CreateFromQuaternion(body.Rotation);
+        Span<float> cornerHeights = stackalloc float[8];
+        Span<float> groundHeights = stackalloc float[8];
+        for (var cornerIndex = 0; cornerIndex < 8; cornerIndex++)
         {
-            groundZ += obj.CarrierDeckHeight;
+            var cornerOffset = new Vector3(
+                ((cornerIndex & 1) == 0 ? 1.0f : -1.0f) * _bepuHalfExtents.X,
+                ((cornerIndex & 2) == 0 ? 1.0f : -1.0f) * _bepuHalfExtents.Y,
+                ((cornerIndex & 4) == 0 ? 1.0f : -1.0f) * _bepuHalfExtents.Z);
+            var corner = body.Position + Vector3.Transform(cornerOffset, rotationMatrix);
+            var cornerGroundZ = GameEngine.Game.TerrainLogic.GetLayerHeight(corner.X, corner.Y, obj.Layer);
+            if (obj.TestStatus(ObjectStatus.DeckHeightOffset))
+            {
+                cornerGroundZ += obj.CarrierDeckHeight;
+            }
+
+            cornerHeights[cornerIndex] = corner.Z;
+            groundHeights[cornerIndex] = cornerGroundZ;
         }
 
-        var bottomZ = position.Z - _bepuBodyOffsetZ;
+        var maximumGroundPenetration = GetMaximumGroundPenetration(cornerHeights, groundHeights);
         var velocity = body.LinearVelocity;
-        if (bottomZ <= groundZ)
+        if (maximumGroundPenetration >= 0.0f)
         {
-            body.Position = position with { Z = groundZ + _bepuBodyOffsetZ };
+            body.Position = position with { Z = position.Z + maximumGroundPenetration };
 
             if (velocity.Z < 0.0f)
             {
@@ -644,12 +668,12 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         }
         else if (GetFlag(PhysicsFlagType.StickToGround)
             && !GetFlag(PhysicsFlagType.AllowToFall)
-            && bottomZ <= groundZ + 1.0f)
+            && maximumGroundPenetration >= -1.0f)
         {
-            body.Position = position with { Z = groundZ + _bepuBodyOffsetZ };
+            body.Position = position with { Z = position.Z + maximumGroundPenetration };
         }
 
-        if (body.Position.Z - _bepuBodyOffsetZ <= groundZ + 1.0f)
+        if (maximumGroundPenetration >= -1.0f)
         {
             var damping = Math.Clamp(1.0f - _forwardFriction, 0.01f, 0.99f);
             velocity = body.LinearVelocity;
@@ -658,7 +682,83 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             body.LinearVelocity = velocity;
         }
 
+        if (_moduleData.OrientToFlightPath || _orientToVelocityRequested)
+        {
+            OrientBepuToVelocity(body);
+        }
+        _orientToVelocityRequested = false;
+
         return UpdateSleepTime.None;
+    }
+
+    internal void RequestOrientToVelocity()
+    {
+        _orientToVelocityRequested = true;
+        SetWakeFrame(UpdateSleepTime.None);
+    }
+
+    private bool OrientToVelocity()
+    {
+        if (!Matrix4x4Utility.TryCreateTransformMatrix(
+            GameObject.Translation,
+            Velocity,
+            GameObject.Transform.Scale,
+            out var transform))
+        {
+            return false;
+        }
+
+        GameObject.SetTransformMatrix(transform);
+        return true;
+    }
+
+    private bool OrientBepuToVelocity(BepuPhysicsBody body)
+    {
+        if (!Matrix4x4Utility.TryCreateTransformMatrix(
+            Vector3.Zero,
+            Velocity,
+            1.0f,
+            out var orientation))
+        {
+            return false;
+        }
+
+        body.Rotation = Quaternion.CreateFromRotationMatrix(orientation);
+        var origin = body.Position - Vector3.Transform(_bepuBodyOffset, body.Rotation);
+        if (!Matrix4x4Utility.TryCreateTransformMatrix(
+            origin,
+            Velocity,
+            GameObject.Transform.Scale,
+            out var transform))
+        {
+            return false;
+        }
+
+        GameObject.SetTransformMatrix(transform);
+        _bepuSyncedPosition = origin;
+        _bepuPoseValid = true;
+        return true;
+    }
+
+    internal static float GetMaximumGroundPenetration(
+        ReadOnlySpan<float> cornerHeights,
+        ReadOnlySpan<float> groundHeights)
+    {
+        if (cornerHeights.IsEmpty || cornerHeights.Length != groundHeights.Length)
+        {
+            throw new ArgumentException(
+                "Corner and ground height samples must have the same non-zero length.",
+                nameof(groundHeights));
+        }
+
+        var maximumPenetration = groundHeights[0] - cornerHeights[0];
+        for (var index = 1; index < cornerHeights.Length; index++)
+        {
+            maximumPenetration = MathF.Max(
+                maximumPenetration,
+                groundHeights[index] - cornerHeights[index]);
+        }
+        return maximumPenetration;
     }
 
     /// <summary>

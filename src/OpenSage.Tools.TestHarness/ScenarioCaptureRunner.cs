@@ -36,6 +36,7 @@ public static class ScenarioCaptureRunner
 
     // Projectiles are tiny; annotate them from their own projection rather than relying on pixels.
     private const float MinimumMarkerRadiusPixels = 6f;
+    private const float ProjectileDirectionMarkerLength = 12f;
 
     private static readonly JsonSerializerOptions ManifestJsonOptions = new()
     {
@@ -190,6 +191,35 @@ public static class ScenarioCaptureRunner
             cameraSubjects.Add(actors[id].Object.Translation);
         }
 
+        ActorState? followState = null;
+        ActorState? projectileSourceState = null;
+        var followFrozen = false;
+        if (profile.Camera.Mode == CaptureCameraMode.Follow)
+        {
+            if (!string.IsNullOrWhiteSpace(profile.Camera.FollowProjectileSourceActorId))
+            {
+                projectileSourceState = actors[profile.Camera.FollowProjectileSourceActorId];
+                if (!subjectIds.Contains(profile.Camera.FollowProjectileSourceActorId))
+                {
+                    // The shooter anchors the framing until the first projectile launches.
+                    cameraSubjects.Add(projectileSourceState.Object.Translation);
+                }
+            }
+            else
+            {
+                var followId = string.IsNullOrWhiteSpace(profile.Camera.FollowActorId)
+                    ? subjectIds[0]
+                    : profile.Camera.FollowActorId;
+                followState = actors[followId];
+
+                // The follow subject anchors the framing even when it is not an explicit subject.
+                if (!subjectIds.Contains(followId))
+                {
+                    cameraSubjects.Add(followState.Object.Translation);
+                }
+            }
+        }
+
         foreach (var point in profile.Camera.FramingPoints)
         {
             var z = point.Z != 0f ? point.Z : scene.Terrain.GetGroundHeight(new Vector2(point.X, point.Y)) ?? 0f;
@@ -208,8 +238,10 @@ public static class ScenarioCaptureRunner
         var frames = new List<FrameRecord>(profile.DurationFrames);
         var framesWithProjectiles = 0;
         var projectileObserved = false;
+        var previousProjectilePositions = new Dictionary<ObjectId, Vector3>();
 
         GameObject? stopActor = null;
+        ObjectId followedProjectileId = ObjectId.Invalid;
         if (profile.StopWhenActorDestroyed != null
             && actors.TryGetValue(profile.StopWhenActorDestroyed, out var stopState))
         {
@@ -232,6 +264,36 @@ public static class ScenarioCaptureRunner
 
             Step(game);
 
+            // Follow mode: pan every logic frame so the subject stays centered; the fitted
+            // height never changes. A destroyed subject freezes the camera at its last spot.
+            // Projectile follow rides the newest live projectile from the source: shell flight,
+            // freeze at the impact site between shots, hand-off to the next shot.
+            if (projectileSourceState != null)
+            {
+                var projectile = FindFollowProjectile(game, projectileSourceState.Object, followedProjectileId);
+                if (projectile != null)
+                {
+                    followedProjectileId = projectile.Id;
+                    var position = projectile.Translation;
+                    scene.TacticalView.LookAt(new Vector3(position.X, position.Y, 0f));
+                }
+            }
+            else if (followState != null && !followFrozen)
+            {
+                var followObject = followState.Object;
+                if (followObject.IsEffectivelyDead || followObject.BodyModule is { Health: <= 0f })
+                {
+                    followFrozen = true;
+                    reporter.Info(
+                        $"Follow subject '{followState.Spec.Id}' destroyed; camera frozen at last position.");
+                }
+                else
+                {
+                    var position = followObject.Translation;
+                    scene.TacticalView.LookAt(new Vector3(position.X, position.Y, 0f));
+                }
+            }
+
             var captured = frame % profile.CaptureStride == 0;
             if (captured)
             {
@@ -249,7 +311,10 @@ public static class ScenarioCaptureRunner
                     }
                 }
 
-                var projectiles = DescribeProjectiles(game, actors.Values.Select(a => a.Object));
+                var projectiles = DescribeProjectiles(
+                    game,
+                    actors.Values.Select(a => a.Object),
+                    previousProjectilePositions);
                 if (projectiles.Count > 0)
                 {
                     framesWithProjectiles++;
@@ -273,7 +338,7 @@ public static class ScenarioCaptureRunner
             }
         }
 
-        var expectationResults = EvaluateExpectations(profile, actors, projectileObserved);
+        var expectationResults = EvaluateExpectations(profile, actors, projectileObserved, frames);
 
         var manifest = BuildManifest(profile, frames, commandResults, expectationResults);
         var manifestPath = Path.Combine(outputDirectory, "manifest.json");
@@ -359,9 +424,13 @@ public static class ScenarioCaptureRunner
         var planar = new Vector2(actor.X, actor.Y);
         var height = actor.Z ?? (game.Scene3D.Terrain.GetGroundHeight(planar) ?? 0f);
         var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
+        var rotation =
+            Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathUtility.ToRadians(actor.FacingDegrees))
+            * Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathUtility.ToRadians(actor.PitchDegrees))
+            * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathUtility.ToRadians(actor.RollDegrees));
         gameObject.UpdateTransform(
             new Vector3(planar.X, planar.Y, height),
-            Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathUtility.ToRadians(actor.FacingDegrees)));
+            rotation);
         // Colliders are built at the origin; without an immediate refresh the model is frustum-culled
         // until the next logic tick, which would corrupt the camera fit below.
         gameObject.UpdateColliders();
@@ -411,6 +480,27 @@ public static class ScenarioCaptureRunner
             {
                 return (false, "No subjects to frame; declare actors or framing points.");
             }
+
+            // A lone follow subject has no span to fit: honor the declared height and center it.
+            if (camera.Mode == CaptureCameraMode.Follow && subjectPoints.Count == 1)
+            {
+                var followHeight = Math.Clamp(camera.InitialCameraHeight, camera.MinCameraHeight, camera.MaxCameraHeight);
+                view.SnapHeightAboveGround(followHeight);
+                view.LookAt(subjectPoints[0]);
+                RefreshCamera(game);
+
+                if (!IsInsideSafeArea(game.Scene3D.Camera.WorldToScreenPoint(subjectPoints[0])))
+                {
+                    return (false,
+                        $"Follow camera at height {followHeight:0} leaves the subject outside the safe viewport; adjust the height bounds.");
+                }
+
+                return (true, FormattableString.Invariant(
+                    $"Follow camera at height {followHeight:0}, centered on the subject."));
+            }
+
+            // AutoFit and Follow share the fit; Follow re-centers on its subject every
+            // logic frame during the capture loop instead of staying put.
 
             var center = new Vector3(
                 subjectPoints.Average(p => p.X),
@@ -497,6 +587,25 @@ public static class ScenarioCaptureRunner
                     // order's move step suppresses fire for several units, and any approach would
                     // drift the actors out of the framing the capture just fitted.
                     weapon.SetTarget(new WeaponTarget(game.Scene3D.GameObjects, target.Id));
+                    return (Dispatched(command), null);
+                }
+
+            case CaptureMoveCommand move:
+                {
+                    var actor = actors[move.ActorId].Object;
+                    if (actor.AIUpdate == null)
+                    {
+                        return (Failed(command,
+                            $"'{actor.Definition.Name}' has no AI update; it cannot be move-ordered."), 1);
+                    }
+
+                    // A real engine move: pathfinded target points through SetTargetPoint, which
+                    // raises the MOVING condition flag on dispatch and clears it on arrival.
+                    var ground = new Vector3(
+                        move.X,
+                        move.Y,
+                        game.Scene3D.Terrain.GetGroundHeight(new Vector2(move.X, move.Y)) ?? 0f);
+                    actor.AIUpdate.SetTargetPoint(ground);
                     return (Dispatched(command), null);
                 }
 
@@ -634,7 +743,8 @@ public static class ScenarioCaptureRunner
     private static List<ExpectationResultRecord> EvaluateExpectations(
         CaptureProfile profile,
         Dictionary<string, ActorState> actors,
-        bool projectileObserved)
+        bool projectileObserved,
+        IReadOnlyList<FrameRecord> frames)
     {
         var results = new List<ExpectationResultRecord>();
         foreach (var expectation in profile.Expectations)
@@ -647,6 +757,33 @@ public static class ScenarioCaptureRunner
                         projectileObserved,
                         projectileObserved ? "projectile observed" : "no projectile was ever observed in flight"));
                     break;
+
+                case CaptureProjectileOrientationExpectation orientation:
+                    {
+                        var samples = frames
+                            .SelectMany(frame => frame.Projectiles)
+                            .Where(projectile => string.IsNullOrWhiteSpace(orientation.Definition)
+                                || projectile.Definition == orientation.Definition)
+                            .Select(projectile => projectile.Orientation)
+                            .OfType<ProjectileOrientationRecord>()
+                            .Where(sample => sample.AlignmentDot.HasValue)
+                            .ToList();
+                        var minimumDot = samples.Count > 0
+                            ? samples.Min(sample => sample.AlignmentDot!.Value)
+                            : float.NaN;
+                        var sawAscent = samples.Any(sample => sample.TravelZ > 0.01f);
+                        var sawDescent = samples.Any(sample => sample.TravelZ < -0.01f);
+                        var passed = samples.Count >= orientation.MinimumSamples
+                            && minimumDot >= orientation.MinimumAlignmentDot
+                            && (!orientation.RequireAscending || sawAscent)
+                            && (!orientation.RequireDescending || sawDescent);
+                        results.Add(new ExpectationResultRecord(
+                            Name(expectation),
+                            passed,
+                            FormattableString.Invariant(
+                                $"{samples.Count} samples, minimum dot {minimumDot:0.####}, ascent {sawAscent}, descent {sawDescent}")));
+                        break;
+                    }
 
                 case CaptureActorDamagedExpectation damaged:
                     {
@@ -795,10 +932,48 @@ public static class ScenarioCaptureRunner
             velocity.Y,
             velocity.Z,
             constructionState,
-            gameObject.BuildProgress);
+            gameObject.BuildProgress,
+            null);
     }
 
-    private static List<ActorRecord> DescribeProjectiles(Game game, IEnumerable<GameObject> tracked)
+    /// <summary>
+    /// The live projectile the follow camera should ride: the previously followed one while it
+    /// still exists (stability through its flight), else the newest projectile from the source.
+    /// Returns null between shots; the camera then holds its last position.
+    /// </summary>
+    private static GameObject? FindFollowProjectile(Game game, GameObject source, ObjectId previouslyFollowed)
+    {
+        GameObject? newest = null;
+        foreach (var candidate in game.Scene3D.GameObjects.Objects)
+        {
+            if (!candidate.Definition.KindOf.Get(ObjectKinds.Projectile))
+            {
+                continue;
+            }
+
+            if (candidate.CreatedByObjectID != source.Id)
+            {
+                continue;
+            }
+
+            if (candidate.Id == previouslyFollowed)
+            {
+                return candidate;
+            }
+
+            if (newest == null || candidate.Id.Index > newest.Id.Index)
+            {
+                newest = candidate;
+            }
+        }
+
+        return newest;
+    }
+
+    private static List<ActorRecord> DescribeProjectiles(
+        Game game,
+        IEnumerable<GameObject> tracked,
+        Dictionary<ObjectId, Vector3> previousPositions)
     {
         var camera = game.Scene3D.Camera;
         var excluded = new HashSet<GameObject>(tracked);
@@ -816,7 +991,48 @@ public static class ScenarioCaptureRunner
                 continue;
             }
 
-            var screen = camera.WorldToScreenPoint(candidate.Translation);
+            var position = candidate.Translation;
+            var screen = camera.WorldToScreenPoint(position);
+            ProjectileOrientationRecord? orientation = null;
+            if (TryNormalize(candidate.TransformMatrix.GetXVector(), out var forward))
+            {
+                var forwardEnd = camera.WorldToScreenPoint(
+                    position + forward * ProjectileDirectionMarkerLength);
+
+                float? travelX = null;
+                float? travelY = null;
+                float? travelZ = null;
+                float? travelScreenX = null;
+                float? travelScreenY = null;
+                float? alignmentDot = null;
+                if (previousPositions.TryGetValue(candidate.Id, out var previousPosition)
+                    && TryNormalize(position - previousPosition, out var travel))
+                {
+                    var travelEnd = camera.WorldToScreenPoint(
+                        position + travel * ProjectileDirectionMarkerLength);
+                    travelX = travel.X;
+                    travelY = travel.Y;
+                    travelZ = travel.Z;
+                    travelScreenX = travelEnd.X;
+                    travelScreenY = travelEnd.Y;
+                    alignmentDot = Math.Clamp(Vector3.Dot(forward, travel), -1.0f, 1.0f);
+                }
+
+                orientation = new ProjectileOrientationRecord(
+                    forward.X,
+                    forward.Y,
+                    forward.Z,
+                    forwardEnd.X,
+                    forwardEnd.Y,
+                    travelX,
+                    travelY,
+                    travelZ,
+                    travelScreenX,
+                    travelScreenY,
+                    alignmentDot);
+            }
+            previousPositions[candidate.Id] = position;
+
             results.Add(new ActorRecord(
                 "projectile",
                 "MISSILE",
@@ -835,10 +1051,24 @@ public static class ScenarioCaptureRunner
                 null,
                 null,
                 null,
-                null));
+                null,
+                orientation));
         }
 
         return results;
+    }
+
+    private static bool TryNormalize(in Vector3 value, out Vector3 normalized)
+    {
+        var lengthSquared = value.LengthSquared();
+        if (!(lengthSquared > 1e-6f) || !float.IsFinite(lengthSquared))
+        {
+            normalized = default;
+            return false;
+        }
+
+        normalized = value / MathF.Sqrt(lengthSquared);
+        return true;
     }
 
     private static string DisplayNameOf(GameObject gameObject)
@@ -966,4 +1196,18 @@ public sealed record ActorRecord(
     float? VelY,
     float? VelZ,
     string? ConstructionState,
-    float? BuildProgress);
+    float? BuildProgress,
+    ProjectileOrientationRecord? Orientation);
+
+public sealed record ProjectileOrientationRecord(
+    float ForwardX,
+    float ForwardY,
+    float ForwardZ,
+    float ForwardScreenX,
+    float ForwardScreenY,
+    float? TravelX,
+    float? TravelY,
+    float? TravelZ,
+    float? TravelScreenX,
+    float? TravelScreenY,
+    float? AlignmentDot);

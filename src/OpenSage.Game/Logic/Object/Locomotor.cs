@@ -1585,8 +1585,14 @@ public sealed class Locomotor : IPersistableObject
         {
             var objPos = obj.Translation;
 
-            var newXform = Matrix4x4Utility.CreateTransformMatrix(objPos, actualDir);
-            obj.SetTransformMatrix(newXform);
+            if (Matrix4x4Utility.TryCreateTransformMatrix(
+                objPos,
+                actualDir,
+                obj.Transform.Scale,
+                out var newXform))
+            {
+                obj.SetTransformMatrix(newXform);
+            }
         }
         return relAngle;
     }

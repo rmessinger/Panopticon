@@ -61,19 +61,40 @@ dotnet run --project src/OpenSage.Tools.TestHarness -- \
 ```
 
 `--scenario` takes a file path or an embedded profile name (checked-in examples:
-`capture-construction.json`, `capture-impulse.json`). Commands: `Attack` (direct weapon
+`capture-construction.json`, `capture-impulse.json`, `capture-rebel-attack.json`,
+`capture-scorpion-treads.json`, `capture-follow-move.json`, `capture-follow-projectile.json`).
+Commands: `Attack` (direct weapon
 targeting, no movement order), `Construct` (real `Order.CreateBuildObject` dispatch; the created
 building binds to the command's result ID and is tracked), `ApplyImpulse` (mass-independent
-delta velocity via `PhysicsBehavior.ApplyForce`). Expectations: `ProjectileObserved`,
+delta velocity via `PhysicsBehavior.ApplyForce`), `Move` (real pathfinded move order through
+`AIUpdate.SetTargetPoint`; raises the MOVING condition flag on dispatch, clears on arrival).
+Camera modes: `AutoFit` (one-time fit of subjects + framing points; the camera never moves),
+`Explicit` (fixed `LookAt` + `Height`), `Follow` (fits like AutoFit, or honors
+`InitialCameraHeight` when the follow subject is the lone subject, then pans every logic frame
+so `FollowActorId`, defaulting to the first subject, stays at screen center; the fitted height
+never changes, and a destroyed subject freezes the camera at its last position).
+`FollowProjectileSourceActorId` (instead of `FollowActorId`) rides the newest live projectile
+fired by that actor: framed on the shooter until launch, tracks the projectile at screen
+center, freezes at the impact site between shots, hands off to the next shot. Projectiles are
+linked to their launcher via `GameObject.CreatedByObjectID`, which `ProjectileNugget` sets.
+Expectations: `ProjectileObserved`,
 `ActorDamaged`, `ActorDestroyed`, `ConstructionProgressed`, `ConstructionCompleted`,
 `MinDisplacement`; unmet expectations fail the run. Exit codes: 1 profile/setup error
 (invalid references, unknown definitions, non-builder, no physics, insufficient funds),
 4 camera could not frame the subjects or an attack source has no weapon, 5 expectation not met.
 `scripts/annotate_capture_gif.py <captureDir> <out.gif>` renders a generic cropped GIF
-(`--labels` adds a legend). Camera fitting pauses logic and consumes zero logic ticks; warm-up
+(`--labels` adds a legend). `ProjectileOrientation` expectations validate sampled local `+X`
+against travel, and `--projectile-orientation` draws both vectors in the GIF. Reference profiles:
+`capture-projectile-orientation-shell.json`, `capture-projectile-orientation-missile.json`, and
+`capture-projectile-orientation-scud.json`.
+Camera fitting pauses logic and consumes zero logic ticks; warm-up
 belongs in the profile's `SettleFrames`. A profile selects the physics backend for the whole run
 with `"PhysicsBackend": "Bepu"` (example: `capture-impulse-bepu.json`), and actor `"Z"` spawns
-height above ground for falling/stacking scenes.
+at an absolute world height; omit it to place the actor on terrain. Actor
+`PitchDegrees`/`RollDegrees` orient the
+spawn (roll 180 = upside down; example: `capture-car-flipped.json`). `DiskFileSystem` resolves
+loose override files case-insensitively, so patched models dropped into `<install>/Art/W3D/`
+load regardless of query casing.
 
 ### `PhysicsStack` scenario (physics seam)
 

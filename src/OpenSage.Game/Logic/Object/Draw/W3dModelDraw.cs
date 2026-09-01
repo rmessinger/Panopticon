@@ -21,7 +21,7 @@ namespace OpenSage.Logic.Object;
 public class W3dModelDraw : DrawModule
 {
     private readonly W3dModelDrawModuleData _data;
-    private readonly IGameEngine _gameEngine;
+    protected readonly IGameEngine _gameEngine;
 
     private ModelConditionState _activeConditionState;
     protected AnimationState _activeAnimationState;
@@ -89,6 +89,52 @@ public class W3dModelDraw : DrawModule
             }
             return null;
         }
+    }
+
+    internal override bool TryGetModelSpaceBounds(out AxisAlignedBoundingBox bounds)
+    {
+        bounds = default;
+
+        var modelInstance = _activeModelDrawConditionState?.Model;
+        if (modelInstance == null)
+        {
+            return false;
+        }
+
+        var foundBounds = false;
+        foreach (var subObject in modelInstance.Model.SubObjects)
+        {
+            if (subObject.RenderObject is not ModelMesh mesh
+                || !IsBoneVisible(modelInstance, subObject.Bone))
+            {
+                continue;
+            }
+
+            var boneTransform = mesh.Skinned
+                ? Matrix4x4.Identity
+                : modelInstance.RelativeBoneTransforms[subObject.Bone.Index];
+            var transformedBounds = AxisAlignedBoundingBox.Transform(mesh.BoundingBox, boneTransform);
+            bounds = foundBounds
+                ? AxisAlignedBoundingBox.CreateMerged(bounds, transformedBounds)
+                : transformedBounds;
+            foundBounds = true;
+        }
+
+        return foundBounds;
+    }
+
+    private static bool IsBoneVisible(ModelInstance modelInstance, ModelBone bone)
+    {
+        for (var current = bone; current != null; current = current.Parent)
+        {
+            if (!modelInstance.BoneVisibilities[current.Index]
+                || !modelInstance.ModelBoneInstances[current.Index].Visible)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     internal W3dModelDraw(

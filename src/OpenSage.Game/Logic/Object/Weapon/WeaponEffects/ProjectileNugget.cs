@@ -79,6 +79,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
         // Record the firing unit so projectile collision can skip it (otherwise a vehicle
         // launcher detonates its own projectile at the muzzle).
         var launcherId = context.Weapon.ParentGameObject.Id;
+        projectileObject.CreatedByObjectID = launcherId;
 
         var bezierProjectileBehavior = projectileObject.FindBehavior<BezierProjectileBehavior>();
         if (bezierProjectileBehavior != null)
@@ -90,6 +91,14 @@ public sealed class ProjectileNugget : WeaponEffectNugget
         if (missileAIUpdate != null)
         {
             missileAIUpdate.LauncherObjectId = launcherId;
+        }
+
+        var usesFlightPathOrientation = bezierProjectileBehavior != null
+            ? bezierProjectileBehavior.UsesFlightPathOrientation
+            : missileAIUpdate != null || projectileObject.Physics?.OrientsToFlightPath == true;
+        if (usesFlightPathOrientation)
+        {
+            SetLeadingEdgeRotationPivot(projectileObject);
         }
 
         CreateShellTracer(context, projectileObject);
@@ -107,6 +116,28 @@ public sealed class ProjectileNugget : WeaponEffectNugget
                 missileAIUpdate.DetonationFX = ParentWeaponTemplate.ProjectileDetonationFX?.Value;
             }
         }
+    }
+
+    private static void SetLeadingEdgeRotationPivot(GameObject projectileObject)
+    {
+        if (projectileObject.Drawable == null
+            || !projectileObject.Drawable.TryGetModelSpaceBounds(out var bounds))
+        {
+            return;
+        }
+
+        var center = bounds.GetCenter();
+        var leadingPoint = new Vector3(bounds.Max.X, center.Y, center.Z);
+        if (!float.IsFinite(leadingPoint.X)
+            || !float.IsFinite(leadingPoint.Y)
+            || !float.IsFinite(leadingPoint.Z))
+        {
+            return;
+        }
+
+        // Keep trajectory, collision, and detonation at the simulation origin. Only the W3D
+        // model moves behind it, making the local +X leading point the visual rotation pivot.
+        projectileObject.ModelTransform.Translation = -leadingPoint;
     }
 
     // Tank cannons and artillery use "NoTracer" FireFX variants in the original data, so the

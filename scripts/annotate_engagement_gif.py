@@ -20,6 +20,7 @@ from PIL import Image, ImageDraw, ImageFont
 RESERVED_COLORS = [
     (255, 60, 40),    # IMPACT flash, DESTROYED readout
     (255, 255, 255),  # health readout
+    (64, 224, 255),   # projectile local +X vector
 ]
 
 

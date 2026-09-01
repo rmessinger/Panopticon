@@ -150,6 +150,13 @@ expectation. Playback defaults to real time (each PNG held for the logic frames 
 generic annotator crops and scales like the engagement one but draws no engagement-specific
 overlays; `--labels` adds a static actor legend.
 
+Projectile-orientation profiles can use a `ProjectileOrientation` expectation to require a
+minimum local `+X` versus sampled-travel dot product and optional ascent or descent samples.
+Pass `--projectile-orientation` to draw travel in white and local `+X` in cyan. Reference
+profiles: `capture-projectile-orientation-shell.json`,
+`capture-projectile-orientation-missile.json`, and
+`capture-projectile-orientation-scud.json`.
+
 Verify content before sharing: the manifest's target `Health` should fall across the sequence
 and a non-trivial number of frames should list a projectile.
 

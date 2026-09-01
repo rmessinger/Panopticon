@@ -72,6 +72,9 @@ internal sealed class MeshShaderResources : DisposableBase
     public struct RenderItemConstantsVS
     {
         public Matrix4x4 World;
+
+        /// <summary>Per-mesh texture offset (xy used) in texture units; animates tread textures.</summary>
+        public Vector4 UVOffset;
     }
 
     public struct RenderItemConstantsPS : IEquatable<RenderItemConstantsPS>

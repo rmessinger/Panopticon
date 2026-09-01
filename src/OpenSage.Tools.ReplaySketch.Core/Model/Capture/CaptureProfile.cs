@@ -4,8 +4,8 @@ namespace OpenSage.Tools.ReplaySketch.Model.Capture;
 
 /// <summary>
 /// Declarative description of a small scripted scenario to capture as a PNG sequence plus a
-/// per-frame manifest: a handful of actors, a camera fixed after setup, frame-scheduled
-/// commands, and success expectations. Loaded from JSON by
+/// per-frame manifest: a handful of actors, camera configuration, frame-scheduled commands,
+/// and success expectations. Loaded from JSON by
 /// <see cref="Services.CaptureProfileLoader"/>; validated by <see cref="CaptureProfileValidator"/>.
 /// The TestHarness <c>ScenarioCaptureRunner</c> executes it.
 /// </summary>
@@ -41,7 +41,7 @@ public class CaptureProfile
     /// <summary>Actors spawned during setup, in declaration order.</summary>
     public List<CaptureActor> Actors { get; set; } = [];
 
-    /// <summary>Camera configuration; fixed before the first captured frame and never moved after.</summary>
+    /// <summary>Camera configuration.</summary>
     public CaptureCamera Camera { get; set; } = new();
 
     /// <summary>Commands scheduled by capture-relative logic frame, executed in declaration order before that frame's tick.</summary>
@@ -100,13 +100,18 @@ public class CaptureActor
     public float Y { get; set; }
 
     /// <summary>
-    /// Spawn height in world units above the ground. Null places the actor on the ground;
-    /// a value spawns it airborne (falling/stacking scenes).
+    /// Absolute world Z at spawn. Null places the actor on the terrain.
     /// </summary>
     public float? Z { get; set; } = null;
 
     /// <summary>Spawn facing in degrees; 0 faces +X, 90 faces +Y.</summary>
     public float FacingDegrees { get; set; } = 0f;
+
+    /// <summary>Spawn pitch in degrees around the sideways (Y) axis, applied after facing.</summary>
+    public float PitchDegrees { get; set; } = 0f;
+
+    /// <summary>Spawn roll in degrees around the forward (X) axis, applied after pitch; 180 spawns upside down.</summary>
+    public float RollDegrees { get; set; } = 0f;
 
     /// <summary>Annotation label. Empty derives one from the definition at run time.</summary>
     public string? Label { get; set; } = null;
@@ -125,6 +130,13 @@ public enum CaptureCameraMode
 {
     AutoFit,
     Explicit,
+
+    /// <summary>
+    /// Fits like <see cref="AutoFit"/> from the subjects and framing points, then pans every
+    /// logic frame so the follow subject stays at screen center. The fitted height never
+    /// changes; if the subject dies, the camera freezes at its last position.
+    /// </summary>
+    Follow,
 }
 
 public class CaptureCamera
@@ -151,6 +163,21 @@ public class CaptureCamera
 
     /// <summary>Upper bound for the fitted height; kept below the terrain fog band (roughly 900-1500).</summary>
     public float MaxCameraHeight { get; set; } = 800f;
+
+    // Follow mode.
+
+    /// <summary>
+    /// Actor the camera centers every logic frame in <see cref="CaptureCameraMode.Follow"/>.
+    /// Empty centers the first <see cref="SubjectActorIds"/> entry.
+    /// </summary>
+    public string FollowActorId { get; set; } = "";
+
+    /// <summary>
+    /// Follow the projectiles fired by this actor instead of the actor itself: the camera rides
+    /// the newest live projectile from the source (shell flight, impact freeze, hand-off to the
+    /// next shot). Mutually exclusive with <see cref="FollowActorId"/>.
+    /// </summary>
+    public string FollowProjectileSourceActorId { get; set; } = "";
 
     // Explicit mode.
 

@@ -150,6 +150,10 @@ public sealed class MissileAIUpdate : AIUpdate
                 BezierProjectileBehavior.DeliverWarhead(GameObject, GameEngine, DetonationFX);
                 GameObject.Kill(deathType: DeathType.Detonated);
             }
+            else
+            {
+                GameObject.Physics?.RequestOrientToVelocity();
+            }
             return;
         }
 

@@ -4,7 +4,8 @@ TestHarness ScenarioCapture runner) into a cropped GIF.
 
 Generic companion to annotate_engagement_gif.py: same crop/palette machinery, but no
 engagement-specific overlays (no target-health readout, no IMPACT flashes). Optional
---labels draws a static legend of tracked actor labels.
+--labels draws a static legend of tracked actor labels. --projectile-orientation draws sampled
+travel and local +X vectors from the manifest.
 
 Playback defaults to real time: each captured frame is held for the number of logic
 frames it covers (manifest AbsoluteLogicFrame delta) at the game's 30 logic frames per
@@ -12,10 +13,12 @@ second. --speed scales that (0.5 = half speed), --frame-ms overrides it absolute
 
 Usage:
     python3 scripts/annotate_capture_gif.py <captureDir> <out.gif> [--speed 1.0] [--labels]
+        [--padding 12]
 """
 
 import argparse
 import json
+import math
 import os
 import sys
 
@@ -26,6 +29,8 @@ from annotate_engagement_gif import RESERVED_COLORS, build_palette  # noqa: E402
 
 MIN_CROP_FRACTION = 0.25
 PADDING = 12
+TRAVEL_COLOR = RESERVED_COLORS[1]
+FORWARD_COLOR = RESERVED_COLORS[2]
 
 
 def _grow(lo, hi, minimum, limit):
@@ -36,7 +41,7 @@ def _grow(lo, hi, minimum, limit):
     return max(0, lo - pad), min(limit, hi + pad)
 
 
-def compute_crop(manifest):
+def compute_crop(manifest, padding):
     xs, ys = [], []
     for frame in manifest["Frames"]:
         for actor in frame["Actors"] + frame["Projectiles"]:
@@ -47,10 +52,10 @@ def compute_crop(manifest):
     if not xs:
         return None, None, None, None
     vw, vh = manifest["ViewportWidth"], manifest["ViewportHeight"]
-    left = max(0, int(min(xs) - PADDING))
-    top = max(0, int(min(ys) - PADDING))
-    right = min(vw, int(max(xs) + PADDING))
-    bottom = min(vh, int(max(ys) + PADDING))
+    left = max(0, int(min(xs) - padding))
+    top = max(0, int(min(ys) - padding))
+    right = min(vw, int(max(xs) + padding))
+    bottom = min(vh, int(max(ys) + padding))
     left, right = _grow(left, right, MIN_CROP_FRACTION * vw, vw)
     top, bottom = _grow(top, bottom, MIN_CROP_FRACTION * vh, vh)
     return left, top, right, bottom
@@ -70,6 +75,32 @@ def fit_font(draw, text, max_width):
     return ImageFont.load_default(8)
 
 
+def draw_arrow(draw, start, end, color, width):
+    draw.line((start, end), fill=color, width=width)
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length = math.hypot(dx, dy)
+    if length < 2:
+        return
+
+    ux = dx / length
+    uy = dy / length
+    px = -uy
+    py = ux
+    arrow_length = 8
+    arrow_width = 4
+    base_x = end[0] - ux * arrow_length
+    base_y = end[1] - uy * arrow_length
+    draw.polygon(
+        (
+            end,
+            (base_x + px * arrow_width, base_y + py * arrow_width),
+            (base_x - px * arrow_width, base_y - py * arrow_width),
+        ),
+        fill=color,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture_dir")
@@ -80,12 +111,16 @@ def main():
                         help="explicit per-frame delay in milliseconds, overriding real-time pacing")
     parser.add_argument("--labels", action="store_true",
                         help="draw a static legend of tracked actor labels")
+    parser.add_argument("--projectile-orientation", action="store_true",
+                        help="draw projectile travel (white) and local +X (cyan) vectors")
+    parser.add_argument("--padding", type=int, default=PADDING,
+                        help=f"crop padding in source pixels (default {PADDING})")
     args = parser.parse_args()
 
     with open(os.path.join(args.capture_dir, "manifest.json")) as fh:
         manifest = json.load(fh)
 
-    crop = compute_crop(manifest)
+    crop = compute_crop(manifest, max(0, args.padding))
     if crop[0] is None:
         print("manifest records no actors or projectiles; nothing to crop")
         return 1
@@ -109,7 +144,7 @@ def main():
                     legend.append(f"{actor['Label']} ({actor['Role']})")
 
     frames = []
-    for path in paths:
+    for path, record in zip(paths, manifest["Frames"]):
         im = Image.open(path).convert("RGB").crop((left, top, right, bottom))
         im = im.resize((out_w, out_h), Image.LANCZOS)
         if legend:
@@ -119,6 +154,55 @@ def main():
             for line in legend:
                 draw.text((4, y), line, fill=RESERVED_COLORS[1], font=font)
                 y += font.size + 2
+        if args.projectile_orientation:
+            draw = ImageDraw.Draw(im)
+            summaries = []
+            for projectile in record["Projectiles"]:
+                orientation = projectile.get("Orientation")
+                if orientation is None:
+                    continue
+
+                start = (
+                    (projectile["X"] - left) * scale,
+                    (projectile["Y"] - top) * scale,
+                )
+                travel_x = orientation.get("TravelScreenX")
+                travel_y = orientation.get("TravelScreenY")
+                if travel_x is not None and travel_y is not None:
+                    travel_end = (
+                        (travel_x - left) * scale,
+                        (travel_y - top) * scale,
+                    )
+                    draw_arrow(draw, start, travel_end, TRAVEL_COLOR, 5)
+
+                forward_end = (
+                    (orientation["ForwardScreenX"] - left) * scale,
+                    (orientation["ForwardScreenY"] - top) * scale,
+                )
+                draw_arrow(draw, start, forward_end, FORWARD_COLOR, 2)
+
+                alignment = orientation.get("AlignmentDot")
+                travel_z = orientation.get("TravelZ")
+                if alignment is not None and travel_z is not None:
+                    phase = "ASCENT" if travel_z > 0.01 else "DESCENT" if travel_z < -0.01 else "LEVEL"
+                    summaries.append(
+                        f"{projectile['Definition']}: {phase}, dot {alignment:.3f}")
+
+            if summaries:
+                lines = ["WHITE travel / CYAN local +X", *summaries[:3]]
+                font = fit_font(draw, max(lines, key=len), out_w - 8)
+                line_height = font.size + 2
+                panel_width = max(draw.textlength(line, font=font) for line in lines) + 8
+                panel_height = len(lines) * line_height + 6
+                panel_left = out_w - panel_width - 4
+                draw.rectangle(
+                    (panel_left, 4, out_w - 4, 4 + panel_height),
+                    fill=(0, 0, 0),
+                )
+                y = 7
+                for line in lines:
+                    draw.text((panel_left + 4, y), line, fill=TRAVEL_COLOR, font=font)
+                    y += line_height
         frames.append(im)
 
     base = build_palette(frames)

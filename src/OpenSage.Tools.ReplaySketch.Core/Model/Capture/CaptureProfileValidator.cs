@@ -171,6 +171,21 @@ public static class CaptureProfileValidator
             {
                 errors.Add($"Expectation '{expectation.Describe()}' needs a positive MinDisplacement.");
             }
+
+            if (expectation is CaptureProjectileOrientationExpectation orientation)
+            {
+                if (orientation.MinimumAlignmentDot is < -1f or > 1f)
+                {
+                    errors.Add(
+                        $"Expectation '{expectation.Describe()}' needs MinimumAlignmentDot between -1 and 1.");
+                }
+
+                if (orientation.MinimumSamples <= 0)
+                {
+                    errors.Add(
+                        $"Expectation '{expectation.Describe()}' needs a positive MinimumSamples.");
+                }
+            }
         }
 
         if (profile.StopWhenActorDestroyed != null
@@ -206,6 +221,7 @@ public static class CaptureProfileValidator
                 break;
 
             case CaptureCameraMode.AutoFit:
+            case CaptureCameraMode.Follow:
                 if (camera.DesiredSpanFraction <= 0f || camera.DesiredSpanFraction > 1f)
                 {
                     errors.Add(
@@ -223,6 +239,35 @@ public static class CaptureProfileValidator
                     if (!actorIds.Contains(subject))
                     {
                         errors.Add($"AutoFit camera subject '{subject}' is not a declared actor.");
+                    }
+                }
+
+                if (camera.Mode == CaptureCameraMode.Follow)
+                {
+                    var hasFollowActor = !string.IsNullOrWhiteSpace(camera.FollowActorId);
+                    var hasProjectileSource = !string.IsNullOrWhiteSpace(camera.FollowProjectileSourceActorId);
+
+                    if (hasFollowActor && hasProjectileSource)
+                    {
+                        errors.Add(
+                            "Follow camera cannot set both FollowActorId and FollowProjectileSourceActorId.");
+                    }
+
+                    if (hasFollowActor && !actorIds.Contains(camera.FollowActorId))
+                    {
+                        errors.Add($"Follow camera actor '{camera.FollowActorId}' is not a declared actor.");
+                    }
+
+                    if (hasProjectileSource && !actorIds.Contains(camera.FollowProjectileSourceActorId))
+                    {
+                        errors.Add(
+                            $"Follow camera projectile source '{camera.FollowProjectileSourceActorId}' is not a declared actor.");
+                    }
+
+                    if (!hasFollowActor && !hasProjectileSource && camera.SubjectActorIds.Count == 0)
+                    {
+                        errors.Add(
+                            "Follow camera needs a FollowActorId, a FollowProjectileSourceActorId, or at least one SubjectActorIds entry.");
                     }
                 }
 

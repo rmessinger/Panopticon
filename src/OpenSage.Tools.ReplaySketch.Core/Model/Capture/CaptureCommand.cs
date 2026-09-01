@@ -10,6 +10,7 @@ namespace OpenSage.Tools.ReplaySketch.Model.Capture;
 [JsonDerivedType(typeof(CaptureAttackCommand), "Attack")]
 [JsonDerivedType(typeof(CaptureConstructCommand), "Construct")]
 [JsonDerivedType(typeof(CaptureApplyImpulseCommand), "ApplyImpulse")]
+[JsonDerivedType(typeof(CaptureMoveCommand), "Move")]
 public abstract class CaptureCommand
 {
     /// <summary>Capture-relative logic frame to execute on; 0 is the first captured tick.</summary>
@@ -73,4 +74,19 @@ public sealed class CaptureApplyImpulseCommand : CaptureCommand
 
     public override string Describe() =>
         $"ApplyImpulse {ActorId} ({DeltaVelocityX:0.##}, {DeltaVelocityY:0.##}, {DeltaVelocityZ:0.##})";
+}
+
+/// <summary>
+/// Issues a normal move order (pathfinded through <see cref="AIUpdate.SetTargetPoint"/>), so the
+/// actor locomotes for real: the MOVING condition flag raises on dispatch and clears on arrival.
+/// </summary>
+public sealed class CaptureMoveCommand : CaptureCommand
+{
+    public string ActorId { get; set; } = "";
+
+    public float X { get; set; }
+
+    public float Y { get; set; }
+
+    public override string Describe() => $"Move {ActorId} to ({X:0.#}, {Y:0.#})";
 }

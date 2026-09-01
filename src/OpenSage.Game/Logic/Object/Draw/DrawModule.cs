@@ -20,6 +20,12 @@ public abstract class DrawModule : ModuleBase
     public abstract IEnumerable<BitArray<ModelConditionFlag>> ModelConditionStates { get; }
     public virtual BoundingSphere? BoundingSphere { get; }
 
+    internal virtual bool TryGetModelSpaceBounds(out AxisAlignedBoundingBox bounds)
+    {
+        bounds = default;
+        return false;
+    }
+
     /// <summary>
     /// For limiting tree sway, etc to visible objects.
     /// TODO(Port): Implement this for W3dModelDraw.

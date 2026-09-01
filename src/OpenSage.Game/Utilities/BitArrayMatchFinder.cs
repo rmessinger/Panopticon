@@ -12,14 +12,15 @@ internal static class BitArrayMatchFinder
         where T : IConditionState<TFlag>
         where TFlag : Enum
     {
-        // prefer exact match
-        // if not, find the first one with the most number of matching bits
-        // this may be convoluted, but the unit tests pass!
+        // Prefer a state whose flag set contains all current flags (ideally an exact match),
+        // then the state intersecting the most current flags. Among equally-intersecting
+        // partial matches, the state defined later wins: INIs conventionally define generic
+        // states (e.g. MOVING) before specific ones (e.g. USING_WEAPON_A), so ATTACKING plus
+        // USING_WEAPON_A must resolve to the firing state, not the MOVING+ATTACKING alias.
         T best = default;
         var bestIntersections = 0;
         T bestContained = default;
         var leastMissing = int.MaxValue;
-        var leastMissingBestIntersections = 0;
         T defaultItem = default;
 
         foreach (var item in set)
@@ -34,7 +35,6 @@ internal static class BitArrayMatchFinder
 
                 var intersections = flagSet.CountIntersectionBits(flags);
                 // we've found a state that matches everything we have, but it may have extra things we don't have that we don't want
-                // the order of the condition states in the ini files is not guaranteed to be ideal
                 if (intersections == flags.NumBitsSet)
                 {
                     var missing = flagSet.NumBitsSet - intersections;
@@ -45,18 +45,16 @@ internal static class BitArrayMatchFinder
                     }
 
                     // otherwise, this state may have extra things we don't have. Cool, but less than ideal... let's keep searching?
-                    // this ensures we don't store the first least missing as better, even if a subsequent one has better best intersections (which should be a better "score")
-                    if (missing < leastMissing || missing == leastMissing && intersections > leastMissingBestIntersections)
+                    if (missing < leastMissing)
                     {
                         bestContained = item;
                         leastMissing = missing;
-                        leastMissingBestIntersections = intersections;
                     }
                 }
-                else if (intersections > bestIntersections)
+                else if (intersections > 0 && intersections >= bestIntersections)
                 {
                     // not an exact match, but save this if we can't find an exact match
-                    bestIntersections = flagSet.NumBitsSet;
+                    bestIntersections = intersections;
                     best = item;
                 }
             }

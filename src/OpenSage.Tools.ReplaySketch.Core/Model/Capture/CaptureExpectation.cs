@@ -14,6 +14,7 @@ namespace OpenSage.Tools.ReplaySketch.Model.Capture;
 [JsonDerivedType(typeof(CaptureConstructionProgressedExpectation), "ConstructionProgressed")]
 [JsonDerivedType(typeof(CaptureConstructionCompletedExpectation), "ConstructionCompleted")]
 [JsonDerivedType(typeof(CaptureMinDisplacementExpectation), "MinDisplacement")]
+[JsonDerivedType(typeof(CaptureProjectileOrientationExpectation), "ProjectileOrientation")]
 public abstract class CaptureExpectation
 {
     /// <summary>Optional stable ID used in result records; empty derives from the expectation itself.</summary>
@@ -26,6 +27,24 @@ public abstract class CaptureExpectation
 public sealed class CaptureProjectileObservedExpectation : CaptureExpectation
 {
     public override string Describe() => "a projectile is observed in flight";
+}
+
+/// <summary>Observed projectiles keep their local +X axis aligned to sampled travel.</summary>
+public sealed class CaptureProjectileOrientationExpectation : CaptureExpectation
+{
+    /// <summary>Optional projectile definition filter. Empty includes every projectile.</summary>
+    public string? Definition { get; set; } = null;
+
+    public float MinimumAlignmentDot { get; set; } = 0.95f;
+
+    public int MinimumSamples { get; set; } = 1;
+
+    public bool RequireAscending { get; set; }
+
+    public bool RequireDescending { get; set; }
+
+    public override string Describe() =>
+        $"{Definition ?? "projectiles"} align to travel at dot >= {MinimumAlignmentDot:0.###}";
 }
 
 /// <summary>The actor's health dropped below its post-setup value at some point.</summary>

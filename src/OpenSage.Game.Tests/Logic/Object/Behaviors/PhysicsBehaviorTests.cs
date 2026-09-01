@@ -1,5 +1,6 @@
 using System.Numerics;
 using OpenSage.Logic.Object;
+using OpenSage.Mathematics;
 using OpenSage.Tests.Logic.Object.Update;
 using Xunit;
 
@@ -156,6 +157,34 @@ public class PhysicsBehaviorTests : UpdateModuleTest<PhysicsBehavior, PhysicsBeh
         Assert.Equal(Vector3.Zero, behavior.CurrentAcceleration);
         Assert.Equal(new Vector3(1, 2, 3), behavior.Velocity);
         Assert.Equal(new Vector3(1, 2, 3), gameObject.Translation);
+    }
+
+    [Fact]
+    public void RequestedVelocityOrientationUsesIntegratedThreeDimensionalVelocity()
+    {
+        var behavior = SampleModule(out var gameObject);
+        gameObject.SetScale(2.5f);
+
+        behavior.ApplyForce(new Vector3(3, 0, 4));
+        behavior.RequestOrientToVelocity();
+        behavior.Update();
+
+        var forward = Vector3.Normalize(gameObject.TransformMatrix.GetXVector());
+        Assert.InRange(Vector3.Dot(Vector3.Normalize(behavior.Velocity), forward), 0.99999f, 1.00001f);
+        Assert.Equal(2.5f, gameObject.Transform.Scale);
+    }
+
+    [Fact]
+    public void MaximumGroundPenetrationPairsEachCornerWithItsTerrainHeight()
+    {
+        float[] cornerHeights = [10, 20, 30];
+        float[] groundHeights = [9, 19, 25];
+
+        var penetration = PhysicsBehavior.GetMaximumGroundPenetration(
+            cornerHeights,
+            groundHeights);
+
+        Assert.Equal(-1, penetration);
     }
 
     private PhysicsBehavior SampleModule(PhysicsBehaviorModuleData? moduleData = null)

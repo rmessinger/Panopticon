@@ -28,6 +28,9 @@ public class BezierProjectileBehavior : UpdateModule
 
     internal FXList DetonationFX { get; set; }
 
+    internal bool UsesFlightPathOrientation =>
+        _moduleData.OrientToFlightPath && !_moduleData.TumbleRandomly;
+
     // The firing unit, assigned at spawn (see ProjectileNugget) so collision can skip it.
     internal ObjectId LauncherObjectId
     {
@@ -56,21 +59,20 @@ public class BezierProjectileBehavior : UpdateModule
             // sinusoidal hump sized by the module's control-point heights. Artillery shells
             // launch from an elevated muzzle; flying the raw launch ray would sail over the
             // target, so the flight is defined by its endpoints, not the launch elevation.
+            var previousT = MathF.Min(_traveled / _flightDistance, 1.0f);
             _traveled += GameObject.Speed;
             var t = MathF.Min(_traveled / _flightDistance, 1.0f);
-            var position = Vector3.Lerp(_launchPosition, _flightTarget, t);
-            var arcHeight = MathF.Max(
-                MathF.Max(_moduleData.FirstHeight, _moduleData.SecondHeight),
-                0.0f);
-            position.Z += MathF.Sin(MathF.PI * t) * arcHeight;
+            var position = GetFlightPosition(t);
 
-            var delta = position - GameObject.Translation;
-            if (delta.LengthSquared() > 1e-6f)
-            {
-                // Orient along the flight path so the shell model points nose-first.
-                GameObject.UpdateTransform(
+            var delta = position - GetFlightPosition(previousT);
+            if (UsesFlightPathOrientation
+                && Matrix4x4Utility.TryCreateTransformMatrix(
                     position,
-                    Quaternion.CreateFromYawPitchRoll(0, 0, MathF.Atan2(delta.Y, delta.X)));
+                    delta,
+                    GameObject.Transform.Scale,
+                    out var transform))
+            {
+                GameObject.SetTransformMatrix(transform);
             }
             else
             {
@@ -129,6 +131,16 @@ public class BezierProjectileBehavior : UpdateModule
 
         _flightInitialized = true;
         return true;
+    }
+
+    private Vector3 GetFlightPosition(float t)
+    {
+        var position = Vector3.Lerp(_launchPosition, _flightTarget, t);
+        var arcHeight = MathF.Max(
+            MathF.Max(_moduleData.FirstHeight, _moduleData.SecondHeight),
+            0.0f);
+        position.Z += MathF.Sin(MathF.PI * t) * arcHeight;
+        return position;
     }
 
     internal static void CheckForHit(
@@ -423,7 +435,7 @@ public class BezierProjectileBehaviorData : UpdateModuleData
     public Percentage FirstPercentHeight { get; private set; }
     public Percentage SecondPercentHeight { get; private set; }
     public int FinalStuckTime { get; private set; }
-    public bool OrientToFlightPath { get; private set; }
+    public bool OrientToFlightPath { get; private set; } = true;
     public ObjectKinds GarrisonHitKillRequiredKindOf { get; private set; }
     public ObjectKinds GarrisonHitKillForbiddenKindOf { get; private set; }
     public int GarrisonHitKillCount { get; private set; }

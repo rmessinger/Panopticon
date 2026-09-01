@@ -180,11 +180,12 @@ public static class Matrix4x4Utility
     /// Creates a matrix given a position and a direction (x axis will point in direction).
     /// Direction vector must be normalized!
     /// </summary>
-    public static Matrix4x4 CreateTransformMatrix(in Vector3 pos, in Vector3 dir)
+    public static Matrix4x4 CreateTransformMatrix(in Vector3 pos, in Vector3 dir, float scale = 1.0f)
     {
         // Tolerance instead of exact equality: a vector that was normalized once can differ
         // from its own re-normalization by an ulp. Also fails for NaN/zero directions.
         Debug.Assert(MathF.Abs(dir.Length() - 1.0f) < 0.001f);
+        Debug.Assert(float.IsFinite(scale));
 
         // Rows are the basis vectors, because Matrix4x4 here is row-vector (v * M): row 1 is
         // what the local +X axis maps to, so it must be `dir` exactly. Building the basis
@@ -199,11 +200,34 @@ public static class Matrix4x4Utility
         var up = Vector3.Cross(dir, lateral);
 
         var result = new Matrix4x4(
-            dir.X, dir.Y, dir.Z, 0.0f,
-            lateral.X, lateral.Y, lateral.Z, 0.0f,
-            up.X, up.Y, up.Z, 0.0f,
+            dir.X * scale, dir.Y * scale, dir.Z * scale, 0.0f,
+            lateral.X * scale, lateral.Y * scale, lateral.Z * scale, 0.0f,
+            up.X * scale, up.Y * scale, up.Z * scale, 0.0f,
             pos.X, pos.Y, pos.Z, 1.0f);
 
         return result;
+    }
+
+    /// <summary>
+    /// Tries to create a transform whose local +X axis follows an arbitrary direction.
+    /// </summary>
+    public static bool TryCreateTransformMatrix(
+        in Vector3 pos,
+        in Vector3 direction,
+        float scale,
+        out Matrix4x4 result)
+    {
+        var lengthSquared = direction.LengthSquared();
+        if (!(lengthSquared > 1e-6f)
+            || !float.IsFinite(lengthSquared)
+            || !float.IsFinite(scale))
+        {
+            result = default;
+            return false;
+        }
+
+        var normalizedDirection = direction / MathF.Sqrt(lengthSquared);
+        result = CreateTransformMatrix(pos, normalizedDirection, scale);
+        return true;
     }
 }

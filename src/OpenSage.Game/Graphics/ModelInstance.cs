@@ -58,6 +58,24 @@ public sealed class ModelInstance : DisposableBase
 
     public readonly bool[] UnknownBools;
 
+    /// <summary>
+    /// Mesh instances paired with their sub-object names, for callers that address meshes by
+    /// name (e.g. W3dTankDraw's tread meshes). Entries without a renderable mesh are skipped.
+    /// </summary>
+    internal IEnumerable<(string Name, ModelMeshInstance Instance)> NamedMeshInstances
+    {
+        get
+        {
+            for (var i = 0; i < Model.SubObjects.Length; i++)
+            {
+                if (MeshInstances[i] != null)
+                {
+                    yield return (Model.SubObjects[i].Name, MeshInstances[i]);
+                }
+            }
+        }
+    }
+
     internal readonly ConstantBuffer<MeshShaderResources.RenderItemConstantsPS> RenderItemConstantsBufferPS;
 
     internal ModelInstance(Model model, AssetLoadContext loadContext)

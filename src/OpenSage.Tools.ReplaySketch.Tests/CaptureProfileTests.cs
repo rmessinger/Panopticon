@@ -64,6 +64,14 @@ public class CaptureProfileTests
                 new CaptureConstructionProgressedExpectation { ActorId = "barracks" },
                 new CaptureConstructionCompletedExpectation { ActorId = "barracks" },
                 new CaptureMinDisplacementExpectation { ActorId = "car", MinDisplacement = 25f },
+                new CaptureProjectileOrientationExpectation
+                {
+                    Definition = "TestShell",
+                    MinimumAlignmentDot = 0.99f,
+                    MinimumSamples = 5,
+                    RequireAscending = true,
+                    RequireDescending = true,
+                },
             ],
             StopWhenActorDestroyed = "car",
         };
@@ -88,9 +96,13 @@ public class CaptureProfileTests
         var impulse = Assert.IsType<CaptureApplyImpulseCommand>(loaded.Commands[2]);
         Assert.Equal(1.5f, impulse.DeltaVelocityX);
 
-        Assert.Equal(6, loaded.Expectations.Count);
+        Assert.Equal(7, loaded.Expectations.Count);
         Assert.IsType<CaptureProjectileObservedExpectation>(loaded.Expectations[0]);
-        Assert.IsType<CaptureMinDisplacementExpectation>(loaded.Expectations[^1]);
+        var orientation = Assert.IsType<CaptureProjectileOrientationExpectation>(loaded.Expectations[^1]);
+        Assert.Equal("TestShell", orientation.Definition);
+        Assert.Equal(0.99f, orientation.MinimumAlignmentDot);
+        Assert.True(orientation.RequireAscending);
+        Assert.True(orientation.RequireDescending);
         Assert.Equal("car", loaded.StopWhenActorDestroyed);
     }
 
@@ -171,4 +183,87 @@ public class CaptureProfileTests
         Assert.IsType<CaptureAttackCommand>(frameTwo[0]);
         Assert.IsType<CaptureConstructCommand>(frameTwo[1]);
     }
+
+    [Fact]
+    public void Validator_AcceptsFollowCamera()
+    {
+        var profile = ValidProfile();
+        profile.Camera = new CaptureCamera
+        {
+            Mode = CaptureCameraMode.Follow,
+            FollowActorId = "tank",
+            SubjectActorIds = ["tank"],
+        };
+
+        var errors = CaptureProfileValidator.Validate(profile);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Validator_FollowCameraNeedsAResolvableSubject()
+    {
+        var profile = ValidProfile();
+        profile.Camera = new CaptureCamera
+        {
+            Mode = CaptureCameraMode.Follow,
+            FollowActorId = "ghost",
+            SubjectActorIds = ["tank"],
+        };
+        Assert.Contains(CaptureProfileValidator.Validate(profile),
+            e => e.Contains("Follow camera actor 'ghost' is not a declared actor"));
+
+        var noSubject = ValidProfile();
+        noSubject.Camera = new CaptureCamera { Mode = CaptureCameraMode.Follow };
+        Assert.Contains(CaptureProfileValidator.Validate(noSubject),
+            e => e.Contains("Follow camera needs a FollowActorId, a FollowProjectileSourceActorId, or at least one SubjectActorIds entry"));
+    }
+
+    [Fact]
+    public void Validator_AcceptsFollowProjectileCamera()
+    {
+        var profile = ValidProfile();
+        profile.Camera = new CaptureCamera
+        {
+            Mode = CaptureCameraMode.Follow,
+            FollowProjectileSourceActorId = "tank",
+            SubjectActorIds = ["tank"],
+        };
+
+        Assert.Empty(CaptureProfileValidator.Validate(profile));
+    }
+
+    [Fact]
+    public void Validator_FollowProjectileCameraRules()
+    {
+        var unknown = ValidProfile();
+        unknown.Camera = new CaptureCamera
+        {
+            Mode = CaptureCameraMode.Follow,
+            FollowProjectileSourceActorId = "ghost",
+            SubjectActorIds = ["tank"],
+        };
+        Assert.Contains(CaptureProfileValidator.Validate(unknown),
+            e => e.Contains("Follow camera projectile source 'ghost' is not a declared actor"));
+
+        var both = ValidProfile();
+        both.Camera = new CaptureCamera
+        {
+            Mode = CaptureCameraMode.Follow,
+            FollowActorId = "tank",
+            FollowProjectileSourceActorId = "tank",
+            SubjectActorIds = ["tank"],
+        };
+        Assert.Contains(CaptureProfileValidator.Validate(both),
+            e => e.Contains("cannot set both FollowActorId and FollowProjectileSourceActorId"));
+    }
+
+    private static CaptureProfile ValidProfile() => new()
+    {
+        Name = "follow",
+        DurationFrames = 10,
+        MapPath = "maps/alpine assault/alpine assault.map",
+        Actors = [new CaptureActor { Id = "tank", Definition = "X", Owner = CaptureProfile.CivilianOwnerId }],
+        Camera = new CaptureCamera(),
+    };
 }

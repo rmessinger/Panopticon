@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace OpenSage.IO;
 
 public sealed class DiskFileSystem : FileSystem
@@ -36,14 +38,41 @@ public sealed class DiskFileSystem : FileSystem
 
     public override FileSystemEntry? GetFile(string filePath)
     {
-        var fullFilePath = Path.Combine(RootDirectory, NormalizeFilePath(filePath));
+        var normalizedPath = NormalizeFilePath(filePath);
+
+        var fullFilePath = Path.Combine(RootDirectory, normalizedPath);
         var fileInfo = new FileInfo(fullFilePath);
-        if (!fileInfo.Exists)
+        if (fileInfo.Exists)
         {
-            return null;
+            return CreateFileSystemEntry(fileInfo);
         }
 
-        return CreateFileSystemEntry(fileInfo);
+        return GetFileCaseInsensitive(normalizedPath);
+    }
+
+    // The game's asset queries use arbitrary casing (e.g. "art/w3d/ModelName.w3d"), which only
+    // matches on case-insensitive filesystems. Fall back to a segment-wise case-insensitive walk.
+    private FileSystemEntry? GetFileCaseInsensitive(string normalizedPath)
+    {
+        var segments = normalizedPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var currentDirectory = new DirectoryInfo(RootDirectory);
+        for (var i = 0; i < segments.Length - 1; i++)
+        {
+            currentDirectory = currentDirectory.EnumerateDirectories()
+                .FirstOrDefault(d => string.Equals(d.Name, segments[i], StringComparison.OrdinalIgnoreCase));
+
+            if (currentDirectory == null)
+            {
+                return null;
+            }
+        }
+
+        var fileName = segments[^1];
+        var fileMatch = currentDirectory.EnumerateFiles()
+            .FirstOrDefault(f => string.Equals(f.Name, fileName, StringComparison.OrdinalIgnoreCase));
+
+        return fileMatch == null ? null : CreateFileSystemEntry(fileMatch);
     }
 
     private FileSystemEntry CreateFileSystemEntry(FileInfo fileInfo)

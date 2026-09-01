@@ -23,17 +23,23 @@ public static class W3dUnderbodyPatcher
             .FirstOrDefault()
             ?? throw new InvalidOperationException("File contains no meshes.");
 
-        var hLod = file.HLod
-            ?? throw new InvalidOperationException("File contains no HLod; an appended mesh would not render.");
+        if (file.HLod == null)
+        {
+            var singleMeshUnderbody = CreateUnderbodyMesh(body, Matrix4x4.Identity, greyLevel);
+            return PatchSingleMeshFile(file, body, singleMeshUnderbody);
+        }
 
+        var hierarchy = file.Hierarchy
+            ?? throw new InvalidOperationException("File has an HLod but no hierarchy.");
         var bodySubObjectName = $"{body.Header.ContainerName}.{body.Header.MeshName}";
-        var boneIndex = hLod.Lods[0].SubObjects
+        var boneIndex = file.HLod.Lods[0].SubObjects
             .FirstOrDefault(s => string.Equals(s.Name, bodySubObjectName, StringComparison.OrdinalIgnoreCase))
             ?.BoneIndex
             ?? throw new InvalidOperationException($"HLod does not reference body mesh '{bodySubObjectName}'.");
 
-        var underbody = CreateUnderbodyMesh(body, greyLevel);
-        var patchedHlod = CreatePatchedHlod(hLod, body.Header.ContainerName, boneIndex);
+        var bodyToModel = GetBindPoseTransform(hierarchy, boneIndex);
+        var underbody = CreateUnderbodyMesh(body, bodyToModel, greyLevel);
+        var patchedHlod = CreatePatchedHlod(file.HLod, body.Header.ContainerName, boneIndex);
 
         var chunks = new List<W3dChunk>(file.Chunks.Count + 1);
         var lastMeshIndex = FindLastMeshIndex(file.Chunks);
@@ -65,6 +71,66 @@ public static class W3dUnderbodyPatcher
         };
 
         return new W3dFile(file.FilePath, chunks, renderableObjects, renderableObjectsByName, file.Hierarchy, patchedHlod);
+    }
+
+    private static W3dFile PatchSingleMeshFile(W3dFile file, W3dMesh body, W3dMesh underbody)
+    {
+        if (file.Hierarchy != null)
+        {
+            throw new InvalidOperationException("File has a hierarchy but no HLod; unsupported layout.");
+        }
+
+        if (file.RenderableObjects.Count != 1)
+        {
+            throw new InvalidOperationException("File has no HLod but contains multiple renderable objects.");
+        }
+
+        var bodySubObjectName = file.RenderableObjectsByName.First(kv => ReferenceEquals(kv.Value, body)).Key;
+        var underbodySubObjectName = $"{body.Header.ContainerName}.{MeshName}";
+
+        var hierarchyName = body.Header.MeshName;
+        var hierarchy = new W3dHierarchyDef(
+            new W3dHierarchy(65538, hierarchyName, 1, Vector3.Zero),
+            new W3dPivots(
+            [
+                new W3dPivot("ROOTTRANSFORM", -1, Vector3.Zero, Vector3.Zero, Quaternion.Identity)
+            ]),
+            PivotFixups: null);
+
+        var hLod = new W3dHLod(
+            new W3dHLodHeader(65536, 1, hierarchyName, hierarchyName),
+        [
+            new W3dHLodArray(
+                new W3dHLodArrayHeader(2, 100000.0f),
+            [
+                new W3dHLodSubObject(0, bodySubObjectName),
+                new W3dHLodSubObject(0, underbodySubObjectName)
+            ])
+        ],
+            Aggregate: null,
+            Proxy: null);
+
+        var chunks = new List<W3dChunk>
+        {
+            hierarchy,
+            body,
+            underbody,
+            hLod
+        };
+
+        var renderableObjects = new List<W3dChunk>
+        {
+            body,
+            underbody
+        };
+
+        var renderableObjectsByName = new Dictionary<string, W3dChunk>
+        {
+            [bodySubObjectName] = body,
+            [underbodySubObjectName] = underbody
+        };
+
+        return new W3dFile(file.FilePath, chunks, renderableObjects, renderableObjectsByName, hierarchy, hLod);
     }
 
     private static int FindLastMeshIndex(IReadOnlyList<W3dChunk> chunks)
@@ -102,39 +168,90 @@ public static class W3dUnderbodyPatcher
         return hLod with { Lods = lods };
     }
 
-    private static W3dMesh CreateUnderbodyMesh(W3dMesh body, byte greyLevel)
+    private static Matrix4x4 GetBindPoseTransform(W3dHierarchyDef hierarchy, uint boneIndex)
     {
-        var min = body.Header.Min;
-        var max = body.Header.Max;
+        if (boneIndex >= (uint)hierarchy.Pivots.Items.Count)
+        {
+            throw new InvalidOperationException(
+                $"HLod bone index {boneIndex} is outside hierarchy '{hierarchy.Header.Name}'.");
+        }
 
-        var insetX = (max.X - min.X) * InsetFraction;
-        var insetY = (max.Y - min.Y) * InsetFraction;
+        var result = Matrix4x4.Identity;
+        var currentIndex = (int)boneIndex;
+        for (var depth = 0; currentIndex >= 0; depth++)
+        {
+            if (depth >= hierarchy.Pivots.Items.Count)
+            {
+                throw new InvalidOperationException(
+                    $"Hierarchy '{hierarchy.Header.Name}' contains a cyclic parent chain.");
+            }
 
-        var x0 = min.X + insetX;
-        var x1 = max.X - insetX;
-        var y0 = min.Y + insetY;
-        var y1 = max.Y - insetY;
-        var z = min.Z - ZOffset;
+            var pivot = hierarchy.Pivots.Items[currentIndex];
+            result *= Matrix4x4.CreateFromQuaternion(pivot.Rotation)
+                * Matrix4x4.CreateTranslation(pivot.Translation);
+            currentIndex = pivot.ParentIdx;
+            if (currentIndex >= hierarchy.Pivots.Items.Count)
+            {
+                throw new InvalidOperationException(
+                    $"Hierarchy '{hierarchy.Header.Name}' contains invalid parent index {currentIndex}.");
+            }
+        }
+
+        return result;
+    }
+
+    private static W3dMesh CreateUnderbodyMesh(
+        W3dMesh body,
+        in Matrix4x4 bodyToModel,
+        byte greyLevel)
+    {
+        if (!Matrix4x4.Invert(bodyToModel, out var modelToBody))
+        {
+            throw new InvalidOperationException(
+                $"Body mesh '{body.Header.MeshName}' has a non-invertible bind-pose transform.");
+        }
+
+        var bodyModelMin = new Vector3(float.MaxValue);
+        var bodyModelMax = new Vector3(float.MinValue);
+        for (var cornerIndex = 0; cornerIndex < 8; cornerIndex++)
+        {
+            var corner = new Vector3(
+                (cornerIndex & 1) == 0 ? body.Header.Min.X : body.Header.Max.X,
+                (cornerIndex & 2) == 0 ? body.Header.Min.Y : body.Header.Max.Y,
+                (cornerIndex & 4) == 0 ? body.Header.Min.Z : body.Header.Max.Z);
+            var modelCorner = Vector3.Transform(corner, bodyToModel);
+            bodyModelMin = Vector3.Min(bodyModelMin, modelCorner);
+            bodyModelMax = Vector3.Max(bodyModelMax, modelCorner);
+        }
+
+        var insetX = (bodyModelMax.X - bodyModelMin.X) * InsetFraction;
+        var insetY = (bodyModelMax.Y - bodyModelMin.Y) * InsetFraction;
+
+        var x0 = bodyModelMin.X + insetX;
+        var x1 = bodyModelMax.X - insetX;
+        var y0 = bodyModelMin.Y + insetY;
+        var y1 = bodyModelMax.Y - insetY;
+        var z = bodyModelMin.Z - ZOffset;
 
         var vertices = new[]
         {
-            new Vector3(x0, y0, z),
-            new Vector3(x1, y0, z),
-            new Vector3(x1, y1, z),
-            new Vector3(x0, y1, z)
+            Vector3.Transform(new Vector3(x0, y0, z), modelToBody),
+            Vector3.Transform(new Vector3(x1, y0, z), modelToBody),
+            Vector3.Transform(new Vector3(x1, y1, z), modelToBody),
+            Vector3.Transform(new Vector3(x0, y1, z), modelToBody)
         };
 
-        var normal = new Vector3(0, 0, -1);
+        var normal = Vector3.Normalize(Vector3.TransformNormal(-Vector3.UnitZ, modelToBody));
         var triangles = new[]
         {
-            CreateTriangle(0, 1, 2, normal, vertices[0]),
-            CreateTriangle(0, 2, 3, normal, vertices[0])
+            CreateTriangle(0, 2, 1, normal, vertices[0]),
+            CreateTriangle(0, 3, 2, normal, vertices[0])
         };
 
-        var boundsMin = new Vector3(x0, y0, z);
-        var boundsMax = new Vector3(x1, y1, z);
-        var sphereCenter = (boundsMin + boundsMax) / 2;
-        var sphereRadius = Vector3.Distance(boundsMin, boundsMax) / 2;
+        var boundsMin = vertices.Aggregate(Vector3.Min);
+        var boundsMax = vertices.Aggregate(Vector3.Max);
+        var sphereCenter = vertices.Aggregate(Vector3.Zero, (sum, vertex) => sum + vertex) / vertices.Length;
+        var sphereRadius = vertices.Max(vertex => Vector3.Distance(sphereCenter, vertex));
 
         var header = new W3dMeshHeader3(
             body.Header.Version,
