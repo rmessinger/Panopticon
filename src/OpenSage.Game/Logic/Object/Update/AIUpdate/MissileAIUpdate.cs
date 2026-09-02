@@ -33,6 +33,69 @@ public sealed class MissileAIUpdate : AIUpdate
 
     internal FXList DetonationFX { get; set; }
 
+    // How far ahead on the parabola the steering point sits; bounds corner-cutting without
+    // smoothing away the arc. Clamped to the trajectory range inside SteerPoint.
+    private const float ParabolicLookaheadDistance = 80f;
+
+    // Parabolic boost distance: just enough for the tail to clear the erector rail. The INI's
+    // DistanceToTravelBeforeTurning (200 for the SCUD) is a legacy boost length that flies
+    // far past the rail before any steering starts.
+    private const float RailClearanceDistance = 40f;
+
+    // Pitch-over easing: while the nose is more than this far (degrees) from the steer
+    // heading, orientation slews at the capped rate below instead of the template's full
+    // 540 deg/sec, so the nose eases onto the arc like a gravity turn.
+    private const float ParabolicPitchOverRatePerSecond = 120f;
+    private const float ParabolicPitchOverReleaseAngle = 15f;
+
+    // Below this speed the velocity direction is too noisy to orient the model by.
+    private const float VelocityOrientationMinSpeed = 40f;
+
+    /// <summary>
+    /// Set by <see cref="MissileAIUpdateModuleData.CreateModule"/>: fly the launch-computed
+    /// parabola (see <see cref="ParabolicTrajectory"/>) instead of homing directly. The SCUD
+    /// missile opts in by definition name because its INI lives in the read-only install.
+    /// </summary>
+    internal bool ParabolicSteeringEnabled { get; set; }
+
+    private ParabolicTrajectory? _parabola;
+
+    // Rocket-motor exhaust (the weapon's ProjectileExhaust system): starts at ignition,
+    // follows the model's tail, finishes on fuel-out or death. SystemLifetime is 0 for these
+    // templates, so the system never stops emitting on its own.
+    private FXParticleSystemTemplate? _exhaustTemplate;
+    private Vector3 _exhaustTailOffset;
+    private ParticleSystem? _exhaustSystem;
+    private Matrix4x4 _exhaustMatrix;
+
+    internal void AttachExhaust(FXParticleSystemTemplate template, Vector3 tailOffset)
+    {
+        _exhaustTemplate = template;
+        _exhaustTailOffset = tailOffset;
+    }
+
+    private void StartExhaust()
+    {
+        if (_exhaustTemplate == null || _exhaustSystem != null)
+        {
+            return;
+        }
+
+        UpdateExhaustMatrix();
+        _exhaustSystem = GameEngine.ParticleSystems.Create(_exhaustTemplate, () => ref _exhaustMatrix);
+    }
+
+    private void UpdateExhaustMatrix()
+    {
+        _exhaustMatrix = Matrix4x4.CreateTranslation(_exhaustTailOffset) * GameObject.TransformMatrix;
+    }
+
+    private void FinishExhaust()
+    {
+        _exhaustSystem?.Finish();
+        _exhaustSystem = null;
+    }
+
     // The firing unit, assigned at spawn (see ProjectileNugget) so collision can skip it.
     internal ObjectId LauncherObjectId
     {
@@ -70,18 +133,33 @@ public sealed class MissileAIUpdate : AIUpdate
 
                     if (ModuleData.DistanceToTravelBeforeTurning > 0)
                     {
+                        var boostDistance = ParabolicSteeringEnabled
+                            ? MathF.Min(ModuleData.DistanceToTravelBeforeTurning, RailClearanceDistance)
+                            : ModuleData.DistanceToTravelBeforeTurning;
                         var pointToReachBeforeTurning = GameObject.Translation
-                            + Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix) * ModuleData.DistanceToTravelBeforeTurning;
+                            + Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix) * boostDistance;
                         AddTargetPoint(pointToReachBeforeTurning);
                     }
 
+                    // The calculated arc is frozen at ignition: launch point, impact point,
+                    // and apex height all come from this moment; the boost waypoint above is
+                    // the only queued target point.
                     // If the target died before the missile finished igniting, there's nowhere
-                    // new to aim; keep whatever target point was already queued (e.g. the
-                    // pre-turn point above) instead of dereferencing a destroyed target.
+                    // new to aim; keep whatever target point was already queued.
                     var currentTarget = GameObject.CurrentWeapon.CurrentTarget;
                     if (currentTarget != null && !currentTarget.IsDestroyed)
                     {
-                        AddTargetPoint(currentTarget.TargetPosition);
+                        if (ParabolicSteeringEnabled)
+                        {
+                            _parabola = new ParabolicTrajectory(
+                                GameObject.Translation,
+                                currentTarget.TargetPosition,
+                                ModuleData.ParabolicApexHeightFactor);
+                        }
+                        else
+                        {
+                            AddTargetPoint(currentTarget.TargetPosition);
+                        }
                     }
 
                     // Ignition impulse along the muzzle direction. ApplyForce adds mass * deltaV
@@ -95,14 +173,31 @@ public sealed class MissileAIUpdate : AIUpdate
 
                     _fuelExhaustionFrame = currentFrame + ModuleData.FuelLifetime;
 
+                    StartExhaust();
+
                     _state = MissileState.Moving;
                 }
                 break;
 
             case MissileState.Moving:
+                // The booster burn terminates at the arc's apex: past the parabola's midpoint
+                // the flight is unpowered descent, so the motor (and its plume) shuts off.
+                if (_exhaustSystem != null
+                    && _parabola is { } parabola
+                    && parabola.Progress(GameObject.Translation) >= parabola.Range * 0.5f)
+                {
+                    FinishExhaust();
+                }
+
+                UpdateExhaustMatrix();
                 SteerTowardTargetPoints(currentFrame);
                 // TODO: DistanceToTargetBeforeDiving
                 BezierProjectileBehavior.CheckForHit(GameObject, GameEngine, ModuleData.DetonateCallsKill, DetonationFX, groundHitFX: null, _launcherObjectId);
+                if (GameObject.IsEffectivelyDead)
+                {
+                    // The warhead delivered: the motor stops with the missile.
+                    FinishExhaust();
+                }
                 break;
 
             default:
@@ -115,8 +210,12 @@ public sealed class MissileAIUpdate : AIUpdate
 
     private void SteerTowardTargetPoints(LogicFrame currentFrame)
     {
+        var parabolic = _parabola.HasValue;
+
         // Keep homing on a moving target: the final target point tracks its live position.
-        if (ModuleData.TryToFollowTarget
+        // Parabolic flight freezes its impact point at ignition, so there is nothing to track.
+        if (!parabolic
+            && ModuleData.TryToFollowTarget
             && TargetPoints.Count > 0
             && GameObject.CurrentWeapon?.CurrentTarget is { } target
             && !target.IsDestroyed)
@@ -127,9 +226,12 @@ public sealed class MissileAIUpdate : AIUpdate
         // Terminal dive: once within DistanceToTargetBeforeDiving, the remaining flight
         // points straight at the target. Cruising locomotors hold a PreferredHeight cruise
         // altitude (the SCUD missile's is 120); the dive must also disable that hold so the
-        // goal's actual Z is flown.
+        // goal's actual Z is flown. Parabolic flight skips the dive (the curve already
+        // terminates at its impact point) but keeps the height hold disabled so the curve's
+        // Z is flown directly.
         var liveTarget = GameObject.CurrentWeapon?.CurrentTarget;
-        var diving = ModuleData.DistanceToTargetBeforeDiving > 0
+        var diving = !parabolic
+            && ModuleData.DistanceToTargetBeforeDiving > 0
             && liveTarget != null
             && !liveTarget.IsDestroyed
             && Vector3.Distance(GameObject.Translation, liveTarget.TargetPosition) < ModuleData.DistanceToTargetBeforeDiving;
@@ -138,11 +240,13 @@ public sealed class MissileAIUpdate : AIUpdate
             TargetPoints.Clear();
             AddTargetPoint(liveTarget.TargetPosition);
         }
-        CurrentLocomotor?.SetPreciseZPosition(diving);
+        CurrentLocomotor?.SetPreciseZPosition(diving || parabolic);
 
         // Out of fuel: thrust stops and gravity takes over, unless configured to detonate.
         if (currentFrame >= _fuelExhaustionFrame)
         {
+            FinishExhaust();
+
             if (ModuleData.DetonateOnNoFuel)
             {
                 // Detonating means the warhead is delivered where the missile dies, not just
@@ -162,7 +266,7 @@ public sealed class MissileAIUpdate : AIUpdate
         // gravity physics applies. This mirrors AIUpdate.Update's movement block, minus the
         // infantry braking/waypoint behavior missiles don't use.
         var locomotor = CurrentLocomotor;
-        if (locomotor == null || TargetPoints.Count == 0)
+        if (locomotor == null || (TargetPoints.Count == 0 && !parabolic))
         {
             return;
         }
@@ -172,10 +276,12 @@ public sealed class MissileAIUpdate : AIUpdate
         // arrival radius, which would otherwise leave it trying to U-turn back toward the
         // point behind it. The FINAL point is exempt: it is the target itself, and a missile
         // that flew past it (e.g. lofted above) must still home back onto it, not discard it
-        // and cruise away ballistic.
+        // and cruise away ballistic. Parabolic flight queues only the boost point, which is
+        // intermediate: once passed, the parabola takes over as the steering reference.
         var closeEnoughDist = locomotor.LocomotorTemplate.CloseEnoughDist;
         var velocity = GameObject.Physics?.Velocity ?? Vector3.Zero;
-        while (TargetPoints.Count > 1)
+        var maxQueuedPoints = parabolic ? 1 : 2;
+        while (TargetPoints.Count >= maxQueuedPoints)
         {
             var toPoint = TargetPoints[0] - GameObject.Translation;
             if (toPoint.LengthSquared() < closeEnoughDist * closeEnoughDist
@@ -189,21 +295,63 @@ public sealed class MissileAIUpdate : AIUpdate
             }
         }
 
-        if (TargetPoints.Count == 0)
+        if (TargetPoints.Count == 0 && !parabolic)
         {
             return;
         }
 
         locomotor.SetPhysicsOptions(GameObject);
 
+        // Until the boost waypoint is consumed, steer at it as before; after that, the
+        // parabola is the steering reference: aim at the curve point ahead of the missile.
+        var steerPoint = TargetPoints.Count > 0
+            ? TargetPoints[0]
+            : _parabola!.Value.SteerPoint(GameObject.Translation, ParabolicLookaheadDistance);
+
         // TODO(Port): Use correct parameter values.
         var blocked = false;
         locomotor.LocoUpdateMoveTowardsPosition(
             GameObject,
-            TargetPoints[0],
-            (TargetPoints[0] - GameObject.Translation).Vector2XY().Length(),
+            steerPoint,
+            (steerPoint - GameObject.Translation).Vector2XY().Length(),
             locomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState),
             ref blocked);
+
+        if (parabolic)
+        {
+            EaseOntoTrajectory(locomotor, steerPoint);
+        }
+    }
+
+    /// <summary>
+    /// Nose handling for parabolic flight. While the nose is far from the steer heading (the
+    /// pitch-over after the rail clears), cap the orientation rate so it eases over instead of
+    /// whipping at the template's full turn rate; thrust is bounded by the nose, so the path
+    /// gentles too. Once converged and moving, lock the model to the flight path exactly: the
+    /// velocity vector changes continuously, so orientation riding it is smooth by construction.
+    /// </summary>
+    private void EaseOntoTrajectory(Locomotor locomotor, Vector3 steerPoint)
+    {
+        var forward = GameObject.TransformMatrix.GetXVector();
+        var toSteer = steerPoint - GameObject.Translation;
+
+        var pitchOver = true;
+        if (MathF.Abs(forward.LengthSquared()) > 0.0001f && toSteer.LengthSquared() > 0.0001f)
+        {
+            var headingError = MathF.Acos(Math.Clamp(
+                Vector3.Dot(Vector3.Normalize(forward), Vector3.Normalize(toSteer)),
+                -1f, 1f));
+            pitchOver = MathUtility.ToDegrees(headingError) > ParabolicPitchOverReleaseAngle;
+        }
+
+        locomotor.ThrustTurnRateLimitPerFrame = pitchOver
+            ? ParabolicPitchOverRatePerSecond / GameEngine.LogicFramesPerSecond
+            : null;
+
+        if (!pitchOver && GameObject.Physics is { } physics && physics.VelocityMagnitude > VelocityOrientationMinSpeed)
+        {
+            physics.RequestOrientToVelocity();
+        }
     }
 
     internal override void Load(StatePersister reader)
@@ -290,6 +438,10 @@ public sealed class MissileAIUpdateModuleData : AIUpdateModuleData
         { "IgnitionFX", (parser, x) => x.IgnitionFX = parser.ParseFXListReference() },
         { "KillSelfDelay", (parser, x) => x.KillSelfDelay = parser.ParseInteger() },
         { "DistanceScatterWhenJammed", (parser, x) => x.DistanceScatterWhenJammed = parser.ParseInteger() },
+
+        // OpenSAGE extensions (not vanilla SAGE fields).
+        { "ParabolicSteering", (parser, x) => x.ParabolicSteering = parser.ParseBoolean() },
+        { "ParabolicApexHeightFactor", (parser, x) => x.ParabolicApexHeightFactor = parser.ParseFloat() },
     });
 
     public bool TryToFollowTarget { get; private set; }
@@ -315,8 +467,23 @@ public sealed class MissileAIUpdateModuleData : AIUpdateModuleData
     [AddedIn(SageGame.CncGeneralsZeroHour)]
     public int DistanceScatterWhenJammed { get; private set; }
 
+    /// <summary>
+    /// OpenSAGE extension: fly a launch-computed parabola (see <see cref="ParabolicTrajectory"/>)
+    /// instead of homing directly at the target.
+    /// </summary>
+    public bool ParabolicSteering { get; private set; }
+
+    /// <summary>OpenSAGE extension: apex height as a multiple of the horizontal launch-to-impact distance.</summary>
+    public float ParabolicApexHeightFactor { get; private set; } = 1f;
+
     internal override BehaviorModule CreateModule(GameObject gameObject, IGameEngine gameEngine)
     {
-        return new MissileAIUpdate(gameObject, gameEngine, this);
+        return new MissileAIUpdate(gameObject, gameEngine, this)
+        {
+            // The SCUD missile's calculated arc is engine behavior: its INI lives inside the
+            // read-only game install, so the opt-in is keyed on the definition name here.
+            ParabolicSteeringEnabled = ParabolicSteering
+                || gameObject.Definition.Name == "SCUDMissile",
+        };
     }
 }
