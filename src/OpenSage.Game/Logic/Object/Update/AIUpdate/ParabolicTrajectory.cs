@@ -18,14 +18,49 @@ internal readonly struct ParabolicTrajectory
     private readonly Vector3 _horizontalAxis;
     private readonly float _range;
 
-    public ParabolicTrajectory(Vector3 launch, Vector3 impact, float apexHeightFactor)
+    private ParabolicTrajectory(Vector3 launch, Vector3 impact, float apexHeight)
     {
         _launch = launch;
         _impact = impact;
         var horizontal = new Vector3(impact.X - launch.X, impact.Y - launch.Y, 0f);
         _range = horizontal.Length();
         _horizontalAxis = _range > 0f ? horizontal / _range : Vector3.UnitX;
-        ApexHeight = apexHeightFactor * _range;
+        ApexHeight = apexHeight;
+    }
+
+    /// <summary>
+    /// Arc whose apex height is an explicit multiple of the horizontal range: the lofted
+    /// rail-launched missile profile (the SCUD).
+    /// </summary>
+    public static ParabolicTrajectory FromApexHeightFactor(Vector3 launch, Vector3 impact, float apexHeightFactor)
+    {
+        return new ParabolicTrajectory(launch, impact, apexHeightFactor * HorizontalRange(launch, impact));
+    }
+
+    /// <summary>
+    /// Arc whose launch tangent matches the given launch direction (a launcher's battery
+    /// angle): the rocket leaves the launcher along the pod and lofts over onto the impact
+    /// point. The apex follows from that launch slope instead of a factor.
+    /// </summary>
+    public static ParabolicTrajectory FromLaunchDirection(Vector3 launch, Vector3 impact, Vector3 launchDirection)
+    {
+        var range = HorizontalRange(launch, impact);
+        var directionHorizontal = MathF.Sqrt(launchDirection.X * launchDirection.X + launchDirection.Y * launchDirection.Y);
+        var launchSlope = directionHorizontal > 0.001f
+            ? Math.Clamp(launchDirection.Z / directionHorizontal, 0f, 10f)
+            : 10f;
+        var chordSlope = range > 0f ? (impact.Z - launch.Z) / range : 0f;
+
+        // z = chord + arch * 4 * f * (1 - f) has initial slope chordSlope + 4 * arch / range;
+        // solve for arch. Clamped at 0: an aim direction below the chord flies the chord line.
+        var arch = MathF.Max(0f, (launchSlope - chordSlope) * range * 0.25f);
+
+        return new ParabolicTrajectory(launch, impact, arch + (launch.Z + impact.Z) * 0.5f);
+    }
+
+    private static float HorizontalRange(Vector3 launch, Vector3 impact)
+    {
+        return new Vector2(impact.X - launch.X, impact.Y - launch.Y).Length();
     }
 
     public float ApexHeight { get; }

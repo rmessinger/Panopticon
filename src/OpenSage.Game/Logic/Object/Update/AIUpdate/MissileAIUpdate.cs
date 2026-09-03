@@ -54,7 +54,8 @@ public sealed class MissileAIUpdate : AIUpdate
     /// <summary>
     /// Set by <see cref="MissileAIUpdateModuleData.CreateModule"/>: fly the launch-computed
     /// parabola (see <see cref="ParabolicTrajectory"/>) instead of homing directly. The SCUD
-    /// missile opts in by definition name because its INI lives in the read-only install.
+    /// missile and rocket buggy missiles opt in by definition name because their INIs live
+    /// in the read-only install.
     /// </summary>
     internal bool ParabolicSteeringEnabled { get; set; }
 
@@ -151,10 +152,19 @@ public sealed class MissileAIUpdate : AIUpdate
                     {
                         if (ParabolicSteeringEnabled)
                         {
-                            _parabola = new ParabolicTrajectory(
-                                GameObject.Translation,
-                                currentTarget.TargetPosition,
-                                ModuleData.ParabolicApexHeightFactor);
+                            // Pod-launched rockets (short boost) fly the arc whose launch tangent
+                            // is the battery's current muzzle angle: they leave the launcher
+                            // along the pod and loft over onto the target. Rail-launched
+                            // missiles use the lofted factor arc and climb the rail first.
+                            _parabola = ModuleData.DistanceToTravelBeforeTurning < RailClearanceDistance
+                                ? ParabolicTrajectory.FromLaunchDirection(
+                                    GameObject.Translation,
+                                    currentTarget.TargetPosition,
+                                    Vector3.TransformNormal(Vector3.UnitX, GameObject.TransformMatrix))
+                                : ParabolicTrajectory.FromApexHeightFactor(
+                                    GameObject.Translation,
+                                    currentTarget.TargetPosition,
+                                    ModuleData.ParabolicApexHeightFactor);
                         }
                         else
                         {
@@ -229,12 +239,17 @@ public sealed class MissileAIUpdate : AIUpdate
         // goal's actual Z is flown. Parabolic flight skips the dive (the curve already
         // terminates at its impact point) but keeps the height hold disabled so the curve's
         // Z is flown directly.
+        // The proximity check is 2D: the original engine "has a 2D heart, being over the
+        // target counts as there" (TomahawkMissile INI). A 3D check could never trigger for a
+        // missile cruising above the dive radius (Tomahawk: altitude 120 vs radius 100), so it
+        // would overfly the target and cruise on.
         var liveTarget = GameObject.CurrentWeapon?.CurrentTarget;
         var diving = !parabolic
             && ModuleData.DistanceToTargetBeforeDiving > 0
             && liveTarget != null
             && !liveTarget.IsDestroyed
-            && Vector3.Distance(GameObject.Translation, liveTarget.TargetPosition) < ModuleData.DistanceToTargetBeforeDiving;
+            && (liveTarget.TargetPosition - GameObject.Translation).Vector2XY().Length()
+                < ModuleData.DistanceToTargetBeforeDiving;
         if (diving)
         {
             TargetPoints.Clear();
@@ -304,9 +319,14 @@ public sealed class MissileAIUpdate : AIUpdate
 
         // Until the boost waypoint is consumed, steer at it as before; after that, the
         // parabola is the steering reference: aim at the curve point ahead of the missile.
+        // On short-range arcs the lookahead shrinks proportionally: a fixed 80 units on a
+        // ~180-unit arc sits near mid-curve, whose direction is far shallower than the
+        // launch tangent, and the nose would pitch over immediately instead of climbing.
         var steerPoint = TargetPoints.Count > 0
             ? TargetPoints[0]
-            : _parabola!.Value.SteerPoint(GameObject.Translation, ParabolicLookaheadDistance);
+            : _parabola!.Value.SteerPoint(
+                GameObject.Translation,
+                MathF.Min(ParabolicLookaheadDistance, _parabola.Value.Range * 0.35f));
 
         // TODO(Port): Use correct parameter values.
         var blocked = false;
@@ -478,12 +498,13 @@ public sealed class MissileAIUpdateModuleData : AIUpdateModuleData
 
     internal override BehaviorModule CreateModule(GameObject gameObject, IGameEngine gameEngine)
     {
+        // The calculated arcs are engine behavior: these projectiles' INIs live inside the
+        // read-only game install, so the opt-in is keyed on the definition names here.
         return new MissileAIUpdate(gameObject, gameEngine, this)
         {
-            // The SCUD missile's calculated arc is engine behavior: its INI lives inside the
-            // read-only game install, so the opt-in is keyed on the definition name here.
             ParabolicSteeringEnabled = ParabolicSteering
-                || gameObject.Definition.Name == "SCUDMissile",
+                || gameObject.Definition.Name == "SCUDMissile"
+                || gameObject.Definition.Name == "RocketBuggyMissile",
         };
     }
 }
