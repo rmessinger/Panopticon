@@ -764,9 +764,18 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             _objectMoved = false;
         }
 
-        if (ModelConditionFlags.Get(ModelConditionFlag.Attacking))
+        if (ModelConditionFlags.Get(ModelConditionFlag.Attacking)
+            || ActiveWeaponSet.Weapons.Any(w => w?.CurrentTarget != null))
         {
-            CurrentWeapon?.LogicTick();
+            // Every filled slot ticks, not just the current one: each weapon runs its own state
+            // machine, so a secondary weapon holding a target (e.g. the Humvee's TOW) fires
+            // independently of whichever slot is current. The Attacking flag alone is not the
+            // gate: a turret AI managing the primary weapon clears it while scanning, which
+            // would starve other slots that do hold targets.
+            foreach (var weapon in ActiveWeaponSet.Weapons)
+            {
+                weapon?.LogicTick();
+            }
         }
         if (ModelConditionFlags.Get(ModelConditionFlag.Sold))
         {

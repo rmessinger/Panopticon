@@ -65,7 +65,12 @@ public sealed class Weapon : IPersistableObject
                 ? CurrentTarget.GetTargetObject()?.RoughCollider?.WorldBounds.Radius ?? 0f
                 : 0f;
 
-            return distance - targetRadius <= Template.AttackRange;
+            var effectiveDistance = distance - targetRadius;
+            return effectiveDistance <= Template.AttackRange
+                // Artillery-style launchers cannot depress onto nearby targets: inside the
+                // minimum attack range the weapon holds fire (the fire cycle stalls in Inactive,
+                // matching vanilla's dead zone).
+                && effectiveDistance >= Template.MinimumAttackRange;
         }
     }
 

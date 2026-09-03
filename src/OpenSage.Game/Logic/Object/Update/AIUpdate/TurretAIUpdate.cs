@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenSage.Data.Ini;
 using OpenSage.Mathematics;
 using OpenSage.Utilities;
@@ -60,9 +61,13 @@ public class TurretAIUpdate : UpdateModule
     internal void Update(BitArray<AutoAcquireEnemiesType> autoAcquireEnemiesWhenIdle)
     {
         // Treat a destroyed target as no target, matching AIUpdate's non-turret path. Without this,
-        // reading target.TargetPosition below dereferences the now-null target object (NRE) in the
-        // frame the target dies, before Weapon.LogicTick clears it.
-        var weaponTarget = GameObject.CurrentWeapon?.CurrentTarget;
+        // reading target.TargetPosition below dereferences the now-null target object (NRE) in
+        // the frame the target dies, before Weapon.LogicTick clears it.
+        // The turret trains on the current weapon's target, or — when the current slot is idle —
+        // any other engaged weapon's target: a secondary weapon holding a target (e.g. the
+        // Humvee's TOW) launches from the aimed launch bone, so the turret must train for it.
+        var weaponTarget = GameObject.CurrentWeapon?.CurrentTarget
+            ?? GameObject.ActiveWeaponSet.Weapons.FirstOrDefault(w => w?.CurrentTarget != null)?.CurrentTarget;
         var target = weaponTarget != null && !weaponTarget.IsDestroyed ? weaponTarget : null;
         float targetYaw;
 

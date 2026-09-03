@@ -73,10 +73,13 @@ public class ProjectileDamageTimingTests : IDisposable
         // (attacker, first-kill frame budget). DragonTankFlameProjectile exhausts its fuel
         // mid-flight (DetonateOnNoFuel must deliver the warhead, not just kill the missile);
         // NukeCannonShell is a Bezier projectile whose kinematic Speed is per logic frame.
-        foreach (var (attackerName, budget) in new[] { ("ChinaTankDragon", 60), ("ChinaVehicleNukeLauncher", 240) })
+        foreach (var (attackerName, budget) in new[] { ("ChinaTankDragon", 60), ("ChinaVehicleNukeLauncher", 300) })
         {
             var attacker = Spawn(attackerName, new Vector3(600, 600, 0), china);
-            var car = Spawn("CarAsian1", new Vector3(680, 600, 0), civilian);
+            // The nuke cannon's NukeCannonGun has a 200-unit minimum attack range (dead zone);
+            // the car must sit inside the 200..350 window or the weapon holds fire.
+            var carDistance = attackerName == "ChinaVehicleNukeLauncher" ? 260 : 80;
+            var car = Spawn("CarAsian1", new Vector3(600 + carDistance, 600, 0), civilian);
             car.BodyModule.SetMaxHealth(30f, MaxHealthChangeType.FullyHeal);
             for (var i = 0; i < 30; i++)
             {
