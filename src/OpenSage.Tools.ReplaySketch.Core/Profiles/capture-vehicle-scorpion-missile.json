@@ -1,0 +1,66 @@
+{
+  // GLA Scorpion firing its missile (player upgrade, secondary slot) at a BattleMaster 110
+  // units out (weapon window 40..150). GrantUpgrade researches Upgrade_GLAScorpionRocket
+  // before the Attack addresses the slot weapon by name. Follow-projectile camera rides the
+  // missile. Run with:
+  //   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-vehicle-scorpion-missile.json
+  "Name": "vehicle-scorpion-missile",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 75,
+  "SettleFrames": 5,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "scorpion",
+      "Definition": "GLATankScorpion",
+      "Owner": "gla",
+      "X": 480,
+      "Y": 640,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "target",
+      "Definition": "ChinaTankBattleMaster",
+      "Owner": "china",
+      "X": 590,
+      "Y": 640,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowProjectileSourceActorId": "scorpion",
+    "SubjectActorIds": [ "scorpion" ],
+    "DesiredSpanFraction": 0.45,
+    "InitialCameraHeight": 140,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 600
+  },
+  "Commands": [
+    {
+      "Type": "GrantUpgrade",
+      "Frame": 0,
+      "ActorId": "scorpion",
+      "UpgradeName": "Upgrade_GLAScorpionRocket"
+    },
+    {
+      "Type": "Attack",
+      "Frame": 2,
+      "SourceActorId": "scorpion",
+      "TargetActorId": "target",
+      "WeaponName": "ScorpionMissileWeapon"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" }
+  ],
+  "StopWhenActorDestroyed": null
+}

@@ -179,6 +179,13 @@ public class CaptureCamera
     /// </summary>
     public string FollowProjectileSourceActorId { get; set; } = "";
 
+    /// <summary>
+    /// Projectile follow locks the FIRST projectile only: ride it to its death and freeze there,
+    /// never handing off to later shots (for rapid-fire weapons where the newest hand-off would
+    /// jump between rockets).
+    /// </summary>
+    public bool FollowFirstProjectileOnly { get; set; }
+
     // Explicit mode.
 
     public CapturePoint? LookAt { get; set; } = null;

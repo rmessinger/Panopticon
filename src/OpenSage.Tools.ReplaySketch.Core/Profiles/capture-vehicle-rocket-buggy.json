@@ -1,0 +1,59 @@
+{
+  // GLA Rocket Buggy firing its rocket pods at a BattleMaster 180 units out (weapon window
+  // 50..300). Follow-projectile camera rides the FIRST rocket only (no hand-off between the
+  // rapid salvo's rockets) and freezes at its impact. Run with:
+  //   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-vehicle-rocket-buggy.json
+  "Name": "vehicle-rocket-buggy",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 75,
+  "SettleFrames": 5,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "buggy",
+      "Definition": "GLAVehicleRocketBuggy",
+      "Owner": "gla",
+      "X": 480,
+      "Y": 640,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "target",
+      "Definition": "ChinaTankBattleMaster",
+      "Owner": "china",
+      "X": 660,
+      "Y": 640,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowProjectileSourceActorId": "buggy",
+    "FollowFirstProjectileOnly": true,
+    "SubjectActorIds": [ "buggy" ],
+    "DesiredSpanFraction": 0.45,
+    "InitialCameraHeight": 140,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 600
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "buggy",
+      "TargetActorId": "target"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" }
+  ],
+  "StopWhenActorDestroyed": null
+}

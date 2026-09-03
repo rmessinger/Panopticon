@@ -242,6 +242,7 @@ public static class ScenarioCaptureRunner
 
         GameObject? stopActor = null;
         ObjectId followedProjectileId = ObjectId.Invalid;
+        var followProjectileExpired = false;
         if (profile.StopWhenActorDestroyed != null
             && actors.TryGetValue(profile.StopWhenActorDestroyed, out var stopState))
         {
@@ -268,14 +269,23 @@ public static class ScenarioCaptureRunner
             // height never changes. A destroyed subject freezes the camera at its last spot.
             // Projectile follow rides the newest live projectile from the source: shell flight,
             // freeze at the impact site between shots, hand-off to the next shot.
-            if (projectileSourceState != null)
+            // FollowFirstProjectileOnly locks the first projectile for its whole flight and
+            // freezes at its death site instead of handing off (rapid-fire weapons).
+            var followFirstOnly = profile.Camera.FollowFirstProjectileOnly;
+            if (projectileSourceState != null && !(followFirstOnly && followProjectileExpired))
             {
-                var projectile = FindFollowProjectile(game, projectileSourceState.Object, followedProjectileId);
+                var projectile = FindFollowProjectile(game, projectileSourceState.Object, followedProjectileId, followFirstOnly);
                 if (projectile != null)
                 {
                     followedProjectileId = projectile.Id;
                     var position = projectile.Translation;
                     scene.TacticalView.LookAt(new Vector3(position.X, position.Y, 0f));
+                }
+                else if (followFirstOnly && followedProjectileId != ObjectId.Invalid)
+                {
+                    followProjectileExpired = true;
+                    reporter.Info(
+                        "First followed projectile died; camera frozen at its impact site.");
                 }
             }
             else if (followState != null && !followFrozen)
@@ -577,7 +587,19 @@ public static class ScenarioCaptureRunner
                 {
                     var source = actors[attack.SourceActorId].Object;
                     var target = actors[attack.TargetActorId].Object;
-                    var weapon = source.CurrentWeapon;
+                    Weapon weapon = null;
+                    if (!string.IsNullOrWhiteSpace(attack.WeaponName))
+                    {
+                        weapon = source.ActiveWeaponSet.Weapons
+                            .FirstOrDefault(w => w != null && string.Equals(w.Template.Name, attack.WeaponName, StringComparison.OrdinalIgnoreCase));
+                        if (weapon == null)
+                        {
+                            return (Failed(command,
+                                $"'{source.Definition.Name}' has no weapon '{attack.WeaponName}' in its current weapon set."), 4);
+                        }
+                    }
+
+                    weapon ??= source.CurrentWeapon;
                     if (weapon == null)
                     {
                         return (Failed(command, $"'{source.Definition.Name}' has no current weapon; nothing would fire."), 4);
@@ -587,6 +609,24 @@ public static class ScenarioCaptureRunner
                     // order's move step suppresses fire for several units, and any approach would
                     // drift the actors out of the framing the capture just fitted.
                     weapon.SetTarget(new WeaponTarget(game.Scene3D.GameObjects, target.Id));
+                    return (Dispatched(command), null);
+                }
+
+            case CaptureGrantUpgradeCommand grant:
+                {
+                    var actor = actors[grant.ActorId].Object;
+                    var upgrade = game.AssetStore.Upgrades.GetByName(grant.UpgradeName);
+                    if (upgrade == null)
+                    {
+                        return (Failed(command, $"Upgrade '{grant.UpgradeName}' not found."), 1);
+                    }
+
+                    // The object's weapon set rebuilds on its next logic tick, so a GrantUpgrade
+                    // scheduled before an Attack makes the upgraded weapons addressable by name.
+                    // Player-type upgrades land on the owner; the object's upgrade modules
+                    // (e.g. WeaponSetUpgrade) must be re-evaluated against the merged set.
+                    upgrade.GrantUpgrade(actor);
+                    actor.UpdateUpgradeableModules();
                     return (Dispatched(command), null);
                 }
 
@@ -939,11 +979,14 @@ public static class ScenarioCaptureRunner
     /// <summary>
     /// The live projectile the follow camera should ride: the previously followed one while it
     /// still exists (stability through its flight), else the newest projectile from the source.
-    /// Returns null between shots; the camera then holds its last position.
+    /// First-only mode acquires the EARLIEST live projectile once and never hands off: the lock
+    /// dies with its projectile so the camera freezes instead of jumping mid-salvo. Returns null
+    /// between shots (or after the locked projectile's death); the camera then holds its last
+    /// position.
     /// </summary>
-    private static GameObject? FindFollowProjectile(Game game, GameObject source, ObjectId previouslyFollowed)
+    private static GameObject? FindFollowProjectile(Game game, GameObject source, ObjectId previouslyFollowed, bool firstOnly)
     {
-        GameObject? newest = null;
+        GameObject? best = null;
         foreach (var candidate in game.Scene3D.GameObjects.Objects)
         {
             if (!candidate.Definition.KindOf.Get(ObjectKinds.Projectile))
@@ -961,13 +1004,17 @@ public static class ScenarioCaptureRunner
                 return candidate;
             }
 
-            if (newest == null || candidate.Id.Index > newest.Id.Index)
+            var takesIt = firstOnly
+                ? previouslyFollowed == ObjectId.Invalid
+                    && (best == null || candidate.Id.Index < best.Id.Index)
+                : best == null || candidate.Id.Index > best.Id.Index;
+            if (takesIt)
             {
-                newest = candidate;
+                best = candidate;
             }
         }
 
-        return newest;
+        return best;
     }
 
     private static List<ActorRecord> DescribeProjectiles(

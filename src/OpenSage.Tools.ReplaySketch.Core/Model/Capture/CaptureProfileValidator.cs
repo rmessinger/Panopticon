@@ -146,6 +146,27 @@ public static class CaptureProfileValidator
                     }
 
                     break;
+
+                case CaptureGrantUpgradeCommand grant:
+                    if (!actorIds.Contains(grant.ActorId))
+                    {
+                        errors.Add($"GrantUpgrade command references unknown actor '{grant.ActorId}'.");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(grant.UpgradeName))
+                    {
+                        errors.Add($"GrantUpgrade command '{grant.Describe()}' needs an UpgradeName.");
+                    }
+
+                    break;
+
+                case CaptureMoveCommand move:
+                    if (!actorIds.Contains(move.ActorId))
+                    {
+                        errors.Add($"Move command references unknown actor '{move.ActorId}'.");
+                    }
+
+                    break;
             }
         }
 
@@ -262,6 +283,12 @@ public static class CaptureProfileValidator
                     {
                         errors.Add(
                             $"Follow camera projectile source '{camera.FollowProjectileSourceActorId}' is not a declared actor.");
+                    }
+
+                    if (camera.FollowFirstProjectileOnly && !hasProjectileSource)
+                    {
+                        errors.Add(
+                            "FollowFirstProjectileOnly needs a FollowProjectileSourceActorId.");
                     }
 
                     if (!hasFollowActor && !hasProjectileSource && camera.SubjectActorIds.Count == 0)

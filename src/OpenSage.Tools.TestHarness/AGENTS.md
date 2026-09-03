@@ -62,12 +62,17 @@ dotnet run --project src/OpenSage.Tools.TestHarness -- \
 
 `--scenario` takes a file path or an embedded profile name (checked-in examples:
 `capture-construction.json`, `capture-impulse.json`, `capture-rebel-attack.json`,
-`capture-scorpion-treads.json`, `capture-follow-move.json`, `capture-follow-projectile.json`).
+`capture-scorpion-treads.json`, `capture-follow-move.json`, `capture-follow-projectile.json`,
+`capture-scud-missile.json`, and the `capture-vehicle-*.json` set: tomahawk, rocket-buggy,
+humvee-tow, scorpion-missile, toxin-truck, dragon-tank).
 Commands: `Attack` (direct weapon
-targeting, no movement order), `Construct` (real `Order.CreateBuildObject` dispatch; the created
+targeting, no movement order; optional `WeaponName` addresses a specific slot weapon by its
+template name, e.g. a secondary TOW), `Construct` (real `Order.CreateBuildObject` dispatch; the created
 building binds to the command's result ID and is tracked), `ApplyImpulse` (mass-independent
 delta velocity via `PhysicsBehavior.ApplyForce`), `Move` (real pathfinded move order through
-`AIUpdate.SetTargetPoint`; raises the MOVING condition flag on dispatch, clears on arrival).
+`AIUpdate.SetTargetPoint`; raises the MOVING condition flag on dispatch, clears on arrival),
+`GrantUpgrade` (researches an upgrade for the actor's owner and refreshes its upgrade modules,
+flipping weapon sets; schedule it a frame before an `Attack` that names an upgraded weapon).
 Camera modes: `AutoFit` (one-time fit of subjects + framing points; the camera never moves),
 `Explicit` (fixed `LookAt` + `Height`), `Follow` (fits like AutoFit, or honors
 `InitialCameraHeight` when the follow subject is the lone subject, then pans every logic frame
@@ -75,7 +80,9 @@ so `FollowActorId`, defaulting to the first subject, stays at screen center; the
 never changes, and a destroyed subject freezes the camera at its last position).
 `FollowProjectileSourceActorId` (instead of `FollowActorId`) rides the newest live projectile
 fired by that actor: framed on the shooter until launch, tracks the projectile at screen
-center, freezes at the impact site between shots, hands off to the next shot. Projectiles are
+center, freezes at the impact site between shots, hands off to the next shot.
+`FollowFirstProjectileOnly` locks the FIRST projectile for its whole flight and freezes at its
+death site instead of handing off (rapid-fire salvos). Projectiles are
 linked to their launcher via `GameObject.CreatedByObjectID`, which `ProjectileNugget` sets.
 Expectations: `ProjectileObserved`,
 `ActorDamaged`, `ActorDestroyed`, `ConstructionProgressed`, `ConstructionCompleted`,

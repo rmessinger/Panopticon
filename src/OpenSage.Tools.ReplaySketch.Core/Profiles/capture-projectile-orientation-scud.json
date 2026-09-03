@@ -13,7 +13,7 @@
   "Actors": [
     {
       "Id": "launcher",
-      "Definition": "GLAVehicleSCUDLauncher",
+      "Definition": "GLAVehicleScudLauncher",
       "Owner": "gla",
       "X": 520,
       "Y": 600,

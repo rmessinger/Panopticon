@@ -1,0 +1,57 @@
+{
+  // China Dragon Tank breathing fire (primary weapon, range 75) at Redguard infantry 50 units
+  // out. Stream weapon: the camera follows the tank, not a projectile. Run with:
+  //   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-vehicle-dragon-tank.json
+  "Name": "vehicle-dragon-tank",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 60,
+  "SettleFrames": 5,
+  "CaptureStride": 2,
+  "HideHud": true,
+  "Players": [
+    { "Id": "china", "Side": "FactionChina", "Name": "China" },
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" }
+  ],
+  "Actors": [
+    {
+      "Id": "dragon",
+      "Definition": "ChinaTankDragon",
+      "Owner": "china",
+      "X": 480,
+      "Y": 640,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "target",
+      "Definition": "GLAInfantryRebel",
+      "Owner": "gla",
+      "X": 530,
+      "Y": 640,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowActorId": "dragon",
+    "SubjectActorIds": [ "dragon" ],
+    "DesiredSpanFraction": 0.5,
+    "InitialCameraHeight": 110,
+    "MinCameraHeight": 50,
+    "MaxCameraHeight": 400
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "dragon",
+      "TargetActorId": "target"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" }
+  ],
+  "StopWhenActorDestroyed": null
+}

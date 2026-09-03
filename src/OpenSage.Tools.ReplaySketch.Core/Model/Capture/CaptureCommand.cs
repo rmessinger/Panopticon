@@ -11,6 +11,7 @@ namespace OpenSage.Tools.ReplaySketch.Model.Capture;
 [JsonDerivedType(typeof(CaptureConstructCommand), "Construct")]
 [JsonDerivedType(typeof(CaptureApplyImpulseCommand), "ApplyImpulse")]
 [JsonDerivedType(typeof(CaptureMoveCommand), "Move")]
+[JsonDerivedType(typeof(CaptureGrantUpgradeCommand), "GrantUpgrade")]
 public abstract class CaptureCommand
 {
     /// <summary>Capture-relative logic frame to execute on; 0 is the first captured tick.</summary>
@@ -29,7 +30,14 @@ public sealed class CaptureAttackCommand : CaptureCommand
 
     public string TargetActorId { get; set; } = "";
 
-    public override string Describe() => $"Attack {SourceActorId} -> {TargetActorId}";
+    /// <summary>
+    /// Optional weapon template name (e.g. a non-primary slot weapon like the Humvee's TOW).
+    /// Empty uses the actor's current weapon.
+    /// </summary>
+    public string WeaponName { get; set; } = "";
+
+    public override string Describe() => $"Attack {SourceActorId} -> {TargetActorId}"
+        + (string.IsNullOrWhiteSpace(WeaponName) ? "" : $" with {WeaponName}");
 }
 
 /// <summary>
@@ -89,4 +97,17 @@ public sealed class CaptureMoveCommand : CaptureCommand
     public float Y { get; set; }
 
     public override string Describe() => $"Move {ActorId} to ({X:0.#}, {Y:0.#})";
+}
+
+/// <summary>
+/// Grants an upgrade (research) to the actor's owner: player upgrades flip weapon sets (e.g.
+/// the Humvee's TOW, the Scorpion's missile), object upgrades change the unit itself.
+/// </summary>
+public sealed class CaptureGrantUpgradeCommand : CaptureCommand
+{
+    public string ActorId { get; set; } = "";
+
+    public string UpgradeName { get; set; } = "";
+
+    public override string Describe() => $"GrantUpgrade {UpgradeName} to {ActorId}";
 }
