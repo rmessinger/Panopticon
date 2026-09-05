@@ -534,9 +534,15 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     simulation-affecting uncontrolled sites converted. Remaining presentation-only sources stay
     uncontrolled by design (listed in the audit). This is an available control, not a
     reproducibility requirement.
-- [ ] Verification harness: multi-sample metrics and per-run invariants.
+- [x] Verification harness: multi-sample metrics and per-run invariants.
   - AC: a harness runs a scenario sample set, checks each run's invariants, and reports aggregate
     distributions without requiring runs to agree.
+  - Done: `StatisticalRunHarness` in `OpenSage.Tools.ReplaySketch.Core` aggregates per-run
+    assertion reports and A1-5 T0 run outputs (mean, sample variance, Student-t 95% CI, Tukey
+    outliers); `HarnessRunner.RunAndAssert` gained an optional T0 run-output callback. Tests in
+    `A2StatisticalHarnessTests`: mocked-host default-N runs (non-interactive), install-backed
+    P0-harness runs (Interactive), higher N gated behind the `StatisticalHighN` trait. No
+    cross-run equality anywhere.
 
 ### A3: Simulation/presentation seam
 - [ ] Formalize the logic↔presentation boundary; ensure logic never reads render-only state.

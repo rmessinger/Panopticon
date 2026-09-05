@@ -32,7 +32,8 @@ public static class HarnessRunner
     public static AssertionReport RunAndAssert(
         ReplayScenario scenario,
         GameInstallation installation,
-        string tempDirectory)
+        string tempDirectory,
+        Action<RunOutput>? onRunCompleted = null)
     {
         ReplayActionMetrics.Reset();
 
@@ -88,6 +89,12 @@ public static class HarnessRunner
             // has completed k-1 frames — matching the pre-Update ComputeLogicFrame of the
             // previous loop.
             var host = new SimulationHost(game.GameEngine);
+
+            // A2 (WI-A2-04): optional T0 run-output capture for statistical aggregation. T0
+            // metrics only; the tiered T1/T2 recording stays out of scope here.
+            var runOutputRecorder = onRunCompleted is not null
+                ? new RunOutputRecorder(host, game, (uint)replayFile.Header.Metadata.SD, scenario.MapPath)
+                : null;
             var openCommands = 0;
             var timedOut = false;
 
@@ -140,6 +147,11 @@ public static class HarnessRunner
             finally
             {
                 resolver.Dispose();
+                if (runOutputRecorder is not null)
+                {
+                    onRunCompleted!(runOutputRecorder.Complete());
+                    runOutputRecorder.Dispose();
+                }
             }
 
             return evaluator.Evaluate();
