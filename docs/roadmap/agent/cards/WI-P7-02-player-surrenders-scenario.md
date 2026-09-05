@@ -17,7 +17,7 @@ Create the checked-in P7 PlayerSurrenders scenario where the human player issues
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: PlayerSurrenders expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scenario authoring requirements.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and per-tick abort behavior.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:112-112`: P7-2 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300`: `OrderType.EndGame` dependency on P3-4.
@@ -32,7 +32,7 @@ Create the checked-in P7 PlayerSurrenders scenario where the human player issues
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json` as a static deterministic `ReplayScenario`.
+1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json` as a static `ReplayScenario`.
 2. Include a short fixed-frame opening sequence that proves the match booted, then emit `OrderType.EndGame` for the human player via the P0 open command model.
 3. Assert the P3 `GameOutcome` is `OutcomeStatus.Decided`, `OutcomeReason.Surrendered`, with the surrendering human as loser and the opposing side as winner. Verify default/sentinel values do not pass.
 4. Add or extend focused P7 scenario test wiring so this scenario is loaded from the JSON and run through `HarnessRunner.RunAndAssert` with a real failing exit code on mismatch.

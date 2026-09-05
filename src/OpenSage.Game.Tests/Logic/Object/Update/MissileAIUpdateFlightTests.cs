@@ -9,6 +9,7 @@ using OpenSage.Mathematics;
 using OpenSage.Network;
 using OpenSage.Tests;
 using OpenSage.Tests.Data;
+using OpenSage.Tests.Logic.Object.Weapon;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -96,6 +97,10 @@ public class MissileAIUpdateFlightTests : IDisposable
         // Track every live missile's horizontal distance to the target each frame.
         var sawMissile = false;
         var minHorizontalDistance = float.MaxValue;
+        var previousPositions = new Dictionary<ObjectId, Vector3>();
+        var minimumAlignment = 1.0f;
+        var orientationSamples = 0;
+        var pivotSamples = 0;
         for (var i = 0; i < 300; i++)
         {
             Step(1);
@@ -103,9 +108,26 @@ public class MissileAIUpdateFlightTests : IDisposable
             foreach (var missile in LiveMissiles())
             {
                 sawMissile = true;
+                ProjectileVisualAssertions.AssertLeadingEdgePivot(missile);
+                pivotSamples++;
                 var dx = missile.Translation.X - targetPos.X;
                 var dy = missile.Translation.Y - targetPos.Y;
                 minHorizontalDistance = MathF.Min(minHorizontalDistance, MathF.Sqrt(dx * dx + dy * dy));
+
+                if (previousPositions.TryGetValue(missile.Id, out var previousPosition))
+                {
+                    var displacement = missile.Translation - previousPosition;
+                    if (displacement.LengthSquared() > 1e-6f)
+                    {
+                        var forward = Vector3.Normalize(missile.TransformMatrix.GetXVector());
+                        var travelDirection = Vector3.Normalize(displacement);
+                        minimumAlignment = MathF.Min(
+                            minimumAlignment,
+                            Vector3.Dot(forward, travelDirection));
+                        orientationSamples++;
+                    }
+                }
+                previousPositions[missile.Id] = missile.Translation;
             }
         }
 
@@ -116,8 +138,50 @@ public class MissileAIUpdateFlightTests : IDisposable
         Assert.True(minHorizontalDistance < 30,
             $"Missile never closed on the target: min horizontal distance {minHorizontalDistance}");
 
+        Assert.True(orientationSamples > 0, "No moving missile orientation was sampled");
+        Assert.True(pivotSamples > 0, "No missile model pivot was sampled");
+        Assert.True(minimumAlignment > 0.95f,
+            $"Missile forward axis diverged from travel direction: minimum dot {minimumAlignment}");
+
         Assert.True(tank.BodyModule.Health < tank.BodyModule.MaxHealth,
             "Missile warhead never damaged the target");
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void MissileWithoutFuel_FacesBallisticTravelDirection()
+    {
+        using var game = _game = CreateGame();
+        var usa = game.Scene3D.Players[2];
+
+        var missile = Spawn("HumveeMissile", new Vector3(600, 600, 120), usa);
+        missile.SetWarhead(new WeaponTemplate());
+        missile.CurrentWeapon!.SetTarget(new WeaponTarget(new Vector3(1400, 600, 120)));
+
+        var previousPosition = missile.Translation;
+        var minimumAlignment = 1.0f;
+        var coastSamples = 0;
+        for (var frame = 0; frame < 120 && !missile.IsEffectivelyDead; frame++)
+        {
+            Step(1);
+
+            var displacement = missile.Translation - previousPosition;
+            previousPosition = missile.Translation;
+            if (frame < 35
+                || missile.Physics is not { Velocity: { Z: < -0.05f } }
+                || displacement.LengthSquared() <= 1e-6f)
+            {
+                continue;
+            }
+
+            var forward = Vector3.Normalize(missile.TransformMatrix.GetXVector());
+            var travelDirection = Vector3.Normalize(displacement);
+            minimumAlignment = MathF.Min(minimumAlignment, Vector3.Dot(forward, travelDirection));
+            coastSamples++;
+        }
+
+        Assert.True(coastSamples > 0, "Missile never entered a descending ballistic coast");
+        Assert.True(minimumAlignment > 0.999f,
+            $"Ballistic missile forward axis diverged from travel direction: minimum dot {minimumAlignment}");
     }
 
     public void Dispose()

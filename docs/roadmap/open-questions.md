@@ -6,26 +6,23 @@
 >
 > Audience: human reference for roadmap decisions.
 
-- Determinism vs. parallelism. Decision: relaxed/statistical determinism + free intra-tick
-  parallelism with explicit conflict resolution. Bit-exact, cross-platform reproducibility is
-  not a goal. Results must be stable enough to compare experiments through aggregate metrics and
-  invariants reproduced within tolerance, not bit-identical. Within a tick, data-parallel
-  systems may run concurrently and write freely; conflicting writes are reconciled through
-  intent/command buffers plus a deterministic-enough merge and authority step. Consequences:
-  - [A2](track-a-foundations.md) is recast from "bit-exact determinism" to reproducibility
-    & statistical stability: seeded randomness stays centralized (so experiments are
-    controllable and re-runnable), but the verification harness checks metric/invariant
-    stability within tolerance and conflict-resolution correctness, not bit-equality.
+- Determinism priority. Decision: determinism is not a roadmap requirement or a gate for
+  parallelism, distribution, physics, AI, replay, or experiment tooling. Runs may diverge across
+  executions, platforms, builds, thread schedules, and shard layouts. Validation uses per-run
+  invariants, authored bounds, aggregate distributions, and performance statistics where useful.
+  Seed controls remain available as an experiment input, but do not imply reproducibility.
+  Within a tick, data-parallel systems may run concurrently and write freely; conflicting writes
+  are reconciled through explicit intent/command buffers and authority rules for correctness.
+  Consequences:
+  - [A2](track-a-foundations.md) is statistical validation: its harness reports distributions and
+    checks invariants without requiring same-seed agreement or state-hash parity.
   - [B3](track-b-scale.md) adopts the free-intra-tick + conflict-resolution model as its
     concrete parallelism design (read/modify via intent buffers, merge by rules).
   - [B6](deep-dives/b6-distributed-simulation.md) validates handoff/boundary sync by
-    invariants (no unit duplication/loss, conservation) and statistical metric closeness to a
-    single-shard reference, not by bit-exact state-hash equality. Cross-shard conflicts use the
+    invariants such as no unit duplication/loss and conservation. Cross-shard conflicts use the
     same authority/resolution rules.
-  - State hashing remains useful as a coarse/quantized signature and as an opt-in strict mode
-    for debugging, but is no longer the primary divergence check; recorded state snapshots/
-    deltas (not input-only re-simulation) back the replayer, since re-running inputs will not
-    reproduce a run bit-for-bit. To still locate where runs diverge, A1-5 records and A5-4
+  - Recorded state snapshots/deltas, not input-only re-simulation, back the replayer. For
+    diagnostic comparisons, A1-5 records and A5-4
     localizes via a tiered, hierarchical recording (aggregate metrics → per-region/entity
     signature tree → triggered per-entity detail) captured live; see
     [visualization.md §5](deep-dives/a5-visualization.md).
@@ -52,10 +49,9 @@
   experiments; OpenSAGE may extend/replace the `.map` format and need not stay loadable in the
   original engine. Makes chunked storage (B4a-5) a core requirement. See
   [B4a deep dive](deep-dives/b4a-larger-maps.md).
-- Variable-fidelity determinism stance. Decision: fidelity is a function of replicated
+- Variable-fidelity consistency stance. Decision: fidelity is a function of replicated
   simulation state for anything shared or distributed; view-driven fidelity is allowed only for
-  single-node, non-distributed experiments. Under the relaxed-determinism Decision, the real
-  constraints are bounded statistical error and cross-shard consistency. Shared and distributed
+  single-node, non-distributed experiments. Shared and distributed
   runs therefore derive fidelity inputs from replicated state so every shard agrees on each
   entity's fidelity level, never from a local camera or view. View-driven fidelity, such as LOD
   by camera distance, remains available for single-node experiments where no shard can disagree.
@@ -150,8 +146,7 @@
   [P3](track-p-playable-baseline.md).
 - Skirmish AI actuation. Decision: emit `Order`s through `OrderProcessor`. The AI issues the
   same `Order`s a human would (`BuildObject`/`CreateUnit`/`ForceAttack…`) rather than calling engine
-  APIs directly, so AI actions enter the recorded/replayed order stream, keeping runs reproducible
-  for [A2](track-a-foundations.md)/Track B and consistent with the
+  APIs directly, so AI actions enter the recorded/replayed order stream and remain consistent with the
   [P0 harness](deep-dives/p0-playable-baseline-harness.md). Trade-off accepted: the AI must synthesize
   valid order arguments (positions, object ids). Must be settled before P2-2. Affects
   [P2](track-p-playable-baseline.md).
@@ -167,8 +162,8 @@
   implementation to carve it from. `AIPlayer.OnDecisionTick()`'s current subclass-override shape
   becomes an injectable `IAIDecisionPolicy`, with `SkirmishAIPlayer`'s rule-based state machine
   as the reference implementation; actuation is unaffected: every policy still emits `Order`s
-  through `OrderProcessor` (the P2 actuation decision above), so reproducibility (A2) and the
-  recorded/replayed order stream hold regardless of which policy runs. This is what unblocks a
+  through `OrderProcessor` (the P2 actuation decision above), so the recorded/replayed order
+  stream holds regardless of which policy runs. This is what unblocks a
   neural-network policy trained by running many seeded self-play matches (a population of
   weight-vector genomes, fitness scored off `GameOutcome`, evolved via selection/mutation across
   generations in an A4 experiment sweep). Design-only for now; implementation (interface
@@ -180,8 +175,8 @@
   per-rank neural networks, rather than a single flat policy per player. This is an alternative
   policy family behind the same `IAIDecisionPolicy` seam, not a replacement for it: a
   `HierarchicalAIDecisionPolicy` adapter runs the ranks and still emits every order through
-  `OrderProcessor`, so the actuation and reproducibility constraints already established for A4/P2
-  hold unchanged. Squads derive from the existing team/selection model; a squad's commander is
+  `OrderProcessor`, so the actuation constraints already established for A4/P2 hold unchanged.
+  Squads derive from the existing team/selection model; a squad's commander is
   promoted from its highest-value surviving member on commander death. Network complexity scales
   by rank (soldier smallest, general largest), not by total unit count. Design-only for now;
   implementation and a co-evolutionary training scheme are follow-on work. Detailed design:
@@ -247,14 +242,6 @@
   economy/production/victory/AI loop. Just enough to prove the [A4](track-a-foundations.md) domain
   seam and [B6](deep-dives/b6-distributed-simulation.md) partitioning are topology-general rather than
   RTS-shaped. Affects [A4](track-a-foundations.md), [B6](deep-dives/b6-distributed-simulation.md).
-- A2 strict-hash mode scope. Decision: same platform/build, best-effort, parallelism allowed.
-  The opt-in strict-hash mode is scoped to a single platform + build and does not forbid intra-tick
-  parallelism; it is therefore best-effort and may still diverge under nondeterministic parallel
-  writes (consistent with the relaxed-determinism Decision). It is a finer-grained debugging
-  signature that approaches bit-equality for same-platform/same-build single runs, not a guarantee of
-  cross-platform or under-parallelism bit-exactness. The [A2](track-a-foundations.md) milestone is
-  softened accordingly: no unconditional "reproduces bit-exactly" promise. Affects
-  [A2](track-a-foundations.md).
 - C5 external-model tooling. Decision: extend ReplaySketch, no dedicated viewer. External-model
   import/preview/validation tooling ([C5](track-c-external-assets.md)) extends ReplaySketch rather
   than spawning a separate viewer, per the no-fragmentation tooling convention (ReplaySketch is the
@@ -263,7 +250,7 @@
 - Save/load (StatePersister) reach. Decision: single-node only. The single `StatePersister`
   save/persist path is required to work only for single-node runs; it is not required to serialize
   sharded/distributed ([B6](deep-dives/b6-distributed-simulation.md)) state. Distributed runs rely on the
-  recorded snapshot/delta stream (the relaxed-determinism recording) for analysis and replay, not on
+  recorded snapshot/delta stream for analysis and replay, not on
   `StatePersister`. The "one save/persist path" in the Simulation-domain scope Decision means one path
   per node, not one path spanning shards. Headless single-node runs may still round-trip save/load;
   cross-shard save/load is out of scope unless a later experiment needs it. Affects
@@ -282,24 +269,42 @@
   be validated against existing built-in content first. Affects
   [Track D](track-d-gameplay-expansion.md),
   [deep-dives/d1-d2-tech-tree-era-progression.md](deep-dives/d1-d2-tech-tree-era-progression.md).
-- Deformable terrain & destruction scope, Decision: own track (Track F), not folded into an
-  existing track; destruction is physics-based, not model-swap. Runtime terrain deformation
-  (craters/scorch marks) does not exist in original SAGE, and Track F's destruction (F4/F5)
+- Object physics, deformable terrain & destruction scope, Decision: own track (Track F), not folded
+  into an existing track; destruction is physics-based, not model-swap. Runtime terrain deformation
+  (craters/scorch marks) does not exist in original SAGE, and Track F's destruction (F4a/F5)
   replaces the canned model-swap approach (rubble/damage-state model swaps, already covered under
   P6-2/P6-3) with rigid-body physics simulation (debris/structural collapse via a new pluggable
   physics seam). Both are new fidelity beyond what P6-2/P6-3 verify, so neither is gated by Track P
   playable-baseline fidelity. The track is split out because it cuts across terrain storage
   ([B4a](deep-dives/b4a-larger-maps.md)), rendering ([B5](track-b-scale.md)), a new physics substrate,
-  combat ([P6](deep-dives/p4-p6-economy-production-combat.md)), and save/replay/determinism
-  ([A2](track-a-foundations.md)) rather than fitting inside any single existing track; the same
+  combat ([P6](deep-dives/p4-p6-economy-production-combat.md)), and save/replay rather than fitting
+  inside any single existing track; the same
   reasoning that split gameplay content out as Track D. Named "Track F" (not "Track D"/"Track E")
   to avoid collisions with two pending unmerged branches: `docs/track-d-gameplay-expansion`
   (Gameplay Content Expansion) and `docs/track-e-naval-warfare` (Naval Warfare). Since superseded
   by events: both branches merged (PRs #5 and #6), so Tracks D and E are on `main` and the letter
   assignment stands on that basis rather than on pending work. The physics
   engine/library is an open candidate, settled when F4 starts, mirroring how Track C left the
-  first external model format ([C4](track-c-external-assets.md)) as a candidate. Affects
+  first external model format ([C4](track-c-external-assets.md)) as a candidate. Since settled:
+  BepuPhysics2, see the object physics engine Decision below. Affects
   [Track F](track-f-terrain-destruction.md).
+- Object physics engine, Decision: BepuPhysics2, consumed as NuGet packages `BepuPhysics` +
+  `BepuUtilities` 2.4.0 (Apache-2.0, GPLv3-compatible) behind an engine-internal object physics
+  seam, settling the F4 candidate. SAGE behavioral fidelity is no longer binding for physics.
+  Every instantiated `GameObject` resolves through one engine-level participation policy:
+  dynamic, kinematic, static, sensor, or no physics. Physical units, projectiles, loose objects,
+  structures, bridges, props, and watercraft use Bepu as applicable; drawable-only effects,
+  script markers, and other objects with no physical role remain outside the solver. Bepu owns
+  solid contact generation/response while `PartitionCellManager` retains gameplay queries and
+  non-physical regions. Each `GameEngine` receives one backend through injected configuration;
+  the proof-of-concept process-global selector is retired. Migration is incremental by category
+  inside Bepu worlds, with the current `PhysicsBehavior` Euler integrator retained as the reference
+  backend. Bepu becomes the default only after the F4a cross-game classification and scenario
+  matrix passes.
+  Gameplay-decisive reads may consume contact state and are validated by invariants and loose
+  authored bounds. Design: [physics-seam plan](plans/physics-seam.md). Affects
+  [Track F](track-f-terrain-destruction.md), [Track E](track-e-naval-warfare.md),
+  [Track B](track-b-scale.md), and [Track H](track-h-storage-formats.md).
 - Rendering clarity & image quality scope, Decision: own track (Track G), not folded into
   [B5 rendering at scale](track-b-scale.md), and not gated on Track P. The current renderer is
   faithful to the original game but grainy on high-resolution displays, with a screen-door pattern
@@ -357,7 +362,8 @@
   modding/content pipeline ([Track D](track-d-gameplay-expansion.md),
   [ModCollector](plans/mod-collector.md)), and authoring tooling (WorldBuilder), rather than
   fitting inside any single existing track. Named "Track H" because A–G are already assigned on
-  `main`. Gated on Track P (P7) only, like Tracks B, C, D, E, and F. Affects
+  `main`. Its hard dependency is Track P (P7); coordination with F4a concerns optional
+  engine-level physics fields and does not gate the format seam. Affects
   [Track H](track-h-storage-formats.md).
 - HUD rework scope. Decision: replacing the pre-rendered HUD is in scope for G9, as an additional
   work item rather than a new track or phase. G9's original scope (native-resolution 2D,

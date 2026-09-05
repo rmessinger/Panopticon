@@ -55,6 +55,12 @@ public sealed class Locomotor : IPersistableObject
     private LocomotorFlags _flags;
     private float _preferredHeight;
     private float _preferredHeightDamping;
+
+    /// <summary>
+    /// Cap on the THRUST path's orientation slewing, in degrees per logic frame. Null uses the
+    /// full template turn rate. Set by missile AI updates that need a gentle pitch-over.
+    /// </summary>
+    internal float? ThrustTurnRateLimitPerFrame { get; set; }
     private float _angleOffset;
     private float _offsetIncrement;
 
@@ -1404,6 +1410,13 @@ public sealed class Locomotor : IPersistableObject
         var maxAccel = (forwardSpeedDelta > 0.0f || GetBraking() == 0) ? GetMaxAcceleration(bdt) : -GetBraking();
         var maxTurnRate = GetMaxTurnRate(bdt);
 
+        // Optional orientation-rate cap (degrees per logic frame): missiles easing onto a
+        // trajectory set this so the nose doesn't whip around at the full template rate.
+        if (ThrustTurnRateLimitPerFrame is { } turnRateLimit && turnRateLimit < maxTurnRate)
+        {
+            maxTurnRate = turnRateLimit;
+        }
+
         // What direction do we need to thrust in, in order to reach the goalpos?
         var desiredThrustDir = CalcDirectionToApplyThrust(obj, physics, localGoalPos, maxAccel);
 
@@ -1585,8 +1598,14 @@ public sealed class Locomotor : IPersistableObject
         {
             var objPos = obj.Translation;
 
-            var newXform = Matrix4x4Utility.CreateTransformMatrix(objPos, actualDir);
-            obj.SetTransformMatrix(newXform);
+            if (Matrix4x4Utility.TryCreateTransformMatrix(
+                objPos,
+                actualDir,
+                obj.Transform.Scale,
+                out var newXform))
+            {
+                obj.SetTransformMatrix(newXform);
+            }
         }
         return relAngle;
     }

@@ -100,6 +100,7 @@ layout(location = 0) in vec3 in_WorldPosition;
 layout(location = 1) in vec3 in_WorldNormal;
 layout(location = 2) in vec2 in_UV0;
 layout(location = 3) in vec2 in_UV1;
+layout(location = 6) in float in_TextureScrollScale;
 layout(location = 4) in vec2 in_CloudUV;
 layout(location = 5) in float in_ViewSpaceDepth;
 
@@ -133,7 +134,7 @@ vec4 SampleTexture(
 
         case TEXTURE_MAPPING_LINEAR_OFFSET:
         {
-            vec2 offset = textureMapping.UVPerSec * t;
+            vec2 offset = textureMapping.UVPerSec * t * in_TextureScrollScale;
             uv = vec2(uv.x, 1 - uv.y) - offset;
             uv *= textureMapping.UVScale;
             break;

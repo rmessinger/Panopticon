@@ -20,7 +20,10 @@ public class W3dModelDrawTests
     }
 
     [Theory]
-    [InlineData(new[] { ModelConditionFlag.AwaitingConstruction, ModelConditionFlag.PartiallyConstructed, ModelConditionFlag.ActivelyBeingConstructed }, new[] { ModelConditionFlag.AwaitingConstruction, ModelConditionFlag.Garrisoned })] // we can DEFINITELY have extra flags - I'm not sure if this is the result that would be returned though
+    // GARRISONED matches nothing; AWAITING_CONSTRUCTION alone and the construction states
+    // intersect equally, and later-defined states win ties, so the trailing AWAITING_CONSTRUCTION
+    // alias state wins over the PARTIALLY_CONSTRUCTED states defined earlier.
+    [InlineData(new[] { ModelConditionFlag.AwaitingConstruction }, new[] { ModelConditionFlag.AwaitingConstruction, ModelConditionFlag.Garrisoned })]
     [InlineData(new[] { ModelConditionFlag.AwaitingConstruction, ModelConditionFlag.PartiallyConstructed, ModelConditionFlag.ActivelyBeingConstructed }, new[] { ModelConditionFlag.PartiallyConstructed, ModelConditionFlag.ActivelyBeingConstructed })]
     [InlineData(new[] { ModelConditionFlag.AwaitingConstruction, ModelConditionFlag.PartiallyConstructed, ModelConditionFlag.ActivelyBeingConstructed, ModelConditionFlag.Night, ModelConditionFlag.Snow, ModelConditionFlag.Damaged }, new[] { ModelConditionFlag.PartiallyConstructed, ModelConditionFlag.ActivelyBeingConstructed, ModelConditionFlag.Night, ModelConditionFlag.Snow, ModelConditionFlag.Damaged })]
     [InlineData(new[] { ModelConditionFlag.AwaitingConstruction, ModelConditionFlag.PartiallyConstructed, ModelConditionFlag.ActivelyBeingConstructed, ModelConditionFlag.Night }, new[] { ModelConditionFlag.PartiallyConstructed, ModelConditionFlag.ActivelyBeingConstructed, ModelConditionFlag.Night })]

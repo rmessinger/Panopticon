@@ -73,10 +73,13 @@ public class ProjectileDamageTimingTests : IDisposable
         // (attacker, first-kill frame budget). DragonTankFlameProjectile exhausts its fuel
         // mid-flight (DetonateOnNoFuel must deliver the warhead, not just kill the missile);
         // NukeCannonShell is a Bezier projectile whose kinematic Speed is per logic frame.
-        foreach (var (attackerName, budget) in new[] { ("ChinaTankDragon", 60), ("ChinaVehicleNukeLauncher", 240) })
+        foreach (var (attackerName, budget) in new[] { ("ChinaTankDragon", 60), ("ChinaVehicleNukeLauncher", 300) })
         {
             var attacker = Spawn(attackerName, new Vector3(600, 600, 0), china);
-            var car = Spawn("CarAsian1", new Vector3(680, 600, 0), civilian);
+            // The nuke cannon's NukeCannonGun has a 200-unit minimum attack range (dead zone);
+            // the car must sit inside the 200..350 window or the weapon holds fire.
+            var carDistance = attackerName == "ChinaVehicleNukeLauncher" ? 260 : 80;
+            var car = Spawn("CarAsian1", new Vector3(600 + carDistance, 600, 0), civilian);
             car.BodyModule.SetMaxHealth(30f, MaxHealthChangeType.FullyHeal);
             for (var i = 0; i < 30; i++)
             {
@@ -171,6 +174,98 @@ public class ProjectileDamageTimingTests : IDisposable
 
         Assert.True(lastMissileDistance < 60,
             $"Missile vanished while still {lastMissileDistance} units from the target, yet damage landed later");
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void NukeCannonShell_FacesFrameDisplacement_ThroughArc()
+    {
+        using var game = _game = CreateGame();
+        var scene = game.Scene3D;
+        var china = scene.Players[0];
+        var civilian = scene.Players[1];
+
+        var launcher = Spawn("ChinaVehicleNukeLauncher", new Vector3(520, 600, 0), china);
+        var target = Spawn("CarAsian1", new Vector3(760, 600, 0), civilian);
+        target.BodyModule.SetMaxHealth(100000f, MaxHealthChangeType.FullyHeal);
+        for (var i = 0; i < 30; i++)
+        {
+            game.Update([]);
+        }
+
+        launcher.CurrentWeapon!.SetTarget(new WeaponTarget(scene.GameObjects, target.Id));
+
+        var previousPositions = new Dictionary<ObjectId, Vector3>();
+        var minimumAlignment = 1.0f;
+        var orientationSamples = 0;
+        var pivotSamples = 0;
+        var sawClimb = false;
+        var sawDescent = false;
+        for (var frame = 0; frame < 360; frame++)
+        {
+            game.Update([]);
+
+            foreach (var shell in scene.GameObjects.Objects.Where(
+                o => o.Definition.Name == "NukeCannonShell" && !o.IsEffectivelyDead))
+            {
+                ProjectileVisualAssertions.AssertLeadingEdgePivot(shell);
+                pivotSamples++;
+                if (previousPositions.TryGetValue(shell.Id, out var previousPosition))
+                {
+                    var displacement = shell.Translation - previousPosition;
+                    if (displacement.LengthSquared() > 1e-6f)
+                    {
+                        var travelDirection = Vector3.Normalize(displacement);
+                        var forward = Vector3.Normalize(shell.TransformMatrix.GetXVector());
+                        minimumAlignment = MathF.Min(
+                            minimumAlignment,
+                            Vector3.Dot(forward, travelDirection));
+                        orientationSamples++;
+                        sawClimb |= travelDirection.Z > 0.05f;
+                        sawDescent |= travelDirection.Z < -0.05f;
+                    }
+                }
+                previousPositions[shell.Id] = shell.Translation;
+            }
+        }
+
+        Assert.True(orientationSamples > 0, "No moving NukeCannonShell orientation was sampled");
+        Assert.True(pivotSamples > 0, "No NukeCannonShell model pivot was sampled");
+        Assert.True(sawClimb, "NukeCannonShell never climbed through its arc");
+        Assert.True(sawDescent, "NukeCannonShell never descended through its arc");
+        Assert.True(minimumAlignment > 0.999f,
+            $"Shell forward axis diverged from travel direction: minimum dot {minimumAlignment}");
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void TumblingProjectile_DoesNotOverrideLaunchOrientation()
+    {
+        using var game = _game = CreateGame();
+        var scene = game.Scene3D;
+        var gla = scene.Players[1];
+
+        var rock = Spawn(
+            "GLAAngryMobRockProjectileObject",
+            new Vector3(560, 600, 40),
+            gla);
+        var launchRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.6f);
+        rock.SetRotation(launchRotation);
+        rock.SetWarhead(new WeaponTemplate());
+        rock.CurrentWeapon!.SetTarget(new WeaponTarget(new Vector3(760, 600, 40)));
+        rock.Speed = 4.0f;
+
+        var projectileBehavior = Assert.IsType<BezierProjectileBehavior>(
+            rock.FindBehavior<BezierProjectileBehavior>());
+        Assert.False(projectileBehavior.UsesFlightPathOrientation);
+
+        var initialForward = Vector3.Normalize(rock.TransformMatrix.GetXVector());
+        for (var frame = 0; frame < 10; frame++)
+        {
+            game.Update([]);
+        }
+
+        Assert.True(Vector3.Distance(rock.Translation, new Vector3(560, 600, 40)) > 1.0f);
+        var currentForward = Vector3.Normalize(rock.TransformMatrix.GetXVector());
+        Assert.InRange(Vector3.Dot(initialForward, currentForward), 0.99999f, 1.00001f);
     }
 
     public void Dispose()

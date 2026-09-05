@@ -99,6 +99,27 @@ public sealed class Drawable : Entity, IPersistableObject
         }
     }
 
+    internal bool TryGetModelSpaceBounds(out AxisAlignedBoundingBox bounds)
+    {
+        bounds = default;
+
+        var foundBounds = false;
+        foreach (var drawModule in DrawModules)
+        {
+            if (!drawModule.TryGetModelSpaceBounds(out var drawBounds))
+            {
+                continue;
+            }
+
+            bounds = foundBounds
+                ? AxisAlignedBoundingBox.CreateMerged(bounds, drawBounds)
+                : drawBounds;
+            foundBounds = true;
+        }
+
+        return foundBounds;
+    }
+
     // TODO(Port): Unify this, Drawable._transformMatrix, and GameObject.ModelTransform.
     public Matrix4x4 InstanceMatrix = Matrix4x4.Identity;
 
@@ -289,10 +310,10 @@ public sealed class Drawable : Entity, IPersistableObject
             var fireFXBone = drawModule.GetWeaponFireFXBone(slot);
             if (fireFXBone != null)
             {
-                var (modelInstance, bone) = drawModule.FindBone(fireFXBone + (index + 1).ToString("D2"));
+                var (modelInstance, bone) = FindWeaponBone(drawModule, fireFXBone, index);
                 if (bone != null)
                 {
-                    return modelInstance.AbsoluteBoneTransforms[bone.Index];
+                    return modelInstance!.AbsoluteBoneTransforms[bone.Index];
                 }
                 break;
             }
@@ -306,16 +327,16 @@ public sealed class Drawable : Entity, IPersistableObject
     {
         foreach (var drawModule in DrawModules)
         {
-            var fireFXBone = drawModule.GetWeaponLaunchBone(slot);
-            if (fireFXBone != null)
+            var launchBone = drawModule.GetWeaponLaunchBone(slot);
+            if (launchBone != null)
             {
-                var (modelInstance, bone) = drawModule.FindBone(fireFXBone + (index + 1).ToString("D2"));
+                var (modelInstance, bone) = FindWeaponBone(drawModule, launchBone, index);
                 if (bone != null)
                 {
                     // Compose the bone's root-relative transform with the object's current
                     // transform: this is called from logic (projectile launch), which cannot
                     // depend on render-time AbsoluteBoneTransforms having been refreshed.
-                    return modelInstance.RelativeBoneTransforms[bone.Index]
+                    return modelInstance!.RelativeBoneTransforms[bone.Index]
                         * GameObject.ModelTransform.Matrix
                         * GameObject.Transform.Matrix;
                 }
@@ -324,6 +345,25 @@ public sealed class Drawable : Entity, IPersistableObject
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Weapon bones are named <c>BoneNN</c> where NN enumerates the weapons on the slot. A
+    /// single-weapon slot has only the 01 bone regardless of which slot it is (the Humvee's
+    /// secondary TOW launcher bone is WEAPONB01), so the exact index falls back to 01.
+    /// </summary>
+    private static (ModelInstance? modelInstance, ModelBone? bone) FindWeaponBone(
+        DrawModule drawModule,
+        string boneName,
+        int index)
+    {
+        var (modelInstance, bone) = drawModule.FindBone(boneName + (index + 1).ToString("D2"));
+        if (bone == null && index != 0)
+        {
+            (modelInstance, bone) = drawModule.FindBone(boneName + "01");
+        }
+
+        return (modelInstance, bone);
     }
 
     public (ModelInstance? modelInstance, ModelBone? bone) FindBone(string boneName)

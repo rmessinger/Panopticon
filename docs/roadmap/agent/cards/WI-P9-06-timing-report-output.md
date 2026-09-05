@@ -37,8 +37,7 @@ reporting gaps and timeouts distinctly from measured durations.
 4. Emit the same data as JSON to a configurable path so CI and future
    [A5](../../deep-dives/a5-visualization.md) tooling can consume it.
 5. Print a trailing summary line with counts of passed, regressed, timed out, and gapped units.
-6. Sort rows deterministically (faction then roster index) so two runs produce diffable output. This
-   is what makes the determinism check in `WI-P9-07` possible.
+6. Sort rows by faction then roster index so reports are easy to inspect and diff.
 7. Ensure any new `.cs` file is UTF-8 with BOM. Run `dotnet format src`, then verify
    `dotnet format src --verify-no-changes` is clean.
 
@@ -52,7 +51,7 @@ reporting gaps and timeouts distinctly from measured durations.
 - [ ] Every roster unit appears exactly once in the table.
 - [ ] Timeouts and gaps are visually and structurally distinct from measured durations, in both the
       table and the JSON.
-- [ ] Row order is deterministic, so two runs of the same scenario produce diffable output.
+- [ ] Rows use stable faction and roster-index ordering.
 - [ ] The JSON artifact contains the same data as the table and is written to a configurable path.
 - [ ] The summary line reports passed, regressed, timed out, and gapped counts.
 - [ ] Any new `.cs` files are UTF-8 with BOM, `dotnet format src` has been run, and

@@ -1,0 +1,59 @@
+{
+  // Follow-projectile example: a USA Missile Defender fires at a China BattleMaster and the
+  // camera rides the missile: framed on the shooter at start, tracks the missile in flight,
+  // freezes at the impact site between shots, and hands off to the next missile. Run with:
+  //   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-follow-projectile.json
+  "Name": "follow-projectile",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 75,
+  "SettleFrames": 5,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "defender",
+      "Definition": "AmericaInfantryMissileDefender",
+      "Owner": "usa",
+      "X": 540,
+      "Y": 600,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "target",
+      "Definition": "ChinaTankBattleMaster",
+      "Owner": "china",
+      "X": 640,
+      "Y": 600,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowProjectileSourceActorId": "defender",
+    "SubjectActorIds": [ "defender" ],
+    "DesiredSpanFraction": 0.45,
+    "InitialCameraHeight": 120,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 400
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "defender",
+      "TargetActorId": "target"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" },
+    { "Type": "ActorDamaged", "ActorId": "target" }
+  ],
+  "StopWhenActorDestroyed": null
+}

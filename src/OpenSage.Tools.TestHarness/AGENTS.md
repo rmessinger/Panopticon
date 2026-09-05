@@ -40,11 +40,87 @@ logic frame, and writes `manifest.json` with per-frame screen projections, radii
 projectile positions. Knobs live under `EngagementCapture` in `TestHarness.json`; notably
 `AxisAngleDegrees` (orients the pair so firing FX vent behind the attacker rather than over him)
 and `HideHud` (closes GUI windows so the minimap stays out of the crop). Background and measured
-angle comparisons: `docs/engagement-capture-findings.md`.
+angle comparisons: `docs/system-investigations/engagement-capture-findings.md`.
 
 Exit codes: 1 unknown object definition, 4 camera could not be fitted or attacker has no
 weapon, 5 no projectile ever observed. Render `scripts/annotate_engagement_gif.py <captureDir>
 <out.gif>` to get the labelled GIF. Full recipe: `docs/screenshots.md`.
+
+### `ScenarioCapture` scenario (generic)
+
+Declarative capture of any small scripted scene: a profile JSON describes players, actors, a
+fixed or auto-fitted camera, frame-scheduled commands, and expectations; the runner executes it
+headlessly and writes a PNG sequence plus a schema-2 `manifest.json` (an additive superset of the
+engagement manifest: world positions, velocities, construction state, command/expectation
+results). `EngagementCapture` is now an adapter onto this runner.
+
+```bash
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  --headless --built-in-scenario ScenarioCapture --scenario capture-construction.json
+```
+
+`--scenario` takes a file path or an embedded profile name (checked-in examples:
+`capture-construction.json`, `capture-impulse.json`, `capture-rebel-attack.json`,
+`capture-scorpion-treads.json`, `capture-follow-move.json`, `capture-follow-projectile.json`,
+`capture-scud-missile.json`, and the `capture-vehicle-*.json` set: tomahawk, rocket-buggy,
+humvee-tow, scorpion-missile, toxin-truck, dragon-tank).
+Commands: `Attack` (direct weapon
+targeting, no movement order; optional `WeaponName` addresses a specific slot weapon by its
+template name, e.g. a secondary TOW), `Construct` (real `Order.CreateBuildObject` dispatch; the created
+building binds to the command's result ID and is tracked), `ApplyImpulse` (mass-independent
+delta velocity via `PhysicsBehavior.ApplyForce`), `Move` (real pathfinded move order through
+`AIUpdate.SetTargetPoint`; raises the MOVING condition flag on dispatch, clears on arrival),
+`GrantUpgrade` (researches an upgrade for the actor's owner and refreshes its upgrade modules,
+flipping weapon sets; schedule it a frame before an `Attack` that names an upgraded weapon).
+Camera modes: `AutoFit` (one-time fit of subjects + framing points; the camera never moves),
+`Explicit` (fixed `LookAt` + `Height`), `Follow` (fits like AutoFit, or honors
+`InitialCameraHeight` when the follow subject is the lone subject, then pans every logic frame
+so `FollowActorId`, defaulting to the first subject, stays at screen center; the fitted height
+never changes, and a destroyed subject freezes the camera at its last position).
+`FollowProjectileSourceActorId` (instead of `FollowActorId`) rides the newest live projectile
+fired by that actor: framed on the shooter until launch, tracks the projectile at screen
+center, freezes at the impact site between shots, hands off to the next shot.
+`FollowFirstProjectileOnly` locks the FIRST projectile for its whole flight and freezes at its
+death site instead of handing off (rapid-fire salvos). Projectiles are
+linked to their launcher via `GameObject.CreatedByObjectID`, which `ProjectileNugget` sets.
+Expectations: `ProjectileObserved`,
+`ActorDamaged`, `ActorDestroyed`, `ConstructionProgressed`, `ConstructionCompleted`,
+`MinDisplacement`; unmet expectations fail the run. Exit codes: 1 profile/setup error
+(invalid references, unknown definitions, non-builder, no physics, insufficient funds),
+4 camera could not frame the subjects or an attack source has no weapon, 5 expectation not met.
+`scripts/annotate_capture_gif.py <captureDir> <out.gif>` renders a generic cropped GIF
+(`--labels` adds a legend). `ProjectileOrientation` expectations validate sampled local `+X`
+against travel, and `--projectile-orientation` draws both vectors in the GIF. Reference profiles:
+`capture-projectile-orientation-shell.json`, `capture-projectile-orientation-missile.json`, and
+`capture-projectile-orientation-scud.json`.
+Camera fitting pauses logic and consumes zero logic ticks; warm-up
+belongs in the profile's `SettleFrames`. A profile selects the physics backend for the whole run
+with `"PhysicsBackend": "Bepu"` (example: `capture-impulse-bepu.json`), and actor `"Z"` spawns
+at an absolute world height; omit it to place the actor on terrain. Actor
+`PitchDegrees`/`RollDegrees` orient the
+spawn (roll 180 = upside down; example: `capture-car-flipped.json`). `DiskFileSystem` resolves
+loose override files case-insensitively, so patched models dropped into `<install>/Art/W3D/`
+load regardless of query casing.
+
+### `PhysicsStack` scenario (physics seam)
+
+Headless validation of the object physics seam (`docs/roadmap/plans/physics-seam.md`), PS-1.
+Two phases: a pure-seam Bepu benchmark (stacked boxes at 100/1k/10k bodies; ms per `Timestep`,
+loose settle bounds, run-to-run stability probe compared by loose center-of-mass bounds), then
+the embedded `capture-physics-stack.json` profile (40 cars stacked in columns fall and settle
+through the game on the Bepu backend), post-validated against a loose scatter bound around the
+stack center.
+
+```sh
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario PhysicsStack
+```
+
+Exit codes: 0 pass, 1 setup/manifest error, 5 unmet settle or scatter bound. Visual frames and
+manifest land in `/tmp/opensage_physics_stack/`; `scripts/annotate_capture_gif.py` renders the
+GIF. Reference timings (single-threaded, this repo's dev host): ~0.03/0.1/3.1 ms per `Timestep`
+at 100/1k/10k bodies.
 
 ---
 

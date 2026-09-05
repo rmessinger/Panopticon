@@ -19,7 +19,7 @@ partition to entity bucket) suitable for tolerance-aware divergence screening, p
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a5-visualization.md` §5: the tier definitions.
-- `docs/roadmap/deep-dives/a2-reproducibility.md` §2.2: the tolerance tiers T1 must respect.
+- `docs/roadmap/deep-dives/a2-reproducibility.md` §2.2: signatures are diagnostic, not parity gates.
 - `src/OpenSage.Game/RunOutput.cs`: the T0 artifact this extends.
 - `src/OpenSage.Game/SimulationHost.cs`: the per-tick hook.
 
@@ -27,7 +27,7 @@ partition to entity bucket) suitable for tolerance-aware divergence screening, p
 
 Unblocked: [a5-visualization.md §5.2](../../deep-dives/a5-visualization.md#52-design-points)
 specifies the bucketing (stable keys from the domain topology: spatial cells for the RTS grid
-domain, stable entity ids) and the tolerance shape (per-quantity ε, opt-in strict hashes), which
+domain, stable entity ids) and the tolerance shape (per-quantity ε), which
 was the blocker this card was waiting on. The comparator UI stays A5-4.
 
 ## Files likely to change
@@ -51,7 +51,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- No bit-exact hashing by default; the strict-hash mode stays opt-in (A2 decision).
+- Do not add a state-parity gate; signatures are diagnostic.
 - No visualization. That is A5-3.
 
 ## On completion

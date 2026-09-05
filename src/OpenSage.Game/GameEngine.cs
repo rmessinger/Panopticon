@@ -8,6 +8,9 @@ using OpenSage.Graphics.ParticleSystems;
 using OpenSage.Logic;
 using OpenSage.Logic.AI;
 using OpenSage.Logic.Object;
+using OpenSage.Physics;
+using OpenSage.Physics.Bepu;
+using OpenSage.Physics.Legacy;
 
 namespace OpenSage;
 
@@ -55,6 +58,8 @@ public sealed class GameEngine : IGameEngine
 
     public IQuadtree<GameObject> Quadtree { get; }
 
+    public Physics.IPhysicsWorld PhysicsWorld { get; }
+
     // TODO: This is temporary until Scene3D and GameEngine are merged.
     public IScene3D Scene3D { get; }
 
@@ -82,5 +87,17 @@ public sealed class GameEngine : IGameEngine
         Game = game;
         LogicFramesPerSecond = Game.SageGame.LogicFramesPerSecond();
         MsPerLogicFrame = Game.SageGame.MsPerLogicFrame();
+        PhysicsWorld = CreatePhysicsWorld();
+    }
+
+    private Physics.IPhysicsWorld CreatePhysicsWorld()
+    {
+        if (PhysicsBackendPolicy.Current == PhysicsBackendKind.Bepu)
+        {
+            var gravityPerFrameSquared = AssetStore.GameData.Current.Gravity;
+            var gravityPerSecondSquared = PhysicsUnitConversion.PerFrameSquaredToPerSecondSquared(gravityPerFrameSquared, LogicFramesPerSecond);
+            return new BepuPhysicsWorld(new System.Numerics.Vector3(0.0f, 0.0f, gravityPerSecondSquared));
+        }
+        return new LegacyPhysicsWorld();
     }
 }

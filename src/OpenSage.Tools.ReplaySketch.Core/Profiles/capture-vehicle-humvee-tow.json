@@ -1,0 +1,65 @@
+{
+  // USA Humvee firing its TOW missile (player upgrade, secondary slot) at a BattleMaster 120
+  // units out. The GrantUpgrade command researches Upgrade_AmericaTOWMissile before the
+  // Attack addresses the slot weapon by name. Follow-projectile camera rides the TOW. Run with:
+  //   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-vehicle-humvee-tow.json
+  "Name": "vehicle-humvee-tow",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 75,
+  "SettleFrames": 5,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "humvee",
+      "Definition": "AmericaVehicleHumvee",
+      "Owner": "usa",
+      "X": 480,
+      "Y": 640,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "target",
+      "Definition": "ChinaTankBattleMaster",
+      "Owner": "china",
+      "X": 600,
+      "Y": 640,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowProjectileSourceActorId": "humvee",
+    "SubjectActorIds": [ "humvee" ],
+    "DesiredSpanFraction": 0.45,
+    "InitialCameraHeight": 140,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 600
+  },
+  "Commands": [
+    {
+      "Type": "GrantUpgrade",
+      "Frame": 0,
+      "ActorId": "humvee",
+      "UpgradeName": "Upgrade_AmericaTOWMissile"
+    },
+    {
+      "Type": "Attack",
+      "Frame": 2,
+      "SourceActorId": "humvee",
+      "TargetActorId": "target",
+      "WeaponName": "HumveeMissileWeapon"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" }
+  ],
+  "StopWhenActorDestroyed": null
+}

@@ -1,0 +1,61 @@
+{
+  // A high-arc Nuke Cannon shell must pitch from ascent through descent. The orientation
+  // expectation compares the projectile's local +X axis with sampled world-space travel.
+  "Name": "projectile-orientation-shell",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 45,
+  "SettleFrames": 30,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "launcher",
+      "Definition": "ChinaVehicleNukeLauncher",
+      "Owner": "china",
+      "X": 520,
+      "Y": 600,
+      "FacingDegrees": 0,
+      "Label": "Nuke Cannon",
+      "Role": "attacker"
+    },
+    {
+      "Id": "target",
+      "Definition": "CarAsian1",
+      "Owner": "civilian",
+      "X": 760,
+      "Y": 600,
+      "FacingDegrees": 180,
+      "Label": "Target",
+      "Role": "target",
+      "MaxHealth": 100000
+    }
+  ],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 640, "Y": 600 },
+    "Height": 400
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "launcher",
+      "TargetActorId": "target"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" },
+    {
+      "Type": "ProjectileOrientation",
+      "Definition": "NukeCannonShell",
+      "MinimumAlignmentDot": 0.999,
+      "MinimumSamples": 20,
+      "RequireAscending": true,
+      "RequireDescending": true
+    }
+  ],
+  "StopWhenActorDestroyed": null
+}

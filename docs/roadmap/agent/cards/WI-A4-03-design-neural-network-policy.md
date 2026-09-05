@@ -50,8 +50,7 @@ inline in a code card.
      down and say why, e.g. "military targeting simplified to nearest-enemy-mass for v1").
    - Weight representation: how a genome (`float[]`) maps onto the network's actual weight
      matrices: flat layout, ordering, and total parameter count.
-   - Determinism: confirm the forward pass is a pure function of (weights, encoded state) with
-     no hidden RNG, per the A2 reproducibility constraint the deep-dive already requires.
+   - Randomness: state whether the policy uses RNG and how the selected seed is supplied.
 2. Add a short "Open questions" section for anything genuinely undecided (e.g. whether to expose
    a fixed action catalog vs. continuous outputs) and route those to
    [open-questions.md](../../open-questions.md) rather than deciding them unilaterally in this card.
@@ -72,7 +71,7 @@ inline in a code card.
       concrete numbers/layouts, not placeholders.
 - [ ] Every decision category `RuleBasedAIDecisionPolicy` covers is addressed by the action
       space (covered or explicitly descoped with a stated reason).
-- [ ] Determinism argument is explicit (pure function of weights + encoded state).
+- [ ] Any policy RNG and seed input are documented.
 - [ ] Any genuinely undecided question is logged in `open-questions.md`, not silently resolved.
 - [ ] This is an investigation/design card. No `.cs` changes, so standard build/test validation
       does not apply; `dotnet format` only applies if any `.cs` sample snippets are added inline

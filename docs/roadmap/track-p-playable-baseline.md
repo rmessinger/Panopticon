@@ -13,7 +13,7 @@
 ## Prerequisite rationale
 
 A complete match loop is the unit of work for the later foundations, scale, and external-asset
-tracks. The [headless host (A1)](deep-dives/a1-headless-host.md), [reproducibility (A2)](track-a-foundations.md),
+tracks. The [headless host (A1)](deep-dives/a1-headless-host.md), [statistical validation (A2)](track-a-foundations.md),
 and [benchmarks (B1)](track-b-scale.md) all depend on that loop.
 
 ## Status from the current code (audit)
@@ -69,5 +69,6 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 - Track P gates the roadmap. [Track A's A1](track-a-foundations.md), and by extension A2/A4 and all of Tracks B/C, depend on P7's validated, terminating match loop. The headless host's unit of work is the skirmish Track P makes real.
 - ReplaySketch is the primary validation tool. Per the project's tooling convention, end-to-end and scenario testing flow through `OpenSage.Tools.ReplaySketch` rather than bespoke harnesses. P0 finalizes it into a general harness for authoring and validating arbitrary command/order sets, so P1-P7 and later the [A5 result visualizer](deep-dives/a5-visualization.md) all run through one tool.
 - Reference game = Generals / Zero Hour. This track is scoped to the reference RTS [domain model](track-a-foundations.md). It is not about feature parity with the original game; it is about a complete, correct, terminating skirmish loop. BFME and other games are out of scope here.
-- Relationship to determinism (A2). Track P only needs the match to run and terminate correctly, not to be reproducible; the seeded/comparable-run guarantees come later in [A2](track-a-foundations.md). P3's queryable win/lose outcome and P7's invariant checks are what A2's verification harness and B1's benchmarks will assert against.
+- Relationship to statistical validation (A2). Track P supplies queryable outcomes and invariant
+  checks that A2 and B1 consume. Cross-run identity is not required.
 - Small skirmish/victory config seam. Two Track P decisions are exposed as configuration rather than hard-coded: the defeat rule, with the real Generals condition as the default but swappable in [P3](deep-dives/p3-victory-defeat.md), and AI difficulty, structured for tiers but with only the minimum legal-opponent tier populated in [P2](deep-dives/p2-p5-skirmish-ai.md). Track P populates only the defaults/minimum so later experiments, including [A4](track-a-foundations.md) pluggable policies, can vary them without re-plumbing.

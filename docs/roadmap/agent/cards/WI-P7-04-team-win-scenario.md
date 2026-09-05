@@ -17,7 +17,7 @@ Create the checked-in P7 TeamWin scenario where both losing-team players are eli
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: TeamWin expected outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scenario authoring requirements.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and per-tick reporting.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:114-114`: P7-4 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:194-200`: `GameOutcome` fields including `WinningTeam`.
@@ -30,9 +30,9 @@ Create the checked-in P7 TeamWin scenario where both losing-team players are eli
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json` as static deterministic scenario data.
+1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json` as static scenario data.
 2. Configure a minimal multi-player team setup with one winning team and one losing team containing two players. Use fixed start positions and teams.
-3. Script deterministic build/attack/elimination commands so both losing-team players lose all command/production structures with no rebuild path.
+3. Script build, attack, and elimination commands so both losing-team players lose all command/production structures with no rebuild path.
 4. Assert `OutcomeStatus.Decided`, `OutcomeReason.Eliminated`, the correct `WinningTeam`, and both losing-team players. Verify defaults/sentinels cannot satisfy these assertions.
 5. Add or extend focused P7 scenario test wiring so this scenario loads from JSON and runs through `HarnessRunner.RunAndAssert` as a real non-skipped pass/fail test.
 6. Attach available universal invariants for all participating players; P7-07 will normalize the shared invariant set across all scenarios.
@@ -47,7 +47,7 @@ Create the checked-in P7 TeamWin scenario where both losing-team players are eli
 ## Acceptance criteria
 
 - [ ] `team-win.json` exists as static checked-in scenario data.
-- [ ] The scenario has a deterministic multi-player team setup with the losing team containing two players.
+- [ ] The scenario has an explicit multi-player team setup with the losing team containing two players.
 - [ ] Both losing-team players are eliminated by the scripted scenario.
 - [ ] The scenario terminates with `OutcomeStatus.Decided`, `OutcomeReason.Eliminated`, and the expected `WinningTeam`.
 - [ ] Winner/loser assertions fail if `WinningTeam` is unset or left at a default/sentinel value.

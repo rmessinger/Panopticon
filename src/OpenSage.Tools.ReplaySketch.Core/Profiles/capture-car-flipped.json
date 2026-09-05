@@ -1,0 +1,48 @@
+{
+  // Single-car flipped capture: one civilian wagon (CarSwatchEuro / CVSwatch01) spawned
+  // upside down (roll 180) and dropped a short distance so it settles on its roof through
+  // the Bepu physics seam. Isolation scene for verifying the patched underbody renders
+  // closed and flat grey (see docs/roadmap/plans/physics-seam.md and the W3dPatcher tool).
+
+  "Name": "car-flipped",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 420,
+  "SettleFrames": 0,
+  "CaptureStride": 6,
+  "HideHud": true,
+  "PhysicsBackend": "Bepu",
+  "Players": [
+    {
+      "Id": "usa",
+      "Side": "FactionAmerica",
+      "Name": "USA"
+    }
+  ],
+  "Actors": [
+    {
+      "Id": "flipped_car",
+      "Definition": "CarSwatchEuro",
+      "Owner": "civilian",
+      "X": 540,
+      "Y": 600,
+      "Z": 65,
+      "FacingDegrees": 20,
+      "RollDegrees": 180,
+      "Label": "flipped wagon",
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "SubjectActorIds": [
+      "flipped_car"
+    ],
+    "FollowActorId": "flipped_car",
+    "InitialCameraHeight": 110,
+    "MinCameraHeight": 110,
+    "MaxCameraHeight": 110
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

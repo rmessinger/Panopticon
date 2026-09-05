@@ -43,7 +43,7 @@ Each rank's network varies in complexity with the size of its input, output, and
 a soldier's network is small and cheap, run once per unit per decision tick at whatever scale
 [Track B](../track-b-scale.md) reaches; a commander's network is larger, run once per squad; the
 general's network is the largest and rarest, run once per player. This mirrors the existing
-per-unit AI split described in [`docs/enemy-ai.md`](../../enemy-ai.md): per-unit behavior
+per-unit AI split described in [`docs/system-investigations/enemy-ai.md`](../../system-investigations/enemy-ai.md): per-unit behavior
 (`AIUpdate`/`AIUpdateStateMachine`) is already the layer that scales with unit count, while
 strategic decisions are already the layer that runs once per player. This design slots a new,
 learned middle rank (commander) between them and replaces the leaf and root layers' decision logic
@@ -87,9 +87,7 @@ already established and [skirmish-ai.md's actuation decision](p2-p5-skirmish-ai.
    AI and the flat NN policy from [pluggable-ai.md](a4-pluggable-ai.md) do.
 
 No rank mutates game state directly, and no rank other than the soldier rank touches
-`OrderProcessor`. This keeps every rank replay- and record-compatible and keeps a decentralized
-match exactly as reproducible under A2 as a flat-policy match: the only nondeterminism budget is
-what A2 already audits, regardless of how many networks are involved.
+`OrderProcessor`. This keeps every rank replay- and record-compatible.
 
 ### 2.3 Relationship to per-unit AI (`AIUpdate`)
 
@@ -252,13 +250,12 @@ adapter composes with the existing `IAIDecisionPolicy` selection point rather th
 - Flat single-policy seam this design generalizes:
   [pluggable-ai.md](a4-pluggable-ai.md) (A4).
 - Reference per-unit AI this design's soldier rank extends:
-  [`docs/enemy-ai.md`](../../enemy-ai.md).
+  [`docs/system-investigations/enemy-ai.md`](../../system-investigations/enemy-ai.md).
 - Reference strategic AI this design's general rank replaces the flat form of:
   [skirmish-ai.md](p2-p5-skirmish-ai.md) (P2).
 - Fitness signal: [victory-defeat.md](p3-victory-defeat.md) (`GameOutcome`, P3).
 - Seam registry entry: [`../seams.md`](../seams.md) (Experiment seams (A4) table).
-- Reproducibility guarantee every rank inherits: [open-questions.md](../open-questions.md)
-  (relaxed-determinism Decision), [Track A A2](../track-a-foundations.md).
+- Statistical evaluation: [Track A A2](../track-a-foundations.md).
 
 ---
 
@@ -352,7 +349,7 @@ sequenceDiagram
   - `AIUpdateStateMachine` and its states (`GuardState`, `HuntState`, `AttackAreaState`, and
     others), the soldier rank's decision-substitution point, see
     `src/OpenSage.Game/Logic/AI/AIUpdateStateMachine.cs` and
-    [`docs/enemy-ai.md` §1.2](../../enemy-ai.md).
+    [`docs/system-investigations/enemy-ai.md` §1.2](../../system-investigations/enemy-ai.md).
   - Existing team/multi-select grouping the squad model reuses: `Team`
     (`src/OpenSage.Game/Logic/Team.cs`) and the box-selection path in
     `src/OpenSage.Game/Logic/SelectionSystem.cs`.

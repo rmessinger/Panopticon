@@ -61,7 +61,7 @@ served at https://files.reid-corp.com/viewer/):
   horizontally; it is ringed in 54 of the 86 frames. Both units are recognizable at model scale
   and labelled ATTACKER / TARGET from translated display names. The target's health drains 300
   to 0 and it is destroyed on camera. Findings and composition rules:
-  `docs/engagement-capture-findings.md`.
+  `docs/system-investigations/engagement-capture-findings.md`.
 - `vg_minimalhud_frame.png`: formation-scale frame with visible units across three faction
   clusters (red USA, green China, blue GLA), minimal HUD with outlined minimap bottom-left.
 
@@ -107,7 +107,7 @@ A vision-capable model reviewing new captures should answer:
    pixel analysis of the current GIF: launch bloom at the attacker frames 5-12, impact FX at
    the target peaking on the damage frame (19), smoke persisting after. A launch-time impact
    bug (damage FX at the muzzle) was found by this capture and fixed; damage now lands on the
-   missile's arrival frame (see `docs/engagement-capture-findings.md`).
+   missile's arrival frame (see `docs/system-investigations/engagement-capture-findings.md`).
 3. Does the missile trajectory arc (thrust + gravity) rather than drop or fly straight?
 4. Does the tank show damage reactions (health bar drain is expected; death FX if HP reaches
    zero)?

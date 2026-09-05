@@ -27,7 +27,7 @@ same interface and be selected or compared without caller changes.
 The variation axis is narrow: how a player's per-tick strategic decisions are made. It is not
 per-object AI (`AIUpdate`/`DozerAIUpdate`/`SupplyAIUpdate`, etc.), and it is not the actuation
 path. Every implementation still emits `Order`s through `OrderProcessor`, per the P2 actuation
-decision in [skirmish-ai.md §1.3](p2-p5-skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor), so reproducibility (A2) and the recorded/replayed order stream stay intact.
+decision in [skirmish-ai.md §1.3](p2-p5-skirmish-ai.md#13-how-the-ai-issues-actions-decision-orders-via-orderprocessor), so the recorded/replayed order stream stays intact.
 
 ---
 
@@ -45,7 +45,7 @@ public interface IAIDecisionPolicy
     // Called at the AI's decision cadence (AIPlayer.DefaultDecisionCadenceFrames).
     // Reads whatever state it needs from the context; returns orders to enqueue.
     // Must not mutate game state directly; same actuation-via-orders constraint as P2 (§2.3
-    // of skirmish-ai.md) so every policy stays replay/record-compatible and A2-reproducible.
+    // of skirmish-ai.md) so every policy stays replay/record-compatible.
     IReadOnlyList<Order> DecideNextOrders(AIDecisionContext context);
 }
 
@@ -98,10 +98,7 @@ A neural-network implementation of `IAIDecisionPolicy` is the motivating case:
 - Network: a small feed-forward network (weights = the evolvable genome) mapping the feature
   vector to a fixed action space (build/produce/attack decisions), decoded back into the same
   `Order`s a human or the rule-based policy would issue.
-- Determinism: because actuation is still orders through `OrderProcessor`, a match run with a
-  given weight vector and a given map/seed is exactly as reproducible as today's rule-based
-  games (A2). The network's forward pass is a pure function of its weights and the encoded
-  state, with no additional nondeterminism to audit beyond what A2 already covers.
+- Evaluation: policy inputs, outputs, and selected seed are recorded so a run can be inspected.
 
 ## 4. What this unblocks: evolutionary training via seeded weight populations
 
@@ -172,8 +169,7 @@ This doc formalizes the seam only. Follow-up work, each large enough for its own
 - Training-run execution surface: [`a1-headless-host.md`](a1-headless-host.md) (A1),
   [`p0-playable-baseline-harness.md`](p0-playable-baseline-harness.md) (P0).
 - Sweep/reporting mechanism the training harness would reuse: [`a5-visualization.md`](a5-visualization.md) (A5).
-- Reproducibility guarantee every policy inherits: [open-questions.md](../open-questions.md)
-  (relaxed-determinism Decision), [Track A A2](../track-a-foundations.md).
+- Statistical evaluation: [Track A A2](../track-a-foundations.md).
 
 ---
 

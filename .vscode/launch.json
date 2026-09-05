@@ -39,8 +39,12 @@
         //   AlpineAssaultUSAvGLA
         //   AlpineAssaultUSAvGLAFullBuild
         //   UnitValidationGround
+        //   EngagementCapture
+        //   ScenarioCapture
         // The Scenario field is the single toggle; ScenarioPath/--scenario only overrides the map
         // for the two replay scenarios and is ignored when Scenario is UnitValidationGround.
+        // --built-in-scenario/--scenario (see the ScenarioCapture config below) override both
+        // fields for a single run without touching TestHarness.json.
         {
             "name": "TestHarness",
             "type": "coreclr",
@@ -54,6 +58,18 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/OpenSage.Tools.TestHarness.dll",
             "args": ["--headless"],
+            "preLaunchTask": "build-testharness-all"
+        },
+        {
+            // Runs the generic ScenarioCapture profile named in the last --scenario argument;
+            // swap it for another embedded profile name (e.g. capture-impulse.json) or a path to
+            // your own capture profile JSON. See docs/screenshots.md and
+            // src/OpenSage.Tools.TestHarness/AGENTS.md for the profile schema.
+            "name": "TestHarness (ScenarioCapture)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/OpenSage.Tools.TestHarness.dll",
+            "args": ["--headless", "--built-in-scenario", "ScenarioCapture", "--scenario", "capture-construction.json"],
             "preLaunchTask": "build-testharness-all"
         },
         {

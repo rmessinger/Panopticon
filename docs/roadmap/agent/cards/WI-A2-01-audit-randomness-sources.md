@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-A2-01` |
-| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Reproducibility & statistical stability |
+| Roadmap phase | [Track A · A2](../../track-a-foundations.md): Statistical validation |
 | Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
@@ -18,9 +18,8 @@ This is the first checklist item of A2 and the input to `WI-A2-03`. Read-only: n
 
 ## Context to read (and only this)
 
-- `docs/roadmap/track-a-foundations.md`: the A2 phase row and the relaxed-determinism note.
-- `docs/roadmap/open-questions.md`: the relaxed-determinism Decision and the A2 strict-hash scope
-  Decision. These bound what the audit must recommend.
+- `docs/roadmap/track-a-foundations.md`: the A2 phase row.
+- `docs/roadmap/open-questions.md`: the determinism-priority Decision.
 - `src/OpenSage.Mathematics/IRandom.cs`: the seeded-source interface and `SystemRandom`.
 - `src/OpenSage.Game/IGame.cs:200-210`: `CreateRandom()`, the factory every seeded consumer uses.
 - `src/OpenSage.Game/Logic/GameLogic.cs:60-75`: the logic-side `Random` instance.
@@ -43,7 +42,7 @@ This is the first checklist item of A2 and the input to `WI-A2-03`. Read-only: n
    `docs/roadmap/implementation/track-g-g1-high-dpi.md` (human-facing summary above the `---`
    divider, agent-context detail below) and write the table into a `## Randomness source audit`
    section below the divider.
-6. Add a `## Track A · A2 : Reproducibility & statistical stability` row group for the new plan in
+6. Add a `## Track A · A2 : Statistical validation` row group for the new plan in
    `docs/roadmap/implementation/README.md`.
 7. Recommend nothing beyond the classification. Do not propose a redesign of `IRandom`.
 
@@ -72,8 +71,7 @@ git status --short -- 'src/*'
 - Do not change any randomness call site, including obvious ones.
 - Do not audit non-random nondeterminism such as iteration order or wall-clock reads. That is
   `WI-A2-02`.
-- Do not propose bit-exact determinism: the roadmap has already decided on reproducibility for
-  comparison, not bit-exactness.
+- Do not turn the audit into a deterministic-execution requirement.
 
 ## On completion
 

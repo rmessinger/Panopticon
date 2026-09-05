@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BepuPhysics" />
+    <PackageReference Include="BepuUtilities" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenSage.Mathematics\OpenSage.Mathematics.csproj" />
+  </ItemGroup>
+</Project>

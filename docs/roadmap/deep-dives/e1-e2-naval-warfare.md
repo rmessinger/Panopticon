@@ -17,9 +17,10 @@ design focuses on terrain passability, ship weapons, and port production rather 
 ## 1. Scope and non-goals
 
 - In scope: real water/ground terrain-passability distinction in the pathfinder, ship weapon and
-  turret combat (broadside and bow-mounted), shipyard/port production gated to water-adjacent
-  tiles, and a reference scenario proving it end-to-end.
-- Out of scope, deferred: full hydrodynamics/buoyancy physics, weather-driven sea states,
+  turret combat (broadside and bow-mounted), F4a Bepu hull contacts and simple water-plane support,
+  shipyard/port production gated to water-adjacent tiles, and a reference scenario proving it
+  end-to-end.
+- Out of scope, deferred: full hydrodynamics, waves/weather-driven sea states,
   amphibious-assault choreography beyond the existing `AMPHIBIOUS` kind, and any new external ship
   models. E1-E4 validate with the existing BFME2 `SHIP_*` reference content, or W3D placeholders,
   before any Track C/ModCollector content is needed.
@@ -51,8 +52,10 @@ tracks an `OverWater` flag for visual effects. E1 wires those pieces together:
 
 ### 2.2 Ship combat
 
-Ship `ObjectDefinition`s already carry weapon slots through the existing weapon-set system. E2 adds
-the two missing ship-specific pieces:
+Ship `ObjectDefinition`s already carry weapon slots through the existing weapon-set system. F4a
+classifies ships as constrained dynamic bodies, maps their hull geometry through the shared
+physics registry, and uses E1 water height for vertical support/damping while locomotors command
+horizontal movement. E2 adds the two ship-specific combat pieces:
 
 - Multi-mount broadside weapons: a ship fires several weapons simultaneously from different
   hull-relative bones on port and starboard sides, reusing the existing multi-weapon-slot mechanism
@@ -61,11 +64,12 @@ the two missing ship-specific pieces:
   application. No kamikaze or suicide update module exists in the engine today, so this is a new
   module built on the existing `GameObject.AttemptDamage` and `Kill(DeathType.Suicided)` path.
   `DeathType.Suicided` and `ObjectFilterRule.Suicide` already exist. The module is a generalized
-  shared mechanism, not naval-only behavior.
+  shared mechanism, not naval-only behavior. It consumes the unique post-step contact record from
+  F4a rather than partition overlap.
 
-`SHIP_TRANSPORT` reuses the existing container/garrison transport module unchanged. The
-`ObjectKind` flag already exists. E2 only needs to confirm the transport module does not assume
-land-only movement, which it should not because containment is orthogonal to locomotion.
+`SHIP_TRANSPORT` reuses the existing container/garrison transport module. The `ObjectKind` flag
+already exists. E2 confirms containment does not assume land-only movement and calls F4a's standard
+body suspension/restoration transition for passengers.
 
 ### 2.3 Naval production (`PORT`)
 
@@ -80,8 +84,8 @@ or water tile by using E1's terrain-passability data instead of today's land-onl
 - E1 depends on Track P so the pathfinding fix is validated against a working match loop rather than
   a partial one. It does not depend on Track C or ModCollector and can be built and tested with
   BFME2's existing `SHIP_*` reference content.
-- E2 depends on E1. Weapons and collision are meaningless if ships cannot correctly occupy or be
-  constrained to water first.
+- E2 depends on E1 and F4a. E1 supplies water occupancy/height; F4a supplies the constrained-dynamic
+  hull, filtering, contain/release transition, and unique contact record.
 - E3 depends on E1 because it needs water-adjacency placement checks, but not on E2.
 - E4 depends on E2 and E3. It is the integration proof, authored and asserted through ReplaySketch
   using the [P0 harness](p0-playable-baseline-harness.md) pattern.
@@ -267,7 +271,19 @@ classDiagram
 
   class ShipRamModule {
     <<E2>>
-    +OnCollision(GameObject other) void
+    +OnPhysicsContact(PhysicsContact contact) void
+  }
+
+  class GameObjectPhysicsRegistry {
+    <<F4a>>
+    +Resolve(GameObject) PhysicsParticipation
+    +Suspend(ObjectId)
+    +Restore(ObjectId)
+  }
+
+  class PhysicsContactDispatcher {
+    <<F4a>>
+    +Dispatch(PhysicsContact contact)
   }
 
   GameObject --> WeaponSet : ActiveWeaponSet
@@ -277,6 +293,9 @@ classDiagram
   TransportContain --|> OpenContainModule
   GameObject ..> ObjectKinds : IsKindOf
   ShipBroadsideController ..> WeaponSet : fires filled slots per hull side
+  GameObjectPhysicsRegistry ..> GameObject : constrained dynamic hull
+  TransportContain ..> GameObjectPhysicsRegistry : passenger suspend / restore
+  PhysicsContactDispatcher ..> ShipRamModule : unique hull contact
   ShipRamModule ..> GameObject : AttemptDamage on contact
   ShipRamModule ..> DeathType : self Kill with Suicided
 ```
@@ -286,11 +305,12 @@ Notes:
 - Broadside: `WeaponSet` already holds up to `WeaponSlot.Primary` through `Quinary` filled slots
   (`WeaponSet._weapons`). E2 adds the coordination that fires several slots from port/starboard hull
   bones; it does not add a weapon type.
-- `SHIP_TRANSPORT`: `TransportContain` already derives from `OpenContainModule`. E2 confirms
-  containment stays independent of locomotion; no transport change is required.
+- `SHIP_TRANSPORT`: `TransportContain` already derives from `OpenContainModule`. E2 uses F4a's
+  common suspend/restore lifecycle when passengers enter and leave.
 - Ram: `DeathType.Suicided` and `ObjectFilterRule.Suicide` exist, but there is no kamikaze update
   module in `src/`. `ShipRamModule` is an E2 deliverable that applies damage through the existing
   `GameObject.AttemptDamage` path and self-destructs via `Kill(deathType: DeathType.Suicided)`.
+  F4a supplies the contact once; E2 owns the gameplay effect.
 
 ### Move order onto water
 
@@ -336,6 +356,8 @@ sequenceDiagram
   participant BC as ShipBroadsideController
   participant WS as WeaponSet
   participant W as Weapon
+  participant PW as IPhysicsWorld
+  participant CD as PhysicsContactDispatcher
   participant RM as ShipRamModule
   participant GO as GameObject
   participant T as Target GameObject
@@ -348,8 +370,10 @@ sequenceDiagram
     Note over W: existing WeaponSlot firing path
   end
 
-  Note over RM,T: SHIP_SUICIDE ram
-  RM->>RM: OnCollision(other) when other is enemy
+  Note over PW,T: SHIP_SUICIDE ram
+  PW-->>CD: unique post-step hull contact
+  CD->>RM: OnPhysicsContact(contact)
+  RM->>RM: validate enemy + SHIP_SUICIDE
   RM->>T: GO.AttemptDamage(DamageInfoInput)
   RM->>GO: Kill(deathType: DeathType.Suicided)
   Note over GO: existing damage + death path,<br/>DeathType.Suicided already defined
@@ -376,6 +400,9 @@ sequenceDiagram
   `SHIP_BOMBARD`, `SHIP_SUICIDE`, `SHIP_TRANSPORT`, `PORT`, `BOAT`, `AMPHIBIOUS` kinds
   (`AddedIn(SageGame.Bfme2)`/`Bfme2Rotwk`), the reference content E1-E4 validate against. No new
   `ObjectKind` values are needed for the initial reference scenario.
+- `src/OpenSage.Physics/` and `docs/roadmap/plans/physics-seam.md`: the Bepu seam exists in
+  proof-of-concept form; F4a adds ship classification, water support, filtering, lifecycle, and
+  contact dispatch before E2 consumes it.
 - `src/OpenSage.Game/Logic/Object/Update/DockUpdate.cs`: existing dock/approach-position pattern
   used today for supply trucks; E3's `PORT` production building placement check follows the same
   module structure, distinct from this supply-specific behavior.

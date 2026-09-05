@@ -79,6 +79,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
         // Record the firing unit so projectile collision can skip it (otherwise a vehicle
         // launcher detonates its own projectile at the muzzle).
         var launcherId = context.Weapon.ParentGameObject.Id;
+        projectileObject.CreatedByObjectID = launcherId;
 
         var bezierProjectileBehavior = projectileObject.FindBehavior<BezierProjectileBehavior>();
         if (bezierProjectileBehavior != null)
@@ -91,6 +92,16 @@ public sealed class ProjectileNugget : WeaponEffectNugget
         {
             missileAIUpdate.LauncherObjectId = launcherId;
         }
+
+        var usesFlightPathOrientation = bezierProjectileBehavior != null
+            ? bezierProjectileBehavior.UsesFlightPathOrientation
+            : missileAIUpdate != null || projectileObject.Physics?.OrientsToFlightPath == true;
+        if (usesFlightPathOrientation)
+        {
+            SetLeadingEdgeRotationPivot(projectileObject);
+        }
+
+        AttachMissileExhaust(context, missileAIUpdate, projectileObject);
 
         CreateShellTracer(context, projectileObject);
         CreateProjectileStream(context, projectileObject);
@@ -107,6 +118,67 @@ public sealed class ProjectileNugget : WeaponEffectNugget
                 missileAIUpdate.DetonationFX = ParentWeaponTemplate.ProjectileDetonationFX?.Value;
             }
         }
+    }
+
+    /// <summary>
+    /// Arms the missile's rocket-motor exhaust (the weapon's ProjectileExhaust particle system).
+    /// The system itself starts at ignition (MissileAIUpdate) and follows the model's tail: the
+    /// leading-edge pivot moved the object origin to the nose, so the tail sits at
+    /// Min.X - Max.X along local X of the shifted model space.
+    /// </summary>
+    private static void AttachMissileExhaust(
+        WeaponEffectExecutionContext context,
+        MissileAIUpdate? missileAIUpdate,
+        GameObject projectileObject)
+    {
+        var exhaustName = context.Weapon.Template.ProjectileExhaust;
+        if (missileAIUpdate == null
+            || string.IsNullOrEmpty(exhaustName)
+            || !projectileObject.Drawable.TryGetModelSpaceBounds(out var bounds))
+        {
+            return;
+        }
+
+        var exhaustTemplate = context.GameEngine.AssetLoadContext.AssetStore.FXParticleSystemTemplates
+            .GetByName(exhaustName);
+        if (exhaustTemplate == null)
+        {
+            return;
+        }
+
+        missileAIUpdate.AttachExhaust(
+            exhaustTemplate,
+            new Vector3(bounds.Min.X - bounds.Max.X, 0f, 0f));
+    }
+
+    private static void SetLeadingEdgeRotationPivot(GameObject projectileObject)
+    {
+        if (projectileObject.Drawable == null
+            || !projectileObject.Drawable.TryGetModelSpaceBounds(out var bounds))
+        {
+            return;
+        }
+
+        var center = bounds.GetCenter();
+        var leadingPoint = new Vector3(bounds.Max.X, center.Y, center.Z);
+        if (!float.IsFinite(leadingPoint.X)
+            || !float.IsFinite(leadingPoint.Y)
+            || !float.IsFinite(leadingPoint.Z))
+        {
+            return;
+        }
+
+        // Keep trajectory, collision, and detonation at the simulation origin. Only the W3D
+        // model moves behind it, making the local +X leading point the visual rotation pivot.
+        projectileObject.ModelTransform.Translation = -leadingPoint;
+
+        // The model's authored origin (the SCUD missile's tail) sits on the launch bone. With
+        // the nose now the visual pivot, advance the simulation origin by the same offset IN
+        // THE OBJECT'S LOCAL FRAME (translation-first, so the bone rotation carries it up the
+        // rail) — the rendered model keeps its authored launch position instead of dropping a
+        // body length below the rail at the spawn swap.
+        projectileObject.SetTransformMatrix(
+            Matrix4x4.CreateTranslation(leadingPoint) * projectileObject.TransformMatrix);
     }
 
     // Tank cannons and artillery use "NoTracer" FireFX variants in the original data, so the

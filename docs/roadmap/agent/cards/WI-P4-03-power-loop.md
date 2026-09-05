@@ -30,13 +30,13 @@ Verify and close the power loop: owned objects' energy production/consumption dr
 
 1. Investigate the existing data model for consumers. Confirm whether consumption is represented by negative `EnergyProduction`, another field, or missing data. Do not invent a new power model without evidence.
 2. Find where per-player power should be evaluated each tick. Prefer an existing player/game logic tick path over adding a new subsystem.
-3. If `_hasInsufficientPower` is not currently updated, add minimal deterministic wiring: compare owned production against owned consumption/negative production, set the field, and keep the default false when no owned power consumers exist.
+3. If `_hasInsufficientPower` is not currently updated, add minimal wiring: compare owned production against owned consumption/negative production, set the field, and keep the default false when no owned power consumers exist.
 4. Verify the intended effect of insufficient power from existing code/data. If the only confirmed effect is a currently missing production slowdown/disabled-structure behavior, implement the smallest version and document it in the test name/assertions.
 5. Preserve persistence ordering in `Player.Persist(...)` and all existing construction/energy guards.
 6. Add `src/OpenSage.Game.Tests/Logic/Economy/PowerLoopTests.cs` with non-skipped headless `[Fact]` tests that:
    - create enough owned power production for a sufficient-power state;
    - add/toggle consumption so consumption exceeds production;
-   - assert `_hasInsufficientPower` (or a test-visible API exposing it) changes deterministically;
+   - assert `_hasInsufficientPower` (or a test-visible API exposing it) changes when the power balance crosses the threshold;
    - assert the verified effect occurs and then clears when power is restored.
 7. New `.cs` files must be UTF-8 with BOM. Run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 

@@ -116,7 +116,7 @@ Two options matter for recognizability. `AxisAngleDegrees` rotates the attacker-
 firing FX are far larger than the unit firing them, so the default 180 orients the pair left to
 right with the backblast venting behind the attacker rather than over him. `HideHud` closes every
 GUI window before capturing so the minimap does not intrude on the crop. Measured comparisons of
-other angles are in `docs/engagement-capture-findings.md`.
+other angles are in `docs/system-investigations/engagement-capture-findings.md`.
 The runner exits non-zero when a definition is missing, the camera cannot be fitted, the
 attacker has no weapon, or no projectile is ever observed, so a silent empty capture is not
 possible.
@@ -124,8 +124,62 @@ Labels come from `ObjectDefinition.DisplayName` run through `.Translate()`; the 
 localization key. `Player.Side` returns raw faction names ("FactionCivilian") and is not
 suitable for labels; the annotator uses ATTACKER/TARGET/MISSILE roles instead.
 
+## Recipe: generic scenario capture (headless)
+
+For scripted scenes beyond a two-unit engagement, `ScenarioCapture` runs a declarative capture
+profile: actors, a fixed or auto-fitted camera, frame-scheduled `Attack`/`Construct`/
+`ApplyImpulse` commands, and expectations (projectile observed, actor damaged/destroyed,
+construction progressed/completed, minimum displacement). Checked-in example profiles:
+`capture-construction.json` (a dozer builds a barracks, tracked from placement through
+completion) and `capture-impulse.json` (a physics impulse slides a civilian car).
+
+```sh
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+  --built-in-scenario ScenarioCapture --scenario capture-construction.json
+python3 scripts/annotate_capture_gif.py /tmp/opensage_capture_construction out.gif --labels
+```
+
+`--scenario` takes a file path or an embedded profile name; the profile schema and failure
+behavior are documented in `src/OpenSage.Tools.TestHarness/AGENTS.md`. Output lands in
+`$TMPDIR/opensage_capture_<name>/` (PNG sequence plus a schema-2 manifest that extends the
+engagement manifest with world positions, velocities, construction state, and command/
+expectation results). Exit codes: 1 profile or setup error, 4 camera fit failure, 5 unmet
+expectation. Playback defaults to real time (each PNG held for the logic frames it covers at
+30 Hz, derived from the manifest); `--speed` scales it and `--frame-ms` overrides it. The
+generic annotator crops and scales like the engagement one but draws no engagement-specific
+overlays; `--labels` adds a static actor legend.
+
+Projectile-orientation profiles can use a `ProjectileOrientation` expectation to require a
+minimum local `+X` versus sampled-travel dot product and optional ascent or descent samples.
+Pass `--projectile-orientation` to draw travel in white and local `+X` in cyan. Reference
+profiles: `capture-projectile-orientation-shell.json`,
+`capture-projectile-orientation-missile.json`, and
+`capture-projectile-orientation-scud.json`.
+
 Verify content before sharing: the manifest's target `Health` should fall across the sequence
 and a non-trivial number of frames should list a projectile.
+
+## Recipe: physics seam test scene (headless)
+
+The `PhysicsStack` built-in scenario validates the object physics seam
+(`docs/roadmap/plans/physics-seam.md`). Two phases: a pure-seam Bepu benchmark (100/1k/10k
+stacked boxes, ms per `Timestep`, loose settle bounds, run-to-run stability probe), then a
+visual stack of 40 cars falling and settling through the game on the Bepu backend,
+post-validated against loose scatter bounds. Exit codes: 0 pass, 1 setup error, 5 unmet bound.
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario PhysicsStack
+python3 scripts/annotate_capture_gif.py /tmp/opensage_physics_stack \
+  "/mnt/pit2/Network Storage/temp/physics_stack.gif" --labels
+```
+
+A capture profile selects the Bepu backend for a whole run via `"PhysicsBackend": "Bepu"`
+(checked-in example: `capture-impulse-bepu.json`, the impulse car on Bepu for loose comparison
+against the legacy `capture-impulse.json`; actor `"Z"` spawns height above ground for
+falling/stacking scenes).
 
 ## Camera framing contract for close-ups
 
@@ -185,6 +239,12 @@ diff = [(x, y) for y in range(a.height) for x in range(a.width)
 
 Runs are near-deterministic, so the diff isolates exactly the change's pixels. Brighter-in-enabled
 counts confirm additive effects (tracers, muzzle flashes).
+
+Caveat (measured on alpine assault): full-frame pixel identity does not hold between runs of the
+same binary on maps with ambient effects; two same-binary runs differ by 300k-550k pixels per
+frame (ambient particles, water shimmer). For behavior-level A/B verification compare manifest
+trajectories instead (bit-identical when the simulation is unchanged); reserve pixel diffs for
+controlled scenes without ambient effects.
 
 ## History
 

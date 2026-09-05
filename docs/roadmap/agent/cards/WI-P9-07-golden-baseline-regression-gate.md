@@ -17,7 +17,7 @@ real install, and make headless mode exit non-zero when a unit regresses beyond 
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.5, §2.7, and §2.9 (determinism check).
+- `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.5, §2.7, and §2.9.
 - `src/OpenSage.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs`: the report to compare.
 - `src/OpenSage.Tools.ReplaySketch.Core/Services/ValidationGroundReportWriter.cs`: the writer from
   `WI-P9-06`, which renders the baseline columns.
@@ -34,18 +34,16 @@ real install, and make headless mode exit non-zero when a unit regresses beyond 
    the baseline is reported as new, not as a failure.
 3. Implement `Load` and `Save`. `Save` runs only under the explicit refresh flag; a normal run must
    never write the baseline file.
-4. Verify determinism before capturing: run headless twice and diff the JSON reports. They must be
-   identical. If they are not, stop and fix the nondeterminism rather than widening tolerances.
-5. Capture the baseline against a real Generals install and commit it to
+4. Capture the baseline against a real Generals install and commit it to
    `src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json`.
-6. Set tolerances deliberately per entry. Do not derive them from the single capture run and do not
+5. Set tolerances deliberately per entry. Do not derive them from the single capture run and do not
    use one global value.
-7. In headless mode, set a non-zero process exit code when any unit regresses. A timeout is also a
+6. In headless mode, set a non-zero process exit code when any unit regresses. A timeout is also a
    non-zero exit, reported distinctly from a regression.
-8. Add `[Fact]` tests for the comparison: a value inside tolerance passes, a value outside fails, the
+7. Add `[Fact]` tests for the comparison: a value inside tolerance passes, a value outside fails, the
    minimum frame floor prevents a one-frame jitter failing a short action, and a unit absent from the
    baseline is reported as new.
-9. Ensure any new `.cs` file is UTF-8 with BOM. Run `dotnet format src`, then verify
+8. Ensure any new `.cs` file is UTF-8 with BOM. Run `dotnet format src`, then verify
    `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
@@ -62,8 +60,6 @@ real install, and make headless mode exit non-zero when a unit regresses beyond 
       does.
 - [x] The baseline file is written only under the explicit refresh flag; a normal run leaves it
       untouched.
-- [x] Two consecutive headless runs produce identical JSON reports; this was verified before the
-      baseline was committed.
 - [x] The committed baseline was captured against a real Generals install, and tolerances were set
       deliberately rather than copied from the capture.
 - [x] Headless exits non-zero on regression, and separately on timeout.
@@ -81,7 +77,7 @@ dotnet test src --filter Category!=Interactive
 dotnet format src
 dotnet format src --verify-no-changes
 
-# Determinism check, requires a Generals install: both reports must be identical
+# Baseline capture, requires a Generals install
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless
 ```
@@ -91,8 +87,7 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 - Do not widen a tolerance to make a failing unit pass. A genuine regression is the signal this phase
   exists to produce.
 - Do not let a normal run rewrite the baseline; that would turn every regression into the new normal.
-- Do not fix engine-side causes of nondeterminism here; escalate them rather than absorbing them into
-  the tolerance.
+- Do not widen tolerances without evidence from representative runs.
 
 ## On completion
 
@@ -106,13 +101,12 @@ Live-captured against a real Generals install on this environment (AMD Radeon RX
 offscreen). The capture had never run before: the "pending GPU" framing was a misdiagnosis, and the
 validation ground had ~9 integration defects that were fixed in this change (faction-side names,
 Helix ZH unit, argument-less SpecialPower/Gather orders, unlinked target ids, per-unit selection,
-NLog log spam, render cost, shared-target measurement flaw). Two deeper blockers were also fixed:
-non-determinism (the engine's wall-clock delta timer gated logic ticks, so frame counts varied per
-run; fixed by an opt-in fixed-timestep mode on `DeltaTimer`/`Game`) and vehicle units never firing
+NLog log spam, render cost, shared-target measurement flaw). Two deeper blockers were also fixed: wall-clock delta timing made frame-count measurements noisy
+(fixed by an opt-in fixed-timestep mode on `DeltaTimer`/`Game`) and vehicle units never firing
 (the `AttackObject` order's move step suppresses fire for several units; in-range attackers now get a
 direct weapon command).
 
-Outcome: 22 units measured deterministically (two consecutive runs byte-identical), 0 timeouts,
+Outcome: 22 units measured, 0 timeouts,
 10 gaps. Gaps: SpecialPower units (AmericaVehicleMedic, ChinaInfantryBlackLotus,
 ChinaInfantryHacker, GLAInfantryHijacker) with no implemented order path; the Zero Hour unit
 ChinaVehicleHelix; and five units the sandbox cannot measure (AmericaInfantryPathfinder,

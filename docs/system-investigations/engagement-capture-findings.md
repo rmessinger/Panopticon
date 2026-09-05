@@ -3,7 +3,7 @@
 Written for the next agent working on visual validation. It records why the earlier
 `vg_missile_defender.gif` was unusable, what the real cause turned out to be, and what the
 committed framework now does. Companion documents: `docs/screenshots.md` (recipes),
-`docs/visual-validation-brief.md` (the branch context).
+`docs/system-investigations/visual-validation-brief.md` (the branch context).
 
 ## What was wrong
 
@@ -120,7 +120,7 @@ Other units need per-unit tuning:
 - Artillery has long pre-attack plus slow, lofted flight: Nuke Launcher and SCUD want 220+
   frames. The SCUD additionally needs `Separation` above its `MinimumAttackRange` of 200
   (300 works) and a wider fit (`DesiredSpanFraction` 0.52); its full configuration lives in
-  `docs/scud-launch-transfer.md`.
+  `docs/system-investigations/scud-launch-transfer.md`.
 - Short-range flame weapons (Dragon Tank, Angry Mob) need separation 60 or less.
 - Instant-hit weapons (machine guns, Ranger, Pathfinder) produce no logic projectile: the
   runner exits 5 with the manifest still written; the capture shows tracers and muzzle FX.

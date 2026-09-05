@@ -41,11 +41,8 @@ explicitly out of scope (separate, later card set per pluggable-ai.md §4/§6).
 3. Add `AIDecisionPolicyType.NeuralNetwork` and wire `AIDecisionPolicyFactory` to construct
    `NeuralNetworkAIDecisionPolicy` given a weight vector (factory signature will need to accept
    weights for this branch. Keep the `RuleBased` branch's signature/behavior unchanged).
-4. Add a headless unit test that: constructs the policy with a fixed, hand-computed weight
-   vector and a fixed `AIDecisionContext` fixture, and asserts the exact decoded `Order` list:
-   proving the forward pass and decoding are deterministic and match the design doc's scheme.
-5. Add a test asserting no additional nondeterminism is introduced (same weights + same context
-   in ⇒ same orders out, called twice).
+4. Add a headless unit test that constructs the policy with a hand-computed weight vector and a
+   controlled `AIDecisionContext`, then verifies the decoded orders match the design.
 6. Run `dotnet format src`; confirm `--verify-no-changes`.
 
 ## Files likely to change
@@ -59,7 +56,7 @@ explicitly out of scope (separate, later card set per pluggable-ai.md §4/§6).
 
 - [ ] `NeuralNetworkAIDecisionPolicy` implements the exact encoding/network/decoding scheme in
       `neural-network-ai-policy.md`. No ad hoc deviation.
-- [ ] Deterministic: identical weights + context ⇒ identical `Order`s, verified by test.
+- [ ] The hand-computed weights and controlled context decode to the expected `Order`s.
 - [ ] Mismatched weight-vector length throws a clear, tested exception rather than silently
       misbehaving.
 - [ ] `RuleBased` policy selection/behavior is unaffected by this card.

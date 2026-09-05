@@ -16,7 +16,7 @@ Close a termination hole in `VictorySystem.EvaluatePendingPlayers`: once `Status
 a second simultaneous elimination of every remaining active player has no winner to resolve to
 (`TryResolveWinningPlayers` returns `null` for every candidate), so the match can get stuck in
 `SuddenDeath` forever instead of ever reaching `Decided`. Make repeated mutual elimination while
-already in `SuddenDeath` resolve to a `Decided` outcome (a legitimate deterministic tie-break, not a
+already in `SuddenDeath` resolve to a `Decided` outcome through an explicit tie-break, not a
 crash or infinite hang), matching the design's intent that `SuddenDeath` is always transitional.
 
 ## Context to read (and only this)
@@ -29,7 +29,7 @@ crash or infinite hang), matching the design's intent that `SuddenDeath` is alwa
 ## Steps
 
 1. Reproduce the gap first: write a failing headless test that destroys every remaining active player's last structure simultaneously while `Status == SuddenDeath` (i.e., two full-mutual-elimination waves in the same or a later check window with no intervening single elimination), and assert the match still reaches `Decided` within a bounded number of `Tick` calls.
-2. Fix `EvaluatePendingPlayers`/`EnterSuddenDeath` so a repeat full-mutual-elimination while in `SuddenDeath` resolves deterministically; the design already allows a tie represented by a winner list (see `GameOutcome.WinningPlayers`/`ScoreMetric` tie handling in `WI-P3-06` for the established shared-victory pattern); resolve to a shared-victory `Decided` outcome among the last simultaneously-eliminated cohort, or another clearly-documented deterministic rule; do not leave it able to loop `SuddenDeath` indefinitely.
+2. Fix `EvaluatePendingPlayers`/`EnterSuddenDeath` so a repeat full-mutual-elimination while in `SuddenDeath` resolves through an explicit rule; the design already allows a tie represented by a winner list (see `GameOutcome.WinningPlayers`/`ScoreMetric` tie handling in `WI-P3-06` for the established shared-victory pattern); resolve to a shared-victory `Decided` outcome among the last simultaneously-eliminated cohort, or another clearly documented rule; do not leave it able to loop `SuddenDeath` indefinitely.
 3. Ensure the fix does not change behavior for the existing staggered-elimination sudden-death test path (single elimination following sudden death still resolves to `Reason = Eliminated` with a lone or team winner as today).
 4. Add the new test to `src/OpenSage.Game.Tests/Logic/Victory/SuddenDeathOutcomeTests.cs`.
 5. Run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
@@ -43,7 +43,7 @@ crash or infinite hang), matching the design's intent that `SuddenDeath` is alwa
 
 - [ ] A scenario with two full-mutual-elimination waves (second wave occurring while `Status == SuddenDeath`) reaches `GameOutcome.Status = Decided` within a bounded frame/tick count, not an infinite `SuddenDeath` hang.
 - [ ] The existing single-elimination-after-sudden-death path is unchanged (still resolves to `Eliminated` with the correct winner).
-- [ ] The resolution rule for a repeat mutual elimination is deterministic and documented in code comments and in the Result section (e.g., shared victory among the last cohort).
+- [ ] The resolution rule for a repeat mutual elimination is explicit and documented in code comments and in the Result section, such as shared victory among the last cohort.
 - [ ] New/updated headless `[Fact]` tests are not skipped and do not require game files.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 

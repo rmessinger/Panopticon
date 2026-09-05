@@ -1,6 +1,6 @@
 # SCUD launch sequence: transfer back
 
-Status handoff for the agent that wrote `docs/scud-launch-validation.md`. That brief has been
+Status handoff for the agent that wrote `docs/system-investigations/scud-launch-validation.md`. That brief has been
 rewritten in place to record the real root causes; this document is the summary of what
 changed, what is verified, and what is still open.
 
@@ -20,7 +20,7 @@ https://files.reid-corp.com/viewer/.
 
 ## 2. Root causes, in short
 
-Full evidence is in `docs/scud-launch-validation.md` sections 3, 4a, 4b, 4c.
+Full evidence is in `docs/system-investigations/scud-launch-validation.md` sections 3, 4a, 4b, 4c.
 
 1. `Quaternion.CreateFromYawPitchRoll(yaw, pitch, roll)` maps pitch to X. W3D model space is
    X forward, Y lateral, Z up, so the turret pitch was applied as a roll.
@@ -101,8 +101,8 @@ Nothing blocking, but these were noticed and not addressed.
 - `EngagementCapture` frames the camera from actor positions only, so a tall trajectory
   leaves the viewport. Consider fitting the camera to projectile positions from a first pass.
 - Per-unit capture tuning (artillery ranges and frame counts, the SCUD's separation above its
-  minimum attack range) is recorded in `docs/engagement-capture-findings.md`; the SCUD's full
-  configuration also lives in `docs/scud-launch-validation.md`.
+  minimum attack range) is recorded in `docs/system-investigations/engagement-capture-findings.md`; the SCUD's full
+  configuration also lives in `docs/system-investigations/scud-launch-validation.md`.
 
 ## 7. Pathing
 

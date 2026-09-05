@@ -14,7 +14,7 @@
 
 Record periodic world snapshots and per-frame deltas so any frame of a headless run can be
 reconstructed for analysis without assuming a re-run reproduces it bit-for-bit
-([a1-headless-host.md §2.5](../../deep-dives/a1-headless-host.md#25-reproducibility-and-result-outputs)).
+([a1-headless-host.md §2.5](../../deep-dives/a1-headless-host.md#25-result-outputs)).
 
 ## Context to read (and only this)
 
@@ -55,7 +55,7 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not implement visualization or comparison UI (A5).
-- Do not assume bit-exact re-simulation; the artifact must stand alone.
+- The artifact must stand alone without requiring re-simulation.
 
 ## On completion
 

@@ -1,0 +1,57 @@
+{
+  // Generic scenario-capture profile: a civilian car receives a mass-independent physics
+  // impulse and slides through a pre-framed field. Run with:
+  //   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-impulse.json
+  "Name": "impulse",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  // Grounded objects decelerate at roughly 0.15 x velocity per frame (the code-default
+  // forward friction), so an 8-units-per-frame impulse coasts ~50 world units before
+  // stopping; the capture window covers the whole slide.
+  "DurationFrames": 90,
+  "SettleFrames": 15,
+  "CaptureStride": 3,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" }
+  ],
+  "Actors": [
+    {
+      // Civilian cars are passive physics props: no locomotor applies a motive force, so
+      // the impulse's horizontal component is not filtered away.
+      "Id": "car",
+      "Definition": "CarAsian1",
+      "Owner": "civilian",
+      "X": 540,
+      "Y": 600,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "AutoFit",
+    "SubjectActorIds": [ "car" ],
+    // Pre-frame the field the car will slide through; the camera never moves after setup.
+    "FramingPoints": [ { "X": 600, "Y": 600 } ],
+    "DesiredSpanFraction": 0.6,
+    "InitialCameraHeight": 180,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 800
+  },
+  "Commands": [
+    {
+      // Mass-independent velocity change of 8 world units per frame along +X (planar, so
+      // nothing airborne or motive-related interferes).
+      "Type": "ApplyImpulse",
+      "Frame": 0,
+      "ActorId": "car",
+      "DeltaVelocityX": 8.0,
+      "DeltaVelocityY": 0,
+      "DeltaVelocityZ": 0
+    }
+  ],
+  "Expectations": [
+    { "Type": "MinDisplacement", "ActorId": "car", "MinDisplacement": 40 }
+  ],
+  "StopWhenActorDestroyed": null
+}

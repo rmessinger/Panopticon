@@ -72,7 +72,7 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
 
 - The existing `for (ownerIdx ...)` loop already iterates all `scenario.Players`; once the mapping
   and enemy lookup are generalized, the loop handles N players without further change. Verify the
-  frame-sort tie-break (`:103-107`) still orders deterministically across >2 players (it sorts by
+  frame-sort tie-break (`:103-107`) still uses stable ordering across >2 players (it sorts by
   frame then `PlayerIndex`, which is fine).
 
 ### Tests (`OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs`)

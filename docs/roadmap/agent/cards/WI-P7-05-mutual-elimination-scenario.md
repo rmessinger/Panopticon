@@ -17,7 +17,7 @@ Create the checked-in P7 MutualElimination scenario that reaches `SuddenDeath` a
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: MutualElimination expected two-stage outcome.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario authoring requirements.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scenario authoring requirements.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariants and per-tick failure behavior.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:115-115`: P7-5 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:243-257`: MutualElimination sequence diagram.
@@ -30,7 +30,7 @@ Create the checked-in P7 MutualElimination scenario that reaches `SuddenDeath` a
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json` as static deterministic scenario data.
+1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json` as static scenario data.
 2. Script fixed-timing commands so both sides' last command/production structures fall in the same P3 check window and the match reports `OutcomeStatus.SuddenDeath` rather than ending immediately.
 3. Script the next elimination after sudden death so the run then terminates as `OutcomeStatus.Decided` and `OutcomeReason.Eliminated`.
 4. Add outcome assertions for both lifecycle points: sudden-death transition first, final decided outcome second, with the expected winning/losing side. Do not check only the final frame.

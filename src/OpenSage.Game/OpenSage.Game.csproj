@@ -33,6 +33,7 @@
     <ProjectReference Include="..\OpenSage.Game.CodeGen\OpenSage.Game.CodeGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\OpenSage.IO\OpenSage.IO.csproj" />
     <ProjectReference Include="..\OpenSage.Mathematics\OpenSage.Mathematics.csproj" />
+    <ProjectReference Include="..\OpenSage.Physics\OpenSage.Physics.csproj" />
     <ProjectReference Include="..\OpenSage.Rendering\OpenSage.Rendering.csproj" />
     <ProjectReference Include="..\Veldrid.ImageSharp\Veldrid.ImageSharp.csproj" />
     <ProjectReference Include="..\Veldrid.ImGui\Veldrid.ImGui.csproj" />

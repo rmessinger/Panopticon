@@ -34,8 +34,8 @@ visual streak. This plan closes that gap with the least machinery.
 
 Implement tracers as an FXList nugget effect, not as projectile objects or a draw module:
 
-- No projectile object is spawned; the streak is a pure client visual. No logic-side state, no
-  replay/determinism impact, no interaction with the simulation host or tiered recording.
+- No projectile object is spawned; the streak is a pure client visual. No logic-side state or
+  replay impact, and no interaction with the simulation host or tiered recording.
 - One new `TracerManager` (client side, modeled on `ParticleSystemManager`) owns active tracers
   and draws them in its own transparent pass. No `RenderList` bucket changes.
 - The fire-bone transform from `FXListExecutionContext` encodes origin and firing direction;

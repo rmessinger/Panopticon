@@ -43,7 +43,7 @@ universal invariant set (§3) plus an end-state-specific outcome assertion.
 ### Scripting approach
 
 Each scenario uses a small number of P0 harness commands, such as build, produce, attack, and
-`EndGame`, chosen to reach the target end state deterministically in the fewest ticks. Scenarios
+`EndGame`, chosen to reach the target end state in the fewest ticks. Scenarios
 are written once by a human or agent, stored in
 `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/`, and never re-generated. They use
 fixed seeds, no random timing, and no optional branching. Any AI player that must make progress is
@@ -121,7 +121,7 @@ Locking means the six scenario files and their assertion sets are committed to s
 - P7 depends on all earlier Track P phases: P0, P1, P2, P3, P4, P5, P6, and P6b.
 - P7 unblocks Track A because A1 headless host depends on a validated terminating loop, and Track
   B because B1 benchmarks need a scenario that runs to completion.
-- P7's six scenario files also seed A2 strict-hash verification and B1 benchmarking.
+- P7's six scenario files also supply workloads for A2 statistical validation and B1 benchmarking.
 
 ---
 

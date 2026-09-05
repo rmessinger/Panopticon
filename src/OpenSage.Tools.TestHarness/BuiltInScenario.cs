@@ -6,4 +6,6 @@ public enum BuiltInScenario
     AlpineAssaultUSAvGLAFullBuild,
     UnitValidationGround,
     EngagementCapture,
+    ScenarioCapture,
+    PhysicsStack,
 }

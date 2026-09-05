@@ -5,7 +5,7 @@
 >
 > Audience: human overview of the variable-fidelity design.
 
-Purpose: trade simulation detail for scale by lowering fidelity for less-important units. The
+Purpose: trade simulation detail for scale by lowering fidelity for less-important objects. The
 design centers on a composable toolkit of fidelity-reduction techniques rather than a single
 mechanism.
 
@@ -28,7 +28,7 @@ measure the trade-off between cost and simulation accuracy.
 | Technique | Idea | Strongest existing hook |
 |---|---|---|
 | Temporal LOD | Update distant/idle units less frequently, every N frames instead of every frame. | `UpdateModule.SetWakeFrame`/`NextCallFrame`/`UpdateOrder` already implement a per-module sleepy-update queue (`src/OpenSage.Game/Logic/Object/Update/UpdateModule.cs`, `GameLogic` sleepy queue). Temporal LOD generalizes this. |
-| Simplified behavior/physics | Swap full AI/pathing/physics for cheap approximations for background units, such as straight-line move with no fine collision. | Module composition (`BehaviorModule`/`UpdateModule`) allows substituting a low-fidelity update path. |
+| Simplified behavior/physics | Keep F4a participation fixed but replace full Bepu stepping for background physical objects with sleep, game-driven kinematic motion, or an aggregate collider. Promote before decisive contact. | Module composition selects cheap behavior; F4a's physics registry owns body-mode transitions. |
 | Group aggregation | Represent a crowd of similar units as one statistical or aggregate entity, expanding back to individuals only when it matters, such as combat or a close camera. | Quadtree/partition (`PartitionCellManager`, `Quadtree`) can cluster; aggregate is a new entity kind. |
 | Precision reduction | Lower numeric or spatial precision for low-fidelity units. | Caution: contributes to bounded error. See §4. |
 
@@ -53,12 +53,10 @@ ideally be hysteretic so units do not thrash between levels frame to frame.
 
 ---
 
-## 4. Interaction with reproducibility (important)
+## 4. Shared-state fidelity policy
 
-Variable fidelity interacts with [A2: Reproducibility & statistical stability](../track-a-foundations.md)
-and [B6: Distributed simulation](b6-distributed-simulation.md). Under the
-[relaxed-determinism Decision](../open-questions.md), the bar is bounded statistical error and
-cross-shard consistency rather than bit-exactness:
+Variable fidelity interacts with [A2: Statistical validation](../track-a-foundations.md) and
+[B6: Distributed simulation](b6-distributed-simulation.md):
 
 - If fidelity depends on camera or interest, two players or two shards can choose different
   fidelity levels and therefore run different simulations. In a shared/distributed run, that is only
@@ -82,9 +80,9 @@ differences within tolerance.
 
 | Phase | Goal | Status |
 |---|---|---|
-| B7-1. Fidelity model & policy stance | Define the fidelity-level abstraction and the policy inputs (§3). The reproducibility stance is settled in [§4](#4-interaction-with-reproducibility-important): replicated-state fidelity inputs are required for shared/distributed runs; view-driven fidelity is single-node only. Design + benchmark targets via [B1](../track-b-scale.md). | Not started |
+| B7-1. Fidelity model & policy stance | Define the fidelity-level abstraction and the policy inputs (§3). The shared-state policy is settled in [§4](#4-shared-state-fidelity-policy): replicated-state fidelity inputs are required for shared/distributed runs; view-driven fidelity is single-node only. Design + benchmark targets via [B1](../track-b-scale.md). | Not started |
 | B7-2. Temporal LOD | Generalize the existing wake-frame/sleepy-update mechanism so units update every N frames based on fidelity level; measure cost vs. accuracy. | Not started |
-| B7-3. Simplified behavior/physics | Provide low-fidelity update paths, cheap move/no fine collision/simplified AI, selected by fidelity level via module composition. | Not started |
+| B7-3. Simplified behavior/physics | Provide low-fidelity update paths and F4a registry transitions: sleeping dynamic bodies, kinematic straight-line motion, or aggregate colliders. Participation classification does not change, and promotion restores full dynamic state before decisive contact. | Not started |
 | B7-4. Group aggregation | Represent dense crowds of similar units as aggregate entities; expand to individuals on demand, such as combat or close interest. | Not started |
 | B7-5. Precision reduction (experimental) | Explore coarser numeric/spatial precision for low-fidelity units, gated by the §4 policy and the bounded-error tolerance. | Not started |
 | B7-6. Fidelity visualization & validation | Extend the [replayer/visualizer (A5-3)](a5-visualization.md) to show per-unit fidelity levels and quantify the cost/accuracy trade-off across scaling experiments. | Not started |
@@ -99,6 +97,8 @@ differences within tolerance.
   frames and is low-risk.
 - B7-3/4 build on [B3](../track-b-scale.md) so low-fidelity paths and aggregates are cheap to store
   and iterate.
+- B7-3 also builds on [F4a](../track-f-terrain-destruction.md). It changes the active
+  representation of a physical object, not the participation result or collision semantics.
 - In [distributed sim (B6)](b6-distributed-simulation.md), a shard-level fidelity hint, where a whole
   region runs at low fidelity when unobserved, is a powerful lever. Coordinate B7's per-unit policy
   with B6's per-shard policy.
@@ -126,7 +126,7 @@ Each cell runs a fixed-length simulation and asserts:
 - Mean tick time is lower than the `full` baseline for the same `unitCount`, so the technique saves
   compute.
 - Unit count at end of run equals the reference within B7's bounded-error tolerance.
-- Aggregate metrics, positions and money, stay within the A2 tolerance band vs. `full`.
+- Aggregate metrics, positions, and money report the cost/accuracy trade-off against `full`.
 
 B7-6 extends the A5-3 replayer to display per-unit fidelity levels and graph the cost/accuracy
 trade-off across matrix cells side by side.
@@ -140,7 +140,8 @@ sets its next wake frame (`src/OpenSage.Game/Logic/GameLogic.cs`,
 fidelity policy seam (the A4 `Fidelity policy` seam in [seams.md](../seams.md)) that classifies each
 `GameObject` by importance, then leans on machinery that already exists: temporal LOD widens the
 wake stride through `AwakenUpdateModule`, simplified behavior substitutes a cheaper `UpdateModule`
-via module composition, and aggregation clusters units using `PartitionCellManager`. The engine's
+via module composition, F4a transitions physical bodies through sleep/kinematic/aggregate modes,
+and aggregation clusters units using `PartitionCellManager`. The engine's
 `StaticGameLod`/`LodType` machinery (`src/OpenSage.Game/Lod/`) is presentation-only (particles,
 shadows, model detail) and is orthogonal: B7 introduces simulation-side fidelity and reuses the LOD
 naming convention without touching that path.
@@ -228,6 +229,15 @@ classDiagram
     <<B7-4>>
     +Expand() IReadOnlyList~GameObject~
   }
+  class PhysicsFidelityAdapter {
+    <<B7-3>>
+    +Apply(ObjectId, FidelityLevel)
+    +PromoteToFull(ObjectId)
+  }
+  class GameObjectPhysicsRegistry {
+    <<F4a>>
+    +Transition(ObjectId, PhysicsParticipation)
+  }
   class SimShard {
     <<B6>>
   }
@@ -250,6 +260,8 @@ classDiagram
   FidelityManager ..> TemporalLodController : B7-2 wake stride
   TemporalLodController ..> GameLogic : AwakenUpdateModule
   FidelityManager ..> SimplifiedAIUpdate : B7-3 module swap
+  FidelityManager ..> PhysicsFidelityAdapter : B7-3 body mode
+  PhysicsFidelityAdapter ..> GameObjectPhysicsRegistry : sleep / kinematic / aggregate
   FidelityManager ..> UnitAggregate : B7-4 cluster
   UnitAggregate ..> GameObject : expands to members
   ToleranceComparison ..> FidelityManager : bounds error vs full baseline
@@ -271,6 +283,8 @@ classDiagram
   class FidelityManager newtype
   class TemporalLodController newtype
   class SimplifiedAIUpdate newtype
+  class PhysicsFidelityAdapter newtype
+  class GameObjectPhysicsRegistry newtype
   class UnitAggregate newtype
 ```
 
@@ -279,7 +293,7 @@ so the seam is a no-op until a reducing policy is selected. `ReplicatedStateFide
 policy required for shared and distributed runs; it reads only replicated simulation state
 (position, activity, density, per-shard hint from [B6](b6-distributed-simulation.md)).
 `ViewDrivenFidelityPolicy` may additionally read `Camera` and is restricted to single-node scaling
-experiments, per the [§4](#4-interaction-with-reproducibility-important) decision.
+experiments, per the [§4](#4-shared-state-fidelity-policy) decision.
 
 ### 8.2 Classified logic tick
 
@@ -348,7 +362,7 @@ sequenceDiagram
 ## 9. Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
-- Reproducibility & statistical stability: [`../track-a-foundations.md`](../track-a-foundations.md)
+- Statistical validation: [`../track-a-foundations.md`](../track-a-foundations.md)
 - Distributed sim (per-shard fidelity): [`b6-distributed-simulation.md`](b6-distributed-simulation.md)
 - Replayer/visualizer (fidelity visualization): [`a1-headless-host.md`](a1-headless-host.md)
 - Open questions: [`../open-questions.md`](../open-questions.md)

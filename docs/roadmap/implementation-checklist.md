@@ -389,7 +389,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Validation-ground measurement of the ability units (P6c-4).
   - AC: the Medic, Black Lotus, Hacker, and Hijacker each perform their ability in the validation
     ground with a per-power completion predicate (heal observed, ownership changed, target
-    disabled, vehicle hijacked), carry baseline entries, and two headless runs are byte-identical.
+    disabled, vehicle hijacked) and carry baseline entries.
 
 ### P7: End-to-end skirmish validation
 - [x] Author one end-state scenario per match outcome (six total).
@@ -452,7 +452,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: every `UnitCatalog` entry resolves to exactly one `PrimaryAction` (attack, build, gather,
     special power, or the move fallback); a test fails if any catalog entry is unresolved, so adding
     a unit to the catalog without deciding its action cannot silently drop it from the ground.
-- [x] Scenario and deterministic layout builder (P9-2).
+- [x] Scenario and fixed layout builder (P9-2).
   - AC: `ValidationGroundBuilder.Build` returns an identical `SpawnPlan` (unit positions, target
     positions, target assignment by index, order sequence) for the same scenario and seed across
     repeated invocations, and has no dependency on `IGame` or `Scene3D`.
@@ -476,10 +476,9 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 - [x] Golden baseline and regression gate (P9-7).
   - AC: a baseline with per-entry tolerance (percentage plus a minimum absolute frame floor) is
     checked in, captured only through an explicit refresh mode and never rewritten by a normal run;
-    two consecutive headless runs produce identical reports; headless exits non-zero when any unit
-    regresses beyond its tolerance.
+    headless exits non-zero when any unit regresses beyond its tolerance.
 - [x] Validation-ground test coverage (P9-8).
-  - AC: install-free `[Fact]` tests cover layout determinism, roster completeness, action-mapping
+  - AC: install-free `[Fact]` tests cover layout rules, roster completeness, action-mapping
     totality, and baseline comparison including the tolerance floor; an install-gated
     `[GameFact(SageGame.CncGenerals)]` test runs the ground end to end and asserts every unit either
     completes within tolerance or is a reported gap.
@@ -527,20 +526,17 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     `.rep` path. Milestone test: headless run to a decided outcome with all tiers written and
     reloadable (`TieredRecordingTests.HeadlessRun_ReachesMatchEnd_AndWritesAllTiers`).
 
-### A2: Reproducibility & statistical stability
-- [x] Centralize all randomness through a seeded source; audit uncontrolled nondeterminism.
-  - AC: all randomness flows through a seeded source; an audit lists any uncontrolled sources; two
-    seeded runs match within tolerance on key metrics.
+### A2: Statistical validation
+- [x] Add seed controls and audit randomness sources.
+  - AC: experiments can select a seed and the audit classifies simulation and presentation sources.
   - Done: audits and conversion in [`implementation/track-a-a2-reproducibility.md`](implementation/track-a-a2-reproducibility.md);
     `Game.StartGame` seeds `GameLogic.Random`/`GameClient.Random` from the run seed; the two
-    simulation-affecting uncontrolled sites converted; `SeededRunTests` verifies same-seed T-exact
-    agreement. Remaining presentation-only sources stay uncontrolled by design (listed in the audit).
-- [ ] Define the conflict-resolution rules for concurrent writes.
-  - AC: TBD, rules documented; concurrent writes resolve deterministically per the rule; a test
-    exercises a conflicting-write case.
-- [ ] Verification harness: metric/invariant stability within tolerance (+ opt-in strict-hash mode).
-  - AC: a harness re-runs a scenario and asserts metric/invariant stability within tolerance, with an
-    opt-in strict-hash mode.
+    simulation-affecting uncontrolled sites converted. Remaining presentation-only sources stay
+    uncontrolled by design (listed in the audit). This is an available control, not a
+    reproducibility requirement.
+- [ ] Verification harness: multi-sample metrics and per-run invariants.
+  - AC: a harness runs a scenario sample set, checks each run's invariants, and reports aggregate
+    distributions without requiring runs to agree.
 
 ### A3: Simulation/presentation seam
 - [ ] Formalize the logic↔presentation boundary; ensure logic never reads render-only state.
@@ -603,11 +599,13 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 
 - [ ] B1 Profiling & robust benchmarking utilities (reusable harness, statistical rigor,
-      regression detection, machine-readable output, hardware characterization).
+      regression detection, machine-readable output, hardware characterization, and Bepu
+      step/contact/sync counters).
   - AC: a reusable harness runs repeatable seeded scenarios (incl. the 10k-unit interactive
     reference workload, the [scale anchor](open-questions.md)), reports mean+variance with warmup
-    discarded, detects regressions vs. stored baselines, emits machine-readable output, and is reused
-    by ≥1 other track.
+    discarded, detects regressions vs. stored baselines, emits machine-readable output including
+    Bepu step/contact/transform-sync counters for physics scenarios, and is reused by ≥1 other
+    track.
 - [ ] B1 hardware characterization: probe host machine and include context in benchmark report.
   - AC: each benchmark run emits a `hardware` section in the machine-readable output containing CPU
     model/core count/frequency, system memory and measured bandwidth, and GPU device/VRAM; a
@@ -617,13 +615,14 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B1 benchmark matrix: sweep unitCount × scenario × subsystem; produce keyed benchmark results
       for regression comparison.
   - AC: a `ScenarioMatrix`-style benchmark matrix (axes: `unitCount` ∈ {1000, 5000, 10000},
-    `scenario` ∈ {allMove, allCombat, mixedActions}, `subsystem` ∈ {pathfinding, combat, economy})
+    `scenario` ∈ {allMove, allCombat, mixedActions}, `subsystem` ∈ {pathfinding, physics, combat,
+    economy})
     runs each cell via the B1 harness; per-cell mean+variance is keyed for side-by-side comparison
     and regression detection.
 - [ ] B2 Allocation & hot-path cleanup (per-tick allocations, collision-pair lists, cache hot
-      queries, data layout).
+      queries, and data layout).
   - AC: per-tick allocations in the named hot paths are eliminated (allocation profiler shows ~0
-    steady-state allocations for the targeted paths); B1 shows no perf regression.
+    steady-state allocations for the targeted paths); B1 shows no performance regression.
 - [ ] B3 Parallel & data-oriented logic (intent/command buffers + conflict resolution; incremental
       SoA storage behind the module API).
   - AC: TBD, intent/command buffers + conflict resolution land behind the module API with no
@@ -641,19 +640,22 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
   - AC: TBD, instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
     the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.
-- [ ] B6 Distributed simulation via spatial sharding ([deep dive](deep-dives/b6-distributed-simulation.md)).
-  - AC: TBD (see the deep dive). Rough template: a sim runs sharded across ≥2 processes with
-    cross-shard consistency within tolerance.
+- [ ] B6 Distributed simulation via spatial sharding after F4a
+      ([deep dive](deep-dives/b6-distributed-simulation.md)): one Bepu world per RTS shard,
+      kinematic halo proxies, and handle-free body handoff.
+  - AC: a simulation runs across at least two processes with no object/body loss or duplication,
+    and a boundary contact applies impulses and gameplay effects exactly once.
 - [ ] B6 scenario matrix: sweep shardCount × scenario × partitionStrategy; assert cross-shard
       consistency for every configuration.
   - AC: a `ScenarioMatrix` (axes: `shardCount` ∈ {1, 2, 4}, `scenario` ∈ {largeBattle,
     multiRegion}, `partitionStrategy` ∈ {spatial-grid, spatial-graph-cut}; invalid combos pruned)
     runs each cell; each asserts unit count matches the single-shard reference and aggregate metrics
     are within tolerance; see the deep dive matrix section.
-- [ ] B7 Variable simulation fidelity ([deep dive](deep-dives/b7-variable-fidelity.md)): replicated-state
-      fidelity for shared/distributed, view-driven single-node only.
-  - AC: TBD (see the deep dive). Rough template: fidelity reduction scales unit count with bounded
-    statistical error vs. a full-fidelity baseline.
+- [ ] B7 Variable simulation fidelity ([deep dive](deep-dives/b7-variable-fidelity.md)):
+      after F4a, use replicated-state fidelity for shared/distributed and view-driven single-node
+      only, with physical objects reduced through sleep/kinematic/aggregate modes.
+  - AC: fidelity reduction scales object count with bounded error versus full fidelity, and every
+    reduced physical object restores full Bepu state before decisive contact.
 - [ ] B7 scenario matrix: sweep fidelityLevel × unitCount × importanceConfig; assert each technique
       reduces cost while staying within bounded error.
   - AC: a `ScenarioMatrix` (axes: `fidelityLevel` ∈ {full, temporal-lod, simplified-behavior,
@@ -708,16 +710,18 @@ Track C (C1) and the standalone [ModCollector tool](plans/mod-collector.md).
 ## Track E: Naval Warfare
 
 See [`track-e-naval-warfare.md`](track-e-naval-warfare.md) and the
-[deep dive](deep-dives/e1-e2-naval-warfare.md). Gated on Track P (P7) only.
+[deep dive](deep-dives/e1-e2-naval-warfare.md). E1/E3 are gated on Track P (P7); E2 also depends
+on F4a's shared Bepu ship/contact path.
 
 - [ ] E1 Water/ground terrain passability (`TerrainLogic`/`Pathfinder` stub replacement, wiring
   `Locomotor.Surfaces` and `AIData.WadeWaterDepth`/`DeepWaterDepth`).
   - AC: TBD, a water-only locomotor cannot move onto dry land, a ground-only unit cannot enter
     deep water but can wade shallow water, and `OverWater` triggers correctly.
-- [ ] E2 Ship combat (broadside weapon slots, ram/collision for `SHIP_SUICIDE`, `SHIP_TRANSPORT`
-  verification).
-  - AC: TBD, two ships exchange broadside fire and destroy each other; a suicide ship rams and
-    destroys a target; a transport loads/unloads passengers while moving on water.
+- [ ] E2 Ship combat (broadside weapon slots, F4a Bepu hull/contact ram for `SHIP_SUICIDE`, and
+  `SHIP_TRANSPORT` body-transition verification).
+  - AC: two Bepu-backed ships exchange broadside fire without interpenetrating; one shared contact
+    record triggers ram damage and self-destruction exactly once; a transport loads/unloads
+    passengers while moving on water with correct body suspension/restoration.
 - [ ] E3 Naval production (`PORT` building placement/production via existing production-queue
   pattern).
   - AC: TBD, a `PORT` building can only be placed adjacent to water, produces a ship, and the
@@ -726,12 +730,12 @@ See [`track-e-naval-warfare.md`](track-e-naval-warfare.md) and the
   - AC: TBD, a ReplaySketch-authored scenario builds a ship from a port and wins a water
     engagement, asserted headlessly per the P0 harness pattern.
 
-## Track F: Deformable Terrain & Destruction
+## Track F: Object Physics, Deformable Terrain & Destruction
 
 See [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md). Gated on Track P (P7);
-coordinates with B4a (chunked terrain storage), B5 (rendering at scale), and B7 (variable
-fidelity, for destruction physics cost). Destruction is physics-based (rigid-body debris/
-collapse), not the existing canned model-swap rubble/damage-state system.
+coordinates with Track E for watercraft and with B2/B4/B7 for collision ownership, pathing, and
+physics fidelity. Every instantiated object receives an explicit physics participation result;
+non-physical objects do not receive bodies.
 
 - [ ] F1 Terrain deformation data model (deltas layered on the chunked heightmap).
   - AC: TBD, a deformation delta applies to and is queryable from a chunked heightmap region in
@@ -743,24 +747,58 @@ collapse), not the existing canned model-swap rubble/damage-state system.
   - AC: TBD, an explosive weapon impact produces a crater of the expected radius/depth; non-
     explosive weapons are unaffected.
 - [ ] F4 Physics engine integration (pluggable rigid-body seam, headless-capable).
-  - AC: TBD, a rigid-body test scene (e.g. falling/stacking debris) runs identically windowed and
-    headless and is measured by the B1 benchmark harness.
+  - AC: a falling/stacking scene runs windowed and headless within the same authored bounds, and
+    the B1 harness reports `Timestep` cost at 100/1k/10k bodies.
+- [ ] F4a-1 Physics participation resolver and cross-game definition audit.
+  - AC: every instantiated definition in each supported `SageGame` resolves to dynamic, kinematic,
+    static, sensor, or none with a reported reason; the audit fails on an unclassified physical
+    definition.
+- [ ] F4a-2 Body registry, transform authority, and lifecycle transitions.
+  - AC: backend selection is injected per `GameEngine`; parallel engines do not leak selection;
+    create/remove/teleport, construction, deploy/pack, contain/release, death, and resurrection
+    preserve pose/state and leave registry/body counts exact with no stale body.
+- [ ] F4a-3 Compound shape/material/filter mapping and Bepu contact dispatch.
+  - AC: all authored geometry shapes, offsets, and scale map through cached seam shapes; one solid
+    or sensor pair emits one filtered gameplay contact per frame, and Bepu-managed pairs are not
+    dispatched again by the legacy partition collision pass.
+- [ ] F4a-4 Loose dynamics: debris, hulks, crates, salvage, rocks, and thrown objects.
+  - AC: one representative of each available role can be tossed, collide, settle, sleep, wake, and
+    be removed within authored bounds.
+- [ ] F4a-5 Ground movers: infantry/cavalry/monsters, vehicles/builders, and siege.
+  - AC: representatives move, stop, turn, traverse slopes, and push apart without tunneling or
+    incidental tumbling; pathfinding and locomotors remain route/motion-command authorities.
+- [ ] F4a-6 Aircraft, drones, parachutes, carrier decks, and airborne deaths.
+  - AC: active flight stays controlled, freefall releases constraints, and landing, bounce, fall
+    damage, deck support, and cleanup consume Bepu contacts.
+- [ ] F4a-7 Static and kinematic structures, bridges, walls/gates, props, platforms, and deployables.
+  - AC: dynamic objects contact each surface, and every geometry/state transition replaces the
+    collider without stale obstruction or a one-frame origin collider.
+- [ ] F4a-8 Projectile policy for ballistic, thrown, guided, authored-arc, and hitscan weapons.
+  - AC: each representative resolves to dynamic sensor, kinematic sensor, or no body; physical
+    impact dispatches its warhead exactly once and ignores owner/container pairs.
+- [ ] F4a-9 Ships, boats, and amphibious objects using E1 water data.
+  - AC: representative hulls receive water support and filtered contacts, transition at shore as
+    authored, contain/release passengers, and expose one contact record with the data E2 needs for
+    ram damage.
+- [ ] F4a-10 Bepu default cutover and legacy comparison mode.
+  - AC: the category scenario matrix and cross-game audit pass with Bepu as the default backend;
+    selecting legacy requires an explicit per-engine test/debug setting, and no world mixes
+    backends.
 - [ ] F5 Physics-based structural destruction (replaces canned `RubbleRiseUpdate`/`ToppleUpdate`
       model swap for at least one building type).
-  - AC: TBD, a destroyed building collapses into simulated rigid-body debris that comes to rest
-    via physics, rather than swapping to a single pre-baked rubble model.
+  - AC: a destroyed building replaces its static body with simulated rigid-body debris that comes
+    to rest, without a stale collider or single pre-baked rubble model.
 - [ ] F6 Destruction-terrain interaction (settled debris/craters block pathing & placement).
   - AC: TBD, a destroyed building's settled debris/crater blocks pathing and prevents
     construction on the same footprint until cleared.
-- [ ] F7 Persistence, replay & determinism (`StatePersister` + ReplaySketch/P0 capture of
-      deformation and physics debris state).
-  - AC: TBD, a save/load round-trip preserves terrain deformation and debris resting state; a
-    ReplaySketch scenario with an explosive weapon and a destroyed building asserts the resulting
-    crater and debris state headlessly within tolerance.
+- [ ] F7 Persistence & replay (`StatePersister` + ReplaySketch/P0 capture of deformation and all
+      runtime object-physics state).
+  - AC: a save/load round-trip reconstructs static bodies and preserves participation mode,
+    transform, velocities, sleep/constraint state, terrain deformation, and debris state without
+    serializing Bepu handles; resumed scenarios stay within authored bounds.
 - [ ] F8 Authoring & validation tooling (extend ReplaySketch; no dedicated viewer).
-  - AC: TBD, ReplaySketch screenshot mode shows deformed terrain and settled debris, and a
-    headless assertion validates crater radius/depth and debris bounds against the triggering
-    weapon/building.
+  - AC: ReplaySketch reports resolved participation/collider/contact state, asserts contact and
+    settle bounds headlessly, and shows deformed terrain and settled debris in screenshot mode.
 
 ## Track G: Rendering Clarity & Image Quality
 
@@ -889,8 +927,9 @@ coordinates with rather than duplicates.
   - AC: a map authored in the new format round-trips (write, reload) with terrain, blend, and
     placed-object data intact.
 - [ ] H4 New object/unit-definition storage format (`ObjectDefinition` plus weapons/upgrades/
-  locomotors; INI stays a permanent legacy read path).
+  locomotors and F4a engine-level physics metadata; INI stays a permanent legacy read path).
   - AC: a unit authored in the new format loads with full parity to its INI-authored equivalent,
+    including participation/material/filter overrides; no Bepu-specific type or handle is serialized,
     and a new schema field does not break loading older content.
 - [ ] H5 Legacy migration & compatibility tooling (`.map`/INI → new formats, round-trip
   validator).

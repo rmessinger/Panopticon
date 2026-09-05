@@ -70,15 +70,11 @@ Scope notes:
   reference domain rather than a baked-in assumption.
 - Scale and extensibility win over original-engine fidelity when they conflict. Reading
   original SAGE data remains valuable, but it must not block the architectural changes scale
-  requires. The [relaxed-determinism Decision](open-questions.md) trades bit-exact,
-  re-simulatable replays for parallel scale; recorded state rather than input re-simulation backs
-  run analysis.
+  requires. Recorded state rather than input re-simulation backs run analysis.
 - Separate simulation from presentation cleanly. Headless and distributed scenarios need a
   logic core that runs without a renderer, audio, or window.
-- Reproducibility is for comparison rather than bit-exactness. Runs must be seeded,
-  re-runnable, and metric/invariant-stable enough to compare experiments. The trade-off is
-  aggressive intra-tick parallelism with explicit conflict resolution rather than bit-exact
-  replays.
+- Determinism is not a roadmap requirement. Validation uses per-run invariants, authored bounds,
+  aggregate distributions, and performance statistics. Seeds remain optional experiment inputs.
 - Incremental, always-shippable: each phase leaves the engine building and the existing games
   playable.
 - Single-operator scope: the framework is a personal research tool for one operator for the
@@ -116,17 +112,18 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`roadmap-tree.md`](roadmap-tree.md) | human | Visual tree of the whole roadmap: tracks → phases → sub-phases hierarchy + the branching dependency flow. |
 | [`seams.md`](seams.md) | human + agent | Definition of a "seam" and the maintained registry of all framework seams (structural + A4 experiment seams). Pending split into a human overview and an agent registry. |
 | [`track-p-playable-baseline.md`](track-p-playable-baseline.md) | human | Prerequisite track: make the reference game (Generals/ZH) a fully playable end-to-end skirmish (setup, AI, economy, production, combat, win/lose). Gates Tracks A/B/C. |
-| [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, reproducibility & statistical stability, sim/presentation seam, experiment framework, scenario authoring & visualization. |
+| [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, statistical validation, sim/presentation seam, experiment framework, scenario authoring & visualization. |
 | [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
 | [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
-| [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes the stubbed water/ground pathfinding layer and adds ship combat/production, validated against BFME2's existing ship content. Gated on Track P only. |
-| [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Deformable terrain & destruction: terrain deformation data model, runtime mesh/rendering update, weapon-driven terrain deformation, physics engine integration, physics-based structural destruction, destruction-terrain interaction, persistence/replay, authoring/validation tooling. |
+| [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes water/ground pathfinding and adds ship combat/production against BFME2 content. E1/E3 depend on Track P; E2 also uses F4a Bepu hull contacts. |
+| [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Object physics, deformable terrain & destruction: Bepu seam, explicit physics participation for every game object, runtime terrain deformation, structural destruction, persistence/replay, and authoring/validation tooling. |
 | [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md) | human | Rendering clarity & image quality: high-DPI/resolution correctness, graphics settings & fidelity presets, visual regression harness, MSAA, cutout/alpha-test clarity, gamma-correct rendering, texture filtering & mip quality, shadow quality tier, resolution-independent 2D/UI, optional realistic proportions. Not gated on Track P. |
 | [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Map & unit storage formats: a new on-disk storage system for maps and object/unit template data. Format-agnostic interchange abstraction, a versioned successor to the `.map` format, a versioned successor to per-game INI object-definition storage, legacy migration/compatibility tooling, authoring/pipeline integration, round-trip regression. Persistence/schema concern, distinct from B3/B4a-5's runtime-performance focus. Gated on Track P. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `OpenSage.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
 | [`plans/tracer-rounds.md`](plans/tracer-rounds.md) | human | Plan for rendering bullet tracers through the existing `Tracer` FXList nugget: client-side `TracerManager`, directional additive quads, no projectile or logic-side involvement. |
+| [`plans/physics-seam.md`](plans/physics-seam.md) | human + agent | Object physics adoption plan: BepuPhysics 2.4 seam, participation/lifecycle/contact policy, category matrix for all applicable game objects, default-backend cutover, and WI-PS card index. |
 | [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
 | [`implementation-checklist.md`](implementation-checklist.md) | human | Single granular change list: every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
 | [`agent/`](agent/) | agent | Agent-focused companion: how a low-effort automated agent picks up small, bounded slices of the roadmap (task cards + workflow) without re-reasoning the whole design. |
@@ -161,7 +158,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 ## Tracks at a glance
 
 Track layout: a prerequisite Playable Baseline track, a shared Foundations track, and parallel
-Scale, External Assets, Gameplay Content, Naval Warfare, Deformable Terrain & Destruction, and
+Scale, External Assets, Gameplay Content, Naval Warfare, Object Physics/Terrain/Destruction, and
 Rendering Clarity tracks. Phase order is approximate; cross-track dependencies appear in each
 track document.
 
@@ -170,8 +167,8 @@ track document.
   P3 victory/defeat conditions · P4 economy loop · P5 construction & production · P6 combat &
   command · P6b unit-contract validation · P7 end-to-end skirmish validation · P8 implementation
   delta remediation · P9 unit validation ground. Gates all other tracks.
-- [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 reproducibility &
-  statistical stability · A3 simulation/presentation seam · A4 experiment framework seams & harness
+- [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 statistical
+  validation · A3 simulation/presentation seam · A4 experiment framework seams & harness
   (incl. the Simulation Domain Model seam - RTS, city-builder, transport, …) · A5 scenario
   authoring & visualization (incl. authoring/visualization at scale - the ReplaySketch tooling
   scales with the sim).
@@ -189,13 +186,14 @@ track document.
   (D1/D2) and Track C/ModCollector (D3/D4).
 - [Track E - Naval Warfare](track-e-naval-warfare.md): E1 water/ground terrain passability ·
   E2 ship combat · E3 naval production (`PORT`) · E4 reference naval scenario. Depends on Track
-  P only.
-- [Track F - Deformable Terrain & Destruction](track-f-terrain-destruction.md): F1 terrain
+  P; E2 also depends on F4a's shared hull/contact path.
+- [Track F - Object Physics, Deformable Terrain & Destruction](track-f-terrain-destruction.md): F1 terrain
   deformation data model (chunked-heightmap deltas) · F2 runtime mesh/rendering update · F3
   weapon/combat-driven terrain deformation · F4 physics engine integration (pluggable rigid-body
-  seam) · F5 physics-based structural destruction (replaces canned rubble/damage-state model
-  swap) · F6 destruction-terrain interaction (debris/craters block pathing & placement) · F7
-  persistence/replay/determinism · F8 authoring/validation tooling.
+  seam) · F4a Bepu adoption across dynamic/kinematic/static/sensor objects · F5 physics-based
+  structural destruction (replaces canned rubble/damage-state model swap) · F6 destruction-terrain
+  interaction (debris/craters block pathing & placement) · F7 persistence/replay · F8
+  authoring/validation tooling.
 - [Track G - Rendering Clarity & Image Quality](track-g-rendering-clarity.md): G1 high-DPI
   drawable & resolution correctness · G2 graphics settings & fidelity presets
   (`Faithful`/`Enhanced`) · G3 visual regression harness · G4 multisample antialiasing · G5
@@ -221,15 +219,16 @@ track document.
   feeds the same runtime `Model`/`ModelInstance` types that the rendering refactor expects.
 - Track D (D1/D2) depends only on Track P; D3/D4 additionally depend on Track C (C1) and the
   standalone [ModCollector tool](plans/mod-collector.md).
-- Track E depends only on Track P; it finishes an existing stub and exercises BFME2's existing
-  ship content, so it needs neither Track C nor ModCollector. B4a (larger maps) should coordinate
-  terrain streaming with E1's water-depth data once both land.
+- Track E depends on Track P; E2 additionally consumes F4a's Bepu hull contacts and water-support
+  body mode. It still needs neither Track C nor ModCollector. B4a should coordinate terrain
+  streaming with E1's water-depth data once both land.
 - Track F's F1 (terrain deformation data model) depends on B4a-5 (chunked terrain storage) and
   F2 (rendering update) coordinates with B5 - deformation should build on the chunked
   representation and shared rendering-at-scale infrastructure rather than a parallel one.
-- Track F's F5/F6 (physics-based structural destruction, destruction-terrain interaction) depend
-  on Track P's P6 combat coverage and P6-3 death cleanup - destruction hooks into the same
-  weapon-hit and death-notification paths those phases verify.
+- Track F's F4a classifies every instantiated object but creates Bepu bodies only for physical
+  roles. It coordinates with B2/B4 over solid-contact ownership, gates B6's RTS shards and B7's
+  reduced-fidelity bodies, supplies E2 ship physics, and defines H4's engine-level physics
+  metadata. F5/F6 then use the same lifecycle for structural destruction and terrain obstruction.
 - Track G is the only track not gated on Track P: it changes presentation only and no simulation
   behaviour. It coordinates with B5 (rendering at scale) over pipeline-description plumbing and
   with A3 (sim/presentation seam) over the pixel-versus-logical-point split, and its G3 golden
@@ -284,7 +283,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | D4 - Reference non-SAGE scenario | `░░░░░░░░░░` | 0 / 1 |
 | Track D total | `░░░░░░░░░░` | 0 / 4 |
 
-### Track E - Naval Warfare (gated on Track P only)
+### Track E - Naval Warfare (gated on Track P; E2 also on F4a)
 
 | Phase | Progress | Items |
 |---|---|---|
@@ -294,7 +293,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | E4 - Reference naval scenario | `░░░░░░░░░░` | 0 / 1 |
 | Track E total | `░░░░░░░░░░` | 0 / 4 |
 
-### Track F - Deformable Terrain & Destruction (gated on Track P)
+### Track F - Object Physics, Deformable Terrain & Destruction (gated on Track P)
 
 | Phase | Progress | Items |
 |---|---|---|
@@ -302,11 +301,12 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | F2 - Runtime mesh & rendering update | `░░░░░░░░░░` | 0 / 1 |
 | F3 - Weapon-driven terrain deformation | `░░░░░░░░░░` | 0 / 1 |
 | F4 - Physics engine integration | `░░░░░░░░░░` | 0 / 1 |
+| F4a - Game-object physics adoption | `░░░░░░░░░░` | 0 / 10 |
 | F5 - Physics-based structural destruction | `░░░░░░░░░░` | 0 / 1 |
 | F6 - Destruction-terrain interaction | `░░░░░░░░░░` | 0 / 1 |
-| F7 - Persistence, replay & determinism | `░░░░░░░░░░` | 0 / 1 |
+| F7 - Persistence & replay | `░░░░░░░░░░` | 0 / 1 |
 | F8 - Authoring & validation tooling | `░░░░░░░░░░` | 0 / 1 |
-| Track F total | `░░░░░░░░░░` | 0 / 8 |
+| Track F total | `░░░░░░░░░░` | 0 / 18 |
 
 ### Track G - Rendering Clarity & Image Quality (not gated on Track P)
 

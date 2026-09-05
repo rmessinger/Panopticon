@@ -26,6 +26,7 @@ struct MeshConstantsType
 struct RenderItemConstantsVSType
 {
     mat4 World;
+    vec4 UVOffset;
 };
 
 struct RenderItemConstantsPSType

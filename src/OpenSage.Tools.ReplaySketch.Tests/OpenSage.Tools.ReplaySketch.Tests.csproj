@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenSage.Tools.ReplaySketch.Core\OpenSage.Tools.ReplaySketch.Core.csproj" />
+    <ProjectReference Include="..\OpenSage.Tools.TestHarness\OpenSage.Tools.TestHarness.csproj" />
   </ItemGroup>
 
 

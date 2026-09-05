@@ -1,10 +1,14 @@
 using System;
+using System.Linq;
 using System.Numerics;
 using ImGuiNET;
 using OpenSage.Audio;
 using OpenSage.Data.Ini;
 using OpenSage.Diagnostics.Util;
 using OpenSage.Mathematics;
+using OpenSage.Physics;
+using OpenSage.Physics.Bepu;
+using OpenSage.Physics.Legacy;
 
 namespace OpenSage.Logic.Object;
 
@@ -34,12 +38,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     private IProjectileUpdate _projectileUpdate;
 
-    private float _yawRate;
-    private float _rollRate;
-    private float _pitchRate;
-    private Vector3 _acceleration;
-    private Vector3 _previousAcceleration;
-    private Vector3 _velocity;
+    private readonly IPhysicsBody _body;
     private PhysicsTurningType _turning;
     private ObjectId _ignoreCollisionsWith;
     private PhysicsFlagType _flags;
@@ -49,8 +48,28 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     private LogicFrame _motiveForceExpires;
     private float _extraBounciness;
     private float _extraFriction;
+    private bool _orientToVelocityRequested;
 
-    private float _velocityMagnitude;
+    /// <summary>
+    /// The legacy backend body holding this module's integration state
+    /// (velocity, acceleration, rotation rates).
+    /// </summary>
+    private LegacyPhysicsBody Body => (LegacyPhysicsBody)_body;
+
+    private BepuPhysicsBody BepuBody => _body as BepuPhysicsBody;
+
+    // Bepu adapter sync state: the position written back to (or pushed from) the
+    // object transform at the last update, so external moves can be detected.
+    private Vector3 _bepuSyncedPosition;
+    private bool _bepuPoseValid;
+    // Collision-volume half extents in object space, and the center of the collision
+    // volume relative to the object origin (the upright ground contact point), so a
+    // spawned object rests on its collision shape, not inside it. The offset rotates
+    // with the object: a rolled car collides with its roof, not a floating box.
+    private readonly Vector3 _bepuHalfExtents;
+    private readonly Vector3 _bepuBodyOffset;
+
+    internal bool OrientsToFlightPath => _moduleData.OrientToFlightPath;
 
     protected override UpdateOrder UpdateOrder => UpdateOrder.Order1;
 
@@ -78,30 +97,72 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     public float YawRate
     {
-        get => _yawRate;
+        get
+        {
+            if (BepuBody is { } bepu)
+            {
+                return bepu.AngularVelocity.Z / GameEngine.LogicFramesPerSecond;
+            }
+            return Body.YawRate;
+        }
         set
         {
-            _yawRate = value;
+            if (BepuBody is { } bepu)
+            {
+                var angular = bepu.AngularVelocity;
+                angular.Z = value * GameEngine.LogicFramesPerSecond;
+                bepu.AngularVelocity = angular;
+                return;
+            }
+            Body.YawRate = value;
             SetHasPitchRollYaw();
         }
     }
 
     public float RollRate
     {
-        get => _rollRate;
+        get
+        {
+            if (BepuBody is { } bepu)
+            {
+                return bepu.AngularVelocity.X / GameEngine.LogicFramesPerSecond;
+            }
+            return Body.RollRate;
+        }
         set
         {
-            _rollRate = value;
+            if (BepuBody is { } bepu)
+            {
+                var angular = bepu.AngularVelocity;
+                angular.X = value * GameEngine.LogicFramesPerSecond;
+                bepu.AngularVelocity = angular;
+                return;
+            }
+            Body.RollRate = value;
             SetHasPitchRollYaw();
         }
     }
 
     public float PitchRate
     {
-        get => _pitchRate;
+        get
+        {
+            if (BepuBody is { } bepu)
+            {
+                return bepu.AngularVelocity.Y / GameEngine.LogicFramesPerSecond;
+            }
+            return Body.PitchRate;
+        }
         set
         {
-            _pitchRate = value;
+            if (BepuBody is { } bepu)
+            {
+                var angular = bepu.AngularVelocity;
+                angular.Y = value * GameEngine.LogicFramesPerSecond;
+                bepu.AngularVelocity = angular;
+                return;
+            }
+            Body.PitchRate = value;
             SetHasPitchRollYaw();
         }
     }
@@ -109,17 +170,27 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     /// <summary>
     /// Returns last frame's acceleration.
     /// </summary>
-    public Vector3 Acceleration => _previousAcceleration;
+    public Vector3 Acceleration => BepuBody != null ? Vector3.Zero : Body.PreviousAcceleration;
 
     /// <summary>
     /// Returns current frame's acceleration. Should only be used for tests.
     /// </summary>
-    internal Vector3 CurrentAcceleration => _acceleration;
+    internal Vector3 CurrentAcceleration => BepuBody != null ? Vector3.Zero : Body.Acceleration;
 
     /// <summary>
     /// Returns current velocity.
     /// </summary>
-    public Vector3 Velocity => _velocity;
+    public Vector3 Velocity
+    {
+        get
+        {
+            if (BepuBody is { } bepu)
+            {
+                return bepu.LinearVelocity / GameEngine.LogicFramesPerSecond;
+            }
+            return Body.Velocity;
+        }
+    }
 
     public PhysicsTurningType Turning
     {
@@ -147,11 +218,15 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     {
         get
         {
-            if (_velocityMagnitude == InvalidVelocityMagnitude)
+            if (BepuBody != null)
             {
-                _velocityMagnitude = _velocity.Length();
+                return Velocity.Length();
             }
-            return _velocityMagnitude;
+            if (Body.VelocityMagnitude == InvalidVelocityMagnitude)
+            {
+                Body.VelocityMagnitude = Body.Velocity.Length();
+            }
+            return Body.VelocityMagnitude;
         }
     }
 
@@ -174,6 +249,22 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
         Mass = moduleData.Mass;
 
+        var shape = CreateShape(gameObject);
+        _bepuHalfExtents = shape switch
+        {
+            PhysicsShape.Sphere sphere => new Vector3(sphere.Radius, sphere.Radius, sphere.Radius),
+            PhysicsShape.Box box => box.HalfExtents,
+            PhysicsShape.Cylinder cylinder => new Vector3(cylinder.Radius, cylinder.Radius, cylinder.Height * 0.5f),
+            _ => Vector3.Zero,
+        };
+        _bepuBodyOffset = new Vector3(0.0f, 0.0f, _bepuHalfExtents.Z);
+        _body = gameEngine.PhysicsWorld.CreateBody(new PhysicsBodyDescription
+        {
+            Shape = shape,
+            Mass = moduleData.Mass,
+            Position = gameObject.Translation,
+        });
+
         SetAllowBouncing(moduleData.AllowBouncing);
         SetAllowCollideForce(moduleData.AllowCollideForce);
 
@@ -186,6 +277,19 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         _forwardFriction = Math.Clamp(moduleData.ForwardFriction, MinNonAeroFriction, MaxFriction);
         _lateralFriction = Math.Clamp(moduleData.LateralFriction, MinNonAeroFriction, MaxFriction);
         _zFriction = Math.Clamp(moduleData.ZFriction, MinNonAeroFriction, MaxFriction);
+    }
+
+    private static PhysicsShape CreateShape(GameObject gameObject)
+    {
+        var shape = gameObject.Definition.Geometry.Shapes.FirstOrDefault();
+        var majorRadius = Math.Max(shape?.MajorRadius ?? 0.0f, 1.0f);
+        var minorRadius = Math.Max(shape?.MinorRadius ?? majorRadius, 1.0f);
+        return shape?.Type switch
+        {
+            GeometryType.Box => new PhysicsShape.Box(new Vector3(majorRadius, minorRadius, Math.Max(shape.Height, 1.0f) * 0.5f)),
+            GeometryType.Cylinder => new PhysicsShape.Cylinder(majorRadius, Math.Max(shape.Height, 1.0f)),
+            _ => new PhysicsShape.Sphere(majorRadius),
+        };
     }
 
     protected internal override void OnObjectCreated()
@@ -234,6 +338,11 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     /// </summary>
     public override UpdateSleepTime Update()
     {
+        if (_body is BepuPhysicsBody bepuBody)
+        {
+            return UpdateBepu(bepuBody);
+        }
+
         var obj = GameObject;
         var d = _moduleData;
         var airborneAtStart = GameObject.IsAboveTerrain;
@@ -252,7 +361,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         }
 
         var prevPos = GameObject.Translation;
-        _previousAcceleration = _acceleration;
+        Body.PreviousAcceleration = Body.Acceleration;
 
         if (!GameObject.IsDisabledByType(DisabledType.Held))
         {
@@ -261,25 +370,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             ApplyGravitationalForces();
             ApplyFrictionalForces();
 
-            // Integrate acceleration into velocity.
-            _velocity += _acceleration;
-
-            // When velocity gets tiny, just clamp to zero.
-            const float threshold = 0.001f;
-            if (MathF.Abs(_velocity.X) < threshold)
-            {
-                _velocity.X = 0.0f;
-            }
-            if (MathF.Abs(_velocity.Y) < threshold)
-            {
-                _velocity.Y = 0.0f;
-            }
-            if (MathF.Abs(_velocity.Z) < threshold)
-            {
-                _velocity.Z = 0.0f;
-            }
-
-            _velocityMagnitude = InvalidVelocityMagnitude;
+            Body.IntegrateVelocity();
 
             var oldPosZ = mtx.Translation.Z;
 
@@ -291,13 +382,13 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
                 {
                     // Things other than projectiles don't cheat in z.
                     var translation = mtx.Translation;
-                    translation.Z += _velocity.Z;
+                    translation.Z += Body.Velocity.Z;
                     mtx.Translation = translation;
                 }
             }
             else
             {
-                mtx.Translation += _velocity;
+                mtx.Translation += Body.Velocity;
             }
 
             if (Vector3Utility.IsNaN(mtx.Translation))
@@ -310,7 +401,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             // This is new in Zero Hour.
             if (GetFlag(PhysicsFlagType.IsStunned))
             {
-                if (IsWithinThreshold(_velocity, StunReliefEpsilon)
+                if (IsWithinThreshold(Body.Velocity, StunReliefEpsilon)
                     || !obj.IsSignificantlyAboveTerrain)
                 {
                     SetStunned(false);
@@ -320,55 +411,9 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
             if (GetFlag(PhysicsFlagType.HasPitchRollYaw))
             {
-                // You may be tempted to do something like this:
-                //
-                // 	Real rollAngle = -mtx.Get_X_Rotation();
-                // 	Real pitchAngle = mtx.Get_Y_Rotation();
-                // 	Real yawAngle = mtx.Get_Z_Rotation();
-                // 	// do stuff to angles, then rebuild the mtx with 'em
-                //
-                // You must resist this temptation, because your code will be wrong!
-                //
-                // The problem is that you can't use these calls to later reconstruct
-                // the matrix... because doing such a thing is highly order-dependent,
-                // and furthermore, you'd have to use Euler angles (Not the Get_?_Rotation
-                // calls) to be able to reconstruct 'em, and that's too slow to do for
-                // every object every frame.
-                //
-                // The one exception is that it is OK to use Get_Z_Rotation() to get
-                // the yaw angle.
-
                 // Only update the position if we are not held.
                 // (Otherwise, slowdeath sinking into ground won't work.)
-                var yawRateToUse = _yawRate * d.PitchRollYawFactor;
-                var pitchRateToUse = _pitchRate * d.PitchRollYawFactor;
-                var rollRateToUse = _rollRate * d.PitchRollYawFactor;
-
-                // With a center of mass listing, pitchRate needs to dampen towards
-                // straight down / straight up.
-                var offset = CenterOfMassOffset;
-
-                // Magnitude sets initial rate. Here we care about sign.
-                if (offset != 0.0f)
-                {
-                    var xvec = mtx.GetXVector();
-                    var xy = MathF.Sqrt(xvec.X * xvec.X + xvec.Y * xvec.Y);
-                    var pitchAngle = MathF.Atan2(xvec.Z, xy);
-                    var remainingAngle = (offset > 0)
-                        ? (MathF.PI / 2) - pitchAngle
-                        : -(MathF.PI / 2) + pitchAngle;
-                    var s = MathF.Sin(remainingAngle);
-                    pitchRateToUse *= s;
-                }
-
-                // Update rotation.
-                // Original comment:
-                // @todo Rotation should use torques, and integrate just like forces (MSB)
-                // note, we DON'T want to Pre-rotate (either inplace or not),
-                // since we want to add our mods to the existing matrix.
-                mtx.RotateX(rollRateToUse);
-                mtx.RotateY(pitchRateToUse);
-                mtx.RotateZ(yawRateToUse);
+                Body.IntegrateRotation(ref mtx, d.PitchRollYawFactor, CenterOfMassOffset);
             }
 
             // Do not allow object to pass through the ground.
@@ -385,20 +430,20 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             gotBounceForce = HandleBounce(oldPosZ, mtx.GetZTranslation(), groundZ, ref bounceForce);
 
             // Remember our z velocity prior to doing ground-slam adjustment.
-            activeVelocityZ = _velocity.Z;
+            activeVelocityZ = Body.Velocity.Z;
             if (mtx.GetZTranslation() <= groundZ)
             {
                 // Note - when vehicles are going down a slope, they will maintain a small negative
                 // z velocity as they go down. So don't slam it to 0 if they aren't slamming into
                 // the ground.
                 var dz = groundZ - mtx.GetZTranslation(); // Our excess z velocity
-                _velocity.Z += dz; // Remove the excess z velocity
-                if (_velocity.Z > 0.0f)
+                Body.Velocity.Z += dz; // Remove the excess z velocity
+                if (Body.Velocity.Z > 0.0f)
                 {
-                    _velocity.Z = 0.0f;
+                    Body.Velocity.Z = 0.0f;
                 }
 
-                _velocityMagnitude = InvalidVelocityMagnitude;
+                Body.VelocityMagnitude = InvalidVelocityMagnitude;
 
                 mtx.SetZTranslation(groundZ);
 
@@ -443,10 +488,16 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 obj.SetTransformMatrix(mtx);
             }
+
+            if (d.OrientToFlightPath || _orientToVelocityRequested)
+            {
+                OrientToVelocity();
+            }
+            _orientToVelocityRequested = false;
         } // if not held
 
         // Reset the acceleration for accumulation next frame.
-        _acceleration = Vector3.Zero;
+        Body.Acceleration = Vector3.Zero;
 
         // Clear overlap object, which will be set by PhysicsCollide later.
         _previousOverlap = _currentOverlap;
@@ -487,8 +538,8 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
                 // (unless the hill is really steep).
                 const float minAngleTan = 3.0f; // Roughly 71 degrees
                 const float tinyDelta = 0.01f;
-                if ((MathF.Abs(_velocity.X) <= tinyDelta || MathF.Abs(activeVelocityZ / _velocity.X) >= minAngleTan) &&
-                    (MathF.Abs(_velocity.Y) <= tinyDelta || MathF.Abs(activeVelocityZ / _velocity.Y) >= minAngleTan))
+                if ((MathF.Abs(Body.Velocity.X) <= tinyDelta || MathF.Abs(activeVelocityZ / Body.Velocity.X) >= minAngleTan) &&
+                    (MathF.Abs(Body.Velocity.Y) <= tinyDelta || MathF.Abs(activeVelocityZ / Body.Velocity.Y) >= minAngleTan))
                 {
                     var damageAmount = netSpeed * Mass * d.FallHeightDamageFactor;
 
@@ -521,7 +572,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         }
 
         // If we are effectively dead, we shouldn't recall kill.
-        if (d.KillWhenRestingOnGround && !airborneAtEnd && IsVerySmall3D(_velocity))
+        if (d.KillWhenRestingOnGround && !airborneAtEnd && IsVerySmall3D(Body.Velocity))
         {
             if (!obj.IsKindOf(ObjectKinds.Drone) || obj.IsEffectivelyDead || obj.IsDisabledByType(DisabledType.Unmanned))
             {
@@ -542,6 +593,175 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     }
 
     /// <summary>
+    /// Bepu adapter path: the backend owns integration (gravity, contacts, angular
+    /// dynamics); this keeps only SAGE ground semantics (ground clamp, stick-to-ground,
+    /// bounce restitution, ground friction) and object-transform synchronization.
+    /// Loose by design while categories migrate incrementally.
+    /// </summary>
+    private UpdateSleepTime UpdateBepu(BepuPhysicsBody body)
+    {
+        var obj = GameObject;
+
+        if (obj.IsDisabledByType(DisabledType.Held))
+        {
+            return UpdateSleepTime.None;
+        }
+
+        var translation = obj.Translation;
+        if (!_bepuPoseValid || translation != _bepuSyncedPosition)
+        {
+            // Something other than physics moved the object, or this is the first
+            // update (spawn placement, scripted repositioning): the object pose is
+            // authoritative, so push it into the body. The body center sits at the
+            // collision-volume center, rotated with the object.
+            var matrix = obj.TransformMatrix;
+            var rotation = Quaternion.CreateFromRotationMatrix(matrix);
+            body.Position = matrix.Translation + Vector3.Transform(_bepuBodyOffset, rotation);
+            body.Rotation = rotation;
+        }
+        else
+        {
+            var pose = Matrix4x4.CreateFromQuaternion(body.Rotation);
+            pose.Translation = body.Position - Vector3.Transform(_bepuBodyOffset, body.Rotation);
+            obj.SetTransformMatrix(pose);
+        }
+        _bepuSyncedPosition = obj.Translation;
+        _bepuPoseValid = true;
+
+        var position = body.Position;
+
+        var rotationMatrix = Matrix4x4.CreateFromQuaternion(body.Rotation);
+        Span<float> cornerHeights = stackalloc float[8];
+        Span<float> groundHeights = stackalloc float[8];
+        for (var cornerIndex = 0; cornerIndex < 8; cornerIndex++)
+        {
+            var cornerOffset = new Vector3(
+                ((cornerIndex & 1) == 0 ? 1.0f : -1.0f) * _bepuHalfExtents.X,
+                ((cornerIndex & 2) == 0 ? 1.0f : -1.0f) * _bepuHalfExtents.Y,
+                ((cornerIndex & 4) == 0 ? 1.0f : -1.0f) * _bepuHalfExtents.Z);
+            var corner = body.Position + Vector3.Transform(cornerOffset, rotationMatrix);
+            var cornerGroundZ = GameEngine.Game.TerrainLogic.GetLayerHeight(corner.X, corner.Y, obj.Layer);
+            if (obj.TestStatus(ObjectStatus.DeckHeightOffset))
+            {
+                cornerGroundZ += obj.CarrierDeckHeight;
+            }
+
+            cornerHeights[cornerIndex] = corner.Z;
+            groundHeights[cornerIndex] = cornerGroundZ;
+        }
+
+        var maximumGroundPenetration = GetMaximumGroundPenetration(cornerHeights, groundHeights);
+        var velocity = body.LinearVelocity;
+        if (maximumGroundPenetration >= 0.0f)
+        {
+            body.Position = position with { Z = position.Z + maximumGroundPenetration };
+
+            if (velocity.Z < 0.0f)
+            {
+                var stiffness = Math.Clamp(
+                    GameEngine.AssetStore.GameData.Current.GroundStiffness,
+                    0.01f,
+                    0.99f);
+                velocity.Z = -velocity.Z * stiffness;
+                body.LinearVelocity = velocity;
+            }
+        }
+        else if (GetFlag(PhysicsFlagType.StickToGround)
+            && !GetFlag(PhysicsFlagType.AllowToFall)
+            && maximumGroundPenetration >= -1.0f)
+        {
+            body.Position = position with { Z = position.Z + maximumGroundPenetration };
+        }
+
+        if (maximumGroundPenetration >= -1.0f)
+        {
+            var damping = Math.Clamp(1.0f - _forwardFriction, 0.01f, 0.99f);
+            velocity = body.LinearVelocity;
+            velocity.X *= damping;
+            velocity.Y *= damping;
+            body.LinearVelocity = velocity;
+        }
+
+        if (_moduleData.OrientToFlightPath || _orientToVelocityRequested)
+        {
+            OrientBepuToVelocity(body);
+        }
+        _orientToVelocityRequested = false;
+
+        return UpdateSleepTime.None;
+    }
+
+    internal void RequestOrientToVelocity()
+    {
+        _orientToVelocityRequested = true;
+        SetWakeFrame(UpdateSleepTime.None);
+    }
+
+    private bool OrientToVelocity()
+    {
+        if (!Matrix4x4Utility.TryCreateTransformMatrix(
+            GameObject.Translation,
+            Velocity,
+            GameObject.Transform.Scale,
+            out var transform))
+        {
+            return false;
+        }
+
+        GameObject.SetTransformMatrix(transform);
+        return true;
+    }
+
+    private bool OrientBepuToVelocity(BepuPhysicsBody body)
+    {
+        if (!Matrix4x4Utility.TryCreateTransformMatrix(
+            Vector3.Zero,
+            Velocity,
+            1.0f,
+            out var orientation))
+        {
+            return false;
+        }
+
+        body.Rotation = Quaternion.CreateFromRotationMatrix(orientation);
+        var origin = body.Position - Vector3.Transform(_bepuBodyOffset, body.Rotation);
+        if (!Matrix4x4Utility.TryCreateTransformMatrix(
+            origin,
+            Velocity,
+            GameObject.Transform.Scale,
+            out var transform))
+        {
+            return false;
+        }
+
+        GameObject.SetTransformMatrix(transform);
+        _bepuSyncedPosition = origin;
+        _bepuPoseValid = true;
+        return true;
+    }
+
+    internal static float GetMaximumGroundPenetration(
+        ReadOnlySpan<float> cornerHeights,
+        ReadOnlySpan<float> groundHeights)
+    {
+        if (cornerHeights.IsEmpty || cornerHeights.Length != groundHeights.Length)
+        {
+            throw new ArgumentException(
+                "Corner and ground height samples must have the same non-zero length.",
+                nameof(groundHeights));
+        }
+
+        var maximumPenetration = groundHeights[0] - cornerHeights[0];
+        for (var index = 1; index < cornerHeights.Length; index++)
+        {
+            maximumPenetration = MathF.Max(
+                maximumPenetration,
+                groundHeights[index] - cornerHeights[index]);
+        }
+        return maximumPenetration;
+    }
+
+    /// <summary>
     /// Applies a force at the object's center of gravity.
     /// </summary>
     /// <param name="force">The force to apply.</param>
@@ -553,8 +773,6 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             return;
         }
 
-        // F = ma  -->  a = F/M (divide force by mass)
-        var mass = Mass;
         var modForce = force;
         if (IsMotive)
         {
@@ -565,8 +783,19 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             modForce.Y = lateralDot * dir.X;
         }
 
-        var massInverse = 1.0f / mass;
-        _acceleration += modForce * massInverse;
+        if (BepuBody is { } bepu)
+        {
+            // A per-frame force (mass * dist/frame^2) becomes a per-second force by
+            // multiplying by fps^2; the backend integrates it over one timestep.
+            var fps = GameEngine.LogicFramesPerSecond;
+            bepu.ApplyForce(modForce * fps * fps);
+            MaybeWakeUp();
+            return;
+        }
+
+        // F = ma  -->  a = F/M (divide force by mass)
+        var massInverse = 1.0f / Mass;
+        Body.Acceleration += modForce * massInverse;
 
         MaybeWakeUp();
     }
@@ -611,14 +840,27 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         // Set bounce to true for a while until the unit is complete bouncing.
         SetAllowBouncing(true);
 
+        var random = GameEngine.GameLogic.Random;
+
+        if (BepuBody is { } bepu)
+        {
+            var fps = GameEngine.LogicFramesPerSecond;
+            bepu.AngularVelocity += new Vector3(
+                _moduleData.ShockMaxRoll * random.NextSingle(-1.0f, 1.0f) * fps,
+                _moduleData.ShockMaxPitch * random.NextSingle(-1.0f, 1.0f) * fps,
+                _moduleData.ShockMaxYaw * random.NextSingle(-1.0f, 1.0f) * fps);
+            MaybeWakeUp();
+            return;
+        }
+
         var randomModifier = GameEngine.GameLogic.Random.NextSingle(-1.0f, 1.0f);
-        _yawRate += _moduleData.ShockMaxYaw * randomModifier;
+        Body.YawRate += _moduleData.ShockMaxYaw * randomModifier;
 
         randomModifier = GameEngine.GameLogic.Random.NextSingle(-1.0f, 1.0f);
-        _pitchRate += _moduleData.ShockMaxPitch * randomModifier;
+        Body.PitchRate += _moduleData.ShockMaxPitch * randomModifier;
 
         randomModifier = GameEngine.GameLogic.Random.NextSingle(-1.0f, 1.0f);
-        _rollRate += _moduleData.ShockMaxRoll * randomModifier;
+        Body.RollRate += _moduleData.ShockMaxRoll * randomModifier;
 
         MaybeWakeUp();
     }
@@ -633,14 +875,22 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     public void ResetDynamicPhysics()
     {
-        _acceleration = Vector3.Zero;
-        _previousAcceleration = Vector3.Zero;
-        _velocity = Vector3.Zero;
-        _velocityMagnitude = 0.0f;
+        if (BepuBody is { } bepu)
+        {
+            bepu.LinearVelocity = Vector3.Zero;
+            bepu.AngularVelocity = Vector3.Zero;
+        }
+        else
+        {
+            Body.Acceleration = Vector3.Zero;
+            Body.PreviousAcceleration = Vector3.Zero;
+            Body.Velocity = Vector3.Zero;
+            Body.VelocityMagnitude = 0.0f;
+            Body.YawRate = 0.0f;
+            Body.RollRate = 0.0f;
+            Body.PitchRate = 0.0f;
+        }
         _turning = PhysicsTurningType.None;
-        _yawRate = 0.0f;
-        _rollRate = 0.0f;
-        _pitchRate = 0.0f;
 
         SetFlag(PhysicsFlagType.HasPitchRollYaw, false);
 
@@ -651,7 +901,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     private void ApplyGravitationalForces()
     {
-        _acceleration.Z += _gravity;
+        Body.Acceleration.Z += _gravity;
     }
 
     private void ApplyFrictionalForces()
@@ -667,12 +917,12 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         {
             ApplyYawPitchRollDamping(1.0f - PhysicsBehaviorModuleData.DefaultLateralFriction);
 
-            if (_velocity.X != 0.0f || _velocity.Y != 0.0f)
+            if (Body.Velocity.X != 0.0f || Body.Velocity.Y != 0.0f)
             {
                 var dir = GameObject.UnitDirectionVector2D;
                 var mass = Mass;
 
-                var lateralDot = (_velocity.X * -dir.Y) + (_velocity.Y * dir.X);
+                var lateralDot = (Body.Velocity.X * -dir.Y) + (Body.Velocity.Y * dir.X);
                 var lateralVelocityX = lateralDot * -dir.Y;
                 var lateralVelocityY = lateralDot * dir.X;
 
@@ -685,7 +935,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
                 if (!IsMotive)
                 {
-                    var forwardDot = (_velocity.X * dir.X) + (_velocity.Y * dir.Y);
+                    var forwardDot = (Body.Velocity.X * dir.X) + (Body.Velocity.Y * dir.Y);
                     var forwardVelocityX = forwardDot * dir.X;
                     var forwardVelocityY = forwardDot * dir.Y;
                     var forwardFriction = mass * _forwardFriction;
@@ -701,7 +951,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             var aerodynamicFriction = -_aerodynamicFriction; // negated!
 
             // Air resistance is proportional to velocity in the opposite direction.
-            _acceleration += _velocity * aerodynamicFriction;
+            Body.Acceleration += Body.Velocity * aerodynamicFriction;
 
             // Since aerodynamic friction is negated, this results in 1.0 - aerodynamicFriction.
             ApplyYawPitchRollDamping(1.0f + aerodynamicFriction);
@@ -721,7 +971,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
                 maxStiffness);
 
             var desiredAccelerationZ = 0.0f;
-            var velocityZ = _velocity.Z;
+            var velocityZ = Body.Velocity.Z;
             if (oldZ > groundZ && velocityZ < 0.0f)
             {
                 desiredAccelerationZ = MathF.Abs(velocityZ) * stiffness;
@@ -827,15 +1077,13 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     private void ApplyYawPitchRollDamping(float factor)
     {
-        _pitchRate *= factor;
-        _rollRate *= factor;
-        _yawRate *= factor;
+        Body.DampYawPitchRoll(factor);
         SetHasPitchRollYaw();
     }
 
     private void SetHasPitchRollYaw()
     {
-        SetFlag(PhysicsFlagType.HasPitchRollYaw, _pitchRate != 0.0f || _rollRate != 0.0f || _yawRate != 0.0f);
+        SetFlag(PhysicsFlagType.HasPitchRollYaw, Body.PitchRate != 0.0f || Body.RollRate != 0.0f || Body.YawRate != 0.0f);
     }
 
     private static bool IsVerySmall3D(in Vector3 v)
@@ -876,8 +1124,8 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     private UpdateSleepTime CalculateSleepTime()
     {
-        if (_velocity == Vector3.Zero
-            && _acceleration == Vector3.Zero
+        if (Body.Velocity == Vector3.Zero
+            && Body.Acceleration == Vector3.Zero
             && !GetFlag(PhysicsFlagType.HasPitchRollYaw)
             && !IsMotive
             && GameObject.Layer == PathfindLayerType.Ground
@@ -1032,7 +1280,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     {
         // This is the most Supreme Truth... that unless I am moving right now,
         // I may not crush anything!
-        if (IsVerySmall3D(_velocity))
+        if (IsVerySmall3D(Velocity))
         {
             return false;
         }
@@ -1380,10 +1628,13 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     /// </summary>
     public float GetForwardSpeed2D()
     {
-        var dir = GameObject.UnitDirectionVector2D;
+        return ComputeForwardSpeed2D(Velocity, GameObject.UnitDirectionVector2D);
+    }
 
-        var vx = _velocity.X * dir.X;
-        var vy = _velocity.Y * dir.Y;
+    private static float ComputeForwardSpeed2D(in Vector3 velocity, in Vector3 direction)
+    {
+        var vx = velocity.X * direction.X;
+        var vy = velocity.Y * direction.Y;
 
         var dot = vx + vy;
 
@@ -1403,11 +1654,14 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
     /// </summary>
     public float GetForwardSpeed3D()
     {
-        var dir = GameObject.TransformMatrix.GetXVector();
+        return ComputeForwardSpeed3D(Velocity, GameObject.TransformMatrix.GetXVector());
+    }
 
-        var vx = _velocity.X * dir.X;
-        var vy = _velocity.Y * dir.Y;
-        var vz = _velocity.Z * dir.Z;
+    private static float ComputeForwardSpeed3D(in Vector3 velocity, in Vector3 direction)
+    {
+        var vx = velocity.X * direction.X;
+        var vy = velocity.Y * direction.Y;
+        var vz = velocity.Z * direction.Z;
 
         var dot = vx + vy + vz;
 
@@ -1420,50 +1674,82 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
     public void ScrubVelocityZ(float desiredVelocity)
     {
+        if (BepuBody is { } bepu)
+        {
+            var velocity = bepu.LinearVelocity / GameEngine.LogicFramesPerSecond;
+            ScrubVelocityZPerFrame(ref velocity, desiredVelocity);
+            bepu.LinearVelocity = velocity * GameEngine.LogicFramesPerSecond;
+            return;
+        }
+        Body.ScrubVelocityZ(desiredVelocity);
+    }
+
+    private static void ScrubVelocityZPerFrame(ref Vector3 velocity, float desiredVelocity)
+    {
         if (MathF.Abs(desiredVelocity) < 0.001f)
         {
-            _velocity.Z = 0;
+            velocity.Z = 0;
         }
         else
         {
-            if ((desiredVelocity < 0 && _velocity.Z < desiredVelocity) || (desiredVelocity > 0 && _velocity.Z > desiredVelocity))
+            if ((desiredVelocity < 0 && velocity.Z < desiredVelocity) || (desiredVelocity > 0 && velocity.Z > desiredVelocity))
             {
-                _velocity.Z = desiredVelocity;
+                velocity.Z = desiredVelocity;
             }
         }
-        _velocityMagnitude = InvalidVelocityMagnitude;
     }
 
     public void ScrubVelocity2D(float desiredVelocity)
     {
+        if (BepuBody is { } bepu)
+        {
+            var velocity = bepu.LinearVelocity / GameEngine.LogicFramesPerSecond;
+            ScrubVelocity2DPerFrame(ref velocity, desiredVelocity);
+            bepu.LinearVelocity = velocity * GameEngine.LogicFramesPerSecond;
+            return;
+        }
+        Body.ScrubVelocity2D(desiredVelocity);
+    }
+
+    private static void ScrubVelocity2DPerFrame(ref Vector3 velocity, float desiredVelocity)
+    {
         if (desiredVelocity < 0.001f)
         {
-            _velocity.X = 0;
-            _velocity.Y = 0;
+            velocity.X = 0;
+            velocity.Y = 0;
         }
         else
         {
-            var curVelocity = MathF.Sqrt(_velocity.X * _velocity.X + _velocity.Y * _velocity.Y);
+            var curVelocity = MathF.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y);
             if (desiredVelocity > curVelocity)
             {
                 return;
             }
             desiredVelocity /= curVelocity;
-            _velocity.X *= desiredVelocity;
-            _velocity.Y *= desiredVelocity;
+            velocity.X *= desiredVelocity;
+            velocity.Y *= desiredVelocity;
         }
-        _velocityMagnitude = InvalidVelocityMagnitude;
     }
 
     public void TransferVelocityTo(PhysicsBehavior that)
     {
-        that._velocity += _velocity;
-        that._velocityMagnitude = InvalidVelocityMagnitude;
+        if (BepuBody is { } bepu && that.BepuBody is { } thatBepu)
+        {
+            thatBepu.LinearVelocity += bepu.LinearVelocity;
+            return;
+        }
+        that.Body.Velocity += Body.Velocity;
+        that.Body.VelocityMagnitude = InvalidVelocityMagnitude;
     }
 
     public void AddVelocityTo(in Vector3 velocity)
     {
-        _velocity += velocity;
+        if (BepuBody is { } bepu)
+        {
+            bepu.LinearVelocity += velocity * GameEngine.LogicFramesPerSecond;
+            return;
+        }
+        Body.Velocity += velocity;
     }
 
     internal override void DrawInspector()
@@ -1471,13 +1757,25 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         base.DrawInspector();
 
         ImGui.InputFloat("Mass", ref _mass);
-        ImGui.DragFloat3("Acceleration", ref _acceleration);
-        ImGui.DragFloat3("Previous acceleration", ref _previousAcceleration);
-        ImGui.DragFloat3("Velocity", ref _velocity);
+
+        if (BepuBody is { } bepu)
+        {
+            var linear = bepu.LinearVelocity;
+            var angular = bepu.AngularVelocity;
+            ImGui.DragFloat3("Velocity (per second)", ref linear);
+            ImGui.DragFloat3("Angular velocity (per second)", ref angular);
+            bepu.LinearVelocity = linear;
+            bepu.AngularVelocity = angular;
+            return;
+        }
+
+        ImGui.DragFloat3("Acceleration", ref Body.Acceleration);
+        ImGui.DragFloat3("Previous acceleration", ref Body.PreviousAcceleration);
+        ImGui.DragFloat3("Velocity", ref Body.Velocity);
         ImGui.LabelText("Velocity magnitude", VelocityMagnitude.ToString());
-        ImGui.InputFloat("Yaw rate", ref _yawRate);
-        ImGui.InputFloat("Roll rate", ref _rollRate);
-        ImGui.InputFloat("Pitch rate", ref _pitchRate);
+        ImGui.InputFloat("Yaw rate", ref Body.YawRate);
+        ImGui.InputFloat("Roll rate", ref Body.RollRate);
+        ImGui.InputFloat("Pitch rate", ref Body.PitchRate);
         ImGuiUtility.ComboEnum("Turning", ref _turning);
         ImGui.LabelText("Motive force expires", _motiveForceExpires.Value.ToString());
         ImGui.InputFloat("Extra bounciness", ref _extraBounciness);
@@ -1492,12 +1790,20 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         base.Load(reader);
         reader.EndObject();
 
-        reader.PersistSingle(ref _yawRate);
-        reader.PersistSingle(ref _rollRate);
-        reader.PersistSingle(ref _pitchRate);
-        reader.PersistVector3(ref _acceleration);
-        reader.PersistVector3(ref _previousAcceleration);
-        reader.PersistVector3(ref _velocity);
+        var yawRate = 0.0f;
+        var rollRate = 0.0f;
+        var pitchRate = 0.0f;
+        var acceleration = Vector3.Zero;
+        var previousAcceleration = Vector3.Zero;
+        var velocity = Vector3.Zero;
+        var velocityMagnitude = 0.0f;
+
+        reader.PersistSingle(ref yawRate);
+        reader.PersistSingle(ref rollRate);
+        reader.PersistSingle(ref pitchRate);
+        reader.PersistVector3(ref acceleration);
+        reader.PersistVector3(ref previousAcceleration);
+        reader.PersistVector3(ref velocity);
 
         // We've never seen version 1 in the wild.
         if (version < 2)
@@ -1515,7 +1821,25 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         reader.PersistLogicFrame(ref _motiveForceExpires);
         reader.PersistSingle(ref _extraBounciness);
         reader.PersistSingle(ref _extraFriction);
-        reader.PersistSingle(ref _velocityMagnitude);
+        reader.PersistSingle(ref velocityMagnitude);
+
+        if (BepuBody is { } bepu)
+        {
+            // Persisted state uses legacy per-frame units; convert for the backend.
+            var fps = GameEngine.LogicFramesPerSecond;
+            bepu.AngularVelocity = new Vector3(rollRate, pitchRate, yawRate) * fps;
+            bepu.LinearVelocity = velocity * fps;
+        }
+        else
+        {
+            Body.YawRate = yawRate;
+            Body.RollRate = rollRate;
+            Body.PitchRate = pitchRate;
+            Body.Acceleration = acceleration;
+            Body.PreviousAcceleration = previousAcceleration;
+            Body.Velocity = velocity;
+            Body.VelocityMagnitude = velocityMagnitude;
+        }
     }
 }
 

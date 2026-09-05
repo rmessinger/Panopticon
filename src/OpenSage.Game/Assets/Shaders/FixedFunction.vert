@@ -13,6 +13,7 @@ layout(location = 2) out vec2 out_UV0;
 layout(location = 3) out vec2 out_UV1;
 layout(location = 4) out vec2 out_CloudUV;
 layout(location = 5) out float out_ViewSpaceDepth;
+layout(location = 6) out float out_TextureScrollScale;
 
 void main()
 {
@@ -45,8 +46,9 @@ void main()
 
     DO_CLIPPING(out_WorldPosition)
 
-    out_UV0 = in_UV0;
+    out_UV0 = in_UV0 + _RenderItemConstantsVS.UVOffset.xy;
     out_UV1 = in_UV1;
+    out_TextureScrollScale = _RenderItemConstantsVS.UVOffset.z;
 
     out_ViewSpaceDepth = gl_Position.z;
 }

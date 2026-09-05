@@ -15,6 +15,10 @@ internal sealed class WeaponSetUpgrade : UpgradeModule
     protected override void OnUpgrade()
     {
         GameObject.SetWeaponSetCondition(WeaponSetConditions.PlayerUpgrade, true);
+
+        // The upgraded draw condition states (TOW launcher with its WeaponLaunchBone, upgraded
+        // models) are selected by this model condition flag.
+        GameObject.SetModelConditionState(ModelConditionFlag.WeaponSetPlayerUpgrade);
     }
 
     internal override void Load(StatePersister reader)

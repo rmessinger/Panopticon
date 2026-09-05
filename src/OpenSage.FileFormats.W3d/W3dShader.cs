@@ -17,6 +17,7 @@ namespace OpenSage.FileFormats.W3d;
 /// <param name="AlphaTest"></param>
 /// <param name="PostDetailColorFunc"></param>
 /// <param name="PostDetailAlphaFunc"></param>
+/// <param name="RawTrailingByte">Final byte of the struct; original files carry non-zero values here, so it is preserved verbatim</param>
 public sealed record W3dShader(
     W3dShaderDepthCompare DepthCompare,
     W3dShaderDepthMask DepthMask,
@@ -32,7 +33,8 @@ public sealed record W3dShader(
     byte ShaderPreset,
     W3dShaderAlphaTest AlphaTest,
     W3dShaderDetailColorFunc PostDetailColorFunc,
-    W3dShaderDetailAlphaFunc PostDetailAlphaFunc)
+    W3dShaderDetailAlphaFunc PostDetailAlphaFunc,
+    byte RawTrailingByte = 0)
 {
     internal static W3dShader Parse(BinaryReader reader)
     {
@@ -51,12 +53,11 @@ public sealed record W3dShader(
         var alphaTest = reader.ReadByteAsEnum<W3dShaderAlphaTest>();
         var postDetailColorFunc = reader.ReadByteAsEnum<W3dShaderDetailColorFunc>();
         var postDetailAlphaFunc = reader.ReadByteAsEnum<W3dShaderDetailAlphaFunc>();
-
-        reader.ReadByte(); // padding
+        var rawTrailingByte = reader.ReadByte();
 
         return new W3dShader(depthCompare, depthMask, colorMask, destBlend, fogFunc, primaryGradient, secondaryGradient,
             srcBlend, texturing, detailColorFunc, detailAlphaFunc, shaderPreset, alphaTest, postDetailColorFunc,
-            postDetailAlphaFunc);
+            postDetailAlphaFunc, rawTrailingByte);
     }
 
     internal void WriteTo(BinaryWriter writer)
@@ -77,6 +78,6 @@ public sealed record W3dShader(
         writer.Write((byte)PostDetailColorFunc);
         writer.Write((byte)PostDetailAlphaFunc);
 
-        writer.Write((byte)0); // Padding
+        writer.Write(RawTrailingByte);
     }
 }

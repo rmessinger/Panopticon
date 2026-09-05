@@ -306,7 +306,6 @@ public class AIUpdate : UpdateModule
     internal void SetTargetDirection(Vector3 targetDirection)
     {
         _targetDirection = targetDirection;
-        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, true);
     }
 
     /// <summary>

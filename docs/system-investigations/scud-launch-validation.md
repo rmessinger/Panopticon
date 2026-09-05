@@ -1,9 +1,9 @@
 # SCUD launcher launch sequence: validation brief
 
 Handoff document for a vision-capable agent validating the SCUD launcher's launch animation
-on branch `minor-visuals`. Companion context: `docs/visual-validation-brief.md` (general
-known-good artifacts and rendering gotchas), `docs/engagement-capture-findings.md` (capture
-framework), `docs/scud-launch-transfer.md` (status summary and open items).
+on branch `minor-visuals`. Companion context: `docs/system-investigations/visual-validation-brief.md` (general
+known-good artifacts and rendering gotchas), `docs/system-investigations/engagement-capture-findings.md` (capture
+framework), `docs/system-investigations/scud-launch-transfer.md` (status summary and open items).
 
 ## 1. What is being validated
 
@@ -160,7 +160,7 @@ Scratch-test pattern for logic-side ground truth (spawn units, step, trace): see
 ## 6. Known rendering red herrings
 
 - Per-frame terrain flicker and the fog band at camera heights 900-1500 are pre-existing
-  (see `docs/visual-validation-brief.md` section 4); ignore them here.
+  (see `docs/system-investigations/visual-validation-brief.md` section 4); ignore them here.
 - The annotator draws an attacker ring and target ring with labels; the IMPACT flash overlay
   is annotation, not engine FX.
 - The shell-tracer streak (yellow-orange) follows cannon shells; the SCUD missile has an

@@ -17,7 +17,7 @@ Create the checked-in P7 PlayerEliminated scenario that drives a human player's 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:38-45`: expected P7 end-state outcomes.
-- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: deterministic scenario storage and scripting approach.
+- `docs/roadmap/deep-dives/p7-end-to-end-regression.md:47-54`: scenario storage and scripting approach.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:58-70`: universal invariant set and per-tick failure behavior.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:111-111`: P7-1 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:279-291`: Regression directory, JSON format, and pending P3 `GameOutcome` query path.
@@ -33,7 +33,7 @@ Create the checked-in P7 PlayerEliminated scenario that drives a human player's 
 ## Steps
 
 1. Create `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/` if it still does not exist.
-2. Add `player-eliminated.json` as a deterministic `ReplayScenario` with fixed seed/timing and the minimum player setup needed for one human player to lose all command/production structures with no rebuild path.
+2. Add `player-eliminated.json` as a `ReplayScenario` with explicit seed/timing and the minimum player setup needed for one human player to lose all command/production structures with no rebuild path.
 3. Script only P0 harness commands needed to reach the end state; prefer existing build/produce/attack command support and do not invent a new harness API.
 4. Add an outcome assertion that reads the P3 `GameOutcome` path and expects `OutcomeStatus.Decided`, `OutcomeReason.Eliminated`, the correct `WinningPlayer`, and the eliminated human as losing player. Verify the assertion cannot pass against default/sentinel `InProgress` values.
 5. Add or extend focused P7 scenario test wiring so this single scenario is loaded from the checked-in JSON, run with `HarnessRunner.RunAndAssert`, and fails the test process if the assertion report fails.
@@ -69,7 +69,7 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not implement missing P3 victory/defeat logic here; block if `WI-P3-02`/`WI-P3-03` are not done.
-- Do not rely on live, nondeterministic AI to eliminate the player; use deterministic scripted orders.
+- Use scripted orders so the scenario reaches the intended outcome without depending on AI strategy.
 - Do not weaken the assertion to `outcome.status == InProgress` or another default/sentinel value.
 - Do not author the other five P7 scenarios in this card.
 

@@ -22,15 +22,37 @@
 - Spatial / pathing: generic `Quadtree` (`src/OpenSage.Game/DataStructures/`),
   `PartitionCellManager` for coarse cell partitioning + collision pair generation, and A*
   pathfinding in `src/OpenSage.Game/Navigation/Navigation.cs`.
-- Determinism / networking: frame-ordered `NetworkMessageBuffer` and `ReplayConnection`
+- Networking / replay: frame-ordered `NetworkMessageBuffer` and `ReplayConnection`
   implement lockstep-style order processing. A random-source abstraction exists
-  (`IGame.CreateRandom()`) but there are TODOs around full determinism guarantees.
+  (`IGame.CreateRandom()`).
 - Rendering: `RenderScene` (`src/OpenSage.Rendering/RenderScene.cs`) buckets
   `RenderObject`s; each `GameObject` has a `Drawable` with `DrawModule[]`. No GPU
   instancing today; rendering is per-object/per-draw-module.
 - Known scale bottlenecks (TODOs in code): per-tick allocations in object iteration and
   collision-pair generation; single-threaded logic/collision/pathing; un-cached hot queries
   (e.g. terrain height); render bucket/shadow scalability.
+
+## Object physics
+
+- BepuPhysics2 2.4.0 is centrally versioned in `src/Directory.Packages.props`; the
+  `OpenSage.Physics` project exposes `IPhysicsWorld`, `IPhysicsBody`, analytic/mesh shape
+  descriptions, a legacy backend, and `BepuPhysicsWorld`.
+- `GameEngine.CreatePhysicsWorld()` selects one backend for the whole run through the process-wide
+  `PhysicsBackendPolicy`; legacy remains the default. `Scene3D.LogicTick()` steps the selected
+  world once after behavior updates.
+- `PhysicsBehavior` is currently the only game-object body-registration path. In Bepu runs every
+  object carrying that module creates a dynamic body from the first INI `GeometryShape`, while
+  structures and other collidable objects without `PhysicsBehavior` have no Bepu body.
+- `PhysicsBodyDescription` already carries `IsStatic` and `PhysicsCollisionFilter`, but the Bepu
+  proof of concept does not apply them uniformly. Analytic shapes are always dynamic,
+  narrow-phase callbacks allow every pair, and contacts are not mapped back to
+  `GameObject.OnCollide`.
+- `PartitionCellManager` still performs gameplay collision-pair detection and dispatch. Terrain
+  meshes reach Bepu only through TestHarness `TerrainPhysicsChunks`, not normal scene lifecycle.
+  No `PhysicsBehavior` lifecycle hook removes its Bepu body when the object is destroyed.
+
+See the [object physics adoption plan](../plans/physics-seam.md) for the classification, lifecycle,
+contact-ownership, and migration work assumed by F4a.
 
 ## Model & animation pipeline
 

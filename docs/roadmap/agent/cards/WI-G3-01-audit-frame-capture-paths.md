@@ -36,7 +36,7 @@ needs, so G3 extends the current paths rather than adding a tool. Read-only: no 
 2. State explicitly whether the ReplaySketch screenshot path goes through `FrameCapturer` or through
    a different capture mechanism, since G3's phase row assumes it can extend both.
 3. List what a golden comparison needs that neither path provides today: stable scene selection,
-   deterministic frame indices, a golden store location, a per-preset dimension, and a pass or fail
+   explicit frame indices, a golden store location, a per-preset dimension, and a pass or fail
    exit code.
 4. Record which existing headless test already captures frames, and whether its output layout can
    serve as the golden store without change.
