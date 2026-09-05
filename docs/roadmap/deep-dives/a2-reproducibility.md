@@ -19,8 +19,8 @@ experiment inputs.
   it. The completed [audit](../implementation/track-a-a2-reproducibility.md#randomness-source-audit)
   records the implementation.
 - The headless host emits metrics, events, invariants, snapshots, and tiered diagnostic data.
-- B1 still needs the multi-run statistics harness that reports distributions and confidence
-  intervals.
+- The multi-run statistics harness (`StatisticalRunHarness`) reports per-run invariant results
+  plus aggregate distributions and confidence intervals (A2-c).
 - Wall-clock timing, parallel scheduling, physics, and distributed execution may produce different
   results between runs. A2 does not constrain those sources.
 
@@ -57,7 +57,7 @@ cross-run identity.
 |---|---|---|
 | A2-a. Experiment controls audit | Randomness and execution-variation audits (the tables in the implementation plan). | Done |
 | A2-b. Seed control | Thread the run seed into `GameLogic.Random`; convert the uncontrolled simulation-affecting sites (`WI-A2-03`). | Done |
-| A2-c. Statistical harness | Multi-sample metrics and per-run invariant harness (`WI-A2-04`). | Not started |
+| A2-c. Statistical harness | Multi-sample metrics and per-run invariant harness (`WI-A2-04`). | Done |
 
 ## 4. Sequencing notes
 

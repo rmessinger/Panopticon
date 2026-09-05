@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A2-04` |
 | Roadmap phase | [Track A · A2](../../track-a-foundations.md): Statistical validation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | A1-5 run metrics and invariants |
