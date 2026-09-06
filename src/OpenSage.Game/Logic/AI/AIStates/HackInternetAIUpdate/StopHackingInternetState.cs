@@ -25,7 +25,7 @@ internal sealed class StopHackingInternetState : State
 
         var frames = _stateMachine.GetVariableFrames(_stateMachine.AIUpdate.ModuleData.PackTime, GameEngine);
 
-        GameObject.Drawable.SetAnimationDuration(frames);
+        GameObject.Client.SetAnimationDuration(frames);
 
         _framesUntilFinishedPacking = frames;
 

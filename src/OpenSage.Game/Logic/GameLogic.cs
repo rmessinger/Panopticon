@@ -195,7 +195,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         _game.Scene3D?.Radar.RemoveGameObject(gameObject);
         gameObject.PartitionObject?.Remove();
 
-        gameObject.Drawable?.Destroy();
+        gameObject.Client?.Destroy();
 
         var owner = gameObject.Owner;
         // A destroyed object must leave no dangling selection reference. Destroy can run without

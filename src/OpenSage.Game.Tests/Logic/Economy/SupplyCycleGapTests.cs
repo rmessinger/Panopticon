@@ -242,14 +242,9 @@ public class SupplyCycleGapTests : MockedGameTest
         return gameObject;
     }
 
-    // GameObject ctor leaves Drawable null (GameClient is null in the mocked host). Construct
-    // a Drawable directly with the internal ctor and inject it so ModelConditionFlags works.
     private GameObject InstantiateWithDrawable(ObjectDefinition definition, Player owner)
     {
-        var gameObject = new GameObject(definition, Generals.GameEngine, owner);
-        var drawable = new Drawable(definition, Generals.GameEngine, gameObject);
-        typeof(GameObject).GetField(nameof(GameObject.Drawable))!.SetValue(gameObject, drawable);
-        return gameObject;
+        return new GameObject(definition, Generals.GameEngine, owner);
     }
 
     private static void InjectBuildTarget(GameObject builder, BehaviorModule aiUpdate, GameObject target)

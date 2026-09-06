@@ -807,12 +807,27 @@ public class ActiveBody : BodyModule
 
     public override void EvaluateVisualCondition()
     {
-        GameObject.Drawable?.ReactToBodyDamageStateChange(_currentDamageState);
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Damaged, false);
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.ReallyDamaged, false);
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.Rubble, false);
+
+        if (GetDamageConditionFlag(_currentDamageState) is { } flag)
+        {
+            GameObject.ModelConditionFlags.Set(flag, true);
+        }
 
         // Destroy any particle systems that were attached to our body for the
         // old state and create new particle systems for the new state.
         UpdateBodyParticleSystems();
     }
+
+    private static ModelConditionFlag? GetDamageConditionFlag(BodyDamageType damageType) => damageType switch
+    {
+        BodyDamageType.Damaged => ModelConditionFlag.Damaged,
+        BodyDamageType.ReallyDamaged => ModelConditionFlag.ReallyDamaged,
+        BodyDamageType.Rubble => ModelConditionFlag.Rubble,
+        _ => null,
+    };
 
     public override void UpdateBodyParticleSystems()
     {

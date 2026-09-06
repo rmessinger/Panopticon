@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using OpenSage.Graphics.Cameras;
-using OpenSage.Gui;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Logic.Object;
@@ -149,27 +147,6 @@ public class SphereCollider : Collider
 
     public override bool Contains(Vector2 point) => WorldBounds.Contains(point);
     public override bool Contains(Vector3 point) => WorldBounds.Contains(point.X, point.Y, point.Z);
-
-    protected void DebugDrawAxisAlignedBoundingArea(DrawingContext2D drawingContext, Camera camera)
-    {
-        var strokeColor = new ColorRgbaF(0, 0, 0, 255);
-        var worldPos = Transform.Translation;
-
-        var bottomLeft = new Vector3(AxisAlignedBoundingArea.X, AxisAlignedBoundingArea.Y, worldPos.Z);
-        var bottomRight = new Vector3(AxisAlignedBoundingArea.X + AxisAlignedBoundingArea.Width, AxisAlignedBoundingArea.Y, worldPos.Z);
-        var topLeft = new Vector3(AxisAlignedBoundingArea.X, AxisAlignedBoundingArea.Y + AxisAlignedBoundingArea.Height, worldPos.Z);
-        var topRight = new Vector3(AxisAlignedBoundingArea.X + AxisAlignedBoundingArea.Width, AxisAlignedBoundingArea.Y + AxisAlignedBoundingArea.Height, worldPos.Z);
-
-        var lbScreen = camera.WorldToScreenPoint(bottomLeft).Vector2XY();
-        var rbScreen = camera.WorldToScreenPoint(bottomRight).Vector2XY();
-        var ltScreen = camera.WorldToScreenPoint(topLeft).Vector2XY();
-        var rtScreen = camera.WorldToScreenPoint(topRight).Vector2XY();
-
-        drawingContext.DrawLine(new Line2D(ltScreen, lbScreen), 1, strokeColor);
-        drawingContext.DrawLine(new Line2D(lbScreen, rbScreen), 1, strokeColor);
-        drawingContext.DrawLine(new Line2D(rbScreen, rtScreen), 1, strokeColor);
-        drawingContext.DrawLine(new Line2D(rtScreen, ltScreen), 1, strokeColor);
-    }
 }
 
 public class BoxCollider : SphereCollider

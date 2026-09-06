@@ -83,8 +83,8 @@ public abstract class OpenContainModule : UpdateModule, IHasRallyPoint
     }
 
     public (Vector3? Start, Vector3? End) DefaultExitPath => (
-        GameObject.Drawable.FindBone(ExitBoneStartName).bone?.Transform.Translation,
-        GameObject.Drawable.FindBone(ExitBoneEndName).bone?.Transform.Translation);
+        GameObject.Client?.TryGetBoneTransform(ExitBoneStartName, out var startBone) == true ? startBone.Translation : null,
+        GameObject.Client?.TryGetBoneTransform(ExitBoneEndName, out var endBone) == true ? endBone.Translation : null);
 
     protected virtual BaseAudioEventInfo? GetEnterVoiceLine(UnitSpecificSounds sounds)
     {

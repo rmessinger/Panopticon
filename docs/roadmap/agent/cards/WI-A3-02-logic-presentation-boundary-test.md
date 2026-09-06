@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A3-02` |
 | Roadmap phase | [Track A · A3](../../track-a-foundations.md): Simulation/presentation seam |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A3-01`, plus an A3 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the A3 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Diagrams | [a3-sim-presentation-seam.md §8](../../deep-dives/a3-sim-presentation-seam.md#8-architecture-diagrams) |
 
 ## Goal
 

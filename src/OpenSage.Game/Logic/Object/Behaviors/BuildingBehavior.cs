@@ -35,11 +35,11 @@ public class BuildingBehavior : UpdateModule
             var nightWindow = _moduleData.NightWindowName;
             if (night)
             {
-                GameObject.Drawable.ShowSubObject(nightWindow);
+                GameObject.Client?.ShowSubObject(nightWindow);
             }
             else
             {
-                GameObject.Drawable.HideSubObject(nightWindow);
+                GameObject.Client?.HideSubObject(nightWindow);
             }
 
             _isNight = night;
@@ -50,19 +50,19 @@ public class BuildingBehavior : UpdateModule
             var fireWindow = _moduleData.FireWindowName;
             if (fire)
             {
-                GameObject.Drawable.ShowSubObject(fireWindow);
+                GameObject.Client?.ShowSubObject(fireWindow);
                 foreach (var fireName in _moduleData.FireNames)
                 {
-                    GameObject.Drawable.ShowSubObject(fireName);
+                    GameObject.Client?.ShowSubObject(fireName);
                 }
             }
             else
             {
-                GameObject.Drawable.HideSubObject(fireWindow);
+                GameObject.Client?.HideSubObject(fireWindow);
 
                 foreach (var fireName in _moduleData.FireNames)
                 {
-                    GameObject.Drawable.HideSubObject(fireName);
+                    GameObject.Client?.HideSubObject(fireName);
                 }
             }
 
@@ -74,11 +74,11 @@ public class BuildingBehavior : UpdateModule
             var glowWindow = _moduleData.GlowWindowName;
             if (glowing)
             {
-                GameObject.Drawable.ShowSubObject(glowWindow);
+                GameObject.Client?.ShowSubObject(glowWindow);
             }
             else
             {
-                GameObject.Drawable.HideSubObject(glowWindow);
+                GameObject.Client?.HideSubObject(glowWindow);
             }
 
             _isGlowing = glowing;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using OpenSage.Client;
 using OpenSage.Content;
 using OpenSage.Content.Translation;
 using OpenSage.Graphics.Cameras;
@@ -311,12 +312,12 @@ public class Scene25D(IScene3D scene3D, AssetStore assetStore)
 
     private static void AddAnimationToDrawable(GameObject gameObject, AnimationType animationType)
     {
-        gameObject.Drawable.AddAnimation(animationType);
+        (gameObject.Client as Drawable)?.AddAnimation(animationType);
     }
 
     private static void RemoveAnimationFromDrawable(GameObject gameObject, AnimationType animationType)
     {
-        gameObject.Drawable.RemoveAnimation(animationType);
+        (gameObject.Client as Drawable)?.RemoveAnimation(animationType);
     }
 
     private readonly List<AnimationType> _animationsToRemove = []; // instantiating this here instead of in-scope prevents allocations
@@ -324,7 +325,7 @@ public class Scene25D(IScene3D scene3D, AssetStore assetStore)
     private void DrawAnimations(DrawingContext2D context, GameObject gameObject, uint currentFrame)
     {
         _animationsToRemove.Clear();
-        foreach (var animation in gameObject.Drawable.Animations)
+        foreach (var animation in (gameObject.Client as Drawable)?.Animations ?? [])
         {
             if (animation.SetFrame(currentFrame))
             {

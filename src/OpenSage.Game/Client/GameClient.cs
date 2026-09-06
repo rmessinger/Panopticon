@@ -35,6 +35,12 @@ internal sealed class GameClient : DisposableBase, IPersistableObject
         return drawable;
     }
 
+    internal IGameObjectClient CreateClientObject(ObjectDefinition objectDefinition, GameObject gameObject)
+        => CreateDrawable(objectDefinition, gameObject);
+
+    internal void DestroyClientObject(IGameObjectClient clientObject)
+        => DestroyDrawable((Drawable)clientObject);
+
     internal void OnDrawableIdChanged(Drawable drawable, uint oldDrawableId)
     {
         if (oldDrawableId != 0)
@@ -115,7 +121,7 @@ internal sealed class GameClient : DisposableBase, IPersistableObject
                 reader.PersistObjectId(ref objectId);
 
                 var drawable = objectId.IsValid
-                    ? _game.GameLogic.GetObjectById(objectId).Drawable
+                    ? (Drawable)_game.GameLogic.GetObjectById(objectId).Client!
                     : CreateDrawable(objectDefinition, null);
 
                 reader.PersistObject(drawable);

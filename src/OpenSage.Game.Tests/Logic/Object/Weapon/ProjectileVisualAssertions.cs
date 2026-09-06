@@ -9,9 +9,9 @@ internal static class ProjectileVisualAssertions
 {
     internal static void AssertLeadingEdgePivot(GameObject projectile)
     {
-        Assert.NotNull(projectile.Drawable);
+        Assert.NotNull(projectile.Client);
         Assert.True(
-            projectile.Drawable.TryGetModelSpaceBounds(out var bounds),
+            projectile.Client!.TryGetModelSpaceBounds(out var bounds),
             $"{projectile.Definition.Name} has no visible model bounds");
 
         var center = bounds.GetCenter();

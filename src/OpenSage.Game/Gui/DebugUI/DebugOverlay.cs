@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using OpenSage.Content;
+using OpenSage.Diagnostics.Util;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Mathematics;
 using SixLabors.Fonts;
@@ -113,7 +114,7 @@ public class DebugOverlay
 
             if (_scene3D.BuildPreviewObject != null)
             {
-                _scene3D.BuildPreviewObject.Geometry.DebugDraw(context, camera, _scene3D.BuildPreviewObject);
+                context.DrawGeometry(camera, _scene3D.BuildPreviewObject);
             }
 
             foreach (var gameObject in _scene3D.GameObjects.Objects)
@@ -126,7 +127,7 @@ public class DebugOverlay
                     //    gameObject.RoughCollider.DebugDraw(context, camera);
                     //}
 
-                    gameObject.Geometry.DebugDraw(context, camera, gameObject);
+                    context.DrawGeometry(camera, gameObject);
                 }
 
                 var targetPoints = gameObject.AIUpdate?.TargetPoints;
@@ -156,7 +157,7 @@ public class DebugOverlay
 
         if (ShowQuadTree)
         {
-            _scene3D.Game.PartitionCellManager.DebugDraw(context, camera);
+            context.DrawPartitionCells(camera, _scene3D.Game.PartitionCellManager);
         }
 
         if (_scene3D.ShowRoads && ShowRoadMeshes)

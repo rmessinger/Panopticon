@@ -2,12 +2,68 @@ using System;
 using System.Numerics;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Gui;
+using OpenSage.Logic;
+using OpenSage.Logic.Object;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Diagnostics.Util;
 
 internal static class DrawingContext2DExtensions
 {
+    public static void DrawGeometry(this DrawingContext2D drawingContext, Camera camera, GameObject gameObject)
+    {
+        var geometry = gameObject.Geometry;
+        var collideInfo = GeometryCollisionDetectionUtility.CreateCollideInfo(gameObject);
+
+        foreach (var shape in geometry.Shapes)
+        {
+            var shapeCollideInfo = GeometryCollisionDetectionUtility.CreateShapeInfo(shape, collideInfo);
+
+            switch (shape.Type)
+            {
+                case GeometryType.Sphere:
+                    drawingContext.DrawSphere(camera, shapeCollideInfo.CreateSphere());
+                    break;
+
+                case GeometryType.Cylinder:
+                    drawingContext.DrawCylinder(camera, shapeCollideInfo.CreateCylinder());
+                    break;
+
+                case GeometryType.Box:
+                    drawingContext.DrawBox(camera, shapeCollideInfo.CreateBox());
+                    break;
+
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
+    }
+
+    public static void DrawPartitionCells(this DrawingContext2D drawingContext, Camera camera, PartitionCellManager partitionCellManager)
+    {
+        var strokeColor = new ColorRgbaF(0, 220, 0, 255);
+
+        foreach (var cell in partitionCellManager.Cells)
+        {
+            var bounds = cell.WorldSpaceBounds;
+
+            var ltWorld = new Vector3(bounds.Position + new Vector2(0, bounds.Height), 0);
+            var rtWorld = new Vector3(bounds.Position + new Vector2(bounds.Width, bounds.Height), 0);
+            var rbWorld = new Vector3(bounds.Position + new Vector2(bounds.Width, 0), 0);
+            var lbWorld = new Vector3(bounds.Position, 0);
+
+            var ltScreen = camera.WorldToScreenPoint(ltWorld).Vector2XY();
+            var rtScreen = camera.WorldToScreenPoint(rtWorld).Vector2XY();
+            var rbScreen = camera.WorldToScreenPoint(rbWorld).Vector2XY();
+            var lbScreen = camera.WorldToScreenPoint(lbWorld).Vector2XY();
+
+            drawingContext.DrawLine(new Line2D(ltScreen, lbScreen), 1, strokeColor);
+            drawingContext.DrawLine(new Line2D(lbScreen, rbScreen), 1, strokeColor);
+            drawingContext.DrawLine(new Line2D(rbScreen, rtScreen), 1, strokeColor);
+            drawingContext.DrawLine(new Line2D(rtScreen, ltScreen), 1, strokeColor);
+        }
+    }
+
     public static void DrawSphere(this DrawingContext2D drawingContext, Camera camera, in SphereShape shape)
     {
         //DebugDrawAxisAlignedBoundingArea(drawingContext, camera);

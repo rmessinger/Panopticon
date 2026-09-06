@@ -232,6 +232,7 @@ public class Player : IPersistableObject
         AcademyStats = new AcademyStats(_game);
     }
 
+
     internal void SelectUnits(ICollection<GameObject> units, bool additive = false)
     {
         if (!additive)
@@ -243,7 +244,7 @@ public class Player : IPersistableObject
 
         foreach (var unit in units)
         {
-            unit.Drawable?.TriggerSelection();
+            unit.Client?.TriggerSelection();
         }
 
         var unitsFromHordeSelection = new List<GameObject>();

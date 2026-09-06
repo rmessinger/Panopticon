@@ -23,7 +23,7 @@ public class SupplyWarehouseDockUpdate : DockUpdate
             _currentBoxes--;
 
             var boxPercentage = (float)_currentBoxes / _moduleData.StartingBoxes;
-            GameObject.Drawable.SetSupplyBoxesRemaining(boxPercentage);
+            GameObject.Client?.SetSupplyBoxesRemaining(boxPercentage);
 
             return true;
         }

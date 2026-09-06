@@ -278,14 +278,11 @@ public class P6CommandCoverageTests : MockedGameTest
         return gameObject;
     }
 
-    // GameLogic.CreateObject leaves Drawable null (GameClient is null in the mocked host). Several
-    // order handlers (Sell) read ModelConditionFlags, so attach a Drawable directly like
-    // SupplyCycleGapTests.InstantiateWithDrawable does.
+    // ModelConditionFlags are logic-owned, so the mocked host (no GameClient, Client null) can
+    // exercise the order handlers directly.
     private GameObject WithDrawable(GameObject gameObject, Player owner)
     {
         owner.AddOwnedObject(gameObject);
-        var drawable = new Drawable(gameObject.Definition, Generals.GameEngine, gameObject);
-        typeof(GameObject).GetField(nameof(GameObject.Drawable))!.SetValue(gameObject, drawable);
         return gameObject;
     }
 
