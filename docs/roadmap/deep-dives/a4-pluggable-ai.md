@@ -90,15 +90,11 @@ the skirmish slot config, which already drives `AIPlayer` vs `SkirmishAIPlayer` 
 
 ## 3. What this unblocks: a neural-network policy
 
-A neural-network implementation of `IAIDecisionPolicy` is the motivating case:
-
-- State encoding: `AIDecisionContext` → a fixed-size feature vector (economy state, owned unit
-  counts by kind, enemy visibility, build-list progress, ...). This encoding is itself an
-  implementation detail of the NN policy, not part of the seam.
-- Network: a small feed-forward network (weights = the evolvable genome) mapping the feature
-  vector to a fixed action space (build/produce/attack decisions), decoded back into the same
-  `Order`s a human or the rule-based policy would issue.
-- Evaluation: policy inputs, outputs, and selected seed are recorded so a run can be inspected.
+A neural-network implementation of `IAIDecisionPolicy` is the motivating case. The concrete
+v1 design (exact feature vector, 9-8-5 network shape, five-action decoding, genome layout,
+randomness policy) lives in [neural-network-ai-policy.md](neural-network-ai-policy.md) and
+is implemented inference-only as `NeuralNetworkAIDecisionPolicy`; that document is the
+stable genome contract for the training harness.
 
 ## 4. What this unblocks: evolutionary training via seeded weight populations
 
@@ -145,20 +141,14 @@ way to construct an `IAIDecisionPolicy` from a weight vector and assign it to a 
 
 ## 6. Follow-on work (not in this doc)
 
-This doc formalizes the seam only. Follow-up work, each large enough for its own task-card set:
+This doc formalized the seam; the first three follow-ups have since landed (the seam
+extraction and selection factory as `WI-A4-01`/`WI-A4-02`, the v1 neural-network policy as
+`WI-A4-03`/`WI-A4-04`). Remaining work, each large enough for its own task-card set:
 
-- Extract `IAIDecisionPolicy`/`AIDecisionContext` and refactor `SkirmishAIPlayer` to implement
-  it as the reference policy, with no behavior change (verified by the existing P2 tests:
-  `SkirmishAIEconomyBuildoutTests`, `SkirmishAIMilitaryBehaviorTests`,
-  `SkirmishAIUnitProductionTests`, `SkirmishAIPlayerTickTests`, and the P0-5b scenario matrix in
-  skirmish-ai.md §6).
-- Add the policy-selection config plumbing (§2.1) and a factory, defaulting to the rule-based
-  policy so existing skirmish setups are unaffected.
-- Design and implement a first neural-network `IAIDecisionPolicy` (state encoding, network
-  shape, order decoding).
 - Design and implement the evolutionary training harness (§4) as an A4 experiment: population
   management, fitness scoring off `GameOutcome`, selection/mutation, per-generation reporting
-  to [A5](a5-visualization.md).
+  to [A5](a5-visualization.md). Selecting the neural-network policy from skirmish slot config
+  (weights cannot flow through `PlayerSetting` today) lands with this harness.
 
 ---
 
@@ -176,9 +166,8 @@ This doc formalizes the seam only. Follow-up work, each large enough for its own
 ## 8. Architecture diagrams
 
 Grounded in the current code (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`,
-`src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`, `src/OpenSage.Game/Logic/Player.cs`,
-`src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`). Class names ending `(planned)` do not exist
-yet; everything else is the type/member as it stands today.
+`src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`, `src/OpenSage.Game/Logic/AI/AIDecisionPolicyFactory.cs`,
+`src/OpenSage.Game/Logic/Player.cs`, `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`).
 
 ```mermaid
 classDiagram
@@ -186,51 +175,58 @@ classDiagram
     <<engine, existing>>
     +AIPlayer? AIPlayer
     +LogicTick()
-    +CreateNew(...)$ Player
+    +FromMapData(...)$ Player
+  }
+
+  class AIDecisionPolicyFactory {
+    <<existing>>
+    +Create(AIDecisionPolicyType, float[]?)$ IAIDecisionPolicy
   }
 
   class AIPlayer {
-    <<host, existing; becomes thin dispatcher>>
+    <<host, existing; thin dispatcher>>
     -Player _owner
+    -IAIDecisionPolicy? _decisionPolicy
     -uint _countdownSomething1
     +Update()
     #OnDecisionTick() virtual
-    #EnqueueOrder(Order)
+    +DecisionPolicy IAIDecisionPolicy?
+    +DecisionTickCount int
     #EnqueueOrders(IReadOnlyList~Order~)
     #DispatchOrders(IReadOnlyList~Order~) virtual
     +Persist(StatePersister)
   }
 
   class IAIDecisionPolicy {
-    <<interface, planned>>
+    <<interface, existing>>
     +DecideNextOrders(AIDecisionContext) IReadOnlyList~Order~
   }
 
   class AIDecisionContext {
-    <<readonly struct, planned>>
+    <<readonly struct, existing>>
     +Player Owner
     +int OwnerPlayerIndex
     +int DecisionTickCount
   }
 
   class RuleBasedAIDecisionPolicy {
-    <<planned; extracted from SkirmishAIPlayer>>
+    <<existing; reference implementation>>
     -RunEconomyAndBaseBuildout()
     -RunUnitProduction()
     -RunMilitaryBehavior()
   }
 
   class SkirmishAIPlayer {
-    <<existing; today's OnDecisionTick override>>
-    +int DecisionTickCount
-    #OnDecisionTick() override
+    <<existing; host with injected policy>>
+    +Persist(StatePersister)
   }
 
   class NeuralNetworkAIDecisionPolicy {
-    <<future; depends on RuleBasedAIDecisionPolicy landing first>>
-    -float[] Weights
-    -EncodeState(AIDecisionContext) float[]
-    -DecodeActions(float[]) IReadOnlyList~Order~
+    <<existing; inference only, weights supplied>>
+    -float[] _weights
+    +EncodeState(AIDecisionContext, Span~float~)
+    +ForwardPass(...)
+    -DecodeAction(NeuralNetworkAIAction, AIDecisionContext)
   }
 
   class OrderProcessor {
@@ -239,40 +235,43 @@ classDiagram
   }
 
   Player --> AIPlayer : owns
-  AIPlayer --> IAIDecisionPolicy : dispatches to (planned)
+  PlayerManager --> AIDecisionPolicyFactory : resolves slot AIPolicy config
+  AIDecisionPolicyFactory ..> IAIDecisionPolicy : creates
+  AIPlayer --> IAIDecisionPolicy : dispatches to
   IAIDecisionPolicy <|.. RuleBasedAIDecisionPolicy
   IAIDecisionPolicy <|.. NeuralNetworkAIDecisionPolicy
   IAIDecisionPolicy ..> AIDecisionContext : reads
-  SkirmishAIPlayer --|> AIPlayer : today's subclass (pre-refactor)
-  RuleBasedAIDecisionPolicy ..> SkirmishAIPlayer : replaces subclass override with policy
-  AIPlayer ..> OrderProcessor : EnqueueOrder(s) -> DispatchOrders -> ... -> Process(...)
+  SkirmishAIPlayer --|> AIPlayer : skirmish save-layout host
+  NeuralNetworkAIDecisionPolicy ..> RuleBasedAIDecisionPolicy : reuses selection helpers for decoding
+  AIPlayer ..> OrderProcessor : EnqueueOrders -> DispatchOrders -> ... -> Process(...)
 ```
 
-Sequence: today's dispatch path (`AIPlayer.Update()` → `OnDecisionTick()` override), and the
-planned path once `IAIDecisionPolicy` lands:
+Sequence: the dispatch path since `WI-A4-01`:
 
 ```mermaid
 sequenceDiagram
   participant PM as PlayerManager
   participant P as Player
   participant AP as AIPlayer
-  participant Pol as IAIDecisionPolicy (planned)
+  participant Pol as IAIDecisionPolicy
   participant OP as OrderProcessor
 
   PM->>P: LogicTick()
   P->>AP: Update()
   Note over AP: countdown reaches 0 (DefaultDecisionCadenceFrames)
+  AP->>AP: DecisionTickCount++
   AP->>Pol: DecideNextOrders(AIDecisionContext)
   Pol-->>AP: IReadOnlyList~Order~
   AP->>AP: EnqueueOrders(orders)
   AP->>OP: DispatchOrders -> NetworkMessageBuffer.AddLocalOrder / Game.InjectOrders -> Process(...)
 ```
 
-Today, `Pol` does not exist: `AIPlayer.OnDecisionTick()` is a `protected virtual` hook and
-`SkirmishAIPlayer` overrides it directly, calling `RunEconomyAndBaseBuildout()` /
-`RunUnitProduction()` / `RunMilitaryBehavior()` inline instead of through a policy object. The
-first task card ([`WI-A4-01`](../agent/cards/WI-A4-01-extract-ai-decision-policy-interface.md))
-introduces `Pol` without changing this sequence's observable behavior.
+Before the seam, `Pol` did not exist: `AIPlayer.OnDecisionTick()` was a bare `protected
+virtual` hook and `SkirmishAIPlayer` overrode it directly, calling
+`RunEconomyAndBaseBuildout()` / `RunUnitProduction()` / `RunMilitaryBehavior()` inline.
+`WI-A4-01` extracted those into `RuleBasedAIDecisionPolicy`; `WI-A4-02` added the enum +
+factory selection; `WI-A4-04` added `NeuralNetworkAIDecisionPolicy` per
+[neural-network-ai-policy.md](neural-network-ai-policy.md).
 
 ---
 

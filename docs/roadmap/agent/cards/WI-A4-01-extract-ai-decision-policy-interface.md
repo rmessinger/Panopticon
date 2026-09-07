@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-01` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): Experiment framework seams & harness, AI decision policy seam |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none (P2's `SkirmishAIPlayer` state machine already lands the reference behavior) |

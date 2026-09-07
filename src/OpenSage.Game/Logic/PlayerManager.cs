@@ -26,7 +26,7 @@ public sealed class PlayerManager : IPersistableObject
 
     internal void OnNewGame(Data.Map.Player[] mapPlayers, GameType gameType, PlayerSetting[] playerSettings)
     {
-        _players = CreatePlayers(mapPlayers, gameType).ToArray();
+        _players = CreatePlayers(mapPlayers, gameType, BuildAIDecisionPolicies(mapPlayers, playerSettings)).ToArray();
 
         if (playerSettings != null)
         {
@@ -87,9 +87,31 @@ public sealed class PlayerManager : IPersistableObject
         }
     }
 
+    // Skirmish slot i drives map player i + 2 (neutral and civilian come first); slots map 1:1
+    // onto AI players, matching how Team is threaded below.
+    private static AI.AIDecisionPolicyType[] BuildAIDecisionPolicies(
+        Data.Map.Player[] mapPlayers, PlayerSetting[] playerSettings)
+    {
+        var policies = new AI.AIDecisionPolicyType[mapPlayers.Length];
+        Array.Fill(policies, AI.AIDecisionPolicyType.RuleBased);
+
+        if (playerSettings == null)
+        {
+            return policies;
+        }
+
+        for (var i = 0; i < playerSettings.Length && i + 2 < policies.Length; i++)
+        {
+            policies[i + 2] = playerSettings[i].AIPolicy;
+        }
+
+        return policies;
+    }
+
     // This needs to operate on the entire player list, because players have references to each other
     // (allies and enemies).
-    private IEnumerable<Player> CreatePlayers(Data.Map.Player[] mapPlayers, GameType gameType)
+    private IEnumerable<Player> CreatePlayers(
+        Data.Map.Player[] mapPlayers, GameType gameType, AI.AIDecisionPolicyType[] aiDecisionPolicies = null)
     {
         var players = new Dictionary<string, Player>();
         var allies = new Dictionary<string, string[]>();
@@ -98,7 +120,10 @@ public sealed class PlayerManager : IPersistableObject
         var id = 0u;
         foreach (var mapPlayer in mapPlayers)
         {
-            var player = Player.FromMapData(id++, mapPlayer, _game, gameType != GameType.SinglePlayer);
+            var aiDecisionPolicy = aiDecisionPolicies != null && id < aiDecisionPolicies.Length
+                ? aiDecisionPolicies[id]
+                : AI.AIDecisionPolicyType.RuleBased;
+            var player = Player.FromMapData(id++, mapPlayer, _game, gameType != GameType.SinglePlayer, aiDecisionPolicy);
             players[player.Name] = player;
             allies[player.Name] =
                 mapPlayer.Allies?.Split(' ')

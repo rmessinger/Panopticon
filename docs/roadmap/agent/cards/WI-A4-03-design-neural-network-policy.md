@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-03` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): AI decision policy seam, §3/§4 of [pluggable-ai.md](../../deep-dives/a4-pluggable-ai.md) |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-02` (Done): the seam and factory must exist so the design has a concrete interface/context to encode against |
