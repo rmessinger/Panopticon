@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using ImGuiNET;
+using OpenSage.Client;
 using OpenSage.Logic.Object;
 using OpenSage.Mathematics;
 
@@ -11,6 +12,7 @@ namespace OpenSage.Diagnostics.AssetViews;
 internal sealed class GameObjectView : AssetView
 {
     private GameObject _gameObject;
+    private Drawable _drawable;
     private readonly List<BitArray<ModelConditionFlag>> _modelConditionStates;
     private int _selectedIndex;
 
@@ -25,7 +27,8 @@ internal sealed class GameObjectView : AssetView
                 _gameObject = gameObjects.CreateObject(objectDefinition, null);
             }));
 
-        _modelConditionStates = _gameObject.Drawable.ModelConditionStates.ToList();
+        _drawable = (Drawable)_gameObject.Client!;
+        _modelConditionStates = _drawable.ModelConditionStates.ToList();
         _selectedIndex = 0;
     }
 
@@ -39,7 +42,7 @@ internal sealed class GameObjectView : AssetView
 
             if (ImGui.Selectable(modelConditionState.DisplayName, i == _selectedIndex))
             {
-                _gameObject.Drawable.CopyModelConditionFlags(modelConditionState);
+                _drawable.CopyModelConditionFlags(modelConditionState);
                 _selectedIndex = i;
             }
         }

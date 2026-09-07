@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A3-01` |
 | Roadmap phase | [Track A · A3](../../track-a-foundations.md): Simulation/presentation seam |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |

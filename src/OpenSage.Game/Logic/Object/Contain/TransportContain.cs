@@ -64,17 +64,15 @@ public class TransportContain : OpenContainModule
                 endBoneName = $"{endBoneName}{pathToChoose:00}";
             }
 
-            var (_, startBone) = GameObject.Drawable.FindBone(startBoneName);
-            var (_, endBone) = GameObject.Drawable.FindBone(endBoneName);
-
-            if (startBone == null || endBone == null)
+            if (GameObject.Client?.TryGetBoneTransform(startBoneName, out var startBone) != true
+                || !GameObject.Client.TryGetBoneTransform(endBoneName, out var endBone))
             {
                 return false;
             }
 
-            var startPoint = GameObject.ToWorldspace(startBone.Transform);
+            var startPoint = GameObject.ToWorldspace(startBone);
             unit.UpdateTransform(startPoint.Translation, startPoint.Rotation);
-            var exitPoint = GameObject.ToWorldspace(endBone.Transform);
+            var exitPoint = GameObject.ToWorldspace(endBone);
             unit.AIUpdate.AddTargetPoint(exitPoint.Translation);
             return true;
         }
@@ -84,13 +82,12 @@ public class TransportContain : OpenContainModule
             return false;
         }
 
-        var (_, bone) = GameObject.Drawable.FindBone(_moduleData.ExitBone);
-        if (bone == null)
+        if (GameObject.Client?.TryGetBoneTransform(_moduleData.ExitBone, out var bone) != true)
         {
             return false;
         }
 
-        var spawnPoint = GameObject.ToWorldspace(bone.Transform);
+        var spawnPoint = GameObject.ToWorldspace(bone);
         unit.UpdateTransform(spawnPoint.Translation, spawnPoint.Rotation);
 
         return true;

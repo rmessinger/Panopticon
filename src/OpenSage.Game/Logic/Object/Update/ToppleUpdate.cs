@@ -174,7 +174,7 @@ public sealed class ToppleUpdate : UpdateModule, ICollideModule
             _angularVelocity += _angularAcceleration;
         }
 
-        GameObject.Drawable.ShadowsEnabled = false;
+        GameObject.Client.ShadowsEnabled = false;
 
         return UpdateSleepTime.None;
     }
@@ -250,7 +250,7 @@ public sealed class ToppleUpdate : UpdateModule, ICollideModule
         _options = options;
 
         // Tell the drawable to stop swaying.
-        GameObject.Drawable.FindClientUpdateModule<SwayClientUpdate>()?.StopSway();
+        GameObject.Client?.StopSway();
 
         // Rotate around the z-axis so that our x-axis is perpendicular to the topple direction.
         // This is really a trick to ensure that relatively planar things (like street lights)

@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using ImGuiNET;
+using OpenSage.Client;
 using OpenSage.Input.Cursors;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
@@ -1274,9 +1275,9 @@ public sealed class TacticalView : IPersistableObject
         }
 
         // TODO: Can Drawables be null? GameObject is not yet null-checked
-        if (CameraLock.Drawable != null)
+        if (CameraLock.Client is Drawable cameraLockDrawable)
         {
-            if (CameraLock.Drawable.GetFirstRenderObjInfo(out var boundingSphereRadius, out var transform))
+            if (cameraLockDrawable.GetFirstRenderObjInfo(out var boundingSphereRadius, out var transform))
             {
                 boundingSphereRadius = 1.0f;
                 var objPos = transform.Translation;

@@ -22,7 +22,7 @@ public sealed class PowerPlantUpdate : UpdateModule
     {
         _rodsExtended = true;
 
-        GameObject.Drawable.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgrading, true);
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgrading, true);
 
         _rodsExtendedEndFrame = GameEngine.GameLogic.CurrentFrame + _moduleData.RodsExtendTime;
     }
@@ -31,8 +31,8 @@ public sealed class PowerPlantUpdate : UpdateModule
     internal void RetractRods()
     {
         _rodsExtended = false;
-        GameObject.Drawable.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgrading, false);
-        GameObject.Drawable.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgraded, false);
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgrading, false);
+        GameObject.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgraded, false);
 
         _rodsExtendedEndFrame = LogicFrame.MaxValue;
     }
@@ -41,8 +41,8 @@ public sealed class PowerPlantUpdate : UpdateModule
     {
         if (_rodsExtended && _rodsExtendedEndFrame < GameEngine.GameLogic.CurrentFrame)
         {
-            GameObject.Drawable.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgrading, false);
-            GameObject.Drawable.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgraded, true);
+            GameObject.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgrading, false);
+            GameObject.ModelConditionFlags.Set(ModelConditionFlag.PowerPlantUpgraded, true);
             _rodsExtendedEndFrame = LogicFrame.MaxValue;
         }
 

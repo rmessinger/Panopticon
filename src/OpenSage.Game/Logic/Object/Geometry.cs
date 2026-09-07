@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using OpenSage.Diagnostics.Util;
-using OpenSage.Graphics.Cameras;
-using OpenSage.Gui;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Logic.Object;
@@ -145,34 +142,6 @@ public sealed class Geometry : IPersistableObject
 
             MinZ = Math.Min(MinZ, minZ);
             MaxZ = Math.Max(MaxZ, maxZ);
-        }
-    }
-
-    internal void DebugDraw(DrawingContext2D drawingContext, Camera camera, GameObject parent)
-    {
-        var collideInfo = GeometryCollisionDetectionUtility.CreateCollideInfo(parent);
-
-        foreach (var shape in Shapes)
-        {
-            var shapeCollideInfo = GeometryCollisionDetectionUtility.CreateShapeInfo(shape, collideInfo);
-
-            switch (shape.Type)
-            {
-                case GeometryType.Sphere:
-                    drawingContext.DrawSphere(camera, shapeCollideInfo.CreateSphere());
-                    break;
-
-                case GeometryType.Cylinder:
-                    drawingContext.DrawCylinder(camera, shapeCollideInfo.CreateCylinder());
-                    break;
-
-                case GeometryType.Box:
-                    drawingContext.DrawBox(camera, shapeCollideInfo.CreateBox());
-                    break;
-
-                default:
-                    throw new InvalidOperationException();
-            }
         }
     }
 

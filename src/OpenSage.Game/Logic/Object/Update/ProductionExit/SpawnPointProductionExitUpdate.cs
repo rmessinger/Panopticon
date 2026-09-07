@@ -1,7 +1,6 @@
 using System;
 using System.Numerics;
 using OpenSage.Data.Ini;
-using OpenSage.Graphics;
 
 namespace OpenSage.Logic.Object;
 
@@ -20,14 +19,11 @@ public sealed class SpawnPointProductionExitUpdate : UpdateModule, IProductionEx
 
     Vector3 IProductionExit.GetUnitCreatePoint()
     {
-        var (modelInstance, bone) = FindBone(_nextIndex);
-
-        if (bone == null)
+        if (!TryGetBonePose(_nextIndex, out var pose))
         {
             _nextIndex = 1;
-            (modelInstance, bone) = FindBone(_nextIndex);
 
-            if (bone == null)
+            if (!TryGetBonePose(_nextIndex, out pose))
             {
                 throw new InvalidOperationException("Could not find spawn point bone");
             }
@@ -35,11 +31,20 @@ public sealed class SpawnPointProductionExitUpdate : UpdateModule, IProductionEx
 
         _nextIndex++;
 
-        return modelInstance.RelativeBoneTransforms[bone.Index].Translation;
+        return pose;
     }
 
-    private (ModelInstance, ModelBone) FindBone(int index)
-        => GameObject.Drawable.FindBone(_moduleData.SpawnPointBoneName + index.ToString("D2"));
+    private bool TryGetBonePose(int index, out Vector3 translation)
+    {
+        if (GameObject.Client?.TryGetBonePose(_moduleData.SpawnPointBoneName + index.ToString("D2"), out var pose) == true)
+        {
+            translation = pose.Translation;
+            return true;
+        }
+
+        translation = default;
+        return false;
+    }
 
     Vector3? IProductionExit.GetNaturalRallyPoint() => null;
 

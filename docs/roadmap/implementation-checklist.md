@@ -545,9 +545,14 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     cross-run equality anywhere.
 
 ### A3: Simulation/presentation seam
-- [ ] Formalize the logic↔presentation boundary; ensure logic never reads render-only state.
-  - AC: TBD, boundary documented; a check/test ensures logic types don't reference render-only
-    state; a headless run proves logic runs with no presentation.
+- [x] Formalize the logic↔presentation boundary; ensure logic never reads render-only state.
+  - Done: boundary defined in [deep-dives/a3-sim-presentation-seam.md](deep-dives/a3-sim-presentation-seam.md);
+    logic reaches presentation only through `IGameObjectClient` commands and asset-derived bone
+    queries, plus the one-way audio/FX/tracer services. All 15 audited read clusters removed
+    ([audit](implementation/track-a-a3-sim-presentation-seam.md)); `ModelConditionFlags` are
+    logic-owned; `LogicPresentationBoundaryTests` reflects over `OpenSage.Logic` types and fails
+    on any presentation-type reference (empty allowlist); headless logic runs are A1's host tests
+    plus the P7/P6b suites, all green.
 
 ### A4: Experiment framework seams & harness
 - [ ] A4-1 Simulation Domain Model seam (domain-agnostic entities/topology/interactions/metrics).

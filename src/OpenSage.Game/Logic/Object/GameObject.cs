@@ -7,14 +7,10 @@ using System.Numerics;
 using FixedMath.NET;
 using ImGuiNET;
 using OpenSage.Audio;
-using OpenSage.Client;
 using OpenSage.Data.Map;
 using OpenSage.DataStructures;
 using OpenSage.Diagnostics;
 using OpenSage.Diagnostics.Util;
-using OpenSage.Graphics.Cameras;
-using OpenSage.Graphics.Rendering;
-using OpenSage.Graphics.Shaders;
 using OpenSage.Gui.ControlBar;
 using OpenSage.Gui.InGame;
 using OpenSage.Logic;
@@ -337,7 +333,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     public bool IsStructure { get; private set; }
 
-    public BitArray<ModelConditionFlag> ModelConditionFlags => Drawable.ModelConditionFlags;
+    public BitArray<ModelConditionFlag> ModelConditionFlags { get; } = new();
 
     public RadiusDecalTemplate SelectionDecal;
 
@@ -487,7 +483,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
     [AddedIn(SageGame.CncGeneralsZeroHour)]
     public float CarrierDeckHeight => 0;
 
-    public readonly Drawable Drawable;
+    public IGameObjectClient Client { get; internal set; }
 
     /// <summary>
     /// A non-persisted queue of rising-cash-text items that should originate from this GameObject.
@@ -525,7 +521,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         // TODO: Instead of GameObject owning the drawable, which makes logic tests a little awkward,
         // perhaps create Drawable somewhere else and attach it to this GameObject?
-        Drawable = gameEngine.GameClient?.CreateDrawable(objectDefinition, this);
+        Client = gameEngine.GameClient?.CreateClientObject(objectDefinition, this);
 
         var behaviors = new List<BehaviorModule>();
 
@@ -1098,7 +1094,6 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
     /// </summary>
     internal void SetIsBeingConstructed()
     {
-        if (Drawable == null) return;
         ModelConditionFlags.Set(ModelConditionFlag.ActivelyBeingConstructed, true);
         ModelConditionFlags.Set(ModelConditionFlag.PartiallyConstructed, true);
         ModelConditionFlags.Set(ModelConditionFlag.AwaitingConstruction, false);
@@ -1137,11 +1132,6 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     public bool IsBeingConstructed()
     {
-        if (Drawable == null)
-        {
-            return false;
-        }
-
         return ModelConditionFlags.Get(ModelConditionFlag.ActivelyBeingConstructed) ||
                ModelConditionFlags.Get(ModelConditionFlag.AwaitingConstruction) ||
                ModelConditionFlags.Get(ModelConditionFlag.PartiallyConstructed);
@@ -1154,44 +1144,22 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     internal void LocalLogicTick(in TimeInterval gameTime, float tickT, HeightMap heightMap)
     {
-        Drawable.LogicTick(gameTime);
-    }
-
-    internal void BuildRenderList(RenderList renderList, Camera camera, in TimeInterval gameTime)
-    {
-        if (ModelConditionFlags.Get(ModelConditionFlag.Sold) || Hidden)
-        {
-            return;
-        }
-
-        var renderItemConstantsPS = new MeshShaderResources.RenderItemConstantsPS
-        {
-            HouseColor = Owner.Color.ToVector3(),
-            Opacity = IsPlacementPreview ? 0.7f : 1.0f,
-            TintColor = IsPlacementInvalid ? new Vector3(1, 0.3f, 0.3f) : Vector3.One,
-        };
-
-        // This must be done after processing anything that might update this object's transform.
-        var worldMatrix = ModelTransform.Matrix * Transform.Matrix;
-        Drawable.BuildRenderList(renderList, camera, gameTime, worldMatrix, renderItemConstantsPS);
+        Client?.LogicTick(gameTime);
     }
 
     public void ClearModelConditionState(ModelConditionFlag state)
     {
-        if (Drawable == null) return;
         ModelConditionFlags.Set(state, false);
     }
 
     public void ClearModelConditionFlags()
     {
-        if (Drawable == null) return;
         ModelConditionFlags.SetAll(false);
         // todo: maintain map-based flags, such as NIGHT, SNOW, etc
     }
 
     public void SetModelConditionState(ModelConditionFlag state)
     {
-        if (Drawable == null) return;
         ModelConditionFlags.Set(state, true);
     }
 
@@ -1373,10 +1341,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         if (construction)
         {
-            if (Drawable != null)
-            {
-                Drawable.ModelConditionFlags.Set(ModelConditionFlag.DestroyedWhilstBeingConstructed, true);
-            }
+            ModelConditionFlags.Set(ModelConditionFlag.DestroyedWhilstBeingConstructed, true);
 
             var mostRecentConstructor = _gameEngine.GameLogic.GetObjectById(BuiltByObjectID);
             // mostRecentConstructor is set to the unit currently or most recently building us
@@ -1388,11 +1353,8 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         }
         else
         {
-            if (Drawable != null)
-            {
-                Drawable.ModelConditionFlags.Set(ModelConditionFlag.ReallyDamaged, false);
-                Drawable.ModelConditionFlags.Set(ModelConditionFlag.Damaged, false);
-            }
+            ModelConditionFlags.Set(ModelConditionFlag.ReallyDamaged, false);
+            ModelConditionFlags.Set(ModelConditionFlag.Damaged, false);
         }
 
         IsSelectable = false;
@@ -1427,15 +1389,12 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         _subdualDamageHelper?.NotifySubdualDamage(amount);
 
         // If we are gaining subdual damage, we are slowly tinting.
-        if (Drawable != null)
-        {
-            // TODO(Port): Implement this:
+        // TODO(Port): Implement this:
 
-            //if (amount > 0)
-            //    getDrawable()->setTintStatus(TINT_STATUS_GAINING_SUBDUAL_DAMAGE);
-            //else
-            //    getDrawable()->clearTintStatus(TINT_STATUS_GAINING_SUBDUAL_DAMAGE);
-        }
+        //if (amount > 0)
+        //    getDrawable()->setTintStatus(TINT_STATUS_GAINING_SUBDUAL_DAMAGE);
+        //else
+        //    getDrawable()->clearTintStatus(TINT_STATUS_GAINING_SUBDUAL_DAMAGE);
     }
 
     /// <summary>
@@ -1760,11 +1719,11 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         reader.PersistObjectId(ref CreatedByObjectID);
         reader.PersistObjectId(ref BuiltByObjectID);
 
-        var drawableId = Drawable.ID;
+        var drawableId = Client.ClientObjectId;
         reader.PersistUInt32(ref drawableId);
         if (reader.Mode == StatePersistMode.Read)
         {
-            Drawable.ID = drawableId;
+            Client.ClientObjectId = drawableId;
         }
 
         reader.PersistAsciiString(ref _name);
@@ -2014,10 +1973,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             }
         }
 
-        foreach (var drawModule in Drawable.DrawModules)
-        {
-            DrawInspector(drawModule);
-        }
+        Client?.DrawInspector();
 
         if (CurrentWeapon != null)
         {
@@ -2064,7 +2020,10 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     protected override void Dispose(bool disposeManagedResources)
     {
-        _gameEngine.GameClient.DestroyDrawable(Drawable);
+        if (Client != null)
+        {
+            _gameEngine.GameClient?.DestroyClientObject(Client);
+        }
 
         base.Dispose(disposeManagedResources);
     }

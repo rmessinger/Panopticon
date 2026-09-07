@@ -243,7 +243,7 @@ public class Player : IPersistableObject
 
         foreach (var unit in units)
         {
-            unit.Drawable?.TriggerSelection();
+            unit.Client?.TriggerSelection();
         }
 
         var unitsFromHordeSelection = new List<GameObject>();

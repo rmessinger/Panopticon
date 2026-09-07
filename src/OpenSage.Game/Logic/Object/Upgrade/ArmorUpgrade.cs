@@ -1,4 +1,3 @@
-using OpenSage.Client;
 using OpenSage.Data.Ini;
 
 namespace OpenSage.Logic.Object;
@@ -21,7 +20,7 @@ internal sealed class ArmorUpgrade : UpgradeModule
         // Unique case for AMERICA to test for upgrade to set flag
         if (IsTriggeredBy("Upgrade_AmericaChemicalSuits"))
         {
-            GameObject.Drawable.SetTerrainDecal(ObjectDecalType.ChemSuit);
+            GameObject.Client?.SetTerrainDecal(ObjectDecalType.ChemSuit);
         }
     }
 

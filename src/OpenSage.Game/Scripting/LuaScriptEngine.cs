@@ -1,8 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 using MoonSharp.Interpreter;
+using OpenSage.Client;
 using OpenSage.Data.Ini;
 using OpenSage.Logic.Object;
+using OpenSage.Mathematics;
 using OpenSage.Scripting.Lua;
 
 namespace OpenSage.Scripting;
@@ -281,13 +284,13 @@ public sealed class LuaScriptEngine : GameSystem
 
     public void ObjectSetModelCondition(string gameObject, string modelCondition)
     {
-        Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Drawable.CopyModelConditionFlags(IniParser.ParseEnumBitArray<ModelConditionFlag>(modelCondition, IniTokenPosition.None));
+        Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).ModelConditionFlags.CopyFrom(IniParser.ParseEnumBitArray<ModelConditionFlag>(modelCondition, IniTokenPosition.None));
     }
 
     public bool ObjectTestModelCondition(string gameObject, string modelCondition)
     {
         var modelConditionBitArray = IniParser.ParseEnumBitArray<ModelConditionFlag>(modelCondition, IniTokenPosition.None);
-        var modelconditionBitArrayEnum = Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Drawable.ModelConditionStates;
+        var modelconditionBitArrayEnum = (Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Client as Drawable)?.ModelConditionStates ?? Enumerable.Empty<BitArray<ModelConditionFlag>>();
         foreach (var i in modelconditionBitArrayEnum)
         {
             if (i == modelConditionBitArray)
@@ -301,7 +304,7 @@ public sealed class LuaScriptEngine : GameSystem
     public void ObjectClearModelCondition(string gameObject, string modelCondition)
     {
         var modelConditionBitArray = IniParser.ParseEnumBitArray<ModelConditionFlag>(modelCondition, IniTokenPosition.None);
-        var modelconditionBitArrayEnum = Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Drawable.ModelConditionStates;
+        var modelconditionBitArrayEnum = (Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Client as Drawable)?.ModelConditionStates ?? Enumerable.Empty<BitArray<ModelConditionFlag>>();
         foreach (var i in modelconditionBitArrayEnum)
         {
             if (i == modelConditionBitArray)
@@ -337,12 +340,12 @@ public sealed class LuaScriptEngine : GameSystem
 
     public void ObjectHideSubObject(string gameObject, string subObject, string state)
     {
-        Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Drawable.HideSubObject(subObject);
+        (Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Client as Drawable)?.HideSubObject(subObject);
     }
 
     public void ObjectHideSubObjectPermanently(string gameObject, string subObject, string state)
     {
-        Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Drawable.HideSubObjectPermanently(subObject);
+        (Game.Scene3D.GameObjects.GetObjectById(GetLuaObjectID(gameObject)).Client as Drawable)?.HideSubObjectPermanently(subObject);
     }
 
     public int ObjectCountNearbyEnemies(string gameObject, string radius)

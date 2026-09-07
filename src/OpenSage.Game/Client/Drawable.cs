@@ -1,11 +1,11 @@
 #nullable enable
 
 using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Numerics;
+using ImGuiNET;
 using OpenSage.Graphics;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Graphics.Rendering;
@@ -16,7 +16,7 @@ using OpenSage.Mathematics;
 
 namespace OpenSage.Client;
 
-public sealed class Drawable : Entity, IPersistableObject
+public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
 {
     private readonly Dictionary<string, ModuleBase> _tagToModuleLookup = new();
 
@@ -41,7 +41,9 @@ public sealed class Drawable : Entity, IPersistableObject
 
     public readonly IEnumerable<BitArray<ModelConditionFlag>> ModelConditionStates;
 
-    public readonly BitArray<ModelConditionFlag> ModelConditionFlags;
+    private readonly BitArray<ModelConditionFlag> _fallbackModelConditionFlags = new();
+
+    public BitArray<ModelConditionFlag> ModelConditionFlags => GameObject?.ModelConditionFlags ?? _fallbackModelConditionFlags;
 
     public ReadOnlySpan<DrawModule> DrawModules
     {
@@ -203,8 +205,6 @@ public sealed class Drawable : Entity, IPersistableObject
         Definition = objectDefinition;
         _gameEngine = gameEngine;
         GameObject = gameObject;
-
-        ModelConditionFlags = new BitArray<ModelConditionFlag>();
 
         // the casing on the object names doesn't always match
         _hiddenSubObjects = new Dictionary<string, bool>(StringComparer.InvariantCultureIgnoreCase);
@@ -438,6 +438,31 @@ public sealed class Drawable : Entity, IPersistableObject
                 _shownSubObjects,
                 _hiddenSubObjects);
         }
+    }
+
+    /// <summary>
+    /// Render entry point for an object-backed drawable: reads logic state (sold/placement
+    /// status, owner color, transforms) and delegates to the draw modules.
+    /// </summary>
+    public void BuildObjectRenderList(RenderList renderList, Camera camera, in TimeInterval gameTime)
+    {
+        var gameObject = GameObject;
+
+        if (gameObject.ModelConditionFlags.Get(ModelConditionFlag.Sold) || gameObject.Hidden)
+        {
+            return;
+        }
+
+        var renderItemConstantsPS = new MeshShaderResources.RenderItemConstantsPS
+        {
+            HouseColor = gameObject.Owner.Color.ToVector3(),
+            Opacity = gameObject.IsPlacementPreview ? 0.7f : 1.0f,
+            TintColor = gameObject.IsPlacementInvalid ? new Vector3(1, 0.3f, 0.3f) : Vector3.One,
+        };
+
+        // This must be done after processing anything that might update this object's transform.
+        var worldMatrix = gameObject.ModelTransform.Matrix * gameObject.Transform.Matrix;
+        BuildRenderList(renderList, camera, gameTime, worldMatrix, renderItemConstantsPS);
     }
 
     private void ApplyPhysicsTransform(ref Matrix4x4 matrix)
@@ -1666,36 +1691,69 @@ public sealed class Drawable : Entity, IPersistableObject
         return true;
     }
 
-    private static readonly FrozenDictionary<BodyDamageType, ModelConditionFlag> DamageTypeLookup = new Dictionary<BodyDamageType, ModelConditionFlag>()
-    {
-        { BodyDamageType.Damaged, ModelConditionFlag.Damaged },
-        { BodyDamageType.ReallyDamaged, ModelConditionFlag.ReallyDamaged },
-        { BodyDamageType.Rubble, ModelConditionFlag.Rubble },
-    }.ToFrozenDictionary();
-
-    public void ReactToBodyDamageStateChange(BodyDamageType newState)
-    {
-        ModelConditionFlags.Set(ModelConditionFlag.Damaged, false);
-        ModelConditionFlags.Set(ModelConditionFlag.ReallyDamaged, false);
-        ModelConditionFlags.Set(ModelConditionFlag.Rubble, false);
-
-        if (DamageTypeLookup.TryGetValue(newState, out var flag))
-        {
-            ModelConditionFlags.Set(flag, true);
-        }
-
-        // TODO(Port): Port this.
-        // When loading map, ambient sound starting is handled by onLevelStart(), so that we can
-        // correctly react to customizations
-        //if (!TheGameLogic->isLoadingMap())
-        //    startAmbientSound(newState, TheGlobalData->m_timeOfDay);
-    }
-
     internal void Destroy()
     {
         foreach (var drawModule in DrawModules)
         {
             drawModule.Dispose();
+        }
+    }
+
+    void IGameObjectClient.Destroy() => Destroy();
+
+    uint IGameObjectClient.ClientObjectId
+    {
+        get => ID;
+        set => ID = value;
+    }
+
+    bool IGameObjectClient.TryGetModelSpaceBounds(out AxisAlignedBoundingBox bounds) => TryGetModelSpaceBounds(out bounds);
+
+    public void StopSway()
+    {
+        FindClientUpdateModule<SwayClientUpdate>()?.StopSway();
+    }
+
+    public void SetDebrisModel(string modelName)
+    {
+        foreach (var drawModule in DrawModules)
+        {
+            if (drawModule is W3dDebrisDraw debrisDraw)
+            {
+                debrisDraw.SetModelName(modelName);
+                break;
+            }
+        }
+    }
+
+    public bool TryGetBoneTransform(string boneName, [MaybeNullWhen(false)] out Transform boneTransform)
+    {
+        var (_, bone) = FindBone(boneName);
+        boneTransform = bone?.Transform;
+        return bone != null;
+    }
+
+    public bool TryGetBonePose(string boneName, out Matrix4x4 pose)
+    {
+        var (modelInstance, bone) = FindBone(boneName);
+        if (modelInstance == null || bone == null)
+        {
+            pose = default;
+            return false;
+        }
+
+        pose = modelInstance.RelativeBoneTransforms[bone.Index];
+        return true;
+    }
+
+    public void DrawInspector()
+    {
+        foreach (var drawModule in _drawModules)
+        {
+            if (ImGui.CollapsingHeader($"{drawModule.GetType().Name} {drawModule.Tag}", ImGuiTreeNodeFlags.DefaultOpen))
+            {
+                drawModule.DrawInspector();
+            }
         }
     }
 
@@ -2130,19 +2188,6 @@ public sealed class Drawable : Entity, IPersistableObject
         public float TotalYaw;
         public float TotalZ;
     }
-}
-
-public enum ObjectDecalType
-{
-    HordeInfantry = 1, // exhorde.dds
-    NationalismInfantry = 2, // exhorde_up.dds
-    HordeVehicle = 3, // exhordeb.dds
-    NationalismVehicle = 4, // exhordeb_up.dds
-    Crate = 5, // exjunkcrate.dds
-    HordeWithFanaticismUpgrade = 6,
-    ChemSuit = 7,
-    None = 8,
-    ShadowTexture = 9,
 }
 
 public enum StealthLookType

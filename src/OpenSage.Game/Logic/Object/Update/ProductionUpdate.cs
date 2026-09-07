@@ -231,8 +231,6 @@ public sealed class ProductionUpdate : UpdateModule
 
         GetDoorConditionFlags(out var opening, out var waitingOpen, out var closing);
 
-        if (GameObject.Drawable == null) return;
-
         GameObject.ModelConditionFlags.Set(opening, doorState is DoorState.Opening);
         GameObject.ModelConditionFlags.Set(waitingOpen, doorState is DoorState.WaitingOpen);
         GameObject.ModelConditionFlags.Set(closing, doorState is DoorState.Closing);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using OpenSage.Audio;
+using OpenSage.Client;
 using OpenSage.Content.Loaders;
 using OpenSage.Content.Util;
 using OpenSage.Data.Map;
@@ -428,11 +429,16 @@ public sealed class Scene3D : DisposableBase, IScene3D
         {
             foreach (var gameObject in GameObjects.Objects)
             {
-                if (!FrustumCulling
-                    || gameObject.Definition.KindOf.Get(ObjectKinds.NoCollide)
-                    || gameObject.RoughCollider.Intersects(Camera.BoundingFrustum))
+                if (FrustumCulling
+                    && !gameObject.Definition.KindOf.Get(ObjectKinds.NoCollide)
+                    && !gameObject.RoughCollider.Intersects(Camera.BoundingFrustum))
                 {
-                    gameObject.BuildRenderList(renderList, camera, gameTime);
+                    continue;
+                }
+
+                if (gameObject.Client is Drawable drawable)
+                {
+                    drawable.BuildObjectRenderList(renderList, camera, gameTime);
                 }
             }
         }

@@ -22,7 +22,7 @@ internal class SubObjectsUpgrade : UpgradeModule
         {
             foreach (var subObject in _moduleData.ShowSubObjects)
             {
-                GameObject.Drawable.ShowSubObject(subObject);
+                GameObject.Client?.ShowSubObject(subObject);
             }
         }
 
@@ -30,7 +30,7 @@ internal class SubObjectsUpgrade : UpgradeModule
         {
             foreach (var subObject in _moduleData.HideSubObjects)
             {
-                GameObject.Drawable.HideSubObject(subObject);
+                GameObject.Client?.HideSubObject(subObject);
             }
         }
     }

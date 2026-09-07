@@ -34,11 +34,9 @@ public abstract class DockUpdate : UpdateModule
     private Vector3 GetActionBone()
     {
         // TODO: might also be DOCKSTART or DOCKEND
-        var (actionModelInstance, actionBone) = GameObject.Drawable.FindBone($"DOCKACTION");
-
-        if (actionModelInstance != null && actionBone != null)
+        if (GameObject.Client?.TryGetBonePose($"DOCKACTION", out var pose) == true)
         {
-            return actionModelInstance.AbsoluteBoneTransforms[actionBone.Index].Translation;
+            return pose.Translation;
         }
         return GameObject.Translation;
     }
@@ -46,8 +44,11 @@ public abstract class DockUpdate : UpdateModule
     private Vector3 GetDockWaitingBone(int id)
     {
         var identifier = id.ToString("D2");
-        var (modelInstance, bone) = GameObject.Drawable.FindBone($"DOCKWAITING{identifier}");
-        return modelInstance.AbsoluteBoneTransforms[bone.Index].Translation;
+        if (GameObject.Client?.TryGetBonePose($"DOCKWAITING{identifier}", out var pose) == true)
+        {
+            return pose.Translation;
+        }
+        return GameObject.Translation;
     }
 
     public bool CanApproach() => !_usesWaitingBones || _unitsApproaching.Count < _moduleData.NumberApproachPositions + 1;

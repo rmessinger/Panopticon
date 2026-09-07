@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Numerics;
+using OpenSage.Client;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Graphics.Rendering;
 using OpenSage.Input;
@@ -63,7 +64,11 @@ public sealed class ConstructBuildingOrderGenerator : OrderGenerator, IDisposabl
         // TODO: Draw arrow (locater02.w3d) to visualise rotation angle.
 
         _previewObject.LocalLogicTick(gameTime, 0, null);
-        _previewObject.BuildRenderList(renderList, camera, gameTime);
+
+        if (_previewObject.Client is Drawable drawable)
+        {
+            drawable.BuildObjectRenderList(renderList, camera, gameTime);
+        }
     }
 
     public override OrderGeneratorResult TryActivate(IScene3D scene, KeyModifiers keyModifiers)
