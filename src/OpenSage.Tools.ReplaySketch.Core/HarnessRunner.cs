@@ -6,6 +6,7 @@ using OpenSage.Data;
 using OpenSage.Graphics;
 using OpenSage.IO;
 using OpenSage.Logic;
+using OpenSage.Simulation;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
 using OpenSage.Tools.ReplaySketch.Assertions;
@@ -88,7 +89,7 @@ public static class HarnessRunner
             // Frame alignment: TickStarting fires before step k (k = e.Frame), when the world
             // has completed k-1 frames — matching the pre-Update ComputeLogicFrame of the
             // previous loop.
-            var host = new SimulationHost(game.GameEngine);
+            var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
 
             // A2 (WI-A2-04): optional T0 run-output capture for statistical aggregation. T0
             // metrics only; the tiered T1/T2 recording stays out of scope here.

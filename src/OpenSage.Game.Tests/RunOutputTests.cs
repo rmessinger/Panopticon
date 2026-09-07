@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using OpenSage.Logic;
+using OpenSage.Simulation;
 using Xunit;
 
 namespace OpenSage.Tests;
@@ -44,7 +45,7 @@ public class RunOutputTests : MockedGameTest
         ConfigureTwoCompetitivePlayers(game);
         game.GameLogic.Random.Initialize(777u);
 
-        var host = new SimulationHost(game.GameEngine);
+        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         using var recorder = new RunOutputRecorder(host, game, seed: 777u, scenarioId: "a1-runoutput-test");
 
         // Drive a terminal outcome and let a tick decide it.
@@ -91,7 +92,7 @@ public class RunOutputTests : MockedGameTest
     public void MetricSeries_IsBoundedBySampleInterval()
     {
         var game = new TestGame(SageGame.CncGenerals);
-        var host = new SimulationHost(game.GameEngine);
+        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         using var recorder = new RunOutputRecorder(host, game, seed: 1u, sampleInterval: 25);
 
         host.Run(100);

@@ -12,6 +12,7 @@ using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 using Xunit;
 using Player = OpenSage.Logic.Player;
+using OpenSage.Simulation;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;
 
@@ -126,7 +127,7 @@ public class A2StatisticalHarnessTests : MockedGameTest
             game.PlayerManager.Players[2].BankAccount.Deposit(5000 + seed % 500, playSound: false);
             game.PlayerManager.Players[3].BankAccount.Deposit(4000 + seed % 300, playSound: false);
 
-            var host = new SimulationHost(game.GameEngine);
+            var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
             using var recorder = new RunOutputRecorder(host, game, seed, "a2-mocked-two-player", sampleInterval: 10);
             host.Run(65);
 
