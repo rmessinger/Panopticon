@@ -7,7 +7,7 @@
 | Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-A1-06` (the host supplies the input-injection and initial-state path A5-1 needs, per [a5-visualization.md §7](../../deep-dives/a5-visualization.md#7-sequencing-notes)) |
+| Prerequisites | `WI-A5-06`; `WI-A1-06` is already `Done` |
 | Diagrams | [A5 §8](../../deep-dives/a5-visualization.md#8-architecture-diagrams) (placeholder; must be replaced before this card is `Ready`) |
 
 ## Goal
@@ -28,12 +28,14 @@ consume it, so a scenario round-trips from file to run.
 
 ## Steps
 
-1. Extend the existing P0 scenario type with the initial-state fields §3.1 names that it lacks.
-   Extend; do not define a second scenario format.
+1. Extend the existing P0 scenario type with the schema version, domain/configuration, seed,
+   initial population, parameters, stop conditions, probes, and recording options defined by
+   `WI-A5-06`. Extend; do not define a second scenario format.
 2. Reuse the P0 command model for the ordered command sequence verbatim.
 3. Add a loader that reads a scenario file and configures a `SimulationHost` run from it.
-4. Add the pre-run validation of §3.4: reject a scenario naming an unknown object definition,
-   player, or map before the run starts, with the offending field in the error.
+4. Reject unsupported schema versions and missing required structural fields before host
+   construction. `WI-A5-10` owns semantic map, player, definition, placement, stop, and probe
+   validation.
 5. Add a test that authors a scenario in code, serializes it, reloads it, runs it headlessly, and
    asserts the run reached the expected frame count.
 6. Run `dotnet format src` and confirm `dotnet format src --verify-no-changes`.
@@ -46,7 +48,7 @@ consume it, so a scenario round-trips from file to run.
 ## Acceptance criteria
 
 - [ ] A scenario file round-trips through serialize, reload, and run.
-- [ ] Pre-run validation rejects an unknown definition, player, or map, naming the field.
+- [ ] Unsupported versions and missing required fields fail before host construction.
 - [ ] The P0 command model is reused, not duplicated.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
@@ -60,7 +62,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not add procedural or capture-from-run authoring. Those are separate A5-1 cards.
+- Do not add procedural or capture-from-run authoring. Those are `WI-A5-23` and `WI-A5-11`.
 - Do not add the short preview of §3.4; validation only.
 - Do not add sweep axes. That is A5-2, and P0-5b already provides the expansion primitive.
 - Do not build any visualization.
@@ -72,6 +74,7 @@ dotnet format src --verify-no-changes
   capture-from-run is still outstanding.
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
-  - Capture-from-run authoring (turn a completed run into a scenario).
-  - Procedural seeding for large scenarios (pairs with A5-5).
-  - Pre-run preview rendering.
+  - `WI-A5-10`: complete pre-run validation.
+  - `WI-A5-11`: capture-from-run authoring.
+  - `WI-A5-13`: pre-run preview rendering.
+  - `WI-A5-23`: procedural seeding for large scenarios.

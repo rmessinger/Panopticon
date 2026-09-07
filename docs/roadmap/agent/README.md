@@ -136,8 +136,9 @@ starts to avoid duplicate in-flight work.
 
 - When a roadmap phase is ready to be chipped at, ensure the phase's deep-dive `Architecture
   Diagrams` section contains a class diagram and at least one sequence diagram grounded in the
-  actual types and flows. Replace any placeholder stubs before writing the first card. This is
-  the gate; cards written without it lack the structural reference agents need to stay in scope.
+  actual types and flows. Replace any placeholder stubs before marking a source-edit card `Ready`.
+  A read-only audit/design card may be `Ready` when its deliverable supplies the evidence or
+  diagrams needed to open this gate.
 - Decompose the phase into cards here (don't wait for a full deep dive: small
   investigation/prep cards are valuable early, but the diagrams should still precede executable
   cards).
