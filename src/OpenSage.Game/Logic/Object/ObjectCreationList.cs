@@ -141,11 +141,9 @@ public sealed class CreateDebrisOCNugget : OCNugget
         debrisObject.Kill();
 
         // Model
-        var w3dDebrisDraw = (W3dDebrisDraw)debrisObject.Drawable.DrawModules[0];
-        // TODO
         //var modelName = ModelNames[context.GameEngine.Random.Next(ModelNames.Length)];
         var modelName = ModelNames[0];
-        w3dDebrisDraw.SetModelName(modelName);
+        debrisObject.Client?.SetDebrisModel(modelName);
 
         // Physics
         var physicsBehavior = debrisObject.FindBehavior<PhysicsBehavior>();

@@ -44,6 +44,15 @@ Source of truth: [deep-dives/a2-reproducibility.md](../deep-dives/a2-reproducibi
 |---|---|---|
 | [track-a-a2-reproducibility.md](track-a-a2-reproducibility.md) | audits + seeded-source conversion | Statistical validation |
 
+## Track A · A3 : Simulation/presentation seam
+
+Source of truth: [deep-dives/a3-sim-presentation-seam.md](../deep-dives/a3-sim-presentation-seam.md) :
+[Architecture diagrams §8](../deep-dives/a3-sim-presentation-seam.md#8-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a3-sim-presentation-seam.md](track-a-a3-sim-presentation-seam.md) | A3-1…A3-4 | Simulation/presentation seam |
+
 ## Track G · G1 : High-DPI drawable & resolution correctness
 
 Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :

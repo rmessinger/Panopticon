@@ -53,7 +53,7 @@ internal sealed class FiringWeaponState : FixedDurationWeaponState
 
     private void TriggerWeaponFireFX()
     {
-        var fireFXTransform = Context.GameObject.Drawable.GetWeaponFireFXBoneTransform(
+        var fireFXTransform = Context.GameObject.Client.GetWeaponFireFXBoneTransform(
             Context.Weapon.Slot,
             Context.Weapon.WeaponIndex);
         if (fireFXTransform == null)

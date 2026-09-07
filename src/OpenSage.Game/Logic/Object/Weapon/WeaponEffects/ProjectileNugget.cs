@@ -62,7 +62,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
             projectileTemplate,
             context.Weapon.ParentGameObject.Owner);
 
-        var launchBoneTransform = context.Weapon.ParentGameObject.Drawable.GetWeaponLaunchBoneTransform(
+        var launchBoneTransform = context.Weapon.ParentGameObject.Client.GetWeaponLaunchBoneTransform(
             context.Weapon.Slot, context.Weapon.WeaponIndex);
 
         // Models without a weapon-launch bone (e.g. the Angry Mob's rock and molotov throwers)
@@ -134,7 +134,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
         var exhaustName = context.Weapon.Template.ProjectileExhaust;
         if (missileAIUpdate == null
             || string.IsNullOrEmpty(exhaustName)
-            || !projectileObject.Drawable.TryGetModelSpaceBounds(out var bounds))
+            || projectileObject.Client?.TryGetModelSpaceBounds(out var bounds) != true)
         {
             return;
         }
@@ -153,8 +153,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
 
     private static void SetLeadingEdgeRotationPivot(GameObject projectileObject)
     {
-        if (projectileObject.Drawable == null
-            || !projectileObject.Drawable.TryGetModelSpaceBounds(out var bounds))
+        if (projectileObject.Client?.TryGetModelSpaceBounds(out var bounds) != true)
         {
             return;
         }

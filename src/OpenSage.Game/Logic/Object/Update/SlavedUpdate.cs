@@ -96,15 +96,16 @@ public class SlavedUpdateModule : UpdateModule
                 case RepairStatus.IN_TRANSITION:
                     if (!isMoving)
                     {
-                        var (modelInstance, bone) = GameObject.Drawable.FindBone(_moduleData.RepairWeldingFXBone);
-                        var transform = modelInstance.AbsoluteBoneTransforms[bone.Index];
-                        _particleTemplate ??= _moduleData.RepairWeldingSys.Value;
+                        if (GameObject.Client?.TryGetBonePose(_moduleData.RepairWeldingFXBone, out var transform) == true)
+                        {
+                            _particleTemplate ??= _moduleData.RepairWeldingSys.Value;
 
-                        var particleSystem = GameEngine.ParticleSystems.Create(
-                            _particleTemplate,
-                            transform);
+                            var particleSystem = GameEngine.ParticleSystems.Create(
+                                _particleTemplate,
+                                transform);
 
-                        particleSystem.Activate();
+                            particleSystem.Activate();
+                        }
 
                         var weldDuration = GameEngine.GameLogic.Random.NextLogicFrameSpan(_moduleData.RepairMinWeldTime, _moduleData.RepairMaxWeldTime);
                         _waitUntil = GameEngine.GameLogic.CurrentFrame + weldDuration;

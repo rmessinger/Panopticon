@@ -526,12 +526,11 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
 
     private Transform GetBoneTransform(string name)
     {
-        var (_, bone) = GameObject.Drawable.FindBone(name);
-        if (bone == null)
+        if (GameObject.Client?.TryGetBoneTransform(name, out var boneTransform) != true)
         {
             throw new InvalidOperationException("Could not find runway start point bone");
         }
-        return bone.Transform;
+        return boneTransform;
     }
 
     public Vector3 GetBoneTranslation(string name) => GetBoneTransform(name).Translation;

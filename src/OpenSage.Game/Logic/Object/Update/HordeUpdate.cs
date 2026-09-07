@@ -2,7 +2,6 @@
 
 using System.Linq;
 using ImGuiNET;
-using OpenSage.Client;
 using OpenSage.Data.Ini;
 using OpenSage.Mathematics;
 
@@ -52,14 +51,14 @@ public sealed class HordeUpdate : UpdateModule
     private void AddToHorde()
     {
         _isInHorde = true;
-        GameObject.Drawable.SetTerrainDecal(GameObjectDecalType);
+        GameObject.Client?.SetTerrainDecal(GameObjectDecalType);
         GameObject.AddWeaponBonusType(_moduleData.Action);
     }
 
     private void RemoveFromHorde()
     {
         _isInHorde = false;
-        GameObject.Drawable.SetTerrainDecal(ObjectDecalType.None);
+        GameObject.Client?.SetTerrainDecal(ObjectDecalType.None);
         GameObject.RemoveWeaponBonusType(_moduleData.Action);
     }
 
