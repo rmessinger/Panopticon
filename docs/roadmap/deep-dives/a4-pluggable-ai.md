@@ -148,7 +148,8 @@ extraction and selection factory as `WI-A4-01`/`WI-A4-02`, the v1 neural-network
 - Design and implement the evolutionary training harness (§4) as an A4 experiment: population
   management, fitness scoring off `GameOutcome`, selection/mutation, per-generation reporting
   to [A5](a5-visualization.md). Selecting the neural-network policy from skirmish slot config
-  (weights cannot flow through `PlayerSetting` today) lands with this harness.
+  (weights cannot flow through `PlayerSetting` today) lands with this harness. The work is
+  decomposed as `WI-A4-11` through `WI-A4-16`.
 
 ---
 
@@ -280,20 +281,17 @@ factory selection; `WI-A4-04` added `NeuralNetworkAIDecisionPolicy` per
 > Agent context: file:line references for agents implementing this phase. Human readers: the
 > design intent above does not require reading this section.
 
-- `AIPlayer.OnDecisionTick()` is the current override point (`protected virtual`), dispatched
-  from `AIPlayer.Update()` on a `DefaultDecisionCadenceFrames`-frame cadence
-  (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`).
-- `SkirmishAIPlayer.OnDecisionTick()` overrides it with the reference state machine: economy
-  (`RunEconomyAndBaseBuildout`), production (`RunUnitProduction`), military
-  (`RunMilitaryBehavior`), reading `Owner.BankAccount`, `Owner.OwnedObjects`, `Owner.Enemies`,
-  `Game.AssetStore.AIData` (`src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`).
+- `AIPlayer.OnDecisionTick()` dispatches its injected `IAIDecisionPolicy` on a
+  `DefaultDecisionCadenceFrames` cadence (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`).
+- `RuleBasedAIDecisionPolicy` contains the reference economy, production, and military state
+  machine extracted from `SkirmishAIPlayer`. `SkirmishAIPlayer` remains the save-layout host.
 - Actuation: `AIPlayer.EnqueueOrder(s)` → `DispatchOrders(...)` →
   `NetworkMessageBuffer.AddLocalOrder` (networked) or `Game.InjectOrders` (local), both ultimately
   processed by `OrderProcessor.Process(...)` (`Logic/Orders/OrderProcessor.cs`). The actuation
   path every future policy must keep using.
-- Selection point: `Player.CreateNew(...)` chooses `SkirmishAIPlayer` vs. `AIPlayer` vs. `null`
-  based on `isHuman`/`isSkirmish`/`side` (`src/OpenSage.Game/Logic/Player.cs`). This is where a
-  policy-identifier config value would plug in (§2.1).
-- Fitness data source for future training: `GameOutcome` (victory-defeat.md, P3), not yet
-  landed at time of writing; the training harness (§4) depends on it existing and being
-  queryable headlessly.
+- Selection: `PlayerSetting.AIPolicy` flows through
+  `PlayerManager.BuildAIDecisionPolicies(...)` to `AIDecisionPolicyFactory`, then into
+  `Player.FromMapData(...)`. Neural selection still needs the weight payload added by
+  `WI-A4-12`.
+- Fitness data source: `GameOutcome` is queryable by headless runs. The training harness (§4)
+  combines it with existing T0 run metrics.

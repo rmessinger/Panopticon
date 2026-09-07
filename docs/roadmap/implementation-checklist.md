@@ -571,14 +571,23 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
       construction). Factory-only construction enforced by a source-scan test. The phase
       milestone's benchmarked comparison clause remains open with the B1-dependent
       harness item below.
+- [ ] AI policy evolution follow-on: carry genome payloads through player construction,
+      evaluate populations over headless match samples, score from `GameOutcome` plus existing T0
+      metrics, apply configured selection/variation, and emit per-generation reports.
+  - AC: a configured population runs across its match-seed matrix; reports identify every genome,
+    seed, fitness component, failure, and ancestry; pure variation operators are same-input
+    deterministic, while simulation samples are evaluated statistically rather than requiring
+    cross-run equality.
 - [ ] A4-3 Decentralized hierarchical AI seam
       ([deep dive](deep-dives/a4-decentralized-hierarchical-ai.md)): general/commander/soldier
       rank hierarchy of per-unit ANNs, composed behind the existing `IAIDecisionPolicy` seam via a
       `HierarchicalAIDecisionPolicy` adapter.
-  - AC: TBD, squad/commander model with death-triggered promotion exists (A4-3a); per-rank
+  - AC: squad/commander model with death-triggered promotion exists and persists (A4-3a); per-rank
     `ISoldierDecisionPolicy`/`ICommanderDecisionPolicy`/`IGeneralDecisionPolicy` interfaces exist
     with rule-based reference implementations (A4-3b to A4-3d); actuation stays exclusively through
-    the soldier rank's `OrderProcessor` calls, matching A2/P2's actuation constraint.
+    the single documented soldier/order path, matching A2/P2's actuation constraint; fixed-contract
+    per-rank neural policies run end to end (A4-3e); three populations advance through the
+    documented co-evolution schedule with rank-aware reports (A4-3f).
 - [ ] Stable seams for pathfinding, partitioning, fidelity policy, storage layout, model import (see
       [seams.md](seams.md)).
   - AC: TBD, each seam has an interface + ≥1 swappable implementation selectable at runtime; all are
@@ -588,15 +597,20 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     A5; demonstrated by swapping one seam impl and comparing results.
 
 ### A5: Scenario authoring & visualization ([deep dive](deep-dives/a5-visualization.md))
-- [ ] A5-1 Scenario authoring & setup (declarative + capture-from-run; built on the P0 harness).
-  - AC: a declarative scenario (on P0) is authored and captured-from-run, then replayed; it round-trips.
+- [ ] A5-1 Scenario authoring & setup (declarative + visual + capture-from-run; built on the P0 harness).
+  - AC: a declarative scenario round-trips and runs; capture-from-run round-trips its documented
+    scenario-initializable projection without claiming save-state equivalence; visual editing covers
+    initial population, parameters, and domain-appropriate topology; validation and bounded preview
+    reject invalid scenarios before a long run.
 - [ ] A5-2 Experiment matrix / parameter sweeps (tooling/visualizer layer).
   - AC: a scenario declares sweep axes that expand to one run per cell; results are keyed for
     comparison; the visualizer can diff two matrix runs. Note: the expansion primitive (cartesian
     product, per-cell execution, keyed JSON output) is provided by P0-5b; A5-2 adds tooling and
     visualization on top.
 - [ ] A5-3 Results replayer / visualizer (extends ReplaySketch).
-  - AC: the visualizer loads a run, scrubs the timeline, shows metrics/events, and exports headlessly.
+  - AC: the visualizer loads a run, plays/pauses/fast-forwards/scrubs the timeline, supports
+    event-to-frame navigation, shows domain state plus metrics/events/fidelity, and exports
+    headlessly.
 - [ ] A5-4 Divergence localization over the tiered recording.
   - AC: given two runs, the tool localizes the first subtree exceeding tolerance; tested on a
     known-divergent pair.
@@ -604,7 +618,8 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
       generation; streaming/LOD/culling in the replay viewport (reuse B5/B7); bounded-memory run
       loading; authoring/replay throughput tracked by B1. (Pairs with B4a-7.)
   - AC: authoring a large procedural scenario and replaying a long/large run stay within documented
-    time/memory budgets (streaming/LOD/bounded-memory loading); B1 tracks the throughput.
+    time/memory budgets using region-indexed state, streaming/LOD/culling, and bounded-memory
+    loading; B1 tracks the throughput.
 - [ ] A5-6 WorldBuilder baseline: audit functional state; ensure basic author → save → load → play
       round-trip works at normal map sizes; document gaps. (Early-start sub-phase, no A1/A4
       dependency; gates B4a.)

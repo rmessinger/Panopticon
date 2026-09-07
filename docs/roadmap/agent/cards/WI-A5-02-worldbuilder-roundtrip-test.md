@@ -4,10 +4,10 @@
 |---|---|
 | Card ID | `WI-A5-02` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring & visualization, sub-phase A5-6 |
-| Status | `Ready` |
+| Status | `Blocked` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `WI-A5-01` (the audit says which round-trip steps exist, so the test asserts reality rather than aspiration) |
+| Prerequisites | `WI-A5-01`, `WI-A5-27`, and `WI-A5-28` |
 | Diagrams | Not applicable: A5-6 is WorldBuilder tooling, not the headless-sim pipeline the A5 §8 diagrams cover. |
 
 ## Goal
@@ -74,8 +74,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not fix WorldBuilder bugs the test uncovers. Record them as follow-up cards and, if a step is
-  genuinely unimplemented, assert only what the audit said works.
+- Do not fix WorldBuilder bugs the test uncovers. Record new gaps as follow-up cards.
 - Do not test large or oversized maps. Normal sizes only; scaling is B4a.
 - Do not add a new test project. Extend `OpenSage.Game.Tests`.
 - Do not exercise the MAUI UI layer. The round-trip is a Core-level contract.

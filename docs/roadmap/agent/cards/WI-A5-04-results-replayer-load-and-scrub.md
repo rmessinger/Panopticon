@@ -7,14 +7,14 @@
 | Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-A1-07` (there must be a run output to load) |
+| Prerequisites | `WI-A5-08` and `WI-A5-09`; A1 run-output cards are already `Done` |
 | Diagrams | [A5 §8](../../deep-dives/a5-visualization.md#8-architecture-diagrams) (placeholder; must be replaced before this card is `Ready`) |
 
 ## Goal
 
-Add the first slice of the A5-3 results replayer: load a run output written by `WI-A1-07` into
-ReplaySketch, scrub its timeline, and chart its metric series and event log. Comparison and
-divergence localization are `WI-A5-05`.
+Add the first slice of the A5-3 results replayer: load the complete run bundle written by
+`WI-A5-09` into ReplaySketch, scrub its timeline, and chart its metric series and event log.
+Comparison and divergence localization are `WI-A5-05`.
 
 ## Context to read (and only this)
 
@@ -23,7 +23,7 @@ divergence localization are `WI-A5-05`.
   ReplaySketch layering rule that logic stays in `.Core` and stays headlessly testable.
 - `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: the MAUI-side rules, including the injectable
   seams for statics and the screenshot-mode validation requirement.
-- The run-output type added by `WI-A1-07`: the artifact being loaded.
+- The portable run bundle and indexed state reader added by `WI-A5-08` and `WI-A5-09`.
 
 ## Steps
 
@@ -68,7 +68,8 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not implement run comparison or divergence localization. That is `WI-A5-05`.
-- Do not implement streaming, LOD, or bounded-memory loading. That is A5-5.
+- Do not implement viewport streaming, LOD, or culling. `WI-A5-08` already owns bounded-memory
+  state reading; `WI-A5-24` owns viewport streaming and culling.
 - Do not add the fidelity overlay or headless export in this card.
 - Do not put logic in the MAUI layer; `.Core` owns it and the tests prove it.
 
@@ -79,5 +80,5 @@ dotnet format src --verify-no-changes
   headless export and the fidelity overlay remain.
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
-  - Headless export of the results view.
-  - Domain-parameterized visualization, once the A4 domain seam exists.
+  - `WI-A5-18`: domain-state rendering.
+  - `WI-A5-20`: headless export.

@@ -13,7 +13,7 @@
 | Type | `investigation` \| `pattern-replication` \| `mechanical-refactor` \| `test-addition` |
 | Effort | `S` (suitable for a low-effort model). If it isn't S, it doesn't belong here |
 | Prerequisites | other card ids that must be `Done` first, or `none` |
-| Diagrams | link to the `Architecture Diagrams` section of this phase's deep-dive: must be populated (not a placeholder stub) before this card is marked `Ready` |
+| Diagrams | link to the populated `Architecture Diagrams` section before a source-edit card is marked `Ready`; a read-only audit/design card may state that its deliverable creates or grounds the diagrams |
 
 ## Goal
 
