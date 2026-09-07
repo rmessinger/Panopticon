@@ -7,12 +7,12 @@ using OpenSage.Data.Map;
 using OpenSage.Logic;
 using OpenSage.Logic.Orders;
 using OpenSage.Mathematics;
+using OpenSage.Simulation;
 using OpenSage.Tools.ReplaySketch.Assertions;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 using Xunit;
 using Player = OpenSage.Logic.Player;
-using OpenSage.Simulation;
 
 namespace OpenSage.Tests.Tools.ReplaySketch;
 

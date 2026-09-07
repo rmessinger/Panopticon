@@ -6,8 +6,8 @@ using System.Numerics;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using OpenSage.Recording;
-using Xunit;
 using OpenSage.Simulation;
+using Xunit;
 
 namespace OpenSage.Tests.Recording;
 

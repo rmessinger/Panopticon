@@ -555,9 +555,18 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     plus the P7/P6b suites, all green.
 
 ### A4: Experiment framework seams & harness
-- [ ] A4-1 Simulation Domain Model seam (domain-agnostic entities/topology/interactions/metrics).
-  - AC: TBD, a domain-agnostic seam interface exists; the RTS domain implements it and at least the
-    transport/graph domain validates it against the same host.
+- [x] A4-1 Simulation Domain Model seam (domain-agnostic entities/topology/interactions/metrics).
+  - Done: contracts in `src/OpenSage.Game/Simulation/` (`ISimulationDomainModel`,
+      `DomainEntitySummary`, metrics/topology/interaction/fidelity types);
+      [design](deep-dives/a4-simulation-domain-model.md) and
+      [audit](implementation/track-a-a4-simulation-domain-model.md). `SimulationHost` takes a
+      required domain model and drives its lifecycle; the recording tiers (world summary, T1
+      signature bucketing, T0 metrics) are routed through the contracts with byte-identical
+      RTS outputs (equivalence tests). `RtsSimulationDomainModel` is the reference adapter;
+      `TransportGraphDomainModel` (6 nodes/7 edges, vehicles on the shared GameObject runtime,
+      tail-owner authority, edge-throughput/node-occupancy metrics) validates the seam against
+      a graph topology through the same host (`SimulationDomainContractTests`; host constructs
+      no concrete adapter, source-checked).
 - [x] A4-2 AI decision policy seam ([deep dive](deep-dives/a4-pluggable-ai.md)): extract
       `IAIDecisionPolicy` from `AIPlayer.OnDecisionTick()`'s subclass override, with
       `SkirmishAIPlayer`'s rule-based state machine as the reference implementation.

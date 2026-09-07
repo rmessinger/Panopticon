@@ -4,9 +4,9 @@ using System.IO;
 using OpenSage.Data;
 using OpenSage.Graphics;
 using OpenSage.IO;
+using OpenSage.Simulation;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
-using OpenSage.Simulation;
 
 namespace OpenSage.Tools.TestHarness;
 

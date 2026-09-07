@@ -85,7 +85,7 @@ public sealed class SimulationHost
     /// <summary>
     /// The injected domain model (A4-1): the projection surface for recording, topology keys,
     /// metrics, and interaction authority. The host never constructs a concrete adapter;
-    /// callers pass one (RTS runs pass <c>RtsSimulationDomainModel</c>).
+    /// callers pass one (RTS callers pass the reference adapter from OpenSage.Simulation).
     /// </summary>
     public ISimulationDomainModel DomainModel { get; }
 

@@ -6,9 +6,9 @@ using OpenSage.Data;
 using OpenSage.Graphics;
 using OpenSage.IO;
 using OpenSage.Logic;
-using OpenSage.Simulation;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
+using OpenSage.Simulation;
 using OpenSage.Tools.ReplaySketch.Assertions;
 using OpenSage.Tools.ReplaySketch.Model;
 

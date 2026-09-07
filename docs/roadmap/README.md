@@ -270,7 +270,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Track | Progress | Items |
 |---|---|---|
-| Track A - Foundations | `█████░░░░░` | 9 / 19 |
+| Track A - Foundations | `█████░░░░░` | 10 / 19 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 12 |
 | Track C - External Assets | `░░░░░░░░░░` | 0 / 6 |
 
