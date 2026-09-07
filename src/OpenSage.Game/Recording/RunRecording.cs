@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenSage.Simulation;
 
 namespace OpenSage.Recording;
 
@@ -14,7 +15,6 @@ namespace OpenSage.Recording;
 public sealed class WorldStateSampler : IDisposable
 {
     private readonly SimulationHost _host;
-    private readonly IGame _game;
     private WorldStateSummary? _previous;
 
     /// <summary>Raised after each stepped frame with that frame's summary and delta.</summary>
@@ -23,11 +23,10 @@ public sealed class WorldStateSampler : IDisposable
     public WorldStateSampler(SimulationHost host, IGame game)
     {
         _host = host;
-        _game = game;
         _host.TickComplete += OnTickComplete;
     }
 
-    public WorldStateSummary CaptureCurrent(uint frame) => WorldStateSummary.Capture(_game, frame);
+    public WorldStateSummary CaptureCurrent(uint frame) => WorldStateSummary.Capture(_host.DomainModel, frame);
 
     private void OnTickComplete(object? sender, SimulationHostTickEventArgs e)
     {
@@ -38,7 +37,7 @@ public sealed class WorldStateSampler : IDisposable
             return;
         }
 
-        var summary = WorldStateSummary.Capture(_game, e.LogicFrame.Value);
+        var summary = WorldStateSummary.Capture(_host.DomainModel, e.LogicFrame.Value);
         var previous = _previous;
         _previous = summary;
 
@@ -131,6 +130,7 @@ public sealed class SnapshotDeltaRecorder : IDisposable
 public sealed class TieredSignatureRecorder : IDisposable
 {
     private readonly WorldStateSampler _sampler;
+    private readonly ISimulationDomainModel? _domain;
     private Func<uint, SignatureTreeFrame, IReadOnlyList<string>?>? _trigger;
     private TriggeredDetailCapture? _detailCapture;
 
@@ -144,13 +144,19 @@ public sealed class TieredSignatureRecorder : IDisposable
     /// <summary>The most recently built per-frame tree (sampled or trigger-built).</summary>
     public SignatureTreeFrame? LastBuilt => _lastBuilt;
 
+    /// <summary>
+    /// Bucket keys come from <paramref name="domain"/>'s topology contract when given,
+    /// otherwise the legacy origin-anchored spatial-cell strategy is used.
+    /// </summary>
     public TieredSignatureRecorder(
         WorldStateSampler sampler,
         SignatureTolerances? tolerances = null,
         uint sampleInterval = RunOutputRecorder.DefaultSampleInterval,
-        float cellSize = SignatureTreeBuilder.DefaultCellSize)
+        float cellSize = SignatureTreeBuilder.DefaultCellSize,
+        ISimulationDomainModel? domain = null)
     {
         _sampler = sampler;
+        _domain = domain;
         Tolerances = tolerances ?? SignatureTolerances.Default;
         SampleInterval = sampleInterval == 0 ? RunOutputRecorder.DefaultSampleInterval : sampleInterval;
         CellSize = cellSize;
@@ -174,7 +180,7 @@ public sealed class TieredSignatureRecorder : IDisposable
 
         if (sampleDue)
         {
-            var tree = SignatureTreeBuilder.Build(summary.Frame, summary, Tolerances, CellSize);
+            var tree = BuildTree(summary.Frame, summary);
             _lastBuilt = tree;
             SampledFrames.Add(tree);
         }
@@ -184,7 +190,7 @@ public sealed class TieredSignatureRecorder : IDisposable
             // Reuse the sampled tree when this frame was just sampled.
             var tree = sampleDue
                 ? _lastBuilt!
-                : SignatureTreeBuilder.Build(summary.Frame, summary, Tolerances, CellSize);
+                : BuildTree(summary.Frame, summary);
             _lastBuilt = tree;
             var diverged = _trigger(summary.Frame, tree);
             if (diverged is { Count: > 0 } && _detailCapture is not null)
@@ -192,6 +198,13 @@ public sealed class TieredSignatureRecorder : IDisposable
                 _detailCapture.Trip(summary.Frame, tree, diverged);
             }
         }
+    }
+
+    private SignatureTreeFrame BuildTree(uint frame, WorldStateSummary summary)
+    {
+        return _domain is not null
+            ? SignatureTreeBuilder.Build(frame, summary, _domain, Tolerances)
+            : SignatureTreeBuilder.Build(frame, summary, Tolerances, CellSize);
     }
 
     public void Dispose() => _sampler.FrameSampled -= OnFrameSampled;
@@ -378,7 +391,7 @@ public sealed class RunRecording : IDisposable
         // T2 subscribes before T1 so the ring buffer has ingested the current frame's delta
         // before the trigger evaluates and trips.
         var t2 = new TriggeredDetailCapture(sampler);
-        var t1 = new TieredSignatureRecorder(sampler, tolerances, sampleInterval);
+        var t1 = new TieredSignatureRecorder(sampler, tolerances, sampleInterval, domain: host.DomainModel);
         var snapshots = new SnapshotDeltaRecorder(sampler, snapshotInterval, snapshotArtifactPath, snapshotArtifactPath is null ? null : game);
         return new RunRecording(sampler, t0, t1, t2, snapshots);
     }

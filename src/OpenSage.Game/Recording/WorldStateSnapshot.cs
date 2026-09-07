@@ -7,6 +7,7 @@ using System.Numerics;
 using OpenSage.IO;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
+using OpenSage.Simulation;
 
 namespace OpenSage.Recording;
 
@@ -24,19 +25,6 @@ public sealed class WorldObjectState : IPersistableObject
     public Vector3 Position { get; set; }
     public float Health { get; set; }
     public float MaxHealth { get; set; }
-
-    internal static WorldObjectState Capture(PlayerManager playerManager, GameObject gameObject)
-    {
-        return new WorldObjectState
-        {
-            ObjectId = gameObject.Id.Index,
-            DefinitionName = gameObject.Definition.Name,
-            OwnerIndex = playerManager.GetPlayerIndex(gameObject.Owner),
-            Position = gameObject.Transform.Translation,
-            Health = gameObject.BodyModule?.Health ?? 0f,
-            MaxHealth = gameObject.BodyModule?.MaxHealth ?? 0f,
-        };
-    }
 
     public void Persist(StatePersister persister)
     {
@@ -81,16 +69,24 @@ public sealed class WorldStateSummary : IPersistableObject
     public List<WorldObjectState> Objects { get; } = new();
     public List<uint> PlayerMoney { get; } = new();
 
-    internal static WorldStateSummary Capture(IGame game, uint frame)
+    internal static WorldStateSummary Capture(ISimulationDomainModel domain, uint frame)
     {
         var summary = new WorldStateSummary { Frame = frame };
-        foreach (var gameObject in game.GameLogic.Objects)
+        foreach (var entity in domain.CaptureEntities())
         {
-            summary.Objects.Add(WorldObjectState.Capture(game.PlayerManager, gameObject));
+            summary.Objects.Add(new WorldObjectState
+            {
+                ObjectId = entity.EntityId,
+                DefinitionName = entity.KindName,
+                OwnerIndex = entity.OwnerIndex,
+                Position = entity.Position,
+                Health = entity.ScalarA,
+                MaxHealth = entity.ScalarB,
+            });
         }
-        foreach (var player in game.PlayerManager.Players)
+        foreach (var money in domain.CapturePlayerMoneyVector())
         {
-            summary.PlayerMoney.Add(player.BankAccount.Money);
+            summary.PlayerMoney.Add(money);
         }
         return summary;
     }

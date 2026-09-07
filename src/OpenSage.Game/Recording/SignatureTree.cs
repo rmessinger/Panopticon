@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using OpenSage.Simulation;
 
 namespace OpenSage.Recording;
 
@@ -51,16 +53,27 @@ public sealed class SignatureTreeFrame
 }
 
 /// <summary>
-/// Builds T1 signature trees from world-state summaries using spatial-cell bucketing. The cell
-/// grid is anchored at the world origin, so bucket keys are stable across runs regardless of
-/// iteration order or partitioning; entity ids (object ids) are the stable entity keys. When
-/// the A4 domain-model seam lands, the bucketing strategy becomes a domain adapter; until then
-/// this is the RTS reference implementation.
+/// Builds T1 signature trees from world-state summaries. Bucket keys come from the A4-1
+/// domain model's topology contract; the spatial-cell strategy anchored at the world origin
+/// (key "cell:x,y") is the RTS reference implementation and stays available as the legacy
+/// path. Member hashes combine commutatively, so bucket and root hashes are independent of
+/// member order.
 /// </summary>
 public static class SignatureTreeBuilder
 {
     public const float DefaultCellSize = 100.0f;
 
+    /// <summary>Domain-keyed build: bucket keys come from <paramref name="domain.TopologyKey"/>.</summary>
+    public static SignatureTreeFrame Build(
+        uint frame,
+        WorldStateSummary summary,
+        ISimulationDomainModel domain,
+        SignatureTolerances? tolerances = null)
+    {
+        return Build(frame, ToEntities(summary), entity => domain.TopologyKey(entity), tolerances);
+    }
+
+    /// <summary>Legacy RTS build: origin-anchored spatial cells of edge <paramref name="cellSize"/>.</summary>
     public static SignatureTreeFrame Build(
         uint frame,
         WorldStateSummary summary,
@@ -72,21 +85,34 @@ public static class SignatureTreeBuilder
             throw new ArgumentOutOfRangeException(nameof(cellSize));
         }
 
+        return Build(
+            frame,
+            ToEntities(summary),
+            entity => RtsCellKey(entity.Position, cellSize),
+            tolerances);
+    }
+
+    /// <summary>Generic core: stable bucket keys supplied by <paramref name="topologyKeyOf"/>.</summary>
+    public static SignatureTreeFrame Build(
+        uint frame,
+        IReadOnlyList<DomainEntitySummary> entities,
+        Func<DomainEntitySummary, string> topologyKeyOf,
+        SignatureTolerances? tolerances = null)
+    {
         tolerances ??= SignatureTolerances.Default;
 
         // Bucket member hashes combine commutatively (sum of mixed hashes), so bucket and root
         // hashes are independent of member order.
-        var buckets = new Dictionary<(int CellX, int CellY), (ulong Sum, int Count)>();
+        var buckets = new Dictionary<string, (ulong Sum, int Count)>();
 
-        foreach (var obj in summary.Objects)
+        foreach (var entity in entities)
         {
-            var entityHash = EntitySignature(obj, tolerances);
-            var cellX = (int)MathF.Floor(obj.Position.X / cellSize);
-            var cellY = (int)MathF.Floor(obj.Position.Y / cellSize);
-            var (sum, count) = buckets.TryGetValue((cellX, cellY), out var existing)
+            var entityHash = EntitySignature(entity, tolerances);
+            var key = topologyKeyOf(entity);
+            var (sum, count) = buckets.TryGetValue(key, out var existing)
                 ? existing
                 : (0UL, 0);
-            buckets[(cellX, cellY)] = (sum + Mix(entityHash), count + 1);
+            buckets[key] = (sum + Mix(entityHash), count + 1);
         }
 
         var tree = new SignatureTreeFrame { Frame = frame };
@@ -94,9 +120,10 @@ public static class SignatureTreeBuilder
         var rootCount = 0;
         // Deterministic node order: sort bucket keys, not dictionary order.
         var root = new SignatureNode { Key = "world", Level = 0 };
-        foreach (var ((cellX, cellY), (sum, count)) in buckets.OrderBy(kv => kv.Key.CellX).ThenBy(kv => kv.Key.CellY))
+        foreach (var ((sum, count), key) in buckets
+            .Select(kv => (kv.Value, kv.Key))
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal))
         {
-            var key = $"cell:{cellX},{cellY}";
             var bucketHash = Mix(sum + (ulong)count * 0x9E3779B97F4A7C15UL + HashString(key));
             tree.Nodes.Add(new SignatureNode
             {
@@ -114,19 +141,40 @@ public static class SignatureTreeBuilder
         return tree;
     }
 
-    /// <summary>
-    /// Quantized entity signature: identity plus position/health quantized to the configured
-    /// tolerances. An extra or reordered entity draw changes its state, not the signature scheme.
-    /// </summary>
-    private static ulong EntitySignature(WorldObjectState obj, SignatureTolerances t)
+    internal static string RtsCellKey(Vector3 position, float cellSize) =>
+        $"cell:{(int)MathF.Floor(position.X / cellSize)},{(int)MathF.Floor(position.Y / cellSize)}";
+
+    private static IReadOnlyList<DomainEntitySummary> ToEntities(WorldStateSummary summary)
     {
-        var hash = HashString(obj.DefinitionName);
-        hash = Combine(hash, (ulong)(obj.OwnerIndex + 2));
-        hash = Combine(hash, Quantize(obj.Position.X, t.PositionEpsilon, t.Strict));
-        hash = Combine(hash, Quantize(obj.Position.Y, t.PositionEpsilon, t.Strict));
-        hash = Combine(hash, Quantize(obj.Position.Z, t.PositionEpsilon, t.Strict));
-        hash = Combine(hash, Quantize(obj.Health, t.HealthEpsilon, t.Strict));
-        hash = Combine(hash, Quantize(obj.MaxHealth, t.HealthEpsilon, t.Strict));
+        var entities = new List<DomainEntitySummary>(summary.Objects.Count);
+        foreach (var obj in summary.Objects)
+        {
+            entities.Add(new DomainEntitySummary(
+                obj.ObjectId,
+                obj.DefinitionName,
+                obj.OwnerIndex,
+                obj.Position,
+                obj.Health,
+                obj.MaxHealth));
+        }
+
+        return entities;
+    }
+
+    /// <summary>
+    /// Quantized entity signature: identity plus position/scalars quantized to the configured
+    /// tolerances. An extra or reordered entity draw changes its state, not the signature scheme.
+    /// Field order and quantization match the pre-domain implementation exactly.
+    /// </summary>
+    private static ulong EntitySignature(DomainEntitySummary entity, SignatureTolerances t)
+    {
+        var hash = HashString(entity.KindName);
+        hash = Combine(hash, (ulong)(entity.OwnerIndex + 2));
+        hash = Combine(hash, Quantize(entity.Position.X, t.PositionEpsilon, t.Strict));
+        hash = Combine(hash, Quantize(entity.Position.Y, t.PositionEpsilon, t.Strict));
+        hash = Combine(hash, Quantize(entity.Position.Z, t.PositionEpsilon, t.Strict));
+        hash = Combine(hash, Quantize(entity.ScalarA, t.HealthEpsilon, t.Strict));
+        hash = Combine(hash, Quantize(entity.ScalarB, t.HealthEpsilon, t.Strict));
         return hash;
     }
 
