@@ -232,7 +232,6 @@ public class Player : IPersistableObject
         AcademyStats = new AcademyStats(_game);
     }
 
-
     internal void SelectUnits(ICollection<GameObject> units, bool additive = false)
     {
         if (!additive)
