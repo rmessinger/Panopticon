@@ -377,3 +377,11 @@
   wanted. Gated behind the `Enhanced` preset with `Faithful` pixel-identical to the pre-rework
   capture, consistent with the rendering-clarity scope Decision. Affects
   [Track G](track-g-rendering-clarity.md) (G9).
+- Neural-network AI policy v1 action and feature scope. Decision: v1 ships a 9-feature
+  input, 9-8-5 tanh/softmax network over a five-action catalog (none, supply build, next
+  structure, combat unit, attack) with descoped gather reassignment and no policy RNG, per
+  [neural-network-ai-policy.md](deep-dives/neural-network-ai-policy.md). Expanding the
+  catalog or feature vector (enemy economy estimates, spatial targeting, special powers) is
+  deferred until the evolutionary training harness produces fitness results that justify
+  the added genome size; until then the v1 shapes are the stable genome contract.
+  Affects [Track A](track-a-foundations.md) (A4).

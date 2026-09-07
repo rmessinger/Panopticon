@@ -558,11 +558,19 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 - [ ] A4-1 Simulation Domain Model seam (domain-agnostic entities/topology/interactions/metrics).
   - AC: TBD, a domain-agnostic seam interface exists; the RTS domain implements it and at least the
     transport/graph domain validates it against the same host.
-- [ ] A4-2 AI decision policy seam ([deep dive](deep-dives/a4-pluggable-ai.md)): extract
+- [x] A4-2 AI decision policy seam ([deep dive](deep-dives/a4-pluggable-ai.md)): extract
       `IAIDecisionPolicy` from `AIPlayer.OnDecisionTick()`'s subclass override, with
       `SkirmishAIPlayer`'s rule-based state machine as the reference implementation.
-  - AC: TBD, `IAIDecisionPolicy` exists and is selectable at runtime; `SkirmishAIPlayer` runs
-    behind it with no behavior change; a first neural-network policy is designed per the deep dive.
+  - Done: `IAIDecisionPolicy`/`AIDecisionContext` (`Logic/AI/`), reference
+      `RuleBasedAIDecisionPolicy` extracted from `SkirmishAIPlayer` with no behavior change
+      (P2 tests pass unmodified); `AIDecisionPolicyType` + `AIDecisionPolicyFactory`
+      selection (default `RuleBased`, threaded via `PlayerSetting.AIPolicy`); first
+      neural-network policy designed
+      ([neural-network-ai-policy.md](deep-dives/neural-network-ai-policy.md)) and implemented
+      inference-only (`NeuralNetworkAIDecisionPolicy`, 125-float genome, weights supplied at
+      construction). Factory-only construction enforced by a source-scan test. The phase
+      milestone's benchmarked comparison clause remains open with the B1-dependent
+      harness item below.
 - [ ] A4-3 Decentralized hierarchical AI seam
       ([deep dive](deep-dives/a4-decentralized-hierarchical-ai.md)): general/commander/soldier
       rank hierarchy of per-unit ANNs, composed behind the existing `IAIDecisionPolicy` seam via a

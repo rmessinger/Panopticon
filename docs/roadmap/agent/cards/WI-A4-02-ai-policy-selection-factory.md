@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-02` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): Experiment framework seams & harness, AI decision policy seam |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-01` (Done): `IAIDecisionPolicy`/`RuleBasedAIDecisionPolicy` must exist first |

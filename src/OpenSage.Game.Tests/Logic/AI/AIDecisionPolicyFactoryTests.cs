@@ -1,0 +1,122 @@
+using System.IO;
+using System.Linq;
+using OpenSage.Logic;
+using OpenSage.Logic.AI;
+using OpenSage.Mathematics;
+using Xunit;
+
+namespace OpenSage.Tests.Logic.AI;
+
+public sealed class AIDecisionPolicyFactoryTests : MockedGameTest
+{
+    [Fact]
+    public void Create_RuleBased_ReturnsReferencePolicy()
+    {
+        Assert.IsType<RuleBasedAIDecisionPolicy>(AIDecisionPolicyFactory.Create(AIDecisionPolicyType.RuleBased));
+    }
+
+    [Fact]
+    public void Create_NeuralNetwork_ReturnsNetworkPolicy()
+    {
+        var weights = new float[NeuralNetworkAIDecisionPolicy.WeightCount];
+
+        Assert.IsType<NeuralNetworkAIDecisionPolicy>(
+            AIDecisionPolicyFactory.Create(AIDecisionPolicyType.NeuralNetwork, weights));
+    }
+
+    [Fact]
+    public void Create_NeuralNetworkWithoutWeights_Throws()
+    {
+        Assert.Throws<System.ArgumentException>(
+            () => AIDecisionPolicyFactory.Create(AIDecisionPolicyType.NeuralNetwork));
+    }
+
+    [Fact]
+    public void DefaultSlotConfig_YieldsRuleBasedPolicyForSkirmishAI()
+    {
+        var manager = new PlayerManager(Generals);
+        RegisterPlayerTemplates();
+        manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, CreatePlayerSettings(humanIsLocal: true));
+
+        var aiPlayer = Assert.IsType<SkirmishAIPlayer>(manager.Players[3].AIPlayer);
+        Assert.IsType<RuleBasedAIDecisionPolicy>(aiPlayer.DecisionPolicy);
+    }
+
+    [Fact]
+    public void Factory_IsOnlyNonTestConstructorOfPolicyImplementations()
+    {
+        var gameSourceRoot = FindGameSourceRoot();
+        var offenders =
+            Directory.GetFiles(gameSourceRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")
+                && !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .Where(path => !Path.GetFileName(path).Equals("AIDecisionPolicyFactory.cs"))
+            .Select(path => new { Path = path, Content = File.ReadAllText(path) })
+            .Where(file => file.Content.Contains("new RuleBasedAIDecisionPolicy(")
+                || file.Content.Contains("new NeuralNetworkAIDecisionPolicy("))
+            .Select(file => Path.GetFileName(file.Path))
+            .ToList();
+
+        Assert.True(offenders.Count == 0,
+            $"Policy implementations must only be constructed by AIDecisionPolicyFactory; found constructions in: {string.Join(", ", offenders)}");
+    }
+
+    private static string FindGameSourceRoot()
+    {
+        var dir = new DirectoryInfo(System.AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            var candidate = Path.Combine(dir.FullName, "src", "OpenSage.Game");
+            if (Directory.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            dir = dir.Parent;
+        }
+
+        return "src/OpenSage.Game";
+    }
+
+    private static OpenSage.Data.Map.Player[] CreateMapPlayers() =>
+    [
+        OpenSage.Data.Map.Player.CreateNeutralPlayer(),
+        OpenSage.Data.Map.Player.CreateCivilianPlayer(),
+        new OpenSage.Data.Map.Player
+        {
+            Name = "human",
+            Faction = "FactionAmerica",
+            DisplayName = "Human",
+            IsHuman = true,
+        },
+        new OpenSage.Data.Map.Player
+        {
+            Name = "ai",
+            Faction = "FactionGLA",
+            DisplayName = "AI",
+            IsHuman = false,
+        },
+    ];
+
+    private static PlayerSetting[] CreatePlayerSettings(bool humanIsLocal) =>
+    [
+        new PlayerSetting(1, "FactionAmerica", new ColorRgb(255, 255, 255), 1, PlayerOwner.Player, "human", humanIsLocal),
+        new PlayerSetting(2, "FactionGLA", new ColorRgb(255, 128, 64), 2, PlayerOwner.EasyAi, "ai"),
+    ];
+
+    private void RegisterPlayerTemplates()
+    {
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionAmerica"));
+        Generals.AssetStore.PlayerTemplates.Add(CreatePlayerTemplate("FactionGLA"));
+    }
+
+    private static PlayerTemplate CreatePlayerTemplate(string name)
+    {
+        var template = new PlayerTemplate();
+        var setNameAndInstanceId = typeof(PlayerTemplate).GetMethod(
+            "SetNameAndInstanceId",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        setNameAndInstanceId!.Invoke(template, new object[] { "PlayerTemplate", name });
+        return template;
+    }
+}

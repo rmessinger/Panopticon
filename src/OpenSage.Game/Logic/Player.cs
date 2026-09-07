@@ -754,7 +754,12 @@ public class Player : IPersistableObject
         reader.PersistBoolean(ref _unknownBool);
     }
 
-    public static Player FromMapData(uint index, Data.Map.Player mapPlayer, IGame game, bool isSkirmish)
+    public static Player FromMapData(
+        uint index,
+        Data.Map.Player mapPlayer,
+        IGame game,
+        bool isSkirmish,
+        AI.AIDecisionPolicyType aiDecisionPolicy = AI.AIDecisionPolicyType.RuleBased)
     {
         var side = mapPlayer.Faction ?? throw new InvalidStateException($"Player {mapPlayer.Name} has no faction.");
 
@@ -811,7 +816,7 @@ public class Player : IPersistableObject
         result.AIPlayer = isHuman || template == null || side == "FactionObserver"
             ? null
             : isSkirmish && side != "FactionCivilian"
-                ? new SkirmishAIPlayer(result)
+                ? new SkirmishAIPlayer(result, AI.AIDecisionPolicyFactory.Create(aiDecisionPolicy))
                 : new AIPlayer(result);
 
         if (template != null)

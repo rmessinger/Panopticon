@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
@@ -11,6 +13,7 @@ public class AIPlayer : IPersistableObject
     internal const uint DefaultDecisionCadenceFrames = 60;
 
     private readonly Player _owner;
+    private readonly IAIDecisionPolicy? _decisionPolicy;
 
     private readonly List<AIPlayerUnknownThing> _unknownThings = new();
     private readonly List<AIPlayerUnknownThing> _unknownThings2 = new();
@@ -28,14 +31,20 @@ public class AIPlayer : IPersistableObject
     private bool _unknownBool3;
     private float _unknownFloat;
 
-    internal AIPlayer(Player owner)
+    internal AIPlayer(Player owner, IAIDecisionPolicy? decisionPolicy = null)
     {
         _owner = owner;
+        _decisionPolicy = decisionPolicy;
     }
 
     protected Player Owner => _owner;
 
     protected int OwnerPlayerIndex => (int)_owner.Id;
+
+    internal IAIDecisionPolicy? DecisionPolicy => _decisionPolicy;
+
+    /// <summary>1-based count of decision ticks elapsed; not persisted.</summary>
+    internal int DecisionTickCount { get; private set; }
 
     internal void Update()
     {
@@ -54,6 +63,13 @@ public class AIPlayer : IPersistableObject
 
     protected virtual void OnDecisionTick()
     {
+        DecisionTickCount++;
+
+        if (_decisionPolicy != null)
+        {
+            var context = new AIDecisionContext(_owner, OwnerPlayerIndex, DecisionTickCount);
+            EnqueueOrders(_decisionPolicy.DecideNextOrders(context));
+        }
     }
 
     protected void EnqueueOrder(Order order)
@@ -189,7 +205,7 @@ public class AIPlayer : IPersistableObject
 
     private sealed class AIPlayerUnknownOtherThing : IPersistableObject
     {
-        private string _objectName;
+        private string _objectName = "";
         private ObjectId _objectId;
         private uint _unknownInt1;
         private uint _unknownInt2;
