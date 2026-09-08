@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using OpenSage.Logic;
@@ -29,6 +30,85 @@ public sealed class AIDecisionPolicyFactoryTests : MockedGameTest
     {
         Assert.Throws<System.ArgumentException>(
             () => AIDecisionPolicyFactory.Create(AIDecisionPolicyType.NeuralNetwork));
+    }
+
+    [Fact]
+    public void Create_NullPayload_ReturnsReferencePolicy()
+    {
+        Assert.IsType<RuleBasedAIDecisionPolicy>(AIDecisionPolicyFactory.Create(null));
+    }
+
+    [Fact]
+    public void Create_PayloadWithNeuralWeights_ReturnsNetworkPolicy()
+    {
+        var payload = new AIDecisionPolicyPayload
+        {
+            Type = AIDecisionPolicyType.NeuralNetwork,
+            NeuralNetworkWeights = new float[NeuralNetworkAIDecisionPolicy.WeightCount],
+        };
+
+        Assert.IsType<NeuralNetworkAIDecisionPolicy>(AIDecisionPolicyFactory.Create(payload));
+    }
+
+    [Fact]
+    public void Create_PayloadNeuralWithoutWeights_ThrowsExplicitly()
+    {
+        var payload = new AIDecisionPolicyPayload { Type = AIDecisionPolicyType.NeuralNetwork };
+
+        Assert.Throws<ArgumentException>(() => AIDecisionPolicyFactory.Create(payload));
+    }
+
+    [Fact]
+    public void Create_PayloadNeuralWithWrongWeightCount_ThrowsExplicitly()
+    {
+        var payload = new AIDecisionPolicyPayload
+        {
+            Type = AIDecisionPolicyType.NeuralNetwork,
+            NeuralNetworkWeights = new float[124],
+        };
+
+        Assert.Throws<ArgumentException>(() => AIDecisionPolicyFactory.Create(payload));
+    }
+
+    [Fact]
+    public void NeuralWeights_AreClonedAtConstruction_NotAliased()
+    {
+        var weights = new float[NeuralNetworkAIDecisionPolicy.WeightCount];
+        var first = new NeuralNetworkAIDecisionPolicy(weights);
+
+        // Mutate the first output bias: logits[0] is exactly that bias, so an aliased
+        // weights array would change the already-constructed policy's forward pass.
+        weights[120] = 999f;
+        var second = new NeuralNetworkAIDecisionPolicy(weights);
+
+        Span<float> features = stackalloc float[NeuralNetworkAIDecisionPolicy.InputSize];
+        Span<float> hidden = stackalloc float[NeuralNetworkAIDecisionPolicy.HiddenSize];
+        Span<float> firstLogits = stackalloc float[NeuralNetworkAIDecisionPolicy.OutputSize];
+        Span<float> secondLogits = stackalloc float[NeuralNetworkAIDecisionPolicy.OutputSize];
+        features.Clear();
+        features[0] = 1f;
+
+        first.ForwardPass(features, hidden, firstLogits);
+        second.ForwardPass(features, hidden, secondLogits);
+
+        Assert.NotEqual(firstLogits[0], secondLogits[0]);
+    }
+
+    [Fact]
+    public void NeuralPayload_ReachesSkirmishAIPlayerThroughPlayerManager()
+    {
+        var manager = new PlayerManager(Generals);
+        RegisterPlayerTemplates();
+        var settings = CreatePlayerSettings(humanIsLocal: true);
+        settings[1].AIPolicy = new AIDecisionPolicyPayload
+        {
+            Type = AIDecisionPolicyType.NeuralNetwork,
+            NeuralNetworkWeights = new float[NeuralNetworkAIDecisionPolicy.WeightCount],
+        };
+        manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, settings);
+
+        var aiPlayer = Assert.IsType<SkirmishAIPlayer>(manager.Players[3].AIPlayer);
+        Assert.IsType<NeuralNetworkAIDecisionPolicy>(aiPlayer.DecisionPolicy);
     }
 
     [Fact]

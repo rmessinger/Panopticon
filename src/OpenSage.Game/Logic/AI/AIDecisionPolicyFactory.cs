@@ -5,22 +5,33 @@ using System;
 namespace OpenSage.Logic.AI;
 
 /// <summary>
-/// The only place that maps an <see cref="AIDecisionPolicyType"/> identifier to an
-/// <see cref="IAIDecisionPolicy"/> implementation. Callers hand over the identifier; nothing
+/// The only place that maps policy configuration to an <see cref="IAIDecisionPolicy"/>
+/// implementation. Callers hand over an <see cref="AIDecisionPolicyPayload"/>; nothing
 /// else branches on policy type.
 /// </summary>
 public static class AIDecisionPolicyFactory
 {
-    public static IAIDecisionPolicy Create(AIDecisionPolicyType policyType, float[]? neuralNetworkWeights = null)
+    public static IAIDecisionPolicy Create(AIDecisionPolicyPayload? payload)
     {
-        return policyType switch
+        payload ??= AIDecisionPolicyPayload.Default;
+
+        return payload.Type switch
         {
             AIDecisionPolicyType.RuleBased => new RuleBasedAIDecisionPolicy(),
             AIDecisionPolicyType.NeuralNetwork => new NeuralNetworkAIDecisionPolicy(
-                neuralNetworkWeights ?? throw new ArgumentException(
+                payload.NeuralNetworkWeights ?? throw new ArgumentException(
                     $"The {nameof(AIDecisionPolicyType.NeuralNetwork)} AI decision policy requires a weight vector.",
-                    nameof(neuralNetworkWeights))),
-            _ => throw new ArgumentOutOfRangeException(nameof(policyType), policyType, "Unknown AI decision policy type."),
+                    nameof(payload))),
+            _ => throw new ArgumentOutOfRangeException(nameof(payload), payload.Type, "Unknown AI decision policy type."),
         };
+    }
+
+    public static IAIDecisionPolicy Create(AIDecisionPolicyType policyType, float[]? neuralNetworkWeights = null)
+    {
+        return Create(new AIDecisionPolicyPayload
+        {
+            Type = policyType,
+            NeuralNetworkWeights = neuralNetworkWeights,
+        });
     }
 }
