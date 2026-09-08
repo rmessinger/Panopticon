@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using OpenSage.Logic.Orders;
+using OpenSage.Simulation;
 using Xunit;
 
 namespace OpenSage.Tests;
@@ -15,7 +16,7 @@ public class SimulationHostTests : MockedGameTest
     private static (MockedGameTest.TestGame Game, SimulationHost Host) CreateHostGame()
     {
         var game = new TestGame(SageGame.CncGenerals);
-        var host = new SimulationHost(game.GameEngine);
+        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         return (game, host);
     }
 

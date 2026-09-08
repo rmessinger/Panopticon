@@ -6,6 +6,7 @@ using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using OpenSage.Logic.Orders;
 using OpenSage.Mathematics;
+using OpenSage.Simulation;
 
 namespace OpenSage;
 
@@ -81,15 +82,21 @@ public sealed class SimulationHost
     /// </summary>
     public LogicFrame LogicFrame => _gameEngine.GameLogic.CurrentFrame;
 
-    // The world is owned through IGameEngine, which is RTS-shaped today. The pluggable domain
-    // model (entity schema, topology, interaction rules) is the A4 Simulation Domain Model seam;
-    // when it lands, this constructor takes the domain adapter as a parameter.
-    public SimulationHost(IGameEngine gameEngine)
+    /// <summary>
+    /// The injected domain model (A4-1): the projection surface for recording, topology keys,
+    /// metrics, and interaction authority. The host never constructs a concrete adapter;
+    /// callers pass one (RTS callers pass the reference adapter from OpenSage.Simulation).
+    /// </summary>
+    public ISimulationDomainModel DomainModel { get; }
+
+    public SimulationHost(IGameEngine gameEngine, ISimulationDomainModel domainModel)
     {
         _gameEngine = gameEngine;
         _game = gameEngine.Game;
         _stepper = new LogicStepper(_game);
         _frameInterval = TimeSpan.FromMilliseconds(gameEngine.MsPerLogicFrame);
+        DomainModel = domainModel;
+        DomainModel.Initialize(this);
     }
 
     /// <summary>
@@ -120,6 +127,8 @@ public sealed class SimulationHost
         var framesCompleted = 0;
         var stopPredicateTriggered = false;
 
+        DomainModel.RunStarting();
+
         for (var i = 0; i < frameBudget; i++)
         {
             StepOnce();
@@ -132,10 +141,12 @@ public sealed class SimulationHost
             }
         }
 
-        return new SimulationHostRunResult(
+        var result = new SimulationHostRunResult(
             framesCompleted,
             LogicFrame,
             stopPredicateTriggered);
+        DomainModel.RunComplete(in result);
+        return result;
     }
 
     private void StepOnce()

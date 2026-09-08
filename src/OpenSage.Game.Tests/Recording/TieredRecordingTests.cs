@@ -6,6 +6,7 @@ using System.Numerics;
 using OpenSage.Logic;
 using OpenSage.Logic.Object;
 using OpenSage.Recording;
+using OpenSage.Simulation;
 using Xunit;
 
 namespace OpenSage.Tests.Recording;
@@ -33,7 +34,7 @@ public class TieredRecordingTests : MockedGameTest
     private static (TestGame Game, SimulationHost Host) CreateHost()
     {
         var game = new TestGame(SageGame.CncGenerals);
-        return (game, new SimulationHost(game.GameEngine));
+        return (game, new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine)));
     }
 
     // ── WI-A1-09: T1 signature trees ──────────────────────────────────────────
@@ -278,7 +279,7 @@ public class TieredRecordingTests : MockedGameTest
         SpawnUnit(game, "A1MilestoneUnit", new Vector3(50, 50, 0));
         SpawnUnit(game, "A1MilestoneDivergence", new Vector3(250, 50, 0));
 
-        var host = new SimulationHost(game.GameEngine);
+        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         var outputDir = Path.Combine(Path.GetTempPath(), $"opensage_run_{Guid.NewGuid():N}");
         var snapshotPath = Path.Combine(outputDir, "snapshots.bin");
         using var recording = RunRecording.Attach(
@@ -341,7 +342,7 @@ public class TieredRecordingTests : MockedGameTest
         ConfigureTwoCompetitivePlayers(game);
         SpawnUnit(game, "A1MilestoneUnit", new Vector3(50, 50, 0));
 
-        var host = new SimulationHost(game.GameEngine);
+        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         var sampler = new WorldStateSampler(host, game);
         using var t1 = new TieredSignatureRecorder(sampler, sampleInterval: 10);
         host.Run(50);

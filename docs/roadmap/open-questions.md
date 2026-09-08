@@ -385,3 +385,8 @@
   deferred until the evolutionary training harness produces fitness results that justify
   the added genome size; until then the v1 shapes are the stable genome contract.
   Affects [Track A](track-a-foundations.md) (A4).
+- RTS topology description scope. Decision: the RTS domain adapter returns an empty
+  <c>DescribeTopology</c> result for now; RTS visualization is position-driven and no current
+  consumer (A5 or B6) needs occupied-cell adjacency. Revisit when one does; the contract
+  already carries the attachment point. Affects
+  [Track A](track-a-foundations.md) (A4-1).

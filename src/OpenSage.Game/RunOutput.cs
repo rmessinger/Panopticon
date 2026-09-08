@@ -37,6 +37,18 @@ public sealed class RunMetricSample
 {
     public uint Frame { get; set; }
     public List<RunPlayerMetrics> Players { get; set; } = new();
+
+    // A4-1 domain metric series rows (transport: edge throughput, node occupancy); the RTS
+    // adapter emits none, so existing run outputs are unchanged.
+    public List<RunDomainMetricValue> DomainMetrics { get; set; } = new();
+}
+
+/// <summary>One value in a named, keyed domain metric series at one sample.</summary>
+public sealed class RunDomainMetricValue
+{
+    public string Series { get; set; } = "";
+    public string Key { get; set; } = "";
+    public double Value { get; set; }
 }
 
 /// <summary>
@@ -52,6 +64,9 @@ public sealed class RunOutput
     public string RunId { get; set; } = Guid.NewGuid().ToString("N");
     public uint Seed { get; set; }
     public string? ScenarioId { get; set; }
+
+    // A4-1: the domain adapter that produced this run ("rts", "transport-graph", ...).
+    public string? DomainId { get; set; }
     public uint TotalLogicFrames { get; set; }
     public double WallClockDurationMilliseconds { get; set; }
     public RunOutcomeRecord? Outcome { get; set; }
@@ -234,13 +249,23 @@ public sealed class RunOutputRecorder : IDisposable
         {
             Frame = e.LogicFrame.Value,
         };
-        foreach (var player in _game.PlayerManager.Players)
+        var metrics = _host.DomainModel.SampleMetrics();
+        foreach (var player in metrics.Players)
         {
             sample.Players.Add(new RunPlayerMetrics
             {
-                Player = player.DisplayName,
-                Money = player.BankAccount.Money,
-                OwnedObjects = player.OwnedObjects.Count,
+                Player = player.Player,
+                Money = player.Money,
+                OwnedObjects = player.OwnedObjects,
+            });
+        }
+        foreach (var value in metrics.Series)
+        {
+            sample.DomainMetrics.Add(new RunDomainMetricValue
+            {
+                Series = value.Series,
+                Key = value.Key,
+                Value = value.Value,
             });
         }
         _samples.Add(sample);
@@ -270,6 +295,7 @@ public sealed class RunOutputRecorder : IDisposable
         {
             Seed = _seed,
             ScenarioId = _scenarioId,
+            DomainId = _host.DomainModel.DomainId,
             TotalLogicFrames = _host.LogicFrame.Value,
             WallClockDurationMilliseconds = _stopwatch.Elapsed.TotalMilliseconds,
             Outcome = outcomeRecord,

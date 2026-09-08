@@ -52,6 +52,7 @@ Source of truth: [deep-dives/a3-sim-presentation-seam.md](../deep-dives/a3-sim-p
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-a-a3-sim-presentation-seam.md](track-a-a3-sim-presentation-seam.md) | A3-1…A3-4 | Simulation/presentation seam |
+| [track-a-a4-simulation-domain-model.md](track-a-a4-simulation-domain-model.md) | A4-1 | Simulation Domain Model seam |
 
 ## Track G · G1 : High-DPI drawable & resolution correctness
 

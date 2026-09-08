@@ -64,7 +64,8 @@ Scope notes:
   [P0](track-p-playable-baseline.md), reusing the engine's streaming, LOD, instancing,
   and procedural-generation work from [B4a](deep-dives/b4a-larger-maps.md) and
   [B5](track-b-scale.md).
-- Domain-agnostic where it is cheap. The simulation domain is a pluggable seam, so the
+- Domain-agnostic where it is cheap. The simulation domain is a pluggable seam
+  ([A4-1](deep-dives/a4-simulation-domain-model.md)), so the
   [FTRT headless host](deep-dives/a1-headless-host.md) and
   [distributed sim](deep-dives/b6-distributed-simulation.md) are not hard-wired to RTS. RTS is the
   reference domain rather than a baked-in assumption.
@@ -269,7 +270,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Track | Progress | Items |
 |---|---|---|
-| Track A - Foundations | `█████░░░░░` | 9 / 19 |
+| Track A - Foundations | `█████░░░░░` | 10 / 19 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 12 |
 | Track C - External Assets | `░░░░░░░░░░` | 0 / 6 |
 

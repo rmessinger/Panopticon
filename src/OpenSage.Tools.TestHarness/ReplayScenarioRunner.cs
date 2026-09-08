@@ -4,6 +4,7 @@ using System.IO;
 using OpenSage.Data;
 using OpenSage.Graphics;
 using OpenSage.IO;
+using OpenSage.Simulation;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 
@@ -163,7 +164,7 @@ public static class ReplayScenarioRunner
         }
 
         var frameRect = new Mathematics.Rectangle(0, 0, 1024, 768);
-        var host = new SimulationHost(game.GameEngine);
+        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
 
         // Deferred orders inject before the frame that consumes them, matching the pre-Update
         // drain position of the previous loop; the countdown is per logic frame now, which is
