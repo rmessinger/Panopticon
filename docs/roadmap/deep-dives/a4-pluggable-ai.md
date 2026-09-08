@@ -353,9 +353,9 @@ sequenceDiagram
   `NetworkMessageBuffer.AddLocalOrder` (networked) or `Game.InjectOrders` (local), both ultimately
   processed by `OrderProcessor.Process(...)` (`Logic/Orders/OrderProcessor.cs`). The actuation
   path every future policy must keep using.
-- Selection: `PlayerSetting.AIPolicy` flows through
+- Selection: `PlayerSetting.AIPolicy` (an `AIDecisionPolicyPayload`, WI-A4-12: null = rule
+  based, neural carries its weight vector) flows through
   `PlayerManager.BuildAIDecisionPolicies(...)` to `AIDecisionPolicyFactory`, then into
-  `Player.FromMapData(...)`. Neural selection still needs the weight payload added by
-  `WI-A4-12`.
+  `Player.FromMapData(...)`.
 - Fitness data source: `GameOutcome` is queryable by headless runs. The training harness (§4)
   combines it with existing T0 run metrics.
