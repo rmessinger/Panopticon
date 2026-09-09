@@ -1,9 +1,6 @@
 #nullable enable
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using OpenSage.Logic.AI;
 
 namespace OpenSage.Tools.ReplaySketch.Model;
 
@@ -84,46 +81,3 @@ public sealed record NeuralEvolutionConfig
         }
     }
 }
-
-/// <summary>One genome: exactly the v1 policy's weight vector (125 floats).</summary>
-public sealed class NeuralGenome
-{
-    public int Index { get; }
-
-    public float[] Weights { get; }
-
-    public NeuralGenome(int index, IReadOnlyList<float> weights)
-    {
-        if (weights.Count != NeuralNetworkAIDecisionPolicy.WeightCount)
-        {
-            throw new ArgumentException(
-                $"A neural genome requires exactly {NeuralNetworkAIDecisionPolicy.WeightCount} weights; got {weights.Count}.",
-                nameof(weights));
-        }
-
-        Index = index;
-        Weights = weights.ToArray();
-    }
-}
-
-/// <summary>One generation's population, indexed 0..PopulationSize-1.</summary>
-public sealed class NeuralPopulation
-{
-    public IReadOnlyList<NeuralGenome> Genomes { get; }
-
-    public NeuralPopulation(IReadOnlyList<NeuralGenome> genomes)
-    {
-        Genomes = genomes;
-    }
-}
-
-/// <summary>A genome with its aggregated fitness, pre-ranked best-first by the runner.</summary>
-public sealed record RankedGenome(NeuralGenome Genome, double? Fitness, bool Failed);
-
-/// <summary>Ancestry of one next-generation genome: its parent (or itself for elites).</summary>
-public sealed record GenomeAncestry(int Index, int ParentIndex, bool Elite);
-
-/// <summary>The next population plus per-genome ancestry.</summary>
-public sealed record NeuralPopulationAdvance(
-    NeuralPopulation Next,
-    IReadOnlyList<GenomeAncestry> Ancestry);

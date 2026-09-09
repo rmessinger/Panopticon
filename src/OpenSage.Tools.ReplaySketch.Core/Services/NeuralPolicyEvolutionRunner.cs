@@ -8,23 +8,6 @@ using OpenSage.Tools.ReplaySketch.Model;
 
 namespace OpenSage.Tools.ReplaySketch.Services;
 
-/// <summary>One completed evaluation: the run output plus which player ran the genome.</summary>
-public sealed record NeuralMatchEvaluation(RunOutput Output, string GenomePlayerName);
-
-/// <summary>
-/// Evaluates one genome in one seeded match (WI-A4-15). Implementations wrap the headless
-/// harness; tests supply fakes so the runner stays game-independent.
-/// </summary>
-public interface INeuralPolicyMatchEvaluator
-{
-    NeuralMatchEvaluation Evaluate(int genomeIndex, IReadOnlyList<float> genome, uint matchSeed);
-}
-
-/// <summary>One generation's outcome: its report and the advanced population.</summary>
-public sealed record NeuralGenerationResult(
-    NeuralGenerationReport Report,
-    NeuralPopulation NextPopulation);
-
 /// <summary>
 /// Runs one neural-policy generation (WI-A4-15, design §4): evaluates every genome against
 /// every configured match seed, aggregates fitness, ranks, computes diversity, advances the

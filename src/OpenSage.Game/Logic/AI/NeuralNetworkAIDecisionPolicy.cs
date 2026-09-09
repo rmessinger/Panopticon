@@ -218,12 +218,3 @@ public sealed class NeuralNetworkAIDecisionPolicy : IAIDecisionPolicy
         return RuleBasedAIDecisionPolicy.CreateAttackOrders(context.OwnerPlayerIndex, force, target);
     }
 }
-
-internal enum NeuralNetworkAIAction
-{
-    None = 0,
-    BuildSupplyPriority = 1,
-    BuildNextStructure = 2,
-    ProduceCombatUnit = 3,
-    AttackNearestEnemy = 4,
-}
