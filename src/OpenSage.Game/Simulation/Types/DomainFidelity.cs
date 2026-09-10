@@ -1,3 +1,5 @@
+#nullable enable
+
 namespace OpenSage.Simulation;
 
 /// <summary>
@@ -12,4 +14,9 @@ public enum DomainFidelityLevel
 
     /// <summary>Reserved for B7: domain-defined aggregation of entities or interactions.</summary>
     Aggregated = 1,
+}
+
+public sealed record DomainFidelityPolicy(DomainFidelityLevel Level)
+{
+    public static readonly DomainFidelityPolicy Identity = new(DomainFidelityLevel.Identity);
 }

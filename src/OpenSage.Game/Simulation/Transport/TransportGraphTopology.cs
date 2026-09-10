@@ -7,6 +7,45 @@ using System.Numerics;
 
 namespace OpenSage.Simulation.Transport;
 
+/// <summary>One node of the transport graph validation topology.</summary>
+public sealed class TransportGraphNode
+{
+    public int Index { get; }
+
+    public string Key => $"node:{Index}";
+
+    /// <summary>Owner side used for partition-cut and authority decisions (player index).</summary>
+    public int OwnerSide { get; }
+
+    /// <summary>2-D layout position for movement and visualization.</summary>
+    public Vector3 Position { get; }
+
+    public TransportGraphNode(int index, int ownerSide, Vector3 position)
+    {
+        Index = index;
+        OwnerSide = ownerSide;
+        Position = position;
+    }
+}
+
+/// <summary>One directed edge; an edge between different owner sides is a partition cut.</summary>
+public sealed class TransportGraphEdge
+{
+    public TransportGraphNode From { get; }
+
+    public TransportGraphNode To { get; }
+
+    public string Key => $"edge:{From.Index}->{To.Index}";
+
+    public bool IsPartitionCut => From.OwnerSide != To.OwnerSide;
+
+    public TransportGraphEdge(TransportGraphNode from, TransportGraphNode to)
+    {
+        From = from;
+        To = to;
+    }
+}
+
 /// <summary>
 /// The transport/graph validation topology (A4-1): a small directed graph with stable node
 /// and edge keys. Deliberately minimal (the non-RTS completeness Decision): this exists to

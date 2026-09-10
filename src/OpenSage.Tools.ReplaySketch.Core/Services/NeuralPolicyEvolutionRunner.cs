@@ -8,6 +8,11 @@ using OpenSage.Tools.ReplaySketch.Model;
 
 namespace OpenSage.Tools.ReplaySketch.Services;
 
+/// <summary>One generation's outcome: its report and the advanced population.</summary>
+public sealed record NeuralGenerationResult(
+    NeuralGenerationReport Report,
+    NeuralPopulation NextPopulation);
+
 /// <summary>
 /// Runs one neural-policy generation (WI-A4-15, design §4): evaluates every genome against
 /// every configured match seed, aggregates fitness, ranks, computes diversity, advances the
