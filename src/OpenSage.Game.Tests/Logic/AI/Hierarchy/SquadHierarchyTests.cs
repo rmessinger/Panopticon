@@ -135,7 +135,7 @@ public sealed class SquadHierarchyTests : MockedGameTest
         hierarchy.Synchronize(player);
         var late = Assert.Single(hierarchy.Squads);
         Assert.NotEqual(removedId, late.Id);
-        Assert.Equal(1, late.Members.Count);
+        Assert.Single(late.Members);
     }
 
     [Fact]

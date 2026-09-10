@@ -203,10 +203,10 @@ to know which family, flat or hierarchical, is running.
 
 | Phase | Goal | Status |
 |---|---|---|
-| A4-3a. Rank and command-hierarchy model | Add the squad/commander data model: derive squads from the existing team/selection model, assign a commander per squad, promote on commander death. No network yet; commander/soldier goals are still decided by today's rule-based logic. | Not started |
-| A4-3b. Soldier-level decision policy seam | Extract `ISoldierDecisionPolicy` from the relevant `AIUpdateStateMachine` states (§2.3), with the existing state-machine transition logic as the reference implementation. | Not started |
-| A4-3c. Commander-level decision policy | Add `ICommanderDecisionPolicy`, with a rule-based reference implementation (aggregate squad state, forward the general's directive as each soldier's goal). | Not started |
-| A4-3d. General-level directive interface | Add `IGeneralDecisionPolicy` and the `HierarchicalAIDecisionPolicy` adapter, with a rule-based reference implementation equivalent to today's flat `SkirmishAIPlayer` behavior split across ranks. | Not started |
+| A4-3a. Rank and command-hierarchy model | Add the squad/commander data model: derive squads from the existing team/selection model, assign a commander per squad, promote on commander death. No network yet; commander/soldier goals are still decided by today's rule-based logic. | Done (WI-A4-18/19) |
+| A4-3b. Soldier-level decision policy seam | Extract `ISoldierDecisionPolicy` from the relevant `AIUpdateStateMachine` states (§2.3), with the existing state-machine transition logic as the reference implementation. | Done (WI-A4-20; adapter-owned per-object invocation per the §6 leaf-execution decision) |
+| A4-3c. Commander-level decision policy | Add `ICommanderDecisionPolicy`, with a rule-based reference implementation (aggregate squad state, forward the general's directive as each soldier's goal). | Done (WI-A4-21) |
+| A4-3d. General-level directive interface | Add `IGeneralDecisionPolicy` and the `HierarchicalAIDecisionPolicy` adapter, with a rule-based reference implementation equivalent to today's flat `SkirmishAIPlayer` behavior split across ranks. | Done (WI-A4-22/23; military facet, economy/production stay the flat policy's surface) |
 | A4-3e. First per-rank neural networks | Design and implement a first `ISoldierDecisionPolicy`, `ICommanderDecisionPolicy`, and `IGeneralDecisionPolicy` network per §2.4's complexity scaling. | Not started |
 | A4-3f. Hierarchical evolutionary training harness | Extend the flat-policy training harness ([pluggable-ai.md §4](a4-pluggable-ai.md#4-what-this-unblocks-evolutionary-training-via-seeded-weight-populations)) to co-evolve three rank populations. | Not started |
 
