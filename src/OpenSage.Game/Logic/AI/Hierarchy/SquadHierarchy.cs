@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenSage.Logic.Object;
@@ -19,6 +20,12 @@ public sealed class SquadHierarchy
 
     private readonly Dictionary<uint, Squad> _squads = new();
     private readonly Dictionary<ObjectId, uint> _memberSquad = new();
+
+    // Restored-but-unresolved membership (WI-A4-19): squad id -> member ids. Ids resolve
+    // against the owner's live objects on the next Synchronize; ids that never resolve
+    // belonged to dead objects and are dropped.
+    private readonly Dictionary<uint, List<uint>> _pendingMemberIds = new();
+
     private uint _nextSquadId = 1;
 
     public IReadOnlyList<Squad> Squads { get; }
@@ -29,18 +36,96 @@ public sealed class SquadHierarchy
     }
 
     /// <summary>
-    /// Brings the hierarchy up to date with the owner's live objects: removes dead members,
-    /// promotes when a commander died, deletes empty squads, and assigns units that are not
-    /// in any squad yet (team-mates together, then open squads, then new squads).
+    /// Brings the hierarchy up to date with the owner's live objects: resolves any restored
+    /// ids, removes dead members, promotes when a commander died, deletes empty squads, and
+    /// assigns units that are not in any squad yet (team-mates together, then open squads,
+    /// then new squads).
     /// </summary>
     public void Synchronize(Player owner)
     {
+        ResolvePending(owner);
         RemoveDeadMembers();
         AssignNewUnits(owner);
 
         var list = (List<Squad>)Squads;
         list.Clear();
         list.AddRange(_squads.Values.OrderBy(s => s.Id));
+    }
+
+    /// <summary>Captures the persistable state (identities and ids only, no live references).</summary>
+    public SquadHierarchyState CaptureState()
+    {
+        var state = new SquadHierarchyState();
+        foreach (var squad in _squads.Values.OrderBy(s => s.Id))
+        {
+            var squadState = new SquadHierarchyState.SquadState
+            {
+                Id = squad.Id,
+                CommanderId = squad.CommanderId?.Index ?? 0u,
+            };
+            squadState.MemberIds.AddRange(squad.Members.Select(m => m.Id.Index));
+            state.Squads.Add(squadState);
+        }
+
+        return state;
+    }
+
+    /// <summary>
+    /// Restores squads from persisted state without touching live objects: memberships stay
+    /// pending until the next <see cref="Synchronize"/> resolves them against the owner.
+    /// </summary>
+    public void Restore(SquadHierarchyState state)
+    {
+        _squads.Clear();
+        _memberSquad.Clear();
+        _pendingMemberIds.Clear();
+        _nextSquadId = 1;
+
+        foreach (var squadState in state.Squads)
+        {
+            var squad = new Squad(squadState.Id)
+            {
+                CommanderId = squadState.CommanderId != 0u ? new ObjectId(squadState.CommanderId) : null,
+            };
+            _squads[squad.Id] = squad;
+            _pendingMemberIds[squad.Id] = new List<uint>(squadState.MemberIds);
+            _nextSquadId = System.Math.Max(_nextSquadId, squadState.Id + 1u);
+        }
+    }
+
+    private void ResolvePending(Player owner)
+    {
+        if (_pendingMemberIds.Count == 0)
+        {
+            return;
+        }
+
+        var byId = owner.OwnedObjects.ToDictionary(o => o.Id.Index);
+        foreach (var (squadId, memberIds) in _pendingMemberIds.ToList())
+        {
+            if (!_squads.TryGetValue(squadId, out var squad))
+            {
+                _pendingMemberIds.Remove(squadId);
+                continue;
+            }
+
+            foreach (var memberId in memberIds)
+            {
+                if (byId.TryGetValue(memberId, out var unit) && !_memberSquad.ContainsKey(unit.Id))
+                {
+                    squad.Members.Add(unit);
+                    _memberSquad[unit.Id] = squad.Id;
+                }
+            }
+
+            squad.Members.Sort((a, b) => a.Id.Index.CompareTo(b.Id.Index));
+            if (squad.Members.Count > 0 && (squad.CommanderId is null || squad.Members.All(m => m.Id != squad.CommanderId)))
+            {
+                squad.PromoteNextCommander();
+            }
+
+            _pendingMemberIds.Remove(squadId);
+        }
     }
 
     public Squad? SquadOf(GameObject unit) =>
