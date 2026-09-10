@@ -115,7 +115,10 @@ visualizes those results. Applied here:
    (best/mean/worst fitness, diversity) reported to the visualizer so evolution progress across
    seeds is inspectable, not just the final result.
 
-This doc does not design the training harness in detail; that follows the seam (§6). The seam is
+This doc does not design the training harness in detail; the concrete design lives in
+[implementation/track-a-a4-ai-policy-evolution.md](../implementation/track-a-a4-ai-policy-evolution.md)
+(WI-A4-11: policy payload, seeded population/variation operators, match evaluation matrix,
+shaped fitness over `GameOutcome` plus T0 metrics, per-generation report). The seam is
 shaped so the harness drops in cleanly: running N genomes across M seeded matches and collecting
 fitness requires no change to `AIPlayer`, `OrderProcessor`, or `GameOutcome`. It only requires a
 way to construct an `IAIDecisionPolicy` from a weight vector and assign it to a player slot, which
@@ -143,13 +146,14 @@ way to construct an `IAIDecisionPolicy` from a weight vector and assign it to a 
 
 This doc formalized the seam; the first three follow-ups have since landed (the seam
 extraction and selection factory as `WI-A4-01`/`WI-A4-02`, the v1 neural-network policy as
-`WI-A4-03`/`WI-A4-04`). Remaining work, each large enough for its own task-card set:
+`WI-A4-03`/`WI-A4-04`), and the flat-policy evolutionary training harness is designed and
+implemented as `WI-A4-11` through `WI-A4-16` (design:
+[implementation/track-a-a4-ai-policy-evolution.md](../implementation/track-a-a4-ai-policy-evolution.md)).
+Remaining work:
 
-- Design and implement the evolutionary training harness (§4) as an A4 experiment: population
-  management, fitness scoring off `GameOutcome`, selection/mutation, per-generation reporting
-  to [A5](a5-visualization.md). Selecting the neural-network policy from skirmish slot config
-  (weights cannot flow through `PlayerSetting` today) lands with this harness. The work is
-  decomposed as `WI-A4-11` through `WI-A4-16`.
+- Per-generation reporting surfaced in [A5](a5-visualization.md) (charts over the generation
+  reports the harness already emits).
+- Hierarchical co-evolution (`WI-A4-17`..): the decentralized rank generalization of this seam.
 
 ---
 
@@ -274,6 +278,66 @@ virtual` hook and `SkirmishAIPlayer` overrode it directly, calling
 factory selection; `WI-A4-04` added `NeuralNetworkAIDecisionPolicy` per
 [neural-network-ai-policy.md](neural-network-ai-policy.md).
 
+Evolution diagrams (WI-A4-11..16; design:
+[implementation/track-a-a4-ai-policy-evolution.md](../implementation/track-a-a4-ai-policy-evolution.md)).
+
+Payload construction (WI-A4-12): how a genome reaches the policy.
+
+```mermaid
+sequenceDiagram
+  participant R as Evolution runner / evaluator
+  participant PS as PlayerSetting
+  participant PM as PlayerManager
+  participant F as AIDecisionPolicyFactory
+  participant P as Player.CreateNew / FromMapData
+
+  R->>PS: AIPolicy = payload(Type=NeuralNetwork, Weights=genome)
+  R->>PM: OnNewGame(mapPlayers, Skirmish, settings)
+  PM->>P: FromMapData(..., payload)
+  P->>F: Create(payload)
+  F-->>P: NeuralNetworkAIDecisionPolicy(weights cloned + validated)
+```
+
+Match evaluation (WI-A4-14/16): one genome-slot-seed cell.
+
+```mermaid
+sequenceDiagram
+  participant Runner as NeuralPolicyEvolutionRunner
+  participant Ev as INeuralPolicyMatchEvaluator
+  participant H as HeadlessNeuralMatchEvaluator
+  participant G as Game + SimulationHost
+  participant S as AIFitnessScorer
+
+  Runner->>Ev: Evaluate(genomeIndex, genome, matchSeed(g, i, s))
+  Ev->>H: StartSkirmishOrMultiPlayerGame(map, settings, seed)
+  H->>G: host.Run(MatchFrameCap, decided)
+  G-->>H: RunOutput (outcome + T0 metrics)
+  H-->>Runner: NeuralMatchResult(seed, output)
+  Runner->>S: Score(output, genomePlayer)
+  S-->>Runner: fitness terms
+```
+
+Generation advancement (WI-A4-13/15): ranking to the next population.
+
+```mermaid
+sequenceDiagram
+  participant Runner as NeuralPolicyEvolutionRunner
+  participant OP as NeuralEvolutionOperators
+  participant RNG as Random(operatorSeed(g))
+
+  Runner->>Runner: rank by mean fitness (ties: lower index)
+  Runner->>OP: Advance(ranked, generation)
+  OP->>RNG: elite copies (no draws)
+  loop each non-elite child slot
+    OP->>RNG: TournamentSize draws -> parent
+    loop each of 125 weights
+      OP->>RNG: mutation check, Box-Muller draws when mutating
+    end
+  end
+  OP-->>Runner: next NeuralPopulation + ancestry
+  Runner->>Runner: NeuralGenerationReport (best/mean/worst/diversity, ToJson)
+```
+
 ---
 
 ## Appendix: Current code (agent context)
@@ -289,9 +353,9 @@ factory selection; `WI-A4-04` added `NeuralNetworkAIDecisionPolicy` per
   `NetworkMessageBuffer.AddLocalOrder` (networked) or `Game.InjectOrders` (local), both ultimately
   processed by `OrderProcessor.Process(...)` (`Logic/Orders/OrderProcessor.cs`). The actuation
   path every future policy must keep using.
-- Selection: `PlayerSetting.AIPolicy` flows through
+- Selection: `PlayerSetting.AIPolicy` (an `AIDecisionPolicyPayload`, WI-A4-12: null = rule
+  based, neural carries its weight vector) flows through
   `PlayerManager.BuildAIDecisionPolicies(...)` to `AIDecisionPolicyFactory`, then into
-  `Player.FromMapData(...)`. Neural selection still needs the weight payload added by
-  `WI-A4-12`.
+  `Player.FromMapData(...)`.
 - Fitness data source: `GameOutcome` is queryable by headless runs. The training harness (§4)
   combines it with existing T0 run metrics.

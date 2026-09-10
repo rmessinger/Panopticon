@@ -759,7 +759,7 @@ public class Player : IPersistableObject
         Data.Map.Player mapPlayer,
         IGame game,
         bool isSkirmish,
-        AI.AIDecisionPolicyType aiDecisionPolicy = AI.AIDecisionPolicyType.RuleBased)
+        AI.AIDecisionPolicyPayload? aiDecisionPolicy = null)
     {
         var side = mapPlayer.Faction ?? throw new InvalidStateException($"Player {mapPlayer.Name} has no faction.");
 

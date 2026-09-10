@@ -580,13 +580,22 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
       construction). Factory-only construction enforced by a source-scan test. The phase
       milestone's benchmarked comparison clause remains open with the B1-dependent
       harness item below.
-- [ ] AI policy evolution follow-on: carry genome payloads through player construction,
+- [x] AI policy evolution follow-on: carry genome payloads through player construction,
       evaluate populations over headless match samples, score from `GameOutcome` plus existing T0
       metrics, apply configured selection/variation, and emit per-generation reports.
-  - AC: a configured population runs across its match-seed matrix; reports identify every genome,
-    seed, fitness component, failure, and ancestry; pure variation operators are same-input
-    deterministic, while simulation samples are evaluated statistically rather than requiring
-    cross-run equality.
+  - Done: WI-A4-11..16. Design
+      ([implementation/track-a-a4-ai-policy-evolution.md](implementation/track-a-a4-ai-policy-evolution.md)):
+      `AIDecisionPolicyPayload` carries 125-float genomes `PlayerSetting` -> factory;
+      ReplaySketch.Core gains deterministic `NeuralEvolutionOperators` (seeded
+      init/elitism/tournament/mutation, byte-identical per seed), `AIFitnessScorer`
+      (outcome ordering win/sudden-death/frame-cap/loss plus economy/army/speed shaped terms from
+      T0 only, explicit rejection of incomplete outputs), `NeuralPolicyEvolutionRunner` with
+      `INeuralPolicyMatchEvaluator` (exactly population x seeds evaluations, failure-explicit
+      per-generation JSON report with ancestry + diversity), and the real
+      `HeadlessNeuralMatchEvaluator` (genome slot vs rule-based reference, `SimulationHost`
+      stepping, T0 capture). Interactive smoke: a 2-genome generation over real 900-frame
+      matches. Variation operators are same-input deterministic; simulation samples are
+      scored statistically (fitness means), never compared cross-run.
 - [ ] A4-3 Decentralized hierarchical AI seam
       ([deep dive](deep-dives/a4-decentralized-hierarchical-ai.md)): general/commander/soldier
       rank hierarchy of per-unit ANNs, composed behind the existing `IAIDecisionPolicy` seam via a

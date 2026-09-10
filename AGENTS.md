@@ -49,6 +49,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 ### Naming conventions
 
 * In `OpenSage.Tools.ReplaySketch.Core`, private static fields follow PascalCase (no `s_` or `_` prefixes), enforced by IDE1006 in `dotnet format` CI.
+* One class (or interface/enum/record) per file. Exceptionally small types (one-to-few-line records, enums paired with their consumer, module data with its module) combine into a single theme-appropriate file instead; use a `Types/` subfolder when a group of such supporting types has no obvious owning file.
 
 ### Validation
 

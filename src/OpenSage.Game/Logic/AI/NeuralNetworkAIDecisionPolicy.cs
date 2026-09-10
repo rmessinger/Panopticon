@@ -18,11 +18,11 @@ namespace OpenSage.Logic.AI;
 /// </summary>
 public sealed class NeuralNetworkAIDecisionPolicy : IAIDecisionPolicy
 {
-    internal const int InputSize = 9;
-    internal const int HiddenSize = 8;
-    internal const int OutputSize = 5;
+    public const int InputSize = 9;
+    public const int HiddenSize = 8;
+    public const int OutputSize = 5;
 
-    internal const int WeightCount = InputSize * HiddenSize + HiddenSize + HiddenSize * OutputSize + OutputSize;
+    public const int WeightCount = InputSize * HiddenSize + HiddenSize + HiddenSize * OutputSize + OutputSize;
 
     private const float CashNormalizationScale = 20000f;
     private const float AttackForceFeatureCap = 8f;
@@ -219,6 +219,8 @@ public sealed class NeuralNetworkAIDecisionPolicy : IAIDecisionPolicy
     }
 }
 
+/// <summary>The five discrete outputs of the v1 network; see
+/// docs/roadmap/deep-dives/neural-network-ai-policy.md §3.</summary>
 internal enum NeuralNetworkAIAction
 {
     None = 0,

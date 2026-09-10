@@ -25,9 +25,9 @@ public struct PlayerSetting
     public int Team { get; set; }
     public bool IsLocalForMultiplayer { get; set; }
 
-    /// <summary>Which AI decision policy this slot's AI player runs; the default matches
-    /// pre-seam skirmish AI behavior.</summary>
-    public AIDecisionPolicyType AIPolicy { get; set; } = AIDecisionPolicyType.RuleBased;
+    /// <summary>Which AI decision policy this slot's AI player runs; null is the default
+    /// rule-based behavior.</summary>
+    public AIDecisionPolicyPayload? AIPolicy { get; set; }
 
     public PlayerSetting(int? startPosition, string sideName, ColorRgb color, int team, PlayerOwner owner = PlayerOwner.None, string name = "", bool isLocalForMultiplayer = false)
     {
