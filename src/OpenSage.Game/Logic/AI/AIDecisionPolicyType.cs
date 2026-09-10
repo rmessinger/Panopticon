@@ -15,4 +15,10 @@ public enum AIDecisionPolicyType
     /// (weights are evolved outside the engine and supplied by the experiment harness).
     /// </summary>
     NeuralNetwork = 1,
+
+    /// <summary>
+    /// Decentralized rank hierarchy (general/commander/soldier) composed behind this seam;
+    /// the reference implementation uses rule-based rank policies.
+    /// </summary>
+    Hierarchical = 2,
 }

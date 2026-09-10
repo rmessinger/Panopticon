@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using OpenSage.Logic;
 using OpenSage.Logic.AI;
+using OpenSage.Logic.AI.Hierarchy;
 using OpenSage.Mathematics;
 using Xunit;
 
@@ -112,6 +113,29 @@ public sealed class AIDecisionPolicyFactoryTests : MockedGameTest
     }
 
     [Fact]
+    public void Create_Hierarchical_ComposesRuleBasedRanks()
+    {
+        var policy = Assert.IsType<HierarchicalAIDecisionPolicy>(
+            AIDecisionPolicyFactory.Create(new AIDecisionPolicyPayload { Type = AIDecisionPolicyType.Hierarchical }));
+
+        Assert.NotNull(policy.Hierarchy);
+    }
+
+    [Fact]
+    public void HierarchicalSelection_WiresHierarchyOntoTheSkirmishHost()
+    {
+        var manager = new PlayerManager(Generals);
+        RegisterPlayerTemplates();
+        var settings = CreatePlayerSettings(humanIsLocal: true);
+        settings[1].AIPolicy = new AIDecisionPolicyPayload { Type = AIDecisionPolicyType.Hierarchical };
+        manager.OnNewGame(CreateMapPlayers(), GameType.Skirmish, settings);
+
+        var aiPlayer = Assert.IsType<SkirmishAIPlayer>(manager.Players[3].AIPlayer);
+        Assert.IsType<HierarchicalAIDecisionPolicy>(aiPlayer.DecisionPolicy);
+        Assert.NotNull(aiPlayer.Hierarchy);
+    }
+
+    [Fact]
     public void DefaultSlotConfig_YieldsRuleBasedPolicyForSkirmishAI()
     {
         var manager = new PlayerManager(Generals);
@@ -133,7 +157,8 @@ public sealed class AIDecisionPolicyFactoryTests : MockedGameTest
             .Where(path => !Path.GetFileName(path).Equals("AIDecisionPolicyFactory.cs"))
             .Select(path => new { Path = path, Content = File.ReadAllText(path) })
             .Where(file => file.Content.Contains("new RuleBasedAIDecisionPolicy(")
-                || file.Content.Contains("new NeuralNetworkAIDecisionPolicy("))
+                || file.Content.Contains("new NeuralNetworkAIDecisionPolicy(")
+                || file.Content.Contains("new HierarchicalAIDecisionPolicy("))
             .Select(file => Path.GetFileName(file.Path))
             .ToList();
 

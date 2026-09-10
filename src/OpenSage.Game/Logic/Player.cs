@@ -813,11 +813,23 @@ public class Player : IPersistableObject
             IsHuman = isHuman,
         };
 
-        result.AIPlayer = isHuman || template == null || side == "FactionObserver"
-            ? null
-            : isSkirmish && side != "FactionCivilian"
-                ? new SkirmishAIPlayer(result, AI.AIDecisionPolicyFactory.Create(aiDecisionPolicy))
+        if (!isHuman && template != null && side != "FactionObserver" && isSkirmish && side != "FactionCivilian")
+        {
+            var policy = AI.AIDecisionPolicyFactory.Create(aiDecisionPolicy);
+            var skirmish = new SkirmishAIPlayer(result, policy);
+            result.AIPlayer = skirmish;
+            if (policy is AI.Hierarchy.HierarchicalAIDecisionPolicy hierarchical)
+            {
+                // Wire the hierarchy onto the host so its squads persist (WI-A4-19).
+                skirmish.Hierarchy = hierarchical.Hierarchy;
+            }
+        }
+        else
+        {
+            result.AIPlayer = isHuman || template == null || side == "FactionObserver"
+                ? null
                 : new AIPlayer(result);
+        }
 
         if (template != null)
         {
