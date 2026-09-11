@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-28` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): A4-3e first per-rank neural networks |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-25`, `WI-A4-26`, `WI-A4-27` |
