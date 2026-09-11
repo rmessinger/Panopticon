@@ -596,10 +596,19 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
       stepping, T0 capture). Interactive smoke: a 2-genome generation over real 900-frame
       matches. Variation operators are same-input deterministic; simulation samples are
       scored statistically (fitness means), never compared cross-run.
-- [ ] A4-3 Decentralized hierarchical AI seam (a..d Done: squad model + persistence, per-rank
-      interfaces with rule-based references, `HierarchicalAIDecisionPolicy` behind
-      `IAIDecisionPolicy`, factory selection `Hierarchical`, contract tests; e/f neural ranks
-      and co-evolution remain)
+- [x] A4-3 Decentralized hierarchical AI seam
+      ([deep dive](deep-dives/a4-decentralized-hierarchical-ai.md)): general/commander/soldier
+      rank hierarchy of per-unit ANNs, composed behind the existing `IAIDecisionPolicy` seam via a
+      `HierarchicalAIDecisionPolicy` adapter.
+  - Done: a..f via WI-A4-17..30. Squad model + version-gated persistence; per-rank
+      interfaces with rule-based references; adapter with documented cadences and a single
+      actuation path; frozen per-rank neural contracts
+      ([design](deep-dives/hierarchical-neural-network-policies.md), soldier 75 / commander 156 /
+      general 116 weights) implemented and factory-selectable via `HierarchicalRankWeights`;
+      contract tests for repair, dispatch, and save identity; alternating round-robin
+      co-evolution runner (one rank per generation, deterministic partners, shared outcome
+      fitness, rank-stamped reports) with an install-backed smoke test. Actuation stays
+      exclusively through the soldier rank's orders into `OrderProcessor`.
       ([deep dive](deep-dives/a4-decentralized-hierarchical-ai.md)): general/commander/soldier
       rank hierarchy of per-unit ANNs, composed behind the existing `IAIDecisionPolicy` seam via a
       `HierarchicalAIDecisionPolicy` adapter.

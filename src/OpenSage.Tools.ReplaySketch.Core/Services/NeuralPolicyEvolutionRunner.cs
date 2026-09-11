@@ -33,7 +33,14 @@ public sealed class NeuralPolicyEvolutionRunner
         Config = config;
     }
 
-    public NeuralGenerationResult RunGeneration(NeuralPopulation population, int generation)
+    public NeuralGenerationResult RunGeneration(NeuralPopulation population, int generation) =>
+        RunGeneration(population, generation,
+            (genomeIndex, slot) => NeuralEvolutionOperators.MatchSeed(Config, (uint)generation, genomeIndex, slot));
+
+    internal NeuralGenerationResult RunGeneration(
+        NeuralPopulation population,
+        int generation,
+        Func<int, int, uint> matchSeedOf)
     {
         if (population.Genomes.Count != Config.PopulationSize)
         {
@@ -52,8 +59,9 @@ public sealed class NeuralPolicyEvolutionRunner
         {
             var entry = new NeuralGenomeReport { Index = genome.Index };
             var results = new List<NeuralFitnessResult?>();
-            foreach (var (slot, matchSeed) in MatchSeeds(generation, genome.Index))
+            for (var slot = 0; slot < Config.MatchSeedCount; slot++)
             {
+                var matchSeed = matchSeedOf(genome.Index, slot);
                 var (match, fitness) = EvaluateMatch(genome, matchSeed);
                 entry.Matches.Add(match);
                 results.Add(fitness);
@@ -76,14 +84,6 @@ public sealed class NeuralPolicyEvolutionRunner
             .ToList();
 
         return new NeuralGenerationResult(report, advance.Next);
-    }
-
-    private IEnumerable<(int Slot, uint Seed)> MatchSeeds(int generation, int genomeIndex)
-    {
-        for (var slot = 0; slot < Config.MatchSeedCount; slot++)
-        {
-            yield return (slot, NeuralEvolutionOperators.MatchSeed(Config, (uint)generation, genomeIndex, slot));
-        }
     }
 
     private (NeuralMatchReport Report, NeuralFitnessResult? Fitness) EvaluateMatch(

@@ -13,12 +13,12 @@ public sealed class NeuralGenome
 
     public float[] Weights { get; }
 
-    public NeuralGenome(int index, IReadOnlyList<float> weights)
+    public NeuralGenome(int index, IReadOnlyList<float> weights, int expectedWeightCount = NeuralNetworkAIDecisionPolicy.WeightCount)
     {
-        if (weights.Count != NeuralNetworkAIDecisionPolicy.WeightCount)
+        if (weights.Count != expectedWeightCount)
         {
             throw new ArgumentException(
-                $"A neural genome requires exactly {NeuralNetworkAIDecisionPolicy.WeightCount} weights; got {weights.Count}.",
+                $"A neural genome requires exactly {expectedWeightCount} weights; got {weights.Count}.",
                 nameof(weights));
         }
 

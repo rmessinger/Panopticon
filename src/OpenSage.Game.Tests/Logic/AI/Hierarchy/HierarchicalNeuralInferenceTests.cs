@@ -192,7 +192,7 @@ public sealed class HierarchicalNeuralInferenceTests : MockedGameTest
     public void FixtureGenomes_ReachTheRanksThroughTheFactory()
     {
         var (game, ai, _) = CreateFixture();
-        var policy = (HierarchicalAIDecisionPolicy) AIDecisionPolicyFactory.Create(
+        var policy = (HierarchicalAIDecisionPolicy)AIDecisionPolicyFactory.Create(
             new AIDecisionPolicyPayload
             {
                 Type = AIDecisionPolicyType.Hierarchical,
@@ -210,7 +210,7 @@ public sealed class HierarchicalNeuralInferenceTests : MockedGameTest
     public void OrdersDispatchOnce_ThroughThePlayerBoundary_AndSaveRoundTrips()
     {
         var (game, ai, _) = CreateFixture();
-        var policy = (HierarchicalAIDecisionPolicy) AIDecisionPolicyFactory.Create(
+        var policy = (HierarchicalAIDecisionPolicy)AIDecisionPolicyFactory.Create(
             new AIDecisionPolicyPayload
             {
                 Type = AIDecisionPolicyType.Hierarchical,
