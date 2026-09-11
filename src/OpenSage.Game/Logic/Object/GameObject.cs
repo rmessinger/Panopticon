@@ -143,6 +143,8 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     private readonly IGameEngine _gameEngine;
 
+    internal IGameEngine GameEngine => _gameEngine;
+
     internal BitArray<WeaponSetConditions> WeaponSetConditions;
     private readonly WeaponSet _weaponSet;
     public WeaponSet ActiveWeaponSet => _weaponSet;

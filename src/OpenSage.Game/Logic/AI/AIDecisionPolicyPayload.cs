@@ -17,5 +17,17 @@ public sealed record AIDecisionPolicyPayload
     /// policy's weight count (125 for the v1 network).</summary>
     public float[]? NeuralNetworkWeights { get; init; }
 
+    /// <summary>Per-rank weight vectors for the Hierarchical type; null selects the
+    /// rule-based reference ranks. Lengths are validated at the factory boundary
+    /// (soldier 75, commander 156, general 116).</summary>
+    public HierarchicalRankWeights? HierarchicalRankWeights { get; init; }
+
     public static AIDecisionPolicyPayload Default { get; } = new();
 }
+
+/// <summary>The three per-rank genomes of a hierarchical neural policy
+/// (hierarchical-neural-network-policies.md §5). Treated as read-only; the factory clones.</summary>
+public sealed record HierarchicalRankWeights(
+    float[]? Soldier = null,
+    float[]? Commander = null,
+    float[]? General = null);

@@ -23,10 +23,15 @@ public static class AIDecisionPolicyFactory
                 payload.NeuralNetworkWeights ?? throw new ArgumentException(
                     $"The {nameof(AIDecisionPolicyType.NeuralNetwork)} AI decision policy requires a weight vector.",
                     nameof(payload))),
-            AIDecisionPolicyType.Hierarchical => new HierarchicalAIDecisionPolicy(
-                new RuleBasedGeneralPolicy(),
-                new RuleBasedCommanderDecisionPolicy(),
-                new RuleBasedSoldierDecisionPolicy()),
+            AIDecisionPolicyType.Hierarchical => payload.HierarchicalRankWeights is { } rankWeights
+                ? new HierarchicalAIDecisionPolicy(
+                    new NeuralGeneralPolicy(rankWeights.General),
+                    new NeuralCommanderDecisionPolicy(rankWeights.Commander),
+                    new NeuralSoldierDecisionPolicy(rankWeights.Soldier))
+                : new HierarchicalAIDecisionPolicy(
+                    new RuleBasedGeneralPolicy(),
+                    new RuleBasedCommanderDecisionPolicy(),
+                    new RuleBasedSoldierDecisionPolicy()),
             _ => throw new ArgumentOutOfRangeException(nameof(payload), payload.Type, "Unknown AI decision policy type."),
         };
     }
