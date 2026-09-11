@@ -596,7 +596,10 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
       stepping, T0 capture). Interactive smoke: a 2-genome generation over real 900-frame
       matches. Variation operators are same-input deterministic; simulation samples are
       scored statistically (fitness means), never compared cross-run.
-- [ ] A4-3 Decentralized hierarchical AI seam
+- [ ] A4-3 Decentralized hierarchical AI seam (a..d Done: squad model + persistence, per-rank
+      interfaces with rule-based references, `HierarchicalAIDecisionPolicy` behind
+      `IAIDecisionPolicy`, factory selection `Hierarchical`, contract tests; e/f neural ranks
+      and co-evolution remain)
       ([deep dive](deep-dives/a4-decentralized-hierarchical-ai.md)): general/commander/soldier
       rank hierarchy of per-unit ANNs, composed behind the existing `IAIDecisionPolicy` seam via a
       `HierarchicalAIDecisionPolicy` adapter.

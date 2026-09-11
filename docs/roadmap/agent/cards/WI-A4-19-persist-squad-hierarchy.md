@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-19` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): A4-3a rank and command hierarchy |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-18` |

@@ -203,10 +203,10 @@ to know which family, flat or hierarchical, is running.
 
 | Phase | Goal | Status |
 |---|---|---|
-| A4-3a. Rank and command-hierarchy model | Add the squad/commander data model: derive squads from the existing team/selection model, assign a commander per squad, promote on commander death. No network yet; commander/soldier goals are still decided by today's rule-based logic. | Not started |
-| A4-3b. Soldier-level decision policy seam | Extract `ISoldierDecisionPolicy` from the relevant `AIUpdateStateMachine` states (§2.3), with the existing state-machine transition logic as the reference implementation. | Not started |
-| A4-3c. Commander-level decision policy | Add `ICommanderDecisionPolicy`, with a rule-based reference implementation (aggregate squad state, forward the general's directive as each soldier's goal). | Not started |
-| A4-3d. General-level directive interface | Add `IGeneralDecisionPolicy` and the `HierarchicalAIDecisionPolicy` adapter, with a rule-based reference implementation equivalent to today's flat `SkirmishAIPlayer` behavior split across ranks. | Not started |
+| A4-3a. Rank and command-hierarchy model | Add the squad/commander data model: derive squads from the existing team/selection model, assign a commander per squad, promote on commander death. No network yet; commander/soldier goals are still decided by today's rule-based logic. | Done (WI-A4-18/19) |
+| A4-3b. Soldier-level decision policy seam | Extract `ISoldierDecisionPolicy` from the relevant `AIUpdateStateMachine` states (§2.3), with the existing state-machine transition logic as the reference implementation. | Done (WI-A4-20; adapter-owned per-object invocation per the §6 leaf-execution decision) |
+| A4-3c. Commander-level decision policy | Add `ICommanderDecisionPolicy`, with a rule-based reference implementation (aggregate squad state, forward the general's directive as each soldier's goal). | Done (WI-A4-21) |
+| A4-3d. General-level directive interface | Add `IGeneralDecisionPolicy` and the `HierarchicalAIDecisionPolicy` adapter, with a rule-based reference implementation equivalent to today's flat `SkirmishAIPlayer` behavior split across ranks. | Done (WI-A4-22/23; military facet, economy/production stay the flat policy's surface) |
 | A4-3e. First per-rank neural networks | Design and implement a first `ISoldierDecisionPolicy`, `ICommanderDecisionPolicy`, and `IGeneralDecisionPolicy` network per §2.4's complexity scaling. | Not started |
 | A4-3f. Hierarchical evolutionary training harness | Extend the flat-policy training harness ([pluggable-ai.md §4](a4-pluggable-ai.md#4-what-this-unblocks-evolutionary-training-via-seeded-weight-populations)) to co-evolve three rank populations. | Not started |
 
@@ -218,10 +218,30 @@ to know which family, flat or hierarchical, is running.
   promote the highest-value surviving squad member on commander death (§2.1), rather than a
   dedicated non-combat commander unit type. Revisit if playtesting shows commander death causes
   disruptive command gaps.
-- Soldier/`AIUpdate` boundary. Decision: the soldier rank's network replaces only
+- Soldier/`AIUpdate` boundary. Decision: the soldier rank's policy replaces only
   `AIUpdateStateMachine`'s decision logic, not `AIUpdate`'s locomotion or turret actuation (§2.3),
   to keep the blast radius of a misbehaving network small and reuse tested movement/targeting
   code.
+- Squad source (WI-A4-17). Decision: squads derive from simulation-owned
+  `GameObject.Team` where a map or script assigned one; units with no team are auto-grouped
+  by the hierarchy into squads of at most `MaxSquadSize` (8), filling in ascending object-id
+  order so grouping is stable across runs. Presentation-owned selection state is never read.
+- Commander ranking (WI-A4-17). Decision: the commander is the squad member with the highest
+  `ObjectDefinition.BuildCost`; ties break to the lower object id. Promotion applies the same
+  rule over surviving members.
+- Per-rank cadence (WI-A4-17). Decision: every rank runs inside the existing
+  `AIPlayer.OnDecisionTick` dispatch (no new tick site). The general runs every second
+  decision tick (120 frames); commanders and soldiers run every decision tick (60 frames).
+  Between commander ticks a soldier keeps its last goal, so every soldier always has one.
+- Leaf execution and actuation (WI-A4-17). Decision: leaf decisions execute inside the
+  top-level adapter, which iterates the player's units per-object and calls each soldier's
+  policy; every rank's output flows back as `Order`s through the single existing actuation
+  path (`AIPlayer.EnqueueOrders` -> `DispatchOrders` -> `OrderProcessor`). No rank mutates
+  game state directly and `AIUpdateStateMachine` is untouched.
+- Hierarchy persistence (WI-A4-17). Decision: squad membership and commander identity
+  persist as a version-gated block appended to `SkirmishAIPlayer.Persist` (version 2+).
+  Version-1 saves load unchanged and rebuild squads on demand; object identities persist as
+  ids and resolve lazily against live objects, never during load.
 - Per-rank network shape and feature encoding: open, deferred to A4-3e (§5). Each rank's exact
   layer sizes and state encoding are implementation detail, not part of the seam (§2.4).
 - Co-evolution scheme for three interacting rank populations (fix two ranks and evolve the
@@ -261,77 +281,127 @@ adapter composes with the existing `IAIDecisionPolicy` selection point rather th
 
 ## 9. Architecture diagrams
 
-Diagrams for this phase will be elaborated once A4-3 moves to active implementation. The
-placeholder below sketches the planned rank hierarchy and its relationship to the existing flat
-policy seam.
+Grounded in the current code plus the explicitly named planned types (`SquadHierarchy`,
+`CommanderDirective`, `SoldierGoal`, the three rank policy interfaces, their rule-based
+reference implementations, and `HierarchicalAIDecisionPolicy`). Everything else is the
+type/member as it stands today.
 
 ```mermaid
 classDiagram
   class IAIDecisionPolicy {
-    <<interface, pluggable-ai.md>>
+    <<interface, existing>>
     +DecideNextOrders(AIDecisionContext) IReadOnlyList~Order~
   }
 
+  class AIDecisionContext {
+    <<readonly struct, existing>>
+    +Player Owner
+    +int OwnerPlayerIndex
+    +int DecisionTickCount
+  }
+
   class HierarchicalAIDecisionPolicy {
-    <<pending A4-3d>>
+    <<planned, WI-A4-22>>
+    -SquadHierarchy _hierarchy
     -IGeneralDecisionPolicy _general
-    -Dictionary~SquadId,ICommanderDecisionPolicy~ _commanders
-    -Dictionary~ObjectId,ISoldierDecisionPolicy~ _soldiers
+    -ICommanderDecisionPolicy _commander
+    -ISoldierDecisionPolicy _soldier
+    -int _decisionTicks
     +DecideNextOrders(AIDecisionContext) IReadOnlyList~Order~
   }
 
   class IGeneralDecisionPolicy {
-    <<interface, pending A4-3d>>
-    +DecideDirectives(GeneralDecisionContext) IReadOnlyDictionary~SquadId,CommanderDirective~
+    <<interface, planned, WI-A4-22>>
+    +DecideDirectives(GeneralDecisionContext) IReadOnlyList~SquadDirective~
   }
 
   class ICommanderDecisionPolicy {
-    <<interface, pending A4-3c>>
-    +DecideGoals(CommanderDecisionContext) IReadOnlyDictionary~ObjectId,SoldierGoal~
+    <<interface, planned, WI-A4-21>>
+    +DecideGoals(CommanderDecisionContext) IReadOnlyDictionary~uint,SoldierGoal~
   }
 
   class ISoldierDecisionPolicy {
-    <<interface, pending A4-3b>>
-    +DecideOrder(SoldierDecisionContext) Order
+    <<interface, planned, WI-A4-20>>
+    +DecideOrder(SoldierDecisionContext) Order?
   }
 
-  class SquadModel {
-    <<pending A4-3a>>
-    +SquadId Id
+  class SquadHierarchy {
+    <<planned, WI-A4-18>>
+    -Dictionary~uint,Squad~ _squads
+    +Synchronize(Player owner)
+    +OnObjectDestroyed(GameObject)
+    +Squads IReadOnlyList~Squad~
+  }
+
+  class Squad {
+    <<planned, WI-A4-18>>
+    +uint Id
     +ObjectId? CommanderId
-    +List~ObjectId~ Members
-    +PromoteNextCommander()
+    +List~GameObject~ Members
+    +PromoteNextCommander() ObjectId?
+  }
+
+  class RuleBasedGeneralPolicy {
+    <<planned, WI-A4-22>>
+  }
+  class RuleBasedCommanderPolicy {
+    <<planned, WI-A4-21>>
+  }
+  class RuleBasedSoldierPolicy {
+    <<planned, WI-A4-20>>
+  }
+
+  class AIPlayer {
+    <<host, existing>>
+    +Update()
+    #OnDecisionTick() virtual
+    #EnqueueOrders(IReadOnlyList~Order~)
+    #DispatchOrders(IReadOnlyList~Order~) virtual
+    +Persist(StatePersister)
   }
 
   IAIDecisionPolicy <|.. HierarchicalAIDecisionPolicy
-  HierarchicalAIDecisionPolicy --> IGeneralDecisionPolicy : ticks
-  HierarchicalAIDecisionPolicy --> ICommanderDecisionPolicy : ticks, one per squad
-  HierarchicalAIDecisionPolicy --> ISoldierDecisionPolicy : ticks, one per soldier
-  HierarchicalAIDecisionPolicy --> SquadModel : reads
+  HierarchicalAIDecisionPolicy --> IGeneralDecisionPolicy : every 2nd decision tick
+  HierarchicalAIDecisionPolicy --> ICommanderDecisionPolicy : per squad, every tick
+  HierarchicalAIDecisionPolicy --> ISoldierDecisionPolicy : per soldier, every tick
+  HierarchicalAIDecisionPolicy --> SquadHierarchy : reads and maintains
+  IGeneralDecisionPolicy <|.. RuleBasedGeneralPolicy
+  ICommanderDecisionPolicy <|.. RuleBasedCommanderPolicy
+  ISoldierDecisionPolicy <|.. RuleBasedSoldierPolicy
+  AIPlayer --> IAIDecisionPolicy : dispatches to
 ```
+
+Order flow for one decision tick (single actuation path; soldiers keep their last goal
+between commander ticks):
 
 ```mermaid
 sequenceDiagram
   participant AP as AIPlayer
-  participant H as HierarchicalAIDecisionPolicy (pending)
-  participant G as IGeneralDecisionPolicy (pending)
-  participant C as ICommanderDecisionPolicy (pending, per squad)
-  participant S as ISoldierDecisionPolicy (pending, per soldier)
+  participant H as HierarchicalAIDecisionPolicy
+  participant SQ as SquadHierarchy
+  participant G as IGeneralDecisionPolicy
+  participant C as ICommanderDecisionPolicy
+  participant S as ISoldierDecisionPolicy
   participant OP as OrderProcessor
 
   AP->>H: DecideNextOrders(context)
-  H->>G: DecideDirectives(context) (general cadence)
-  G-->>H: directives keyed by SquadId
+  H->>SQ: Synchronize(owner) — spawn assignment, death promotion, cleanup
+  alt every 2nd decision tick
+    H->>G: DecideDirectives(context + squad summaries)
+    G-->>H: one CommanderDirective per squad
+  else other ticks
+    Note over H: reuse last directives
+  end
   loop each squad
-    H->>C: DecideGoals(directive, squad state) (commander cadence)
-    C-->>H: goals keyed by ObjectId
-    loop each soldier in squad
-      H->>S: DecideOrder(goal, local perception) (soldier cadence)
-      S-->>H: Order
-    end
+    H->>C: DecideGoals(directive, squad state)
+    C-->>H: SoldierGoal per member
+  end
+  loop each soldier (per object)
+    H->>S: DecideOrder(goal, local state)
+    S-->>H: Order? (MoveTo / AttackObject / null)
   end
   H-->>AP: IReadOnlyList~Order~
-  AP->>OP: EnqueueOrders(...) -> ... -> Process(...)
+  AP->>OP: EnqueueOrders -> DispatchOrders -> ... -> Process(...)
 ```
 
 ---

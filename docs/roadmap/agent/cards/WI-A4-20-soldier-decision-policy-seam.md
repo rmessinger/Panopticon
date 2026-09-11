@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-20` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): A4-3b soldier-level policy seam |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-17`, `WI-A4-18` |

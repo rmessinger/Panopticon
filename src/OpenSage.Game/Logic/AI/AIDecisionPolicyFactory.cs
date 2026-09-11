@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using OpenSage.Logic.AI.Hierarchy;
 
 namespace OpenSage.Logic.AI;
 
@@ -22,6 +23,10 @@ public static class AIDecisionPolicyFactory
                 payload.NeuralNetworkWeights ?? throw new ArgumentException(
                     $"The {nameof(AIDecisionPolicyType.NeuralNetwork)} AI decision policy requires a weight vector.",
                     nameof(payload))),
+            AIDecisionPolicyType.Hierarchical => new HierarchicalAIDecisionPolicy(
+                new RuleBasedGeneralPolicy(),
+                new RuleBasedCommanderDecisionPolicy(),
+                new RuleBasedSoldierDecisionPolicy()),
             _ => throw new ArgumentOutOfRangeException(nameof(payload), payload.Type, "Unknown AI decision policy type."),
         };
     }
