@@ -207,7 +207,7 @@ to know which family, flat or hierarchical, is running.
 | A4-3b. Soldier-level decision policy seam | Extract `ISoldierDecisionPolicy` from the relevant `AIUpdateStateMachine` states (§2.3), with the existing state-machine transition logic as the reference implementation. | Done (WI-A4-20; adapter-owned per-object invocation per the §6 leaf-execution decision) |
 | A4-3c. Commander-level decision policy | Add `ICommanderDecisionPolicy`, with a rule-based reference implementation (aggregate squad state, forward the general's directive as each soldier's goal). | Done (WI-A4-21) |
 | A4-3d. General-level directive interface | Add `IGeneralDecisionPolicy` and the `HierarchicalAIDecisionPolicy` adapter, with a rule-based reference implementation equivalent to today's flat `SkirmishAIPlayer` behavior split across ranks. | Done (WI-A4-22/23; military facet, economy/production stay the flat policy's surface) |
-| A4-3e. First per-rank neural networks | Design and implement a first `ISoldierDecisionPolicy`, `ICommanderDecisionPolicy`, and `IGeneralDecisionPolicy` network per §2.4's complexity scaling. | Not started |
+| A4-3e. First per-rank neural networks | Design and implement a first `ISoldierDecisionPolicy`, `ICommanderDecisionPolicy`, and `IGeneralDecisionPolicy` network per §2.4's complexity scaling. | Design frozen: [hierarchical-neural-network-policies.md](hierarchical-neural-network-policies.md) |
 | A4-3f. Hierarchical evolutionary training harness | Extend the flat-policy training harness ([pluggable-ai.md §4](a4-pluggable-ai.md#4-what-this-unblocks-evolutionary-training-via-seeded-weight-populations)) to co-evolve three rank populations. | Not started |
 
 ---
@@ -342,13 +342,22 @@ classDiagram
   }
 
   class RuleBasedGeneralPolicy {
-    <<planned, WI-A4-22>>
+    <<existing, WI-A4-22>>
   }
   class RuleBasedCommanderPolicy {
-    <<planned, WI-A4-21>>
+    <<existing, WI-A4-21>>
   }
   class RuleBasedSoldierPolicy {
-    <<planned, WI-A4-20>>
+    <<existing, WI-A4-20>>
+  }
+  class NeuralGeneralPolicy {
+    <<planned, WI-A4-27; 116-float genome>>
+  }
+  class NeuralCommanderPolicy {
+    <<planned, WI-A4-26; 156-float genome>>
+  }
+  class NeuralSoldierPolicy {
+    <<planned, WI-A4-25; 75-float genome>>
   }
 
   class AIPlayer {
@@ -368,6 +377,9 @@ classDiagram
   IGeneralDecisionPolicy <|.. RuleBasedGeneralPolicy
   ICommanderDecisionPolicy <|.. RuleBasedCommanderPolicy
   ISoldierDecisionPolicy <|.. RuleBasedSoldierPolicy
+  IGeneralDecisionPolicy <|.. NeuralGeneralPolicy
+  ICommanderDecisionPolicy <|.. NeuralCommanderPolicy
+  ISoldierDecisionPolicy <|.. NeuralSoldierPolicy
   AIPlayer --> IAIDecisionPolicy : dispatches to
 ```
 
