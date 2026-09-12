@@ -56,6 +56,14 @@ Source of truth: [deep-dives/a3-sim-presentation-seam.md](../deep-dives/a3-sim-p
 | [track-a-a4-ai-policy-evolution.md](track-a-a4-ai-policy-evolution.md) | A4 evolution follow-on | Neural-policy evolutionary training (WI-A4-11..16) |
 | [track-a-a4-hierarchical-ai.md](track-a-a4-hierarchical-ai.md) | A4-3 | Hierarchical AI: ranks, contracts, co-evolution (WI-A4-17..30) |
 
+## Track C · C1 : Format-agnostic import abstraction
+
+Source of truth: this plan (deep dive pending, `WI-C1-03`).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c1-import-abstraction.md](track-c-c1-import-abstraction.md) | C1 | Format-agnostic import abstraction |
+
 ## Track G · G1 : High-DPI drawable & resolution correctness
 
 Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :

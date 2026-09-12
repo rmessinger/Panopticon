@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C1-02` |
 | Roadmap phase | [Track C · C1: Format-agnostic import abstraction](../../track-c-external-assets.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-C1-01` |
