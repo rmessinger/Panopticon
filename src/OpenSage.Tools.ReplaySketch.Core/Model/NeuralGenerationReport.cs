@@ -103,6 +103,13 @@ public sealed class NeuralGenerationReport
 
     public List<NeuralNextGenomeReport> NextGeneration { get; set; } = [];
 
+    // Hierarchical co-evolution (WI-A4-30): the rank this generation advanced, and the
+    // partner genome slot per rank (the advancing rank partners with itself). Flat reports
+    // leave both null.
+    public string? AdvancingRank { get; set; }
+
+    public Dictionary<string, int>? PartnerGenomeIndices { get; set; }
+
     public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
     public static NeuralGenerationReport? FromJson(string json) =>

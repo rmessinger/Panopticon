@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-29` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): A4-3f hierarchical training harness |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-16`, `WI-A4-28` |

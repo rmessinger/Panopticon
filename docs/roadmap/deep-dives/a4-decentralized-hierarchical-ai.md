@@ -207,8 +207,8 @@ to know which family, flat or hierarchical, is running.
 | A4-3b. Soldier-level decision policy seam | Extract `ISoldierDecisionPolicy` from the relevant `AIUpdateStateMachine` states (§2.3), with the existing state-machine transition logic as the reference implementation. | Done (WI-A4-20; adapter-owned per-object invocation per the §6 leaf-execution decision) |
 | A4-3c. Commander-level decision policy | Add `ICommanderDecisionPolicy`, with a rule-based reference implementation (aggregate squad state, forward the general's directive as each soldier's goal). | Done (WI-A4-21) |
 | A4-3d. General-level directive interface | Add `IGeneralDecisionPolicy` and the `HierarchicalAIDecisionPolicy` adapter, with a rule-based reference implementation equivalent to today's flat `SkirmishAIPlayer` behavior split across ranks. | Done (WI-A4-22/23; military facet, economy/production stay the flat policy's surface) |
-| A4-3e. First per-rank neural networks | Design and implement a first `ISoldierDecisionPolicy`, `ICommanderDecisionPolicy`, and `IGeneralDecisionPolicy` network per §2.4's complexity scaling. | Not started |
-| A4-3f. Hierarchical evolutionary training harness | Extend the flat-policy training harness ([pluggable-ai.md §4](a4-pluggable-ai.md#4-what-this-unblocks-evolutionary-training-via-seeded-weight-populations)) to co-evolve three rank populations. | Not started |
+| A4-3e. First per-rank neural networks | Design and implement a first `ISoldierDecisionPolicy`, `ICommanderDecisionPolicy`, and `IGeneralDecisionPolicy` network per §2.4's complexity scaling. | Done (WI-A4-24..28; contracts in [hierarchical-neural-network-policies.md](hierarchical-neural-network-policies.md)) |
+| A4-3f. Hierarchical evolutionary training harness | Extend the flat-policy training harness ([pluggable-ai.md §4](a4-pluggable-ai.md#4-what-this-unblocks-evolutionary-training-via-seeded-weight-populations)) to co-evolve three rank populations. | Done (WI-A4-29/30; contract: [implementation/track-a-a4-hierarchical-ai.md](../implementation/track-a-a4-hierarchical-ai.md)) |
 
 ---
 
@@ -244,15 +244,16 @@ to know which family, flat or hierarchical, is running.
   ids and resolve lazily against live objects, never during load.
 - Per-rank network shape and feature encoding: open, deferred to A4-3e (§5). Each rank's exact
   layer sizes and state encoding are implementation detail, not part of the seam (§2.4).
-- Co-evolution scheme for three interacting rank populations (fix two ranks and evolve the
-  third, alternating; or evolve all three jointly): open, deferred to A4-3f (§5). This is a
-  harder training problem than the flat policy's single-population evolution
-  ([pluggable-ai.md §4](a4-pluggable-ai.md#4-what-this-unblocks-evolutionary-training-via-seeded-weight-populations))
-  because rank fitness is interdependent.
-- Fitness signal below the match level: open. The flat policy scores fitness from
-  [`GameOutcome`](p3-victory-defeat.md) alone; a hierarchical population may need per-rank shaped
-  fitness (for example, a commander's squad survival rate) in addition to match outcome, to give
-  useful training signal to ranks that do not directly win or lose a match. Deferred to A4-3f.
+- Co-evolution scheme (WI-A4-29). Decision: alternating round-robin. Each generation advances
+  exactly one rank over the fixed cycle [General, Commander, Soldier]; the other two ranks play
+  as deterministic fixed partners (genome index 0 of each current population, which elitism
+  keeps as the best-known genome). Joint evolution and stochastic partner sampling are future
+  work. Contract: [implementation/track-a-a4-hierarchical-ai.md](../implementation/track-a-a4-hierarchical-ai.md).
+- Fitness signal below the match level (WI-A4-29). Decision: v1 uses shared outcome credit:
+  every rank in a match receives the flat scorer's match fitness. Per-rank shaped fitness
+  (for example, a commander's squad survival rate) needs per-rank T0 metrics that do not exist
+  yet; recorded as a prerequisite in [open-questions.md](../open-questions.md), deferred to a
+  later phase.
 
 ---
 
@@ -342,13 +343,22 @@ classDiagram
   }
 
   class RuleBasedGeneralPolicy {
-    <<planned, WI-A4-22>>
+    <<existing, WI-A4-22>>
   }
   class RuleBasedCommanderPolicy {
-    <<planned, WI-A4-21>>
+    <<existing, WI-A4-21>>
   }
   class RuleBasedSoldierPolicy {
-    <<planned, WI-A4-20>>
+    <<existing, WI-A4-20>>
+  }
+  class NeuralGeneralPolicy {
+    <<planned, WI-A4-27; 116-float genome>>
+  }
+  class NeuralCommanderPolicy {
+    <<planned, WI-A4-26; 156-float genome>>
+  }
+  class NeuralSoldierPolicy {
+    <<planned, WI-A4-25; 75-float genome>>
   }
 
   class AIPlayer {
@@ -368,6 +378,9 @@ classDiagram
   IGeneralDecisionPolicy <|.. RuleBasedGeneralPolicy
   ICommanderDecisionPolicy <|.. RuleBasedCommanderPolicy
   ISoldierDecisionPolicy <|.. RuleBasedSoldierPolicy
+  IGeneralDecisionPolicy <|.. NeuralGeneralPolicy
+  ICommanderDecisionPolicy <|.. NeuralCommanderPolicy
+  ISoldierDecisionPolicy <|.. NeuralSoldierPolicy
   AIPlayer --> IAIDecisionPolicy : dispatches to
 ```
 

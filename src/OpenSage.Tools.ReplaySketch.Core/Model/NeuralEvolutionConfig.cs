@@ -17,6 +17,11 @@ public sealed record NeuralEvolutionConfig
 
     public int MatchSeedCount { get; init; } = 2;
 
+    /// <summary>Genome length this configuration evolves: the flat policy's 125 by default,
+    /// or a per-rank length of the hierarchical contracts (general 116, commander 156,
+    /// soldier 75).</summary>
+    public int GenomeLength { get; init; } = OpenSage.Logic.AI.NeuralNetworkAIDecisionPolicy.WeightCount;
+
     public int EliteCount { get; init; } = 2;
 
     public int TournamentSize { get; init; } = 3;
@@ -50,6 +55,10 @@ public sealed record NeuralEvolutionConfig
         if (MatchSeedCount < 1)
         {
             throw new InvalidOperationException($"{nameof(MatchSeedCount)} must be at least 1.");
+        }
+        if (GenomeLength < 1)
+        {
+            throw new InvalidOperationException($"{nameof(GenomeLength)} must be at least 1.");
         }
         if (EliteCount < 1 || EliteCount >= PopulationSize)
         {

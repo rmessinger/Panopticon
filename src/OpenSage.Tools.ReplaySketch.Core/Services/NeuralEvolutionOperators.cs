@@ -25,6 +25,11 @@ public static class NeuralEvolutionOperators
     public static uint MatchSeed(NeuralEvolutionConfig config, uint generation, int genomeIndex, int slot) =>
         Mix(config.ExperimentSeed, generation, (uint)(genomeIndex + 1), (uint)(slot + 1));
 
+    /// <summary>Hierarchical match seed (WI-A4-29 contract): double-mixed over the rank.</summary>
+    public static uint HierarchicalMatchSeed(
+        NeuralEvolutionConfig config, uint generation, OpenSage.Tools.ReplaySketch.Model.NeuralRankKind rank, int genomeIndex, int slot) =>
+        Mix(Mix(config.ExperimentSeed, generation, (uint)(int)rank + 1, 0), 0, (uint)(genomeIndex + 1), (uint)(slot + 1));
+
     /// <summary>
     /// Initializes a population: one Random over the experiment seed, genomes in index
     /// order, weights in index order, each clamped to ±WeightClamp.
@@ -37,7 +42,7 @@ public static class NeuralEvolutionOperators
         var genomes = new List<NeuralGenome>(config.PopulationSize);
         for (var i = 0; i < config.PopulationSize; i++)
         {
-            genomes.Add(new NeuralGenome(i, CreateWeights(config, rng)));
+            genomes.Add(new NeuralGenome(i, CreateWeights(config, rng), config.GenomeLength));
         }
 
         return new NeuralPopulation(genomes);
@@ -45,7 +50,7 @@ public static class NeuralEvolutionOperators
 
     private static float[] CreateWeights(NeuralEvolutionConfig config, Random rng)
     {
-        var weights = new float[GenomeLength];
+        var weights = new float[config.GenomeLength];
         for (var i = 0; i < weights.Length; i++)
         {
             weights[i] = Clamp(NextGaussian(rng, config.InitializationSigma), config.WeightClamp);
@@ -53,8 +58,6 @@ public static class NeuralEvolutionOperators
 
         return weights;
     }
-
-    private static int GenomeLength => Logic.AI.NeuralNetworkAIDecisionPolicy.WeightCount;
 
     /// <summary>
     /// Advances one generation. <paramref name="rankedByFitness"/> must already be ordered
@@ -75,10 +78,10 @@ public static class NeuralEvolutionOperators
         }
         foreach (var ranked in rankedByFitness)
         {
-            if (ranked.Genome.Weights.Length != GenomeLength)
+            if (ranked.Genome.Weights.Length != config.GenomeLength)
             {
                 throw new InvalidOperationException(
-                    $"Genome {ranked.Genome.Index} has {ranked.Genome.Weights.Length} weights; expected {GenomeLength}.");
+                    $"Genome {ranked.Genome.Index} has {ranked.Genome.Weights.Length} weights; expected {config.GenomeLength}.");
             }
         }
 
@@ -90,14 +93,14 @@ public static class NeuralEvolutionOperators
         for (var slot = 0; slot < config.EliteCount; slot++)
         {
             var elite = rankedByFitness[slot].Genome;
-            next.Add(new NeuralGenome(slot, elite.Weights));
+            next.Add(new NeuralGenome(slot, elite.Weights, config.GenomeLength));
             ancestry.Add(new GenomeAncestry(slot, elite.Index, Elite: true));
         }
 
         for (var slot = config.EliteCount; slot < config.PopulationSize; slot++)
         {
             var parent = SelectTournamentWinner(rankedByFitness, config, rng);
-            next.Add(new NeuralGenome(slot, Mutate(parent.Weights, config, rng)));
+            next.Add(new NeuralGenome(slot, Mutate(parent.Weights, config, rng), config.GenomeLength));
             ancestry.Add(new GenomeAncestry(slot, parent.Index, Elite: false));
         }
 

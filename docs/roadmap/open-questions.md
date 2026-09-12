@@ -390,3 +390,9 @@
   consumer (A5 or B6) needs occupied-cell adjacency. Revisit when one does; the contract
   already carries the attachment point. Affects
   [Track A](track-a-foundations.md) (A4-1).
+- Per-rank hierarchical fitness signal. Decision: v1 hierarchical co-evolution uses shared
+  outcome credit only (every rank in a match receives the flat scorer's match fitness). Per-rank
+  shaped fitness, such as a commander's squad survival rate, requires per-rank T0 run-output
+  metrics that do not exist yet; when they land, the co-evolution contract grows per-rank credit
+  assignment without changing the schedule. Affects
+  [Track A](track-a-foundations.md) (A4-3f).
