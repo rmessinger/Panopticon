@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C1-03` |
 | Roadmap phase | [Track C · C1: Format-agnostic import abstraction](../../track-c-external-assets.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-C1-01`, `WI-C1-02` |
@@ -87,7 +87,5 @@ npx -y @mermaid-js/mermaid-cli@latest -i deep-dives/c1-import-abstraction.md -o 
 - Set Status above to `Done` (or `Blocked` + reason).
 - Do not change the C1 phase Status; implementation has not started.
 - Append a result line to repo-root `.exchange`.
-- Follow-up cards to create:
-  - interchange types + importer interfaces implementation card
-  - W3D refactor behind the seam card
-  - W3D parity tests card
+- Follow-up cards:
+  - `WI-C1-04` through `WI-C1-14`

@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-31`, `WI-A4-38`; C1 must land importer contracts, W3D reference adapters, and diagrams |
-| Diagrams | C1 architecture diagrams, pending the C1 design |
+| Diagrams | [C1 architecture diagrams](../../deep-dives/c1-import-abstraction.md#9-architecture-diagrams) |
 
 ## Goal
 

@@ -58,7 +58,8 @@ Source of truth: [deep-dives/a3-sim-presentation-seam.md](../deep-dives/a3-sim-p
 
 ## Track C · C1 : Format-agnostic import abstraction
 
-Source of truth: this plan (deep dive pending, `WI-C1-03`).
+Source of truth: [deep-dives/c1-import-abstraction.md](../deep-dives/c1-import-abstraction.md) :
+[Architecture diagrams §9](../deep-dives/c1-import-abstraction.md#9-architecture-diagrams).
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
