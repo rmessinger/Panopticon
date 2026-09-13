@@ -27,7 +27,7 @@ Diagrams are required before any phase's first task card is marked `Ready`. All 
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| C1 | — | — | — |
+| C1 | — | — | [`WI-C1-01`](agent/cards/WI-C1-01-audit-model-import-path.md), [`WI-C1-02`](agent/cards/WI-C1-02-audit-animation-import-path.md), [`WI-C1-03`](agent/cards/WI-C1-03-deep-dive-contract-design.md) |
 | C2 | — | — | — |
 | C3 | — | — | — |
 | C4 | — | — | — |
