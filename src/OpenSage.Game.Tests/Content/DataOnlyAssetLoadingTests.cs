@@ -17,6 +17,9 @@ public sealed class MemoryFileSystem : FileSystem
     public void AddFile(string path, string contents) =>
         _files[NormalizeFilePath(path)] = Encoding.UTF8.GetBytes(contents);
 
+    public void AddFile(string path, byte[] contents) =>
+        _files[NormalizeFilePath(path)] = contents;
+
     public override FileSystemEntry? GetFile(string filePath) =>
         _files.TryGetValue(NormalizeFilePath(filePath), out var bytes)
             ? new FileSystemEntry(this, filePath, (uint)bytes.Length, () => new MemoryStream(bytes))
