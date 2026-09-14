@@ -44,6 +44,17 @@
   Morph targets (blendshapes) and advanced glTF PBR material extensions are deferred to
   [C6](track-c-external-assets.md) and added only if an experiment needs them. This keeps the
   first importer small and proves the C1 abstraction end-to-end as early as possible.
+- C1 import-seam shape. Decision: importers parse source files into CPU-only engine interchange
+  values; engine-owned materializers validate those values and create runtime models, animations,
+  materials, textures, and GPU resources. `OnDemandAssetLoadStrategy` carries the selected
+  `IModelImporter` / `IAnimationImporter`; shipped games select internal W3D adapters through a
+  public in-assembly factory, while
+  `OnDemandAssetLoadStrategy.None` remains importer-free. Referenced skeleton loading remains
+  behind `IModelImporter` and the existing hierarchy cache. Missing assets return null with one
+  loader warning; malformed or unsupported source data throws a contextual exception. This keeps
+  file formats out of runtime graphics types, makes imported data inspectable without a GPU, and
+  gives C2/C3/C4 one stable boundary. Affects
+  [Track C](track-c-external-assets.md) (C1).
 - Large-map ceiling & compatibility. Decision: no size cap; no compatibility constraint.
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
   experiments; OpenSAGE may extend/replace the `.map` format and need not stay loadable in the

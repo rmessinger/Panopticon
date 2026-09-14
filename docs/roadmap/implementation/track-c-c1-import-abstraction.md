@@ -9,17 +9,16 @@ interchange types for meshes, skeletons, animations, and materials, plus an
 abstraction with no behavior change. No new external formats (glTF is C4). The seam is registered
 in [seams.md](../seams.md) as the model/animation import seam.
 
-## Audit-to-design sequence
+## Audit-to-implementation sequence
 
 | Step | Card | Deliverable |
 |---|---|---|
 | 1 | [`WI-C1-01`](../agent/cards/WI-C1-01-audit-model-import-path.md) | Current model import path audit (below). |
 | 2 | [`WI-C1-02`](../agent/cards/WI-C1-02-audit-animation-import-path.md) | Current animation import path audit (below). |
-| 3 | `WI-C1-03` | C1 deep dive, contract design, and grounded architecture diagrams from both audits. |
-| 4 | later cards | Interchange types, importer interfaces, W3D refactored behind the seam, parity tests. |
+| 3 | [`WI-C1-03`](../agent/cards/WI-C1-03-deep-dive-contract-design.md) | [C1 deep dive](../deep-dives/c1-import-abstraction.md), contract design, and grounded diagrams. |
+| 4 | [`WI-C1-04..14`](../agent/cards/) | Interchange types, importers, materializers, W3D parity, cutover, and cleanup. |
 
-Steps 1 and 2 are read-only; they ground the C1 architecture diagrams required before the first
-source-edit card is marked `Ready`.
+Steps 1-3 are complete. `WI-C1-04` is the first source-edit card.
 
 ---
 
@@ -211,21 +210,20 @@ Format assumptions exposed by names: `W3DAnimation` (the asset type and the
    flags occur in real data is not determinable from the listed context
    (`AnimationInstance.cs:106-110`).
 
-## Evidence required for C1 design
+## C1 design decisions
 
-Checklist of decisions the C1 deep dive (`WI-C1-03`) must make from the audits above. Not resolved
-here.
+Resolved by the [C1 deep dive](../deep-dives/c1-import-abstraction.md).
 
-- [ ] Interchange ownership: which types own mesh/skeleton/animation/material data between import
+- [x] Interchange ownership: which types own mesh/skeleton/animation/material data between import
       and runtime, and where the W3D ctors on `ModelBoneHierarchy`, `ModelMesh`, and `W3DAnimation`
       move.
-- [ ] Importer selection: how `IModelImporter` / `IAnimationImporter` implementations are chosen
+- [x] Importer selection: how `IModelImporter` / `IAnimationImporter` implementations are chosen
       and wired behind `OnDemandAssetLoadStrategy`, including path-resolver ownership.
-- [ ] Model/animation contract split: what `Model`, `AnimationClip`, and the bone index space
+- [x] Model/animation contract split: what `Model`, `AnimationClip`, and the bone index space
       guarantee to importers, and what stays W3D-implementation detail (the compatibility contracts
       above are the input).
-- [ ] CPU-to-GPU boundary: whether GPU allocation stays inside runtime construction
+- [x] CPU-to-GPU boundary: whether GPU allocation stays inside runtime construction
       (`ModelMesh` ctor, `ModelInstance` skinning buffer) or moves behind the seam.
-- [ ] Error contract: null-return vs log vs throw per failure stage; today's behavior is
+- [x] Error contract: null-return vs log vs throw per failure stage; today's behavior is
       inconsistent across the loaders (see the ambiguous findings in both audits).
-- [ ] W3D parity tests: how the W3D refactor behind the seam proves no behavior change.
+- [x] W3D parity tests: how the W3D refactor behind the seam proves no behavior change.

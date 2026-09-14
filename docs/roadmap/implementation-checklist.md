@@ -735,8 +735,10 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P (P7).
 
 - [ ] C1 Format-agnostic import abstraction (feeds the same `Model`/`ModelInstance` runtime types).
-  - AC: TBD, an import abstraction feeds the same `Model`/`ModelInstance` runtime types; a
-    stub/second importer validates the seam.
+  - AC: CPU-only `IModelImporter` / `IAnimationImporter` contracts feed engine-owned runtime
+    materializers; W3D is the selected reference implementation; representative static, skinned,
+    hierarchy-referenced, material, and animation assets retain their runtime descriptors; no
+    runtime graphics type accepts a W3D parser type.
 - [ ] C2 Skeleton / animation retargeting.
   - AC: TBD, an external skeleton/animation retargets onto an engine unit and plays correctly.
 - [ ] C3 Material mapping.

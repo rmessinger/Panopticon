@@ -129,7 +129,7 @@ mindmap
         B7-5 Precision reduction
         B7-6 Fidelity visualization
     C. External models and animations
-      C1 Import abstraction
+      C1 Import abstraction ⮕
       C2 Skeleton retargeting
       C3 Material mapping
       C4 First concrete format

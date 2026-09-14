@@ -23,11 +23,12 @@
 ## Phase resources
 
 Navigation index for each phase: deep dives, architecture diagrams, and agent task cards.
-Diagrams are required before any phase's first task card is marked `Ready`. All C-phase deep dives are still unwritten.
+Diagrams are required before any phase's first source-edit task card is marked `Ready`. C2-C6 deep
+dives are still unwritten.
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| C1 | — | — | [`WI-C1-01`](agent/cards/WI-C1-01-audit-model-import-path.md), [`WI-C1-02`](agent/cards/WI-C1-02-audit-animation-import-path.md), [`WI-C1-03`](agent/cards/WI-C1-03-deep-dive-contract-design.md) |
+| C1 | [`c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | [Architecture diagrams](deep-dives/c1-import-abstraction.md#9-architecture-diagrams) | [`WI-C1-01..14`](agent/cards/) |
 | C2 | — | — | — |
 | C3 | — | — | — |
 | C4 | — | — | — |
