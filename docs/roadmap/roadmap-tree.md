@@ -132,7 +132,8 @@ mindmap
       C1 Import abstraction ⮕
       C2 Skeleton retargeting
       C3 Material mapping
-      C4 First concrete format
+      C4 First production format
+      C4a EE2 NIF proof ⮕
       C5 Authoring tooling
       C6 Extended features deferred
     D. Gameplay content expansion
@@ -263,7 +264,8 @@ flowchart LR
     direction TB
     A4["A4 Experiment harness"]
     B3["B3 Parallel logic"]
-    C4["C4 First format · static + skinned"]
+    C4["C4 glTF · static + skinned"]
+    C4A["C4a EE2 NIF static proof"]
     D3["D3 External content ingestion"]
     F1["F1 Terrain deformation data model"]
     F4["F4 Physics engine integration"]
@@ -370,6 +372,7 @@ flowchart LR
   A2 --> B3
   B2 --> B3
   C1 --> C4
+  C1 --> C4A
   C2 --> C4
   C3 --> C4
   D1 --> D3
@@ -448,7 +451,7 @@ flowchart LR
 
   class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
-  class C1,C2,C3,C4,C5,C6 trackC;
+  class C1,C2,C3,C4,C4A,C5,C6 trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class H1,H2,H3,H4,H5,H6,H7 trackH;

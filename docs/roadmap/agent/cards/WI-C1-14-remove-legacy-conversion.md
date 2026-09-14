@@ -68,4 +68,5 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` or `Blocked`.
 - If done, set C1 Status to `Done`, tick C1 in the checklist, and unblock `WI-A4-36`.
+- If done and `WI-C4a-09` and `WI-C4a-10` are done, change `WI-C4a-11` to `Ready`.
 - Append a result line to `.exchange`.

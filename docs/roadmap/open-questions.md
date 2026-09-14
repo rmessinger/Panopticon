@@ -39,11 +39,18 @@
   [B6 deep dive](deep-dives/b6-distributed-simulation.md). Affects
   [B6](track-b-scale.md) and informs [A2](track-a-foundations.md)/[B3](track-b-scale.md).
 - glTF scope for C4. Decision: static meshes + skinned skeletal animation only. The first
-  concrete external format ([C4](track-c-external-assets.md)) covers the minimum needed to get
+  production external format ([C4](track-c-external-assets.md)) covers the minimum needed to get
   externally-authored units, with mesh, skeleton, and gameplay-driven animation, into the engine.
   Morph targets (blendshapes) and advanced glTF PBR material extensions are deferred to
   [C6](track-c-external-assets.md) and added only if an experiment needs them. This keeps the
   first importer small and proves the C1 abstraction end-to-end as early as possible.
+- Empire Earth II proof scope. Decision: [C4a](track-c-external-assets.md) is an additive,
+  experimental second-format proof after C1, not a replacement for C4's production glTF
+  importer. It loads the static NIF 10.1 War Galley and Twin-Engine Bomber models directly from
+  an operator-supplied `graphics.zip`, bakes the Bomber's highest-detail LOD, preserves
+  fixed-function values and source texture names, and renders untextured diffuse materials. KF
+  animation, skinning, `.texcache` decoding, player-color patches, DDF integration, and older NIF
+  versions remain outside the proof. No EE2 asset is committed.
 - C1 import-seam shape. Decision: importers parse source files into CPU-only engine interchange
   values; engine-owned materializers validate those values and create runtime models, animations,
   materials, textures, and GPU resources. `OnDemandAssetLoadStrategy` carries the selected

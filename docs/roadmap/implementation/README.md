@@ -65,6 +65,16 @@ Source of truth: [deep-dives/c1-import-abstraction.md](../deep-dives/c1-import-a
 |---|---|---|
 | [track-c-c1-import-abstraction.md](track-c-c1-import-abstraction.md) | C1 | Format-agnostic import abstraction |
 
+## Track C · C4a : Empire Earth II NIF 10.1 proof
+
+Source of truth:
+[deep-dives/ee2-gamebryo-model-storage.md](../deep-dives/ee2-gamebryo-model-storage.md) :
+[Architecture diagrams §10](../deep-dives/ee2-gamebryo-model-storage.md#10-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4a-ee2-nif-proof.md](track-c-c4a-ee2-nif-proof.md) | C4a | Empire Earth II NIF 10.1 proof of concept |
+
 ## Track G · G1 : High-DPI drawable & resolution correctness
 
 Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :

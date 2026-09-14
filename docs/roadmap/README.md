@@ -115,7 +115,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-p-playable-baseline.md`](track-p-playable-baseline.md) | human | Prerequisite track: make the reference game (Generals/ZH) a fully playable end-to-end skirmish (setup, AI, economy, production, combat, win/lose). Gates Tracks A/B/C. |
 | [`track-a-foundations.md`](track-a-foundations.md) | human | Shared prerequisites: headless host, statistical validation, sim/presentation seam, experiment framework, scenario authoring & visualization. |
 | [`track-b-scale.md`](track-b-scale.md) | human | Scaling work: benchmarks, allocation cleanup, parallelism, spatial/pathing, rendering, distributed sim. |
-| [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, first format, tooling. |
+| [`track-c-external-assets.md`](track-c-external-assets.md) | human | External model/animation import: abstraction, retargeting, materials, production glTF, EE2 NIF proof, tooling. |
 | [`track-d-gameplay-expansion.md`](track-d-gameplay-expansion.md) | human | Gameplay content expansion beyond the built-in SAGE titles: tech-tree/prerequisite-graph generalization, era/age progression, external content ingestion (ModCollector + Track C), a reference non-SAGE scenario. Gated on Track P; D3 onward also gated on Track C/ModCollector. |
 | [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes water/ground pathfinding and adds ship combat/production against BFME2 content. E1/E3 depend on Track P; E2 also uses F4a Bepu hull contacts. |
 | [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Object physics, deformable terrain & destruction: Bepu seam, explicit physics participation for every game object, runtime terrain deformation, structural destruction, persistence/replay, and authoring/validation tooling. |
@@ -151,7 +151,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (scaling toolkit). |
 | [`deep-dives/c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | Track C phase C1 - CPU-only model and animation import contracts, W3D reference adapters, runtime materialization, and parity. |
-| [`deep-dives/ee2-gamebryo-model-storage.md`](deep-dives/ee2-gamebryo-model-storage.md) | Track C supporting survey - Empire Earth 2's Gamebryo asset corpus (packaging, NIF 10.1 models, animation vintages, cooked textures) mapped onto the C1 interchange model. |
+| [`deep-dives/ee2-gamebryo-model-storage.md`](deep-dives/ee2-gamebryo-model-storage.md) | Track C phase C4a - Empire Earth II Gamebryo corpus survey and bounded NIF 10.1 model-loading proof of concept. |
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
 | [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
 | [`deep-dives/g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | Track G phase G1 - High-DPI drawable & resolution correctness (logical points versus physical pixels across window, panel, viewport and GUI). |
@@ -180,9 +180,9 @@ track document.
   large-population scenario authoring in WorldBuilder) · B5
   rendering at scale · B6 distributed simulation · B7 variable simulation fidelity.
 - [Track C - External Models & Animations](track-c-external-assets.md): C1 import
-  abstraction · C2 skeleton/animation retargeting · C3 material mapping · C4 first concrete
-  format (static + skinned) · C5 authoring/validation tooling · C6 extended features (deferred:
-  morph targets, advanced PBR).
+  abstraction · C2 skeleton/animation retargeting · C3 material mapping · C4 first production
+  format (glTF static + skinned) · C4a EE2 NIF 10.1 static-model proof · C5
+  authoring/validation tooling · C6 extended features (deferred: morph targets, advanced PBR).
 - [Track D - Gameplay Content Expansion](track-d-gameplay-expansion.md): D1 tech-tree/
   prerequisite-graph generalization · D2 era/age progression mechanic · D3 external content
   ingestion (ModCollector + Track C) · D4 reference non-SAGE scenario. Depends on Track P
@@ -274,7 +274,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | Track A - Foundations | `███████░░░` | 12 / 19 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 12 |
-| Track C - External Assets | `░░░░░░░░░░` | 0 / 6 |
+| Track C - External Assets | `░░░░░░░░░░` | 0 / 7 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
 

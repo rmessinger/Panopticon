@@ -1,10 +1,10 @@
-# Deep Dive: Empire Earth 2 model storage survey
+# Deep Dive: Empire Earth II Gamebryo models and NIF proof
 
-> Audience: human. A read-only survey of how Empire Earth II Gold stores, cooks, and binds unit
-> models, animations, and textures. Evidence for [Track C](../track-c-external-assets.md): a
-> complete second-engine asset corpus (Gamebryo) used to sanity-check that the
-> [C1 import seam](c1-import-abstraction.md) is format-agnostic beyond W3D and glTF. Performed
-> 2026-09-14 against a local install; no OpenSAGE source changes.
+> Audience: human. A survey of how Empire Earth II Gold stores, cooks, and binds unit models,
+> animations, and textures, plus the bounded design for the
+> [C4a NIF 10.1 proof](../track-c-external-assets.md). The corpus sanity-checks that the
+> [C1 import seam](c1-import-abstraction.md) is format-agnostic beyond W3D and glTF. The original
+> survey was performed 2026-09-14 against a local install.
 
 ## 1. Scope and method
 
@@ -139,11 +139,155 @@ Player colors are applied through `cache/pcpcache/<name><A..K>.pcpatch` pixel pa
 - The survey validates the C1 seam's shape: separate model and animation importers, a CPU-only
   interchange graph, by-name texture references, and gameplay-side state binding all exist in a
   second commercial engine with no forcing function from OpenSAGE's design.
-- NIF 10.1 is a viable second importer candidate after C4's glTF (open spec via nif.xml, mature
-  tooling), and this corpus would serve as its parity test set. C4's committed scope is unchanged.
-- Known risks if pursued: three animation header vintages in one corpus (including 452 files of
-  an older 10.0.1.0 layout with per-file user versions), 4-bone influences versus the two-bone
-  runtime limit, LOD nodes, and axis/scale conventions (not verified; nothing was rendered).
+- C4a uses NIF 10.1 as a static second-format proof after C1. C4's production glTF scope is
+  unchanged.
+- Known follow-up risks: three animation header vintages in one corpus (including 452 files of an
+  older 10.0.1.0 layout with per-file user versions), 4-bone influences versus the two-bone
+  runtime limit, cooked texture decoding, player-color patches, and DDF state binding.
+
+## 9. C4a proof-of-concept scope
+
+### 9.1 Target assets
+
+The proof uses two base-game entries from `zips/graphics.zip`. Their block inventories were
+rechecked directly against the archive before defining the work items.
+
+| Asset | Blocks | Required distinction |
+|---|---:|---|
+| `cache/nifcache/nwg1_galley.nifcache` | 74 | Static node hierarchy, triangle geometry, fixed-function material, texture references, and string metadata. |
+| `cache/nifcache/ab11_TwinEngineBomber.nifcache` | 82 | The same base subset plus alpha and specular state and `NiLODNode` / `NiRangeLODData`. |
+
+Neither target contains `NiSkinInstance` or `NiSkinData`. The proof therefore does not depend on
+C2 and cannot be used to claim NIF skinning or animation support.
+
+The supported block set is:
+
+- `NiNode`, `NiLODNode`, and `NiRangeLODData` for the static hierarchy and highest-detail LOD.
+- `NiTriShape` and `NiTriShapeData` for positions, normals, UVs, and triangle indices.
+- `NiMaterialProperty`, `NiTexturingProperty`, `NiSourceTexture`, `NiAlphaProperty`,
+  `NiSpecularProperty`, `NiZBufferProperty`, and `NiVertexColorProperty` for fixed-function
+  material state.
+- `NiStringExtraData` only where the target inventory identifies a passive metadata role.
+
+`WI-C4a-01` records exact object graphs, counts, transforms, property flags, texture names, and
+LOD ranges before parser code is written. An enabled vertex-color array, an unknown active
+property, or a graph outside this list blocks the affected target until the design is extended.
+
+### 9.2 Import and rendering contract
+
+- Input is an operator-owned EE2 installation selected by `EMPIRE_EARTH_II_PATH`. No fallback
+  machine path is embedded in source.
+- `ZipFileSystem` exposes `graphics.zip` through the existing `FileSystem` abstraction with
+  case-insensitive normalized entry lookup. C4a does not implement EE2's patch-layer stack.
+- `NifFile` accepts only `Gamebryo File Format, Version 10.1.0.0`, version `0x0A010000`, user
+  version 0. Other versions throw `NotSupportedException` with asset context.
+- `NifModelImporter` walks the selected NIF node graph and accumulates each shape's full source
+  transform. It bakes that transform and one documented source-to-engine conversion into the
+  static mesh positions and normals, reverses triangle winding when the conversion changes
+  handedness, and attaches all meshes to one identity root bone. This avoids widening
+  `ImportedBone`, which stores translation and rotation but not scale.
+- Non-finite transforms and transforms that cannot be represented safely by position and
+  inverse-transpose normal baking fail with `NotSupportedException`.
+- The Bomber's `NiLODNode` is baked to the child whose range starts nearest the camera. Other LOD
+  children are intentionally omitted because C1 has no LOD interchange type.
+- Fixed-function colors and render state map to `ImportedMaterial`; by-name `.tga` references
+  remain `TextureName` properties. The proof sets texture-stage count to zero and renders the
+  fixed-function diffuse color without sampling an unresolved texture. `.texcache` and
+  `.pcpatch` decoding are not part of C4a.
+- Each mesh's axis-aligned bounding box and bounding sphere are recomputed from transformed
+  positions. Source bounds remain parser diagnostics but are not copied after transform baking.
+- Unsupported block types reachable from the selected graph throw `NotSupportedException`.
+  Invalid references, counts, ranges, or malformed data throw contextual
+  `InvalidDataException`. No data is silently truncated or discarded.
+- Synthetic byte streams cover parser behavior in normal tests. Installed-asset tests and
+  captures read the local archive only. Raw or extracted EE2 assets are never committed.
+
+### 9.3 Completion boundary
+
+C4a is complete when both target archive entries:
+
+1. Import into deterministic `ImportedModel` descriptors whose counts, bounds, hierarchy,
+   material values, and texture names match the inventory from `WI-C4a-01`.
+2. Materialize through the C1 runtime materializer without a NIF-specific runtime type.
+3. Produce recognizable frame captures with correct baked hierarchy placement, winding, normals,
+   orientation, scale, and the Bomber's highest-detail LOD.
+
+KF animation, skinning, older NIF versions, cooked textures, player color, patch archives, DDF
+unit definitions, damage-state swapping, particles, and general EE2 game support remain separate
+follow-up work.
+
+## 10. Architecture diagrams
+
+```mermaid
+classDiagram
+  class FileSystem
+  class ZipFileSystem
+  class NifFile
+  class NifHeader
+  class NifBlock
+  class NifNode
+  class NifTriShape
+  class NifTriShapeData
+  class NifProperty
+  class IModelImporter
+  class NifModelImporter
+  class AssetImportContext
+  class ImportedModel
+  class ImportedSkeleton
+  class ImportedMesh
+  class ImportedMaterial
+  class ImportedModelMaterializer
+  class Model
+  class StandaloneModelCapture
+  class Ee2NifProofScenario
+
+  FileSystem <|-- ZipFileSystem
+  NifFile *-- NifHeader
+  NifFile *-- NifBlock
+  NifBlock <|-- NifNode
+  NifBlock <|-- NifTriShape
+  NifBlock <|-- NifTriShapeData
+  NifBlock <|-- NifProperty
+  IModelImporter <|.. NifModelImporter
+  NifModelImporter --> AssetImportContext
+  AssetImportContext --> FileSystem
+  NifModelImporter --> NifFile
+  NifModelImporter --> ImportedModel
+  ImportedModel *-- ImportedSkeleton
+  ImportedModel *-- ImportedMesh
+  ImportedMesh *-- ImportedMaterial
+  ImportedModelMaterializer --> ImportedModel
+  ImportedModelMaterializer --> Model
+  StandaloneModelCapture --> Model
+  Ee2NifProofScenario --> ZipFileSystem
+  Ee2NifProofScenario --> NifModelImporter
+  Ee2NifProofScenario --> ImportedModelMaterializer
+  Ee2NifProofScenario --> StandaloneModelCapture
+```
+
+```mermaid
+sequenceDiagram
+  participant Proof as Ee2NifProofScenario
+  participant Zip as ZipFileSystem
+  participant Importer as NifModelImporter
+  participant Parser as NifFile
+  participant Materializer as ImportedModelMaterializer
+  participant Runtime as Model
+  participant Frame as FrameCapturer
+
+  Proof->>Zip: open graphics.zip
+  Proof->>Importer: Import(target key, AssetImportContext)
+  Importer->>Zip: GetFile(cache/nifcache/key.nifcache)
+  Zip-->>Importer: source stream
+  Importer->>Parser: Read(stream)
+  Parser-->>Importer: validated NIF 10.1 block graph
+  Importer->>Importer: select highest LOD and bake transforms into meshes
+  Importer-->>Proof: CPU-only ImportedModel
+  Proof->>Materializer: Materialize(imported model, AssetLoadContext)
+  Materializer->>Runtime: create buffers, materials, and model
+  Runtime-->>Proof: runtime Model
+  Proof->>Frame: render and capture target
+```
 
 ## Appendix: reproduction
 

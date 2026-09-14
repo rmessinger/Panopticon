@@ -56,6 +56,9 @@ contact-ownership, and migration work assumed by F4a.
 
 ## Model & animation pipeline
 
+- C1 interchange values now exist under `src/OpenSage.Game/Content/Importing/`: immutable,
+  CPU-only `ImportedModel`, skeleton, mesh, material, and animation graphs with constructor
+  validation. Importer contracts, materializers, and loader cutover remain planned.
 - W3D parsing: `src/OpenSage.FileFormats.W3d/`: `W3dFile` parses meshes, hierarchy
   (skeleton pivots), animations (incl. compressed), materials, emitters, HLOD, etc.
 - W3D → runtime: `OnDemandModelLoader` (`src/OpenSage.Game/Content/Loaders/`) builds a
