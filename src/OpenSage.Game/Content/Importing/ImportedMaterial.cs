@@ -15,6 +15,7 @@ public enum ImportedCullMode
 
 public enum ImportedDepthComparison
 {
+    Never,
     Less,
     Equal,
     LessEqual,
