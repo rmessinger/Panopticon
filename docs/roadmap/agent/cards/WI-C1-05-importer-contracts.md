@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C1-05` |
 | Roadmap phase | [Track C · C1](../../track-c-external-assets.md): Format-agnostic import abstraction |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C1-04` |
