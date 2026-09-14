@@ -39,3 +39,4 @@ dives are still unwritten.
 
 - C1 and A3 both touch the presentation seam, so the import abstraction should feed the same runtime `Model`/`ModelInstance` types that [B5](track-b-scale.md) expects.
 - B5 should account for Track C models so instancing is not W3D-specific.
+- The seam's format-agnosticism is cross-checked against a second engine's asset layout in the [Empire Earth 2 Gamebryo survey](deep-dives/ee2-gamebryo-model-storage.md); NIF 10.1 is a candidate second importer after C4.
