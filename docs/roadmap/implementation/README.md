@@ -85,6 +85,16 @@ Source of truth:
 |---|---|---|
 | [track-c-c3-material-texture-mapping.md](track-c-c3-material-texture-mapping.md) | C3 | Material mapping |
 
+## Track C · C4 : Production glTF importer
+
+Source of truth:
+[deep-dives/c4-gltf-importer.md](../deep-dives/c4-gltf-importer.md) :
+[Architecture diagrams §11](../deep-dives/c4-gltf-importer.md#11-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4-gltf-importer.md](track-c-c4-gltf-importer.md) | C4 | First production format |
+
 ## Track C · C4a : Empire Earth II NIF 10.1 proof
 
 Source of truth:
@@ -94,6 +104,16 @@ Source of truth:
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-c-c4a-ee2-nif-proof.md](track-c-c4a-ee2-nif-proof.md) | C4a | Empire Earth II NIF 10.1 proof of concept |
+
+## Track C · C5 : External model tooling
+
+Source of truth:
+[deep-dives/c5-external-model-tooling.md](../deep-dives/c5-external-model-tooling.md) :
+[Architecture diagrams §12](../deep-dives/c5-external-model-tooling.md#12-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c5-external-model-tooling.md](track-c-c5-external-model-tooling.md) | C5 | Authoring and validation tooling |
 
 ## Track G · G1 : High-DPI drawable & resolution correctness
 

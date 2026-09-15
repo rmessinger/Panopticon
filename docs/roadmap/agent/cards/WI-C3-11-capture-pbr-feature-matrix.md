@@ -78,4 +78,5 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` or `Blocked`.
 - If done, set C3 Status to `Done` and tick C3 in the implementation checklist.
+- If done and `WI-C4-11` and `WI-C4a-10` are done, change `WI-C4-12` to `Ready`.
 - Append a result line to `.exchange`, including the capture output and validation result.

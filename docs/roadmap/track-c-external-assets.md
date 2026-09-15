@@ -31,9 +31,9 @@ Diagrams are required before any phase's first source-edit task card is marked `
 | C1 | [`c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | [Architecture diagrams](deep-dives/c1-import-abstraction.md#9-architecture-diagrams) | [`WI-C1-01..14`](agent/cards/) |
 | C2 | [`c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | [Architecture diagrams](deep-dives/c2-skeleton-animation-retargeting.md#8-architecture-diagrams) | [`WI-C2-01..06`](agent/cards/) |
 | C3 | [`c3-material-texture-mapping.md`](deep-dives/c3-material-texture-mapping.md) | [Architecture diagrams](deep-dives/c3-material-texture-mapping.md#9-architecture-diagrams) | [`WI-C3-01..11`](agent/cards/) |
-| C4 | [`c4-gltf-importer.md`](deep-dives/c4-gltf-importer.md) | [Architecture diagrams](deep-dives/c4-gltf-importer.md#11-architecture-diagrams) | — |
+| C4 | [`c4-gltf-importer.md`](deep-dives/c4-gltf-importer.md) | [Architecture diagrams](deep-dives/c4-gltf-importer.md#11-architecture-diagrams) | [`WI-C4-01..12`](agent/cards/) |
 | C4a | [`ee2-gamebryo-model-storage.md`](deep-dives/ee2-gamebryo-model-storage.md) | [Architecture diagrams](deep-dives/ee2-gamebryo-model-storage.md#10-architecture-diagrams) | [`WI-C4a-01..11`](agent/cards/) |
-| C5 | [`c5-external-model-tooling.md`](deep-dives/c5-external-model-tooling.md) | [Architecture diagrams](deep-dives/c5-external-model-tooling.md#12-architecture-diagrams) | — |
+| C5 | [`c5-external-model-tooling.md`](deep-dives/c5-external-model-tooling.md) | [Architecture diagrams](deep-dives/c5-external-model-tooling.md#12-architecture-diagrams) | [`WI-C5-01..12`](agent/cards/) |
 | C6 | [`c6-extended-model-features.md`](deep-dives/c6-extended-model-features.md) | [Architecture diagrams](deep-dives/c6-extended-model-features.md#11-architecture-diagrams) | — |
 
 ## Cross-track dependencies
