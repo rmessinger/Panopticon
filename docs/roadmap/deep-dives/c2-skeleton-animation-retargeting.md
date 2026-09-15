@@ -93,8 +93,8 @@ the same indices and fixed-time playback results as C1 parity tests.
 Binding validates before animation playback:
 
 - Every named channel has exactly one case-insensitive target match.
-- Non-empty target bone names are unique under the matching comparer when named channels are
-  present; null or empty runtime names are excluded from the name index.
+- For each distinct referenced name, the hierarchy contains exactly one matching bone. Duplicate
+  runtime names that no channel references do not block unrelated animation.
 - Keyframe kinds and ordering remain protected by the interchange constructors.
 
 A named source bone absent from the target is an `InvalidDataException` naming the animation,
