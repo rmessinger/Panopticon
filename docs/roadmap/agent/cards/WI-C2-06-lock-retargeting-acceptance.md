@@ -72,4 +72,5 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` or `Blocked`.
 - If done, set C2 Status to `Done` and tick C2 in the implementation checklist.
+- If done, change `WI-C4-04` to `Ready`.
 - Append a result line to `.exchange`, including the synthetic hierarchy and channel matrix.

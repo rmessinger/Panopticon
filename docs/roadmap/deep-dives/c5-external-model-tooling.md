@@ -327,25 +327,25 @@ classDiagram
   class TestHarnessPreviewClient
   class ExternalModelRequest
   class ExternalModelReport
-  class TestHarnessExternalModelHost
+  class ExternalModelHost
   class IModelImporter
   class IAnimationImporter
   class ImportedModelMaterializer
 
   ModelTabView --> ExternalModelViewModel
   ExternalModelViewModel --> ExternalModelSession
-  ExternalModelSession --> ExternalFormatFactory
+  ExternalModelHost --> ExternalFormatFactory
   ExternalModelSession --> IExternalAssetInspector
   ExternalModelSession --> ExternalAssetCatalog
   ExternalModelSession --> ExternalModelDiagnostic
   ExternalModelSession --> IExternalModelPreviewClient
   IExternalModelPreviewClient <|.. TestHarnessPreviewClient
   TestHarnessPreviewClient --> ExternalModelRequest
-  TestHarnessExternalModelHost --> ExternalModelRequest
-  TestHarnessExternalModelHost --> ExternalModelReport
-  TestHarnessExternalModelHost --> IModelImporter
-  TestHarnessExternalModelHost --> IAnimationImporter
-  TestHarnessExternalModelHost --> ImportedModelMaterializer
+  ExternalModelHost --> ExternalModelRequest
+  ExternalModelHost --> ExternalModelReport
+  ExternalModelHost --> IModelImporter
+  ExternalModelHost --> IAnimationImporter
+  ExternalModelHost --> ImportedModelMaterializer
 ```
 
 ```mermaid

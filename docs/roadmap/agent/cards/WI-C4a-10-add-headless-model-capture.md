@@ -73,4 +73,6 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` or `Blocked`.
 - If `WI-C1-14` and `WI-C4a-09` are done, change `WI-C4a-11` to `Ready`.
 - If `WI-C3-10` is done, change `WI-C3-11` to `Ready`.
+- If `WI-C4-11` is done, change `WI-C4-12` to `Ready`.
+- If `WI-C5-07` is done, change `WI-C5-08` to `Ready`.
 - Append a result line to `.exchange`.
