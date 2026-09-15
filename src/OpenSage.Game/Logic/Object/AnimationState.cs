@@ -113,7 +113,7 @@ public sealed class AnimationStateAnimation
     };
 
     public string AnimationType { get; private set; }
-    public LazyAssetReference<Graphics.Animation.W3DAnimation> Animation { get; internal set; }
+    public LazyAssetReference<Graphics.Animation.ModelAnimation> Animation { get; internal set; }
     public AnimationMode AnimationMode { get; internal set; }
     public int Priority { get; internal set; } = 1;
     public bool UseWeaponTiming { get; private set; }

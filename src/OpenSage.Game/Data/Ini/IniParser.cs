@@ -713,14 +713,14 @@ internal sealed partial class IniParser
             : null;
     }
 
-    public LazyAssetReference<Graphics.Animation.W3DAnimation>? ParseAnimationReference()
+    public LazyAssetReference<Graphics.Animation.ModelAnimation>? ParseAnimationReference()
     {
         var token = GetNextToken();
 
         return ScanAnimationReference(token);
     }
 
-    public LazyAssetReference<Graphics.Animation.W3DAnimation>? ScanAnimationReference(in IniToken token)
+    public LazyAssetReference<Graphics.Animation.ModelAnimation>? ScanAnimationReference(in IniToken token)
     {
         return (!string.Equals(token.Text, "NONE", StringComparison.OrdinalIgnoreCase))
             ? _assetStore.ModelAnimations.GetLazyAssetReferenceByName(token.Text)

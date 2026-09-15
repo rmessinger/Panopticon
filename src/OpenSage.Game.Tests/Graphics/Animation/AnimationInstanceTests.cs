@@ -283,7 +283,7 @@ public class AnimationInstanceTests
         };
     }
 
-    private static W3DAnimation NewBasicAnimationInstance()
+    private static ModelAnimation NewBasicAnimationInstance()
     {
         var animationClips = new[]
         {
@@ -312,7 +312,7 @@ public class AnimationInstanceTests
             })
         };
 
-        return new W3DAnimation(string.Empty, TimeSpan.FromSeconds(5), animationClips);
+        return new ModelAnimation(string.Empty, TimeSpan.FromSeconds(5), animationClips);
     }
 }
 

@@ -13,7 +13,7 @@ public sealed class AnimationInstance
     private readonly GameObject _gameObject;
     private readonly int[] _keyframeIndices;
     private readonly ModelBoneInstance[] _boneInstances;
-    private readonly W3DAnimation _animation;
+    private readonly ModelAnimation _animation;
 
     private TimeSpan _currentTimeValue;
 
@@ -39,7 +39,7 @@ public sealed class AnimationInstance
     /// <param name="flags">Additional animation flags</param>
     /// <param name="gameObject"></param>
     /// <param name="random">Random number generator used when combined with <see cref="AnimationFlags.RandomStart"/></param>
-    public AnimationInstance(ModelBoneInstance[] modelBoneInstances, W3DAnimation animation,
+    public AnimationInstance(ModelBoneInstance[] modelBoneInstances, ModelAnimation animation,
         AnimationMode mode, AnimationFlags flags, GameObject gameObject, IRandom random)
     {
         _animation = animation;
