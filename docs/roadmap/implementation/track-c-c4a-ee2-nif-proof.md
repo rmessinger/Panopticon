@@ -27,7 +27,7 @@ experimental proof, not an EE2 game definition or a production NIF importer.
 | 7 | [`WI-C4a-07`](../agent/cards/WI-C4a-07-add-nif-model-importer.md) | C1 `ImportedModel` adapter. |
 | 8 | [`WI-C4a-08`](../agent/cards/WI-C4a-08-add-zip-file-system.md) | Case-insensitive ZIP-backed virtual file system. |
 | 9 | [`WI-C4a-09`](../agent/cards/WI-C4a-09-verify-ee2-import-descriptors.md) | Installed-asset descriptor checks for both targets. |
-| 10 | [`WI-C4a-10`](../agent/cards/WI-C4a-10-add-headless-model-capture.md) | Headless runtime-model capture path. |
+| 10 | [`WI-C4a-10`](../agent/cards/WI-C4a-10-add-headless-model-capture.md) | Shared C3/C4a headless runtime-model capture path. |
 | 11 | [`WI-C4a-11`](../agent/cards/WI-C4a-11-capture-ee2-proof-models.md) | Installed-asset materialization and visual captures. |
 
 Cards 3 and 8 can proceed independently after their prerequisites. Cards 4, 5, and 6 can proceed

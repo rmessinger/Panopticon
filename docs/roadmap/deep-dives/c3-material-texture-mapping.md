@@ -113,6 +113,11 @@ format-neutral CPU `ImportedTangentGenerator` creates a deterministic tangent ba
 materialization. Degenerate UV triangles or incomplete inputs produce `NotSupportedException`;
 the engine does not silently disable the normal map.
 
+UV arrays live on mesh parts while tangent vectors live on shared mesh vertices. When
+normal-mapped parts share a vertex index, their selected UV values for that vertex must match.
+Conflicting shared-vertex UVs fail with `NotSupportedException` rather than making tangent output
+depend on part order. Disjoint parts may select different UV sets.
+
 Malformed values or references throw contextual `InvalidDataException`. Valid unsupported
 features throw `NotSupportedException`. For a PBR payload, missing referenced images are errors.
 Neutral textures are used only for omitted optional bindings, never to hide a broken reference.
@@ -131,7 +136,8 @@ rather than a second material family.
 Materialization:
 
 1. Validates the complete imported graph.
-2. Opens exact external virtual paths or decodes embedded image bytes, including PNG.
+2. Opens exact external virtual paths or decodes embedded PNG, JPEG, or TGA image bytes to RGBA8.
+   DDS remains on the existing W3D texture path; C3 does not add block-compression decoding.
 3. Uploads image data as ordinary UNorm texture data; the binding role controls shader conversion.
 4. Creates or reuses the requested sampler.
 5. Creates the PBR constants and texture resource set.
@@ -175,8 +181,7 @@ C4 owns glTF parsing and conversion:
 
 - glTF factors and core textures become the typed C3 payload.
 - URI, data URI, and buffer-view images become `ImportedImageSource` values.
-- External image URIs resolve relative to the model path and support PNG, JPEG, and the existing
-  decoded image formats.
+- External image URIs resolve relative to the model path and support PNG, JPEG, and TGA.
 - glTF sampler constants become `ImportedSampler` values.
 - `TEXCOORD_0` and `TEXCOORD_1` map to the existing two UV arrays.
 - A populated `COLOR_0` accessor is rejected because C3 does not extend the vertex layout.
