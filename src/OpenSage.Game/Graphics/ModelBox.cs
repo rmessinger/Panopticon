@@ -1,4 +1,5 @@
 using System.Numerics;
+using OpenSage.Content.Importing;
 using OpenSage.Content.Loaders;
 using OpenSage.FileFormats.W3d;
 using OpenSage.Graphics.Cameras;
@@ -25,6 +26,12 @@ public sealed class ModelBox : ModelRenderObject
             w3dBox.Center + w3dBox.Extent);
         _boundingSphere = new BoundingSphere(w3dBox.Center, w3dBox.Extent.Length());
         // TODO
+    }
+
+    internal ModelBox(ImportedBox importedBox)
+    {
+        _boundingBox = importedBox.BoundingBox;
+        _boundingSphere = importedBox.BoundingSphere;
     }
 
     internal override void BuildRenderList(

@@ -1,4 +1,5 @@
 using System.Numerics;
+using OpenSage.Content.Importing;
 using OpenSage.FileFormats.W3d;
 
 namespace OpenSage.Graphics;
@@ -40,6 +41,29 @@ public sealed class ModelBoneHierarchy : BaseAsset
                 parent,
                 pivot.Translation,
                 pivot.Rotation);
+        }
+    }
+
+    internal ModelBoneHierarchy(ImportedSkeleton importedSkeleton)
+    {
+        SetNameAndInstanceId("W3DHierarchy", importedSkeleton.Name);
+
+        Bones = new ModelBone[importedSkeleton.Bones.Count];
+
+        for (var i = 0; i < Bones.Length; i++)
+        {
+            var importedBone = importedSkeleton.Bones[i];
+
+            var parent = importedBone.ParentIndex == -1
+                ? null
+                : Bones[importedBone.ParentIndex];
+
+            Bones[i] = new ModelBone(
+                i,
+                importedBone.Name,
+                parent,
+                importedBone.BindTranslation,
+                importedBone.BindRotation);
         }
     }
 }
