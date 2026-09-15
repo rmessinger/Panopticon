@@ -45,6 +45,7 @@ public sealed class ImportedAssetTests
             new BoundingSphere(Vector3.Zero, 1.0f),
             hidden: false,
             cameraOriented: false,
+            hasHouseColor: false,
             isSkinned: isSkinned,
             materials: new[] { CreateMaterial() },
             meshParts: new[]
@@ -283,6 +284,7 @@ public sealed class ImportedAssetTests
                 new BoundingSphere(Vector3.Zero, 1.0f),
                 hidden: false,
                 cameraOriented: false,
+                hasHouseColor: false,
                 isSkinned: false,
                 materials: new[] { CreateMaterial() },
                 meshParts: new[]
@@ -310,6 +312,7 @@ public sealed class ImportedAssetTests
                 new BoundingSphere(Vector3.Zero, 1.0f),
                 hidden: false,
                 cameraOriented: false,
+                hasHouseColor: false,
                 isSkinned: false,
                 materials: new[] { CreateMaterial() },
                 meshParts: new[]
@@ -337,6 +340,7 @@ public sealed class ImportedAssetTests
                 new BoundingSphere(Vector3.Zero, 1.0f),
                 hidden: false,
                 cameraOriented: false,
+                hasHouseColor: false,
                 isSkinned: false,
                 materials: new[] { CreateMaterial() },
                 meshParts: new[]
