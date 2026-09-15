@@ -30,8 +30,8 @@ deep dives are still unwritten.
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
 | C1 | [`c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | [Architecture diagrams](deep-dives/c1-import-abstraction.md#9-architecture-diagrams) | [`WI-C1-01..14`](agent/cards/) |
-| C2 | [`c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | [Architecture diagrams](deep-dives/c2-skeleton-animation-retargeting.md#8-architecture-diagrams) | — |
-| C3 | [`c3-material-texture-mapping.md`](deep-dives/c3-material-texture-mapping.md) | [Architecture diagrams](deep-dives/c3-material-texture-mapping.md#9-architecture-diagrams) | — |
+| C2 | [`c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | [Architecture diagrams](deep-dives/c2-skeleton-animation-retargeting.md#8-architecture-diagrams) | [`WI-C2-01..06`](agent/cards/) |
+| C3 | [`c3-material-texture-mapping.md`](deep-dives/c3-material-texture-mapping.md) | [Architecture diagrams](deep-dives/c3-material-texture-mapping.md#9-architecture-diagrams) | [`WI-C3-01..11`](agent/cards/) |
 | C4 | — | — | — |
 | C4a | [`ee2-gamebryo-model-storage.md`](deep-dives/ee2-gamebryo-model-storage.md) | [Architecture diagrams](deep-dives/ee2-gamebryo-model-storage.md#10-architecture-diagrams) | [`WI-C4a-01..11`](agent/cards/) |
 | C5 | — | — | — |

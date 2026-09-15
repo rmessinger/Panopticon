@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-C4a-10` |
-| Roadmap phase | [Track C · C4a](../../track-c-external-assets.md): Empire Earth II NIF 10.1 proof of concept |
+| Roadmap phase | [Track C · C4a](../../track-c-external-assets.md): shared C3/C4a runtime-model capture infrastructure |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
@@ -13,7 +13,8 @@
 ## Goal
 
 Add a TestHarness helper that renders one already-materialized runtime `Model` to a PNG without
-requiring the ImGui-based diagnostic `ModelView`.
+requiring the ImGui-based diagnostic `ModelView`. This infrastructure card may execute after
+`WI-C1-11` independently of the remaining C4a cards.
 
 ## Context to read (and only this)
 
@@ -71,4 +72,5 @@ dotnet format src --verify-no-changes
 
 - Set Status above to `Done` or `Blocked`.
 - If `WI-C1-14` and `WI-C4a-09` are done, change `WI-C4a-11` to `Ready`.
+- If `WI-C3-10` is done, change `WI-C3-11` to `Ready`.
 - Append a result line to `.exchange`.

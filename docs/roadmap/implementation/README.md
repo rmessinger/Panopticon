@@ -65,6 +65,26 @@ Source of truth: [deep-dives/c1-import-abstraction.md](../deep-dives/c1-import-a
 |---|---|---|
 | [track-c-c1-import-abstraction.md](track-c-c1-import-abstraction.md) | C1 | Format-agnostic import abstraction |
 
+## Track C · C2 : Skeleton and animation retargeting
+
+Source of truth:
+[deep-dives/c2-skeleton-animation-retargeting.md](../deep-dives/c2-skeleton-animation-retargeting.md) :
+[Architecture diagrams §8](../deep-dives/c2-skeleton-animation-retargeting.md#8-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c2-animation-retargeting.md](track-c-c2-animation-retargeting.md) | C2 | Skeleton / animation retargeting |
+
+## Track C · C3 : Material and texture mapping
+
+Source of truth:
+[deep-dives/c3-material-texture-mapping.md](../deep-dives/c3-material-texture-mapping.md) :
+[Architecture diagrams §9](../deep-dives/c3-material-texture-mapping.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c3-material-texture-mapping.md](track-c-c3-material-texture-mapping.md) | C3 | Material mapping |
+
 ## Track C · C4a : Empire Earth II NIF 10.1 proof
 
 Source of truth:
