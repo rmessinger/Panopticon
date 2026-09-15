@@ -329,7 +329,7 @@ public sealed class ObjectConditionAnimation
         return result;
     }
 
-    public LazyAssetReference<Graphics.Animation.W3DAnimation> Animation { get; private set; }
+    public LazyAssetReference<Graphics.Animation.ModelAnimation> Animation { get; private set; }
     public float Distance { get; private set; }
     public int Priority { get; private set; }
 }

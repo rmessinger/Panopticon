@@ -135,7 +135,7 @@ public sealed class AssetStore
     public ScopedAssetCollection<MappedImage> MappedImages { get; }
     public ScopedAssetCollection<MeshNameMatches> MeshNameMatches { get; }
     public ScopedAssetCollection<Model> Models { get; }
-    public ScopedAssetCollection<Graphics.Animation.W3DAnimation> ModelAnimations { get; }
+    public ScopedAssetCollection<Graphics.Animation.ModelAnimation> ModelAnimations { get; }
     public ScopedAssetCollection<ModelBoneHierarchy> ModelBoneHierarchies { get; }
     public ScopedAssetCollection<ModelMesh> ModelMeshes { get; }
     public ScopedAssetCollection<ModifierList> ModifierLists { get; }
@@ -309,7 +309,7 @@ public sealed class AssetStore
         AddAssetCollection(MappedImages = new ScopedAssetCollection<MappedImage>(this));
         AddAssetCollection(MeshNameMatches = new ScopedAssetCollection<MeshNameMatches>(this));
         AddAssetCollection(Models = new ScopedAssetCollection<Model>(this, loadStrategy.CreateModelLoader()));
-        AddAssetCollection(ModelAnimations = new ScopedAssetCollection<Graphics.Animation.W3DAnimation>(this, loadStrategy.CreateAnimationLoader()));
+        AddAssetCollection(ModelAnimations = new ScopedAssetCollection<Graphics.Animation.ModelAnimation>(this, loadStrategy.CreateAnimationLoader()));
         AddAssetCollection(ModelBoneHierarchies = new ScopedAssetCollection<ModelBoneHierarchy>(this, loadStrategy.CreateModelBoneHierarchyLoader()));
         AddAssetCollection(ModelMeshes = new ScopedAssetCollection<ModelMesh>(this)); // TODO: ModelMesh loader?
         AddAssetCollection(ModifierLists = new ScopedAssetCollection<ModifierList>(this));

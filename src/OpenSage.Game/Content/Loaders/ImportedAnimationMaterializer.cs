@@ -1,45 +1,39 @@
+#nullable enable
+
 using System;
 using System.Linq;
 using OpenSage.Content.Importing;
 using OpenSage.Content.Importing.W3d;
 using OpenSage.FileFormats.W3d;
+using OpenSage.Graphics.Animation;
 
-namespace OpenSage.Graphics.Animation;
+namespace OpenSage.Content.Loaders;
 
 /// <summary>
-/// Runtime animation asset. Conversion now runs through the W3D importer's interchange values;
-/// WI-C1-07 replaces this compatibility mapping with a format-neutral materializer.
+/// Converts CPU-only imported animations into the format-neutral runtime asset.
 /// </summary>
-public sealed class W3DAnimation : BaseAsset
+internal static class ImportedAnimationMaterializer
 {
-    internal static W3DAnimation? FromW3dFile(W3dFile w3dFile)
+    public static ModelAnimation Materialize(ImportedAnimation imported)
+    {
+        var clips = imported.Channels
+            .Select(ToRuntimeClip)
+            .ToArray();
+
+        return new ModelAnimation(imported.Name, imported.Duration, clips);
+    }
+
+    /// <summary>
+    /// Legacy entry point used by the pre-seam W3D loader; WI-C1-12 compares this path with
+    /// direct importer plus materializer output.
+    /// </summary>
+    public static ModelAnimation? FromW3dFile(W3dFile w3dFile)
     {
         var imported = W3dAnimationImporter.Convert(w3dFile);
 
         return imported is null
             ? null
-            : new W3DAnimation(imported);
-    }
-
-    public TimeSpan Duration { get; }
-
-    public AnimationClip[] Clips { get; }
-
-    internal W3DAnimation(string name, TimeSpan duration, AnimationClip[] clips)
-    {
-        SetNameAndInstanceId("W3DAnimation", name);
-        Duration = duration;
-        Clips = clips;
-    }
-
-    private W3DAnimation(ImportedAnimation imported)
-    {
-        SetNameAndInstanceId("W3DAnimation", imported.Name);
-        Duration = imported.Duration;
-
-        Clips = imported.Channels
-            .Select(ToRuntimeClip)
-            .ToArray();
+            : Materialize(imported);
     }
 
     private static AnimationClip ToRuntimeClip(ImportedAnimationChannel channel)
