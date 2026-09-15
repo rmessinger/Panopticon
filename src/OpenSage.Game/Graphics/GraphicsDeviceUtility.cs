@@ -66,4 +66,28 @@ internal static class GraphicsDeviceUtility
                 "OpenGL and OpenGL ES require a window-bound context; pass a window or select a different backend."),
         };
     }
+
+    /// <summary>
+    /// Cheap capability check (no device creation) for whether <see cref="CreateGraphicsDevice"/>
+    /// can succeed without a window on this host; gates device-backed tests.
+    /// </summary>
+    public static bool CanCreateHeadlessDevice()
+    {
+        var backend = VeldridStartup.GetPlatformDefaultBackend();
+
+        if (backend != GraphicsBackend.OpenGL && backend != GraphicsBackend.OpenGLES)
+        {
+            return true;
+        }
+
+        foreach (var candidate in HeadlessCapableBackends)
+        {
+            if (GraphicsDevice.IsBackendSupported(candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
