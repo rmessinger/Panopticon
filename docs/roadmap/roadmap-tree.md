@@ -130,8 +130,8 @@ mindmap
         B7-6 Fidelity visualization
     C. External models and animations
       C1 Import abstraction ⮕
-      C2 Skeleton retargeting
-      C3 Material mapping
+      C2 Skeleton retargeting ⮕
+      C3 Material mapping ⮕
       C4 First production format
       C4a EE2 NIF proof ⮕
       C5 Authoring tooling

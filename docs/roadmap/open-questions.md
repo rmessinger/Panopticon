@@ -62,6 +62,19 @@
   file formats out of runtime graphics types, makes imported data inspectable without a GPU, and
   gives C2/C3/C4 one stable boundary. Affects
   [Track C](track-c-external-assets.md) (C1).
+- C2 retargeting scope. Decision: imported animation channels use either direct bone indices or
+  exact case-insensitive bone names. Binding occurs once per `ModelAnimation` and target
+  `ModelBoneHierarchy`, before `AnimationInstance` playback, and the immutable result is held in a
+  weak-key cache by hierarchy identity. W3D retains direct-index behavior, including omitting
+  out-of-range channels rather than failing the asset. C2 adds no INI alias syntax, heuristic
+  matching, humanoid semantics, bind-pose compensation, or per-frame name lookup. Affects
+  [Track C](track-c-external-assets.md) (C2).
+- C3 material contract. Decision: core metallic-roughness data uses a typed, format-neutral
+  payload on `ImportedMaterial`, not shader-property naming conventions. Typed texture bindings
+  carry external or embedded image sources, UV set, sampler, role, and color-space semantics.
+  Engine-owned materialization validates and decodes them, generates missing tangent bases when
+  possible, and renders through one core PBR shader path. Advanced `KHR_materials_*` semantics
+  remain C6. Affects [Track C](track-c-external-assets.md) (C3/C4/C6).
 - Large-map ceiling & compatibility. Decision: no size cap; no compatibility constraint.
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
   experiments; OpenSAGE may extend/replace the `.map` format and need not stay loadable in the

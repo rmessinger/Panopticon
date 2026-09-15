@@ -740,9 +740,13 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     hierarchy-referenced, material, and animation assets retain their runtime descriptors; no
     runtime graphics type accepts a W3D parser type.
 - [ ] C2 Skeleton / animation retargeting.
-  - AC: TBD, an external skeleton/animation retargets onto an engine unit and plays correctly.
+  - AC: named channels bind case-insensitively to a differently ordered runtime hierarchy and play
+    through an existing gameplay animation state; missing and duplicate named targets fail before
+    playback; out-of-range direct targets are omitted once, preserving W3D behavior.
 - [ ] C3 Material mapping.
-  - AC: TBD, external materials map to engine materials with acceptable visual parity.
+  - AC: synthetic static and skinned meshes render the core metallic-roughness matrix, including
+    external and embedded images, UV0/UV1, samplers, color space, alpha modes, double-sided state,
+    and generated tangents; validation and cache-key coverage precede GPU allocation.
 - [ ] C4 First production format: static meshes + skinned skeletal animation only.
   - AC: a glTF 2.0 unit loads static + skinned skeletal meshes and renders/animates
     in-engine.
