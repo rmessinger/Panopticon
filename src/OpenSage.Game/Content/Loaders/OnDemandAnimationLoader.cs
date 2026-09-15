@@ -5,7 +5,7 @@ using OpenSage.IO;
 
 namespace OpenSage.Content.Loaders;
 
-internal sealed class OnDemandAnimationLoader : IOnDemandAssetLoader<W3DAnimation>
+internal sealed class OnDemandAnimationLoader : IOnDemandAssetLoader<ModelAnimation>
 {
     private readonly IPathResolver _pathResolver;
     private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
@@ -15,7 +15,7 @@ internal sealed class OnDemandAnimationLoader : IOnDemandAssetLoader<W3DAnimatio
         _pathResolver = pathResolver;
     }
 
-    public W3DAnimation Load(string key, AssetLoadContext context)
+    public ModelAnimation Load(string key, AssetLoadContext context)
     {
         var splitName = key.Split('.');
 
@@ -47,7 +47,7 @@ internal sealed class OnDemandAnimationLoader : IOnDemandAssetLoader<W3DAnimatio
         {
             w3dFile = W3dFile.FromStream(entryStream, entry.FilePath);
         }
-        var animation = W3DAnimation.FromW3dFile(w3dFile);
+        var animation = ImportedAnimationMaterializer.FromW3dFile(w3dFile);
 
         if (animation == null)
         {
