@@ -181,7 +181,8 @@ C4 owns glTF parsing and conversion:
 
 - glTF factors and core textures become the typed C3 payload.
 - URI, data URI, and buffer-view images become `ImportedImageSource` values.
-- External image URIs resolve relative to the model path and support PNG, JPEG, and TGA.
+- External image URIs resolve relative to the model path and support PNG and JPEG. TGA remains
+  available to other C3 producers but is not a core glTF image format.
 - glTF sampler constants become `ImportedSampler` values.
 - `TEXCOORD_0` and `TEXCOORD_1` map to the existing two UV arrays.
 - A populated `COLOR_0` accessor is rejected because C3 does not extend the vertex layout.

@@ -748,8 +748,12 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     external and embedded images, UV0/UV1, samplers, color space, alpha modes, double-sided state,
     and generated tangents; validation and cache-key coverage precede GPU allocation.
 - [ ] C4 First production format: static meshes + skinned skeletal animation only.
-  - AC: a glTF 2.0 unit loads static + skinned skeletal meshes and renders/animates
-    in-engine.
+  - AC: strict SharpGLTF.Core adapters load repository-owned `.gltf` and `.glb` fixtures through
+    isolated virtual roots; static nodes, split triangle primitives, sparse accessors, one skin,
+    inverse binds, linear/step named animation, rigid attach nodes, and core PBR data convert into
+    C1-C3 values; the one-meter `(x, y, z)` to `(z, x, y)` fixture renders at approximately
+    3.28084 world units, upright and +X-forward with correct winding, and every excluded or
+    required unsupported feature fails contextually.
 - [ ] C4a Empire Earth II NIF 10.1 proof of concept
       ([deep dive](deep-dives/ee2-gamebryo-model-storage.md#9-c4a-proof-of-concept-scope)).
   - AC: `nwg1_galley.nifcache` and `ab11_TwinEngineBomber.nifcache` load from an
@@ -757,11 +761,19 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     produce recognizable captures; the Bomber uses its highest-detail LOD, source texture names
     survive import while rendering uses untextured diffuse materials, and no EE2 assets are
     committed.
-- [ ] C5 Authoring & validation tooling (extend ReplaySketch/WorldBuilder; licensing out of scope).
-  - AC: TBD, tooling validates an imported asset (geometry/skeleton/material checks) and surfaces
-    failures.
+- [ ] C5 Authoring & validation tooling (extend ReplaySketch; licensing out of scope).
+  - AC: the ReplaySketch Model tab inspects an isolated external glTF root, lists clips and
+    structured C1-C4 diagnostics, pairs an optional animation through C2, and applies explicit
+    preview-only transforms; a versioned TestHarness request produces a deterministic PNG and JSON
+    report, stale sessions cannot replace current results, and source replacement releases
+    filesystem, artifact, and GPU lifetimes.
 - [ ] C6 Extended features (deferred): morph targets, advanced PBR.
-  - AC: deferred, out of scope until C1–C5 land; no AC yet.
+  - AC: implementation starts only from a named experiment with a reduced fixture and request-scoped
+    feature gate; morph targets use separate bounded delta arrays and weight tracks with
+    morph-before-skin deformation and conservative bounds, while each advanced PBR family uses
+    typed payloads and normalized shader keys; every gate defaults off, required unsupported
+    semantics fail, optional core-preserving fallbacks warn, and feature-disabled C1-C5 output is
+    unchanged.
 
 ## Track D: Gameplay Content Expansion
 

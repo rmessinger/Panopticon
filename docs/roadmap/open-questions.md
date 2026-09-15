@@ -44,6 +44,16 @@
   Morph targets (blendshapes) and advanced glTF PBR material extensions are deferred to
   [C6](track-c-external-assets.md) and added only if an experiment needs them. This keeps the
   first importer small and proves the C1 abstraction end-to-end as early as possible.
+- C4 glTF importer architecture. Decision: use strict SharpGLTF.Core parsing behind a
+  glTF-private adapter, then expose only C1-C3 engine-owned values. External resources resolve
+  through the selected model's virtual root. One basis maps `(x, y, z)` to `(z, x, y)` across
+  geometry, nodes, inverse binds, animation, and bounds, and one meter maps to approximately
+  3.28084 foot-based world units. Scene nodes remain runtime bones for rigid attachments. The
+  first skinning subset supports one skin and two meaningful influences, with inverse bind
+  matrices added to the neutral skeleton.
+  External-tool sessions select this importer explicitly without replacing shipped game
+  definitions' single-importer strategy. Affects
+  [C4](track-c-external-assets.md).
 - Empire Earth II proof scope. Decision: [C4a](track-c-external-assets.md) is an additive,
   experimental second-format proof after C1, not a replacement for C4's production glTF
   importer. It loads the static NIF 10.1 War Galley and Twin-Engine Bomber models directly from
@@ -75,6 +85,14 @@
   Engine-owned materialization validates and decodes them, generates missing tangent bases when
   possible, and renders through one core PBR shader path. Advanced `KHR_materials_*` semantics
   remain C6. Affects [Track C](track-c-external-assets.md) (C3/C4/C6).
+- C6 extension activation. Decision: morph targets and advanced PBR remain request-scoped
+  experiments behind named feature gates that default off. Morph deltas and weight animation use
+  primitive-target identities separate from vertices and bone channels, with morph-before-skin
+  deformation. Advanced materials use typed optional families and normalized shader feature keys;
+  transmission and volume semantics require an explicit renderer-pass experiment. Required
+  unsupported semantics fail, while optional material extensions may be ignored with a warning
+  only when core output remains complete. Affects
+  [C6](track-c-external-assets.md).
 - Large-map ceiling & compatibility. Decision: no size cap; no compatibility constraint.
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
   experiments; OpenSAGE may extend/replace the `.map` format and need not stay loadable in the
@@ -273,10 +291,13 @@
   economy/production/victory/AI loop. Just enough to prove the [A4](track-a-foundations.md) domain
   seam and [B6](deep-dives/b6-distributed-simulation.md) partitioning are topology-general rather than
   RTS-shaped. Affects [A4](track-a-foundations.md), [B6](deep-dives/b6-distributed-simulation.md).
-- C5 external-model tooling. Decision: extend ReplaySketch, no dedicated viewer. External-model
-  import/preview/validation tooling ([C5](track-c-external-assets.md)) extends ReplaySketch rather
-  than spawning a separate viewer, per the no-fragmentation tooling convention (ReplaySketch is the
-  primary tool). The "or a dedicated viewer" option is removed from C5. Affects
+- C5 external-model tooling. Decision: extend ReplaySketch with a dedicated Model tab, no
+  dedicated viewer. ReplaySketch Core owns session state, stable diagnostics, animation pairing,
+  preview eligibility, and reports; MAUI owns presentation. TestHarness performs one isolated
+  graphics-backed capture per versioned request and disposes GPU resources on exit. External
+  roots never layer into game assets, and transforms remain preview-only. This preserves the
+  no-fragmentation tooling convention and keeps graphics out of the external-model Core path.
+  Affects
   [C5](track-c-external-assets.md).
 - Save/load (StatePersister) reach. Decision: single-node only. The single `StatePersister`
   save/persist path is required to work only for single-node runs; it is not required to serialize

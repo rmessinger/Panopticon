@@ -132,10 +132,10 @@ mindmap
       C1 Import abstraction ⮕
       C2 Skeleton retargeting ⮕
       C3 Material mapping ⮕
-      C4 First production format
+      C4 First production format ⮕
       C4a EE2 NIF proof ⮕
-      C5 Authoring tooling
-      C6 Extended features deferred
+      C5 Authoring tooling ⮕
+      C6 Extended features deferred ⮕
     D. Gameplay content expansion
       D1 Tech tree prerequisite graph ⮕
       D2 Era and age progression ⮕
