@@ -27,6 +27,8 @@ public sealed class ImportedMesh : ImportedRenderObject
 
     public bool CameraOriented { get; }
 
+    public bool HasHouseColor { get; }
+
     public bool IsSkinned { get; }
 
     public IReadOnlyList<ImportedMaterial> Materials { get; }
@@ -40,6 +42,7 @@ public sealed class ImportedMesh : ImportedRenderObject
         in BoundingSphere boundingSphere,
         bool hidden,
         bool cameraOriented,
+        bool hasHouseColor,
         bool isSkinned,
         IReadOnlyList<ImportedMaterial> materials,
         IReadOnlyList<ImportedMeshPart> meshParts)
@@ -145,6 +148,7 @@ public sealed class ImportedMesh : ImportedRenderObject
         BoundingSphere = boundingSphere;
         Hidden = hidden;
         CameraOriented = cameraOriented;
+        HasHouseColor = hasHouseColor;
         IsSkinned = isSkinned;
         Materials = materials.ToArray();
         MeshParts = meshParts.ToArray();
