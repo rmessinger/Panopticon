@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using OpenSage.Content.Importing.W3d;
 using OpenSage.Content.Loaders;
 using OpenSage.Content.Util;
 using OpenSage.FileFormats.W3d;
@@ -288,202 +289,22 @@ partial class ModelMesh
             texCoords,
             BufferUsage.VertexBuffer));
 
-        // Optimisation for a fairly common case.
-        if (w3dMaterialPass.VertexMaterialIds.Items.Length == 1
-            && w3dMaterialPass.ShaderIds.Items.Length == 1
-            && w3dMaterialPass.TextureStages.Count == 1
-            && w3dMaterialPass.TextureStages[0].TextureIds.Items.Count == 1)
+        foreach (var combinedId in W3dMaterialConverter.GetMaterialRuns(w3dMesh, w3dMaterialPass))
         {
             meshParts.Add(CreateModelMeshPart(
                 context,
                 texCoordsVertexBuffer,
-                0,
-                w3dMesh.Header.NumTris * 3,
+                combinedId.StartIndex,
+                combinedId.IndexCount,
                 w3dMesh,
                 vertexMaterials,
                 shadingConfigurations,
-                w3dMaterialPass.VertexMaterialIds.Items[0],
-                w3dMaterialPass.ShaderIds.Items[0],
+                combinedId.VertexMaterialID,
+                combinedId.ShaderID,
                 numTextureStages,
-                w3dMaterialPass.TextureStages[0].TextureIds.Items[0],
-                null));
+                combinedId.TextureIndex0,
+                combinedId.TextureIndex1));
         }
-        else
-        {
-            // Expand ShaderIds and TextureIds, if they have a single entry
-            // (which means same ID for all faces)
-
-            IEnumerable<uint?> getExpandedTextureIds(IReadOnlyList<uint?> ids)
-            {
-                if (ids == null)
-                {
-                    for (var i = 0; i < w3dMesh.Header.NumTris; i++)
-                    {
-                        yield return null;
-                    }
-                }
-                else if (ids.Count == 1)
-                {
-                    var result = ids[0];
-                    for (var i = 0; i < w3dMesh.Header.NumTris; i++)
-                    {
-                        yield return result;
-                    }
-                }
-                else
-                {
-                    foreach (var id in ids)
-                    {
-                        yield return id;
-                    }
-                }
-            }
-
-            IEnumerable<uint> getExpandedShaderIds()
-            {
-                var ids = w3dMaterialPass.ShaderIds.Items;
-                if (ids.Length == 1)
-                {
-                    var result = ids[0];
-                    for (var i = 0; i < w3dMesh.Header.NumTris; i++)
-                    {
-                        yield return result;
-                    }
-                }
-                else
-                {
-                    foreach (var id in ids)
-                    {
-                        yield return id;
-                    }
-                }
-            }
-
-            IEnumerable<uint> getExpandedVertexMaterialIDs()
-            {
-                var ids = w3dMaterialPass.VertexMaterialIds.Items;
-                if (ids.Length == 1)
-                {
-                    var result = ids[0];
-                    for (var i = 0; i < w3dMesh.Header.NumTris; i++)
-                    {
-                        yield return result;
-                    }
-                }
-                else
-                {
-                    for (var i = 0; i < w3dMesh.Header.NumTris; i++)
-                    {
-                        var triangle = w3dMesh.Triangles.Items[i];
-                        var materialID0 = ids[(int)triangle.VIndex0];
-                        var materialID1 = ids[(int)triangle.VIndex1];
-                        var materialID2 = ids[(int)triangle.VIndex2];
-                        if (materialID0 != materialID1 || materialID1 != materialID2)
-                        {
-                            throw new NotSupportedException();
-                        }
-                        yield return materialID0;
-                    }
-
-                    foreach (var id in ids)
-                    {
-                        yield return id;
-                    }
-                }
-            }
-
-            var combinedIds = getExpandedVertexMaterialIDs()
-                .Zip(getExpandedShaderIds(), (x, y) => new { VertexMaterialID = x, ShaderID = y })
-                .Zip(getExpandedTextureIds(textureStage0?.TextureIds.Items), (x, y) => new { x.VertexMaterialID, x.ShaderID, TextureIndex0 = y })
-                .Zip(getExpandedTextureIds(textureStage1?.TextureIds.Items), (x, y) => new CombinedMaterialPermutation { VertexMaterialID = x.VertexMaterialID, ShaderID = x.ShaderID, TextureIndex0 = x.TextureIndex0, TextureIndex1 = y });
-
-            var combinedId = combinedIds.First();
-            var startIndex = 0u;
-            var indexCount = 0u;
-
-            foreach (var newCombinedId in combinedIds)
-            {
-                if (combinedId != newCombinedId)
-                {
-                    meshParts.Add(CreateModelMeshPart(
-                        context,
-                        texCoordsVertexBuffer,
-                        startIndex,
-                        indexCount,
-                        w3dMesh,
-                        vertexMaterials,
-                        shadingConfigurations,
-                        combinedId.VertexMaterialID,
-                        combinedId.ShaderID,
-                        numTextureStages,
-                        combinedId.TextureIndex0,
-                        combinedId.TextureIndex1));
-
-                    startIndex = startIndex + indexCount;
-                    indexCount = 0;
-                }
-
-                combinedId = newCombinedId;
-
-                indexCount += 3;
-            }
-
-            if (indexCount > 0)
-            {
-                meshParts.Add(CreateModelMeshPart(
-                    context,
-                    texCoordsVertexBuffer,
-                    startIndex,
-                    indexCount,
-                    w3dMesh,
-                    vertexMaterials,
-                    shadingConfigurations,
-                    combinedId.VertexMaterialID,
-                    combinedId.ShaderID,
-                    numTextureStages,
-                    combinedId.TextureIndex0,
-                    combinedId.TextureIndex1));
-            }
-        }
-    }
-
-    private struct CombinedMaterialPermutation
-    {
-        public uint VertexMaterialID;
-        public uint ShaderID;
-        public uint? TextureIndex0;
-        public uint? TextureIndex1;
-
-        public override bool Equals(object obj)
-        {
-            if (!(obj is CombinedMaterialPermutation))
-            {
-                return false;
-            }
-
-            var permutation = (CombinedMaterialPermutation)obj;
-
-            return this == permutation;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(
-                VertexMaterialID,
-                ShaderID,
-                TextureIndex0,
-                TextureIndex1);
-        }
-
-        public static bool operator ==(CombinedMaterialPermutation l, CombinedMaterialPermutation r)
-        {
-            return l.VertexMaterialID == r.VertexMaterialID
-                && l.ShaderID == r.ShaderID
-                && l.TextureIndex0 == r.TextureIndex0
-                && l.TextureIndex1 == r.TextureIndex1;
-        }
-
-        public static bool operator !=(CombinedMaterialPermutation l, CombinedMaterialPermutation r) => !(l == r);
     }
 
     // One ModelMeshPart for each unique shader in a W3D_CHUNK_MATERIAL_PASS.
