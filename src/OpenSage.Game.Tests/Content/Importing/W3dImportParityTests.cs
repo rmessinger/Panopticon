@@ -44,9 +44,9 @@ public sealed class W3dImportParityTests
             using var fileSystem = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
             using var graphics = new TestGraphicsContext(
                 fileSystem,
-                new OnDemandAssetLoadStrategy(PathResolvers.W3d, PathResolvers.GeneralsTexture));
+                OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.GeneralsTexture));
 
-            var legacyModel = new OnDemandModelLoader(PathResolvers.W3d).Load(modelName, graphics.Context);
+            var legacyModel = LoadLegacyModel(fileSystem, graphics.Context, modelName);
             Assert.NotNull(legacyModel);
 
             var importedModel = LoadImportedModel(graphics.Context, modelName);
@@ -74,9 +74,7 @@ public sealed class W3dImportParityTests
     public void ReferencedHierarchyDescriptor_Parity()
     {
         using var fileSystem = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
-        var context = CreateDataOnlyContext(fileSystem);
-
-        var legacyHierarchy = new OnDemandModelBoneHierarchyLoader(PathResolvers.W3d).Load("airngr_skl", context);
+        var legacyHierarchy = LoadLegacyHierarchy(fileSystem, "airngr_skl");
         Assert.NotNull(legacyHierarchy);
 
         var importedSkeleton = new W3dModelImporter(PathResolvers.W3d).ImportSkeleton(
@@ -95,9 +93,7 @@ public sealed class W3dImportParityTests
         foreach (var animationKey in AnimationParityAssets)
         {
             using var fileSystem = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
-            var context = CreateDataOnlyContext(fileSystem);
-
-            var legacyAnimation = new OnDemandAnimationLoader(PathResolvers.W3d).Load(animationKey, context);
+            var legacyAnimation = LoadLegacyAnimation(fileSystem, animationKey);
             Assert.NotNull(legacyAnimation);
 
             var importedAnimation = new W3dAnimationImporter(PathResolvers.W3d).ImportAnimation(
@@ -135,9 +131,7 @@ public sealed class W3dImportParityTests
     private static void AnimationPlayback_Parity_Run(string skeletonName, string animationKey)
     {
         using var fileSystem = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
-        var context = CreateDataOnlyContext(fileSystem);
-
-        var legacyAnimation = new OnDemandAnimationLoader(PathResolvers.W3d).Load(animationKey, context);
+        var legacyAnimation = LoadLegacyAnimation(fileSystem, animationKey);
         Assert.NotNull(legacyAnimation);
 
         var importedAnimation = new W3dAnimationImporter(PathResolvers.W3d).ImportAnimation(
@@ -225,26 +219,132 @@ public sealed class W3dImportParityTests
             materializedMesh.MeshParts[0].Material.ForwardPass.Pipeline);
     }
 
+    // The on-demand loaders are importer-backed since WI-C1-13; the legacy side of each parity
+    // comparison constructs runtime assets directly from parsed W3D data, mirroring the
+    // pre-cutover loader logic exactly.
+    private static W3dFile? FindAndParse(FileSystem fileSystem, string name)
+    {
+        FileSystemEntry? entry = null;
+        foreach (var path in PathResolvers.W3d.GetPaths(name, "english"))
+        {
+            entry = fileSystem.GetFile(path);
+            if (entry != null)
+            {
+                break;
+            }
+        }
+
+        if (entry is null)
+        {
+            return null;
+        }
+
+        using var entryStream = entry.Open();
+        return W3dFile.FromStream(entryStream, entry.FilePath);
+    }
+
+    private static ModelBoneHierarchy? LoadLegacyHierarchy(FileSystem fileSystem, string name)
+    {
+        var w3dFile = FindAndParse(fileSystem, name);
+        return w3dFile?.Hierarchy != null
+            ? new ModelBoneHierarchy(w3dFile.Hierarchy)
+            : ModelBoneHierarchy.CreateDefault();
+    }
+
+    private static ModelAnimation? LoadLegacyAnimation(FileSystem fileSystem, string key)
+    {
+        var splitName = key.Split('.');
+        if (splitName.Length <= 1)
+        {
+            return null;
+        }
+
+        var w3dFile = FindAndParse(fileSystem, splitName[1]);
+        return w3dFile != null
+            ? ImportedAnimationMaterializer.FromW3dFile(w3dFile)
+            : null;
+    }
+
+    private static Model? LoadLegacyModel(FileSystem fileSystem, AssetLoadContext context, string name)
+    {
+        var w3dFile = FindAndParse(fileSystem, name);
+        if (w3dFile is null)
+        {
+            return null;
+        }
+
+        ModelBoneHierarchy boneHierarchy;
+        if (w3dFile.Hierarchy != null)
+        {
+            boneHierarchy = new ModelBoneHierarchy(w3dFile.Hierarchy);
+        }
+        else if (w3dFile.HLod != null)
+        {
+            boneHierarchy = LoadLegacyHierarchy(fileSystem, w3dFile.HLod.Header.HierarchyName)
+                ?? throw new InvalidOperationException(
+                    "Referenced hierarchy missing: " + w3dFile.HLod.Header.HierarchyName);
+        }
+        else
+        {
+            boneHierarchy = ModelBoneHierarchy.CreateDefault();
+        }
+
+        var subObjects = new List<ModelSubObject>();
+
+        if (w3dFile.HLod != null)
+        {
+            foreach (var w3dSubObject in w3dFile.HLod.Lods[0].SubObjects)
+            {
+                if (!w3dFile.RenderableObjectsByName.TryGetValue(w3dSubObject.Name, out var w3dRenderableObject))
+                {
+                    continue;
+                }
+
+                subObjects.Add(CreateLegacySubObject(
+                    w3dSubObject.Name,
+                    w3dRenderableObject,
+                    boneHierarchy.Bones[(int)w3dSubObject.BoneIndex],
+                    context));
+            }
+        }
+        else
+        {
+            var w3dRenderableObjectPair = w3dFile.RenderableObjectsByName.First();
+            subObjects.Add(CreateLegacySubObject(
+                w3dRenderableObjectPair.Key,
+                w3dRenderableObjectPair.Value,
+                boneHierarchy.Bones[0],
+                context));
+        }
+
+        return new Model(
+            System.IO.Path.GetFileNameWithoutExtension(w3dFile.FilePath),
+            boneHierarchy,
+            subObjects.ToArray());
+    }
+
+    private static ModelSubObject CreateLegacySubObject(
+        string fullName,
+        W3dChunk w3dRenderableObject,
+        ModelBone bone,
+        AssetLoadContext context)
+    {
+        return w3dRenderableObject switch
+        {
+            W3dMesh w3dMesh => new ModelSubObject(fullName, w3dMesh.Header.MeshName, bone, new ModelMesh(w3dMesh, context)),
+
+            W3dBox w3dBox => new ModelSubObject(fullName, bone, new ModelBox(w3dBox, context)),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(w3dRenderableObject)),
+        };
+    }
+
     private static Model LoadImportedModel(AssetLoadContext context, string name)
     {
         var importer = new W3dModelImporter(PathResolvers.W3d);
         var imported = importer.ImportModel(name, new AssetImportContext(context.FileSystem, context.Language));
         Assert.NotNull(imported);
         return ImportedModelMaterializer.MaterializeModel(imported, context);
-    }
-
-    private static AssetLoadContext CreateDataOnlyContext(FileSystem fileSystem)
-    {
-        var assetStore = new AssetStore(
-            SageGame.CncGenerals,
-            fileSystem,
-            "english",
-            null,
-            null,
-            null,
-            null,
-            OnDemandAssetLoadStrategy.None);
-        return new AssetLoadContext(fileSystem, "english", null, null, null, null, assetStore);
     }
 
     private static W3dMesh GetMesh(W3dFile w3dFile)

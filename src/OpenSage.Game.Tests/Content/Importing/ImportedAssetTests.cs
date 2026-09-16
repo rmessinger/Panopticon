@@ -102,7 +102,8 @@ public sealed class ImportedAssetTests
                     renderObject: CreateMesh(
                         new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) },
                         new ushort[] { 0, 1, 2 })),
-            });
+            },
+            ImportedSkeletonOrigin.Embedded);
     }
 
     [Fact]
@@ -170,7 +171,8 @@ public sealed class ImportedAssetTests
                     "Body",
                     parentBoneIndex: 0,
                     renderObject: CreateMesh(skinnedVertices, new ushort[] { 0, 1, 2 }, isSkinned: true)),
-            });
+            },
+            ImportedSkeletonOrigin.Embedded);
 
         var animation = new ImportedAnimation(
             "SkinnedSkeleton.Run",
@@ -246,7 +248,8 @@ public sealed class ImportedAssetTests
                         renderObject: CreateMesh(
                             new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) },
                             new ushort[] { 0, 1, 2 })),
-                }));
+                },
+                ImportedSkeletonOrigin.Embedded));
     }
 
     [Fact]
@@ -278,7 +281,8 @@ public sealed class ImportedAssetTests
                             new[] { skinnedVertex, skinnedVertex, skinnedVertex },
                             new ushort[] { 0, 1, 2 },
                             isSkinned: true)),
-                }));
+                },
+                ImportedSkeletonOrigin.Embedded));
     }
 
     [Fact]

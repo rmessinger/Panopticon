@@ -43,7 +43,7 @@ public class BfmeDefinition : IGameDefinition
 
     public OnDemandAssetLoadStrategy CreateAssetLoadStrategy()
     {
-        return new OnDemandAssetLoadStrategy(PathResolvers.W3d, PathResolvers.BfmeTexture);
+        return OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.BfmeTexture);
     }
 
     public Scene25D CreateScene25D(IScene3D scene3D, AssetStore assetStore) => new(scene3D, assetStore);

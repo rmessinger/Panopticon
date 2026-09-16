@@ -10,18 +10,32 @@ namespace OpenSage.Content.Importing;
 /// CPU-only interchange root for one imported model asset. Validated at construction; safe to
 /// inspect without a graphics device. See docs/roadmap/deep-dives/c1-import-abstraction.md.
 /// </summary>
+public enum ImportedSkeletonOrigin
+{
+    Embedded,
+    Referenced,
+    Default,
+}
+
 public sealed class ImportedModel
 {
     public string Name { get; }
 
     public ImportedSkeleton Skeleton { get; }
 
+    /// <summary>
+    /// How the skeleton was selected. Referenced skeletons let the on-demand loader delegate to
+    /// the shared ModelBoneHierarchies cache instead of building a private hierarchy.
+    /// </summary>
+    public ImportedSkeletonOrigin SkeletonOrigin { get; }
+
     public IReadOnlyList<ImportedSubObject> SubObjects { get; }
 
     public ImportedModel(
         string name,
         ImportedSkeleton skeleton,
-        IReadOnlyList<ImportedSubObject> subObjects)
+        IReadOnlyList<ImportedSubObject> subObjects,
+        ImportedSkeletonOrigin skeletonOrigin)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -75,6 +89,7 @@ public sealed class ImportedModel
         }
 
         Name = name;
+        SkeletonOrigin = skeletonOrigin;
         Skeleton = skeleton;
         SubObjects = copiedSubObjects;
     }

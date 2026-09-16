@@ -74,9 +74,11 @@ internal sealed class W3dModelImporter : IModelImporter
         var modelName = Path.GetFileNameWithoutExtension(w3dFile.FilePath);
 
         ImportedSkeleton skeleton;
+        ImportedSkeletonOrigin skeletonOrigin;
         if (w3dFile.Hierarchy != null)
         {
             skeleton = ConvertSkeleton(w3dFile.Hierarchy);
+            skeletonOrigin = ImportedSkeletonOrigin.Embedded;
         }
         else if (w3dFile.HLod != null)
         {
@@ -89,10 +91,12 @@ internal sealed class W3dModelImporter : IModelImporter
             }
 
             skeleton = referencedSkeleton;
+            skeletonOrigin = ImportedSkeletonOrigin.Referenced;
         }
         else
         {
             skeleton = CreateDefaultSkeleton();
+            skeletonOrigin = ImportedSkeletonOrigin.Default;
         }
 
         var subObjects = new List<ImportedSubObject>();
@@ -151,7 +155,7 @@ internal sealed class W3dModelImporter : IModelImporter
                 $"Model '{modelName}' contains no render objects.");
         }
 
-        return new ImportedModel(modelName, skeleton, subObjects);
+        return new ImportedModel(modelName, skeleton, subObjects, skeletonOrigin);
     }
 
     /// <summary>

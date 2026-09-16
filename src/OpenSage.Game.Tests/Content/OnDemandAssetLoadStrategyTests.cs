@@ -33,7 +33,6 @@ public sealed class OnDemandAssetLoadStrategyTests
         var strategy = new OnDemandAssetLoadStrategy(
             modelImporter,
             animationImporter,
-            PathResolvers.W3d,
             PathResolvers.GeneralsTexture);
 
         Assert.Same(modelImporter, strategy.ModelImporter);
@@ -47,14 +46,12 @@ public sealed class OnDemandAssetLoadStrategyTests
             new OnDemandAssetLoadStrategy(
                 null,
                 new FakeAnimationImporter(),
-                PathResolvers.W3d,
                 PathResolvers.GeneralsTexture));
 
         Assert.Throws<ArgumentNullException>(() =>
             new OnDemandAssetLoadStrategy(
                 new FakeModelImporter(),
                 null,
-                PathResolvers.W3d,
                 PathResolvers.GeneralsTexture));
     }
 
@@ -69,12 +66,14 @@ public sealed class OnDemandAssetLoadStrategyTests
     }
 
     [Fact]
-    public void ResolverConstructor_CreatesUnchangedLoaders()
+    public void CreateW3d_CreatesAllPresentationLoaders()
     {
-        var strategy = new OnDemandAssetLoadStrategy(
+        var strategy = OnDemandAssetLoadStrategy.CreateW3d(
             PathResolvers.W3d,
             PathResolvers.GeneralsTexture);
 
+        Assert.NotNull(strategy.ModelImporter);
+        Assert.NotNull(strategy.AnimationImporter);
         Assert.NotNull(strategy.CreateModelLoader());
         Assert.NotNull(strategy.CreateModelBoneHierarchyLoader());
         Assert.NotNull(strategy.CreateAnimationLoader());

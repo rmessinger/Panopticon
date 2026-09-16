@@ -140,7 +140,8 @@ public sealed class ImportedModelMaterializerTests
                     new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity),
                     new ImportedBone("turret", 0, new Vector3(1, 2, 3), Quaternion.Identity),
                 ]),
-            [new ImportedSubObject("TestContainer.MeshA", "MeshA", parentBoneIndex, renderObject)]);
+            [new ImportedSubObject("TestContainer.MeshA", "MeshA", parentBoneIndex, renderObject)],
+                ImportedSkeletonOrigin.Embedded);
     }
 
     [GraphicsFact]

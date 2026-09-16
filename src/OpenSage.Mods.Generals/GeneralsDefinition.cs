@@ -43,7 +43,7 @@ public class GeneralsDefinition : IGameDefinition
 
     public OnDemandAssetLoadStrategy CreateAssetLoadStrategy()
     {
-        return new OnDemandAssetLoadStrategy(PathResolvers.W3d, PathResolvers.GeneralsTexture);
+        return OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.GeneralsTexture);
     }
 
     public Scene25D CreateScene25D(IScene3D scene3D, AssetStore assetStore) => new GeneralsScene25D(scene3D, assetStore);
