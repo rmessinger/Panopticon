@@ -197,8 +197,8 @@ internal static class W3dMaterialConverter
     }
 
     /// <summary>
-    /// Per-face material run grouping, shared with the legacy runtime mesh conversion so both
-    /// paths produce identical part boundaries.
+    /// Per-face material run grouping: consecutive faces sharing vertex material, shader, and
+    /// texture ids become one run, which becomes one imported mesh part.
     /// </summary>
     internal static IReadOnlyList<W3dMaterialRun> GetMaterialRuns(W3dMesh w3dMesh, W3dMaterialPass w3dMaterialPass)
     {
