@@ -1,40 +1,36 @@
-using OpenSage.FileFormats.W3d;
+using OpenSage.Content.Importing;
 using OpenSage.Graphics;
-using OpenSage.IO;
 
 namespace OpenSage.Content.Loaders;
 
+/// <summary>
+/// Loads hierarchies through the selected importer, then materializes the imported skeleton.
+/// The ModelBoneHierarchies collection this loader serves remains the shared cache for both
+/// direct hierarchy loads and model references.
+/// </summary>
 internal sealed class OnDemandModelBoneHierarchyLoader : IOnDemandAssetLoader<ModelBoneHierarchy>
 {
-    private readonly IPathResolver _pathResolver;
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public OnDemandModelBoneHierarchyLoader(IPathResolver pathResolver)
+    private readonly IModelImporter _modelImporter;
+
+    public OnDemandModelBoneHierarchyLoader(IModelImporter modelImporter)
     {
-        _pathResolver = pathResolver;
+        _modelImporter = modelImporter;
     }
 
     public ModelBoneHierarchy Load(string name, AssetLoadContext context)
     {
-        // Find it in the file system.
-        FileSystemEntry entry = null;
-        foreach (var path in _pathResolver.GetPaths(name, context.Language))
+        var imported = _modelImporter.ImportSkeleton(
+            name,
+            new AssetImportContext(context.FileSystem, context.Language));
+
+        if (imported is null)
         {
-            entry = context.FileSystem.GetFile(path);
-            if (entry != null)
-            {
-                break;
-            }
+            Logger.Warn("Failed to load hierarchy: " + name);
+            return null;
         }
 
-        // Load hierarchy.
-        W3dFile hierarchyFile;
-        using (var entryStream = entry.Open())
-        {
-            hierarchyFile = W3dFile.FromStream(entryStream, entry.FilePath);
-        }
-        var w3dHierarchy = hierarchyFile.Hierarchy;
-        return w3dHierarchy != null
-            ? new ModelBoneHierarchy(w3dHierarchy)
-            : ModelBoneHierarchy.CreateDefault();
+        return ImportedModelMaterializer.MaterializeSkeleton(imported);
     }
 }

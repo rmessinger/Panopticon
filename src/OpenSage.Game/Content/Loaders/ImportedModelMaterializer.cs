@@ -22,7 +22,25 @@ internal static class ImportedModelMaterializer
 
     public static Model MaterializeModel(ImportedModel importedModel, AssetLoadContext context)
     {
-        var boneHierarchy = new ModelBoneHierarchy(importedModel.Skeleton);
+        return MaterializeModel(
+            importedModel,
+            new ModelBoneHierarchy(importedModel.Skeleton),
+            context);
+    }
+
+    /// <summary>
+    /// Materialization with an externally supplied hierarchy, used when the on-demand loader
+    /// delegates a referenced skeleton to the shared ModelBoneHierarchies cache.
+    /// </summary>
+    public static Model MaterializeModel(ImportedModel importedModel, ModelBoneHierarchy boneHierarchy, AssetLoadContext context)
+    {
+        if (boneHierarchy.Bones.Length != importedModel.Skeleton.Bones.Count)
+        {
+            throw new System.IO.InvalidDataException(
+                $"Model '{importedModel.Name}' expects a skeleton with " +
+                $"{importedModel.Skeleton.Bones.Count} bones, but hierarchy " +
+                $"'{boneHierarchy.Name}' has {boneHierarchy.Bones.Length}.");
+        }
 
         var subObjects = new ModelSubObject[importedModel.SubObjects.Count];
         for (var i = 0; i < subObjects.Length; i++)

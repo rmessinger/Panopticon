@@ -1,5 +1,6 @@
 using System;
 using OpenSage.Content.Importing;
+using OpenSage.Content.Importing.W3d;
 using OpenSage.Content.Loaders;
 
 namespace OpenSage.Content;
@@ -7,32 +8,32 @@ namespace OpenSage.Content;
 public sealed class OnDemandAssetLoadStrategy
 {
     private readonly bool _allowOnDemandLoading;
-    private readonly IPathResolver _w3dPathResolver;
     private readonly IPathResolver _texturePathResolver;
     private readonly IModelImporter _modelImporter;
     private readonly IAnimationImporter _animationImporter;
 
     public static readonly OnDemandAssetLoadStrategy None = new OnDemandAssetLoadStrategy(false);
 
-    public OnDemandAssetLoadStrategy(IPathResolver w3dPathResolver, IPathResolver texturePathResolver)
-        : this(true)
+    /// <summary>
+    /// Selects the shipped W3D importers for model, hierarchy, and animation loading. Mod
+    /// assemblies use this factory so importer contracts stay internal to OpenSage.Game.
+    /// </summary>
+    public static OnDemandAssetLoadStrategy CreateW3d(IPathResolver w3dPathResolver, IPathResolver texturePathResolver)
     {
-        _w3dPathResolver = w3dPathResolver;
-        _texturePathResolver = texturePathResolver;
+        return new OnDemandAssetLoadStrategy(
+            new W3dModelImporter(w3dPathResolver),
+            new W3dAnimationImporter(w3dPathResolver),
+            texturePathResolver);
     }
 
-    // The w3d resolver stays alongside the importers until WI-C1-13 switches the on-demand
-    // loaders to importer-backed construction.
     internal OnDemandAssetLoadStrategy(
         IModelImporter modelImporter,
         IAnimationImporter animationImporter,
-        IPathResolver w3dPathResolver,
         IPathResolver texturePathResolver)
         : this(true)
     {
         _modelImporter = modelImporter ?? throw new ArgumentNullException(nameof(modelImporter));
         _animationImporter = animationImporter ?? throw new ArgumentNullException(nameof(animationImporter));
-        _w3dPathResolver = w3dPathResolver;
         _texturePathResolver = texturePathResolver;
     }
 
@@ -48,21 +49,21 @@ public sealed class OnDemandAssetLoadStrategy
     internal OnDemandAnimationLoader CreateAnimationLoader()
     {
         return _allowOnDemandLoading
-            ? new OnDemandAnimationLoader(_w3dPathResolver)
+            ? new OnDemandAnimationLoader(_animationImporter)
             : null;
     }
 
     internal OnDemandModelLoader CreateModelLoader()
     {
         return _allowOnDemandLoading
-            ? new OnDemandModelLoader(_w3dPathResolver)
+            ? new OnDemandModelLoader(_modelImporter)
             : null;
     }
 
     internal OnDemandModelBoneHierarchyLoader CreateModelBoneHierarchyLoader()
     {
         return _allowOnDemandLoading
-            ? new OnDemandModelBoneHierarchyLoader(_w3dPathResolver)
+            ? new OnDemandModelBoneHierarchyLoader(_modelImporter)
             : null;
     }
 

@@ -1,148 +1,48 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using OpenSage.FileFormats.W3d;
+using OpenSage.Content.Importing;
 using OpenSage.Graphics;
-using OpenSage.IO;
 
 namespace OpenSage.Content.Loaders;
 
-
+/// <summary>
+/// Loads models through the selected importer, then materializes the imported interchange
+/// values. Referenced skeletons delegate to the shared ModelBoneHierarchies cache.
+/// </summary>
 internal sealed class OnDemandModelLoader : IOnDemandAssetLoader<Model>
 {
-    private readonly IPathResolver _pathResolver;
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    public OnDemandModelLoader(IPathResolver pathResolver)
+    private readonly IModelImporter _modelImporter;
+
+    public OnDemandModelLoader(IModelImporter modelImporter)
     {
-        _pathResolver = pathResolver;
+        _modelImporter = modelImporter;
     }
 
     public Model Load(string name, AssetLoadContext context)
     {
-        // Find it in the file system.
-        FileSystemEntry entry = null;
-        foreach (var path in _pathResolver.GetPaths(name, context.Language))
-        {
-            entry = context.FileSystem.GetFile(path);
-            if (entry != null)
-            {
-                break;
-            }
-        }
+        var imported = _modelImporter.ImportModel(
+            name,
+            new AssetImportContext(context.FileSystem, context.Language));
 
-        if (entry == null)
+        if (imported is null)
         {
+            Logger.Warn("Failed to load model: " + name);
             return null;
         }
 
-        // Load model.
-        W3dFile w3dFile;
-        using (var entryStream = entry.Open())
+        if (imported.SkeletonOrigin == ImportedSkeletonOrigin.Referenced)
         {
-            w3dFile = W3dFile.FromStream(entryStream, entry.FilePath);
-        }
-
-        var w3dHLod = w3dFile.HLod;
-        var w3dHierarchy = w3dFile.Hierarchy;
-        ModelBoneHierarchy boneHierarchy;
-        if (w3dHierarchy != null)
-        {
-            boneHierarchy = new ModelBoneHierarchy(w3dHierarchy);
-        }
-        else if (w3dHLod != null && w3dHierarchy == null)
-        {
-            // Load referenced hierarchy.
-            boneHierarchy = context.AssetStore.ModelBoneHierarchies.GetByName(w3dHLod.Header.HierarchyName);
-        }
-        else
-        {
-            boneHierarchy = ModelBoneHierarchy.CreateDefault();
-        }
-
-        return CreateModel(
-            context,
-            w3dFile,
-            boneHierarchy);
-    }
-
-    private static Model CreateModel(
-        AssetLoadContext context,
-        W3dFile w3dFile,
-        ModelBoneHierarchy boneHierarchy)
-    {
-        //BoundingSphere boundingSphere = default(BoundingSphere);
-
-        var w3dHLod = w3dFile.HLod;
-
-        var subObjects = new List<ModelSubObject>();
-
-        if (w3dHLod != null)
-        {
-            foreach (var w3dSubObject in w3dHLod.Lods[0].SubObjects)
+            var boneHierarchy = context.AssetStore.ModelBoneHierarchies.GetByName(imported.Skeleton.Name);
+            if (boneHierarchy is null)
             {
-                if (!w3dFile.RenderableObjectsByName.TryGetValue(w3dSubObject.Name, out var w3dRenderableObject))
-                {
-                    continue;
-                }
-
-                var bone = boneHierarchy.Bones[(int)w3dSubObject.BoneIndex];
-
-                //var meshBoundingSphere = mesh.BoundingSphere.Transform(bone.Transform);
-
-                //boundingSphere = (i == 0)
-                //    ? meshBoundingSphere
-                //    : BoundingSphere.CreateMerged(boundingSphere, meshBoundingSphere);
-
-                subObjects.Add(
-                    CreateSubObject(
-                        w3dSubObject.Name,
-                        w3dRenderableObject,
-                        bone,
-                        context));
-            }
-        }
-        else if (w3dFile.RenderableObjects.Count > 0)
-        {
-            // Simple models can have only one mesh with no HLod chunk.
-            if (w3dFile.RenderableObjects.Count != 1)
-            {
-                throw new InvalidOperationException();
+                throw new System.IO.InvalidDataException(
+                    $"Model '{imported.Name}' references hierarchy '{imported.Skeleton.Name}', " +
+                    "which could not be loaded.");
             }
 
-            var w3dRenderableObjectPair = w3dFile.RenderableObjectsByName.First();
-
-            subObjects.Add(
-                CreateSubObject(
-                    w3dRenderableObjectPair.Key,
-                    w3dRenderableObjectPair.Value,
-                    boneHierarchy.Bones[0],
-                    context));
-        }
-        else
-        {
-
+            return ImportedModelMaterializer.MaterializeModel(imported, boneHierarchy, context);
         }
 
-        return new Model(
-            Path.GetFileNameWithoutExtension(w3dFile.FilePath),
-            boneHierarchy,
-            subObjects.ToArray());
-    }
-
-    private static ModelSubObject CreateSubObject(
-        string fullName,
-        W3dChunk w3dRenderableObject,
-        ModelBone bone,
-        AssetLoadContext context)
-    {
-        return w3dRenderableObject switch
-        {
-            W3dMesh w3dMesh => new ModelSubObject(fullName, w3dMesh.Header.MeshName, bone, new ModelMesh(w3dMesh, context)),
-
-            W3dBox w3dBox => new ModelSubObject(fullName, bone, new ModelBox(w3dBox, context)),
-
-            _ => throw new ArgumentOutOfRangeException(nameof(w3dRenderableObject)),
-        };
+        return ImportedModelMaterializer.MaterializeModel(imported, context);
     }
 }
