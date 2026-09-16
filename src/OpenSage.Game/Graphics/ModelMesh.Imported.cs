@@ -186,6 +186,8 @@ partial class ModelMesh
                 Emissive = shading.Emissive,
                 Shininess = shading.Shininess,
                 Opacity = shading.Opacity,
+                TextureMappingStage0 = CreateTextureMapping(shading.TextureMappingStage0),
+                TextureMappingStage1 = CreateTextureMapping(shading.TextureMappingStage1),
             },
             Shading = new FixedFunctionShaderResources.ShadingConfiguration
             {
@@ -196,6 +198,25 @@ partial class ModelMesh
                 SecondaryTextureAlphaBlend = (FixedFunctionShaderResources.SecondaryTextureBlend)shading.SecondaryTextureAlphaBlend,
                 AlphaTest = shading.AlphaTest,
             },
+        };
+    }
+
+    private static FixedFunctionShaderResources.TextureMapping CreateTextureMapping(ImportedTextureMapping mapping)
+    {
+        return new FixedFunctionShaderResources.TextureMapping
+        {
+            MappingType = (FixedFunctionShaderResources.TextureMappingType)mapping.MappingType,
+            UVPerSec = mapping.UVPerSec,
+            UVScale = mapping.UVScale,
+            UVCenter = mapping.UVCenter,
+            UVAmplitude = mapping.UVAmplitude,
+            UVFrequency = mapping.UVFrequency,
+            UVPhase = mapping.UVPhase,
+            UVStep = mapping.UVStep,
+            Speed = mapping.Speed,
+            Fps = mapping.Fps,
+            Log2Width = mapping.Log2Width,
+            StepsPerSecond = mapping.StepsPerSecond,
         };
     }
 
