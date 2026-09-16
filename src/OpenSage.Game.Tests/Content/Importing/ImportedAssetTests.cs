@@ -32,8 +32,27 @@ public sealed class ImportedAssetTests
                 emissive: Vector3.Zero,
                 shininess: 0.0f,
                 opacity: 1.0f,
-                textureStageCount: 1),
+                textureStageCount: 1,
+                CreateDefaultTextureMapping(),
+                CreateDefaultTextureMapping()),
             properties: new[] { ImportedMaterialProperty.FromTextureName("Texture0", "AVTest.tga") });
+    }
+
+    private static ImportedTextureMapping CreateDefaultTextureMapping()
+    {
+        return new ImportedTextureMapping(
+            ImportedTextureMappingType.Uv,
+            Vector2.Zero,
+            Vector2.One,
+            Vector2.Zero,
+            Vector2.One,
+            Vector2.One,
+            Vector2.Zero,
+            Vector2.One,
+            speed: 0.1f,
+            fps: 1.0f,
+            log2Width: 1,
+            stepsPerSecond: 0.0f);
     }
 
     private static ImportedMesh CreateMesh(ImportedVertex[] vertices, ushort[] indices, bool isSkinned = false)

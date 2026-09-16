@@ -127,7 +127,8 @@ internal static class W3dMaterialConverter
             foreach (var run in GetMaterialRuns(w3dMesh, w3dMaterialPass))
             {
                 var w3dShader = w3dMesh.Shaders.Items[(int)run.ShaderID];
-                var w3dMaterial = w3dMesh.VertexMaterials.Items[(int)run.VertexMaterialID].Info;
+                var w3dVertexMaterial = w3dMesh.VertexMaterials.Items[(int)run.VertexMaterialID];
+                var w3dMaterial = w3dVertexMaterial.Info;
 
                 var cullMode = w3dMesh.Header.Attributes.HasFlag(W3dMeshFlags.TwoSided)
                     ? ImportedCullMode.None
@@ -148,7 +149,13 @@ internal static class W3dMaterialConverter
                     emissive: w3dMaterial.Emissive.ToVector3(),
                     shininess: w3dMaterial.Shininess,
                     opacity: w3dMaterial.Opacity,
-                    textureStageCount: numTextureStages);
+                    textureStageCount: numTextureStages,
+                    textureMappingStage0: CreateTextureMapping(
+                        w3dMaterial.Stage0Mapping,
+                        w3dVertexMaterial.MapperArgs0 ?? new W3dVertexMapperArgs(W3dChunkType.W3D_CHUNK_VERTEX_MAPPER_ARGS0)),
+                    textureMappingStage1: CreateTextureMapping(
+                        w3dMaterial.Stage1Mapping,
+                        w3dVertexMaterial.MapperArgs1 ?? new W3dVertexMapperArgs(W3dChunkType.W3D_CHUNK_VERTEX_MAPPER_ARGS1)));
 
                 var properties = new List<ImportedMaterialProperty>();
                 if (run.TextureIndex0 != null)
@@ -468,6 +475,43 @@ internal static class W3dMaterialConverter
             W3dShaderDestBlendFunc.OneMinusSrcColor => alpha
                 ? ImportedBlendFactor.InverseSourceAlpha
                 : ImportedBlendFactor.InverseSourceColor,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+    }
+
+    private static ImportedTextureMapping CreateTextureMapping(W3dVertexMappingType mappingType, W3dVertexMapperArgs args)
+    {
+        return new ImportedTextureMapping(
+            MapTextureMappingType(mappingType),
+            new Vector2(args.UPerSec, args.VPerSec),
+            new Vector2(args.UScale, args.VScale),
+            new Vector2(args.UCenter, args.VCenter),
+            new Vector2(args.UAmp, args.VAmp),
+            new Vector2(args.UFreq, args.VFreq),
+            new Vector2(args.UPhase, args.VPhase),
+            new Vector2(args.UStep, args.VStep),
+            args.Speed,
+            args.FPS,
+            args.Log2Width,
+            args.StepsPerSecond);
+    }
+
+    private static ImportedTextureMappingType MapTextureMappingType(W3dVertexMappingType value)
+    {
+        return value switch
+        {
+            W3dVertexMappingType.Uv => ImportedTextureMappingType.Uv,
+            W3dVertexMappingType.Environment or W3dVertexMappingType.CheapEnvironment => ImportedTextureMappingType.Environment,
+            W3dVertexMappingType.LinearOffset => ImportedTextureMappingType.LinearOffset,
+            W3dVertexMappingType.Rotate => ImportedTextureMappingType.Rotate,
+            W3dVertexMappingType.SineLinearOffset => ImportedTextureMappingType.SineLinearOffset,
+            W3dVertexMappingType.StepLinearOffset => ImportedTextureMappingType.StepLinearOffset,
+            W3dVertexMappingType.Screen => ImportedTextureMappingType.Screen,
+            W3dVertexMappingType.Scale => ImportedTextureMappingType.Scale,
+            W3dVertexMappingType.Grid => ImportedTextureMappingType.Grid,
+            W3dVertexMappingType.Random => ImportedTextureMappingType.Random,
+            W3dVertexMappingType.BumpEnv => ImportedTextureMappingType.BumpEnv,
+            W3dVertexMappingType.WsEnvironment => ImportedTextureMappingType.WsEnvironment,
             _ => throw new ArgumentOutOfRangeException(nameof(value)),
         };
     }

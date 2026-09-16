@@ -18,6 +18,23 @@ namespace OpenSage.Tests.Content.Importing;
 
 public sealed class ImportedModelMaterializerTests
 {
+    private static ImportedTextureMapping CreateDefaultTextureMapping()
+    {
+        return new ImportedTextureMapping(
+            ImportedTextureMappingType.Uv,
+            Vector2.Zero,
+            Vector2.One,
+            Vector2.Zero,
+            Vector2.One,
+            Vector2.One,
+            Vector2.Zero,
+            Vector2.One,
+            speed: 0.1f,
+            fps: 1.0f,
+            log2Width: 1,
+            stepsPerSecond: 0.0f);
+    }
+
     private static ImportedMaterial CreateFixedFunctionMaterial(
         params ImportedMaterialProperty[] properties)
     {
@@ -43,7 +60,9 @@ public sealed class ImportedModelMaterializerTests
                 emissive: Vector3.Zero,
                 shininess: 1.0f,
                 opacity: 1.0f,
-                textureStageCount: 1),
+                textureStageCount: 1,
+                CreateDefaultTextureMapping(),
+                CreateDefaultTextureMapping()),
             properties);
     }
 
@@ -127,7 +146,7 @@ public sealed class ImportedModelMaterializerTests
     [GraphicsFact]
     public void StaticModel_Materializes()
     {
-        using var graphics = new GraphicsTestContext();
+        using var graphics = new TestGraphicsContext();
 
         var model = ImportedModelMaterializer.MaterializeModel(
             CreateModel(CreateStaticMesh()),
@@ -166,7 +185,7 @@ public sealed class ImportedModelMaterializerTests
     [GraphicsFact]
     public void SkinnedModel_Materializes()
     {
-        using var graphics = new GraphicsTestContext();
+        using var graphics = new TestGraphicsContext();
 
         var model = ImportedModelMaterializer.MaterializeModel(
             CreateModel(CreateStaticMesh(
@@ -186,7 +205,7 @@ public sealed class ImportedModelMaterializerTests
     [GraphicsFact]
     public void Box_Materializes()
     {
-        using var graphics = new GraphicsTestContext();
+        using var graphics = new TestGraphicsContext();
 
         var model = ImportedModelMaterializer.MaterializeModel(
             CreateModel(new ImportedBox(new Vector3(1, 2, 3), new Vector3(4, 5, 6))),
@@ -205,7 +224,7 @@ public sealed class ImportedModelMaterializerTests
     [GraphicsFact]
     public void FixedFunctionMaterial_MapsTextureNamesThroughAssetStore()
     {
-        using var graphics = new GraphicsTestContext();
+        using var graphics = new TestGraphicsContext();
 
         var model = ImportedModelMaterializer.MaterializeModel(
             CreateModel(CreateStaticMesh(
@@ -224,7 +243,7 @@ public sealed class ImportedModelMaterializerTests
     [GraphicsFact]
     public void ShaderMaterial_AllPropertyKinds_ReachResourceSet()
     {
-        using var graphics = new GraphicsTestContext();
+        using var graphics = new TestGraphicsContext();
 
         var shaderResources = new TestShaderMaterialResources(graphics.ShaderSetStore);
         using var _ = shaderResources;
@@ -261,7 +280,7 @@ public sealed class ImportedModelMaterializerTests
     [GraphicsFact]
     public void MaterializeSkeleton_ProducesHierarchy()
     {
-        using var graphics = new GraphicsTestContext();
+        using var graphics = new TestGraphicsContext();
 
         var skeleton = new ImportedSkeleton(
             "TestHierarchy",
@@ -313,51 +332,6 @@ public sealed class ImportedModelMaterializerTests
                 2,
                 new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment),
                 ResourceType.Sampler);
-        }
-    }
-
-    private sealed class GraphicsTestContext : IDisposable
-    {
-        public GraphicsDevice Device { get; }
-        public StandardGraphicsResources StandardResources { get; }
-        public ShaderSetStore ShaderSetStore { get; }
-        public ShaderResourceManager ShaderResources { get; }
-        public AssetLoadContext Context { get; }
-
-        public GraphicsTestContext()
-        {
-            Device = GraphicsDeviceUtility.CreateGraphicsDevice(null, null);
-            StandardResources = new StandardGraphicsResources(Device);
-            ShaderSetStore = new ShaderSetStore(Device, RenderPipeline.GameOutputDescription);
-            ShaderResources = new ShaderResourceManager(Device, StandardResources, ShaderSetStore);
-
-            var fileSystem = new MemoryFileSystem();
-            var assetStore = new AssetStore(
-                SageGame.CncGenerals,
-                fileSystem,
-                "english",
-                Device,
-                StandardResources,
-                ShaderResources,
-                ShaderSetStore,
-                OnDemandAssetLoadStrategy.None);
-
-            Context = new AssetLoadContext(
-                fileSystem,
-                "english",
-                Device,
-                StandardResources,
-                ShaderResources,
-                ShaderSetStore,
-                assetStore);
-        }
-
-        public void Dispose()
-        {
-            ShaderResources.Dispose();
-            ShaderSetStore.Dispose();
-            StandardResources.Dispose();
-            Device.Dispose();
         }
     }
 }

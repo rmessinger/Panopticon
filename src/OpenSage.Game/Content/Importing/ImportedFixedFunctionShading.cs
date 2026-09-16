@@ -56,6 +56,10 @@ public sealed class ImportedFixedFunctionShading
 
     public int TextureStageCount { get; }
 
+    public ImportedTextureMapping TextureMappingStage0 { get; }
+
+    public ImportedTextureMapping TextureMappingStage1 { get; }
+
     public ImportedFixedFunctionShading(
         ImportedDiffuseLightingType diffuseLightingType,
         bool specularEnabled,
@@ -69,7 +73,9 @@ public sealed class ImportedFixedFunctionShading
         in Vector3 emissive,
         float shininess,
         float opacity,
-        int textureStageCount)
+        int textureStageCount,
+        ImportedTextureMapping textureMappingStage0,
+        ImportedTextureMapping textureMappingStage1)
     {
         if (textureStageCount < 0 || textureStageCount > 2)
         {
@@ -89,5 +95,7 @@ public sealed class ImportedFixedFunctionShading
         Shininess = shininess;
         Opacity = opacity;
         TextureStageCount = textureStageCount;
+        TextureMappingStage0 = textureMappingStage0;
+        TextureMappingStage1 = textureMappingStage1;
     }
 }
