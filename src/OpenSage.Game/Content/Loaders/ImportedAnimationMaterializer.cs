@@ -3,8 +3,6 @@
 using System;
 using System.Linq;
 using OpenSage.Content.Importing;
-using OpenSage.Content.Importing.W3d;
-using OpenSage.FileFormats.W3d;
 using OpenSage.Graphics.Animation;
 
 namespace OpenSage.Content.Loaders;
@@ -21,19 +19,6 @@ internal static class ImportedAnimationMaterializer
             .ToArray();
 
         return new ModelAnimation(imported.Name, imported.Duration, clips);
-    }
-
-    /// <summary>
-    /// Legacy entry point used by the pre-seam W3D loader; WI-C1-12 compares this path with
-    /// direct importer plus materializer output.
-    /// </summary>
-    public static ModelAnimation? FromW3dFile(W3dFile w3dFile)
-    {
-        var imported = W3dAnimationImporter.Convert(w3dFile);
-
-        return imported is null
-            ? null
-            : Materialize(imported);
     }
 
     private static AnimationClip ToRuntimeClip(ImportedAnimationChannel channel)

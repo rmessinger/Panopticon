@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-36` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): stable model-import seam |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-31`, `WI-A4-38`; C1 must land importer contracts, W3D reference adapters, and diagrams |

@@ -1,7 +1,6 @@
 using System.Numerics;
 using OpenSage.Content.Importing;
 using OpenSage.Content.Loaders;
-using OpenSage.FileFormats.W3d;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Graphics.Rendering;
 using OpenSage.Graphics.Shaders;
@@ -18,15 +17,6 @@ public sealed class ModelBox : ModelRenderObject
     public override ref readonly BoundingSphere BoundingSphere => ref _boundingSphere;
 
     public override bool Hidden { get; } = false;
-
-    internal ModelBox(W3dBox w3dBox, AssetLoadContext context)
-    {
-        _boundingBox = new AxisAlignedBoundingBox(
-            w3dBox.Center - w3dBox.Extent,
-            w3dBox.Center + w3dBox.Extent);
-        _boundingSphere = new BoundingSphere(w3dBox.Center, w3dBox.Extent.Length());
-        // TODO
-    }
 
     internal ModelBox(ImportedBox importedBox)
     {

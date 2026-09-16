@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -46,15 +47,15 @@ public sealed class W3dImportParityTests
                 fileSystem,
                 OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.GeneralsTexture));
 
-            var legacyModel = LoadLegacyModel(fileSystem, graphics.Context, modelName);
-            Assert.NotNull(legacyModel);
+            var loaderModel = graphics.Context.AssetStore.Models.GetByName(modelName);
+            Assert.NotNull(loaderModel);
 
-            var importedModel = LoadImportedModel(graphics.Context, modelName);
-            Assert.NotNull(importedModel);
+            var directModel = LoadImportedModel(graphics.Context, modelName);
+            Assert.NotNull(directModel);
 
-            AssertModelParity(legacyModel, importedModel);
+            AssertModelParity(loaderModel, directModel);
 
-            AssertMaterialsShared(legacyModel, importedModel, graphics, modelName);
+            AssertMaterialsShared(loaderModel, directModel, graphics, modelName);
         }
     }
 
@@ -74,8 +75,10 @@ public sealed class W3dImportParityTests
     public void ReferencedHierarchyDescriptor_Parity()
     {
         using var fileSystem = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
-        var legacyHierarchy = LoadLegacyHierarchy(fileSystem, "airngr_skl");
-        Assert.NotNull(legacyHierarchy);
+        var context = CreateImportingDataOnlyContext(fileSystem);
+
+        var loaderHierarchy = context.AssetStore.ModelBoneHierarchies.GetByName("airngr_skl");
+        Assert.NotNull(loaderHierarchy);
 
         var importedSkeleton = new W3dModelImporter(PathResolvers.W3d).ImportSkeleton(
             "airngr_skl",
@@ -84,7 +87,7 @@ public sealed class W3dImportParityTests
 
         var importedHierarchy = ImportedModelMaterializer.MaterializeSkeleton(importedSkeleton);
 
-        AssertHierarchyParity(legacyHierarchy, importedHierarchy);
+        AssertHierarchyParity(loaderHierarchy, importedHierarchy);
     }
 
     [GameFact(SageGame.CncGenerals)]
@@ -93,8 +96,10 @@ public sealed class W3dImportParityTests
         foreach (var animationKey in AnimationParityAssets)
         {
             using var fileSystem = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
-            var legacyAnimation = LoadLegacyAnimation(fileSystem, animationKey);
-            Assert.NotNull(legacyAnimation);
+            var context = CreateImportingDataOnlyContext(fileSystem);
+
+            var loaderAnimation = context.AssetStore.ModelAnimations.GetByName(animationKey);
+            Assert.NotNull(loaderAnimation);
 
             var importedAnimation = new W3dAnimationImporter(PathResolvers.W3d).ImportAnimation(
                 animationKey,
@@ -103,7 +108,7 @@ public sealed class W3dImportParityTests
 
             var materializedAnimation = ImportedAnimationMaterializer.Materialize(importedAnimation);
 
-            AssertAnimationParity(legacyAnimation, materializedAnimation);
+            AssertAnimationParity(loaderAnimation, materializedAnimation);
         }
     }
 
@@ -131,8 +136,10 @@ public sealed class W3dImportParityTests
     private static void AnimationPlayback_Parity_Run(string skeletonName, string animationKey)
     {
         using var fileSystem = InstalledFilesTestData.GetInstallation(SageGame.CncGenerals).CreateFileSystem();
-        var legacyAnimation = LoadLegacyAnimation(fileSystem, animationKey);
-        Assert.NotNull(legacyAnimation);
+        var context = CreateImportingDataOnlyContext(fileSystem);
+
+        var loaderAnimation = context.AssetStore.ModelAnimations.GetByName(animationKey);
+        Assert.NotNull(loaderAnimation);
 
         var importedAnimation = new W3dAnimationImporter(PathResolvers.W3d).ImportAnimation(
             animationKey,
@@ -150,7 +157,7 @@ public sealed class W3dImportParityTests
         var importedBones = hierarchy.Bones.Select(b => new ModelBoneInstance(b)).ToArray();
 
         var legacyInstance = new AnimationInstance(
-            legacyBones, legacyAnimation, AnimationMode.Once, AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
+            legacyBones, loaderAnimation, AnimationMode.Once, AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
         var importedInstance = new AnimationInstance(
             importedBones, materializedAnimation, AnimationMode.Once, AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
 
@@ -159,7 +166,7 @@ public sealed class W3dImportParityTests
 
         var totalTime = TimeSpan.Zero;
         var step = TimeSpan.FromSeconds(0.5);
-        while (totalTime <= legacyAnimation.Duration)
+        while (totalTime <= loaderAnimation.Duration)
         {
             var time = new TimeInterval(totalTime, step);
             legacyInstance.Update(time);
@@ -193,150 +200,55 @@ public sealed class W3dImportParityTests
             return;
         }
 
-        using var graphics = new TestGraphicsContext();
         var w3dFile = ShaderMaterialTestFile.Create();
 
-        var legacyMesh = new ModelMesh(GetMesh(w3dFile), graphics.Context);
+        var fileSystem = new MemoryFileSystem();
+        using var output = new MemoryStream();
+        w3dFile.WriteTo(output);
+        fileSystem.AddFile(w3dFile.FilePath, output.ToArray());
 
-        var imported = new W3dModelImporter(PathResolvers.W3d).Convert(
+        using var graphics = new TestGraphicsContext(
+            fileSystem,
+            OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.GeneralsTexture));
+
+        var loaderModel = graphics.Context.AssetStore.Models.GetByName("shadermaterialtest");
+        Assert.NotNull(loaderModel);
+        var loaderMesh = (ModelMesh)loaderModel.SubObjects[0].RenderObject;
+
+        var direct = new W3dModelImporter(PathResolvers.W3d).Convert(
             w3dFile,
-            new AssetImportContext(new MemoryFileSystem(), "english"));
-        Assert.NotNull(imported);
-        var materializedModel = ImportedModelMaterializer.MaterializeModel(imported, graphics.Context);
-        var materializedMesh = (ModelMesh)materializedModel.SubObjects[0].RenderObject;
+            new AssetImportContext(fileSystem, "english"));
+        Assert.NotNull(direct);
+        var directModel = ImportedModelMaterializer.MaterializeModel(direct, graphics.Context);
+        var directMesh = (ModelMesh)directModel.SubObjects[0].RenderObject;
 
-        AssertMeshParity(DescribeMesh(legacyMesh), DescribeMesh(materializedMesh));
+        AssertMeshParity(DescribeMesh(loaderMesh), DescribeMesh(directMesh));
 
         // Named shader-material properties are compared at conversion level in
         // W3dMaterialConverterTests and at resource-set level in ImportedModelMaterializerTests;
         // here shader selection and pipeline identity must agree. A named shader-material
         // shader set owns a single shared pipeline, so equality is instance identity.
         Assert.Same(
-            legacyMesh.MeshParts[0].Material.ForwardPass.ShaderSet,
-            materializedMesh.MeshParts[0].Material.ForwardPass.ShaderSet);
+            loaderMesh.MeshParts[0].Material.ForwardPass.ShaderSet,
+            directMesh.MeshParts[0].Material.ForwardPass.ShaderSet);
         Assert.Same(
-            legacyMesh.MeshParts[0].Material.ForwardPass.Pipeline,
-            materializedMesh.MeshParts[0].Material.ForwardPass.Pipeline);
+            loaderMesh.MeshParts[0].Material.ForwardPass.Pipeline,
+            directMesh.MeshParts[0].Material.ForwardPass.Pipeline);
     }
 
-    // The on-demand loaders are importer-backed since WI-C1-13; the legacy side of each parity
-    // comparison constructs runtime assets directly from parsed W3D data, mirroring the
-    // pre-cutover loader logic exactly.
-    private static W3dFile? FindAndParse(FileSystem fileSystem, string name)
+    private static AssetLoadContext CreateImportingDataOnlyContext(FileSystem fileSystem)
     {
-        FileSystemEntry? entry = null;
-        foreach (var path in PathResolvers.W3d.GetPaths(name, "english"))
-        {
-            entry = fileSystem.GetFile(path);
-            if (entry != null)
-            {
-                break;
-            }
-        }
-
-        if (entry is null)
-        {
-            return null;
-        }
-
-        using var entryStream = entry.Open();
-        return W3dFile.FromStream(entryStream, entry.FilePath);
-    }
-
-    private static ModelBoneHierarchy? LoadLegacyHierarchy(FileSystem fileSystem, string name)
-    {
-        var w3dFile = FindAndParse(fileSystem, name);
-        return w3dFile?.Hierarchy != null
-            ? new ModelBoneHierarchy(w3dFile.Hierarchy)
-            : ModelBoneHierarchy.CreateDefault();
-    }
-
-    private static ModelAnimation? LoadLegacyAnimation(FileSystem fileSystem, string key)
-    {
-        var splitName = key.Split('.');
-        if (splitName.Length <= 1)
-        {
-            return null;
-        }
-
-        var w3dFile = FindAndParse(fileSystem, splitName[1]);
-        return w3dFile != null
-            ? ImportedAnimationMaterializer.FromW3dFile(w3dFile)
-            : null;
-    }
-
-    private static Model? LoadLegacyModel(FileSystem fileSystem, AssetLoadContext context, string name)
-    {
-        var w3dFile = FindAndParse(fileSystem, name);
-        if (w3dFile is null)
-        {
-            return null;
-        }
-
-        ModelBoneHierarchy boneHierarchy;
-        if (w3dFile.Hierarchy != null)
-        {
-            boneHierarchy = new ModelBoneHierarchy(w3dFile.Hierarchy);
-        }
-        else if (w3dFile.HLod != null)
-        {
-            boneHierarchy = LoadLegacyHierarchy(fileSystem, w3dFile.HLod.Header.HierarchyName)
-                ?? throw new InvalidOperationException(
-                    "Referenced hierarchy missing: " + w3dFile.HLod.Header.HierarchyName);
-        }
-        else
-        {
-            boneHierarchy = ModelBoneHierarchy.CreateDefault();
-        }
-
-        var subObjects = new List<ModelSubObject>();
-
-        if (w3dFile.HLod != null)
-        {
-            foreach (var w3dSubObject in w3dFile.HLod.Lods[0].SubObjects)
-            {
-                if (!w3dFile.RenderableObjectsByName.TryGetValue(w3dSubObject.Name, out var w3dRenderableObject))
-                {
-                    continue;
-                }
-
-                subObjects.Add(CreateLegacySubObject(
-                    w3dSubObject.Name,
-                    w3dRenderableObject,
-                    boneHierarchy.Bones[(int)w3dSubObject.BoneIndex],
-                    context));
-            }
-        }
-        else
-        {
-            var w3dRenderableObjectPair = w3dFile.RenderableObjectsByName.First();
-            subObjects.Add(CreateLegacySubObject(
-                w3dRenderableObjectPair.Key,
-                w3dRenderableObjectPair.Value,
-                boneHierarchy.Bones[0],
-                context));
-        }
-
-        return new Model(
-            System.IO.Path.GetFileNameWithoutExtension(w3dFile.FilePath),
-            boneHierarchy,
-            subObjects.ToArray());
-    }
-
-    private static ModelSubObject CreateLegacySubObject(
-        string fullName,
-        W3dChunk w3dRenderableObject,
-        ModelBone bone,
-        AssetLoadContext context)
-    {
-        return w3dRenderableObject switch
-        {
-            W3dMesh w3dMesh => new ModelSubObject(fullName, w3dMesh.Header.MeshName, bone, new ModelMesh(w3dMesh, context)),
-
-            W3dBox w3dBox => new ModelSubObject(fullName, bone, new ModelBox(w3dBox, context)),
-
-            _ => throw new ArgumentOutOfRangeException(nameof(w3dRenderableObject)),
-        };
+        var assetStore = new AssetStore(
+            SageGame.CncGenerals,
+            fileSystem,
+            "english",
+            null,
+            null,
+            null,
+            null,
+            OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.GeneralsTexture));
+        assetStore.PushScope();
+        return new AssetLoadContext(fileSystem, "english", null, null, null, null, assetStore);
     }
 
     private static Model LoadImportedModel(AssetLoadContext context, string name)
@@ -345,11 +257,6 @@ public sealed class W3dImportParityTests
         var imported = importer.ImportModel(name, new AssetImportContext(context.FileSystem, context.Language));
         Assert.NotNull(imported);
         return ImportedModelMaterializer.MaterializeModel(imported, context);
-    }
-
-    private static W3dMesh GetMesh(W3dFile w3dFile)
-    {
-        return (W3dMesh)w3dFile.RenderableObjectsByName.First().Value;
     }
 
     private static void AssertMaterialsShared(Model legacyModel, Model importedModel, TestGraphicsContext graphics, string modelName)
@@ -707,7 +614,7 @@ public sealed class W3dImportParityTests
                 FilePath: "art/w3d/shadermaterialtest.w3d",
                 Chunks: [mesh],
                 RenderableObjects: [mesh],
-                RenderableObjectsByName: new Dictionary<string, W3dChunk> { ["ShaderMaterialTest"] = mesh },
+                RenderableObjectsByName: new Dictionary<string, W3dChunk> { ["ShaderMatTest"] = mesh },
                 Hierarchy: null,
                 HLod: null);
         }
@@ -717,7 +624,7 @@ public sealed class W3dImportParityTests
             return new W3dMeshHeader3(
                 Version: 0,
                 Attributes: 0,
-                MeshName: "ShaderMaterialTest",
+                MeshName: "ShaderMatTest",
                 ContainerName: "TestContainer",
                 NumTris: 1,
                 NumVertices: 3,
@@ -727,7 +634,7 @@ public sealed class W3dImportParityTests
                 PrelitVersion: 0,
                 FutureCounts: 0,
                 VertexChannels: W3dVertexChannels.Location | W3dVertexChannels.Normal,
-                FaceChannels: 0,
+                FaceChannels: W3dFaceChannels.Face,
                 Min: Vector3.Zero,
                 Max: Vector3.One,
                 SphCenter: new Vector3(0.5f, 0.5f, 0.5f),

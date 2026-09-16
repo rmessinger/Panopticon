@@ -1,6 +1,5 @@
 using System.Numerics;
 using OpenSage.Content.Importing;
-using OpenSage.FileFormats.W3d;
 
 namespace OpenSage.Graphics;
 
@@ -19,29 +18,6 @@ public sealed class ModelBoneHierarchy : BaseAsset
     {
         SetNameAndInstanceId("W3DHierarchy", name);
         Bones = bones;
-    }
-
-    internal ModelBoneHierarchy(W3dHierarchyDef w3dHierarchy)
-    {
-        SetNameAndInstanceId("W3DHierarchy", w3dHierarchy.Header.Name);
-
-        Bones = new ModelBone[w3dHierarchy.Pivots.Items.Count];
-
-        for (var i = 0; i < w3dHierarchy.Pivots.Items.Count; i++)
-        {
-            var pivot = w3dHierarchy.Pivots.Items[i];
-
-            var parent = pivot.ParentIdx == -1
-                ? null
-                : Bones[pivot.ParentIdx];
-
-            Bones[i] = new ModelBone(
-                i,
-                pivot.Name,
-                parent,
-                pivot.Translation,
-                pivot.Rotation);
-        }
     }
 
     internal ModelBoneHierarchy(ImportedSkeleton importedSkeleton)

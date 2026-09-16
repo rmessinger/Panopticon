@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C4-01` |
 | Roadmap phase | [Track C · C4](../../track-c-external-assets.md): First production external format |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C1-14` |
