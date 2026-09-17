@@ -64,7 +64,6 @@ public sealed class ModelAnimation : BaseAsset
             else
             {
                 boneNameIndex ??= BuildBoneNameIndex(hierarchy);
-                boneNameIndex ??= BuildBoneNameIndex(hierarchy);
                 var boneName = channel.Target.BoneName;
                 if (!boneNameIndex.TryGetValue(boneName, out boneIndex))
                 {
@@ -78,6 +77,7 @@ public sealed class ModelAnimation : BaseAsset
 
         return new BoundModelAnimation(Name, Duration, clips);
     }
+
     private static Dictionary<string, int> BuildBoneNameIndex(ModelBoneHierarchy hierarchy)
     {
         var index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
