@@ -334,7 +334,6 @@ public sealed class ModelAnimationTests
         Assert.Equal(0, bound.Clips[2].Bone);
         Assert.Equal(AnimationClipType.TranslationZ, bound.Clips[2].ClipType);
     }
-
     private static ImportedSkeleton CreateSkeleton(int boneCount)
     {
         var bones = new ImportedBone[boneCount];
