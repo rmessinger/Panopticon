@@ -13,7 +13,7 @@ public sealed class AnimationInstance
     private readonly GameObject _gameObject;
     private readonly int[] _keyframeIndices;
     private readonly ModelBoneInstance[] _boneInstances;
-    private readonly ModelAnimation _animation;
+    private readonly BoundModelAnimation _animation;
 
     private TimeSpan _currentTimeValue;
 
@@ -34,12 +34,12 @@ public sealed class AnimationInstance
     /// Construct a new <see cref="AnimationInstance"/>
     /// </summary>
     /// <param name="modelBoneInstances">The bone instances to use, which will be modified as the animation plays</param>
-    /// <param name="animation">The animation to apply to the bones</param>
+    /// <param name="animation">The bound animation to apply to the bones</param>
     /// <param name="mode">The animation mode</param>
     /// <param name="flags">Additional animation flags</param>
     /// <param name="gameObject"></param>
     /// <param name="random">Random number generator used when combined with <see cref="AnimationFlags.RandomStart"/></param>
-    public AnimationInstance(ModelBoneInstance[] modelBoneInstances, ModelAnimation animation,
+    public AnimationInstance(ModelBoneInstance[] modelBoneInstances, BoundModelAnimation animation,
         AnimationMode mode, AnimationFlags flags, GameObject gameObject, IRandom random)
     {
         _animation = animation;

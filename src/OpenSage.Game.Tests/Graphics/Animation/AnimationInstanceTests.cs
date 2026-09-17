@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using OpenSage.Content.Importing;
 using OpenSage.Graphics;
 using OpenSage.Graphics.Animation;
 using OpenSage.Logic.Object;
@@ -18,8 +19,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.Once,
-            AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -39,8 +39,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.OnceBackwards,
-            AnimationFlags.StartFrameLast, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.OnceBackwards, AnimationFlags.StartFrameLast);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -60,8 +59,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.Once,
-            AnimationFlags.StartFrameLast, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameLast);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -82,8 +80,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.OnceBackwards,
-            AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.OnceBackwards, AnimationFlags.StartFrameFirst);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -104,8 +101,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.Manual,
-            AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Manual, AnimationFlags.StartFrameFirst);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -126,8 +122,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.Manual,
-            AnimationFlags.StartFrameLast, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Manual, AnimationFlags.StartFrameLast);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -148,8 +143,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.Loop,
-            AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Loop, AnimationFlags.StartFrameFirst);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -169,8 +163,7 @@ public class AnimationInstanceTests
         var modelBoneInstances = NewDefaultModelBoneInstances();
         var animation = NewBasicAnimationInstance();
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.LoopBackwards,
-            AnimationFlags.StartFrameLast, null, new QuoteUnquoteRandom());
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.LoopBackwards, AnimationFlags.StartFrameLast);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -199,8 +192,8 @@ public class AnimationInstanceTests
         var animation = NewBasicAnimationInstance();
         var random = new QuoteUnquoteRandom(rngSeed);
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.Once,
-            AnimationFlags.RandomStart, null, random);
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once,
+            AnimationFlags.RandomStart, random);
 
         instance.Play();
         var time = TimeInterval.Zero;
@@ -218,9 +211,9 @@ public class AnimationInstanceTests
             }
 
             var target = previous.Value + 1;
-            if (target > animation.Clips[0].Keyframes.Last().Value.FloatValue)
+            if (target > animation.Channels[0].Keyframes.Last().Value.FloatValue)
             {
-                target = animation.Clips[0].Keyframes.Last().Value.FloatValue;
+                target = animation.Channels[0].Keyframes.Last().Value.FloatValue;
             }
 
             Assert.Equal(target, modelBoneInstances[0].AnimatedOffset.Translation.X, new ToleranceEqualityComparer(0.001f));
@@ -244,8 +237,8 @@ public class AnimationInstanceTests
         var animation = NewBasicAnimationInstance();
         var random = new QuoteUnquoteRandom(rngSeed);
 
-        var instance = new AnimationInstance(modelBoneInstances, animation, AnimationMode.OnceBackwards,
-            AnimationFlags.RandomStart, null, random);
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.OnceBackwards,
+            AnimationFlags.RandomStart, random);
 
         instance.Play();
 
@@ -272,6 +265,21 @@ public class AnimationInstanceTests
             previous = modelBoneInstances[0].AnimatedOffset.Translation.X;
         }
         instance.Stop();
+    }
+
+    private static AnimationInstance CreateInstance(
+        ModelBoneInstance[] modelBoneInstances,
+        ModelAnimation animation,
+        AnimationMode mode,
+        AnimationFlags flags,
+        IRandom? random = null)
+    {
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton(
+            "TestSkeleton",
+            new[] { new ImportedBone("myBone", -1, Vector3.Zero, Quaternion.Identity) }));
+
+        return new AnimationInstance(
+            modelBoneInstances, animation.Bind(hierarchy), mode, flags, null, random ?? new QuoteUnquoteRandom());
     }
 
     private static ModelBoneInstance[] NewDefaultModelBoneInstances()

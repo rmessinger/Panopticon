@@ -13,7 +13,7 @@ namespace OpenSage.Tests.Graphics.Animation;
 public sealed class ModelAnimationTests
 {
     [Fact]
-    public void Materialize_PreservesNameDurationAndClips()
+    public void Materialize_PreservesNameDurationAndChannels()
     {
         var rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 4);
         var imported = new ImportedAnimation(
@@ -49,17 +49,21 @@ public sealed class ModelAnimationTests
 
         Assert.Equal("HV.Run", animation.Name);
         Assert.Equal(TimeSpan.FromSeconds(2.0), animation.Duration);
-        Assert.Equal(3, animation.Clips.Length);
+        Assert.Equal(3, animation.Channels.Length);
 
-        Assert.Equal(AnimationClipType.Quaternion, animation.Clips[0].ClipType);
-        Assert.Equal(3, animation.Clips[0].Bone);
-        Assert.Equal(rotation, animation.Clips[0].Keyframes[1].Value.Quaternion);
+        Assert.Equal(ModelAnimationTargetKind.DirectIndex, animation.Channels[0].Target.Kind);
+        Assert.Equal(3, animation.Channels[0].Target.DirectIndex);
+        Assert.Equal(AnimationClipType.Quaternion, animation.Channels[0].ClipType);
+        Assert.Equal(TimeSpan.FromSeconds(0.2), animation.Channels[0].Keyframes[1].Time);
+        Assert.Equal(rotation, animation.Channels[0].Keyframes[1].Value.Quaternion);
 
-        Assert.Equal(AnimationClipType.TranslationX, animation.Clips[1].ClipType);
-        Assert.Equal(1.0f, animation.Clips[1].Keyframes[0].Value.FloatValue);
+        Assert.Equal(1, animation.Channels[1].Target.DirectIndex);
+        Assert.Equal(AnimationClipType.TranslationX, animation.Channels[1].ClipType);
+        Assert.Equal(1.0f, animation.Channels[1].Keyframes[0].Value.FloatValue);
 
-        Assert.Equal(AnimationClipType.Visibility, animation.Clips[2].ClipType);
-        Assert.True(animation.Clips[2].Keyframes[0].Value.BoolValue);
+        Assert.Equal(2, animation.Channels[2].Target.DirectIndex);
+        Assert.Equal(AnimationClipType.Visibility, animation.Channels[2].ClipType);
+        Assert.True(animation.Channels[2].Keyframes[0].Value.BoolValue);
     }
 
     [Fact]

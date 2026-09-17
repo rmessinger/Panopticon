@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace OpenSage.Graphics.Animation;
@@ -20,30 +19,12 @@ public sealed class ModelAnimation : BaseAsset
 
     public ModelAnimationChannel[] Channels { get; }
 
-    /// <summary>
-    /// Compatibility clip surface for callers not yet binding through
-    /// <see cref="Bind(ModelBoneHierarchy)"/>; removed by WI-C2-05. Derived from direct-index
-    /// channels only, preserving their order; bone-name channels are not playable here.
-    /// </summary>
-    public AnimationClip[] Clips { get; }
-
     internal ModelAnimation(string name, TimeSpan duration, ModelAnimationChannel[] channels)
     {
         SetNameAndInstanceId("ModelAnimation", name);
 
-        var directChannels = channels
-            .Where(c => c.Target.Kind == ModelAnimationTargetKind.DirectIndex)
-            .ToArray();
-        var clips = new AnimationClip[directChannels.Length];
-        for (var i = 0; i < directChannels.Length; i++)
-        {
-            var channel = directChannels[i];
-            clips[i] = new AnimationClip(channel.ClipType, channel.Target.DirectIndex, channel.Keyframes);
-        }
-
         Duration = duration;
         Channels = channels;
-        Clips = clips;
     }
 
     /// <summary>
