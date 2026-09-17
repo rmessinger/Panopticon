@@ -14,14 +14,14 @@ internal static class ImportedAnimationMaterializer
 {
     public static ModelAnimation Materialize(ImportedAnimation imported)
     {
-        var clips = imported.Channels
-            .Select(ToRuntimeClip)
+        var channels = imported.Channels
+            .Select(ToRuntimeChannel)
             .ToArray();
 
-        return new ModelAnimation(imported.Name, imported.Duration, clips);
+        return new ModelAnimation(imported.Name, imported.Duration, channels);
     }
 
-    private static AnimationClip ToRuntimeClip(ImportedAnimationChannel channel)
+    private static ModelAnimationChannel ToRuntimeChannel(ImportedAnimationChannel channel)
     {
         var clipType = channel.ChannelType switch
         {
@@ -33,11 +33,18 @@ internal static class ImportedAnimationMaterializer
             _ => throw new ArgumentOutOfRangeException(nameof(channel)),
         };
 
+        var target = channel.Target.Kind switch
+        {
+            ImportedAnimationTargetKind.DirectIndex => ModelAnimationTarget.CreateDirectIndex(channel.Target.DirectIndex),
+            ImportedAnimationTargetKind.BoneName => ModelAnimationTarget.CreateBoneName(channel.Target.BoneName),
+            _ => throw new ArgumentOutOfRangeException(nameof(channel)),
+        };
+
         var keyframes = channel.Keyframes
             .Select(k => new Keyframe(k.Time, ToRuntimeValue(k)))
             .ToArray();
 
-        return new AnimationClip(clipType, channel.BoneIndex, keyframes);
+        return new ModelAnimationChannel(target, clipType, keyframes);
     }
 
     private static KeyframeValue ToRuntimeValue(ImportedKeyframe keyframe)

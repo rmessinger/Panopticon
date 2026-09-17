@@ -285,9 +285,12 @@ public class AnimationInstanceTests
 
     private static ModelAnimation NewBasicAnimationInstance()
     {
-        var animationClips = new[]
+        var animationChannels = new[]
         {
-            new AnimationClip(AnimationClipType.TranslationX, 0, new []
+            new ModelAnimationChannel(
+                ModelAnimationTarget.CreateDirectIndex(0),
+                AnimationClipType.TranslationX,
+                new []
             {
                 new Keyframe(TimeSpan.FromSeconds(0), new KeyframeValue
                 {
@@ -312,7 +315,7 @@ public class AnimationInstanceTests
             })
         };
 
-        return new ModelAnimation(string.Empty, TimeSpan.FromSeconds(5), animationClips);
+        return new ModelAnimation(string.Empty, TimeSpan.FromSeconds(5), animationChannels);
     }
 }
 
