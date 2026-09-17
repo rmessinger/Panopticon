@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace OpenSage.Graphics.Animation;
@@ -43,6 +45,7 @@ public sealed class ModelAnimation : BaseAsset
     {
         ArgumentNullException.ThrowIfNull(hierarchy);
 
+        Dictionary<string, int>? boneNameIndex = null;
         var clips = new AnimationClip[Channels.Length];
         for (var i = 0; i < Channels.Length; i++)
         {
@@ -60,13 +63,41 @@ public sealed class ModelAnimation : BaseAsset
             }
             else
             {
-                throw new InvalidOperationException(
-                    $"Animation '{Name}' channel {i} uses a bone-name target, which cannot be bound yet.");
+                boneNameIndex ??= BuildBoneNameIndex(hierarchy);
+                var boneName = channel.Target.BoneName;
+                if (!boneNameIndex.TryGetValue(boneName, out boneIndex))
+                {
+                    throw new InvalidDataException(
+                        $"Animation '{Name}' targets bone '{boneName}', which does not exist in hierarchy '{hierarchy.Name}'.");
+                }
             }
 
             clips[i] = new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes);
         }
 
         return new BoundModelAnimation(Name, Duration, clips);
+    }
+
+    private static Dictionary<string, int> BuildBoneNameIndex(ModelBoneHierarchy hierarchy)
+    {
+        var index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < hierarchy.Bones.Length; i++)
+        {
+            var bone = hierarchy.Bones[i];
+            if (bone.Name is null)
+            {
+                continue;
+            }
+
+            if (index.TryGetValue(bone.Name, out var existingIndex))
+            {
+                throw new InvalidDataException(
+                    $"Hierarchy '{hierarchy.Name}' contains bones '{hierarchy.Bones[existingIndex].Name}' at index {existingIndex} and '{bone.Name}' at index {i} differing only by case; named animation targets would be ambiguous.");
+            }
+
+            index.Add(bone.Name, i);
+        }
+
+        return index;
     }
 }
