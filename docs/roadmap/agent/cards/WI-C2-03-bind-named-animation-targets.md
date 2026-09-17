@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C2-03` |
 | Roadmap phase | [Track C · C2](../../track-c-external-assets.md): Skeleton and animation retargeting |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C2-02` |
