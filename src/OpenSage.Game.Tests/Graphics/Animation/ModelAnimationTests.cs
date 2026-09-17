@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using OpenSage.Content.Importing;
 using OpenSage.Content.Loaders;
@@ -136,35 +137,121 @@ public sealed class ModelAnimationTests
     }
 
     [Fact]
-    public void Bind_RejectsOutOfRangeDirectIndexAndNamedTargets()
+    public void Bind_OmitsOutOfRangeDirectChannels_And_WarnsOncePerHierarchy()
     {
-        var imported = new ImportedAnimation(
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Omit",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    boneIndex: 0,
+                    ImportedAnimationChannelType.TranslationX,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 1.0f) }),
+                new ImportedAnimationChannel(
+                    boneIndex: 99,
+                    ImportedAnimationChannelType.TranslationY,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 2.0f) }),
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Bone_Arm"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Bone_Arm", 0, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        using var logCapture = new NLogCapture();
+        var bound = animation.Bind(hierarchy);
+        animation.Bind(hierarchy);
+
+        Assert.Equal(2, bound.Clips.Length);
+        Assert.Equal(0, bound.Clips[0].Bone);
+        Assert.Equal(AnimationClipType.TranslationX, bound.Clips[0].ClipType);
+        Assert.Equal(1, bound.Clips[1].Bone);
+        Assert.Equal(AnimationClipType.Visibility, bound.Clips[1].ClipType);
+        Assert.Equal(1, logCapture.CountWarningsContaining("HV.Omit"));
+        Assert.Equal(1, logCapture.CountWarningsContaining("99"));
+    }
+
+    [Fact]
+    public void Bind_CachesPerHierarchyObjectIdentity()
+    {
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
             "HV.Run",
             TimeSpan.FromSeconds(1.0),
             new[]
             {
                 new ImportedAnimationChannel(
-                    boneIndex: 5,
-                    ImportedAnimationChannelType.Visibility,
-                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
-            });
-        var animation = ImportedAnimationMaterializer.Materialize(imported);
-        var hierarchy = new ModelBoneHierarchy(CreateSkeleton(3));
-
-        Assert.Throws<ArgumentOutOfRangeException>(() => animation.Bind(hierarchy));
-
-        var named = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
-            "HV.Named",
-            TimeSpan.FromSeconds(1.0),
-            new[]
-            {
-                new ImportedAnimationChannel(
-                    ImportedAnimationTarget.CreateBoneName("Bip01"),
+                    boneIndex: 0,
                     ImportedAnimationChannelType.Visibility,
                     new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
             }));
 
-        Assert.Throws<InvalidDataException>(() => named.Bind(hierarchy));
+        var firstHierarchy = CreateHierarchy("TargetSkeleton");
+        var secondHierarchy = CreateHierarchy("TargetSkeleton");
+
+        var firstBound = animation.Bind(firstHierarchy);
+        var secondBound = animation.Bind(secondHierarchy);
+
+        Assert.Same(firstBound, animation.Bind(firstHierarchy));
+        Assert.Same(secondBound, animation.Bind(secondHierarchy));
+        Assert.NotSame(firstBound, secondBound);
+    }
+
+    [Fact]
+    public void Bind_CacheStorageIsWeak_And_BoundResultHoldsNoHierarchyReference()
+    {
+        var cacheField = typeof(ModelAnimation)
+            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Single(f => f.FieldType.IsGenericType &&
+                f.FieldType.GetGenericTypeDefinition() == typeof(System.Runtime.CompilerServices.ConditionalWeakTable<,>));
+        Assert.Equal(typeof(ModelBoneHierarchy), cacheField.FieldType.GetGenericArguments()[0]);
+        Assert.Equal(typeof(BoundModelAnimation), cacheField.FieldType.GetGenericArguments()[1]);
+
+        Assert.DoesNotContain(
+            typeof(ModelAnimation).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
+            f => f.FieldType == typeof(ModelBoneHierarchy));
+
+        var boundFields = typeof(BoundModelAnimation)
+            .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .Select(f => f.FieldType);
+        Assert.DoesNotContain(boundFields, t => t == typeof(ModelBoneHierarchy) || t == typeof(ModelBone));
+    }
+
+    private static ModelBoneHierarchy CreateHierarchy(string name)
+    {
+        return new ModelBoneHierarchy(new ImportedSkeleton(name, new[]
+        {
+            new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity),
+        }));
+    }
+
+    private sealed class NLogCapture : IDisposable
+    {
+        private readonly NLog.Config.LoggingConfiguration? _previousConfiguration;
+        private readonly NLog.Targets.MemoryTarget _memoryTarget = new("ModelAnimationTests");
+
+        public NLogCapture()
+        {
+            _previousConfiguration = NLog.LogManager.Configuration;
+            var configuration = new NLog.Config.LoggingConfiguration();
+            configuration.AddRule(NLog.LogLevel.Warn, NLog.LogLevel.Fatal, _memoryTarget);
+            NLog.LogManager.Configuration = configuration;
+        }
+
+        public int CountWarningsContaining(string substring)
+        {
+            return _memoryTarget.Logs.Count(l => l.Contains(substring));
+        }
+
+        public void Dispose()
+        {
+            NLog.LogManager.Configuration = _previousConfiguration;
+        }
     }
 
     [Fact]
