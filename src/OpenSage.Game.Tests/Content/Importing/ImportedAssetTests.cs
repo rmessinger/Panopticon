@@ -437,7 +437,7 @@ public sealed class ImportedAssetTests
     [Fact]
     public void Animation_RejectsNegativeBoneIndex()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ImportedAnimationChannel(
                 boneIndex: -1,
                 ImportedAnimationChannelType.Quaternion,
@@ -514,5 +514,65 @@ public sealed class ImportedAssetTests
         Assert.Equal(MathF.Sqrt(3), box.BoundingSphere.Radius, 5);
 
         Assert.Throws<ArgumentException>(() => new ImportedBox(Vector3.Zero, new Vector3(-1, 1, 1)));
+    }
+
+    [Fact]
+    public void AnimationTarget_DirectIndex_HoldsIndex_And_RejectsWrongKindAccess()
+    {
+        var target = ImportedAnimationTarget.CreateDirectIndex(7);
+
+        Assert.Equal(ImportedAnimationTargetKind.DirectIndex, target.Kind);
+        Assert.Equal(7, target.DirectIndex);
+        Assert.Throws<InvalidOperationException>(() => target.BoneName);
+    }
+
+    [Fact]
+    public void AnimationTarget_BoneName_PreservesExactName_And_RejectsWrongKindAccess()
+    {
+        var target = ImportedAnimationTarget.CreateBoneName("  Root_BONE.01 ");
+
+        Assert.Equal(ImportedAnimationTargetKind.BoneName, target.Kind);
+        Assert.Equal("  Root_BONE.01 ", target.BoneName);
+        Assert.Throws<InvalidOperationException>(() => target.DirectIndex);
+    }
+
+    [Fact]
+    public void AnimationTarget_RejectsInvalidInputs()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => ImportedAnimationTarget.CreateDirectIndex(-1));
+        Assert.Throws<ArgumentException>(() => ImportedAnimationTarget.CreateBoneName(null!));
+        Assert.Throws<ArgumentException>(() => ImportedAnimationTarget.CreateBoneName(""));
+    }
+
+    [Fact]
+    public void AnimationChannel_TargetConstructor_CreatesBoundChannel_And_IntConstructorStaysDirectIndex()
+    {
+        var keyframes = new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 1.0f) };
+
+        var namedChannel = new ImportedAnimationChannel(
+            ImportedAnimationTarget.CreateBoneName("Bip01"),
+            ImportedAnimationChannelType.TranslationX,
+            keyframes);
+        Assert.Equal(ImportedAnimationTargetKind.BoneName, namedChannel.Target.Kind);
+        Assert.Equal("Bip01", namedChannel.Target.BoneName);
+        Assert.Throws<InvalidOperationException>(() => namedChannel.BoneIndex);
+
+        var directChannel = new ImportedAnimationChannel(
+            boneIndex: 4,
+            ImportedAnimationChannelType.TranslationX,
+            keyframes);
+        Assert.Equal(ImportedAnimationTargetKind.DirectIndex, directChannel.Target.Kind);
+        Assert.Equal(4, directChannel.Target.DirectIndex);
+        Assert.Equal(4, directChannel.BoneIndex);
+    }
+
+    [Fact]
+    public void AnimationChannel_RejectsNullTarget()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new ImportedAnimationChannel(
+                null!,
+                ImportedAnimationChannelType.Quaternion,
+                new[] { ImportedKeyframe.FromQuaternion(TimeSpan.Zero, Quaternion.Identity) }));
     }
 }

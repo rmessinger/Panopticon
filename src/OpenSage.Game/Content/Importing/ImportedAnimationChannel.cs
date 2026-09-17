@@ -15,25 +15,41 @@ public enum ImportedAnimationChannelType
 }
 
 /// <summary>
-/// One animation channel: bone index into the target skeleton, channel type, and keyframes with
+/// One animation channel: target bone in the source skeleton, channel type, and keyframes with
 /// monotonically non-decreasing times whose value kind matches the channel type.
 /// </summary>
 public sealed class ImportedAnimationChannel
 {
-    public int BoneIndex { get; }
+    public ImportedAnimationTarget Target { get; }
 
     public ImportedAnimationChannelType ChannelType { get; }
 
     public IReadOnlyList<ImportedKeyframe> Keyframes { get; }
 
+    /// <summary>
+    /// Compatibility view of direct-index targets for pre-retargeting consumers. Throws for
+    /// bone-name targets, which have no meaningful index until bound to a hierarchy.
+    /// </summary>
+    public int BoneIndex => Target.Kind == ImportedAnimationTargetKind.DirectIndex
+        ? Target.DirectIndex
+        : throw new InvalidOperationException("Channel does not use a direct-index target.");
+
     public ImportedAnimationChannel(
         int boneIndex,
         ImportedAnimationChannelType channelType,
         IReadOnlyList<ImportedKeyframe> keyframes)
+        : this(ImportedAnimationTarget.CreateDirectIndex(boneIndex), channelType, keyframes)
     {
-        if (boneIndex < 0)
+    }
+
+    public ImportedAnimationChannel(
+        ImportedAnimationTarget target,
+        ImportedAnimationChannelType channelType,
+        IReadOnlyList<ImportedKeyframe> keyframes)
+    {
+        if (target is null)
         {
-            throw new ArgumentException("Bone index must not be negative.", nameof(boneIndex));
+            throw new ArgumentNullException(nameof(target));
         }
 
         if (keyframes is null)
@@ -74,7 +90,7 @@ public sealed class ImportedAnimationChannel
             copiedKeyframes[i] = keyframe;
         }
 
-        BoneIndex = boneIndex;
+        Target = target;
         ChannelType = channelType;
         Keyframes = copiedKeyframes;
     }
