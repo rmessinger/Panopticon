@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace OpenSage.Graphics.Animation;
 
@@ -11,6 +12,10 @@ namespace OpenSage.Graphics.Animation;
 /// </summary>
 public sealed class ModelAnimation : BaseAsset
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+    private readonly ConditionalWeakTable<ModelBoneHierarchy, BoundModelAnimation> _boundCache = new();
+
     public TimeSpan Duration { get; }
 
     public ModelAnimationChannel[] Channels { get; }
@@ -41,12 +46,22 @@ public sealed class ModelAnimation : BaseAsset
         Clips = clips;
     }
 
+    /// <summary>
+    /// Binds this animation against a hierarchy, cached by hierarchy object identity. Out-of-range
+    /// direct-index channels are omitted from the binding and warned about once per hierarchy;
+    /// named-target failures always throw.
+    /// </summary>
     public BoundModelAnimation Bind(ModelBoneHierarchy hierarchy)
     {
         ArgumentNullException.ThrowIfNull(hierarchy);
 
+        return _boundCache.GetValue(hierarchy, _ => ComputeBinding(hierarchy));
+    }
+
+    private BoundModelAnimation ComputeBinding(ModelBoneHierarchy hierarchy)
+    {
         Dictionary<string, int>? boneNameIndex = null;
-        var clips = new AnimationClip[Channels.Length];
+        var clips = new List<AnimationClip>(Channels.Length);
         for (var i = 0; i < Channels.Length; i++)
         {
             var channel = Channels[i];
@@ -56,9 +71,9 @@ public sealed class ModelAnimation : BaseAsset
                 boneIndex = channel.Target.DirectIndex;
                 if (boneIndex >= hierarchy.Bones.Length)
                 {
-                    throw new ArgumentOutOfRangeException(
-                        nameof(hierarchy),
-                        $"Animation '{Name}' channel {i} targets bone index {boneIndex}, but hierarchy '{hierarchy.Name}' has {hierarchy.Bones.Length} bones.");
+                    Logger.Warn(
+                        $"Animation '{Name}' omits channel {i}: direct index {boneIndex} is out of range for hierarchy '{hierarchy.Name}' with {hierarchy.Bones.Length} bones.");
+                    continue;
                 }
             }
             else
@@ -72,10 +87,10 @@ public sealed class ModelAnimation : BaseAsset
                 }
             }
 
-            clips[i] = new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes);
+            clips.Add(new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes));
         }
 
-        return new BoundModelAnimation(Name, Duration, clips);
+        return new BoundModelAnimation(Name, Duration, clips.ToArray());
     }
 
     private static Dictionary<string, int> BuildBoneNameIndex(ModelBoneHierarchy hierarchy)
