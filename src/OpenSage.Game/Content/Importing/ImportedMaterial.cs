@@ -44,6 +44,8 @@ public sealed class ImportedMaterial
 {
     public const string FixedFunctionFamily = "FixedFunction";
 
+    public const string PbrMetallicRoughnessFamily = "PbrMetallicRoughness";
+
     public string ShaderFamily { get; }
 
     public ImportedCullMode CullMode { get; }
@@ -62,6 +64,8 @@ public sealed class ImportedMaterial
 
     public ImportedFixedFunctionShading? FixedFunctionShading { get; }
 
+    public ImportedPbrMetallicRoughness? PbrMetallicRoughness { get; }
+
     public IReadOnlyList<ImportedMaterialProperty> Properties { get; }
 
     public ImportedMaterial(
@@ -74,7 +78,8 @@ public sealed class ImportedMaterial
         ImportedBlendFactor destinationColorBlendFactor,
         ImportedBlendFactor destinationAlphaBlendFactor,
         ImportedFixedFunctionShading? fixedFunctionShading,
-        IReadOnlyList<ImportedMaterialProperty> properties)
+        IReadOnlyList<ImportedMaterialProperty> properties,
+        ImportedPbrMetallicRoughness? pbrMetallicRoughness = null)
     {
         if (string.IsNullOrEmpty(shaderFamily))
         {
@@ -94,6 +99,21 @@ public sealed class ImportedMaterial
             }
         }
 
+        var isPbrFamily = shaderFamily == PbrMetallicRoughnessFamily;
+        if (isPbrFamily != (pbrMetallicRoughness is not null))
+        {
+            throw new ArgumentException(
+                $"Shader family '{PbrMetallicRoughnessFamily}' and the PBR payload must appear together.",
+                nameof(shaderFamily));
+        }
+
+        if (pbrMetallicRoughness is not null && fixedFunctionShading is not null)
+        {
+            throw new ArgumentException(
+                "A material cannot combine a PBR payload with fixed-function shading.",
+                nameof(fixedFunctionShading));
+        }
+
         ShaderFamily = shaderFamily;
         CullMode = cullMode;
         DepthWriteEnabled = depthWriteEnabled;
@@ -103,6 +123,36 @@ public sealed class ImportedMaterial
         DestinationColorBlendFactor = destinationColorBlendFactor;
         DestinationAlphaBlendFactor = destinationAlphaBlendFactor;
         FixedFunctionShading = fixedFunctionShading;
+        PbrMetallicRoughness = pbrMetallicRoughness;
         Properties = properties.ToArray();
+    }
+
+    /// <summary>
+    /// Constructs a metallic-roughness material whose legacy render-state fields are derived from
+    /// the payload: culling from double-sidedness, blending and depth-write from the alpha mode.
+    /// </summary>
+    public static ImportedMaterial CreatePbrMetallicRoughness(
+        ImportedPbrMetallicRoughness payload,
+        IReadOnlyList<ImportedMaterialProperty>? properties = null)
+    {
+        if (payload is null)
+        {
+            throw new ArgumentNullException(nameof(payload));
+        }
+
+        var blendEnabled = payload.AlphaMode == ImportedAlphaMode.Blend;
+
+        return new ImportedMaterial(
+            PbrMetallicRoughnessFamily,
+            payload.DoubleSided ? ImportedCullMode.None : ImportedCullMode.Back,
+            depthWriteEnabled: !blendEnabled,
+            depthComparison: ImportedDepthComparison.LessEqual,
+            blendEnabled: blendEnabled,
+            sourceBlendFactor: blendEnabled ? ImportedBlendFactor.SourceAlpha : ImportedBlendFactor.One,
+            destinationColorBlendFactor: blendEnabled ? ImportedBlendFactor.InverseSourceAlpha : ImportedBlendFactor.Zero,
+            destinationAlphaBlendFactor: blendEnabled ? ImportedBlendFactor.InverseSourceAlpha : ImportedBlendFactor.Zero,
+            fixedFunctionShading: null,
+            pbrMetallicRoughness: payload,
+            properties: properties ?? []);
     }
 }
