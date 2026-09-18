@@ -96,4 +96,74 @@ public sealed class ModelAnimation : BaseAsset
 
         return index;
     }
+
+    /// <summary>
+    /// Binds this animation against a hierarchy, cached by hierarchy object identity. Out-of-range
+    /// direct-index channels are omitted from the binding and warned about once per hierarchy;
+    /// named-target failures always throw.
+    /// </summary>
+    public BoundModelAnimation Bind(ModelBoneHierarchy hierarchy)
+    {
+        ArgumentNullException.ThrowIfNull(hierarchy);
+
+        return _boundCache.GetValue(hierarchy, _ => ComputeBinding(hierarchy));
+    }
+
+    private BoundModelAnimation ComputeBinding(ModelBoneHierarchy hierarchy)
+    {
+        Dictionary<string, int>? boneNameIndex = null;
+        var clips = new List<AnimationClip>(Channels.Length);
+        for (var i = 0; i < Channels.Length; i++)
+        {
+            var channel = Channels[i];
+            int boneIndex;
+            if (channel.Target.Kind == ModelAnimationTargetKind.DirectIndex)
+            {
+                boneIndex = channel.Target.DirectIndex;
+                if (boneIndex >= hierarchy.Bones.Length)
+                {
+                    Logger.Warn(
+                        $"Animation '{Name}' omits channel {i}: direct index {boneIndex} is out of range for hierarchy '{hierarchy.Name}' with {hierarchy.Bones.Length} bones.");
+                    continue;
+                }
+            }
+            else
+            {
+                boneNameIndex ??= BuildBoneNameIndex(hierarchy);
+                var boneName = channel.Target.BoneName;
+                if (!boneNameIndex.TryGetValue(boneName, out boneIndex))
+                {
+                    throw new InvalidDataException(
+                        $"Animation '{Name}' targets bone '{boneName}', which does not exist in hierarchy '{hierarchy.Name}'.");
+                }
+            }
+
+            clips.Add(new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes));
+        }
+
+        return new BoundModelAnimation(Name, Duration, clips.ToArray());
+    }
+
+    private static Dictionary<string, int> BuildBoneNameIndex(ModelBoneHierarchy hierarchy)
+    {
+        var index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < hierarchy.Bones.Length; i++)
+        {
+            var bone = hierarchy.Bones[i];
+            if (bone.Name is null)
+            {
+                continue;
+            }
+
+            if (index.TryGetValue(bone.Name, out var existingIndex))
+            {
+                throw new InvalidDataException(
+                    $"Hierarchy '{hierarchy.Name}' contains bones '{hierarchy.Bones[existingIndex].Name}' at index {existingIndex} and '{bone.Name}' at index {i} differing only by case; named animation targets would be ambiguous.");
+            }
+
+            index.Add(bone.Name, i);
+        }
+
+        return index;
+    }
 }
