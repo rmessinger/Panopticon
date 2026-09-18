@@ -5,9 +5,10 @@
 #include "ForwardPass.h"
 #include "Mesh.h"
 
-// Engine-owned core metallic-roughness material scaffold. WI-C3-06 implements the base-color
-// path with explicit sRGB handling; metallic-roughness lighting and the remaining texture
-// roles arrive in WI-C3-07. The render target stays non-sRGB until G6, so the final linear
+// Engine-owned core metallic-roughness lighting. Uses the existing global lighting rig
+// (directional color + ambient per light) with a Cook-Torrance GGX/Smith/Schlick BRDF.
+// Base-color and emissive samples decode from sRGB; metallic-roughness, normal, and
+// occlusion stay linear. The render target stays non-sRGB until G6, so the final linear
 // color is encoded to sRGB locally.
 
 #define PBR_FLAG_HAS_BASE_COLOR_TEXTURE     0x01
@@ -20,6 +21,8 @@
 #define PBR_ALPHA_MODE_OPAQUE 0
 #define PBR_ALPHA_MODE_MASK   1
 #define PBR_ALPHA_MODE_BLEND  2
+
+const float PI = 3.14159265359;
 
 layout(set = MATERIAL_CONSTANTS_RESOURCE_SET, binding = 0) uniform MaterialConstants
 {
@@ -83,11 +86,72 @@ vec3 LinearToSrgb(vec3 linear)
     return mix(high, low, cutoff);
 }
 
+float DistributionGGX(float nDotH, float alpha)
+{
+    float alpha2 = alpha * alpha;
+    float d = nDotH * nDotH * (alpha2 - 1.0) + 1.0;
+    return alpha2 / (PI * d * d);
+}
+
+float GeometrySmith(float nDotV, float nDotL, float alpha)
+{
+    float k = alpha / 2.0;
+    float gV = nDotV / (nDotV * (1.0 - k) + k);
+    float gL = nDotL / (nDotL * (1.0 - k) + k);
+    return gV * gL;
+}
+
+vec3 FresnelSchlick(float cosTheta, vec3 f0)
+{
+    return f0 + (vec3(1.0) - f0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+void EvaluateLight(
+    Light light,
+    vec3 worldPosition,
+    vec3 normal,
+    vec3 viewDirection,
+    vec3 albedo,
+    float metallic,
+    float roughness,
+    vec3 f0,
+    out vec3 direct,
+    out vec3 ambient)
+{
+    vec3 lightDirection = -light.Direction;
+    float nDotL = saturate(dot(normal, lightDirection));
+
+    ambient = light.Ambient;
+
+    if (nDotL <= 0.0)
+    {
+        direct = vec3(0.0);
+        return;
+    }
+
+    vec3 halfVector = normalize(lightDirection + viewDirection);
+    float nDotV = saturate(dot(normal, viewDirection));
+    float nDotH = saturate(dot(normal, halfVector));
+    float vDotH = saturate(dot(viewDirection, halfVector));
+
+    float alpha = roughness * roughness;
+
+    float d = DistributionGGX(nDotH, alpha);
+    float g = GeometrySmith(nDotV, nDotL, alpha);
+    vec3 f = FresnelSchlick(vDotH, f0);
+
+    vec3 specular = (d * g * f) / max(4.0 * nDotV * nDotL, 0.001);
+    vec3 diffuse = (vec3(1.0) - f) * (vec3(1.0) - metallic) * albedo;
+
+    direct = (diffuse / PI + specular) * light.Color * nDotL;
+}
+
 void main()
 {
-    vec4 baseColor = _MaterialConstants.BaseColorFactor;
+    int flags = _MaterialConstants.Flags;
 
-    if ((_MaterialConstants.Flags & PBR_FLAG_HAS_BASE_COLOR_TEXTURE) != 0)
+    vec4 baseColor = _MaterialConstants.BaseColorFactor;
+    if ((flags & PBR_FLAG_HAS_BASE_COLOR_TEXTURE) != 0)
     {
         vec4 texel = texture(
             sampler2D(BaseColorTexture, BaseColorSampler),
@@ -101,7 +165,86 @@ void main()
         discard;
     }
 
-    vec3 linearColor = baseColor.rgb;
+    float metallic = _MaterialConstants.MetallicFactor;
+    float roughness = _MaterialConstants.RoughnessFactor;
+    if ((flags & PBR_FLAG_HAS_METALLIC_ROUGHNESS) != 0)
+    {
+        // Roughness in G, metallic in B; both linear.
+        vec3 texel = texture(
+            sampler2D(MetallicRoughnessTexture, MetallicRoughnessSampler),
+            SelectUV(_MaterialConstants.MetallicRoughnessUvSet)).rgb;
+        roughness *= texel.g;
+        metallic *= texel.b;
+    }
 
-    out_Color = vec4(LinearToSrgb(linearColor), baseColor.a);
+    vec3 normal = normalize(in_WorldNormal);
+    if ((flags & PBR_FLAG_HAS_NORMAL_TEXTURE) != 0)
+    {
+        vec3 texel = texture(
+            sampler2D(NormalTexture, NormalSampler),
+            SelectUV(_MaterialConstants.NormalUvSet)).rgb;
+        vec3 tangentSpaceNormal = texel * 2.0 - vec3(1.0);
+        tangentSpaceNormal = vec3(tangentSpaceNormal.xy * _MaterialConstants.NormalScale, tangentSpaceNormal.z);
+        tangentSpaceNormal = normalize(tangentSpaceNormal);
+
+        mat3 tangentToWorld = mat3(
+            in_WorldTangent,
+            in_WorldBinormal,
+            normal);
+        normal = normalize(tangentToWorld * tangentSpaceNormal);
+    }
+
+    if ((flags & PBR_FLAG_DOUBLE_SIDED) != 0 && !gl_FrontFacing)
+    {
+        normal = -normal;
+    }
+
+    float ambientOcclusion = 1.0;
+    if ((flags & PBR_FLAG_HAS_OCCLUSION_TEXTURE) != 0)
+    {
+        float texel = texture(
+            sampler2D(OcclusionTexture, OcclusionSampler),
+            SelectUV(_MaterialConstants.OcclusionUvSet)).r;
+        ambientOcclusion = mix(1.0, texel, _MaterialConstants.OcclusionStrength);
+    }
+
+    vec3 albedo = baseColor.rgb;
+    vec3 f0 = mix(vec3(0.04), albedo, metallic);
+    vec3 viewDirection = normalize(CalculateViewVector(in_WorldPosition));
+
+    vec3 directLighting = vec3(0.0);
+    vec3 ambientLighting = vec3(0.0);
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
+        vec3 direct;
+        vec3 ambient;
+        EvaluateLight(
+            _GlobalLightingConstantsPS.Object.Lights[i],
+            in_WorldPosition,
+            normal,
+            viewDirection,
+            albedo,
+            metallic,
+            roughness,
+            f0,
+            direct,
+            ambient);
+        directLighting += direct;
+        ambientLighting += ambient;
+    }
+
+    // Occlusion modulates the summed per-light ambient contribution.
+    vec3 color = directLighting + ambientLighting * albedo * ambientOcclusion;
+
+    vec3 emissive = _MaterialConstants.EmissiveFactor.rgb;
+    if ((flags & PBR_FLAG_HAS_EMISSIVE_TEXTURE) != 0)
+    {
+        vec3 texel = texture(
+            sampler2D(EmissiveTexture, EmissiveSampler),
+            SelectUV(_MaterialConstants.EmissiveUvSet)).rgb;
+        emissive *= SrgbToLinear(texel);
+    }
+    color += emissive;
+
+    out_Color = vec4(LinearToSrgb(color), baseColor.a);
 }
