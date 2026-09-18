@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Numerics;
 using OpenSage.Content.Importing;
 using OpenSage.Content.Loaders;
@@ -163,7 +164,7 @@ public sealed class ModelAnimationTests
                     new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
             }));
 
-        Assert.Throws<InvalidOperationException>(() => named.Bind(hierarchy));
+        Assert.Throws<InvalidDataException>(() => named.Bind(hierarchy));
     }
 
     [Fact]
@@ -183,6 +184,156 @@ public sealed class ModelAnimationTests
         Assert.Throws<ArgumentNullException>(() => animation.Bind(null!));
     }
 
+    [Fact]
+    public void Bind_NamedTargets_ResolveAgainstReorderedHierarchy_WithCaseInsensitiveMatch()
+    {
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("BONE_Leg"),
+                    ImportedAnimationChannelType.TranslationX,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 1.0f) }),
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("root"),
+                    ImportedAnimationChannelType.Quaternion,
+                    new[] { ImportedKeyframe.FromQuaternion(TimeSpan.Zero, Quaternion.Identity) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("ROOT", -1, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Bone_Arm", 0, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Bone_Leg", 0, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        var bound = animation.Bind(hierarchy);
+
+        Assert.Equal(2, bound.Clips.Length);
+        Assert.Equal(2, bound.Clips[0].Bone);
+        Assert.Equal(AnimationClipType.TranslationX, bound.Clips[0].ClipType);
+        Assert.Equal(1.0f, bound.Clips[0].Keyframes[0].Value.FloatValue);
+        Assert.Equal(0, bound.Clips[1].Bone);
+        Assert.Equal(AnimationClipType.Quaternion, bound.Clips[1].ClipType);
+    }
+
+    [Fact]
+    public void Bind_NamedTargets_MissingNameFailsWithContext()
+    {
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Bone_Tail"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        var exception = Assert.Throws<InvalidDataException>(() => animation.Bind(hierarchy));
+        Assert.Contains("HV.Run", exception.Message);
+        Assert.Contains("Bone_Tail", exception.Message);
+        Assert.Contains("TargetSkeleton", exception.Message);
+    }
+
+    [Fact]
+    public void Bind_NamedTargets_DuplicateHierarchyNamesFailBeforeResolution()
+    {
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Bone_Leg"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("Bone_Leg", -1, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("bone_leg", 0, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        var exception = Assert.Throws<InvalidDataException>(() => animation.Bind(hierarchy));
+        Assert.Contains("TargetSkeleton", exception.Message);
+        Assert.Contains("Bone_Leg", exception.Message);
+    }
+
+    [Fact]
+    public void Bind_NamedTargets_UnrelatedAndUnnamedBonesRequireNoMapping()
+    {
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Bone_Leg"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("Bone_Leg", -1, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Bone_Unrelated", 0, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        var bound = animation.Bind(hierarchy);
+
+        Assert.Single(bound.Clips);
+        Assert.Equal(0, bound.Clips[0].Bone);
+    }
+
+    [Fact]
+    public void Bind_MixedTargets_PreservesChannelOrder()
+    {
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Bone_Arm"),
+                    ImportedAnimationChannelType.TranslationY,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 2.0f) }),
+                new ImportedAnimationChannel(
+                    boneIndex: 1,
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Bone_Leg"),
+                    ImportedAnimationChannelType.TranslationZ,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 3.0f) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("Bone_Leg", -1, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Bone_Arm", 0, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Bone_Torso", 0, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        var bound = animation.Bind(hierarchy);
+
+        Assert.Equal(3, bound.Clips.Length);
+        Assert.Equal(1, bound.Clips[0].Bone);
+        Assert.Equal(AnimationClipType.TranslationY, bound.Clips[0].ClipType);
+        Assert.Equal(1, bound.Clips[1].Bone);
+        Assert.Equal(AnimationClipType.Visibility, bound.Clips[1].ClipType);
+        Assert.Equal(0, bound.Clips[2].Bone);
+        Assert.Equal(AnimationClipType.TranslationZ, bound.Clips[2].ClipType);
+    }
     private static ImportedSkeleton CreateSkeleton(int boneCount)
     {
         var bones = new ImportedBone[boneCount];
