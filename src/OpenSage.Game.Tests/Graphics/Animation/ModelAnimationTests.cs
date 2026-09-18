@@ -139,7 +139,7 @@ public sealed class ModelAnimationTests
     [Fact]
     public void Bind_OmitsOutOfRangeDirectChannels_And_WarnsOncePerHierarchy()
     {
-        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+        var imported = new ImportedAnimation(
             "HV.Omit",
             TimeSpan.FromSeconds(1.0),
             new[]
@@ -150,14 +150,15 @@ public sealed class ModelAnimationTests
                     new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 1.0f) }),
                 new ImportedAnimationChannel(
                     boneIndex: 99,
-                    ImportedAnimationChannelType.TranslationY,
-                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 2.0f) }),
-                new ImportedAnimationChannel(
-                    ImportedAnimationTarget.CreateBoneName("Bone_Arm"),
                     ImportedAnimationChannelType.Visibility,
                     new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
-            }));
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Bone_Arm"),
+                    ImportedAnimationChannelType.TranslationY,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 2.0f) }),
+            });
 
+        var animation = ImportedAnimationMaterializer.Materialize(imported);
         var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
         {
             new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity),
@@ -172,7 +173,7 @@ public sealed class ModelAnimationTests
         Assert.Equal(0, bound.Clips[0].Bone);
         Assert.Equal(AnimationClipType.TranslationX, bound.Clips[0].ClipType);
         Assert.Equal(1, bound.Clips[1].Bone);
-        Assert.Equal(AnimationClipType.Visibility, bound.Clips[1].ClipType);
+        Assert.Equal(AnimationClipType.TranslationY, bound.Clips[1].ClipType);
         Assert.Equal(1, logCapture.CountWarningsContaining("HV.Omit"));
         Assert.Equal(1, logCapture.CountWarningsContaining("99"));
     }
@@ -220,14 +221,6 @@ public sealed class ModelAnimationTests
             .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             .Select(f => f.FieldType);
         Assert.DoesNotContain(boundFields, t => t == typeof(ModelBoneHierarchy) || t == typeof(ModelBone));
-    }
-
-    private static ModelBoneHierarchy CreateHierarchy(string name)
-    {
-        return new ModelBoneHierarchy(new ImportedSkeleton(name, new[]
-        {
-            new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity),
-        }));
     }
 
     private sealed class NLogCapture : IDisposable
@@ -421,7 +414,6 @@ public sealed class ModelAnimationTests
         Assert.Equal(0, bound.Clips[2].Bone);
         Assert.Equal(AnimationClipType.TranslationZ, bound.Clips[2].ClipType);
     }
-
     private static ImportedSkeleton CreateSkeleton(int boneCount)
     {
         var bones = new ImportedBone[boneCount];
@@ -432,5 +424,13 @@ public sealed class ModelAnimationTests
         }
 
         return new ImportedSkeleton("TestSkeleton", bones);
+    }
+
+    private static ModelBoneHierarchy CreateHierarchy(string name)
+    {
+        return new ModelBoneHierarchy(new ImportedSkeleton(name, new[]
+        {
+            new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity),
+        }));
     }
 }
