@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Numerics;
 using OpenSage.Content;
 using OpenSage.Content.Importing;
@@ -293,6 +295,222 @@ public sealed class ImportedModelMaterializerTests
         var bone = Assert.Single(hierarchy.Bones);
         Assert.Equal("root", bone.Name);
         Assert.Equal(new Vector3(1, 2, 3), bone.Transform.Translation);
+    }
+
+    [Fact]
+    public void PbrModel_MalformedInput_FailsBeforeGpuOrFileSystemAccess()
+    {
+        // No graphics device and no real file system: any attempt to allocate GPU resources or
+        // read external images would fail, proving the validator rejects the model first.
+
+        var mesh = CreateStaticMesh();
+        var payload = new ImportedPbrMetallicRoughness(
+            baseColorTexture: new ImportedTextureBinding(
+                ImportedImageSource.CreateVirtualPath("textures/base.png"),
+                uvSet: 1,
+                new ImportedSampler(),
+                ImportedTextureRole.BaseColor));
+        var pbrMesh = ReplaceMaterials(mesh, ImportedMaterial.CreatePbrMetallicRoughness(payload));
+
+        var context = CreateDataOnlyContext();
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            ImportedModelMaterializer.MaterializeModel(CreateModel(pbrMesh), context));
+        Assert.Contains("TestModel", exception.Message);
+        Assert.Contains("mesh part 0", exception.Message);
+        Assert.Contains("UV set 1", exception.Message);
+    }
+
+    [Fact]
+    public void PbrModel_NonFiniteFactor_FailsWithContext()
+    {
+        var context = CreateDataOnlyContext();
+        var mesh = CreateStaticMesh();
+        var payload = new ImportedPbrMetallicRoughness(metallicFactor: float.NaN);
+        var pbrMesh = ReplaceMaterials(mesh, ImportedMaterial.CreatePbrMetallicRoughness(payload));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            ImportedModelMaterializer.MaterializeModel(CreateModel(pbrMesh), context));
+        Assert.Contains("metallic factor", exception.Message);
+    }
+
+    [Fact]
+    public void PbrModel_FactorOutOfRange_FailsWithContext()
+    {
+        var context = CreateDataOnlyContext();
+        var mesh = CreateStaticMesh();
+        var payload = new ImportedPbrMetallicRoughness(roughnessFactor: 1.5f);
+        var pbrMesh = ReplaceMaterials(mesh, ImportedMaterial.CreatePbrMetallicRoughness(payload));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            ImportedModelMaterializer.MaterializeModel(CreateModel(pbrMesh), context));
+        Assert.Contains("roughness factor", exception.Message);
+    }
+
+    [Fact]
+    public void PbrModel_BlendFlagMustAgreeWithAlphaMode()
+    {
+        var context = CreateDataOnlyContext();
+        var mesh = CreateStaticMesh();
+        var payload = new ImportedPbrMetallicRoughness(alphaMode: ImportedAlphaMode.Blend);
+        var pbrMesh = ReplaceMaterials(mesh, ImportedMaterial.CreatePbrMetallicRoughness(payload));
+
+        // CreateStaticMesh sets blendEnabled: false, which contradicts Blend alpha mode.
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            ImportedModelMaterializer.MaterializeModel(CreateModel(pbrMesh), context));
+        Assert.Contains("alpha mode 'Blend'", exception.Message);
+    }
+
+    [Fact]
+    public void PbrModel_PartialTangents_AreMalformed()
+    {
+        var context = CreateDataOnlyContext();
+        var mesh = CreateStaticMesh();
+        var payload = new ImportedPbrMetallicRoughness(
+            normalTexture: new ImportedTextureBinding(
+                ImportedImageSource.CreateVirtualPath("textures/normal.png"),
+                uvSet: 0,
+                new ImportedSampler(),
+                ImportedTextureRole.Normal));
+        var pbrMesh = ReplaceMaterials(mesh, ImportedMaterial.CreatePbrMetallicRoughness(payload));
+
+        // CreateStaticMesh vertices carry no tangents: normal mapping with no UV set 0 fails as
+        // unsupported only when UV data is missing; with UV present, generation inputs are valid.
+        // Force the malformed path by giving exactly one vertex a tangent.
+        var mixedMesh = WithTangentOnFirstVertex(pbrMesh);
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            ImportedModelMaterializer.MaterializeModel(CreateModel(mixedMesh), context));
+        Assert.Contains("tangent", exception.Message);
+    }
+
+    [Fact]
+    public void PbrModel_ConflictingSharedVertexUvs_AreUnsupported()
+    {
+        var context = CreateDataOnlyContext();
+        var normalBinding = new ImportedTextureBinding(
+            ImportedImageSource.CreateVirtualPath("textures/normal.png"),
+            uvSet: 0,
+            new ImportedSampler(),
+            ImportedTextureRole.Normal);
+        var materials = new[]
+        {
+            ImportedMaterial.CreatePbrMetallicRoughness(new ImportedPbrMetallicRoughness(normalTexture: normalBinding)),
+            ImportedMaterial.CreatePbrMetallicRoughness(new ImportedPbrMetallicRoughness(normalTexture: normalBinding)),
+        };
+
+        var vertices = new[]
+        {
+            new ImportedVertex(new Vector3(0, 0, 0), Vector3.UnitZ),
+            new ImportedVertex(new Vector3(1, 0, 0), Vector3.UnitZ),
+            new ImportedVertex(new Vector3(0, 1, 0), Vector3.UnitZ),
+        };
+
+        // Both parts draw the same three vertices, but with conflicting UV values for vertex 0.
+        var mesh = new ImportedMesh(
+            vertices,
+            [0, 1, 2, 0, 1, 2],
+            new AxisAlignedBoundingBox(new Vector3(-1, -1, -1), new Vector3(1, 1, 1)),
+            new BoundingSphere(Vector3.Zero, 1.5f),
+            hidden: false,
+            cameraOriented: false,
+            hasHouseColor: false,
+            isSkinned: false,
+            materials: materials,
+            meshParts:
+            [
+                new ImportedMeshPart(
+                    textureCoordinates0: new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1) },
+                    textureCoordinates1: null,
+                    startIndex: 0,
+                    indexCount: 3,
+                    blendEnabled: false,
+                    materialIndex: 0),
+                new ImportedMeshPart(
+                    textureCoordinates0: new[] { new Vector2(0.5f, 0.5f), new Vector2(1, 0), new Vector2(0, 1) },
+                    textureCoordinates1: null,
+                    startIndex: 3,
+                    indexCount: 3,
+                    blendEnabled: false,
+                    materialIndex: 1),
+            ]);
+
+        var exception = Assert.Throws<NotSupportedException>(() =>
+            ImportedModelMaterializer.MaterializeModel(CreateModel(mesh), context));
+        Assert.Contains("vertex 0", exception.Message);
+        Assert.Contains("part order", exception.Message);
+    }
+
+    private static AssetLoadContext CreateDataOnlyContext()
+    {
+        var fileSystem = new MemoryFileSystem();
+        var assetStore = new AssetStore(
+            SageGame.CncGenerals,
+            fileSystem,
+            "english",
+            null,
+            null,
+            null,
+            null,
+            OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.GeneralsTexture));
+        assetStore.PushScope();
+        return new AssetLoadContext(fileSystem, "english", null, null, null, null, assetStore);
+    }
+
+    private static ImportedMesh ReplaceMaterials(ImportedMesh mesh, params ImportedMaterial[] materials)
+    {
+        return new ImportedMesh(
+            mesh.Vertices,
+            mesh.Indices,
+            mesh.BoundingBox,
+            mesh.BoundingSphere,
+            hidden: false,
+            cameraOriented: false,
+            hasHouseColor: false,
+            isSkinned: false,
+            materials: materials,
+            meshParts:
+            [
+                new ImportedMeshPart(
+                    mesh.MeshParts[0].TextureCoordinates0?.ToArray(),
+                    mesh.MeshParts[0].TextureCoordinates1?.ToArray(),
+                    mesh.MeshParts[0].StartIndex,
+                    mesh.MeshParts[0].IndexCount,
+                    mesh.MeshParts[0].BlendEnabled,
+                    materialIndex: 0),
+            ]);
+    }
+
+    private static ImportedMesh WithTangentOnFirstVertex(ImportedMesh mesh)
+    {
+        var oldVertices = mesh.Vertices;
+        var vertices = new ImportedVertex[oldVertices.Count];
+        for (var i = 0; i < oldVertices.Count; i++)
+        {
+            var v = oldVertices[i];
+            vertices[i] = i == 0
+                ? new ImportedVertex(
+                    v.Position,
+                    v.Normal,
+                    tangent: v.Tangent ?? Vector3.UnitX,
+                    binormal: v.Binormal,
+                    boneIndex0: v.BoneIndex0,
+                    boneIndex1: v.BoneIndex1,
+                    boneWeight0: v.BoneWeight0,
+                    boneWeight1: v.BoneWeight1)
+                : v;
+        }
+
+        return new ImportedMesh(
+            vertices,
+            mesh.Indices,
+            mesh.BoundingBox,
+            mesh.BoundingSphere,
+            hidden: false,
+            cameraOriented: false,
+            hasHouseColor: false,
+            isSkinned: false,
+            materials: mesh.Materials,
+            meshParts: mesh.MeshParts);
     }
 
     /// <summary>

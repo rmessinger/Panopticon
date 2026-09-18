@@ -34,13 +34,7 @@ internal static class ImportedModelMaterializer
     /// </summary>
     public static Model MaterializeModel(ImportedModel importedModel, ModelBoneHierarchy boneHierarchy, AssetLoadContext context)
     {
-        if (boneHierarchy.Bones.Length != importedModel.Skeleton.Bones.Count)
-        {
-            throw new System.IO.InvalidDataException(
-                $"Model '{importedModel.Name}' expects a skeleton with " +
-                $"{importedModel.Skeleton.Bones.Count} bones, but hierarchy " +
-                $"'{boneHierarchy.Name}' has {boneHierarchy.Bones.Length}.");
-        }
+        ImportedModelValidator.Validate(importedModel, boneHierarchy);
 
         var subObjects = new ModelSubObject[importedModel.SubObjects.Count];
         for (var i = 0; i < subObjects.Length; i++)
