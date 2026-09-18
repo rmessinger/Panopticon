@@ -739,7 +739,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     materializers; W3D is the selected reference implementation; representative static, skinned,
     hierarchy-referenced, material, and animation assets retain their runtime descriptors; no
     runtime graphics type accepts a W3D parser type.
-- [ ] C2 Skeleton / animation retargeting.
+- [x] C2 Skeleton / animation retargeting.
   - AC: named channels bind case-insensitively to a differently ordered runtime hierarchy and play
     through an existing gameplay animation state; missing and duplicate named targets fail before
     playback; out-of-range direct targets are omitted once, preserving W3D behavior.
