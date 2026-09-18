@@ -157,9 +157,9 @@ public sealed class W3dImportParityTests
         var importedBones = hierarchy.Bones.Select(b => new ModelBoneInstance(b)).ToArray();
 
         var legacyInstance = new AnimationInstance(
-            legacyBones, loaderAnimation, AnimationMode.Once, AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
+            legacyBones, loaderAnimation.Bind(hierarchy), AnimationMode.Once, AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
         var importedInstance = new AnimationInstance(
-            importedBones, materializedAnimation, AnimationMode.Once, AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
+            importedBones, materializedAnimation.Bind(hierarchy), AnimationMode.Once, AnimationFlags.StartFrameFirst, null, new QuoteUnquoteRandom());
 
         legacyInstance.Play();
         importedInstance.Play();
@@ -424,8 +424,9 @@ public sealed class W3dImportParityTests
         Assert.Equal(expected.Name, actual.Name);
         Assert.Equal(expected.Duration, actual.Duration);
 
-        var expectedClips = expected.Clips.Select(DescribeClip).ToArray();
-        var actualClips = actual.Clips.Select(DescribeClip).ToArray();
+        var hierarchy = CreateWideHierarchy();
+        var expectedClips = expected.Bind(hierarchy).Clips.Select(DescribeClip).ToArray();
+        var actualClips = actual.Bind(hierarchy).Clips.Select(DescribeClip).ToArray();
         Assert.Equal(expectedClips.Length, actualClips.Length);
         for (var i = 0; i < expectedClips.Length; i++)
         {
@@ -520,7 +521,18 @@ public sealed class W3dImportParityTests
         return new AnimationDescriptor(
             animation.Name,
             animation.Duration,
-            animation.Clips.Select(DescribeClip).ToArray());
+            animation.Bind(CreateWideHierarchy()).Clips.Select(DescribeClip).ToArray());
+    }
+
+    private static ModelBoneHierarchy CreateWideHierarchy()
+    {
+        var bones = new ImportedBone[1024];
+        for (var i = 0; i < bones.Length; i++)
+        {
+            bones[i] = new ImportedBone($"Bone{i}", i - 1, Vector3.Zero, Quaternion.Identity);
+        }
+
+        return new ModelBoneHierarchy(new ImportedSkeleton("ParitySkeleton", bones));
     }
 
     private sealed class QuoteUnquoteRandom : IRandom

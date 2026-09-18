@@ -229,7 +229,8 @@ public class W3dModelDraw : DrawModule
         {
             var flags = animationState.Flags;
             var mode = animationBlock.AnimationMode;
-            var animationInstance = new AnimationInstance(modelInstance.ModelBoneInstances, anim, mode, flags, GameObject, _gameEngine.GameClient.Random);
+            var animationInstance = modelInstance.CreateAnimationInstance(
+                anim, mode, flags, GameObject, _gameEngine.GameClient.Random);
             modelInstance.AnimationInstances.Add(animationInstance);
             animationInstance.Play(animationBlock.AnimationSpeedFactorRange.GetValue(random));
         }

@@ -6,7 +6,9 @@ using OpenSage.Graphics.Animation;
 using OpenSage.Graphics.Cameras;
 using OpenSage.Graphics.Rendering;
 using OpenSage.Graphics.Shaders;
+using OpenSage.Logic.Object;
 using OpenSage.Mathematics;
+using OpenSage.Utilities;
 using Veldrid;
 
 namespace OpenSage.Graphics;
@@ -162,6 +164,22 @@ public sealed class ModelInstance : DisposableBase
         }
 
         UnknownBools = new bool[model.SubObjects.Length];
+    }
+
+    /// <summary>
+    /// Creates a playing-capable animation instance by binding the animation against this
+    /// instance's model hierarchy.
+    /// </summary>
+    public AnimationInstance CreateAnimationInstance(
+        ModelAnimation animation,
+        AnimationMode mode,
+        AnimationFlags flags,
+        GameObject gameObject,
+        IRandom random)
+    {
+        var bound = animation.Bind(Model.BoneHierarchy);
+
+        return new AnimationInstance(ModelBoneInstances, bound, mode, flags, gameObject, random);
     }
 
     public void Update(in TimeInterval gameTime)
