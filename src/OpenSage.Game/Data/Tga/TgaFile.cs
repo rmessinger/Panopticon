@@ -12,8 +12,13 @@ public sealed class TgaFile
 
     public static TgaFile FromFileSystemEntry(FileSystemEntry entry)
     {
-        using (var stream = entry.Open())
-        using (var reader = new BinaryReader(stream, Encoding.ASCII, true))
+        using var stream = entry.Open();
+        return FromStream(stream);
+    }
+
+    public static TgaFile FromStream(Stream stream)
+    {
+        using (var reader = new BinaryReader(stream, Encoding.ASCII, leaveOpen: true))
         {
             var header = TgaHeader.Parse(reader);
 
@@ -49,6 +54,13 @@ public sealed class TgaFile
 
                 default:
                     throw new InvalidOperationException();
+            }
+
+            var expectedDataLength = header.Width * header.Height * bytesPerPixel;
+            if (data.Length < expectedDataLength)
+            {
+                throw new InvalidDataException(
+                    $"TGA pixel data is truncated: expected {expectedDataLength} bytes, got {data.Length}.");
             }
 
             var stride = header.Width * bytesPerPixel;
