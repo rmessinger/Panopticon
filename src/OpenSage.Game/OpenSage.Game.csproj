@@ -15,6 +15,7 @@
     <PackageReference Include="SixLabors.ImageSharp.Drawing" />
     <PackageReference Include="SharpAudio" />
     <PackageReference Include="SharpAudio.Codec" />
+    <PackageReference Include="SharpGLTF.Core" />
 
 
     <PackageReference Include="System.ValueTuple" />
