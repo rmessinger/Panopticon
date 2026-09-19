@@ -17,7 +17,7 @@ internal static class ShaderCrossCompiler
 
     // Per cache file locks: concurrent GraphicsDevice creation (e.g. parallel test classes)
     // must not cross-compile and write the same cache file simultaneously.
-    private static readonly ConcurrentDictionary<string, object> _cacheFileLocks = new();
+    private static readonly ConcurrentDictionary<string, object> CacheFileLocks = new();
 
     // Increment this whenever the cross-compilation logic changes (e.g. FixMetalMslBindings)
     // so that stale cached shader files are automatically invalidated.
@@ -51,7 +51,7 @@ internal static class ShaderCrossCompiler
         // Look for cached shader file on disk match the input SPIR-V shaders.
         var cacheFilePath = Path.Combine(shaderCacheFolder, $"OpenSage.Assets.Shaders.{shaderName}.{spvHash}.{targetExtension}");
 
-        lock (_cacheFileLocks.GetOrAdd(cacheFilePath, _ => new object()))
+        lock (CacheFileLocks.GetOrAdd(cacheFilePath, _ => new object()))
         {
             if (ShaderCacheFile.TryLoad(cacheFilePath, out var shaderCacheFile))
             {
