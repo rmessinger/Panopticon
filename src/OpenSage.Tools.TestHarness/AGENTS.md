@@ -37,6 +37,24 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
   dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario PbrMaterialProof
 ```
 
+### `GltfRuntimeProof` scenario
+
+Headless C4 runtime proof: imports the committed glTF fixtures (`--gltf-fixture-root`, default
+the Game.Tests fixture matrix) through the internal glTF importers, materializes through C1-C3,
+binds animations through C2, and captures the static PBR model, two rigid-node times, and three
+skinned times (including one between STEP keys) into `gltf-runtime-proof/*.png` plus a
+`validation_guide.md`. Captures apply presentation-only framing (uniform magnification 20x and a
+yaw, because glTF front +Z maps to OpenSAGE +X and unrotated fixtures present vertical walls
+edge-on to the arcball view) and discarded warm-up frames (plain, textured, and animated) absorb
+first-execution instability; repeated runs are byte-identical. Requires `CNC_GENERALS_PATH` as
+the rendering host only.
+
+```bash
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+  dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario GltfRuntimeProof \
+  --gltf-fixture-root "$PWD/src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures"
+```
+
 ### `EngagementCapture` scenario
 
 Headless capture of one unit attacking another, used to produce annotated engagement GIFs.

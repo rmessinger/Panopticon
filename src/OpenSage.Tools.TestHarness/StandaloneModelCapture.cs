@@ -27,7 +27,9 @@ internal static class StandaloneModelCapture
         Model model,
         AssetLoadContext loadContext,
         string outputPath,
-        in Size viewportSize)
+        in Size viewportSize,
+        Action<ModelInstance>? configureInstance = null,
+        Matrix4x4? worldMatrix = null)
     {
         if (game is null)
         {
@@ -51,9 +53,31 @@ internal static class StandaloneModelCapture
         }
 
         var enclosingBounds = ComputeEnclosingBoundingBox(model);
+        if (worldMatrix is { } magnification)
+        {
+            // Fit the camera to the magnified bounds, not the raw model bounds.
+            var corners = new[]
+            {
+                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Min.Y, enclosingBounds.Min.Z), magnification),
+                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Min.Y, enclosingBounds.Min.Z), magnification),
+                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Max.Y, enclosingBounds.Min.Z), magnification),
+                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Max.Y, enclosingBounds.Min.Z), magnification),
+                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Min.Y, enclosingBounds.Max.Z), magnification),
+                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Min.Y, enclosingBounds.Max.Z), magnification),
+                Vector3.Transform(new Vector3(enclosingBounds.Min.X, enclosingBounds.Max.Y, enclosingBounds.Max.Z), magnification),
+                Vector3.Transform(new Vector3(enclosingBounds.Max.X, enclosingBounds.Max.Y, enclosingBounds.Max.Z), magnification),
+            };
+            enclosingBounds = AxisAlignedBoundingBox.CreateFromPoints(corners);
+        }
+
         var (cameraTarget, cameraDistance) = FitCamera(enclosingBounds);
 
         using var modelInstance = model.CreateInstance(loadContext);
+        if (configureInstance != null)
+        {
+            configureInstance(modelInstance);
+        }
+
         modelInstance.Update(TimeInterval.Zero);
 
         var inputMessageBuffer = new InputMessageBuffer();
@@ -73,7 +97,7 @@ internal static class StandaloneModelCapture
 
         void OnBuildingRenderList(object sender, BuildingRenderListEventArgs e)
         {
-            modelInstance.SetWorldMatrix(Matrix4x4.Identity);
+            modelInstance.SetWorldMatrix(worldMatrix ?? Matrix4x4.Identity);
             modelInstance.BuildRenderList(
                 e.RenderList,
                 e.Camera,
@@ -93,6 +117,10 @@ internal static class StandaloneModelCapture
                 scene.Camera,
                 default,
                 TimeInterval.Zero);
+
+            // The default near plane (one terrain tile, 10 units) clips sub-10-unit models
+            // such as unit-scale glTF fixtures; tighten it for diagnostic framing.
+            scene.Camera.NearPlaneDistance = MathF.Max((enclosingBounds.Max - enclosingBounds.Min).Length() / 100f, 0.05f);
 
             renderPipeline.Execute(new RenderContext
             {
