@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Veldrid;
@@ -21,14 +22,28 @@ internal sealed class ShaderCacheFile
             return false;
         }
 
+        try
+        {
+            result = Load(filePath);
+            return true;
+        }
+        catch (IOException)
+        {
+            // Partially written or unreadable: treat as a cache miss and recompile.
+            result = null;
+            return false;
+        }
+    }
+
+    private static ShaderCacheFile Load(string filePath)
+    {
         using var fileStream = File.OpenRead(filePath);
         using var binaryReader = new BinaryReader(fileStream);
 
         var version = binaryReader.ReadInt32();
         if (version != Version)
         {
-            result = null;
-            return false;
+            throw new InvalidDataException("Cache version " + version + " does not match " + Version + ".");
         }
 
         var vsEntryPoint = binaryReader.ReadString();
@@ -72,12 +87,10 @@ internal sealed class ShaderCacheFile
             }
         }
 
-        result = new ShaderCacheFile(
+        return new ShaderCacheFile(
             new ShaderDescription(ShaderStages.Vertex, vsBytes, vsEntryPoint),
             new ShaderDescription(ShaderStages.Fragment, fsBytes, fsEntryPoint),
             resourceLayoutDescriptions);
-
-        return true;
     }
 
     public ShaderCacheFile(
@@ -92,9 +105,27 @@ internal sealed class ShaderCacheFile
 
     public void Save(string filePath)
     {
-        using var fileStream = File.OpenWrite(filePath);
-        using var binaryWriter = new BinaryWriter(fileStream);
+        // Write to a unique temporary file, then replace atomically, so readers either
+        // see the previous complete file or the new one, never a partial write.
+        var temporaryPath = filePath + $".tmp{Guid.NewGuid():N}";
+        try
+        {
+            using (var fileStream = File.OpenWrite(temporaryPath))
+            {
+                using var binaryWriter = new BinaryWriter(fileStream);
+                Write(binaryWriter);
+            }
 
+            File.Move(temporaryPath, filePath, overwrite: true);
+        }
+        finally
+        {
+            File.Delete(temporaryPath);
+        }
+    }
+
+    private void Write(BinaryWriter binaryWriter)
+    {
         binaryWriter.Write(Version);
 
         binaryWriter.Write(VertexShaderDescription.EntryPoint);

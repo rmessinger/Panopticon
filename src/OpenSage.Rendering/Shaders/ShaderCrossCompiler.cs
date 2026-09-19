@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -13,6 +14,10 @@ namespace OpenSage.Rendering;
 internal static class ShaderCrossCompiler
 {
     private const string EntryPoint = "main";
+
+    // Per cache file locks: concurrent GraphicsDevice creation (e.g. parallel test classes)
+    // must not cross-compile and write the same cache file simultaneously.
+    private static readonly ConcurrentDictionary<string, object> _cacheFileLocks = new();
 
     // Increment this whenever the cross-compilation logic changes (e.g. FixMetalMslBindings)
     // so that stale cached shader files are automatically invalidated.
@@ -46,88 +51,91 @@ internal static class ShaderCrossCompiler
         // Look for cached shader file on disk match the input SPIR-V shaders.
         var cacheFilePath = Path.Combine(shaderCacheFolder, $"OpenSage.Assets.Shaders.{shaderName}.{spvHash}.{targetExtension}");
 
-        if (ShaderCacheFile.TryLoad(cacheFilePath, out var shaderCacheFile))
+        lock (_cacheFileLocks.GetOrAdd(cacheFilePath, _ => new object()))
         {
-            // Cache is valid - use it.
+            if (ShaderCacheFile.TryLoad(cacheFilePath, out var shaderCacheFile))
+            {
+                // Cache is valid - use it.
+                return shaderCacheFile;
+            }
+
+            // Cache is invalid or doesn't exist - do cross-compilation.
+
+            // For Vulkan, we don't actually need to do cross-compilation. But we do need to get reflection data.
+            // So we cross-compile to HLSL, throw away the resulting HLSL, and use the reflection data.
+            var compilationTarget = backendType == GraphicsBackend.Vulkan
+                ? CrossCompileTarget.HLSL
+                : GetCompilationTarget(backendType);
+
+            VertexFragmentCompilationResult compilationResult;
+            try
+            {
+                compilationResult = SpirvCompilation.CompileVertexFragment(
+                    vsSpvBytes,
+                    fsSpvBytes,
+                    compilationTarget,
+                    new CrossCompileOptions());
+            }
+            catch (SpirvCompilationException ex) when (IsGlslEmitterNativeBug(ex, compilationTarget))
+            {
+                throw new SpirvCompilationException(
+                    $"Cross-compiling shader '{shaderName}' to {compilationTarget} failed because the " +
+                    $"bundled Veldrid.SPIRV 1.0.15 native has a bug in its GLSL/ESSL emitter " +
+                    $"(it throws basic_string::replace with npos on shaders that use storage buffers). " +
+                    $"The {backendType} backend requires {compilationTarget} output and cannot be used for this shader. " +
+                    "Use a backend whose shaders cross-compile via the unaffected HLSL or MSL paths " +
+                    "(Vulkan, Direct3D 11, or Metal). If the platform defaulted to OpenGL/OpenGLES, " +
+                    "install a Vulkan-capable driver and/or run under a non-snap .NET SDK so Veldrid can " +
+                    "select Vulkan. Original native error: " + ex.Message, ex);
+            }
+
+            byte[] vsBytes, fsBytes;
+
+            switch (backendType)
+            {
+                case GraphicsBackend.Vulkan:
+                    vsBytes = vsSpvBytes;
+                    fsBytes = fsSpvBytes;
+                    break;
+
+                case GraphicsBackend.Direct3D11:
+                    vsBytes = CompileHlsl(compilationResult.VertexShader, "vs_5_0");
+                    fsBytes = CompileHlsl(compilationResult.FragmentShader, "ps_5_0");
+                    break;
+
+                case GraphicsBackend.OpenGL:
+                case GraphicsBackend.OpenGLES:
+                    vsBytes = Encoding.ASCII.GetBytes(compilationResult.VertexShader);
+                    fsBytes = Encoding.ASCII.GetBytes(compilationResult.FragmentShader);
+                    break;
+
+                case GraphicsBackend.Metal:
+                    // TODO: Compile to IR.
+                    // SPIRV-cross assigns Metal buffer/texture/sampler indices in a different order
+                    // than Veldrid's Metal backend (ResourceBindingModel.Improved) expects.
+                    // Post-process the MSL to remap all [[resource(N)]] indices to match Veldrid.
+                    var layouts = compilationResult.Reflection.ResourceLayouts;
+                    vsBytes = Encoding.UTF8.GetBytes(FixMetalMslBindings(compilationResult.VertexShader, layouts, ShaderStages.Vertex));
+                    fsBytes = Encoding.UTF8.GetBytes(FixMetalMslBindings(compilationResult.FragmentShader, layouts, ShaderStages.Fragment));
+                    break;
+
+                default:
+                    throw new InvalidOperationException();
+            }
+
+            var entryPoint = factory.BackendType == GraphicsBackend.Metal
+                ? $"{EntryPoint}0"
+                : EntryPoint;
+
+            shaderCacheFile = new ShaderCacheFile(
+                new ShaderDescription(ShaderStages.Vertex, vsBytes, entryPoint),
+                new ShaderDescription(ShaderStages.Fragment, fsBytes, entryPoint),
+                compilationResult.Reflection.ResourceLayouts);
+
+            shaderCacheFile.Save(cacheFilePath);
+
             return shaderCacheFile;
         }
-
-        // Cache is invalid or doesn't exist - do cross-compilation.
-
-        // For Vulkan, we don't actually need to do cross-compilation. But we do need to get reflection data.
-        // So we cross-compile to HLSL, throw away the resulting HLSL, and use the reflection data.
-        var compilationTarget = backendType == GraphicsBackend.Vulkan
-            ? CrossCompileTarget.HLSL
-            : GetCompilationTarget(backendType);
-
-        VertexFragmentCompilationResult compilationResult;
-        try
-        {
-            compilationResult = SpirvCompilation.CompileVertexFragment(
-                vsSpvBytes,
-                fsSpvBytes,
-                compilationTarget,
-                new CrossCompileOptions());
-        }
-        catch (SpirvCompilationException ex) when (IsGlslEmitterNativeBug(ex, compilationTarget))
-        {
-            throw new SpirvCompilationException(
-                $"Cross-compiling shader '{shaderName}' to {compilationTarget} failed because the " +
-                $"bundled Veldrid.SPIRV 1.0.15 native has a bug in its GLSL/ESSL emitter " +
-                $"(it throws basic_string::replace with npos on shaders that use storage buffers). " +
-                $"The {backendType} backend requires {compilationTarget} output and cannot be used for this shader. " +
-                "Use a backend whose shaders cross-compile via the unaffected HLSL or MSL paths " +
-                "(Vulkan, Direct3D 11, or Metal). If the platform defaulted to OpenGL/OpenGLES, " +
-                "install a Vulkan-capable driver and/or run under a non-snap .NET SDK so Veldrid can " +
-                "select Vulkan. Original native error: " + ex.Message, ex);
-        }
-
-        byte[] vsBytes, fsBytes;
-
-        switch (backendType)
-        {
-            case GraphicsBackend.Vulkan:
-                vsBytes = vsSpvBytes;
-                fsBytes = fsSpvBytes;
-                break;
-
-            case GraphicsBackend.Direct3D11:
-                vsBytes = CompileHlsl(compilationResult.VertexShader, "vs_5_0");
-                fsBytes = CompileHlsl(compilationResult.FragmentShader, "ps_5_0");
-                break;
-
-            case GraphicsBackend.OpenGL:
-            case GraphicsBackend.OpenGLES:
-                vsBytes = Encoding.ASCII.GetBytes(compilationResult.VertexShader);
-                fsBytes = Encoding.ASCII.GetBytes(compilationResult.FragmentShader);
-                break;
-
-            case GraphicsBackend.Metal:
-                // TODO: Compile to IR.
-                // SPIRV-cross assigns Metal buffer/texture/sampler indices in a different order
-                // than Veldrid's Metal backend (ResourceBindingModel.Improved) expects.
-                // Post-process the MSL to remap all [[resource(N)]] indices to match Veldrid.
-                var layouts = compilationResult.Reflection.ResourceLayouts;
-                vsBytes = Encoding.UTF8.GetBytes(FixMetalMslBindings(compilationResult.VertexShader, layouts, ShaderStages.Vertex));
-                fsBytes = Encoding.UTF8.GetBytes(FixMetalMslBindings(compilationResult.FragmentShader, layouts, ShaderStages.Fragment));
-                break;
-
-            default:
-                throw new InvalidOperationException();
-        }
-
-        var entryPoint = factory.BackendType == GraphicsBackend.Metal
-            ? $"{EntryPoint}0"
-            : EntryPoint;
-
-        shaderCacheFile = new ShaderCacheFile(
-            new ShaderDescription(ShaderStages.Vertex, vsBytes, entryPoint),
-            new ShaderDescription(ShaderStages.Fragment, fsBytes, entryPoint),
-            compilationResult.Reflection.ResourceLayouts);
-
-        shaderCacheFile.Save(cacheFilePath);
-
-        return shaderCacheFile;
     }
 
     private static byte[] ReadShaderSpv(Assembly assembly, string shaderName, string shaderType)
