@@ -284,7 +284,7 @@ public class AnimationInstanceTests
 
     private static ModelBoneInstance[] NewDefaultModelBoneInstances()
     {
-        var testBone = new ModelBone(0, "myBone", null, Vector3.Zero, Quaternion.Identity);
+        var testBone = new ModelBone(0, "myBone", null, Vector3.Zero, Quaternion.Identity, Matrix4x4.Identity);
         return new[]
         {
             new ModelBoneInstance(testBone)

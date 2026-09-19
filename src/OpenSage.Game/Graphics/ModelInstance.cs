@@ -245,10 +245,20 @@ public sealed class ModelInstance : DisposableBase
 
         for (var i = 0; i < Model.BoneHierarchy.Bones.Length; i++)
         {
-            _skinningBones[i] = RelativeBoneTransforms[i];
+            _skinningBones[i] = ComputeSkinningMatrix(Model.BoneHierarchy.Bones[i], RelativeBoneTransforms[i]);
         }
 
         _graphicsDevice.UpdateBuffer(_skinningBuffer, 0, _skinningBones);
+    }
+
+    /// <summary>
+    /// Row-vector skinning matrix for one bone: inverse bind followed by the animated
+    /// relative transform. W3D bones carry identity inverse binds, matching the previous
+    /// upload of the bare relative transform.
+    /// </summary>
+    internal static Matrix4x4 ComputeSkinningMatrix(ModelBone bone, in Matrix4x4 relativeBoneTransform)
+    {
+        return bone.InverseBindMatrix * relativeBoneTransform;
     }
 
     public ref readonly Matrix4x4 GetWorldMatrix() => ref _worldMatrix;
