@@ -8,4 +8,5 @@ public enum BuiltInScenario
     EngagementCapture,
     ScenarioCapture,
     PhysicsStack,
+    PbrMaterialProof,
 }
