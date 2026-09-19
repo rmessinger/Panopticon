@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4a-10` |
 | Roadmap phase | [Track C · C4a](../../track-c-external-assets.md): shared C3/C4a runtime-model capture infrastructure |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C1-11` |
