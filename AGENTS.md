@@ -33,6 +33,11 @@ Builds on the repository-wide documentation style above. Additional rules specif
 
 ## Repository-Specific Memories
 
+### Development model (standard since C4)
+
+* Track C (and later tracks) ship through phase staging branches (`staging/track-cX`): cards are implemented in dependency order, grouped onto shared branches (per-card commits, card Status flips, `.exchange` lines), each group = one stacked PR into the staging branch. Staging PR branches do not trigger CI (workflows run on push to `main` only); one final staging-to-main PR runs CI once per phase.
+* PR descriptions use bullets, not prose paragraphs: one bullet per card or change area (sub-bullets for detail), plus a short Validation list; keep total verbosity roughly the same as paragraph text.
+
 ### Documentation style
 
 * Repo-wide policy: keep docs, code comments, and agent responses concise. Comments explain non-obvious intent only (`docs/coding-style.md` #17); docs are plain prose, no duplication (`CONTRIBUTING.md`); agent responses lead with outcome, skip routine narration (`.github/copilot-instructions.md`).
