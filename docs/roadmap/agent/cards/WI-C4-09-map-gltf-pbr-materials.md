@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C4-09` |
 | Roadmap phase | [Track C · C4](../../track-c-external-assets.md): First production external format |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C3-09`, `WI-C3-10`, `WI-C4-02`, `WI-C4-06` |
