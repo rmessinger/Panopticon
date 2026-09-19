@@ -8,7 +8,7 @@ public sealed class ModelBoneHierarchy : BaseAsset
     public static ModelBoneHierarchy CreateDefault()
     {
         var bones = new ModelBone[1];
-        bones[0] = new ModelBone(0, null, null, Vector3.Zero, Quaternion.Identity);
+        bones[0] = new ModelBone(0, null, null, Vector3.Zero, Quaternion.Identity, Matrix4x4.Identity);
         return new ModelBoneHierarchy("[Default]", bones);
     }
 
@@ -39,7 +39,8 @@ public sealed class ModelBoneHierarchy : BaseAsset
                 importedBone.Name,
                 parent,
                 importedBone.BindTranslation,
-                importedBone.BindRotation);
+                importedBone.BindRotation,
+                importedBone.InverseBindMatrix);
         }
     }
 }

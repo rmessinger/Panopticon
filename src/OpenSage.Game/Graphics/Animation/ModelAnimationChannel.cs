@@ -12,12 +12,19 @@ public sealed class ModelAnimationChannel
 
     public AnimationClipType ClipType { get; }
 
+    public AnimationInterpolation Interpolation { get; }
+
     public Keyframe[] Keyframes { get; }
 
-    internal ModelAnimationChannel(ModelAnimationTarget target, AnimationClipType clipType, Keyframe[] keyframes)
+    internal ModelAnimationChannel(
+        ModelAnimationTarget target,
+        AnimationClipType clipType,
+        Keyframe[] keyframes,
+        AnimationInterpolation interpolation)
     {
         Target = target;
         ClipType = clipType;
         Keyframes = keyframes;
+        Interpolation = interpolation;
     }
 }

@@ -68,7 +68,7 @@ public sealed class ModelAnimation : BaseAsset
                 }
             }
 
-            clips.Add(new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes));
+            clips.Add(new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes, channel.Interpolation));
         }
 
         return new BoundModelAnimation(Name, Duration, clips.ToArray());
