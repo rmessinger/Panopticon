@@ -440,6 +440,132 @@ public sealed class ImportedModelMaterializerTests
         Assert.Contains("part order", exception.Message);
     }
 
+    [GraphicsFact]
+    public void PbrModel_MaterializesThroughDedicatedPbrShaderPath()
+    {
+        using var graphics = new TestGraphicsContext();
+
+        // Normal-mapped PBR mesh without tangents: the materializer must validate, generate the
+        // tangent basis, upload the embedded image, and produce a cached PBR material.
+        var baseColorTexture = new ImportedTextureBinding(
+            ImportedImageSource.CreateEmbeddedBytes(EncodePngBytes(), "image/png", "helmet.glb#0"),
+            uvSet: 0,
+            new ImportedSampler(),
+            ImportedTextureRole.BaseColor);
+        var normalTexture = new ImportedTextureBinding(
+            ImportedImageSource.CreateEmbeddedBytes(EncodePngBytes(), "image/png", "helmet.glb#1"),
+            uvSet: 0,
+            new ImportedSampler(),
+            ImportedTextureRole.Normal);
+
+        var payload = ImportedMaterial.CreatePbrMetallicRoughness(
+            new ImportedPbrMetallicRoughness(
+                baseColorTexture: baseColorTexture,
+                normalTexture: normalTexture,
+                alphaMode: ImportedAlphaMode.Blend));
+
+        var mesh = ReplaceMaterials(CreateStaticMesh(), payload, blendEnabled: true);
+        var model = ImportedModelMaterializer.MaterializeModel(CreateModel(mesh), graphics.Context);
+
+        var modelMesh = Assert.IsType<ModelMesh>(model.SubObjects[0].RenderObject);
+        var meshPart = Assert.Single(modelMesh.MeshParts);
+        Assert.True(meshPart.BlendEnabled);
+        Assert.Same(
+            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            meshPart.Material.ForwardPass!.ShaderSet);
+
+        // Equivalent second materialization reuses the cached material.
+        var modelAgain = ImportedModelMaterializer.MaterializeModel(
+            CreateModel(ReplaceMaterials(CreateStaticMesh(), payload, blendEnabled: true)),
+            graphics.Context);
+        var meshPartAgain = Assert.Single(Assert.IsType<ModelMesh>(modelAgain.SubObjects[0].RenderObject).MeshParts);
+        Assert.Same(meshPart.Material.ForwardPass, meshPartAgain.Material.ForwardPass);
+    }
+
+    [GraphicsFact]
+    public void PbrModel_AllRoles_Embedded_MaterializeStaticAndSkinned()
+    {
+        using var graphics = new TestGraphicsContext();
+
+        // Skinned quad uses two bone influences; both variants omit tangents so generation runs.
+        var staticModel = ImportedModelMaterializer.MaterializeModel(
+            PbrImportedModelTestData.CreateModel(
+                PbrImportedModelTestData.CreateQuadMesh(PbrImportedModelTestData.CreateFullRoleMaterial(embedded: true))),
+            graphics.Context);
+        var skinnedModel = ImportedModelMaterializer.MaterializeModel(
+            PbrImportedModelTestData.CreateModel(
+                PbrImportedModelTestData.CreateQuadMesh(PbrImportedModelTestData.CreateFullRoleMaterial(embedded: true), skinned: true)),
+            graphics.Context);
+
+        var staticMesh = Assert.IsType<ModelMesh>(staticModel.SubObjects[0].RenderObject);
+        var skinnedMesh = Assert.IsType<ModelMesh>(skinnedModel.SubObjects[0].RenderObject);
+
+        Assert.False(staticMesh.Skinned);
+        Assert.True(skinnedMesh.Skinned);
+        Assert.Single(staticMesh.MeshParts);
+        Assert.Single(skinnedMesh.MeshParts);
+
+        Assert.Same(
+            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            staticMesh.MeshParts[0].Material.ForwardPass!.ShaderSet);
+        Assert.Same(
+            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            skinnedMesh.MeshParts[0].Material.ForwardPass!.ShaderSet);
+
+        // Same payload values and equivalent embedded content: one cached material for both.
+        Assert.Same(
+            staticMesh.MeshParts[0].Material.ForwardPass,
+            skinnedMesh.MeshParts[0].Material.ForwardPass);
+    }
+
+    [GraphicsFact]
+    public void PbrModel_AllRoles_External_MaterializesThroughExactPaths()
+    {
+        var fileSystem = new MemoryFileSystem();
+        foreach (var name in new[] { "base", "metallicRoughness", "normal", "occlusion", "emissive" })
+        {
+            fileSystem.AddFile($"textures/{name}.png", PbrImportedModelTestData.EncodePng());
+        }
+
+        using var graphics = new TestGraphicsContext(fileSystem);
+
+        var model = ImportedModelMaterializer.MaterializeModel(
+            PbrImportedModelTestData.CreateModel(
+                PbrImportedModelTestData.CreateQuadMesh(PbrImportedModelTestData.CreateFullRoleMaterial(embedded: false))),
+            graphics.Context);
+
+        var mesh = Assert.IsType<ModelMesh>(model.SubObjects[0].RenderObject);
+        Assert.Same(
+            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            Assert.Single(mesh.MeshParts).Material.ForwardPass!.ShaderSet);
+    }
+
+    [GraphicsFact]
+    public void PbrModel_ImportedTangents_MaterializeWithoutGeneration()
+    {
+        using var graphics = new TestGraphicsContext();
+
+        var material = PbrImportedModelTestData.CreateFullRoleMaterial(embedded: true);
+        var mesh = PbrImportedModelTestData.CreateQuadMesh(material, withTangents: true);
+
+        var model = ImportedModelMaterializer.MaterializeModel(
+            PbrImportedModelTestData.CreateModel(mesh),
+            graphics.Context);
+
+        var modelMesh = Assert.IsType<ModelMesh>(model.SubObjects[0].RenderObject);
+        Assert.Same(
+            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            Assert.Single(modelMesh.MeshParts).Material.ForwardPass!.ShaderSet);
+    }
+
+    private static byte[] EncodePngBytes()
+    {
+        using var image = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(2, 2);
+        using var stream = new System.IO.MemoryStream();
+        image.Save(stream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+        return stream.ToArray();
+    }
+
     private static AssetLoadContext CreateDataOnlyContext()
     {
         var fileSystem = new MemoryFileSystem();
@@ -456,7 +582,7 @@ public sealed class ImportedModelMaterializerTests
         return new AssetLoadContext(fileSystem, "english", null, null, null, null, assetStore);
     }
 
-    private static ImportedMesh ReplaceMaterials(ImportedMesh mesh, params ImportedMaterial[] materials)
+    private static ImportedMesh ReplaceMaterials(ImportedMesh mesh, ImportedMaterial material, bool blendEnabled = false)
     {
         return new ImportedMesh(
             mesh.Vertices,
@@ -467,7 +593,7 @@ public sealed class ImportedModelMaterializerTests
             cameraOriented: false,
             hasHouseColor: false,
             isSkinned: false,
-            materials: materials,
+            materials: [material],
             meshParts:
             [
                 new ImportedMeshPart(
@@ -475,7 +601,7 @@ public sealed class ImportedModelMaterializerTests
                     mesh.MeshParts[0].TextureCoordinates1?.ToArray(),
                     mesh.MeshParts[0].StartIndex,
                     mesh.MeshParts[0].IndexCount,
-                    mesh.MeshParts[0].BlendEnabled,
+                    blendEnabled,
                     materialIndex: 0),
             ]);
     }

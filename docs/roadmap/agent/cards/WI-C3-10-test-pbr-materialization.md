@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C3-10` |
 | Roadmap phase | [Track C · C3](../../track-c-external-assets.md): Material and texture mapping |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C3-09` |

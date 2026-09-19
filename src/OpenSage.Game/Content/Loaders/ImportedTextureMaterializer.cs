@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using OpenSage.Content.Importing;
 using OpenSage.IO;
 using SixLabors.ImageSharp;
@@ -20,6 +21,15 @@ namespace OpenSage.Content.Loaders;
 /// </summary>
 internal sealed class ImportedTextureMaterializer : DisposableBase
 {
+    // Cached PBR materials reference uploaded textures and outlive any single mesh, so the
+    // shared materializer lives as long as its load context (weak key, no process-global state).
+    private static readonly ConditionalWeakTable<AssetLoadContext, ImportedTextureMaterializer> SharedByContext = new();
+
+    public static ImportedTextureMaterializer GetShared(AssetLoadContext context)
+    {
+        return SharedByContext.GetValue(context, static c => new ImportedTextureMaterializer(c));
+    }
+
     private readonly AssetLoadContext _context;
     private readonly Dictionary<ExternalPathKey, Texture> _externalTextures = new();
     private readonly Dictionary<EmbeddedContentKey, Texture> _embeddedTextures = new();

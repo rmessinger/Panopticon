@@ -73,6 +73,39 @@ partial class ModelMesh
         return vertices;
     }
 
+    private Material CreatePbrMaterial(
+        ImportedPbrMetallicRoughness payload,
+        AssetLoadContext context)
+    {
+        var textureMaterializer = ImportedTextureMaterializer.GetShared(context);
+        var shaderResources = context.ShaderResources.PbrMetallicRoughness;
+
+        return shaderResources.GetCachedMaterial(
+            payload,
+            context.StandardGraphicsResources!,
+            ResolveRole(payload.BaseColorTexture, textureMaterializer),
+            ResolveRole(payload.MetallicRoughnessTexture, textureMaterializer),
+            ResolveRole(payload.NormalTexture, textureMaterializer),
+            ResolveRole(payload.OcclusionTexture, textureMaterializer),
+            ResolveRole(payload.EmissiveTexture, textureMaterializer));
+    }
+
+    private static PbrMetallicRoughnessShaderResources.RoleBinding? ResolveRole(
+        ImportedTextureBinding? binding,
+        ImportedTextureMaterializer textureMaterializer)
+    {
+        if (binding is null)
+        {
+            return null;
+        }
+
+        return new PbrMetallicRoughnessShaderResources.RoleBinding(
+            textureMaterializer.GetTexture(
+                binding.ImageSource,
+                generateMipmaps: binding.Sampler.MipFilter != ImportedFilterMode.Nearest),
+            textureMaterializer.GetSampler(binding.Sampler));
+    }
+
     private ModelMeshPart CreateModelMeshPart(
         ImportedMesh importedMesh,
         ImportedMeshPart importedPart,
@@ -129,6 +162,21 @@ partial class ModelMesh
 
             materialPass = new MaterialPass(cachedMaterial, context.ShaderResources.MeshDepth.Material);
             materialPassBlend = new MaterialPass(cachedMaterialBlend, context.ShaderResources.MeshDepth.Material);
+        }
+        else if (material.ShaderFamily == ImportedMaterial.PbrMetallicRoughnessFamily)
+        {
+            if (material.PbrMetallicRoughness is null)
+            {
+                throw new System.IO.InvalidDataException(
+                    $"Mesh '{Name}' has a PBR-family material without a PBR payload.");
+            }
+
+            blendEnabled = material.PbrMetallicRoughness.AlphaMode == ImportedAlphaMode.Blend;
+
+            materialPass = new MaterialPass(
+                CreatePbrMaterial(material.PbrMetallicRoughness, context),
+                context.ShaderResources.MeshDepth.Material);
+            materialPassBlend = materialPass;
         }
         else
         {
