@@ -267,6 +267,114 @@ public class AnimationInstanceTests
         instance.Stop();
     }
 
+    [Fact]
+    public void StepChannel_HoldsPreviousValueBetweenKeys_Forward()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = NewStepAnimation(AnimationClipType.TranslationX);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(0, modelBoneInstances[0].AnimatedOffset.Translation.X);
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(1, modelBoneInstances[0].AnimatedOffset.Translation.X);
+
+        instance.Update(Step(0.75f));
+        Assert.Equal(1, modelBoneInstances[0].AnimatedOffset.Translation.X);
+    }
+
+    [Fact]
+    public void StepChannel_HoldsValueBetweenKeys_Reverse()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = NewStepAnimation(AnimationClipType.TranslationX);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.OnceBackwards, AnimationFlags.StartFrameLast);
+        instance.Play();
+
+        // Starts at the last key (t=2); stepping back crosses keys at 1.75, then exactly 1.0.
+        instance.Update(Step(0.25f));
+        Assert.Equal(1, modelBoneInstances[0].AnimatedOffset.Translation.X);
+
+        instance.Update(Step(0.75f));
+        Assert.Equal(1, modelBoneInstances[0].AnimatedOffset.Translation.X);
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(0, modelBoneInstances[0].AnimatedOffset.Translation.X);
+    }
+
+    [Fact]
+    public void StepQuaternionChannel_HoldsPreviousRotationBetweenKeys()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var first = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 8);
+        var second = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 4);
+        var animation = new ModelAnimation(string.Empty, TimeSpan.FromSeconds(2),
+        [
+            new ModelAnimationChannel(
+                ModelAnimationTarget.CreateDirectIndex(0),
+                AnimationClipType.Quaternion,
+                new[]
+                {
+                    new Keyframe(TimeSpan.FromSeconds(0), new KeyframeValue { Quaternion = first }),
+                    new Keyframe(TimeSpan.FromSeconds(1), new KeyframeValue { Quaternion = second }),
+                },
+                AnimationInterpolation.Step),
+        ]);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(first, modelBoneInstances[0].AnimatedOffset.Rotation);
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(second, modelBoneInstances[0].AnimatedOffset.Rotation);
+    }
+
+    [Fact]
+    public void LinearChannel_InterpolatesMidpoint()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = NewStepAnimation(AnimationClipType.TranslationX, AnimationInterpolation.Linear);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(0.5f, modelBoneInstances[0].AnimatedOffset.Translation.X, 3);
+
+        instance.Update(Step(1.0f));
+        Assert.Equal(1.5f, modelBoneInstances[0].AnimatedOffset.Translation.X, 3);
+    }
+
+    private static TimeInterval Step(float deltaSeconds)
+    {
+        return new TimeInterval(TimeSpan.Zero, TimeSpan.FromSeconds(deltaSeconds));
+    }
+
+    private static ModelAnimation NewStepAnimation(
+        AnimationClipType clipType,
+        AnimationInterpolation interpolation = AnimationInterpolation.Step)
+    {
+        return new ModelAnimation(string.Empty, TimeSpan.FromSeconds(2),
+        [
+            new ModelAnimationChannel(
+                ModelAnimationTarget.CreateDirectIndex(0),
+                clipType,
+                new[]
+                {
+                    new Keyframe(TimeSpan.FromSeconds(0), new KeyframeValue { FloatValue = 0 }),
+                    new Keyframe(TimeSpan.FromSeconds(1), new KeyframeValue { FloatValue = 1 }),
+                    new Keyframe(TimeSpan.FromSeconds(2), new KeyframeValue { FloatValue = 2 }),
+                },
+                interpolation),
+        ]);
+    }
+
     private static AnimationInstance CreateInstance(
         ModelBoneInstance[] modelBoneInstances,
         ModelAnimation animation,
@@ -298,7 +406,7 @@ public class AnimationInstanceTests
             new ModelAnimationChannel(
                 ModelAnimationTarget.CreateDirectIndex(0),
                 AnimationClipType.TranslationX,
-                new []
+                new[]
             {
                 new Keyframe(TimeSpan.FromSeconds(0), new KeyframeValue
                 {
@@ -320,7 +428,8 @@ public class AnimationInstanceTests
                 {
                     FloatValue = 4,
                 }),
-            })
+            },
+            AnimationInterpolation.Linear)
         };
 
         return new ModelAnimation(string.Empty, TimeSpan.FromSeconds(5), animationChannels);

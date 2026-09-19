@@ -40,11 +40,18 @@ internal static class ImportedAnimationMaterializer
             _ => throw new ArgumentOutOfRangeException(nameof(channel)),
         };
 
+        var interpolation = channel.Interpolation switch
+        {
+            ImportedAnimationInterpolation.Linear => AnimationInterpolation.Linear,
+            ImportedAnimationInterpolation.Step => AnimationInterpolation.Step,
+            _ => throw new ArgumentOutOfRangeException(nameof(channel)),
+        };
+
         var keyframes = channel.Keyframes
             .Select(k => new Keyframe(k.Time, ToRuntimeValue(k)))
             .ToArray();
 
-        return new ModelAnimationChannel(target, clipType, keyframes);
+        return new ModelAnimationChannel(target, clipType, keyframes, interpolation);
     }
 
     private static KeyframeValue ToRuntimeValue(ImportedKeyframe keyframe)
