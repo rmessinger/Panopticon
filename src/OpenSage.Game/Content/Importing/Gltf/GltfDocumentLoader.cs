@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using System.Text.Json;
 using SharpGLTF.Schema2;
 using SharpGLTF.Validation;
 
@@ -17,9 +18,16 @@ internal delegate byte[]? GltfExternalResourceResolver(string relativePath);
 /// Loads and strictly parses one bounded glTF root document through the import file system.
 /// Returns null for a missing root; malformed documents throw <see cref="InvalidDataException"/>.
 /// </summary>
+/// <summary>
+/// A parsed root document plus whether the source declared a default scene. SharpGLTF
+/// synthesizes a default scene when none is declared, so declared-ness is detected from the
+/// raw document.
+/// </summary>
+internal sealed record GltfLoadedDocument(ModelRoot Root, bool HasDeclaredDefaultScene);
+
 internal static class GltfDocumentLoader
 {
-    public static ModelRoot? TryLoadRoot(
+    public static GltfLoadedDocument? TryLoadDocument(
         string modelPath,
         AssetImportContext context,
         GltfImportOptions options,
@@ -29,10 +37,10 @@ internal static class GltfDocumentLoader
             ? null
             : resourceResolver.Resolve;
 
-        return TryLoadRoot(modelPath, context, options, externalResolver);
+        return TryLoadDocument(modelPath, context, options, externalResolver);
     }
 
-    public static ModelRoot? TryLoadRoot(
+    public static GltfLoadedDocument? TryLoadDocument(
         string modelPath,
         AssetImportContext context,
         GltfImportOptions options,
@@ -69,12 +77,16 @@ internal static class GltfDocumentLoader
         var readContext = ReadContext.Create(ResolveResource)
             .WithSettingsFrom(readSettings);
 
+        var isGlb = modelPath.EndsWith(".glb", StringComparison.OrdinalIgnoreCase);
+        var hasDeclaredDefaultScene = HasDeclaredDefaultScene(rootBytes, isGlb);
+
         using var rootStream = new MemoryStream(rootBytes);
         try
         {
-            return modelPath.EndsWith(".glb", StringComparison.OrdinalIgnoreCase)
+            var root = isGlb
                 ? readContext.ReadBinarySchema2(rootStream)
                 : readContext.ReadTextSchema2(rootStream);
+            return new GltfLoadedDocument(root, hasDeclaredDefaultScene);
         }
         catch (InvalidDataException)
         {
@@ -102,5 +114,43 @@ internal static class GltfDocumentLoader
 
             return new ArraySegment<byte>(resolved);
         }
+    }
+
+    private static bool HasDeclaredDefaultScene(byte[] rootBytes, bool isGlb)
+    {
+        var jsonBytes = isGlb
+            ? ExtractGlbJsonChunk(rootBytes)
+            : rootBytes;
+
+        try
+        {
+            using var document = JsonDocument.Parse(jsonBytes);
+            return document.RootElement.TryGetProperty("scene", out _);
+        }
+        catch (JsonException)
+        {
+            // The strict SharpGLTF parse below reports malformed documents with proper context.
+            return true;
+        }
+    }
+
+    private static byte[] ExtractGlbJsonChunk(byte[] glbBytes)
+    {
+        if (glbBytes.Length < 20)
+        {
+            return [];
+        }
+
+        var jsonChunkLength = BitConverter.ToInt32(glbBytes, 12);
+        var jsonChunkStart = 20;
+
+        if (jsonChunkLength <= 0 || jsonChunkStart + jsonChunkLength > glbBytes.Length)
+        {
+            return [];
+        }
+
+        var jsonBytes = new byte[jsonChunkLength];
+        Array.Copy(glbBytes, jsonChunkStart, jsonBytes, 0, jsonChunkLength);
+        return jsonBytes;
     }
 }

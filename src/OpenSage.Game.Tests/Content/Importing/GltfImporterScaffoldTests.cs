@@ -103,7 +103,7 @@ public class GltfImporterScaffoldTests
     {
         var context = CreateContext();
 
-        var result = GltfDocumentLoader.TryLoadRoot(
+        var result = GltfDocumentLoader.TryLoadDocument(
             "models/tank.gltf",
             context,
             GltfImportOptions.Default,
@@ -118,7 +118,7 @@ public class GltfImporterScaffoldTests
         var context = CreateContext(("models/big.gltf", new byte[1024]));
         var options = new GltfImportOptions(maxRootDocumentBytes: 512);
 
-        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadRoot(
+        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadDocument(
             "models/big.gltf",
             context,
             options,
@@ -130,7 +130,7 @@ public class GltfImporterScaffoldTests
     {
         var context = CreateContext(("models/bad.gltf", "not json"u8.ToArray()));
 
-        var exception = Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadRoot(
+        var exception = Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadDocument(
             "models/bad.gltf",
             context,
             GltfImportOptions.Default,
@@ -144,7 +144,7 @@ public class GltfImporterScaffoldTests
     {
         var context = CreateContext(("models/bad.glb", new byte[] { 0x47, 0x4C, 0x46, 0x46, 0x02, 0x00, 0x00, 0x00 }));
 
-        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadRoot(
+        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadDocument(
             "models/bad.glb",
             context,
             GltfImportOptions.Default,
@@ -156,14 +156,14 @@ public class GltfImporterScaffoldTests
     {
         var context = CreateContext(("models/triangle.glb", MinimalGlb));
 
-        var result = GltfDocumentLoader.TryLoadRoot(
+        var result = GltfDocumentLoader.TryLoadDocument(
             "models/triangle.glb",
             context,
             GltfImportOptions.Default,
             externalResolver: null);
 
         Assert.NotNull(result);
-        Assert.Single(result.LogicalMeshes);
+        Assert.Single(result.Root.LogicalMeshes);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class GltfImporterScaffoldTests
             """;
         var context = CreateContext(("models/external.gltf", System.Text.Encoding.UTF8.GetBytes(json)));
 
-        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadRoot(
+        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadDocument(
             "models/external.gltf",
             context,
             GltfImportOptions.Default,
@@ -195,7 +195,7 @@ public class GltfImporterScaffoldTests
             """;
         var context = CreateContext(("models/external.gltf", System.Text.Encoding.UTF8.GetBytes(json)));
 
-        var result = GltfDocumentLoader.TryLoadRoot(
+        var result = GltfDocumentLoader.TryLoadDocument(
             "models/external.gltf",
             context,
             GltfImportOptions.Default,
@@ -215,7 +215,7 @@ public class GltfImporterScaffoldTests
             """;
         var context = CreateContext(("models/external.gltf", System.Text.Encoding.UTF8.GetBytes(json)));
 
-        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadRoot(
+        Assert.Throws<InvalidDataException>(() => GltfDocumentLoader.TryLoadDocument(
             "models/external.gltf",
             context,
             GltfImportOptions.Default,

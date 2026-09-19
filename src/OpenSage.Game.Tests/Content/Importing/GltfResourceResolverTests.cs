@@ -209,7 +209,7 @@ public class GltfResourceResolverTests
         var context = new AssetImportContext(fileSystem, null);
         var resolver = new GltfResourceResolver("models/external.gltf", fileSystem, GltfImportOptions.Default);
 
-        var root = GltfDocumentLoader.TryLoadRoot("models/external.gltf", context, GltfImportOptions.Default, resolver);
+        var root = GltfDocumentLoader.TryLoadDocument("models/external.gltf", context, GltfImportOptions.Default, resolver);
 
         Assert.NotNull(root);
     }
