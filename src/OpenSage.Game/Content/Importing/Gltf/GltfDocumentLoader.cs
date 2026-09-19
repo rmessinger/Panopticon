@@ -23,6 +23,19 @@ internal static class GltfDocumentLoader
         string modelPath,
         AssetImportContext context,
         GltfImportOptions options,
+        GltfResourceResolver? resourceResolver)
+    {
+        GltfExternalResourceResolver? externalResolver = resourceResolver is null
+            ? null
+            : resourceResolver.Resolve;
+
+        return TryLoadRoot(modelPath, context, options, externalResolver);
+    }
+
+    public static ModelRoot? TryLoadRoot(
+        string modelPath,
+        AssetImportContext context,
+        GltfImportOptions options,
         GltfExternalResourceResolver? externalResolver)
     {
         ArgumentNullException.ThrowIfNull(context);
