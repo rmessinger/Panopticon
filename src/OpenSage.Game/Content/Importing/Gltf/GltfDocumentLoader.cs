@@ -15,16 +15,16 @@ namespace OpenSage.Content.Importing.Gltf;
 internal delegate byte[]? GltfExternalResourceResolver(string relativePath);
 
 /// <summary>
-/// Loads and strictly parses one bounded glTF root document through the import file system.
-/// Returns null for a missing root; malformed documents throw <see cref="InvalidDataException"/>.
-/// </summary>
-/// <summary>
 /// A parsed root document plus whether the source declared a default scene. SharpGLTF
 /// synthesizes a default scene when none is declared, so declared-ness is detected from the
 /// raw document.
 /// </summary>
 internal sealed record GltfLoadedDocument(ModelRoot Root, bool HasDeclaredDefaultScene);
 
+/// <summary>
+/// Loads and strictly parses one bounded glTF root document through the import file system.
+/// Returns null for a missing root; malformed documents throw <see cref="InvalidDataException"/>.
+/// </summary>
 internal static class GltfDocumentLoader
 {
     public static GltfLoadedDocument? TryLoadDocument(
