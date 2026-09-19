@@ -24,6 +24,19 @@ Set `GamePath` to your game installation if auto-detection fails.
 `BuiltInScenario` in the config selects what runs; `--built-in-scenario <name>` overrides it
 for a single run.
 
+### `PbrMaterialProof` scenario
+
+Headless capture of the complete C3 PBR feature matrix: synthetic static/skinned quads with
+embedded textures render through `StandaloneModelCapture` into `pbr-material-proof/*.png`, plus a
+`validation_guide.md` naming the expected check per capture. Asserts the emissive sRGB round trip
+within one 8-bit step and byte-identical repeat captures (a discarded warm-up frame absorbs
+first-execution engine-global uploads). Requires `CNC_GENERALS_PATH` as the rendering host only.
+
+```bash
+CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
+  dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario PbrMaterialProof
+```
+
 ### `EngagementCapture` scenario
 
 Headless capture of one unit attacking another, used to produce annotated engagement GIFs.

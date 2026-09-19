@@ -59,11 +59,12 @@ internal static class StandaloneModelCapture
         var inputMessageBuffer = new InputMessageBuffer();
         var width = (float)viewportSize.Width;
         var height = (float)viewportSize.Height;
+        var cameraController = new ArcballCameraController(cameraTarget, cameraDistance);
         using var scene = new Scene3D(
             game,
             inputMessageBuffer,
             () => new Viewport(0, 0, width, height, 0, 1),
-            new ArcballCameraController(cameraTarget, cameraDistance),
+            cameraController,
             WorldLighting.CreateDefault(),
             isDiagnosticScene: true);
         using var renderPipeline = new RenderPipeline(game);
@@ -87,12 +88,19 @@ internal static class StandaloneModelCapture
         renderPipeline.BuildingRenderList += OnBuildingRenderList;
         try
         {
-            scene.LocalLogicTick(game.MapTime, 1.0f);
+            // Diagnostic scenes have no tactical view; apply the arcball camera directly.
+            ((IEditorCameraController)cameraController).UpdateCamera(
+                scene.Camera,
+                default,
+                TimeInterval.Zero);
 
             renderPipeline.Execute(new RenderContext
             {
                 ContentManager = game.ContentManager,
-                GameTime = game.RenderTime,
+
+                // A fixed frame time keeps captures deterministic: time-driven effects like
+                // cloud-shadow scrolling would otherwise advance between captures.
+                GameTime = TimeInterval.Zero,
                 GraphicsDevice = game.GraphicsDevice,
                 RenderTarget = renderTarget.Framebuffer,
                 Scene2D = null,

@@ -212,6 +212,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.PbrMaterialProof)
+        {
+            Environment.ExitCode = PbrMaterialProofScenario.Run(installation, config, reporter);
+            return;
+        }
+
         var plan = ScenarioBuilder.BuildReplayRun(installation, config, reporter);
         if (plan == null)
         {
