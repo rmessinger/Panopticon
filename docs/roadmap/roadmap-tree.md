@@ -112,6 +112,7 @@ mindmap
         B4a-5 Chunked storage
         B4a-6 Round-trip and play
         B4a-7 Large-population scenario authoring
+      B4b Geospatial map generation
       B5 Rendering at scale
       B6 Distributed simulation ⮕
         B6-1 Partition and boundary spec
@@ -282,6 +283,7 @@ flowchart LR
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
     direction TB
     A5["A5 Scenario & visualization"]
+    B4B["B4b Geospatial map generation"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
     D4["D4 Reference non-SAGE scenario"]
@@ -388,6 +390,8 @@ flowchart LR
   %% Stage 2 -> 3
   A1 --> A5
   A4 --> A5
+  B4A --> B4B
+  H3 --> B4B
   C4 --> C5
   C4 --> C6
   D2 --> D4
@@ -450,7 +454,7 @@ flowchart LR
   F7 --> F8
 
   class A1,A2,A3,A4,A5,A5WB trackA;
-  class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
+  class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C4A,C5,C6 trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;

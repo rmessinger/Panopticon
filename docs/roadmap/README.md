@@ -32,6 +32,11 @@ Long-term goals:
    [near-term scale anchor Decision](open-questions.md)); larger figures remain directional.
 2. External asset incorporation - support for models and animations authored outside the
    Westwood `.w3d` ecosystem through a format-agnostic import abstraction.
+3. First World War Western Front-scale simulation - a theater-scale, spatially explicit
+   simulation combining [geospatial terrain](track-b-scale.md), large/distributed/variable-fidelity
+   simulation, and extensible gameplay content. This is a directional integration target; map
+   extent, order of battle, temporal resolution, combat fidelity, and interactive-rate targets
+   remain uncommitted.
 
 Scope notes:
 
@@ -182,8 +187,9 @@ track document.
   scales with the sim).
 - [Track B - Scale](track-b-scale.md): B1 profiling & benchmarking utilities · B2 allocation cleanup · B3
   parallel/data-oriented logic · B4 spatial & pathfinding scaling · B4a larger maps (+
-  large-population scenario authoring in WorldBuilder) · B5
-  rendering at scale · B6 distributed simulation · B7 variable simulation fidelity.
+  large-population scenario authoring in WorldBuilder) · B4b geospatial map generation from
+  operator-supplied Google Earth data · B5 rendering at scale · B6 distributed simulation · B7
+  variable simulation fidelity.
 - [Track C - External Models & Animations](track-c-external-assets.md): C1 import
   abstraction · C2 skeleton/animation retargeting · C3 material mapping · C4 first production
   format (glTF static + skinned) · C4a EE2 NIF 10.1 static-model proof · C5
@@ -244,10 +250,11 @@ track document.
 - Track H depends only on Track P. Its H3 (new map storage format) reserves a terrain section for
   [B4a-5's chunked heightmap representation](deep-dives/b4a-larger-maps.md) rather than competing
   with it: B4a-5 owns the runtime chunking/streaming model, H3 owns the on-disk container and
-  versioning. H2's format-agnostic interchange abstraction mirrors [C1](track-c-external-assets.md)'s
+  versioning. B4b consumes both as the output path for generated geospatial maps. H2's
+  format-agnostic interchange abstraction mirrors [C1](track-c-external-assets.md)'s
   import-abstraction pattern applied to map/object-definition data instead of models/animations.
-  H4/H6 feed Track D's D3 external content ingestion and the standalone
-  [ModCollector tool](plans/mod-collector.md) once the new object-definition format exists.
+  H4/H6 feed Track D's D3 external content ingestion and the standalone [ModCollector
+  tool](plans/mod-collector.md) once the new object-definition format exists.
 
 ---
 
@@ -278,7 +285,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | Track | Progress | Items |
 |---|---|---|
 | Track A - Foundations | `███████░░░` | 12 / 19 |
-| Track B - Scale | `░░░░░░░░░░` | 0 / 12 |
+| Track B - Scale | `░░░░░░░░░░` | 0 / 13 |
 | Track C - External Assets | `░░░░░░░░░░` | 0 / 7 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)

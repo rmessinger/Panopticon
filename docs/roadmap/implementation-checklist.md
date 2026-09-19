@@ -701,6 +701,13 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: TBD (multi-sub-phase, see the deep dive). Rough template: very large maps author → save →
     reload → play within budgets; region edits are O(brush) not O(map area); large object populations
     are placeable/editable interactively.
+- [ ] B4b Geospatial map generation: import operator-supplied Google Earth or Google Earth Engine
+      exports into WorldBuilder through the map interchange boundary. Parse KML/KMZ extents and
+      vector features plus georeferenced DEM/imagery rasters; project, crop, resample, and preserve
+      source/projection metadata without direct Google service access. Depends on B4a and H3.
+  - AC: a synthetic fixture and one operator-supplied real-world area generate maps whose extent,
+    elevations, imagery, and named vector landmarks match source control points within declared
+    tolerances; each map saves, reloads in WorldBuilder, and plays.
 - [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
   - AC: TBD, instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
     the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.
