@@ -743,7 +743,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
   - AC: named channels bind case-insensitively to a differently ordered runtime hierarchy and play
     through an existing gameplay animation state; missing and duplicate named targets fail before
     playback; out-of-range direct targets are omitted once, preserving W3D behavior.
-- [ ] C3 Material mapping.
+- [x] C3 Material mapping.
   - AC: synthetic static and skinned meshes render the core metallic-roughness matrix, including
     external and embedded images, UV0/UV1, samplers, color space, alpha modes, double-sided state,
     and generated tangents; validation and cache-key coverage precede GPU allocation.

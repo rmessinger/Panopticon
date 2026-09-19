@@ -575,4 +575,175 @@ public sealed class ImportedAssetTests
                 ImportedAnimationChannelType.Quaternion,
                 new[] { ImportedKeyframe.FromQuaternion(TimeSpan.Zero, Quaternion.Identity) }));
     }
+
+    [Fact]
+    public void ImageSource_HoldsExactIdentity_And_RejectsInvalidInputs()
+    {
+        var path = ImportedImageSource.CreateVirtualPath("textures/helmet_base.png");
+        Assert.Equal(ImportedImageSourceKind.VirtualPath, path.Kind);
+        Assert.Equal("textures/helmet_base.png", path.VirtualPath);
+        Assert.Throws<InvalidOperationException>(() => path.EmbeddedBytes);
+
+        var rawBytes = new byte[] { 1, 2, 3 };
+        var embedded = ImportedImageSource.CreateEmbeddedBytes(rawBytes, "image/png", "helmet.glb#bufferView-2");
+        Assert.Equal(ImportedImageSourceKind.EmbeddedBytes, embedded.Kind);
+        Assert.Equal("image/png", embedded.MimeType);
+        Assert.Equal("helmet.glb#bufferView-2", embedded.DiagnosticName);
+        Assert.Equal(new byte[] { 1, 2, 3 }, embedded.EmbeddedBytes.ToArray());
+        rawBytes[0] = 99;
+        Assert.Equal(1, embedded.EmbeddedBytes.Span[0]);
+        Assert.Throws<InvalidOperationException>(() => embedded.VirtualPath);
+
+        Assert.Throws<ArgumentException>(() => ImportedImageSource.CreateVirtualPath(""));
+        Assert.Throws<ArgumentException>(() => ImportedImageSource.CreateVirtualPath("textures\\helmet.png"));
+        Assert.Throws<ArgumentException>(() => ImportedImageSource.CreateVirtualPath("/textures/helmet.png"));
+        Assert.Throws<ArgumentException>(() => ImportedImageSource.CreateVirtualPath("textures/../helmet.png"));
+        Assert.Throws<ArgumentException>(() => ImportedImageSource.CreateEmbeddedBytes(Array.Empty<byte>(), "image/png", "name"));
+        Assert.Throws<ArgumentException>(() => ImportedImageSource.CreateEmbeddedBytes(new byte[] { 1 }, "", "name"));
+        Assert.Throws<ArgumentException>(() => ImportedImageSource.CreateEmbeddedBytes(new byte[] { 1 }, "image/png", ""));
+    }
+
+    [Fact]
+    public void TextureBinding_HoldsValues_And_RejectsInvalidInputs()
+    {
+        var source = ImportedImageSource.CreateVirtualPath("textures/base.png");
+        var sampler = new ImportedSampler(
+            ImportedAddressMode.Clamp,
+            ImportedAddressMode.MirroredRepeat,
+            ImportedFilterMode.Nearest,
+            ImportedFilterMode.Linear,
+            ImportedFilterMode.Nearest);
+
+        var binding = new ImportedTextureBinding(source, uvSet: 1, sampler, ImportedTextureRole.BaseColor);
+
+        Assert.Same(source, binding.ImageSource);
+        Assert.Equal(1, binding.UvSet);
+        Assert.Same(sampler, binding.Sampler);
+        Assert.Equal(ImportedTextureRole.BaseColor, binding.Role);
+
+        Assert.Throws<ArgumentNullException>(() => new ImportedTextureBinding(null!, 0, sampler, ImportedTextureRole.BaseColor));
+        Assert.Throws<ArgumentNullException>(() => new ImportedTextureBinding(source, 0, null!, ImportedTextureRole.BaseColor));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ImportedTextureBinding(source, 2, sampler, ImportedTextureRole.BaseColor));
+    }
+
+    [Fact]
+    public void PbrPayload_HasConstructorDefaults_And_RejectsRoleMismatches()
+    {
+        var payload = new ImportedPbrMetallicRoughness();
+
+        Assert.Equal(Vector4.One, payload.BaseColorFactor);
+        Assert.Null(payload.BaseColorTexture);
+        Assert.Equal(1.0f, payload.MetallicFactor);
+        Assert.Equal(1.0f, payload.RoughnessFactor);
+        Assert.Null(payload.MetallicRoughnessTexture);
+        Assert.Null(payload.NormalTexture);
+        Assert.Equal(1.0f, payload.NormalScale);
+        Assert.Null(payload.OcclusionTexture);
+        Assert.Equal(1.0f, payload.OcclusionStrength);
+        Assert.Equal(Vector3.Zero, payload.EmissiveFactor);
+        Assert.Null(payload.EmissiveTexture);
+        Assert.Equal(ImportedAlphaMode.Opaque, payload.AlphaMode);
+        Assert.Equal(0.5f, payload.AlphaCutoff);
+        Assert.False(payload.DoubleSided);
+
+        var wrongRole = new ImportedTextureBinding(
+            ImportedImageSource.CreateVirtualPath("textures/rough.png"),
+            0,
+            new ImportedSampler(),
+            ImportedTextureRole.MetallicRoughness);
+
+        Assert.Throws<ArgumentException>(() => new ImportedPbrMetallicRoughness(baseColorTexture: wrongRole));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ImportedPbrMetallicRoughness(alphaCutoff: 1.5f));
+    }
+
+    [Fact]
+    public void PbrMaterial_DerivesRenderStateFromPayload_And_FamilyAndPayloadAreInseparable()
+    {
+        var opaque = ImportedMaterial.CreatePbrMetallicRoughness(
+            new ImportedPbrMetallicRoughness(doubleSided: false));
+        Assert.Equal(ImportedMaterial.PbrMetallicRoughnessFamily, opaque.ShaderFamily);
+        Assert.Equal(ImportedCullMode.Back, opaque.CullMode);
+        Assert.True(opaque.DepthWriteEnabled);
+        Assert.False(opaque.BlendEnabled);
+        Assert.Null(opaque.FixedFunctionShading);
+        Assert.NotNull(opaque.PbrMetallicRoughness);
+
+        var blended = ImportedMaterial.CreatePbrMetallicRoughness(
+            new ImportedPbrMetallicRoughness(alphaMode: ImportedAlphaMode.Blend, doubleSided: true));
+        Assert.Equal(ImportedCullMode.None, blended.CullMode);
+        Assert.False(blended.DepthWriteEnabled);
+        Assert.True(blended.BlendEnabled);
+        Assert.Equal(ImportedBlendFactor.SourceAlpha, blended.SourceBlendFactor);
+        Assert.Equal(ImportedBlendFactor.InverseSourceAlpha, blended.DestinationColorBlendFactor);
+        Assert.Equal(ImportedBlendFactor.InverseSourceAlpha, blended.DestinationAlphaBlendFactor);
+
+        var masked = ImportedMaterial.CreatePbrMetallicRoughness(
+            new ImportedPbrMetallicRoughness(alphaMode: ImportedAlphaMode.Mask, alphaCutoff: 0.25f));
+        Assert.True(masked.DepthWriteEnabled);
+        Assert.False(masked.BlendEnabled);
+
+        Assert.Throws<ArgumentException>(() => new ImportedMaterial(
+            ImportedMaterial.PbrMetallicRoughnessFamily,
+            ImportedCullMode.Back,
+            depthWriteEnabled: true,
+            depthComparison: ImportedDepthComparison.LessEqual,
+            blendEnabled: false,
+            sourceBlendFactor: ImportedBlendFactor.One,
+            destinationColorBlendFactor: ImportedBlendFactor.Zero,
+            destinationAlphaBlendFactor: ImportedBlendFactor.Zero,
+            fixedFunctionShading: null,
+            properties: []));
+    }
+
+    [Fact]
+    public void Material_RejectsPbrCombinedWithFixedFunction()
+    {
+        var ffShading = new ImportedFixedFunctionShading(
+            ImportedDiffuseLightingType.Modulate,
+            specularEnabled: false,
+            texturingEnabled: true,
+            secondaryTextureColorBlend: ImportedSecondaryTextureBlend.Disable,
+            secondaryTextureAlphaBlend: ImportedSecondaryTextureBlend.Disable,
+            alphaTest: false,
+            ambient: Vector3.One,
+            diffuse: Vector3.One,
+            specular: Vector3.Zero,
+            emissive: Vector3.Zero,
+            shininess: 0.0f,
+            opacity: 1.0f,
+            textureStageCount: 1,
+            CreateDefaultTextureMapping(),
+            CreateDefaultTextureMapping());
+
+        var payload = new ImportedPbrMetallicRoughness();
+        var pbr = ImportedMaterial.CreatePbrMetallicRoughness(payload);
+        Assert.Null(pbr.FixedFunctionShading);
+        Assert.Same(payload, pbr.PbrMetallicRoughness);
+
+        Assert.Throws<ArgumentException>(() => new ImportedMaterial(
+            ImportedMaterial.PbrMetallicRoughnessFamily,
+            ImportedCullMode.Back,
+            depthWriteEnabled: true,
+            depthComparison: ImportedDepthComparison.LessEqual,
+            blendEnabled: false,
+            sourceBlendFactor: ImportedBlendFactor.One,
+            destinationColorBlendFactor: ImportedBlendFactor.Zero,
+            destinationAlphaBlendFactor: ImportedBlendFactor.Zero,
+            fixedFunctionShading: ffShading,
+            properties: [],
+            pbrMetallicRoughness: payload));
+
+        Assert.Throws<ArgumentException>(() => new ImportedMaterial(
+            "SomeOtherFamily",
+            ImportedCullMode.Back,
+            depthWriteEnabled: true,
+            depthComparison: ImportedDepthComparison.LessEqual,
+            blendEnabled: false,
+            sourceBlendFactor: ImportedBlendFactor.One,
+            destinationColorBlendFactor: ImportedBlendFactor.Zero,
+            destinationAlphaBlendFactor: ImportedBlendFactor.Zero,
+            fixedFunctionShading: null,
+            properties: [],
+            pbrMetallicRoughness: payload));
+    }
 }

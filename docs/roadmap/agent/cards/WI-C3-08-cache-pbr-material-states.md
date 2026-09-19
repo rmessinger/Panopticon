@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C3-08` |
 | Roadmap phase | [Track C · C3](../../track-c-external-assets.md): Material and texture mapping |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C3-05`, `WI-C3-07` |

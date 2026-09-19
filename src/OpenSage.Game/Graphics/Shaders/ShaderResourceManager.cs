@@ -15,6 +15,7 @@ internal sealed class ShaderResourceManager : DisposableBase
     public readonly RadiusCursorDecalShaderResources RadiusCursor;
 
     public readonly FixedFunctionShaderResources FixedFunction;
+    public readonly PbrMetallicRoughnessShaderResources PbrMetallicRoughness;
     public readonly MeshDepthShaderResources MeshDepth;
     public readonly ParticleShaderResources Particle;
     public readonly RoadShaderResources Road;
@@ -35,6 +36,7 @@ internal sealed class ShaderResourceManager : DisposableBase
             RadiusCursor = AddDisposable(new RadiusCursorDecalShaderResources(graphicsDevice, standardGraphicsResources.Aniso4xClampSampler));
 
             FixedFunction = AddDisposable(new FixedFunctionShaderResources(shaderSetStore));
+            PbrMetallicRoughness = AddDisposable(new PbrMetallicRoughnessShaderResources(shaderSetStore));
             MeshDepth = AddDisposable(new MeshDepthShaderResources(shaderSetStore));
             Particle = AddDisposable(new ParticleShaderResources(shaderSetStore));
             Road = AddDisposable(new RoadShaderResources(shaderSetStore));
