@@ -18,12 +18,18 @@ public sealed class GltfImportOptions
 
     public long MaxDataUriBytes { get; }
 
+    public long MaxExternalResourceBytes { get; }
+
+    public long MaxAggregateExternalResourceBytes { get; }
+
     public static GltfImportOptions Default { get; } = new();
 
     public GltfImportOptions(
         float unitsPerMeter = 1f / 0.3048f,
         long maxRootDocumentBytes = 16 * 1024 * 1024,
-        long maxDataUriBytes = 16 * 1024 * 1024)
+        long maxDataUriBytes = 16 * 1024 * 1024,
+        long maxExternalResourceBytes = 16 * 1024 * 1024,
+        long maxAggregateExternalResourceBytes = 64 * 1024 * 1024)
     {
         if (float.IsNaN(unitsPerMeter) || float.IsInfinity(unitsPerMeter) || unitsPerMeter <= 0)
         {
@@ -40,8 +46,20 @@ public sealed class GltfImportOptions
             throw new ArgumentException("Maximum data-URI bytes must be positive.", nameof(maxDataUriBytes));
         }
 
+        if (maxExternalResourceBytes <= 0)
+        {
+            throw new ArgumentException("Maximum external resource bytes must be positive.", nameof(maxExternalResourceBytes));
+        }
+
+        if (maxAggregateExternalResourceBytes <= 0)
+        {
+            throw new ArgumentException("Maximum aggregate external resource bytes must be positive.", nameof(maxAggregateExternalResourceBytes));
+        }
+
         UnitsPerMeter = unitsPerMeter;
         MaxRootDocumentBytes = maxRootDocumentBytes;
         MaxDataUriBytes = maxDataUriBytes;
+        MaxExternalResourceBytes = maxExternalResourceBytes;
+        MaxAggregateExternalResourceBytes = maxAggregateExternalResourceBytes;
     }
 }
