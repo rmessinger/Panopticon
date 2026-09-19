@@ -701,10 +701,12 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: TBD (multi-sub-phase, see the deep dive). Rough template: very large maps author → save →
     reload → play within budgets; region edits are O(brush) not O(map area); large object populations
     are placeable/editable interactively.
-- [ ] B4b Geospatial map generation: import operator-supplied Google Earth or Google Earth Engine
-      exports into WorldBuilder through the map interchange boundary. Parse KML/KMZ extents and
-      vector features plus georeferenced DEM/imagery rasters; project, crop, resample, and preserve
-      source/projection metadata without direct Google service access. Depends on B4a and H3.
+- [ ] B4b Geospatial map generation
+      ([deep dive](deep-dives/b4b-geospatial-map-generation.md)): import Google Earth KML/KMZ plus
+      georeferenced DEM/imagery rasters from operator-authorized Earth Engine datasets or other
+      sources into WorldBuilder through the map interchange boundary. Project, crop, resample, and
+      preserve source/projection metadata without direct Google service access. Google basemap
+      imagery and terrain are not supported inputs. Depends on B4a and H6.
   - AC: a synthetic fixture and one operator-supplied real-world area generate maps whose extent,
     elevations, imagery, and named vector landmarks match source control points within declared
     tolerances; each map saves, reloads in WorldBuilder, and plays.

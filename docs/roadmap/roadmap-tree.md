@@ -112,7 +112,16 @@ mindmap
         B4a-5 Chunked storage
         B4a-6 Round-trip and play
         B4a-7 Large-population scenario authoring
-      B4b Geospatial map generation
+      B4b Geospatial map generation ⮕
+        B4b-1 Input contract and dependency spike
+        B4b-2 Geospatial interchange
+        B4b-3 Local source readers
+        B4b-4 Coordinate normalization
+        B4b-5 Terrain and imagery generation
+        B4b-6 Vector semantics
+        B4b-7 H3 package output
+        B4b-8 WorldBuilder workflow
+        B4b-9 Validation and scale proof
       B5 Rendering at scale
       B6 Distributed simulation ⮕
         B6-1 Partition and boundary spec
@@ -283,7 +292,6 @@ flowchart LR
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
     direction TB
     A5["A5 Scenario & visualization"]
-    B4B["B4b Geospatial map generation"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
     D4["D4 Reference non-SAGE scenario"]
@@ -305,6 +313,7 @@ flowchart LR
 
   subgraph S5["Stage 5 · Integration & round-trip validation"]
     direction TB
+    B4B["B4b Geospatial map generation"]
     E4["E4 Reference naval scenario"]
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence & replay"]
@@ -390,8 +399,6 @@ flowchart LR
   %% Stage 2 -> 3
   A1 --> A5
   A4 --> A5
-  B4A --> B4B
-  H3 --> B4B
   C4 --> C5
   C4 --> C6
   D2 --> D4
@@ -447,6 +454,8 @@ flowchart LR
   G4 --> G5
   H5 --> H7
   H6 --> H7
+  B4A --> B4B
+  H6 --> B4B
 
   %% Stage 5 -> 6
   F2 --> F8
