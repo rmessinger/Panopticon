@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using OpenSage.IO;
 
 namespace OpenSage.Content.Importing.Gltf;
@@ -109,6 +110,23 @@ internal sealed class GltfResourceResolver
         _aggregateExternalBytes += payload.Length;
         _payloadCache.Add(normalizedPath, payload);
         return payload;
+    }
+
+    /// <summary>
+    /// Normalized external path whose resolved payload is byte-identical to the given
+    /// content, or null. Identifies which external file an in-memory image came from.
+    /// </summary>
+    public string? FindResolvedExternalPath(ReadOnlyMemory<byte> content)
+    {
+        foreach (var (path, payload) in _payloadCache)
+        {
+            if (content.Span.SequenceEqual(payload))
+            {
+                return path;
+            }
+        }
+
+        return null;
     }
 
     private static bool IsDataUri(string uri)
