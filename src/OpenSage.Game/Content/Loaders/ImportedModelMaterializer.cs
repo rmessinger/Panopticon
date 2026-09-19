@@ -41,21 +41,49 @@ internal static class ImportedModelMaterializer
         {
             var importedSubObject = importedModel.SubObjects[i];
 
+            var renderObject = importedSubObject.RenderObject;
+            if (renderObject is ImportedMesh mesh && NeedsTangentGeneration(mesh))
+            {
+                renderObject = ImportedTangentGenerator.GenerateTangents(mesh);
+            }
+
             subObjects[i] = new ModelSubObject(
                 importedSubObject.FullName,
                 importedSubObject.DisplayName,
                 boneHierarchy.Bones[importedSubObject.ParentBoneIndex],
-                CreateRenderObject(importedSubObject, context));
+                CreateRenderObject(importedSubObject, renderObject, context));
         }
 
         return new Model(importedModel.Name, boneHierarchy, subObjects);
     }
 
+    private static bool NeedsTangentGeneration(ImportedMesh mesh)
+    {
+        // Only normal-mapped PBR parts that omit tangents need generation; W3D meshes and
+        // meshes with imported tangents pass through untouched.
+        foreach (var part in mesh.MeshParts)
+        {
+            var payload = mesh.Materials[part.MaterialIndex].PbrMetallicRoughness;
+            if (payload?.NormalTexture is null)
+            {
+                continue;
+            }
+
+            if (mesh.Vertices[0].Tangent is null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static ModelRenderObject CreateRenderObject(
         ImportedSubObject importedSubObject,
+        ImportedRenderObject renderObject,
         AssetLoadContext context)
     {
-        return importedSubObject.RenderObject switch
+        return renderObject switch
         {
             ImportedMesh importedMesh => new ModelMesh(importedSubObject.DisplayName, importedMesh, context),
 
@@ -63,7 +91,7 @@ internal static class ImportedModelMaterializer
 
             _ => throw new NotSupportedException(
                 $"Sub-object '{importedSubObject.FullName}' has unsupported render object type " +
-                $"'{importedSubObject.RenderObject.GetType().Name}'."),
+                $"'{renderObject.GetType().Name}'."),
         };
     }
 }
