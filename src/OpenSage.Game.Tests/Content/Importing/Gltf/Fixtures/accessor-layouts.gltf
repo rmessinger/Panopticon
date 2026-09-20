@@ -1,0 +1,48 @@
+{
+  "asset": { "version": "2.0", "generator": "hand-authored" },
+  "scene": 0,
+  "scenes": [ { "nodes": [0, 1, 2] } ],
+  "nodes": [
+    { "name": "interleaved", "mesh": 0 },
+    { "name": "sparse", "mesh": 1 },
+    { "name": "uintIndices", "mesh": 2 }
+  ],
+  "meshes": [
+    { "primitives": [ { "attributes": { "POSITION": 0, "NORMAL": 1 }, "indices": 2 } ] },
+    { "primitives": [ { "attributes": { "POSITION": 3, "NORMAL": 4 }, "indices": 5 } ] },
+    { "primitives": [ { "attributes": { "POSITION": 6, "NORMAL": 7 }, "indices": 8 } ] }
+  ],
+  "accessors": [
+    { "bufferView": 0, "byteOffset": 0, "componentType": 5126, "count": 3, "type": "VEC3", "min": [0, 0, 0], "max": [1, 1, 0] },
+    { "bufferView": 0, "byteOffset": 12, "componentType": 5126, "count": 3, "type": "VEC3" },
+    { "bufferView": 1, "componentType": 5123, "count": 3, "type": "SCALAR" },
+    { "bufferView": 2, "componentType": 5126, "count": 3, "type": "VEC3", "min": [0, 0, 0], "max": [1, 1, 1],
+      "sparse": { "count": 1,
+        "indices": { "bufferView": 4, "componentType": 5125 },
+        "values": { "bufferView": 5 } } },
+    { "bufferView": 3, "componentType": 5126, "count": 3, "type": "VEC3" },
+    { "bufferView": 1, "byteOffset": 6, "componentType": 5123, "count": 3, "type": "SCALAR" },
+    { "bufferView": 6, "componentType": 5126, "count": 3, "type": "VEC3", "min": [0, 0, 0], "max": [1, 1, 0] },
+    { "bufferView": 3, "componentType": 5126, "count": 3, "type": "VEC3" },
+    { "bufferView": 7, "componentType": 5125, "count": 3, "type": "SCALAR" }
+  ],
+  "bufferViews": [
+    { "buffer": 0, "byteOffset": 0, "byteLength": 72, "byteStride": 24 },
+    { "buffer": 1, "byteOffset": 0, "byteLength": 12 },
+    { "buffer": 2, "byteOffset": 0, "byteLength": 36 },
+    { "buffer": 2, "byteOffset": 36, "byteLength": 36 },
+    { "buffer": 3, "byteOffset": 0, "byteLength": 4 },
+    { "buffer": 4, "byteOffset": 0, "byteLength": 12 },
+    { "buffer": 5, "byteOffset": 0, "byteLength": 36 },
+    { "buffer": 6, "byteOffset": 0, "byteLength": 12 }
+  ],
+  "buffers": [
+    { "uri": "accessor-layouts-interleaved.bin", "byteLength": 72 },
+    { "uri": "accessor-layouts-indices.bin", "byteLength": 12 },
+    { "uri": "accessor-layouts-geometry.bin", "byteLength": 72 },
+    { "uri": "accessor-layouts-sparse-keys.bin", "byteLength": 4 },
+    { "uri": "accessor-layouts-sparse-values.bin", "byteLength": 12 },
+    { "uri": "accessor-layouts-positions.bin", "byteLength": 36 },
+    { "uri": "accessor-layouts-uint-indices.bin", "byteLength": 12 }
+  ]
+}

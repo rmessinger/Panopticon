@@ -43,6 +43,12 @@ public static class Program
             config.ScenarioPath = scenarioPath;
         }
 
+        var gltfFixtureRoot = GetArgValue(args, "--gltf-fixture-root");
+        if (!string.IsNullOrEmpty(gltfFixtureRoot))
+        {
+            config.GltfFixtureRoot = gltfFixtureRoot;
+        }
+
         var builtInScenario = GetArgValue(args, "--built-in-scenario");
         if (!string.IsNullOrEmpty(builtInScenario))
         {
@@ -215,6 +221,12 @@ public static class Program
         if (config.Scenario == BuiltInScenario.PbrMaterialProof)
         {
             Environment.ExitCode = PbrMaterialProofScenario.Run(installation, config, reporter);
+            return;
+        }
+
+        if (config.Scenario == BuiltInScenario.GltfRuntimeProof)
+        {
+            Environment.ExitCode = GltfRuntimeProofScenario.Run(installation, config, reporter);
             return;
         }
 

@@ -48,6 +48,7 @@ internal static class GltfAnimationConverter
         }
 
         var nodePlanBySourceIndex = plan.Nodes.ToDictionary(n => n.SourceNodeIndex);
+        var targetedNodeIndices = new HashSet<int>();
         var targetedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var channels = new List<ImportedAnimationChannel>();
         var duration = TimeSpan.Zero;
@@ -67,7 +68,7 @@ internal static class GltfAnimationConverter
                     $"Animation '{name}' targets an unnamed node; animation targets require authored names.");
             }
 
-            if (!targetedNames.Add(nodePlan.AuthoredName!))
+            if (!targetedNodeIndices.Add(targetNode.LogicalIndex) && !targetedNames.Add(nodePlan.AuthoredName!))
             {
                 throw new InvalidDataException(
                     $"Animation '{name}' targets node name '{nodePlan.AuthoredName}', which is duplicated under case-insensitive comparison.");

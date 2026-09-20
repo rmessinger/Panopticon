@@ -71,6 +71,8 @@ public sealed class TestHarnessConfig
     /// </summary>
     public string? GamePath { get; set; } = null;
 
+    public string? GltfFixtureRoot { get; set; } = null;
+
     /// <summary>
     /// Multiplier applied to the game's default <c>MaxCameraHeight</c> INI value.
     /// 1.0 = game default; 2.0 (default) = double the zoom-out distance.

@@ -747,7 +747,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
   - AC: synthetic static and skinned meshes render the core metallic-roughness matrix, including
     external and embedded images, UV0/UV1, samplers, color space, alpha modes, double-sided state,
     and generated tangents; validation and cache-key coverage precede GPU allocation.
-- [ ] C4 First production format: static meshes + skinned skeletal animation only.
+- [x] C4 First production format: static meshes + skinned skeletal animation only.
   - AC: strict SharpGLTF.Core adapters load repository-owned `.gltf` and `.glb` fixtures through
     isolated virtual roots; static nodes, split triangle primitives, sparse accessors, one skin,
     inverse binds, linear/step named animation, rigid attach nodes, and core PBR data convert into
