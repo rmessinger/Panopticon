@@ -41,6 +41,12 @@ internal static class GltfAnimationConverter
             : animation.Name!;
 
         var basis = GltfTransformConverter.CreateBasis(options.UnitsPerMeter);
+        if (animation.Channels.Count > options.MaxChannelCount)
+        {
+            throw new InvalidDataException(
+                $"Animation '{name}' has {animation.Channels.Count} channels; the limit is {options.MaxChannelCount}.");
+        }
+
         var nodePlanBySourceIndex = plan.Nodes.ToDictionary(n => n.SourceNodeIndex);
         var targetedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var channels = new List<ImportedAnimationChannel>();
@@ -78,7 +84,7 @@ internal static class GltfAnimationConverter
                         var sampler = channel.GetTranslationSampler();
                         var interpolation = MapInterpolation(sampler.InterpolationMode, name);
                         var samples = sampler.GetLinearKeys().ToList();
-                        var keys = CollectTimes(samples.Select(k => (k.Key, k.Value)), name, ref duration);
+                        var keys = CollectTimes(samples.Select(k => (k.Key, k.Value)), name, ref duration, options.MaxKeyframeCount);
                         var offsets = new Vector3[samples.Count];
                         for (var i = 0; i < samples.Count; i++)
                         {
@@ -96,7 +102,7 @@ internal static class GltfAnimationConverter
                         var sampler = channel.GetRotationSampler();
                         var interpolation = MapInterpolation(sampler.InterpolationMode, name);
                         var samples = sampler.GetLinearKeys().ToList();
-                        var keys = CollectTimes(samples.Select(k => (k.Key, k.Value.X)), name, ref duration);
+                        var keys = CollectTimes(samples.Select(k => (k.Key, k.Value.X)), name, ref duration, options.MaxKeyframeCount);
                         var rotations = new Quaternion[samples.Count];
                         for (var i = 0; i < samples.Count; i++)
                         {
@@ -165,7 +171,8 @@ internal static class GltfAnimationConverter
     private static List<TimeSpan> CollectTimes<T>(
         IEnumerable<(float Time, T Scrap)> keys,
         string animationName,
-        ref TimeSpan duration)
+        ref TimeSpan duration,
+        int maxKeyframeCount)
     {
         var result = new List<TimeSpan>();
         foreach (var (time, _) in keys)
@@ -188,6 +195,12 @@ internal static class GltfAnimationConverter
             if (span > duration)
             {
                 duration = span;
+            }
+
+            if (result.Count > maxKeyframeCount)
+            {
+                throw new InvalidDataException(
+                    $"Animation '{animationName}' exceeds the keyframe limit of {maxKeyframeCount} in one channel.");
             }
         }
 

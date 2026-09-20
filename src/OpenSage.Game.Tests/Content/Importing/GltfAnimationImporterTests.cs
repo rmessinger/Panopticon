@@ -66,7 +66,7 @@ public class GltfAnimationImporterTests
         var fileSystem = new MemoryFileSystem();
         fileSystem.AddFile("model.gltf", json);
         var context = new AssetImportContext(fileSystem, null);
-        var importer = new GltfAnimationImporter();
+        var importer = new GltfAnimationImporter(GltfImportOptions.Default);
         return importer.ImportAnimation("model.gltf#animation=0", context)!;
     }
 
@@ -75,7 +75,7 @@ public class GltfAnimationImporterTests
         var fileSystem = new MemoryFileSystem();
         fileSystem.AddFile("model.gltf", json);
         var context = new AssetImportContext(fileSystem, null);
-        var importer = new GltfAnimationImporter();
+        var importer = new GltfAnimationImporter(GltfImportOptions.Default);
 
         Assert.Throws(exceptionType, () => importer.ImportAnimation("model.gltf#animation=0", context));
     }
@@ -277,7 +277,7 @@ public class GltfAnimationImporterTests
     public void InvalidKey_ReturnsNull()
     {
         var context = new AssetImportContext(new MemoryFileSystem(), null);
-        var importer = new GltfAnimationImporter();
+        var importer = new GltfAnimationImporter(GltfImportOptions.Default);
 
         Assert.Null(importer.ImportAnimation("model.gltf", context));
         Assert.Null(importer.ImportAnimation("model.w3d#animation=0", context));
@@ -287,7 +287,7 @@ public class GltfAnimationImporterTests
     public void MissingRoot_ReturnsNull()
     {
         var context = new AssetImportContext(new MemoryFileSystem(), null);
-        var importer = new GltfAnimationImporter();
+        var importer = new GltfAnimationImporter(GltfImportOptions.Default);
 
         Assert.Null(importer.ImportAnimation("model.gltf#animation=0", context));
     }
