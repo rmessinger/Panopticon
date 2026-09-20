@@ -56,6 +56,15 @@ public sealed record ExternalSourceIdentity(
     }
 }
 
+/// <summary>Render-stage metadata; no staging or installation paths.</summary>
+public sealed record ExternalRenderMetadata(
+    int ViewportWidth,
+    int ViewportHeight,
+    string? AnimationKey,
+    float? AnimationSampleTimeSeconds,
+    string? PngContentHash,
+    long? PngByteLength);
+
 /// <summary>
 /// Versioned external model report envelope. Pairing, importer options, corrections, and
 /// render metadata belong to their owning later cards. Contains only normalized identities,
@@ -80,6 +89,8 @@ public sealed class ExternalModelReport
 
     public ExternalModelPreviewOptions? PreviewOptions { get; }
 
+    public ExternalRenderMetadata? RenderMetadata { get; }
+
     public IReadOnlyList<ExternalModelDiagnostic> Diagnostics { get; }
 
     public PreviewEligibility Eligibility { get; }
@@ -92,7 +103,8 @@ public sealed class ExternalModelReport
         PreviewEligibility? eligibility,
         ExternalAnimationPairing? animationPairing = null,
         ExternalModelImportOptions? importOptions = null,
-        ExternalModelPreviewOptions? previewOptions = null)
+        ExternalModelPreviewOptions? previewOptions = null,
+        ExternalRenderMetadata? renderMetadata = null)
     {
         ModelSource = modelSource;
         AnimationSource = animationSource;
@@ -100,6 +112,7 @@ public sealed class ExternalModelReport
         AnimationPairing = animationPairing;
         ImportOptions = importOptions;
         PreviewOptions = previewOptions;
+        RenderMetadata = renderMetadata;
         Diagnostics = ExternalModelDiagnosticMapper.SortAndCollapse(diagnostics ?? []);
         Eligibility = eligibility ?? PreviewEligibility.NotEvaluated;
     }
