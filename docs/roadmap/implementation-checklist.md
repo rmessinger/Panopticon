@@ -770,7 +770,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     produce recognizable captures; the Bomber uses its highest-detail LOD, source texture names
     survive import while rendering uses untextured diffuse materials, and no EE2 assets are
     committed.
-- [ ] C5 Authoring & validation tooling (extend ReplaySketch; licensing out of scope).
+- [x] C5 Authoring & validation tooling (extend ReplaySketch; licensing out of scope).
   - AC: the ReplaySketch Model tab inspects an isolated external glTF root, lists clips and
     structured C1-C4 diagnostics, pairs an optional animation through C2, and applies explicit
     preview-only transforms; a versioned TestHarness request produces a deterministic PNG and JSON
