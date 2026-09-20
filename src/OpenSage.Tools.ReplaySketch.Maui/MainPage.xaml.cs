@@ -10,7 +10,7 @@ public partial class MainPage : ContentPage
 
     // Screenshot-and-exit mode. Set environment variables before launching:
     //   REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png   (required to activate)
-    //   REPLAYSKETCH_SCREENSHOT_TAB=tree|map|validationground  (optional, default: tree)
+    //   REPLAYSKETCH_SCREENSHOT_TAB=tree|map|validationground|model  (optional, default: tree)
     //   REPLAYSKETCH_SCREENSHOT_DELAY=N              (optional seconds, default: 3)
     private static readonly string? ScreenshotPath =
         Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_PATH");
@@ -58,6 +58,8 @@ public partial class MainPage : ContentPage
                 SwitchToMap();
             else if (tab == "validationground")
                 SwitchToValidationGround();
+            else if (tab == "model")
+                SwitchToModel(useScreenshotFixture: true);
             Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(ScreenshotDelaySec), () => _ = TakeScreenshotAsync());
         }
     }
@@ -98,15 +100,18 @@ public partial class MainPage : ContentPage
     private void OnTreeTabClicked(object? sender, EventArgs e) => SwitchToTree();
     private void OnMapTabClicked(object? sender, EventArgs e) => SwitchToMap();
     private void OnValidationGroundTabClicked(object? sender, EventArgs e) => SwitchToValidationGround();
+    private void OnModelTabClicked(object? sender, EventArgs e) => SwitchToModel();
 
     private void SwitchToTree()
     {
         TreeFrame.IsVisible = true;
         MapFrame.IsVisible = false;
         ValidationGroundFrame.IsVisible = false;
+        ModelFrame.IsVisible = false;
         SetTabActive(TreeTabBtn, true);
         SetTabActive(MapTabBtn, false);
         SetTabActive(ValidationGroundTabBtn, false);
+        SetTabActive(ModelTabBtn, false);
     }
 
     private void SwitchToMap()
@@ -114,9 +119,11 @@ public partial class MainPage : ContentPage
         TreeFrame.IsVisible = false;
         MapFrame.IsVisible = true;
         ValidationGroundFrame.IsVisible = false;
+        ModelFrame.IsVisible = false;
         SetTabActive(TreeTabBtn, false);
         SetTabActive(MapTabBtn, true);
         SetTabActive(ValidationGroundTabBtn, false);
+        SetTabActive(ModelTabBtn, false);
         MapPreviewView.Invalidate();
     }
 
@@ -125,10 +132,30 @@ public partial class MainPage : ContentPage
         TreeFrame.IsVisible = false;
         MapFrame.IsVisible = false;
         ValidationGroundFrame.IsVisible = true;
+        ModelFrame.IsVisible = false;
         SetTabActive(TreeTabBtn, false);
         SetTabActive(MapTabBtn, false);
         SetTabActive(ValidationGroundTabBtn, true);
+        SetTabActive(ModelTabBtn, false);
         ValidationGroundEditorView.Invalidate();
+    }
+
+    private void SwitchToModel(bool useScreenshotFixture = false)
+    {
+        TreeFrame.IsVisible = false;
+        MapFrame.IsVisible = false;
+        ValidationGroundFrame.IsVisible = false;
+        ModelFrame.IsVisible = true;
+        SetTabActive(TreeTabBtn, false);
+        SetTabActive(MapTabBtn, false);
+        SetTabActive(ValidationGroundTabBtn, false);
+        SetTabActive(ModelTabBtn, true);
+
+        if (useScreenshotFixture)
+        {
+            // Deterministic fake state; no TestHarness process is launched.
+            ExternalModelView.Bind(Maui.Services.ExternalModelScreenshotFixture.Create());
+        }
     }
 
     private static void SetTabActive(Button btn, bool active)

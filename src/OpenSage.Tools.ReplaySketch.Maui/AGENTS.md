@@ -92,7 +92,7 @@ Or view it with the `view` tool inside an agent session.
 | Variable | Default | Effect |
 |---|---|---|
 | `REPLAYSKETCH_SCREENSHOT_PATH` | (none; mode inactive) | Absolute path to write the output PNG. Activates screenshot-and-exit mode. |
-| `REPLAYSKETCH_SCREENSHOT_TAB` | `tree` | Which tab to capture: `tree` or `map`. |
+| `REPLAYSKETCH_SCREENSHOT_TAB` | `tree` | Which tab to capture: `tree`, `map`, `validationground`, or `model`. |
 | `REPLAYSKETCH_SCREENSHOT_DELAY` | `3` | Seconds to wait after `OnLoaded` before capturing. Increase if map preview is slow. |
 
 If capture is not supported on the platform, or an error occurs, the app writes a diagnostic to

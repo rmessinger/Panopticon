@@ -223,6 +223,10 @@ Renders the editor scene via SkiaSharp, headless; works on Linux. The MAUI front
 screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`, see `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`)
 requires a MAUI platform runtime and does not run on Linux.
 
+The MAUI Model tab (`REPLAYSKETCH_SCREENSHOT_TAB=model`) uses a deterministic fake session
+(`ExternalModelScreenshotFixture`) and starts no TestHarness process, so its capture is
+reproducible wherever the MAUI runtime is available; it cannot be captured on Linux either.
+
 ## Recipe: pixel-diff A/B verification
 
 When a visual change must be verified without a human, capture two runs that differ only in the
