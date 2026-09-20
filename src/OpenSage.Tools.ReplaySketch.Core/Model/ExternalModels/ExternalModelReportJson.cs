@@ -36,6 +36,9 @@ public static class ExternalModelReportJson
             ModelSource = SerializeIdentity(report.ModelSource),
             AnimationSource = SerializeIdentity(report.AnimationSource),
             Catalog = SerializeCatalog(report.Catalog),
+            AnimationPairing = SerializePairing(report.AnimationPairing),
+            ImportOptions = SerializeImportOptions(report.ImportOptions),
+            PreviewOptions = SerializePreviewOptions(report.PreviewOptions),
             Diagnostics = report.Diagnostics.Select(SerializeDiagnostic).ToArray(),
             Eligibility = SerializeEligibility(report.Eligibility),
         };
@@ -128,6 +131,85 @@ public static class ExternalModelReportJson
         };
     }
 
+    private static PairingPayload? SerializePairing(ExternalAnimationPairing? pairing)
+    {
+        if (pairing is null)
+        {
+            return null;
+        }
+
+        return new PairingPayload
+        {
+            Document = pairing.Document.ToString(),
+            SourceDisplayName = pairing.SourceDisplayName,
+            Key = pairing.Descriptor.Key,
+            Name = pairing.Descriptor.Name,
+            DurationSeconds = pairing.Descriptor.Duration.TotalSeconds,
+            ChannelCount = pairing.Descriptor.ChannelCount,
+        };
+    }
+
+    private static ImportOptionsPayload? SerializeImportOptions(ExternalModelImportOptions? options)
+    {
+        if (options is null)
+        {
+            return null;
+        }
+
+        return new ImportOptionsPayload
+        {
+            UnitsPerMeter = options.UnitsPerMeter,
+            EnabledFeatureGates = options.FeatureGates
+                .Where(pair => pair.Value)
+                .Select(pair => pair.Key)
+                .OrderBy(name => name, StringComparer.Ordinal)
+                .ToArray(),
+            MorphWeightRanges = options.MorphWeightRanges
+                .Select(pair => new MorphRangePayload
+                {
+                    Target = pair.Key,
+                    Minimum = pair.Value.Minimum,
+                    Maximum = pair.Value.Maximum,
+                })
+                .OrderBy(payload => payload.Target, StringComparer.Ordinal)
+                .ToArray(),
+        };
+    }
+
+    private static PreviewOptionsPayload? SerializePreviewOptions(ExternalModelPreviewOptions? options)
+    {
+        if (options is null)
+        {
+            return null;
+        }
+
+        return new PreviewOptionsPayload
+        {
+            ModelYaw = options.ModelYaw,
+            ModelPitch = options.ModelPitch,
+            ModelRoll = options.ModelRoll,
+            ModelTranslationX = options.ModelTranslation.X,
+            ModelTranslationY = options.ModelTranslation.Y,
+            ModelTranslationZ = options.ModelTranslation.Z,
+            CameraOrbit = options.CameraOrbit,
+            CameraElevation = options.CameraElevation,
+            CameraDistance = options.CameraDistance,
+            CameraFieldOfView = options.CameraFieldOfView,
+            Background = options.Background.ToString(),
+            Lighting = options.Lighting.ToString(),
+            SelectedAnimationKey = options.SelectedAnimationKey,
+            AnimationSampleTime = options.AnimationSampleTime,
+            MorphWeights = options.MorphWeights
+                .Select(pair => new MorphWeightPayload
+                {
+                    Target = pair.Key,
+                    Weight = pair.Value,
+                })
+                .OrderBy(payload => payload.Target, StringComparer.Ordinal)
+                .ToArray(),
+        };
+    }
+
     private static DiagnosticPayload SerializeDiagnostic(ExternalModelDiagnostic diagnostic)
     {
         return new DiagnosticPayload
@@ -162,6 +244,12 @@ public static class ExternalModelReportJson
         public IdentityPayload? AnimationSource { get; set; }
 
         public CatalogPayload? Catalog { get; set; }
+
+        public PairingPayload? AnimationPairing { get; set; }
+
+        public ImportOptionsPayload? ImportOptions { get; set; }
+
+        public PreviewOptionsPayload? PreviewOptions { get; set; }
 
         public IReadOnlyList<DiagnosticPayload> Diagnostics { get; set; } = [];
 
@@ -255,6 +343,79 @@ public static class ExternalModelReportJson
         public string Severity { get; set; } = "";
 
         public string Message { get; set; } = "";
+    }
+
+    private sealed class PairingPayload
+    {
+        public string Document { get; set; } = "";
+
+        public string SourceDisplayName { get; set; } = "";
+
+        public string Key { get; set; } = "";
+
+        public string Name { get; set; } = "";
+
+        public double DurationSeconds { get; set; }
+
+        public int ChannelCount { get; set; }
+    }
+
+    private sealed class ImportOptionsPayload
+    {
+        public float UnitsPerMeter { get; set; }
+
+        public IReadOnlyList<string> EnabledFeatureGates { get; set; } = [];
+
+        public IReadOnlyList<MorphRangePayload> MorphWeightRanges { get; set; } = [];
+    }
+
+    private sealed class MorphRangePayload
+    {
+        public string Target { get; set; } = "";
+
+        public float Minimum { get; set; }
+
+        public float Maximum { get; set; }
+    }
+
+    private sealed class PreviewOptionsPayload
+    {
+        public float ModelYaw { get; set; }
+
+        public float ModelPitch { get; set; }
+
+        public float ModelRoll { get; set; }
+
+        public float ModelTranslationX { get; set; }
+
+        public float ModelTranslationY { get; set; }
+
+        public float ModelTranslationZ { get; set; }
+
+        public float CameraOrbit { get; set; }
+
+        public float CameraElevation { get; set; }
+
+        public float CameraDistance { get; set; }
+
+        public float CameraFieldOfView { get; set; }
+
+        public string Background { get; set; } = "";
+
+        public string Lighting { get; set; } = "";
+
+        public string? SelectedAnimationKey { get; set; }
+
+        public float AnimationSampleTime { get; set; }
+
+        public IReadOnlyList<MorphWeightPayload> MorphWeights { get; set; } = [];
+    }
+
+    private sealed class MorphWeightPayload
+    {
+        public string Target { get; set; } = "";
+
+        public float Weight { get; set; }
     }
 
     private sealed class DiagnosticPayload

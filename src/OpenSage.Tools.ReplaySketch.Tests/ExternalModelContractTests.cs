@@ -257,7 +257,7 @@ public class ExternalModelContractTests
         Assert.Equal(4, root.GetProperty("diagnostics")[0].GetProperty("occurrenceCount").GetInt32());
         Assert.False(root.GetProperty("eligibility").GetProperty("canRender").GetBoolean());
         Assert.Equal(["GLTF010"], root.GetProperty("eligibility").GetProperty("blockingDiagnosticCodes")
-            .EnumerateArray().Select(e => e.GetString()).ToArray());
+            .EnumerateArray().Select(e => e.GetString()).ToArray()!);
     }
 
     [Fact]
