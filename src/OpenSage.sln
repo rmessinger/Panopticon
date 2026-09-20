@@ -78,6 +78,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.W3dPatcher", "OpenSage.Tools.W3dPatcher\OpenSage.Tools.W3dPatcher.csproj", "{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch.Avalonia", "OpenSage.Tools.ReplaySketch.Avalonia\OpenSage.Tools.ReplaySketch.Avalonia.csproj", "{D40F9BB2-2CE9-E031-3968-259EE4B1084A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -448,6 +450,18 @@ Global
 		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x64.Build.0 = Release|Any CPU
 		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x86.ActiveCfg = Release|Any CPU
 		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x86.Build.0 = Release|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|x64.Build.0 = Debug|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|x86.Build.0 = Debug|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|x64.ActiveCfg = Release|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|x64.Build.0 = Release|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|x86.ActiveCfg = Release|Any CPU
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -466,6 +480,7 @@ Global
 		{3EECB25F-C088-49FD-B5F7-26119ACD1B51} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
+		{D40F9BB2-2CE9-E031-3968-259EE4B1084A} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DBD83F1E-3F41-45D9-AACC-62E00826AD5C}
