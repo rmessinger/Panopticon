@@ -79,7 +79,7 @@ public sealed class ExternalModelRenderingTests : IDisposable
 
     private ExternalModelRequest CreateRequest(
         string outputDir,
-        string? virtualKey = "pbr-materials.gltf",
+        string virtualKey = "pbr-materials.gltf",
         string? image = "preview.png",
         ExternalModelPreviewOptions? preview = null)
     {
