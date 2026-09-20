@@ -26,6 +26,8 @@ public sealed class ImportedAnimationChannel
 
     public IReadOnlyList<ImportedKeyframe> Keyframes { get; }
 
+    public ImportedAnimationInterpolation Interpolation { get; }
+
     /// <summary>
     /// Compatibility view of direct-index targets for pre-retargeting consumers. Throws for
     /// bone-name targets, which have no meaningful index until bound to a hierarchy.
@@ -46,7 +48,21 @@ public sealed class ImportedAnimationChannel
         ImportedAnimationTarget target,
         ImportedAnimationChannelType channelType,
         IReadOnlyList<ImportedKeyframe> keyframes)
+        : this(target, channelType, keyframes, ImportedAnimationInterpolation.Linear)
     {
+    }
+
+    public ImportedAnimationChannel(
+        ImportedAnimationTarget target,
+        ImportedAnimationChannelType channelType,
+        IReadOnlyList<ImportedKeyframe> keyframes,
+        ImportedAnimationInterpolation interpolation)
+    {
+        if (!Enum.IsDefined(interpolation))
+        {
+            throw new ArgumentOutOfRangeException(nameof(interpolation));
+        }
+
         if (target is null)
         {
             throw new ArgumentNullException(nameof(target));
@@ -93,5 +109,6 @@ public sealed class ImportedAnimationChannel
         Target = target;
         ChannelType = channelType;
         Keyframes = copiedKeyframes;
+        Interpolation = interpolation;
     }
 }

@@ -284,14 +284,50 @@ public sealed class AnimationInstance
         in Keyframe next,
         TimeSpan currentTime)
     {
+        var animatedOffset = _boneInstances[clip.Bone].AnimatedOffset;
+
+        if (clip.Interpolation == AnimationInterpolation.Step)
+        {
+            // The held value is the keyframe at or before the current time. In forward
+            // playback that is `previous`; the reverse walk names it `next`, because it
+            // stores the last key below the current time.
+            var held = previous.Time <= currentTime ? previous : next;
+
+            switch (clip.ClipType)
+            {
+                case AnimationClipType.TranslationX:
+                    animatedOffset.Translation = animatedOffset.Translation.WithX(held.Value.FloatValue);
+                    break;
+
+                case AnimationClipType.TranslationY:
+                    animatedOffset.Translation = animatedOffset.Translation.WithY(held.Value.FloatValue);
+                    break;
+
+                case AnimationClipType.TranslationZ:
+                    animatedOffset.Translation = animatedOffset.Translation.WithZ(held.Value.FloatValue);
+                    break;
+
+                case AnimationClipType.Quaternion:
+                    _boneInstances[clip.Bone].AnimatedOffset.Rotation = held.Value.Quaternion;
+                    break;
+
+                case AnimationClipType.Visibility:
+                    _boneInstances[clip.Bone].Visible = previous.Value.BoolValue;
+                    break;
+
+                default:
+                    throw new InvalidOperationException();
+            }
+
+            return;
+        }
+
         var progress = (float)(currentTime - previous.Time).TotalMilliseconds;
         var duration = (float)(next.Time - previous.Time).TotalMilliseconds;
 
         var amount = (duration != 0)
             ? progress / duration
             : 0;
-
-        var animatedOffset = _boneInstances[clip.Bone].AnimatedOffset;
 
         switch (clip.ClipType)
         {

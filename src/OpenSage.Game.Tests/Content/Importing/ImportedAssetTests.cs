@@ -746,4 +746,39 @@ public sealed class ImportedAssetTests
             properties: [],
             pbrMetallicRoughness: payload));
     }
+    [Fact]
+    public void AnimationChannel_DefaultsToLinearInterpolation()
+    {
+        var channel = new ImportedAnimationChannel(
+            0,
+            ImportedAnimationChannelType.TranslationX,
+            new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 0) });
+
+        Assert.Equal(ImportedAnimationInterpolation.Linear, channel.Interpolation);
+    }
+
+    [Fact]
+    public void AnimationChannel_RetainsExplicitInterpolation()
+    {
+        var channel = new ImportedAnimationChannel(
+            ImportedAnimationTarget.CreateDirectIndex(0),
+            ImportedAnimationChannelType.Quaternion,
+            new[] { ImportedKeyframe.FromQuaternion(TimeSpan.Zero, Quaternion.Identity) },
+            ImportedAnimationInterpolation.Step);
+
+        Assert.Equal(ImportedAnimationInterpolation.Step, channel.Interpolation);
+    }
+
+    [Fact]
+    public void AnimationChannel_RejectsUndefinedInterpolation()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new ImportedAnimationChannel(
+            ImportedAnimationTarget.CreateDirectIndex(0),
+            ImportedAnimationChannelType.TranslationX,
+            new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 0) },
+            (ImportedAnimationInterpolation)99));
+
+        Assert.Equal("interpolation", exception.ParamName);
+    }
+
 }

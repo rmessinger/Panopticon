@@ -9,4 +9,5 @@ public enum BuiltInScenario
     ScenarioCapture,
     PhysicsStack,
     PbrMaterialProof,
+    GltfRuntimeProof,
 }

@@ -1,13 +1,13 @@
 #nullable enable
 
 using System;
-
 using System.Numerics;
 
 namespace OpenSage.Content.Importing;
 
 /// <summary>
-/// One skeleton bone: name, parent index (-1 for a root), and bind pose transform.
+/// One skeleton bone: name, parent index (-1 for a root), bind pose transform, and optional
+/// inverse bind matrix (identity for formats without one, e.g. W3D).
 /// </summary>
 public sealed class ImportedBone
 {
@@ -19,7 +19,19 @@ public sealed class ImportedBone
 
     public Quaternion BindRotation { get; }
 
+    public Matrix4x4 InverseBindMatrix { get; }
+
     public ImportedBone(string name, int parentIndex, in Vector3 bindTranslation, in Quaternion bindRotation)
+        : this(name, parentIndex, bindTranslation, bindRotation, Matrix4x4.Identity)
+    {
+    }
+
+    public ImportedBone(
+        string name,
+        int parentIndex,
+        in Vector3 bindTranslation,
+        in Quaternion bindRotation,
+        in Matrix4x4 inverseBindMatrix)
     {
         if (name is null)
         {
@@ -35,5 +47,6 @@ public sealed class ImportedBone
         ParentIndex = parentIndex;
         BindTranslation = bindTranslation;
         BindRotation = bindRotation;
+        InverseBindMatrix = inverseBindMatrix;
     }
 }

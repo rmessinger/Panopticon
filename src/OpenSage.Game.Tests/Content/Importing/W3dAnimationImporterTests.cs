@@ -49,6 +49,7 @@ public sealed class W3dAnimationImporterTests
         Assert.Equal(TimeSpan.FromSeconds(2.0), imported.Duration);
 
         var clip = Assert.Single(imported.Channels);
+        Assert.Equal(ImportedAnimationInterpolation.Linear, clip.Interpolation);
         Assert.Equal(3, clip.BoneIndex);
         Assert.Equal(ImportedAnimationChannelType.Quaternion, clip.ChannelType);
         Assert.Equal(2, clip.Keyframes.Count);
@@ -74,6 +75,7 @@ public sealed class W3dAnimationImporterTests
         var imported = W3dAnimationImporter.Convert(CreateFile(new W3dAnimation(CreateUncompressedHeader(), [channel])));
 
         var clip = Assert.Single(imported!.Channels);
+        Assert.Equal(ImportedAnimationInterpolation.Linear, clip.Interpolation);
         Assert.Equal(ImportedAnimationChannelType.TranslationX, clip.ChannelType);
         Assert.Equal(TimeSpan.FromSeconds(0.4), clip.Keyframes[0].Time);
         Assert.Equal(TimeSpan.FromSeconds(0.6), clip.Keyframes[1].Time);
@@ -96,6 +98,7 @@ public sealed class W3dAnimationImporterTests
             CreateFile(new W3dAnimation(CreateUncompressedHeader(numFrames: 5), [channel])));
 
         var clip = Assert.Single(imported!.Channels);
+        Assert.Equal(ImportedAnimationInterpolation.Linear, clip.Interpolation);
         Assert.Equal(ImportedAnimationChannelType.Visibility, clip.ChannelType);
         Assert.Equal(3, clip.Keyframes.Count);
         Assert.Equal(TimeSpan.Zero, clip.Keyframes[0].Time);
@@ -129,6 +132,7 @@ public sealed class W3dAnimationImporterTests
 
         Assert.Equal("HV.Walk", imported!.Name);
         var clip = Assert.Single(imported.Channels);
+        Assert.Equal(ImportedAnimationInterpolation.Linear, clip.Interpolation);
         Assert.Equal(ImportedAnimationChannelType.TranslationY, clip.ChannelType);
         Assert.Equal(2, clip.Keyframes.Count);
         Assert.Equal(TimeSpan.Zero, clip.Keyframes[0].Time);
@@ -163,6 +167,7 @@ public sealed class W3dAnimationImporterTests
             [])));
 
         var clip = Assert.Single(imported!.Channels);
+        Assert.Equal(ImportedAnimationInterpolation.Linear, clip.Interpolation);
         Assert.Equal(4, clip.BoneIndex);
         Assert.Equal(ImportedAnimationChannelType.TranslationZ, clip.ChannelType);
         Assert.Equal(3, clip.Keyframes.Count);
@@ -197,6 +202,7 @@ public sealed class W3dAnimationImporterTests
             [channel])));
 
         var clip = Assert.Single(imported!.Channels);
+        Assert.Equal(ImportedAnimationInterpolation.Linear, clip.Interpolation);
         Assert.Equal(5, clip.BoneIndex);
         Assert.Equal(ImportedAnimationChannelType.Quaternion, clip.ChannelType);
         Assert.Equal(2, clip.Keyframes.Count);
@@ -270,4 +276,5 @@ public sealed class W3dAnimationImporterTests
         Assert.Null(importer.ImportAnimation("NoDotKey", context));
         Assert.Null(importer.ImportAnimation("HV.Missing", context));
     }
+
 }

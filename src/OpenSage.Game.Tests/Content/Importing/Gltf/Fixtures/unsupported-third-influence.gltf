@@ -1,0 +1,27 @@
+{
+  "asset": { "version": "2.0", "generator": "hand-authored" },
+  "scene": 0,
+  "scenes": [ { "nodes": [0, 2] } ],
+  "nodes": [
+    { "name": "jointA", "children": [1] },
+    { "name": "jointB", "translation": [0, 1, 0] },
+    { "name": "meshNode", "mesh": 0, "skin": 0 }
+  ],
+  "skins": [ { "joints": [0, 1], "skeleton": 0 } ],
+  "meshes": [ { "primitives": [ { "attributes": { "POSITION": 0, "NORMAL": 1, "JOINTS_0": 2, "WEIGHTS_0": 3 }, "indices": 4 } ] } ],
+  "accessors": [
+    { "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3", "min": [0, 0, 0], "max": [1, 1, 0] },
+    { "bufferView": 1, "componentType": 5126, "count": 3, "type": "VEC3" },
+    { "bufferView": 2, "componentType": 5123, "count": 3, "type": "VEC4" },
+    { "bufferView": 3, "componentType": 5126, "count": 3, "type": "VEC4" },
+    { "bufferView": 4, "componentType": 5123, "count": 3, "type": "SCALAR" }
+  ],
+  "bufferViews": [
+    { "buffer": 0, "byteOffset": 0, "byteLength": 36 },
+    { "buffer": 0, "byteOffset": 36, "byteLength": 36 },
+    { "buffer": 0, "byteOffset": 72, "byteLength": 24 },
+    { "buffer": 0, "byteOffset": 96, "byteLength": 48 },
+    { "buffer": 0, "byteOffset": 144, "byteLength": 6 }
+  ],
+  "buffers": [ { "uri": "unsupported-third-influence.bin", "byteLength": 150 } ]
+}

@@ -226,6 +226,28 @@ public sealed class ModelAnimationTests
         Assert.DoesNotContain(boundFields, t => t == typeof(ModelBoneHierarchy) || t == typeof(ModelBone));
     }
 
+    [Fact]
+    public void Bind_PreservesInterpolation()
+    {
+        var channels = new[]
+        {
+            new ModelAnimationChannel(
+                ModelAnimationTarget.CreateDirectIndex(0),
+                AnimationClipType.TranslationX,
+                new[] { new Keyframe(TimeSpan.Zero, new KeyframeValue { FloatValue = 0 }) },
+                AnimationInterpolation.Step),
+        };
+        var animation = new ModelAnimation("step", TimeSpan.FromSeconds(1), channels);
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton(
+            "skeleton",
+            new[] { new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity) }));
+
+        var bound = animation.Bind(hierarchy);
+
+        var clip = Assert.Single(bound.Clips);
+        Assert.Equal(AnimationInterpolation.Step, clip.Interpolation);
+    }
+
     private static ModelBoneHierarchy CreateHierarchy(string name)
     {
         return new ModelBoneHierarchy(new ImportedSkeleton(name, new[]
