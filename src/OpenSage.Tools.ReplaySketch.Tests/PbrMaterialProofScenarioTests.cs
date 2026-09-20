@@ -74,13 +74,19 @@ public class PbrMaterialProofScenarioTests
     private static string FindRepositoryRoot(string startDirectory)
     {
         var directory = new DirectoryInfo(startDirectory);
-        while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, ".git")))
+        while (directory is not null && !ExistsOnDisk(Path.Combine(directory.FullName, ".git")))
         {
             directory = directory.Parent;
         }
 
         Assert.NotNull(directory);
         return directory!.FullName;
+
+        static bool ExistsOnDisk(string path)
+        {
+            // In a linked worktree, .git is a file rather than a directory.
+            return Directory.Exists(path) || File.Exists(path);
+        }
     }
 
     private static System.Collections.Generic.IEnumerable<string> ExtractCaptureNames(string source)

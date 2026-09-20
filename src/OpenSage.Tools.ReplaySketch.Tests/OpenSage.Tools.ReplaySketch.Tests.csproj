@@ -26,6 +26,13 @@
     <ProjectReference Include="..\OpenSage.Tools.TestHarness\OpenSage.Tools.TestHarness.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\OpenSage.Game.Tests\Content\Importing\Gltf\Fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Content\Importing\Gltf\Fixtures\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
 
   <ItemGroup>
     <Using Include="Xunit" />

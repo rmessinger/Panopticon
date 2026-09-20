@@ -23,6 +23,17 @@ public static class Program
     {
         ITestHarnessReporter reporter = new ConsoleTestHarnessReporter();
 
+        // External-model mode is fully self-contained: dispatch before ordinary config
+        // loading and scenario construction.
+        if (Array.Exists(args, a => a.Equals("--external-model-request", StringComparison.OrdinalIgnoreCase)))
+        {
+            Environment.Exit(ExternalModels.ExternalModelHost.RunArguments(
+                args,
+                reporter,
+                new ExternalModels.ExternalModelSceneRenderer()).ExitCode);
+            return;
+        }
+
         if (Array.Exists(args, a => a.Equals("--run-assert", StringComparison.OrdinalIgnoreCase)))
         {
             Environment.Exit(RunAndAssertCommand(args, reporter));

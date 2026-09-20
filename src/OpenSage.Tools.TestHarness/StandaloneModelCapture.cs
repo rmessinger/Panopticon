@@ -15,6 +15,22 @@ using Veldrid;
 namespace OpenSage.Tools.TestHarness;
 
 /// <summary>
+/// Explicit deterministic camera: spherical offset (orbit, elevation) around the fitted
+/// bounds center at the given distance, with an explicit vertical field of view.
+/// </summary>
+internal sealed record StandaloneCaptureCamera(
+    float OrbitRadians,
+    float ElevationRadians,
+    float Distance,
+    float FieldOfViewRadians);
+
+/// <summary>Optional overrides for a standalone capture; null members keep the defaults.</summary>
+internal sealed record StandaloneCaptureOptions(
+    StandaloneCaptureCamera? Camera = null,
+    Settings.WorldLighting? Lighting = null,
+    Mathematics.ColorRgbaF? Background = null);
+
+/// <summary>
 /// Renders one already-materialized runtime <see cref="Model"/> to a PNG without the ImGui-based
 /// diagnostic ModelView. Creates a diagnostic scene with a fixed viewport, default world
 /// lighting, and an arcball camera fitted to the merged sub-object bounds, then executes the
@@ -29,7 +45,8 @@ internal static class StandaloneModelCapture
         string outputPath,
         in Size viewportSize,
         Action<ModelInstance>? configureInstance = null,
-        Matrix4x4? worldMatrix = null)
+        Matrix4x4? worldMatrix = null,
+        StandaloneCaptureOptions? options = null)
     {
         if (game is null)
         {
@@ -89,9 +106,14 @@ internal static class StandaloneModelCapture
             inputMessageBuffer,
             () => new Viewport(0, 0, width, height, 0, 1),
             cameraController,
-            WorldLighting.CreateDefault(),
+            options?.Lighting ?? WorldLighting.CreateDefault(),
             isDiagnosticScene: true);
         using var renderPipeline = new RenderPipeline(game);
+        if (options?.Background is { } background)
+        {
+            renderPipeline.ClearColor = new RgbaFloat(background.R, background.G, background.B, background.A);
+        }
+
         using var renderTarget = new RenderTarget(game.GraphicsDevice);
         renderTarget.EnsureSize(viewportSize);
 
@@ -117,6 +139,16 @@ internal static class StandaloneModelCapture
                 scene.Camera,
                 default,
                 TimeInterval.Zero);
+
+            if (options?.Camera is { } explicitCamera)
+            {
+                var offset = new Vector3(
+                    MathF.Cos(explicitCamera.ElevationRadians) * MathF.Cos(explicitCamera.OrbitRadians),
+                    MathF.Cos(explicitCamera.ElevationRadians) * MathF.Sin(explicitCamera.OrbitRadians),
+                    MathF.Sin(explicitCamera.ElevationRadians)) * explicitCamera.Distance;
+                scene.Camera.SetLookAt(cameraTarget + offset, cameraTarget, Vector3.UnitZ);
+                scene.Camera.FieldOfView = explicitCamera.FieldOfViewRadians;
+            }
 
             // The default near plane (one terrain tile, 10 units) clips sub-10-unit models
             // such as unit-scale glTF fixtures; tighten it for diagnostic framing.
