@@ -55,6 +55,22 @@ public sealed class ExternalModelSession : IDisposable
         _artifactStore = artifactStore ?? throw new ArgumentNullException(nameof(artifactStore));
     }
 
+    /// <summary>
+    /// Union of the model document's and the separately mounted animation document's
+    /// animation descriptors, keyed by their stable C4 keys.
+    /// </summary>
+    public IReadOnlyList<ExternalAnimationDescriptor> GetAvailableAnimations()
+    {
+        lock (_gate)
+        {
+            return
+            [
+                .. (_snapshot.Catalog?.Animations ?? []),
+                .. (_animationCatalog?.Animations ?? []),
+            ];
+        }
+    }
+
     public ExternalModelSnapshot CurrentSnapshot
     {
         get

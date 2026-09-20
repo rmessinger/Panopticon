@@ -77,6 +77,9 @@ public sealed class ExternalModelReport
 
     public int ReportSchemaVersion => SchemaVersion;
 
+    /// <summary>Request generation this report answers; null for pre-request failure reports.</summary>
+    public int? RequestGeneration { get; }
+
     public ExternalSourceIdentity? ModelSource { get; }
 
     public ExternalSourceIdentity? AnimationSource { get; }
@@ -104,8 +107,10 @@ public sealed class ExternalModelReport
         ExternalAnimationPairing? animationPairing = null,
         ExternalModelImportOptions? importOptions = null,
         ExternalModelPreviewOptions? previewOptions = null,
-        ExternalRenderMetadata? renderMetadata = null)
+        ExternalRenderMetadata? renderMetadata = null,
+        int? requestGeneration = null)
     {
+        RequestGeneration = requestGeneration;
         ModelSource = modelSource;
         AnimationSource = animationSource;
         Catalog = catalog;

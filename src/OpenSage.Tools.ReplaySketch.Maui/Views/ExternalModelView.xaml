@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OpenSage.Tools.ReplaySketch.Maui.Views.ExternalModelView">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
+          Padding="6"
+          RowSpacing="4">
+
+        <!-- Source: model + animation pickers and clips -->
+        <VerticalStackLayout Grid.Row="0" Spacing="4">
+            <HorizontalStackLayout Spacing="6">
+                <Button x:Name="ChooseModelButton"
+                        Text="Choose Model..."
+                        FontSize="12"
+                        Padding="10,4"
+                        Command="{Binding ChooseModelCommand}"/>
+                <Button x:Name="ReloadButton"
+                        Text="Reload"
+                        FontSize="12"
+                        Padding="10,4"
+                        Command="{Binding ReloadCommand}"/>
+                <Button x:Name="ChooseAnimationButton"
+                        Text="Choose Animation..."
+                        FontSize="12"
+                        Padding="10,4"
+                        Command="{Binding ChooseAnimationCommand}"/>
+                <Button x:Name="ClearAnimationButton"
+                        Text="Clear Animation"
+                        FontSize="12"
+                        Padding="10,4"
+                        Command="{Binding ClearAnimationCommand}"/>
+                <Button x:Name="ResetButton"
+                        Text="Reset"
+                        FontSize="12"
+                        Padding="10,4"
+                        Command="{Binding ResetCommand}"/>
+                <Button x:Name="CancelButton"
+                        Text="Cancel"
+                        FontSize="12"
+                        Padding="10,4"
+                        Command="{Binding CancelCommand}"/>
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="10">
+                <Label Text="{Binding StateText}" FontSize="11" FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#333, Dark=#EEE}"/>
+                <Label Text="{Binding SourceDisplayName}" FontSize="11"
+                       TextColor="{AppThemeBinding Light=#555, Dark=#BBB}"/>
+                <Label Text="{Binding AnimationSourceDisplayName}" FontSize="11"
+                       TextColor="{AppThemeBinding Light=#777, Dark=#999}"/>
+            </HorizontalStackLayout>
+            <Picker x:Name="AnimationPicker"
+                    Title="Animation clip"
+                    FontSize="12"
+                    SelectedIndexChanged="OnAnimationPickerSelectedIndexChanged"/>
+        </VerticalStackLayout>
+
+        <!-- Summary: structural counts -->
+        <VerticalStackLayout Grid.Row="1" Spacing="0">
+            <Label Text="Summary" FontSize="12" FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=#333, Dark=#EEE}"/>
+            <HorizontalStackLayout x:Name="SummaryPanel" Spacing="12"/>
+        </VerticalStackLayout>
+
+        <!-- Preview: captured frame + controls -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,220" ColumnSpacing="6">
+            <Border Grid.Column="0"
+                    Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                    StrokeShape="RoundRectangle 4"
+                    Padding="2">
+                <Image x:Name="PreviewImage"
+                       Aspect="AspectFit"
+                       BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#111}"/>
+            </Border>
+            <VerticalStackLayout Grid.Column="1" Spacing="3">
+                <Label Text="Preview corrections" FontSize="11" FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light=#333, Dark=#EEE}"/>
+                <Entry x:Name="YawEntry" Placeholder="Yaw (rad)" Keyboard="Numeric" FontSize="11"/>
+                <Entry x:Name="OrbitEntry" Placeholder="Camera orbit (rad)" Keyboard="Numeric" FontSize="11"/>
+                <Entry x:Name="ElevationEntry" Placeholder="Camera elevation (rad)" Keyboard="Numeric" FontSize="11"/>
+                <Entry x:Name="DistanceEntry" Placeholder="Camera distance" Keyboard="Numeric" FontSize="11"/>
+                <Entry x:Name="SampleTimeEntry" Placeholder="Sample time (s)" Keyboard="Numeric" FontSize="11"/>
+                <Button x:Name="ApplyPreviewButton"
+                        Text="Apply Preview Options"
+                        FontSize="11"
+                        Padding="8,3"
+                        Clicked="OnApplyPreviewClicked"/>
+                <Button x:Name="RenderButton"
+                        Text="Render"
+                        FontSize="12"
+                        Padding="10,4"
+                        Command="{Binding RenderCommand}"/>
+                <Label x:Name="EligibilityLabel" FontSize="10"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Diagnostics: filterable table -->
+        <Grid Grid.Row="3" RowDefinitions="Auto,*" RowSpacing="2">
+            <Label Grid.Row="0" Text="Diagnostics" FontSize="12" FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=#333, Dark=#EEE}"/>
+            <CollectionView Grid.Row="1"
+                            x:Name="DiagnosticsList"
+                            SelectionMode="Single"
+                            SelectionChanged="OnDiagnosticSelected">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <HorizontalStackLayout Spacing="8" Padding="2">
+                            <Label Text="{Binding Code}" FontSize="11" FontFamily="Mono"
+                                   TextColor="{AppThemeBinding Light=#833, Dark=#E77}"/>
+                            <Label Text="{Binding Severity}" FontSize="11"
+                                   TextColor="{AppThemeBinding Light=#555, Dark=#AAA}"/>
+                            <Label Text="{Binding Message}" FontSize="11" LineBreakMode="TailTruncation"
+                                   MaxLines="2"
+                                   TextColor="{AppThemeBinding Light=#333, Dark=#DDD}"/>
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+
+        <Label Grid.Row="4"
+               x:Name="DiagnosticDetailLabel"
+               FontSize="10"
+               FontFamily="Mono"
+               LineBreakMode="CharacterWrap"
+               TextColor="{AppThemeBinding Light=#666, Dark:#AAA}"/>
+    </Grid>
+</ContentView>

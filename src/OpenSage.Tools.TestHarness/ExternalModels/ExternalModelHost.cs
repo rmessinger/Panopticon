@@ -445,7 +445,8 @@ internal sealed class ExternalModelHost
             animationPairing: BuildPairing(request, importedAnimation),
             importOptions: request.ImportOptions,
             previewOptions: request.PreviewOptions,
-            renderMetadata: renderMetadata);
+            renderMetadata: renderMetadata,
+            requestGeneration: request.Generation);
     }
 
     private static ExternalAnimationPairing? BuildPairing(

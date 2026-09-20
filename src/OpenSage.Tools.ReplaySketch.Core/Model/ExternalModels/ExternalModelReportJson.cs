@@ -33,6 +33,7 @@ public static class ExternalModelReportJson
         var payload = new ReportPayload
         {
             SchemaVersion = ExternalModelReport.SchemaVersion,
+            RequestGeneration = report.RequestGeneration,
             ModelSource = SerializeIdentity(report.ModelSource),
             AnimationSource = SerializeIdentity(report.AnimationSource),
             Catalog = SerializeCatalog(report.Catalog),
@@ -257,6 +258,8 @@ public static class ExternalModelReportJson
     private sealed class ReportPayload
     {
         public int SchemaVersion { get; set; }
+
+        public int? RequestGeneration { get; set; }
 
         public IdentityPayload? ModelSource { get; set; }
 
