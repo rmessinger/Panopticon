@@ -1,41 +1,53 @@
-using OpenSage.Tools.ReplaySketch.Maui.ViewModels;
+using Avalonia;
+using Avalonia.Controls;
+using global::Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using OpenSage.Tools.ReplaySketch.Avalonia.Controls;
+using OpenSage.Tools.ReplaySketch.Avalonia.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Profiles;
 using OpenSage.Tools.ReplaySketch.Services;
 using SkiaSharp;
-using SkiaSharp.Views.Maui;
 
-namespace OpenSage.Tools.ReplaySketch.Maui.Views;
+namespace OpenSage.Tools.ReplaySketch.Avalonia.Views;
 
 /// <summary>
 /// Displays the action tree for the selected player slot as an interactive node graph.
 /// The left palette lists available <see cref="ActionType"/> commands; tapping a palette button
-/// adds the command to the current player's action list.  Each node in the canvas can be
+/// adds the command to the current player's action list. Each node in the canvas can be
 /// dragged onto another node to re-parent it via an <see cref="AfterActionTiming"/> trigger.
-/// Selecting a node shows its edit controls in the detail panel below.
+/// Selecting a node shows its edit controls in the detail panel. Ported from the MAUI
+/// ActionTreeView; pointer events replace SKTouch.
 /// </summary>
-public partial class ActionTreeView : ContentView
+public sealed class ActionTreeView : UserControl
 {
     // ── Layout constants (re-exported from ActionTreeLayoutEngine for SKiaSharp drawing) ──
     private const float NodeW = ActionTreeLayoutEngine.NodeW;
     private const float NodeH = ActionTreeLayoutEngine.NodeH;
-    private const float ColGap = ActionTreeLayoutEngine.ColGap;
-    private const float RowGap = ActionTreeLayoutEngine.RowGap;
     private const float CanvasPad = ActionTreeLayoutEngine.CanvasPad;
+
+    private static readonly IBrush SectionBrush = new SolidColorBrush(Color.Parse("#569CD6"));
+    private static readonly IBrush FieldBrush = new SolidColorBrush(Color.Parse("#D4D4D4"));
+    private static readonly IBrush FieldBackground = new SolidColorBrush(Color.Parse("#3C3C3C"));
+    private static readonly IBrush PaletteIdle = new SolidColorBrush(Color.Parse("#3C3C3C"));
+    private static readonly IBrush PaletteActive = new SolidColorBrush(Color.Parse("#0E639C"));
 
     // ── State ────────────────────────────────────────────────────────────────
     private MainViewModel? _vm;
     private ActionTreeController? _controller;
     private IReadOnlyList<NodeLayout> _layoutNodes = [];
     private NodeLayout? _selectedNode;
-    private SizeF _canvasLogicalSize;
-    private VerticalStackLayout? _externalDetailPanel;
+    private global::Avalonia.Size _canvasLogicalSize;
+    private StackPanel? _externalDetailPanel;
 
     // Pending selection to apply once a new controller is created for a different player
     private string? _pendingSelectId;
 
     // ── Drag state ───────────────────────────────────────────────────────────
-    private const float DragThresholdDp = 8f;
+    private const float DragThresholdPx = 8f;
     private string? _dragId;
     private float _dragStartX;
     private float _dragStartY;
@@ -52,89 +64,127 @@ public partial class ActionTreeView : ContentView
     private static readonly LandmarkType[] LandmarkValues =
         [LandmarkType.OwnBase, LandmarkType.EnemyBase, LandmarkType.MapCenter];
 
+    private readonly SkiaCanvas _treeCanvas = new();
+    private readonly StackPanel _palettePanel = new() { Spacing = 4, Margin = new Thickness(6) };
+    private readonly Panel _flyoutOverlay = new() { IsVisible = false };
+    private readonly Border _flyoutBackdrop = new() { Background = new SolidColorBrush(Color.Parse("#80000000")) };
+    private readonly Border _flyoutCard = new();
+    private readonly StackPanel _flyoutContent = new() { Spacing = 8 };
+
     public ActionTreeView()
     {
-        InitializeComponent();
+        _treeCanvas.PaintSurface += OnPaintSurface;
+        _treeCanvas.PointerPressed += OnCanvasPointerPressed;
+        _treeCanvas.PointerMoved += OnCanvasPointerMoved;
+        _treeCanvas.PointerReleased += OnCanvasPointerReleased;
+
         BuildPalette();
-        FlyoutBackdrop.GestureRecognizers.Add(new TapGestureRecognizer
+
+        _flyoutBackdrop.PointerPressed += (_, _) => HideFlyout();
+        _flyoutCard = new Border
         {
-            Command = new Command(HideFlyout)
-        });
+            Background = new SolidColorBrush(Color.Parse("#2D2D2D")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#666")),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            MinWidth = 280,
+            Child = _flyoutContent,
+        };
+        _flyoutOverlay.Children.Add(_flyoutBackdrop);
+        _flyoutOverlay.Children.Add(_flyoutCard);
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("104,*") };
+        var paletteBorder = new Border
+        {
+            BorderBrush = new SolidColorBrush(Color.Parse("#444")),
+            Background = new SolidColorBrush(Color.Parse("#222222")),
+            BorderThickness = new Thickness(1),
+        };
+        paletteBorder.SetValue(Grid.ColumnProperty, 0);
+        paletteBorder.Child = new ScrollViewer { Content = _palettePanel };
+
+        var treeScroll = new ScrollViewer
+        {
+            Content = _treeCanvas,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        };
+        treeScroll.SetValue(Grid.ColumnProperty, 1);
+
+        grid.Children.Add(paletteBorder);
+        grid.Children.Add(treeScroll);
+        grid.Children.Add(_flyoutOverlay);
+        Content = grid;
     }
 
-    // ── Touch hit-testing ─────────────────────────────────────────────────────
+    // ── Pointer hit-testing ─────────────────────────────────────────────────
 
-    private float GetDensity() =>
-        TreeCanvas.CanvasSize.Width > 0 && TreeCanvas.Width > 0
-            ? (float)(TreeCanvas.CanvasSize.Width / TreeCanvas.Width)
-            : 1f;
+    private SKPoint ToCanvasPoint(PointerEventArgs e)
+    {
+        var position = e.GetPosition(_treeCanvas);
+        return new SKPoint((float)position.X, (float)position.Y);
+    }
 
-    private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
+    private void OnCanvasPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         e.Handled = true;
+        var location = ToCanvasPoint(e);
 
-        var density = GetDensity();
-        var logX = e.Location.X / density;
-        var logY = e.Location.Y / density;
-
-        switch (e.ActionType)
+        var hit = _layoutNodes.FirstOrDefault(n => ActionTreeLayoutEngine.HitTest(n, location.X, location.Y));
+        if (hit.Action != null)
         {
-            case SKTouchAction.Pressed:
-                var hit = _layoutNodes.FirstOrDefault(n => ActionTreeLayoutEngine.HitTest(n, logX, logY));
-                if (hit.Action != null)
-                {
-                    _dragId = hit.Action.Id;
-                    _dragStartX = logX;
-                    _dragStartY = logY;
-                    _dragCurrentX = logX;
-                    _dragCurrentY = logY;
-                    _isDragging = false;
-                }
-                else
-                {
-                    _dragId = null;
-                    _isDragging = false;
-                    _controller?.SelectNode(null);
-                }
-                break;
-
-            case SKTouchAction.Moved:
-                if (_dragId != null)
-                {
-                    _dragCurrentX = logX;
-                    _dragCurrentY = logY;
-                    var dx = _dragCurrentX - _dragStartX;
-                    var dy = _dragCurrentY - _dragStartY;
-                    if (!_isDragging && MathF.Sqrt(dx * dx + dy * dy) >= DragThresholdDp)
-                        _isDragging = true;
-                    if (_isDragging)
-                        TreeCanvas.InvalidateSurface();
-                }
-                break;
-
-            case SKTouchAction.Released:
-                if (_dragId != null && _isDragging)
-                {
-                    _controller?.Reparent(
-                        _dragId,
-                        GetDropTargetId(logX, logY, _dragId));
-                }
-                else if (_dragId != null)
-                {
-                    // Short tap — just select
-                    _controller?.SelectNode(_dragId);
-                }
-                _dragId = null;
-                _isDragging = false;
-                TreeCanvas.InvalidateSurface();
-                break;
-
-            case SKTouchAction.Cancelled:
-                _dragId = null;
-                _isDragging = false;
-                TreeCanvas.InvalidateSurface();
-                break;
+            _dragId = hit.Action.Id;
+            _dragStartX = location.X;
+            _dragStartY = location.Y;
+            _dragCurrentX = location.X;
+            _dragCurrentY = location.Y;
+            _isDragging = false;
         }
+        else
+        {
+            _dragId = null;
+            _isDragging = false;
+            _controller?.SelectNode(null);
+        }
+    }
+
+    private void OnCanvasPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_dragId == null) return;
+        e.Handled = true;
+
+        var location = ToCanvasPoint(e);
+        _dragCurrentX = location.X;
+        _dragCurrentY = location.Y;
+        var dx = _dragCurrentX - _dragStartX;
+        var dy = _dragCurrentY - _dragStartY;
+        if (!_isDragging && MathF.Sqrt(dx * dx + dy * dy) >= DragThresholdPx)
+            _isDragging = true;
+        if (_isDragging)
+            _treeCanvas.InvalidateCanvas();
+    }
+
+    private void OnCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        e.Handled = true;
+        var location = ToCanvasPoint(e);
+
+        if (_dragId != null && _isDragging)
+        {
+            _controller?.Reparent(
+                _dragId,
+                GetDropTargetId(location.X, location.Y, _dragId));
+        }
+        else if (_dragId != null)
+        {
+            // Short tap — just select
+            _controller?.SelectNode(_dragId);
+        }
+        _dragId = null;
+        _isDragging = false;
+        _treeCanvas.InvalidateCanvas();
     }
 
     private string? GetDropTargetId(float logX, float logY, string excludeId)
@@ -150,10 +200,10 @@ public partial class ActionTreeView : ContentView
     // ── Public API ───────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Provides the external <see cref="VerticalStackLayout"/> (owned by the right panel)
+    /// Provides the external <see cref="StackPanel"/> (owned by the right panel)
     /// that this view writes selected-node edit controls into.
     /// </summary>
-    public void SetExternalDetailPanel(VerticalStackLayout panel)
+    public void SetExternalDetailPanel(StackPanel panel)
     {
         _externalDetailPanel = panel;
         BuildDetailPanel(_selectedNode);
@@ -186,7 +236,7 @@ public partial class ActionTreeView : ContentView
     {
         _selectedNode = FindNode(_controller?.SelectedActionId);
         BuildDetailPanel(_selectedNode);
-        TreeCanvas.InvalidateSurface();
+        _treeCanvas.InvalidateCanvas();
     }
 
     public void BindViewModel(MainViewModel vm)
@@ -211,10 +261,10 @@ public partial class ActionTreeView : ContentView
         // Reset palette button highlight before swapping controllers
         if (_flyoutActiveButton != null)
         {
-            _flyoutActiveButton.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton.Background = PaletteIdle;
             _flyoutActiveButton = null;
         }
-        FlyoutOverlay.IsVisible = false;
+        _flyoutOverlay.IsVisible = false;
 
         if (_vm != null) _vm.SelectedActionId = null;
 
@@ -237,7 +287,7 @@ public partial class ActionTreeView : ContentView
         _selectedNode = FindNode(_controller?.SelectedActionId);
         if (_vm != null) _vm.SelectedActionId = _controller?.SelectedActionId;
         BuildDetailPanel(_selectedNode);
-        TreeCanvas.InvalidateSurface();
+        _treeCanvas.InvalidateCanvas();
     }
 
     private void SyncFlyout()
@@ -247,17 +297,13 @@ public partial class ActionTreeView : ContentView
         if (_controller.FlyoutIsOpen)
         {
             var item = ActionTreeController.PaletteItems.FirstOrDefault(p => p.Type == _controller.FlyoutType);
-            FlyoutCard.Margin = new Thickness(110, 40, 0, 0);
+            _flyoutCard.Margin = new Thickness(110, 40, 0, 0);
             BuildFlyoutContent(item.Label, _vm!.SelectedPlayer.FactionIndex);
-            // Enable backdrop interactivity before making it visible so it can dismiss on outside tap
-            FlyoutBackdrop.InputTransparent = false;
-            FlyoutOverlay.IsVisible = true;
+            _flyoutOverlay.IsVisible = true;
         }
         else
         {
-            FlyoutOverlay.IsVisible = false;
-            // Return backdrop to transparent so it never intercepts palette-button clicks
-            FlyoutBackdrop.InputTransparent = true;
+            _flyoutOverlay.IsVisible = false;
         }
     }
 
@@ -267,7 +313,7 @@ public partial class ActionTreeView : ContentView
         _layoutNodes = ComputeLayout(_vm.SelectedPlayer.Actions);
         _selectedNode = FindNode(_controller?.SelectedActionId);
         UpdateCanvasSize();
-        TreeCanvas.InvalidateSurface();
+        _treeCanvas.InvalidateCanvas();
         BuildDetailPanel(_selectedNode);
     }
 
@@ -281,32 +327,28 @@ public partial class ActionTreeView : ContentView
 
     private void BuildPalette()
     {
-        PalettePanel.Children.Clear();
+        _palettePanel.Children.Clear();
 
-        var header = new Label
+        _palettePanel.Children.Add(new TextBlock
         {
             Text = "Add Action",
-            FontAttributes = FontAttributes.Bold,
-            TextColor = Color.FromArgb("#569CD6"),
-            FontSize = 12,
+            FontWeight = FontWeight.Bold,
+            Foreground = SectionBrush,
             Margin = new Thickness(0, 0, 0, 4),
-        };
-        PalettePanel.Children.Add(header);
+        });
 
         foreach (var (type, label, _) in ActionTreeController.PaletteItems)
         {
             var btn = new Button
             {
-                Text = label,
-                BackgroundColor = Color.FromArgb("#3C3C3C"),
-                TextColor = Color.FromArgb("#D4D4D4"),
-                FontSize = 11,
+                Content = label,
+                Background = PaletteIdle,
+                Foreground = FieldBrush,
                 Padding = new Thickness(4, 6),
-                CornerRadius = 4,
             };
-            btn.Clicked += (_, _) => ToggleAddFlyout(type, btn);
+            btn.Click += (_, _) => ToggleAddFlyout(type, btn);
 
-            PalettePanel.Children.Add(btn);
+            _palettePanel.Children.Add(btn);
         }
     }
 
@@ -321,13 +363,13 @@ public partial class ActionTreeView : ContentView
 
         if (willOpen)
         {
-            _flyoutActiveButton?.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton?.Background = PaletteIdle;
             _flyoutActiveButton = sourceButton;
-            sourceButton.BackgroundColor = Color.FromArgb("#0E639C");
+            sourceButton.Background = PaletteActive;
         }
         else
         {
-            _flyoutActiveButton?.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton?.Background = PaletteIdle;
             _flyoutActiveButton = null;
         }
 
@@ -336,81 +378,67 @@ public partial class ActionTreeView : ContentView
 
     private void BuildFlyoutContent(string typeLabel, int factionIndex)
     {
-        FlyoutContent.Children.Clear();
+        _flyoutContent.Children.Clear();
 
-        // Title
-        FlyoutContent.Children.Add(new Label
+        _flyoutContent.Children.Add(new TextBlock
         {
             Text = $"Add: {typeLabel}",
-            FontAttributes = FontAttributes.Bold,
-            TextColor = Color.FromArgb("#569CD6"),
-            FontSize = 13,
-            Margin = new Thickness(0, 0, 0, 4),
+            FontWeight = FontWeight.Bold,
+            Foreground = SectionBrush,
         });
 
-        // Label field
-        var labelEntry = new Entry
+        var labelEntry = new TextBox
         {
             Text = _controller!.FlyoutDraft!.Label,
-            Placeholder = "Label",
-            TextColor = Color.FromArgb("#D4D4D4"),
-            BackgroundColor = Color.FromArgb("#3C3C3C"),
-            FontSize = 13,
+            Watermark = "Label",
+            Foreground = FieldBrush,
+            Background = FieldBackground,
         };
-        labelEntry.TextChanged += (_, e) => _controller!.SetFlyoutLabel(e.NewTextValue);
-        FlyoutContent.Children.Add(FieldRow("Label", labelEntry));
+        labelEntry.TextChanged += (_, _) => _controller!.SetFlyoutLabel(labelEntry.Text ?? string.Empty);
+        _flyoutContent.Children.Add(FieldRow("Label", labelEntry));
 
-        // Building picker for Construct
         if (_controller.FlyoutType == ActionType.Construct)
-            FlyoutContent.Children.Add(FieldRow("Building",
+            _flyoutContent.Children.Add(FieldRow("Building",
                 BuildBuildingPicker(_controller.FlyoutDraft, factionIndex)));
 
-        // Unit picker for RecruitBasicUnit
         if (_controller.FlyoutType == ActionType.RecruitBasicUnit)
-            FlyoutContent.Children.Add(FieldRow("Unit",
+            _flyoutContent.Children.Add(FieldRow("Unit",
                 BuildUnitPicker(_controller.FlyoutDraft, factionIndex)));
 
-        // Action row
-        var buttonsRow = new HorizontalStackLayout
+        var buttonsRow = new StackPanel
         {
+            Orientation = Orientation.Horizontal,
             Spacing = 8,
-            HorizontalOptions = LayoutOptions.End,
-            Margin = new Thickness(0, 4, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Right,
         };
 
         var cancelBtn = new Button
         {
-            Text = "Cancel",
-            BackgroundColor = Color.FromArgb("#555"),
-            TextColor = Color.FromArgb("#D4D4D4"),
-            CornerRadius = 4,
-            FontSize = 12,
-            Padding = new Thickness(12, 6),
+            Content = "Cancel",
+            Background = new SolidColorBrush(Color.Parse("#555")),
+            Foreground = FieldBrush,
         };
-        cancelBtn.Clicked += (_, _) => HideFlyout();
+        cancelBtn.Click += (_, _) => HideFlyout();
 
         var addBtn = new Button
         {
-            Text = "Add",
-            BackgroundColor = Color.FromArgb("#0E639C"),
-            TextColor = Colors.White,
-            CornerRadius = 4,
-            FontSize = 12,
-            Padding = new Thickness(12, 6),
+            Content = "Add",
+            Background = PaletteActive,
+            Foreground = Brushes.White,
         };
-        addBtn.Clicked += (_, _) =>
+        addBtn.Click += (_, _) =>
         {
             _controller?.CommitFlyout();  // fires FlyoutStateChanged + ActionsChanged
             if (_flyoutActiveButton != null)
             {
-                _flyoutActiveButton.BackgroundColor = Color.FromArgb("#3C3C3C");
+                _flyoutActiveButton.Background = PaletteIdle;
                 _flyoutActiveButton = null;
             }
         };
 
         buttonsRow.Children.Add(cancelBtn);
         buttonsRow.Children.Add(addBtn);
-        FlyoutContent.Children.Add(buttonsRow);
+        _flyoutContent.Children.Add(buttonsRow);
     }
 
     private void HideFlyout()
@@ -418,7 +446,7 @@ public partial class ActionTreeView : ContentView
         _controller?.CancelFlyout();  // fires FlyoutStateChanged → SyncFlyout
         if (_flyoutActiveButton != null)
         {
-            _flyoutActiveButton.BackgroundColor = Color.FromArgb("#3C3C3C");
+            _flyoutActiveButton.Background = PaletteIdle;
             _flyoutActiveButton = null;
         }
     }
@@ -431,31 +459,28 @@ public partial class ActionTreeView : ContentView
 
         if (layouts.Count == 0)
         {
-            _canvasLogicalSize = new SizeF(200, 200);
+            _canvasLogicalSize = new global::Avalonia.Size(200, 200);
             return [];
         }
 
-        _canvasLogicalSize = new SizeF(
+        _canvasLogicalSize = new global::Avalonia.Size(
             layouts.Max(n => n.CenterX) + NodeW / 2f + CanvasPad,
-            layouts.Max(n => n.CenterY) + NodeH / 2f + CanvasPad);
+            layouts.Max(n => n.CenterY) + ActionTreeLayoutEngine.NodeH / 2f + CanvasPad);
 
         return layouts;
     }
 
-    // ── Canvas size ───────────────────────────────────────────────────────────
-
     private void UpdateCanvasSize()
     {
-        TreeCanvas.WidthRequest = Math.Max(_canvasLogicalSize.Width, 200);
-        TreeCanvas.HeightRequest = Math.Max(_canvasLogicalSize.Height, 200);
+        _treeCanvas.DesiredCanvasSize = new Size(
+            Math.Max(_canvasLogicalSize.Width, 200),
+            Math.Max(_canvasLogicalSize.Height, 200));
     }
 
     // ── SkiaSharp painting ────────────────────────────────────────────────────
 
-    private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+    private void OnPaintSurface(object? sender, SKCanvas canvas)
     {
-        var density = TreeCanvas.Width > 0 ? (float)(e.Info.Width / TreeCanvas.Width) : 1f;
-
         DragState? drag = _isDragging && _dragId != null
             ? new DragState(
                 _dragId,
@@ -464,7 +489,7 @@ public partial class ActionTreeView : ContentView
                 GetDropTargetId(_dragCurrentX, _dragCurrentY, _dragId))
             : null;
 
-        ActionTreeRenderer.Render(e.Surface.Canvas, _layoutNodes, _controller?.SelectedActionId, density, drag);
+        ActionTreeRenderer.Render(canvas, _layoutNodes, _controller?.SelectedActionId, 1f, drag);
     }
 
     // ── Detail panel ──────────────────────────────────────────────────────────
@@ -476,11 +501,11 @@ public partial class ActionTreeView : ContentView
 
         if (node == null)
         {
-            _externalDetailPanel.Children.Add(new Label
+            _externalDetailPanel.Children.Add(new TextBlock
             {
                 Text = "Select a node to edit it",
-                TextColor = Color.FromArgb("#888888"),
-                HorizontalOptions = LayoutOptions.Center,
+                Foreground = new SolidColorBrush(Color.Parse("#888888")),
+                HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 16),
             });
             return;
@@ -509,14 +534,14 @@ public partial class ActionTreeView : ContentView
 
         // Label
         _externalDetailPanel.Children.Add(FieldRow("Label",
-            BuildEntry(action.Label, v => { action.Label = v; TreeCanvas.InvalidateSurface(); })));
+            BuildEntry(action.Label, v => { action.Label = v; _treeCanvas.InvalidateCanvas(); })));
 
         // Building definition name (Construct only)
         if (action.Type == ActionType.Construct)
         {
             var factionIndex = _vm!.SelectedPlayer.FactionIndex;
             _externalDetailPanel.Children.Add(FieldRow("Building",
-                BuildBuildingPicker(action, factionIndex, () => TreeCanvas.InvalidateSurface())));
+                BuildBuildingPicker(action, factionIndex, () => _treeCanvas.InvalidateCanvas())));
         }
 
         // Unit definition name (RecruitBasicUnit only)
@@ -524,7 +549,7 @@ public partial class ActionTreeView : ContentView
         {
             var factionIndex = _vm!.SelectedPlayer.FactionIndex;
             _externalDetailPanel.Children.Add(FieldRow("Unit",
-                BuildUnitPicker(action, factionIndex, () => TreeCanvas.InvalidateSurface())));
+                BuildUnitPicker(action, factionIndex, () => _treeCanvas.InvalidateCanvas())));
         }
 
         // Position
@@ -541,14 +566,12 @@ public partial class ActionTreeView : ContentView
         // Remove button
         var removeBtn = new Button
         {
-            Text = "Remove Action",
-            BackgroundColor = Color.FromArgb("#6B1A1A"),
-            TextColor = Colors.White,
-            FontSize = 12,
-            CornerRadius = 4,
+            Content = "Remove Action",
+            Background = new SolidColorBrush(Color.Parse("#6B1A1A")),
+            Foreground = Brushes.White,
             Margin = new Thickness(0, 8, 0, 0),
         };
-        removeBtn.Clicked += (_, _) =>
+        removeBtn.Click += (_, _) =>
         {
             player.Actions.Remove(action);
             _selectedNode = null;
@@ -559,23 +582,23 @@ public partial class ActionTreeView : ContentView
 
     // ── Position controls ─────────────────────────────────────────────────────
 
-    private View BuildPositionControls(ActionEntry action)
+    private Control BuildPositionControls(ActionEntry action)
     {
-        var container = new VerticalStackLayout { Spacing = 4 };
+        var container = new StackPanel { Spacing = 4 };
         var isNormalized = action.Position is NormalizedPosition;
 
-        var modeRow = new HorizontalStackLayout { Spacing = 12 };
+        var modeRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
         var normBtn = new RadioButton { Content = "Map Normalized", IsChecked = isNormalized };
         var lmBtn = new RadioButton { Content = "Landmark Relative", IsChecked = !isNormalized };
-        normBtn.CheckedChanged += (_, e) =>
+        normBtn.Click += (_, _) =>
         {
-            if (!e.Value) return;
+            if (normBtn.IsChecked != true) return;
             action.Position = new NormalizedPosition(0.5f, 0.5f);
             RefreshTree();
         };
-        lmBtn.CheckedChanged += (_, e) =>
+        lmBtn.Click += (_, _) =>
         {
-            if (!e.Value) return;
+            if (lmBtn.IsChecked != true) return;
             action.Position = new LandmarkRelativePosition(LandmarkType.OwnBase, 2f, new FixedAngle(45f));
             RefreshTree();
         };
@@ -585,11 +608,11 @@ public partial class ActionTreeView : ContentView
 
         if (action.Position is NormalizedPosition np)
         {
-            container.Children.Add(FieldRow("X (0–1)", BuildFloatEntry(np.NormX, v =>
+            container.Children.Add(FieldRow("X (0\u20131)", BuildFloatEntry(np.NormX, v =>
             {
                 action.Position = new NormalizedPosition(Math.Clamp(v, 0f, 1f), np.NormY);
             })));
-            container.Children.Add(FieldRow("Y (0–1)", BuildFloatEntry(np.NormY, v =>
+            container.Children.Add(FieldRow("Y (0\u20131)", BuildFloatEntry(np.NormY, v =>
             {
                 action.Position = new NormalizedPosition(np.NormX, Math.Clamp(v, 0f, 1f));
             })));
@@ -610,23 +633,23 @@ public partial class ActionTreeView : ContentView
         return container;
     }
 
-    private View BuildAngleControls(ActionEntry action, LandmarkRelativePosition lrp)
+    private Control BuildAngleControls(ActionEntry action, LandmarkRelativePosition lrp)
     {
-        var container = new VerticalStackLayout { Spacing = 4 };
+        var container = new StackPanel { Spacing = 4 };
         var isFixed = lrp.Angle is FixedAngle;
 
-        var modeRow = new HorizontalStackLayout { Spacing = 12 };
+        var modeRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
         var fixedBtn = new RadioButton { Content = "Fixed", IsChecked = isFixed };
         var randomBtn = new RadioButton { Content = "Random range", IsChecked = !isFixed };
-        fixedBtn.CheckedChanged += (_, e) =>
+        fixedBtn.Click += (_, _) =>
         {
-            if (!e.Value) return;
+            if (fixedBtn.IsChecked != true) return;
             action.Position = new LandmarkRelativePosition(lrp.Landmark, lrp.DistanceInBaseWidths, new FixedAngle(0f));
             RefreshTree();
         };
-        randomBtn.CheckedChanged += (_, e) =>
+        randomBtn.Click += (_, _) =>
         {
-            if (!e.Value) return;
+            if (randomBtn.IsChecked != true) return;
             action.Position = new LandmarkRelativePosition(lrp.Landmark, lrp.DistanceInBaseWidths, new RandomAngle(0f, 360f));
             RefreshTree();
         };
@@ -641,12 +664,12 @@ public partial class ActionTreeView : ContentView
         }
         else if (lrp.Angle is RandomAngle ra)
         {
-            container.Children.Add(FieldRow("Min°", BuildFloatEntry(ra.MinDegrees, v =>
+            container.Children.Add(FieldRow("Min\u00B0", BuildFloatEntry(ra.MinDegrees, v =>
             {
                 var min = v; var max = Math.Max(v, ra.MaxDegrees);
                 action.Position = new LandmarkRelativePosition(lrp.Landmark, lrp.DistanceInBaseWidths, new RandomAngle(min, max));
             })));
-            container.Children.Add(FieldRow("Max°", BuildFloatEntry(ra.MaxDegrees, v =>
+            container.Children.Add(FieldRow("Max\u00B0", BuildFloatEntry(ra.MaxDegrees, v =>
             {
                 var max = v; var min = Math.Min(ra.MinDegrees, v);
                 action.Position = new LandmarkRelativePosition(lrp.Landmark, lrp.DistanceInBaseWidths, new RandomAngle(min, max));
@@ -658,34 +681,34 @@ public partial class ActionTreeView : ContentView
 
     // ── Timing controls ───────────────────────────────────────────────────────
 
-    private View BuildTimingControls(ActionEntry action)
+    private Control BuildTimingControls(ActionEntry action)
     {
-        var container = new VerticalStackLayout { Spacing = 4 };
+        var container = new StackPanel { Spacing = 4 };
 
         var isFixed = action.Timing is FixedTiming;
         var isRandom = action.Timing is RandomTiming;
         var isAfter = action.Timing is AfterActionTiming;
 
-        var modeRow = new HorizontalStackLayout { Spacing = 8 };
+        var modeRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         var fixedBtn = new RadioButton { Content = "Fixed", IsChecked = isFixed };
         var randomBtn = new RadioButton { Content = "Random", IsChecked = isRandom };
         var afterBtn = new RadioButton { Content = "After Action", IsChecked = isAfter };
 
-        fixedBtn.CheckedChanged += (_, e) =>
+        fixedBtn.Click += (_, _) =>
         {
-            if (!e.Value) return;
+            if (fixedBtn.IsChecked != true) return;
             action.Timing = new FixedTiming(300);
             RefreshTree();
         };
-        randomBtn.CheckedChanged += (_, e) =>
+        randomBtn.Click += (_, _) =>
         {
-            if (!e.Value) return;
+            if (randomBtn.IsChecked != true) return;
             action.Timing = new RandomTiming(150, 450);
             RefreshTree();
         };
-        afterBtn.CheckedChanged += (_, e) =>
+        afterBtn.Click += (_, _) =>
         {
-            if (!e.Value) return;
+            if (afterBtn.IsChecked != true) return;
             var other = _vm!.SelectedPlayer.Actions.FirstOrDefault(a => a != action);
             action.Timing = other != null
                 ? new AfterActionTiming(other.Id, ActionPhase.Completed)
@@ -722,11 +745,10 @@ public partial class ActionTreeView : ContentView
             var otherActions = _vm!.SelectedPlayer.Actions.Where(a => a != action).ToArray();
             if (otherActions.Length == 0)
             {
-                container.Children.Add(new Label
+                container.Children.Add(new TextBlock
                 {
                     Text = "No other actions to trigger from.",
-                    TextColor = Color.FromArgb("#888"),
-                    FontSize = 13,
+                    Foreground = new SolidColorBrush(Color.Parse("#888")),
                 });
             }
             else
@@ -743,7 +765,6 @@ public partial class ActionTreeView : ContentView
                         RefreshTree();
                     })));
 
-                // Phase picker
                 var phases = new[] { "Dispatched", "Completed" };
                 var phaseIdx = aat.TriggerPhase == ActionPhase.Dispatched ? 0 : 1;
                 container.Children.Add(FieldRow("Phase", BuildPicker(phases, phaseIdx,
@@ -756,7 +777,6 @@ public partial class ActionTreeView : ContentView
                         RefreshTree();
                     })));
 
-                // Extra frames
                 container.Children.Add(FieldRow("Extra frames", BuildUIntEntry(aat.ExtraFrames,
                     v =>
                     {
@@ -769,33 +789,24 @@ public partial class ActionTreeView : ContentView
         return container;
     }
 
-    // ── Shared UI helpers (mirror ActionSequenceView pattern) ─────────────────
+    // ── Shared UI helpers ────────────────────────────────────────────────────
 
-    private static Label SectionLabel(string text) => new()
+    private static TextBlock SectionLabel(string text) => new()
     {
         Text = text,
-        FontAttributes = FontAttributes.Bold,
-        TextColor = Color.FromArgb("#569CD6"),
-        FontSize = 12,
+        FontWeight = FontWeight.Bold,
+        Foreground = SectionBrush,
         Margin = new Thickness(0, 4, 0, 0),
     };
 
-    private static View FieldRow(string label, View control)
+    private static Control FieldRow(string label, Control control)
     {
-        var grid = new Grid
-        {
-            ColumnDefinitions =
-            {
-                new ColumnDefinition(new GridLength(130)),
-                new ColumnDefinition(GridLength.Star),
-            },
-        };
-        var lbl = new Label
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("130,*") };
+        var lbl = new TextBlock
         {
             Text = label,
-            TextColor = Color.FromArgb("#D4D4D4"),
-            VerticalOptions = LayoutOptions.Center,
-            FontSize = 12,
+            Foreground = FieldBrush,
+            VerticalAlignment = VerticalAlignment.Center,
         };
         Grid.SetColumn(lbl, 0);
         Grid.SetColumn(control, 1);
@@ -804,7 +815,7 @@ public partial class ActionTreeView : ContentView
         return grid;
     }
 
-    private static Picker BuildBuildingPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
+    private static ComboBox BuildBuildingPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
     {
         var options = BuildingCatalog.ForFaction(factionIndex);
         var displayNames = options.Select(b => b.DisplayName).ToArray();
@@ -819,7 +830,7 @@ public partial class ActionTreeView : ContentView
         });
     }
 
-    private static Picker BuildUnitPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
+    private static ComboBox BuildUnitPicker(ActionEntry action, int factionIndex, Action? onChanged = null)
     {
         var options = UnitCatalog.ForFaction(factionIndex);
         var displayNames = options.Select(u => u.DisplayName).ToArray();
@@ -834,72 +845,76 @@ public partial class ActionTreeView : ContentView
         });
     }
 
-    private static Picker BuildPicker(string[] items, int selectedIndex, Action<int> onChange)
+    private static ComboBox BuildPicker(string[] items, int selectedIndex, Action<int> onChange)
     {
-        var picker = new Picker
+        var picker = new ComboBox
         {
             ItemsSource = items,
-            SelectedIndex = selectedIndex,
-            TextColor = Color.FromArgb("#D4D4D4"),
-            BackgroundColor = Color.FromArgb("#3C3C3C"),
-            FontSize = 12,
+            SelectedIndex = Math.Max(0, selectedIndex),
+            Foreground = FieldBrush,
+            Background = FieldBackground,
         };
-        picker.SelectedIndexChanged += (_, _) =>
+        picker.SelectionChanged += (_, _) =>
         {
             if (picker.SelectedIndex >= 0) onChange(picker.SelectedIndex);
         };
         return picker;
     }
 
-    private static Entry BuildEntry(string value, Action<string> onChange)
+    private static TextBox BuildEntry(string value, Action<string> onChange)
     {
-        var entry = new Entry
+        var entry = new TextBox
         {
             Text = value,
-            TextColor = Color.FromArgb("#D4D4D4"),
-            BackgroundColor = Color.FromArgb("#3C3C3C"),
-            FontSize = 12,
+            Foreground = FieldBrush,
+            Background = FieldBackground,
         };
-        entry.Completed += (_, _) => onChange(entry.Text ?? string.Empty);
-        entry.Unfocused += (_, _) => onChange(entry.Text ?? string.Empty);
+        void Commit() => onChange(entry.Text ?? string.Empty);
+        entry.LostFocus += (_, _) => Commit();
+        entry.AddHandler(InputElement.KeyDownEvent, (_, e) =>
+        {
+            if (e.Key == Key.Enter) Commit();
+        }, RoutingStrategies.Tunnel);
         return entry;
     }
 
-    private static Entry BuildFloatEntry(float value, Action<float> onChange)
+    private static TextBox BuildFloatEntry(float value, Action<float> onChange)
     {
-        var entry = new Entry
+        var entry = new TextBox
         {
             Text = value.ToString("G6"),
-            Keyboard = Keyboard.Numeric,
-            TextColor = Color.FromArgb("#D4D4D4"),
-            BackgroundColor = Color.FromArgb("#3C3C3C"),
-            FontSize = 12,
+            Foreground = FieldBrush,
+            Background = FieldBackground,
         };
         void Commit()
         {
             if (float.TryParse(entry.Text, out var v)) onChange(v);
         }
-        entry.Completed += (_, _) => Commit();
-        entry.Unfocused += (_, _) => Commit();
+        entry.LostFocus += (_, _) => Commit();
+        entry.AddHandler(InputElement.KeyDownEvent, (_, e) =>
+        {
+            if (e.Key == Key.Enter) Commit();
+        }, RoutingStrategies.Tunnel);
         return entry;
     }
 
-    private static Entry BuildUIntEntry(uint value, Action<uint> onChange)
+    private static TextBox BuildUIntEntry(uint value, Action<uint> onChange)
     {
-        var entry = new Entry
+        var entry = new TextBox
         {
             Text = value.ToString(),
-            Keyboard = Keyboard.Numeric,
-            TextColor = Color.FromArgb("#D4D4D4"),
-            BackgroundColor = Color.FromArgb("#3C3C3C"),
-            FontSize = 12,
+            Foreground = FieldBrush,
+            Background = FieldBackground,
         };
         void Commit()
         {
             if (uint.TryParse(entry.Text, out var v)) onChange(v);
         }
-        entry.Completed += (_, _) => Commit();
-        entry.Unfocused += (_, _) => Commit();
+        entry.LostFocus += (_, _) => Commit();
+        entry.AddHandler(InputElement.KeyDownEvent, (_, e) =>
+        {
+            if (e.Key == Key.Enter) Commit();
+        }, RoutingStrategies.Tunnel);
         return entry;
     }
 }

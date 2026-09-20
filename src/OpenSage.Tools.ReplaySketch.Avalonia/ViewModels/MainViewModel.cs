@@ -3,11 +3,11 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using OpenSage.Tools.ReplaySketch.Maui.Services;
+using OpenSage.Tools.ReplaySketch.Avalonia.Services;
 using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 
-namespace OpenSage.Tools.ReplaySketch.Maui.ViewModels;
+namespace OpenSage.Tools.ReplaySketch.Avalonia.ViewModels;
 
 /// <summary>
 /// Top-level view model that owns the <see cref="ReplayScenario"/> and coordinates
@@ -129,8 +129,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IMainThreadDispatcher? mainThreadDispatcher = null,
         IProcessLauncher? processLauncher = null)
     {
-        _preferences = preferences ?? new MauiPreferencesStore();
-        _mainThreadDispatcher = mainThreadDispatcher ?? new MauiMainThreadDispatcher();
+        _preferences = preferences ?? new AvaloniaPreferencesStore();
+        _mainThreadDispatcher = mainThreadDispatcher ?? new AvaloniaMainThreadDispatcher();
         _processLauncher = processLauncher ?? new SystemProcessLauncher();
         _validateCommand = new RelayCommand(
             execute: _ => ExecuteValidate(),
@@ -146,7 +146,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         ReloadMapCommand = new RelayCommand(execute: _ => LoadMap());
 
-        // Restore a previously saved installation path (MAUI apps don't inherit shell env vars)
+        // Restore a previously saved installation path
         var savedPath = _preferences.Get("cnc_generals_path", string.Empty);
         if (!string.IsNullOrEmpty(savedPath))
         {
