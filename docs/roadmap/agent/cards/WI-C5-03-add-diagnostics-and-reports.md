@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C5-03` |
 | Roadmap phase | [Track C · C5](../../track-c-external-assets.md): Authoring and validation tooling |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4-10`, `WI-C5-01` |
