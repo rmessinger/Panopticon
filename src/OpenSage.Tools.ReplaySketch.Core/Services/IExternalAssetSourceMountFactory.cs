@@ -2,6 +2,7 @@
 
 using System;
 using OpenSage.Content.Importing;
+using OpenSage.Tools.ReplaySketch.Model;
 
 namespace OpenSage.Tools.ReplaySketch.Services;
 
@@ -20,13 +21,15 @@ public interface IExternalSourceMount : IDisposable
 
 /// <summary>
 /// Creates source mounts for the session. Production routes through the engine's
-/// ExternalAssetSourceMount; Core tests substitute fakes without touching disk.
+/// ExternalAssetSourceMount with importer options mapped from the session's
+/// ExternalModelImportOptions; Core tests substitute fakes without touching disk.
 /// </summary>
 public interface IExternalAssetSourceMountFactory
 {
     /// <summary>
-    /// Mounts one absolute selected file. Throws InvalidDataException (EXT001) for
-    /// unsupported formats; other creation failures throw InvalidDataException as well.
+    /// Mounts one absolute selected file under the given importer options. Throws
+    /// InvalidDataException (EXT001) for unsupported formats; other creation failures
+    /// throw InvalidDataException as well.
     /// </summary>
-    IExternalSourceMount Create(string absoluteSelectedFile);
+    IExternalSourceMount Create(string absoluteSelectedFile, ExternalModelImportOptions options);
 }

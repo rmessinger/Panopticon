@@ -16,7 +16,10 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 /// Source replacement cancels current work, increments a monotonic generation, disposes
 /// prior mounts and artifact leases, and inspects the new source. Results carrying an
 /// older generation are discarded. Snapshots are immutable and published only complete;
-/// cancellation is control flow, never a diagnostic.
+/// cancellation is control flow, never a diagnostic. Animation pairing selects by stable
+/// C4 key from the model document or a separately mounted animation document; importer
+/// option changes rerun inspection while preview-only changes republish without touching
+/// sources.
 /// </summary>
 public sealed class ExternalModelSession : IDisposable
 {
@@ -26,8 +29,18 @@ public sealed class ExternalModelSession : IDisposable
 
     private int _generation;
     private CancellationTokenSource? _operationCts;
+
+    private string? _modelFilePath;
     private IExternalSourceMount? _modelMount;
+    private string? _animationFilePath;
+    private IExternalSourceMount? _animationMount;
+    private ExternalAssetCatalog? _animationCatalog;
+
+    private ExternalModelImportOptions _importOptions = ExternalModelImportOptions.Default;
+    private ExternalModelPreviewOptions _previewOptions = ExternalModelPreviewOptions.Default;
+    private ExternalAnimationPairing? _pairing;
     private IExternalModelArtifactLease? _artifactLease;
+
     private ExternalModelSnapshot _snapshot = ExternalModelSnapshot.CreateEmpty(0);
     private bool _disposed;
 
@@ -55,9 +68,8 @@ public sealed class ExternalModelSession : IDisposable
 
     /// <summary>
     /// Replaces the model source. Cancels current work, increments the generation,
-    /// disposes the prior mount and artifact lease, publishes Inspecting, and inspects
-    /// the new source. Returns the final snapshot for this operation; stale completions
-    /// never alter current state.
+    /// disposes prior mounts and artifact leases, clears source-specific state (including
+    /// any separate-document pairing), publishes Inspecting, and inspects the new source.
     /// </summary>
     public async Task<ExternalModelSnapshot> LoadModelAsync(
         string absoluteSelectedFile,
@@ -70,38 +82,238 @@ public sealed class ExternalModelSession : IDisposable
             return CurrentSnapshot;
         }
 
-        return await InspectAsync(generation, mount, token, cancellationToken)
+        return await InspectModelAsync(generation, mount, token, cancellationToken)
             .ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Re-inspects the current model source under a new generation, keeping the existing
-    /// mount. Used after importer-option changes.
+    /// Re-inspects the current sources under a new generation with current importer
+    /// options, re-creating the mounts. Used after importer-option changes.
     /// </summary>
-    public async Task<ExternalModelSnapshot> ReloadAsync(CancellationToken cancellationToken = default)
+    public Task<ExternalModelSnapshot> ReloadAsync(CancellationToken cancellationToken = default)
     {
-        IExternalSourceMount mount;
-        int generation;
-        CancellationToken token;
+        lock (_gate)
+        {
+            ThrowIfDisposed();
+
+            if (_modelFilePath is null)
+            {
+                throw new InvalidOperationException("No model source is loaded.");
+            }
+
+            return LoadModelAsync(_modelFilePath, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Replaces the optional animation source document. Cancels current work, increments
+    /// the generation, disposes the old animation mount, inspects the new document, and
+    /// clears a prior selection that referenced the replaced document.
+    /// </summary>
+    public async Task<ExternalModelSnapshot> LoadAnimationAsync(
+        string absoluteSelectedFile,
+        CancellationToken cancellationToken = default)
+    {
+        var (generation, mount, token) = BeginAnimationLoad(absoluteSelectedFile);
+
+        if (mount is null)
+        {
+            return CurrentSnapshot;
+        }
+
+        ExternalAssetCatalog? catalog = null;
+        Exception? failure = null;
+
+        using (var linked = CancellationTokenSource.CreateLinkedTokenSource(token, cancellationToken))
+        {
+            try
+            {
+                catalog = await Task.Run(
+                    () => mount.FormatSelection.Inspector.InspectModel(
+                        mount.RootVirtualKey,
+                        mount.ImportContext),
+                    linked.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return CurrentSnapshot;
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+            }
+        }
+
+        lock (_gate)
+        {
+            if (_disposed || generation != _generation)
+            {
+                return _snapshot;
+            }
+
+            if (failure is not null || catalog is null)
+            {
+                var exception = failure ?? new InvalidDataException(
+                    $"Animation document '{mount.RootVirtualKey}' was not found in its mount.");
+                PublishLocked(FailedSnapshot(generation, exception, ExternalDiagnosticSourceRole.Animation));
+                return _snapshot;
+            }
+
+            _animationCatalog = catalog;
+
+            if (_pairing is { Document: ExternalAnimationSourceDocument.SeparateDocument } pairing &&
+                !catalog.Animations.Any(a => a.Key == pairing.SelectedKey))
+            {
+                _pairing = null;
+            }
+
+            PublishLocked(_snapshot with
+            {
+                AnimationSourceDisplayName = catalog.SourceDisplayName,
+                AnimationPairing = _pairing,
+            });
+            return _snapshot;
+        }
+    }
+
+    /// <summary>
+    /// Selects an animation by stable descriptor key: from the model document or from the
+    /// separately mounted animation document. Null clears the selection. Throws
+    /// InvalidDataException for unknown keys.
+    /// </summary>
+    public ExternalModelSnapshot SelectAnimation(string? selectedKey)
+    {
+        lock (_gate)
+        {
+            ThrowIfDisposed();
+
+            if (selectedKey is null)
+            {
+                _pairing = null;
+                _previewOptions = _previewOptions with { SelectedAnimationKey = null, AnimationSampleTime = 0 };
+                PublishLocked(_snapshot with
+                {
+                    AnimationPairing = null,
+                    PreviewOptions = _previewOptions,
+                });
+                return _snapshot;
+            }
+
+            var descriptor = FindDescriptor(selectedKey);
+            if (descriptor is null)
+            {
+                throw new InvalidDataException($"Animation key '{selectedKey}' is not available.");
+            }
+
+            var document = _modelMount is not null && _snapshot.Catalog is { } modelCatalog &&
+                modelCatalog.Animations.Any(a => a.Key == selectedKey)
+                ? ExternalAnimationSourceDocument.SameDocument
+                : ExternalAnimationSourceDocument.SeparateDocument;
+
+            var sourceName = document == ExternalAnimationSourceDocument.SameDocument
+                ? _snapshot.SourceDisplayName
+                : _animationCatalog?.SourceDisplayName;
+
+            _pairing = new ExternalAnimationPairing(document, sourceName, descriptor);
+            _previewOptions = _previewOptions with
+            {
+                SelectedAnimationKey = selectedKey,
+                AnimationSampleTime = 0,
+            };
+            _previewOptions.Validate(_importOptions, (float)descriptor.Duration.TotalSeconds);
+
+            PublishLocked(_snapshot with
+            {
+                AnimationPairing = _pairing,
+                PreviewOptions = _previewOptions,
+            });
+            return _snapshot;
+        }
+    }
+
+    /// <summary>
+    /// Applies new importer options and reruns inspection: mounts are re-created because
+    /// unit scale is baked into the format selection. Animation pairing keys survive the
+    /// reload; preview-only values are untouched.
+    /// </summary>
+    public async Task<ExternalModelSnapshot> SetImportOptionsAsync(
+        ExternalModelImportOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        if (options is null)
+        {
+            throw new ArgumentNullException(nameof(options));
+        }
+
+        lock (_gate)
+        {
+            ThrowIfDisposed();
+            _importOptions = options;
+
+            if (_modelFilePath is null)
+            {
+                PublishLocked(_snapshot with { ImportOptions = options });
+                return _snapshot;
+            }
+        }
+
+        var snapshot = await LoadModelAsync(_modelFilePath!, cancellationToken).ConfigureAwait(false);
+
+        if (_animationFilePath is not null &&
+            !snapshot.FailedOrEmpty())
+        {
+            snapshot = await LoadAnimationAsync(_animationFilePath, cancellationToken).ConfigureAwait(false);
+        }
+
+        return snapshot;
+    }
+
+    /// <summary>
+    /// Applies preview-only corrections; publishes a new snapshot without reopening or
+    /// modifying source data. Invalid values throw before anything is applied.
+    /// </summary>
+    public ExternalModelSnapshot SetPreviewOptions(ExternalModelPreviewOptions options)
+    {
+        if (options is null)
+        {
+            throw new ArgumentNullException(nameof(options));
+        }
 
         lock (_gate)
         {
             ThrowIfDisposed();
 
-            mount = _modelMount!;
-            if (mount is null)
-            {
-                throw new InvalidOperationException("No model source is loaded.");
-            }
+            options.Validate(_importOptions, CurrentDurationLocked());
 
-            generation = ++_generation;
-            _operationCts = new CancellationTokenSource();
-            token = _operationCts.Token;
-            PublishLocked(InspectingSnapshot(generation, mount.RootVirtualKey));
+            _previewOptions = options;
+            PublishLocked(_snapshot with { PreviewOptions = options });
+            return _snapshot;
+        }
+    }
+
+    /// <summary>
+    /// Restores canonical C4 import scale and default preview values, clears the
+    /// animation selection, and reruns inspection. Source files are never modified.
+    /// </summary>
+    public Task<ExternalModelSnapshot> ResetToDefaultsAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            ThrowIfDisposed();
+
+            _importOptions = ExternalModelImportOptions.Default;
+            _previewOptions = ExternalModelPreviewOptions.Default;
+            _pairing = null;
+
+            PublishLocked(_snapshot with
+            {
+                ImportOptions = _importOptions,
+                PreviewOptions = _previewOptions,
+                AnimationPairing = null,
+            });
         }
 
-        return await InspectAsync(generation, mount, token, cancellationToken)
-            .ConfigureAwait(false);
+        return SetImportOptionsAsync(_importOptions, cancellationToken);
     }
 
     /// <summary>
@@ -156,12 +368,14 @@ public sealed class ExternalModelSession : IDisposable
             [
                 _operationCts,
                 _modelMount,
+                _animationMount,
                 _artifactLease,
                 _artifactStore,
             ];
 
             _operationCts = null;
             _modelMount = null;
+            _animationMount = null;
             _artifactLease = null;
 
             PublishLocked(_snapshot with { State = ExternalModelSessionState.Disposed });
@@ -186,29 +400,43 @@ public sealed class ExternalModelSession : IDisposable
             var generation = ++_generation;
             _operationCts = new CancellationTokenSource();
 
+            _modelFilePath = absoluteSelectedFile;
             _modelMount?.Dispose();
             _modelMount = null;
+            _animationMount?.Dispose();
+            _animationMount = null;
+            _animationCatalog = null;
             _artifactLease?.Dispose();
             _artifactLease = null;
+            _pairing = null;
 
-            PublishLocked(ExternalModelSnapshot.CreateEmpty(generation) with
+            PublishLocked(_snapshot with
             {
+                Generation = generation,
                 State = ExternalModelSessionState.Inspecting,
+                SourceDisplayName = null,
+                ImportOptions = _importOptions,
+                Catalog = null,
+                Diagnostics = [],
+                Eligibility = PreviewEligibility.NotEvaluated,
+                PreviewArtifact = null,
+                AnimationSourceDisplayName = null,
+                AnimationPairing = null,
             });
 
             IExternalSourceMount? mount = null;
             try
             {
-                mount = _modelMount = _mountFactory.Create(absoluteSelectedFile);
-                PublishLocked(InspectingSnapshot(generation, mount.RootVirtualKey));
+                mount = _modelMount = _mountFactory.Create(absoluteSelectedFile, _importOptions);
+                PublishLocked(_snapshot with
+                {
+                    Generation = generation,
+                    SourceDisplayName = mount.RootVirtualKey,
+                });
             }
             catch (Exception exception)
             {
-                PublishLocked(FailedSnapshot(generation, null, DiagnosticsFor(
-                    ExternalDiagnosticStage.Selection,
-                    ExternalDiagnosticSourceRole.Model,
-                    null,
-                    exception)));
+                PublishLocked(FailedSnapshot(generation, exception, ExternalDiagnosticSourceRole.Model));
                 return (generation, null, CancellationToken.None);
             }
 
@@ -216,7 +444,50 @@ public sealed class ExternalModelSession : IDisposable
         }
     }
 
-    private async Task<ExternalModelSnapshot> InspectAsync(
+    private (int Generation, IExternalSourceMount? Mount, CancellationToken Token) BeginAnimationLoad(
+        string absoluteSelectedFile)
+    {
+        lock (_gate)
+        {
+            ThrowIfDisposed();
+
+            _operationCts?.Cancel();
+            _operationCts?.Dispose();
+
+            var generation = ++_generation;
+            _operationCts = new CancellationTokenSource();
+
+            _animationFilePath = absoluteSelectedFile;
+            _animationMount?.Dispose();
+            _animationMount = null;
+            _animationCatalog = null;
+
+            if (_pairing is { Document: ExternalAnimationSourceDocument.SeparateDocument })
+            {
+                _pairing = null;
+                PublishLocked(_snapshot with
+                {
+                    AnimationSourceDisplayName = null,
+                    AnimationPairing = null,
+                });
+            }
+
+            IExternalSourceMount? mount = null;
+            try
+            {
+                mount = _animationMount = _mountFactory.Create(absoluteSelectedFile, _importOptions);
+            }
+            catch (Exception exception)
+            {
+                PublishLocked(FailedSnapshot(generation, exception, ExternalDiagnosticSourceRole.Animation));
+                return (generation, null, CancellationToken.None);
+            }
+
+            return (generation, mount, _operationCts.Token);
+        }
+    }
+
+    private async Task<ExternalModelSnapshot> InspectModelAsync(
         int generation,
         IExternalSourceMount mount,
         CancellationToken internalToken,
@@ -255,36 +526,43 @@ public sealed class ExternalModelSession : IDisposable
 
             if (failure is not null)
             {
-                PublishLocked(FailedSnapshot(generation, mount.RootVirtualKey, DiagnosticsFor(
-                    ExternalDiagnosticStage.Parse,
-                    ExternalDiagnosticSourceRole.Model,
-                    null,
-                    failure)));
+                PublishLocked(FailedSnapshot(generation, failure, ExternalDiagnosticSourceRole.Model, stage: ExternalDiagnosticStage.Parse));
                 return _snapshot;
             }
 
             if (catalog is null)
             {
-                PublishLocked(FailedSnapshot(generation, mount.RootVirtualKey, DiagnosticsFor(
-                    ExternalDiagnosticStage.Selection,
-                    ExternalDiagnosticSourceRole.Model,
-                    null,
-                    new InvalidDataException(
-                        $"Source document '{mount.RootVirtualKey}' was not found in its mount."))));
+                var exception = new InvalidDataException(
+                    $"Source document '{mount.RootVirtualKey}' was not found in its mount.");
+                PublishLocked(FailedSnapshot(generation, exception, ExternalDiagnosticSourceRole.Model));
                 return _snapshot;
             }
 
             var diagnostics = CatalogDiagnostics(catalog);
-            PublishLocked(new ExternalModelSnapshot(
-                generation,
-                ExternalModelSessionState.Ready,
-                mount.RootVirtualKey,
-                catalog,
-                diagnostics,
-                PreviewEligibility.Evaluate(diagnostics),
-                null));
+            PublishLocked(_snapshot with
+            {
+                Generation = generation,
+                State = ExternalModelSessionState.Ready,
+                Catalog = catalog,
+                Diagnostics = diagnostics,
+                Eligibility = PreviewEligibility.Evaluate(diagnostics),
+            });
             return _snapshot;
         }
+    }
+
+    private ExternalAnimationDescriptor? FindDescriptor(string selectedKey)
+    {
+        var descriptor = _snapshot.Catalog?.Animations.FirstOrDefault(a => a.Key == selectedKey);
+        descriptor ??= _animationCatalog?.Animations.FirstOrDefault(a => a.Key == selectedKey);
+        return descriptor;
+    }
+
+    private float? CurrentDurationLocked()
+    {
+        return _pairing is { } pairing
+            ? (float?)pairing.Descriptor.Duration.TotalSeconds
+            : null;
     }
 
     private static IReadOnlyList<ExternalModelDiagnostic> CatalogDiagnostics(ExternalAssetCatalog catalog)
@@ -304,40 +582,26 @@ public sealed class ExternalModelSession : IDisposable
         return ExternalModelDiagnosticMapper.SortAndCollapse(warnings);
     }
 
-    private static IReadOnlyList<ExternalModelDiagnostic> DiagnosticsFor(
-        ExternalDiagnosticStage stage,
-        ExternalDiagnosticSourceRole source,
-        string? context,
-        Exception exception)
-    {
-        return [ExternalModelDiagnosticMapper.Map(stage, source, context, exception)];
-    }
-
-    private static ExternalModelSnapshot InspectingSnapshot(int generation, string sourceDisplayName)
-    {
-        return new ExternalModelSnapshot(
-            generation,
-            ExternalModelSessionState.Inspecting,
-            sourceDisplayName,
-            null,
-            [],
-            PreviewEligibility.NotEvaluated,
-            null);
-    }
-
-    private static ExternalModelSnapshot FailedSnapshot(
+    private ExternalModelSnapshot FailedSnapshot(
         int generation,
-        string? sourceDisplayName,
-        IReadOnlyList<ExternalModelDiagnostic> diagnostics)
+        Exception exception,
+        ExternalDiagnosticSourceRole source,
+        ExternalDiagnosticStage stage = ExternalDiagnosticStage.Selection)
     {
-        return new ExternalModelSnapshot(
-            generation,
-            ExternalModelSessionState.Failed,
-            sourceDisplayName,
-            null,
-            ExternalModelDiagnosticMapper.SortAndCollapse(diagnostics),
-            PreviewEligibility.Evaluate(diagnostics),
-            null);
+        var diagnostics = new[]
+        {
+            ExternalModelDiagnosticMapper.Map(stage, source, null, exception),
+        };
+
+        return _snapshot with
+        {
+            Generation = generation,
+            State = ExternalModelSessionState.Failed,
+            Catalog = null,
+            Diagnostics = ExternalModelDiagnosticMapper.SortAndCollapse(diagnostics),
+            Eligibility = PreviewEligibility.Evaluate(diagnostics),
+            PreviewArtifact = null,
+        };
     }
 
     private void PublishLocked(ExternalModelSnapshot snapshot)
@@ -354,5 +618,13 @@ public sealed class ExternalModelSession : IDisposable
         {
             throw new ObjectDisposedException(nameof(ExternalModelSession));
         }
+    }
+}
+
+internal static class ExternalModelSnapshotExtensions
+{
+    public static bool FailedOrEmpty(this ExternalModelSnapshot snapshot)
+    {
+        return snapshot.State is ExternalModelSessionState.Failed or ExternalModelSessionState.Empty;
     }
 }

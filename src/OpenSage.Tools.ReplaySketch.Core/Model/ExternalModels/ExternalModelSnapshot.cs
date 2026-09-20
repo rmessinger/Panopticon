@@ -12,7 +12,9 @@ public sealed record ExternalPreviewArtifactMetadata(
 
 /// <summary>
 /// Immutable, complete session state. Published only as a whole, so consumers never
-/// observe partially updated state. A ready session may carry warnings.
+/// observe partially updated state. A ready session may carry warnings. Animation
+/// pairing, importer options, and preview options are explicit values with canonical
+/// C4 defaults.
 /// </summary>
 public sealed record ExternalModelSnapshot(
     int Generation,
@@ -21,7 +23,11 @@ public sealed record ExternalModelSnapshot(
     ExternalAssetCatalog? Catalog,
     IReadOnlyList<ExternalModelDiagnostic> Diagnostics,
     PreviewEligibility Eligibility,
-    ExternalPreviewArtifactMetadata? PreviewArtifact)
+    ExternalPreviewArtifactMetadata? PreviewArtifact,
+    string? AnimationSourceDisplayName,
+    ExternalAnimationPairing? AnimationPairing,
+    ExternalModelImportOptions ImportOptions,
+    ExternalModelPreviewOptions PreviewOptions)
 {
     public static ExternalModelSnapshot CreateEmpty(int generation)
     {
@@ -32,6 +38,10 @@ public sealed record ExternalModelSnapshot(
             null,
             [],
             PreviewEligibility.NotEvaluated,
-            null);
+            null,
+            null,
+            null,
+            ExternalModelImportOptions.Default,
+            ExternalModelPreviewOptions.Default);
     }
 }

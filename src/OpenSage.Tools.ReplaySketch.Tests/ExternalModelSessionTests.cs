@@ -100,8 +100,11 @@ public sealed class ExternalModelSessionTests : IDisposable
             _create = create;
         }
 
-        public IExternalSourceMount Create(string absoluteSelectedFile)
+        public int CreateCalls { get; private set; }
+
+        public IExternalSourceMount Create(string absoluteSelectedFile, ExternalModelImportOptions options)
         {
+            CreateCalls++;
             return _create(absoluteSelectedFile);
         }
     }
@@ -394,14 +397,16 @@ public sealed class ExternalModelSessionTests : IDisposable
     }
 
     [Fact]
-    public async Task ReloadAsync_ReinspectsSameMountUnderNewGeneration()
+    public async Task ReloadAsync_RecreatesMountWithCurrentOptions()
     {
-        FakeMount? mount = null;
-        using var session = CreateSession(file =>
+        FakeMount? firstMount = null;
+        var factory = new FakeMountFactory(file =>
         {
-            mount = new FakeMount(Path.GetFileName(file), new FakeInspector(_ => CreateCatalog()));
+            var mount = new FakeMount(Path.GetFileName(file), new FakeInspector(_ => CreateCatalog()));
+            firstMount ??= mount;
             return mount;
         });
+        using var session = new ExternalModelSession(factory, new FakeArtifactStore());
 
         var first = await session.LoadModelAsync(ModelPath("tank.gltf"));
         var second = await session.ReloadAsync();
@@ -409,7 +414,8 @@ public sealed class ExternalModelSessionTests : IDisposable
         Assert.Equal(2, second.Generation);
         Assert.Equal(ExternalModelSessionState.Ready, second.State);
         Assert.Equal(first.SourceDisplayName, second.SourceDisplayName);
-        Assert.False(mount!.IsDisposed);
+        Assert.True(firstMount!.IsDisposed);
+        Assert.Equal(2, factory.CreateCalls);
         Assert.Equal(2, session.CurrentSnapshot.Generation);
     }
 

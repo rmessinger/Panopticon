@@ -74,6 +74,12 @@ public sealed class ExternalModelReport
 
     public ExternalAssetCatalog? Catalog { get; }
 
+    public ExternalAnimationPairing? AnimationPairing { get; }
+
+    public ExternalModelImportOptions? ImportOptions { get; }
+
+    public ExternalModelPreviewOptions? PreviewOptions { get; }
+
     public IReadOnlyList<ExternalModelDiagnostic> Diagnostics { get; }
 
     public PreviewEligibility Eligibility { get; }
@@ -83,11 +89,17 @@ public sealed class ExternalModelReport
         ExternalSourceIdentity? animationSource,
         ExternalAssetCatalog? catalog,
         IReadOnlyList<ExternalModelDiagnostic>? diagnostics,
-        PreviewEligibility? eligibility)
+        PreviewEligibility? eligibility,
+        ExternalAnimationPairing? animationPairing = null,
+        ExternalModelImportOptions? importOptions = null,
+        ExternalModelPreviewOptions? previewOptions = null)
     {
         ModelSource = modelSource;
         AnimationSource = animationSource;
         Catalog = catalog;
+        AnimationPairing = animationPairing;
+        ImportOptions = importOptions;
+        PreviewOptions = previewOptions;
         Diagnostics = ExternalModelDiagnosticMapper.SortAndCollapse(diagnostics ?? []);
         Eligibility = eligibility ?? PreviewEligibility.NotEvaluated;
     }
