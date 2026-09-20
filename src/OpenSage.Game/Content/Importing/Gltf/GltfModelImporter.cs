@@ -47,7 +47,7 @@ internal sealed class GltfModelImporter : IModelImporter
 
         var root = document.Root;
         ValidateExtensionPolicy(root, _diagnostics);
-        EnforceDocumentLimits(modelKey.Path, root);
+        EnforceDocumentLimits(modelKey.Path, root, _options);
 
         var plan = GltfSceneConverter.CreatePlan(modelKey.Path, root, _options, document.HasDeclaredDefaultScene);
 
@@ -75,7 +75,7 @@ internal sealed class GltfModelImporter : IModelImporter
             for (var primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
             {
                 var primitive = primitives[primitiveIndex];
-                EnforcePrimitiveLimits(modelKey.Path, primitive, node.Name, primitiveIndex);
+                EnforcePrimitiveLimits(modelKey.Path, primitive, node.Name, primitiveIndex, _options);
 
                 var material = GltfMaterialConverter.Convert(primitive.Material, resolver);
                 var converted = GltfPrimitiveConverter.Convert(
@@ -111,7 +111,7 @@ internal sealed class GltfModelImporter : IModelImporter
                 for (var primitiveIndex = 0; primitiveIndex < primitives.Count; primitiveIndex++)
                 {
                     var primitive = primitives[primitiveIndex];
-                    EnforcePrimitiveLimits(modelKey.Path, primitive, node.Name, primitiveIndex);
+                    EnforcePrimitiveLimits(modelKey.Path, primitive, node.Name, primitiveIndex, _options);
 
                     var material = GltfMaterialConverter.Convert(primitive.Material, resolver);
                     var converted = GltfSkinConverter.ConvertSkinnedPrimitive(
@@ -168,7 +168,7 @@ internal sealed class GltfModelImporter : IModelImporter
         }
 
         ValidateExtensionPolicy(document.Root, _diagnostics);
-        EnforceDocumentLimits(modelKey.Path, document.Root);
+        EnforceDocumentLimits(modelKey.Path, document.Root, _options);
 
         var plan = GltfSceneConverter.CreatePlan(modelKey.Path, document.Root, _options, document.HasDeclaredDefaultScene);
         return plan.Skeleton;
@@ -191,18 +191,18 @@ internal sealed class GltfModelImporter : IModelImporter
         }
     }
 
-    private void EnforceDocumentLimits(string modelKey, ModelRoot root)
+    internal static void EnforceDocumentLimits(string modelKey, ModelRoot root, GltfImportOptions options)
     {
-        if (root.LogicalNodes.Count > _options.MaxNodeCount)
+        if (root.LogicalNodes.Count > options.MaxNodeCount)
         {
             throw new InvalidDataException(
-                $"glTF model '{modelKey}' has {root.LogicalNodes.Count} nodes; the limit is {_options.MaxNodeCount}.");
+                $"glTF model '{modelKey}' has {root.LogicalNodes.Count} nodes; the limit is {options.MaxNodeCount}.");
         }
 
-        if (root.LogicalMeshes.Count > _options.MaxMeshCount)
+        if (root.LogicalMeshes.Count > options.MaxMeshCount)
         {
             throw new InvalidDataException(
-                $"glTF model '{modelKey}' has {root.LogicalMeshes.Count} meshes; the limit is {_options.MaxMeshCount}.");
+                $"glTF model '{modelKey}' has {root.LogicalMeshes.Count} meshes; the limit is {options.MaxMeshCount}.");
         }
 
         if (root.LogicalSkins.Count > 1)
@@ -213,40 +213,40 @@ internal sealed class GltfModelImporter : IModelImporter
 
         foreach (var skin in root.LogicalSkins)
         {
-            if (skin.JointsCount > _options.MaxJointCount)
+            if (skin.JointsCount > options.MaxJointCount)
             {
                 throw new InvalidDataException(
-                    $"glTF model '{modelKey}' skin has {skin.JointsCount} joints; the limit is {_options.MaxJointCount}.");
+                    $"glTF model '{modelKey}' skin has {skin.JointsCount} joints; the limit is {options.MaxJointCount}.");
             }
         }
 
-        if (root.LogicalAnimations.Count > _options.MaxAnimationCount)
+        if (root.LogicalAnimations.Count > options.MaxAnimationCount)
         {
             throw new InvalidDataException(
-                $"glTF model '{modelKey}' has {root.LogicalAnimations.Count} animations; the limit is {_options.MaxAnimationCount}.");
+                $"glTF model '{modelKey}' has {root.LogicalAnimations.Count} animations; the limit is {options.MaxAnimationCount}.");
         }
     }
 
-    private void EnforcePrimitiveLimits(string modelPath, MeshPrimitive primitive, string nodeName, int primitiveIndex)
+    internal static void EnforcePrimitiveLimits(string modelPath, MeshPrimitive primitive, string nodeName, int primitiveIndex, GltfImportOptions options)
     {
         if (!primitive.VertexAccessors.TryGetValue("POSITION", out var positionAccessor))
         {
             return;
         }
 
-        if (positionAccessor.Count > _options.MaxVertexCount)
+        if (positionAccessor.Count > options.MaxVertexCount)
         {
             throw new InvalidDataException(
                 $"glTF model '{modelPath}' node '{nodeName}' primitive {primitiveIndex} has {positionAccessor.Count} " +
-                $"vertices; the limit is {_options.MaxVertexCount}.");
+                $"vertices; the limit is {options.MaxVertexCount}.");
         }
 
         var indexCount = primitive.IndexAccessor?.Count ?? positionAccessor.Count;
-        if (indexCount > _options.MaxIndexCount)
+        if (indexCount > options.MaxIndexCount)
         {
             throw new InvalidDataException(
                 $"glTF model '{modelPath}' node '{nodeName}' primitive {primitiveIndex} has {indexCount} " +
-                $"indices; the limit is {_options.MaxIndexCount}.");
+                $"indices; the limit is {options.MaxIndexCount}.");
         }
     }
 
