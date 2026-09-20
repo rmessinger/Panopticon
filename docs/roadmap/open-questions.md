@@ -283,6 +283,14 @@
   interactive scenario as the reference workload, and B2 (allocation), B3 (parallelism),
   B4 (pathfinding), B5 (rendering), and B7 (fidelity) each target sustaining ~10k units at ~30 fps
   single-node before the anchor is raised. Affects [B1–B5, B7](track-b-scale.md).
+- Geospatial map import source boundary. Decision: consume operator-supplied exports, not a live
+  Google service. B4b accepts KML/KMZ exported from Google Earth plus georeferenced DEM and imagery
+  raster files exported from operator-authorized Google Earth Engine datasets or other sources.
+  Google basemap imagery and terrain are not supported inputs. B4b records source and projection
+  metadata but does not authenticate to, scrape, or download from Google services. Repository
+  tests use synthetic fixtures. This keeps the importer deterministic and service-independent
+  while leaving source-data rights with the operator under the existing single-operator scope.
+  Affects [B4b](deep-dives/b4b-geospatial-map-generation.md).
 - Non-RTS validation domain completeness. Decision: minimal partition-stress harness. The first
   non-RTS (transport/graph) domain (see the Simulation-domain scope Decision) is implemented only as
   far as needed to exercise graph-cut (non-spatial) partitioning and edge-coupled interaction/owner

@@ -112,6 +112,16 @@ mindmap
         B4a-5 Chunked storage
         B4a-6 Round-trip and play
         B4a-7 Large-population scenario authoring
+      B4b Geospatial map generation ⮕
+        B4b-1 Input contract and dependency spike
+        B4b-2 Geospatial interchange
+        B4b-3 Local source readers
+        B4b-4 Coordinate normalization
+        B4b-5 Terrain and imagery generation
+        B4b-6 Vector semantics
+        B4b-7 H3 package output
+        B4b-8 WorldBuilder workflow
+        B4b-9 Validation and scale proof
       B5 Rendering at scale
       B6 Distributed simulation ⮕
         B6-1 Partition and boundary spec
@@ -303,6 +313,7 @@ flowchart LR
 
   subgraph S5["Stage 5 · Integration & round-trip validation"]
     direction TB
+    B4B["B4b Geospatial map generation"]
     E4["E4 Reference naval scenario"]
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence & replay"]
@@ -443,6 +454,8 @@ flowchart LR
   G4 --> G5
   H5 --> H7
   H6 --> H7
+  B4A --> B4B
+  H6 --> B4B
 
   %% Stage 5 -> 6
   F2 --> F8
@@ -450,7 +463,7 @@ flowchart LR
   F7 --> F8
 
   class A1,A2,A3,A4,A5,A5WB trackA;
-  class B1,B2,B3,B4,B4A,B5,B6,B7 trackB;
+  class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C4A,C5,C6 trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
