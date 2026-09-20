@@ -90,7 +90,7 @@ internal static class GltfPrimitiveConverter
         var meshes = new List<ImportedMesh>(splits.Count);
         foreach (var split in splits)
         {
-            meshes.Add(BuildMesh(split, converted, uv0, uv1, materialFactory(primitive.Material)));
+            meshes.Add(BuildMesh(split, uv0, uv1, materialFactory(primitive.Material), isSkinned: false));
         }
 
         return new GltfConvertedPrimitive(meshes, primitive.Material?.LogicalIndex ?? -1, attachment.SourceNodeIndex);
@@ -205,12 +205,12 @@ internal static class GltfPrimitiveConverter
         return vertices;
     }
 
-    private static ImportedMesh BuildMesh(
+    internal static ImportedMesh BuildMesh(
         GltfMeshSplitter.MeshSplit split,
-        ImportedVertex[] convertedVertices,
-        System.Numerics.Vector2[]? uv0,
-        System.Numerics.Vector2[]? uv1,
-        ImportedMaterial material)
+        Vector2[]? uv0,
+        Vector2[]? uv1,
+        ImportedMaterial material,
+        bool isSkinned)
     {
         var indices = new ushort[split.OriginalIndices.Count];
         for (var i = 0; i < split.OriginalIndices.Count; i++)
@@ -227,8 +227,8 @@ internal static class GltfPrimitiveConverter
         var boundingBox = GltfBoundsCalculator.ComputeBox(splitPositions);
         var boundingSphere = GltfBoundsCalculator.ComputeSphere(splitPositions);
 
-        Vector2[]? splitUv0 = CopySplitUv(uv0, split);
-        Vector2[]? splitUv1 = CopySplitUv(uv1, split);
+        var splitUv0 = CopySplitUv(uv0, split);
+        var splitUv1 = CopySplitUv(uv1, split);
 
         var meshPart = new ImportedMeshPart(
             splitUv0,
@@ -246,7 +246,7 @@ internal static class GltfPrimitiveConverter
             hidden: false,
             cameraOriented: false,
             hasHouseColor: false,
-            isSkinned: false,
+            isSkinned: isSkinned,
             [material],
             [meshPart]);
     }

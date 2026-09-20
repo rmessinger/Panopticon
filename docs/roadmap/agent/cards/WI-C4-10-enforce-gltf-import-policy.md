@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C4-10` |
 | Roadmap phase | [Track C · C4](../../track-c-external-assets.md): First production external format |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-C4-05`, `WI-C4-06`, `WI-C4-07`, `WI-C4-08`, `WI-C4-09` |
