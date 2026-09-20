@@ -13,7 +13,7 @@ using OpenSage.Tools.ReplaySketch.Model;
 using OpenSage.Tools.ReplaySketch.Services;
 using OpenSage.Tools.ReplaySketch.ViewModels;
 
-namespace OpenSage.Tools.ReplaySketch.Maui.Services;
+namespace OpenSage.Tools.ReplaySketch.Avalonia.Services;
 
 /// <summary>
 /// Deterministic Model-tab state for screenshot mode: an <see cref="ExternalModelViewModel"/>
@@ -49,8 +49,7 @@ public static class ExternalModelScreenshotFixture
             new SynchronousMainThreadDispatcher(),
             new FixturePreviewClient());
 
-        var command = (System.Windows.Input.ICommand)viewModel.ChooseModelCommand;
-        command.Execute(null);
+        ((System.Windows.Input.ICommand)viewModel.ChooseModelCommand).Execute(null);
 
         // Successful render publishes the stable preview image; a second, failing render
         // leaves one error diagnostic visible with the artifact retained.
