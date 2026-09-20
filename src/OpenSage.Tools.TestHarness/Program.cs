@@ -27,7 +27,10 @@ public static class Program
         // loading and scenario construction.
         if (Array.Exists(args, a => a.Equals("--external-model-request", StringComparison.OrdinalIgnoreCase)))
         {
-            Environment.Exit(ExternalModels.ExternalModelHost.RunArguments(args, reporter).ExitCode);
+            Environment.Exit(ExternalModels.ExternalModelHost.RunArguments(
+                args,
+                reporter,
+                new ExternalModels.ExternalModelSceneRenderer()).ExitCode);
             return;
         }
 

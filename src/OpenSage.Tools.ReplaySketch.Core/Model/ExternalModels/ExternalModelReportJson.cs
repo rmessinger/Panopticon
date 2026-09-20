@@ -39,6 +39,7 @@ public static class ExternalModelReportJson
             AnimationPairing = SerializePairing(report.AnimationPairing),
             ImportOptions = SerializeImportOptions(report.ImportOptions),
             PreviewOptions = SerializePreviewOptions(report.PreviewOptions),
+            RenderMetadata = SerializeRenderMetadata(report.RenderMetadata),
             Diagnostics = report.Diagnostics.Select(SerializeDiagnostic).ToArray(),
             Eligibility = SerializeEligibility(report.Eligibility),
         };
@@ -210,6 +211,24 @@ public static class ExternalModelReportJson
         };
     }
 
+    private static RenderMetadataPayload? SerializeRenderMetadata(ExternalRenderMetadata? metadata)
+    {
+        if (metadata is null)
+        {
+            return null;
+        }
+
+        return new RenderMetadataPayload
+        {
+            ViewportWidth = metadata.ViewportWidth,
+            ViewportHeight = metadata.ViewportHeight,
+            AnimationKey = metadata.AnimationKey,
+            AnimationSampleTimeSeconds = metadata.AnimationSampleTimeSeconds,
+            PngContentHash = metadata.PngContentHash,
+            PngByteLength = metadata.PngByteLength,
+        };
+    }
+
     private static DiagnosticPayload SerializeDiagnostic(ExternalModelDiagnostic diagnostic)
     {
         return new DiagnosticPayload
@@ -250,6 +269,8 @@ public static class ExternalModelReportJson
         public ImportOptionsPayload? ImportOptions { get; set; }
 
         public PreviewOptionsPayload? PreviewOptions { get; set; }
+
+        public RenderMetadataPayload? RenderMetadata { get; set; }
 
         public IReadOnlyList<DiagnosticPayload> Diagnostics { get; set; } = [];
 
@@ -416,6 +437,21 @@ public static class ExternalModelReportJson
         public string Target { get; set; } = "";
 
         public float Weight { get; set; }
+    }
+
+    private sealed class RenderMetadataPayload
+    {
+        public int ViewportWidth { get; set; }
+
+        public int ViewportHeight { get; set; }
+
+        public string? AnimationKey { get; set; }
+
+        public float? AnimationSampleTimeSeconds { get; set; }
+
+        public string? PngContentHash { get; set; }
+
+        public long? PngByteLength { get; set; }
     }
 
     private sealed class DiagnosticPayload

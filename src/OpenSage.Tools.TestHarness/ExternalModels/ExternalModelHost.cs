@@ -334,8 +334,28 @@ internal sealed class ExternalModelHost
                 return Failure(request, diagnostics);
             }
 
-            var report = BuildReport(request, importedModel, importedAnimation, diagnostics);
-            WriteReport(request.OutputReportPath, report);
+            // The success report is published last; if its replacement fails, a newly
+            // published image is removed so no partial result set survives.
+            var report = BuildReport(request, importedModel, importedAnimation, diagnostics, outcome);
+            try
+            {
+                ExternalModelArtifactWriter.PublishText(request.OutputReportPath, ExternalModelReportJson.Serialize(report));
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                if (request.OutputImagePath is { } publishedImage)
+                {
+                    ExternalModelArtifactWriter.RemoveImage(publishedImage);
+                }
+
+                diagnostics.Add(ExternalModelDiagnosticMapper.Map(
+                    ExternalDiagnosticStage.Render,
+                    ExternalDiagnosticSourceRole.Model,
+                    null,
+                    exception));
+                return Failure(request, diagnostics);
+            }
+
             foreach (var diagnostic in diagnostics)
             {
                 _reporter.Info($"[{diagnostic.Code}] {diagnostic.Message}");
@@ -401,8 +421,21 @@ internal sealed class ExternalModelHost
         ExternalModelRequest request,
         ImportedModel importedModel,
         ImportedAnimation? importedAnimation,
-        IReadOnlyList<ExternalModelDiagnostic> diagnostics)
+        IReadOnlyList<ExternalModelDiagnostic> diagnostics,
+        ExternalModelRenderOutcome? outcome = null)
     {
+        ExternalRenderMetadata? renderMetadata = null;
+        if (outcome is not null)
+        {
+            renderMetadata = new ExternalRenderMetadata(
+                request.Viewport.Width,
+                request.Viewport.Height,
+                request.PreviewOptions.SelectedAnimationKey,
+                request.PreviewOptions.SelectedAnimationKey is null ? null : request.PreviewOptions.AnimationSampleTime,
+                outcome.PngContentHash,
+                outcome.PngByteLength);
+        }
+
         return new ExternalModelReport(
             ReadIdentity(request.ModelSource),
             request.AnimationSource is { } source ? ReadIdentity(source) : null,
@@ -411,7 +444,8 @@ internal sealed class ExternalModelHost
             PreviewEligibility.Evaluate(diagnostics),
             animationPairing: BuildPairing(request, importedAnimation),
             importOptions: request.ImportOptions,
-            previewOptions: request.PreviewOptions);
+            previewOptions: request.PreviewOptions,
+            renderMetadata: renderMetadata);
     }
 
     private static ExternalAnimationPairing? BuildPairing(
@@ -476,7 +510,7 @@ internal sealed class ExternalModelHost
                 PreviewEligibility.Evaluate(diagnostics),
                 importOptions: null,
                 previewOptions: null);
-            WriteReport(request.OutputReportPath, report);
+            ExternalModelArtifactWriter.PublishText(request.OutputReportPath, ExternalModelReportJson.Serialize(report));
             return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
@@ -484,11 +518,6 @@ internal sealed class ExternalModelHost
             _reporter.Error($"Failure report could not be written: {exception.Message}");
             return false;
         }
-    }
-
-    private static void WriteReport(string path, ExternalModelReport report)
-    {
-        File.WriteAllText(path, ExternalModelReportJson.Serialize(report));
     }
 
     private static bool ReportWasWritten(ExternalModelRequest request)
@@ -522,7 +551,8 @@ internal sealed class ExternalModelHost
                         null,
                         "Render stage not implemented; request completed in report-only form."),
                 ],
-                PngByteLength: null);
+                PngByteLength: null,
+                PngContentHash: null);
         }
     }
 

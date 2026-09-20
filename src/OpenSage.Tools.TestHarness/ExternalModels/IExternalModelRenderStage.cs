@@ -21,7 +21,8 @@ internal sealed record ExternalModelRenderInputs(
 internal sealed record ExternalModelRenderOutcome(
     bool Succeeded,
     IReadOnlyList<ExternalModelDiagnostic> Diagnostics,
-    long? PngByteLength);
+    long? PngByteLength,
+    string? PngContentHash);
 
 /// <summary>
 /// Injectable render stage implemented by WI-C5-08. The default stage returns a structured
