@@ -44,6 +44,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\OpenSage.FileFormats.Nif\OpenSage.FileFormats.Nif.csproj" />
     <ProjectReference Include="..\OpenSage.Game\OpenSage.Game.csproj" />
     <ProjectReference Include="..\OpenSage.IO\OpenSage.IO.csproj" />
     <ProjectReference Include="..\OpenSage.Mods.BuiltIn\OpenSage.Mods.BuiltIn.csproj" />
