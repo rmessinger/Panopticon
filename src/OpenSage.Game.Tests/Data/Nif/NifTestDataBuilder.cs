@@ -194,3 +194,121 @@ public static class NifTestBlocks
         return stream.ToArray();
     }
 }
+
+public static class NifTestGeometry
+{
+    public static byte[] Shape(
+        string name = "",
+        int data = 0,
+        int skin = -1,
+        byte hasShader = 0,
+        int[]? properties = null,
+        (float X, float Y, float Z)? translation = null,
+        float scale = 1.0f)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteSizedString(name);
+        NifTestBlocks.WriteRefList(body, []);
+        body.WriteInt32(-1);
+        body.WriteUInt16(0);
+        NifTestBlocks.WriteVector3(body, translation ?? (0, 0, 0));
+        NifTestBlocks.WriteMatrix33Identity(body);
+        body.WriteSingle(scale);
+        NifTestBlocks.WriteRefList(body, properties ?? []);
+        body.WriteInt32(-1);
+        body.WriteInt32(data);
+        body.WriteInt32(skin);
+        body.WriteByte(hasShader);
+        return stream.ToArray();
+    }
+
+    public static byte[] GeometryData(
+        int numVertices,
+        (float X, float Y, float Z)[]? vertices = null,
+        bool hasNormals = true,
+        (float X, float Y, float Z)[]? normals = null,
+        ushort dataFlags = 1,
+        (float X, float Y, float Z) boundCenter = default,
+        float boundRadius = 1.0f,
+        bool hasColors = false,
+        ushort consistency = 0x4000,
+        (ushort V1, ushort V2, ushort V3)[]? triangles = null,
+        int? numTrianglePoints = null,
+        byte hasTriangles = 1,
+        ushort[]? matchGroupIndices = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        vertices ??= DefaultVertices(numVertices);
+        normals ??= vertices;
+        triangles ??= [(0, 1, 2)];
+        matchGroupIndices ??= [];
+
+        body.WriteUInt32(0);
+        body.WriteUInt16((ushort)numVertices);
+        body.WriteByte(0);
+        body.WriteByte(0);
+        body.WriteByte(1);
+        foreach (var v in vertices)
+        {
+            NifTestBlocks.WriteVector3(body, v);
+        }
+        body.WriteUInt16(dataFlags);
+        body.WriteByte((byte)(hasNormals ? 1 : 0));
+        if (hasNormals)
+        {
+            foreach (var n in normals)
+            {
+                NifTestBlocks.WriteVector3(body, n);
+            }
+        }
+        NifTestBlocks.WriteVector3(body, boundCenter);
+        body.WriteSingle(boundRadius);
+        body.WriteByte((byte)(hasColors ? 1 : 0));
+        var numUvSets = dataFlags & 0x3F;
+        for (var set = 0; set < numUvSets; set++)
+        {
+            for (var i = 0; i < numVertices; i++)
+            {
+                body.WriteSingle(i * 0.1f);
+                body.WriteSingle(1.0f - i * 0.1f);
+            }
+        }
+        body.WriteUInt16(consistency);
+        body.WriteUInt16((ushort)triangles.Length);
+        body.WriteInt32(numTrianglePoints ?? 3 * triangles.Length);
+        body.WriteByte(hasTriangles);
+        foreach (var t in triangles)
+        {
+            body.WriteUInt16(t.V1);
+            body.WriteUInt16(t.V2);
+            body.WriteUInt16(t.V3);
+        }
+        if (matchGroupIndices.Length == 0)
+        {
+            body.WriteUInt16(0);
+        }
+        else
+        {
+            body.WriteUInt16(1);
+            body.WriteUInt16((ushort)matchGroupIndices.Length);
+            foreach (var index in matchGroupIndices)
+            {
+                body.WriteUInt16(index);
+            }
+        }
+        return stream.ToArray();
+    }
+
+    private static (float, float, float)[] DefaultVertices(int count)
+    {
+        var result = new (float, float, float)[count];
+        for (var i = 0; i < count; i++)
+        {
+            result[i] = (i * 1.0f, i * 2.0f, i * 3.0f);
+        }
+        return result;
+    }
+}

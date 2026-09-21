@@ -63,6 +63,10 @@ public sealed record NifFile(
                 return NifNode.Read(reader);
             case "NiStringExtraData":
                 return NifStringExtraData.Read(reader);
+            case "NiTriShape":
+                return NifTriShape.Read(reader);
+            case "NiTriShapeData":
+                return NifTriShapeData.Read(reader);
             default:
                 throw new NotSupportedException(
                     $"NIF block {index} has unsupported type '{typeName}'.");
@@ -110,6 +114,22 @@ public sealed record NifFile(
                             ValidateReference(property, i, "Property");
                         }
                         ValidateReference(avBlock.CollisionObjectReference, i, "CollisionObject");
+                        if (blocks[i] is NifGeometry geometry)
+                        {
+                            ValidateReference(geometry.DataReference, i, "Data");
+                            if (geometry.DataReference >= 0 &&
+                                blocks[geometry.DataReference] is not NifTriShapeData)
+                            {
+                                throw new InvalidDataException(
+                                    $"NIF geometry block {i} references block {geometry.DataReference} " +
+                                    $"as data, but that block is a {blocks[geometry.DataReference].GetType().Name}.");
+                            }
+                            if (geometry.SkinInstanceReference != -1)
+                            {
+                                throw new NotSupportedException(
+                                    $"NIF geometry '{geometry.Name}' is skinned; skinning is out of C4a scope.");
+                            }
+                        }
                         if (blocks[i] is NifNode node)
                         {
                             foreach (var child in node.ChildReferences)
