@@ -54,7 +54,7 @@ internal sealed class NifModelImporter : IModelImporter
         }
 
         var skeleton = CreateDefaultSkeleton();
-        var subObjects = NifSceneConverter.Convert(file, name);
+        var subObjects = NifSceneConverter.Convert(file, name, context);
 
         return new ImportedModel(name, skeleton, subObjects, ImportedSkeletonOrigin.Default);
     }

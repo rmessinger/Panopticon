@@ -19,7 +19,8 @@ internal static class NifSceneConverter
 {
     internal static List<ImportedSubObject> Convert(
         FileFormatsNif.NifFile file,
-        string modelName)
+        string modelName,
+        AssetImportContext context)
     {
         var subObjects = new List<ImportedSubObject>();
 
@@ -29,7 +30,7 @@ internal static class NifSceneConverter
             if (rootBlock is FileFormatsNif.NifAvObject rootAvObject)
             {
                 Walk(file, root, NifTransformConverter.CreateLocalMatrix(rootAvObject),
-                    Matrix4x4.Identity, subObjects, modelName);
+                    Matrix4x4.Identity, subObjects, modelName, context);
             }
         }
 
@@ -48,7 +49,8 @@ internal static class NifSceneConverter
         Matrix4x4 local,
         Matrix4x4 parentWorld,
         List<ImportedSubObject> subObjects,
-        string modelName)
+        string modelName,
+        AssetImportContext context)
     {
         var block = file.Blocks[blockIndex];
         if (block is not FileFormatsNif.NifAvObject avObject)
@@ -64,7 +66,7 @@ internal static class NifSceneConverter
                 // Only the highest-detail child converts; the other LOD
                 // levels are dropped wholesale by contract.
                 var selectedChild = file.GetHighestDetailLodChild(lodNode);
-                Descend(file, selectedChild, world, subObjects, modelName);
+                Descend(file, selectedChild, world, subObjects, modelName, context);
                 break;
 
             case FileFormatsNif.NifNode node:
@@ -72,13 +74,13 @@ internal static class NifSceneConverter
                 {
                     if (child >= 0)
                     {
-                        Descend(file, child, world, subObjects, modelName);
+                        Descend(file, child, world, subObjects, modelName, context);
                     }
                 }
                 break;
 
             case FileFormatsNif.NifTriShape shape:
-                subObjects.Add(ConvertShape(file, shape, world, subObjects.Count, modelName));
+                subObjects.Add(ConvertShape(file, shape, world, subObjects.Count, modelName, context));
                 break;
         }
     }
@@ -88,12 +90,13 @@ internal static class NifSceneConverter
         int childIndex,
         Matrix4x4 parentWorld,
         List<ImportedSubObject> subObjects,
-        string modelName)
+        string modelName,
+        AssetImportContext context)
     {
         if (file.Blocks[childIndex] is FileFormatsNif.NifAvObject childAvObject)
         {
             Walk(file, childIndex, NifTransformConverter.CreateLocalMatrix(childAvObject),
-                parentWorld, subObjects, modelName);
+                parentWorld, subObjects, modelName, context);
         }
     }
 
@@ -102,7 +105,8 @@ internal static class NifSceneConverter
         FileFormatsNif.NifTriShape shape,
         Matrix4x4 world,
         int subObjectIndex,
-        string modelName)
+        string modelName,
+        AssetImportContext context)
     {
         if (shape.DataReference < 0 ||
             file.Blocks[shape.DataReference] is not FileFormatsNif.NifTriShapeData data)
@@ -155,12 +159,18 @@ internal static class NifSceneConverter
                 properties.Add(property);
             }
         }
-        var material = NifMaterialConverter.Convert(properties, file.Blocks, shape.Name);
+        var material = NifMaterialConverter.Convert(properties, file.Blocks, shape.Name, context);
 
         Vector2[]? textureCoordinates = null;
         if (data.NumUvSets > 0)
         {
-            textureCoordinates = data.UvSets[0];
+            // NIF UVs are V-up; engine textures are sampled top-down, so flip V.
+            var source = data.UvSets[0];
+            textureCoordinates = new Vector2[source.Length];
+            for (var i = 0; i < source.Length; i++)
+            {
+                textureCoordinates[i] = new Vector2(source[i].X, 1.0f - source[i].Y);
+            }
         }
 
         var meshPart = new ImportedMeshPart(

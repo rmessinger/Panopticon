@@ -20,7 +20,9 @@ public sealed class Ee2NifImportTests
     private const string ArchiveRelativePath = "zips/graphics.zip";
     private const float FeetPerMeter = 3.280839895f;
 
-    private static (ZipFileSystem FileSystem, NifModelImporter Importer) OpenArchive()
+    private const string TexturesArchiveRelativePath = "zips/textures.zip";
+
+    private static (FileSystem FileSystem, NifModelImporter Importer) OpenArchive(bool withTextures)
     {
         var root = Environment.GetEnvironmentVariable("EMPIRE_EARTH_II_PATH");
         if (string.IsNullOrEmpty(root))
@@ -36,12 +38,24 @@ public sealed class Ee2NifImportTests
                 $"Interactive test requires the EE2 graphics archive at '{archivePath}'.");
         }
 
-        return (new ZipFileSystem(archivePath), new NifModelImporter());
+        var fileSystem = (FileSystem)new ZipFileSystem(archivePath);
+        if (withTextures)
+        {
+            var texturesPath = Path.Combine(root, TexturesArchiveRelativePath);
+            if (!File.Exists(texturesPath))
+            {
+                throw new InvalidOperationException(
+                    $"Interactive test requires the EE2 textures archive at '{texturesPath}'.");
+            }
+            fileSystem = new CompositeFileSystem(fileSystem, new ZipFileSystem(texturesPath));
+        }
+
+        return (fileSystem, new NifModelImporter());
     }
 
-    private static ImportedModel Import(string key)
+    private static ImportedModel Import(string key, bool withTextures = false)
     {
-        var (fileSystem, importer) = OpenArchive();
+        var (fileSystem, importer) = OpenArchive(withTextures);
         using var _ = fileSystem;
         var context = new AssetImportContext(fileSystem, language: null);
         return importer.ImportModel(key, context)
@@ -142,6 +156,28 @@ public sealed class Ee2NifImportTests
     }
 
     [Fact]
+    public void TextureStageFollowsTexcacheAvailability()
+    {
+        // graphics.zip alone: no texcache resolves, C4a untextured fallback.
+        var untextured = Import("nwg1_galley");
+        var untexturedShading = ((ImportedMesh)untextured.SubObjects[0].RenderObject)
+            .Materials[0].FixedFunctionShading!;
+        Assert.False(untexturedShading.TexturingEnabled);
+        Assert.Equal(0, untexturedShading.TextureStageCount);
+
+        // With textures.zip mounted: the base stage turns on.
+        var textured = Import("nwg1_galley", withTextures: true);
+        var texturedShading = ((ImportedMesh)textured.SubObjects[0].RenderObject)
+            .Materials[0].FixedFunctionShading!;
+        Assert.True(texturedShading.TexturingEnabled);
+        Assert.Equal(1, texturedShading.TextureStageCount);
+        AssertTexture0(textured, 0, "nwg1_galley.tga", expectedStageCount: 1);
+
+        // Counts and bounds are unchanged by the texture resolution.
+        Assert.Equal(untextured.SubObjects.Count, textured.SubObjects.Count);
+    }
+
+    [Fact]
     public void MissingArchiveFailsWithDirectSetupMessage()
     {
         var root = Environment.GetEnvironmentVariable("EMPIRE_EARTH_II_PATH");
@@ -151,16 +187,16 @@ public sealed class Ee2NifImportTests
             return;
         }
 
-        var ex = Assert.ThrowsAny<InvalidOperationException>(() => OpenArchive());
+        var ex = Assert.ThrowsAny<InvalidOperationException>(() => OpenArchive(withTextures: false));
         Assert.Contains("EMPIRE_EARTH_II_PATH", ex.Message);
     }
 
-    private static void AssertTexture0(ImportedModel model, int i, string expected)
+    private static void AssertTexture0(ImportedModel model, int i, string expected, int expectedStageCount = 0)
     {
         var material = MeshAt(model, i).Materials[0];
         var textureProperty = material.Properties.Single(p => p.Name == "Texture0");
         Assert.Equal(expected, textureProperty.TextureName);
-        Assert.Equal(0, material.FixedFunctionShading.TextureStageCount);
+        Assert.Equal(expectedStageCount, material.FixedFunctionShading.TextureStageCount);
     }
 
     private static void AssertBounds(

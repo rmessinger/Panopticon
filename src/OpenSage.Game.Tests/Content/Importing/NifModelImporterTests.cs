@@ -157,7 +157,7 @@ public sealed class NifModelImporterTests
         Assert.NotNull(shading);
         Assert.Equal(new Vector3(0.4f, 0.5f, 0.6f), shading.Diffuse);
         Assert.Equal(new Vector3(0.25f, 0.25f, 0.25f), shading.Specular);
-        Assert.Equal(10.0f, shading.Shininess);
+        Assert.Equal(0.1f, shading.Shininess, 3); // glossiness 10 / 100
         Assert.Equal(1.0f, shading.Opacity);
         Assert.Equal(0, shading.TextureStageCount);
 

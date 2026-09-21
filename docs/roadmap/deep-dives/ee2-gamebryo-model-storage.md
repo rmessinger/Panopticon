@@ -397,6 +397,13 @@ Derived from the accumulated transforms and geometry (all determinants positive,
 - Baked world AABBs in source units: Galley `x [-14.71, 14.66] y [-23.91, 22.86]
   z [-9.92, 24.60]`; Bomber `x [-9.66, 9.62] y [-7.25, 6.53] z [-1.95, 5.61]`. The
   interactive descriptor tests lock these after the engine conversion.
+- Winding and culling: EE2 triangle winding matches neither engine front-face
+  orientation (each cull direction removes nearly the whole mesh), so NIF materials
+  import with culling disabled and the C4a winding-reversal rule stays as the
+  determinant-based mirror handling.
+- Glossiness: NIF carries a 3ds Max 0-100 glossiness; the engine's fixed-function
+  shininess multiplies the specular contribution directly, so the importer divides
+  by 100 (a raw 10 bleeds highlights to full white across the mesh).
 
 The single source-to-engine matrix C4a bakes into every shape (positions and normals, then
 bounds recomputed):
