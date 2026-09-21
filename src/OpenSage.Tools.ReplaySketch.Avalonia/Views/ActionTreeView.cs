@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
-using global::Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using global::Avalonia.Controls.Primitives;
 using OpenSage.Tools.ReplaySketch.Avalonia.Controls;
 using OpenSage.Tools.ReplaySketch.Avalonia.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;

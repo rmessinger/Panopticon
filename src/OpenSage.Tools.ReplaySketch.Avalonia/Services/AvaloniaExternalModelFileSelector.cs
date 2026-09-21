@@ -64,13 +64,13 @@ public sealed class AvaloniaExternalModelFileSelector : IExternalModelFileSelect
 /// </summary>
 public static class StorageProviderSource
 {
-    private static TopLevel? _topLevel;
+    private static TopLevel? TopLevelInstance;
 
     public static void Register(TopLevel topLevel)
     {
-        _topLevel = topLevel;
+        TopLevelInstance = topLevel;
     }
 
     public static IStorageProvider Current =>
-        (_topLevel ?? throw new InvalidOperationException("No TopLevel registered.")).StorageProvider;
+        (TopLevelInstance ?? throw new InvalidOperationException("No TopLevel registered.")).StorageProvider;
 }

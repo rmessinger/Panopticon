@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
-using global::Avalonia.Interactivity;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using global::Avalonia.Interactivity;
 using OpenSage.Tools.ReplaySketch.Avalonia.ViewModels;
 using OpenSage.Tools.ReplaySketch.Model;
 
@@ -243,7 +243,7 @@ public sealed class ScenarioView : UserControl
 
     private static Control FieldRow(string label, Control control)
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,80" ) };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,80") };
         var lbl = new TextBlock
         {
             Text = label,

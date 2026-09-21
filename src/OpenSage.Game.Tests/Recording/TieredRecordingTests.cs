@@ -282,20 +282,23 @@ public class TieredRecordingTests : MockedGameTest
         var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         var outputDir = Path.Combine(Path.GetTempPath(), $"opensage_run_{Guid.NewGuid():N}");
         var snapshotPath = Path.Combine(outputDir, "snapshots.bin");
-        using var recording = RunRecording.Attach(
+        RunOutput output;
+        using (var recording = RunRecording.Attach(
             host, game, seed: 42, scenarioId: "a1-milestone",
-            sampleInterval: 10, snapshotInterval: 10, snapshotArtifactPath: snapshotPath);
-        recording.ArmReferenceTrigger(referenceTrees);
+            sampleInterval: 10, snapshotInterval: 10, snapshotArtifactPath: snapshotPath))
+        {
+            recording.ArmReferenceTrigger(referenceTrees);
 
-        host.Run(40);
-        game.VictorySystem.Surrender(game.PlayerManager.Players[2]);
-        var result = host.Run(60, h => game.CurrentOutcome.Status == OutcomeStatus.Decided);
+            host.Run(40);
+            game.VictorySystem.Surrender(game.PlayerManager.Players[2]);
+            var result = host.Run(60, h => game.CurrentOutcome.Status == OutcomeStatus.Decided);
 
-        // Reached match end headlessly.
-        Assert.True(result.StopPredicateTriggered);
-        Assert.Equal(OutcomeStatus.Decided, game.CurrentOutcome.Status);
+            // Reached match end headlessly.
+            Assert.True(result.StopPredicateTriggered);
+            Assert.Equal(OutcomeStatus.Decided, game.CurrentOutcome.Status);
 
-        var output = recording.Complete();
+            output = recording.Complete();
+        } // dispose before touching the artifact files: Windows requires it
         Assert.Equal(42u, output.Seed);
         Assert.Equal(OutcomeStatus.Decided, output.Outcome!.Status);
 
