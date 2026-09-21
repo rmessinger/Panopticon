@@ -504,3 +504,54 @@ public static class NifTestLod
         return stream.ToArray();
     }
 }
+
+public static class NifTestTexcache
+{
+    /// <summary>
+    /// Builds a synthetic texcache byte stream: one NiPixelData block with the
+    /// given DXT format and mip chain (sizes derived from the block math).
+    /// </summary>
+    public static byte[] Texcache(uint format, params (uint Width, uint Height)[] mips)
+    {
+        var block = new MemoryStream();
+        var body = new NifBodyWriter(block);
+
+        body.WriteUInt32(0);               // leading u32 (read by NifFile)
+        body.WriteUInt32(format);          // format
+        body.WriteUInt32(0);               // red mask
+        body.WriteUInt32(0);               // green mask
+        body.WriteUInt32(0);               // blue mask
+        body.WriteUInt32(0);               // alpha mask
+        body.WriteUInt32(0);               // bits per pixel
+        body.WriteUInt32(format);          // format repeat
+        body.WriteUInt32(0);               // unknown 1
+        body.WriteUInt32(0);               // unknown 2
+        body.WriteInt32(-1);               // palette
+        body.WriteUInt32((uint)mips.Length);
+        body.WriteUInt32(0);               // bytes per pixel
+
+        uint blockBytes = format == 4 ? 8u : 16u;
+        uint offset = 0;
+        var pixels = new MemoryStream();
+        foreach (var (w, h) in mips)
+        {
+            body.WriteUInt32(w);
+            body.WriteUInt32(h);
+            body.WriteUInt32(offset);
+            var size = Math.Max(1u, (w + 3) / 4) * Math.Max(1u, (h + 3) / 4) * blockBytes;
+            var data = new byte[size];
+            pixels.Write(data);
+            offset += size;
+        }
+
+        body.WriteUInt32((uint)pixels.Length);
+        var blockBytes2 = block.ToArray();
+        var pixelBytes = pixels.ToArray();
+
+        var builder = new NifTestDataBuilder();
+        var pixelType = builder.AddBlockType("NiPixelData");
+        builder.AddBlock(pixelType, [.. blockBytes2, .. pixelBytes]);
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+}

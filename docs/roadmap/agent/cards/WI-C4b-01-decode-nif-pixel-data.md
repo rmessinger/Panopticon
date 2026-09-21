@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4b-01` |
 | Roadmap phase | [Track C · C4b](../../track-c-external-assets.md): EE2 cooked texture decoding |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4a-02`, `WI-C4a-05` |
