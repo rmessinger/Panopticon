@@ -42,10 +42,15 @@ internal sealed class NifModelImporter : IModelImporter
             return null;
         }
 
+        // ZIP entry streams are not seekable; the bounded reader requires a
+        // knowable length, so buffer the (small) model into memory.
         FileFormats.Nif.NifFile file;
         using (var stream = entry.Open())
+        using (var buffered = new MemoryStream())
         {
-            file = FileFormats.Nif.NifFile.Read(stream);
+            stream.CopyTo(buffered);
+            buffered.Position = 0;
+            file = FileFormats.Nif.NifFile.Read(buffered);
         }
 
         var skeleton = CreateDefaultSkeleton();

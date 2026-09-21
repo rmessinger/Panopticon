@@ -387,10 +387,15 @@ Derived from the accumulated transforms and geometry (all determinants positive,
   the C4 glTF convention (the C4 `(x, y, z) -> (z, x, y)` mapping is an even permutation).
 - Up axis: `+Z` (identity root rotations; masts and superstructure extend along `+Z`).
 - Front axis: `-Y`. Bomber evidence: propellers (`y = -5.7`), both pilot meshes
-  (`y = -5.4`), and nose landing gear at `y = +6.1` is the tail skid of a WW1-style
-  tail-dragger; the Galley ram bow sits at `-Y` (extent `-23.9` vs `+22.9`).
-- Unit scale: meters (Galley hull spans 46.8 NIF units, bomber fuselage 14.2, both matching
-  real-world sizes). The engine unit is feet per C4 (1 m renders 3.28084 units).
+  (`y = -5.4`), and the tail wheel at `y = +6.1` marks the rear of a WW1-style
+  tail-dragger; the Galley's longer end is `-Y` (extent `-23.91` vs `+18.32`).
+- Unit scale: meters. Baked world extents (source units, from the importer's unit-tested
+  transform bake): the Galley spans 46.8 along the fore-aft axis, 29.4 across the oars, and
+  34.5 mast-to-keel; the Bomber spans 19.3 wingspan, 13.8 fuselage, 7.6 gear-to-tail. The
+  engine unit is feet per C4 (1 m renders 3.28084 units).
+- Baked world AABBs in source units: Galley `x [-14.71, 14.66] y [-23.91, 22.86]
+  z [-9.92, 24.60]`; Bomber `x [-9.66, 9.62] y [-7.25, 6.53] z [-1.95, 5.61]`. The
+  interactive descriptor tests lock these after the engine conversion.
 
 The single source-to-engine matrix C4a bakes into every shape (positions and normals, then
 bounds recomputed):

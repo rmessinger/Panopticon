@@ -49,7 +49,7 @@ public sealed record NifTexturingProperty : NifProperty
         var slots = new Dictionary<string, NifTextureDescriptor>();
         for (var i = 0; i < SlotNames.Length; i++)
         {
-            if (i > 4 && TextureCount <= (uint)i - 1)
+            if (i > 4 && TextureCount <= (uint)i)
             {
                 break;
             }
