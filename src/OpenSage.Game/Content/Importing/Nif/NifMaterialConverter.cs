@@ -113,7 +113,7 @@ internal static class NifMaterialConverter
 
         return new ImportedMaterial(
             ImportedMaterial.FixedFunctionFamily,
-            ImportedCullMode.Back,
+            ImportedCullMode.None, // EXPERIMENT
             depthWriteEnabled,
             depthComparison,
             blendEnabled,
