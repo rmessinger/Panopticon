@@ -118,6 +118,7 @@ block. Models reference textures by source name (`NiSourceTexture` -> `nwg1_gall
 runtime resolves the name to `<name>.texcache`, mirroring Generals' by-name texture lookup.
 Player colors are applied through `cache/pcpcache/<name><A..K>.pcpatch` pixel patches (e.g.
 `nwg1_galley_sailA..K`), one per player slot, patched onto the base texture at runtime.
+C4b decodes the texcache containers; pixel patches stay out of scope.
 
 ## 7. Mapping onto the C1 interchange model
 

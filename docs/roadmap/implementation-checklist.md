@@ -769,7 +769,13 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     operator-supplied `graphics.zip` through C1, materialize as runtime `Model` assets, and
     produce recognizable captures; the Bomber uses its highest-detail LOD, source texture names
     survive import while rendering uses untextured diffuse materials, and no EE2 assets are
-    committed.
+    committed.- [ ] C4b EE2 cooked texture decoding.
+      - AC: texcache NiPixelData containers decode with validated contiguous DXT mip
+      chains; both C4a proof captures render textured through `textures.zip` with the
+      alpha-blended Bomber materials intact, and the untextured fallback still applies
+      when a texcache entry is absent; `.pcpatch` stays out of scope.
+
+
 - [x] C5 Authoring & validation tooling (extend ReplaySketch; licensing out of scope).
   - AC: the ReplaySketch Model tab inspects an isolated external glTF root, lists clips and
     structured C1-C4 diagnostics, pairs an optional animation through C2, and applies explicit
