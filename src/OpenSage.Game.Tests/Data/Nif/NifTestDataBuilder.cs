@@ -105,6 +105,13 @@ public sealed class NifBodyWriter(Stream stream)
         WriteUInt32(unchecked((uint)value));
     }
 
+    public void WriteInt16(short value)
+    {
+        Span<byte> span = stackalloc byte[2];
+        System.Buffers.Binary.BinaryPrimitives.WriteInt16LittleEndian(span, value);
+        stream.Write(span);
+    }
+
     public void WriteSingle(float value)
     {
         WriteUInt32(unchecked((uint)BitConverter.SingleToUInt32Bits(value)));
@@ -310,5 +317,150 @@ public static class NifTestGeometry
             result[i] = (i * 1.0f, i * 2.0f, i * 3.0f);
         }
         return result;
+    }
+}
+
+public static class NifTestProperties
+{
+    public static byte[] Base(string name = "")
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteSizedString(name);
+        NifTestBlocks.WriteRefList(body, []);
+        body.WriteInt32(-1);
+        return stream.ToArray();
+    }
+
+    public static byte[] Material(
+        (float R, float G, float B) ambient = default,
+        (float R, float G, float B) diffuse = default,
+        (float R, float G, float B) specular = default,
+        (float R, float G, float B) emissive = default,
+        float glossiness = 10.0f,
+        float alpha = 1.0f,
+        string name = "")
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteBytes(Base(name));
+        WriteColor(body, ambient);
+        WriteColor(body, diffuse);
+        WriteColor(body, specular);
+        WriteColor(body, emissive);
+        body.WriteSingle(glossiness);
+        body.WriteSingle(alpha);
+        return stream.ToArray();
+    }
+
+    public static byte[] Texturing(
+        uint applyMode = 4,
+        uint textureCount = 7,
+        (int Source, uint Clamp, uint Filter, uint UvSet, short Ps2L, short Ps2K)? baseSlot = null,
+        string name = "",
+        uint numShaderTextures = 0,
+        byte? baseTransformFlag = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteBytes(Base(name));
+        body.WriteUInt32(applyMode);
+        body.WriteUInt32(textureCount);
+        var slots = new[] { "Base", "Dark", "Detail", "Gloss", "Glow", "BumpMap", "Decal0", "Decal1", "Decal2", "Decal3" };
+        for (var i = 0; i < slots.Length; i++)
+        {
+            if (i > 4 && textureCount <= (uint)i - 1)
+            {
+                break;
+            }
+            if (i == 0 && baseSlot is { } slot)
+            {
+                body.WriteByte(1);
+                body.WriteInt32(slot.Source);
+                body.WriteUInt32(slot.Clamp);
+                body.WriteUInt32(slot.Filter);
+                body.WriteUInt32(slot.UvSet);
+                body.WriteInt16(slot.Ps2L);
+                body.WriteInt16(slot.Ps2K);
+                body.WriteByte(baseTransformFlag ?? 0);
+            }
+            else
+            {
+                body.WriteByte(0);
+            }
+        }
+        body.WriteUInt32(numShaderTextures);
+        return stream.ToArray();
+    }
+
+    public static byte[] SourceTexture(
+        string fileName = "model.tga",
+        byte useExternal = 1,
+        int pixelData = -1,
+        uint pixelLayout = 3,
+        uint useMipmaps = 1,
+        uint alphaFormat = 1,
+        byte isStatic = 1,
+        string name = "")
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteBytes(Base(name));
+        body.WriteByte(useExternal);
+        body.WriteSizedString(fileName);
+        body.WriteInt32(pixelData);
+        body.WriteUInt32(pixelLayout);
+        body.WriteUInt32(useMipmaps);
+        body.WriteUInt32(alphaFormat);
+        body.WriteByte(isStatic);
+        return stream.ToArray();
+    }
+
+    public static byte[] Alpha(ushort flags = 0x12ED, byte threshold = 100)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteBytes(Base());
+        body.WriteUInt16(flags);
+        body.WriteByte(threshold);
+        return stream.ToArray();
+    }
+
+    public static byte[] Specular(ushort flags = 1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteBytes(Base());
+        body.WriteUInt16(flags);
+        return stream.ToArray();
+    }
+
+    public static byte[] ZBuffer(ushort flags = 3, uint function = 3)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteBytes(Base());
+        body.WriteUInt16(flags);
+        body.WriteUInt32(function);
+        return stream.ToArray();
+    }
+
+    public static byte[] VertexColor(ushort flags = 0xCDCD, uint vertexMode = 0, uint lightingMode = 1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteBytes(Base());
+        body.WriteUInt16(flags);
+        body.WriteUInt32(vertexMode);
+        body.WriteUInt32(lightingMode);
+        return stream.ToArray();
+    }
+
+    private static void WriteColor(NifBodyWriter body, (float R, float G, float B) color)
+    {
+        body.WriteSingle(color.R);
+        body.WriteSingle(color.G);
+        body.WriteSingle(color.B);
     }
 }

@@ -20,7 +20,6 @@ public sealed class NifSceneGraphTests
             flags: 0x10,
             translation: (1.5f, -2.25f, 3.0f),
             scale: 2.0f,
-            properties: [2],
             children: [2, -1, -1]));
         builder.AddBlock(nodeType, NifTestBlocks.Node(name: "mast"));
         builder.AddBlock(extraType, NifTestBlocks.StringExtraData("UserPropBuffer", "NiOptimizeKeep"));
@@ -58,7 +57,6 @@ public sealed class NifSceneGraphTests
         Assert.Equal(2.0f, hull.Scale);
         Assert.True(hull.Rotation.IsIdentity(1e-6f));
         Assert.Equal([3], hull.ExtraDataReferences);
-        Assert.Equal([2], hull.PropertyReferences);
         // Null child references are preserved verbatim.
         Assert.Equal([2, -1, -1], hull.ChildReferences);
 

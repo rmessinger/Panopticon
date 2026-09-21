@@ -67,6 +67,20 @@ public sealed record NifFile(
                 return NifTriShape.Read(reader);
             case "NiTriShapeData":
                 return NifTriShapeData.Read(reader);
+            case "NiMaterialProperty":
+                return NifMaterialProperty.Read(reader);
+            case "NiTexturingProperty":
+                return NifTexturingProperty.Read(reader);
+            case "NiSourceTexture":
+                return NifSourceTexture.Read(reader);
+            case "NiAlphaProperty":
+                return NifAlphaProperty.Read(reader);
+            case "NiSpecularProperty":
+                return NifSpecularProperty.Read(reader);
+            case "NiZBufferProperty":
+                return NifZBufferProperty.Read(reader);
+            case "NiVertexColorProperty":
+                return NifVertexColorProperty.Read(reader);
             default:
                 throw new NotSupportedException(
                     $"NIF block {index} has unsupported type '{typeName}'.");
@@ -107,11 +121,32 @@ public sealed record NifFile(
                         }
                     }
                     ValidateReference(netBlock.ControllerReference, i, "Controller");
+                    if (blocks[i] is NifTexturingProperty texturingBlock)
+                    {
+                        foreach (var slot in texturingBlock.Slots.Values)
+                        {
+                            ValidateReference(slot.SourceReference, i, "TextureSource");
+                            if (slot.SourceReference >= 0 &&
+                                blocks[slot.SourceReference] is not NifSourceTexture)
+                            {
+                                throw new InvalidDataException(
+                                    $"NIF texturing property block {i} references block " +
+                                    $"{slot.SourceReference} as a texture source, but that block is a " +
+                                    $"{blocks[slot.SourceReference].GetType().Name}.");
+                            }
+                        }
+                    }
                     if (blocks[i] is NifAvObject avBlock)
                     {
                         foreach (var property in avBlock.PropertyReferences)
                         {
                             ValidateReference(property, i, "Property");
+                            if (property >= 0 && blocks[property] is not NifProperty)
+                            {
+                                throw new InvalidDataException(
+                                    $"NIF block {i} references block {property} as a property, " +
+                                    $"but that block is a {blocks[property].GetType().Name}.");
+                            }
                         }
                         ValidateReference(avBlock.CollisionObjectReference, i, "CollisionObject");
                         if (blocks[i] is NifGeometry geometry)
