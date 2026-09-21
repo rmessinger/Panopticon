@@ -72,13 +72,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.WorldBuilder.Core", "OpenSage.Tools.WorldBuilder.Core\OpenSage.Tools.WorldBuilder.Core.csproj", "{3EECB25F-C088-49FD-B5F7-26119ACD1B51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.WorldBuilder.Maui", "OpenSage.Tools.WorldBuilder.Maui\OpenSage.Tools.WorldBuilder.Maui.csproj", "{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch.Tests", "OpenSage.Tools.ReplaySketch.Tests\OpenSage.Tools.ReplaySketch.Tests.csproj", "{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.W3dPatcher", "OpenSage.Tools.W3dPatcher\OpenSage.Tools.W3dPatcher.csproj", "{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch.Avalonia", "OpenSage.Tools.ReplaySketch.Avalonia\OpenSage.Tools.ReplaySketch.Avalonia.csproj", "{D40F9BB2-2CE9-E031-3968-259EE4B1084A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.WorldBuilder.Avalonia", "OpenSage.Tools.WorldBuilder.Avalonia\OpenSage.Tools.WorldBuilder.Avalonia.csproj", "{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -414,18 +414,6 @@ Global
 		{3EECB25F-C088-49FD-B5F7-26119ACD1B51}.Release|x64.Build.0 = Release|Any CPU
 		{3EECB25F-C088-49FD-B5F7-26119ACD1B51}.Release|x86.ActiveCfg = Release|Any CPU
 		{3EECB25F-C088-49FD-B5F7-26119ACD1B51}.Release|x86.Build.0 = Release|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|x64.Build.0 = Debug|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Debug|x86.Build.0 = Debug|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|x64.ActiveCfg = Release|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|x64.Build.0 = Release|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|x86.ActiveCfg = Release|Any CPU
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE}.Release|x86.Build.0 = Release|Any CPU
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -462,6 +450,18 @@ Global
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|x64.Build.0 = Release|Any CPU
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|x86.ActiveCfg = Release|Any CPU
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Release|x86.Build.0 = Release|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Debug|x64.Build.0 = Debug|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Debug|x86.Build.0 = Debug|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Release|x64.ActiveCfg = Release|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Release|x64.Build.0 = Release|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Release|x86.ActiveCfg = Release|Any CPU
+		{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -478,7 +478,6 @@ Global
 		{E6D28A7B-DBC0-4CC5-AF38-D2DB005D91D8} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{FE48484E-79D8-474F-9C19-C0786CE95FC2} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{3EECB25F-C088-49FD-B5F7-26119ACD1B51} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
-		{54A59626-6AEC-4678-9ACA-8BF424BF6DAE} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{55412B7A-555E-4AFC-9B8C-8CC6D07A01EE} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A} = {DA1B5AB5-4CC9-49CB-ACF1-34CF6A69D5BE}
 	EndGlobalSection

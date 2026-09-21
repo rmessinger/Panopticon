@@ -302,3 +302,6 @@ imgui.ini
 ShaderCache
 DeveloperMode.ini
 .exchange
+
+# Local WorldBuilder screenshot captures
+/worldbuilder-shot/
