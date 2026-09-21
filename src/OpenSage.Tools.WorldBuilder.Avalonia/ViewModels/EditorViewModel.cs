@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using OpenSage.Tools.WorldBuilder.Core;
 
-namespace OpenSage.Tools.WorldBuilder.Maui.ViewModels;
+namespace OpenSage.Tools.WorldBuilder.Avalonia.ViewModels;
 
 /// <summary>
 /// Root view model for the editor. Holds active map, tool selection, undo/redo

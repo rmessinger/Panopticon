@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Numerics;
-using System.Reflection;
 using OpenSage;
 using OpenSage.Data;
 using OpenSage.Data.Map;
 using OpenSage.Graphics;
+using OpenSage.Graphics.Rendering;
 using OpenSage.Input;
+using OpenSage.Logic.Map;
 using OpenSage.Mathematics;
+using OpenSage.Network;
+using OpenSage.Terrain;
 using Veldrid;
 using Rectangle = OpenSage.Mathematics.Rectangle;
 
@@ -20,12 +24,11 @@ public sealed class GameViewportRenderer : IDisposable
     private readonly List<InputMessage> _pendingInputMessages = [];
 
     private Game? _game;
-    private Swapchain? _swapchain;
-    private TextureCopier? _textureCopier;
     private EditorMap? _editorMap;
     private bool _needsTerrainReload;
+    private long _frameVersion;
 
-    public bool IsInitialized => _game != null && _swapchain != null;
+    public bool IsInitialized => _game != null;
 
     public uint Width { get; private set; }
 
@@ -48,7 +51,26 @@ public sealed class GameViewportRenderer : IDisposable
     public bool IsLockAngle { get; set; }
     public bool IsTopDown { get; set; }
 
-    public void Initialize(SwapchainSource source, uint width, uint height)
+    /// <summary>
+    /// Presenting front-ends increment this after presenting a frame; callers can
+    /// poll it to avoid re-reading an unchanged frame.
+    /// </summary>
+    public long FrameVersion => _frameVersion;
+
+    /// <summary>
+    /// The offscreen color target of the last rendered frame. Presentation
+    /// (native swapchain or CPU readback) is owned by the front-end.
+    /// </summary>
+    public Veldrid.Texture? FrameTexture =>
+        _game?.Panel.Framebuffer.ColorTargets[0].Target;
+
+    public Veldrid.GraphicsDevice? GraphicsDevice => _game?.GraphicsDevice;
+
+    /// <summary>
+    /// Creates the offscreen game. Frames render into the panel framebuffer;
+    /// the front-end presents them however its UI toolkit requires.
+    /// </summary>
+    public void Initialize(uint width, uint height)
     {
         if (IsInitialized || Installation == null || width == 0 || height == 0)
         {
@@ -59,12 +81,8 @@ public sealed class GameViewportRenderer : IDisposable
         Height = height;
 
         GraphicsBackend? preferredBackend = GetPreferredBackend();
-        _game = new Game(Installation, preferredBackend, new Configuration(), null!);
+        _game = new Game(installation: Installation, preferredBackend, new Configuration { NoAudio = true, SkipStartingBuildings = true }, null!);
 
-        SwapchainDescription swapchainDesc = new(source, width, height, null, true);
-        _swapchain = _game.GraphicsDevice.ResourceFactory.CreateSwapchain(ref swapchainDesc);
-
-        _textureCopier = new TextureCopier(_game, _swapchain.Framebuffer.OutputDescription);
         _game.Panel.EnsureFrame(CreateBounds(width, height));
 
         if (_editorMap != null)
@@ -77,7 +95,7 @@ public sealed class GameViewportRenderer : IDisposable
 
     public void Resize(uint width, uint height)
     {
-        if (_swapchain == null || _game == null || width == 0 || height == 0)
+        if (_game == null || width == 0 || height == 0)
         {
             return;
         }
@@ -90,13 +108,14 @@ public sealed class GameViewportRenderer : IDisposable
         Width = width;
         Height = height;
 
-        _swapchain.Resize(width, height);
         _game.Panel.EnsureFrame(CreateBounds(width, height));
     }
 
     public void RenderFrame()
     {
-        if (_game == null || _swapchain == null || _textureCopier == null || Width == 0 || Height == 0)
+        // Game.Update requires a scene (logic ticks read GameEngine from it);
+        // before a map is loaded there is nothing to render.
+        if (_game == null || _game.Scene3D is null || Width == 0 || Height == 0)
         {
             return;
         }
@@ -118,12 +137,7 @@ public sealed class GameViewportRenderer : IDisposable
         _game.Update(inputMessages);
         _game.Panel.EnsureFrame(CreateBounds(Width, Height));
         _game.Render();
-
-        _textureCopier.Execute(
-            _game.Panel.Framebuffer.ColorTargets[0].Target,
-            _swapchain.Framebuffer);
-
-        _game.GraphicsDevice.SwapBuffers(_swapchain);
+        _frameVersion++;
     }
 
     public void OnPointerEvent(ViewportPointerEvent pointerEvent)
@@ -235,80 +249,55 @@ public sealed class GameViewportRenderer : IDisposable
             _pendingInputMessages.Clear();
         }
 
-        _textureCopier?.Dispose();
-        _textureCopier = null;
-
-        _swapchain?.Dispose();
-        _swapchain = null;
-
         _game?.Dispose();
         _game = null;
     }
+
+    /// <summary>
+    /// Raised with a human-readable status line when a map load succeeds or
+    /// is refused; the UI relays it to the status bar.
+    /// </summary>
+    public event Action<string>? LoadStatus;
 
     private void LoadMapCore(EditorMap map)
     {
         if (_game == null || map.MapFile.HeightMapData == null || map.MapFile.SidesList == null || map.MapFile.GlobalLighting == null)
         {
+            LoadStatus?.Invoke("Map lacks height, sides, or lighting data; no 3D preview.");
             return;
         }
 
-        _game.TerrainLogic.SetHeightMapData(map.MapFile.HeightMapData);
+        // Load through the game's own single-player flow: it performs the full
+        // StartGame sequence (sides setup, scene construction, seeded randoms,
+        // network buffer, camera framing, culling) that the render pipeline
+        // expects. Maps outside the game file system are refused for the 3D
+        // preview rather than constructed ad hoc, which crashes GPU drivers;
+        // mounting editor maps into a composite file system is follow-up work.
+        if (map.FilePath is { } mapPath && _game.ContentManager.GetMapEntry(mapPath) != null)
+        {
+            _game.StartSinglePlayerGame(mapPath);
+            FrameCameraOnMap(map);
+            LoadStatus?.Invoke($"3D preview: {Path.GetFileName(mapPath)}");
+        }
+        else
+        {
+            LoadStatus?.Invoke(
+                "3D preview requires the map to live inside the game installation; " +
+                "editing still works, the viewport stays blank.");
+        }
+    }
 
-        Assembly assembly = typeof(Game).Assembly;
-        Type gameTypeType = assembly.GetType("OpenSage.GameType", throwOnError: true)!;
-        object singlePlayer = Enum.Parse(gameTypeType, "SinglePlayer", ignoreCase: false);
-
-        Type sidesListUtilityType = assembly.GetType("OpenSage.Logic.Map.SidesListUtility", throwOnError: true)!;
-        MethodInfo setupGameSidesMethod = sidesListUtilityType.GetMethod(
-            "SetupGameSides",
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
-            ?? throw new InvalidOperationException("Could not locate SidesListUtility.SetupGameSides.");
-
-        object?[] sideSetupArguments =
-        [
-            _game,
-            map.MapFile,
-            null,
-            singlePlayer,
-            null,
-            null,
-            null
-        ];
-
-        setupGameSidesMethod.Invoke(null, sideSetupArguments);
-
-        Type playerType = assembly.GetType("OpenSage.Data.Map.Player", throwOnError: true)!;
-        Type teamType = assembly.GetType("OpenSage.Data.Map.Team", throwOnError: true)!;
-        Type scriptListType = assembly.GetType("OpenSage.Scripting.ScriptList", throwOnError: true)!;
-
-        ConstructorInfo sceneConstructor = typeof(Scene3D).GetConstructor(
-            BindingFlags.Instance | BindingFlags.NonPublic,
-            binder: null,
-            [
-                typeof(IGame),
-                typeof(MapFile),
-                typeof(string),
-                playerType.MakeArrayType(),
-                teamType.MakeArrayType(),
-                scriptListType.MakeArrayType(),
-                gameTypeType
-            ],
-            modifiers: null)
-            ?? throw new InvalidOperationException("Could not locate Scene3D map constructor.");
-
-        string mapPath = map.FilePath ?? "WorldBuilder.map";
-        object scene = sceneConstructor.Invoke(
-        [
-            _game,
-            map.MapFile,
-            mapPath,
-            sideSetupArguments[4]!,
-            sideSetupArguments[5]!,
-            sideSetupArguments[6]!,
-            singlePlayer
-        ]);
-
-        _game.Scene3D = (IScene3D)scene;
+    private void FrameCameraOnMap(EditorMap map)
+    {
+        // The tactical camera starts unpositioned; aim it at the map centre so
+        // the viewport shows terrain immediately instead of empty space.
+        var heightMap = map.MapFile.HeightMapData!;
+        var centerX = heightMap.Width * HeightMap.HorizontalScale / 2f;
+        var centerY = heightMap.Height * HeightMap.HorizontalScale / 2f;
+        _game!.Scene3D!.TacticalView.LookAt(new Vector3(centerX, centerY, 0));
+        _game.Scene3D.TacticalView.InitHeightForMap();
+        _game.Scene3D.TacticalView.SetAngleAndPitchToDefault();
+        _game.Scene3D.TacticalView.SetZoomToDefault();
     }
 
     private void QueueInputMessage(InputMessage inputMessage)
