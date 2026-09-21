@@ -464,3 +464,43 @@ public static class NifTestProperties
         body.WriteSingle(color.B);
     }
 }
+
+public static class NifTestLod
+{
+    public static byte[] LodNode(int[] children, int lodData, ushort switchFlags = 1, int switchIndex = 0, string name = "body")
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteSizedString(name);
+        NifTestBlocks.WriteRefList(body, []);
+        body.WriteInt32(-1);
+        body.WriteUInt16(0);
+        NifTestBlocks.WriteVector3(body, (0, 0, 0));
+        NifTestBlocks.WriteMatrix33Identity(body);
+        body.WriteSingle(1.0f);
+        NifTestBlocks.WriteRefList(body, []);
+        body.WriteInt32(-1);
+        NifTestBlocks.WriteRefList(body, children);
+        NifTestBlocks.WriteRefList(body, []);
+        body.WriteUInt16(switchFlags);
+        body.WriteInt32(switchIndex);
+        body.WriteInt32(lodData);
+        return stream.ToArray();
+    }
+
+    public static byte[] RangeLodData(params (float Near, float Far)[] ranges)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestBlocks.WriteVector3(body, (0, 0, 0));
+        body.WriteUInt32((uint)ranges.Length);
+        foreach (var (near, far) in ranges)
+        {
+            body.WriteSingle(near);
+            body.WriteSingle(far);
+        }
+        return stream.ToArray();
+    }
+}

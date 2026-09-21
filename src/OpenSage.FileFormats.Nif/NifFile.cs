@@ -54,6 +54,62 @@ public sealed record NifFile(
         return new NifFile(header, blocks, roots);
     }
 
+    /// <summary>
+    /// Returns the block index of the highest-detail child of the given
+    /// NiLODNode: the child whose range has the minimum near distance.
+    /// The minimum must be unambiguous.
+    /// </summary>
+    public int GetHighestDetailLodChild(NifLodNode lodNode)
+    {
+        if (lodNode.LodDataReference < 0 ||
+            Blocks[lodNode.LodDataReference] is not NifRangeLodData rangeData)
+        {
+            throw new InvalidDataException(
+                $"NIF LOD node '{lodNode.Name}' has no range data.");
+        }
+
+        var bestIndex = -1;
+        var bestNear = float.PositiveInfinity;
+        var ambiguous = false;
+        for (var i = 0; i < rangeData.Ranges.Count; i++)
+        {
+            var near = rangeData.Ranges[i].Near;
+            if (near < bestNear)
+            {
+                bestNear = near;
+                bestIndex = i;
+                ambiguous = false;
+            }
+            else if (near == bestNear)
+            {
+                ambiguous = true;
+            }
+        }
+
+        if (ambiguous)
+        {
+            throw new InvalidDataException(
+                $"NIF LOD node '{lodNode.Name}' has an ambiguous minimum near distance {bestNear}.");
+        }
+
+        var childIndex = 0;
+        foreach (var child in lodNode.ChildReferences)
+        {
+            if (child < 0)
+            {
+                continue;
+            }
+            if (childIndex == bestIndex)
+            {
+                return child;
+            }
+            childIndex++;
+        }
+
+        throw new InvalidDataException(
+            $"NIF LOD node '{lodNode.Name}' has no child at LOD index {bestIndex}.");
+    }
+
     private static NifBlock ReadBlock(NifBinaryReader reader, NifHeader header, int index)
     {
         var typeName = header.Blocks[index].TypeName;
@@ -81,6 +137,10 @@ public sealed record NifFile(
                 return NifZBufferProperty.Read(reader);
             case "NiVertexColorProperty":
                 return NifVertexColorProperty.Read(reader);
+            case "NiLODNode":
+                return NifLodNode.Read(reader);
+            case "NiRangeLODData":
+                return NifRangeLodData.Read(reader);
             default:
                 throw new NotSupportedException(
                     $"NIF block {index} has unsupported type '{typeName}'.");
@@ -163,6 +223,34 @@ public sealed record NifFile(
                             {
                                 throw new NotSupportedException(
                                     $"NIF geometry '{geometry.Name}' is skinned; skinning is out of C4a scope.");
+                            }
+                        }
+                        if (blocks[i] is NifLodNode lodNode)
+                        {
+                            ValidateReference(lodNode.LodDataReference, i, "LODLevelData");
+                            if (lodNode.LodDataReference >= 0 &&
+                                blocks[lodNode.LodDataReference] is not NifRangeLodData)
+                            {
+                                throw new InvalidDataException(
+                                    $"NIF LOD node '{lodNode.Name}' references block " +
+                                    $"{lodNode.LodDataReference} as LOD data, but that block is a " +
+                                    $"{blocks[lodNode.LodDataReference].GetType().Name}.");
+                            }
+                            var nonNullChildren = 0;
+                            foreach (var child in lodNode.ChildReferences)
+                            {
+                                if (child >= 0)
+                                {
+                                    nonNullChildren++;
+                                }
+                            }
+                            if (lodNode.LodDataReference >= 0 &&
+                                nonNullChildren != ((NifRangeLodData)blocks[lodNode.LodDataReference]).Ranges.Count)
+                            {
+                                throw new InvalidDataException(
+                                    $"NIF LOD node '{lodNode.Name}' has {nonNullChildren} children but " +
+                                    $"its range data declares " +
+                                    $"{((NifRangeLodData)blocks[lodNode.LodDataReference]).Ranges.Count} levels.");
                             }
                         }
                         if (blocks[i] is NifNode node)
