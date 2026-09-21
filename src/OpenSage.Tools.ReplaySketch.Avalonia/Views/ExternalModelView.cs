@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Controls.Templates;
 using Avalonia.Media.Imaging;
 using OpenSage.Content.Importing;
 using OpenSage.Tools.ReplaySketch.Model;

@@ -367,7 +367,12 @@ public static class WorldStateArtifact
         var snapshots = new List<WorldStateSummary>();
         var deltas = new List<WorldStateDelta>();
 
-        using var reader = new StateReader(new FileStream(path, FileMode.Open, FileAccess.Read), game);
+        // FileShare.ReadWrite: artifacts are flushed per record, so loading is
+        // legal while the owning recorder still holds the write stream (Windows
+        // refuses an exclusive-mode open in that state).
+        using var reader = new StateReader(
+            new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite),
+            game);
         while (reader.BaseStream.Position < reader.BaseStream.Length)
         {
             var tag = byte.MaxValue;
