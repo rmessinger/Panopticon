@@ -4,12 +4,12 @@ namespace OpenSage.FileFormats.Nif;
 /// NiNode at 10.1.0.0: child and effect reference lists. Null (-1)
 /// child references are preserved verbatim.
 /// </summary>
-public sealed record NifNode : NifAvObject
+public record NifNode : NifAvObject
 {
     public int[] ChildReferences { get; }
     public int[] EffectReferences { get; }
 
-    private NifNode(NifBinaryReader reader)
+    protected NifNode(NifBinaryReader reader)
         : base(reader)
     {
         ChildReferences = reader.ReadBlockReferenceList("Children");

@@ -63,6 +63,7 @@ public sealed record NifHeader(
                 throw new InvalidDataException(
                     $"NIF block {i} has type index {typeIndex} but only {numTypes} block types exist.");
             }
+
             entries[i] = new NifBlockDirectoryEntry(i, typeIndex, blockTypes[typeIndex]);
         }
 
