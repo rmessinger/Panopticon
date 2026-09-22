@@ -60,6 +60,7 @@ public sealed class W3dTruckDraw : W3dModelDraw
             {
                 continue;
             }
+
             boneInstance.AnimatedOffset.Rotation = Quaternion.CreateFromYawPitchRoll(0, 0, yaw);
             boneInstance.AnimatedOffset.Rotation *= Quaternion.CreateFromYawPitchRoll(MathUtility.ToRadians(roll), 0, 0);
         }

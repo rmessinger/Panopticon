@@ -38,6 +38,7 @@ public abstract class DockUpdate : UpdateModule
         {
             return pose.Translation;
         }
+
         return GameObject.Translation;
     }
 
@@ -48,6 +49,7 @@ public abstract class DockUpdate : UpdateModule
         {
             return pose.Translation;
         }
+
         return GameObject.Translation;
     }
 

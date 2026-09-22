@@ -56,6 +56,7 @@ internal sealed class AptView : DiagnosticView
                 DrawDisplayListRecursive(0, aptWindow.Root);
                 ImGui.TreePop();
             }
+
             ImGui.EndChild();
 
             ImGui.SameLine();
@@ -85,8 +86,10 @@ internal sealed class AptView : DiagnosticView
                             {
                                 ImGuiUtility.PropertyRow(frameLabels.Key, frameLabels.Value);
                             }
+
                             ImGuiUtility.EndPropertyList();
                         }
+
                         break;
                     case RenderItem ri:
                         if (_selectedItem.Character is Text)
@@ -109,6 +112,7 @@ internal sealed class AptView : DiagnosticView
                             ImGuiUtility.PropertyRow("GeometryID", shape.Geometry);
                             ImGuiUtility.EndPropertyList();
                         }
+
                         break;
                 }
 
@@ -122,6 +126,7 @@ internal sealed class AptView : DiagnosticView
                             ImGuiUtility.PropertyRow(variable.Key, CreateObject(variable.Value));
                         }
                     }
+
                     ImGuiUtility.EndPropertyList();
                 }
 
@@ -136,9 +141,11 @@ internal sealed class AptView : DiagnosticView
                             ImGuiUtility.PropertyRow($"{index++}", CreateObject(variable));
                         }
                     }
+
                     ImGuiUtility.EndPropertyList();
                 }
             }
+
             ImGui.EndChild();
         }
     }
@@ -232,6 +239,7 @@ internal sealed class AptView : DiagnosticView
             _selectedItem.Highlight = false;
             _selectedItem = null;
         }
+
         _selectedItem = item;
         _selectedItem.Highlight = true;
         Context.SelectedAptWindow = _selectedItem.Context.Window;

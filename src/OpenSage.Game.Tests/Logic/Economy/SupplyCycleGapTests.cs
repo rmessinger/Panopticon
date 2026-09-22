@@ -294,6 +294,7 @@ public class SupplyCycleGapTests : MockedGameTest
                 return;
             }
         }
+
         throw new InvalidOperationException($"Field '{fieldName}' not found on {instance.GetType()}");
     }
 

@@ -48,6 +48,7 @@ internal readonly struct SearchPattern
         {
             throw new ArgumentNullException(nameof(name));
         }
+
         // if _execMatch is null and _regexMatch is null, we have a * match
         return _exactMatch != null ? _exactMatch == name : _regexMatch is null || _regexMatch.IsMatch(name);
     }
@@ -98,6 +99,7 @@ internal readonly struct SearchPattern
 
             startIndex = nextIndex + 1;
         }
+
         if (builder is null)
         {
             _exactMatch = searchPattern;

@@ -161,6 +161,7 @@ public static class ValidationGroundMapRenderer
             var p = Project(map.ExtentMin, map.ExtentMax, structure.Position, offsetX, offsetY, previewSize);
             rects.Add(new SKRect(p.X - StructureHalfSize, p.Y - StructureHalfSize, p.X + StructureHalfSize, p.Y + StructureHalfSize));
         }
+
         return rects;
     }
 
@@ -191,11 +192,13 @@ public static class ValidationGroundMapRenderer
             {
                 continue;
             }
+
             var unit = markers[i + 1];
             if (unit.IsTarget || unit.FactionIndex != target.FactionIndex || unit.RosterIndex != target.RosterIndex)
             {
                 continue;
             }
+
             canvas.DrawLine(
                 new SKPoint(unit.ScreenX, unit.ScreenY),
                 new SKPoint(target.ScreenX, target.ScreenY),
@@ -218,10 +221,12 @@ public static class ValidationGroundMapRenderer
         {
             return targetScreen;
         }
+
         if (distance < 0.0001f)
         {
             return new SKPoint(unitScreen.X + MinimumMarkerSeparationPx, unitScreen.Y);
         }
+
         var scale = MinimumMarkerSeparationPx / distance;
         return new SKPoint(unitScreen.X + dx * scale, unitScreen.Y + dy * scale);
     }
@@ -246,6 +251,7 @@ public static class ValidationGroundMapRenderer
             {
                 continue;
             }
+
             unitPaint.Color = FactionColor(m.FactionIndex);
             canvas.DrawCircle(new SKPoint(m.ScreenX, m.ScreenY), UnitRadius, unitPaint);
         }
@@ -283,6 +289,7 @@ public static class ValidationGroundMapRenderer
             target = plan.TargetPlacements[targetIndex];
             return true;
         }
+
         target = null;
         return false;
     }

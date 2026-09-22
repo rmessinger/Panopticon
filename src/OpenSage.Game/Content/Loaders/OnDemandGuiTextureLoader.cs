@@ -85,6 +85,7 @@ internal sealed class OnDemandGuiTextureLoader : IOnDemandAssetLoader<GuiTexture
                 {
                     goto case ".tga";
                 }
+
                 var ddsFile = DdsFile.FromFileSystemEntry(entry);
                 return CreateTextureFromDds(ddsFile, graphicsDevice);
 

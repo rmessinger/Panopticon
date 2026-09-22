@@ -53,9 +53,11 @@ internal sealed class ObjectListView : DiagnosticView
                     _currentItem = item;
                     Context.SelectedObject = item;
                 }
+
                 ImGuiUtility.DisplayTooltipOnHover(name);
             }
         }
+
         clipper.Destroy();
 
         ImGui.EndChild();

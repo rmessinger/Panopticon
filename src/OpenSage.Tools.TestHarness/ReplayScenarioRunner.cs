@@ -150,6 +150,7 @@ public static class ReplayScenarioRunner
                 var decidedOn = (uint)(outcome.DecidedOnFrame ?? (int)frame);
                 runoutEndLogicFrame = decidedOn + RunoutLogicFrames;
             }
+
             reporter.MatchOutcomeDecided(outcome.Status, outcome.Reason, outcome.WinningPlayer?.Name, frame);
         };
 

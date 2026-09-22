@@ -48,6 +48,7 @@ public class JetAIUpdateAttackTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
         return game;
     }

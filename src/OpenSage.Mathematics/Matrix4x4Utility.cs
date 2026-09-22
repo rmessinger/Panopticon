@@ -12,6 +12,7 @@ public static class Matrix4x4Utility
         {
             throw new System.InvalidOperationException();
         }
+
         return result;
     }
 

@@ -42,6 +42,7 @@ public sealed class BmpRasterData
 
                         readBytes += 3;
                     }
+
                     break;
 
                 case 32:
@@ -57,6 +58,7 @@ public sealed class BmpRasterData
 
                         readBytes += 4;
                     }
+
                     break;
 
                 default:
@@ -72,8 +74,10 @@ public sealed class BmpRasterData
                             // Invert y, because DIB data is stored bottom-to-top.
                             pixels[((height - 1 - y) * width) + x + i] = (byte)((byteValue >> shift) & bitMask);
                         }
+
                         readBytes++;
                     }
+
                     break;
             }
 

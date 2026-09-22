@@ -136,14 +136,17 @@ public sealed class GeneralsControlBar : IControlBar
         {
             lblName.Text = name;
         }
+
         if (_descriptionWindow.Controls.FindControl("ControlBarPopupDescription.wnd:StaticTextCost") is Label lblCost)
         {
             lblCost.Text = cost;
         }
+
         if (_descriptionWindow.Controls.FindControl("ControlBarPopupDescription.wnd:StaticTextDescription") is Label lblDesc)
         {
             lblDesc.Text = description;
         }
+
         _descriptionWindow.Show();
     }
 
@@ -396,6 +399,7 @@ public sealed class GeneralsControlBar : IControlBar
                     {
                         child.Hide();
                     }
+
                     control.Show();
                 }
                 else
@@ -502,6 +506,7 @@ public sealed class GeneralsControlBar : IControlBar
                                 // as far as I can tell there's no real way to figure that out other than just monitoring for the first one
                                 firstExitCommand = i;
                             }
+
                             var container = selectedUnit.FindBehavior<OpenContainModule>();
 
                             if (slotsUsed >= container.TotalSlots)
@@ -529,6 +534,7 @@ public sealed class GeneralsControlBar : IControlBar
                                 buttonControl.Enabled = false;
                                 slotsUsed += 1;
                             }
+
                             buttonControl.Show();
                             break;
                         case CommandType.Evacuate:
@@ -671,6 +677,7 @@ public sealed class GeneralsControlBar : IControlBar
                             {
                                 img = controlBar._window.ImageLoader.CreateFromMappedImageReference(job.UpgradeDefinition.ButtonImage);
                             }
+
                             var posCopy = pos;
 
                             queueButton.SystemCallback = (control, message, context) =>
@@ -691,6 +698,7 @@ public sealed class GeneralsControlBar : IControlBar
                             };
                         }
                     }
+
                     queueButton.BackgroundImage = img;
                     queueButton.OverlayImage = overlayImage;
 

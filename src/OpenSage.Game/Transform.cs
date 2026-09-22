@@ -88,6 +88,7 @@ public sealed class Transform
                     Matrix4x4.CreateTranslation(Translation);
                 _isMatrixDirty = false;
             }
+
             return _matrix;
         }
 
@@ -124,6 +125,7 @@ public sealed class Transform
                 _matrixInverse = Matrix4x4Utility.Invert(Matrix);
                 _isMatrixInverseDirty = false;
             }
+
             return _matrixInverse;
         }
     }

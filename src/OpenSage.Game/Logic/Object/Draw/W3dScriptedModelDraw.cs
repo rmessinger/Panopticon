@@ -104,6 +104,7 @@ public sealed class RandomTexture
         {
             result.Second = parser.ScanAssetReference(second.Value);
         }
+
         return result;
     }
 

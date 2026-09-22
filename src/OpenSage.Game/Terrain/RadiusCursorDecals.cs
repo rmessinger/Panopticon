@@ -135,6 +135,7 @@ internal sealed class RadiusCursorDecals : DisposableBase
                 handle.IsOpacityIncreasing = !handle.IsOpacityIncreasing;
                 handle.NextOpacityDirectionChange = time.TotalTime + handle.Template.OpacityThrobTime / 2f;
             }
+
             if (handle.IsOpacityIncreasing)
             {
                 handle.Decal.Opacity += opacityDelta;

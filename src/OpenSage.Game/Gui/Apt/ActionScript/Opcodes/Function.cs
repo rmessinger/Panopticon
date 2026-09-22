@@ -194,6 +194,7 @@ public sealed class CallMethod : InstructionBase
 
             FunctionCommon.ExecuteFunction(funcName, args, obj, context);
         }
+
         // Else the function is on the stack
         else
         {
@@ -224,6 +225,7 @@ public sealed class CallMethodPop : InstructionBase
 
             FunctionCommon.ExecuteFunction(funcName, args, obj, context);
         }
+
         // Else the function is on the stack
         else
         {

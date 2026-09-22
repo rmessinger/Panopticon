@@ -40,6 +40,7 @@ public sealed class ScopedSingleAsset<TAsset> : IScopedSingleAssetStorage
         {
             toPush = new TAsset();
         }
+
         _assetStack.Push(toPush);
     }
 

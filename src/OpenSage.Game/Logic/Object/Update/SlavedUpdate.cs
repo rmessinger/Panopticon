@@ -80,6 +80,7 @@ public class SlavedUpdateModule : UpdateModule
                         var readyDuration = GameEngine.GameLogic.Random.NextLogicFrameSpan(_moduleData.RepairMinReadyTime, _moduleData.RepairMaxReadyTime);
                         _waitUntil = GameEngine.GameLogic.CurrentFrame + readyDuration;
                     }
+
                     break;
                 case RepairStatus.READY:
                     if (GameEngine.GameLogic.CurrentFrame >= _waitUntil)
@@ -92,6 +93,7 @@ public class SlavedUpdateModule : UpdateModule
                         GameObject.AIUpdate.SetTargetPoint(_master.Translation + offset);
                         _repairStatus = RepairStatus.IN_TRANSITION;
                     }
+
                     break;
                 case RepairStatus.IN_TRANSITION:
                     if (!isMoving)
@@ -111,12 +113,14 @@ public class SlavedUpdateModule : UpdateModule
                         _waitUntil = GameEngine.GameLogic.CurrentFrame + weldDuration;
                         _repairStatus = RepairStatus.WELDING;
                     }
+
                     break;
                 case RepairStatus.WELDING:
                     if (GameEngine.GameLogic.CurrentFrame >= _waitUntil)
                     {
                         _repairStatus = RepairStatus.READY;
                     }
+
                     break;
             }
 
@@ -133,6 +137,7 @@ public class SlavedUpdateModule : UpdateModule
                         _repairStatus = RepairStatus.INITIAL;
                         GameObject.AIUpdate.SetLocomotor(LocomotorSetType.Normal);
                     }
+
                     break;
             }
         }

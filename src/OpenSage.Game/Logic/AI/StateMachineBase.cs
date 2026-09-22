@@ -273,6 +273,7 @@ internal abstract class StateMachineBase : IPersistableObject, IDisposable
             {
                 return StateReturnType.Failure;
             }
+
             return _currentState.CheckForSleepTransitions(StateReturnType.Sleep(_sleepTill - now));
         }
 
@@ -331,6 +332,7 @@ internal abstract class StateMachineBase : IPersistableObject, IDisposable
             {
                 return;
             }
+
             SetGoalObjectImpl(value);
         }
     }

@@ -37,6 +37,7 @@ public class DebugMessageHandler : InputMessageHandler
                         _overlay.ToggleQuadTree();
                         return InputMessageResult.Handled;
                 }
+
                 break;
         }
 

@@ -270,6 +270,7 @@ public sealed class AnimationInstance
                     _keyframeIndices[i] = j;
                 }
             }
+
             Evaluate(
                 clip,
                 previous,

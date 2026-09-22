@@ -36,6 +36,11 @@ The general rule we follow is "use Visual Studio defaults".
     `x is { Count: > 0 } y`) are exempt: the braces are a pattern, not a block. Enforced by
     `scripts/check_brace_newline.py` in CI (the `else`/`catch`/`finally` cases are also
     covered by `.editorconfig`'s `csharp_new_line_before_*` through `dotnet format`).
+    Additionally, a closing brace that ends its line must be separated from a following
+    statement by one blank line; nested block ends, punctuation followers, and clause
+    continuations (`else`, `catch`, `finally`, `while`, `when`) stay adjacent. One-liners
+    such as `{ get; set; }` are unaffected. Also enforced by
+    `scripts/check_brace_newline.py`.
 
 An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been provided at the root of the OpenSage repository, enabling C# auto-formatting conforming to the above guidelines.
 

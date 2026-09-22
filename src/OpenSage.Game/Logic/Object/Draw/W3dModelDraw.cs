@@ -79,6 +79,7 @@ public class W3dModelDraw : DrawModule
             {
                 return null;
             }
+
             foreach (var subObject in modelInstance.Model.SubObjects)
             {
                 if (subObject.RenderObject is ModelMesh mesh)
@@ -87,6 +88,7 @@ public class W3dModelDraw : DrawModule
                 }
 
             }
+
             return null;
         }
     }
@@ -265,6 +267,7 @@ public class W3dModelDraw : DrawModule
             {
                 SetActiveAnimationState(_activeAnimationState, random);
             }
+
             return;
         }
 
@@ -301,6 +304,7 @@ public class W3dModelDraw : DrawModule
                 .Distinct()
                 .ToList();
         }
+
         return _muzzleFlashBoneNames;
     }
 
@@ -482,6 +486,7 @@ public class W3dModelDraw : DrawModule
             _turretYawBoneName = _activeConditionState.Turret;
             _turretYawBone = _turretYawBoneName != null ? FindBoneInstance(_turretYawBoneName) : null;
         }
+
         if (!ReferenceEquals(_turretPitchBoneName, _activeConditionState.TurretPitch))
         {
             _turretPitchBoneName = _activeConditionState.TurretPitch;
@@ -492,6 +497,7 @@ public class W3dModelDraw : DrawModule
         {
             _turretYawBone.AnimatedOffset.Rotation = Quaternion.CreateFromYawPitchRoll(0, 0, GameObject.TurretYaw);
         }
+
         if (_turretPitchBone != null)
         {
             // Positive pitch elevates the arm: rotate about the model's lateral (Y) axis so the
@@ -546,6 +552,7 @@ public class W3dModelDraw : DrawModule
                 return weapon;
             }
         }
+
         return null;
     }
 

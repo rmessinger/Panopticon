@@ -65,11 +65,13 @@ internal class AIUpdateStateMachine : StateMachineBase
                     status = StateReturnType.Success;
                 }
             }
+
             if (status.Kind == StateReturnTypeKind.Continue)
             {
                 // TODO(Port): Debug logging.
                 return status;
             }
+
             _temporaryState.OnExit(StateExitType.Normal);
             _temporaryState = null;
         }
@@ -110,11 +112,13 @@ internal class AIUpdateStateMachine : StateMachineBase
             temporaryStateId = _temporaryState.Id;
             DebugUtility.AssertCrash(temporaryStateId != StateId.Invalid, "State has invalid state id");
         }
+
         reader.PersistStateId(ref temporaryStateId);
         if (reader.Mode == StatePersistMode.Read && temporaryStateId != StateId.Invalid)
         {
             _temporaryState = GetState(temporaryStateId);
         }
+
         if (_temporaryState != null)
         {
             reader.PersistObject(_temporaryState);

@@ -111,6 +111,7 @@ public sealed class SimulationHost
             list = new List<Order>();
             _pendingOrders[frame] = list;
         }
+
         list.AddRange(orders);
     }
 
@@ -176,6 +177,7 @@ public sealed class SimulationHost
             {
                 _game.InjectOrders(new[] { order });
             }
+
             _pendingOrders.Remove(dueFrame);
         }
     }

@@ -39,6 +39,7 @@ internal static class ConversionExtensions
                 Light1 = ToLight(mapLightingConfiguration.ObjectAccent1 ?? mapLightingConfiguration.TerrainAccent1),
                 Light2 = ToLight(mapLightingConfiguration.ObjectAccent2 ?? mapLightingConfiguration.TerrainAccent2),
             }
+
             // TODO: Infantry lights
             );
     }

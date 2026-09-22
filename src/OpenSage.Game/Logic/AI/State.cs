@@ -74,6 +74,7 @@ public abstract class State : IPersistableObject
                 {
                     return result;
                 }
+
                 break;
         }
 

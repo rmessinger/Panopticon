@@ -100,6 +100,7 @@ internal sealed class ActionEntryJsonConverter : JsonConverter<ActionEntry>
             command = JsonSerializer.Deserialize<CommandSpec>(commandElem, options)
                 ?? throw new JsonException("Invalid 'command' format");
         }
+
         // Fall back to legacy format: "type": "Construct"
         else if (root.TryGetProperty("type", out var typeElem) && typeElem.ValueKind == JsonValueKind.String)
         {
@@ -160,6 +161,7 @@ internal sealed class ActionEntryJsonConverter : JsonConverter<ActionEntry>
             writer.WritePropertyName("command");
             JsonSerializer.Serialize(writer, value.Command, options);
         }
+
         writer.WritePropertyName("timing");
         JsonSerializer.Serialize(writer, value.Timing, options);
         if (value.Position != null)
@@ -167,18 +169,22 @@ internal sealed class ActionEntryJsonConverter : JsonConverter<ActionEntry>
             writer.WritePropertyName("position");
             JsonSerializer.Serialize(writer, value.Position, options);
         }
+
         if (value.BuildingDefinitionName != null)
         {
             writer.WriteString("buildingDefinitionName", value.BuildingDefinitionName);
         }
+
         if (value.UnitDefinitionName != null)
         {
             writer.WriteString("unitDefinitionName", value.UnitDefinitionName);
         }
+
         if (value.Quantity.HasValue)
         {
             writer.WriteNumber("quantity", value.Quantity.Value);
         }
+
         writer.WriteEndObject();
     }
 }

@@ -36,6 +36,7 @@ public class SkirmishGameSettings : IPersistableObject
         {
             Slots[i] = new SkirmishSlot(i);
         }
+
         Status = SkirmishGameStatus.Configuring;
     }
 
@@ -113,6 +114,7 @@ public class SkirmishGameSettings : IPersistableObject
             Slots[i] ??= new SkirmishSlot(i);
             reader.PersistObjectValue(Slots[i]);
         }
+
         reader.EndArray();
 
         reader.SkipUnknownBytes(4);

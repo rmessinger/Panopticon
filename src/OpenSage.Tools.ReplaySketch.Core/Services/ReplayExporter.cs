@@ -77,6 +77,7 @@ public static class ReplayExporter
                                 $"AfterActionTiming on action '{action.Id}' references trigger '{aat.TriggerActionId}' which is an open CommandSpec command. Open-command deferred triggers are not yet supported.");
                         }
                     }
+
                     // else: dangling reference — action is silently skipped (trigger no longer exists)
                 }
                 else
@@ -243,6 +244,7 @@ public static class ReplayExporter
                         recruitOrder.AddIntegerArgument(1);         // arg[1] = place in queue
                         yield return recruitOrder;
                     }
+
                     break;
                 }
 

@@ -43,6 +43,7 @@ public sealed class InputLoggerMessageHandler : InputMessageHandler, IDisposable
                 _logger.LogMouseInput(0, 0, null, false, message.Value.ScrollWheel);
                 break;
         }
+
         return InputMessageResult.NotHandled;
     }
 

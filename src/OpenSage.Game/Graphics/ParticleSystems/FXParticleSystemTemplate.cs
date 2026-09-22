@@ -555,6 +555,7 @@ public sealed class FXParticleEmissionVelocityOutward : FXParticleEmissionVeloci
                     {
                         up = Vector3.UnitY;
                     }
+
                     var dir1 = Vector3.Cross(direction, up);
                     var dir2 = Vector3.Cross(dir1, dir1);
                     dir1 *= Speed.GetRandomFloat();

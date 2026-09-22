@@ -200,6 +200,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             UpdateCommandStates();
             return;
         }
+
         ReplaySketchLog.Write($"  TryResolveInstallation: {installStopwatch.ElapsedMilliseconds}ms");
 
         Task.Run(async () =>

@@ -286,6 +286,7 @@ public sealed class ToppleUpdate : UpdateModule, ICollideModule
         {
             _numAngleDeltaX = 1;
         }
+
         _angleDeltaX = (desiredAngleX - currentAngleX) / _numAngleDeltaX;
 
         GameObject.SetModelConditionState(ModelConditionFlag.Toppled);

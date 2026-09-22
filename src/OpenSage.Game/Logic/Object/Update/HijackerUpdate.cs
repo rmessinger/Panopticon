@@ -57,6 +57,7 @@ public sealed class HijackerUpdate : UpdateModule
         {
             candidate.Team = GameObject.Owner.DefaultTeam;
         }
+
         candidate.Owner = GameObject.Owner;
         GameObject.Kill();
 

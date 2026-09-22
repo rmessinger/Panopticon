@@ -31,6 +31,7 @@ public class SkirmishSlot : IPersistableObject
         {
             return _state;
         }
+
         set
         {
             IsDirty |= _state != value;
@@ -45,6 +46,7 @@ public class SkirmishSlot : IPersistableObject
         {
             return _index;
         }
+
         set
         {
             IsDirty |= _index != value;
@@ -60,6 +62,7 @@ public class SkirmishSlot : IPersistableObject
         {
             return _playerName;
         }
+
         set
         {
             IsDirty |= _playerName != value;
@@ -74,6 +77,7 @@ public class SkirmishSlot : IPersistableObject
         {
             return _colorIndex;
         }
+
         set
         {
             IsDirty |= _colorIndex != value;
@@ -88,6 +92,7 @@ public class SkirmishSlot : IPersistableObject
         {
             return _factionIndex;
         }
+
         set
         {
             IsDirty |= _factionIndex != value;
@@ -104,6 +109,7 @@ public class SkirmishSlot : IPersistableObject
         {
             return _team;
         }
+
         set
         {
             IsDirty |= _team != value;
@@ -118,6 +124,7 @@ public class SkirmishSlot : IPersistableObject
         {
             return _startPosition;
         }
+
         set
         {
             IsDirty |= _startPosition != value;

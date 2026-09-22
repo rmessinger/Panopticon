@@ -162,6 +162,7 @@ internal sealed class W3dAnimationImporter : IAnimationImporter
         {
             numKeyframes++;
         }
+
         if (w3dChannel.LastFrame != w3dAnimation.Header.NumFrames - 1)
         {
             numKeyframes++;

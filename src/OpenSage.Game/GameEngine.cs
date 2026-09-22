@@ -98,6 +98,7 @@ public sealed class GameEngine : IGameEngine
             var gravityPerSecondSquared = PhysicsUnitConversion.PerFrameSquaredToPerSecondSquared(gravityPerFrameSquared, LogicFramesPerSecond);
             return new BepuPhysicsWorld(new System.Numerics.Vector3(0.0f, 0.0f, gravityPerSecondSquared));
         }
+
         return new LegacyPhysicsWorld();
     }
 }

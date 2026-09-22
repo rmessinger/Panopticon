@@ -118,6 +118,7 @@ internal static class ImGuiUtility
         {
             currentValue = (TEnum)currentObjectValue;
         }
+
         return result;
     }
 

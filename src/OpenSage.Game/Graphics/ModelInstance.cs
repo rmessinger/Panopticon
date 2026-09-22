@@ -342,6 +342,7 @@ public sealed class ModelInstance : DisposableBase
             {
                 animationInstance.DrawInspector();
             }
+
             ImGui.TreePop();
         }
     }

@@ -192,6 +192,7 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel
         {
             snapshot.Series.Add(new DomainMetricValue("edge-throughput", edgeKey, throughput));
         }
+
         foreach (var (nodeIndex, occupancy) in _nodeOccupancy.OrderBy(kv => kv.Key))
         {
             snapshot.Series.Add(new DomainMetricValue("node-occupancy", $"node:{nodeIndex}", occupancy));

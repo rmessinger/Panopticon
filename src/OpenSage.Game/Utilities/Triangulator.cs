@@ -274,6 +274,7 @@ public static class Triangulator
             Log("Inserting vertex {0} after vertex {1}.", holePolygon[i], PolygonVertices[injectPoint].Value);
             PolygonVertices.AddAfter(PolygonVertices[injectPoint++], holePolygon[i]);
         }
+
         PolygonVertices.AddAfter(PolygonVertices[injectPoint], P);
 
 #if DEBUG
@@ -601,6 +602,7 @@ public static class Triangulator
 
                 return base[index];
             }
+
             set
             {
                 //perform the index wrapping

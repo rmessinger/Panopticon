@@ -29,6 +29,7 @@ static class Utilities
             {
                 Align(writer);
             }
+
             writer.Write(argument.Value);
         }
     }
@@ -94,6 +95,7 @@ public class InstructionParsingTest
 
             instructionWriter.Seek(instructionOffsetPosition, SeekOrigin.Begin);
         }
+
         return instructionStream;
     }
 

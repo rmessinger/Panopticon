@@ -43,6 +43,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = s;
                 return true;
             }
+
             return false;
         }));
 
@@ -54,6 +55,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = b;
                 return true;
             }
+
             return false;
         }));
 
@@ -65,6 +67,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = i;
                 return true;
             }
+
             return false;
         }));
 
@@ -76,6 +79,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = f;
                 return true;
             }
+
             return false;
         }));
 
@@ -87,6 +91,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = c;
                 return true;
             }
+
             return false;
         }));
 
@@ -98,6 +103,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = new Percentage(f);
                 return true;
             }
+
             return false;
         }));
 
@@ -112,6 +118,7 @@ internal sealed class DefaultInspectable : IInspectable
                     (byte)(c.Z * 255.0f));
                 return true;
             }
+
             return false;
         }));
 
@@ -127,6 +134,7 @@ internal sealed class DefaultInspectable : IInspectable
                     (byte)(c.W * 255.0f));
                 return true;
             }
+
             return false;
         }));
 
@@ -138,6 +146,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = new ColorRgbF(c.X, c.Y, c.Z);
                 return true;
             }
+
             return false;
         }));
 
@@ -149,6 +158,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = new ColorRgbaF(c.X, c.Y, c.Z, c.W);
                 return true;
             }
+
             return false;
         }));
 
@@ -160,6 +170,7 @@ internal sealed class DefaultInspectable : IInspectable
                 v = e;
                 return true;
             }
+
             return false;
         }));
 
@@ -177,6 +188,7 @@ internal sealed class DefaultInspectable : IInspectable
             {
                 ImGui.Text("<null>");
             }
+
             return false;
         }));
 
@@ -187,6 +199,7 @@ internal sealed class DefaultInspectable : IInspectable
             {
                 context.SelectedObject = v;
             }
+
             return false;
         }));
 

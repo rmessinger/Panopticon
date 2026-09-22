@@ -186,6 +186,7 @@ public sealed class SelectionSystem : GameSystem
                 {
                     continue;
                 }
+
                 if (closestObject != null && !gameObject.IsStructure && closestObject.IsStructure ||
                     depth < closestDepth)
                 {

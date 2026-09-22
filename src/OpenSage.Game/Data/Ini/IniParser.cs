@@ -118,6 +118,7 @@ internal sealed partial class IniParser
         {
             result += token.Value.Text + " ";
         }
+
         return result;
     }
 
@@ -180,6 +181,7 @@ internal sealed partial class IniParser
             {
                 return c - '0';
             }
+
             return c - 'A' + 10;
         }
 
@@ -285,6 +287,7 @@ internal sealed partial class IniParser
         {
             return 0;
         }
+
         return ScanInteger(token.Value);
     }
 
@@ -351,6 +354,7 @@ internal sealed partial class IniParser
             {
                 break;
             }
+
             if (c == '.')
             {
                 if (seenDot)
@@ -362,8 +366,10 @@ internal sealed partial class IniParser
                     seenDot = true;
                 }
             }
+
             floatText += c;
         }
+
         return floatText;
     }
 
@@ -558,6 +564,7 @@ internal sealed partial class IniParser
 
             result.Add(_assetStore.Sciences.GetLazyAssetReferenceByName(name));
         }
+
         return result.ToArray();
     }
 
@@ -755,6 +762,7 @@ internal sealed partial class IniParser
             {
                 throw new IniParseException($"Expected attribute name 'A'", aToken.Value.Position);
             }
+
             a = ScanByte(GetNextToken(SeparatorsColon));
         }
 
@@ -975,6 +983,7 @@ internal sealed partial class IniParser
                 {
                     throw new InvalidOperationException();
                 }
+
                 done = true;
                 continue;
             }
@@ -1039,6 +1048,7 @@ internal sealed partial class IniParser
             includeFileName = includeFileName.Remove(0, 3);
             directory = directory.Substring(0, directory.LastIndexOf(Path.DirectorySeparatorChar));
         }
+
         if (includeFileName.StartsWith(Path.DirectorySeparatorChar.ToString()))
         {
             includeFileName = includeFileName.Remove(0, 1);

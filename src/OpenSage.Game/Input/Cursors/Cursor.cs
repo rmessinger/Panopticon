@@ -64,6 +64,7 @@ internal sealed class Cursor : DisposableBase
                 {
                     throw new InvalidOperationException("Unable to get image pixelspan.");
                 }
+
                 using (var pin = pixelSpan.Pin())
                 {
                     surface = Sdl2Interop.SDL_CreateRGBSurfaceWithFormatFrom(

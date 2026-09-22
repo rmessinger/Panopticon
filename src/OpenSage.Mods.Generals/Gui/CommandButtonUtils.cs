@@ -58,6 +58,7 @@ class CommandButtonUtils
                         description = commandButton.Science[0].Value.Description.Translate();
                         break;
                 }
+
                 controlBar.ShowDescription(name, cost, description);
             }
             else if (message.MessageType == WndWindowMessageType.MouseExit)

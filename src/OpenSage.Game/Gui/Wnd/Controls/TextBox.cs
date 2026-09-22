@@ -71,6 +71,7 @@ public class TextBox : Control
                                 {
                                     Text = Text.Remove(Text.Length - 1, 1);
                                 }
+
                                 break;
                         }
                     }
@@ -86,6 +87,7 @@ public class TextBox : Control
                         }
                     }
                 }
+
                 break;
 
             default:

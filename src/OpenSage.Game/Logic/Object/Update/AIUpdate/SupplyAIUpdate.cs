@@ -156,6 +156,7 @@ public abstract class SupplyAIUpdate : AIUpdate
                     SupplyGatherState = SupplyGatherStates.RequestingSupplies;
                     GameObject.ModelConditionFlags.Set(ModelConditionFlag.Docking, true);
                 }
+
                 break;
 
             case SupplyGatherStates.RequestingSupplies:
@@ -195,6 +196,7 @@ public abstract class SupplyAIUpdate : AIUpdate
                     GameObject.ModelConditionFlags.Set(ModelConditionFlag.Carrying, true);
                     SupplyGatherState = SupplyGatherStates.RequestingSupplies;
                 }
+
                 break;
 
             case SupplyGatherStates.PickingUpSupplies:
@@ -203,6 +205,7 @@ public abstract class SupplyAIUpdate : AIUpdate
                     SupplyGatherState = SupplyGatherStates.SearchingForSupplyTarget;
                     ClearActionConditionFlags();
                 }
+
                 break;
 
             case SupplyGatherStates.SearchingForSupplyTarget:
@@ -232,6 +235,7 @@ public abstract class SupplyAIUpdate : AIUpdate
                 {
                     SupplyGatherState = SupplyGatherStates.EnqueuedAtSupplyTarget;
                 }
+
                 break;
 
             case SupplyGatherStates.EnqueuedAtSupplyTarget:
@@ -261,6 +265,7 @@ public abstract class SupplyAIUpdate : AIUpdate
                     GameObject.ModelConditionFlags.Set(ModelConditionFlag.Docking, false);
                     GameObject.ModelConditionFlags.Set(ModelConditionFlag.Carrying, false);
                 }
+
                 break;
 
             case SupplyGatherStates.FinishedDumpingSupplies:

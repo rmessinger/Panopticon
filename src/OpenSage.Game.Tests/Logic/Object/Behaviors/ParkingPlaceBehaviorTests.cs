@@ -1327,6 +1327,7 @@ public class ParkingPlaceBehaviorTests : UpdateModuleTest<ParkingPlaceBehaviour,
         Assert.Equal(ParkingPlaceBehaviour.RunwayAssignment.Empty, behavior.RunwayAssignments[0]);
         Assert.Equal(ParkingPlaceBehaviour.RunwayAssignment.Empty, behavior.RunwayAssignments[1]);
     }
+
     [Fact]
     public void ParkingPlaceBehavior_ClearProducedVehicle_Away()
     {

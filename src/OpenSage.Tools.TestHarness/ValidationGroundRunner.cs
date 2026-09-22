@@ -36,6 +36,7 @@ public static class ValidationGroundRunner
             {
                 rule.DisableLoggingForLevel(NLog.LogLevel.Info);
             }
+
             NLog.LogManager.ReconfigExistingLoggers();
         }
 
@@ -81,14 +82,17 @@ public static class ValidationGroundRunner
             {
                 framed.Add(new System.Numerics.Vector2(p.Position.X, p.Position.Y));
             }
+
             foreach (var p in runPlan.SpawnPlan.TargetPlacements)
             {
                 framed.Add(new System.Numerics.Vector2(p.Position.X, p.Position.Y));
             }
+
             foreach (var p in runPlan.SpawnPlan.SupplySourcePlacements)
             {
                 framed.Add(new System.Numerics.Vector2(p.Position.X, p.Position.Y));
             }
+
             var view = game.Scene3D.TacticalView;
             view.LookAt(framed.Count > 0
                 ? new System.Numerics.Vector3(
@@ -311,6 +315,7 @@ public static class ValidationGroundRunner
                 MinimumFrameFloor = 3,
             });
         }
+
         baseline.Save(path);
         reporter.Info($"Baseline refreshed at: {path}");
     }
@@ -342,12 +347,14 @@ public static class ValidationGroundRunner
                     (int)game.Panel.Framebuffer.Width,
                     (int)game.Panel.Framebuffer.Height);
             }
+
             game.Render();
             if (overlayShot != null)
             {
                 overlayShot.Update(1 / 30f, new EmptyInputSnapshot());
                 overlayShot.Render(game.GraphicsDevice);
             }
+
             VgCapture ??= new FrameCaptureService();
             VgCaptureCount++;
             VgCapture!.Capture(

@@ -153,14 +153,17 @@ public sealed class GhostObject : IPersistableObject
 
                     reader.EndObject();
                 }
+
                 reader.EndArray();
 
                 reader.EndObject();
             }
+
             reader.EndArray();
 
             reader.EndObject();
         }
+
         reader.EndArray();
 
         reader.PersistBoolean(ref _hasUnknownThing);

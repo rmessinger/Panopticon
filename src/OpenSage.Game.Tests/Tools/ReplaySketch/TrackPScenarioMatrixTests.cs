@@ -221,6 +221,7 @@ public class P1_ScenarioMatrixTests : MockedGameTest
                 {
                     continue;
                 }
+
                 results.Add(AssertRelationship(cellKey, i, j, participants, setup.Teams));
             }
         }
@@ -298,10 +299,12 @@ public class P1_ScenarioMatrixTests : MockedGameTest
         {
             return "Allies";
         }
+
         if (a.Enemies.Contains(b))
         {
             return "Enemies";
         }
+
         return "Neutral";
     }
 
@@ -320,8 +323,10 @@ public class P1_ScenarioMatrixTests : MockedGameTest
                     next.Add(new Dictionary<string, string>(binding) { [axis.Name] = value });
                 }
             }
+
             result = next;
         }
+
         return result;
     }
 
@@ -457,6 +462,7 @@ public class P3_ScenarioMatrixTests : MockedGameTest
                     scenario.CommandCenters[i].Destroy();
                     RunVictoryCadence(game);
                 }
+
                 break;
 
             case PlayerSurrendersEndState:
@@ -473,6 +479,7 @@ public class P3_ScenarioMatrixTests : MockedGameTest
                     scenario.CommandCenters[i].Destroy();
                     RunVictoryCadence(game);
                 }
+
                 break;
 
             case MutualEliminationEndState:
@@ -489,6 +496,7 @@ public class P3_ScenarioMatrixTests : MockedGameTest
                     scenario.Units[i].Destroy();
                     RunVictoryCadence(game);
                 }
+
                 break;
 
             case ScoreDecisionEndState:

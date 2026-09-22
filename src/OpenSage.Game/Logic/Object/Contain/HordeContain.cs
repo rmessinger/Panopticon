@@ -33,6 +33,7 @@ public sealed class HordeContainBehavior : UpdateModule
         {
             obj.IsSelected = value;
         }
+
         return _payload;
     }
 
@@ -52,8 +53,10 @@ public sealed class HordeContainBehavior : UpdateModule
                     Position = new Vector3(pos, 0)
                 });
             }
+
             i++;
         }
+
         return result;
     }
 
@@ -117,6 +120,7 @@ public sealed class HordeContainBehavior : UpdateModule
                         _productionUpdate.CloseDoor();
                         _productionUpdate = null;
                     }
+
                     return;
                 }
             }
@@ -137,6 +141,7 @@ public sealed class HordeContainBehavior : UpdateModule
                 }
             }
         }
+
         return Vector3.Zero;
     }
 

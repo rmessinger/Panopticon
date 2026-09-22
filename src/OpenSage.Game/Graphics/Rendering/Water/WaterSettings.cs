@@ -21,9 +21,11 @@ public sealed class WaterSettings
             {
                 throw new ArgumentOutOfRangeException(nameof(value), "Reflection map size must be greater than 0.");
             }
+
             _reflectionMapSize = MathUtility.NextPowerOfTwo(value);
         }
     }
+
     /// <summary>
     /// Gets or sets the size of the refraction map (in pixels).
     /// </summary>
@@ -36,9 +38,11 @@ public sealed class WaterSettings
             {
                 throw new ArgumentOutOfRangeException(nameof(value), "Refraction map size must be greater than 0.");
             }
+
             _refractionMapSize = MathUtility.NextPowerOfTwo(value);
         }
     }
+
     /// <summary>
     /// Gets or sets the furthest distance from the camera that reflections will be rendered.
     /// </summary>

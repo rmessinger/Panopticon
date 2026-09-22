@@ -142,6 +142,7 @@ public class WorkerAIUpdate : SupplyAIUpdate, IBuilderAIUpdate
         {
             return supplySource.Supply > 0;
         }
+
         return base.SupplySourceHasBoxes(dockUpdate, supplySource);
     }
 
@@ -155,8 +156,10 @@ public class WorkerAIUpdate : SupplyAIUpdate, IBuilderAIUpdate
                 CurrentSupplySource.Update();
                 CurrentSupplySource = null;
             }
+
             return;
         }
+
         base.GetBox();
     }
 
@@ -196,6 +199,7 @@ public class WorkerAIUpdate : SupplyAIUpdate, IBuilderAIUpdate
                     SupplyGatherState = SupplyGatherStateToResume;
                     break;
                 }
+
                 _waitUntil = GameEngine.GameLogic.CurrentFrame + ModuleData.BoredTime;
                 break;
         }

@@ -24,6 +24,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
         [Display("zh-Hant")] ChineseTraditional,
         [Display("pl-PL")] Polish = 12,
     }
+
     private enum LanguageBFME
     {
         [Display("en-US")] English,
@@ -67,6 +68,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                 {
                     throw new InvalidDataException("Error parsing csf (Magic: CSF expected).");
                 }
+
                 var version = reader.ReadInt32();
                 var numLabels = reader.ReadInt32();
                 var numStrings = reader.ReadInt32();
@@ -75,6 +77,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                     // throw new NotSupportedException("Csf substrings are not supported.");
                     Logger.Warn("[CSF] Number of labels and strings mismatch.");
                 }
+
                 csf._numStrings = numStrings;
                 reader.ReadUInt32(); // reserved
                 var languageCode = reader.ReadUInt32();
@@ -93,11 +96,13 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                     default:
                         throw new InvalidOperationException();
                 }
+
                 if (language is null)
                 {
                     language = "en-US";
                     Logger.Warn($"Unknown language id {languageCode} for game {game}.");
                 }
+
                 csf._language = language;
                 string label;
                 int strCount;
@@ -111,6 +116,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                     {
                         throw new InvalidDataException("Error parsing csf (Magic: LBL expected).");
                     }
+
                     strCount = reader.ReadInt32();
                     label = reader.ReadUInt32PrefixedAsciiString();
                     for (var idy = 0; idy < strCount; ++idy)
@@ -120,6 +126,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                         {
                             throw new InvalidDataException("Error parsing csf (Magic: STR/STRW expected).");
                         }
+
                         if (idy == 0)
                         {
                             str = reader.ReadUInt32PrefixedNegatedUnicodeString();
@@ -127,6 +134,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                             {
                                 str += reader.ReadUInt32PrefixedAsciiString();
                             }
+
                             colonIdx = label.IndexOf(':');
                             if (colonIdx == -1)
                             {
@@ -137,11 +145,13 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                             {
                                 categoryLabel = label.Substring(0, colonIdx).ToUpperInvariant();
                             }
+
                             if (!csf._strings.TryGetValue(categoryLabel, out var category))
                             {
                                 category = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                                 csf._strings.Add(categoryLabel, category);
                             }
+
                             label = label.Substring(colonIdx + 1);
                             if (category.ContainsKey(label))
                             {
@@ -177,11 +187,13 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                 result = str;
                 return false;
             }
+
             label = str.Substring(0, colonIdx);
             if (_strings.TryGetValue(label, out var category) && category.TryGetValue(str.Substring(colonIdx + 1), out result))
             {
                 return true;
             }
+
             result = null;
             return false;
         }
@@ -202,6 +214,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
                     result.Add($"{label.Key}:{str.Key}");
                 }
             }
+
             return result;
         }
     }
@@ -223,6 +236,7 @@ public sealed class CsfTranslationProvider : ATranslationProviderBase
         {
             Logger.Warn($"Requested string '{str}' not found in '{Name}'.");
         }
+
         return result;
     }
 

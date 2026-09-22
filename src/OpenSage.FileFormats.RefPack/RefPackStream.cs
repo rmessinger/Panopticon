@@ -91,6 +91,7 @@ public class RefPackStream : Stream
             {
                 size = (size << 8) | compressedStream.ReadByte();
             }
+
             return size;
         }
 
@@ -121,6 +122,7 @@ public class RefPackStream : Stream
             {
                 ExecuteCommand();
             }
+
             _currentOutputPosition += (int)offset;
         }
         else

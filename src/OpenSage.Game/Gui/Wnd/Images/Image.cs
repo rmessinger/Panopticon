@@ -61,6 +61,7 @@ public sealed class Image
             return;
             // throw new InvalidOperationException();
         }
+
         drawingContext.DrawImage(_texture, null, destinationRect, grayscale: _grayscale);
     }
 }

@@ -129,6 +129,7 @@ public static class PhysicsStackRunner
             {
                 world.Timestep(timestep);
             }
+
             stopwatch.Stop();
             msPerTimestep = (float)(stopwatch.Elapsed.TotalMilliseconds / MeasuredSteps);
 
@@ -137,6 +138,7 @@ public static class PhysicsStackRunner
             {
                 centerOfMass += body.Position;
             }
+
             centerOfMass /= bodies.Count;
 
             return bodies.Select(body => (body.Position, body.LinearVelocity)).ToList();
@@ -197,11 +199,13 @@ public static class PhysicsStackRunner
             {
                 unsettled++;
             }
+
             if (position.Z < -BoxHalfExtent * 4.0f || position.Z > BodiesPerStack * BoxHalfExtent * 4.0f)
             {
                 reporter.Error($"[PhysicsStack] {phase}: body escaped vertically at {position}.");
                 return false;
             }
+
             if (position.X < -BoxHalfExtent || position.X > fieldSize + BoxHalfExtent
                 || position.Y < -BoxHalfExtent || position.Y > fieldSize + BoxHalfExtent)
             {

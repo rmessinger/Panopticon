@@ -235,6 +235,7 @@ public class ComboBox : Control
             _editBox.Text = Items[SelectedIndex].ColumnData[0];
             _editBox.TextColor = Items[SelectedIndex].TextColor;
         }
+
         IsDropDownOpen = false;
     }
 

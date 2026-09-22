@@ -89,6 +89,7 @@ public sealed class FontManager
                 Logger.Info($"Will use embedded font as fallback for font {fontName}");
                 font = _fallbackFonts.Get(FallbackEmbeddedFont).CreateFont(fontSize, fontStyle);
             }
+
             _cachedFonts.Add(key, font);
         }
 

@@ -149,6 +149,7 @@ public static class InstallationLocators
                 }
             }
         }
+
         return result;
     }
 }

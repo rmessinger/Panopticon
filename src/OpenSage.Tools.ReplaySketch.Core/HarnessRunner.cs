@@ -131,6 +131,7 @@ public static class HarnessRunner
                 {
                     resolver.EndCommand();
                 }
+
                 openCommands = 0;
 
                 if (e.Frame - 1 >= DefaultFrameTimeout)

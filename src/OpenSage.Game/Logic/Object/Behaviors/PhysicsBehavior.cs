@@ -92,6 +92,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
             return result;
         }
+
         set => _mass = value;
     }
 
@@ -103,8 +104,10 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 return bepu.AngularVelocity.Z / GameEngine.LogicFramesPerSecond;
             }
+
             return Body.YawRate;
         }
+
         set
         {
             if (BepuBody is { } bepu)
@@ -114,6 +117,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
                 bepu.AngularVelocity = angular;
                 return;
             }
+
             Body.YawRate = value;
             SetHasPitchRollYaw();
         }
@@ -127,8 +131,10 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 return bepu.AngularVelocity.X / GameEngine.LogicFramesPerSecond;
             }
+
             return Body.RollRate;
         }
+
         set
         {
             if (BepuBody is { } bepu)
@@ -138,6 +144,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
                 bepu.AngularVelocity = angular;
                 return;
             }
+
             Body.RollRate = value;
             SetHasPitchRollYaw();
         }
@@ -151,8 +158,10 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 return bepu.AngularVelocity.Y / GameEngine.LogicFramesPerSecond;
             }
+
             return Body.PitchRate;
         }
+
         set
         {
             if (BepuBody is { } bepu)
@@ -162,6 +171,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
                 bepu.AngularVelocity = angular;
                 return;
             }
+
             Body.PitchRate = value;
             SetHasPitchRollYaw();
         }
@@ -188,6 +198,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 return bepu.LinearVelocity / GameEngine.LogicFramesPerSecond;
             }
+
             return Body.Velocity;
         }
     }
@@ -222,10 +233,12 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 return Velocity.Length();
             }
+
             if (Body.VelocityMagnitude == InvalidVelocityMagnitude)
             {
                 Body.VelocityMagnitude = Body.Velocity.Length();
             }
+
             return Body.VelocityMagnitude;
         }
     }
@@ -493,6 +506,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 OrientToVelocity();
             }
+
             _orientToVelocityRequested = false;
         } // if not held
 
@@ -568,6 +582,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 obj.ClearDisabled(DisabledType.Freefall);
             }
+
             obj.ClearModelConditionState(ModelConditionFlag.FreeFall);
         }
 
@@ -625,6 +640,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             pose.Translation = body.Position - Vector3.Transform(_bepuBodyOffset, body.Rotation);
             obj.SetTransformMatrix(pose);
         }
+
         _bepuSyncedPosition = obj.Translation;
         _bepuPoseValid = true;
 
@@ -686,6 +702,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         {
             OrientBepuToVelocity(body);
         }
+
         _orientToVelocityRequested = false;
 
         return UpdateSleepTime.None;
@@ -758,6 +775,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
                 maximumPenetration,
                 groundHeights[index] - cornerHeights[index]);
         }
+
         return maximumPenetration;
     }
 
@@ -890,6 +908,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             Body.RollRate = 0.0f;
             Body.PitchRate = 0.0f;
         }
+
         _turning = PhysicsTurningType.None;
 
         SetFlag(PhysicsFlagType.HasPitchRollYaw, false);
@@ -1176,6 +1195,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 objContainedBy.OnCollide(other, location, normal);
             }
+
             return;
         }
 
@@ -1220,6 +1240,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
                 GameEngine.GameLogic.DestroyObject(obj);
             }
+
             return;
         }
 
@@ -1392,6 +1413,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
                     frontPerpLength = perpVector.Length();
                 }
+
                 {
                     comparisonCoord = crusheePos;
                     comparisonCoord.X -= crushPointOffset.X;
@@ -1414,6 +1436,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
                     backPerpLength = perpVector.Length();
                 }
+
                 {
                     comparisonCoord = crusheePos;
                     centerVector = comparisonCoord;
@@ -1681,6 +1704,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             bepu.LinearVelocity = velocity * GameEngine.LogicFramesPerSecond;
             return;
         }
+
         Body.ScrubVelocityZ(desiredVelocity);
     }
 
@@ -1708,6 +1732,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             bepu.LinearVelocity = velocity * GameEngine.LogicFramesPerSecond;
             return;
         }
+
         Body.ScrubVelocity2D(desiredVelocity);
     }
 
@@ -1725,6 +1750,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             {
                 return;
             }
+
             desiredVelocity /= curVelocity;
             velocity.X *= desiredVelocity;
             velocity.Y *= desiredVelocity;
@@ -1738,6 +1764,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             thatBepu.LinearVelocity += bepu.LinearVelocity;
             return;
         }
+
         that.Body.Velocity += Body.Velocity;
         that.Body.VelocityMagnitude = InvalidVelocityMagnitude;
     }
@@ -1749,6 +1776,7 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
             bepu.LinearVelocity += velocity * GameEngine.LogicFramesPerSecond;
             return;
         }
+
         Body.Velocity += velocity;
     }
 

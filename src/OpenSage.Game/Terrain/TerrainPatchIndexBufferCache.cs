@@ -42,6 +42,7 @@ internal sealed class TerrainPatchIndexBufferCache : DisposableBase
         {
             indices = result.Indices;
         }
+
         return result.Buffer;
     }
 

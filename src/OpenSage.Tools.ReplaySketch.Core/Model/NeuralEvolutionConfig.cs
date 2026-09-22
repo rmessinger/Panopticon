@@ -52,38 +52,47 @@ public sealed record NeuralEvolutionConfig
         {
             throw new InvalidOperationException($"{nameof(PopulationSize)} must be 2..256.");
         }
+
         if (MatchSeedCount < 1)
         {
             throw new InvalidOperationException($"{nameof(MatchSeedCount)} must be at least 1.");
         }
+
         if (GenomeLength < 1)
         {
             throw new InvalidOperationException($"{nameof(GenomeLength)} must be at least 1.");
         }
+
         if (EliteCount < 1 || EliteCount >= PopulationSize)
         {
             throw new InvalidOperationException($"{nameof(EliteCount)} must be at least 1 and less than {nameof(PopulationSize)}.");
         }
+
         if (TournamentSize < 2 || TournamentSize > PopulationSize)
         {
             throw new InvalidOperationException($"{nameof(TournamentSize)} must be 2..{nameof(PopulationSize)}.");
         }
+
         if (MutationProbability <= 0f || MutationProbability > 1f)
         {
             throw new InvalidOperationException($"{nameof(MutationProbability)} must be in (0, 1].");
         }
+
         if (MutationSigma <= 0f || InitializationSigma <= 0f || WeightClamp <= 0f)
         {
             throw new InvalidOperationException("Sigmas and clamp must be positive.");
         }
+
         if (MaxGenerations < 1)
         {
             throw new InvalidOperationException($"{nameof(MaxGenerations)} must be at least 1.");
         }
+
         if (StopAfterStaleGenerations < 0)
         {
             throw new InvalidOperationException($"{nameof(StopAfterStaleGenerations)} must be 0 or more.");
         }
+
         if (MatchFrameCap < 1)
         {
             throw new InvalidOperationException($"{nameof(MatchFrameCap)} must be at least 1.");

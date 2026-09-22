@@ -38,6 +38,7 @@ internal static class ImGuiUtility
         {
             s = $"{size / 1024}K";
         }
+
         if (size / 1024 > 1024)
         {
             s = $"{size / 1024 / 1024}M";

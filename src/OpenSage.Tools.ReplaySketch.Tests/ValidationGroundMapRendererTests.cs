@@ -22,6 +22,7 @@ public class ValidationGroundMapRendererTests
             units.Add(new UnitPlacement("Unit", 2, PlayerIndex: 2, Position: unit, Action: PrimaryAction.Move(200), TargetIndex: idx, RosterIndex: idx));
             idx++;
         }
+
         return new SpawnPlan { UnitPlacements = units, TargetPlacements = targets };
     }
 
@@ -114,6 +115,7 @@ public class ValidationGroundMapRendererTests
             {
                 continue;
             }
+
             var distance = MathF.Sqrt(
                 MathF.Pow(unit.ScreenX - target.ScreenX, 2f) + MathF.Pow(unit.ScreenY - target.ScreenY, 2f));
             Assert.True(distance >= ValidationGroundMapRenderer.MinimumMarkerSeparationPx - 0.01f,

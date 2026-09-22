@@ -89,8 +89,10 @@ public static class LanguageUtility
             {
                 continue;
             }
+
             return file;
         }
+
         return DefaultLanguage;
     }
 }

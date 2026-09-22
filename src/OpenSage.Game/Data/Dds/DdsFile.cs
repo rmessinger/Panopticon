@@ -110,6 +110,7 @@ public sealed class DdsFile
                 {
                     throw new InvalidDataException();
                 }
+
                 arraySize = 6;
             }
 

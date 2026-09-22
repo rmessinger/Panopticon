@@ -19,6 +19,7 @@ public sealed class LocalizedString
         _localized ??= Original?.Translate() ?? string.Empty;
         return args.Length > 0 ? PrintfFormatter.Format(_localized, args) : _localized;
     }
+
     public static LocalizedString CreateApt(string original)
     {
         var trimmed = original.Replace("$", "APT:") // All string values begin with $

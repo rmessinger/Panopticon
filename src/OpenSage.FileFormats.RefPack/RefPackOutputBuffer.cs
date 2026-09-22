@@ -59,6 +59,7 @@ internal sealed class RefPackOutputBuffer
             {
                 _buffer[destinationOffset++ % WindowSize] = _buffer[referencedDataIndex++ % WindowSize];
             }
+
             return;
         }
 

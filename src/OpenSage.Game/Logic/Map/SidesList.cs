@@ -469,6 +469,7 @@ public sealed class SidesList : Asset, IPersistableObject
                 Logger.Warn($"No skirmish scripts found for player {player.Name}");
                 continue;
             }
+
             player.Scripts = skirmishScripts.PlayerScripts.ScriptLists[index];
         }
     }

@@ -76,6 +76,7 @@ public sealed class Road : RenderObject
             _debugLines.Add((b, c));
             _debugLines.Add((c, a));
         }
+
 #endif
     }
 
@@ -97,6 +98,7 @@ public sealed class Road : RenderObject
         {
             DebugDrawingUtils.DrawLine(context, camera, line.start, line.end, strokeColor);
         }
+
 #endif
     }
 }

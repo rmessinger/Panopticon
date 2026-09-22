@@ -78,6 +78,7 @@ public sealed class BlendTileData : Asset
             {
                 _textureIndices = CalculateTextureIndices();
             }
+
             return _textureIndices;
         }
     }

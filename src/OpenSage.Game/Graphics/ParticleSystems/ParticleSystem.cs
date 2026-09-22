@@ -442,6 +442,7 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
         {
             particle.Color = prevC.Color;
         }
+
         // particle.Color is recomputed from the keyframe table every frame rather than carried
         // over from the previous frame, so ColorScale (a flat per-frame increment in the original
         // engine) must be scaled by elapsed frames here to reproduce the same cumulative total.
@@ -601,6 +602,7 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
                 throw new InvalidStateException();
             }
         }
+
         reader.EndArray();
 
         reader.PersistVector3(ref _position);
@@ -630,8 +632,10 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
             {
                 _particles[i] = new Particle(this);
             }
+
             reader.PersistObjectValue(ref _particles[i]);
         }
+
         reader.EndArray();
     }
 }

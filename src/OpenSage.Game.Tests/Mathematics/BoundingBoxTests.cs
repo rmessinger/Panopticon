@@ -74,5 +74,6 @@ public class BoundingBoxTests
 
         Assert.Equal(expected, sut.Intersects(sphere));
     }
+
     #endregion
 }

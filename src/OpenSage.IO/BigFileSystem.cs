@@ -128,6 +128,7 @@ public sealed class BigFileSystem : FileSystem
                 directory = new BigDirectory();
                 Directories.Add(directoryName, directory);
             }
+
             return directory;
         }
     }

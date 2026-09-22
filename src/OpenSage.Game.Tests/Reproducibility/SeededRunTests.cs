@@ -80,6 +80,7 @@ public sealed class SeededRunTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
 
         for (var i = 0; i < 90; i++)

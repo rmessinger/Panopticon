@@ -41,6 +41,7 @@ internal sealed class ImageTextureCache : DisposableBase
             result = AddDisposable(createTexture(_loadContext));
             _cachedTextures.Add(cacheKey, result);
         }
+
         return result;
     }
 }

@@ -353,6 +353,7 @@ public sealed class AssetStore
         {
             scopedAssetCollection.PushScope();
         }
+
         foreach (var scopedSingleton in _scopedSingleAssetStorage)
         {
             scopedSingleton.PushScope();
@@ -365,6 +366,7 @@ public sealed class AssetStore
         {
             scopedAssetCollection.PopScope();
         }
+
         foreach (var scopedSingleton in _scopedSingleAssetStorage)
         {
             scopedSingleton.PopScope();
@@ -377,6 +379,7 @@ public sealed class AssetStore
         {
             yield return scopedSingleton.Current;
         }
+
         foreach (var scopedAssetCollection in _scopedAssetCollections)
         {
             foreach (var asset in scopedAssetCollection.GetAssets())

@@ -232,6 +232,7 @@ public class BigArchive : DisposableBase
                         stream.CopyTo(content);
                     }
                 }
+
                 bw.BaseStream.Position = entry.OutstandingOffset;
                 var str = Encoding.ASCII.GetString(content.ToArray());
                 bw.Write(content.ToArray());

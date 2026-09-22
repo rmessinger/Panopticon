@@ -50,6 +50,7 @@ public abstract record W3dPrelitBase(
                     {
                         materialPass2 = W3dMaterialPass.Parse(reader, context);
                     }
+
                     break;
 
                 default:

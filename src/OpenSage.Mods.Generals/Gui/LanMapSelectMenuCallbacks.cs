@@ -31,6 +31,7 @@ public static class LanMapSelectMenuCallbacks
                         LanGameOptionsMenuCallbacks.GameOptions.CloseMapSelection(context);
                         break;
                 }
+
                 break;
         }
     }

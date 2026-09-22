@@ -39,6 +39,7 @@ internal sealed class ResourceType
             // TODO
             //throw new InvalidOperationException($"Unknown member '{name}' in type '{Name}'.");
         }
+
         return result;
     }
 }

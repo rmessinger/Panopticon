@@ -36,6 +36,7 @@ public sealed class CommandSpec
         {
             arg.AppendTo(order, ctx, rng);
         }
+
         return order;
     }
 
@@ -135,6 +136,7 @@ internal sealed class CommandSpecJsonConverter : JsonConverter<CommandSpec>
         {
             JsonSerializer.Serialize(writer, arg, typeof(CommandArgument), options);
         }
+
         writer.WriteEndArray();
 
         writer.WriteEndObject();

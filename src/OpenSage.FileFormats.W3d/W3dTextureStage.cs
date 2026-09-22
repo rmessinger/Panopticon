@@ -55,6 +55,7 @@ public sealed record W3dTextureStage(
                         {
                             perFaceTexCoordIds[count] = W3dVectorUInt32.Parse(reader);
                         }
+
                         break;
 
                     case W3dChunkType.W3D_CHUNK_STAGE_TEXCOORDS:

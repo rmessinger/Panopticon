@@ -269,28 +269,33 @@ public class ImGuiRenderer : IDisposable
                     string resourceName = name + ".hlsl.bytes";
                     return GetEmbeddedResourceBytes(resourceName);
                 }
+
             case GraphicsBackend.OpenGL:
                 {
                     if (stage == ShaderStages.Vertex && colorSpaceHandling == ColorSpaceHandling.Legacy) { name += "-legacy"; }
                     string resourceName = name + ".glsl";
                     return GetEmbeddedResourceBytes(resourceName);
                 }
+
             case GraphicsBackend.OpenGLES:
                 {
                     if (stage == ShaderStages.Vertex && colorSpaceHandling == ColorSpaceHandling.Legacy) { name += "-legacy"; }
                     string resourceName = name + ".glsles";
                     return GetEmbeddedResourceBytes(resourceName);
                 }
+
             case GraphicsBackend.Vulkan:
                 {
                     string resourceName = name + ".spv";
                     return GetEmbeddedResourceBytes(resourceName);
                 }
+
             case GraphicsBackend.Metal:
                 {
                     string resourceName = name + ".metallib";
                     return GetEmbeddedResourceBytes(resourceName);
                 }
+
             default:
                 throw new NotImplementedException();
         }

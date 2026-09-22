@@ -78,6 +78,7 @@ public sealed class BlendDescription
                 // TODO
                 //throw new InvalidDataException();
             }
+
             if (bytes[i] != 0)
             {
                 result |= bytes[i] << i;

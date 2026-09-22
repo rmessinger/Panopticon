@@ -158,6 +158,7 @@ public sealed class Game : DisposableBase, IGame
                 return obj.Id;
             }
         }
+
         return Logic.Object.ObjectId.Invalid;
     }
 
@@ -281,6 +282,7 @@ public sealed class Game : DisposableBase, IGame
                 }
 
             }
+
             pSettings.Add(new PlayerSetting(slot.StartPosition, faction, color, slot.Team, owner, slot.HumanName));
         }
 
@@ -322,6 +324,7 @@ public sealed class Game : DisposableBase, IGame
                     break;
             }
         }
+
         return slots.ToArray();
     }
 
@@ -347,6 +350,7 @@ public sealed class Game : DisposableBase, IGame
             }
         }
     }
+
     private bool _isLogicRunning;
 
     // Measures time when IsLogicRunning == true.
@@ -468,6 +472,7 @@ public sealed class Game : DisposableBase, IGame
             VictorySystem.ApplyOptions(_victoryOptions);
         }
     }
+
     private VictoryOptions _victoryOptions = VictoryOptions.Default;
 
     GameLogic IGame.GameLogic => GameLogic;
@@ -590,10 +595,12 @@ public sealed class Game : DisposableBase, IGame
             {
                 ContentManager.UserDataFileSystem = AddDisposable(new DiskFileSystem(UserDataFolder));
             }
+
             if (SageGame >= SageGame.Bfme && UserAppDataFolder is not null && Directory.Exists(UserAppDataFolder))
             {
                 ContentManager.UserDataFileSystem = AddDisposable(new DiskFileSystem(UserAppDataFolder));
             }
+
             // TODO
             //if (SageGame >= SageGame.Cnc3 && UserAppDataFolder is not null && Directory.Exists(UserAppDataFolder))
             //{
@@ -738,6 +745,7 @@ public sealed class Game : DisposableBase, IGame
         {
             throw new Exception($"Window file {wndFileName} was not found.");
         }
+
         var wndFile = WndFile.FromFileSystemEntry(entry, AssetStore);
         return new Window(wndFile, this, _wndCallbackResolver);
     }
@@ -823,6 +831,7 @@ public sealed class Game : DisposableBase, IGame
             var outputPath = Path.Combine(replayDir, Configuration.SaveReplayFile);
             _pendingReplaySave = (outputPath, header);
         }
+
         {
             Scene2D.ControlBar = Definition.ControlBar.Create(Scene3D.LocalPlayer.Side, this);
             Scene2D.ControlBar.AddToScene(Scene2D);
@@ -999,6 +1008,7 @@ public sealed class Game : DisposableBase, IGame
             _inputLoggerHandler.Dispose();
             _inputLoggerHandler = null;
         }
+
         if (UPnP.Status == UPnPStatus.PortsForwarded)
         {
             UPnP.RemovePortForwardingAsync().Wait();

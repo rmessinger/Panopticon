@@ -72,6 +72,7 @@ public sealed class OrderProcessor
                     {
                         player.CreateSelectionGroup(order.OrderType - OrderType.CreateGroup0);
                     }
+
                     break;
                 case OrderType.SelectGroup0:
                 case OrderType.SelectGroup1:
@@ -86,6 +87,7 @@ public sealed class OrderProcessor
                     {
                         player.SelectGroup(order.OrderType - OrderType.SelectGroup0);
                     }
+
                     break;
                 // TODO
                 case OrderType.MoveTo:
@@ -111,6 +113,7 @@ public sealed class OrderProcessor
 
                         lastUnit?.OnLocalMove(_game.Audio);
                     }
+
                     break;
                 case OrderType.BuildObject:
                     {
@@ -123,6 +126,7 @@ public sealed class OrderProcessor
                             Logger.Error($"BuildObject order references unknown object definition id {objectDefinitionId}");
                             continue;
                         }
+
                         if (!TryDebit(player.BankAccount, (uint)objectDefinition.BuildCost))
                         {
                             Logger.Warn($"BuildObject for player {order.PlayerIndex}: cannot afford {objectDefinition.Name} (cost {objectDefinition.BuildCost}, balance {player.BankAccount.Money})");
@@ -147,6 +151,7 @@ public sealed class OrderProcessor
 
                         _game.Audio.PlayAudioEvent(dozer, dozer?.Definition.UnitSpecificSounds?.VoiceBuildResponse?.Value);
                     }
+
                     break;
                 case OrderType.CancelBuild:
                     {
@@ -156,8 +161,10 @@ public sealed class OrderProcessor
                             unit.Kill();
                             player.BankAccount.Deposit((uint)unit.Definition.BuildCost);
                         }
+
                         player.DeselectUnits();
                     }
+
                     break;
                 case OrderType.ResumeBuild:
                     {
@@ -172,6 +179,7 @@ public sealed class OrderProcessor
 
                         _game.Audio.PlayAudioEvent(dozer, dozer?.Definition.UnitSpecificSounds?.VoiceBuildResponse?.Value);
                     }
+
                     break;
                 case OrderType.BeginUpgrade:
                     {
@@ -188,6 +196,7 @@ public sealed class OrderProcessor
                         var gameObject = GameObjects.GetObjectById(objectDefinitionId);
                         gameObject?.ProductionUpdate.QueueUpgrade(upgradeDefinition);
                     }
+
                     break;
 
                 case OrderType.CancelUpgrade:
@@ -199,6 +208,7 @@ public sealed class OrderProcessor
                         // since this is a building and only one at a time can be selected
                         player.SelectedUnits.First().ProductionUpdate.CancelUpgrade(upgradeDefinition);
                     }
+
                     break;
 
                 case OrderType.StopMoving:
@@ -206,6 +216,7 @@ public sealed class OrderProcessor
                     {
                         unit.AIUpdate.Stop();
                     }
+
                     break;
 
                 case OrderType.CreateUnit:
@@ -217,6 +228,7 @@ public sealed class OrderProcessor
                             Logger.Error($"CreateUnit order references unknown object definition id {objectDefinitionId}");
                             continue;
                         }
+
                         if (!TryDebit(player.BankAccount, (uint)objectDefinition.BuildCost))
                         {
                             Logger.Warn($"CreateUnit for player {order.PlayerIndex}: cannot afford {objectDefinition.Name} (cost {objectDefinition.BuildCost}, balance {player.BankAccount.Money})");
@@ -242,6 +254,7 @@ public sealed class OrderProcessor
                             producer.ProductionUpdate?.QueueProduction(objectDefinition);
                         }
                     }
+
                     break;
 
                 case OrderType.CancelUnit:
@@ -264,6 +277,7 @@ public sealed class OrderProcessor
                             unit.ProductionUpdate?.CancelProduction(queueIndex);
                         }
                     }
+
                     break;
 
                 case OrderType.Sell:
@@ -283,6 +297,7 @@ public sealed class OrderProcessor
 
                         player.BankAccount.Deposit((uint)sellAmount);
                     }
+
                     break;
 
                 case OrderType.RepairStructure:
@@ -298,6 +313,7 @@ public sealed class OrderProcessor
 
                         _game.Audio.PlayAudioEvent(repairer, repairer?.Definition.UnitSpecificSounds?.VoiceRepair?.Value);
                     }
+
                     break;
 
                 case OrderType.SetCameraPosition:
@@ -341,6 +357,7 @@ public sealed class OrderProcessor
                                 {
                                     unit.AIUpdate?.SetTargetPoint(targetObject.Translation);
                                 }
+
                                 unit.CurrentWeapon?.SetTarget(new WeaponTarget(GameObjects, objectId));
                             }
                         }
@@ -356,6 +373,7 @@ public sealed class OrderProcessor
                             _game.Audio.PlayAudioEvent(firstUnit, voiceAttack);
                         }
                     }
+
                     break;
 
                 case OrderType.ForceAttackGround:
@@ -401,6 +419,7 @@ public sealed class OrderProcessor
                             }
                         }
                     }
+
                     break;
 
                 case OrderType.SetRallyPoint:
@@ -432,6 +451,7 @@ public sealed class OrderProcessor
                     {
                         Logger.Error(e, "Error while setting rallypoint");
                     }
+
                     break;
                 case OrderType.SpecialPowerAtLocation:
                     {
@@ -445,6 +465,7 @@ public sealed class OrderProcessor
                             new LocationArguments(player, specialPowerLocation, commandFlags,
                                 _game.GameLogic.GetObjectById(commandCenterSource)), player.SelectedUnits);
                     }
+
                     break;
 
                 case OrderType.SpecialPower:
@@ -456,6 +477,7 @@ public sealed class OrderProcessor
                         SpecialPowerApplicator.Execute(specialPowerDefinition,
                             new SpecialPowerArguments(player, commandFlags), player.SelectedUnits);
                     }
+
                     break;
 
                 case OrderType.SpecialPowerAtObject:
@@ -469,6 +491,7 @@ public sealed class OrderProcessor
                             new ObjectArguments(player, _game.GameLogic.GetObjectById(targetId), commandFlags,
                                 _game.GameLogic.GetObjectById(commandCenterSource)), player.SelectedUnits);
                     }
+
                     break;
 
                 case OrderType.EndGame:
@@ -488,6 +511,7 @@ public sealed class OrderProcessor
                     {
                         unit.FindBehavior<OpenContainModule>().Remove(objectIdToExit);
                     }
+
                     break;
 
                 case OrderType.Evacuate:
@@ -495,6 +519,7 @@ public sealed class OrderProcessor
                     {
                         unit.FindBehavior<OpenContainModule>().Evacuate();
                     }
+
                     break;
 
                 case OrderType.Enter:
@@ -525,8 +550,10 @@ public sealed class OrderProcessor
                                 container.Add(unit);
                             }
                         }
+
                         break;
                     }
+
                 case OrderType.GatherDumpSupplies:
                     var supplyPointId = order.Arguments[0].Value.ObjectId;
                     var supplyPoint = GameObjects.GetObjectById(supplyPointId);
@@ -559,6 +586,7 @@ public sealed class OrderProcessor
                             behavior.SupplyGatherState = SupplyAIUpdate.SupplyGatherStates.SearchingForSupplyTarget;
                         }
                     }
+
                     break;
 
                 case OrderType.HackInternet:
@@ -579,6 +607,7 @@ public sealed class OrderProcessor
 
                         _game.Audio.PlayAudioEvent(lastUnit, lastUnit?.Definition.UnitSpecificSounds.VoiceHackInternet?.Value);
                     }
+
                     break;
 
                 case OrderType.ToggleOvercharge:
@@ -654,6 +683,7 @@ public sealed class OrderProcessor
         {
             return false;
         }
+
         account.Withdraw(cost);
         return true;
     }

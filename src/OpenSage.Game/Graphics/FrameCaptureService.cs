@@ -114,6 +114,7 @@ public sealed class FrameCaptureService : IDisposable
             try { File.Delete(path); }
             catch (IOException) { }
         }
+
         _writtenPaths.Clear();
     }
 
@@ -141,6 +142,7 @@ public sealed class FrameCaptureService : IDisposable
         {
             return;
         }
+
         _disposed = true;
         DeleteCaptures();
     }

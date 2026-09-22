@@ -79,6 +79,7 @@ internal sealed class CastleBehavior : FoundationAIUpdate
                 }
             }
         }
+
         IsUnpacked = true;
     }
 

@@ -59,6 +59,7 @@ public sealed record W3dAnimationChannel(
                 {
                     throw new InvalidDataException();
                 }
+
                 break;
 
             case W3dAnimationChannelType.TranslationX:
@@ -68,6 +69,7 @@ public sealed record W3dAnimationChannel(
                 {
                     throw new InvalidDataException();
                 }
+
                 break;
 
             case W3dAnimationChannelType.UnknownBfme:
@@ -75,6 +77,7 @@ public sealed record W3dAnimationChannel(
                 {
                     throw new InvalidDataException();
                 }
+
                 break;
 
             default:

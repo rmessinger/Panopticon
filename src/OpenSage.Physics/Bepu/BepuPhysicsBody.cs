@@ -77,6 +77,7 @@ public sealed class BepuPhysicsBody : IPhysicsBody
             var inverseMass = Reference.LocalInertia.InverseMass;
             return inverseMass > 0.0f ? 1.0f / inverseMass : float.PositiveInfinity;
         }
+
         set
         {
             // Only analytic shapes recompute inertia; hull mass changes are not supported yet.

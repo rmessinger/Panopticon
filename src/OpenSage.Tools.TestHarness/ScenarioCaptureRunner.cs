@@ -1078,6 +1078,7 @@ public static class ScenarioCaptureRunner
                     travelScreenY,
                     alignmentDot);
             }
+
             previousPositions[candidate.Id] = position;
 
             results.Add(new ActorRecord(

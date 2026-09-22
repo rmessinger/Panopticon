@@ -53,6 +53,7 @@ public sealed class SpecialAbilityModule : SpecialPowerModule
                 return update.ModuleData;
             }
         }
+
         return null;
     }
 
@@ -70,6 +71,7 @@ public sealed class SpecialAbilityModule : SpecialPowerModule
         {
             target.Team = GameObject.Owner.DefaultTeam;
         }
+
         target.Owner = GameObject.Owner;
     }
 

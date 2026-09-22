@@ -126,6 +126,7 @@ partial class IniParser
                 }
             }
         }
+
         return stringToValueMap;
     }
 
@@ -151,6 +152,7 @@ partial class IniParser
                 }
             }
         }
+
         return valueToStringMap;
     }
 
@@ -201,6 +203,7 @@ partial class IniParser
         {
             return (T)enumValue;
         }
+
         return default;
     }
 
@@ -229,6 +232,7 @@ partial class IniParser
                         value = stringValue[0] == '+';
                         stringValue = stringValue.Substring(1);
                     }
+
                     if (!stringToValueMap.TryGetValue(stringValue, out var enumValue))
                     {
                         throw new IniParseException($"Invalid value for type '{typeof(T).Name}': '{stringValue}'", token.Value.Position);
@@ -340,6 +344,7 @@ partial class IniParser
                     value = stringValue[0] == '+';
                     stringValue = stringValue.Substring(1);
                 }
+
                 if (!stringToValueMap.TryGetValue(stringValue, out var enumValue))
                 {
                     if (inLine)
@@ -357,6 +362,7 @@ partial class IniParser
 
                 break;
         }
+
         return true;
     }
 

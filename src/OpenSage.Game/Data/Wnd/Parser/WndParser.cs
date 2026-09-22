@@ -37,6 +37,7 @@ internal sealed class WndParser
         {
             throw new InvalidDataException($"Expected token of type '{tokenType.Value}', but got token of type '{token.TokenType}'.");
         }
+
         _tokenIndex++;
         return token;
     }
@@ -48,6 +49,7 @@ internal sealed class WndParser
         {
             throw new InvalidDataException($"Expected an identifier with name '{expectedStringValue}', but got '{token.StringValue}'.");
         }
+
         return token;
     }
 
@@ -136,6 +138,7 @@ internal sealed class WndParser
                             UnexpectedToken(Current);
                             break;
                     }
+
                     break;
 
                 default:
@@ -650,6 +653,7 @@ internal sealed class WndParser
         {
             throw new InvalidDataException();
         }
+
         return result == 1;
     }
 

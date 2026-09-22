@@ -165,6 +165,7 @@ public abstract class P7RegressionTestBase : MockedGameTest
         {
             results.Add(WithId(invariantResult, $"{endState}.{invariantResult.AssertionId}"));
         }
+
         return new CellResult(bindings, new AssertionReport(results));
     }
 

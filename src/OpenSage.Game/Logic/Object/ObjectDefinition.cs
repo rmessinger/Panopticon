@@ -76,6 +76,7 @@ public class ObjectDefinition : BaseAsset
                 return true;
             }
         }
+
         return false;
     }
 
@@ -123,6 +124,7 @@ public class ObjectDefinition : BaseAsset
                     x.ArmorSets.Clear();
                     x._armorCopiedFromDefault = false;
                 }
+
                 x.ArmorSets.Add(ArmorTemplateSet.Parse(parser));
             }
         },
@@ -1271,14 +1273,17 @@ public class ObjectDefinition : BaseAsset
         {
             result.Behaviors[pair.Key] = pair.Value.WithInherited();
         }
+
         foreach (var pair in result.Draws.ToList())
         {
             result.Draws[pair.Key] = pair.Value.WithInherited();
         }
+
         foreach (var pair in result.ClientUpdates.ToList())
         {
             result.ClientUpdates[pair.Key] = pair.Value.WithInherited();
         }
+
         foreach (var pair in result.ClientBehaviors.ToList())
         {
             result.ClientBehaviors[pair.Key] = pair.Value.WithInherited();
@@ -1347,6 +1352,7 @@ public class ObjectDefinition : BaseAsset
                         {
                             behaviorsToRemove.Add(existingBehavior);
                         }
+
                         break;
 
                     case ModuleInheritanceMode.AlwaysInherit:
@@ -1357,6 +1363,7 @@ public class ObjectDefinition : BaseAsset
                         {
                             behaviorsToRemove.Add(existingBehavior);
                         }
+
                         break;
 
                     default:
@@ -1368,6 +1375,7 @@ public class ObjectDefinition : BaseAsset
                 behaviorsToRemove.Add(existingBehavior);
             }
         }
+
         foreach (var behaviorToRemove in behaviorsToRemove)
         {
             modules.Remove(behaviorToRemove.Tag);

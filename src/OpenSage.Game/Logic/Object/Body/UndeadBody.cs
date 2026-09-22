@@ -77,6 +77,7 @@ public sealed class UndeadBody : ActiveBody
                 total += module.GetProbabilityModifier(damageOutput);
             }
         }
+
         DebugUtility.AssertCrash(total > 0, "Hmm, this is wrong");
 
         // This returns a value from 1...total, inclusive.

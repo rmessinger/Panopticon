@@ -130,6 +130,7 @@ class Program
             {
                 AddFileToArchive(archive, file);
             }
+
             AddDirectoryToArchive(archive, dir);
         }
     }

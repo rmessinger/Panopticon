@@ -31,6 +31,7 @@ internal sealed class IdleAfterFiringWeaponState : FixedDurationWeaponState
             {
                 return WeaponState.PreAttack;
             }
+
             return WeaponState.BetweenShots;
         }
 

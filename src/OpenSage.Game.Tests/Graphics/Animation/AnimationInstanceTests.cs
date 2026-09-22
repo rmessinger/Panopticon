@@ -219,6 +219,7 @@ public class AnimationInstanceTests
             Assert.Equal(target, modelBoneInstances[0].AnimatedOffset.Translation.X, new ToleranceEqualityComparer(0.001f));
             previous = modelBoneInstances[0].AnimatedOffset.Translation.X;
         }
+
         instance.Stop();
     }
 
@@ -264,6 +265,7 @@ public class AnimationInstanceTests
             Assert.Equal(target, modelBoneInstances[0].AnimatedOffset.Translation.X, new ToleranceEqualityComparer(0.001f));
             previous = modelBoneInstances[0].AnimatedOffset.Translation.X;
         }
+
         instance.Stop();
     }
 

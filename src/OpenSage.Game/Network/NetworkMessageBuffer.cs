@@ -68,6 +68,7 @@ public sealed class NetworkMessageBuffer : DisposableBase
                 {
                     FrameOrders.Add(frame, orders = new List<Order>());
                 }
+
                 orders.Add(order);
             });
 

@@ -416,6 +416,7 @@ public sealed class StateReader : StatePersister
         {
             Console.Write($"0x{_binaryReader.ReadByte():x2}, ");
         }
+
         Console.WriteLine();
     }
 }

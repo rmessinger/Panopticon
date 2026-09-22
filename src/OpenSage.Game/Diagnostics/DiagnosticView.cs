@@ -45,6 +45,7 @@ internal abstract class DiagnosticView : DisposableBase
                 {
                     DrawOverride(ref isGameViewFocused);
                 }
+
                 ImGui.End();
             }
             else

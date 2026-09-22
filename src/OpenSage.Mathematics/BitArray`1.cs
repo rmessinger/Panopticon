@@ -29,6 +29,7 @@ public sealed class BitArray<TEnum> : IEquatable<BitArray<TEnum>>
         {
             throw new Exception($"Cannot create a BitArray for enum {typeof(TEnum).Name}, because it has {maxBits} cases (max 512).");
         }
+
         _data = new BitArray512(maxBits);
     }
 

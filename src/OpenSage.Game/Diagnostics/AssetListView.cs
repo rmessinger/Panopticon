@@ -54,6 +54,7 @@ internal sealed class AssetListView : DiagnosticView
             {
                 Context.SelectedObject = item.Asset;
             }
+
             ImGuiUtility.DisplayTooltipOnHover(item.Name);
         }
 

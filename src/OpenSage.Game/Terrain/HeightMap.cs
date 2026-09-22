@@ -256,6 +256,7 @@ public sealed class HeightMap
                 }
             }
         }
+
         avg /= num;
 
         return Vector3.Normalize(avg);

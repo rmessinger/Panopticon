@@ -295,6 +295,7 @@ public sealed class MainWindow : Window
         {
             item.Gesture = KeyGesture.Parse(gesture);
         }
+
         item.Click += handler;
         return item;
     }
@@ -543,6 +544,7 @@ public sealed class MainWindow : Window
                     {
                         _viewModel.Undo();
                     }
+
                     return;
 
                 case "Y":
@@ -558,6 +560,7 @@ public sealed class MainWindow : Window
                     {
                         OnMenuSave(null, EventArgs.Empty);
                     }
+
                     return;
 
                 case "N":

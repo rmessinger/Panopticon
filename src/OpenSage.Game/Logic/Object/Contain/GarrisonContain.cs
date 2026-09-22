@@ -34,6 +34,7 @@ public sealed class GarrisonContain : OpenContainModule
                 // todo: DefaultTeam is not currently set on player object - this if statement can be removed once we're actually setting this
                 _originalTeamId = uint.MaxValue;
             }
+
             _originalTeamSet = true;
         }
 

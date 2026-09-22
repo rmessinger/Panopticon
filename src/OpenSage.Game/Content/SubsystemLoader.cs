@@ -192,6 +192,7 @@ public sealed class SubsystemLoader
                         _contentManager.LoadIniFile(@"Data\INI\WaterTextures.ini");
                         break;
                 }
+
                 switch (_gameDefinition.Game)
                 {
                     case SageGame.CncGenerals:
@@ -208,6 +209,7 @@ public sealed class SubsystemLoader
                         _contentManager.LoadIniFile($@"HeaderTemplate.ini");
                         break;
                 }
+
                 break;
 
             case Subsystem.Players:
@@ -242,6 +244,7 @@ public sealed class SubsystemLoader
                         LoadIniFiles(@"Data\INI\MappedImages\AptImages");
                         break;
                 }
+
                 break;
         }
     }
@@ -303,6 +306,7 @@ public sealed class SubsystemLoader
                         yield return "TheFXParticleSystemManager";
                         break;
                 }
+
                 break;
 
             case Subsystem.Wnd:
@@ -322,6 +326,7 @@ public sealed class SubsystemLoader
                         yield return "TheLinearCampaignManager";
                         break;
                 }
+
                 break;
 
             case Subsystem.Credits:
@@ -389,6 +394,7 @@ public sealed class SubsystemLoader
                         {
                             yield return file;
                         }
+
                         break;
                 }
             }

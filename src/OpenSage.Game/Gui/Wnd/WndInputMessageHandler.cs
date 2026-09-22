@@ -64,6 +64,7 @@ internal sealed class WndInputMessageHandler : InputMessageHandler
                                 context);
                         }
                     }
+
                     foreach (var control in mouseOverControls)
                     {
                         if (!_lastMouseOverControls.Contains(control))
@@ -86,6 +87,7 @@ internal sealed class WndInputMessageHandler : InputMessageHandler
                             new WndWindowMessage(WndWindowMessageType.MouseMove, control, mousePosition),
                             context);
                     }
+
                     return mouseOverControls.Count > 0
                         ? InputMessageResult.Handled
                         : InputMessageResult.NotHandled;
@@ -101,6 +103,7 @@ internal sealed class WndInputMessageHandler : InputMessageHandler
                             context);
                         return InputMessageResult.Handled;
                     }
+
                     break;
                 }
 
@@ -114,6 +117,7 @@ internal sealed class WndInputMessageHandler : InputMessageHandler
                             context);
                         return InputMessageResult.Handled;
                     }
+
                     break;
                 }
 
@@ -127,6 +131,7 @@ internal sealed class WndInputMessageHandler : InputMessageHandler
                             context);
                         return InputMessageResult.Handled;
                     }
+
                     break;
                 }
 
@@ -140,6 +145,7 @@ internal sealed class WndInputMessageHandler : InputMessageHandler
                             context);
                         return InputMessageResult.Handled;
                     }
+
                     break;
                 }
 

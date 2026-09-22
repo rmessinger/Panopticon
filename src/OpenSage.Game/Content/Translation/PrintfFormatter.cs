@@ -62,6 +62,7 @@ public static class PrintfFormatter
                     case '0': zeroPad = true; i++; continue;
                     case '#': altForm = true; i++; continue;
                 }
+
                 break;
             }
 
@@ -145,29 +146,34 @@ public static class PrintfFormatter
                     if (spaceSign) return " " + s;
                     return s;
                 }
+
             case 'u':
                 {
                     var val = Convert.ToUInt64(arg ?? 0UL);
                     return val.ToString();
                 }
+
             case 'o':
                 {
                     var val = Convert.ToUInt64(arg ?? 0UL);
                     var s = Convert.ToString((long)val, 8);
                     return altForm && val != 0 ? "0" + s : s;
                 }
+
             case 'x':
                 {
                     var val = Convert.ToUInt64(arg ?? 0UL);
                     var s = val.ToString("x");
                     return altForm && val != 0 ? "0x" + s : s;
                 }
+
             case 'X':
                 {
                     var val = Convert.ToUInt64(arg ?? 0UL);
                     var s = val.ToString("X");
                     return altForm && val != 0 ? "0X" + s : s;
                 }
+
             case 'f':
             case 'F':
                 {
@@ -179,6 +185,7 @@ public static class PrintfFormatter
                     if (spaceSign) return " " + s;
                     return s;
                 }
+
             case 'e':
                 {
                     var val = Convert.ToDouble(arg ?? 0.0);
@@ -188,6 +195,7 @@ public static class PrintfFormatter
                     if (spaceSign && val >= 0) return " " + s;
                     return s;
                 }
+
             case 'E':
                 {
                     var val = Convert.ToDouble(arg ?? 0.0);
@@ -197,6 +205,7 @@ public static class PrintfFormatter
                     if (spaceSign && val >= 0) return " " + s;
                     return s;
                 }
+
             case 'g':
             case 'G':
                 {
@@ -208,11 +217,13 @@ public static class PrintfFormatter
                     if (spaceSign && val >= 0) return " " + s;
                     return s;
                 }
+
             case 'c':
                 {
                     if (arg is char c) return c.ToString();
                     return ((char)Convert.ToInt32(arg ?? 0)).ToString();
                 }
+
             case 's':
                 {
                     var s = arg?.ToString() ?? string.Empty;
@@ -220,8 +231,10 @@ public static class PrintfFormatter
                     {
                         s = s[..precision];
                     }
+
                     return s;
                 }
+
             default:
                 return "%" + specifier;
         }

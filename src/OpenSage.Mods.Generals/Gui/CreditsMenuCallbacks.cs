@@ -70,6 +70,7 @@ public static class CreditsMenuCallbacks
                         default:
                             throw new InvalidOperationException();
                     }
+
                     continue;
 
                 case CreditTextLine tl:
@@ -127,6 +128,7 @@ public static class CreditsMenuCallbacks
                     //Should load a loading screen
                     context.WindowManager.SetWindow(@"Menus\MainMenu.wnd");
                 }
+
                 break;
         }
     }

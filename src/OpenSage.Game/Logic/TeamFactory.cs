@@ -92,6 +92,7 @@ public sealed class TeamFactory : IPersistableObject
         {
             return result;
         }
+
         return null;
     }
 
@@ -101,6 +102,7 @@ public sealed class TeamFactory : IPersistableObject
         {
             return result;
         }
+
         return null;
     }
 
@@ -114,6 +116,7 @@ public sealed class TeamFactory : IPersistableObject
                 return team;
             }
         }
+
         return null;
     }
 
@@ -161,6 +164,7 @@ public sealed class TeamFactory : IPersistableObject
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
     }
 }

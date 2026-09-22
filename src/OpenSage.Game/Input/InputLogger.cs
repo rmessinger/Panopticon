@@ -54,6 +54,7 @@ public sealed class InputLogger : IDisposable
             _writer.Dispose();
             _disposed = true;
         }
+
         GC.SuppressFinalize(this);
     }
 }

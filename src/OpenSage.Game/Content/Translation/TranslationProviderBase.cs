@@ -21,6 +21,7 @@ public abstract class ATranslationProviderBase : ITranslationProvider
                 wasRegistered = true;
                 TranslationManager.Instance.UnregisterProvider(this, false);
             }
+
             _nameOverride = value;
             if (wasRegistered)
             {
@@ -28,6 +29,7 @@ public abstract class ATranslationProviderBase : ITranslationProvider
             }
         }
     }
+
     public abstract IReadOnlyCollection<string> Labels { get; }
 
     public abstract string GetString(string str);

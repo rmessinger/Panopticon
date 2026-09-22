@@ -246,6 +246,7 @@ public class UnitUpgradeProductionTests : MockedGameTest
                 .GetProperty(nameof(ProductionUpdateModuleData.MaxQueueEntries))!
                 .SetValue(prodData, maxQueue);
         }
+
         producerDef.Behaviors.Add("ModuleTag_Production",
             new ModuleDataContainer("ModuleTag_Production", prodData, ModuleInheritanceMode.Default, inherited: false));
 
@@ -278,6 +279,7 @@ public class UnitUpgradeProductionTests : MockedGameTest
             .SetValue(template, type);
         return template;
     }
+
     private static void MarkSelected(Player owner, params GameObject[] units)
     {
         var field = typeof(Player).GetField("_selectedUnits", BindingFlags.Instance | BindingFlags.NonPublic);

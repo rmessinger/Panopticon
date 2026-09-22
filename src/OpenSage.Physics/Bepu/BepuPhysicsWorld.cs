@@ -56,6 +56,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
                     body = AddBody(bodyDescription, description);
                     break;
                 }
+
             case PhysicsShape.Box box:
                 {
                     // Bepu Box takes full extents; the seam description uses half extents.
@@ -67,6 +68,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
                     body = AddBody(bodyDescription, description);
                     break;
                 }
+
             case PhysicsShape.Cylinder cylinder:
                 {
                     var shape = new BepuPhysics.Collidables.Cylinder(cylinder.Radius, cylinder.Height);
@@ -74,6 +76,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
                     body = AddBody(bodyDescription, description);
                     break;
                 }
+
             case PhysicsShape.ConvexHull hull:
                 {
                     var points = new Vector3[hull.Points.Count];
@@ -81,6 +84,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
                     {
                         points[i] = hull.Points[i];
                     }
+
                     var shape = new ConvexHull(points.AsSpan(), _bufferPool, out _);
                     var shapeIndex = _simulation.Shapes.Add(shape);
                     var inertia = shape.ComputeInertia(description.Mass);
@@ -92,22 +96,26 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
                     body = AddBody(bodyDescription, description);
                     break;
                 }
+
             case PhysicsShape.TriangleList triangleList:
                 {
                     if (!description.IsStatic)
                     {
                         throw new NotSupportedException("Dynamic triangle-list bodies are not supported; use a convex hull.");
                     }
+
                     var vertices = new TerrainPhysicsVertex[triangleList.Vertices.Count];
                     for (var i = 0; i < vertices.Length; i++)
                     {
                         vertices[i] = triangleList.Vertices[i];
                     }
+
                     var indices = new int[triangleList.Indices.Count];
                     for (var i = 0; i < indices.Length; i++)
                     {
                         indices[i] = triangleList.Indices[i];
                     }
+
                     var mesh = CreateMesh(vertices, indices);
                     var shapeIndex = _simulation.Shapes.Add(mesh);
                     var bodyDescription = BodyDescription.CreateKinematic(
@@ -117,6 +125,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
                     body = AddBody(bodyDescription, description);
                     break;
                 }
+
             default:
                 throw new NotSupportedException($"Unsupported shape {description.Shape?.GetType().Name}");
         }
@@ -138,6 +147,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
         {
             return;
         }
+
         _bodies.Remove(bepuBody);
         _simulation.Bodies.Remove(bepuBody.Handle);
     }
@@ -165,6 +175,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
         {
             vertexArray[i] = vertices[i].Position;
         }
+
         return CreateMesh(vertexArray.AsSpan(), indices);
     }
 
@@ -180,6 +191,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
                 vertices[indices[i + 2]],
                 vertices[indices[i + 1]]);
         }
+
         var scale = Vector3.One;
         return new Mesh(triangles, in scale, _bufferPool);
     }
@@ -199,6 +211,7 @@ public sealed class BepuPhysicsWorld : IPhysicsWorld, IDisposable
         {
             body.FlushPendingForce(deltaTime);
         }
+
         _simulation.Timestep(deltaTime);
     }
 

@@ -127,6 +127,7 @@ public partial class Control : DisposableBase
         {
             return _text;
         }
+
         set
         {
             if (value != _text)
@@ -533,6 +534,7 @@ public partial class Control : DisposableBase
             child.ParentInternal = null;
             child.Dispose();
         }
+
         Controls.Clear();
 
         base.Dispose(disposeManagedResources);

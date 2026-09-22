@@ -160,6 +160,7 @@ public sealed class JetAIUpdate : AIUpdate
                     break;
             }
         }
+
         base.SetTargetPoint(targetPoint);
     }
 
@@ -232,10 +233,12 @@ public sealed class JetAIUpdate : AIUpdate
                     {
                         break;
                     }
+
                     _pathToStart = parkingPlaceBehavior.GetPathToRunway(GameObject.Id, runway);
                     CurrentJetAIState = JetAIState.MovingTowardsStart;
                     _unparkingRequested = false;
                 }
+
                 break;
 
             case JetAIState.MovingTowardsStart:
@@ -289,8 +292,10 @@ public sealed class JetAIUpdate : AIUpdate
                         GameObject.ModelConditionFlags.Set(ModelConditionFlag.JetAfterburner, false);
                         _afterburnerEnabled = false;
                     }
+
                     break;
                 }
+
                 CurrentJetAIState = JetAIState.ReachedTargetPoint;
                 _waitUntil = GameEngine.GameLogic.CurrentFrame + ModuleData.ReturnToBaseIdleTime;
                 break;
@@ -365,6 +370,7 @@ public sealed class JetAIUpdate : AIUpdate
                 _waitUntil = GameEngine.GameLogic.CurrentFrame + ModuleData.TakeoffPause;
                 return true;
             }
+
             if (GameEngine.GameLogic.CurrentFrame < _waitUntil)
             {
                 return true;

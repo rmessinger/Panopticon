@@ -156,6 +156,7 @@ public class RadialCommandListOverlay : InputMessageHandler, ICommandListOverlay
                 }
             }
         }
+
         return InputMessageResult.NotHandled;
     }
 }

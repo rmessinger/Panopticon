@@ -146,6 +146,7 @@ internal static class SidesListUtility
             playerAllies[i] = new List<string>();
             playerEnemies[i] = new List<string>();
         }
+
         for (var i = 0; i < playerSettings.Length; i++)
         {
             var outerPlayer = playerSettings[i];
@@ -165,6 +166,7 @@ internal static class SidesListUtility
                 }
             }
         }
+
         for (var i = 0; i < playerSettings.Length; i++)
         {
             mapPlayers[i + 2].Allies = string.Join(' ', playerAllies[i]);

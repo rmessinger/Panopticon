@@ -172,34 +172,41 @@ public sealed class ActionContext
             Registers[reg] = Value.FromObject(Scope);
             ++reg;
         }
+
         if (flags.HasFlag(FunctionPreloadFlags.PreloadArguments))
         {
             throw new NotImplementedException();
         }
+
         if (flags.HasFlag(FunctionPreloadFlags.PreloadSuper))
         {
             throw new NotImplementedException();
         }
+
         if (flags.HasFlag(FunctionPreloadFlags.PreloadRoot))
         {
             Registers[reg] = Value.FromObject(Apt.Root.ScriptObject);
             ++reg;
         }
+
         if (flags.HasFlag(FunctionPreloadFlags.PreloadParent))
         {
             Registers[reg] = Value.FromObject(Scope.GetParent());
             ++reg;
         }
+
         if (flags.HasFlag(FunctionPreloadFlags.PreloadGlobal))
         {
             Registers[reg] = Value.FromObject(Apt.Avm.GlobalObject);
             ++reg;
         }
+
         if (flags.HasFlag(FunctionPreloadFlags.PreloadExtern))
         {
             Registers[reg] = Value.FromObject(Apt.Avm.ExternObject);
             ++reg;
         }
+
         if (!flags.HasFlag(FunctionPreloadFlags.SupressSuper))
         {
             throw new NotImplementedException();

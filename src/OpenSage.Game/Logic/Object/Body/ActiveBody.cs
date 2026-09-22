@@ -89,6 +89,7 @@ public class ActiveBody : BodyModule
                         // Healing and Damage are separate, so this shouldn't happen.
                         damageOutput = AttemptHealing(damageInput);
                     }
+
                     return damageOutput;
                 }
 
@@ -494,6 +495,7 @@ public class ActiveBody : BodyModule
                     // construction... don't. Special case code.
                     return 0.0f;
                 }
+
                 break;
         }
 

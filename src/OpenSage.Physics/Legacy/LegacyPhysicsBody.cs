@@ -76,10 +76,12 @@ public sealed class LegacyPhysicsBody : IPhysicsBody
         {
             Velocity.X = 0.0f;
         }
+
         if (MathF.Abs(Velocity.Y) < threshold)
         {
             Velocity.Y = 0.0f;
         }
+
         if (MathF.Abs(Velocity.Z) < threshold)
         {
             Velocity.Z = 0.0f;
@@ -198,6 +200,7 @@ public sealed class LegacyPhysicsBody : IPhysicsBody
                 Velocity.Z = desiredVelocity;
             }
         }
+
         VelocityMagnitude = InvalidVelocityMagnitude;
     }
 
@@ -215,10 +218,12 @@ public sealed class LegacyPhysicsBody : IPhysicsBody
             {
                 return;
             }
+
             desiredVelocity /= curVelocity;
             Velocity.X *= desiredVelocity;
             Velocity.Y *= desiredVelocity;
         }
+
         VelocityMagnitude = InvalidVelocityMagnitude;
     }
 }

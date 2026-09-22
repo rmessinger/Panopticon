@@ -166,6 +166,7 @@ internal sealed class TracerManager : RenderObject
                         {
                             tracer.Direction = Vector3.Normalize(step);
                         }
+
                         tracer.Origin = head;
                         _tracers[i] = tracer;
                         continue;

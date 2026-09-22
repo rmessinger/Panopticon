@@ -97,6 +97,7 @@ public sealed class ValidationGroundEditorModel : INotifyPropertyChanged
                 best = m;
             }
         }
+
         return best;
     }
 
@@ -124,6 +125,7 @@ public sealed class ValidationGroundEditorModel : INotifyPropertyChanged
                 Y = worldY,
             });
         }
+
         Regenerate();
     }
 

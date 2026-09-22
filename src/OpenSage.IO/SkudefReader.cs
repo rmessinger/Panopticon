@@ -89,6 +89,7 @@ internal static class SkudefReader
                     {
                         addBigArchive(bigPath);
                     }
+
                     break;
 
                 case "add-config":
@@ -96,6 +97,7 @@ internal static class SkudefReader
                     {
                         Read(Path.GetDirectoryName(fullPath)!, reader, addBigArchive);
                     }
+
                     break;
             }
         }
@@ -126,12 +128,14 @@ internal static class SkudefReader
                 {
                     return 0;
                 }
+
                 if (fileName.EndsWith("ZH", StringComparison.OrdinalIgnoreCase))
                 {
                     // The Zero Hour .big files need to be loaded after the Generals .big files.
                     // This can be a problem with pre-Steam versions.
                     return 1;
                 }
+
                 if (fileName.StartsWith("Patch", StringComparison.OrdinalIgnoreCase))
                 {
                     // The Steam Workshop update added a couple of new PatchX.big files, which need to be loaded after the main .big files.
@@ -139,6 +143,7 @@ internal static class SkudefReader
                     // or they happened to accidentally be loaded in the right order thanks to their names (& NTFS).
                     return 2;
                 }
+
                 return 0;
             })
             // And finally we sort alphabetically & case-insensitively to match the Windows behavior.

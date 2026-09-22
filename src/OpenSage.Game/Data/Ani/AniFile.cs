@@ -66,8 +66,10 @@ public sealed class AniFile
 
                                 result.Images[iconIndex++] = iconChunkContent.GetImage(0);
                             }
+
                             break;
                     }
+
                     break;
 
                 case AniHeaderChunkContent anih:

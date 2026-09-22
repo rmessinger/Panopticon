@@ -129,6 +129,7 @@ public sealed class AcademyStats(IGame game) : IPersistableObject
     {
         _clearedGarrisonedBuildings++;
     }
+
     public void RecordVehicleSniped()
     {
         _vehiclesSniped++;

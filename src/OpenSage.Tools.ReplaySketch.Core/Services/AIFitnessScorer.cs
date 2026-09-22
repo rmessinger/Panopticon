@@ -40,14 +40,17 @@ public static class AIFitnessScorer
         {
             throw new InvalidOperationException("Fitness requires a run output.");
         }
+
         if (output.Outcome is null)
         {
             throw new InvalidOperationException("Fitness requires a terminal outcome record.");
         }
+
         if (output.MetricSamples.Count == 0)
         {
             throw new InvalidOperationException("Fitness requires at least one metric sample.");
         }
+
         if (matchFrameCap < 1)
         {
             throw new InvalidOperationException("Match frame cap must be positive.");

@@ -126,6 +126,7 @@ public class P1BootValidationTests
                 {
                     continue;
                 }
+
                 var a = participants[i];
                 var b = participants[j];
                 if (RelationshipBetween(a, b) != RelationshipBetween(b, a))
@@ -134,6 +135,7 @@ public class P1BootValidationTests
                 }
             }
         }
+
         return true;
     }
 
@@ -146,6 +148,7 @@ public class P1BootValidationTests
                 return false;
             }
         }
+
         return true;
     }
 
@@ -162,8 +165,10 @@ public class P1BootValidationTests
             {
                 continue;
             }
+
             result.Add(player);
         }
+
         return result;
     }
 
@@ -173,10 +178,12 @@ public class P1BootValidationTests
         {
             return RelationshipType.Allies;
         }
+
         if (a.Enemies.Contains(b))
         {
             return RelationshipType.Enemies;
         }
+
         return RelationshipType.Neutral;
     }
 }
@@ -262,6 +269,7 @@ public class P1BootValidationPredicateTests : MockedGameTest
                 IsHuman = human,
             });
         }
+
         Generals.PlayerManager.OnNewGame(mapPlayers.ToArray(), GameType.Skirmish, settings);
     }
 

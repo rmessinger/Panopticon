@@ -436,6 +436,7 @@ public sealed class InGameUI : BaseSingletonAsset, IPersistableObject
 
             reader.EndObject();
         }
+
         reader.EndArray();
     }
 }

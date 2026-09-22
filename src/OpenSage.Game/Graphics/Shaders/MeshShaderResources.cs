@@ -111,6 +111,7 @@ internal sealed class MeshShaderResources : DisposableBase
         {
             return !(left == right);
         }
+
 #pragma warning restore CS0169
     }
 

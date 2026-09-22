@@ -64,6 +64,7 @@ public sealed class PolygonTrigger : IPersistableObject
             {
                 UpdateBounds();
             }
+
             return _bounds;
         }
     }
@@ -77,6 +78,7 @@ public sealed class PolygonTrigger : IPersistableObject
             {
                 UpdateBounds();
             }
+
             return _radius;
         }
     }

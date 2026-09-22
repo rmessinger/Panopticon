@@ -109,6 +109,7 @@ public sealed class FireWeaponUpdate : UpdateModule
         {
             throw new InvalidStateException();
         }
+
         reader.PersistUInt32(ref _unknownUInt2); // something large, was 1 for NukeRadiationFieldWeapon
 
         reader.PersistLogicFrame(ref _unknownFrame1);
@@ -126,6 +127,7 @@ public sealed class FireWeaponUpdate : UpdateModule
         {
             throw new InvalidStateException();
         }
+
         reader.PersistUInt32(ref _unknownUInt5);
         if (_unknownUInt5 != 1)
         {

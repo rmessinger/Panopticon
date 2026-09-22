@@ -37,6 +37,7 @@ public class P6bSpecialPowerGapClosureTests : P6bContractTestBase
                 }
             }
         }
+
         return gaps;
     }
 
@@ -48,6 +49,7 @@ public class P6bSpecialPowerGapClosureTests : P6bContractTestBase
         {
             return string.Empty;
         }
+
         var rest = detail[(idx + marker.Length)..];
         var end = rest.IndexOf(' ');
         return end < 0 ? rest : rest[..end];

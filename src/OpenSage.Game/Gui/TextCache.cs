@@ -282,6 +282,7 @@ internal sealed class TextCache : DisposableBase
         {
             throw new InvalidOperationException("Unable to get image pixelspan.");
         }
+
         using (var pin = pixelSpan.Pin())
         {
             texture = _graphicsDevice.ResourceFactory.CreateTexture(

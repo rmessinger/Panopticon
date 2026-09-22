@@ -95,6 +95,7 @@ public sealed class ScriptActionsGenerator : ScriptContentGeneratorBase
                     {
                         sb.Append(" || ");
                     }
+
                     sb.Append($"game == SageGame.{sageGameNameLookup[(int)games[i].Value]}");
                 }
             }
@@ -106,6 +107,7 @@ public sealed class ScriptActionsGenerator : ScriptContentGeneratorBase
             {
                 sb.Append($", {GetArgument(i, parameterTypes, "action")}");
             }
+
             sb.AppendLine($");");
 
             var displayTemplate = (string)scriptActionAttribute.ConstructorArguments[2].Value;
@@ -114,6 +116,7 @@ public sealed class ScriptActionsGenerator : ScriptContentGeneratorBase
             {
                 sb.Append($", {GetArgument(i, parameterTypes, "action")}");
             }
+
             sb.AppendLine("));");
 
             sb.AppendLine($"                    break;");

@@ -164,18 +164,21 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
             {
                 texture.Dispose();
             }
+
             _externalTextures.Clear();
 
             foreach (var texture in _embeddedTextures.Values)
             {
                 texture.Dispose();
             }
+
             _embeddedTextures.Clear();
 
             foreach (var sampler in _samplers.Values)
             {
                 sampler.Dispose();
             }
+
             _samplers.Clear();
         }
 

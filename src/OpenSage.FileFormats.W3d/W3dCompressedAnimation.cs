@@ -47,6 +47,7 @@ public sealed record W3dCompressedAnimation(
                             default:
                                 throw new InvalidDataException();
                         }
+
                         break;
 
                     case W3dChunkType.W3D_CHUNK_COMPRESSED_BIT_CHANNEL:
@@ -64,6 +65,7 @@ public sealed record W3dCompressedAnimation(
                             default:
                                 throw new InvalidDataException();
                         }
+
                         break;
 
                     case W3dChunkType.W3D_CHUNK_COMPRESSED_ANIMATION_MOTION_CHANNEL:
@@ -81,6 +83,7 @@ public sealed record W3dCompressedAnimation(
                             default:
                                 throw new InvalidDataException();
                         }
+
                         break;
 
                     default:

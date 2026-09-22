@@ -192,6 +192,7 @@ public static class MainMenuCallbacks
                         exitWindow.Controls.FindControl("QuitMessageBox.wnd:ButtonCancel").Text = "GUI:No".Translate();
                         break;
                 }
+
                 break;
         }
     }

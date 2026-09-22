@@ -484,6 +484,7 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
                 {
                     result.Enqueue($"RUNWAY2PREP2");
                 }
+
                 result.Enqueue($"RUNWAY1PREP1");
                 break;
             case "RUNWAY1PARKING2":
@@ -501,6 +502,7 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
                     result.Enqueue($"RUNWAY2PARKING2");
                     result.Enqueue($"RUNWAY2PREP2");
                 }
+
                 result.Enqueue($"RUNWAY2PREP1");
                 break;
             case "RUNWAY2PARKING2":
@@ -513,6 +515,7 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
                 result.Enqueue($"RUNWAY2PREP1");
                 break;
         }
+
         result.Enqueue($"RUNWAYSTART{runwayBoneIndex}");
         return result;
     }
@@ -530,6 +533,7 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
         {
             throw new InvalidOperationException("Could not find runway start point bone");
         }
+
         return boneTransform;
     }
 

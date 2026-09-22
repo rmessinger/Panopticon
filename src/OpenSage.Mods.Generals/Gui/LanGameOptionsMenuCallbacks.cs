@@ -46,6 +46,7 @@ class LanGameOptionsMenuCallbacks
                             Logger.Warn($"No callback for {message.Element.Name}");
                             break;
                     }
+
                     break;
             }
         }

@@ -54,6 +54,7 @@ public sealed class ModelAnimationBindingTests : IDisposable
                 draw = modelDraw;
             }
         }
+
         Assert.NotNull(draw);
         draw = draw!;
 
@@ -159,6 +160,7 @@ public sealed class ModelAnimationBindingTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
         return game;
     }

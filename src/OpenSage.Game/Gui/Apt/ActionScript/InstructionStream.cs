@@ -59,6 +59,7 @@ public sealed class InstructionStream
         {
             instructions.Add(position, instruction);
         }
+
         _index += instructions.Count;
 
         return new InstructionCollection(instructions);

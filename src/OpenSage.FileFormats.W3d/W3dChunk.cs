@@ -116,6 +116,7 @@ public abstract record W3dListChunk<TItem>(W3dChunkType ChunkType, IReadOnlyList
         {
             items.Add(parseItem(reader));
         }
+
         return items;
     }
 

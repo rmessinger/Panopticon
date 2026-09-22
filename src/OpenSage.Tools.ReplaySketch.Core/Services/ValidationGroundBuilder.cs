@@ -144,6 +144,7 @@ public static class ValidationGroundBuilder
                     activeIndices.Add(i);
                 }
             }
+
             var activeCount = activeIndices.Count;
 
             var clusterCenter = FindClusterCenter(map, layout, activeCount, chosen);
@@ -226,6 +227,7 @@ public static class ValidationGroundBuilder
             targetPos = ChooseClearedTargetPosition(
                 unitPos, clusterCenter!.Value, effectiveStandoff, blockUnitPositions!, placedTargetPositions!);
         }
+
         placedTargetPositions?.Add(targetPos);
 
         var action = PrimaryActionCatalog.Resolve(unit);
@@ -292,6 +294,7 @@ public static class ValidationGroundBuilder
         {
             min = MathF.Min(min, Vector2.Distance(point, other));
         }
+
         return min;
     }
 
@@ -361,6 +364,7 @@ public static class ValidationGroundBuilder
                         break;
                     }
                 }
+
                 if (tooClose)
                 {
                     continue;
@@ -398,6 +402,7 @@ public static class ValidationGroundBuilder
                 return true;
             }
         }
+
         return false;
     }
 
@@ -415,11 +420,13 @@ public static class ValidationGroundBuilder
                 {
                     continue;
                 }
+
                 var h = map.SampleHeight(center.X + dx, center.Y + dy);
                 min = Math.Min(min, h);
                 max = Math.Max(max, h);
             }
         }
+
         return min == float.MaxValue ? float.MaxValue : max - min;
     }
 
@@ -442,6 +449,7 @@ public static class ValidationGroundBuilder
                     0f);
                 sources.Add(new TargetPlacement(scenario.SupplySourceDefinitions[i], position));
             }
+
             return sources;
         }
 
@@ -469,10 +477,12 @@ public static class ValidationGroundBuilder
                             break;
                         }
                     }
+
                     if (!clear)
                     {
                         continue;
                     }
+
                     if (placed.Count > 0 && MinDistance(candidate, placed) < layout.UnitSpacing)
                     {
                         continue;

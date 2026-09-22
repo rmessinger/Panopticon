@@ -38,6 +38,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             {
                 name = name.Split('/')[1];
             }
+
             teamTemplate = gameEngine.Game.TeamFactory.FindTeamTemplateByName(name);
         }
 
@@ -656,12 +657,14 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             {
                 return false;
             }
+
             if (_gameEngine.Scene3D.Game.SageGame == SageGame.CncGenerals ||
                 _gameEngine.Scene3D.Game.SageGame == SageGame.CncGenerals)
             {
                 // SupplyWarehouse in CncGenerals has NoCollide
                 return true;
             }
+
             return !Definition.KindOf.Get(ObjectKinds.NoCollide);
 
         }
@@ -675,6 +678,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         {
             return;
         }
+
         _attributeModifiers.Add(name, modifier);
     }
 
@@ -706,6 +710,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                 _gameEngine.Navigation.UpdateAreaPassability(collider, false);
             }
         }
+
         Colliders.AddRange(newColliders);
         RoughCollider = Collider.Create(Colliders);
         _gameEngine.Quadtree.Update(this);
@@ -726,9 +731,11 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                 {
                     _gameEngine.Navigation.UpdateAreaPassability(Colliders[i], true);
                 }
+
                 Colliders.RemoveAt(i);
             }
         }
+
         RoughCollider = Collider.Create(Colliders);
         _gameEngine.Quadtree.Update(this);
 
@@ -745,6 +752,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         {
             collider.Update(Transform);
         }
+
         _gameEngine.Quadtree.Update(this);
     }
 
@@ -775,6 +783,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                 weapon?.LogicTick();
             }
         }
+
         if (ModelConditionFlags.Get(ModelConditionFlag.Sold))
         {
             Kill();
@@ -814,6 +823,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                 {
                     continue; // if we're dead, we should only update SlowDeathBehavior, LifetimeUpdate, or DeletionUpdate
                 }
+
                 if (behavior is IUpdateModule updateModule && updateModule.UpdatePhase == updatePhase)
                 {
                     updateModule.Update();
@@ -837,6 +847,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                 return false;
             }
         }
+
         return true;
     }
 
@@ -867,6 +878,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                 }
             }
         }
+
         return false;
     }
 
@@ -1207,16 +1219,19 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
             return HasUpgrade(button.NeededUpgrade?.Value)
                 && CanConstructUnit(button.Object.Value);
         }
+
         if (button.Upgrade != null && button.Upgrade.Value != null)
         {
             return HasUpgrade(button.NeededUpgrade?.Value)
                 && CanEnqueueUpgrade(button.Upgrade.Value);
         }
+
         if (button.Command == CommandType.CastleUnpack)
         {
             var castleBehavior = FindBehavior<CastleBehavior>();
             return HasEnoughMoney(castleBehavior.GetUnpackCost(Owner));
         }
+
         return true;
     }
 
@@ -1806,6 +1821,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         {
             reader.PersistObjectValue(ref _polygonTriggersState[i]);
         }
+
         reader.EndArray();
 
         reader.PersistEnum(ref _layer);
@@ -1858,6 +1874,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
 
         reader.PersistObjectId(ref HealedByObjectId);
@@ -1938,6 +1955,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                         _status.Set(flag, !_status.Get(flag));
                     }
                 }
+
                 ImGui.TreePop();
             }
 
@@ -1951,6 +1969,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
                         ModelConditionFlags.Set(flag, !ModelConditionFlags.Get(flag));
                     }
                 }
+
                 ImGui.TreePop();
             }
 

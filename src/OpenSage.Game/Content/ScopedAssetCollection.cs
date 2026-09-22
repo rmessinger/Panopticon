@@ -52,6 +52,7 @@ public sealed class ScopedAssetCollection<TAsset> : IScopedAssetCollection, IEnu
             _list.Remove(asset); // TODO: This is slow.
             asset.Dispose();
         }
+
         for (var i = assetScope.StartId; i < _nextId; i++)
         {
             _byInternalId.Remove(i);
@@ -121,6 +122,7 @@ public sealed class ScopedAssetCollection<TAsset> : IScopedAssetCollection, IEnu
                 return result;
             }
         }
+
         return null;
     }
 

@@ -49,6 +49,7 @@ public class ProjectileDamageTimingTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
         return game;
     }
@@ -146,6 +147,7 @@ public class ProjectileDamageTimingTests : IDisposable
                 {
                     firstMissileFrame = frame;
                 }
+
                 lastMissileFrame = frame;
                 lastMissileDistance = MathF.Min(lastMissileDistance,
                     missiles.Min(m => Vector3.Distance(m.Translation, tank.Translation)));
@@ -224,6 +226,7 @@ public class ProjectileDamageTimingTests : IDisposable
                         sawDescent |= travelDirection.Z < -0.05f;
                     }
                 }
+
                 previousPositions[shell.Id] = shell.Translation;
             }
         }

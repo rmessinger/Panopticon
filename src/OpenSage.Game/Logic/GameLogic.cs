@@ -57,6 +57,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
                     _objectsToIterate.Add(gameObject);
                 }
             }
+
             return _objectsToIterate;
         }
     }
@@ -153,6 +154,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         {
             _objects.Add(null);
         }
+
         _objects[(int)objectId.Index] = gameObject;
     }
 
@@ -445,6 +447,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
 
         // Don't know why this is duplicated here. It's also loaded by a top-level .sav chunk.
@@ -543,6 +546,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
             reader.EndObject();
         }
+
         reader.EndArray();
 
         var unknownBool1 = true;
@@ -605,6 +609,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
             var endString = "";
             reader.PersistAsciiStringValue(ref endString);
         }
+
         reader.EndArray();
 
         reader.SkipUnknownBytes(4);
@@ -834,6 +839,7 @@ internal sealed class SleepyUpdateList
             {
                 break;
             }
+
             --parent;
         }
 
@@ -864,6 +870,7 @@ internal sealed class SleepyUpdateList
                 var priority1 = _inner[i1].Priority;
                 DebugUtility.AssertCrash(priority <= priority1, "Sleepy updates are broken");
             }
+
             if (i2 < _inner.Count)
             {
                 var priority2 = _inner[i2].Priority;

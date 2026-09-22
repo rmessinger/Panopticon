@@ -76,6 +76,7 @@ public sealed class SettingsWindow : WbDialog
             {
                 return;
             }
+
             var folders = await owner.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 AllowMultiple = false,

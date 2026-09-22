@@ -122,11 +122,13 @@ partial class Control
                 {
                     control.BackgroundColor = wndWindow.EnabledDrawData.Items[0].Color.ToColorRgbaF();
                 }
+
                 if (control.BackgroundImage == null)
                 {
                     control.BorderColor = wndWindow.EnabledDrawData.Items[0].BorderColor.ToColorRgbaF();
                     control.BorderWidth = 1;
                 }
+
                 return control;
         }
     }

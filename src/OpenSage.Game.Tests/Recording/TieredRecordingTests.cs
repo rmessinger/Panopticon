@@ -135,10 +135,12 @@ public class TieredRecordingTests : MockedGameTest
             {
                 tree1 = tree;
             }
+
             if (count == 1)
             {
                 tree2 = tree;
             }
+
             count++;
         };
         host.Run(1);

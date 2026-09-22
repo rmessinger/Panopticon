@@ -17,6 +17,7 @@ public static class MessageBoxCallbacks
                         context.WindowManager.PopWindow();
                         break;
                 }
+
                 break;
         }
     }

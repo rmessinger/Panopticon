@@ -746,6 +746,7 @@ public sealed class ImportedAssetTests
             properties: [],
             pbrMetallicRoughness: payload));
     }
+
     [Fact]
     public void AnimationChannel_DefaultsToLinearInterpolation()
     {

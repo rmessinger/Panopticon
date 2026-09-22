@@ -156,6 +156,7 @@ internal sealed class ParticleSystemManager : DisposableBase, IPersistableObject
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
     }
 }
