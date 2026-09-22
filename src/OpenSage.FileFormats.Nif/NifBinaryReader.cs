@@ -80,6 +80,7 @@ public sealed class NifBinaryReader
             throw NewInvalidData(fieldName,
                 $"string length {length} exceeds remaining {RemainingBytes} bytes");
         }
+
         var bytes = _reader.ReadBytes((int)length);
         return System.Text.Encoding.Latin1.GetString(bytes);
     }
@@ -99,10 +100,12 @@ public sealed class NifBinaryReader
             {
                 return System.Text.Encoding.Latin1.GetString(bytes.ToArray());
             }
+
             if (bytes.Count > MaxStringBytes)
             {
                 throw NewInvalidData(fieldName, "line exceeds maximum length");
             }
+
             bytes.Add(b);
         }
     }
@@ -119,12 +122,14 @@ public sealed class NifBinaryReader
         {
             throw NewInvalidData(fieldName, $"count {count} exceeds int.MaxValue");
         }
+
         var needed = (long)count * bytesPerElement;
         if (needed > RemainingBytes)
         {
             throw NewInvalidData(fieldName,
                 $"count {count} of {bytesPerElement}-byte elements exceeds remaining {RemainingBytes} bytes");
         }
+
         return (int)count;
     }
 
@@ -140,6 +145,7 @@ public sealed class NifBinaryReader
         {
             references[i] = ReadBlockReference(fieldName);
         }
+
         return references;
     }
 

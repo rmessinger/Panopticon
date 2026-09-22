@@ -26,12 +26,14 @@ public sealed record NifTextureDescriptor(
             throw new InvalidDataException(
                 $"NIF texture slot {slotName} has clamp mode {clampMode}; valid range is 0-3.");
         }
+
         var filterMode = reader.ReadUInt32($"{slotName}.FilterMode");
         if (filterMode > 6)
         {
             throw new InvalidDataException(
                 $"NIF texture slot {slotName} has filter mode {filterMode}; valid range is 0-6.");
         }
+
         var uvSet = reader.ReadUInt32($"{slotName}.UvSet");
         var ps2L = reader.ReadInt16($"{slotName}.PS2L");
         var ps2K = reader.ReadInt16($"{slotName}.PS2K");
@@ -41,6 +43,7 @@ public sealed record NifTextureDescriptor(
             throw new NotSupportedException(
                 $"NIF texture slot {slotName} has a texture transform; C4a does not decode them.");
         }
+
         return new NifTextureDescriptor(source, clampMode, filterMode, uvSet, ps2L, ps2K);
     }
 }

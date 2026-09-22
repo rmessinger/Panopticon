@@ -28,24 +28,28 @@ public sealed record NifSourceTexture : NifObjectNet
             throw new NotSupportedException(
                 $"NIF source texture '{Name}' references pixel data; C4a supports by-name external textures only.");
         }
+
         PixelLayout = reader.ReadUInt32("PixelLayout");
         if (PixelLayout > 7)
         {
             throw new InvalidDataException(
                 $"NIF source texture '{Name}' has pixel layout {PixelLayout}; valid range is 0-7.");
         }
+
         UseMipmaps = reader.ReadUInt32("UseMipmaps");
         if (UseMipmaps > 2)
         {
             throw new InvalidDataException(
                 $"NIF source texture '{Name}' has mipmap format {UseMipmaps}; valid range is 0-2.");
         }
+
         AlphaFormat = reader.ReadUInt32("AlphaFormat");
         if (AlphaFormat > 3)
         {
             throw new InvalidDataException(
                 $"NIF source texture '{Name}' has alpha format {AlphaFormat}; valid range is 0-3.");
         }
+
         IsStatic = reader.ReadByte("IsStatic");
     }
 

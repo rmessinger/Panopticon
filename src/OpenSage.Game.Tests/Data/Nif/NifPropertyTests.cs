@@ -16,6 +16,7 @@ public sealed class NifPropertyTests
             var type = builder.AddBlockType(typeName);
             builder.AddBlock(type, body);
         }
+
         builder.AddTrailing(NifTestBlocks.Footer());
         using var stream = new MemoryStream(builder.Build());
         return NifFile.Read(stream);
