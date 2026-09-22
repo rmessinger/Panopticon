@@ -20,5 +20,4 @@ public record NifNode : NifAvObject
     {
         return new NifNode(reader);
     }
-
 }

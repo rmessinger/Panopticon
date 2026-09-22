@@ -43,8 +43,10 @@ public sealed record NifTriShapeData : NifTriBasedGeometryData
                     $"NIF triangle {i} ({v1}, {v2}, {v3}) references a vertex beyond " +
                     $"the declared count {NumVertices}.");
             }
+
             triangles[i] = (v1, v2, v3);
         }
+
         Triangles = triangles;
 
         var numMatchGroups = reader.ReadUInt16("NumMatchGroups");
@@ -62,10 +64,13 @@ public sealed record NifTriShapeData : NifTriBasedGeometryData
                         $"NIF match group {i} index {j} references vertex {index} " +
                         $"beyond the declared count {NumVertices}.");
                 }
+
                 indices[j] = index;
             }
+
             matchGroups[i] = new NifMatchGroup(indices);
         }
+
         MatchGroups = matchGroups;
     }
 
