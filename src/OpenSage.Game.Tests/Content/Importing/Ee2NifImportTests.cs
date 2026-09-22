@@ -47,6 +47,7 @@ public sealed class Ee2NifImportTests
                 throw new InvalidOperationException(
                     $"Interactive test requires the EE2 textures archive at '{texturesPath}'.");
             }
+
             fileSystem = new CompositeFileSystem(fileSystem, new ZipFileSystem(texturesPath));
         }
 

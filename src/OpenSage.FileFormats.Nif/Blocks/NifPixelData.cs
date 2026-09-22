@@ -68,6 +68,7 @@ public sealed record NifPixelData : NifBlock
                 reader.ReadUInt32($"Mipmaps[{i}].Height"),
                 reader.ReadUInt32($"Mipmaps[{i}].Offset"));
         }
+
         Mips = mips;
 
         var numPixels = reader.ReadElementCount(1, "NumPixels");
@@ -118,6 +119,7 @@ public sealed record NifPixelData : NifBlock
                     $"NIF pixel data mip {i} has offset {mip.Offset}; expected the contiguous " +
                     $"offset {expectedOffset}.");
             }
+
             var size = GetMipSize(i);
             expectedOffset += size;
             total += size;

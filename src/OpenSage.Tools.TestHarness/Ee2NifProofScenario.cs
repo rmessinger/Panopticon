@@ -160,6 +160,7 @@ internal static class Ee2NifProofScenario
             {
                 continue;
             }
+
             foreach (var material in mesh.Materials)
             {
                 foreach (var property in material.Properties)

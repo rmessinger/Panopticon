@@ -17,6 +17,7 @@ public sealed class NifPixelDataTests
         {
             w.WriteUInt32(0); // RGBA masks
         }
+
         w.WriteUInt32(0); // bits per pixel
         w.WriteUInt32(repeat);
         w.WriteUInt32(0); // unknown 1
@@ -60,6 +61,7 @@ public sealed class NifPixelDataTests
             Assert.Equal((uint)expectedTotal, pixelData.Mips[i].Offset);
             expectedTotal += pixelData.GetMipSize(i);
         }
+
         Assert.Equal(expectedTotal, pixelData.PixelData.Length);
     }
 

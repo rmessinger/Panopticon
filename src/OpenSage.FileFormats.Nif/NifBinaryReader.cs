@@ -165,8 +165,10 @@ public sealed class NifBinaryReader
             {
                 break;
             }
+
             read += n;
         }
+
         return read;
     }
 

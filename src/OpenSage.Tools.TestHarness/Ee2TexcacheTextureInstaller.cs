@@ -48,6 +48,7 @@ internal static class Ee2TexcacheTextureInstaller
             {
                 stream.CopyTo(buffered);
             }
+
             buffered.Position = 0;
 
             var file = NifFile.Read(buffered);
