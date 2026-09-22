@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>Resources\app.manifest</ApplicationManifest>
   </PropertyGroup>
 

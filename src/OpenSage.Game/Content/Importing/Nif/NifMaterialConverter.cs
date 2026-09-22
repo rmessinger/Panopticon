@@ -22,7 +22,8 @@ internal static class NifMaterialConverter
     internal static ImportedMaterial Convert(
         IReadOnlyList<FileFormatsNif.NifProperty> properties,
         IReadOnlyList<FileFormatsNif.NifBlock> blocks,
-        string shapeName)
+        string shapeName,
+        AssetImportContext context)
     {
         var ambient = new Vector3(1, 1, 1);
         var diffuse = new Vector3(1, 1, 1);
@@ -31,6 +32,8 @@ internal static class NifMaterialConverter
         var shininess = 0.0f;
         var opacity = 1.0f;
         var specularEnabled = false;
+        var texturingEnabled = false;
+        string? resolvedTexcachePath = null;
         var depthWriteEnabled = true;
         var depthComparison = ImportedDepthComparison.LessEqual;
         var blendEnabled = false;
@@ -39,6 +42,13 @@ internal static class NifMaterialConverter
         var alphaTest = false;
 
         var materialProperties = new List<ImportedMaterialProperty>();
+
+        // Retained for diagnostics: where the cooked texture was found.
+        if (resolvedTexcachePath is not null)
+        {
+            materialProperties.Add(ImportedMaterialProperty.FromBool(
+                "HasTexcache", true));
+        }
 
         foreach (var property in properties)
         {
@@ -49,7 +59,11 @@ internal static class NifMaterialConverter
                     diffuse = material.DiffuseColor;
                     specular = material.SpecularColor;
                     emissive = material.EmissiveColor;
-                    shininess = material.Glossiness;
+                    // NIF carries a 3ds Max glossiness (0-100 scale); the
+                    // engine's fixed-function shininess multiplies the specular
+                    // contribution directly, so a raw 10 would blow highlights
+                    // out to full white across the mesh.
+                    shininess = material.Glossiness / 100f;
                     opacity = material.Alpha;
                     break;
 
@@ -86,6 +100,15 @@ internal static class NifMaterialConverter
                     {
                         materialProperties.Add(ImportedMaterialProperty.FromTextureName(
                             Texture0PropertyName, sourceTexture.FileName));
+                        if (TryResolveTexcache(sourceTexture.FileName, context, out var texcachePath))
+                        {
+                            // Cooked texture available: render the base stage.
+                            // The materializer resolves the name; when the
+                            // entry is absent the C4a untextured fallback
+                            // stays in force.
+                            texturingEnabled = true;
+                            resolvedTexcachePath = texcachePath;
+                        }
                     }
 
                     break;
@@ -100,7 +123,7 @@ internal static class NifMaterialConverter
         var shading = new ImportedFixedFunctionShading(
             diffuseLightingType: ImportedDiffuseLightingType.Modulate,
             specularEnabled: specularEnabled,
-            texturingEnabled: false,
+            texturingEnabled: texturingEnabled,
             secondaryTextureColorBlend: ImportedSecondaryTextureBlend.Disable,
             secondaryTextureAlphaBlend: ImportedSecondaryTextureBlend.Disable,
             alphaTest: alphaTest,
@@ -110,13 +133,17 @@ internal static class NifMaterialConverter
             emissive: emissive,
             shininess: shininess,
             opacity: opacity,
-            textureStageCount: 0,
+            textureStageCount: texturingEnabled ? 1 : 0,
             textureMappingStage0: CreateIdentityMapping(),
             textureMappingStage1: CreateIdentityMapping());
 
+        // EE2 Gamebryo winding does not match the engine's counter-clockwise
+        // front-face convention (either orientation culls roughly the whole
+        // mesh), so NIF materials import with culling disabled; both
+        // orientations then render with correct lighting.
         return new ImportedMaterial(
             ImportedMaterial.FixedFunctionFamily,
-            ImportedCullMode.None, // EXPERIMENT
+            ImportedCullMode.None,
             depthWriteEnabled,
             depthComparison,
             blendEnabled,
@@ -125,6 +152,21 @@ internal static class NifMaterialConverter
             destinationBlend,
             shading,
             materialProperties);
+    }
+
+    /// <summary>
+    /// Resolves the EE2 cooked-texture path for a source texture name
+    /// (e.g. "nwg1_galley.tga" to "cache/nifcache" analog
+    /// "cache/texcache/nwg1_galley.texcache") through the import file system.
+    /// </summary>
+    internal static bool TryResolveTexcache(
+        string sourceFileName,
+        AssetImportContext context,
+        out string texcachePath)
+    {
+        var stem = System.IO.Path.GetFileNameWithoutExtension(sourceFileName);
+        texcachePath = $"cache/texcache/{stem}.texcache";
+        return context.FileSystem.GetFile(texcachePath) is not null;
     }
 
     private static ImportedDepthComparison MapDepthComparison(uint function)

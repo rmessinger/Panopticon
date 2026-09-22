@@ -146,6 +146,8 @@ public sealed record NifFile(
                 return NifLodNode.Read(reader);
             case "NiRangeLODData":
                 return NifRangeLodData.Read(reader);
+            case "NiPixelData":
+                return NifPixelData.Read(reader);
             default:
                 throw new NotSupportedException(
                     $"NIF block {index} has unsupported type '{typeName}'.");

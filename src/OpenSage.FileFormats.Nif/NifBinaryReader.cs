@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
@@ -147,6 +148,28 @@ public sealed class NifBinaryReader
         }
 
         return references;
+    }
+
+    /// <summary>
+    /// Reads exactly <paramref name="destination.Length"/> bytes. Throws when
+    /// fewer remain.
+    /// </summary>
+    public int ReadBytes(byte[] destination)
+    {
+        var remaining = (int)Math.Min(destination.Length, RemainingBytes);
+        var read = 0;
+        while (read < remaining)
+        {
+            var n = _reader.Read(destination, read, remaining - read);
+            if (n <= 0)
+            {
+                break;
+            }
+
+            read += n;
+        }
+
+        return read;
     }
 
     public Vector3 ReadVector3(string fieldName)

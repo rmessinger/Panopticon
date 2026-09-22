@@ -3,10 +3,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using OpenSage.Content.Importing;
 using OpenSage.Content.Importing.Nif;
 using OpenSage.Content.Loaders;
 using OpenSage.Data;
+using OpenSage.FileFormats.Nif;
 using OpenSage.Graphics;
 using OpenSage.IO;
 using OpenSage.Mathematics;
@@ -27,6 +29,7 @@ internal static class Ee2NifProofScenario
     private const int CaptureSize = 512;
 
     public const string ArchiveRelativePath = "zips/graphics.zip";
+    public const string TexturesArchiveRelativePath = "zips/textures.zip";
 
     /// <summary>
     /// Presentation-only yaw: NIF forward maps to engine +X, so unrotated
@@ -41,11 +44,12 @@ internal static class Ee2NifProofScenario
             "War Galley: recognizable complete hull with masts and sail, twelve oar pairs baked at " +
             "their rotated node placements, upright orientation (mast up), bow toward +X after the " +
             "source conversion, correct winding and normals (lit surfaces face the camera), " +
-            "untextured white fixed-function diffuse"),
+            "nwg1_galley.tga texture mapped coherently (no upside-down or mirrored artwork)"),
         ("ab11_TwinEngineBomber",
             "Twin-Engine Bomber: fuselage, wings, both engine props at 0.7416 baked scale, wheels, " +
             "and open cockpits; highest-detail body_LOD0 geometry (no LOD1 simplification seams); " +
-            "upright and +X forward; blended alpha state on wheels/body does not break depth"),
+            "upright and +X forward; DXT3 alpha blending on wheels/body keeps correct depth; " +
+            "ab11_TwinEngineBomber.tga and af11_biplane_prop.tga mapped coherently"),
     ];
 
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
@@ -64,6 +68,13 @@ internal static class Ee2NifProofScenario
             return 1;
         }
 
+        var texturesArchivePath = Path.Combine(ee2Root, TexturesArchiveRelativePath);
+        if (!File.Exists(texturesArchivePath))
+        {
+            reporter.Error($"Missing EE2 textures archive at '{texturesArchivePath}'.");
+            return 1;
+        }
+
         var outputDirectory = "ee2-nif-proof";
         Directory.CreateDirectory(outputDirectory);
 
@@ -74,7 +85,9 @@ internal static class Ee2NifProofScenario
             null);
 
         using var ee2FileSystem = new ZipFileSystem(archivePath);
-        var importContext = new AssetImportContext(ee2FileSystem, language: null);
+        using var ee2TexturesFileSystem = new ZipFileSystem(texturesArchivePath);
+        var compositeFileSystem = new CompositeFileSystem(ee2FileSystem, ee2TexturesFileSystem);
+        var importContext = new AssetImportContext(compositeFileSystem, language: null);
         var importer = new NifModelImporter();
 
         var gameLoadContext = game.AssetStore.LoadContext;
@@ -93,6 +106,15 @@ internal static class Ee2NifProofScenario
         {
             var imported = importer.ImportModel(key, importContext)
                 ?? throw new InvalidOperationException($"EE2 import returned null for '{key}'.");
+
+            // Decode and register the model's cooked textures under their
+            // source .tga names so fixed-function materialization resolves them.
+            var installed = Ee2TexcacheTextureInstaller.Install(
+                game,
+                compositeFileSystem,
+                CollectTextureNames(imported));
+            reporter.Info($"Installed {installed} texcache textures for '{key}'.");
+
             var model = ImportedModelMaterializer.MaterializeModel(imported, loadContext);
 
             var outputName = $"ee2-{key}.png";
@@ -130,6 +152,29 @@ internal static class Ee2NifProofScenario
         return 0;
     }
 
+    public static IEnumerable<string> CollectTextureNames(ImportedModel model)
+    {
+        foreach (var subObject in model.SubObjects)
+        {
+            if (subObject.RenderObject is not ImportedMesh mesh)
+            {
+                continue;
+            }
+
+            foreach (var material in mesh.Materials)
+            {
+                foreach (var property in material.Properties)
+                {
+                    if (property.Name == "Texture0" &&
+                        property.Kind == ImportedMaterialPropertyKind.TextureName)
+                    {
+                        yield return property.TextureName;
+                    }
+                }
+            }
+        }
+    }
+
     public static string DescribePrerequisites()
     {
         return $"EMPIRE_EARTH_II_PATH (source models; needs {ArchiveRelativePath}) and the rendering " +
@@ -141,10 +186,10 @@ internal static class Ee2NifProofScenario
         using var writer = new StreamWriter(Path.Combine(outputDirectory, "validation_guide.md"));
         writer.WriteLine("# EE2 NIF proof - validation guide");
         writer.WriteLine();
-        writer.WriteLine("Every capture comes from ZipFileSystem(graphics.zip) -> NifModelImporter ->");
-        writer.WriteLine("ImportedModelMaterializer -> runtime Model -> StandaloneModelCapture. Source");
-        writer.WriteLine("models render untextured fixed-function diffuse (texture-stage count zero);");
-        writer.WriteLine("source texture names remain in the imported descriptors. No EE2 asset is");
+        writer.WriteLine("Every capture comes from ZipFileSystem(graphics.zip + textures.zip) ->");
+        writer.WriteLine("NifModelImporter -> texcache decode -> ImportedModelMaterializer -> runtime");
+        writer.WriteLine("Model -> StandaloneModelCapture. The cooked DXT mips upload block-for-block");
+        writer.WriteLine("(DXT1/DXT3; no transcoding) and the models render textured. No EE2 asset is");
         writer.WriteLine("copied or committed. Deterministic repeat: a second run must produce the");
         writer.WriteLine("same frames.");
         writer.WriteLine();
