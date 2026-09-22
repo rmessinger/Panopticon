@@ -10,4 +10,5 @@ public enum BuiltInScenario
     PhysicsStack,
     PbrMaterialProof,
     GltfRuntimeProof,
+    Ee2NifProof,
 }

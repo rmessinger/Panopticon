@@ -80,6 +80,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.ReplaySketch
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.Tools.WorldBuilder.Avalonia", "OpenSage.Tools.WorldBuilder.Avalonia\OpenSage.Tools.WorldBuilder.Avalonia.csproj", "{F38EF5C3-7A7B-480F-8EDA-FB72F5D7422C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSage.FileFormats.Nif", "OpenSage.FileFormats.Nif\OpenSage.FileFormats.Nif.csproj", "{48A7C6AA-0312-4C12-B544-C2B47EA724A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -438,6 +440,18 @@ Global
 		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x64.Build.0 = Release|Any CPU
 		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x86.ActiveCfg = Release|Any CPU
 		{C2516E4B-5FFC-43B3-A042-74ACEB2B4864}.Release|x86.Build.0 = Release|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Debug|x64.Build.0 = Debug|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Debug|x86.Build.0 = Debug|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Release|x64.ActiveCfg = Release|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Release|x64.Build.0 = Release|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Release|x86.ActiveCfg = Release|Any CPU
+		{48A7C6AA-0312-4C12-B544-C2B47EA724A7}.Release|x86.Build.0 = Release|Any CPU
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D40F9BB2-2CE9-E031-3968-259EE4B1084A}.Debug|x64.ActiveCfg = Debug|Any CPU

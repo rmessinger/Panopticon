@@ -763,13 +763,19 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     C1-C3 values; the one-meter `(x, y, z)` to `(z, x, y)` fixture renders at approximately
     3.28084 world units, upright and +X-forward with correct winding, and every excluded or
     required unsupported feature fails contextually.
-- [ ] C4a Empire Earth II NIF 10.1 proof of concept
+- [x] C4a Empire Earth II NIF 10.1 proof of concept
       ([deep dive](deep-dives/ee2-gamebryo-model-storage.md#9-c4a-proof-of-concept-scope)).
   - AC: `nwg1_galley.nifcache` and `ab11_TwinEngineBomber.nifcache` load from an
     operator-supplied `graphics.zip` through C1, materialize as runtime `Model` assets, and
     produce recognizable captures; the Bomber uses its highest-detail LOD, source texture names
     survive import while rendering uses untextured diffuse materials, and no EE2 assets are
-    committed.
+    committed.- [x] C4b EE2 cooked texture decoding.
+      - AC: texcache NiPixelData containers decode with validated contiguous DXT mip
+      chains; both C4a proof captures render textured through `textures.zip` with the
+      alpha-blended Bomber materials intact, and the untextured fallback still applies
+      when a texcache entry is absent; `.pcpatch` stays out of scope.
+
+
 - [x] C5 Authoring & validation tooling (extend ReplaySketch; licensing out of scope).
   - AC: the ReplaySketch Model tab inspects an isolated external glTF root, lists clips and
     structured C1-C4 diagnostics, pairs an optional animation through C2, and applies explicit
