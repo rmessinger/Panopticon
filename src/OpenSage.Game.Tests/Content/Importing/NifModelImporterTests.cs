@@ -24,6 +24,7 @@ public sealed class NifModelImporterTests
         {
             fileSystem.AddFile($"cache/nifcache/{name}.nifcache", fileBytes);
         }
+
         return importer.ImportModel(name, new AssetImportContext(fileSystem, language: null));
     }
 

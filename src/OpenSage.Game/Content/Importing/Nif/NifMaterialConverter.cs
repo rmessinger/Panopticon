@@ -69,12 +69,14 @@ internal static class NifMaterialConverter
                         sourceBlend = MapBlendFactor((uint)((alpha.Flags >> 1) & 0xF), shapeName);
                         destinationBlend = MapBlendFactor((uint)((alpha.Flags >> 5) & 0xF), shapeName);
                     }
+
                     alphaTest = (alpha.Flags & 0x200) != 0;
                     if (alphaTest)
                     {
                         materialProperties.Add(ImportedMaterialProperty.FromInt32(
                             "AlphaTestThreshold", alpha.Threshold));
                     }
+
                     break;
 
                 case FileFormatsNif.NifTexturingProperty texturing:
@@ -85,6 +87,7 @@ internal static class NifMaterialConverter
                         materialProperties.Add(ImportedMaterialProperty.FromTextureName(
                             Texture0PropertyName, sourceTexture.FileName));
                     }
+
                     break;
 
                 case FileFormatsNif.NifVertexColorProperty:
