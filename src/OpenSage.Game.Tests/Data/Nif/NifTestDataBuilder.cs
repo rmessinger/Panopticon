@@ -381,7 +381,7 @@ public static class NifTestProperties
         var slots = new[] { "Base", "Dark", "Detail", "Gloss", "Glow", "BumpMap", "Decal0", "Decal1", "Decal2", "Decal3" };
         for (var i = 0; i < slots.Length; i++)
         {
-            if (i > 4 && textureCount <= (uint)i - 1)
+            if (i > 4 && textureCount <= (uint)i)
             {
                 break;
             }

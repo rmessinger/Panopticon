@@ -763,7 +763,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     C1-C3 values; the one-meter `(x, y, z)` to `(z, x, y)` fixture renders at approximately
     3.28084 world units, upright and +X-forward with correct winding, and every excluded or
     required unsupported feature fails contextually.
-- [ ] C4a Empire Earth II NIF 10.1 proof of concept
+- [x] C4a Empire Earth II NIF 10.1 proof of concept
       ([deep dive](deep-dives/ee2-gamebryo-model-storage.md#9-c4a-proof-of-concept-scope)).
   - AC: `nwg1_galley.nifcache` and `ab11_TwinEngineBomber.nifcache` load from an
     operator-supplied `graphics.zip` through C1, materialize as runtime `Model` assets, and

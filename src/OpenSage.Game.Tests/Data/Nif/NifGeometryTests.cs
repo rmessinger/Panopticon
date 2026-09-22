@@ -139,9 +139,12 @@ public sealed class NifGeometryTests
     }
 
     [Fact]
-    public void MatchGroupIndexOutOfRangeFails()
+    public void MatchGroupIndicesBeyondVertexCountArePreserved()
     {
+        // The EE2 cooker emits such indices (body_LOD1); they are diagnostics.
         var geometry = NifTestGeometry.GeometryData(numVertices: 3, matchGroupIndices: [77]);
-        Assert.Throws<InvalidDataException>(() => Read(ShapeBuilder(geometry).Build()));
+        var file = Read(ShapeBuilder(geometry).Build());
+        var data = (NifTriShapeData)file.Blocks[2];
+        Assert.Equal(77, data.MatchGroups[0].VertexIndices[0]);
     }
 }

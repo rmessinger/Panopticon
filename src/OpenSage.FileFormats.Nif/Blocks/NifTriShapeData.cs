@@ -57,15 +57,10 @@ public sealed record NifTriShapeData : NifTriBasedGeometryData
             var indices = new ushort[count];
             for (var j = 0; j < count; j++)
             {
-                var index = reader.ReadUInt16($"MatchGroups[{i}].VertexIndices[{j}]");
-                if (index >= NumVertices)
-                {
-                    throw new InvalidDataException(
-                        $"NIF match group {i} index {j} references vertex {index} " +
-                        $"beyond the declared count {NumVertices}.");
-                }
-
-                indices[j] = index;
+                // Preserved for diagnostics only; the EE2 cooker emits indices
+                // beyond the declared vertex count (e.g. body_LOD1), so they are
+                // recorded verbatim without range validation.
+                indices[j] = reader.ReadUInt16($"MatchGroups[{i}].VertexIndices[{j}]");
             }
 
             matchGroups[i] = new NifMatchGroup(indices);
