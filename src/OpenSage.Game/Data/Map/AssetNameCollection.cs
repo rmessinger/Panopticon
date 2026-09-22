@@ -30,6 +30,7 @@ internal sealed class AssetNameCollection
             {
                 throw new InvalidDataException();
             }
+
             result.AddAssetName(assetIndex, assetName);
         }
 

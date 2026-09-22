@@ -51,6 +51,7 @@ public class MissileAIUpdateFlightTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
         return game;
     }
@@ -127,6 +128,7 @@ public class MissileAIUpdateFlightTests : IDisposable
                         orientationSamples++;
                     }
                 }
+
                 previousPositions[missile.Id] = missile.Translation;
             }
         }

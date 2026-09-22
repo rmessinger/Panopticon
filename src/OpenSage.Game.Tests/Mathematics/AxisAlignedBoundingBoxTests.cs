@@ -141,6 +141,7 @@ public class AxisAlignedBoundingBoxTests
 
         Assert.Equal(expected, sut.Intersects(other));
     }
+
     #endregion
 
 }

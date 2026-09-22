@@ -33,6 +33,7 @@ public sealed class DisplayList : DisposableBase
         {
             RemoveAndDispose(ref previous);
         }
+
         _items[depth] = AddDisposable(item);
         _reverseItems[depth] = item;
     }
@@ -43,6 +44,7 @@ public sealed class DisplayList : DisposableBase
         {
             return;
         }
+
         RemoveAndDispose(ref previous);
         _items.Remove(depth);
         _reverseItems.Remove(depth);

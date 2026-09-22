@@ -22,10 +22,12 @@ public class OrderGeneratorSystem : GameSystem
             {
                 throw new ArgumentNullException();
             }
+
             if (_activeGenerator is IDisposable disposable)
             {
                 disposable.Dispose();
             }
+
             _activeGenerator = value;
         }
     }

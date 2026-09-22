@@ -38,6 +38,7 @@ public sealed class Movie : Playable
         {
             throw new ArgumentException("AptFile already has a Movie");
         }
+
         var movie = new Movie
         {
             Frames = new List<Frame>(),

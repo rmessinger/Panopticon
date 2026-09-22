@@ -209,6 +209,7 @@ public sealed class AudioSystem : GameSystem
         {
             source.Stop();
         }
+
         _sources.Remove(source);
     }
 

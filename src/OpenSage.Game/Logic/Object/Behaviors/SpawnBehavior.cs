@@ -163,6 +163,7 @@ internal sealed class SpawnBehavior : UpdateModule
         {
             SpawnUnit();
         }
+
         _nextReplaceFrame = GameEngine.GameLogic.CurrentFrame + ReplaceDelayFrames();
     }
 

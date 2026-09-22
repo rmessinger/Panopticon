@@ -174,6 +174,7 @@ public sealed class LuaScriptEngine : GameSystem
         {
             i = -1;
         }
+
         return i;
     }
 
@@ -298,6 +299,7 @@ public sealed class LuaScriptEngine : GameSystem
                 return true;
             }
         }
+
         return false;
     }
 

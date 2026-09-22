@@ -152,6 +152,7 @@ public sealed class ProductionUpdate : UpdateModule
                 {
                     break; // Door is closed on aircraft death from JetAIUpdate
                 }
+
                 CloseDoor(_doorIndex);
                 break;
 
@@ -242,6 +243,7 @@ public sealed class ProductionUpdate : UpdateModule
         {
             return !ProducedAtHelipad(definition);
         }
+
         return true;
     }
 
@@ -310,10 +312,12 @@ public sealed class ProductionUpdate : UpdateModule
         {
             return GetCountAndProgress(button.Upgrade.Value);
         }
+
         if (button.Object != null && button.Object.Value != null)
         {
             return GetCountAndProgress(button.Object.Value);
         }
+
         return (0, 0.0f);
     }
 
@@ -398,6 +402,7 @@ public sealed class ProductionUpdate : UpdateModule
                 jetAIUpdate.Base = GameObject;
                 jetAIUpdate.CurrentJetAIState = JetAIUpdate.JetAIState.Parked;
             }
+
             producedUnit.SetTransformMatrix(parkingPlace.GetUnitCreateTransform(producedAtHelipad, producedUnit.Id).Matrix * GameObject.TransformMatrix);
             return producedUnit;
         }
@@ -495,6 +500,7 @@ public sealed class ProductionUpdate : UpdateModule
         {
             parkingPlaceBehaviour.EnqueueObject();
         }
+
         // TODO: Set ModelConditionFlag.ActivelyConstructing.
     }
 
@@ -642,6 +648,7 @@ public sealed class ProductionUpdate : UpdateModule
 
             reader.SkipUnknownBytes(4);
         }
+
         reader.EndArray();
 
         reader.SkipUnknownBytes(1);

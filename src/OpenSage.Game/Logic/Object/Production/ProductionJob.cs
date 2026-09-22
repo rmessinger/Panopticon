@@ -36,6 +36,7 @@ public sealed class ProductionJob : IPersistableObject
             _progressInFrames++;
             _subFrameProgress -= 1.0f;
         }
+
         _progressPercentage = _progressInFrames / _buildTime;
     }
 

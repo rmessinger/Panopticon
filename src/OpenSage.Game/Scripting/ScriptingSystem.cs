@@ -335,6 +335,7 @@ public sealed class ScriptingSystem : GameSystem, IPersistableObject
 
             reader.EndObject();
         }
+
         reader.EndArray();
 
         var numTimersAndCounters2 = (uint)_numCounters;
@@ -358,6 +359,7 @@ public sealed class ScriptingSystem : GameSystem, IPersistableObject
 
             reader.EndObject();
         }
+
         reader.EndArray();
 
         var numFlags2 = (uint)_numFlags;
@@ -418,6 +420,7 @@ public sealed class ScriptingSystem : GameSystem, IPersistableObject
 
             reader.EndObject();
         }
+
         reader.EndArray();
 
         reader.PersistArrayWithUInt16Length(_specialPowers, ObjectNameAndIdListPersister);

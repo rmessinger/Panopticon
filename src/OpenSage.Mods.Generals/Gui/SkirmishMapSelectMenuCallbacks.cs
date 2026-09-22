@@ -31,6 +31,7 @@ public static class SkirmishMapSelectMenuCallbacks
                         SkirmishGameOptionsMenuCallbacks.GameOptions.CloseMapSelection(context);
                         break;
                 }
+
                 break;
         }
     }

@@ -457,6 +457,7 @@ public static class BinaryWriterExtensions
         {
             writer.Write(c);
         }
+
         writer.Write('\0');
     }
 
@@ -467,6 +468,7 @@ public static class BinaryWriterExtensions
         {
             Array.Reverse(array);
         }
+
         writer.Write(array);
     }
 

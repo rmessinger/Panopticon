@@ -142,6 +142,7 @@ public class ImageSharpCubemapTexture
         {
             throw new ArgumentException("Texture should have at least one mip level.");
         }
+
         if (positiveX.Length != negativeX.Length ||
             positiveX.Length != positiveY.Length ||
             positiveX.Length != negativeY.Length ||
@@ -150,6 +151,7 @@ public class ImageSharpCubemapTexture
         {
             throw new ArgumentException("Mip count doesn't match.");
         }
+
         CubemapTextures[0] = positiveX;
         CubemapTextures[1] = negativeX;
         CubemapTextures[2] = positiveY;
@@ -174,26 +176,32 @@ public class ImageSharpCubemapTexture
             {
                 throw new VeldridException("Unable to get positive x pixelspan.");
             }
+
             if (!CubemapTextures[NegativeXArrayLayer][level].DangerousTryGetSinglePixelMemory(out Memory<Rgba32> pixelSpanNegX))
             {
                 throw new VeldridException("Unable to get negatve x pixelspan.");
             }
+
             if (!CubemapTextures[PositiveYArrayLayer][level].DangerousTryGetSinglePixelMemory(out Memory<Rgba32> pixelSpanPosY))
             {
                 throw new VeldridException("Unable to get positive y pixelspan.");
             }
+
             if (!CubemapTextures[NegativeYArrayLayer][level].DangerousTryGetSinglePixelMemory(out Memory<Rgba32> pixelSpanNegY))
             {
                 throw new VeldridException("Unable to get negatve y pixelspan.");
             }
+
             if (!CubemapTextures[PositiveZArrayLayer][level].DangerousTryGetSinglePixelMemory(out Memory<Rgba32> pixelSpanPosZ))
             {
                 throw new VeldridException("Unable to get positive z pixelspan.");
             }
+
             if (!CubemapTextures[NegativeZArrayLayer][level].DangerousTryGetSinglePixelMemory(out Memory<Rgba32> pixelSpanNegZ))
             {
                 throw new VeldridException("Unable to get negatve z pixelspan.");
             }
+
             using (var positiveXPin = pixelSpanPosX.Pin())
             using (var negativeXPin = pixelSpanNegX.Pin())
             using (var positiveYPin = pixelSpanPosY.Pin())
@@ -213,6 +221,7 @@ public class ImageSharpCubemapTexture
                 gd.UpdateTexture(cubemapTexture, (IntPtr)negativeZPin.Pointer, faceSize, 0, 0, 0, width, height, 1, (uint)level, NegativeZArrayLayer);
             }
         }
+
         return cubemapTexture;
     }
 }

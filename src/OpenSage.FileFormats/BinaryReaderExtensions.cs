@@ -50,6 +50,7 @@ public static class BinaryReaderExtensions
         {
             result |= (uint)reader.ReadByte() << (i * 8);
         }
+
         return result;
     }
 
@@ -117,6 +118,7 @@ public static class BinaryReaderExtensions
         {
             negatedBytes[i] = (byte)~bytes[i];
         }
+
         return Encoding.Unicode.GetString(negatedBytes);
     }
 
@@ -215,6 +217,7 @@ public static class BinaryReaderExtensions
                 {
                     temp = reader.ReadByte();
                 }
+
                 result[x, y] = (temp & (1 << (x % 8))) != 0;
             }
         }
@@ -233,6 +236,7 @@ public static class BinaryReaderExtensions
             {
                 temp = reader.ReadByte();
             }
+
             result[i] = (temp & (1 << (i % 8))) != 0;
         }
 
@@ -749,6 +753,7 @@ public static class BinaryReaderExtensions
             {
                 continue;
             }
+
             var enumBitValue = (TEnum)Enum.ToObject(typeof(TEnum), maskedValue);
             if (!EnumUtility.IsValueDefined(enumBitValue))
             {

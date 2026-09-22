@@ -187,6 +187,7 @@ public sealed class MissileAIUpdate : AIUpdate
 
                     _state = MissileState.Moving;
                 }
+
                 break;
 
             case MissileState.Moving:
@@ -208,6 +209,7 @@ public sealed class MissileAIUpdate : AIUpdate
                     // The warhead delivered: the motor stops with the missile.
                     FinishExhaust();
                 }
+
                 break;
 
             default:
@@ -255,6 +257,7 @@ public sealed class MissileAIUpdate : AIUpdate
             TargetPoints.Clear();
             AddTargetPoint(liveTarget.TargetPosition);
         }
+
         CurrentLocomotor?.SetPreciseZPosition(diving || parabolic);
 
         // Out of fuel: thrust stops and gravity takes over, unless configured to detonate.
@@ -273,6 +276,7 @@ public sealed class MissileAIUpdate : AIUpdate
             {
                 GameObject.Physics?.RequestOrientToVelocity();
             }
+
             return;
         }
 

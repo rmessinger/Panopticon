@@ -266,6 +266,7 @@ public static class MapPreviewRenderer
                                 break;
                             }
                     }
+
                     break;
                 }
         }
@@ -302,6 +303,7 @@ public static class MapPreviewRenderer
             var a = minRad + i * step;
             path.LineTo(center.X + MathF.Cos(a) * radius, center.Y - MathF.Sin(a) * radius);
         }
+
         path.Close();
         canvas.DrawPath(path, fillPaint);
 

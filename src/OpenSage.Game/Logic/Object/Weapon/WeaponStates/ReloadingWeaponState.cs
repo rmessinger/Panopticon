@@ -31,6 +31,7 @@ internal sealed class ReloadingWeaponState : FixedDurationWeaponState
             {
                 return WeaponState.PreAttack;
             }
+
             return WeaponState.Firing;
         }
 

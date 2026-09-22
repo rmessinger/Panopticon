@@ -95,6 +95,7 @@ internal sealed class ObjectPool<T>
         {
             return item;
         }
+
         return _objectGenerator();
     }
 

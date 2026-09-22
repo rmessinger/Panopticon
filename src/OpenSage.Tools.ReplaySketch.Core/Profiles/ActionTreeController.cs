@@ -96,6 +96,7 @@ public sealed class ActionTreeController
                 break;
             }
         }
+
         SelectNode(hitId);
     }
 

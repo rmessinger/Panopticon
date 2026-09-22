@@ -86,6 +86,7 @@ public sealed class RenderItemCollection
                 {
                     Cull(i, clippingPlane1.Value);
                 }
+
                 if (clippingPlane2 != null)
                 {
                     Cull(i, clippingPlane2.Value);
@@ -111,6 +112,7 @@ public sealed class RenderItemCollection
                     {
                         Cull(i, clip1.Value);
                     }
+
                     if (clip2 != null)
                     {
                         Cull(i, clip2.Value);

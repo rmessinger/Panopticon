@@ -146,6 +146,7 @@ internal sealed class DozerAndWorkerState : IPersistableObject
             repairTarget.HealedByObjectId = ObjectId.Invalid;
             repairTarget.HealedEndFrame = LogicFrame.Zero;
         }
+
         _dozerTargets[1] = new DozerTarget();
     }
 

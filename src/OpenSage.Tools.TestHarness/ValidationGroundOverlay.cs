@@ -50,6 +50,7 @@ public sealed class ValidationGroundOverlay : IDisposable
         {
             return null;
         }
+
         var parts = value.Split(',');
         return parts.Length == 2
             && float.TryParse(parts[0], out var x)
@@ -155,16 +156,19 @@ public sealed class ValidationGroundOverlay : IDisposable
                 {
                     continue;
                 }
+
                 var screen = scene.Camera.WorldToScreenPoint(gameObject.Transform.Translation);
                 if (screen.Z < 0 || screen.Z > 1)
                 {
                     continue;
                 }
+
                 io.MousePos = new Vector2(
                     Math.Clamp(screen.X, 0, io.DisplaySize.X - 1),
                     Math.Clamp(screen.Y, 0, io.DisplaySize.Y - 1));
                 return;
             }
+
             return;
         }
 
@@ -301,6 +305,7 @@ public sealed class ValidationGroundOverlay : IDisposable
                 {
                     continue;
                 }
+
                 if (closest != null && !gameObject.IsStructure && closest.IsStructure ||
                     depth < closestDepth)
                 {
@@ -335,6 +340,7 @@ public sealed class ValidationGroundOverlay : IDisposable
             {
                 pressed = true;
             }
+
             wasDown = keyEvent.Down;
         }
 

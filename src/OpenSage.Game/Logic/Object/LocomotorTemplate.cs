@@ -546,14 +546,17 @@ public sealed class LocomotorTemplate : BaseAsset
         {
             MaxSpeedDamaged = MaxSpeed;
         }
+
         if (MaxTurnRateDamaged < 0.0f)
         {
             MaxTurnRateDamaged = MaxTurnRate;
         }
+
         if (AccelerationDamaged < 0.0f)
         {
             AccelerationDamaged = Acceleration;
         }
+
         if (LiftDamaged < 0.0f)
         {
             LiftDamaged = Lift;
@@ -566,6 +569,7 @@ public sealed class LocomotorTemplate : BaseAsset
                 DebugUtility.Crash("WINGS should always have positive MinSpeed (otherwise, they hover)");
                 MinSpeed = 0.01f;
             }
+
             if (MinTurnSpeed <= 0.0f)
             {
                 DebugUtility.Crash("WINGS should always have positive MinTurnSpeed");
@@ -581,18 +585,21 @@ public sealed class LocomotorTemplate : BaseAsset
             {
                 throw new InvalidOperationException("THRUST locos may not use ZAxisBehavior or lift!");
             }
+
             if (MaxSpeed <= 0.0f)
             {
                 // If one of these was omitted, it defaults to zero... just quietly heal it here, rather than crashing.
                 Logger.Warn("THRUST locos may not have zero MaxSpeed; healing...");
                 MaxSpeed = 0.01f;
             }
+
             if (MaxSpeedDamaged <= 0.0f)
             {
                 // If one of these was omitted, it defaults to zero... just quietly heal it here, rather than crashing.
                 Logger.Warn("THRUST locos may not have zero MaxSpeedDamaged; healing...");
                 MaxSpeedDamaged = 0.01f;
             }
+
             if (MinSpeed <= 0.0f)
             {
                 // If one of these was omitted, it defaults to zero... just quietly heal it here, rather than crashing.

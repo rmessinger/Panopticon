@@ -50,6 +50,7 @@ public sealed class ValidationGroundHost
                 {
                     obj.BodyModule?.SetMaxHealth(targetHp, MaxHealthChangeType.FullyHeal);
                 }
+
                 _targets.Add(obj);
             }
         }
@@ -139,6 +140,7 @@ public sealed class ValidationGroundHost
                         unit.ExpectedEffect = AbilityEffect.SubjectHealed;
                         unit.SubjectInitialHealth = subject.BodyModule.Health;
                     }
+
                     break;
                 }
 
@@ -150,6 +152,7 @@ public sealed class ValidationGroundHost
                         unit.SubjectObjectId = subject.Id;
                         unit.ExpectedEffect = AbilityEffect.SubjectOwned;
                     }
+
                     break;
                 }
 
@@ -161,6 +164,7 @@ public sealed class ValidationGroundHost
                         unit.SubjectObjectId = subject.Id;
                         unit.ExpectedEffect = AbilityEffect.SubjectDisabled;
                     }
+
                     break;
                 }
 
@@ -177,6 +181,7 @@ public sealed class ValidationGroundHost
                         unit.SubjectObjectId = subject.Id;
                         unit.ExpectedEffect = AbilityEffect.SubjectOwned;
                     }
+
                     break;
                 }
         }
@@ -359,6 +364,7 @@ public sealed class ValidationGroundHost
                         unit.Placement.Action.Kind, $"{powerType} needs a target object; none assigned");
                     return null;
                 }
+
                 return Order.CreateSpecialPowerAtObject(playerIndex, (int)powerType, powerTarget.Id,
                     SpecialPowerOrderFlags.NeedTargetEnemyObject
                     | SpecialPowerOrderFlags.NeedTargetNeutralObject, ObjectId.Invalid);

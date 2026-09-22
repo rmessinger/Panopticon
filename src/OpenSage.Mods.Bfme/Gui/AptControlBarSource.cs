@@ -141,6 +141,7 @@ class AptControlBar : IControlBar
         {
             return;
         }
+
         if (selectedUnit.Definition.CommandSet == null || selectedUnit.Definition.CommandSet.Value == null)
         {
             return;
@@ -163,6 +164,7 @@ class AptControlBar : IControlBar
             {
                 continue;
             }
+
             var button = commandSet.Buttons[i].Value;
             if (!button.InPalantir || button.Command == CommandType.Revive)
             {

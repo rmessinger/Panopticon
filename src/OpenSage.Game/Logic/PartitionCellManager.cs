@@ -415,6 +415,7 @@ public sealed class PartitionObject
         {
             cell.Objects.Remove(this);
         }
+
         OverlappingCells.Clear();
 
         // Compute which cells are overlapped by this object.

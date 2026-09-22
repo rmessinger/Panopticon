@@ -55,8 +55,10 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 {
                     drawModule.UpdateConditionState(ModelConditionFlags, _gameEngine.GameClient.Random);
                 }
+
                 ModelConditionFlags.BitsChanged = false;
             }
+
             return _drawModules;
         }
     }
@@ -224,6 +226,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 AddDisposable(drawModule);
             }
         }
+
         _drawModules = drawModules.ToArray();
 
         ModelConditionStates = _drawModules
@@ -247,6 +250,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 _tagToModuleLookup.Add(clientUpdateModuleDataContainer.Tag, clientUpdateModule);
             }
         }
+
         _clientUpdateModules = clientUpdateModules.ToArray();
     }
 
@@ -315,6 +319,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 {
                     return modelInstance!.AbsoluteBoneTransforms[bone.Index];
                 }
+
                 break;
             }
         }
@@ -340,6 +345,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                         * GameObject.ModelTransform.Matrix
                         * GameObject.Transform.Matrix;
                 }
+
                 break;
             }
         }
@@ -641,6 +647,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                     _locomotorInfo.WheelInfo.RearRightHeightOffset += (0 - _locomotorInfo.WheelInfo.RearRightHeightOffset) / 2.0f;
                 }
             }
+
             // Calculate suspension info.
             var length2 = obj.Geometry.MajorRadius;
             var width2 = obj.Geometry.MinorRadius;
@@ -757,6 +764,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             {
                 newInfo.WheelAngle = 0;
             }
+
             if (physics.GetForwardSpeed2D() < 0.0f)
             {
                 // if we're moving backwards, the wheels rotate in the opposite direction.
@@ -791,6 +799,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 newInfo.RearLeftHeightOffset = springFactor * (-pitchHeight / 2 + -pitchHeight / 3);
                 newInfo.RearRightHeightOffset = springFactor * (-pitchHeight / 2 + -pitchHeight / 3);
             }
+
             if (rollHeight > 0)
             {
                 // Right raising up.
@@ -807,6 +816,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 newInfo.RearLeftHeightOffset += springFactor * (rollHeight / 3 + rollHeight / 2);
                 newInfo.FrontLeftHeightOffset += springFactor * (rollHeight / 3 + rollHeight / 2);
             }
+
             if (newInfo.FrontLeftHeightOffset < _locomotorInfo.WheelInfo.FrontLeftHeightOffset)
             {
                 // If it's going down, dampen the movement a bit
@@ -816,6 +826,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             {
                 _locomotorInfo.WheelInfo.FrontLeftHeightOffset = newInfo.FrontLeftHeightOffset;
             }
+
             if (newInfo.FrontRightHeightOffset < _locomotorInfo.WheelInfo.FrontRightHeightOffset)
             {
                 // If it's going down, dampen the movement a bit
@@ -825,6 +836,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             {
                 _locomotorInfo.WheelInfo.FrontRightHeightOffset = newInfo.FrontRightHeightOffset;
             }
+
             if (newInfo.RearLeftHeightOffset < _locomotorInfo.WheelInfo.RearLeftHeightOffset)
             {
                 // If it's going down, dampen the movement a bit
@@ -834,6 +846,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             {
                 _locomotorInfo.WheelInfo.RearLeftHeightOffset = newInfo.RearLeftHeightOffset;
             }
+
             if (newInfo.RearRightHeightOffset < _locomotorInfo.WheelInfo.RearRightHeightOffset)
             {
                 // If it's going down, dampen the movement a bit
@@ -843,24 +856,29 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             {
                 _locomotorInfo.WheelInfo.RearRightHeightOffset = newInfo.RearRightHeightOffset;
             }
+
             //_locomotorInfo.WheelInfo = newInfo;
             if (_locomotorInfo.WheelInfo.FrontLeftHeightOffset < maxSuspensionExtension)
             {
                 _locomotorInfo.WheelInfo.FrontLeftHeightOffset = maxSuspensionExtension;
             }
+
             if (_locomotorInfo.WheelInfo.FrontRightHeightOffset < maxSuspensionExtension)
             {
                 _locomotorInfo.WheelInfo.FrontRightHeightOffset = maxSuspensionExtension;
             }
+
             if (_locomotorInfo.WheelInfo.RearLeftHeightOffset < maxSuspensionExtension)
             {
                 _locomotorInfo.WheelInfo.RearLeftHeightOffset = maxSuspensionExtension;
             }
+
             if (_locomotorInfo.WheelInfo.RearRightHeightOffset < maxSuspensionExtension)
             {
                 _locomotorInfo.WheelInfo.RearRightHeightOffset = maxSuspensionExtension;
             }
         }
+
         // If we are > 22 degrees, need to raise height;
         var divisor = 4.0f;
         var pitch = MathF.Abs(info.TotalPitch - groundPitch);
@@ -869,6 +887,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
         {
             divisor = ((4 * MathF.PI / 8) + (1 * (pitch - MathF.PI / 8))) / pitch;
         }
+
         info.TotalZ += MathF.Abs(pitchHeight) / divisor;
         info.TotalZ += MathF.Abs(rollHeight) / divisor;
     }
@@ -947,6 +966,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                     _locomotorInfo.WheelInfo.RearRightHeightOffset = _locomotorInfo.WheelInfo.RearLeftHeightOffset;
                 }
             }
+
             // Calculate suspension info.
             var length2 = obj.Geometry.MajorRadius;
             //Real width = obj->getGeometryInfo().getMinorRadius();
@@ -1070,6 +1090,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             {
                 newInfo.WheelAngle = 0;
             }
+
             if (physics.GetForwardSpeed2D() < 0.0f)
             {
                 // if we're moving backwards, the wheels rotate in the opposite direction.
@@ -1105,6 +1126,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 newInfo.FrontRightHeightOffset = newInfo.FrontLeftHeightOffset;
                 newInfo.RearRightHeightOffset = newInfo.RearLeftHeightOffset;
             }
+
             if (newInfo.FrontLeftHeightOffset < _locomotorInfo.WheelInfo.FrontLeftHeightOffset)
             {
                 // If it's going down, dampen the movement a bit
@@ -1116,6 +1138,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 _locomotorInfo.WheelInfo.FrontLeftHeightOffset = newInfo.FrontLeftHeightOffset;
                 _locomotorInfo.WheelInfo.FrontRightHeightOffset = newInfo.FrontLeftHeightOffset;
             }
+
             if (newInfo.RearLeftHeightOffset < _locomotorInfo.WheelInfo.RearLeftHeightOffset)
             {
                 // If it's going down, dampen the movement a bit
@@ -1127,17 +1150,20 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                 _locomotorInfo.WheelInfo.RearLeftHeightOffset = newInfo.RearLeftHeightOffset;
                 _locomotorInfo.WheelInfo.RearRightHeightOffset = newInfo.RearLeftHeightOffset;
             }
+
             if (_locomotorInfo.WheelInfo.FrontLeftHeightOffset < maxSuspensionExtension)
             {
                 _locomotorInfo.WheelInfo.FrontLeftHeightOffset = maxSuspensionExtension;
                 _locomotorInfo.WheelInfo.FrontRightHeightOffset = maxSuspensionExtension;
             }
+
             if (_locomotorInfo.WheelInfo.RearLeftHeightOffset < maxSuspensionExtension)
             {
                 _locomotorInfo.WheelInfo.RearLeftHeightOffset = maxSuspensionExtension;
                 _locomotorInfo.WheelInfo.RearRightHeightOffset = maxSuspensionExtension;
             }
         }
+
         // If we are > 22 degrees, need to raise height;
         var divisor = 4.0f;
         var pitch = MathF.Abs(info.TotalPitch - groundPitch);
@@ -1386,6 +1412,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             _locomotorInfo.OverlapZ = 0.0f;
             _locomotorInfo.OverlapZVelocity = 0.0f;
         }
+
         info.TotalZ = ztmp;
     }
 
@@ -1526,6 +1553,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                     _locomotorInfo.Pitch += (wobbleRate / 2.0f);
                     _locomotorInfo.Yaw += (wobbleRate / 2.0f);
                 }
+
                 if (_locomotorInfo.Pitch >= maxWobble)
                 {
                     _locomotorInfo.Wobble = -1.0f;
@@ -1543,6 +1571,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
                     _locomotorInfo.Pitch -= (wobbleRate / 2.0f);
                     _locomotorInfo.Yaw -= (wobbleRate / 2.0f);
                 }
+
                 if (_locomotorInfo.Pitch <= minWobble)
                 {
                     _locomotorInfo.Wobble = 1.0f;
@@ -1590,6 +1619,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
         {
             _hiddenSubObjects.Add(subObject, false);
         }
+
         _shownSubObjects.Remove(subObject);
     }
 
@@ -1605,6 +1635,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
         {
             _hiddenSubObjects[subObject] = true;
         }
+
         _shownSubObjects.Remove(subObject);
     }
 
@@ -1616,6 +1647,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
         {
             _shownSubObjects.Add(subObject, false);
         }
+
         _hiddenSubObjects.Remove(subObject);
     }
 
@@ -1631,6 +1663,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
         {
             _shownSubObjects[subObject] = true;
         }
+
         _hiddenSubObjects.Remove(subObject);
     }
 
@@ -1801,6 +1834,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
             // In Generals, "None" == 6.
             decalType = ObjectDecalType.None;
         }
+
         if (reader.Mode == StatePersistMode.Read)
         {
             SetTerrainDecal(decalType);
@@ -1975,6 +2009,7 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
 
             reader.EndObject();
         }
+
         reader.EndArray();
 
         reader.EndObject();

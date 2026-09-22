@@ -23,6 +23,7 @@ public sealed class LodPreset : BaseAsset
             result.ResolutionWidth = parser.ParseInteger();
             result.ResolutionHeight = parser.ParseInteger();
         }
+
         return result;
     }
 

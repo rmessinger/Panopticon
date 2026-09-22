@@ -60,6 +60,7 @@ public sealed class TerrainVisual : IPersistableObject
                 elevations[x, y] = elevation;
             }
         }
+
         reader.EndArray();
 
         if (reader.Mode == StatePersistMode.Read)

@@ -276,6 +276,7 @@ public sealed class LivingWorldRegionCampaignRegion
             {
                 result.Add(new RegionConnection(region));
             }
+
             return result;
         }
 
@@ -287,6 +288,7 @@ public sealed class LivingWorldRegionCampaignRegion
             parser.GoToNextLine();
             token = parser.PeekNextTokenOptional();
         }
+
         return result;
     }
 }

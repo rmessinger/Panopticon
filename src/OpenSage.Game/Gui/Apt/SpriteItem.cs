@@ -107,6 +107,7 @@ public sealed class SpriteItem : DisplayItem
         {
             renderingContext.SetClipMask(null);
         }
+
         renderingContext.PopTransform();
     }
 
@@ -222,18 +223,21 @@ public sealed class SpriteItem : DisplayItem
                 {
                     PlaceItem(po);
                 }
+
                 //modify an existing display item
                 else if (!po.Flags.HasFlag(PlaceObjectFlags.HasCharacter) &&
                           po.Flags.HasFlag(PlaceObjectFlags.Move))
                 {
                     MoveItem(po);
                 }
+
                 //this will erase an existing item and place a new item right away
                 else if (po.Flags.HasFlag(PlaceObjectFlags.HasCharacter) &&
                          po.Flags.HasFlag(PlaceObjectFlags.Move))
                 {
                     PlaceItem(po);
                 }
+
                 break;
             case RemoveObject ro:
                 Content.RemoveItem(ro.Depth);
@@ -250,6 +254,7 @@ public sealed class SpriteItem : DisplayItem
                 {
                     //throw new InvalidOperationException("BackgroundColor can only be set from root!");
                 }
+
                 break;
             default:
                 throw new NotImplementedException("Unimplemented frameitem");
@@ -380,6 +385,7 @@ public sealed class SpriteItem : DisplayItem
             Context.Avm.Execute(action.Instructions, ScriptObject,
                     ScriptObject.Item.Character.Container.Constants.Entries);
         }
+
         _actionList.Clear();
 
         //execute all subitems actions now

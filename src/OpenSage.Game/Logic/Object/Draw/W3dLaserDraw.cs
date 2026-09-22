@@ -54,6 +54,7 @@ public sealed class W3dLaserDraw : DrawModule
         reader.EndObject();
     }
 }
+
 /// <summary>
 /// Interdependent with the <see cref="LaserUpdateModuleData"/> module and requires the object to have
 /// KindOf = INERT IMMOBILE.

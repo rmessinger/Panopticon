@@ -133,6 +133,7 @@ internal sealed class MainForm : DisposableBase
 
                 ImGui.EndMenu();
             }
+
             if (ImGui.BeginMenu("Edit"))
             {
                 if (ImGui.MenuItem("Export All", "Ctrl+E", false, _bigArchive != null))
@@ -167,6 +168,7 @@ internal sealed class MainForm : DisposableBase
                 OpenBigFile(result);
             }
         }
+
         if (wasExportAllClicked)
         {
             // "Select folder for export files"
@@ -175,6 +177,7 @@ internal sealed class MainForm : DisposableBase
                 Export(result);
             }
         }
+
         if (wasImportDirectoryClicked)
         {
             // "Select folder for import files"
@@ -183,6 +186,7 @@ internal sealed class MainForm : DisposableBase
                 ImportDirectory(result);
             }
         }
+
         if (wasImportFileClicked)
         {
             // "Select file which you want to import"
@@ -275,12 +279,14 @@ internal sealed class MainForm : DisposableBase
             ImGui.SetScrollY(_scrollY);
 
         }
+
         if (ImGui.IsKeyPressed(ImGuiKey.UpArrow) && _currentFile != 0)
         {
             _currentFile--;
             _scrollY -= ImGui.GetIO().DeltaTime * 1000.0f;
             ImGui.SetScrollY(_scrollY);
         }
+
         if (ImGui.IsMouseClicked(0))
         {
             _scrollY = ImGui.GetScrollY();
@@ -310,6 +316,7 @@ internal sealed class MainForm : DisposableBase
                         {
                             _currentView = AddDisposable(new TextView(stream));
                         }
+
                         break;
                     case ".tga":
                     case ".bmp":
@@ -319,6 +326,7 @@ internal sealed class MainForm : DisposableBase
                         {
                             _currentView = AddDisposable(new ImageView(stream, _graphicsDevice, _imguiRenderer));
                         }
+
                         break;
                     default:
                         _currentView = null;

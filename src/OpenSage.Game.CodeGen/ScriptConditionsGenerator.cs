@@ -95,6 +95,7 @@ public sealed class ScriptConditionsGenerator : ScriptContentGeneratorBase
                     {
                         sb.Append(" || ");
                     }
+
                     sb.Append($"game == SageGame.{sageGameNameLookup[(int)games[i].Value]}");
                 }
             }
@@ -106,6 +107,7 @@ public sealed class ScriptConditionsGenerator : ScriptContentGeneratorBase
             {
                 sb.Append($", {GetArgument(i, parameterTypes, "condition")}");
             }
+
             sb.AppendLine($"))");
             sb.AppendLine("                    {");
 
@@ -115,6 +117,7 @@ public sealed class ScriptConditionsGenerator : ScriptContentGeneratorBase
             {
                 sb.Append($", {GetArgument(i, parameterTypes, "condition")}");
             }
+
             sb.AppendLine("));");
 
             sb.AppendLine("                        return true;");

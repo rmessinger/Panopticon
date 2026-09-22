@@ -58,6 +58,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                 {
                     _mousePosition = message.Value.MousePosition;
                 }
+
                 break;
 
             case InputMessageType.MouseLeftButtonDown:
@@ -70,6 +71,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                         {
                             return InputMessageResult.Handled;
                         }
+
                         break;
                     }
                 }
@@ -83,6 +85,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                     _dragEndPosition = _mousePosition;
                     return InputMessageResult.Handled;
                 }
+
                 break;
 
             case InputMessageType.MouseLeftButtonUp:
@@ -92,6 +95,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                     _isDragging = false;
                     return InputMessageResult.Handled;
                 }
+
                 break;
 
             case InputMessageType.MouseRightButtonDown:
@@ -115,6 +119,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                     // Classic: right-click cancels the active order generator.
                     _orderGeneratorSystem.CancelOrderGenerator();
                 }
+
                 break;
 
             case InputMessageType.MouseRightButtonUp:
@@ -137,6 +142,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                         _orderGeneratorSystem.TryActivate(_keyModifiers);
                     }
                 }
+
                 break;
 
             case InputMessageType.KeyDown:
@@ -146,6 +152,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                     _keyModifiers |= KeyModifiers.Ctrl;
                     return InputMessageResult.Handled;
                 }
+
                 break;
 
             case InputMessageType.KeyUp:
@@ -155,6 +162,7 @@ public class OrderGeneratorInputHandler : InputMessageHandler
                     _keyModifiers &= ~KeyModifiers.Ctrl;
                     return InputMessageResult.Handled;
                 }
+
                 break;
         }
 

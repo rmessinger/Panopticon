@@ -27,5 +27,6 @@ public class TriangleUtilityTest
     {
         Assert.Equal(expectedResult, TriangleUtility.IsPointInside(v1, v2, v3, point));
     }
+
     #endregion
 }

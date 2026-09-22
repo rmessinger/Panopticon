@@ -45,6 +45,7 @@ public static class ControlBarCallbacks
 
                         break;
                 }
+
                 break;
         }
     }
@@ -75,6 +76,7 @@ public static class ControlBarCallbacks
                     var order = Order.CreateMoveOrder(context.Game.Scene3D.GetPlayerIndex(context.Game.Scene3D.LocalPlayer), terrainPosition);
                     context.Game.NetworkMessageBuffer.AddLocalOrder(order);
                 }
+
                 break;
 
             case WndWindowMessageType.MouseRightDown: // Right mouse moves camera.

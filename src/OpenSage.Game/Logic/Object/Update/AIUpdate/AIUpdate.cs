@@ -211,11 +211,13 @@ public class AIUpdate : UpdateModule
             {
                 path.RemoveAt(0);
             }
+
             TargetPoints.AddRange(path);
             if (TargetPoints.Count > 0 && endIsPassable)
             {
                 TargetPoints[TargetPoints.Count - 1] = targetPoint;
             }
+
             Logger.Debug("Set new target points: " + TargetPoints.Count);
             GameObject.SetModelConditionState(ModelConditionFlag.Moving);
         }

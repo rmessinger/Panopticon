@@ -76,6 +76,7 @@ internal static class W3dMeshConverter
                 throw new InvalidDataException(
                     $"Skinned mesh '{w3dMesh.Header.MeshName}' has no vertex influences.");
             }
+
             ValidateArrayLength(w3dMesh, w3dMesh.Influences.Items.Length, numVertices, "influences");
         }
 

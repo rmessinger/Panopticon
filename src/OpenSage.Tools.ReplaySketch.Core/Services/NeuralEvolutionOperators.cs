@@ -76,6 +76,7 @@ public static class NeuralEvolutionOperators
             throw new InvalidOperationException(
                 $"Advance expects {config.PopulationSize} ranked genomes; got {rankedByFitness.Count}.");
         }
+
         foreach (var ranked in rankedByFitness)
         {
             if (ranked.Genome.Weights.Length != config.GenomeLength)

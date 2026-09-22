@@ -134,6 +134,7 @@ public class MapFile
                 {
                     throw new InvalidDataException();
                 }
+
                 // DeflateStream doesn't support .Position or .Length, so to simplify
                 // the rest of the map loading process, we decompress it to a MemoryStream
                 // here. Not optimal, but only used on one 187kb map so it doesn't matter.
@@ -142,6 +143,7 @@ public class MapFile
                 {
                     deflateStream.CopyTo(result);
                 }
+
                 result.Position = 0;
                 return result;
 

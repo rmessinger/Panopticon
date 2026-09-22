@@ -234,6 +234,7 @@ public class W3dUnderbodyPatcherTests
                 * Matrix4x4.CreateTranslation(pivot.Translation);
             currentIndex = pivot.ParentIdx;
         }
+
         return result;
     }
 
@@ -254,6 +255,7 @@ public class W3dUnderbodyPatcherTests
             transformedMin = Vector3.Min(transformedMin, transformed);
             transformedMax = Vector3.Max(transformedMax, transformed);
         }
+
         return (transformedMin, transformedMax);
     }
 }

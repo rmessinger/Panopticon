@@ -55,6 +55,7 @@ public class P6cSpecialPowerTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
         return game;
     }

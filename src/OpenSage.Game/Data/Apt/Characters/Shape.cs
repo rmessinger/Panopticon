@@ -25,6 +25,7 @@ public sealed class Shape : Character
         {
             throw new ArgumentException(null, nameof(geometryId));
         }
+
         var box = geometry.BoundingBox;
         var bounds = new Vector4
         {
@@ -47,6 +48,7 @@ public sealed class Shape : Character
         {
             throw new ArgumentException(null, nameof(newGeometryId));
         }
+
         if (modifyBounds)
         {
             if (!newBounds.HasValue)
@@ -60,8 +62,10 @@ public sealed class Shape : Character
                     W = box.Bottom
                 };
             }
+
             Bounds = newBounds.Value;
         }
+
         Geometry = newGeometryId;
     }
 }

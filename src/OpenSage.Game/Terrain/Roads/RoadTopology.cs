@@ -129,6 +129,7 @@ internal sealed class RoadTopology
         {
             Nodes.Add(node = new RoadTopologyNode(position));
         }
+
         return node;
     }
 }

@@ -60,6 +60,7 @@ public sealed class Emotion
             result.Type = EmotionType.None;
             result.EmotionName = parser.ScanAssetReference(firstToken);
         }
+
         return result;
     }
 

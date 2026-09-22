@@ -164,6 +164,7 @@ internal static class W3dMaterialConverter
                         "Texture0",
                         GetTextureName(w3dMesh, run.TextureIndex0)));
                 }
+
                 if (run.TextureIndex1 != null)
                 {
                     properties.Add(ImportedMaterialProperty.FromTextureName(
@@ -301,6 +302,7 @@ internal static class W3dMaterialConverter
                         $"Mesh '{w3dMesh.Header.MeshName}' has a triangle whose vertices reference " +
                         "more than one vertex material.");
                 }
+
                 yield return materialID0;
             }
 

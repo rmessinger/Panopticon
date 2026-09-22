@@ -15,8 +15,10 @@ public static class EnumExtensions
             {
                 return value.ToString();
             }
+
             return attribute.Name;
         }
+
         return null;
     }
 }

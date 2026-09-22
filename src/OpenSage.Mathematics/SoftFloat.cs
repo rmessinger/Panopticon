@@ -151,6 +151,7 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
 
                     deltaExp = rawExp1 - rawExp2;
                 }
+
                 var man = (man1 << 6) + ((man2 << 6) >> deltaExp);
                 var absMan = (uint)Math.Abs(man);
                 if (absMan == 0)
@@ -166,6 +167,7 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
                     absMan <<= 8;
                     msb = absMan >> 23;
                 }
+
                 var msbIndex = BitScanReverse8(msb);
                 rawExp += msbIndex;
                 absMan >>= msbIndex;
@@ -187,11 +189,13 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
                             return NegativeInfinity;
                         }
                     }
+
                     if (rawExp >= -24)//Fixme
                     {
                         var raw = (uint)man & 0x80000000 | absMan >> (-rawExp + 1);
                         return new SoftFloat(raw);
                     }
+
                     return Zero;
                 }
             }
@@ -202,6 +206,7 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
                 {
                     return f1;
                 }
+
                 // Both not finite
                 if (f1._raw == f2._raw)
                 {
@@ -248,6 +253,7 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
                 rawMan1 <<= 1;
                 rawExp1--;
             }
+
             Debug.Assert(rawMan1 >> 23 == 1);
             man1 = (int)((rawMan1 ^ sign1) - sign1);
         }
@@ -325,6 +331,7 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
                 rawMan2 <<= 1;
                 rawExp2--;
             }
+
             Debug.Assert(rawMan2 >> 23 == 1);
             man2 = (int)((rawMan2 ^ sign2) - sign2);
         }
@@ -385,6 +392,7 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
             absMan >>= 1;
             rawExp++;
         }
+
         Debug.Assert(absMan >> 23 == 1);
         if (rawExp >= 255)
         {
@@ -428,6 +436,7 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
         {
             return false;
         }
+
         return Equals((SoftFloat)obj);
     }
 

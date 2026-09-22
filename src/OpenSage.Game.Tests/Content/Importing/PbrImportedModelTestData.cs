@@ -99,6 +99,7 @@ internal static class PbrImportedModelTestData
                 new Vector2(0.75f, 0.75f),
                 new Vector2(0.25f, 0.75f),
             }
+
             : null;
 
         return new ImportedMesh(

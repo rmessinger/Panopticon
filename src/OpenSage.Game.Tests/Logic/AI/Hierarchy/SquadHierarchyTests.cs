@@ -128,6 +128,7 @@ public sealed class SquadHierarchyTests : MockedGameTest
         {
             game.GameLogic.DestroyObject(member);
         }
+
         hierarchy.Synchronize(player);
         Assert.Empty(hierarchy.Squads);
 

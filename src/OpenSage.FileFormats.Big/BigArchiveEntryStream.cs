@@ -24,6 +24,7 @@ public class BigArchiveEntryStream : Stream
         {
             _entry.Length = (uint)this.Length;
         }
+
         _archive.WriteToDisk();
     }
 
@@ -47,6 +48,7 @@ public class BigArchiveEntryStream : Stream
             result = _entry.OutstandingWriteStream!.Read(buffer, offset, count); // set when _write is set to true
             Position += result;
         }
+
         _archive.ReleaseLock();
 
         return result;

@@ -37,6 +37,7 @@ public sealed class EditorCameraInputMessageHandler : InputMessageHandler
                         _lastX = position.X;
                         _lastY = position.Y;
                     }
+
                     break;
                 }
 
@@ -62,6 +63,7 @@ public sealed class EditorCameraInputMessageHandler : InputMessageHandler
                             _rightMouseDown = true;
                             break;
                     }
+
                     break;
                 }
 
@@ -89,6 +91,7 @@ public sealed class EditorCameraInputMessageHandler : InputMessageHandler
                     {
                         _pressedKeys.Add(key);
                     }
+
                     break;
                 }
 

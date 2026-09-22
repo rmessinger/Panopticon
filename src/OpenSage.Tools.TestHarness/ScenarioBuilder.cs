@@ -94,6 +94,7 @@ public static class ScenarioBuilder
         {
             scenario.MapPath = config.ValidationGroundMapPath;
         }
+
         scenario.SettleFrames = config.ValidationGroundSettleFrames;
         scenario.Seed = config.ValidationGroundSeed;
 

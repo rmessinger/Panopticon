@@ -118,6 +118,7 @@ public sealed class TgaFile
                             Array.Copy(bytes, 0, data, dataIndex, bytes.Length);
                             dataIndex += bytes.Length;
                         }
+
                         break;
                     }
 
@@ -169,6 +170,7 @@ public sealed class TgaFile
                         result[resultIndex++] = data[i]; // B
                         result[resultIndex++] = 255;     // A
                     }
+
                     return result;
                 }
 
@@ -192,6 +194,7 @@ public sealed class TgaFile
                         result[resultIndex++] = (byte)(b * factor); // B
                         result[resultIndex++] = 255; // A
                     }
+
                     return result;
                 }
 
@@ -206,6 +209,7 @@ public sealed class TgaFile
                         result[resultIndex++] = data[i + 0]; // B
                         result[resultIndex++] = 255;         // A
                     }
+
                     return result;
                 }
 
@@ -227,6 +231,7 @@ public sealed class TgaFile
                             result[resultIndex++] = data[i + 3]; // A
                         }
                     }
+
                     return result;
                 }
 

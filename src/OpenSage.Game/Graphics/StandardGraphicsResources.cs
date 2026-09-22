@@ -90,6 +90,7 @@ internal sealed class StandardGraphicsResources : DisposableBase
 
             result.Name = $"NullStructuredBuffer_Size{size}";
         }
+
         return result;
     }
 }

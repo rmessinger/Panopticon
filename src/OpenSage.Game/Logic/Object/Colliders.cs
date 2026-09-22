@@ -130,8 +130,10 @@ public class SphereCollider : Collider
             {
                 return Intersects(box, twoDimensional);
             }
+
             return true;
         }
+
         return false;
     }
 
@@ -141,6 +143,7 @@ public class SphereCollider : Collider
         {
             return false;
         }
+
         // TODO: consider non-AA bounds of box collider
         return twoDimensional || WorldBounds.Intersects(other.WorldAABox);
     }
@@ -218,8 +221,10 @@ public class BoxCollider : SphereCollider
             {
                 return Intersects(box, twoDimensional);
             }
+
             return true;
         }
+
         return false;
     }
 
@@ -269,6 +274,7 @@ public class CylinderCollider : BoxCollider
         {
             return false;
         }
+
         var distance = (Transform.Translation.Vector2XY() - point).Length();
         return distance <= LowerRadius;
     }
@@ -279,6 +285,7 @@ public class CylinderCollider : BoxCollider
         {
             return false;
         }
+
         return true; // TODO
     }
 }

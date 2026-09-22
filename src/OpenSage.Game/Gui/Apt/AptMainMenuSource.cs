@@ -18,6 +18,7 @@ public class AptMainMenuSource : IMainMenuSource
         {
             aptWindow.BackgroundImage = game.AssetStore.MappedImages.GetByName(_fallbackShell);
         }
+
         scene.AptWindowManager.PushWindow(aptWindow);
     }
 }

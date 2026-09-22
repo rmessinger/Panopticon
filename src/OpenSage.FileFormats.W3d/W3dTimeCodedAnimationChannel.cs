@@ -82,6 +82,7 @@ public sealed record W3dTimeCodedDatum(
         {
             timeCode |= (1u << 31);
         }
+
         writer.Write(timeCode);
 
         Value.WriteTo(writer, channelType);

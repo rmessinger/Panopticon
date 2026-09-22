@@ -343,6 +343,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 SetFlag(LocomotorFlags.IsBraking, true);
             }
+
             onPathDistToGoal = dist;
         }
 
@@ -360,6 +361,7 @@ public sealed class Locomotor : IPersistableObject
             // If we get high enough to stay up for 3 frames, then we left the ground.
             treatAsAirborne = true;
         }
+
         // We apply a zero acceleration to all units, as the call to
         // ApplyMotiveForce flags an object as being "driven" by a locomotor, rather
         // than being pushed around by objects bumping it.
@@ -371,6 +373,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 blocked = false;
             }
+
             if (treatAsAirborne && (LocomotorTemplate.Surfaces & Surfaces.Air) != 0)
             {
                 // Airborne flying objects don't collide for now.
@@ -453,10 +456,12 @@ public sealed class Locomotor : IPersistableObject
                 {
                     vel = minVel;
                 }
+
                 if (vel > dist)
                 {
                     vel = dist; // do not overcompensate!
                 }
+
                 // Normalize.
                 if (dist > 0.001f)
                 {
@@ -480,10 +485,12 @@ public sealed class Locomotor : IPersistableObject
                     {
                         vel = minVel;
                     }
+
                     if (vel > dist)
                     {
                         vel = dist; // do not overcompensate!
                     }
+
                     dist = 1.0f / dist;
                     dx *= dist;
                     dy *= dist;
@@ -491,6 +498,7 @@ public sealed class Locomotor : IPersistableObject
                     pos.Y += dy * vel;
                 }
             }
+
             obj.SetTranslation(pos);
         }
     }
@@ -605,8 +613,10 @@ public sealed class Locomotor : IPersistableObject
                     {
                         pos.Z = _gameEngine.Game.TerrainLogic.GetLayerHeight(pos.X, pos.Y, obj.Layer);
                     }
+
                     obj.SetTranslation(pos);
                 }
+
                 break;
 
             case LocomotorBehaviorZ.FixedSurfaceRelativeHeight:
@@ -619,6 +629,7 @@ public sealed class Locomotor : IPersistableObject
                     pos.Z = _preferredHeight + (surfaceRel ? surfaceHt : 0);
                     obj.SetTranslation(pos);
                 }
+
                 break;
 
             case LocomotorBehaviorZ.RelativeToGroundAndBuildings:
@@ -634,6 +645,7 @@ public sealed class Locomotor : IPersistableObject
                     obj.SetTranslation(pos);
 
                 }
+
                 break;
             case LocomotorBehaviorZ.RelativeToHighestLayer:
                 requiresConstantCalling = true;
@@ -672,6 +684,7 @@ public sealed class Locomotor : IPersistableObject
                         }
                     }
                 }
+
                 break;
 
             case LocomotorBehaviorZ.SurfaceRelativeHeight:
@@ -703,6 +716,7 @@ public sealed class Locomotor : IPersistableObject
                         }
                     }
                 }
+
                 break;
 
             default:
@@ -760,6 +774,7 @@ public sealed class Locomotor : IPersistableObject
                     SetFlag(LocomotorFlags.OffsetIncreasing, true);
                 }
             }
+
             desiredAngle = MathUtility.NormalizeAngle(desiredAngle + _angleOffset);
         }
 
@@ -838,6 +853,7 @@ public sealed class Locomotor : IPersistableObject
         {
             SetFlag(LocomotorFlags.Climbing, true);
         }
+
         if (MathF.Abs(dz) < 1)
         {
             SetFlag(LocomotorFlags.Climbing, false);
@@ -863,11 +879,13 @@ public sealed class Locomotor : IPersistableObject
             {
                 groundSlope = 1.0f;
             }
+
             if (groundSlope > 1.0f)
             {
                 desiredSpeed /= groundSlope * 4;
             }
         }
+
         SetFlag(LocomotorFlags.MovingBackwards, moveBackwards);
 
         // Orient toward goal position.
@@ -915,6 +933,7 @@ public sealed class Locomotor : IPersistableObject
         {
             speedDelta = -goalSpeed + actualSpeed;
         }
+
         if (speedDelta != 0.0f)
         {
             var mass = physics.Mass;
@@ -989,6 +1008,7 @@ public sealed class Locomotor : IPersistableObject
             }
 
         }
+
         if (GetFlag(LocomotorFlags.MovingBackwards))
         {
             if (MathF.Abs(relAngle) < MathF.PI / 2)
@@ -1044,6 +1064,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 turnFactor = 1.0f;
             }
+
             var turnAmount = projectFrames * turnFactor * maxTurnRate / 4.0f;
             if (relAngle < 0)
             {
@@ -1053,6 +1074,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 targetAngle += turnAmount;
             }
+
             var offset = new Vector3(
                 MathF.Cos(targetAngle) * distance,
                 MathF.Sin(targetAngle) * distance,
@@ -1116,6 +1138,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 _brakingFactor = MaxBrakingFactor;
             }
+
             _brakingFactor = 1.0f;
             if (slowDownDist > onPathDistToGoal)
             {
@@ -1150,10 +1173,12 @@ public sealed class Locomotor : IPersistableObject
             {
                 turnFactor = -turnFactor; // In case we're sliding backwards in a 3 pt turn.
             }
+
             if (turnFactor > 1.0f)
             {
                 turnFactor = 1.0f;
             }
+
             var turnAmount = turnFactor * maxTurnRate;
 
             PhysicsTurningType rotating;
@@ -1178,6 +1203,7 @@ public sealed class Locomotor : IPersistableObject
         {
             speedDelta = -goalSpeed + actualSpeed;
         }
+
         if (speedDelta != 0.0f)
         {
             var mass = physics.Mass;
@@ -1281,6 +1307,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 _brakingFactor = MaxBrakingFactor;
             }
+
             if (slowDownDist > onPathDistToGoal)
             {
                 goalSpeed = actualSpeed - GetBraking();
@@ -1440,8 +1467,10 @@ public sealed class Locomotor : IPersistableObject
                     // We are at target.
                     adjust = false;
                 }
+
                 maxTurnRate = 3 * maxTurnRate;
             }
+
             if (adjust)
             {
                 /*Real orient =*/
@@ -1455,6 +1484,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 maxForwardSpeed = 0.01f; // In some cases, this is 0, hack for now.  jba.
             }
+
             var damping = Math.Clamp(maxAccel / maxForwardSpeed, 0.0f, 1.0f);
             var curVel = physics.Velocity;
 
@@ -1607,6 +1637,7 @@ public sealed class Locomotor : IPersistableObject
                 obj.SetTransformMatrix(newXform);
             }
         }
+
         return relAngle;
     }
 
@@ -1718,6 +1749,7 @@ public sealed class Locomotor : IPersistableObject
         {
             maxNetLift = 0;
         }
+
         var curVelZ = physics.Velocity.Z;
         // Going down, braking is limited by net lift; going up, braking is limited by gravity.
         var maxAccel = GetFlag(LocomotorFlags.UltraAccurate)
@@ -1766,6 +1798,7 @@ public sealed class Locomotor : IPersistableObject
         {
             desiredAccel = 0.0f;
         }
+
         var liftToUse = desiredAccel - _gameEngine.AssetStore.GameData.Current.Gravity;
         if (GetFlag(LocomotorFlags.UltraAccurate))
         {
@@ -1775,6 +1808,7 @@ public sealed class Locomotor : IPersistableObject
             {
                 liftToUse = upFactor * maxGrossLift;
             }
+
             // srj sez: we used to clip lift to zero here (not allowing neg lift).
             // however, I now think that allowing neg lift in ultra-accurate mode is
             // a good and desirable thing; in particular, it enables jets to complete
@@ -1880,8 +1914,10 @@ public sealed class Locomotor : IPersistableObject
             {
                 turn = PhysicsTurningType.None;
             }
+
             obj.SetOrientation(MathUtility.NormalizeAngle(angle + amount));
         }
+
         return turn;
     }
 
@@ -2057,6 +2093,7 @@ public sealed class Locomotor : IPersistableObject
                 turnRadius = -turnRadius;
                 aimDir = -aimDir;
             }
+
             angleTowardMaintainPos += aimDir;
 
             // project a spot "radius" dist away from it, in that dir

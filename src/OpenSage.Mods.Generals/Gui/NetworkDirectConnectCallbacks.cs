@@ -32,8 +32,10 @@ public static class NetworkDirectConnectCallbacks
                             var endPoint = new System.Net.IPEndPoint(ipAddress, Ports.SkirmishHost);
                             NetworkUtils.JoinGame(context, endPoint);
                         }
+
                         break;
                 }
+
                 break;
         }
     }

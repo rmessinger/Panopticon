@@ -41,6 +41,7 @@ public static class ValidationGroundCamera
             min = Vector2.Min(min, p);
             max = Vector2.Max(max, p);
         }
+
         var centre = (min + max) / 2f;
 
         var view = scene.TacticalView;
@@ -63,6 +64,7 @@ public static class ValidationGroundCamera
                 fits = viewHeight;
                 break;
             }
+
             tooClose = viewHeight;
             viewHeight *= 1.6f;
             view.SnapHeightAboveGround(viewHeight);
@@ -104,6 +106,7 @@ public static class ValidationGroundCamera
                 return false;
             }
         }
+
         return true;
     }
 }

@@ -82,6 +82,7 @@ public sealed class SnapshotDeltaRecorder : IDisposable
         {
             throw new ArgumentOutOfRangeException(nameof(snapshotInterval));
         }
+
         if (artifactPath is not null && game is null)
         {
             throw new ArgumentException($"{nameof(game)} is required when {nameof(artifactPath)} is set.", nameof(game));
@@ -104,6 +105,7 @@ public sealed class SnapshotDeltaRecorder : IDisposable
             Snapshots.Add(summary);
             _writer?.WriteSnapshot(summary);
         }
+
         Deltas.Add(delta);
         _writer?.WriteDelta(delta);
     }
@@ -339,6 +341,7 @@ public sealed class TriggeredDetailCapture : IDisposable
             window.Frames.AddRange(_markedFrames);
             _windows.Add(window);
         }
+
         return _windows;
     }
 
@@ -410,6 +413,7 @@ public sealed class RunRecording : IDisposable
                 {
                     return null;
                 }
+
                 var diverged = SignatureTreeComparer.FindDivergedSubtrees(reference, tree);
                 return diverged.Count > 0 ? diverged : null;
             },
@@ -426,6 +430,7 @@ public sealed class RunRecording : IDisposable
         {
             output.TriggeredCaptures.Add(RunOutput.ToDto(window));
         }
+
         output.SnapshotInterval = Snapshots.SnapshotInterval;
         output.SnapshotArtifactPath = Snapshots.ArtifactPath;
         output.SnapshotFrames.AddRange(Snapshots.Snapshots.Select(s => s.Frame));

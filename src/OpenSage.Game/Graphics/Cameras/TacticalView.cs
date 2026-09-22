@@ -106,6 +106,7 @@ public sealed class TacticalView : IPersistableObject
     {
         _angle = MathF.Atan2(lookDirection.Y, lookDirection.X);
     }
+
     public Vector3 GetLookDirection()
     {
         return new Vector3(
@@ -313,6 +314,7 @@ public sealed class TacticalView : IPersistableObject
             var sample = _terrainLogic.GetGroundHeight(samplePos.X, samplePos.Y);
             terrainHeightMax = Math.Max(terrainHeightMax, sample);
         }
+
         return terrainHeightMax;
     }
 
@@ -912,6 +914,7 @@ public sealed class TacticalView : IPersistableObject
         {
             _path = path;
         }
+
         _cameraArrivedAtWaypointOnPathFlag = false;
         _rotateAnimation = null;
         path.ElapsedTimeMilliseconds = 0;
@@ -999,6 +1002,7 @@ public sealed class TacticalView : IPersistableObject
         {
             currentAngle += MathUtility.TwoPi;
         }
+
         if (nextAngle - currentAngle < -Math.PI)
         {
             currentAngle -= MathUtility.TwoPi;
@@ -1028,6 +1032,7 @@ public sealed class TacticalView : IPersistableObject
             midSegmentIndex = _path.CurSegment + 1;
             factor -= 0.5f;
         }
+
         var result = _path.GetBezierPoint(midSegmentIndex, factor);
 
         _pos = result;
@@ -1374,6 +1379,7 @@ public sealed class TacticalView : IPersistableObject
                         // 30 FPS fix, might need to be adjusted
                         _angle += (float)(diff * 0.1 * gameTime.GetLogicFrameRelativeDeltaTime(_msPerLogicFrame));
                     }
+
                     _angle = NormalizeAngle(_angle);
                 }
             }
@@ -1570,6 +1576,7 @@ public sealed class TacticalView : IPersistableObject
         {
             MaxHeightAboveGround = heightAboveGround;
         }
+
         _heightAboveGround = heightAboveGround;
 
         var terrainHeightMax = GetHeightAroundPos(_pos.Vector2XY());

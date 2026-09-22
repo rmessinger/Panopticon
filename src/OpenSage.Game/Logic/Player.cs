@@ -107,8 +107,10 @@ public class Player : IPersistableObject
             {
                 continue;
             }
+
             energy += gameObject.EnergyProduction;
         }
+
         return energy;
     }
 
@@ -126,6 +128,7 @@ public class Player : IPersistableObject
             {
                 energy += gameObject.EnergyProduction;
             }
+
             return energy;
         }
     }
@@ -265,6 +268,7 @@ public class Player : IPersistableObject
                 }
             }
         }
+
         _selectedUnits.UnionWith(unitsFromHordeSelection);
     }
 
@@ -275,6 +279,7 @@ public class Player : IPersistableObject
             unit.IsSelected = false;
             HandleHordeDeselect(unit);
         }
+
         _selectedUnits.Clear();
     }
 
@@ -585,6 +590,7 @@ public class Player : IPersistableObject
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
 
         reader.PersistUInt32(ref _unknown1);
@@ -652,6 +658,7 @@ public class Player : IPersistableObject
         {
             throw new InvalidStateException();
         }
+
         if (isAIPlayer)
         {
             reader.PersistObject(AIPlayer);

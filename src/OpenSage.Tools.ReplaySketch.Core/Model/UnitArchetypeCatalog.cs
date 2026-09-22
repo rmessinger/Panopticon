@@ -142,6 +142,7 @@ public static class UnitArchetypeCatalog
                     }
                 }
             }
+
             return count;
         }
     }

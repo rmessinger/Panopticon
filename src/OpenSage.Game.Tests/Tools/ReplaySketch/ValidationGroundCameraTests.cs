@@ -59,10 +59,12 @@ public class ValidationGroundCameraTests
         {
             SpawnAt(t.DefinitionName, t.Position, civilian);
         }
+
         foreach (var s in plan.SupplySourcePlacements)
         {
             SpawnAt(s.DefinitionName, s.Position, civilian);
         }
+
         foreach (var u in plan.UnitPlacements)
         {
             SpawnAt(u.DefinitionName, u.Position, game.Scene3D.Players[u.PlayerIndex]);
@@ -73,10 +75,12 @@ public class ValidationGroundCameraTests
         {
             framed.Add(new Vector2(p.Position.X, p.Position.Y));
         }
+
         foreach (var p in plan.TargetPlacements)
         {
             framed.Add(new Vector2(p.Position.X, p.Position.Y));
         }
+
         foreach (var p in plan.SupplySourcePlacements)
         {
             framed.Add(new Vector2(p.Position.X, p.Position.Y));
@@ -137,6 +141,7 @@ public class ValidationGroundCameraTests
                     }
                 }
             }
+
             Assert.True(clearColored < sampled * 0.05f,
                 $"{clearColored}/{sampled} upper-frame pixels are clear color: the terrain did not render at the framed camera height");
 

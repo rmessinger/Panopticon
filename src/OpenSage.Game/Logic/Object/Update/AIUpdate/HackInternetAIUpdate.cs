@@ -28,6 +28,7 @@ public class HackInternetAIUpdate : AIUpdate
             {
                 SetTargetPoint(_packingUpData.TargetPosition);
             }
+
             _packingUpData = null;
         }
 

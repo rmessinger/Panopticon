@@ -205,6 +205,7 @@ public sealed class AptRenderingContext : DisposableBase
                                 l.Thickness,
                                 color);
                         }
+
                         break;
                     }
 
@@ -236,6 +237,7 @@ public sealed class AptRenderingContext : DisposableBase
                                     new ColorRgbaF(1.0f, 1.0f, 1.0f, color.A));
                             }
                         }
+
                         break;
                     }
 
@@ -264,6 +266,7 @@ public sealed class AptRenderingContext : DisposableBase
                                 Triangle2D.Transform(tri, matrix),
                                 tintColor);
                         }
+
                         break;
                     }
             }

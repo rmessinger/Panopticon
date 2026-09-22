@@ -7,6 +7,12 @@ Punctuation followers (`;`, `)`, `,`, `.`) remain on the brace's line, so
 statements like `};` or `}).Invoke()` are fine; what is rejected is code such as
 `} return null;` or `} while (x);`.
 
+Additionally, a closing brace that ends its line (a lone `}` line) must be
+separated from a following statement by one blank line. Nested block ends
+(`}` before `}`), punctuation followers, and clause continuations (`else`,
+`catch`, `finally`, `while`, `when`) stay adjacent; everything else — including
+comments, directives, accessors, and case labels — needs the blank line.
+
 This class has no .editorconfig / dotnet-format option (unlike `} else`,
 which csharp_new_line_before_else already covers), so it is enforced by this
 scanner instead. String literals, char literals, and comments are skipped.
@@ -25,6 +31,10 @@ SKIP_DIRS = {"obj", "bin", ".git", "node_modules", "packages"}
 # pattern: a brace pair opened after one of these is a pattern, not a block,
 # so a designation identifier may follow its closing brace on the same line.
 PATTERN_INTRODUCERS = {"is", "not", "and", "or", "when", ":"}
+
+# Keywords that legitimately continue the enclosing statement on the line
+# after a closing brace and therefore do not need a blank line separator.
+CLAUSE_KEYWORDS = {"else", "catch", "finally", "while", "when"}
 
 
 def opens_property_pattern(line, close_idx):
@@ -148,6 +158,26 @@ def violations(text, path):
                 line_slice = text[line_start:line_end if line_end != -1 else n]
                 if text[k] != "{" and not opens_property_pattern(line_slice, i - line_start):
                     result.append(f"{path}:{line}:{col + 1}: code after closing brace")
+            elif j >= n or text[j] == "\n":
+                # Lone closing-brace line: the next line must be blank, another
+                # closing brace, a punctuation follower, or a clause keyword.
+                # "Lone" requires only whitespace before the brace on its line,
+                # so one-liners like `{ get; set; }` are not covered here.
+                line_start = text.rfind("\n", 0, i) + 1
+                if text[line_start:i].strip():
+                    advance()
+                    continue
+                k = (j + 1) if j < n else n
+                line_end2 = text.find("\n", k) if k < n else -1
+                if line_end2 == -1:
+                    line_end2 = n
+                follower = text[k:line_end2].strip()
+                if follower and follower[0] not in ";),.}":
+                    match = re.match(r"[A-Za-z_]+", follower)
+                    if not match or match.group(0) not in CLAUSE_KEYWORDS:
+                        result.append(
+                            f"{path}:{line}:{col + 1}: statement follows closing brace "
+                            f"without a blank line")
             advance()
             continue
 

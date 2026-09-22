@@ -35,6 +35,7 @@ public static class WorldBuilderPreferences
         {
             // Corrupt settings fall back to defaults.
         }
+
         return [];
     }
 

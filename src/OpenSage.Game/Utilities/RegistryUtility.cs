@@ -26,4 +26,5 @@ public static class RegistryUtility
         return value;
     }
 }
+
 #pragma warning restore CA1416 // Validate platform compatibility

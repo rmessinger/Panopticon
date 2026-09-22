@@ -182,6 +182,7 @@ public sealed class ValidationGroundEditorView : UserControl
                 AttachVmMap();
                 RebuildPreviewBitmap();
             }
+
             _canvas.InvalidateCanvas();
         };
         AttachVmMap();
@@ -262,6 +263,7 @@ public sealed class ValidationGroundEditorView : UserControl
         {
             BeginMoveDrag(_dragStartTouch);
         }
+
         e.Handled = true;
     }
 

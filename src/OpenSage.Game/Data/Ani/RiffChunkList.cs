@@ -26,6 +26,7 @@ public sealed class RiffChunkList : RiffChunkContent
                 {
                     chunks.Add(RiffChunk.Parse(reader));
                 }
+
                 break;
 
             default:

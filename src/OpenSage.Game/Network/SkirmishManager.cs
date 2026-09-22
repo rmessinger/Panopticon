@@ -50,6 +50,7 @@ public abstract class SkirmishManager
             {
                 Game.Scene2D.WndWindowManager.PopWindow();
             }
+
             StartGame();
         }
     }
@@ -579,6 +580,7 @@ public sealed class HostSkirmishManager : NetworkSkirmishManager
                 {
                     Settings.Status = SkirmishGameStatus.ReadyToStart;
                 }
+
                 break;
 
             case SkirmishGameStatus.ReadyToStart:

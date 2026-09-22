@@ -207,6 +207,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
                             GameObject.FromMapObject(mapObject, GameEngine, overwriteAngle: null);
                             break;
                     }
+
                     break;
 
                 case RoadType.BridgeStart:
@@ -464,6 +465,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
         {
             playerStartPosition = startWaypoint.Position;
         }
+
         playerStartPosition.Z += Terrain.HeightMap.GetHeight(playerStartPosition.X, playerStartPosition.Y);
 
         if (player.Template.StartingBuilding != null)
@@ -501,6 +503,7 @@ public sealed class Scene3D : DisposableBase, IScene3D
                     }
                 }
             }
+
             foreach (var (castleBehavior, _) in castleBehaviors)
             {
                 castleBehavior.Unpack(player, instant: true);

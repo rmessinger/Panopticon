@@ -50,6 +50,7 @@ public sealed record W3dAdaptiveDeltaBlock(int VectorIndex, byte BlockIndex, sby
                     {
                         deltas[i * 2] &= 0x0F;
                     }
+
                     deltas[i * 2 + 1] = (sbyte)(DeltaBytes[i] >> 4);
                     break;
 
@@ -64,6 +65,7 @@ public sealed record W3dAdaptiveDeltaBlock(int VectorIndex, byte BlockIndex, sby
                     {
                         val |= 0x80;
                     }
+
                     deltas[i] = (sbyte)val;
                     break;
 

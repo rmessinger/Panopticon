@@ -56,6 +56,7 @@ public class ButtonItem : TexturedItem
                     {
                         _actionList.Add(button.Actions[idx].Instructions);
                     }
+
                     _isHovered = true;
                 }
 
@@ -67,6 +68,7 @@ public class ButtonItem : TexturedItem
                     {
                         _actionList.Add(button.Actions[idx].Instructions);
                     }
+
                     _isDown = true;
                 }
 
@@ -78,6 +80,7 @@ public class ButtonItem : TexturedItem
                     {
                         _actionList.Add(button.Actions[idx].Instructions);
                     }
+
                     _isDown = false;
                 }
 
@@ -92,9 +95,11 @@ public class ButtonItem : TexturedItem
             {
                 _actionList.Add(button.Actions[idx].Instructions);
             }
+
             _isHovered = false;
             Logger.Debug("Unhovered: " + mousePos.X + "-" + mousePos.Y);
         }
+
         return false;
     }
 
@@ -136,6 +141,7 @@ public class ButtonItem : TexturedItem
         {
             Context.Avm.Execute(action, Parent.ScriptObject, Character.Container.Constants.Entries);
         }
+
         _actionList.Clear();
     }
 }

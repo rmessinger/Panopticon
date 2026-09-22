@@ -23,6 +23,7 @@ public static class SkirmishGameOptionsMenuCallbacks
                             // TODO: Go back to Single Player sub-menu
                             break;
                     }
+
                     break;
             }
         }

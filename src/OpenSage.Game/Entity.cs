@@ -28,6 +28,7 @@ public abstract class Entity : DisposableBase
         {
             return;
         }
+
         Transform.Translation = translation;
         OnEntityMoved();
     }
@@ -38,6 +39,7 @@ public abstract class Entity : DisposableBase
         {
             return;
         }
+
         Transform.Rotation = rotation;
         OnEntityMoved();
     }
@@ -49,6 +51,7 @@ public abstract class Entity : DisposableBase
         {
             return;
         }
+
         Transform.Rotation = QuaternionUtility.CreateFromYawPitchRoll_ZUp(angle, 0, 0);
         OnEntityMoved();
     }

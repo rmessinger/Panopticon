@@ -104,6 +104,7 @@ public class TransportContain : OpenContainModule
                 var exitDelayFrames = _moduleData.ExitDelay / 1000f * GameEngine.LogicFramesPerSecond;
                 _nextEvacAllowedAfter = currentFrame + new LogicFrameSpan((uint)exitDelayFrames);
             }
+
             return true;
         }
 

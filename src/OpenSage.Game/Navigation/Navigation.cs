@@ -69,6 +69,7 @@ public class Navigation
             currentNode = GetClosestNode(start);
             maxSteps--;
         }
+
         return maxSteps > 0 ? currentNode : null;
     }
 
@@ -112,6 +113,7 @@ public class Navigation
             var pos = GetNodePosition(node);
             result.Add(new Vector3(pos.X, pos.Y, _heightMap.GetHeight(pos.X, pos.Y)));
         }
+
         return result;
     }
 

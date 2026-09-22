@@ -149,6 +149,7 @@ public sealed class RtsDomainAdapterEquivalenceTests : MockedGameTest
             Assert.Equal(game.PlayerManager.Players.Count, sample.Players.Count);
             Assert.Empty(sample.DomainMetrics);
         }
+
         Assert.Contains(output.SignatureTrees, t => t.Nodes.Count >= 1 && t.Nodes[0].Key == "world");
     }
 }

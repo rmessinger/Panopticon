@@ -30,6 +30,7 @@ public sealed class ShadowSettings
             {
                 throw new ArgumentOutOfRangeException(nameof(value), "Shadow map size must be greater than 0.");
             }
+
             _shadowMapSize = MathUtility.NextPowerOfTwo(value);
         }
     }

@@ -94,6 +94,7 @@ public class RadialButton
                 var textRect = new Rectangle(RectangleF.Transform(rect, Matrix3x2.CreateTranslation(new Vector2(0, rect.Width / 3))));
                 drawingContext.DrawText(_count.ToString(), _font, TextAlignment.Center, _fontColor, textRect);
             }
+
             //drawingContext.SetAlphaMask(null);
         }
 
@@ -127,6 +128,7 @@ public class RadialButton
                     _isHovered = true;
                     return true;
                 }
+
                 _isHovered = false;
                 break;
             case InputMessageType.MouseLeftButtonUp:
@@ -137,8 +139,10 @@ public class RadialButton
                         CommandButtonCallback.HandleCommand(_game, CommandButton, _objectDefinition);
                         _game.Audio.PlayAudioEvent("Gui_PalantirCommandButtonClick");
                     }
+
                     return true;
                 }
+
                 break;
             case InputMessageType.MouseRightButtonUp:
                 if (_isHovered)
@@ -165,10 +169,13 @@ public class RadialButton
 
                         CommandButtonCallback.HandleCommand(_game, CommandButton, _objectDefinition, true, index);
                     }
+
                     return true;
                 }
+
                 break;
         }
+
         return false;
     }
 }

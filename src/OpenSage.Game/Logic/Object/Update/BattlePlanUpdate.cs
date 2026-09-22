@@ -68,6 +68,7 @@ public sealed class BattlePlanUpdate : UpdateModule
                     PlayAnnouncementSound();
                     SetStateChangeCompleteFrame(currentFrame);
                 }
+
                 break;
             case BattlePlanUpdateState.Activating:
                 if (currentFrame >= _stateChangeCompleteFrame)
@@ -76,6 +77,7 @@ public sealed class BattlePlanUpdate : UpdateModule
                     ActivateCurrentBattlePlan();
                     // todo: apply unit bonuses
                 }
+
                 break;
             case BattlePlanUpdateState.Active:
                 if (_current != _desired)
@@ -87,6 +89,7 @@ public sealed class BattlePlanUpdate : UpdateModule
                     SetStateChangeCompleteFrame(currentFrame);
                     ClearActiveBattlePlan();
                 }
+
                 break;
             case BattlePlanUpdateState.Deactivating:
                 if (currentFrame >= _stateChangeCompleteFrame)
@@ -94,6 +97,7 @@ public sealed class BattlePlanUpdate : UpdateModule
                     _state = BattlePlanUpdateState.None;
                     _current = BattlePlanType.None;
                 }
+
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

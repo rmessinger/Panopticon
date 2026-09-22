@@ -84,6 +84,7 @@ public class ImageSharpTexture
             {
                 throw new VeldridException("Unable to get image pixelspan.");
             }
+
             using (var pin = pixelSpan.Pin())
             {
                 MappedResource map = gd.Map(staging, MapMode.Write, level);
@@ -101,6 +102,7 @@ public class ImageSharpTexture
                         Unsafe.CopyBlock(dstStart, srcStart, rowWidth);
                     }
                 }
+
                 gd.Unmap(staging, level);
 
                 cl.CopyTexture(
@@ -110,6 +112,7 @@ public class ImageSharpTexture
 
             }
         }
+
         cl.End();
 
         gd.SubmitCommands(cl);
@@ -130,6 +133,7 @@ public class ImageSharpTexture
             {
                 throw new VeldridException("Unable to get image pixelspan.");
             }
+
             using (var pin = pixelSpan.Pin())
             {
                 gd.UpdateTexture(

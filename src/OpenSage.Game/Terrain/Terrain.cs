@@ -129,6 +129,7 @@ public sealed class Terrain : DisposableBase
         {
             _causticsIndex = 0;
         }
+
         return (int)_causticsIndex;
     }
 
@@ -391,6 +392,7 @@ public sealed class Terrain : DisposableBase
             {
                 flags |= 2;
             }
+
             return new BlendData
             {
                 TextureIndex = (byte)mapFile.BlendTileData.TextureIndices[(int)blendDescription.SecondaryTextureTile].TextureIndex,
@@ -568,6 +570,7 @@ public sealed class Terrain : DisposableBase
             {
                 throw new InvalidOperationException("Unable to get image pixelspan.");
             }
+
             using (var pin = pixelSpan.Pin())
             {
                 var map = gd.Map(staging, MapMode.Write, level);
@@ -585,9 +588,11 @@ public sealed class Terrain : DisposableBase
                         Unsafe.CopyBlock(dstStart, srcStart, rowWidth);
                     }
                 }
+
                 gd.Unmap(staging, level);
             }
         }
+
         cl.End();
 
         gd.SubmitCommands(cl);

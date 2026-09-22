@@ -182,6 +182,7 @@ public sealed class ActionTreeView : UserControl
             // Short tap — just select
             _controller?.SelectNode(_dragId);
         }
+
         _dragId = null;
         _isDragging = false;
         _treeCanvas.InvalidateCanvas();
@@ -194,6 +195,7 @@ public sealed class ActionTreeView : UserControl
             if (node.Action.Id != excludeId && ActionTreeLayoutEngine.HitTest(node, logX, logY))
                 return node.Action.Id;
         }
+
         return null;
     }
 
@@ -264,6 +266,7 @@ public sealed class ActionTreeView : UserControl
             _flyoutActiveButton.Background = PaletteIdle;
             _flyoutActiveButton = null;
         }
+
         _flyoutOverlay.IsVisible = false;
 
         if (_vm != null) _vm.SelectedActionId = null;
@@ -890,6 +893,7 @@ public sealed class ActionTreeView : UserControl
         {
             if (float.TryParse(entry.Text, out var v)) onChange(v);
         }
+
         entry.LostFocus += (_, _) => Commit();
         entry.AddHandler(InputElement.KeyDownEvent, (_, e) =>
         {
@@ -910,6 +914,7 @@ public sealed class ActionTreeView : UserControl
         {
             if (uint.TryParse(entry.Text, out var v)) onChange(v);
         }
+
         entry.LostFocus += (_, _) => Commit();
         entry.AddHandler(InputElement.KeyDownEvent, (_, e) =>
         {

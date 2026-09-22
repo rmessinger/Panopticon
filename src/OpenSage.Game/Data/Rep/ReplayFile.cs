@@ -32,6 +32,7 @@ public sealed class ReplayFile
             {
                 chunks.Add(ReplayChunk.Parse(reader));
             }
+
             result.Chunks = chunks;
 
             if (result.Header.NumTimecodes != chunks[chunks.Count - 1].Header.Timecode)

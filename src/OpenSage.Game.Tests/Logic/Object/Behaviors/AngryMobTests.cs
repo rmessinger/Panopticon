@@ -41,6 +41,7 @@ public class AngryMobTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
         return game;
     }

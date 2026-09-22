@@ -116,6 +116,7 @@ public class DeathCleanupTests : MockedGameTest
                 units++;
             }
         }
+
         Assert.Equal(buildings, owner.BuildingCount);
         Assert.Equal(units, owner.UnitCount);
     }

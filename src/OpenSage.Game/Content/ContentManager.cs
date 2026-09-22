@@ -130,6 +130,7 @@ public sealed class ContentManager : DisposableBase
             Logger.Warn($"INI file not found, skipping: {filePath}");
             return;
         }
+
         LoadIniFile(entry);
     }
 

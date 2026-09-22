@@ -162,6 +162,7 @@ public sealed class Geometry
                             translation.Y = ParseUtility.ParseFloat(paramList[11]);
                             break;
                     }
+
                     break;
                 //A line
                 case 'l':
@@ -210,6 +211,7 @@ public sealed class Geometry
                         if (line.V0.Y > botRight.Y) botRight.Y = line.V0.Y;
                         if (line.V1.Y > botRight.Y) botRight.Y = line.V1.Y;
                     }
+
                     break;
                 case GeometrySolidTriangles gst:
                     foreach (var tri in gst.Triangles)
@@ -228,6 +230,7 @@ public sealed class Geometry
                         if (tri.V1.Y > botRight.Y) botRight.Y = tri.V1.Y;
                         if (tri.V2.Y > botRight.Y) botRight.Y = tri.V2.Y;
                     }
+
                     break;
                 case GeometryTexturedTriangles gtt:
                     foreach (var tri in gtt.Triangles)
@@ -246,6 +249,7 @@ public sealed class Geometry
                         if (tri.V1.Y > botRight.Y) botRight.Y = tri.V1.Y;
                         if (tri.V2.Y > botRight.Y) botRight.Y = tri.V2.Y;
                     }
+
                     break;
             }
         }

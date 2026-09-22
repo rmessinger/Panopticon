@@ -142,6 +142,7 @@ public abstract class DisposableBase : IDisposable
             _disposables.Remove(objectToDispose);
             objectToDispose.Dispose();
         }
+
         objectToDispose = AddDisposable(newValue);
     }
 

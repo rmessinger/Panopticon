@@ -62,18 +62,21 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             state = State.Begin;
                         }
+
                         break;
                     case State.CommentPreValue:
                         if (c == '\n' || c == '\r')
                         {
                             state = State.PreValue;
                         }
+
                         break;
                     case State.CommentPreEnd:
                         if (c == '\n' || c == '\r')
                         {
                             state = State.End1;
                         }
+
                         break;
                     case State.Begin:
                         if (char.IsWhiteSpace(c))
@@ -92,6 +95,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             state = State.CommentBegin;
                         }
+
                         // TODO: multiline comments
                         else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
                         {
@@ -102,6 +106,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             throw new InvalidDataException($"Unexpected token {c}.");
                         }
+
                         break;
                     case State.Category:
                         if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
@@ -118,6 +123,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             throw new InvalidDataException($"Unexpected token {c}.");
                         }
+
                         break;
                     case State.Label:
                         if (c >= '!' && c <= 'z')
@@ -134,6 +140,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             throw new InvalidDataException($"Unexpected token {c}.");
                         }
+
                         break;
                     case State.PreValue:
                         if (char.IsWhiteSpace(c))
@@ -152,6 +159,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             state = State.CommentPreValue;
                         }
+
                         // TODO: multiline comments
                         else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
                         {
@@ -166,6 +174,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             throw new InvalidDataException($"Unexpected token {c}.");
                         }
+
                         break;
                     case State.Value:
                         if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
@@ -182,6 +191,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             throw new InvalidDataException($"Unexpected token {c}.");
                         }
+
                         break;
                     case State.String:
                         if (isEscaped)
@@ -211,6 +221,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                                     break;
                                     // TODO: unicode escapes
                             }
+
                             isEscaped = false;
                         }
                         else if (c == '\\')
@@ -227,6 +238,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             sb.Append(c);
                         }
+
                         break;
                     case State.End1:
                         if (char.IsWhiteSpace(c))
@@ -245,6 +257,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             state = State.CommentPreEnd;
                         }
+
                         // TODO: multiline comments
                         else if (c == 'E' || c == 'e')
                         {
@@ -255,6 +268,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                             // throw new InvalidDataException($"Unexpected token {c}.");
                             // There is a typo in BFME2's str which seems to be just ignored (string ends with two '"')
                         }
+
                         break;
                     case State.End2:
                         if (c == 'N' || c == 'n')
@@ -265,6 +279,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                         {
                             throw new InvalidDataException($"Unexpected token {c}.");
                         }
+
                         break;
                     case State.End3:
                         if (c == 'D' || c == 'd')
@@ -274,6 +289,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                                 dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                                 str._strings.Add(category, dict);
                             }
+
                             if (dict.TryGetValue(label, out var dictValue))
                             {
                                 Logger.Info($"[STR] String duplication: '{category}:{label}' -> '{dictValue}', new value: '{value}'");
@@ -283,12 +299,14 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                                 dict.Add(label, value);
                                 ++str._numStrings;
                             }
+
                             state = State.Begin;
                         }
                         else
                         {
                             throw new InvalidDataException($"Unexpected token {c}.");
                         }
+
                         break;
                 }
             }
@@ -303,11 +321,13 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                 result = str;
                 return false;
             }
+
             label = str.Substring(0, colonIdx);
             if (_strings.TryGetValue(label, out var category) && category.TryGetValue(str.Substring(colonIdx + 1), out result))
             {
                 return true;
             }
+
             result = null;
             return false;
         }
@@ -328,6 +348,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
                     result.Add($"{label.Key}:{str.Key}");
                 }
             }
+
             return result;
         }
     }
@@ -348,6 +369,7 @@ public sealed class StrTranslationProvider : ATranslationProviderBase
         {
             Logger.Warn($"Requested string '{str}' not found in '{Name}'.");
         }
+
         return result;
     }
 

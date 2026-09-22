@@ -48,6 +48,7 @@ public sealed class LocomotorSet : IPersistableObject
                 return locomotor;
             }
         }
+
         return null;
     }
 
@@ -111,6 +112,7 @@ public sealed class LocomotorSet : IPersistableObject
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
 
         reader.PersistEnumFlags(ref _surfaces);

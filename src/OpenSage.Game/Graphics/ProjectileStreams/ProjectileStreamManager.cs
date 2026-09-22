@@ -101,6 +101,7 @@ internal sealed class ProjectileStreamManager : RenderObject
         {
             _scrollSeconds += (float)(gameTime.TotalTime - _lastUpdateTime).TotalSeconds;
         }
+
         _lastUpdateTime = gameTime.TotalTime;
 
         for (var i = _ribbons.Count - 1; i >= 0; i--)
@@ -223,6 +224,7 @@ internal sealed class ProjectileStreamManager : RenderObject
             {
                 v += Vector3.Distance(previous, point);
             }
+
             previous = point;
 
             var direction = i < ribbon.PointCount - 1

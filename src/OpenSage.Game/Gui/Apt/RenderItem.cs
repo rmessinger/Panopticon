@@ -94,6 +94,7 @@ public sealed class RenderItem : TexturedItem
                 {
                     renderingContext.RenderOutline(geometry);
                 }
+
                 break;
 
             case Text t:

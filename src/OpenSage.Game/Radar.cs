@@ -154,6 +154,7 @@ public sealed class RadarItemCollection : KeyedCollection<ObjectId, RadarItem>, 
                 reader.PersistObjectValue(item);
             }
         }
+
         reader.EndArray();
     }
 

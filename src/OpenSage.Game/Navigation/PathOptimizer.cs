@@ -21,6 +21,7 @@ public static class PathOptimizer
             {
                 nodes.RemoveAt(i);
             }
+
             prevDirX = dirX;
             prevDirY = dirY;
         }

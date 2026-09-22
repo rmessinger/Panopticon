@@ -57,6 +57,7 @@ internal sealed class WndLexer
                     sb.Append(CurrentChar);
                     NextChar();
                 }
+
                 NextChar();
                 return new WndToken(WndTokenType.StringLiteral)
                 {
@@ -80,6 +81,7 @@ internal sealed class WndLexer
                     integerValue += CurrentChar;
                     NextChar();
                 }
+
                 return new WndToken(WndTokenType.IntegerLiteral)
                 {
                     IntegerValue = int.Parse(integerValue)

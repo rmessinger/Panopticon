@@ -25,6 +25,7 @@ class TextView : View
             {
                 ImGui.SetClipboardText(_fileText);
             }
+
             ImGui.EndPopup();
         }
     }

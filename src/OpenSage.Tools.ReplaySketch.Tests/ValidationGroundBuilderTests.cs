@@ -83,6 +83,7 @@ public class ValidationGroundBuilderTests
                 Assert.True(Vector2.Distance(targetPositions[i], unit) >= 30f,
                     $"target {targetPositions[i]} overlaps a unit ({Vector2.Distance(targetPositions[i], unit):F0} away)");
             }
+
             for (var j = 0; j < targetPositions.Count; j++)
             {
                 if (i == j) continue;

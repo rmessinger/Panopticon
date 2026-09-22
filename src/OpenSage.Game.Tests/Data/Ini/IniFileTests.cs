@@ -118,6 +118,7 @@ public class IniFileTests
                             {
                                 continue;
                             }
+
                             break;
 
                         //mods specific

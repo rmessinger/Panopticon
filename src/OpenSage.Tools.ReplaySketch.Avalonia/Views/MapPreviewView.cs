@@ -343,6 +343,7 @@ public sealed class MapPreviewView : UserControl
                 return;
             }
         }
+
         _lastTapTime = now;
         _lastTapPoint = canvasPos;
 

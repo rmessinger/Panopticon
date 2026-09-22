@@ -16,6 +16,7 @@ public static class IniScript
             result += line;
             parser.GoToNextLine();
         }
+
         return result;
     }
 }

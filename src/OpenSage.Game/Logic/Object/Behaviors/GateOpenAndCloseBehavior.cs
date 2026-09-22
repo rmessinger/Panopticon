@@ -88,19 +88,23 @@ public class GateOpenAndCloseBehavior : UpdateModule
                     {
                         GameObject.ShowCollider(openCollider);
                     }
+
                     _toggledColliders = true;
                 }
+
                 if (!_playedFinishedSound && currentFrame >= _finishedSoundTime)
                 {
                     audioSystem.DisposeSource(_openingSoundLoop);
                     audioSystem.PlayAudioEvent(GameObject, _moduleData.SoundFinishedOpeningGate?.Value);
                     _playedFinishedSound = true;
                 }
+
                 if (currentFrame >= _toggleFinishedTime)
                 {
                     _open = true;
                     _state = DoorState.Idle;
                 }
+
                 break;
 
             case DoorState.StartClosing:
@@ -126,19 +130,23 @@ public class GateOpenAndCloseBehavior : UpdateModule
                     {
                         GameObject.HideCollider(openCollider);
                     }
+
                     _toggledColliders = true;
                 }
+
                 if (!_playedFinishedSound && currentFrame >= _finishedSoundTime)
                 {
                     audioSystem.DisposeSource(_closingSoundLoop);
                     audioSystem.PlayAudioEvent(GameObject, _moduleData.SoundFinishedClosingGate?.Value);
                     _playedFinishedSound = true;
                 }
+
                 if (currentFrame >= _toggleFinishedTime)
                 {
                     _open = false;
                     _state = DoorState.Idle;
                 }
+
                 break;
         }
 

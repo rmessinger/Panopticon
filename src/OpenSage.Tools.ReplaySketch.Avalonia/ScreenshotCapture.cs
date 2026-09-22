@@ -61,6 +61,7 @@ internal static class ScreenshotCapture
         {
             svc.SetPath(envPath);
         }
+
         return svc.TryGetInstallation(out var install) ? install : null;
     }
 

@@ -90,6 +90,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
         {
             return _anchor;
         }
+
         return null;
     }
 
@@ -168,12 +169,14 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                             {
                                 _tacticalView.ZoomIn();
                             }
+
                             return disp;
                         case Veldrid.Key.Minus:
                             if (state)
                             {
                                 _tacticalView.ZoomOut();
                             }
+
                             return disp;
                         // New feature: Escape disables mouse lock, so let's also stop scrolling
                         case Veldrid.Key.Escape:
@@ -181,6 +184,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                             {
                                 StopScrolling(gameTime);
                             }
+
                             return disp;
                     }
 
@@ -206,6 +210,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         StopScrolling(gameTime);
                     }
                 }
+
                 break;
             case InputMessageType.MouseRightButtonDown:
                 {
@@ -229,8 +234,10 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                             SetScrolling(ScrollType.RightMouseButton);
                         }
                     }
+
                     break;
                 }
+
             case InputMessageType.MouseRightButtonUp:
                 {
                     _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
@@ -243,8 +250,10 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                     {
                         StopScrolling(gameTime);
                     }
+
                     break;
                 }
+
             case InputMessageType.MouseMiddleButtonDown:
                 {
                     _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
@@ -258,6 +267,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                     _pivotWorldPos = _tacticalView.GetGroundPointAtScreen(message.Value.MousePosition);
                     break;
                 }
+
             case InputMessageType.MouseMiddleButtonUp:
                 {
                     _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
@@ -283,6 +293,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
 
                     break;
                 }
+
             case InputMessageType.MouseMove:
                 {
                     var newMousePos = message.Value.MousePosition;
@@ -290,6 +301,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                     {
                         _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
                     }
+
                     _currentPos = newMousePos;
 
                     var screenSize = _tacticalView.Camera.ScreenSize;
@@ -387,8 +399,10 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                             spin++;
                         }
                     }
+
                     break;
                 }
+
                 // TODO(Port): View save / restore
         }
 
@@ -444,20 +458,24 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         offset += speedFactor * vec * MathF.Pow(keyboardScrollSpeedFactor, 2.0f);
                         break;
                     }
+
                 case ScrollType.Key:
                     {
                         if (_scrollDir.Up)
                         {
                             offset.Y -= 1.0f;
                         }
+
                         if (_scrollDir.Down)
                         {
                             offset.Y += 1.0f;
                         }
+
                         if (_scrollDir.Left)
                         {
                             offset.X -= 1.0f;
                         }
+
                         if (_scrollDir.Right)
                         {
                             offset.X += 1.0f;
@@ -479,6 +497,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         {
                             offset.Y = 1.0f;
                         }
+
                         if (_currentPos.X < EdgeScrollSize)
                         {
                             offset.X = -1.0f;
@@ -491,6 +510,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         offset *= speedFactor * ScrollAmount * keyboardScrollSpeedFactor;
                         break;
                     }
+
                 default:
                     break;
             }
@@ -520,6 +540,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
             {
                 _tacticalView.Angle -= KeyRotateSpeed;
             }
+
             if (_rotateDirRight)
             {
                 _tacticalView.Angle += KeyRotateSpeed;

@@ -235,6 +235,7 @@ internal class UserMapCache
             crc += reader.ReadByte();
             crc += hibit;
         }
+
         return crc;
     }
 

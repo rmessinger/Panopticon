@@ -22,6 +22,7 @@ internal static class AssertUtility
                 differentIndices.Add(i);
             }
         }
+
         if (differentIndices.Count > 0)
         {
             var message = string.Empty;
@@ -29,6 +30,7 @@ internal static class AssertUtility
             {
                 message += $"Different values at index {index}. Expected: {array1[index]}. Actual: {array2[index]}.{Environment.NewLine}";
             }
+
             throw new Exception(message);
         }
     }

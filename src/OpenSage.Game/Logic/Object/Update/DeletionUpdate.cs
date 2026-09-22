@@ -26,6 +26,7 @@ internal class DeletionUpdate : UpdateModule
             // If the delay is less than 1 frame, set it to 1 frame.
             return new LogicFrameSpan(1);
         }
+
         _dieFrame = GameEngine.GameLogic.CurrentFrame + delay;
         return delay;
     }

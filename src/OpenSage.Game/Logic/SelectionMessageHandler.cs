@@ -45,6 +45,7 @@ public class SelectionMessageHandler : InputMessageHandler
                 {
                     _system.OnEndDragSelection();
                 }
+
                 break;
 
             case InputMessageType.MouseRightButtonDown:
@@ -58,6 +59,7 @@ public class SelectionMessageHandler : InputMessageHandler
                     // when moving quickly MouseMove wouldn't be called before MouseRightButtonUp
                     _system.OnEndRightClickDrag(message.Value.MousePosition);
                 }
+
                 break;
         }
 

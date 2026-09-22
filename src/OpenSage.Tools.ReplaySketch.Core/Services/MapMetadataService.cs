@@ -170,6 +170,7 @@ public sealed class MapMetadataService
                     previewHeight = generated.Value.height;
                     SavePreviewCache(cachePath, previewPixels, previewWidth, previewHeight);
                 }
+
                 ReplaySketchLog.Write($"  MapMetadataService preview: generated ({previewWidth}x{previewHeight}) in {sw.ElapsedMilliseconds}ms cache='{cachePath}'");
             }
         }
@@ -217,6 +218,7 @@ public sealed class MapMetadataService
             var pos = _playerStarts[slotIndex];
             if (pos != Vector3.Zero) return pos;
         }
+
         return MapCenter;
     }
 

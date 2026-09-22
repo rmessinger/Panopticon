@@ -94,6 +94,7 @@ public class TurretAIUpdate : UpdateModule
                 {
                     _turretAIstate = TurretAIStates.ScanningForTargets;
                 }
+
                 break;
 
             case TurretAIStates.ScanningForTargets:
@@ -153,6 +154,7 @@ public class TurretAIUpdate : UpdateModule
                     _turretAIstate = TurretAIStates.Turning;
                     _currentTarget = target;
                 }
+
                 break;
 
             case TurretAIStates.Recentering:
@@ -164,6 +166,7 @@ public class TurretAIUpdate : UpdateModule
                         _turretAIstate = TurretAIStates.Idle;
                     }
                 }
+
                 break;
         }
     }
@@ -177,6 +180,7 @@ public class TurretAIUpdate : UpdateModule
             GameObject.TurretYaw -= MathF.Sign(deltaYaw) * _moduleData.TurretTurnRate;
             return true;
         }
+
         GameObject.TurretYaw -= deltaYaw;
         return false;
     }
@@ -213,6 +217,7 @@ public class TurretAIUpdate : UpdateModule
             GameObject.TurretPitch -= MathF.Sign(deltaPitch) * step;
             return true;
         }
+
         GameObject.TurretPitch -= deltaPitch;
         return false;
     }

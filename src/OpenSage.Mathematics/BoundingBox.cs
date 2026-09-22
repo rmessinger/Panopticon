@@ -50,6 +50,7 @@ public readonly struct BoundingBox : IBoundingVolume
             _up = Vector3.Transform(_up, rotation);
             _forward = Vector3.Transform(_forward, rotation);
         }
+
         _center = Vector3.Transform(_center, matrix);
         for (var i = 0; i < Vertices.Length; i++)
         {

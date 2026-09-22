@@ -25,6 +25,7 @@ public abstract class UpdateModule : BehaviorModule, IUpdateModule
             {
                 value = new LogicFrame(UpdateSleepTime.SleepForever);
             }
+
             _nextUpdateFrame = new UpdateFrame(value, UpdateOrder);
         }
     }

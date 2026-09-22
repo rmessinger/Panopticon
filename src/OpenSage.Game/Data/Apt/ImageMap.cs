@@ -115,6 +115,7 @@ public sealed class ImageMap
                 }
             }
         }
+
         return map;
     }
 }

@@ -164,6 +164,7 @@ internal abstract class TerrainAwareRoadSegmentMesher : RoadSegmentMesher
                 usefulPositions.Add(positionCandidates[i]);
             }
         }
+
         usefulPositions.Add(positionCandidates[sectionCount]);
 
         // get vertex normals

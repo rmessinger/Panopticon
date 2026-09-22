@@ -20,6 +20,7 @@ public static class OptionsMenuCallbacks
                         context.WindowManager.PopWindow();
                         break;
                 }
+
                 break;
         }
     }

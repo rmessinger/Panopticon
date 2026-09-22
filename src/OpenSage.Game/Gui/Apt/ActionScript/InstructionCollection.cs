@@ -322,6 +322,7 @@ public sealed class InstructionCollection
                                 parameters.Add(Value.FromConstant(constant));
                             }
                         }
+
                         break;
                     case InstructionType.GotoLabel:
                         instruction = new GotoLabel();
@@ -351,11 +352,13 @@ public sealed class InstructionCollection
                                 parameters.Add(Value.FromInteger(param.Register));
                                 parameters.Add(Value.FromString(param.Parameter));
                             }
+
                             //body size of the function
                             parameters.Add(Value.FromInteger(reader.ReadInt32()));
                             //skip 8 bytes
                             reader.ReadUInt64();
                         }
+
                         break;
                     case InstructionType.PushData:
                         {
@@ -369,6 +372,7 @@ public sealed class InstructionCollection
                                 parameters.Add(Value.FromConstant(constant));
                             }
                         }
+
                         break;
                     case InstructionType.BranchAlways:
                         {
@@ -377,6 +381,7 @@ public sealed class InstructionCollection
                             parameters.Add(Value.FromInteger(offset));
                             helper.ReportBranchOffset(offset);
                         }
+
                         break;
                     case InstructionType.GetURL2:
                         instruction = new GetUrl2();
@@ -394,11 +399,13 @@ public sealed class InstructionCollection
                             {
                                 parameters.Add(Value.FromString(param));
                             }
+
                             //body size of the function
                             parameters.Add(Value.FromInteger(reader.ReadInt32()));
                             //skip 8 bytes
                             reader.ReadUInt64();
                         }
+
                         break;
                     case InstructionType.BranchIfTrue:
                         {
@@ -407,6 +414,7 @@ public sealed class InstructionCollection
                             parameters.Add(Value.FromInteger(offset));
                             helper.ReportBranchOffset(offset);
                         }
+
                         break;
                     case InstructionType.GotoFrame2:
                         instruction = new GotoFrame2();

@@ -44,6 +44,7 @@ internal sealed class ResourcePool<T, TKey> : DisposableBase
         {
             _leased.Add(key, leased = new List<T>());
         }
+
         leased.Add(result);
 
         return result;

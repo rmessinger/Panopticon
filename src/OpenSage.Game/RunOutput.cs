@@ -104,6 +104,7 @@ public sealed class RunOutput
         {
             Directory.CreateDirectory(directory);
         }
+
         File.WriteAllText(path, ToJson());
     }
 
@@ -259,6 +260,7 @@ public sealed class RunOutputRecorder : IDisposable
                 OwnedObjects = player.OwnedObjects,
             });
         }
+
         foreach (var value in metrics.Series)
         {
             sample.DomainMetrics.Add(new RunDomainMetricValue
@@ -268,6 +270,7 @@ public sealed class RunOutputRecorder : IDisposable
                 Value = value.Value,
             });
         }
+
         _samples.Add(sample);
     }
 

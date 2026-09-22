@@ -76,6 +76,7 @@ public sealed class ScriptGroup : Asset, IPersistableObject
                         {
                             goto default;
                         }
+
                         groups.Add(ScriptGroup.Parse(reader, context));
                         break;
 

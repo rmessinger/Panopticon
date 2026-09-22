@@ -70,6 +70,7 @@ public static class CommandButtonCallback
                     order.AddIntegerArgument(index);
                     break;
                 }
+
                 order = CreateOrder(OrderType.CreateUnit);
                 order.AddIntegerArgument((int)objectDefinition.InstanceId);
                 order.AddIntegerArgument(1);
@@ -155,6 +156,7 @@ public static class CommandButtonCallback
                         order.AddObjectIdArgument(ObjectId.Invalid);
                     }
                 }
+
                 break;
 
             case CommandType.ToggleGate:
@@ -209,18 +211,22 @@ public static class CommandButtonCallback
         {
             flags |= SpecialPowerOrderFlags.NeedTargetEnemyObject;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.NeedTargetEnemyObject))
         {
             flags |= SpecialPowerOrderFlags.NeedTargetEnemyObject;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.NeedTargetNeutralObject))
         {
             flags |= SpecialPowerOrderFlags.NeedTargetNeutralObject;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.NeedTargetAllyObject))
         {
             flags |= SpecialPowerOrderFlags.NeedTargetAllyObject;
         }
+
         // if (commandButtonOptions.Get(CommandButtonOption.Unknown1))
         // {
         //     flags |= SpecialPowerOrderFlags.Unknown1;
@@ -233,26 +239,32 @@ public static class CommandButtonCallback
         {
             flags |= SpecialPowerOrderFlags.NeedTargetPosition;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.NeedUpgrade))
         {
             flags |= SpecialPowerOrderFlags.NeedUpgrade;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.NeedSpecialPowerScience))
         {
             flags |= SpecialPowerOrderFlags.NeedSpecialPowerScience;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.OkForMultiSelect))
         {
             flags |= SpecialPowerOrderFlags.OkForMultiSelect;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.ContextModeCommand))
         {
             flags |= SpecialPowerOrderFlags.ContextModeCommand;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.CheckLike))
         {
             flags |= SpecialPowerOrderFlags.CheckLike;
         }
+
         // if (commandButtonOptions.Get(CommandButtonOption.Unknown3))
         // {
         //     flags |= SpecialPowerOrderFlags.Unknown3;
@@ -265,10 +277,12 @@ public static class CommandButtonCallback
         {
             flags |= SpecialPowerOrderFlags.OptionOne;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.OptionTwo))
         {
             flags |= SpecialPowerOrderFlags.OptionTwo;
         }
+
         if (commandButtonOptions.Get(CommandButtonOption.OptionThree))
         {
             flags |= SpecialPowerOrderFlags.OptionThree;

@@ -36,6 +36,7 @@ public sealed class MapIniWindow : WbDialog
                 _map.MapIniContent = _editor.Text ?? string.Empty;
                 _map.MarkDirty();
             }
+
             Close();
         };
 

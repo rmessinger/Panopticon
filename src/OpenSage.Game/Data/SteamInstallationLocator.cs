@@ -231,6 +231,7 @@ public class VdfParser(StreamReader streamReader)
             {
                 throw new InvalidDataException($"Expected left brace, but got {token.Name} at position {_tokenStream.Position}.");
             }
+
             _tokenStream.Read();
         }
 
@@ -357,6 +358,7 @@ public class VdfParser(StreamReader streamReader)
                 {
                     throw new InvalidDataException("Unexpected end of file.");
                 }
+
                 Position++;
 
                 var nextChar = (char)maybeNextChar;

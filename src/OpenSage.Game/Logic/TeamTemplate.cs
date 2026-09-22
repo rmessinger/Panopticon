@@ -47,6 +47,7 @@ public sealed class TeamTemplate : IPersistableObject
                 return team;
             }
         }
+
         return null;
     }
 
@@ -101,6 +102,7 @@ public sealed class TeamTemplate : IPersistableObject
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
     }
 }

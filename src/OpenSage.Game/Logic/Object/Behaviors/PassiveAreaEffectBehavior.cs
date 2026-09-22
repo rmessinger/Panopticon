@@ -25,6 +25,7 @@ public class PassiveAreaEffectBehavior : UpdateModule
             // TODO(Port): Use correct value.
             return UpdateSleepTime.None;
         }
+
         _nextPing = GameEngine.GameLogic.CurrentFrame + _moduleData.PingDelay;
 
         var nearbyObjects = GameEngine.Game.PartitionCellManager.QueryObjects(

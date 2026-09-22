@@ -41,6 +41,7 @@ public class TacticalViewConstraintTests : IDisposable
         {
             player.DisableAI();
         }
+
         game.EnableFixedLogicTimestep();
         return game;
     }

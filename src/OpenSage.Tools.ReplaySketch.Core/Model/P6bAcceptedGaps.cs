@@ -77,6 +77,7 @@ public static class P6bAcceptedGaps
         {
             index[gap.SpecialPowerName] = gap;
         }
+
         return index;
     }
 }

@@ -415,6 +415,7 @@ public class GameOptionsUtil
             {
                 continue;
             }
+
             var items = options.Select((o, i) => new ListBoxDataItem(dataItems?[i], new[] { o.Translate() }, comboBox.TextColor)).ToArray();
             comboBox.Items = items;
             comboBox.SelectedIndex = selectedIndex;

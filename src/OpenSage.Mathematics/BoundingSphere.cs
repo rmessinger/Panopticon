@@ -25,11 +25,13 @@ public readonly struct BoundingSphere : IBoundingVolume
             {
                 return original;
             }
+
             if (distance <= additional.Radius - original.Radius)
             {
                 return additional;
             }
         }
+
         var leftRadius = Math.Max(original.Radius - distance, additional.Radius);
         var rightRadius = Math.Max(original.Radius + distance, additional.Radius);
         ocenterToaCenter += ((leftRadius - rightRadius) / (2 * ocenterToaCenter.Length()) * ocenterToaCenter);
@@ -58,6 +60,7 @@ public readonly struct BoundingSphere : IBoundingVolume
         {
             return PlaneIntersectionType.Front;
         }
+
         return distance < -Radius ? PlaneIntersectionType.Back : PlaneIntersectionType.Intersecting;
     }
 

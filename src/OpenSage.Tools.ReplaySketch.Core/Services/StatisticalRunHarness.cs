@@ -167,6 +167,7 @@ public static class StatisticalRunHarness
             {
                 series[name] = values = [];
             }
+
             values.Add((runIndex, value));
         }
 

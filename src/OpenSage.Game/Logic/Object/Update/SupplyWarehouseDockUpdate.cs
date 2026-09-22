@@ -27,6 +27,7 @@ public class SupplyWarehouseDockUpdate : DockUpdate
 
             return true;
         }
+
         return false;
     }
 

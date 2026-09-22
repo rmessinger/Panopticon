@@ -223,6 +223,7 @@ public sealed class WeaponTemplate : BaseAsset
         {
             throw new IniParseException($"Unexpected identifier: {identifier}", tokenPosition);
         }
+
         return parser.ParseAssetReference();
     }
 
@@ -246,6 +247,7 @@ public sealed class WeaponTemplate : BaseAsset
             Nuggets.Add(damageNugget);
             damageNuggets.Add(damageNugget);
         }
+
         return damageNuggets[index];
     }
 
@@ -268,6 +270,7 @@ public sealed class WeaponTemplate : BaseAsset
         {
             Nuggets.Add(metaImpactNugget = new MetaImpactNugget());
         }
+
         return metaImpactNugget;
     }
 
@@ -536,6 +539,7 @@ public class DamageScalar
         {
             result.Targets = ObjectFilter.Parse(parser);
         }
+
         return result;
     }
 

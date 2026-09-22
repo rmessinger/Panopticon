@@ -55,6 +55,7 @@ public static class LanLobbyMenuCallbacks
                         context.WindowManager.SetWindow(@"Menus\NetworkDirectConnect.wnd");
                         break;
                 }
+
                 break;
         }
     }

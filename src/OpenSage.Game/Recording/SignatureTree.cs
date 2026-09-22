@@ -135,6 +135,7 @@ public static class SignatureTreeBuilder
             rootSum += Mix(bucketHash);
             rootCount++;
         }
+
         root.Hash = Mix(rootSum + (ulong)rootCount * 0x9E3779B97F4A7C15UL + HashString("world"));
         root.MemberCount = rootCount;
         tree.Nodes.Insert(0, root);
@@ -184,6 +185,7 @@ public static class SignatureTreeBuilder
         {
             return (ulong)BitConverter.SingleToUInt32Bits(value);
         }
+
         return (ulong)MathF.Round(value / epsilon);
     }
 
@@ -196,6 +198,7 @@ public static class SignatureTreeBuilder
             hash ^= c;
             hash *= 0x100000001b3UL;
         }
+
         return hash;
     }
 
@@ -245,6 +248,7 @@ public static class SignatureTreeComparer
                 diverged.Add(node.Key);
             }
         }
+
         foreach (var node in reference.Nodes)
         {
             if (current.Nodes.All(n => n.Key != node.Key) && !diverged.Contains(node.Key))
@@ -252,6 +256,7 @@ public static class SignatureTreeComparer
                 diverged.Add(node.Key);
             }
         }
+
         diverged.Sort(StringComparer.Ordinal);
         return diverged;
     }

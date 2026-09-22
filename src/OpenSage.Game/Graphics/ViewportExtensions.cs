@@ -29,6 +29,7 @@ internal static class ViewportExtensions
             vector.Y = vector.Y / a;
             vector.Z = vector.Z / a;
         }
+
         vector.X = (((vector.X + 1f) * 0.5f) * viewport.Width) + viewport.X;
         vector.Y = (((-vector.Y + 1f) * 0.5f) * viewport.Height) + viewport.Y;
         vector.Z = (vector.Z * (viewport.MaxDepth - viewport.MinDepth)) + viewport.MinDepth;
@@ -66,6 +67,7 @@ internal static class ViewportExtensions
             vector.Y = vector.Y / a;
             vector.Z = vector.Z / a;
         }
+
         return vector;
     }
 

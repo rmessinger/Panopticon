@@ -48,6 +48,7 @@ public abstract class MockedGameTest : IDisposable
                 VictorySystem.ApplyOptions(_victoryOptions);
             }
         }
+
         private VictoryOptions _victoryOptions = VictoryOptions.Default;
         public string UserDataLeafName { get; }
         public string UserDataFolder { get; }
@@ -109,6 +110,7 @@ public abstract class MockedGameTest : IDisposable
         {
             InjectedOrders.AddRange(orders);
         }
+
         public void LoadSaveFile(FileSystemEntry entry)
         {
             throw new NotImplementedException();
@@ -182,6 +184,7 @@ public abstract class MockedGameTest : IDisposable
             GameLogic = new GameLogic(this);
             VictorySystem.OutcomeDecided += (_, _) => MatchOutcomeDecided?.Invoke(this, EventArgs.Empty);
         }
+
 #pragma warning restore CS8618, CS8625
 
         public void StartCampaign(string campaignName, string missionName)

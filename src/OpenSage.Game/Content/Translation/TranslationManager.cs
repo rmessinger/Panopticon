@@ -77,6 +77,7 @@ public static class TranslationManager
                         }
                     }
                 }
+
                 return result;
             }
         }
@@ -91,6 +92,7 @@ public static class TranslationManager
                     result = [];
                     _translationProviders.Add(CurrentLanguage.Name, result);
                 }
+
                 return result;
             }
         }
@@ -183,16 +185,19 @@ public static class TranslationManager
             {
                 return GetString(str);
             }
+
             // Do we want to do this here or in the caller?
             if (string.IsNullOrEmpty(str))
             {
                 return string.Empty;
             }
+
             // If the string does not contain a Category/Label separator we return the string
             if (!str.Contains(':'))
             {
                 return str;
             }
+
             string result;
             var providers = GetParticularProviders(context);
             if (providers is not null)
@@ -205,6 +210,7 @@ public static class TranslationManager
                     }
                 }
             }
+
             return string.Format(Missing, str);
         }
     }
@@ -237,6 +243,7 @@ public static class TranslationManager
             Instance.RegisterProvider(new CsfTranslationProvider(stream, gameDefinition.Game));
             return true;
         }
+
         return false;
     }
 

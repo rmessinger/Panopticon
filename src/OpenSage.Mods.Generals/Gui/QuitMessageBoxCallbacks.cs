@@ -20,6 +20,7 @@ public static class QuitMessageBoxCallbacks
                         context.Game.Exit();
                         break;
                 }
+
                 break;
         }
     }

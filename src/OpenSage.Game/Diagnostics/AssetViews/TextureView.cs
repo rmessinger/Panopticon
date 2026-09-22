@@ -37,6 +37,7 @@ internal sealed class TextureView : AssetView
                     }
                 }
             }
+
             ImGui.EndChild();
 
             ImGui.BeginChild("texture viewer settings", new Vector2(150, 0), ImGuiChildFlags.Borders, 0);
@@ -61,8 +62,10 @@ internal sealed class TextureView : AssetView
 
                 ImGui.Checkbox("Scale to fit", ref _scaleToFit);
             }
+
             ImGui.EndChild();
         }
+
         ImGui.EndChild();
 
         ImGui.SameLine();
@@ -107,6 +110,7 @@ internal sealed class TextureView : AssetView
                 Vector4.One,
                 Vector4.Zero);
         }
+
         ImGui.EndChild();
 
         ImGui.PopStyleColor();

@@ -143,6 +143,7 @@ public sealed class ReplayMetadata
                 sb.Append(slot.Encode());
                 sb.Append(':');
             }
+
             sb.Append(';');
         }
 

@@ -31,6 +31,7 @@ public sealed class HordeUpdate : UpdateModule
                 // enable horde mode iff count succeeds
                 nearbyItem.AddToHorde();
             }
+
             AddToHorde();
         }
         else if (_isInHorde)

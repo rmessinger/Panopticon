@@ -288,6 +288,7 @@ public sealed class SpriteBatch : DisposableBase
             result = AddDisposable(_spriteShaderResources.CreateTextureResourceSet(texture));
             _textureResourceSets.Add(texture, result);
         }
+
         return result;
     }
 
@@ -299,6 +300,7 @@ public sealed class SpriteBatch : DisposableBase
             result = AddDisposable(_spriteShaderResources.CreateAlphaMaskResourceSet(alphaMask));
             _textureResourceSets.Add(alphaMask, result);
         }
+
         return result;
     }
 

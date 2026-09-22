@@ -25,6 +25,7 @@ public static class GeneralsExpPointsCallbacks
                         Window = null;
                         break;
                 }
+
                 break;
         }
     }

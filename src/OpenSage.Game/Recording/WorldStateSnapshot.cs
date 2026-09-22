@@ -84,10 +84,12 @@ public sealed class WorldStateSummary : IPersistableObject
                 MaxHealth = entity.ScalarB,
             });
         }
+
         foreach (var money in domain.CapturePlayerMoneyVector())
         {
             summary.PlayerMoney.Add(money);
         }
+
         return summary;
     }
 
@@ -178,6 +180,7 @@ public sealed class WorldStateDelta : IPersistableObject
                 {
                     delta.Changed.Add(after);
                 }
+
                 i++;
                 j++;
             }
@@ -222,14 +225,17 @@ public sealed class WorldStateDelta : IPersistableObject
         {
             objects.Remove(id);
         }
+
         foreach (var added in Added)
         {
             objects[added.ObjectId] = added;
         }
+
         foreach (var changed in Changed)
         {
             objects[changed.ObjectId] = changed;
         }
+
         if (PlayerMoney.Count > 0)
         {
             money.Clear();
@@ -335,6 +341,7 @@ public sealed class WorldStateArtifactWriter : DisposableBase
         {
             Directory.CreateDirectory(directory);
         }
+
         _writer = AddDisposable(new StateWriter(new FileStream(path, FileMode.Create, FileAccess.Write), game));
         AddDisposeAction(_writer.Dispose);
     }
@@ -418,6 +425,7 @@ public static class WorldStateArtifact
                 break;
             }
         }
+
         if (baselineIndex < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(frame), $"No snapshot at or before frame {frame}.");
@@ -429,6 +437,7 @@ public static class WorldStateArtifact
         {
             objects[obj.ObjectId] = obj;
         }
+
         var money = new List<uint>(baseline.PlayerMoney);
 
         foreach (var delta in deltas)
@@ -437,10 +446,12 @@ public static class WorldStateArtifact
             {
                 continue;
             }
+
             if (delta.Frame > frame)
             {
                 break;
             }
+
             delta.Apply(objects, money);
         }
 

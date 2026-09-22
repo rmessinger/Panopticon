@@ -57,6 +57,7 @@ internal sealed class GameClient : DisposableBase, IPersistableObject
         {
             _drawables.Add(null);
         }
+
         _drawables[(int)drawableId] = drawable;
     }
 
@@ -157,6 +158,7 @@ internal sealed class GameClient : DisposableBase, IPersistableObject
                 reader.EndObject();
             }
         }
+
         reader.EndArray();
 
         reader.PersistListWithUInt32Count(

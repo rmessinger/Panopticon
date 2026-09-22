@@ -106,6 +106,7 @@ public sealed class WeaponSet : IPersistableObject
                         _currentWeaponTemplateSet.Slots[i].Weapon.Value,
                         (WeaponSlot)i, _gameEngine);
                 }
+
                 reader.PersistObject(_weapons[i], "Value");
             }
             else
@@ -115,6 +116,7 @@ public sealed class WeaponSet : IPersistableObject
 
             reader.EndObject();
         }
+
         reader.EndArray();
 
         reader.PersistEnum(ref _currentWeaponSlot);

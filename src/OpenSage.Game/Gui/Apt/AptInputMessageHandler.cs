@@ -37,12 +37,14 @@ public sealed class AptInputMessageHandler : InputMessageHandler
                 {
                     return InputMessageResult.Handled;
                 }
+
                 break;
             case InputMessageType.MouseLeftButtonUp:
                 if (_windowManager.HandleInput(message.Value.MousePosition, false))
                 {
                     return InputMessageResult.Handled;
                 }
+
                 break;
             case InputMessageType.MouseMiddleButtonDown:
                 break;
@@ -57,6 +59,7 @@ public sealed class AptInputMessageHandler : InputMessageHandler
                 {
                     return InputMessageResult.Handled;
                 }
+
                 break;
             case InputMessageType.MouseWheel:
                 break;

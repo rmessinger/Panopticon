@@ -212,6 +212,7 @@ public sealed class EngineActionRecorder : IDisposable
                     Write("State", SupplyCycleCategory, obj.Owner,
                         $"unit={obj.Id.Index} def={obj.Definition.Name} state={currentState} prev={tracker.LastState}");
                 }
+
                 tracker.EverSeen = true;
                 tracker.LastState = currentState;
             }
@@ -231,6 +232,7 @@ public sealed class EngineActionRecorder : IDisposable
                     Write("ApproachStart", SupplyCycleCategory, obj.Owner,
                         $"unit={obj.Id.Index} def={obj.Definition.Name} leg={(toTarget ? "Dump" : "Gather")} goal={Fmt(goal)} frame={tracker.ActiveLeg.StartFrame}");
                 }
+
                 tracker.ActiveLeg.Sample(obj.Translation, obj.AIUpdate);
             }
             else if (tracker.ActiveLeg != null)
@@ -250,6 +252,7 @@ public sealed class EngineActionRecorder : IDisposable
         {
             _supplyTrackers[id] = tracker = new SupplyCycleTracker();
         }
+
         return tracker;
     }
 
@@ -299,6 +302,7 @@ public sealed class EngineActionRecorder : IDisposable
             {
                 direction = Vector3.Normalize(direction);
             }
+
             var speed = unit.AIUpdate?.CurrentLocomotorSpeed ?? 0f;
 
             Write("Started", OrderType.MoveTo, player,
@@ -327,6 +331,7 @@ public sealed class EngineActionRecorder : IDisposable
             {
                 _pendingAttacksByTarget[targetId] = attackers = new HashSet<ObjectId>();
             }
+
             attackers.Add(unit.Id);
         }
     }
@@ -380,6 +385,7 @@ public sealed class EngineActionRecorder : IDisposable
         {
             _pendingBuilds[key] = queue = new Queue<int>();
         }
+
         queue.Enqueue(0);
     }
 
@@ -399,6 +405,7 @@ public sealed class EngineActionRecorder : IDisposable
         {
             _pendingCreateUnits[key] = queue = new Queue<int>();
         }
+
         queue.Enqueue(0);
     }
 
@@ -446,6 +453,7 @@ public sealed class EngineActionRecorder : IDisposable
             {
                 Write("Completed", OrderType.AttackObject, obj.Owner, $"unit={attackerId.Index} target={obj.Id.Index}");
             }
+
             _pendingAttacksByTarget.Remove(obj.Id);
         }
     }
@@ -555,8 +563,10 @@ public sealed class EngineActionRecorder : IDisposable
                 {
                     Overshoots++;
                 }
+
                 _wasDecreasing = decreasing;
             }
+
             _hasPrev = true;
             _prevDistSq = dSq;
         }

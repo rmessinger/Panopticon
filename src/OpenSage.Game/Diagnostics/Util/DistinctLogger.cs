@@ -32,6 +32,7 @@ class DistinctLogger
                 _duplicates[key] = count + 1;
                 return;
             }
+
             log(message);
             _duplicates[key] = 0;
         }
