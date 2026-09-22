@@ -13,7 +13,7 @@ The editor is implemented as a **.NET MAUI** desktop application following the s
 | Project | Purpose |
 |---|---|
 | `OpenSage.Tools.WorldBuilder.Core` | Platform-agnostic editor logic: `EditorMap`, tools, undo/redo, viewport renderer |
-| `OpenSage.Tools.WorldBuilder.Maui` | MAUI application: XAML views, ViewModels, platform-specific 3-D viewport handler |
+| `OpenSage.Tools.WorldBuilder.Avalonia` | Avalonia application: views, ViewModels, offscreen 3-D viewport presentation (runs on Linux, macOS, Windows) |
 
 ### UI Guidelines
 
@@ -66,7 +66,7 @@ The editor is implemented as a **.NET MAUI** desktop application following the s
 
 ## 1. Application Shell
 
-- The editor is a **.NET MAUI** desktop application (`OpenSage.Tools.WorldBuilder.Maui`).
+- The editor is an **Avalonia** desktop application (`OpenSage.Tools.WorldBuilder.Avalonia`).
 - The main window is a MAUI `Shell` with a desktop-style **menu bar** (`MenuBarItem` entries for File, Edit, View, Help), a horizontal **toolbar** strip below the menu bar, and a three-column layout:
   - **Left column** (fixed ~260 dp): Object Properties / tool-settings panel, implemented as a MAUI `ScrollView` containing context-sensitive `ContentView`s.
   - **Centre column** (fills remaining width): 3-D viewport (`VeldridViewport` custom control).

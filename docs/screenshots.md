@@ -219,13 +219,20 @@ dotnet run --project src/OpenSage.Tools.ReplaySketch.Avalonia --no-build -- \
   --screenshot "/mnt/pit2/Network Storage/temp/vg_avalonia.png"
 ```
 
-Renders the editor scene via SkiaSharp, headless; works on Linux. The MAUI front-end's
-screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`, see `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`)
-requires a MAUI platform runtime and does not run on Linux.
+Renders the editor scene via SkiaSharp, headless; works on Linux. The current Avalonia front-end's screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`, see
+`src/OpenSage.Tools.ReplaySketch.Avalonia/AGENTS.md`) runs on Linux under Xvfb with software
+GL (verified recipe below). The former MAUI front-end was removed.
 
-The MAUI Model tab (`REPLAYSKETCH_SCREENSHOT_TAB=model`) uses a deterministic fake session
+```sh
+setsid nohup Xvfb :99 -screen 0 1600x1000x24 -nolisten tcp >/dev/null 2>&1 &
+DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1 \
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png REPLAYSKETCH_SCREENSHOT_TAB=model \
+  dotnet run --project src/OpenSage.Tools.ReplaySketch.Avalonia --no-build
+```
+
+The Model tab (`REPLAYSKETCH_SCREENSHOT_TAB=model`) uses a deterministic fake session
 (`ExternalModelScreenshotFixture`) and starts no TestHarness process, so its capture is
-reproducible wherever the MAUI runtime is available; it cannot be captured on Linux either.
+reproducible. Map-tab captures need `CNC_GENERALS_PATH` and a longer settle delay (8 s).
 
 ## Recipe: pixel-diff A/B verification
 

@@ -23,7 +23,7 @@ namespace OpenSage.Tests.Tools.ReplaySketch;
 // ExportCommand, PlayInGameCommand, and background-load apply-results are
 // unit-testable without a MAUI runtime.
 
-public class P0_1c_MauiCommandFlowTests
+public class P0_1c_CommandFlowTests
 {
     [Fact]
     public void ValidateCommand_WhenMapLoaded_SetsValidationResult()
@@ -79,7 +79,7 @@ public class P0_1c_MauiCommandFlowTests
             var candidate = Path.Combine(
                 current.FullName,
                 "src",
-                "OpenSage.Tools.ReplaySketch.Maui",
+                "OpenSage.Tools.ReplaySketch.Avalonia",
                 "ViewModels",
                 "MainViewModel.cs");
             if (File.Exists(candidate))

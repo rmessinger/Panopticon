@@ -60,7 +60,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 
 * Code after a closing brace starts on the next line (another closing brace or punctuation may stay adjacent); property patterns (`is { } x`) are exempt. Enforced by `scripts/check_brace_newline.py` in CI alongside `dotnet format` (see `docs/coding-style.md` rule 18).
 * Screenshot capture and sharing recipes (3D headless captures, windowed runs under Xvfb + llvmpipe, synthetic hover for tooltips, the shared viewer) live in `docs/screenshots.md`. Amend that file when a new capability or limitation is found instead of re-deriving the method.
-* Always use ReplaySketch screenshot mode to verify any ReplaySketch fix or feature. Run: `REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png [REPLAYSKETCH_SCREENSHOT_TAB=map] dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui`
+* Always use ReplaySketch screenshot mode to verify any ReplaySketch fix or feature. Run: `DISPLAY=:99 [LIBGL_ALWAYS_SOFTWARE=1] REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png [REPLAYSKETCH_SCREENSHOT_TAB=map|model] dotnet run --project src/OpenSage.Tools.ReplaySketch.Avalonia` (X11 display required; use Xvfb on headless hosts).
 * To share a screenshot with the user, write it into `/mnt/pit2/Network Storage/temp/` (path contains spaces, quote it) instead of `/tmp`, e.g. `REPLAYSKETCH_SCREENSHOT_PATH="/mnt/pit2/Network Storage/temp/shot.png"`. That directory is served read-only by the live viewer at `https://files.reid-corp.com/viewer/`, which shows the newest image automatically; no manual refresh, upload, or login needed. Overwrite the same file for iteration snapshots so the viewer swaps instantly.
 * Always verify ReplaySketch fixes without breaking the map panel.
 * Determinism-enforcing tests (same-seed equality: `SeededRunTests`; golden-baseline byte-identity: `UnitValidationGround` baseline + `BaselineGoldenFrames_*`; run-output/replay byte-identity) are treated as suspected deviations, not automatic regressions. On failure: stop, preserve the artifacts (run outputs, baselines, diffs), report the failing assertion plus the most likely cause, and wait for the user's determination before fixing or declaring the run failed. Standard unit-test failures follow the normal rules.
@@ -68,7 +68,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 ### Tooling
 
 * P6b validates unit archetypes via the P0 harness: 6 archetypes (infantry/vehicle/aircraft/builder/support/superweapon), full contract (produce/move/attack/all weapon modes/all special abilities/die), USA reference units, unimplemented handlers surface as explicit failures.
-* ReplaySketch validation: logic stays in `.Core` (tested headlessly by `ReplaySketch.Tests` + P0-5 run-and-assert); MAUI statics go behind injectable seams; agents follow `ReplaySketch.Maui/AGENTS.md` (P0-1b/1c/7).
+* ReplaySketch validation: logic stays in `.Core` (tested headlessly by `ReplaySketch.Tests` + P0-5 run-and-assert); UI lives in the Avalonia front-end and stays a thin shell behind injectable seams; agents follow `ReplaySketch.Avalonia/AGENTS.md` (P0-1b/1c/7).
 
 ### Environment
 

@@ -14,7 +14,7 @@ namespace OpenSage.Tools.ReplaySketch.Services;
 /// not <see cref="AppDataBase"/>; iCloud can evict files in Application Support but
 /// never touches ~/Library/Caches.
 /// </summary>
-internal static class PlatformPaths
+public static class PlatformPaths
 {
     /// <summary>
     /// Base directory for persistent application data (logs, user-facing state).
