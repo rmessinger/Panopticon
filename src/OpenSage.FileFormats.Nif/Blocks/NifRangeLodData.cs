@@ -27,8 +27,10 @@ public sealed record NifRangeLodData : NifLodData
                 throw new InvalidDataException(
                     $"NIF range LOD level {i} is ({near}, {far}); expected finite values with near <= far.");
             }
+
             ranges[i] = (near, far);
         }
+
         Ranges = ranges;
     }
 

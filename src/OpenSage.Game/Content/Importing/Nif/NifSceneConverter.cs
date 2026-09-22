@@ -77,6 +77,7 @@ internal static class NifSceneConverter
                         Descend(file, child, world, subObjects, modelName, context);
                     }
                 }
+
                 break;
 
             case FileFormatsNif.NifTriShape shape:
@@ -122,6 +123,7 @@ internal static class NifSceneConverter
             throw new NotSupportedException(
                 $"NIF shape '{shape.Name}' has a degenerate accumulated transform.");
         }
+
         var reverseWinding = bakeDeterminant < 0;
 
         var vertexCount = data.NumVertices;
@@ -142,6 +144,7 @@ internal static class NifSceneConverter
                 indices.Add(triangle.V3);
                 indices.Add(triangle.V2);
             }
+
             else
             {
                 indices.Add(triangle.V1);
@@ -159,6 +162,7 @@ internal static class NifSceneConverter
                 properties.Add(property);
             }
         }
+
         var material = NifMaterialConverter.Convert(properties, file.Blocks, shape.Name, context);
 
         Vector2[]? textureCoordinates = null;
@@ -188,6 +192,7 @@ internal static class NifSceneConverter
         {
             positions[i] = vertices[i].Position;
         }
+
         var boundingBox = AxisAlignedBoundingBox.CreateFromPoints(positions);
         var sphereCenter = (boundingBox.Min + boundingBox.Max) / 2.0f;
         var boundingSphere = new BoundingSphere(

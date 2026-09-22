@@ -108,6 +108,7 @@ internal static class NifTransformConverter
             throw new NotSupportedException(
                 "NIF transform bake is not invertible; normals cannot be baked safely.");
         }
+
         var normalMatrix = Matrix4x4.Transpose(inverse);
         return Vector3.Normalize(Vector3.TransformNormal(normal, normalMatrix));
     }

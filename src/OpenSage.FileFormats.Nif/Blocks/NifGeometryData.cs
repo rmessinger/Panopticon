@@ -43,6 +43,7 @@ public abstract record NifGeometryData : NifBlock
         {
             vertices[i] = reader.ReadVector3($"Vertices[{i}]");
         }
+
         Vertices = vertices;
 
         DataFlags = reader.ReadUInt16("DataFlags");
@@ -58,11 +59,13 @@ public abstract record NifGeometryData : NifBlock
             throw new NotSupportedException(
                 $"NIF geometry data has no normals; C1 requires one normal per vertex.");
         }
+
         var normals = new Vector3[NumVertices];
         for (var i = 0; i < NumVertices; i++)
         {
             normals[i] = reader.ReadVector3($"Normals[{i}]");
         }
+
         Normals = normals;
 
         BoundCenter = reader.ReadVector3("BoundCenter");
@@ -86,8 +89,10 @@ public abstract record NifGeometryData : NifBlock
                 var v = reader.ReadSingle($"UvSets[{set}][{i}].V");
                 coords[i] = new Vector2(u, v);
             }
+
             uvSets[set] = coords;
         }
+
         UvSets = uvSets;
 
         ConsistencyFlags = reader.ReadUInt16("ConsistencyFlags");

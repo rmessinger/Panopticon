@@ -23,6 +23,7 @@ public sealed record NifVertexColorProperty : NifProperty
             throw new InvalidDataException(
                 $"NIF vertex color property has vertex mode {VertexMode}; valid range is 0-2.");
         }
+
         LightingMode = reader.ReadUInt32("LightingMode");
         if (LightingMode > 1)
         {
