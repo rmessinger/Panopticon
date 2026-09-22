@@ -35,7 +35,8 @@ internal sealed class ModelView : AssetView
                 new MeshShaderResources.RenderItemConstantsPS
                 {
                     HouseColor = Vector3.One,
-                    Opacity = 1.0f
+                    Opacity = 1.0f,
+                    TintColor = Vector3.One
                 });
         }
 

@@ -128,6 +128,7 @@ internal static class StandaloneModelCapture
                 {
                     HouseColor = Vector3.One,
                     Opacity = 1.0f,
+                    TintColor = Vector3.One,
                 });
         }
 

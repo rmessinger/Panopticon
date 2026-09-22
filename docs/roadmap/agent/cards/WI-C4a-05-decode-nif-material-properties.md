@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4a-05` |
 | Roadmap phase | [Track C · C4a](../../track-c-external-assets.md): Empire Earth II NIF 10.1 proof of concept |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4a-03` |
