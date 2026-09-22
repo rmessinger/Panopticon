@@ -61,6 +61,7 @@ public sealed class Ee2NifProofScenarioTests
             Assert.Equal(1, exitCode);
             Assert.Contains("EMPIRE_EARTH_II_PATH", reporter.Errors.ToString());
         }
+
         finally
         {
             Environment.SetEnvironmentVariable("EMPIRE_EARTH_II_PATH", previous);
@@ -81,6 +82,7 @@ public sealed class Ee2NifProofScenarioTests
             Assert.Equal(1, exitCode);
             Assert.Contains("graphics.zip", reporter.Errors.ToString());
         }
+
         finally
         {
             Environment.SetEnvironmentVariable("EMPIRE_EARTH_II_PATH", previous);
