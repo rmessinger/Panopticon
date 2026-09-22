@@ -144,6 +144,15 @@ mindmap
       C3 Material mapping ⮕
       C4 First production format ⮕
       C4a EE2 NIF proof ⮕
+      C4b EE2 cooked textures ⮕
+      C4c EE2 rigid KF animation ⮕
+        C4c-1 KF block decoding
+        C4c-2 Node hierarchy bones
+        C4c-3 Key curve resampling
+        C4c-4 KF animation importer
+        C4c-5 Installed clip checks
+        C4c-6 Animated captures
+      C4d EE2 skinned animation
       C5 Authoring tooling ⮕
       C6 Extended features deferred ⮕
     D. Gameplay content expansion
@@ -292,6 +301,7 @@ flowchart LR
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
     direction TB
     A5["A5 Scenario & visualization"]
+    C4B["C4b EE2 cooked textures"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
     D4["D4 Reference non-SAGE scenario"]
@@ -306,6 +316,7 @@ flowchart LR
     direction TB
     B6["B6 Distributed simulation"]
     B7["B7 Variable fidelity"]
+    C4C["C4c EE2 rigid KF animation"]
     E2["E2 Ship combat"]
     F5["F5 Physics-based structural destruction"]
     H6["H6 Authoring & pipeline integration"]
@@ -314,6 +325,7 @@ flowchart LR
   subgraph S5["Stage 5 · Integration & round-trip validation"]
     direction TB
     B4B["B4b Geospatial map generation"]
+    C4D["C4d EE2 skinned animation"]
     E4["E4 Reference naval scenario"]
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence & replay"]
@@ -401,6 +413,7 @@ flowchart LR
   A4 --> A5
   C4 --> C5
   C4 --> C6
+  C4A --> C4B
   D2 --> D4
   D3 --> D4
   F1 --> F2
@@ -426,6 +439,8 @@ flowchart LR
   %% Stage 3 -> 4
   A4S --> B6
   B4A --> B6
+  C2 --> C4C
+  C4B --> C4C
   A1 --> B6
   A2 --> B6
   B3 --> B6
@@ -441,6 +456,7 @@ flowchart LR
   H5 --> H6
 
   %% Stage 4 -> 5
+  C4C --> C4D
   E2 --> E4
   E3 --> E4
   F1 --> F6
@@ -464,7 +480,7 @@ flowchart LR
 
   class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
-  class C1,C2,C3,C4,C4A,C5,C6 trackC;
+  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C5,C6 trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class H1,H2,H3,H4,H5,H6,H7 trackH;

@@ -61,6 +61,17 @@
   fixed-function values and source texture names, and renders untextured diffuse materials. KF
   animation, skinning, `.texcache` decoding, player-color patches, DDF integration, and older NIF
   versions remain outside the proof. No EE2 asset is committed.
+- EE2 rigid animation scope. Decision: [C4c](track-c-external-assets.md) imports only the
+  DDF-bound NIF 10.1 `.kf` clips of the C4a proof models, using the four-block
+  `NiControllerSequence` / `NiKeyframeController` subset. Unit-scale NIF nodes become runtime
+  bones so rests match the C4a bake. Keys take the form `<model>#kf=<path>` because KF files
+  carry no rest pose. XYZ Euler rotations use `Rz·Ry·Rx` with NifSkope's segment-normalized
+  Hermite tangents and resample at 30 Hz, rejecting steps of 90 degrees or more. Constant
+  accumulation-root channels apply as pose, and varying root motion is rejected. Scale keys must
+  be identity. Skinned characters move to C4d, which starts with an influence inventory before
+  choosing between widening runtime skinning and rejecting assets. See the
+  [C4c deep dive](deep-dives/c4c-ee2-rigid-animation.md). Affects
+  [C4c and C4d](track-c-external-assets.md).
 - C1 import-seam shape. Decision: importers parse source files into CPU-only engine interchange
   values; engine-owned materializers validate those values and create runtime models, animations,
   materials, textures, and GPU resources. `OnDemandAssetLoadStrategy` carries the selected

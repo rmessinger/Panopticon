@@ -769,11 +769,27 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     operator-supplied `graphics.zip` through C1, materialize as runtime `Model` assets, and
     produce recognizable captures; the Bomber uses its highest-detail LOD, source texture names
     survive import while rendering uses untextured diffuse materials, and no EE2 assets are
-    committed.- [x] C4b EE2 cooked texture decoding.
-      - AC: texcache NiPixelData containers decode with validated contiguous DXT mip
-      chains; both C4a proof captures render textured through `textures.zip` with the
-      alpha-blended Bomber materials intact, and the untextured fallback still applies
-      when a texcache entry is absent; `.pcpatch` stays out of scope.
+    committed.
+- [x] C4b EE2 cooked texture decoding.
+  - AC: texcache NiPixelData containers decode with validated contiguous DXT mip
+    chains; both C4a proof captures render textured through `textures.zip` with the
+    alpha-blended Bomber materials intact, and the untextured fallback still applies
+    when a texcache entry is absent; `.pcpatch` stays out of scope.
+- [ ] C4c EE2 rigid KF animation
+      ([deep dive](deep-dives/c4c-ee2-rigid-animation.md)).
+  - AC: the seven DDF-bound War Galley and Twin-Engine Bomber `.kf` clips import through a
+    `<model>#kf=<path>` key as bone-name, rest-relative C1 channels; unit-scale NIF nodes become
+    bones with rest-pose parity to the C4a bake; XYZ Euler keys resample at 30 Hz with the
+    NifSkope Hermite convention and a sub-90-degree step limit; clips bind through C2, and
+    deterministic textured captures show oar sweep, a quarter propeller turn at 1/12 s, and the
+    TakeOff ground-to-flight pose; the unreferenced `ab11_TwinEngineBomber.kf` fails naming
+    `prop_1`; skinning, root motion, and other controllers fail explicitly.
+- [ ] C4d EE2 skinned character animation.
+  - AC: an influence inventory selects one DDF-bound skinned EE2 unit and records its per-vertex
+    influence distribution; a recorded Decision chooses widening runtime skinning or rejecting
+    more than two meaningful influences; the skin imports with inverse binds under that policy
+    without silent truncation, its rest pose matches a static bake, and a DDF-bound clip deforms
+    the mesh through C4c channels and C2 binding.
 
 
 - [x] C5 Authoring & validation tooling (extend ReplaySketch; licensing out of scope).

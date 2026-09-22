@@ -105,6 +105,16 @@ Source of truth:
 |---|---|---|
 | [track-c-c4a-ee2-nif-proof.md](track-c-c4a-ee2-nif-proof.md) | C4a | Empire Earth II NIF 10.1 proof of concept |
 
+## Track C · C4c : EE2 rigid KF animation
+
+Source of truth:
+[deep-dives/c4c-ee2-rigid-animation.md](../deep-dives/c4c-ee2-rigid-animation.md) :
+[Architecture diagrams §10](../deep-dives/c4c-ee2-rigid-animation.md#10-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4c-ee2-rigid-animation.md](track-c-c4c-ee2-rigid-animation.md) | C4c | EE2 rigid KF animation |
+
 ## Track C · C5 : External model tooling
 
 Source of truth:
