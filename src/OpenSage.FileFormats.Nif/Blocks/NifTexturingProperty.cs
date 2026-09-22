@@ -39,7 +39,7 @@ public sealed record NifTexturingProperty : NifProperty
             throw new InvalidDataException(
                 $"NIF texturing property has apply mode {ApplyMode}; valid range is 0-4.");
         }
-        
+
         TextureCount = reader.ReadUInt32("TextureCount");
         if (TextureCount > 9)
         {
@@ -54,14 +54,14 @@ public sealed record NifTexturingProperty : NifProperty
             {
                 break;
             }
-            
+
             var enabled = reader.ReadByte($"{SlotNames[i]}.Enabled");
             if (enabled != 0)
             {
                 slots[SlotNames[i]] = NifTextureDescriptor.Read(reader, SlotNames[i]);
             }
         }
-        
+
         Slots = slots;
         var numShaderTextures = reader.ReadUInt32("NumShaderTextures");
         if (numShaderTextures != 0)

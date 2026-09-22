@@ -33,6 +33,7 @@ public sealed record NifFile(
                 throw new InvalidDataException(
                     $"NIF block {i} ({header.Blocks[i].TypeName}) has leading word {leading}; expected 0.");
             }
+
             blocks[i] = ReadBlock(reader, header, i);
         }
 
@@ -43,6 +44,7 @@ public sealed record NifFile(
             throw new InvalidDataException(
                 $"NIF footer ({footer1}, {footer2}) is invalid; expected ({Footer1}, {Footer2}).");
         }
+
         if (reader.RemainingBytes != 0)
         {
             throw new InvalidDataException(
@@ -80,6 +82,7 @@ public sealed record NifFile(
                 bestIndex = i;
                 ambiguous = false;
             }
+
             else if (near == bestNear)
             {
                 ambiguous = true;
@@ -99,10 +102,12 @@ public sealed record NifFile(
             {
                 continue;
             }
+
             if (childIndex == bestIndex)
             {
                 return child;
             }
+
             childIndex++;
         }
 
@@ -180,6 +185,7 @@ public sealed record NifFile(
                                 $"but that block is a {blocks[extra].GetType().Name}.");
                         }
                     }
+
                     ValidateReference(netBlock.ControllerReference, i, "Controller");
                     if (blocks[i] is NifTexturingProperty texturingBlock)
                     {
@@ -196,6 +202,7 @@ public sealed record NifFile(
                             }
                         }
                     }
+
                     if (blocks[i] is NifAvObject avBlock)
                     {
                         foreach (var property in avBlock.PropertyReferences)
@@ -208,6 +215,7 @@ public sealed record NifFile(
                                     $"but that block is a {blocks[property].GetType().Name}.");
                             }
                         }
+
                         ValidateReference(avBlock.CollisionObjectReference, i, "CollisionObject");
                         if (blocks[i] is NifGeometry geometry)
                         {
@@ -219,12 +227,14 @@ public sealed record NifFile(
                                     $"NIF geometry block {i} references block {geometry.DataReference} " +
                                     $"as data, but that block is a {blocks[geometry.DataReference].GetType().Name}.");
                             }
+
                             if (geometry.SkinInstanceReference != -1)
                             {
                                 throw new NotSupportedException(
                                     $"NIF geometry '{geometry.Name}' is skinned; skinning is out of C4a scope.");
                             }
                         }
+
                         if (blocks[i] is NifLodNode lodNode)
                         {
                             ValidateReference(lodNode.LodDataReference, i, "LODLevelData");
@@ -236,6 +246,7 @@ public sealed record NifFile(
                                     $"{lodNode.LodDataReference} as LOD data, but that block is a " +
                                     $"{blocks[lodNode.LodDataReference].GetType().Name}.");
                             }
+
                             var nonNullChildren = 0;
                             foreach (var child in lodNode.ChildReferences)
                             {
@@ -244,6 +255,7 @@ public sealed record NifFile(
                                     nonNullChildren++;
                                 }
                             }
+
                             if (lodNode.LodDataReference >= 0 &&
                                 nonNullChildren != ((NifRangeLodData)blocks[lodNode.LodDataReference]).Ranges.Count)
                             {
@@ -253,6 +265,7 @@ public sealed record NifFile(
                                     $"{((NifRangeLodData)blocks[lodNode.LodDataReference]).Ranges.Count} levels.");
                             }
                         }
+
                         if (blocks[i] is NifNode node)
                         {
                             foreach (var child in node.ChildReferences)
@@ -265,16 +278,19 @@ public sealed record NifFile(
                                         throw new InvalidDataException(
                                             $"NIF node {i} lists itself as a child.");
                                     }
+
                                     if (parents[child] != -1)
                                     {
                                         throw new InvalidDataException(
                                             $"NIF node {child} has two parents: {parents[child]} and {i}.");
                                     }
+
                                     parents[child] = i;
                                 }
                             }
                         }
                     }
+
                     break;
             }
         }
@@ -312,17 +328,20 @@ public sealed record NifFile(
                     {
                         continue;
                     }
+
                     if (color[child] == Grey)
                     {
                         throw new InvalidDataException(
                             $"NIF scene graph contains a cycle through node {child}.");
                     }
+
                     if (color[child] == White)
                     {
                         Visit(child);
                     }
                 }
             }
+
             color[node] = Black;
         }
 

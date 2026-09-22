@@ -52,19 +52,23 @@ public sealed class NifTestDataBuilder
         {
             writer.WriteSizedString(typeName);
         }
+
         foreach (var index in _blockTypeIndices)
         {
             writer.WriteUInt16(index);
         }
+
         writer.WriteUInt32(NumGroups);
         foreach (var body in _blockBodies)
         {
             writer.WriteBytes(body);
         }
+
         foreach (var bytes in _trailing)
         {
             writer.WriteBytes(bytes);
         }
+
         return stream.ToArray();
     }
 }
@@ -262,6 +266,7 @@ public static class NifTestGeometry
         {
             NifTestBlocks.WriteVector3(body, v);
         }
+
         body.WriteUInt16(dataFlags);
         body.WriteByte((byte)(hasNormals ? 1 : 0));
         if (hasNormals)
@@ -271,6 +276,7 @@ public static class NifTestGeometry
                 NifTestBlocks.WriteVector3(body, n);
             }
         }
+
         NifTestBlocks.WriteVector3(body, boundCenter);
         body.WriteSingle(boundRadius);
         body.WriteByte((byte)(hasColors ? 1 : 0));
@@ -283,6 +289,7 @@ public static class NifTestGeometry
                 body.WriteSingle(1.0f - i * 0.1f);
             }
         }
+
         body.WriteUInt16(consistency);
         body.WriteUInt16((ushort)triangles.Length);
         body.WriteInt32(numTrianglePoints ?? 3 * triangles.Length);
@@ -293,10 +300,12 @@ public static class NifTestGeometry
             body.WriteUInt16(t.V2);
             body.WriteUInt16(t.V3);
         }
+
         if (matchGroupIndices.Length == 0)
         {
             body.WriteUInt16(0);
         }
+
         else
         {
             body.WriteUInt16(1);
@@ -306,6 +315,7 @@ public static class NifTestGeometry
                 body.WriteUInt16(index);
             }
         }
+
         return stream.ToArray();
     }
 
@@ -316,6 +326,7 @@ public static class NifTestGeometry
         {
             result[i] = (i * 1.0f, i * 2.0f, i * 3.0f);
         }
+
         return result;
     }
 }
@@ -374,6 +385,7 @@ public static class NifTestProperties
             {
                 break;
             }
+
             if (i == 0 && baseSlot is { } slot)
             {
                 body.WriteByte(1);
@@ -385,11 +397,13 @@ public static class NifTestProperties
                 body.WriteInt16(slot.Ps2K);
                 body.WriteByte(baseTransformFlag ?? 0);
             }
+
             else
             {
                 body.WriteByte(0);
             }
         }
+
         body.WriteUInt32(numShaderTextures);
         return stream.ToArray();
     }
@@ -501,6 +515,7 @@ public static class NifTestLod
             body.WriteSingle(near);
             body.WriteSingle(far);
         }
+
         return stream.ToArray();
     }
 }

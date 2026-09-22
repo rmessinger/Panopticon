@@ -32,14 +32,17 @@ public sealed class NifLodTests
         {
             builder.AddBlock(shapeType, shapeBodies[i]);
         }
+
         if (wrongTypeLodData is { } wrong)
         {
             builder.AddBlock(nodeType, NifTestBlocks.Node(name: "notlod"));
         }
+
         else
         {
             builder.AddBlock(rangeType, rangeBody);
         }
+
         builder.AddTrailing(NifTestBlocks.Footer());
         return builder.Build();
     }
