@@ -74,13 +74,17 @@ public sealed class Ee2NifImportTests
         var model = Import("nwg1_galley");
 
         Assert.Equal("nwg1_galley", model.Name);
-        Assert.Equal(ImportedSkeletonOrigin.Default, model.SkeletonOrigin);
-        Assert.Single(model.Skeleton.Bones);
+        Assert.Equal(ImportedSkeletonOrigin.Embedded, model.SkeletonOrigin);
+        Assert.Equal(30, model.Skeleton.Bones.Count);
         Assert.Equal(-1, model.Skeleton.Bones[0].ParentIndex);
+        Assert.Contains(model.Skeleton.Bones, b => b.Name == "R_OAR14");
 
         Assert.Equal(13, model.SubObjects.Count);
-        Assert.All(model.SubObjects, s => Assert.Equal(0, s.ParentBoneIndex));
         Assert.All(model.SubObjects, s => Assert.False(((ImportedMesh)s.RenderObject).IsSkinned));
+        Assert.All(model.SubObjects, s =>
+            Assert.InRange(s.ParentBoneIndex, 0, model.Skeleton.Bones.Count - 1));
+        // The 12 oar shapes hang off their own R_OARxx bones, not the root.
+        Assert.True(model.SubObjects.Select(s => s.ParentBoneIndex).Distinct().Count() >= 2);
 
         Assert.Equal("Galley1", model.SubObjects[0].DisplayName);
         var hull = MeshAt(model, 0);
@@ -112,6 +116,13 @@ public sealed class Ee2NifImportTests
         var model = Import("ab11_TwinEngineBomber");
 
         Assert.Equal("ab11_TwinEngineBomber", model.Name);
+        Assert.Equal(22, model.Skeleton.Bones.Count);
+        Assert.Equal(-1, model.Skeleton.Bones[0].ParentIndex);
+        Assert.Contains(model.Skeleton.Bones, b => b.Name == "prop_01");
+        Assert.Contains(model.Skeleton.Bones, b => b.Name == "prop_02");
+        Assert.All(model.SubObjects, s =>
+            Assert.InRange(s.ParentBoneIndex, 0, model.Skeleton.Bones.Count - 1));
+
         Assert.Equal(6, model.SubObjects.Count);
         Assert.All(model.SubObjects, s => Assert.False(((ImportedMesh)s.RenderObject).IsSkinned));
 
@@ -206,13 +217,32 @@ public sealed class Ee2NifImportTests
         Vector3 expectedMax,
         float tolerance)
     {
+        // Sub-object bounds are bone-local after WI-C4c-02, so the world
+        // AABB transforms the baked vertices by the accumulated bone rest
+        // chain (engine frame); a box-corner transform would overestimate
+        // rotated sub-objects.
+        var worlds = new Matrix4x4[model.Skeleton.Bones.Count];
+        for (var i = 0; i < worlds.Length; i++)
+        {
+            var bone = model.Skeleton.Bones[i];
+            var local = Matrix4x4.CreateFromQuaternion(bone.BindRotation);
+            local.M41 = bone.BindTranslation.X;
+            local.M42 = bone.BindTranslation.Y;
+            local.M43 = bone.BindTranslation.Z;
+            worlds[i] = bone.ParentIndex < 0 ? local : local * worlds[bone.ParentIndex];
+        }
+
         var min = new Vector3(float.MaxValue);
         var max = new Vector3(float.MinValue);
         foreach (var subObject in model.SubObjects)
         {
-            var box = ((ImportedMesh)subObject.RenderObject).BoundingBox;
-            min = Vector3.Min(min, box.Min);
-            max = Vector3.Max(max, box.Max);
+            var world = worlds[subObject.ParentBoneIndex];
+            foreach (var vertex in ((ImportedMesh)subObject.RenderObject).Vertices)
+            {
+                var position = Vector3.Transform(vertex.Position, world);
+                min = Vector3.Min(min, position);
+                max = Vector3.Max(max, position);
+            }
         }
 
         Assert.True(
