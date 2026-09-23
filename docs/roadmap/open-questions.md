@@ -72,6 +72,20 @@
   choosing between widening runtime skinning and rejecting assets. See the
   [C4c deep dive](deep-dives/c4c-ee2-rigid-animation.md). Affects
   [C4c and C4d](track-c-external-assets.md).
+- EE2 skin influence limit. Decision: [C4d](track-c-external-assets.md) widens C1, the shared
+  runtime mesh vertex layout, and glTF import from two to four influences per vertex. Rejecting
+  beyond two would reject 87 of 124 DDF-bound skinned EE2 unit models, and four matches
+  Gamebryo's hardware partition width. Influences at or below 1e-4 are dropped, more than four
+  meaningful influences are rejected, and weight sums further than 0.01 from 1 are rejected. No
+  influence is truncated. See the [C4d deep dive](deep-dives/c4d-ee2-skinned-animation.md#4-influence-policy).
+  Affects [C4, C4d, and C4f](track-c-external-assets.md).
+- NIF rotation convention. Decision: NIF `Matrix33` values are column-vector matrices, so every
+  node, shape, skin, and Euler-sample rotation is transposed once when it enters a row-vector
+  `Matrix4x4`. Quaternion keys stay unchanged. Skin transforms, upright character geometry, and
+  time-0 quaternion keys all confirm this reading, and the positional copy used by C4a and C4c
+  inverted non-symmetric rotations. C4d lands the fix first and regenerates the C4a and C4c
+  locked outputs. See the [C4d deep dive](deep-dives/c4d-ee2-skinned-animation.md#5-nif-rotation-convention).
+  Affects [C4a, C4c, C4d, and C4e through C4i](track-c-external-assets.md).
 - Material-property animation targeting. Decision: [C4e](track-c-external-assets.md) property
   animation targets runtime sub-objects or material slots, not bones or shared material names.
   Visibility reuses the existing `Visibility` channel, with sub-object targets added beside bone

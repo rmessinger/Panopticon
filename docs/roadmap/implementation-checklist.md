@@ -784,12 +784,17 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     deterministic textured captures show oar sweep, a quarter propeller turn at 1/12 s, and the
     TakeOff ground-to-flight pose; the unreferenced `ab11_TwinEngineBomber.kf` fails naming
     `prop_1`; skinning, root motion, and other controllers fail explicitly.
-- [ ] C4d EE2 skinned character animation.
-  - AC: an influence inventory selects one DDF-bound skinned EE2 unit and records its per-vertex
-    influence distribution; a recorded Decision chooses widening runtime skinning or rejecting
-    more than two meaningful influences; the skin imports with inverse binds under that policy
-    without silent truncation, its rest pose matches a static bake, and a DDF-bound clip deforms
-    the mesh through C4c channels and C2 binding.
+- [ ] C4d EE2 skinned character animation
+      ([deep dive](deep-dives/c4d-ee2-skinned-animation.md)).
+  - AC: NIF node, shape, skin, and Euler rotations use the column-vector convention, and the C4a
+    and C4c descriptors and captures are regenerated once and locked again; `NiSkinInstance`,
+    `NiSkinData`, and `NiSkinPartition` parse with validated references; C1, the runtime vertex
+    layout, all mesh vertex shaders, and glTF import carry four influences, while W3D output is
+    unchanged; `CIV1_Druid_british` imports 648 LOD0 vertices with `NiSkinData` inverse binds,
+    bind-pose parity within 1e-4, and its three- and four-influence vertices intact; its five
+    DDF-bound clips bind through C2, and the matching `walk01` channels have identity offsets at
+    time 0; deterministic textured captures show the Druid upright and deforming; more than four
+    influences and weight sums further than 0.01 from 1 fail explicitly.
 - [ ] C4e EE2 property animation
       ([deep dive](deep-dives/c4e-ee2-property-animation.md)).
   - AC: NIF property controller blocks decode with exact stream consumption; C1 and runtime

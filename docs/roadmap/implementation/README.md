@@ -115,6 +115,16 @@ Source of truth:
 |---|---|---|
 | [track-c-c4c-ee2-rigid-animation.md](track-c-c4c-ee2-rigid-animation.md) | C4c | EE2 rigid KF animation |
 
+## Track C · C4d : EE2 skinned character animation
+
+Source of truth:
+[deep-dives/c4d-ee2-skinned-animation.md](../deep-dives/c4d-ee2-skinned-animation.md) :
+[Architecture diagrams §12](../deep-dives/c4d-ee2-skinned-animation.md#12-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4d-ee2-skinned-animation.md](track-c-c4d-ee2-skinned-animation.md) | C4d | EE2 skinned character animation |
+
 ## Track C · C4e : EE2 property animation
 
 Source of truth:

@@ -31,7 +31,7 @@ C4c supports:
 
 C4c rejects:
 
-- skinning (`NiSkinInstance`, `NiSkinData`), which is C4d;
+- skinning (`NiSkinInstance`, `NiSkinData`), which is [C4d](c4d-ee2-skinned-animation.md);
 - visibility, texture transform, material color, and alpha controllers, which are
   [C4e](c4e-ee2-property-animation.md);
 - non-unit scale, which is [C4f](c4f-ee2-scale-animation.md);
@@ -306,6 +306,10 @@ carry up to four influences per vertex, while the runtime and C4 support two. C4
 influence inventory of one DDF-bound skinned unit, then decides between widening the C1 and
 runtime skinning path and rejecting assets with more than two meaningful influences. Silent
 truncation is not an option. C4c must not add skinning types.
+
+The [C4d deep dive](c4d-ee2-skinned-animation.md) records the inventory, chooses four
+influences, and corrects the NIF rotation convention used by sections 4.1 and 5 of this
+design.
 
 C4e through C4i reuse the C4c parser blocks, key evaluation, and `#kf=` key for the remaining
 controller families, scale, morphs, particles, and legacy vintages.
