@@ -137,6 +137,7 @@ public static class NifTestBlocks
         ushort flags = 0,
         (float X, float Y, float Z)? translation = null,
         float scale = 1.0f,
+        FileFormats.Nif.NifMatrix33? rotation = null,
         int[]? properties = null,
         int collision = -1,
         int[]? children = null,
@@ -150,7 +151,15 @@ public static class NifTestBlocks
         body.WriteInt32(controller);
         body.WriteUInt16(flags);
         WriteVector3(body, translation ?? (0, 0, 0));
-        WriteMatrix33Identity(body);
+        if (rotation is { } nodeRotation)
+        {
+            WriteMatrix33(body, nodeRotation);
+        }
+        else
+        {
+            WriteMatrix33Identity(body);
+        }
+
         body.WriteSingle(scale);
         WriteRefList(body, properties ?? []);
         body.WriteInt32(collision);
@@ -194,6 +203,19 @@ public static class NifTestBlocks
                 body.WriteSingle(row == column ? 1.0f : 0.0f);
             }
         }
+    }
+
+    public static void WriteMatrix33(NifBodyWriter body, FileFormats.Nif.NifMatrix33 rotation)
+    {
+        body.WriteSingle(rotation.M11);
+        body.WriteSingle(rotation.M12);
+        body.WriteSingle(rotation.M13);
+        body.WriteSingle(rotation.M21);
+        body.WriteSingle(rotation.M22);
+        body.WriteSingle(rotation.M23);
+        body.WriteSingle(rotation.M31);
+        body.WriteSingle(rotation.M32);
+        body.WriteSingle(rotation.M33);
     }
 
     public static byte[] Footer()
@@ -517,6 +539,200 @@ public static class NifTestLod
         }
 
         return stream.ToArray();
+    }
+}
+
+public static class NifTestKeyframe
+{
+    public static byte[] ControllerSequence(
+        string name,
+        string accumulationRoot,
+        int textKeys,
+        params (string TargetName, int Controller)[] controlledBlocks)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteSizedString(name);
+        body.WriteSizedString(accumulationRoot);
+        body.WriteInt32(textKeys);
+        body.WriteUInt32((uint)controlledBlocks.Length);
+        foreach (var (targetName, controller) in controlledBlocks)
+        {
+            body.WriteSizedString(targetName);
+            body.WriteInt32(controller);
+        }
+
+        return stream.ToArray();
+    }
+
+    public static byte[] TextKeyExtraData(string name, params (float Time, string Value)[] keys)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteSizedString(name);
+        body.WriteUInt32((uint)keys.Length);
+        foreach (var (time, value) in keys)
+        {
+            body.WriteSingle(time);
+            body.WriteSizedString(value);
+        }
+
+        return stream.ToArray();
+    }
+
+    public static byte[] KeyframeController(
+        int data = -1,
+        ushort flags = 0x2C,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteInt32(next);
+        body.WriteUInt16(flags);
+        body.WriteSingle(frequency);
+        body.WriteSingle(phase);
+        body.WriteSingle(startTime);
+        body.WriteSingle(stopTime);
+        body.WriteInt32(target);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
+    public static byte[] KeyframeData(
+        IReadOnlyList<(float Time, float W, float X, float Y, float Z)>? quaternionRotationKeys = null,
+        uint? rotationKeyTypeOverride = null,
+        float? xyzRotationOrder = null,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? xRotationKeys = null,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? yRotationKeys = null,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? zRotationKeys = null,
+        IReadOnlyList<(float Time, (float X, float Y, float Z) Value, (float X, float Y, float Z)? Forward, (float X, float Y, float Z)? Backward)>? translationKeys = null,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? scaleKeys = null,
+        uint? translationKeyTypeOverride = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+
+        if (xyzRotationOrder is { } order)
+        {
+            body.WriteUInt32(1);
+            body.WriteUInt32(4);
+            body.WriteSingle(order);
+            WriteFloatGroup(body, xRotationKeys ?? []);
+            WriteFloatGroup(body, yRotationKeys ?? []);
+            WriteFloatGroup(body, zRotationKeys ?? []);
+        }
+
+        else if (quaternionRotationKeys is { Count: > 0 } quaternionKeys)
+        {
+            body.WriteUInt32((uint)quaternionKeys.Count);
+            body.WriteUInt32(rotationKeyTypeOverride ?? 1);
+            foreach (var (time, w, x, y, z) in quaternionKeys)
+            {
+                body.WriteSingle(time);
+                body.WriteSingle(w);
+                body.WriteSingle(x);
+                body.WriteSingle(y);
+                body.WriteSingle(z);
+            }
+        }
+
+        else
+        {
+            body.WriteUInt32(0);
+        }
+
+        WriteVector3Group(body, translationKeys, translationKeyTypeOverride);
+        WriteFloatGroup(body, scaleKeys ?? []);
+        return stream.ToArray();
+    }
+
+    private static void WriteFloatGroup(
+        NifBodyWriter body,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)> keys)
+    {
+        body.WriteUInt32((uint)keys.Count);
+        if (keys.Count == 0)
+        {
+            return;
+        }
+
+        var quadratic = false;
+        foreach (var key in keys)
+        {
+            if (key.Forward is not null || key.Backward is not null)
+            {
+                quadratic = true;
+            }
+        }
+
+        body.WriteUInt32(quadratic ? 2u : 1u);
+        foreach (var (time, value, forward, backward) in keys)
+        {
+            body.WriteSingle(time);
+            body.WriteSingle(value);
+            if (quadratic)
+            {
+                body.WriteSingle(forward ?? 0.0f);
+                body.WriteSingle(backward ?? 0.0f);
+            }
+        }
+    }
+
+    private static void WriteVector3Group(
+        NifBodyWriter body,
+        IReadOnlyList<(float Time, (float X, float Y, float Z) Value, (float X, float Y, float Z)? Forward, (float X, float Y, float Z)? Backward)>? keys,
+        uint? keyTypeOverride)
+    {
+        keys ??= [];
+        body.WriteUInt32((uint)keys.Count);
+        if (keys.Count == 0)
+        {
+            return;
+        }
+
+        if (keyTypeOverride is { } overrideType)
+        {
+            // Rejection tests inject an unsupported type word; keys are
+            // written in linear shape because the parser stops at the type.
+            body.WriteUInt32(overrideType);
+            foreach (var (time, value, _, _) in keys)
+            {
+                body.WriteSingle(time);
+                NifTestBlocks.WriteVector3(body, value);
+            }
+
+            return;
+        }
+
+        var quadratic = false;
+        foreach (var key in keys)
+        {
+            if (key.Forward is not null || key.Backward is not null)
+            {
+                quadratic = true;
+            }
+        }
+
+        body.WriteUInt32(quadratic ? 2u : 1u);
+        foreach (var (time, value, forward, backward) in keys)
+        {
+            body.WriteSingle(time);
+            NifTestBlocks.WriteVector3(body, value);
+            if (quadratic)
+            {
+                NifTestBlocks.WriteVector3(body, forward ?? (0, 0, 0));
+                NifTestBlocks.WriteVector3(body, backward ?? (0, 0, 0));
+            }
+        }
     }
 }
 

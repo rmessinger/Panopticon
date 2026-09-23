@@ -775,7 +775,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     chains; both C4a proof captures render textured through `textures.zip` with the
     alpha-blended Bomber materials intact, and the untextured fallback still applies
     when a texcache entry is absent; `.pcpatch` stays out of scope.
-- [ ] C4c EE2 rigid KF animation
+- [x] C4c EE2 rigid KF animation
       ([deep dive](deep-dives/c4c-ee2-rigid-animation.md)).
   - AC: the seven DDF-bound War Galley and Twin-Engine Bomber `.kf` clips import through a
     `<model>#kf=<path>` key as bone-name, rest-relative C1 channels; unit-scale NIF nodes become

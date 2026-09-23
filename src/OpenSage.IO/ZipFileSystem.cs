@@ -45,6 +45,7 @@ public sealed class ZipFileSystem : FileSystem
                     $"ZIP archive contains duplicate entries for '{normalizedPath}' " +
                     $"(e.g. '{entry.FullName}'); ambiguous archives are rejected.");
             }
+
             _files[normalizedPath] = new IndexedEntry(normalizedPath, entry);
 
             var parent = GetParentDirectory(normalizedPath);
@@ -55,6 +56,7 @@ public sealed class ZipFileSystem : FileSystem
                     children = [];
                     _directories[parent] = children;
                 }
+
                 children.Add(GetFileName(normalizedPath));
                 normalizedPath = parent;
                 parent = GetParentDirectory(normalizedPath);
@@ -69,6 +71,7 @@ public sealed class ZipFileSystem : FileSystem
         {
             return null;
         }
+
         return CreateEntry(indexed);
     }
 

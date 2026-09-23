@@ -77,6 +77,56 @@ internal static class NifTransformConverter
     }
 
     /// <summary>
+    /// One node's engine-frame bone-local transform: the source local
+    /// conjugated by the source-to-engine map. The rotation conjugates by
+    /// Rz(90) with the uniform node scale cancelling; the translation is
+    /// rotated by Rz(90) and converted to feet.
+    /// </summary>
+    internal static Matrix4x4 CreateBoneLocalMatrix(FileFormats.Nif.NifAvObject node)
+    {
+        return ConjugateSourceToEngine(CreateLocalMatrix(node));
+    }
+
+    /// <summary>
+    /// Conjugates a source-space transform by the source-to-engine map:
+    /// E^-1 * source * E (row-vector products). Conjugated locals compose
+    /// exactly: conjugating an accumulated source chain equals
+    /// accumulating the conjugated locals.
+    /// </summary>
+    internal static Matrix4x4 ConjugateSourceToEngine(in Matrix4x4 source)
+    {
+        if (!Matrix4x4.Invert(SourceToEngine, out var inverse))
+        {
+            throw new NotSupportedException(
+                "The NIF source-to-engine conversion is not invertible.");
+        }
+
+        return inverse * source * SourceToEngine;
+    }
+
+    /// <summary>
+    /// Converts a source-frame rotation to the engine frame by
+    /// conjugation, with the same negative-W canonicalization as the
+    /// glTF converter.
+    /// </summary>
+    internal static Quaternion ConjugateSourceRotationToEngine(Quaternion rotation)
+    {
+        var source = Matrix4x4.CreateFromQuaternion(rotation);
+        var engine = ConjugateSourceToEngine(source);
+        var result = Quaternion.CreateFromRotationMatrix(engine);
+        return result.W < 0f ? Quaternion.Negate(result) : result;
+    }
+
+    /// <summary>
+    /// Converts a source-frame translation to the engine frame: rotated
+    /// by Rz(90 degrees) and scaled from meters to feet.
+    /// </summary>
+    internal static Vector3 ConvertSourceTranslationToEngine(Vector3 translation)
+    {
+        return Vector3.Transform(translation, SourceToEngine);
+    }
+
+    /// <summary>
     /// The full position bake for one shape: accumulated world transform
     /// followed by the source-to-engine conversion.
     /// </summary>

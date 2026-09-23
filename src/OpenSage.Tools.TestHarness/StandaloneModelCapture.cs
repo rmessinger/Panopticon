@@ -130,6 +130,8 @@ internal static class StandaloneModelCapture
                     Opacity = 1.0f,
                     TintColor = Vector3.One,
                 });
+
+            FlushMeshWorldConstants(game, modelInstance);
         }
 
         renderPipeline.BuildingRenderList += OnBuildingRenderList;
@@ -177,6 +179,31 @@ internal static class StandaloneModelCapture
     }
 
     /// <summary>
+    /// Uploads every mesh's world constants synchronously before the render passes execute,
+    /// so the per-item update inside <see cref="ModelMeshInstance.OnBeforeRender"/> is skipped
+    /// by its dirty check. Without this, hardware Vulkan drivers (RADV) can execute those
+    /// inline command-list buffer updates after the draws that read them, rendering some
+    /// meshes with stale world matrices; serializing drivers (llvmpipe) never expose the race.
+    /// Captures serialize frames via WaitForIdle, so synchronous CPU writes are safe here.
+    /// </summary>
+    private static void FlushMeshWorldConstants(Game game, ModelInstance modelInstance)
+    {
+        var model = modelInstance.Model;
+        for (var i = 0; i < model.SubObjects.Length; i++)
+        {
+            var meshInstance = modelInstance.MeshInstances[i];
+            if (meshInstance is null)
+            {
+                continue;
+            }
+
+            var world = modelInstance.AbsoluteBoneTransforms[model.SubObjects[i].Bone.Index];
+            meshInstance.RenderItemConstantsBufferVS.Value.World = world;
+            meshInstance.RenderItemConstantsBufferVS.Update(game.GraphicsDevice);
+        }
+    }
+
+    /// <summary>
     /// Minimal data-only load context for captures that need no asset-store resolution.
     /// </summary>
     internal static AssetLoadContext CreateDataOnlyLoadContext()
@@ -196,11 +223,22 @@ internal static class StandaloneModelCapture
     }
 
     /// <summary>
-    /// Merged sub-object bounds over rest-pose bone transforms; mirrors ModelView's
-    /// enclosing-bounds computation for a freshly updated instance.
+    /// Merged sub-object bounds over accumulated rest-pose bone worlds; mirrors ModelView's
+    /// enclosing-bounds computation for a freshly updated instance. Bones are ordered parent
+    /// before child, so index order accumulates the full chain; sub-object bounds are
+    /// bone-local.
     /// </summary>
     internal static AxisAlignedBoundingBox ComputeEnclosingBoundingBox(Model model)
     {
+        var boneWorlds = new Matrix4x4[model.BoneHierarchy.Bones.Length];
+        for (var i = 0; i < boneWorlds.Length; i++)
+        {
+            var bone = model.BoneHierarchy.Bones[i];
+            boneWorlds[i] = bone.Parent is null
+                ? bone.Transform.Matrix
+                : bone.Transform.Matrix * boneWorlds[bone.Parent.Index];
+        }
+
         var boundingBox = default(AxisAlignedBoundingBox);
 
         var first = true;
@@ -208,7 +246,7 @@ internal static class StandaloneModelCapture
         {
             var transformedBoundingBox = AxisAlignedBoundingBox.Transform(
                 subObject.RenderObject.BoundingBox,
-                subObject.Bone.Transform.Matrix);
+                boneWorlds[subObject.Bone.Index]);
 
             if (first)
             {

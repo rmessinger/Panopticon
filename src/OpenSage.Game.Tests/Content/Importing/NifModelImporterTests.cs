@@ -81,20 +81,196 @@ public sealed class NifModelImporterTests
     }
 
     [Fact]
-    public void StaticModelProducesIdentityRootAndNamedSubObject()
+    public void StaticModelProducesRootBoneAndNamedSubObject()
     {
         var model = Import(StaticModelBytes());
 
         Assert.NotNull(model);
         Assert.Equal("test_model", model.Name);
-        Assert.Equal(ImportedSkeletonOrigin.Default, model.SkeletonOrigin);
-        Assert.Single(model.Skeleton.Bones);
-        Assert.Equal(-1, model.Skeleton.Bones[0].ParentIndex);
-        Assert.Equal(1f, model.Skeleton.Bones[0].BindRotation.W);
+        Assert.Equal(ImportedSkeletonOrigin.Embedded, model.SkeletonOrigin);
+        var bone = Assert.Single(model.Skeleton.Bones);
+        Assert.Equal("root", bone.Name);
+        Assert.Equal(-1, bone.ParentIndex);
+        Assert.Equal(1f, bone.BindRotation.W);
 
         var subObject = Assert.Single(model.SubObjects);
         Assert.Equal("hull", subObject.DisplayName);
         Assert.Equal(0, subObject.ParentBoneIndex);
+    }
+
+    [Fact]
+    public void NodeHierarchyBecomesBonesAndRestPoseMatchesBakedWorld()
+    {
+        var model = Import(HierarchyModelBytes());
+
+        Assert.Equal(2, model.Skeleton.Bones.Count);
+        Assert.Equal("root", model.Skeleton.Bones[0].Name);
+        Assert.Equal(-1, model.Skeleton.Bones[0].ParentIndex);
+        Assert.Equal("child", model.Skeleton.Bones[1].Name);
+        Assert.Equal(0, model.Skeleton.Bones[1].ParentIndex);
+
+        var subObject = Assert.Single(model.SubObjects);
+        Assert.Equal(1, subObject.ParentBoneIndex);
+
+        // Composing the conjugated bone locals must equal the conjugated
+        // source world chain (C4a math), the deep-dive rest-pose parity.
+        var file = FileFormats.Nif.NifFile.Read(new MemoryStream(HierarchyModelBytes()));
+        var rootLocal = NifTransformConverter.CreateLocalMatrix((FileFormats.Nif.NifAvObject)file.Blocks[0]);
+        var childLocal = NifTransformConverter.CreateLocalMatrix((FileFormats.Nif.NifAvObject)file.Blocks[1]);
+        var expectedWorld = NifTransformConverter.ConjugateSourceToEngine(childLocal * rootLocal);
+        var actualWorld = BoneLocal(model.Skeleton.Bones[1]) * BoneLocal(model.Skeleton.Bones[0]);
+        AssertMatricesEqual(expectedWorld, actualWorld);
+
+        // Baked bone-local vertices, transformed by the bone chain, land on
+        // the C4a world bake: v * (L_child * L_root) * E.
+        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var bake = childLocal * rootLocal * SourceToEngineMatrix();
+        for (var i = 0; i < mesh.Vertices.Count; i++)
+        {
+            var expected = Vector3.Transform(SourceVertices[i], bake);
+            var actual = Vector3.Transform(mesh.Vertices[i].Position, actualWorld);
+            AssertEqual(expected, actual);
+        }
+    }
+
+    [Fact]
+    public void ScaledSubtreeBakesIntoNearestBoneAncestor()
+    {
+        var model = Import(ScaledSubtreeModelBytes());
+
+        var bone = Assert.Single(model.Skeleton.Bones);
+        Assert.Equal("root", bone.Name);
+        var subObject = Assert.Single(model.SubObjects);
+        Assert.Equal(0, subObject.ParentBoneIndex);
+
+        // The scaled child node (scale 2, translated (0, -1, 0)) bakes into
+        // the root bone frame: v * [2I | (0,-1,0)] * E.
+        var mesh = (ImportedMesh)subObject.RenderObject;
+        const float f = 3.280839895f;
+        // (1, 0, 0) -> (2, -1, 0) -> (1, 2, 0) * feet.
+        AssertEqual(new Vector3(1 * f, 2 * f, 0), mesh.Vertices[1].Position);
+    }
+
+    [Fact]
+    public void ScaledRootWithShapeFailsWithClearMessage()
+    {
+        var ex = Assert.Throws<NotSupportedException>(
+            () => Import(ScaledSubtreeModelBytes(rootScale: 2.0f)));
+        Assert.Contains("no unit-scale node ancestor", ex.Message);
+    }
+
+    private static byte[] HierarchyModelBytes()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var zBufferType = builder.AddBlockType("NiZBufferProperty");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(
+            name: "root", children: [1], translation: (1, 0, 0)));
+        builder.AddBlock(nodeType, NifTestBlocks.Node(
+            name: "child", children: [3], translation: (0, -2, 0), rotation: OarRotation));
+        builder.AddBlock(zBufferType, NifTestProperties.ZBuffer(flags: 3, function: 3));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 4, properties: [2]));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+            normals: [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)],
+            boundCenter: (0.5f, 0.5f, 0.5f),
+            boundRadius: 1.0f,
+            triangles: [(0, 1, 2), (0, 2, 3)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    private static byte[] ScaledSubtreeModelBytes(float rootScale = 1.0f)
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var zBufferType = builder.AddBlockType("NiZBufferProperty");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(
+            name: "root", children: [1], scale: rootScale));
+        builder.AddBlock(nodeType, NifTestBlocks.Node(
+            name: "scaled", children: [3], translation: (0, -1, 0), scale: 2.0f));
+        builder.AddBlock(zBufferType, NifTestProperties.ZBuffer(flags: 3, function: 3));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 4, properties: [2]));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+            normals: [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)],
+            boundCenter: (0.5f, 0.5f, 0.5f),
+            boundRadius: 1.0f,
+            triangles: [(0, 1, 2), (0, 2, 3)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    // The real R_OAR14 stored rest rotation from nwg1_galley.nifcache.
+    private static readonly FileFormats.Nif.NifMatrix33 OarRotation = new(
+        0.38575035f, -0.5062548f, -0.7712994f,
+        -0.7839769f, -0.6206029f, 0.015251815f,
+        -0.48639184f, 0.5987975f, -0.63628995f);
+
+    private static readonly Vector3[] SourceVertices =
+    [
+        new(0, 0, 0),
+        new(1, 0, 0),
+        new(0, 1, 0),
+        new(0, 0, 1),
+    ];
+
+    private static Matrix4x4 SourceToEngineMatrix()
+    {
+        // The source-to-engine map E: Rz(90) with meters-to-feet, the same
+        // conversion NifTransformConverter applies inside its bake.
+        var e = Matrix4x4.Identity;
+        e.M11 = 0.0f;
+        e.M12 = 1.0f;
+        e.M21 = -1.0f;
+        e.M22 = 0.0f;
+        e.M11 *= NifTransformConverter.FeetPerMeter;
+        e.M12 *= NifTransformConverter.FeetPerMeter;
+        e.M21 *= NifTransformConverter.FeetPerMeter;
+        e.M22 *= NifTransformConverter.FeetPerMeter;
+        e.M33 *= NifTransformConverter.FeetPerMeter;
+        return e;
+    }
+
+    private static Matrix4x4 BoneLocal(ImportedBone bone)
+    {
+        var local = Matrix4x4.CreateFromQuaternion(bone.BindRotation);
+        local.M41 = bone.BindTranslation.X;
+        local.M42 = bone.BindTranslation.Y;
+        local.M43 = bone.BindTranslation.Z;
+        return local;
+    }
+
+    private static void AssertMatricesEqual(Matrix4x4 expected, Matrix4x4 actual)
+    {
+        var expectedElements = new[]
+        {
+            expected.M11, expected.M12, expected.M13,
+            expected.M21, expected.M22, expected.M23,
+            expected.M31, expected.M32, expected.M33,
+            expected.M41, expected.M42, expected.M43,
+        };
+        var actualElements = new[]
+        {
+            actual.M11, actual.M12, actual.M13,
+            actual.M21, actual.M22, actual.M23,
+            actual.M31, actual.M32, actual.M33,
+            actual.M41, actual.M42, actual.M43,
+        };
+        for (var i = 0; i < expectedElements.Length; i++)
+        {
+            Assert.True(
+                MathF.Abs(expectedElements[i] - actualElements[i]) < 1e-4f,
+                $"Matrix element {i}: expected {expectedElements[i]}, got {actualElements[i]}.");
+        }
     }
 
     [Fact]
@@ -203,6 +379,9 @@ public sealed class NifModelImporterTests
         Assert.NotNull(model);
         var subObject = Assert.Single(model.SubObjects);
         Assert.Equal("detail_LOD0", subObject.DisplayName);
+        Assert.Equal(0, subObject.ParentBoneIndex);
+        var bone = Assert.Single(model.Skeleton.Bones);
+        Assert.Equal(-1, bone.ParentIndex);
     }
 
     [Fact]
