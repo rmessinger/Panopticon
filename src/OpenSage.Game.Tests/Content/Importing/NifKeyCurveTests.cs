@@ -129,7 +129,7 @@ public sealed class NifKeyCurveTests
 
             var delta = current * Quaternion.Conjugate(previous);
             Assert.True(
-                delta.Y > 0f,
+                delta.Y < 0f,
                 $"Step {i} turned the wrong way.");
         }
     }

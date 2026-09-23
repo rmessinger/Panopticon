@@ -105,6 +105,28 @@ internal static class NifTransformConverter
     }
 
     /// <summary>
+    /// Converts a source-frame rotation to the engine frame by
+    /// conjugation, with the same negative-W canonicalization as the
+    /// glTF converter.
+    /// </summary>
+    internal static Quaternion ConjugateSourceRotationToEngine(Quaternion rotation)
+    {
+        var source = Matrix4x4.CreateFromQuaternion(rotation);
+        var engine = ConjugateSourceToEngine(source);
+        var result = Quaternion.CreateFromRotationMatrix(engine);
+        return result.W < 0f ? Quaternion.Negate(result) : result;
+    }
+
+    /// <summary>
+    /// Converts a source-frame translation to the engine frame: rotated
+    /// by Rz(90 degrees) and scaled from meters to feet.
+    /// </summary>
+    internal static Vector3 ConvertSourceTranslationToEngine(Vector3 translation)
+    {
+        return Vector3.Transform(translation, SourceToEngine);
+    }
+
+    /// <summary>
     /// The full position bake for one shape: accumulated world transform
     /// followed by the source-to-engine conversion.
     /// </summary>

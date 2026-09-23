@@ -131,17 +131,18 @@ internal static class NifRotationSampler
 
     private static Quaternion ToQuaternion(in NifMatrix33 rotation)
     {
-        // NifMatrix33 stores a column-vector map by rows; System.Numerics
-        // composes row-vector, so transpose the elements positionally.
+        // Positional copy matching NifTransformConverter.CreateLocalMatrix;
+        // System.Numerics quaternions are internally consistent with this
+        // row-vector layout.
         var engine = Matrix4x4.Identity;
         engine.M11 = rotation.M11;
-        engine.M12 = rotation.M21;
-        engine.M13 = rotation.M31;
-        engine.M21 = rotation.M12;
+        engine.M12 = rotation.M12;
+        engine.M13 = rotation.M13;
+        engine.M21 = rotation.M21;
         engine.M22 = rotation.M22;
-        engine.M23 = rotation.M32;
-        engine.M31 = rotation.M13;
-        engine.M32 = rotation.M23;
+        engine.M23 = rotation.M23;
+        engine.M31 = rotation.M31;
+        engine.M32 = rotation.M32;
         engine.M33 = rotation.M33;
         return Quaternion.CreateFromRotationMatrix(engine);
     }
