@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4c-03` |
 | Roadmap phase | [Track C · C4c](../../track-c-external-assets.md): EE2 rigid KF animation |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-01` |

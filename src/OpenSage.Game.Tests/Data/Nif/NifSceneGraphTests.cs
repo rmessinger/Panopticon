@@ -185,12 +185,13 @@ public sealed class NifSceneGraphTests
     public void UnknownBlockTypeFailsNamingBlockAndIndex()
     {
         var builder = new NifTestDataBuilder();
-        var keyframeType = builder.AddBlockType("NiKeyframeController");
-        builder.AddBlock(keyframeType, [0, 0, 0, 0]);
+        // NiMorphData is a real NIF block type with no C4c support.
+        var morphType = builder.AddBlockType("NiMorphData");
+        builder.AddBlock(morphType, [0, 0, 0, 0]);
         builder.AddTrailing(NifTestBlocks.Footer());
         var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
         Assert.Contains("block 0", ex.Message);
-        Assert.Contains("NiKeyframeController", ex.Message);
+        Assert.Contains("NiMorphData", ex.Message);
     }
 
     [Fact]
