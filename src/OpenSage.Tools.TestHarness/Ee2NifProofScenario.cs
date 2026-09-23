@@ -11,18 +11,20 @@ using OpenSage.Data;
 using OpenSage.FileFormats.Nif;
 using OpenSage.Graphics;
 using OpenSage.IO;
+using OpenSage.Logic.Object;
 using OpenSage.Mathematics;
 
 namespace OpenSage.Tools.TestHarness;
 
 /// <summary>
-/// Headless C4a proof: mounts the operator-supplied EE2 graphics.zip through
-/// ZipFileSystem, imports both C4a targets through NifModelImporter,
+/// Headless C4 proof: mounts the operator-supplied EE2 graphics.zip through
+/// ZipFileSystem, imports both proof targets through NifModelImporter,
 /// materializes them through ImportedModelMaterializer (runtime path:
 /// NifModelImporter -> ImportedModelMaterializer -> Model), and captures one
-/// PNG per target plus a validation guide. Fixed-function diffuse renders
-/// with texture-stage count zero; source texture names stay in the imported
-/// descriptors. No EE2 asset is copied or committed.
+/// static PNG per target plus C4c animated frames at fixed clip times
+/// (NifAnimationImporter -> ImportedAnimationMaterializer -> C2 named binding).
+/// Fixed-function diffuse renders with texture-stage count zero; source texture
+/// names stay in the imported descriptors. No EE2 asset is copied or committed.
 /// </summary>
 internal static class Ee2NifProofScenario
 {
@@ -51,6 +53,37 @@ internal static class Ee2NifProofScenario
             "upright and +X forward; DXT3 alpha blending on wheels/body keeps correct depth; " +
             "ab11_TwinEngineBomber.tga and af11_biplane_prop.tga mapped coherently"),
     ];
+
+    /// <summary>
+    /// C4c animated plan: deterministic clip times from the deep dive section 8. File names
+    /// use the KF stem (which is already <model>_<clip>) plus zero-padded milliseconds.
+    /// </summary>
+    public static readonly (string ModelKey, string KfPath, float TimeSeconds, string Check)[] AnimatedCapturePlan =
+    [
+        ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_walk.kf", 0f,
+            "start of the rowing stroke: oars squared at their first key angles"),
+        ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_walk.kf", 0.767f,
+            "mid-stroke: oars swept to intermediate angles, visibly different from 0000"),
+        ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_walk.kf", 1.433f,
+            "late stroke: oars at their final key angles, different from both 0000 and 0767"),
+        ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_idle.kf", 0f,
+            "rest pose: identical to the static ee2-nwg1_galley.png capture (idle offsets are identity)"),
+        ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_walk.kf", 0f,
+            "ground pose with propellers at their first key, matching the Walk channel values at time 0"),
+        ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_walk.kf", 1f / 12f,
+            "both propellers turned a quarter turn (90 degrees) from 0000; airframe otherwise unchanged"),
+        ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 0f,
+            "ground pose: identical to the static ee2-ab11_TwinEngineBomber.png capture (root NonAccum carries the ground pose at time 0)"),
+        ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 1.333f,
+            "level raised flight pose: root keyed toward its flight rotation while root NonAccum carries the raised translation, clearly off the 0000 ground stance"),
+    ];
+
+    internal static string GetAnimatedCaptureFileName(string kfPath, float timeSeconds)
+    {
+        var stem = Path.GetFileNameWithoutExtension(kfPath);
+        var milliseconds = (int)MathF.Round(timeSeconds * 1000f);
+        return $"ee2-{stem}_{milliseconds:0000}.png";
+    }
 
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
     {
@@ -89,6 +122,7 @@ internal static class Ee2NifProofScenario
         var compositeFileSystem = new CompositeFileSystem(ee2FileSystem, ee2TexturesFileSystem);
         var importContext = new AssetImportContext(compositeFileSystem, language: null);
         var importer = new NifModelImporter();
+        var animationImporter = new NifAnimationImporter();
 
         var gameLoadContext = game.AssetStore.LoadContext;
         var loadContext = new AssetLoadContext(
@@ -144,6 +178,28 @@ internal static class Ee2NifProofScenario
 
             captures.Add((outputName, check));
             reporter.Info($"Captured {outputName}");
+
+            foreach (var (_, kfPath, timeSeconds, animatedCheck) in AnimatedCapturePlan.Where(e => e.ModelKey == key))
+            {
+                var importedAnimation = animationImporter.ImportAnimation($"{key}#kf={kfPath}", importContext)
+                    ?? throw new InvalidOperationException($"EE2 animation import returned null for '{key}#kf={kfPath}'.");
+                var animation = ImportedAnimationMaterializer.Materialize(importedAnimation);
+
+                var animatedName = GetAnimatedCaptureFileName(kfPath, timeSeconds);
+                StandaloneModelCapture.Capture(
+                    game,
+                    model,
+                    loadContext,
+                    Path.Combine(outputDirectory, animatedName),
+                    new Size(CaptureSize, CaptureSize),
+                    configureInstance: instance => PlayToTime(instance, animation, timeSeconds),
+                    worldMatrix: System.Numerics.Matrix4x4.CreateRotationZ(CaptureYawRadians),
+                    options: new StandaloneCaptureOptions(
+                        Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f)));
+
+                captures.Add((animatedName, animatedCheck));
+                reporter.Info($"Captured {animatedName}");
+            }
         }
 
         WriteValidationGuide(outputDirectory, captures);
@@ -181,7 +237,39 @@ internal static class Ee2NifProofScenario
             "host installation resolved by the harness";
     }
 
-    private static void WriteValidationGuide(string outputDirectory, List<(string FileName, string Check)> captures)
+    private static void PlayToTime(ModelInstance instance, OpenSage.Graphics.Animation.ModelAnimation animation, float seconds)
+    {
+        var animationInstance = instance.CreateAnimationInstance(
+            animation,
+            AnimationMode.Once,
+            AnimationFlags.StartFrameFirst,
+            gameObject: null!,
+            random: new ConstantRandom());
+
+        animationInstance.Play();
+
+        const int steps = 8;
+        var delta = TimeSpan.FromSeconds(seconds / steps);
+        for (var i = 0; i < steps; i++)
+        {
+            animationInstance.Update(new TimeInterval(TimeSpan.Zero, delta));
+        }
+    }
+
+    private sealed class ConstantRandom : IRandom
+    {
+        public uint Seed => 0;
+
+        public void Initialize(uint seed)
+        {
+        }
+
+        public int Next(int lo, int hi) => lo;
+
+        public float NextSingle(float lo, float hi) => lo;
+    }
+
+    internal static void WriteValidationGuide(string outputDirectory, List<(string FileName, string Check)> captures)
     {
         using var writer = new StreamWriter(Path.Combine(outputDirectory, "validation_guide.md"));
         writer.WriteLine("# EE2 NIF proof - validation guide");
@@ -189,9 +277,13 @@ internal static class Ee2NifProofScenario
         writer.WriteLine("Every capture comes from ZipFileSystem(graphics.zip + textures.zip) ->");
         writer.WriteLine("NifModelImporter -> texcache decode -> ImportedModelMaterializer -> runtime");
         writer.WriteLine("Model -> StandaloneModelCapture. The cooked DXT mips upload block-for-block");
-        writer.WriteLine("(DXT1/DXT3; no transcoding) and the models render textured. No EE2 asset is");
-        writer.WriteLine("copied or committed. Deterministic repeat: a second run must produce the");
-        writer.WriteLine("same frames.");
+        writer.WriteLine("(DXT1/DXT3; no transcoding) and the models render textured. Animated frames add");
+        writer.WriteLine("NifAnimationImporter -> ImportedAnimationMaterializer -> C2 named binding driven");
+        writer.WriteLine("to a fixed clip time before the capture. No EE2 asset is copied or committed.");
+        writer.WriteLine("Deterministic repeat: a second run must produce the same frames. Mesh world");
+        writer.WriteLine("constants are uploaded synchronously before each capture's passes because");
+        writer.WriteLine("hardware Vulkan drivers can otherwise apply the per-item inline updates after");
+        writer.WriteLine("the draws that read them (stale world matrices on some meshes).");
         writer.WriteLine();
         foreach (var (fileName, check) in captures)
         {

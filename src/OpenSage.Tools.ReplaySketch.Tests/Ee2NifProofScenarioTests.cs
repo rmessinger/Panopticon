@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using OpenSage.Tools.TestHarness;
 using Xunit;
@@ -47,6 +48,87 @@ public sealed class Ee2NifProofScenarioTests
         Assert.All(
             Ee2NifProofScenario.CapturePlan,
             entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
+    }
+
+    [Fact]
+    public void AnimatedCapturePlanCoversDeepDiveSectionEight()
+    {
+        var plan = Ee2NifProofScenario.AnimatedCapturePlan;
+        Assert.Equal(8, plan.Length);
+
+        var expected = new[]
+        {
+            ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_walk.kf", 0f),
+            ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_walk.kf", 0.767f),
+            ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_walk.kf", 1.433f),
+            ("nwg1_galley", "Graphics/Vehicles/nwg1_galley_idle.kf", 0f),
+            ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_walk.kf", 0f),
+            ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_walk.kf", 1f / 12f),
+            ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 0f),
+            ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 1.333f),
+        };
+
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].Item1, plan[i].ModelKey);
+            Assert.Equal(expected[i].Item2, plan[i].KfPath);
+            Assert.Equal(expected[i].Item3, plan[i].TimeSeconds);
+        }
+
+        Assert.All(plan, entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
+    }
+
+    [Fact]
+    public void AnimatedCaptureFileNameUsesKfStemAndPaddedMilliseconds()
+    {
+        Assert.Equal(
+            "ee2-nwg1_galley_walk_0000.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName("Graphics/Vehicles/nwg1_galley_walk.kf", 0f));
+        Assert.Equal(
+            "ee2-nwg1_galley_walk_0767.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName("Graphics/Vehicles/nwg1_galley_walk.kf", 0.767f));
+        Assert.Equal(
+            "ee2-nwg1_galley_walk_1433.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName("Graphics/Vehicles/nwg1_galley_walk.kf", 1.433f));
+        Assert.Equal(
+            "ee2-ab11_TwinEngineBomber_walk_0083.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Vehicles/ab11_TwinEngineBomber_walk.kf", 1f / 12f));
+        Assert.Equal(
+            "ee2-ab11_TwinEngineBomber_takeoff_1333.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 1.333f));
+    }
+
+    [Fact]
+    public void ValidationGuideListsAnimatedCapturesAndDeterminismNote()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "ee2-proof-guide-test");
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            var captures = new List<(string FileName, string Check)>
+            {
+                ("ee2-nwg1_galley.png", "static hull"),
+                ("ee2-nwg1_galley_walk_0767.png", "mid-stroke oars"),
+                ("ee2-ab11_TwinEngineBomber_walk_0083.png", "quarter-turn props"),
+            };
+
+            Ee2NifProofScenario.WriteValidationGuide(directory, captures);
+
+            var guide = File.ReadAllText(Path.Combine(directory, "validation_guide.md"));
+            Assert.Contains("ee2-nwg1_galley_walk_0767.png", guide);
+            Assert.Contains("ee2-ab11_TwinEngineBomber_walk_0083.png", guide);
+            Assert.Contains("NifAnimationImporter", guide);
+            Assert.Contains("Deterministic repeat", guide);
+            Assert.Contains("synchronously", guide);
+        }
+
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
     }
 
     [Fact]
