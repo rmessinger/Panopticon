@@ -26,5 +26,14 @@ jobs:
     - name: Build
       run: dotnet build src --configuration ${{ matrix.configuration }}
 
+    # --blame-crash names the test running when a host crashes and saves a dump.
     - name: Test
-      run: dotnet test src --configuration ${{ matrix.configuration }} --filter Category!=Interactive
+      run: dotnet test src --configuration ${{ matrix.configuration }} --filter Category!=Interactive --blame-crash --results-directory TestResults
+
+    - name: Upload crash diagnostics
+      if: failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: test-crash-diagnostics-${{ matrix.configuration }}
+        path: TestResults/
+        if-no-files-found: ignore
