@@ -145,6 +145,12 @@ C4b decodes the texcache containers; pixel patches stay out of scope.
 - Known follow-up risks: three animation header vintages in one corpus (including 452 files of an
   older 10.0.1.0 layout with per-file user versions), 4-bone influences versus the two-bone
   runtime limit, cooked texture decoding, player-color patches, and DDF state binding.
+- Follow-ups: C4b decodes cooked textures. [C4c](c4c-ee2-rigid-animation.md) imports the proof
+  models' rigid KF clips. C4d owns the four-influence skinning risk.
+  [C4e](c4e-ee2-property-animation.md), [C4f](c4f-ee2-scale-animation.md),
+  [C4g](c4g-ee2-morph-animation.md), [C4h](c4h-ee2-particle-effects.md), and
+  [C4i](c4i-ee2-legacy-kf-formats.md) own property controllers, scale, morphs, particles, and
+  the older animation vintages.
 
 ## 9. C4a proof-of-concept scope
 
@@ -472,7 +478,8 @@ C4a is complete when both target archive entries:
 
 KF animation, skinning, older NIF versions, cooked textures, player color, patch archives, DDF
 unit definitions, damage-state swapping, particles, and general EE2 game support remain separate
-follow-up work.
+follow-up work. C4b covers cooked textures, [C4c](c4c-ee2-rigid-animation.md) covers the proof
+models' rigid KF animation, and C4d covers skinning.
 
 ## 10. Architecture diagrams
 

@@ -61,6 +61,56 @@
   fixed-function values and source texture names, and renders untextured diffuse materials. KF
   animation, skinning, `.texcache` decoding, player-color patches, DDF integration, and older NIF
   versions remain outside the proof. No EE2 asset is committed.
+- EE2 rigid animation scope. Decision: [C4c](track-c-external-assets.md) imports only the
+  DDF-bound NIF 10.1 `.kf` clips of the C4a proof models, using the four-block
+  `NiControllerSequence` / `NiKeyframeController` subset. Unit-scale NIF nodes become runtime
+  bones so rests match the C4a bake. Keys take the form `<model>#kf=<path>` because KF files
+  carry no rest pose. XYZ Euler rotations use `Rz·Ry·Rx` with NifSkope's segment-normalized
+  Hermite tangents and resample at 30 Hz, rejecting steps of 90 degrees or more. Constant
+  accumulation-root channels apply as pose, and varying root motion is rejected. Scale keys must
+  be identity. Skinned characters move to C4d, which starts with an influence inventory before
+  choosing between widening runtime skinning and rejecting assets. See the
+  [C4c deep dive](deep-dives/c4c-ee2-rigid-animation.md). Affects
+  [C4c and C4d](track-c-external-assets.md).
+- Material-property animation targeting. Decision: [C4e](track-c-external-assets.md) property
+  animation targets runtime sub-objects or material slots, not bones or shared material names.
+  Visibility reuses the existing `Visibility` channel, with sub-object targets added beside bone
+  targets. Material color, alpha, and UV channels bind against a `Model` because material slots
+  belong to mesh parts. Shared `Material` and `MaterialPass` resources remain immutable; sampled
+  values live on `ModelInstance` or `ModelMeshPartInstance`. See the
+  [C4e deep dive](deep-dives/c4e-ee2-property-animation.md). Affects
+  [C4e](track-c-external-assets.md).
+- EE2 scale animation. Decision: [C4f](track-c-external-assets.md) supports NIF 10.1 uniform
+  scale as a scalar rest field plus a rest-relative scale channel, using `sampleScale /
+  restScale`. Positive finite rest scale is a bone transform, and identity scale remains
+  unchanged. Animated zero scale is valid when rest scale is positive. Singular rest scale is
+  rejected for animated targets because `AnimatedOffset * rest` cannot reconstruct non-zero
+  samples from a zero rest transform. See the
+  [C4f deep dive](deep-dives/c4f-ee2-scale-animation.md). Affects
+  [C4f](track-c-external-assets.md).
+- EE2 morph runtime ownership. Decision: [C4g](track-c-external-assets.md) implements the shared
+  C6 morph-target runtime under the request-scoped `morph-targets` gate instead of depending on
+  C6 as a completed phase. The EE2 farm proof is the first concrete morph consumer, and C6
+  remains the envelope for later glTF and shader work. NIF morph 0 is the absolute base and is
+  validated, then omitted; morphs 1..N become C6 position deltas. KF-owned target data uses a
+  paired model key `<model>#morph-kf=<path>` so target sets exist before animation binding. See
+  the [C4g deep dive](deep-dives/c4g-ee2-morph-animation.md). Affects
+  [C4g](track-c-external-assets.md).
+- EE2 particle runtime mapping. Decision: [C4h](track-c-external-assets.md) translates EE2
+  legacy `NiParticles` effects into C1-style imported particle effect values and materializes
+  them onto the existing OpenSAGE particle runtime. The corpus has 129 particle `fx_*` files,
+  259 `NiParticles` systems, and no `NiPSys*` blocks, so `NiPSys*` is an explicit rejection path.
+  Attachment names stay in the DDF binding layer and resolve to C4c node bones or fixed world
+  origins. Deterministic captures require request-scoped particle RNG seeding. See the
+  [C4h deep dive](deep-dives/c4h-ee2-particle-effects.md). Affects
+  [C4h](track-c-external-assets.md).
+- Legacy EE2 KF vintages. Decision: [C4i](track-c-external-assets.md) supports DDF-bound NIF
+  10.0.1.0 keyframe-only clips by version-gating the C4c reader, parsing root-list footers,
+  trimming text-key marker values, accepting proven legacy flags, and resolving uppercase `.KF`.
+  NetImmerse 4.2.2.0 is rejected because only three unbound files use an inline-type container
+  outside the parser architecture. Legacy property, morph, and skinned consumers remain with
+  C4e, C4g, and C4d. See the [C4i deep dive](deep-dives/c4i-ee2-legacy-kf-formats.md). Affects
+  [C4i](track-c-external-assets.md).
 - C1 import-seam shape. Decision: importers parse source files into CPU-only engine interchange
   values; engine-owned materializers validate those values and create runtime models, animations,
   materials, textures, and GPU resources. `OnDemandAssetLoadStrategy` carries the selected
