@@ -196,11 +196,22 @@ internal static class StandaloneModelCapture
     }
 
     /// <summary>
-    /// Merged sub-object bounds over rest-pose bone transforms; mirrors ModelView's
-    /// enclosing-bounds computation for a freshly updated instance.
+    /// Merged sub-object bounds over accumulated rest-pose bone worlds; mirrors ModelView's
+    /// enclosing-bounds computation for a freshly updated instance. Bones are ordered parent
+    /// before child, so index order accumulates the full chain; sub-object bounds are
+    /// bone-local.
     /// </summary>
     internal static AxisAlignedBoundingBox ComputeEnclosingBoundingBox(Model model)
     {
+        var boneWorlds = new Matrix4x4[model.BoneHierarchy.Bones.Length];
+        for (var i = 0; i < boneWorlds.Length; i++)
+        {
+            var bone = model.BoneHierarchy.Bones[i];
+            boneWorlds[i] = bone.Parent is null
+                ? bone.Transform.Matrix
+                : bone.Transform.Matrix * boneWorlds[bone.Parent.Index];
+        }
+
         var boundingBox = default(AxisAlignedBoundingBox);
 
         var first = true;
@@ -208,7 +219,7 @@ internal static class StandaloneModelCapture
         {
             var transformedBoundingBox = AxisAlignedBoundingBox.Transform(
                 subObject.RenderObject.BoundingBox,
-                subObject.Bone.Transform.Matrix);
+                boneWorlds[subObject.Bone.Index]);
 
             if (first)
             {

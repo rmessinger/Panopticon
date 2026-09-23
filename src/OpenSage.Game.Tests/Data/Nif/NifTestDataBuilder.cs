@@ -137,6 +137,7 @@ public static class NifTestBlocks
         ushort flags = 0,
         (float X, float Y, float Z)? translation = null,
         float scale = 1.0f,
+        FileFormats.Nif.NifMatrix33? rotation = null,
         int[]? properties = null,
         int collision = -1,
         int[]? children = null,
@@ -150,7 +151,15 @@ public static class NifTestBlocks
         body.WriteInt32(controller);
         body.WriteUInt16(flags);
         WriteVector3(body, translation ?? (0, 0, 0));
-        WriteMatrix33Identity(body);
+        if (rotation is { } nodeRotation)
+        {
+            WriteMatrix33(body, nodeRotation);
+        }
+        else
+        {
+            WriteMatrix33Identity(body);
+        }
+
         body.WriteSingle(scale);
         WriteRefList(body, properties ?? []);
         body.WriteInt32(collision);
@@ -194,6 +203,19 @@ public static class NifTestBlocks
                 body.WriteSingle(row == column ? 1.0f : 0.0f);
             }
         }
+    }
+
+    public static void WriteMatrix33(NifBodyWriter body, FileFormats.Nif.NifMatrix33 rotation)
+    {
+        body.WriteSingle(rotation.M11);
+        body.WriteSingle(rotation.M12);
+        body.WriteSingle(rotation.M13);
+        body.WriteSingle(rotation.M21);
+        body.WriteSingle(rotation.M22);
+        body.WriteSingle(rotation.M23);
+        body.WriteSingle(rotation.M31);
+        body.WriteSingle(rotation.M32);
+        body.WriteSingle(rotation.M33);
     }
 
     public static byte[] Footer()
