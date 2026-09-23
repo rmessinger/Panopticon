@@ -148,6 +148,14 @@ public sealed record NifFile(
                 return NifRangeLodData.Read(reader);
             case "NiPixelData":
                 return NifPixelData.Read(reader);
+            case "NiControllerSequence":
+                return NifControllerSequence.Read(reader);
+            case "NiTextKeyExtraData":
+                return NifTextKeyExtraData.Read(reader);
+            case "NiKeyframeController":
+                return NifKeyframeController.Read(reader);
+            case "NiKeyframeData":
+                return NifKeyframeData.Read(reader);
             default:
                 throw new NotSupportedException(
                     $"NIF block {index} has unsupported type '{typeName}'.");
@@ -291,6 +299,48 @@ public sealed record NifFile(
                                 }
                             }
                         }
+                    }
+
+                    break;
+
+                case NifControllerSequence sequence:
+                    ValidateReference(sequence.TextKeysReference, i, "TextKeys");
+                    if (sequence.TextKeysReference >= 0 &&
+                        blocks[sequence.TextKeysReference] is not NifTextKeyExtraData)
+                    {
+                        throw new InvalidDataException(
+                            $"NIF controller sequence block {i} references block " +
+                            $"{sequence.TextKeysReference} as text keys, but that block is a " +
+                            $"{blocks[sequence.TextKeysReference].GetType().Name}.");
+                    }
+
+                    for (var j = 0; j < sequence.ControlledBlocks.Count; j++)
+                    {
+                        var controlled = sequence.ControlledBlocks[j];
+                        ValidateReference(controlled.ControllerReference, i, $"ControlledBlocks[{j}].Controller");
+                        if (controlled.ControllerReference >= 0 &&
+                            blocks[controlled.ControllerReference] is not NifKeyframeController)
+                        {
+                            throw new InvalidDataException(
+                                $"NIF controller sequence block {i} references block " +
+                                $"{controlled.ControllerReference} as a keyframe controller, but that " +
+                                $"block is a {blocks[controlled.ControllerReference].GetType().Name}.");
+                        }
+                    }
+
+                    break;
+
+                case NifKeyframeController keyframeController:
+                    ValidateReference(keyframeController.NextControllerReference, i, "NextController");
+                    ValidateReference(keyframeController.TargetReference, i, "Target");
+                    ValidateReference(keyframeController.DataReference, i, "Data");
+                    if (keyframeController.DataReference >= 0 &&
+                        blocks[keyframeController.DataReference] is not NifKeyframeData)
+                    {
+                        throw new InvalidDataException(
+                            $"NIF keyframe controller block {i} references block " +
+                            $"{keyframeController.DataReference} as data, but that block is a " +
+                            $"{blocks[keyframeController.DataReference].GetType().Name}.");
                     }
 
                     break;
