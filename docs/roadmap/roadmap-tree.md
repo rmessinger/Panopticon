@@ -153,6 +153,41 @@ mindmap
         C4c-5 Installed clip checks
         C4c-6 Animated captures
       C4d EE2 skinned animation
+      C4e EE2 property animation ⮕
+        C4e-1 Controller block decoding
+        C4e-2 Property target resolution
+        C4e-3 C1 property channels
+        C4e-4 NIF property conversion
+        C4e-5 Runtime material animation
+        C4e-6 Installed proof captures
+      C4f EE2 scale animation ⮕
+        C4f-1 C1 and runtime scale
+        C4f-2 NIF rest scale
+        C4f-3 KF scale conversion
+        C4f-4 Scale normals and bounds
+        C4f-5 EE2 scale descriptors
+        C4f-6 Scale proof captures
+      C4g EE2 morph animation ⮕
+        C4g-1 Morph block decoding
+        C4g-2 Morph interchange gate
+        C4g-3 NIF morph target import
+        C4g-4 CPU morph runtime
+        C4g-5 Morph weight binding
+        C4g-6 EE2 morph captures
+      C4h EE2 particle effects ⮕
+        C4h-1 Particle effect census
+        C4h-2 Legacy particle block decoding
+        C4h-3 Particle interchange
+        C4h-4 Runtime template materialization
+        C4h-5 Effect attachment binding
+        C4h-6 Particle proof captures
+      C4i EE2 legacy KF formats ⮕
+        C4i-1 Legacy header layouts
+        C4i-2 Legacy KF block reuse
+        C4i-3 Legacy semantics normalization
+        C4i-4 DDF proof binding
+        C4i-5 Legacy rejection fixtures
+        C4i-6 Legacy proof captures
       C5 Authoring tooling ⮕
       C6 Extended features deferred ⮕
     D. Gameplay content expansion
@@ -326,6 +361,11 @@ flowchart LR
     direction TB
     B4B["B4b Geospatial map generation"]
     C4D["C4d EE2 skinned animation"]
+    C4E["C4e EE2 property animation"]
+    C4F["C4f EE2 scale animation"]
+    C4G["C4g EE2 morph animation"]
+    C4H["C4h EE2 particle effects"]
+    C4I["C4i EE2 legacy KF formats"]
     E4["E4 Reference naval scenario"]
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence & replay"]
@@ -457,6 +497,13 @@ flowchart LR
 
   %% Stage 4 -> 5
   C4C --> C4D
+  C4C --> C4E
+  C4C --> C4F
+  C4C --> C4G
+  C4C --> C4H
+  C4C --> C4I
+  C4B --> C4E
+  C4B --> C4H
   E2 --> E4
   E3 --> E4
   F1 --> F6
@@ -480,7 +527,7 @@ flowchart LR
 
   class A1,A2,A3,A4,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
-  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C5,C6 trackC;
+  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6 trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class H1,H2,H3,H4,H5,H6,H7 trackH;

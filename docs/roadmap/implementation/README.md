@@ -115,6 +115,56 @@ Source of truth:
 |---|---|---|
 | [track-c-c4c-ee2-rigid-animation.md](track-c-c4c-ee2-rigid-animation.md) | C4c | EE2 rigid KF animation |
 
+## Track C · C4e : EE2 property animation
+
+Source of truth:
+[deep-dives/c4e-ee2-property-animation.md](../deep-dives/c4e-ee2-property-animation.md) :
+[Architecture diagrams §11](../deep-dives/c4e-ee2-property-animation.md#11-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4e-ee2-property-animation.md](track-c-c4e-ee2-property-animation.md) | C4e | EE2 property animation |
+
+## Track C · C4f : EE2 scale animation
+
+Source of truth:
+[deep-dives/c4f-ee2-scale-animation.md](../deep-dives/c4f-ee2-scale-animation.md) :
+[Architecture diagrams §12](../deep-dives/c4f-ee2-scale-animation.md#12-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4f-ee2-scale-animation.md](track-c-c4f-ee2-scale-animation.md) | C4f | EE2 scale animation |
+
+## Track C · C4g : EE2 morph animation
+
+Source of truth:
+[deep-dives/c4g-ee2-morph-animation.md](../deep-dives/c4g-ee2-morph-animation.md) :
+[Architecture diagrams §10](../deep-dives/c4g-ee2-morph-animation.md#10-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4g-ee2-morph-animation.md](track-c-c4g-ee2-morph-animation.md) | C4g | EE2 morph animation |
+
+## Track C · C4h : EE2 particle effects
+
+Source of truth:
+[deep-dives/c4h-ee2-particle-effects.md](../deep-dives/c4h-ee2-particle-effects.md) :
+[Architecture diagrams §11](../deep-dives/c4h-ee2-particle-effects.md#11-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4h-ee2-particle-effects.md](track-c-c4h-ee2-particle-effects.md) | C4h | EE2 particle effects |
+
+## Track C · C4i : EE2 legacy KF formats
+
+Source of truth:
+[deep-dives/c4i-ee2-legacy-kf-formats.md](../deep-dives/c4i-ee2-legacy-kf-formats.md) :
+[Architecture diagrams §10](../deep-dives/c4i-ee2-legacy-kf-formats.md#10-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-c-c4i-ee2-legacy-kf-formats.md](track-c-c4i-ee2-legacy-kf-formats.md) | C4i | EE2 legacy KF formats |
+
 ## Track C · C5 : External model tooling
 
 Source of truth:

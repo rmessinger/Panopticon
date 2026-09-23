@@ -164,6 +164,11 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/c4-gltf-importer.md`](deep-dives/c4-gltf-importer.md) | Track C phase C4 - Strict glTF 2.0 static, skin, animation, coordinate, and core PBR conversion through C1-C3. |
 | [`deep-dives/ee2-gamebryo-model-storage.md`](deep-dives/ee2-gamebryo-model-storage.md) | Track C phase C4a - Empire Earth II Gamebryo corpus survey and bounded NIF 10.1 model-loading proof of concept. |
 | [`deep-dives/c4c-ee2-rigid-animation.md`](deep-dives/c4c-ee2-rigid-animation.md) | Track C phase C4c - Empire Earth II NIF 10.1 KF decoding, node-hierarchy bones, Euler/Hermite resampling, and C2 playback for the proof models. |
+| [`deep-dives/c4e-ee2-property-animation.md`](deep-dives/c4e-ee2-property-animation.md) | Track C phase C4e - Empire Earth II visibility, UV, material color, and alpha controllers with per-instance material state. |
+| [`deep-dives/c4f-ee2-scale-animation.md`](deep-dives/c4f-ee2-scale-animation.md) | Track C phase C4f - Empire Earth II uniform scale keys, bone rest scale, and scale channels through C1 and the runtime. |
+| [`deep-dives/c4g-ee2-morph-animation.md`](deep-dives/c4g-ee2-morph-animation.md) | Track C phase C4g - Empire Earth II morph-target animation implementing the shared C6 morph runtime. |
+| [`deep-dives/c4h-ee2-particle-effects.md`](deep-dives/c4h-ee2-particle-effects.md) | Track C phase C4h - Empire Earth II legacy `NiParticles` effects mapped onto the existing particle runtime. |
+| [`deep-dives/c4i-ee2-legacy-kf-formats.md`](deep-dives/c4i-ee2-legacy-kf-formats.md) | Track C phase C4i - Empire Earth II NIF 10.0.1.0 KF support and NetImmerse 4.2.2.0 rejection. |
 | [`deep-dives/c5-external-model-tooling.md`](deep-dives/c5-external-model-tooling.md) | Track C phase C5 - ReplaySketch external-model inspection and TestHarness preview/report protocol. |
 | [`deep-dives/c6-extended-model-features.md`](deep-dives/c6-extended-model-features.md) | Track C phase C6 - Request-scoped morph-target and advanced-PBR experiment gates. |
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
@@ -197,7 +202,9 @@ track document.
 - [Track C - External Models & Animations](track-c-external-assets.md): C1 import
   abstraction · C2 skeleton/animation retargeting · C3 material mapping · C4 first production
   format (glTF static + skinned) · C4a EE2 NIF 10.1 static-model proof · C4b EE2 cooked
-  textures · C4c EE2 rigid KF animation · C4d EE2 skinned character animation · C5
+  textures · C4c EE2 rigid KF animation · C4d EE2 skinned character animation · C4e EE2
+  property animation · C4f EE2 scale animation · C4g EE2 morph animation · C4h EE2 particle
+  effects · C4i EE2 legacy KF formats · C5
   authoring/validation tooling · C6 extended features (deferred: morph targets, advanced PBR).
 - [Track D - Gameplay Content Expansion](track-d-gameplay-expansion.md): D1 tech-tree/
   prerequisite-graph generalization · D2 era/age progression mechanic · D3 external content
@@ -292,7 +299,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | Track A - Foundations | `███████░░░` | 12 / 19 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 13 |
-| Track C - External Assets | `███████░░░` | 7 / 10 |
+| Track C - External Assets | `█████░░░░░` | 7 / 15 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
 

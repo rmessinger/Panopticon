@@ -147,6 +147,10 @@ C4b decodes the texcache containers; pixel patches stay out of scope.
   runtime limit, cooked texture decoding, player-color patches, and DDF state binding.
 - Follow-ups: C4b decodes cooked textures. [C4c](c4c-ee2-rigid-animation.md) imports the proof
   models' rigid KF clips. C4d owns the four-influence skinning risk.
+  [C4e](c4e-ee2-property-animation.md), [C4f](c4f-ee2-scale-animation.md),
+  [C4g](c4g-ee2-morph-animation.md), [C4h](c4h-ee2-particle-effects.md), and
+  [C4i](c4i-ee2-legacy-kf-formats.md) own property controllers, scale, morphs, particles, and
+  the older animation vintages.
 
 ## 9. C4a proof-of-concept scope
 

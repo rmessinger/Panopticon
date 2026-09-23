@@ -790,6 +790,39 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     more than two meaningful influences; the skin imports with inverse binds under that policy
     without silent truncation, its rest pose matches a static bake, and a DDF-bound clip deforms
     the mesh through C4c channels and C2 binding.
+- [ ] C4e EE2 property animation
+      ([deep dive](deep-dives/c4e-ee2-property-animation.md)).
+  - AC: NIF property controller blocks decode with exact stream consumption; C1 and runtime
+    animation targets cover sub-object visibility and material slots; the NIF converter emits UV,
+    material color, alpha, and visibility channels for DDF-bound proof clips; runtime playback
+    applies per-instance material state without mutating shared materials; deterministic
+    installed-asset tests and captures prove all four families; unsupported flags, slots, morph
+    mixes, missing targets, and malformed data fail with asset context.
+- [ ] C4f EE2 scale animation
+      ([deep dive](deep-dives/c4f-ee2-scale-animation.md)).
+  - AC: C1 exposes bone rest scale and scale animation channels; C4c scale rejection is replaced
+    by shared C4c curve evaluation for linear and quadratic scale keys; DDF-bound skinless scale
+    clips bind and sample correctly; fixed-function normals and bounds remain valid under uniform
+    scale; singular rest scale reports a contextual unsupported-feature error.
+- [ ] C4g EE2 morph animation
+      ([deep dive](deep-dives/c4g-ee2-morph-animation.md)).
+  - AC: NIF 10.1 morph controller and morph data blocks parse with validated references; C6
+    morph-target interchange and the request-scoped gate exist; KF-owned target data pairs into
+    model-side target sets; morph weight animations bind by primitive and target names; CPU morph
+    deformation runs before skinning; farm yam captures at weights 0, 0.5, and 1 show visible
+    deformation without changing feature-disabled output.
+- [ ] C4h EE2 particle effects
+      ([deep dive](deep-dives/c4h-ee2-particle-effects.md)).
+  - AC: the proof `fx_*` NIFs parse to exact end of file; CPU-only imported particle effect
+    values materialize onto the existing `FXParticleSystemTemplate` and `ParticleSystemManager`
+    paths without a new particle runtime; DDF world or bone attachments resolve through C4c node
+    names; captures are seeded deterministically; `NiPSys*`, bomb, morph, UV, texture-transform,
+    mesh-emission, collision, and unsupported gravity semantics fail with contextual errors.
+- [ ] C4i EE2 legacy KF formats
+      ([deep dive](deep-dives/c4i-ee2-legacy-kf-formats.md)).
+  - AC: NIF 10.0.1.0 headers and KF blocks decode; legacy text keys, flags, and uppercase paths
+    normalize; rigid proof clips bind and capture; NetImmerse 4.2.2.0, property, morph, and
+    skinned legacy cases fail with owning-phase diagnostics.
 
 
 - [x] C5 Authoring & validation tooling (extend ReplaySketch; licensing out of scope).

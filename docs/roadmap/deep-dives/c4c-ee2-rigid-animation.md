@@ -32,11 +32,17 @@ C4c supports:
 C4c rejects:
 
 - skinning (`NiSkinInstance`, `NiSkinData`), which is C4d;
-- other controller families (visibility, texture transform, material color, alpha, morph);
-- TBC keys, quadratic translation, and non-unit scale;
+- visibility, texture transform, material color, and alpha controllers, which are
+  [C4e](c4e-ee2-property-animation.md);
+- non-unit scale, which is [C4f](c4f-ee2-scale-animation.md);
+- morph controllers, which are [C4g](c4g-ee2-morph-animation.md);
+- TBC keys and quadratic translation;
 - varying accumulation-root motion;
 - text keys other than `start` and `end`;
-- NIF 10.0.1.0 and NetImmerse 4.2.2.0 animation files.
+- NIF 10.0.1.0 and NetImmerse 4.2.2.0 animation files, which are
+  [C4i](c4i-ee2-legacy-kf-formats.md).
+
+Particle effects in `fx_*` models are [C4h](c4h-ee2-particle-effects.md).
 
 DDF parsing, EE2 state machines, sound and FX text keys, ReplaySketch Model-tab support for NIF,
 and an EE2 game definition remain out of scope.
@@ -300,6 +306,9 @@ carry up to four influences per vertex, while the runtime and C4 support two. C4
 influence inventory of one DDF-bound skinned unit, then decides between widening the C1 and
 runtime skinning path and rejecting assets with more than two meaningful influences. Silent
 truncation is not an option. C4c must not add skinning types.
+
+C4e through C4i reuse the C4c parser blocks, key evaluation, and `#kf=` key for the remaining
+controller families, scale, morphs, particles, and legacy vintages.
 
 ## 10. Architecture diagrams
 
