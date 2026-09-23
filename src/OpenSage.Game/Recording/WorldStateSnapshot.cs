@@ -332,6 +332,7 @@ public sealed class WorldStateArtifactWriter : DisposableBase
     private const byte SnapshotRecord = 1;
     private const byte DeltaRecord = 2;
 
+    private readonly FileStream _stream;
     private readonly StateWriter _writer;
 
     public WorldStateArtifactWriter(string path, IGame game)
@@ -342,8 +343,11 @@ public sealed class WorldStateArtifactWriter : DisposableBase
             Directory.CreateDirectory(directory);
         }
 
-        _writer = AddDisposable(new StateWriter(new FileStream(path, FileMode.Create, FileAccess.Write), game));
-        AddDisposeAction(_writer.Dispose);
+        // FileShare.Read keeps the artifact loadable while the recorder holds
+        // the write stream; disposal order (reverse registration) closes the
+        // writer before the stream so the handle is released on Windows.
+        _stream = AddDisposable(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read));
+        _writer = AddDisposable(new StateWriter(_stream, game));
     }
 
     public void WriteSnapshot(WorldStateSummary summary)
@@ -376,10 +380,11 @@ public static class WorldStateArtifact
 
         // FileShare.ReadWrite: artifacts are flushed per record, so loading is
         // legal while the owning recorder still holds the write stream (Windows
-        // refuses an exclusive-mode open in that state).
-        using var reader = new StateReader(
-            new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite),
-            game);
+        // refuses an exclusive-mode open in that state). The persister leaves
+        // the stream open, so dispose it explicitly; a leaked handle would keep
+        // the file locked on Windows until finalization.
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StateReader(stream, game);
         while (reader.BaseStream.Position < reader.BaseStream.Length)
         {
             var tag = byte.MaxValue;

@@ -4,7 +4,8 @@ namespace OpenSage.IO;
 
 /// <summary>
 /// Read-only file system over an ordinary ZIP archive. Entry paths are
-/// normalized and looked up case-insensitively; duplicate normalized names
+/// normalized to forward slashes (the ZIP canonical separator, regardless of
+/// host OS) and looked up case-insensitively; duplicate normalized names
 /// are rejected instead of resolved by archive order. The archive stays
 /// alive until the file system is disposed and every open returns a fresh
 /// stream.
@@ -16,6 +17,13 @@ public sealed class ZipFileSystem : FileSystem
     private readonly Dictionary<string, HashSet<string>> _directories = new(StringComparer.OrdinalIgnoreCase);
 
     private sealed record IndexedEntry(string CanonicalPath, ZipArchiveEntry Entry);
+
+    private const char Separator = '/';
+
+    private static string NormalizeZipPath(string path)
+    {
+        return path.Replace('\\', Separator);
+    }
 
     public ZipFileSystem(Stream stream)
     {
@@ -33,7 +41,7 @@ public sealed class ZipFileSystem : FileSystem
     {
         foreach (var entry in _archive.Entries)
         {
-            var normalizedPath = NormalizeFilePath(entry.FullName).Trim(Path.DirectorySeparatorChar);
+            var normalizedPath = NormalizeZipPath(entry.FullName).Trim(Separator);
             if (normalizedPath.Length == 0)
             {
                 continue;
@@ -66,7 +74,7 @@ public sealed class ZipFileSystem : FileSystem
 
     public override FileSystemEntry? GetFile(string filePath)
     {
-        var normalizedPath = NormalizeFilePath(filePath).Trim(Path.DirectorySeparatorChar);
+        var normalizedPath = NormalizeZipPath(filePath).Trim(Separator);
         if (!_files.TryGetValue(normalizedPath, out var indexed))
         {
             return null;
@@ -80,7 +88,7 @@ public sealed class ZipFileSystem : FileSystem
         string searchPattern = "*",
         SearchOption searchOption = SearchOption.TopDirectoryOnly)
     {
-        var normalizedDirectory = NormalizeFilePath(directoryPath).Trim(Path.DirectorySeparatorChar);
+        var normalizedDirectory = NormalizeZipPath(directoryPath).Trim(Separator);
 
         var search = new SearchPattern(searchPattern);
 
@@ -104,7 +112,7 @@ public sealed class ZipFileSystem : FileSystem
         {
             var childPath = directoryPath.Length == 0
                 ? child
-                : directoryPath + Path.DirectorySeparatorChar + child;
+                : directoryPath + Separator + child;
             if (_files.ContainsKey(childPath))
             {
                 yield return childPath;
@@ -130,13 +138,13 @@ public sealed class ZipFileSystem : FileSystem
 
     private static string GetParentDirectory(string path)
     {
-        var separatorIndex = path.LastIndexOf(Path.DirectorySeparatorChar);
+        var separatorIndex = path.LastIndexOf(Separator);
         return separatorIndex < 0 ? string.Empty : path[..separatorIndex];
     }
 
     private static string GetFileName(string path)
     {
-        var separatorIndex = path.LastIndexOf(Path.DirectorySeparatorChar);
+        var separatorIndex = path.LastIndexOf(Separator);
         return separatorIndex < 0 ? path : path[(separatorIndex + 1)..];
     }
 
