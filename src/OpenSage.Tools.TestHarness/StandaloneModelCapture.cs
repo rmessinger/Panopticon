@@ -130,6 +130,8 @@ internal static class StandaloneModelCapture
                     Opacity = 1.0f,
                     TintColor = Vector3.One,
                 });
+
+            FlushMeshWorldConstants(game, modelInstance);
         }
 
         renderPipeline.BuildingRenderList += OnBuildingRenderList;
@@ -173,6 +175,31 @@ internal static class StandaloneModelCapture
         finally
         {
             renderPipeline.BuildingRenderList -= OnBuildingRenderList;
+        }
+    }
+
+    /// <summary>
+    /// Uploads every mesh's world constants synchronously before the render passes execute,
+    /// so the per-item update inside <see cref="ModelMeshInstance.OnBeforeRender"/> is skipped
+    /// by its dirty check. Without this, hardware Vulkan drivers (RADV) can execute those
+    /// inline command-list buffer updates after the draws that read them, rendering some
+    /// meshes with stale world matrices; serializing drivers (llvmpipe) never expose the race.
+    /// Captures serialize frames via WaitForIdle, so synchronous CPU writes are safe here.
+    /// </summary>
+    private static void FlushMeshWorldConstants(Game game, ModelInstance modelInstance)
+    {
+        var model = modelInstance.Model;
+        for (var i = 0; i < model.SubObjects.Length; i++)
+        {
+            var meshInstance = modelInstance.MeshInstances[i];
+            if (meshInstance is null)
+            {
+                continue;
+            }
+
+            var world = modelInstance.AbsoluteBoneTransforms[model.SubObjects[i].Bone.Index];
+            meshInstance.RenderItemConstantsBufferVS.Value.World = world;
+            meshInstance.RenderItemConstantsBufferVS.Update(game.GraphicsDevice);
         }
     }
 
