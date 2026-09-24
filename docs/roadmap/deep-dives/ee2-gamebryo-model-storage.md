@@ -190,7 +190,7 @@ targets plus two minimal corpus files (`NULL.nifcache`, `road_15.nifcache`):
   The file ends with an 8-byte footer: `u32 1`, `u32 0`.
 - `NiObjectNET` field order at 10.1.0.0: sized-string name, extra-data count (`u32`) plus
   block refs, then a single controller ref (`0xFFFFFFFF` = none in both targets).
-- `NiAVObject`: flags (`u16`), translation (3x `f32`), rotation (row-major 3x3 `f32`),
+- `NiAVObject`: flags (`u16`), translation (3x `f32`), rotation (3x3, 9x `f32`),
   scale (`f32`), property refs (`u32` count + refs), then a collision-object ref
   (`0xFFFFFFFF` = none in both targets).
 - `NiNode` adds child refs then effect refs (`u32` count + refs each). Null refs (`0xFFFFFFFF`)
@@ -392,17 +392,26 @@ Derived from the accumulated transforms and geometry (all determinants positive,
 
 - Handedness: right-handed. Winding needs no reversal provided the engine target preserves
   the C4 glTF convention (the C4 `(x, y, z) -> (z, x, y)` mapping is an even permutation).
+- Rotation layout: the stored 3x3 is the column-vector rotation map (`v' = M v`), the
+  convention NifSkope renders. The engine composes row-vector (`v' = v R`), so every
+  stored→engine rotation hand-off transposes the matrix. Anchored physically by the Galley
+  oar rest poses: the transpose fans oars outboard at the gunwale, a positional copy
+  rendered them under the keel (caught 2026-09-23 by reviewing the C4c animated captures;
+  translations, identity rotations, determinants, and AABB magnitudes are transpose-blind,
+  which is why C4a self-derived checks never caught it).
 - Up axis: `+Z` (identity root rotations; masts and superstructure extend along `+Z`).
 - Front axis: `-Y`. Bomber evidence: propellers (`y = -5.7`), both pilot meshes
   (`y = -5.4`), and the tail wheel at `y = +6.1` marks the rear of a WW1-style
   tail-dragger; the Galley's longer end is `-Y` (extent `-23.91` vs `+18.32`).
 - Unit scale: meters. Baked world extents (source units, from the importer's unit-tested
-  transform bake): the Galley spans 46.8 along the fore-aft axis, 29.4 across the oars, and
-  34.5 mast-to-keel; the Bomber spans 19.3 wingspan, 13.8 fuselage, 7.6 gear-to-tail. The
+  transform bake): the Galley spans 46.8 along the fore-aft axis, 38.9 across the oars, and
+  33.2 mast-to-keel; the Bomber spans 19.1 wingspan, 14.2 fuselage, 5.4 gear-to-tail. The
   engine unit is feet per C4 (1 m renders 3.28084 units).
-- Baked world AABBs in source units: Galley `x [-14.71, 14.66] y [-23.91, 22.86]
-  z [-9.92, 24.60]`; Bomber `x [-9.66, 9.62] y [-7.25, 6.53] z [-1.95, 5.61]`. The
-  interactive descriptor tests lock these after the engine conversion.
+- Baked world AABBs in source units: Galley `x [-19.47, 19.41] y [-23.91, 22.86]
+  z [-8.61, 24.61]`; Bomber `x [-9.57, 9.55] y [-8.09, 6.15] z [-0.21, 5.20]`. The
+  interactive descriptor tests lock these after the engine conversion. Values re-derived
+  2026-09-23 under the corrected (transposing) rotation hand-off; the oar beam widens and
+  the Bomber pitch sign flips versus the original positional-copy bake.
 - Winding and culling: EE2 triangle winding matches neither engine front-face
   orientation (each cull direction removes nearly the whole mesh), so NIF materials
   import with culling disabled and the C4a winding-reversal rule stays as the

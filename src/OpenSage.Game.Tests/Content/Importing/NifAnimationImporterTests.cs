@@ -121,10 +121,10 @@ public sealed class NifAnimationImporterTests
         {
             Assert.Equal(i / 30.0, channel.Keyframes[i].Time.TotalSeconds, 6);
 
-            // The stored source matrix Rz*Ry*Rx read row-vector equals a
-            // negative axis-angle in System.Numerics, so +y Euler keys spin
-            // by -angle about the engine Y axis.
-            var angle = -MathF.PI / 12f * (i / 30f) / 0.5f;
+            // The stored source matrix Rz*Ry*Rx is the column-vector map,
+            // transposed into the engine's row-vector layout, so +y Euler
+            // keys spin by +angle about the engine Y axis.
+            var angle = MathF.PI / 12f * (i / 30f) / 0.5f;
             var expected = NifTransformConverter.ConjugateSourceRotationToEngine(
                 Quaternion.CreateFromAxisAngle(Vector3.UnitY, angle));
             var reconstructed = Quaternion.Concatenate(

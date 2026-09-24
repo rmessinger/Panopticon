@@ -37,7 +37,11 @@ internal static class NifTransformConverter
 
     /// <summary>
     /// Builds one node's local matrix in row-vector convention (T * R * S)
-    /// and rejects non-finite or degenerate values.
+    /// and rejects non-finite or degenerate values. The stored NIF 3x3 is
+    /// the column-vector map, so it is transposed into the row-vector
+    /// engine layout; anchored by the galley oar rest poses (a positional
+    /// copy rendered oars under the keel, the transpose renders them
+    /// outboard).
     /// </summary>
     internal static Matrix4x4 CreateLocalMatrix(FileFormats.Nif.NifAvObject node)
     {
@@ -53,13 +57,13 @@ internal static class NifTransformConverter
         var scale = node.Scale;
         var m = Matrix4x4.Identity;
         m.M11 = rotation.M11 * scale;
-        m.M12 = rotation.M12 * scale;
-        m.M13 = rotation.M13 * scale;
-        m.M21 = rotation.M21 * scale;
+        m.M12 = rotation.M21 * scale;
+        m.M13 = rotation.M31 * scale;
+        m.M21 = rotation.M12 * scale;
         m.M22 = rotation.M22 * scale;
-        m.M23 = rotation.M23 * scale;
-        m.M31 = rotation.M31 * scale;
-        m.M32 = rotation.M32 * scale;
+        m.M23 = rotation.M32 * scale;
+        m.M31 = rotation.M13 * scale;
+        m.M32 = rotation.M23 * scale;
         m.M33 = rotation.M33 * scale;
         m.M41 = node.Translation.X;
         m.M42 = node.Translation.Y;
