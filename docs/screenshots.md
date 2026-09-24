@@ -82,8 +82,11 @@ dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
   definition each frame (follows camera motion). Small infantry can project to a point that
   misses their own collider (ray pick fails, no tooltip); if that happens, pick a larger unit.
 - `TESTHARNESS_VG_HOVER=x,y` pins the mouse at a fixed screen position instead.
-- F1-key visibility and status-window rendering are unchanged; the synthetic mouse only feeds
-  the tooltip.
+- `TESTHARNESS_VG_OVERLAY_SHOT=1` also opens the validation-ground status window in offscreen
+  captures, including its camera speed sliders and Save button. The first frame may precede the
+  first ImGui draw; inspect a later capture such as `capture_0030.png`.
+- Synthetic mouse positioning only feeds the tooltip; F1 still toggles status-window visibility
+  in windowed runs.
 - Verify the result with a pixel scan: the tooltip is a dark translucent panel docked at the
   right edge above the bottom HUD, with a bright owner-colored text line (red for USA in the
   validation ground) and white text below; a crop and 3x upscale makes it reviewable.

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Numerics;
 using ImGuiNET;
 using OpenSage.Gui;
@@ -37,6 +38,9 @@ public sealed class ValidationGroundOverlay : IDisposable
     private bool _spaceDown;
     private bool _f1Down;
     private bool _statusWindowVisible;
+    private readonly string _cameraSettingsPath = Path.Combine(AppContext.BaseDirectory, "ValidationGroundCameraSettings.json");
+    private ValidationGroundCameraSettings _cameraSettings = new();
+    private string? _cameraSettingsMessage;
 
     private static readonly Vector2? HoverPosition = ParseHoverPosition(
         Environment.GetEnvironmentVariable("TESTHARNESS_VG_HOVER"));
@@ -87,6 +91,7 @@ public sealed class ValidationGroundOverlay : IDisposable
         _unsubscribeResize = () => window.ClientSizeChanged -= OnWindowSizeChanged;
 
         _commandList = game.GraphicsDevice.ResourceFactory.CreateCommandList();
+        LoadCameraSettings();
     }
 
     /// <summary>
@@ -99,6 +104,7 @@ public sealed class ValidationGroundOverlay : IDisposable
     internal ValidationGroundOverlay(Game game, Veldrid.OutputDescription outputDescription, int width, int height)
     {
         _game = game;
+        _statusWindowVisible = Environment.GetEnvironmentVariable("TESTHARNESS_VG_OVERLAY_SHOT") is not null;
         _imgui = new ImGuiRenderer(
             game.GraphicsDevice,
             outputDescription,
@@ -203,9 +209,63 @@ public sealed class ValidationGroundOverlay : IDisposable
             }
         }
 
+        ImGui.Separator();
+        ImGui.Text("Camera movement speed");
+        var horizontal = _cameraSettings.HorizontalSpeed;
+        if (ImGui.SliderFloat("Horizontal", ref horizontal, ValidationGroundCameraSettings.MinimumSpeed, ValidationGroundCameraSettings.MaximumSpeed, "%.1fx"))
+        {
+            _cameraSettings.HorizontalSpeed = horizontal;
+            ApplyCameraSettings();
+        }
+
+        var vertical = _cameraSettings.VerticalSpeed;
+        if (ImGui.SliderFloat("Vertical", ref vertical, ValidationGroundCameraSettings.MinimumSpeed, ValidationGroundCameraSettings.MaximumSpeed, "%.1fx"))
+        {
+            _cameraSettings.VerticalSpeed = vertical;
+            ApplyCameraSettings();
+        }
+
+        if (ImGui.Button("Save camera speed"))
+        {
+            try
+            {
+                _cameraSettings.Save(_cameraSettingsPath);
+                _cameraSettingsMessage = "Camera speed saved.";
+            }
+            catch (Exception ex)
+            {
+                _cameraSettingsMessage = $"Save failed: {ex.Message}";
+            }
+        }
+
+        if (_cameraSettingsMessage != null)
+        {
+            ImGui.TextWrapped(_cameraSettingsMessage);
+        }
+
         ImGui.TextDisabled("F1 hides this window. Hover a unit for details.");
 
         ImGui.End();
+    }
+
+    private void LoadCameraSettings()
+    {
+        try
+        {
+            _cameraSettings = ValidationGroundCameraSettings.Load(_cameraSettingsPath);
+            ApplyCameraSettings();
+        }
+        catch (Exception ex)
+        {
+            _cameraSettingsMessage = $"Camera settings load failed: {ex.Message}";
+        }
+    }
+
+    private void ApplyCameraSettings()
+    {
+        var translator = _game.Scene3D.TacticalView.LookAtTranslator;
+        translator.HorizontalSpeedMultiplier = _cameraSettings.HorizontalSpeed;
+        translator.VerticalSpeedMultiplier = _cameraSettings.VerticalSpeed;
     }
 
     private void DrawObjectTooltip()

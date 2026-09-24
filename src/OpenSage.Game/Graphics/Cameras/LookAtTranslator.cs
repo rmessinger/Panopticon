@@ -25,6 +25,10 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
 
     public bool IsEdgeScrollingEnabled { get; set; } = false;
 
+    public float HorizontalSpeedMultiplier { get; set; } = 1f;
+
+    public float VerticalSpeedMultiplier { get; set; } = 1f;
+
     private string? _prevCursor;
 
     // TODO(Port): Move this to InGameUI
@@ -52,9 +56,8 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
     // World-space XY point around which the camera pivots when middle mouse is held
     private System.Numerics.Vector2? _pivotWorldPos;
 
-    // Drag-to-pan state: world-space anchor locked to cursor on right-button-down
+    // Drag-to-pan state
     private bool _isDraggingPan;
-    private System.Numerics.Vector2 _panAnchorWorld;
 
     // C++ version also has _isChangingFOV and _lastPlaneID, but they're only used for debugging
 
@@ -224,7 +227,6 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                     {
                         // Right drag = drag-to-pan in Total War mode
                         _isDraggingPan = true;
-                        _panAnchorWorld = _tacticalView.GetGroundPointAtScreen(message.Value.MousePosition);
                     }
                     else
                     {
@@ -302,6 +304,7 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
                         _lastMouseMoveTime = gameTime.TotalTime.TotalMilliseconds;
                     }
 
+                    var previousMousePos = _currentPos;
                     _currentPos = newMousePos;
 
                     var screenSize = _tacticalView.Camera.ScreenSize;
@@ -339,8 +342,10 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
 
                     if (_isDraggingPan)
                     {
+                        var previousWorld = _tacticalView.GetGroundPointAtScreen(previousMousePos);
                         var currentWorld = _tacticalView.GetGroundPointAtScreen(_currentPos);
-                        var delta = _panAnchorWorld - currentWorld;
+                        var delta = previousWorld - currentWorld;
+                        delta *= new Vector2(HorizontalSpeedMultiplier, VerticalSpeedMultiplier);
                         _tacticalView.PanByWorldDelta(delta);
                         if (_pivotWorldPos.HasValue)
                         {
@@ -425,8 +430,8 @@ public sealed class LookAtTranslator(TacticalView tacticalView, CursorManager cu
         else if (IsScrolling)
         {
             var speedFactor = new Vector2(
-                _gameData.HorizontalScrollSpeedFactor,
-                _gameData.VerticalScrollSpeedFactor
+                _gameData.HorizontalScrollSpeedFactor * HorizontalSpeedMultiplier,
+                _gameData.VerticalScrollSpeedFactor * VerticalSpeedMultiplier
             );
 
             // TODO: Integrate this with settings
