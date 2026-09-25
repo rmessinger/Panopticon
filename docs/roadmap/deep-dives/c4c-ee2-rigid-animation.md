@@ -141,7 +141,9 @@ target ref `-1`. KF files contain no `NiNode`, so `NifFile.Roots` is empty for t
 An XYZ key triple `(x, y, z)` reproduces the stored `NiAVObject` rotation, read exactly as
 C4a's `NifMatrix33`, as the column-vector product `Rz(z) * Ry(y) * Rx(x)`. The Galley Idle
 `R_OAR14` triple `(2.3865, 0.5080, -1.1135)` matches its rest matrix to 1.1e-4. No other axis
-order or transpose matches within 0.01.
+order or transpose matches within 0.01. The stored matrix is the column-vector map, so the
+engine hand-off transposes it (see the
+[C4a rotation-layout note](ee2-gamebryo-model-storage.md#913-source-convention-and-the-import-contract-matrix)).
 
 ### 4.2 Quadratic keys
 

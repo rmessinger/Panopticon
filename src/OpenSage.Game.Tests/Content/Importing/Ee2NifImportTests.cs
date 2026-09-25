@@ -102,11 +102,14 @@ public sealed class Ee2NifImportTests
         AssertTexture0(model, i: 0, expected: "nwg1_galley.tga");
         AssertTexture0(model, i: 6, expected: "nwg1_galley.tga");
 
-        // C4a-01 world AABB in source units x [-14.71, 14.66],
-        // y [-23.91, 22.86], z [-9.92, 24.60]; engine = (-y, x, z) * feet.
+        // World AABB re-derived after the 2026-09-23 NIF rotation-convention
+        // fix (stored 3x3 transposed into the row-vector engine layout; the
+        // oars now bake outboard instead of under the keel). Source units
+        // x [-19.47, 19.41], y [-23.91, 22.86], z [-8.61, 24.61];
+        // engine = (-y, x, z) * feet.
         AssertBounds(model,
-            new Vector3(-22.860f, -14.712f, -9.922f) * FeetPerMeter,
-            new Vector3(23.911f, 14.656f, 24.604f) * FeetPerMeter,
+            new Vector3(-22.8616f, -19.4721f, -8.6116f) * FeetPerMeter,
+            new Vector3(23.9142f, 19.4147f, 24.6073f) * FeetPerMeter,
             tolerance: 0.2f);
     }
 
@@ -159,11 +162,14 @@ public sealed class Ee2NifImportTests
             new Vector3(0.15294118f, 0.15294118f, 0.15294118f),
             MeshAt(model, 3).Materials[0].FixedFunctionShading.Specular);
 
-        // C4a-01 world AABB in source units x [-9.66, 9.62],
-        // y [-7.25, 6.53], z [-1.95, 5.61]; engine = (-y, x, z) * feet.
+        // World AABB re-derived after the 2026-09-23 NIF rotation-convention
+        // fix (the root pitch sign flipped with the transpose, so the nose
+        // and gear redistribute along the longitudinal and vertical axes).
+        // Source units x [-9.57, 9.55], y [-8.09, 6.15], z [-0.21, 5.20];
+        // engine = (-y, x, z) * feet.
         AssertBounds(model,
-            new Vector3(-6.535f, -9.660f, -1.953f) * FeetPerMeter,
-            new Vector3(7.248f, 9.622f, 5.608f) * FeetPerMeter,
+            new Vector3(-8.0884f, -9.5667f, -0.2140f) * FeetPerMeter,
+            new Vector3(6.1453f, 9.5501f, 5.2007f) * FeetPerMeter,
             tolerance: 0.2f);
     }
 
