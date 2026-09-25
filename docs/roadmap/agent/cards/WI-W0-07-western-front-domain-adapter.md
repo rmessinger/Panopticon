@@ -1,36 +1,32 @@
-# Task Card `WI-W0-07`: Implement the Western Front domain adapter
+# Task Card `WI-W0-07`: Add the Western Front domain adapter
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-07` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-04`, `WI-W0-06`, `WI-A4-44` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
-Implement `WesternFrontDomainModel : ISimulationDomainModel, IDomainStateProjection` per the §8 mapping.
+Add `WesternFrontDomainModel` implementing `ISimulationDomainModel` and `IDomainStateProjection`.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §8.
-- `src/Panopticon.Simulation/Simulation/ISimulationDomainModel.cs`.
-- `src/Panopticon.Simulation/Simulation/Transport/TransportGraphDomainModel.cs`: adapter pattern.
-- `src/Panopticon.Simulation/Simulation/State/IDomainStateProjection.cs`.
+- `src/Panopticon.Simulation/Simulation/ISimulationDomainModel.cs:15-63`.
+- `docs/roadmap/deep-dives/a4-4-domain-state-projection.md` §5.
 
 ## Steps
 
-1. Add `WesternFrontDomainModel.Create(IGameEngine, WesternFrontScenarioOptions, WesternFrontClockOptions)`
-   wrapping scenario, topology, registry, and scheduler.
-2. `Initialize` attaches the scheduler to `TickStarting` with the engine's `MsPerLogicFrame`.
-3. Implement every §8 member. `CaptureState` emits records in ordinal key order through the
-   `WI-W0-02` field indices; `aggregate.members` is the space-joined ordinal member list.
-4. Tests on `MockedGameTest`: a host runs 10 frames; entity captures are id-ordered; topology keys
-   per entity type; authority for a `link:` key returns the tail region controller id; state record
-   counts per kind match the scenario; metric series names match §8.
+1. Implement every §8 mapping.
+2. Subscribe scheduler advancement in `Initialize`.
+3. Capture state records in ordinal key order.
+4. Capture entities in object-id order and use soldier cell topology for tactical objects.
+5. Add tests for domain id, topology keys, state capture, schema validation, and scheduler subscription.
 
 ## Files likely to change
 
@@ -39,8 +35,9 @@ Implement `WesternFrontDomainModel : ISimulationDomainModel, IDomainStateProject
 
 ## Acceptance criteria
 
-- [ ] `SimulationHost` runs the domain with no change to host code.
-- [ ] Every captured record passes schema vector-length checks.
+- [ ] `CaptureState` includes theater, operational, aggregate, and soldier records.
+- [ ] `CaptureEntities` returns soldiers, not squads.
+- [ ] `ResolveInteractionAuthority` maps cell keys to containing region controllers.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -54,10 +51,10 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-`conservation-residual` metrics may report zero placeholders until `WI-W0-08`.
+No ledger residual implementation beyond exposing captured values.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-W0-08`.
+- List follow-up cards to create: none.

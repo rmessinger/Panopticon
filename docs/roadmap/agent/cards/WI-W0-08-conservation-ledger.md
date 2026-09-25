@@ -3,34 +3,29 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-08` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-07` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
-Make `WesternFrontLedger` the only mutation path for conserved fields and report real conservation residuals.
+Add `WesternFrontLedger` as the only mutation path for conserved fields and expose residual metrics.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §9.
 - `docs/roadmap/deep-dives/a4-4-domain-state-projection.md` §4.
-- `src/Panopticon.Simulation.WesternFront/State/` and `WesternFrontDomainModel.cs`.
+- `src/Panopticon.Simulation.WesternFront/WesternFrontDomainModel.cs` from `WI-W0-07`.
 
 ## Steps
 
-1. Add `WesternFrontLedger` with `Move(family, fromKey, toKey, amount)`,
-   `Produce(family, side, amount)`, and `Sink(family, fromKey, sinkField, amount)`; resolve keys
-   through the registry and scenario; reject negative amounts, negative results, family mismatch,
-   and cross-side moves with `InvalidOperationException`.
-2. Keep an ordered `LedgerEntry` list per operational tick for diagnostics.
-3. Replace the placeholder `conservation-residual` metrics with `DomainConservation.Residuals`
-   against the run's first captured frame.
-4. Tests: formation to squad, depot to formation, squad to the `killed` sink, and produce each leave
-   residuals empty; an invalid operation throws and changes nothing.
+1. Add holdings references for pool, depot, link, formation, soldier, and ledger sink fields.
+2. Implement `Move`, `Produce`, and `Sink` with negative-result rejection.
+3. Add residual metric sampling using `DomainConservation.Residuals` against a baseline frame.
+4. Add tests for successful moves, negative rejection, source/sink balancing, and residual emptiness.
 
 ## Files likely to change
 
@@ -40,8 +35,9 @@ Make `WesternFrontLedger` the only mutation path for conserved fields and report
 
 ## Acceptance criteria
 
-- [ ] Failed operations leave every holding unchanged.
-- [ ] Residuals stay empty across a scripted sequence of every operation type.
+- [ ] Depot to formation to soldier to ledger sink leaves no residual.
+- [ ] Attempting to move more than a holding contains throws.
+- [ ] Residual metric keys include family and side.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -55,10 +51,10 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-No gameplay rule decides amounts here; callers supply them.
+No W1 combat, logistics, or consumption rules.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-W0-09`.
+- List follow-up cards to create: none.

@@ -66,6 +66,24 @@ Source of truth:
 |---|---|---|
 | [track-a-a4-domain-state-projection.md](track-a-a4-domain-state-projection.md) | A4-4a…A4-4d | Domain state projection (WI-A4-42..45) |
 
+## Track B · B1 : Benchmarking
+
+Source of truth: [deep-dives/b1-benchmarking.md](../deep-dives/b1-benchmarking.md) :
+[Architecture diagrams §](../deep-dives/b1-benchmarking.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b1-benchmarking.md](track-b-b1-benchmarking.md) | B1-1…B1-7 | Benchmarking utilities (WI-B1-01..07) |
+
+## Track B · B4a : Larger maps
+
+Source of truth: [deep-dives/b4a-larger-maps.md](../deep-dives/b4a-larger-maps.md) :
+[Architecture diagrams §](../deep-dives/b4a-larger-maps.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b4a-larger-maps.md](track-b-b4a-larger-maps.md) | B4a-1…B4a-6 | Larger maps (WI-B4a-01..11) |
+
 ## Track B · B4b : Geospatial map generation
 
 Source of truth:
@@ -75,6 +93,24 @@ Source of truth:
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | B4b-1…B4b-6b | Geospatial map generation (WI-B4b-01..24) |
+
+## Track B · B6 : Distributed simulation
+
+Source of truth: [deep-dives/b6-distributed-simulation.md](../deep-dives/b6-distributed-simulation.md) :
+[Architecture diagrams §9](../deep-dives/b6-distributed-simulation.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b6-distributed-simulation.md](track-b-b6-distributed-simulation.md) | B6-1, B6-2, B6-6 | Distributed simulation (WI-B6-01..10) |
+
+## Track B · B7 : Variable fidelity
+
+Source of truth: [deep-dives/b7-variable-fidelity.md](../deep-dives/b7-variable-fidelity.md) :
+[Architecture diagrams §9](../deep-dives/b7-variable-fidelity.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b7-variable-fidelity.md](track-b-b7-variable-fidelity.md) | B7-1, B7-4, B7-6 | Variable fidelity (WI-B7-01..07) |
 
 ## Track C · C1 : Format-agnostic import abstraction
 
@@ -214,6 +250,14 @@ Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dp
 |---|---|---|
 | [track-g-g1-high-dpi.md](track-g-g1-high-dpi.md) | G1-1…G1-4 | High-DPI drawable & resolution correctness |
 
+## Track H · H1-H3 : Map storage
+
+Source of truth: [track-h-storage-formats.md](../track-h-storage-formats.md).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-h-h1-h3-map-storage.md](track-h-h1-h3-map-storage.md) | H1-1…H3-4 | Map storage audit, interchange, package format (WI-H1-01..02, WI-H2-01, WI-H3-01..04) |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :
@@ -222,3 +266,57 @@ Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fix
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-w-w0-charter-fixture.md](track-w-w0-charter-fixture.md) | W0-1…W0-9 | Charter fixture (WI-W0-01..09) |
+
+## Track W · W1 : Aggregate sector simulation
+
+Source of truth: [deep-dives/w1-aggregate-sector.md](../deep-dives/w1-aggregate-sector.md) :
+[Architecture diagrams §13](../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w1-aggregate-sector.md](track-w-w1-aggregate-sector.md) | W1-1…W1-7 | Aggregate sector simulation (WI-W1-01..15) |
+
+## Track W · W2 : Fidelity promotion and reconciliation
+
+Source of truth: [deep-dives/w2-fidelity-promotion.md](../deep-dives/w2-fidelity-promotion.md) :
+[Architecture diagrams §10](../deep-dives/w2-fidelity-promotion.md#10-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w2-fidelity-promotion.md](track-w-w2-fidelity-promotion.md) | W2-1…W2-14 | Fidelity promotion (WI-W2-01..14) |
+
+## Track W · W3 : Geospatial sector
+
+Source of truth: [deep-dives/w3-geospatial-sector.md](../deep-dives/w3-geospatial-sector.md) :
+[Architecture diagrams §6](../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w3-geospatial-sector.md](track-w-w3-geospatial-sector.md) | W3-1…W3-10 | Geospatial sector (WI-W3-01..10) |
+
+## Track W · W4 : Command and logistics experiment
+
+Source of truth: [deep-dives/w4-command-logistics-experiment.md](../deep-dives/w4-command-logistics-experiment.md) :
+[Architecture diagrams §6](../deep-dives/w4-command-logistics-experiment.md#6-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w4-command-logistics-experiment.md](track-w-w4-command-logistics-experiment.md) | W4-1…W4-6 | Command and logistics experiment (WI-W4-01..06) |
+
+## Track W · W5 : Distributed regional simulation
+
+Source of truth: [deep-dives/w5-distributed-regional-simulation.md](../deep-dives/w5-distributed-regional-simulation.md) :
+[Architecture diagrams §7](../deep-dives/w5-distributed-regional-simulation.md#7-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w5-distributed-regional-simulation.md](track-w-w5-distributed-regional-simulation.md) | W5-1…W5-8 | Distributed regional simulation (WI-W5-01..08) |
+
+## Track W · W6 : Long-run campaign experiment
+
+Source of truth: [deep-dives/w6-long-run-campaign.md](../deep-dives/w6-long-run-campaign.md) :
+[Architecture diagrams §6](../deep-dives/w6-long-run-campaign.md#6-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w6-long-run-campaign.md](track-w-w6-long-run-campaign.md) | W6-1…W6-8 | Long-run campaign (WI-W6-01..08) |

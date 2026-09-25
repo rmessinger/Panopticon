@@ -22,10 +22,11 @@ Ground the B4b §5.1a chunk layout against the engine and record it as the propo
 
 ## Steps
 
-1. Map the 128-interval chunk to current terrain patch sizes and the ten-unit lattice; note border and apron interactions.
-2. Estimate resident memory per chunk (heights, blend, passability, GPU patch) and whole-front totals at 1 m per game unit.
-3. List engine call sites that assume a whole-map resident grid.
-4. Add a `Chunk contract (proposed)` section to `b4a-larger-maps.md` with the layout table link, estimates, and call-site list; flag open items as Decisions for the operator.
+1. Map the 128-interval chunk to current terrain patch sizes and the ten-unit lattice.
+2. Note border and apron interactions.
+3. Estimate resident memory per chunk and Somme-scale totals.
+4. List engine call sites that assume a whole resident grid.
+5. Update the B4a chunk contract section if the source audit changes it.
 
 ## Files likely to change
 
@@ -34,19 +35,20 @@ Ground the B4b §5.1a chunk layout against the engine and record it as the propo
 ## Acceptance criteria
 
 - [ ] The section cites file:line for every call site listed.
-- [ ] Memory estimates cover a Somme-scale and whole-front map.
-- [ ] Standard validation passes.
+- [ ] Memory estimates cover a Somme-scale map.
+- [ ] The diagram renders.
 
 ## Validation commands
 
 ```sh
-echo '{"args":["--no-sandbox"]}' > /tmp/pp.json
-npx -y @mermaid-js/mermaid-cli@latest -p /tmp/pp.json -i docs/roadmap/deep-dives/b4a-larger-maps.md -o /tmp/mm/card.svg
+mkdir -p docs/roadmap/.validation-b1h
+echo '{"args":["--no-sandbox"]}' > docs/roadmap/.validation-b1h/pp.json
+npx -y @mermaid-js/mermaid-cli@latest -p docs/roadmap/.validation-b1h/pp.json -i docs/roadmap/deep-dives/b4a-larger-maps.md -o docs/roadmap/.validation-b1h/card.svg
 ```
 
 ## Out of scope / guardrails
 
-No code changes; no B4a-5 implementation.
+No code changes and no H3 serialization.
 
 ## On completion
 

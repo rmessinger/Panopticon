@@ -21,9 +21,11 @@ combat, and uncertainty interact across multiple scales. The research question i
 Panopticon's domain, recording, map, fidelity, and partition seams can support that experiment while
 keeping cost and approximation error measurable.
 
-Success is not defined as simulating every soldier or reproducing a particular campaign. The
-first evidence must show that the same scenario can move between aggregate and detailed
-representations while preserving declared quantities and producing inspectable run output.
+Runs are offline, and detail outranks speed (see the detail-first stance Decision in
+[open-questions.md](../open-questions.md)): the target is an all-tactical run with one entity per
+soldier, not a real-time game. The first evidence must show that the same scenario can move
+between aggregate and detailed representations while preserving declared quantities and producing
+inspectable run output.
 
 The goal remains directional. These values are parameters until experiments justify commitments:
 
@@ -71,7 +73,7 @@ aggregation, tactical activation, sharding, save/load, and replay.
 The tactical layer activates only for bounded regions that require detailed resolution. It may
 contain:
 
-- soldiers or squads;
+- one `GameObject` per soldier, grouped into squads and sections through A4-3;
 - machine-gun and artillery positions;
 - engineers, vehicles, aircraft, and observation assets;
 - trenches, wire, craters, structures, and local terrain;
@@ -169,9 +171,9 @@ Geospatial fidelity is independent from simulation fidelity. A high-resolution D
 require every unit to be tactical, and an aggregate campaign can use the same map package as a
 detailed local engagement.
 
-B4b's first pipeline supports one bounded, low-distortion projected area. A theater spanning
-multiple projection zones requires a later multi-zone or extended-projection experiment. WF-3
-uses one bounded sector and does not claim that B4b already imports the whole front.
+B4b projects each import onto one Transverse Mercator grid with a custom central meridian, so a
+single import can span UTM zones 31 and 32 within its scale-error limit. WF-3 still uses one
+bounded sector.
 
 ## 5. Time and activation
 
@@ -197,7 +199,7 @@ without deterministic input re-simulation.
 ## 6. Command and information
 
 The existing general/commander/soldier hierarchy is a useful local pattern, not a complete
-theater command model. The experiment adds echelons above squads while retaining order-based
+theater command model. The experiment adds echelons above the A4-3 soldier groupings while retaining order-based
 actuation.
 
 Orders carry:
@@ -355,7 +357,8 @@ Evidence:
 
 ## 11. Decision gates
 
-Settled: see the Western Front decision gates Decision in [open-questions.md](../open-questions.md).
+Settled: see the Western Front decision gates Decision in [open-questions.md](../open-questions.md),
+revised by the detail-first stance Decision (offline runs; gates 2, 3, 9, 10, and 12).
 The gates were:
 
 1. Geographic extent, projection, dates, and source datasets.

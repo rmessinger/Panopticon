@@ -23,34 +23,35 @@ Create `deep-dives/h1-h2-map-storage.md` with a grounded audit of the legacy `.m
 
 ## Steps
 
-1. Create the deep dive with an Audience line and sections: scope, current format (chunk table: name, version handling, sizes, resident cost), readers/writers, limits (C1-C6 from B4a), consumers (engine, WorldBuilder, B4b preview).
-2. Add a mermaid class diagram of the current `MapFile` section types.
-3. Link it from the Track H resources row.
+1. Create the deep dive with an Audience line and sections for scope, current format, readers and writers, limits, and consumers.
+2. List every `MapFile` section with version handling and file:line references.
+3. Add a mermaid class diagram of current `MapFile` section types.
+4. Link the deep dive from Track H resources if the coordinator permits editing that file.
 
 ## Files likely to change
 
 - New `docs/roadmap/deep-dives/h1-h2-map-storage.md`
-- `docs/roadmap/track-h-storage-formats.md`
+- `docs/roadmap/track-h-storage-formats.md` if ownership allows
 
 ## Acceptance criteria
 
 - [ ] Every `MapFile` section is listed with file:line references.
 - [ ] The diagram renders.
-- [ ] Standard validation passes.
+- [ ] The audit does not make a format decision.
 
 ## Validation commands
 
 ```sh
-echo '{"args":["--no-sandbox"]}' > /tmp/pp.json
-npx -y @mermaid-js/mermaid-cli@latest -p /tmp/pp.json -i docs/roadmap/deep-dives/h1-h2-map-storage.md -o /tmp/mm/card.svg
+mkdir -p docs/roadmap/.validation-b1h
+echo '{"args":["--no-sandbox"]}' > docs/roadmap/.validation-b1h/pp.json
+npx -y @mermaid-js/mermaid-cli@latest -p docs/roadmap/.validation-b1h/pp.json -i docs/roadmap/deep-dives/h1-h2-map-storage.md -o docs/roadmap/.validation-b1h/card.svg
 ```
 
 ## Out of scope / guardrails
 
-No format decision.
+No format decision and no implementation.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-H1-02`.

@@ -27,7 +27,9 @@ files it names, without roadmap-wide context.
 Every agent working from this guide follows the same loop:
 
 1. Pick a card. Take one card from [`cards/`](cards/) whose Status is `Ready` and whose
-   listed prerequisites are met. Do one card at a time.
+   listed prerequisites are met. Do one card at a time. A `Draft` card is written against types
+   its prerequisites have not implemented yet; once they are `Done`, reconcile the card's names
+   with the landed code and set it to `Ready` before starting it.
 2. Read only what the card names. The card lists the exact files / line ranges and the roadmap
    phase it serves. Read those. Do not go spelunking the whole codebase.
 3. Make the change. Keep the diff small and surgical: scoped to the card's "Files likely to

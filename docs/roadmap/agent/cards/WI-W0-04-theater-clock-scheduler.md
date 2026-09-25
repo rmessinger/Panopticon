@@ -1,38 +1,33 @@
-# Task Card `WI-W0-04`: Add the theater clock and multi-rate scheduler
+# Task Card `WI-W0-04`: Add the theater clock and scheduler
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-04` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-01` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
-Implement `TheaterClock`, `WesternFrontClockOptions`, `IWesternFrontSystem`, and `WesternFrontScheduler` with compressed and tactical modes, testable without a host.
+Add `TheaterClock` and `WesternFrontScheduler` with W0 cadence and mode conversion rules.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §7.
-- `src/Panopticon.Simulation/SimulationHost.cs:20-80`: `SimulationHostTickEventArgs` and `TickStarting`.
+- `src/Panopticon.Simulation/SimulationHost.cs:68-159`: host timing events.
+- `src/Panopticon.Simulation.WesternFront/` enums from `WI-W0-01`.
 
 ## Steps
 
-1. Add `TheaterClock` (whole milliseconds) and `WesternFrontClockOptions` (campaign and
-   operational seconds; campaign must be a positive whole multiple of operational).
-2. Add `IWesternFrontSystem` (`Cadence`, `Step(WesternFrontStepContext)`) and
-   `WesternFrontStepContext` (host frame, theater ms, operational tick index, campaign tick index).
-3. Add `WesternFrontScheduler` with `Register`, `RequestMode`, `Advance(uint hostFrame, float msPerLogicFrame)`,
-   `Mode`, and `Conversions`. Queued mode changes apply only on an operational boundary. Tactical
-   time is `entryMs + round(frames * msPerLogicFrame)`.
-4. Add `AttachTo(SimulationHost host, float msPerLogicFrame)` subscribing `Advance` to `TickStarting`.
-5. Tests: default cadences in compressed mode (operational every frame, campaign every 36 frames);
-   tactical mode at 1000/30 ms reaches the first operational boundary at frame 18000 without drift;
-   a mid-interval mode request applies at the next boundary and appends one `ClockConversion`;
-   campaign systems run before operational systems on shared boundaries.
+1. Add `WesternFrontClockOptions` with defaults operational 60 s and campaign 3600 s.
+2. Add `TheaterClock`, `ClockConversion`, `IWesternFrontSystem`, and `WesternFrontScheduler`.
+3. Advance compressed mode by 60000 ms per host frame.
+4. In tactical mode compute time as `entryMs + round(tacticalFrames * MsPerLogicFrame)`.
+5. Queue mode changes and apply them only on operational boundaries.
+6. Add scheduler unit tests with default and shortened cadence options.
 
 ## Files likely to change
 
@@ -41,8 +36,9 @@ Implement `TheaterClock`, `WesternFrontClockOptions`, `IWesternFrontSystem`, and
 
 ## Acceptance criteria
 
-- [ ] Every §7 rule holds in tests without constructing a `SimulationHost`.
-- [ ] Invalid cadence options throw `ArgumentException`.
+- [ ] Default compressed mode produces one campaign tick every 60 host frames.
+- [ ] Shortened 10 s operational cadence produces one tactical operational boundary after 300 30-fps frames.
+- [ ] Both mode conversions are recorded on operational boundaries.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -56,10 +52,10 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-No gameplay systems. No change to `SimulationHost`.
+No gameplay systems.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-W0-07`.
+- List follow-up cards to create: none.

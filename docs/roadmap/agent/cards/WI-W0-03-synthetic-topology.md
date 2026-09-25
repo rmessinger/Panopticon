@@ -1,37 +1,31 @@
-# Task Card `WI-W0-03`: Build the synthetic regional topology
+# Task Card `WI-W0-03`: Build the synthetic topology fixture
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-03` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-01` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
-Add `WesternFrontTopology` with the §5 synthetic layout, ownership rules, and domain topology description.
+Add the W0 synthetic topology with region, cell, node, link, and authority helpers.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w0-charter-fixture.md` §3 and §5.
-- `src/Panopticon.Simulation/Simulation/Transport/TransportGraphTopology.cs`: topology type pattern.
-- `src/Panopticon.Simulation/Simulation/Types/DomainTopology.cs`.
+- `docs/roadmap/deep-dives/w0-charter-fixture.md` §5.
+- `src/Panopticon.Simulation/Simulation/Types/DomainTopologyDescription.cs`: topology DTO.
+- `src/Panopticon.Simulation.WesternFront/` key helpers from `WI-W0-01`.
 
 ## Steps
 
-1. Add immutable `Sector`, `Region` (key, sector, column, bounds, owner side), `DepotNode` (key,
-   region, side, position), and `TransportLink` (key, from, to, rail or road).
-2. Add `WesternFrontTopology.CreateSynthetic()` producing 2 sectors, 8 regions, 6 nodes, and 8
-   links exactly as §5.
-3. Add `RegionAt(Vector2)`, `CellKeyAt(Vector2)`, `RegionOf(key)` for node, link, and cell keys,
-   and `LinkOwnerRegion(linkKey)` (the tail node's region).
-4. Add `Describe(IReadOnlySet<string> activeRegions)` returning `DomainTopologyDescription`: every
-   sector, region, node, and link key, region adjacencies, link endpoints, and cells only for the
-   given regions.
-5. Tests for counts, ownership by column, link owner, cell keys at region corners, and adjacency.
+1. Add topology records for sectors, regions, cells, nodes, links, and adjacency.
+2. Build the two-sector, four-column fixture with 3280-unit regions and 8 x 8 cells of 410 units.
+3. Implement `RegionOf`, `CellOf`, `LinkOwnerRegion`, and bounded `DescribeTopology` projection.
+4. Add tests for dimensions, ownership, adjacency, link ownership, and cell keys.
 
 ## Files likely to change
 
@@ -40,8 +34,9 @@ Add `WesternFrontTopology` with the §5 synthetic layout, ownership rules, and d
 
 ## Acceptance criteria
 
-- [ ] `LinkOwnerRegion("link:blue.rail->blue.dump1")` returns the rail node's region.
-- [ ] `Describe` with no active regions lists no `cell:` keys; with one active region it lists exactly 64.
+- [ ] Every region reports width and height 3280 world units.
+- [ ] Every region has 64 cells and each cell is 410 world units wide.
+- [ ] `link:blue.rail->blue.dump0` is owned by the tail node region.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -55,10 +50,10 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-No geospatial input (W3). No movement or routing.
+No scenario objects or state capture.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-W0-06`.
+- List follow-up cards to create: none.

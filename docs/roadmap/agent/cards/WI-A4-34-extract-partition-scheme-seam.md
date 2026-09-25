@@ -8,7 +8,7 @@
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-10`, `WI-A4-31`; B6-1 contract must be implementation-ready |
-| Diagrams | [B6 §6](../../deep-dives/b6-distributed-simulation.md#6-architecture-diagrams) |
+| Diagrams | [B6 §9](../../deep-dives/b6-distributed-simulation.md#9-architecture-diagrams) |
 
 ## Goal
 

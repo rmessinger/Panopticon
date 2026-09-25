@@ -3,12 +3,12 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-09` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-08` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
@@ -22,25 +22,21 @@ Add the end-to-end evidence test for the W0 milestone and close the phase.
 
 ## Steps
 
-1. Add `WesternFrontCharterFixtureTests` on `MockedGameTest` running the §10 sequence with a
-   temporary domain-state artifact path and cadence options of 10 s operational, 60 s campaign.
-2. Register a test system that performs one scripted ledger operation of each type on chosen
-   operational ticks.
-3. Assert every §10 bullet, loading the artifact through `DomainStateArtifact.Load` for the
-   reconstruction comparisons.
-4. Close the phase: W0 `Done` in the track doc, checklist ticks, README progress, and the charter's
-   WF-0 status line.
+1. Add `WesternFrontCharterFixtureTests` on `MockedGameTest` running the §10 sequence with a repository-local artifact path and cadence options of 10 s operational, 60 s campaign.
+2. Register a test system that performs one scripted ledger operation of each type on chosen operational ticks.
+3. Assert every §10 bullet, loading the artifact through `DomainStateArtifact.Load` for reconstruction comparisons.
+4. Close the phase in roadmap docs only if the implementation is actually complete.
 
 ## Files likely to change
 
 - `test/Panopticon.Simulation.Tests/WesternFront/WesternFrontCharterFixtureTests.cs`
-- `docs/roadmap/track-w-western-front.md`, `docs/roadmap/implementation-checklist.md`,
-  `docs/roadmap/README.md`, `docs/roadmap/deep-dives/western-front-scale-simulation.md`
+- Roadmap status docs if the implementation completes the phase
 
 ## Acceptance criteria
 
 - [ ] Every §10 assertion passes.
-- [ ] The test deletes its temporary artifact.
+- [ ] The test deletes its repository-local artifact.
+- [ ] Two mode changes are recorded and both occur on operational boundaries.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -60,4 +56,4 @@ No W1 systems. If an assertion needs a schema change, stop and update the deep d
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Follow-up: decompose W1 into `WI-W1-*` cards from [w1-aggregate-sector.md](../../deep-dives/w1-aggregate-sector.md).
+- List follow-up cards to create: none.

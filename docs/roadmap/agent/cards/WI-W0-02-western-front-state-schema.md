@@ -1,44 +1,42 @@
-# Task Card `WI-W0-02`: Declare the Western Front state schema
+# Task Card `WI-W0-02`: Add the Western Front state schema
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-02` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-01`, `WI-A4-42` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
-Declare the §4 state vector as one A4-4 `DomainStateSchema` (version 1).
+Add `WesternFrontSchema` version 1 matching the W0 state vector.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §4.
-- `src/Panopticon.Simulation/Simulation/State/DomainStateSchema.cs` (from `WI-A4-42`).
+- `docs/roadmap/deep-dives/a4-4-domain-state-projection.md` §3.
+- `src/Panopticon.Simulation.WesternFront/` types from `WI-W0-01`.
 
 ## Steps
 
-1. Add `WesternFrontSchema.Current`: domain id `western-front`, version 1, kinds `theater`, `pool`,
-   `ledger`, `formation`, `depot`, `link`, `region`, `aggregate`, and `squad` with exactly the §4
-   fields, units, types, roles, families, layers, and reference names.
-2. Add `WesternFrontFamilies` constants for the six conserved families.
-3. Add per-kind field-index constants (for example `FormationFields.Personnel`) so adapters never
-   look up fields by string at capture time.
-4. Add `WesternFrontSchemaTests`: `Validate()` passes; every field has unit and layer; every
-   conserved family has at least one `Holding` and one `Sink` field; kind layers match §4.
+1. Add schema-building code for theater, pool, ledger, formation, depot, link, region, aggregate, and soldier kinds.
+2. Use exact units, quantity types, conservation roles, and families from §4.
+3. Ensure formation references include parent and region, and soldier references include formation and cell.
+4. Add tests that call `Validate`, inspect every kind, and assert conserved fields are integer-only.
 
 ## Files likely to change
 
-- `src/Panopticon.Simulation.WesternFront/State/WesternFrontSchema.cs`
+- `src/Panopticon.Simulation.WesternFront/State/*.cs`
 - `test/Panopticon.Simulation.Tests/WesternFront/WesternFrontSchemaTests.cs`
 
 ## Acceptance criteria
 
-- [ ] The schema validates.
-- [ ] Field-index constants match declaration order (asserted by test).
+- [ ] Schema version is 1 and domain id is `western-front`.
+- [ ] Echelon values include Company 5 and Platoon 6.
+- [ ] Tactical layer kind is `soldier`, not `squad`.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -52,10 +50,10 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-No capture code. A field beyond §4 needs a deep-dive change first.
+No capture, ledger, or recording code.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-W0-05`.
+- List follow-up cards to create: none.

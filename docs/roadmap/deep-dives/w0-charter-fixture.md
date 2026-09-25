@@ -17,12 +17,12 @@ clock can move between compressed and tactical modes at explicit synchronization
 
 ## 1. Decisions applied
 
-From the [Western Front decision gates](../open-questions.md):
+From the latest Western Front decisions:
 
 | Gate | W0 consequence |
 |---|---|
-| 2. Echelons | Persistent formations: army, corps, division, brigade, battalion. Tactical entity: squad (section of about 10). |
-| 3. Clocks | Domain-owned multi-rate scheduler over host logic frames: campaign 6 h, operational 10 min, tactical one logic frame. |
+| 2. Echelons | Persistent formations: army, corps, division, brigade, battalion, company, platoon. Tactical entity: one `GameObject` per soldier. Squads and sections are A4-3 `SquadHierarchy` groupings, not Western Front objects. |
+| 3. Clocks | Domain-owned multi-rate scheduler over host logic frames: campaign 1 h, operational 1 min, tactical one logic frame. Compressed mode advances 60 s per host frame. |
 | 5. Conservation | Personnel, equipment, and supply are integers conserved exactly. Activation triggers stay an experiment input (W2). |
 | 7. Logistics | Commodities: artillery ammunition, small-arms ammunition (SAA), personnel replacements. Links owned by the tail node's region. |
 | 8. Terrain | Per-region summarized terrain: trench, wire, and crater levels. |
@@ -38,12 +38,14 @@ runtime; the domain adds modules and an adapter, not a second engine.
   Referenced by `Panopticon.Simulation.Tests`. `Panopticon.Simulation` grants it
   `InternalsVisibleTo` because module data overrides `internal CreateModule`.
 - Each persistent formation, depot, and region controller is one `GameObject` with a data-only
-  behavior module (`FormationBehavior`, `DepotBehavior`, `RegionControllerBehavior`). Each active
-  squad is one `GameObject` with `SquadBehavior`.
+  behavior module (`FormationBehavior`, `DepotBehavior`, `RegionControllerBehavior`).
+- Each active soldier is one `GameObject` with `SoldierBehavior`, stock object-definition health,
+  its own weapon, and its own ammunition.
 - Modules hold state and never advance it per logic frame. Domain systems advance state from the
-  scheduler, because in compressed mode one host frame spans ten theater minutes.
+  scheduler, because in compressed mode one host frame spans one theater minute.
 - Formation identity is a stable string key, not the `GameObject` id. `FormationRegistry` maps
-  keys to object ids and owns squad-to-formation mapping.
+  keys to object ids and owns soldier-to-formation mapping. A4-3 `SquadHierarchy` may group
+  soldiers for tactical command without changing the Western Front state schema.
 
 ## 3. Stable keys
 
@@ -52,8 +54,8 @@ Keys are lowercase, `:`-prefixed by kind, ordinal-sortable, and never reused wit
 | Kind | Format | Example |
 |---|---|---|
 | Side | `side:<name>` | `side:blue` |
-| Formation | `formation:<side>/<path>` | `formation:blue/a1/c1/d1/b2/bn1` |
-| Squad | `squad:<formation path>/<n>` | `squad:blue/a1/c1/d1/b2/bn1/07` |
+| Formation | `formation:<side>/<path>` | `formation:blue/a1/c1/d1/b2/bn1/co3/pl2` |
+| Soldier | `soldier:<formation path>/<n>` | `soldier:blue/a1/c1/d1/b2/bn1/co3/pl2/0042` |
 | Sector | `sector:<n>` | `sector:0` |
 | Region | `region:<sector>.<n>` | `region:0.2` |
 | Cell | `cell:<sector>.<n>/<x>,<y>` | `cell:0.2/3,1` |
@@ -61,7 +63,9 @@ Keys are lowercase, `:`-prefixed by kind, ordinal-sortable, and never reused wit
 | Link | `link:<from node>-><to node>` | `link:blue.rail->blue.dump0` |
 | Theater singletons | `theater`, `pool:<side>`, `ledger:<side>` | `ledger:red` |
 
-Formation paths name the full parent chain, so a key alone identifies echelon and parent.
+Formation paths name the full parent chain, so a key alone identifies echelon and parent. Echelon
+values are fixed: army `0`, corps `1`, division `2`, brigade `3`, battalion `4`, company `5`,
+platoon `6`.
 
 ## 4. Layers and state vector
 
@@ -116,9 +120,9 @@ Four layers own disjoint record kinds. Every field declares unit, type, and cons
 | `region` | `trench`, `wire`, `crater` | `index` | Real | None | |
 
 `formation` references: `parent`, `region`. `link` references: `from`, `to`. `depot` references:
-`region`. `echelon`: `0` army, `1` corps, `2` division, `3` brigade, `4` battalion. `fidelity`:
-`0` aggregate, `1` operational, `2` tactical. Owner layer for `formation` is operational even
-while its fidelity is aggregate or tactical: the record persists across transitions.
+`region`. `fidelity`: `0` aggregate, `1` operational, `2` tactical. Owner layer for `formation`
+is operational even while its fidelity is aggregate or tactical: the record persists across
+transitions.
 
 ### 4.3 Aggregate layer
 
@@ -137,14 +141,14 @@ and the members' movement and combat while inactive.
 
 | Kind | Field | Unit | Type | Role | Family |
 |---|---|---|---|---|---|
-| `squad` | `object_id` | `id` | Integer | None | |
+| `soldier` | `object_id` | `id` | Integer | None | |
 | | `personnel` | `persons` | Integer | Holding | `personnel` |
 | | `mg` | `guns` | Integer | Holding | `mg` |
 | | `saa` | `rounds` | Integer | Holding | `saa` |
 | | `suppression` | `ratio` | Real | None | |
 
-References: `formation`, `cell`. A partially promoted battalion keeps the unmaterialized
-remainder on its `formation` record; squads hold the rest.
+References: `formation`, `cell`. A partially promoted platoon keeps the unmaterialized remainder
+on its `formation` record; soldiers hold the rest. A soldier record normally holds one person.
 
 ## 5. Topology fixture
 
@@ -156,7 +160,9 @@ sector:1           region:1.0       region:1.1        region:1.2       region:1.
 sector:0           region:0.0       region:0.1        region:0.2       region:0.3
 ```
 
-- Regions are 2000 x 2000 world units; cells are 250 x 250 (8 x 8 per region).
+- Regions are 3280 x 3280 world units; cells are 410 x 410 world units (8 x 8 per region).
+- Each region represents 1 km x 1 km at true scale rounded for the synthetic fixture. Each cell is
+  125 m x 125 m.
 - Nodes per side: `rail` (rear region of sector 0) and `dump0`, `dump1` (front region of each
   sector).
 - Links per side: `rail->dump0`, `rail->dump1`, `dump0->dump1`, `dump1->dump0`.
@@ -172,16 +178,19 @@ sector:0           region:0.0       region:0.1        region:0.2       region:0.
 
 | Side | Formations | Fidelity |
 |---|---|---|
-| blue | army `a1`, corps `c1`, division `d1`, brigades `b1`, `b2`, battalions `b1/bn1`, `b1/bn2`, `b2/bn1`, `b2/bn2`, artillery brigade `ra1` | operational, except `b2/bn1` tactical |
-| blue | reserve division `d2` with two brigades of two battalions | aggregate in `region:0.0` |
+| blue | army `a1`, corps `c1`, division `d1`, brigades `b1`, `b2`, battalions `b1/bn1`, `b1/bn2`, `b2/bn1`, `b2/bn2`, each battalion with four companies and each company with four platoons, plus artillery brigade `ra1` | operational, except platoon `b2/bn1/co1/pl1` tactical |
+| blue | reserve division `d2` with two brigades of two battalions, four companies per battalion, and four platoons per company | aggregate in `region:0.0` |
 | red | mirror of blue under `a1`/`c1`/`d1`, reserve `d2` | operational; reserve aggregate in `region:0.3` |
 
-- Battalion: 800 personnel, 8 MG, 400000 SAA. Artillery brigade: 600 personnel, 24 field guns,
-  8 heavy guns, 20000 artillery rounds. Headquarters echelons hold 0 of each; they exist for
-  identity and command.
-- Tactical promotion in the fixture: `blue/.../b2/bn1` materializes 24 squads (10 personnel,
-  1 in 8 squads with 1 MG, 2000 SAA each) into `cell:0.1/7,3`, leaving 560 personnel, 5 MG, and
-  352000 SAA on the formation record.
+- Platoon: 50 personnel, 1 MG, 25000 SAA. Company: four platoons, 200 personnel, 4 MG, 100000 SAA
+  by child totals. Battalion: four companies, 800 personnel, 16 MG, 400000 SAA by child totals.
+  Artillery brigade: 600 personnel, 24 field guns, 8 heavy guns, 20000 artillery rounds.
+  Headquarters echelons hold 0 of each; they exist for identity and command.
+- Tactical promotion in the fixture: `blue/.../b2/bn1/co1/pl1` materializes 50 soldiers into
+  `cell:0.1/7,3`; soldier `0001` carries the platoon's MG and each soldier receives 500 SAA.
+  The platoon record keeps 0 personnel, 0 MG, and 0 SAA.
+- The promoted battalion still sums to 800 personnel, 16 MG, and 400000 SAA across its company,
+  platoon, and soldier descendants.
 - Pools, depots, and in-transit fields start at fixed values from `WesternFrontScenarioOptions`.
 - Every value is synthetic. No value claims historical accuracy.
 
@@ -192,8 +201,8 @@ per host frame from `SimulationHost.TickStarting`:
 
 | Mode | Theater advance per host frame | Operational tick | Campaign tick |
 |---|---|---|---|
-| Compressed (no active tactical region) | 600 s | every host frame | every 36 host frames |
-| Tactical (one or more active regions) | one logic frame | when theater time crosses a 600 s boundary | when theater time crosses a 21600 s boundary |
+| Compressed (no active tactical region) | 60 s | every host frame | every 60 host frames |
+| Tactical (one or more active regions) | one logic frame | when theater time crosses a 60 s boundary | when theater time crosses a 3600 s boundary |
 
 Rules:
 
@@ -209,7 +218,7 @@ Rules:
 - In compressed mode the host still steps `GameLogic` once per frame. No W0 module updates per
   frame, so the step is a no-op for Western Front state.
 
-Cadences come from `WesternFrontClockOptions` (defaults: campaign 21600 s, operational 600 s;
+Cadences come from `WesternFrontClockOptions` (defaults: campaign 3600 s, operational 60 s;
 campaign must be a whole multiple of operational). W0 registers only a probe system in tests; W1
 adds the gameplay systems.
 
@@ -222,14 +231,14 @@ adds the gameplay systems.
 | `DomainId` | `"western-front"` |
 | `Fidelity` | `DomainFidelityPolicy.Identity` (W2 revisits) |
 | `Initialize(host)` | subscribe the scheduler to `TickStarting` |
-| `CaptureEntities` | formations, depots, region controllers, squads in object-id order; `ScalarA` personnel (depot: artillery rounds), `ScalarB` cohesion (squad: suppression) |
+| `CaptureEntities` | formations, depots, region controllers, soldiers in object-id order; `ScalarA` personnel (depot: artillery rounds), `ScalarB` cohesion (soldier: suppression) |
 | `CapturePlayerMoneyVector` | empty |
-| `TopologyKey` | squad: its `cell:`; formation and depot: its `region:`; region controller: its `region:` |
+| `TopologyKey` | soldier: its `cell:`; formation and depot: its `region:`; region controller: its `region:` |
 | `DescribeTopology` | §5 |
 | `SampleMetrics` | series `personnel` keyed `side:*`, `stock-<commodity>` keyed `side:*`, `theater-time` keyed `theater`, `clock-mode` keyed `theater`, `conservation-residual` keyed `<family>/side:*` |
 | `ResolveInteractionAuthority` | the region controller entity of the interaction's region; for `link:` keys, the tail node's region controller; for `cell:` keys, the containing region's controller |
 | `StateSchema` | §4, version 1 |
-| `CaptureState(frame)` | one record per theater singleton, pool, ledger, depot, link, region, formation, aggregate, and squad |
+| `CaptureState(frame)` | one record per theater singleton, pool, ledger, depot, link, region, formation, aggregate, and soldier |
 
 ## 9. Conservation
 
@@ -242,17 +251,16 @@ no residuals.
 ## 10. Evidence (phase milestone)
 
 A fixture run with a shortened operational cadence (10 s, so a tactical interval is 300 host
-frames; campaign 60 s) runs 40 compressed frames, queues tactical mode, runs 600 frames, queues
-compressed mode, and runs 40 more. It records with `RunRecording` and the domain state artifact.
-A test asserts:
+frames at 30 frames/s; campaign 60 s) runs 40 compressed frames, queues tactical mode, runs 600
+frames, queues compressed mode, and runs 40 more. It records with `RunRecording` and the
+domain-state artifact. A test asserts:
 
 - the schema validates and every field has a non-empty unit and a layer;
 - reconstructed state at the first frame, a campaign boundary, a tactical frame, and the last frame
-  equals the live capture at those frames for
-  theater, operational, aggregate, and tactical records;
+  equals the live capture at those frames for theater, operational, aggregate, and tactical records;
 - the default cadences are covered separately by scheduler unit tests without a host;
 - conservation residuals are empty at every sampled frame after scripted ledger transfers
-  (depot to formation, formation to squad, squad to `ledger` sink);
+  (depot to formation, formation to soldier, soldier to `ledger` sink);
 - `ClockConversion` entries exist at the two mode changes, both on operational boundaries;
 - run-output JSON records `domainId` `western-front` and the domain-state artifact path.
 
@@ -282,6 +290,9 @@ classDiagram
   }
   class IDomainStateProjection {
     <<A4-4>>
+  }
+  class SquadHierarchy {
+    <<A4-3, existing>>
   }
   class WesternFrontDomainModel {
     +DomainId "western-front"
@@ -318,7 +329,7 @@ classDiagram
   class FormationRegistry {
     +Formations IReadOnlyList~FormationKey~
     +ObjectIdOf(key) uint
-    +SquadsOf(key)
+    +SoldiersOf(key)
     +Aggregates
   }
   class WesternFrontLedger {
@@ -330,9 +341,9 @@ classDiagram
     <<BehaviorModule>>
     +State FormationState
   }
-  class SquadBehavior {
+  class SoldierBehavior {
     <<BehaviorModule>>
-    +State SquadState
+    +State SoldierState
   }
   class DepotBehavior {
     <<BehaviorModule>>
@@ -357,14 +368,15 @@ classDiagram
   WesternFrontDomainModel --> FormationRegistry
   WesternFrontDomainModel --> WesternFrontLedger
   WesternFrontScheduler --> TheaterClock
-  WesternFrontScheduler --> IWesternFrontSystem : cadence-ordered
+  WesternFrontScheduler --> IWesternFrontSystem : cadence ordered
   FormationRegistry --> GameObject : key to object id
+  FormationRegistry ..> SquadHierarchy : tactical grouping only
   GameObject --> FormationBehavior
-  GameObject --> SquadBehavior
+  GameObject --> SoldierBehavior
   GameObject --> DepotBehavior
   GameObject --> RegionControllerBehavior
   WesternFrontLedger ..> FormationBehavior : conserved fields
-  WesternFrontLedger ..> SquadBehavior : conserved fields
+  WesternFrontLedger ..> SoldierBehavior : conserved fields
   WesternFrontLedger ..> DepotBehavior : conserved fields
   WesternFrontScheduler ..> SimulationHost : subscribes TickStarting
 ```
@@ -387,7 +399,7 @@ sequenceDiagram
   loop each host frame
     H->>C: TickStarting
     C->>C: apply queued mode change if on operational boundary
-    C->>C: advance theater time (600000 ms or one logic frame)
+    C->>C: advance theater time (60000 ms or one logic frame)
     C->>D: run due campaign, then operational, then tactical systems
     H->>L: AdvanceLogic
     H->>R: TickComplete
@@ -399,14 +411,16 @@ sequenceDiagram
 
 ## Appendix: Current-state hooks (agent context)
 
-- `src/Panopticon.Simulation/SimulationHost.cs:62-68`: `TickStarting`, raised before order
-  dispatch and the logic step.
-- `src/Panopticon.Simulation/SimulationHost.cs:92-99`: host construction calls `Initialize`.
+- `src/Panopticon.Simulation/SimulationHost.cs:68`: `TickStarting`, raised before order dispatch and
+  the logic step.
+- `src/Panopticon.Simulation/SimulationHost.cs:92-99`: host construction calls `DomainModel.Initialize`.
 - `src/Panopticon.Simulation/Simulation/Transport/TransportGraphDomainModel.cs:51-92`: code-built
   `ObjectDefinition` plus `ModuleDataContainer` pattern for data-only modules.
 - `src/Panopticon.Simulation/Simulation/Transport/TransportVehicleUpdate.cs:15-27`: module data with
   `internal override CreateModule`, the reason for `InternalsVisibleTo`.
 - `src/Panopticon.Simulation/AssemblyInfo.cs:3-8`: existing `InternalsVisibleTo` list.
-- `src/Panopticon.Mathematics/IRandom.cs`: `SageRandom`, the seeded source W1 uses.
+- `src/Panopticon.Mathematics/IRandom.cs:6-135`: `IRandom` and `SageRandom`, the seeded source W1 uses.
+- `src/Panopticon.Simulation/Logic/AI/Hierarchy/SquadHierarchy.cs:17-75`: A4-3 squad grouping and
+  persistence by stable object ID.
 - `test/Panopticon.Simulation.Tests/Simulation/SimulationDomainContractTests.cs:71-120`:
   `MockedGameTest` host fixture pattern.

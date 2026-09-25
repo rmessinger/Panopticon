@@ -1,4 +1,4 @@
-# Task Card `WI-H2-01`: Map interchange type design
+# Task Card `WI-H2-01`: Design map interchange for the settled package format
 
 | Field | Value |
 |---|---|
@@ -12,19 +12,21 @@
 
 ## Goal
 
-Design the H2 format-neutral map interchange types that B4b-7 and H3 target, after the operator resolves the WI-H1-02 Decisions.
+Design H2 format-neutral map interchange types for B4b-7, B4a-5, and H3 with the settled directory package and raw chunk-layer encoding.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/h1-h2-map-storage.md`.
-- Resolved H1 Decisions in `docs/roadmap/open-questions.md`.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §6 and §10.1.
+- `docs/roadmap/deep-dives/b4a-larger-maps.md` chunk contract.
+- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.1a and §6.1.
+- `docs/roadmap/agent/cards/WI-H1-02-format-decision-options.md`.
 
 ## Steps
 
-1. Add an interchange section: terrain chunk source, material layers, masks, placed objects, waypoints, sides, provenance, and the transform metadata B4b retains.
-2. Add a mermaid class diagram of the interchange types and their producers (legacy reader, B4b) and consumers (H3 writer, engine loader, WorldBuilder).
-3. Decompose H2 implementation into Ready cards using the task-card template.
+1. Add an interchange section for chunks, material layers, masks, placed objects, waypoints, sides, provenance, and transform metadata.
+2. Ensure every B4b §6.1 payload field has an H2 interchange home.
+3. Add a mermaid class diagram of producers, interchange types, and consumers.
+4. Link provisional H3 cards as package-format follow-up.
 
 ## Files likely to change
 
@@ -34,19 +36,20 @@ Design the H2 format-neutral map interchange types that B4b-7 and H3 target, aft
 ## Acceptance criteria
 
 - [ ] Every B4b §6.1 payload field has an interchange home.
-- [ ] New H2 cards exist and are linked from the deep dive.
-- [ ] Standard validation passes.
+- [ ] The settled H3 directory package is the only target container.
+- [ ] New implementation cards are concrete and linked from the deep dive.
 
 ## Validation commands
 
 ```sh
-echo '{"args":["--no-sandbox"]}' > /tmp/pp.json
-npx -y @mermaid-js/mermaid-cli@latest -p /tmp/pp.json -i docs/roadmap/deep-dives/h1-h2-map-storage.md -o /tmp/mm/card.svg
+mkdir -p docs/roadmap/.validation-b1h
+echo '{"args":["--no-sandbox"]}' > docs/roadmap/.validation-b1h/pp.json
+npx -y @mermaid-js/mermaid-cli@latest -p docs/roadmap/.validation-b1h/pp.json -i docs/roadmap/deep-dives/h1-h2-map-storage.md -o docs/roadmap/.validation-b1h/card.svg
 ```
 
 ## Out of scope / guardrails
 
-No code.
+No H3 writer code and no object-template format design beyond map references.
 
 ## On completion
 

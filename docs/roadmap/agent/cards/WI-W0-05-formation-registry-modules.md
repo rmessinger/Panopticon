@@ -3,48 +3,41 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-05` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-02` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
-Hold Western Front state on the shared `GameObject` runtime through data-only behavior modules, and map stable keys to objects.
+Add data-only behavior modules for W0 state and a registry mapping stable keys to objects.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §2 and §4.
-- `src/Panopticon.Simulation/Simulation/Transport/TransportGraphDomainModel.cs:51-92`: code-built
-  definitions and `ModuleDataContainer`.
-- `src/Panopticon.Simulation/Simulation/Transport/TransportVehicleUpdate.cs`: module data pattern.
-- `src/Panopticon.Simulation/Logic/Object/BehaviorModule.cs`: behavior base type.
+- `src/Panopticon.Simulation/Simulation/Transport/TransportVehicleUpdate.cs:15-27`: data-only module pattern.
+- `src/Panopticon.Simulation.WesternFront/State/` from `WI-W0-02`.
 
 ## Steps
 
-1. Add state classes `FormationState`, `SquadState`, `DepotState`, `RegionState`, `LinkState`,
-   `TheaterState`, `PoolState`, `LedgerState`, and `AggregateState`, one property per §4 field;
-   conserved properties have `internal` setters.
-2. Add data-only modules `FormationBehavior`, `SquadBehavior`, `DepotBehavior`, and
-   `RegionControllerBehavior` with module data classes; none overrides a per-frame update.
-3. Add `FormationRegistry`: `CreateFormation`, `CreateSquad`, `CreateDepot`, `CreateRegionController`,
-   key-to-object-id lookups both ways, `SquadsOf(formationKey)`, and
-   `FormAggregate(regionKey, side, members)`.
-4. Tests on `MockedGameTest`: objects carry the expected module; keys round-trip to object ids;
-   squads map to their formation; aggregate members list in ordinal order.
+1. Add state records for formation, soldier, depot, region, aggregate, pool, ledger, and link state.
+2. Add `FormationBehavior`, `SoldierBehavior`, `DepotBehavior`, and `RegionControllerBehavior` with no per-frame update.
+3. Add `FormationRegistry` mapping formation, soldier, depot, and region keys to object ids.
+4. Add tests for registration, lookup, stable ordering, and soldier-to-formation membership.
 
 ## Files likely to change
 
-- `src/Panopticon.Simulation.WesternFront/State/*.cs`
 - `src/Panopticon.Simulation.WesternFront/Runtime/*.cs`
+- `src/Panopticon.Simulation.WesternFront/State/*.cs`
 - `test/Panopticon.Simulation.Tests/WesternFront/FormationRegistryTests.cs`
 
 ## Acceptance criteria
 
-- [ ] No module added here overrides a per-frame update method.
-- [ ] Creating a duplicate key throws `InvalidOperationException`.
+- [ ] Registry maps one soldier key to its platoon formation.
+- [ ] No W0 behavior module advances state per logic frame.
+- [ ] Registry enumeration is ordinal by stable key.
 - [ ] Standard validation passes.
 
 ## Validation commands
@@ -58,10 +51,10 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-No scenario values, ledger, or domain adapter. Conserved fields change only in tests until `WI-W0-08`.
+No scenario construction or ledger mutation rules.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-W0-06`.
+- List follow-up cards to create: none.

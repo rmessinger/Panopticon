@@ -386,10 +386,11 @@
   settled as follows, and the goal becomes [Track W](track-w-western-front.md).
   1. Extent: a Somme 1916 sector of about 30 x 20 km in UTM zone 31N. W0-W2 use synthetic data;
      W3 generates the sector through B4b; W6 covers July-November 1916.
-  2. Granularity: the battalion is the smallest persistent formation; the tactical entity is a
-     squad of about 10 personnel, one `GameObject` whose health is personnel times per-soldier hp.
-  3. Clocks: a domain-owned multi-rate scheduler over host logic frames. Campaign cadence 6 h,
-     operational 10 min, tactical one logic frame.
+  2. Granularity (revised by the detail-first stance below): the platoon (about 50) is the
+     smallest persistent formation; the tactical entity is one soldier, one `GameObject` with its
+     own health, weapon, and ammunition. Squads and sections are A4-3 groupings, not objects.
+  3. Clocks (revised): a domain-owned multi-rate scheduler over host logic frames. Campaign
+     cadence 1 h, operational 1 min, tactical one logic frame.
   4. Aggregate combat: stochastic Lanchester (square law for aimed fire, linear law for area and
      artillery fire) on a seeded `IRandom`, plus a mean-field variant for comparison.
   5. Promotion and demotion: triggers and hysteresis are an experiment input behind an activation
@@ -399,14 +400,56 @@
   7. Logistics: commodities are artillery ammunition, small-arms ammunition, and personnel
      replacements; a link is owned by its tail node's region.
   8. Terrain outside active regions: per-region summarized trench, wire, and crater levels.
-  9. Sharding: deferred to W5, keyed by region.
-  10. Persistence: recording tiers only through W5; save/load arrives in W6.
+  9. Sharding: deferred to W5, keyed by region, for memory and capacity rather than speed.
+  10. Persistence: recording tiers only through W5; save/load arrives in W6 as a domain-state
+      snapshot plus host save.
   11. Interaction: headless runs plus A5 visualization; no player control.
-  12. Acceptance: W0 and W1 measure only; W2 sets the first approximation-error envelope against
-      an all-detailed reference run.
+  12. Acceptance (revised): W0 and W1 measure only. The all-tactical run is the reference and
+      the primary product; W2 measures aggregate error against a whole-sector all-tactical run.
   Affects [Track W](track-w-western-front.md).
+- Western Front detail-first stance. Decision: Western Front runs are offline, never real time,
+  and detail outranks performance. This revises gates 2, 3, 9, 10, and 12 above. Performance work
+  (B1, B6, B7) measures cost and adds capacity; it does not reduce modelled detail by default.
+  Affects [Track W](track-w-western-front.md), [B1](track-b-scale.md), [B6](deep-dives/b6-distributed-simulation.md),
+  [B7](deep-dives/b7-variable-fidelity.md).
+- Western Front aggregate numerics. Decision: seeds derive from XxHash64 over
+  `runSeed|regionPairKey|tickIndex|streamName`; Poisson draws are exact (Knuth below lambda 10,
+  Hörmann PTRS above); the mean-field accumulator is a fixed-point `long` at 1e-6 personnel;
+  parameters are JSON `{ value, unit }` pairs checked against a unit schema; reference command
+  policies are rule-based and reactive to force ratios in each headquarters' intelligence picture.
+  Experiments use 64 seeds per arm or cell. Affects [W1](deep-dives/w1-aggregate-sector.md),
+  [W2](deep-dives/w2-fidelity-promotion.md), [W4](track-w-western-front.md).
+- Western Front tactical engagement. Decision: placeholder soldiers are `AmericaInfantryRanger`
+  (blue) and `ChinaInfantryRedguard` (red) with stock health; a casualty is an object death,
+  classified killed, wounded, or missing by seeded draw. Artillery stays operational and fires into
+  an active area only when a bombard order targets it, as direct `DamageInfo` impacts. Every
+  contested region activates by default, with no concurrency cap, no fixed engagement bound, and a
+  3-tick dwell. Affects [W2](deep-dives/w2-fidelity-promotion.md).
+- Western Front sector. Decision: W3 covers lat 49.90-50.17 N, lon 2.52-2.80 E in UTM 31N at true
+  scale (0.3048 m per game unit), from IGN RGE ALTI 1 m reprojected by the operator, modern
+  OSM-derived features, and operator-digitized 1916 front lines. Regions are 1 km with 8 x 8 cells.
+  Affects [W3](track-w-western-front.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
+- Western Front experiments and distribution. Decision: W4 sweeps the full 216-cell grid. W5 is the
+  first B6 implementation domain, ahead of RTS and F4a: shards are strips perpendicular to the
+  front so contested pairs never cross shards, lockstep per operational tick in compressed mode and
+  per logic frame in tactical mode, handoffs every host frame, JSON boundary messages in process
+  and compact binary across processes. The W6 historical order-of-battle format is decided at W6.
+  Affects [W4-W6](track-w-western-front.md), [B6](deep-dives/b6-distributed-simulation.md).
+- Benchmark harness. Decision: B1 is a custom macro harness over the headless `SimulationHost`
+  (per-tick and per-system time, allocations, GC, peak memory) with BenchmarkDotNet for micro
+  benchmarks only; results are JSON records compatible with A2 reports plus a CSV summary;
+  medians carry bootstrap 95% confidence intervals and non-overlap flags a regression. Affects
+  [B1](track-b-scale.md).
+- Variable fidelity scope. Decision: B7 plans B7-1 (model and policy), B7-4 (group aggregation),
+  and B7-6 (visualization and error) only; per-object levels live in a `FidelityRegistry` keyed by
+  object id. Affects [B7](deep-dives/b7-variable-fidelity.md).
+- Map storage format. Decision: B4a-2 undo stores region deltas; B4a-4 uses CDLOD; B4a-5 owns the
+  runtime chunk store and H3 owns the on-disk encoding. The H3 map is a directory package
+  (`manifest.json` plus one raw little-endian file per chunk per layer), mirroring the B4b payload.
+  `WI-H1-02` confirms the choice against the H1 audit. Affects [B4a](deep-dives/b4a-larger-maps.md),
+  [H1-H3](track-h-storage-formats.md).
 - Western Front clock compression. Decision: with no active tactical region, one host frame
-  advances 600 s of theater time (one operational tick). With an active region, a host frame
+  advances 60 s of theater time (one operational tick). With an active region, a host frame
   advances one logic frame, and theater time is `entryMs + round(frames * MsPerLogicFrame)` so the
   float frame interval never accumulates drift. Mode changes apply only on operational boundaries
   and are recorded as clock conversions. Affects [W0](deep-dives/w0-charter-fixture.md#7-clock-and-scheduler).

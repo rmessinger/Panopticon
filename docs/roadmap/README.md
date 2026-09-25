@@ -155,15 +155,20 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/a4-decentralized-hierarchical-ai.md`](deep-dives/a4-decentralized-hierarchical-ai.md) | Track A phase A4 - Decentralized hierarchical AI (unit-level ANNs organized as general/commander/soldier ranks, generalizing the flat pluggable-AI policy seam). |
 | [`deep-dives/a4-4-domain-state-projection.md`](deep-dives/a4-4-domain-state-projection.md) | Track A checklist item A4-4 - Optional domain state projection: versioned schema, keyed multi-field records, domain-state artifact, and schema-driven conservation check. |
 | [`deep-dives/a5-visualization.md`](deep-dives/a5-visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
+| [`deep-dives/b1-benchmarking.md`](deep-dives/b1-benchmarking.md) | Track B phase B1 - Macro benchmark harness, BenchmarkDotNet micro benchmarks, A2-compatible JSON records, bootstrap confidence intervals, and regression comparison. |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/b4b-geospatial-map-generation.md`](deep-dives/b4b-geospatial-map-generation.md) | Track B phase B4b - Offline generation of editable maps from operator-supplied Google Earth or Google Earth Engine geospatial exports. |
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
-| [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (scaling toolkit). |
+| [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (fidelity registry, group aggregation contract, visualization and error reporting). |
 | [`deep-dives/western-front-scale-simulation.md`](deep-dives/western-front-scale-simulation.md) | Long-term goal - experiment charter and dependency map for a Western Front-scale First World War simulation; source of Track W. |
 | [`deep-dives/w0-charter-fixture.md`](deep-dives/w0-charter-fixture.md) | Track W phase W0 - Stable keys, state schema, synthetic topology and scenario, multi-rate theater clock, and conservation ledger. |
-| [`deep-dives/w1-aggregate-sector.md`](deep-dives/w1-aggregate-sector.md) | Track W phase W1 - Command and information, movement, logistics, consumption, and stochastic Lanchester combat at operational cadence. |
-| [`deep-dives/w2-fidelity-promotion.md`](deep-dives/w2-fidelity-promotion.md) | Track W phase W2 - Activation policy, promotion to squads, tactical engagement, demotion with exact reconciliation, and the reference comparison. |
-| [`deep-dives/w3-w6-integration-experiments.md`](deep-dives/w3-w6-integration-experiments.md) | Track W phases W3-W6 - Geospatial sector, command and logistics sweeps, distributed regions, and the long-run campaign. |
+| [`deep-dives/w1-aggregate-sector.md`](deep-dives/w1-aggregate-sector.md) | Track W phase W1 - Command and information, movement, logistics, consumption, and platoon-level stochastic and mean-field combat at operational cadence. |
+| [`deep-dives/w2-fidelity-promotion.md`](deep-dives/w2-fidelity-promotion.md) | Track W phase W2 - Activation of every contested region, promotion to soldier objects with A4-3 groupings, tactical engagement, demotion with exact reconciliation, and the all-tactical reference comparison. |
+| [`deep-dives/w3-w6-integration-experiments.md`](deep-dives/w3-w6-integration-experiments.md) | Track W phases W3-W6 - Overview of the geospatial sector, command and logistics sweeps, distributed regions, and the long-run campaign. |
+| [`deep-dives/w3-geospatial-sector.md`](deep-dives/w3-geospatial-sector.md) | Track W phase W3 - Somme 1916 sector at true scale in UTM 31N, topology derived from the B4b payload, and W1/W2 evidence on real geography. |
+| [`deep-dives/w4-command-logistics-experiment.md`](deep-dives/w4-command-logistics-experiment.md) | Track W phase W4 - 216-cell command and logistics matrix, information audit, and sensitivity report. |
+| [`deep-dives/w5-distributed-regional-simulation.md`](deep-dives/w5-distributed-regional-simulation.md) | Track W phase W5 - Front-strip shards over B6, lockstep coordination, and cross-boundary handoff. |
+| [`deep-dives/w6-long-run-campaign.md`](deep-dives/w6-long-run-campaign.md) | Track W phase W6 - Long-run campaign file, domain snapshot plus host save, replay indexing, and approximation error reporting. |
 | [`deep-dives/c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | Track C phase C1 - CPU-only model and animation import contracts, W3D reference adapters, runtime materialization, and parity. |
 | [`deep-dives/c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | Track C phase C2 - Direct-index and exact-name animation-channel binding to runtime model hierarchies. |
 | [`deep-dives/c3-material-texture-mapping.md`](deep-dives/c3-material-texture-mapping.md) | Track C phase C3 - Format-neutral core metallic-roughness materials, texture bindings, and engine PBR materialization. |
@@ -313,7 +318,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | Track | Progress | Items |
 |---|---|---|
 | Track A - Foundations | `██████░░░░` | 12 / 21 |
-| Track B - Scale | `░░░░░░░░░░` | 0 / 24 |
+| Track B - Scale | `░░░░░░░░░░` | 0 / 44 |
 | Track C - External Assets | `█████░░░░░` | 7 / 15 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
@@ -371,14 +376,14 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Phase | Progress | Items |
 |---|---|---|
-| H1 - Format requirements & current-state audit | `░░░░░░░░░░` | 0 / 1 |
-| H2 - Format-agnostic interchange abstraction | `░░░░░░░░░░` | 0 / 1 |
-| H3 - New map storage format | `░░░░░░░░░░` | 0 / 1 |
+| H1 - Format requirements & current-state audit | `░░░░░░░░░░` | 0 / 3 |
+| H2 - Format-agnostic interchange abstraction | `░░░░░░░░░░` | 0 / 2 |
+| H3 - New map storage format | `░░░░░░░░░░` | 0 / 5 |
 | H4 - New object/unit-definition storage format | `░░░░░░░░░░` | 0 / 1 |
 | H5 - Legacy migration & compatibility tooling | `░░░░░░░░░░` | 0 / 1 |
 | H6 - Authoring & pipeline integration | `░░░░░░░░░░` | 0 / 1 |
 | H7 - Validation & round-trip regression | `░░░░░░░░░░` | 0 / 1 |
-| Track H total | `░░░░░░░░░░` | 0 / 7 |
+| Track H total | `░░░░░░░░░░` | 0 / 14 |
 
 ### Track W - Western Front Simulation (gated on A4-1 and A4-4)
 
@@ -386,12 +391,12 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | W0 - Charter fixture | `░░░░░░░░░░` | 0 / 9 |
 | W1 - Aggregate sector simulation | `░░░░░░░░░░` | 0 / 7 |
-| W2 - Fidelity promotion and reconciliation | `░░░░░░░░░░` | 0 / 7 |
-| W3 - Geospatial sector | `░░░░░░░░░░` | 0 / 1 |
-| W4 - Command and logistics experiment | `░░░░░░░░░░` | 0 / 1 |
-| W5 - Distributed regional simulation | `░░░░░░░░░░` | 0 / 1 |
-| W6 - Long-run campaign experiment | `░░░░░░░░░░` | 0 / 1 |
-| Track W total | `░░░░░░░░░░` | 0 / 27 |
+| W2 - Fidelity promotion and reconciliation | `░░░░░░░░░░` | 0 / 14 |
+| W3 - Geospatial sector | `░░░░░░░░░░` | 0 / 10 |
+| W4 - Command and logistics experiment | `░░░░░░░░░░` | 0 / 6 |
+| W5 - Distributed regional simulation | `░░░░░░░░░░` | 0 / 8 |
+| W6 - Long-run campaign experiment | `░░░░░░░░░░` | 0 / 8 |
+| Track W total | `░░░░░░░░░░` | 0 / 62 |
 
 ---
 

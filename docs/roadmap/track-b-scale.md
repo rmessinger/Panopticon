@@ -24,7 +24,7 @@
 | B4b. Geospatial map generation | Add a WorldBuilder import pipeline that generates an editable Panopticon map from Google Earth KML/KMZ plus georeferenced DEM and imagery rasters exported from operator-authorized Google Earth Engine datasets or other sources. Convert source coordinates into a declared local projection, resample terrain and imagery, preserve source/projection metadata, and never fetch from Google services directly. Google basemap imagery and terrain are not supported inputs. See the [deep dive](deep-dives/b4b-geospatial-map-generation.md) and [geospatial-import Decision](open-questions.md). | A selected real-world area imports with its extent, elevations, imagery, and named vector landmarks within declared tolerances, then round-trips through WorldBuilder and plays. | Not started | B4a, H6 |
 | B5. Rendering at scale | GPU instancing for repeated unit models, LOD/impostors, culling, and render-bucket/shadow improvements so presentation keeps up with large logic scenes. | A large repeated-model scene renders via GPU instancing + LOD/culling within frame budget. | Not started | A3 |
 | B6. Distributed simulation | Partition a single simulation across processes/machines via spatial sharding. Each RTS shard owns one Bepu world; owned bodies simulate, halo bodies are kinematic proxies, and handoff carries handle-free F4a state. Detailed design: [deep-dives/b6-distributed-simulation.md](deep-dives/b6-distributed-simulation.md). | One simulation runs across at least two shards with no object/body loss or duplication and no double-resolved boundary contact. | Not started | A1, B3, F4a |
-| B7. Variable simulation fidelity | A toolkit of fidelity-reduction techniques (temporal LOD, simplified behavior/physics, group aggregation, precision) to scale object counts by spending compute proportionally to importance. F4a participation remains stable while low-fidelity physical objects sleep, become kinematic, or use aggregate colliders. Detailed design: [deep-dives/b7-variable-fidelity.md](deep-dives/b7-variable-fidelity.md). | Applying fidelity reduction to low-importance objects raises sustainable count within bounded error, and every object returns to full Bepu state before decisive contact. | Not started | B1, B3, F4a |
+| B7. Variable simulation fidelity | Scoped to three sub-phases: B7-1 fidelity model, `FidelityRegistry`, replicated policy inputs, and domain-state projection; B7-4 a reusable group aggregation contract generalized from W2, with error hooks; B7-6 an A5 visualization bridge and a transition and error report. Other fidelity techniques (temporal LOD, simplified behavior, precision) are deferred. F4a participation remains stable while low-fidelity physical objects sleep, become kinematic, or use aggregate colliders. Detailed design: [deep-dives/b7-variable-fidelity.md](deep-dives/b7-variable-fidelity.md). | Fidelity states are registered, projected, and visualized; W2 aggregation runs through the reusable contract; a report declares each fidelity policy's error against the full-fidelity reference. | Not started | B1, B3, F4a |
 
 ## Phase resources
 
@@ -33,15 +33,15 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| B1 | — | — | — |
+| B1 | [Benchmarking](deep-dives/b1-benchmarking.md) | [§](deep-dives/b1-benchmarking.md#architecture-diagrams) | `WI-B1-01..07` ([plan](implementation/track-b-b1-benchmarking.md)) |
 | B2 | — | — | — |
 | B3 | — | — | — |
 | B4 | — | — | — |
-| B4a | [Larger maps](deep-dives/b4a-larger-maps.md) | [§](deep-dives/b4a-larger-maps.md#architecture-diagrams) | [`WI-B4a-01`](agent/cards/WI-B4a-01-chunk-contract.md) (B4a-5 chunk contract) |
+| B4a | [Larger maps](deep-dives/b4a-larger-maps.md) | [§](deep-dives/b4a-larger-maps.md#architecture-diagrams) | `WI-B4a-01..11` ([plan](implementation/track-b-b4a-larger-maps.md)) |
 | B4b | [Geospatial map generation](deep-dives/b4b-geospatial-map-generation.md) | [§10](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | `WI-B4b-01..24` ([plan](implementation/track-b-b4b-geospatial.md)) |
 | B5 | — | — | — |
-| B6 | [Distributed sim](deep-dives/b6-distributed-simulation.md) | [§6](deep-dives/b6-distributed-simulation.md#6-architecture-diagrams) | — |
-| B7 | [Variable fidelity](deep-dives/b7-variable-fidelity.md) | [§8](deep-dives/b7-variable-fidelity.md#8-architecture-diagrams) | — |
+| B6 | [Distributed sim](deep-dives/b6-distributed-simulation.md) | [§9](deep-dives/b6-distributed-simulation.md#9-architecture-diagrams) | `WI-B6-01..10` ([plan](implementation/track-b-b6-distributed-simulation.md)) |
+| B7 | [Variable fidelity](deep-dives/b7-variable-fidelity.md) | [§9](deep-dives/b7-variable-fidelity.md#9-architecture-diagrams) | `WI-B7-01..07` ([plan](implementation/track-b-b7-variable-fidelity.md)) |
 
 ## Cross-track dependencies
 

@@ -1,103 +1,68 @@
 # Deep Dive: W3-W6 Integration Experiments
 
 > Expands phases W3-W6 of [Track W: Western Front Simulation](../track-w-western-front.md).
-> Builds on [W1](w1-aggregate-sector.md) and [W2](w2-fidelity-promotion.md).
+> Detailed phase designs now live in per-phase deep dives.
 >
-> Audience: human design outline. Each phase gets its own deep dive and cards when its
-> prerequisites land.
+> Audience: human + agent navigation overview.
 
-Purpose: fix the scope, inputs, and evidence of the later demonstrations so earlier phases do not
-close off their options.
+Purpose: index the later Western Front demonstrations and keep the original section anchors stable
+for inbound links. Each section points to the owning deep dive, implementation plan, and draft
+cards.
 
 ---
 
 ## 1. W3 Geospatial sector
 
-Region: the Somme 1916 sector, the Allied attack frontage of 1 July 1916 between Gommecourt and
-Maricourt with its rear areas, about 30 x 20 km, inside UTM zone 31N (EPSG:32631). The exact
-bounding box is fixed at W3 planning.
+Detailed design: [W3 geospatial sector](w3-geospatial-sector.md).
 
-Inputs, all operator-supplied per the [B4b source-boundary Decision](../open-questions.md):
+Implementation plan: [Track W · W3](../implementation/track-w-w3-geospatial-sector.md).
 
-- DEM: a georeferenced elevation raster covering the box.
-- Imagery: optional georeferenced basemap or georeferenced historical trench-map scans.
-- Vectors: KML/KMZ of 1916 roads, railways, rivers (Somme, Ancre), villages, woods, and the
-  1 July front lines, digitized by the operator.
+Card range: [`WI-W3-01..10`](../agent/cards/).
 
-Design:
-
-- B4b generates the map package; W3 adds a `WesternFrontTopologyBuilder` that derives sectors,
-  regions, cells, depot nodes, and road/rail links from the package's vector layers and records
-  the source feature id on every key.
-- Regions follow a regular projected grid clipped to the box (default 2 km), with front sectors
-  aligned to the digitized line. Cells follow B4a terrain chunks, so tactical and aggregate
-  representations share one map transform.
-- Only the area must be historical: modern DEM, land cover, roads, and buildings are acceptable
-  per the [terrain-currency Decision](../open-questions.md); 1916 trench, wire, and crater state
-  comes from W summaries.
-- Order of battle stays synthetic, placed on real geography. A historical order of battle is a W6
-  input, not a W3 requirement.
-
-Evidence: B4b control-point tolerances hold after packaging; every link and region key maps to
-source features; W1 and W2 evidence repeats on the generated sector.
-
-Depends on: W2, B4b.
+Scope: run W1 and W2 evidence on a B4b generated Somme sector. The sector uses lat 49.90-50.17 N,
+lon 2.52-2.80 E, UTM 31N, true scale, `metersPerGameUnit` 0.3048, a 1000 m region grid, and 8 x 8
+cells per region.
 
 ## 2. W4 Command and logistics experiment
 
-Sweep, through the A5-2 experiment matrix:
+Detailed design: [W4 command and logistics experiment](w4-command-logistics-experiment.md).
 
-| Axis | Values (initial) |
-|---|---|
-| Order latency scale | 0.5, 1, 2, 4 |
-| Reconnaissance detection probability scale | 0.25, 0.5, 1 |
-| Link capacity scale | 0.5, 1, 2 |
-| Activation policy | never, contact, operator interest |
-| Combat variant | stochastic, mean-field |
+Implementation plan: [Track W · W4](../implementation/track-w-w4-command-logistics-experiment.md).
 
-Outputs per cell: outcome, casualty, supply, command-latency, and cost distributions with
-confidence intervals from A2/B1; sensitivity ranking per axis. An information audit samples each
-policy call's `EchelonView` provenance and fails the run if any value originates outside the
-echelon's received information.
+Card range: [`WI-W4-01..06`](../agent/cards/).
 
-Depends on: W2, A5 (A5-2 sweeps).
+Scope: execute the full 216-cell experiment grid through A5-2, 64 seeds per cell, and audit every
+policy call for echelon-local information access.
 
 ## 3. W5 Distributed regional simulation
 
-Shards own sets of region keys (B6 partition input). Rules carried from earlier phases:
+Detailed design: [W5 distributed regional simulation](w5-distributed-regional-simulation.md).
 
-- A link's shipments resolve at the tail node region's shard (W0 authority rule).
-- A contested region pair resolves at the defending region's shard.
-- Formations hand off with their `formation` record, holdings, and pending messages; a handoff
-  is a ledger move between shard-local holdings, so conservation is checked across shards.
-- Tactical regions never span shards in W5; a region promotes only inside its owning shard.
+Implementation plan: [Track W · W5](../implementation/track-w-w5-distributed-regional-simulation.md).
 
-Evidence: ownership and conservation invariants across shards; exactly-once cross-boundary
-combat and logistics effects; handoff, halo, network, and shard-imbalance metrics; aggregate
-outcome comparison with the single-process run, not byte identity.
+Card range: [`WI-W5-01..08`](../agent/cards/), plus shared B6 cards.
 
-Depends on: W2, B6.
+Scope: apply B6 to the Western Front domain first. Shards are frontage strips perpendicular to the
+front so contested pairs never cross shards. The first implementation is in-process and proves
+memory and capacity for all-tactical runs.
 
 ## 4. W6 Long-run campaign experiment
 
-Parameterized campaign on the W3 sector, July to November 1916 (about 140 theater days, about
-20000 operational ticks plus tactical windows). Adds:
+Detailed design: [W6 long-run campaign](w6-long-run-campaign.md).
 
-- save/load of Western Front state through `StatePersister`, starting at schema-matched version 1
-  (Gate 10);
-- an optional historical order of battle at battalion level, loaded from an operator-supplied
-  dataset with provenance per formation;
-- replay scrubbing over the domain-state artifact in the A5 visualizer.
+Implementation plan: [Track W · W6](../implementation/track-w-w6-long-run-campaign.md).
 
-Evidence: bounded memory and artifact size; measured wall-clock scaling; reconstruction latency;
-complete provenance; the declared approximation error of every active fidelity policy against the
-W2 envelope.
+Card range: [`WI-W6-01..08`](../agent/cards/).
 
-Depends on: W3, W4, W5.
+Scope: run July-November 1916, about 140 days and 201600 one-minute operational ticks, with
+domain-state artifact snapshots, host saves, optional historical OOB investigation, and A5 replay
+scrubbing.
 
-## 5. Architecture diagrams
+## 5. Cross-phase evidence
 
-Deferred. Each of W3-W6 gets a dedicated deep dive with grounded class and sequence diagrams
-before its first source-edit card is marked `Ready`. The charter's
-[conceptual diagrams](western-front-scale-simulation.md#12-architecture-diagrams) cover the
-cross-phase flow until then.
+| Phase | Primary evidence |
+|---|---|
+| W3 | B4b control-point tolerances, generated topology source keys, W1/W2 evidence on real geography. |
+| W4 | Matrix distributions, sensitivity ranking, information-audit failures when policies read outside their `EchelonView`. |
+| W5 | Shard ownership, conservation, boundary-message, handoff, and comparison metrics against the single-process reference. |
+| W6 | Memory and artifact bounds, save/load reconstruction, replay scrub latency, provenance, and declared approximation error. |

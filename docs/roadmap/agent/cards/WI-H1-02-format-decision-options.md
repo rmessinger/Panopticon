@@ -1,4 +1,4 @@
-# Task Card `WI-H1-02`: Map format requirements and options
+# Task Card `WI-H1-02`: Confirm settled H3 format choices against the audit
 
 | Field | Value |
 |---|---|
@@ -12,44 +12,45 @@
 
 ## Goal
 
-Add requirements and container options to the H1/H2 deep dive and record open Decisions for the operator.
+Check the settled H3 choices against the H1 audit: directory package with `manifest.json` plus one file per chunk per layer, using raw little-endian arrays and JSON metadata.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/h1-h2-map-storage.md`.
 - `docs/roadmap/deep-dives/b4a-larger-maps.md` chunk contract.
-- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §6.1 payload.
+- `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.1a and §6.1.
+- `docs/roadmap/track-h-storage-formats.md` H1-H3.
 
 ## Steps
 
-1. Add a requirements section: chunked terrain, streaming reads, schema evolution, provenance metadata, deterministic bytes, legacy import.
-2. Compare at least three container options (directory of chunk files, single indexed binary, zip package) against the requirements in a table.
-3. Record each unresolved choice under Open Questions in `open-questions.md` with options and a recommendation.
+1. Add requirements to the H1/H2 deep dive.
+2. Record the settled H3 container and chunk layer encoding.
+3. Compare those choices against the audit findings.
+4. Raise `Blocked` and a Decision request only if the audit contradicts the settled choices.
 
 ## Files likely to change
 
 - `docs/roadmap/deep-dives/h1-h2-map-storage.md`
-- `docs/roadmap/open-questions.md`
 
 ## Acceptance criteria
 
-- [ ] Requirements trace to B4a, B4b, and H6 consumers.
-- [ ] Each Open Question has options and a recommendation.
-- [ ] Standard validation passes.
+- [ ] Requirements trace to B4a, B4b, H2, H3, and H6 consumers.
+- [ ] Settled choices are recorded as confirmed unless the audit contradicts them.
+- [ ] Any contradiction is written as a specific `Blocked` reason.
 
 ## Validation commands
 
 ```sh
-echo '{"args":["--no-sandbox"]}' > /tmp/pp.json
-npx -y @mermaid-js/mermaid-cli@latest -p /tmp/pp.json -i docs/roadmap/deep-dives/h1-h2-map-storage.md -o /tmp/mm/card.svg
+mkdir -p docs/roadmap/.validation-b1h
+echo '{"args":["--no-sandbox"]}' > docs/roadmap/.validation-b1h/pp.json
+npx -y @mermaid-js/mermaid-cli@latest -p docs/roadmap/.validation-b1h/pp.json -i docs/roadmap/deep-dives/h1-h2-map-storage.md -o docs/roadmap/.validation-b1h/card.svg
 ```
 
 ## Out of scope / guardrails
 
-No implementation.
+Do not add new container options unless the audit proves a contradiction.
 
 ## On completion
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-H2-01`.

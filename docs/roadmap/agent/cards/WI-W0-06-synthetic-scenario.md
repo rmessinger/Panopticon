@@ -3,16 +3,16 @@
 | Field | Value |
 |---|---|
 | Card ID | `WI-W0-06` |
-| Roadmap phase | [Track W · W0](../../track-w-western-front.md): charter fixture |
+| Roadmap phase | [Track W · W1](../../track-w-western-front.md): aggregate sector simulation |
 | Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-W0-03`, `WI-W0-05` |
-| Diagrams | [W0 §12](../../deep-dives/w0-charter-fixture.md#12-architecture-diagrams) |
+| Diagrams | [W1 §13](../../deep-dives/w1-aggregate-sector.md#13-architecture-diagrams) |
 
 ## Goal
 
-Add `WesternFrontScenario.CreateSynthetic` producing the exact §6 fixture on a mocked game.
+Add `WesternFrontScenario.CreateSynthetic` producing the exact W0 fixture.
 
 ## Context to read (and only this)
 
@@ -22,15 +22,10 @@ Add `WesternFrontScenario.CreateSynthetic` producing the exact §6 fixture on a 
 
 ## Steps
 
-1. Add `WesternFrontScenarioOptions` with the §6 strengths and the pool, depot, and link starting
-   values as properties with documented defaults.
-2. Add `WesternFrontScenario` holding topology, registry, singleton states, and link states.
-   `CreateSynthetic(IGameEngine, options)` builds region controllers, depots, both sides' formation
-   trees, both reserve aggregates, and the partial promotion of `formation:blue/a1/c1/d1/b2/bn1`
-   into 24 squads in `cell:0.1/7,3`.
-3. Player indices: blue 0, red 1 (`PlayerManager.GetPlayerByIndex`).
-4. Tests: formation counts per side and echelon, aggregate members, squad count and totals, and the
-   promoted battalion remainder (560 personnel, 5 MG, 352000 SAA).
+1. Add `WesternFrontScenarioOptions` with §6 strengths and stock defaults.
+2. Build region controllers, depots, both sides' formation trees to platoon depth, both reserve aggregates, and the partial tactical promotion of `formation:blue/a1/c1/d1/b2/bn1/co1/pl1` into 50 soldiers in `cell:0.1/7,3`.
+3. Player indices: blue 0, red 1.
+4. Tests: formation counts per side and echelon, aggregate members, soldier count and totals, and the promoted platoon remainder.
 
 ## Files likely to change
 
@@ -39,7 +34,8 @@ Add `WesternFrontScenario.CreateSynthetic` producing the exact §6 fixture on a 
 
 ## Acceptance criteria
 
-- [ ] Formation plus squad personnel of the promoted battalion equals 800.
+- [ ] Formation plus soldier personnel of the promoted platoon equals 50.
+- [ ] The promoted battalion totals 800 personnel, 16 MG, and 400000 SAA across descendants.
 - [ ] Every created object is registered with a stable key.
 - [ ] Standard validation passes.
 
@@ -60,4 +56,4 @@ No historical values. No gameplay systems.
 
 - Set Status above to `Done` or `Blocked`.
 - Append a result line to `.exchange`.
-- Unblock `WI-W0-07`.
+- List follow-up cards to create: none.

@@ -137,10 +137,10 @@ mindmap
         B6-7 Load balancing
       B7 Variable fidelity ⮕
         B7-1 Fidelity model and policy
-        B7-2 Temporal LOD
-        B7-3 Simplified behavior
+        B7-2 Temporal LOD (deferred)
+        B7-3 Simplified behavior (deferred)
         B7-4 Group aggregation
-        B7-5 Precision reduction
+        B7-5 Precision reduction (deferred)
         B7-6 Fidelity visualization
     C. External models and animations
       C1 Import abstraction ⮕
