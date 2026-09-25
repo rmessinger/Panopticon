@@ -156,6 +156,12 @@ public sealed record NifFile(
                 return NifKeyframeController.Read(reader);
             case "NiKeyframeData":
                 return NifKeyframeData.Read(reader);
+            case "NiSkinInstance":
+                return NifSkinInstance.Read(reader);
+            case "NiSkinData":
+                return NifSkinData.Read(reader);
+            case "NiSkinPartition":
+                return NifSkinPartition.Read(reader);
             default:
                 throw new NotSupportedException(
                     $"NIF block {index} has unsupported type '{typeName}'.");
@@ -238,10 +244,14 @@ public sealed record NifFile(
                                     $"as data, but that block is a {blocks[geometry.DataReference].GetType().Name}.");
                             }
 
-                            if (geometry.SkinInstanceReference != -1)
+                            ValidateReference(geometry.SkinInstanceReference, i, "SkinInstance");
+                            if (geometry.SkinInstanceReference >= 0 &&
+                                blocks[geometry.SkinInstanceReference] is not NifSkinInstance)
                             {
-                                throw new NotSupportedException(
-                                    $"NIF geometry '{geometry.Name}' is skinned; skinning is out of C4a scope.");
+                                throw new InvalidDataException(
+                                    $"NIF geometry '{geometry.Name}' references block " +
+                                    $"{geometry.SkinInstanceReference} as a skin instance, but that block is " +
+                                    $"a {blocks[geometry.SkinInstanceReference].GetType().Name}.");
                             }
                         }
 
@@ -341,6 +351,60 @@ public sealed record NifFile(
                             $"NIF keyframe controller block {i} references block " +
                             $"{keyframeController.DataReference} as data, but that block is a " +
                             $"{blocks[keyframeController.DataReference].GetType().Name}.");
+                    }
+
+                    break;
+
+                case NifSkinInstance skinInstance:
+                    ValidateReference(skinInstance.DataReference, i, "SkinData");
+                    if (skinInstance.DataReference < 0 ||
+                        blocks[skinInstance.DataReference] is not NifSkinData)
+                    {
+                        throw new InvalidDataException(
+                            $"NIF skin instance block {i} references block " +
+                            $"{skinInstance.DataReference} as skin data, but that block is a " +
+                            $"{(skinInstance.DataReference >= 0 ? blocks[skinInstance.DataReference].GetType().Name : "null")}.");
+                    }
+
+                    ValidateReference(skinInstance.SkeletonRootReference, i, "SkeletonRoot");
+                    if (skinInstance.SkeletonRootReference < 0 ||
+                        blocks[skinInstance.SkeletonRootReference] is not NifNode)
+                    {
+                        throw new InvalidDataException(
+                            $"NIF skin instance block {i} references block " +
+                            $"{skinInstance.SkeletonRootReference} as a skeleton root node, but that " +
+                            $"block is a {(skinInstance.SkeletonRootReference >= 0 ? blocks[skinInstance.SkeletonRootReference].GetType().Name : "null")}.");
+                    }
+
+                    for (var j = 0; j < skinInstance.BoneReferences.Count; j++)
+                    {
+                        var bone = skinInstance.BoneReferences[j];
+                        ValidateReference(bone, i, $"Bones[{j}]");
+                        if (bone < 0 || blocks[bone] is not NifNode)
+                        {
+                            throw new InvalidDataException(
+                                $"NIF skin instance block {i} references block {bone} as bone {j}, " +
+                                $"but that block is a {(bone >= 0 ? blocks[bone].GetType().Name : "null")}.");
+                        }
+                    }
+
+                    var skinData = (NifSkinData)blocks[skinInstance.DataReference];
+                    if (skinInstance.BoneReferences.Count != skinData.Bones.Count)
+                    {
+                        throw new InvalidDataException(
+                            $"NIF skin instance block {i} lists {skinInstance.BoneReferences.Count} " +
+                            $"bones but its skin data block {skinInstance.DataReference} declares " +
+                            $"{skinData.Bones.Count}.");
+                    }
+
+                    ValidateReference(skinData.PartitionReference, i, "SkinPartition");
+                    if (skinData.PartitionReference >= 0 &&
+                        blocks[skinData.PartitionReference] is not NifSkinPartition)
+                    {
+                        throw new InvalidDataException(
+                            $"NIF skin data block {i} references block {skinData.PartitionReference} " +
+                            $"as a skin partition, but that block is a " +
+                            $"{blocks[skinData.PartitionReference].GetType().Name}.");
                     }
 
                     break;

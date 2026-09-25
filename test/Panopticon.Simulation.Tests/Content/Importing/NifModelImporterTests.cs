@@ -66,6 +66,34 @@ public sealed class NifModelImporterTests
         return builder.Build();
     }
 
+    private static byte[] SkinnedModelBytes()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var materialType = builder.AddBlockType("NiMaterialProperty");
+        var textureType = builder.AddBlockType("NiTexturingProperty");
+        var sourceTextureType = builder.AddBlockType("NiSourceTexture");
+        var zBufferType = builder.AddBlockType("NiZBufferProperty");
+        var skinDataType = builder.AddBlockType("NiSkinData");
+        var skinInstanceType = builder.AddBlockType("NiSkinInstance");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [4]));
+        builder.AddBlock(zBufferType, NifTestProperties.ZBuffer(flags: 3, function: 3));
+        builder.AddBlock(materialType, NifTestProperties.Material());
+        builder.AddBlock(textureType, NifTestProperties.Texturing(baseSlot: (6, 3, 2, 0, 0, -100)));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 5, skin: 8));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(numVertices: 4));
+        builder.AddBlock(sourceTextureType, NifTestProperties.SourceTexture(fileName: "hull.tga"));
+        builder.AddBlock(skinDataType, NifTestBlocks.SkinData(
+            boneWeights: [[(0, 1.0f)]]));
+        builder.AddBlock(skinInstanceType, NifTestBlocks.SkinInstance(
+            data: 7, skeletonRoot: 0, bones: [0]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
     [Fact]
     public void MissingEntryReturnsNull()
     {
@@ -157,6 +185,15 @@ public sealed class NifModelImporterTests
         var ex = Assert.Throws<NotSupportedException>(
             () => Import(ScaledSubtreeModelBytes(rootScale: 2.0f)));
         Assert.Contains("no unit-scale node ancestor", ex.Message);
+    }
+
+    [Fact]
+    public void SkinnedShapeStillRejectedByImporterNamingC4d()
+    {
+        // The parser decodes the skin chain (WI-C4d-02); conversion of
+        // skinned shapes arrives with WI-C4d-06.
+        var ex = Assert.Throws<NotSupportedException>(() => Import(SkinnedModelBytes()));
+        Assert.Contains("C4d", ex.Message);
     }
 
     private static byte[] HierarchyModelBytes()
