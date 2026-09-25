@@ -72,6 +72,33 @@ internal static class NifTransformConverter
     }
 
     /// <summary>
+    /// Builds a NiSkinTransform (skin transform or per-bone bind) in
+    /// row-vector convention, transposing the stored column-vector 3x3
+    /// like <see cref="CreateLocalMatrix"/>. Finiteness is the skin
+    /// converter's concern; it validates the converted inverse binds.
+    /// </summary>
+    internal static Matrix4x4 CreateSkinTransformMatrix(
+        FileFormats.Nif.NifSkinTransform transform)
+    {
+        var rotation = transform.Rotation;
+        var scale = transform.Scale;
+        var m = Matrix4x4.Identity;
+        m.M11 = rotation.M11 * scale;
+        m.M12 = rotation.M21 * scale;
+        m.M13 = rotation.M31 * scale;
+        m.M21 = rotation.M12 * scale;
+        m.M22 = rotation.M22 * scale;
+        m.M23 = rotation.M32 * scale;
+        m.M31 = rotation.M13 * scale;
+        m.M32 = rotation.M23 * scale;
+        m.M33 = rotation.M33 * scale;
+        m.M41 = transform.Translation.X;
+        m.M42 = transform.Translation.Y;
+        m.M43 = transform.Translation.Z;
+        return m;
+    }
+
+    /// <summary>
     /// Composes a child's world matrix: the child's local matrix applies
     /// first, then the parent's world (row-vector order).
     /// </summary>

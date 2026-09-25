@@ -87,7 +87,7 @@ public sealed class NifModelImporterTests
         builder.AddBlock(dataType, NifTestGeometry.GeometryData(numVertices: 4));
         builder.AddBlock(sourceTextureType, NifTestProperties.SourceTexture(fileName: "hull.tga"));
         builder.AddBlock(skinDataType, NifTestBlocks.SkinData(
-            boneWeights: [[(0, 1.0f)]]));
+            boneWeights: [[(0, 1.0f), (1, 1.0f), (2, 1.0f), (3, 1.0f)]]));
         builder.AddBlock(skinInstanceType, NifTestBlocks.SkinInstance(
             data: 7, skeletonRoot: 0, bones: [0]));
         builder.AddTrailing(NifTestBlocks.Footer());
@@ -188,12 +188,19 @@ public sealed class NifModelImporterTests
     }
 
     [Fact]
-    public void SkinnedShapeStillRejectedByImporterNamingC4d()
+    public void SkinnedShapeImportsAsSkinnedMeshOnRootBone()
     {
-        // The parser decodes the skin chain (WI-C4d-02); conversion of
-        // skinned shapes arrives with WI-C4d-06.
-        var ex = Assert.Throws<NotSupportedException>(() => Import(SkinnedModelBytes()));
-        Assert.Contains("C4d", ex.Message);
+        // Skinned-shape conversion landed with WI-C4d-06; the identity
+        // skin data of this fixture yields the identity inverse bind.
+        var model = Import(SkinnedModelBytes());
+
+        Assert.NotNull(model);
+        var subObject = Assert.Single(model.SubObjects);
+        Assert.Equal(0, subObject.ParentBoneIndex);
+        Assert.True(subObject.RenderObject is ImportedMesh { IsSkinned: true });
+        var bone = Assert.Single(model.Skeleton.Bones);
+        Assert.Equal(1f, bone.InverseBindMatrix.M11);
+        Assert.Equal(0f, bone.InverseBindMatrix.M41);
     }
 
     private static byte[] HierarchyModelBytes()

@@ -241,7 +241,8 @@ public static class NifTestBlocks
         int partition = -1,
         byte hasVertexWeights = 1,
         IReadOnlyList<(float X, float Y, float Z)>? boundCenters = null,
-        IReadOnlyList<float>? boundRadii = null)
+        IReadOnlyList<float>? boundRadii = null,
+        IReadOnlyList<(float X, float Y, float Z)>? boneTranslations = null)
     {
         var bones = boneWeights ?? [];
         var stream = new MemoryStream();
@@ -256,7 +257,7 @@ public static class NifTestBlocks
         for (var i = 0; i < bones.Count; i++)
         {
             WriteMatrix33Identity(body);
-            WriteVector3(body, (0, 0, 0));
+            WriteVector3(body, boneTranslations is not null && i < boneTranslations.Count ? boneTranslations[i] : (0, 0, 0));
             body.WriteSingle(1.0f);
             WriteVector3(body, boundCenters is not null && i < boundCenters.Count ? boundCenters[i] : (0, 0, 0));
             body.WriteSingle(boundRadii is not null && i < boundRadii.Count ? boundRadii[i] : 1.0f);
