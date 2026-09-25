@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-06` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4d-01`, `WI-C4d-02`, `WI-C4d-03` |

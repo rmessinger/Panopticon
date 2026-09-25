@@ -175,6 +175,12 @@ internal static class NifSceneConverter
         string modelName,
         AssetImportContext context)
     {
+        if (shape.SkinInstanceReference >= 0)
+        {
+            throw new NotSupportedException(
+                $"NIF shape '{shape.Name}' is skinned; skinned-shape conversion is C4d work (WI-C4d-06).");
+        }
+
         if (shape.DataReference < 0 ||
             file.Blocks[shape.DataReference] is not FileFormatsNif.NifTriShapeData data)
         {

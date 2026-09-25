@@ -167,10 +167,24 @@ public sealed class ImportedMesh : ImportedRenderObject
 
             if (!isSkinned &&
                 (vertex.BoneIndex0 != 0 || vertex.BoneIndex1 != 0 ||
-                 vertex.BoneWeight0 != 0.0f || vertex.BoneWeight1 != 0.0f))
+                 vertex.BoneIndex2 != 0 || vertex.BoneIndex3 != 0 ||
+                 vertex.BoneWeight0 != 0.0f || vertex.BoneWeight1 != 0.0f ||
+                 vertex.BoneWeight2 != 0.0f || vertex.BoneWeight3 != 0.0f))
             {
                 throw new ArgumentException(
                     $"Vertex {i} carries skinning data, but the mesh is not skinned.",
+                    nameof(vertices));
+            }
+
+            if ((vertex.BoneWeight2 != 0.0f || vertex.BoneWeight3 != 0.0f) &&
+                (vertex.SecondaryPosition is { } secondaryPosition &&
+                     secondaryPosition != vertex.Position ||
+                 vertex.SecondaryNormal is { } secondaryNormal &&
+                     secondaryNormal != vertex.Normal))
+            {
+                throw new ArgumentException(
+                    $"Vertex {i} has secondary geometry, but weights on slots 2 and 3 require " +
+                    $"secondary geometry equal to the primary geometry.",
                     nameof(vertices));
             }
 
