@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-04` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4d-03` |
@@ -57,11 +57,11 @@ shader, with W3D rendering unchanged.
 
 ## Acceptance criteria
 
-- [ ] Shaders compile in the normal build.
-- [ ] `MeshVertex.Basic` is 104 bytes and matches its layout description.
-- [ ] A W3D model capture is identical before and after.
-- [ ] Existing glTF skinned fixtures render unchanged.
-- [ ] Standard validation passes.
+- [x] Shaders compile in the normal build.
+- [x] `MeshVertex.Basic` is 104 bytes and matches its layout description.
+- [x] A W3D model capture is identical before and after.
+- [x] Existing glTF skinned fixtures render unchanged.
+- [x] Standard validation passes.
 
 ## Validation commands
 

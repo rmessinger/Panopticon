@@ -67,6 +67,10 @@ partial class ModelMesh
                 BoneIndex1 = importedVertex.BoneIndex1,
                 BoneWeight0 = importedVertex.BoneWeight0,
                 BoneWeight1 = importedVertex.BoneWeight1,
+                BoneIndex2 = importedVertex.BoneIndex2,
+                BoneIndex3 = importedVertex.BoneIndex3,
+                BoneWeight2 = importedVertex.BoneWeight2,
+                BoneWeight3 = importedVertex.BoneWeight3,
             };
         }
 

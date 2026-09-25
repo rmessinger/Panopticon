@@ -130,6 +130,10 @@ internal sealed class MeshShaderResources : DisposableBase
             public uint BoneIndex1;
             public float BoneWeight0;
             public float BoneWeight1;
+            public uint BoneIndex2;
+            public uint BoneIndex3;
+            public float BoneWeight2;
+            public float BoneWeight3;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -148,6 +152,10 @@ internal sealed class MeshShaderResources : DisposableBase
                 new VertexElementDescription("NORMAL", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                 new VertexElementDescription("TANGENT", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                 new VertexElementDescription("BINORMAL", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+                new VertexElementDescription("BLENDINDICES", VertexElementSemantic.TextureCoordinate, VertexElementFormat.UInt1),
+                new VertexElementDescription("BLENDINDICES", VertexElementSemantic.TextureCoordinate, VertexElementFormat.UInt1),
+                new VertexElementDescription("BLENDINDICES", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float1),
+                new VertexElementDescription("BLENDINDICES", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float1),
                 new VertexElementDescription("BLENDINDICES", VertexElementSemantic.TextureCoordinate, VertexElementFormat.UInt1),
                 new VertexElementDescription("BLENDINDICES", VertexElementSemantic.TextureCoordinate, VertexElementFormat.UInt1),
                 new VertexElementDescription("BLENDINDICES", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float1),

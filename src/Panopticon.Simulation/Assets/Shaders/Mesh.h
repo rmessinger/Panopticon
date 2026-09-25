@@ -13,8 +13,12 @@
     layout(location = 7) in uint in_BoneIndex1; \
     layout(location = 8) in float in_BoneWeight0; \
     layout(location = 9) in float in_BoneWeight1; \
-    layout(location = 10) in vec2 in_UV0; \
-    layout(location = 11) in vec2 in_UV1;
+    layout(location = 10) in uint in_BoneIndex2; \
+    layout(location = 11) in uint in_BoneIndex3; \
+    layout(location = 12) in float in_BoneWeight2; \
+    layout(location = 13) in float in_BoneWeight3; \
+    layout(location = 14) in vec2 in_UV0; \
+    layout(location = 15) in vec2 in_UV1;
 
 struct MeshConstantsType
 {
@@ -64,16 +68,24 @@ void GetSkinnedVertexData(
     vec3 inputNormal1,
     mat4 skinning0,
     mat4 skinning1,
+    mat4 skinning2,
+    mat4 skinning3,
     float weight0,
     float weight1,
+    float weight2,
+    float weight3,
     out vec3 modifiedPosition,
     out vec3 modifiedNormal)
 {
     modifiedPosition = (skinning0 * vec4(inputPosition0, 1)).xyz * weight0;
     modifiedPosition += (skinning1 * vec4(inputPosition1, 1)).xyz * weight1;
+    modifiedPosition += (skinning2 * vec4(inputPosition0, 1)).xyz * weight2;
+    modifiedPosition += (skinning3 * vec4(inputPosition0, 1)).xyz * weight3;
 
     modifiedNormal = TransformNormal(inputNormal0, skinning0) * weight0;
     modifiedNormal += TransformNormal(inputNormal1, skinning1) * weight1;
+    modifiedNormal += TransformNormal(inputNormal0, skinning2) * weight2;
+    modifiedNormal += TransformNormal(inputNormal0, skinning3) * weight3;
 }
 
 void VSSkinnedInstancedPositionOnly(
