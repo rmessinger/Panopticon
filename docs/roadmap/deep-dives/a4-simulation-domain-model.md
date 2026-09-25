@@ -30,7 +30,7 @@ The seam replaces these with one injected collaborator.
 
 ## 2. Contracts
 
-Namespace `OpenSage.Simulation`, files under `src/OpenSage.Game/Simulation/`.
+Namespace `Panopticon.Simulation`, files under `src/Panopticon.Simulation/Simulation/`.
 
 ### 2.1 Entity summary
 
@@ -222,7 +222,7 @@ scenarios.
 
 ## 8. Architecture diagrams
 
-Grounded in the code as of `WI-A4-07`/`WI-A4-08`/`WI-A4-09`; types under `OpenSage.Simulation`
+Grounded in the code as of `WI-A4-07`/`WI-A4-08`/`WI-A4-09`; types under `Panopticon.Simulation`
 are the contracts those cards add.
 
 ```mermaid

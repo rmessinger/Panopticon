@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.Core\Panopticon.Core.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats.RefPack\Panopticon.FileFormats.RefPack.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats\Panopticon.FileFormats.csproj" />
+  </ItemGroup>
+
+</Project>

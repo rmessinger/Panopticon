@@ -18,7 +18,7 @@ retry-once strategy on failure.
 
 ## Steps
 
-1. Create `src/OpenSage.Tools.ModCollector/DownloadOptions.cs` with `[Verb("download")]`:
+1. Create `src/Panopticon.Tools.ModCollector/DownloadOptions.cs` with `[Verb("download")]`:
 
 ```csharp
 [Verb("download", HelpText = "Download mods from the manifest.")]
@@ -35,7 +35,7 @@ sealed class DownloadOptions
 }
 ```
 
-2. Create `src/OpenSage.Tools.ModCollector/Downloader.cs`. Key contract:
+2. Create `src/Panopticon.Tools.ModCollector/Downloader.cs`. Key contract:
 
 ```csharp
 // Returns true if all entries succeeded; false if any were skipped.
@@ -53,7 +53,7 @@ Implementation rules:
   - On second failure: write to `Console.Error`, continue.
   - On success: write the response stream directly to the file; log "downloaded: <name>".
 - Use `HttpClient` with a reasonable timeout (30 seconds) and a descriptive `User-Agent` header
-  (`OpenSAGE ModCollector/1.0`).
+  (`Panopticon ModCollector/1.0`).
 
 3. Wire `DownloadOptions` into `Program.cs` alongside `ListOptions`.
 
@@ -68,8 +68,8 @@ Implementation rules:
 ## Validation
 
 ```sh
-dotnet build src/OpenSage.Tools.ModCollector
-dotnet run --project src/OpenSage.Tools.ModCollector -- download --output /tmp/mc-test --category mods
+dotnet build src/Panopticon.Tools.ModCollector
+dotnet run --project src/Panopticon.Tools.ModCollector -- download --output /tmp/mc-test --category mods
 ls /tmp/mc-test
 dotnet format src --verify-no-changes
 ```

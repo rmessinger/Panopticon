@@ -18,15 +18,15 @@ without breaking the assets that are already linear. Read-only: no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:23-25,92-100,160-168`: the output formats
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:23-25,92-100,160-168`: the output formats
   of the intermediate target and the swapchain target.
 - `src/Veldrid.ImageSharp/MipmapHelper.cs:36-61`: the mip resample, and which colour space it
   operates in.
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs`: the texture formats used for the
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs`: the texture formats used for the
   placeholder and solid textures.
-- `src/OpenSage.Game/Assets/Shaders/`: the lighting computation in the fixed-function and
+- `src/Panopticon.Simulation/Assets/Shaders/`: the lighting computation in the fixed-function and
   normal-mapped fragment shaders.
-- `src/OpenSage.Game/Terrain/Terrain.cs:480-533`: the terrain texture-array format and resample.
+- `src/Panopticon.Simulation/Terrain/Terrain.cs:480-533`: the terrain texture-array format and resample.
 
 ## Steps
 

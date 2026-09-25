@@ -18,9 +18,9 @@ implementation, leaving movement, targeting, and weapon actuation unchanged.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a4-hierarchical-ai.md`: exact leaf boundary.
-- `src/OpenSage.Game/Logic/AI/AIUpdateStateMachine.cs`.
+- `src/Panopticon.Simulation/Logic/AI/AIUpdateStateMachine.cs`.
 - The state classes named by the implementation plan.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`.
 - Existing tests for those AI states.
 
 ## Steps
@@ -33,7 +33,7 @@ implementation, leaving movement, targeting, and weapon actuation unchanged.
 
 ## Files likely to change
 
-- New policy files under `src/OpenSage.Game/Logic/AI/`
+- New policy files under `src/Panopticon.Simulation/Logic/AI/`
 - Only AI state files named by the implementation plan
 - Focused AI tests
 

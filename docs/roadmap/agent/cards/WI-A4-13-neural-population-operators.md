@@ -19,7 +19,7 @@ crossover independently of match execution.
 
 - `docs/roadmap/implementation/track-a-a4-ai-policy-evolution.md`.
 - `docs/roadmap/deep-dives/neural-network-ai-policy.md`: 125-float genome contract.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`: seeded-service style.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`: seeded-service style.
 
 ## Steps
 
@@ -30,8 +30,8 @@ crossover independently of match execution.
 
 ## Files likely to change
 
-- New models and services under `src/OpenSage.Tools.ReplaySketch.Core/`
-- New tests under `src/OpenSage.Tools.ReplaySketch.Tests/`
+- New models and services under `src/Panopticon.Tools.ReplaySketch.Core/`
+- New tests under `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 

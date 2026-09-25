@@ -18,13 +18,13 @@ Read-only: no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowSettings.cs:9-83`: the defaults, the
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs:9-83`: the defaults, the
   power-of-two map size setter, the cascade split depths, `Bias`, and `NormalOffset`.
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowMapRenderer.cs`: how the settings reach the
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowMapRenderer.cs`: how the settings reach the
   shader constants and how the cascades are built.
-- `src/OpenSage.Game/Graphics/Shaders/GlobalShaderResources.cs`: the shadow constants structure and
+- `src/Panopticon.Simulation/Graphics/Shaders/GlobalShaderResources.cs`: the shadow constants structure and
   where `Bias` and `NormalOffset` are copied into it.
-- `src/OpenSage.Game/Assets/Shaders/Shadows.h:55-70`: where the constant bias is subtracted from the
+- `src/Panopticon.Simulation/Assets/Shaders/Shadows.h:55-70`: where the constant bias is subtracted from the
   light depth.
 
 ## Steps

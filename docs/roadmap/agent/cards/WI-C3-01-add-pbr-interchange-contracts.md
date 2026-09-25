@@ -18,10 +18,10 @@ and alpha policy as immutable format-neutral interchange values.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 1-3.
-- `src/OpenSage.Game/Content/Importing/ImportedMaterial.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMaterialProperty.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMeshPart.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMaterial.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMaterialProperty.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMeshPart.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`.
 
 ## Steps
 
@@ -41,12 +41,12 @@ and alpha policy as immutable format-neutral interchange values.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedImageSource.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedSampler.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedTextureBinding.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedPbrMetallicRoughness.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedMaterial.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedImageSource.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedSampler.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedTextureBinding.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedPbrMetallicRoughness.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedMaterial.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`
 
 ## Acceptance criteria
 

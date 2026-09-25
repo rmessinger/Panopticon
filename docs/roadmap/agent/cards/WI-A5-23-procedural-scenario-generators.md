@@ -18,7 +18,7 @@ specifications and a seed.
 ## Context to read (and only this)
 
 - Generator contract in the A5 implementation plan.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`.
 - `Model/SpawnPlan.cs`, `CommandSpec.cs`, and P0 procedural authoring tests.
 - A5 scenario serialization from `WI-A5-03`.
 

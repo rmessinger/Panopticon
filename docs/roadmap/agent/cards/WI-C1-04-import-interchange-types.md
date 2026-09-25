@@ -18,15 +18,15 @@ validation for structural invariants and no W3D, Veldrid, or `AssetStore` depend
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 2, 4, and 6.
-- `src/OpenSage.Game/Graphics/ModelBone.cs`: existing bone data shape.
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs:149-206`: current vertex and index outputs.
-- `src/OpenSage.Game/Graphics/Animation/AnimationClip.cs` and `Keyframe.cs`: current animation
+- `src/Panopticon.Simulation/Graphics/ModelBone.cs`: existing bone data shape.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs:149-206`: current vertex and index outputs.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClip.cs` and `Keyframe.cs`: current animation
   channel and value shapes.
-- `src/OpenSage.Game/Graphics/ModelBox.cs:14-28`: current box bounds data.
+- `src/Panopticon.Simulation/Graphics/ModelBox.cs:14-28`: current box bounds data.
 
 ## Steps
 
-1. Create `src/OpenSage.Game/Content/Importing/` and add the interchange types listed in deep-dive
+1. Create `src/Panopticon.Simulation/Content/Importing/` and add the interchange types listed in deep-dive
    section 2, including the type-tagged `ImportedMaterialProperty`, one type per file.
 2. Use immutable arrays or read-only collections. Copy caller-owned arrays at the construction
    boundary.
@@ -35,18 +35,18 @@ validation for structural invariants and no W3D, Veldrid, or `AssetStore` depend
    two-bone skinning limit.
 4. Throw `ArgumentException` for invalid programmatic construction. Importers later translate
    malformed file data to `InvalidDataException` with asset context.
-5. Add focused unit tests under `src/OpenSage.Game.Tests/Content/Importing/` for one valid static
+5. Add focused unit tests under `test/Panopticon.Simulation.Tests/Content/Importing/` for one valid static
    mesh, one valid skinned mesh and animation, and each invariant in step 3.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/` (new value-type files)
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/` (new value-type files)
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs` (new)
 
 ## Acceptance criteria
 
 - [ ] The complete section 2 value graph exists, one type per file.
-- [ ] No file under `Content/Importing/` references `OpenSage.FileFormats.W3d`, Veldrid,
+- [ ] No file under `Content/Importing/` references `Panopticon.FileFormats.W3d`, Veldrid,
       `AssetStore`, `GraphicsDevice`, or shader-resource types.
 - [ ] Invalid indices, ranges, skinning counts, and keyframe ordering are rejected by tests.
 - [ ] Standard validation passes.

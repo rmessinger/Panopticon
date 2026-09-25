@@ -20,14 +20,14 @@ the SP/MP spawn unification and `LocalPlayer` selection are a separate card (out
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/PlayerManager.cs:24-76`: `OnNewGame()` (the TODO at line 45) and
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs:24-76`: `OnNewGame()` (the TODO at line 45) and
   `CreatePlayers()` (which already maps map-defined `Allies`/`Enemies` into the `Player` sets).
-- `src/OpenSage.Game/Logic/Player.cs:124-139`: `Allies`/`Enemies` (`HashSet<Player>`) and `Team`.
-- `src/OpenSage.Game/Logic/Player.cs:779-786`: `AddAlly`/`AddEnemy` (currently add to the local set
+- `src/Panopticon.Simulation/Logic/Player.cs:124-139`: `Allies`/`Enemies` (`HashSet<Player>`) and `Team`.
+- `src/Panopticon.Simulation/Logic/Player.cs:779-786`: `AddAlly`/`AddEnemy` (currently add to the local set
   only, no reciprocal wiring).
-- `src/OpenSage.Game/Logic/Player.cs:811-831`: `GetRelationship(Team? that)` (team override → player
+- `src/Panopticon.Simulation/Logic/Player.cs:811-831`: `GetRelationship(Team? that)` (team override → player
   override → neutral); confirm it already consumes the sets/teams you populate.
-- `src/OpenSage.Game/Logic/Player.cs:965-994`: `RelationshipType { Enemies=0, Neutral=1, Allies=2 }`
+- `src/Panopticon.Simulation/Logic/Player.cs:965-994`: `RelationshipType { Enemies=0, Neutral=1, Allies=2 }`
   and the `PlayerRelationships` override map.
 
 ## Steps
@@ -48,8 +48,8 @@ the SP/MP spawn unification and `LocalPlayer` selection are a separate card (out
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/PlayerManager.cs`: `OnNewGame()` body.
-- `src/OpenSage.Game/Logic/Player.cs`: `AddAlly`/`AddEnemy` reciprocity only.
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs`: `OnNewGame()` body.
+- `src/Panopticon.Simulation/Logic/Player.cs`: `AddAlly`/`AddEnemy` reciprocity only.
 
 ## Acceptance criteria
 

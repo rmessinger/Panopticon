@@ -19,10 +19,10 @@ models fully textured.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/ee2-gamebryo-model-storage.md` sections 6 and 9.2.
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`.
-- `src/OpenSage.Game/Content/Loaders/OnDemandTextureLoader.cs` (static texture
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandTextureLoader.cs` (static texture
   upload from mip data) and `ScopedAssetCollection` (asset injection).
-- `src/OpenSage.Game/Content/Importing/Nif/NifMaterialConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifMaterialConverter.cs`.
 
 ## Steps
 
@@ -46,12 +46,12 @@ models fully textured.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifMaterialConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`
-- `src/OpenSage.Tools.TestHarness/Ee2TexcacheTextureInstaller.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2TexcacheTextureInstallerTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifMaterialConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`
+- `src/Panopticon.Tools.TestHarness/Ee2TexcacheTextureInstaller.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2TexcacheTextureInstallerTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -67,7 +67,7 @@ models fully textured.
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario Ee2NifProof
 dotnet build src
 dotnet test src --filter Category!=Interactive

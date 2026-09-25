@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" />
+    <PackageReference Include="ConsoleTables" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.FileFormats.Big\Panopticon.FileFormats.Big.csproj" />
+  </ItemGroup>
+
+</Project>

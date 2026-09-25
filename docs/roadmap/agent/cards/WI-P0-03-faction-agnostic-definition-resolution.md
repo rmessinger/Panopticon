@@ -19,13 +19,13 @@ via the existing `AssetHash.GetHash(name)` path. This is the first concrete step
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:16-32`: the `KnownDefinitions`
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:16-32`: the `KnownDefinitions`
   class (hardcoded USA/GLA barracks + ranger/rebel names/hashes) to delete.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:194-251`: `BuildOrders(...)`, which
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:194-251`: `BuildOrders(...)`, which
   currently falls back to `KnownDefinitions` via `isGla ? Gla… : Usa…` (lines 197, 203-205, 220-222);
   this is the code to change. Note `BuildOrders` is also called at lines 75 and 85 passing
   `player.FactionIndex`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json`: the regression
+- `src/Panopticon.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json`: the regression
   scenario. It already specifies `buildingDefinitionName` / `unitDefinitionName` for every
   action (lines ~95, 120, 155, 178), so removing the defaults must not change its behaviour.
 
@@ -46,7 +46,7 @@ via the existing `AssetHash.GetHash(name)` path. This is the first concrete step
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` (only this file).
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` (only this file).
 
 ## Acceptance criteria
 

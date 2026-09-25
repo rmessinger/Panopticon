@@ -23,7 +23,7 @@ spelling, uppercase paths, and proof-clip controller flags.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 4, 6, and 7.
 - C4c `NifAnimationImporter`, `NifAnimationConverter`, `NifKeyCurve`, and `NifRotationSampler`
   files added by `WI-C4c-03` and `WI-C4c-04`.
-- `src/OpenSage.IO` ZIP file-system lookup behavior used by C4b texture resolution.
+- `src/Panopticon.IO` ZIP file-system lookup behavior used by C4b texture resolution.
 
 ## Steps
 
@@ -38,11 +38,11 @@ spelling, uppercase paths, and proof-clip controller flags.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifLegacyVersionPolicy.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImporterTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationConverterTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifLegacyVersionPolicy.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationConverterTests.cs`
 
 ## Acceptance criteria
 

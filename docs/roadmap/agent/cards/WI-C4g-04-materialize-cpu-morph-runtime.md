@@ -19,10 +19,10 @@ buffers before existing skinning.
 
 - `docs/roadmap/deep-dives/c4g-ee2-morph-animation.md` sections 6, 7, and 8.
 - `docs/roadmap/deep-dives/c6-extended-model-features.md` section 4.
-- `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs:20-75`.
-- `src/OpenSage.Game/Graphics/ModelMeshInstance.cs`.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs:185-251`.
-- `src/OpenSage.Game/Assets/Shaders/Mesh.h:5-76`.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs:20-75`.
+- `src/Panopticon.Simulation/Graphics/ModelMeshInstance.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs:185-251`.
+- `src/Panopticon.Simulation/Assets/Shaders/Mesh.h:5-76`.
 
 ## Steps
 
@@ -39,12 +39,12 @@ buffers before existing skinning.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs`
-- `src/OpenSage.Game/Graphics/ModelMesh.cs`
-- `src/OpenSage.Game/Graphics/ModelMeshInstance.cs`
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`
-- `src/OpenSage.Game/Graphics/ModelMorphTargetSet.cs` (new)
-- `src/OpenSage.Game.Tests/Graphics/ModelMorphTests.cs` (new)
+- `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs`
+- `src/Panopticon.Simulation/Graphics/ModelMesh.cs`
+- `src/Panopticon.Simulation/Graphics/ModelMeshInstance.cs`
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`
+- `src/Panopticon.Simulation/Graphics/ModelMorphTargetSet.cs` (new)
+- `test/Panopticon.Simulation.Tests/Graphics/ModelMorphTests.cs` (new)
 
 ## Acceptance criteria
 

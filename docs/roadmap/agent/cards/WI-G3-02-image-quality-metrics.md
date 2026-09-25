@@ -18,9 +18,9 @@ correct before any capture plumbing exists.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Graphics/FrameCapturer.cs`: the `CapturedFrame` shape (`PixelData`, `Width`,
+- `src/Panopticon.Simulation/Graphics/FrameCapturer.cs`: the `CapturedFrame` shape (`PixelData`, `Width`,
   `Height`, `Format`), which fixes the input the metrics must accept.
-- `src/OpenSage.Game.Tests/`: the existing xUnit conventions and the `MockedGameTest` base, for test
+- `test/Panopticon.Simulation.Tests/`: the existing xUnit conventions and the `MockedGameTest` base, for test
   placement and naming only.
 - `docs/coding-style.md`: naming and formatting rules.
 
@@ -44,8 +44,8 @@ correct before any capture plumbing exists.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/` (new metrics type)
-- `src/OpenSage.Game.Tests/` (new metric tests)
+- `src/Panopticon.Simulation/Graphics/` (new metrics type)
+- `test/Panopticon.Simulation.Tests/` (new metric tests)
 
 ## Acceptance criteria
 

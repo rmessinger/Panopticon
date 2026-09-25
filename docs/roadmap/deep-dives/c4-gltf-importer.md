@@ -23,7 +23,7 @@ C4 supports:
 - one skin shared by all skinned primitives in the selected scene;
 - skeletal translation and quaternion animation with `LINEAR` or `STEP` interpolation;
 - external, data-URI, and buffer-view PNG or JPEG images;
-- deterministic conversion from glTF coordinates into OpenSAGE model space.
+- deterministic conversion from glTF coordinates into Panopticon model space.
 
 C4 rejects:
 
@@ -43,7 +43,7 @@ Malformed data fails with `InvalidDataException`.
 
 C4 uses
 [`SharpGLTF.Core`](https://www.nuget.org/packages/SharpGLTF.Core) behind
-`OpenSage.Content.Importing.Gltf`. The centrally managed package version is pinned when the first
+`Panopticon.Content.Importing.Gltf`. The centrally managed package version is pinned when the first
 implementation card starts. The design was grounded against version 1.0.7.
 
 SharpGLTF remains an implementation detail:
@@ -96,11 +96,11 @@ image is malformed asset data and throws.
 The importer loads the declared default scene. If no default is declared, exactly one scene must
 exist. Importing multiple scenes from one key is outside C4.
 
-glTF is right-handed, Y-up, and asset-front +Z. OpenSAGE model space is right-handed, Z-up, and
+glTF is right-handed, Y-up, and asset-front +Z. Panopticon model space is right-handed, Z-up, and
 object-forward +X. One basis conversion is applied everywhere:
 
 ```text
-(x, y, z) glTF -> (z, x, y) OpenSAGE
+(x, y, z) glTF -> (z, x, y) Panopticon
 ```
 
 The basis conversion has determinant +1, so triangle winding is preserved. A combined row-vector
@@ -112,7 +112,7 @@ conversion matrix `C` contains that basis and `UnitsPerMeter`. It applies to:
 - animation rotations through basis conjugation;
 - computed bounds.
 
-OpenSAGE's internal distance unit is the foot. One glTF meter therefore maps to
+Panopticon's internal distance unit is the foot. One glTF meter therefore maps to
 `1 / 0.3048`, approximately 3.28084, world units by default.
 `GltfImportOptions.UnitsPerMeter` provides an explicit positive finite override for authoring
 workflows. C4 never guesses scale from bounds. The conversion should use
@@ -213,7 +213,7 @@ ancestors use C2 `BoneName` targets. Exact authored names are preserved. Require
 nodes must have non-empty names unique under `OrdinalIgnoreCase`; otherwise import fails before
 materialization.
 
-glTF samples replace a node's local TRS, while OpenSAGE animation values are offsets applied before
+glTF samples replace a node's local TRS, while Panopticon animation values are offsets applied before
 the bone's stored bind transform. C4 converts every sample against that animation document's rest
 transform:
 
@@ -328,7 +328,7 @@ C4 is complete when repository-owned fixtures prove:
 - no SharpGLTF type crosses the importer boundary.
 
 Fixtures are tiny, deterministic, and committed under
-`OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures`. They contain only project-authored geometry
+`Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures`. They contain only project-authored geometry
 and textures. Fixture updates run the Khronos validator. A headless TestHarness scenario captures
 one static and one animated skinned unit without requiring third-party assets.
 
@@ -407,22 +407,22 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - Import contracts and context:
-  `src/OpenSage.Game/Content/Importing/IModelImporter.cs`,
+  `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs`,
   `IAnimationImporter.cs`, and `AssetImportContext.cs`.
 - W3D reference adapters:
-  `src/OpenSage.Game/Content/Importing/W3d/W3dModelImporter.cs` and
+  `src/Panopticon.Simulation/Content/Importing/W3d/W3dModelImporter.cs` and
   `W3dAnimationImporter.cs`.
 - Interchange graph:
-  `src/OpenSage.Game/Content/Importing/ImportedModel.cs`, `ImportedSkeleton.cs`,
+  `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`, `ImportedSkeleton.cs`,
   `ImportedBone.cs`, `ImportedMesh.cs`, `ImportedMeshPart.cs`, `ImportedVertex.cs`,
   `ImportedMaterial.cs`, `ImportedAnimation.cs`, and `ImportedAnimationChannel.cs`.
 - Materialization:
-  `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs` and
+  `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs` and
   `ImportedAnimationMaterializer.cs`.
 - Runtime bones and skinning:
-  `src/OpenSage.Game/Graphics/ModelBone.cs`, `ModelBoneHierarchy.cs`, and
+  `src/Panopticon.Simulation/Graphics/ModelBone.cs`, `ModelBoneHierarchy.cs`, and
   `ModelInstance.cs`.
 - Imported mesh GPU construction:
-  `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs`.
+  `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs`.
 - Package versions:
   `src/Directory.Packages.props`.

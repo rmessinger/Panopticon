@@ -18,10 +18,10 @@ that provide normals and UVs but omit tangents.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` section 4.
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMeshPart.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedVertex.cs`.
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs`: existing tangent conversion only.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMeshPart.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs`: existing tangent conversion only.
 - Existing mathematics vector helpers used by mesh import tests.
 
 ## Steps
@@ -39,8 +39,8 @@ that provide normals and UVs but omit tangents.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedTangentGenerator.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedTangentGeneratorTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedTangentGenerator.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedTangentGeneratorTests.cs` (new)
 
 ## Acceptance criteria
 

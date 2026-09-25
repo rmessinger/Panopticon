@@ -2,11 +2,11 @@
 
 ## Building the repository
 
-Opensage uses the standard .NET Core tooling. Install the tools and build normally (dotnet build).
+Panopticon uses the standard .NET Core tooling. Install the tools and build normally (dotnet build).
 
 ### Windows
 
-Solution file: `src/OpenSage.sln`, openable directly in Visual Studio.
+Solution file: `src/Panopticon.sln`, openable directly in Visual Studio.
 
 ### Linux & MacOS
 
@@ -61,9 +61,9 @@ lrwxrwxrwx  1 root root        32 Nov  6 00:12 libdl.so -> /lib/x86_64-linux-gnu
 - APT based: `sudo apt install libopenal-dev`
 - RPM based: `sudo apt install openal-soft-devel`
 
-## Running OpenSAGE
+## Running Panopticon
 
-OpenSage does not provide any game assets itself, so it expects the user to have the game files installed on the system.
+Panopticon does not provide any game assets itself, so it expects the user to have the game files installed on the system.
 
 ### Windows
 
@@ -83,9 +83,9 @@ Since there are no official installers of the original games on Unix systems, th
 
 The same environment variables also work on Windows, as an alternative to the registry.
 
-### Starting OpenSage
+### Starting Panopticon
 
-Entry point: `OpenSage.Launcher` project. Default game: C&C Generals. Game selection: `-g <identifier>`
+Entry point: `Panopticon.Launcher` project. Default game: C&C Generals. Game selection: `-g <identifier>`
 (e.g. `-g bfme` for Battle for Middle-earth), contingent on a configured installation location.
 
 ### Developer Mode

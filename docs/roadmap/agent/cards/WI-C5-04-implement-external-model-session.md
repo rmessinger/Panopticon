@@ -20,18 +20,18 @@ cancellation, source replacement, and explicit filesystem and artifact ownership
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 2, 5, and 12.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: Core orchestration boundary.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`: immutable result precedent.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IMainThreadDispatcher.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/PlatformPaths.cs`: application cache root.
-- `src/OpenSage.Game/Content/Importing/ExternalAssetSourceMount.cs` (new, from `WI-C5-02`).
-- `src/OpenSage.Game/Content/Importing/IExternalAssetInspector.cs` (new, from `WI-C5-01`).
-- `src/OpenSage.Game/Content/Importing/ExternalAssetInspection.cs` (new, from `WI-C5-01`).
-- `src/OpenSage.Game/Content/Importing/ExternalFormatSelectionResult.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: Core orchestration boundary.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`: immutable result precedent.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IMainThreadDispatcher.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/PlatformPaths.cs`: application cache root.
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetSourceMount.cs` (new, from `WI-C5-02`).
+- `src/Panopticon.Simulation/Content/Importing/IExternalAssetInspector.cs` (new, from `WI-C5-01`).
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetInspection.cs` (new, from `WI-C5-01`).
+- `src/Panopticon.Simulation/Content/Importing/ExternalFormatSelectionResult.cs` (new, from
   `WI-C5-01`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelDiagnostic.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelDiagnostic.cs` (new, from
   `WI-C5-03`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/PreviewEligibility.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/PreviewEligibility.cs` (new, from
   `WI-C5-03`).
 
 ## Steps
@@ -57,13 +57,13 @@ cancellation, source replacement, and explicit filesystem and artifact ownership
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSessionState.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IExternalAssetSourceMountFactory.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IExternalModelArtifactStore.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ExternalModelArtifactStore.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelSessionTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSessionState.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IExternalAssetSourceMountFactory.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IExternalModelArtifactStore.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ExternalModelArtifactStore.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelSessionTests.cs` (new)
 
 ## Acceptance criteria
 

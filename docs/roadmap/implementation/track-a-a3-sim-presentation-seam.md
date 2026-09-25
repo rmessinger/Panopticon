@@ -11,7 +11,7 @@ Implements the A3 row of [Track A](../track-a-foundations.md). Design source of 
 Formalize the boundary between logic state and presentation. Logic must not read render-only or
 audio-only state; logic commands presentation only through the `IGameObjectClient` interface and
 the one-way effect services (audio, particles, tracers). Presentation reads logic state freely.
-Excludes relocating the presentation-by-role subtrees that currently live under `OpenSage.Logic`
+Excludes relocating the presentation-by-role subtrees that currently live under `Panopticon.Logic`
 namespaces, and excludes moving drawable scripting (`CurDrawable*` Lua functions) to a client-side
 script engine; both are documented in the deep dive as named follow-ups.
 
@@ -32,18 +32,18 @@ Entry points after the phase:
 
 | Concern | Surface |
 |---|---|
-| Logic handle to an object's client side | `GameObject.Client` (`IGameObjectClient`, `OpenSage.Logic.Object`) |
-| Concrete client object (presentation only) | `Drawable` (`OpenSage.Client`), obtained as `gameObject.Client is Drawable d` |
+| Logic handle to an object's client side | `GameObject.Client` (`IGameObjectClient`, `Panopticon.Logic.Object`) |
+| Concrete client object (presentation only) | `Drawable` (`Panopticon.Client`), obtained as `gameObject.Client is Drawable d` |
 | Model condition flags | Owned by `GameObject.ModelConditionFlags` (logic state); `Drawable.ModelConditionFlags` forwards for presentation consumers |
 | Bone data for logic | `IGameObjectClient.TryGetBoneTransform` (bind pose), `TryGetBonePose` (current root-relative pose), `GetWeaponLaunchBoneTransform`, `GetWeaponFireFXBoneTransform` |
 | Client object lifecycle | `GameClient.CreateClientObject` / `DestroyClientObject` (`IGameObjectClient`-typed) |
-| Enforcement | `LogicPresentationBoundaryTests` reflects over `OpenSage.Logic` types and fails on any reference to a presentation type |
+| Enforcement | `LogicPresentationBoundaryTests` reflects over `Panopticon.Logic` types and fails on any reference to a presentation type |
 
 ## Logic-to-presentation read audit
 
-Audit of `src/OpenSage.Game/Logic/` references to presentation types (`Drawable`, `Camera`,
+Audit of `src/Panopticon.Simulation/Logic/` references to presentation types (`Drawable`, `Camera`,
 `GraphicsDevice`, `Scene2D`, `AudioSystem`, `Cursors`, `RenderTime`, `ModelInstance`, `W3d`-prefixed
-types, `OpenSage.Rendering`), classified per `WI-A3-01`. Line numbers are the pre-change tree.
+types, `Panopticon.Rendering`), classified per `WI-A3-01`. Line numbers are the pre-change tree.
 
 ### Read violations (the A3 defect list)
 
@@ -78,9 +78,9 @@ Read count: 15 clusters. All are removed in this change; the enforcement test's 
 | Debug drawing signatures | `PartitionCellManager.cs:286,313` `DebugDraw`; `Colliders.cs:153`; `Geometry.cs:151` | type-only; moved to `DebugOverlay` |
 | Name-collision data fields | `AIData` `AltCamera*`; `ObjectDefinition` `LiveCamera*`; `CreateAHeroSystem` `CameraAngle`; `OrderType.SetCameraPosition`; `UpgradeTemplate.Cursor`; `SpecialPower.RadiusCursorRadius`; `ModelConditionFlag.BuildPlacementCursor`; `ObjectKinds.DrawableOnly`/`OrientsToCamera`; `LocomotorTemplate.cs:235` comment | data, not presentation references |
 | Persisted client ids | `ChinookCombatDropState.cs:50,60` `DrawableID`; `ParticleUplinkCannonUpdate.cs:20-84` laser drawable ids | data (uint, persisted, never resolved to `Drawable`) |
-| Asset-data types | `using OpenSage.Audio` in sound/template data classes; `ProjectileNugget.cs:218-221` `W3dProjectileStreamDrawModuleData` (INI data) | data |
+| Asset-data types | `using Panopticon.Audio` in sound/template data classes; `ProjectileNugget.cs:218-221` `W3dProjectileStreamDrawModuleData` (INI data) | data |
 
-### Presentation-by-role under `OpenSage.Logic`
+### Presentation-by-role under `Panopticon.Logic`
 
 | Subtree | Role | Evidence |
 |---|---|---|
@@ -91,14 +91,14 @@ Read count: 15 clusters. All are removed in this change; the enforcement test's 
 | `Logic/GhostObject.cs`, `GhostObjectManager.cs` | Presentation (placement ghosts) | Holds `ModelInstance` per player for build placement previews |
 
 These are excluded from the enforcement test's logic-type set by namespace/type name, per
-`WI-A3-02` step 3. Relocating them under `OpenSage.Client` is a named follow-up.
+`WI-A3-02` step 3. Relocating them under `Panopticon.Client` is a named follow-up.
 
 ### Adjacent mixed surfaces (documented, out of structural scope)
 
-- `LuaScriptEngine` (`OpenSage.Scripting`): `CurDrawable*` functions are SAGE client scripting
+- `LuaScriptEngine` (`Panopticon.Scripting`): `CurDrawable*` functions are SAGE client scripting
   (draw-module animation-state scripts generated at `W3dModelDraw.cs:936-975`); they read drawable
-  state from the shared script engine. Outside `OpenSage.Logic`, so not flagged.
-- `Scene3D` (`OpenSage` root): composition layer. Drives the logic tick (`Scene3D.LogicTick`) and
+  state from the shared script engine. Outside `Panopticon.Logic`, so not flagged.
+- `Scene3D` (`Panopticon` root): composition layer. Drives the logic tick (`Scene3D.LogicTick`) and
   owns camera and render list building.
-- `IGameEngine.GameClient` (`OpenSage` root): the client service property logic uses to create and
+- `IGameEngine.GameClient` (`Panopticon` root): the client service property logic uses to create and
   destroy client objects; command-only.

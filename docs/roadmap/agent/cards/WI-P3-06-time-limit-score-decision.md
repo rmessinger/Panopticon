@@ -19,12 +19,12 @@ Add an optional frame-count time limit to `VictorySystem` that decides the match
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:68-72`: time-limit design in defeat detection.
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:93-103`: frame-limit and score-decision implementation notes.
 - `docs/roadmap/implementation-checklist.md:225-228`: score-decision AC.
-- `src/OpenSage.Game/IGame.cs:93-96`: map time surface if implementation uses elapsed game time.
-- `src/OpenSage.Game/Game.cs:899-927` and `src/OpenSage.Game/Game.cs:963-975`: logic tick timing and update flow.
-- `src/OpenSage.Game/Logic/GameLogic.cs:29-32` and `src/OpenSage.Game/Logic/GameLogic.cs:250-292`: current logic frame state and increment.
-- `src/OpenSage.Game/Logic/Player.cs:126-134` and `src/OpenSage.Game/Logic/Player.cs:807-839`: player counts available for simple score metrics.
-- `src/OpenSage.Game/Logic/Player.cs:1172-1249`: existing score manager persistence fields; preserve all persist branches if exposing any score data.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
+- `src/Panopticon.Simulation/IGame.cs:93-96`: map time surface if implementation uses elapsed game time.
+- `src/Panopticon.Simulation/Game.cs:899-927` and `src/Panopticon.Simulation/Game.cs:963-975`: logic tick timing and update flow.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:29-32` and `src/Panopticon.Simulation/Logic/GameLogic.cs:250-292`: current logic frame state and increment.
+- `src/Panopticon.Simulation/Logic/Player.cs:126-134` and `src/Panopticon.Simulation/Logic/Player.cs:807-839`: player counts available for simple score metrics.
+- `src/Panopticon.Simulation/Logic/Player.cs:1172-1249`: existing score manager persistence fields; preserve all persist branches if exposing any score data.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 
@@ -33,15 +33,15 @@ Add an optional frame-count time limit to `VictorySystem` that decides the match
 3. Add a configurable score metric with a simple default suitable for headless tests, such as buildings standing from `Player.BuildingCount`; keep more advanced metrics behind the seam.
 4. On expiry, compute each active side's score, set `GameOutcome.Status = Decided`, `Reason = ScoreDecision`, `DecidedOnFrame`, and the highest-scoring `WinningPlayer`/`WinningTeam`.
 5. Cover ties as shared victory/winner-list or winning-team according to the outcome representation established by `WI-P3-01`; do not silently pick a random winner.
-6. Add `src/OpenSage.Game.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs` with headless `[Fact]` tests for disabled-by-default, clear winner, and tied/shared-victory outcomes.
+6. Add `test/Panopticon.Simulation.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs` with headless `[Fact]` tests for disabled-by-default, clear winner, and tied/shared-victory outcomes.
 7. New `.cs` files must be UTF-8 with BOM. Run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/VictorySystem.cs`
-- `src/OpenSage.Game/Logic/GameOutcome.cs`
-- `src/OpenSage.Game/Logic/VictoryConditionRule.cs` (or equivalent rule/config seam)
-- `src/OpenSage.Game.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/VictorySystem.cs`
+- `src/Panopticon.Simulation/Logic/GameOutcome.cs`
+- `src/Panopticon.Simulation/Logic/VictoryConditionRule.cs` (or equivalent rule/config seam)
+- `test/Panopticon.Simulation.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -76,7 +76,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "Time-limit → score decision" item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` with the time-limit metric and tests run.
-- Confirm the required test file `src/OpenSage.Game.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs` was created and runs in CI.
+- Confirm the required test file `test/Panopticon.Simulation.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs` was created and runs in CI.
 
 ## Result
 

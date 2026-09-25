@@ -18,10 +18,10 @@ the domain contracts while preserving observable runs.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a4-simulation-domain-model.md`: RTS mapping.
-- `src/OpenSage.Game/Logic/GameLogic.cs`, `Logic/PartitionCellManager.cs`.
-- `src/OpenSage.Game/Recording/SignatureTree.cs`, `RunRecording.cs`.
-- `src/OpenSage.Game/RunOutput.cs`.
-- `src/OpenSage.Game.Tests/SimulationHostTests.cs` and recording tests.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`, `Logic/PartitionCellManager.cs`.
+- `src/Panopticon.Simulation/Recording/SignatureTree.cs`, `RunRecording.cs`.
+- `src/Panopticon.Simulation/RunOutput.cs`.
+- `test/Panopticon.Simulation.Tests/SimulationHostTests.cs` and recording tests.
 
 ## Steps
 
@@ -33,9 +33,9 @@ the domain contracts while preserving observable runs.
 
 ## Files likely to change
 
-- New RTS adapter under `src/OpenSage.Game/Simulation/`
-- `src/OpenSage.Game/Recording/`
-- Focused tests under `src/OpenSage.Game.Tests/`
+- New RTS adapter under `src/Panopticon.Simulation/Simulation/`
+- `src/Panopticon.Simulation/Recording/`
+- Focused tests under `test/Panopticon.Simulation.Tests/`
 
 ## Acceptance criteria
 

@@ -52,7 +52,7 @@ into C5, so they introduce no cycle.
 
 ## Agent context
 
-- Public inspection boundary: `OpenSage.Game` exposes engine-owned catalogs and
+- Public inspection boundary: `Panopticon.Simulation` exposes engine-owned catalogs and
   `IExternalAssetInspector`, not the internal C1 `IModelImporter` or `IAnimationImporter`.
 - C4 state: every path under `Content/Importing/Gltf/` named by these cards is planned by C4 and
   does not exist until its prerequisite C4 card completes.

@@ -19,8 +19,8 @@ scheduling and outcomes unchanged.
 
 - `docs/roadmap/deep-dives/b7-variable-fidelity.md`: B7-1 model and policy.
 - `docs/roadmap/implementation/track-a-a4-experiment-seams.md`.
-- `src/OpenSage.Game/Logic/GameLogic.cs`.
-- `src/OpenSage.Game/Logic/Object/Update/UpdateModule.cs` and sleepy-update types.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`.
+- `src/Panopticon.Simulation/Logic/Object/Update/UpdateModule.cs` and sleepy-update types.
 - A4-1 domain fidelity hooks.
 
 ## Steps
@@ -32,7 +32,7 @@ scheduling and outcomes unchanged.
 
 ## Files likely to change
 
-- New files under `src/OpenSage.Game/Logic/Fidelity/`
+- New files under `src/Panopticon.Simulation/Logic/Fidelity/`
 - Narrow logic-step and domain-adapter integration
 - Focused tests
 

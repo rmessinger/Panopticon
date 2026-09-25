@@ -20,8 +20,8 @@ recording, metrics, and fidelity hooks before defining the domain seam.
 - `docs/roadmap/track-a-foundations.md`: A4-1 domain responsibilities.
 - `docs/roadmap/seams.md`: canonical Simulation Domain Model seam.
 - `docs/roadmap/deep-dives/b6-distributed-simulation.md`: topology and authority consumers.
-- `src/OpenSage.Game/SimulationHost.cs`, `Logic/GameLogic.cs`, `Logic/Object/GameObject.cs`.
-- `src/OpenSage.Game/Logic/PartitionCellManager.cs`, `Recording/`, and `RunOutput.cs`.
+- `src/Panopticon.Simulation/SimulationHost.cs`, `Logic/GameLogic.cs`, `Logic/Object/GameObject.cs`.
+- `src/Panopticon.Simulation/Logic/PartitionCellManager.cs`, `Recording/`, and `RunOutput.cs`.
 
 ## Steps
 

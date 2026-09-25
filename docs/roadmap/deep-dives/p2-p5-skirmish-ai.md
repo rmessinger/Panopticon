@@ -234,7 +234,7 @@ classDiagram
 
 ### The strategic AI is state-only (the gap)
 - `AIPlayer` is persisted fields only: counters, flags, an object id, a position, and `Persist(...)`;
-  no update/decision loop (`src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154`).
+  no update/decision loop (`src/Panopticon.Simulation/Logic/AI/AIPlayer.cs:8-154`).
 - `SkirmishAIPlayer` adds 4 persisted scalars + `Persist(...)`; no behavior
   (`Logic/AI/SkirmishAIPlayer.cs:3-31`).
 - ⇒ There is currently no strategic AI at all, only save/load state.

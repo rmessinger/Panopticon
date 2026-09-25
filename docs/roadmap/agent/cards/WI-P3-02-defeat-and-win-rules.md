@@ -20,14 +20,14 @@ Implement the default configurable defeat rule and win rule: a player is defeate
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:118-124`: P3-1/P3-2/P3-3 sequencing.
 - `docs/roadmap/implementation-checklist.md:205-208`: defeat-rule AC.
 - `docs/roadmap/implementation-checklist.md:212-214`: all-non-allies-defeated win AC.
-- `src/OpenSage.Game/Logic/Player.cs:126-134`: P1 ownership/relationship fields consumed by this card.
-- `src/OpenSage.Game/Logic/Player.cs:350-380`: existing production-prerequisite scan; do not copy this pattern for victory scans.
-- `src/OpenSage.Game/Logic/Player.cs:785-804` and `src/OpenSage.Game/Logic/Player.cs:863-884`: allies/enemies and relationship lookup.
-- `src/OpenSage.Game/Logic/Player.cs:807-839`: maintained owned-object set and counts from `WI-P1-07`.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291-297` and `src/OpenSage.Game/Logic/Object/GameObject.cs:586-631`: owner, structure flag, and kind checks.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:788-798`: object-level production capability check.
-- `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:148-218` and `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:379-383`: relevant structure/command/rebuild kind flags.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
+- `src/Panopticon.Simulation/Logic/Player.cs:126-134`: P1 ownership/relationship fields consumed by this card.
+- `src/Panopticon.Simulation/Logic/Player.cs:350-380`: existing production-prerequisite scan; do not copy this pattern for victory scans.
+- `src/Panopticon.Simulation/Logic/Player.cs:785-804` and `src/Panopticon.Simulation/Logic/Player.cs:863-884`: allies/enemies and relationship lookup.
+- `src/Panopticon.Simulation/Logic/Player.cs:807-839`: maintained owned-object set and counts from `WI-P1-07`.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:291-297` and `src/Panopticon.Simulation/Logic/Object/GameObject.cs:586-631`: owner, structure flag, and kind checks.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:788-798`: object-level production capability check.
+- `src/Panopticon.Simulation/Logic/Object/ObjectKinds.cs:148-218` and `src/Panopticon.Simulation/Logic/Object/ObjectKinds.cs:379-383`: relevant structure/command/rebuild kind flags.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 
@@ -36,15 +36,15 @@ Implement the default configurable defeat rule and win rule: a player is defeate
 3. Treat the default Generals rule as: no qualifying command/production structures and no rebuild means (no dozer/worker equivalent and insufficient resources). Keep exact object classification narrow and data-driven/configurable; if a flag is ambiguous, document the gap and keep the seam.
 4. Implement win determination using P1 relationships/teams: when all players not allied to player X are defeated, set `GameOutcome.Status = Decided`, `Reason = Eliminated`, and the correct `WinningPlayer`/`WinningTeam` fields.
 5. React to the incremental lifecycle notification from `WI-P3-03`; do not add a per-frame full-object scan.
-6. Add headless `[Fact]` tests in `src/OpenSage.Game.Tests/Logic/Victory/VictoryRuleTests.cs` for player defeat within the check cadence and all-non-allies-defeated win determination.
+6. Add headless `[Fact]` tests in `test/Panopticon.Simulation.Tests/Logic/Victory/VictoryRuleTests.cs` for player defeat within the check cadence and all-non-allies-defeated win determination.
 7. New `.cs` files must be UTF-8 with BOM. Run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/VictorySystem.cs`
-- `src/OpenSage.Game/Logic/GameOutcome.cs`
-- `src/OpenSage.Game/Logic/VictoryConditionRule.cs` (new, or equivalent rule seam)
-- `src/OpenSage.Game.Tests/Logic/Victory/VictoryRuleTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/VictorySystem.cs`
+- `src/Panopticon.Simulation/Logic/GameOutcome.cs`
+- `src/Panopticon.Simulation/Logic/VictoryConditionRule.cs` (new, or equivalent rule seam)
+- `test/Panopticon.Simulation.Tests/Logic/Victory/VictoryRuleTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -79,7 +79,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "Player-defeat detection" item and the win-determination portion of "Win/lose determination + match-end flow" in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` with the rule seam name and tests run.
-- Confirm the required test file `src/OpenSage.Game.Tests/Logic/Victory/VictoryRuleTests.cs` was created and runs in CI.
+- Confirm the required test file `test/Panopticon.Simulation.Tests/Logic/Victory/VictoryRuleTests.cs` was created and runs in CI.
 
 ## Result
 

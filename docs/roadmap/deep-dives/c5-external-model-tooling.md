@@ -34,7 +34,7 @@ Responsibilities remain split by existing project boundaries:
 |---|---|
 | ReplaySketch MAUI | File picking, commands, tab presentation, image display |
 | ReplaySketch Core | Session state, format selection, diagnostics, reports, preview requests |
-| OpenSage.Game | Import, validation, materialization, animation binding |
+| Panopticon.Simulation | Import, validation, materialization, animation binding |
 | TestHarness | Graphics device, scene, model lifetime, frame capture |
 
 The external-model session path in ReplaySketch Core never creates a graphics device. MAUI does
@@ -85,7 +85,7 @@ The catalog contains only engine-owned values:
 - parser diagnostics that do not prevent a valid import.
 
 `ExternalAssetInspection.CreateGltf(options)` returns the public facade while its implementation and
-C1 importer instances remain internal to `OpenSage.Game`. ReplaySketch Core therefore needs no
+C1 importer instances remain internal to `Panopticon.Simulation`. ReplaySketch Core therefore needs no
 friend-assembly access. The C4 inspector uses the same parser, resolver, limits, and subset checks
 as the importers. It must not become a second permissive parser path. The catalog does not contain
 parser objects or materialized assets.
@@ -205,10 +205,10 @@ TestHarness executable using the existing sibling-build-directory convention, th
 external-model mode with one JSON request:
 
 ```sh
-<OpenSage.Tools.TestHarness executable> --external-model-request <request.json>
+<Panopticon.Tools.TestHarness executable> --external-model-request <request.json>
 ```
 
-`dotnet run --project src/OpenSage.Tools.TestHarness -- --external-model-request <request.json>`
+`dotnet run --project src/Panopticon.Tools.TestHarness -- --external-model-request <request.json>`
 is a developer fallback, not the ReplaySketch launch path.
 
 The request contains:
@@ -393,22 +393,22 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - ReplaySketch shell and tabs:
-  `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml` and `MainPage.xaml.cs`.
+  `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml` and `MainPage.xaml.cs`.
 - Top-level commands and current process-launching precedent:
-  `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`,
-  `src/OpenSage.Tools.ReplaySketch.Core/Services/IProcessLauncher.cs`, and
-  `src/OpenSage.Tools.ReplaySketch.Core/Services/LauncherLocatorService.cs`, and
-  `src/OpenSage.Tools.ReplaySketch.Maui/Services/SystemProcessLauncher.cs`.
+  `src/Panopticon.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`,
+  `src/Panopticon.Tools.ReplaySketch.Core/Services/IProcessLauncher.cs`, and
+  `src/Panopticon.Tools.ReplaySketch.Core/Services/LauncherLocatorService.cs`, and
+  `src/Panopticon.Tools.ReplaySketch.Maui/Services/SystemProcessLauncher.cs`.
 - Existing file and folder picker patterns:
-  `src/OpenSage.Tools.ReplaySketch.Maui/Views/ValidationGroundEditorView.xaml.cs` and
+  `src/Panopticon.Tools.ReplaySketch.Maui/Views/ValidationGroundEditorView.xaml.cs` and
   `MapPreviewView.xaml.cs`.
 - Screenshot mode:
-  `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml.cs`.
+  `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml.cs`.
 - TestHarness entry point and capture helpers:
-  `src/OpenSage.Tools.TestHarness/Program.cs`,
+  `src/Panopticon.Tools.TestHarness/Program.cs`,
   `ScenarioCaptureRunner.cs`, and `EngagementCaptureRunner.cs`.
 - Existing Core orchestration patterns:
-  `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`,
+  `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`,
   `ScenarioMatrixRunner.cs`, and `Services/UnitContractRunner.cs`.
 - ReplaySketch tests:
-  `src/OpenSage.Tools.ReplaySketch.Tests`.
+  `test/Panopticon.Tools.ReplaySketch.Tests`.

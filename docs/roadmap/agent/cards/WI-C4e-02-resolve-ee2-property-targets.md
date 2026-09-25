@@ -18,10 +18,10 @@ Expose NIF source identity for sub-objects and material slots so C4e controllers
 
 - `docs/roadmap/deep-dives/c4e-ee2-property-animation.md` sections 2, 5.2, 5.4, and 6.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` section 5.
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifMaterialConverter.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedSubObject.cs` and `ImportedMeshPart.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifMaterialConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedSubObject.cs` and `ImportedMeshPart.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`.
 
 ## Steps
 
@@ -33,11 +33,11 @@ Expose NIF source identity for sub-objects and material slots so C4e controllers
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifModelImporter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifMaterialConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifPropertyTargetMap.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifMaterialConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifPropertyTargetMap.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`
 
 ## Acceptance criteria
 

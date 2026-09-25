@@ -139,7 +139,7 @@ linear and quadratic `NifKeyGroup<float>` values for Euler axes and scale.
 ## 5. Semantics
 
 NIF 10.1 scale is a local uniform scalar. Local transform order remains the C4a row-vector order
-`S * R * T`, matching `Transform.Matrix` in `src/OpenSage.Game/Transform.cs:85-88`.
+`S * R * T`, matching `Transform.Matrix` in `src/Panopticon.Simulation/Transform.cs:85-88`.
 
 Scale keys are absolute local scale samples in the source model frame. Rest scale comes from the
 model node, not the KF file. The imported channel value is rest-relative:
@@ -177,15 +177,15 @@ Current C1 and runtime gaps:
 
 | Area | Current code | Gap |
 |---|---|---|
-| C1 rest bones | `ImportedBone` stores name, parent, bind translation, bind rotation, and inverse bind matrix in `src/OpenSage.Game/Content/Importing/ImportedBone.cs:14-22`. | No bind scale field. |
-| C1 channel types | `ImportedAnimationChannelType` is `TranslationX`, `TranslationY`, `TranslationZ`, `Quaternion`, `Visibility` in `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs:8-15`. | No scale channel type. |
-| C1 key values | `ImportedKeyframeKind` stores float, quaternion, and bool in `src/OpenSage.Game/Content/Importing/ImportedKeyframe.cs:8-13`. | Scale can reuse float. |
-| Runtime clip types | `AnimationClipType` mirrors the same five types in `src/OpenSage.Game/Graphics/Animation/AnimationClipType.cs:3-10`. | No scale clip type. |
-| Runtime rest bones | `ModelBone` constructs `Transform` from translation and rotation only in `src/OpenSage.Game/Graphics/ModelBone.cs:19-32`. | The existing `Transform` already has a scale field, but it is not populated from imported bones. |
-| Runtime offsets | `ModelBoneInstance.Matrix` is `AnimatedOffset.Matrix * _modelBone.Transform.Matrix` in `src/OpenSage.Game/Graphics/ModelBoneInstance.cs:34-36`. | Scale composition works once rest and animated offset scale are set. |
-| Animation reset | `AnimationInstance.ResetBoneTransforms` resets translation and rotation only in `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs:125-129`. | Offset scale must reset to 1. |
-| Animation evaluation | `AnimationInstance.Evaluate` handles translation, quaternion, and visibility in `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs:333-365`. | Linear and step scale assignment are missing. |
-| Materialization | `ImportedAnimationMaterializer` maps imported channel types in `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs:26-34`. | Scale mapping is missing. |
+| C1 rest bones | `ImportedBone` stores name, parent, bind translation, bind rotation, and inverse bind matrix in `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs:14-22`. | No bind scale field. |
+| C1 channel types | `ImportedAnimationChannelType` is `TranslationX`, `TranslationY`, `TranslationZ`, `Quaternion`, `Visibility` in `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs:8-15`. | No scale channel type. |
+| C1 key values | `ImportedKeyframeKind` stores float, quaternion, and bool in `src/Panopticon.Simulation/Content/Importing/ImportedKeyframe.cs:8-13`. | Scale can reuse float. |
+| Runtime clip types | `AnimationClipType` mirrors the same five types in `src/Panopticon.Simulation/Graphics/Animation/AnimationClipType.cs:3-10`. | No scale clip type. |
+| Runtime rest bones | `ModelBone` constructs `Transform` from translation and rotation only in `src/Panopticon.Simulation/Graphics/ModelBone.cs:19-32`. | The existing `Transform` already has a scale field, but it is not populated from imported bones. |
+| Runtime offsets | `ModelBoneInstance.Matrix` is `AnimatedOffset.Matrix * _modelBone.Transform.Matrix` in `src/Panopticon.Simulation/Graphics/ModelBoneInstance.cs:34-36`. | Scale composition works once rest and animated offset scale are set. |
+| Animation reset | `AnimationInstance.ResetBoneTransforms` resets translation and rotation only in `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs:125-129`. | Offset scale must reset to 1. |
+| Animation evaluation | `AnimationInstance.Evaluate` handles translation, quaternion, and visibility in `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs:333-365`. | Linear and step scale assignment are missing. |
+| Materialization | `ImportedAnimationMaterializer` maps imported channel types in `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs:26-34`. | Scale mapping is missing. |
 
 Minimal C1 extension:
 
@@ -233,17 +233,17 @@ interpolation only, and C4c already uses 30 Hz resampling for quadratic Euler cu
 
 Rigid meshes: parent-bone scale reaches rendering through `ModelInstance.AbsoluteBoneTransforms`.
 `ModelMesh.BuildRenderList` uses that matrix for unskinned meshes in
-`src/OpenSage.Game/Graphics/ModelMesh.cs:51-53`. The existing bounding box transform in
+`src/Panopticon.Simulation/Graphics/ModelMesh.cs:51-53`. The existing bounding box transform in
 `ModelMesh.cs:109` expands render bounds under scale.
 
 Skinned meshes: `ModelInstance.ComputeSkinningMatrix` returns `bone.InverseBindMatrix *
-relativeBoneTransform` in `src/OpenSage.Game/Graphics/ModelInstance.cs:259-261`. C4d must include
+relativeBoneTransform` in `src/Panopticon.Simulation/Graphics/ModelInstance.cs:259-261`. C4d must include
 rest scale in inverse bind matrices and verify scaled bone animation before choosing a proof asset.
 C4f must not widen or truncate skin influences.
 
 Normals: NIF scale is uniform, so normal direction is unchanged by scale and only vector length is
 affected. The shader helper `TransformNormal` currently multiplies by the matrix without
-normalizing in `src/OpenSage.Game/Assets/Shaders/Common.h:35-38`. C4f must normalize mesh normals
+normalizing in `src/Panopticon.Simulation/Assets/Shaders/Common.h:35-38`. C4f must normalize mesh normals
 after world and skinning transforms, or otherwise prove fixed-function and PBR lighting are
 unchanged under uniform scale. This is required for fixed-function EE2 proofs because
 `FixedFunction.frag` uses `in_WorldNormal` directly.
@@ -385,32 +385,32 @@ sequenceDiagram
 
 ## Appendix: current-code grounding
 
-- `ImportedBone` has no rest scale field: `src/OpenSage.Game/Content/Importing/ImportedBone.cs:14-22`.
-- C1 animation channel types omit scale: `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs:8-15`.
-- `ImportedKeyframe` already supports float values: `src/OpenSage.Game/Content/Importing/ImportedKeyframe.cs:8-13,45-48`.
-- Runtime clip types omit scale: `src/OpenSage.Game/Graphics/Animation/AnimationClipType.cs:3-10`.
+- `ImportedBone` has no rest scale field: `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs:14-22`.
+- C1 animation channel types omit scale: `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs:8-15`.
+- `ImportedKeyframe` already supports float values: `src/Panopticon.Simulation/Content/Importing/ImportedKeyframe.cs:8-13,45-48`.
+- Runtime clip types omit scale: `src/Panopticon.Simulation/Graphics/Animation/AnimationClipType.cs:3-10`.
 - `Transform` supports uniform scale and composes `Scale * Rotation * Translation`:
-  `src/OpenSage.Game/Transform.cs:47-69,85-88`.
+  `src/Panopticon.Simulation/Transform.cs:47-69,85-88`.
 - `ModelBone` currently creates `Transform` without scale:
-  `src/OpenSage.Game/Graphics/ModelBone.cs:19-32`.
+  `src/Panopticon.Simulation/Graphics/ModelBone.cs:19-32`.
 - `ModelBoneHierarchy` materializes imported translation and rotation only:
-  `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs:37-43`.
+  `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs:37-43`.
 - Bone local composition uses animated offset before rest:
-  `src/OpenSage.Game/Graphics/ModelBoneInstance.cs:34-36`.
+  `src/Panopticon.Simulation/Graphics/ModelBoneInstance.cs:34-36`.
 - `AnimationInstance` resets and evaluates translation, rotation, and visibility only:
-  `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs:125-129,333-365`.
+  `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs:125-129,333-365`.
 - `ImportedAnimationMaterializer` maps only the existing five channel types:
-  `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs:24-55`.
+  `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs:24-55`.
 - C4c's current scale rejection mirrors glTF's non-identity scale rejection:
-  `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs:121-132`.
+  `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs:121-132`.
 - NIF source-to-engine conversion applies meters-to-feet in the basis matrix:
-  `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs:19-35`.
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs:19-35`.
 - Unskinned render bounds use the parent bone world matrix:
-  `src/OpenSage.Game/Graphics/ModelMesh.cs:51-53,109`.
+  `src/Panopticon.Simulation/Graphics/ModelMesh.cs:51-53,109`.
 - Skinning matrix composition is inverse bind followed by relative transform:
-  `src/OpenSage.Game/Graphics/ModelInstance.cs:259-261`.
+  `src/Panopticon.Simulation/Graphics/ModelInstance.cs:259-261`.
 - Shader normal transform currently does not normalize:
-  `src/OpenSage.Game/Assets/Shaders/Common.h:35-38`.
+  `src/Panopticon.Simulation/Assets/Shaders/Common.h:35-38`.
 
 ## Appendix: reproduction
 

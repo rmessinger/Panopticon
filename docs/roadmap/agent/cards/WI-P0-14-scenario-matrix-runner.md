@@ -21,19 +21,19 @@ This is the primitive the P1–P7 phase matrices depend on.
 
 - `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.5b`: full design: model types,
   expansion algorithm, output shape, and the aggregate JSON report format.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the template this matrix
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the template this matrix
   wraps per-cell.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: `AssertionTemplate`
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: `AssertionTemplate`
   will produce concrete assertions by substituting axis tokens.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs`: per-cell report type;
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs`: per-cell report type;
   aggregate report is a new type that wraps a list of per-cell results.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: the entry point called per cell.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: the entry point called per cell.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
   `P0_5b_ScenarioMatrixTests` stubs that this card must unblock.
 
 ## Steps
 
-1. In `OpenSage.Tools.ReplaySketch.Core/Model/`, create `ScenarioMatrix.cs` containing:
+1. In `Panopticon.Tools.ReplaySketch.Core/Model/`, create `ScenarioMatrix.cs` containing:
 
    - `SweepAxis`: `string Name`, `IReadOnlyList<string> Values`.
    - `ConstraintFilter`: `string Expression` (a simple predicate string for documentation; for now
@@ -50,7 +50,7 @@ This is the primitive the P1–P7 phase matrices depend on.
    - `MatrixCell`: `IReadOnlyDictionary<string,string> Bindings`,
      `ReplayScenario ConcreteScenario` (template with assertion templates resolved for this cell).
 
-2. In `OpenSage.Tools.ReplaySketch.Core/`, create `ScenarioMatrixRunner.cs`:
+2. In `Panopticon.Tools.ReplaySketch.Core/`, create `ScenarioMatrixRunner.cs`:
 
    `ScenarioMatrixRunner.Run(ScenarioMatrix matrix, GameInstallation installation, string tempDirectory)`
    returns a `MatrixReport`.
@@ -72,7 +72,7 @@ This is the primitive the P1–P7 phase matrices depend on.
      ```
 
 4. Update the three `P0_5b_ScenarioMatrixTests` stubs in
-   `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`:
+   `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`:
 
    a. `Matrix_Expansion_ProducesOneRunPerCell`:
       Build a `ScenarioMatrix` with 2 axes of lengths 2 and 3 (no `BaseScenario` needed:
@@ -90,7 +90,7 @@ This is the primitive the P1–P7 phase matrices depend on.
       verifies the aggregate report JSON contains the failing cell's key. Tag as Interactive if
       a live game is needed.
 
-5. Add unit tests in `OpenSage.Tools.ReplaySketch.Tests/ScenarioMatrixTests.cs`:
+5. Add unit tests in `Panopticon.Tools.ReplaySketch.Tests/ScenarioMatrixTests.cs`:
    - `Expand_TwoAxes_ProducesCartesianProduct`: 2×3 axes → 6 cells.
    - `Expand_WithConstraintFilter_PrunesDisallowedCells`: constraint removes cells where
      axis `a == "x" && axis b == "y"`.
@@ -101,11 +101,11 @@ This is the primitive the P1–P7 phase matrices depend on.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: unblock P0_5b stubs
-- `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioMatrixTests.cs` (new unit tests)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: unblock P0_5b stubs
+- `test/Panopticon.Tools.ReplaySketch.Tests/ScenarioMatrixTests.cs` (new unit tests)
 
 ## Acceptance criteria
 
@@ -122,7 +122,7 @@ This is the primitive the P1–P7 phase matrices depend on.
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests
 dotnet test src --filter "FullyQualifiedName~P0_5b"
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes

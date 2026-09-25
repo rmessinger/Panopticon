@@ -18,11 +18,11 @@ without allocating GPU resources.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 3-5.
-- `src/OpenSage.Game/Content/Loaders/OnDemandTextureLoader.cs`.
-- `src/OpenSage.Game/Data/Tga/TgaFile.cs`.
-- `src/OpenSage.Game/Graphics/TextureAsset.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandTextureLoader.cs`.
+- `src/Panopticon.Simulation/Data/Tga/TgaFile.cs`.
+- `src/Panopticon.Simulation/Graphics/TextureAsset.cs`.
 - `src/Veldrid.ImageSharp/ImageSharpTexture.cs`.
-- `src/OpenSage.IO/FileSystem.cs` and `FileSystemEntry.cs`.
+- `src/Panopticon.IO/FileSystem.cs` and `FileSystemEntry.cs`.
 - PBR image-source types from `WI-C3-01`.
 
 ## Steps
@@ -40,10 +40,10 @@ without allocating GPU resources.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Loaders/DecodedImportedImage.cs` (new)
-- `src/OpenSage.Game/Content/Loaders/ImportedImageDecoder.cs` (new)
-- `src/OpenSage.Game/Data/Tga/TgaFile.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedImageDecoderTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/DecodedImportedImage.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/ImportedImageDecoder.cs` (new)
+- `src/Panopticon.Simulation/Data/Tga/TgaFile.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedImageDecoderTests.cs` (new)
 
 ## Acceptance criteria
 

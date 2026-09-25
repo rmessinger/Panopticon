@@ -170,9 +170,9 @@ Remaining work:
 
 ## 8. Architecture diagrams
 
-Grounded in the current code (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`,
-`src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`, `src/OpenSage.Game/Logic/AI/AIDecisionPolicyFactory.cs`,
-`src/OpenSage.Game/Logic/Player.cs`, `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`).
+Grounded in the current code (`src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`,
+`src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs`, `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyFactory.cs`,
+`src/Panopticon.Simulation/Logic/Player.cs`, `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`).
 
 ```mermaid
 classDiagram
@@ -346,7 +346,7 @@ sequenceDiagram
 > design intent above does not require reading this section.
 
 - `AIPlayer.OnDecisionTick()` dispatches its injected `IAIDecisionPolicy` on a
-  `DefaultDecisionCadenceFrames` cadence (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`).
+  `DefaultDecisionCadenceFrames` cadence (`src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`).
 - `RuleBasedAIDecisionPolicy` contains the reference economy, production, and military state
   machine extracted from `SkirmishAIPlayer`. `SkirmishAIPlayer` remains the save-layout host.
 - Actuation: `AIPlayer.EnqueueOrder(s)` → `DispatchOrders(...)` →

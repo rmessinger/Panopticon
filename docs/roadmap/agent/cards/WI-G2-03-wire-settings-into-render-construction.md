@@ -21,9 +21,9 @@ observable output must not change while both presets still carry the current val
 - `docs/roadmap/implementation/track-g-g2-graphics-settings.md`: the consumer column of the
   `WI-G2-01` table lists exactly the call sites to change.
 - The G2 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs:22-48`: the three sampler constructions.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:92-100`: intermediate target creation.
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowSettings.cs:9-77`.
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs:22-48`: the three sampler constructions.
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:92-100`: intermediate target creation.
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs:9-77`.
 
 ## Steps
 
@@ -39,10 +39,10 @@ observable output must not change while both presets still carry the current val
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs`
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs`
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowSettings.cs`
-- `src/OpenSage.Game.Tests/`
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs`
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs`
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs`
+- `test/Panopticon.Simulation.Tests/`
 - `docs/roadmap/implementation/track-g-g2-graphics-settings.md`
 
 ## Acceptance criteria

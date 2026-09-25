@@ -20,15 +20,15 @@ including distinct model and animation roots and caller-owned output paths.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 7, 8, and 10.
-- `src/OpenSage.Tools.ReplaySketch.Core/OpenSage.Tools.ReplaySketch.Core.csproj`.
-- `src/OpenSage.Tools.TestHarness/OpenSage.Tools.TestHarness.csproj`: existing Core reference.
-- `src/OpenSage.Tools.TestHarness/Program.cs`: argument parsing precedent.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/Capture/CaptureProfile.cs`: JSON contract precedent.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs` (new,
+- `src/Panopticon.Tools.ReplaySketch.Core/Panopticon.Tools.ReplaySketch.Core.csproj`.
+- `src/Panopticon.Tools.TestHarness/Panopticon.Tools.TestHarness.csproj`: existing Core reference.
+- `src/Panopticon.Tools.TestHarness/Program.cs`: argument parsing precedent.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/Capture/CaptureProfile.cs`: JSON contract precedent.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs` (new,
   from `WI-C5-05`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelPreviewOptions.cs` (new,
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelPreviewOptions.cs` (new,
   from `WI-C5-05`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
   `WI-C5-03`).
 
 ## Steps
@@ -55,12 +55,12 @@ including distinct model and animation roots and caller-owned output paths.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequest.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSourceRequest.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelViewport.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelProtocolJson.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequestValidator.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelProtocolTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequest.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSourceRequest.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelViewport.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelProtocolJson.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequestValidator.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelProtocolTests.cs` (new)
 
 ## Acceptance criteria
 

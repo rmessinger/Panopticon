@@ -19,8 +19,8 @@ as the reference implementation.
 
 - `docs/roadmap/implementation/track-a-a4-experiment-seams.md`: storage invariants.
 - The completed B3 design and diagrams.
-- `src/OpenSage.Game/Logic/GameLogic.cs`.
-- `src/OpenSage.Game/Logic/IGameObjectCollection.cs`.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`.
+- `src/Panopticon.Simulation/Logic/IGameObjectCollection.cs`.
 - Object creation, destruction, persistence, and iteration tests named by the B3 design.
 
 ## Steps
@@ -33,8 +33,8 @@ as the reference implementation.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/GameLogic.cs`
-- New storage files under `src/OpenSage.Game/Logic/`
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`
+- New storage files under `src/Panopticon.Simulation/Logic/`
 - Focused logic and persistence tests
 
 ## Acceptance criteria

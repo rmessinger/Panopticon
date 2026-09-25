@@ -26,7 +26,7 @@ design treats terrain streaming and large-object authoring as the core requireme
   experiment with scaling techniques, so size must be bounded by disk, not RAM or the file format.
   Streaming/chunking (B4a-5) is therefore a core requirement, and every per-cell-resident
   assumption (C1, C5) must eventually go.
-- Original-engine `.map` compatibility is not required. OpenSAGE may extend or replace the `.map`
+- Original-engine `.map` compatibility is not required. Panopticon may extend or replace the `.map`
   format for large maps from the start, consistent with the roadmap principle that scale and
   extensibility outrank fidelity. Reading existing original maps remains valuable, but writing must
   not be constrained by the original format's limits. This removes the compatibility half of C6 as a
@@ -35,17 +35,17 @@ design treats terrain streaming and large-object authoring as the core requireme
 ## How maps are sized today
 
 - Terrain is a heightmap grid. `HeightMapData`
-  (`src/OpenSage.Game/Data/Map/HeightMapData.cs`) stores `Width`/`Height` (tiles) and a full
+  (`src/Panopticon.Simulation/Data/Map/HeightMapData.cs`) stores `Width`/`Height` (tiles) and a full
   `ushort[,] Elevations` array, plus `Area = Width  Height`. Generals maps store elevations as
   `uint8`; BFME and later as `uint16` (`ElevationsAre16Bit`, version ≥ 5).
 - Companion per-tile data scales with area too. Blend/texture tiles (`BlendTileData`), passability,
   and similar data are all per-cell.
 - Rendering splits terrain into fixed 17×17-vertex patches. `Terrain`
-  (`src/OpenSage.Game/Terrain/Terrain.cs`, `PatchSize = 17`) builds a `List<TerrainPatch>` covering
+  (`src/Panopticon.Simulation/Terrain/Terrain.cs`, `PatchSize = 17`) builds a `List<TerrainPatch>` covering
   the whole map up front. There is no streaming or terrain LOD.
 - Spatial systems scale with cell count. `PartitionCellManager`, the `Quadtree`
-  (`src/OpenSage.Game/DataStructures/`), and the navigation graph
-  (`src/OpenSage.Game/Navigation/`) are all sized from map dimensions.
+  (`src/Panopticon.Simulation/DataStructures/`), and the navigation graph
+  (`src/Panopticon.Simulation/Navigation/`) are all sized from map dimensions.
 - WorldBuilder authoring assumes the full grid is resident and cheap to copy. The New Map wizard
   (`NewMapWizardPage.xaml.cs`) only enforces minimums (width/height ≥ 10, border ≥ 2); there is no
   upper bound. Height-edit tooling clones the entire elevation array per stroke
@@ -97,10 +97,10 @@ large-population authoring, see the sections above; these diagrams cover only st
 
 ### Current types and B4a additions
 
-`MapFile` (`src/OpenSage.Game/Data/Map/MapFile.cs`) owns the resident map data. `HeightMapData`
+`MapFile` (`src/Panopticon.Simulation/Data/Map/MapFile.cs`) owns the resident map data. `HeightMapData`
 holds the full `ushort[,] Elevations` grid and validates `Width * Height == Area`; `BlendTileData`
 holds per-cell tile arrays; `ObjectsList` holds the flat `MapObject[]`. `Terrain`
-(`src/OpenSage.Game/Terrain/Terrain.cs`) builds one `TerrainPatch` per `PatchSize` (17) block over
+(`src/Panopticon.Simulation/Terrain/Terrain.cs`) builds one `TerrainPatch` per `PatchSize` (17) block over
 the whole `HeightMap` up front in `CreatePatches`. On the editor side, `EditorMap` wraps a `MapFile`
 and an `UndoRedoStack~IMapEdit~`; tools push region-scoped `IMapEdit` records. B4a-5 replaces the
 single resident grid with chunked storage, B4a-4 builds patches on demand, and B4a-7 lifts the

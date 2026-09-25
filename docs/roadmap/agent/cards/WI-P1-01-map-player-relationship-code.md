@@ -24,11 +24,11 @@ brief that a later implementation card will follow.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/PlayerManager.cs`: `OnNewGame()` (the `// TODO: Setup player
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs`: `OnNewGame()` (the `// TODO: Setup player
   relationships.` at ~line 45) and how players are created/iterated.
-- `src/OpenSage.Game/Logic/Player.cs`: any existing relationship/ally/enemy/team fields or methods
+- `src/Panopticon.Simulation/Logic/Player.cs`: any existing relationship/ally/enemy/team fields or methods
   (search for `Relationship`, `Ally`, `Enemy`, `Team`).
-- `src/OpenSage.Game/Network/SkirmishManager.cs`: how skirmish player settings (teams/slots) are
+- `src/Panopticon.Simulation/Network/SkirmishManager.cs`: how skirmish player settings (teams/slots) are
   built and passed into game start.
 
 ## Steps

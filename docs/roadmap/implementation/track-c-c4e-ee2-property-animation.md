@@ -17,7 +17,7 @@ material state.
 
 | Step | Card | Deliverable |
 |---|---|---|
-| 1 | [`WI-C4e-01`](../agent/cards/WI-C4e-01-decode-ee2-property-controllers.md) | Property controller and data blocks in `OpenSage.FileFormats.Nif`. |
+| 1 | [`WI-C4e-01`](../agent/cards/WI-C4e-01-decode-ee2-property-controllers.md) | Property controller and data blocks in `Panopticon.FileFormats.Nif`. |
 | 2 | [`WI-C4e-02`](../agent/cards/WI-C4e-02-resolve-ee2-property-targets.md) | NIF target resolution for sub-objects and material slots. |
 | 3 | [`WI-C4e-03`](../agent/cards/WI-C4e-03-extend-c1-property-channels.md) | C1 and runtime target/channel types for property animation. |
 | 4 | [`WI-C4e-04`](../agent/cards/WI-C4e-04-convert-ee2-property-animation.md) | NIF property-animation converter emitting C1 channels. |

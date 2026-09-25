@@ -18,7 +18,7 @@ metadata required for later inspection.
 ## Context to read (and only this)
 
 - T2 contract in the A5 implementation plan and deep dive §5.
-- `src/OpenSage.Game/Recording/RunRecording.cs`.
+- `src/Panopticon.Simulation/Recording/RunRecording.cs`.
 - Scenario recording options from `WI-A5-03`.
 - Domain detail projection from `WI-A5-12`.
 - Existing T2 recording tests.
@@ -34,7 +34,7 @@ metadata required for later inspection.
 ## Files likely to change
 
 - Scenario recording-option models
-- `src/OpenSage.Game/Recording/RunRecording.cs`
+- `src/Panopticon.Simulation/Recording/RunRecording.cs`
 - Harness wiring
 - Focused tests
 

@@ -19,8 +19,8 @@ categorical overlays through A4-1 without spatial assumptions in ReplaySketch.
 
 - A5 projection contract in the implementation plan.
 - A4 simulation-domain contracts and RTS/transport adapters.
-- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/MapPreviewRenderer.cs`.
-- `src/OpenSage.Game/Recording/WorldStateSnapshot.cs` and `SignatureTree.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Profiles/MapPreviewRenderer.cs`.
+- `src/Panopticon.Simulation/Recording/WorldStateSnapshot.cs` and `SignatureTree.cs`.
 
 ## Steps
 
@@ -33,7 +33,7 @@ categorical overlays through A4-1 without spatial assumptions in ReplaySketch.
 ## Files likely to change
 
 - A4 domain interface/adapters
-- New visualization types under `src/OpenSage.Tools.ReplaySketch.Core/`
+- New visualization types under `src/Panopticon.Tools.ReplaySketch.Core/`
 - Focused tests
 
 ## Acceptance criteria

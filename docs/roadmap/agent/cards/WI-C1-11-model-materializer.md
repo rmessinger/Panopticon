@@ -18,7 +18,7 @@ loader and game-definition wiring unchanged.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 3, 4, 6, and 9.
-- `src/OpenSage.Game/Graphics/Model.cs`, `ModelBoneHierarchy.cs`, `ModelSubObject.cs`,
+- `src/Panopticon.Simulation/Graphics/Model.cs`, `ModelBoneHierarchy.cs`, `ModelSubObject.cs`,
   `ModelBox.cs`, `ModelMesh.cs`, and `ModelMesh.W3d.cs`.
 
 ## Steps
@@ -34,9 +34,9 @@ loader and game-definition wiring unchanged.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs` (new)
-- `src/OpenSage.Game/Graphics/Model*.cs` (format-neutral construction only)
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedModelMaterializerTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Model*.cs` (format-neutral construction only)
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelMaterializerTests.cs` (new)
 
 ## Acceptance criteria
 

@@ -51,7 +51,7 @@ locks CPU behavior against committed fixtures. Card 12 depends on every earlier 
 
 ## Agent context
 
-- Parser boundary: only files under `src/OpenSage.Game/Content/Importing/Gltf/` (new in C4) may
+- Parser boundary: only files under `src/Panopticon.Simulation/Content/Importing/Gltf/` (new in C4) may
   reference `SharpGLTF.Schema2`.
 - Public configuration: `GltfImportOptions` is immutable constructor state. It does not extend
   `AssetImportContext`.

@@ -22,14 +22,14 @@ Attach the three universal invariants to all six P7 scenarios and prove the P0-5
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:210-240`: suite execution sequence diagram.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:293-296`: per-tick invariant hook via `Game.Updating`.
 - `docs/roadmap/implementation-checklist.md:348-360`: invariant and matrix ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151`: matrix expansion and assertion-template materialization.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: P0-5b runner over expanded cells.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73`: per-tick invariant subscription and abort.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:135-167`: `InvariantAssertion` implementation.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:192-218`: `CodeAssertion` escape hatch for invariants that need code.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs:7-15`: predicate registration.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55`: aggregate cell report and JSON shape.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254`: final P7 matrix test names to satisfy in P7-08.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151`: matrix expansion and assertion-template materialization.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: P0-5b runner over expanded cells.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73`: per-tick invariant subscription and abort.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:135-167`: `InvariantAssertion` implementation.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:192-218`: `CodeAssertion` escape hatch for invariants that need code.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs:7-15`: predicate registration.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55`: aggregate cell report and JSON shape.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254`: final P7 matrix test names to satisfy in P7-08.
 
 ## Steps
 
@@ -44,15 +44,15 @@ Attach the three universal invariants to all six P7 scenarios and prove the P0-5
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/player-eliminated.json`
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json`
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json`
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json`
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json`
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionMatrixTests.cs` (new focused matrix coverage, or equivalent helper consumed by P7-08)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if invariant paths need real values)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (only if code predicates are needed)
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/player-eliminated.json`
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json`
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json`
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json`
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json`
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionMatrixTests.cs` (new focused matrix coverage, or equivalent helper consumed by P7-08)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if invariant paths need real values)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (only if code predicates are needed)
 
 ## Acceptance criteria
 

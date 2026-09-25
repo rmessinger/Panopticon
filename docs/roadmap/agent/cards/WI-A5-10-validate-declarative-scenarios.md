@@ -18,7 +18,7 @@ artifact field path.
 ## Context to read (and only this)
 
 - Scenario schema from the A5 implementation plan.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`, `PlayerSlotConfig.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`, `PlayerSlotConfig.cs`.
 - `Services/TerrainValidator.cs`, `ScenarioProfileLoader.cs`, `MapMetadataService.cs`.
 - Scenario tests added by `WI-A5-03`.
 
@@ -33,8 +33,8 @@ artifact field path.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
-- `src/OpenSage.Tools.ReplaySketch.Tests/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
+- `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 

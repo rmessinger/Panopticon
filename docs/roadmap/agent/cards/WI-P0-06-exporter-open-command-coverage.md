@@ -19,19 +19,19 @@ rather than producing a silently incomplete replay.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100`: `Export(...)`: the main
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100`: `Export(...)`: the main
   loop. Line ~67: deferred path (AfterActionTiming). Line ~87: non-deferred path. Line ~91 calls
   `BuildOrders(...)`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:200-270`: `BuildOrders(...)`:
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:200-270`: `BuildOrders(...)`:
   line ~206 is the open-command early exit (`action.Type == null → action.Command.ToOrder(...)`).
   Lines ~77-83: the silent skip for open-command deferred triggers (comment: "Open commands cannot
   yet be deferred triggers").
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: the five `CommandArgument`
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: the five `CommandArgument`
   subtypes (`IntegerCommandArgument`, `FloatCommandArgument`, `BooleanCommandArgument`,
   `ObjectIdCommandArgument`, `PositionCommandArgument`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:32-45`: `ToOrder(...)`:
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs:32-45`: `ToOrder(...)`:
   calls `arg.AppendTo(order, ctx, rng)` for each argument.
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: existing `ReplaySketchTests` for test style.
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: existing `ReplaySketchTests` for test style.
 
 ## Steps
 
@@ -56,8 +56,8 @@ rather than producing a silently incomplete replay.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`. Replace silent skip with throw.
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: two new unit tests.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`. Replace silent skip with throw.
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: two new unit tests.
 
 ## Acceptance criteria
 
@@ -73,7 +73,7 @@ rather than producing a silently incomplete replay.
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

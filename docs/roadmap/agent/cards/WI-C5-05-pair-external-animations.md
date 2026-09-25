@@ -21,11 +21,11 @@ preview-only transform, camera, lighting, animation sample, and gated morph cont
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 4, 5, and 7.
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 4 and 7.
-- `src/OpenSage.Game/Content/Importing/ExternalAnimationDescriptor.cs` (new, from `WI-C5-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new, from `WI-C4-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationImporter.cs` (new, from `WI-C4-08`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new, from `WI-C5-04`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new, from
+- `src/Panopticon.Simulation/Content/Importing/ExternalAnimationDescriptor.cs` (new, from `WI-C5-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new, from `WI-C4-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationImporter.cs` (new, from `WI-C4-08`).
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new, from `WI-C5-04`).
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new, from
   `WI-C5-04`).
 
 ## Steps
@@ -54,15 +54,15 @@ preview-only transform, camera, lighting, animation sample, and gated morph cont
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelPreviewOptions.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalAnimationPairing.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelPreviewOptions.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalAnimationPairing.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new, from
   `WI-C5-04`)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
   `WI-C5-03`)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new, from `WI-C5-04`)
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalAnimationPairingTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new, from `WI-C5-04`)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalAnimationPairingTests.cs` (new)
 
 ## Acceptance criteria
 

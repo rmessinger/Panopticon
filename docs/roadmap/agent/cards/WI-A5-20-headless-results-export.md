@@ -32,7 +32,7 @@ window, MAUI runtime, or GPU.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
 - Narrow command-entry files
 - ReplaySketch tests
 - `docs/screenshots.md`

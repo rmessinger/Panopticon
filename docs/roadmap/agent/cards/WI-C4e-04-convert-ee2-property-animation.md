@@ -18,10 +18,10 @@ Teach `NifAnimationImporter` to convert EE2 property controllers into C1 propert
 
 - `docs/roadmap/deep-dives/c4e-ee2-property-animation.md` sections 2, 5, 6, 8, and 9.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 4, 6, and 7.
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs` from `WI-C4c-04`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs` from `WI-C4c-04`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifPropertyTargetMap.cs` from `WI-C4e-02`.
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImporterTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs` from `WI-C4c-04`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs` from `WI-C4c-04`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifPropertyTargetMap.cs` from `WI-C4e-02`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImporterTests.cs`.
 
 ## Steps
 
@@ -35,11 +35,11 @@ Teach `NifAnimationImporter` to convert EE2 property controllers into C1 propert
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifPropertyAnimationConverter.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImporterTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifPropertyAnimationTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifPropertyAnimationConverter.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifPropertyAnimationTests.cs` (new)
 
 ## Acceptance criteria
 

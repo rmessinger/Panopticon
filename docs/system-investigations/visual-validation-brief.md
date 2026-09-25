@@ -1,4 +1,4 @@
-# Visual validation brief: OpenSAGE minor-visuals
+# Visual validation brief: Panopticon minor-visuals
 
 Context document for a vision-capable model validating recent rendering and simulation work.
 Read together with `docs/screenshots.md` (capture recipes) and `docs/maps.md` (map data).
@@ -6,7 +6,7 @@ Facts are current as of commit `1d5fbe5f` on branch `minor-visuals` (PR #28).
 
 ## 1. Repository state
 
-- Repo: OpenSAGE (C# port of the SAGE engine, C&C Generals). Branch `minor-visuals`.
+- Repo: Panopticon (C# port of the SAGE engine, C&C Generals). Branch `minor-visuals`.
 - Merged earlier: headless logic host (A1), tracer rounds, P6b test fixes.
 - On this branch: validation-ground overlay tooltip, screenshot infrastructure, minimal HUD
   (minimap-only default) with pixel-snapped minimap outline, Missile Defender flight fix,
@@ -75,18 +75,18 @@ served at https://files.reid-corp.com/viewer/):
 | Missile/FX sub-pixel at far zoom | Expected at validation-ground heights (1600+); close-ups (height ~90-180) fix scale | GIF recipes in `docs/screenshots.md` |
 | Shared global constants buffer across passes | Fixed on this branch; was rendering the forward pass with the shadow pass's light-space matrix on Vulkan | `GlobalShaderResourceData.AcquireSlot` / `BeginFrame` |
 | Minimap bottom-left, black outline ring | Intentional minimal-HUD design | `vg_minimalhud_frame.png` |
-| Projectile streams | Implemented: `ProjectileStreamManager` draws the data's textured ribbons (Dragon Tank flame, Toxin Truck spray, hazard cleanup) per live stream projectile; the hack "beam" weapons (Black Lotus, Hacker) reuse stream data but fire no projectile object and still show nothing | `src/OpenSage.Game/Graphics/ProjectileStreams/ProjectileStreamManager.cs` |
+| Projectile streams | Implemented: `ProjectileStreamManager` draws the data's textured ribbons (Dragon Tank flame, Toxin Truck spray, hazard cleanup) per live stream projectile; the hack "beam" weapons (Black Lotus, Hacker) reuse stream data but fire no projectile object and still show nothing | `src/Panopticon.Simulation/Graphics/ProjectileStreams/ProjectileStreamManager.cs` |
 | Tank shell tracers | Engine addition (the game data deliberately uses NoTracer FireFX for cannons): a tracer streak follows each shell, scaled from the data's own tank-tracer values (Length 20, Width 0.5) | `ProjectileNugget.CreateShellTracer`, `TracerManager.CreateTracking` |
 | Animating cloud shadows | Normal | All daytime captures |
 
 ## 5. Capture environment facts
 
 - Headless offscreen Vulkan rendering through the TestHarness (`--headless`); no display
-  needed. Captures write PNGs to `/tmp/opensage_captures/`.
+  needed. Captures write PNGs to `/tmp/panopticon_captures/`.
 - Env hooks: `TESTHARNESS_VG_CAPTURE=1` (per-frame captures), `TESTHARNESS_VG_OVERLAY_SHOT=1`,
   `TESTHARNESS_VG_HOVER_OBJECT=<definition>`, `TESTHARNESS_VG_HOVER=x,y`.
 - Engagement captures use the committed `EngagementCapture` built-in scenario
-  (`dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario
+  (`dotnet run --project src/Panopticon.Tools.TestHarness -- --headless --built-in-scenario
   EngagementCapture`), configured under `EngagementCapture` in `TestHarness.json`. It writes
   PNGs plus a `manifest.json` of per-frame screen projections; `scripts/annotate_engagement_gif.py`
   renders the annotated GIF. Full recipe in `docs/screenshots.md`.

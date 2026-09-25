@@ -435,29 +435,29 @@ sequenceDiagram
 
 ## Appendix: current-code grounding
 
-- Skinned geometry rejection to replace: `src/OpenSage.FileFormats.Nif/NifFile.cs:241-245`;
+- Skinned geometry rejection to replace: `src/Panopticon.FileFormats.Nif/NifFile.cs:241-245`;
   block dispatch: `NifFile.cs:118-160`; skin reference read:
-  `src/OpenSage.FileFormats.Nif/Blocks/NifGeometry.cs:18-19`.
-- Row-major matrix read: `src/OpenSage.FileFormats.Nif/NifBinaryReader.cs:183-195`. Positional
+  `src/Panopticon.FileFormats.Nif/Blocks/NifGeometry.cs:18-19`.
+- Row-major matrix read: `src/Panopticon.FileFormats.Nif/NifBinaryReader.cs:183-195`. Positional
   copy into row-vector matrices:
-  `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs:43-67` and
-  `src/OpenSage.Game/Content/Importing/Nif/NifRotationSampler.cs` `ToQuaternion`.
-  Quaternion keys used directly: `src/OpenSage.FileFormats.Nif/NifKeys.cs:159`,
-  `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs:356-360`.
-- Scene walk and rigid shape bake: `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs:63-286`.
-- Two-influence C1 vertex: `src/OpenSage.Game/Content/Importing/ImportedVertex.cs:9-68`;
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs:43-67` and
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifRotationSampler.cs` `ToQuaternion`.
+  Quaternion keys used directly: `src/Panopticon.FileFormats.Nif/NifKeys.cs:159`,
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs:356-360`.
+- Scene walk and rigid shape bake: `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs:63-286`.
+- Two-influence C1 vertex: `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs:9-68`;
   unskinned check: `ImportedMesh.cs:157-175`; bone-index check: `ImportedModel.cs:74-84`;
   tangent copy: `ImportedTangentGenerator.cs:125-135`.
-- glTF influence rejection: `src/OpenSage.Game/Content/Importing/Gltf/GltfSkinConverter.cs:199-258`;
+- glTF influence rejection: `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSkinConverter.cs:199-258`;
   skinned sub-objects on bone 0: `GltfModelImporter.cs:126-131`.
-- Runtime vertex: `src/OpenSage.Game/Graphics/Shaders/MeshShaderResources.cs:118-150`; vertex
-  fill: `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs:50-72`; shader inputs and blend:
-  `src/OpenSage.Game/Assets/Shaders/Mesh.h:5-15,61-77`; per-shader calls in `FixedFunction.vert`,
+- Runtime vertex: `src/Panopticon.Simulation/Graphics/Shaders/MeshShaderResources.cs:118-150`; vertex
+  fill: `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs:50-72`; shader inputs and blend:
+  `src/Panopticon.Simulation/Assets/Shaders/Mesh.h:5-15,61-77`; per-shader calls in `FixedFunction.vert`,
   `NormalMapped.vert`, `Simple.vert`, `MeshDepth.vert`, `PbrMetallicRoughness.vert`.
-- Skinning matrix: `src/OpenSage.Game/Graphics/ModelInstance.cs:259-262`.
-- Installed tests and proof: `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`,
-  `Ee2KfAnimationImportTests.cs`, `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`,
-  `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
+- Skinning matrix: `src/Panopticon.Simulation/Graphics/ModelInstance.cs:259-262`.
+- Installed tests and proof: `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`,
+  `Ee2KfAnimationImportTests.cs`, `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`,
+  `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
 
 ## Appendix: reproduction
 

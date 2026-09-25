@@ -19,9 +19,9 @@ inspection contracts in the landed A1/P0 implementation.
 
 - `docs/roadmap/deep-dives/a5-visualization.md`.
 - `docs/roadmap/deep-dives/a1-headless-host.md` and `p0-playable-baseline-harness.md`.
-- `src/OpenSage.Game/RunOutput.cs` and `Recording/`.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`, `ScenarioMatrixRunner.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`, `ScenarioMatrix.cs`.
+- `src/Panopticon.Simulation/RunOutput.cs` and `Recording/`.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`, `ScenarioMatrixRunner.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`, `ScenarioMatrix.cs`.
 
 ## Steps
 

@@ -32,7 +32,7 @@ This is primarily a correctness-and-cataloging task: confirm the argument shape 
 ### Ground each verb against `OrderProcessor`
 
 For each verb, read the authoritative handler in
-`src/OpenSage.Game/Logic/Orders/OrderProcessor.cs` and the matching `Order.Create*` helper in
+`src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs` and the matching `Order.Create*` helper in
 `Logic/Orders/Order.cs`, and record the exact `OrderType` + ordered argument list + any required
 selection precondition:
 
@@ -82,14 +82,14 @@ and correct it : `OrderProcessor.Process` is the source of truth, per the
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs` | Add verb factory methods for move/attack/construct/produce/ability |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Emit multi-order factory sequences in the open-command branch |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs` | Add verb factory methods for move/attack/construct/produce/ability |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Emit multi-order factory sequences in the open-command branch |
 | `docs/roadmap/deep-dives/p0-playable-baseline-harness.md` | Add the verb→`OrderType` catalog table |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | One headless test per verb (effect assertion) |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | One headless test per verb (effect assertion) |
 
 ## Tests
 
-- Per-verb headless effect tests (in `OpenSage.Game.Tests`, `Category!=Interactive`): author a single
+- Per-verb headless effect tests (in `Panopticon.Simulation.Tests`, `Category!=Interactive`): author a single
   command for each of move/attack/construct/produce/ability, run headless via the
   [entry point](track-p-p0-6-run-and-assert-entry-point.md)/harness, and assert the expected
   `OrderProcessor` effect (object moved/created/attacked) via a state assertion. If the headless

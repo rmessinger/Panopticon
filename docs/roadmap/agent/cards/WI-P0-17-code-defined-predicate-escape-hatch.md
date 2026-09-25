@@ -21,17 +21,17 @@ is in-process code; the scenario JSON references the predicate by its registered
 
 - `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4`: "escape hatch of code-defined
   (C#) predicates (registered by name, referenced from the scenario)".
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: the base class and
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: the base class and
   the three existing subtypes; `CodeAssertion` is a fourth subtype.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`: needs a static
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`: needs a static
   registration table and must dispatch `CodeAssertion` evaluations through it.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
   `CodeDefinedPredicateEscapeHatch_Registered_EvaluatesCorrectly` stub to unblock.
 
 ## Steps
 
 1. Add a static `CodeAssertionRegistry` class in
-   `OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs`:
+   `Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs`:
    ```csharp
    public static class CodeAssertionRegistry
    {
@@ -82,13 +82,13 @@ is in-process code; the scenario JSON references the predicate by its registered
    ```
 
 3. Update the `CodeDefinedPredicateEscapeHatch_Registered_EvaluatesCorrectly` stub in
-   `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`:
+   `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`:
    - Register a predicate with a test name (e.g., `"always-true"`) via `CodeAssertionRegistry.Register`.
    - Build a `ReplayScenario` with a `CodeAssertion { PredicateName = "always-true" }`.
    - Tag `[Trait("Category", "Interactive")]` and run via `HarnessRunner.RunAndAssert`.
    - Assert `report.AllPassed`.
 
-4. Add unit tests in `OpenSage.Tools.ReplaySketch.Tests/CodeAssertionTests.cs`:
+4. Add unit tests in `Panopticon.Tools.ReplaySketch.Tests/CodeAssertionTests.cs`:
    - `CodeAssertion_RegistryMiss_ReportsFail`: a `CodeAssertion` with an unregistered name
      evaluates to `Passed=false` with a clear message.
    - `CodeAssertion_RegistryHit_ReportsPredicateResult`: register a predicate that returns `true`,
@@ -100,11 +100,11 @@ is in-process code; the scenario JSON references the predicate by its registered
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: add `CodeAssertion`
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: add `CodeAssertion`
   subtype and `[JsonDerivedType]` attribute.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: unblock stub.
-- `src/OpenSage.Tools.ReplaySketch.Tests/CodeAssertionTests.cs` (new unit tests)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: unblock stub.
+- `test/Panopticon.Tools.ReplaySketch.Tests/CodeAssertionTests.cs` (new unit tests)
 
 ## Acceptance criteria
 
@@ -119,7 +119,7 @@ is in-process code; the scenario JSON references the predicate by its registered
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests
 dotnet test src --filter "FullyQualifiedName~CodeAssertion OR FullyQualifiedName~EscapeHatch"
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes

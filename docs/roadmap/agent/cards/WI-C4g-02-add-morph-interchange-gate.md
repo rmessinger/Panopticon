@@ -19,10 +19,10 @@ feature-disabled model output.
 
 - `docs/roadmap/deep-dives/c4g-ee2-morph-animation.md` sections 1, 6, 7, and 8.
 - `docs/roadmap/deep-dives/c6-extended-model-features.md` sections 1 through 4.
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedVertex.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelPreviewOptions.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelPreviewOptions.cs`.
 
 ## Steps
 
@@ -40,13 +40,13 @@ feature-disabled model output.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedAnimation.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedMorphTargetSet.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedMorphTarget.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedMorphAnimationChannel.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimation.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedMorphTargetSet.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedMorphTarget.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedMorphAnimationChannel.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelImportOptions.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`
 
 ## Acceptance criteria
 

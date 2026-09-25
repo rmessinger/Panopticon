@@ -18,15 +18,15 @@ runtime animation path, with default behavior unchanged for existing assets.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4f-ee2-scale-animation.md` sections 5, 6, and 9.
-- `src/OpenSage.Game/Content/Importing/ImportedBone.cs`: current C1 bone fields.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs` and `ImportedKeyframe.cs`:
+- `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs`: current C1 bone fields.
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs` and `ImportedKeyframe.cs`:
   channel types and float keyframes.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`: channel mapping.
-- `src/OpenSage.Game/Graphics/ModelBone.cs`, `ModelBoneHierarchy.cs`, and `ModelBoneInstance.cs`:
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`: channel mapping.
+- `src/Panopticon.Simulation/Graphics/ModelBone.cs`, `ModelBoneHierarchy.cs`, and `ModelBoneInstance.cs`:
   runtime rest transform and offset composition.
-- `src/OpenSage.Game/Graphics/Animation/AnimationClipType.cs` and `AnimationInstance.cs`:
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClipType.cs` and `AnimationInstance.cs`:
   runtime clip evaluation.
-- `src/OpenSage.Game/Transform.cs`: existing uniform scale support.
+- `src/Panopticon.Simulation/Transform.cs`: existing uniform scale support.
 
 ## Steps
 
@@ -45,16 +45,16 @@ runtime animation path, with default behavior unchanged for existing assets.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedBone.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedKeyframe.cs`
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`
-- `src/OpenSage.Game/Graphics/ModelBone.cs`
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`
-- `src/OpenSage.Game/Graphics/Animation/AnimationClipType.cs`
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedModelMaterializerTests.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedKeyframe.cs`
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`
+- `src/Panopticon.Simulation/Graphics/ModelBone.cs`
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClipType.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelMaterializerTests.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`
 
 ## Acceptance criteria
 

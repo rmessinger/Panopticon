@@ -18,11 +18,11 @@ Add format-neutral animation targets and channel types for sub-object visibility
 
 - `docs/roadmap/deep-dives/c4e-ee2-property-animation.md` sections 6, 7, and 8.
 - `docs/roadmap/deep-dives/c2-skeleton-animation-retargeting.md` sections 3, 4, and 8.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationTarget.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedKeyframe.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`, `ModelAnimationTarget.cs`, `AnimationClipType.cs`, and `BoundModelAnimation.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationTarget.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedKeyframe.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`, `ModelAnimationTarget.cs`, `AnimationClipType.cs`, and `BoundModelAnimation.cs`.
 
 ## Steps
 
@@ -35,14 +35,14 @@ Add format-neutral animation targets and channel types for sub-object visibility
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationTarget.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedKeyframe.cs`
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`
-- `src/OpenSage.Game/Graphics/Animation/AnimationClipType.cs`
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimationTarget.cs`
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimationChannel.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAnimationTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationTarget.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedKeyframe.cs`
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClipType.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimationTarget.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimationChannel.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAnimationTests.cs`
 
 ## Acceptance criteria
 

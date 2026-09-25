@@ -20,15 +20,15 @@ Create the P6b `ScenarioMatrix` test that sweeps `archetype × faction`, prunes 
 - `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:47-67`: full six-point contract each cell must assert.
 - `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:92-119`: matrix axes, `ConstraintFilter`, per-cell assertions, and pass/fail purpose.
 - `docs/roadmap/implementation-checklist.md:330-335`: checklist AC for the P6b matrix.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: `SweepAxis`, `ConstraintFilter`, `AssertionTemplate`, and expansion.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix execution via `HarnessRunner`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:7-56`: aggregate report shape and cell keys.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:372-448`: current matrix test style.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bInfantryContractTests.cs`, `P6bVehicleContractTests.cs`, `P6bAircraftContractTests.cs`, `P6bBuilderContractTests.cs`, `P6bSupportContractTests.cs`, `P6bSuperweaponContractTests.cs`: reusable per-archetype contract scenario builders/assertions.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: `SweepAxis`, `ConstraintFilter`, `AssertionTemplate`, and expansion.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix execution via `HarnessRunner`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:7-56`: aggregate report shape and cell keys.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:372-448`: current matrix test style.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bInfantryContractTests.cs`, `P6bVehicleContractTests.cs`, `P6bAircraftContractTests.cs`, `P6bBuilderContractTests.cs`, `P6bSupportContractTests.cs`, `P6bSuperweaponContractTests.cs`: reusable per-archetype contract scenario builders/assertions.
 
 ## Steps
 
-1. Create `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bScenarioMatrixTests.cs` as a real xUnit `[Fact]` test file that runs in CI under `dotnet test src --filter Category!=Interactive`. A `[GameFact]` may be supplemental only; it cannot be the acceptance gate.
+1. Create `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bScenarioMatrixTests.cs` as a real xUnit `[Fact]` test file that runs in CI under `dotnet test src --filter Category!=Interactive`. A `[GameFact]` may be supplemental only; it cannot be the acceptance gate.
 2. Build a `ScenarioMatrix` with axes:
    - `archetype`: `infantry`, `vehicle`, `aircraft`, `builder`, `support`, `superweapon`
    - `faction`: `USA`, `GLA`, `China`
@@ -40,9 +40,9 @@ Create the P6b `ScenarioMatrix` test that sweeps `archetype × faction`, prunes 
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bScenarioMatrixTests.cs` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6b*ContractTests.cs` (only to expose reusable builders/assertions)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs` (only if existing `ConstraintFilter` plumbing is insufficient)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bScenarioMatrixTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6b*ContractTests.cs` (only to expose reusable builders/assertions)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs` (only if existing `ConstraintFilter` plumbing is insufficient)
 
 ## Acceptance criteria
 
@@ -77,7 +77,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + exact remaining matrix/gap reason).
 - Tick the "P6b scenario matrix" item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` with raw/valid cell counts and any failing cell keys.
-- Confirm `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bScenarioMatrixTests.cs` was created and the matrix test runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bScenarioMatrixTests.cs` was created and the matrix test runs in CI.
 
 ## Result
 

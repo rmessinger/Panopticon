@@ -21,26 +21,26 @@ and refactor `SkirmishAIPlayer`'s existing state machine to be the reference imp
 
 - `docs/roadmap/deep-dives/a4-pluggable-ai.md` §§1-2, 5: the seam design this card implements.
 - `docs/roadmap/deep-dives/a4-pluggable-ai.md` §8: architecture/sequence diagrams to follow exactly.
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs`: current host: `Update()`, `OnDecisionTick()`
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`: current host: `Update()`, `OnDecisionTick()`
   (`protected virtual`), `EnqueueOrder(s)`, `DispatchOrders(...)`, `Persist(...)`. Preserve
   `Persist` byte-for-byte; do not touch save-format fields.
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`: reference state machine:
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs`: reference state machine:
   `OnDecisionTick()` calls `RunEconomyAndBaseBuildout()` → `RunUnitProduction()` →
   `RunMilitaryBehavior()`, reading `Owner.BankAccount`, `Owner.OwnedObjects`, `Owner.Enemies`,
   `Game.AssetStore.AIData`.
-- `src/OpenSage.Game/Logic/Player.cs:763-777`: where `SkirmishAIPlayer` vs. `AIPlayer` is
+- `src/Panopticon.Simulation/Logic/Player.cs:763-777`: where `SkirmishAIPlayer` vs. `AIPlayer` is
   constructed; do not change this selection logic in this card (that is `WI-A4-02`).
 - Existing P2 tests that must keep passing unmodified in behavior:
-  `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs`,
+  `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs`,
   `SkirmishAIMilitaryBehaviorTests.cs`, `SkirmishAIUnitProductionTests.cs`,
-  `SkirmishAIPlayerTickTests.cs` (find via glob under `src/OpenSage.Game.Tests/Logic/AI/`).
+  `SkirmishAIPlayerTickTests.cs` (find via glob under `test/Panopticon.Simulation.Tests/Logic/AI/`).
 
 ## Steps
 
-1. Add `src/OpenSage.Game/Logic/AI/IAIDecisionPolicy.cs` defining the interface exactly as
+1. Add `src/Panopticon.Simulation/Logic/AI/IAIDecisionPolicy.cs` defining the interface exactly as
    shaped in the deep-dive §2 (one method: `DecideNextOrders(AIDecisionContext context)` returning
    `IReadOnlyList<Order>`).
-2. Add `src/OpenSage.Game/Logic/AI/AIDecisionContext.cs` as a `readonly struct` wrapping the
+2. Add `src/Panopticon.Simulation/Logic/AI/AIDecisionContext.cs` as a `readonly struct` wrapping the
    read-only state today's `SkirmishAIPlayer` methods read (`Owner`, `OwnerPlayerIndex`,
    `DecisionTickCount`, plus any other accessor the extracted methods need: mirror what they
    already read, add nothing new).
@@ -48,7 +48,7 @@ and refactor `SkirmishAIPlayer`'s existing state machine to be the reference imp
    injected `IAIDecisionPolicy` is present, builds an `AIDecisionContext` and calls
    `EnqueueOrders(policy.DecideNextOrders(context))`. Keep it `protected virtual` still overridable
    for now so no caller breaks, but wire the default path through the policy.
-4. Add `src/OpenSage.Game/Logic/AI/RuleBasedAIDecisionPolicy.cs` implementing
+4. Add `src/Panopticon.Simulation/Logic/AI/RuleBasedAIDecisionPolicy.cs` implementing
    `IAIDecisionPolicy` by moving `RunEconomyAndBaseBuildout`, `RunUnitProduction`,
    `RunMilitaryBehavior` (and their private helpers) out of `SkirmishAIPlayer` into this new
    class, adapted to read from `AIDecisionContext` instead of directly from `Owner`/`Game`.
@@ -63,11 +63,11 @@ and refactor `SkirmishAIPlayer`'s existing state machine to be the reference imp
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/IAIDecisionPolicy.cs` (new)
-- `src/OpenSage.Game/Logic/AI/AIDecisionContext.cs` (new)
-- `src/OpenSage.Game/Logic/AI/RuleBasedAIDecisionPolicy.cs` (new)
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs`
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`
+- `src/Panopticon.Simulation/Logic/AI/IAIDecisionPolicy.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionContext.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/RuleBasedAIDecisionPolicy.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs`
 
 ## Acceptance criteria
 

@@ -18,9 +18,9 @@ completing C4a with visible proof.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/ee2-gamebryo-model-storage.md` sections 9 and 10.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`: visual-validation and capture requirements.
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs` and `Program.cs`: scenario dispatch.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs`.
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`: visual-validation and capture requirements.
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs` and `Program.cs`: scenario dispatch.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs`.
 - Installed-asset setup and expected descriptors from `Ee2NifImportTests`.
 
 ## Steps
@@ -41,10 +41,10 @@ completing C4a with visible proof.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs`
-- `src/OpenSage.Tools.TestHarness/Program.cs`
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs`
+- `src/Panopticon.Tools.TestHarness/Program.cs`
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -61,7 +61,7 @@ completing C4a with visible proof.
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario Ee2NifProof
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~Ee2NifProofScenarioTests"

@@ -22,15 +22,15 @@ Create the checked-in P7 MutualElimination scenario that reaches `SuddenDeath` a
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:115-115`: P7-5 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:243-257`: MutualElimination sequence diagram.
 - `docs/roadmap/implementation-checklist.md:337-344`: scenario and expected outcome ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/TimingConfig.cs:15-23`: fixed/random timing primitives; use fixed timing only.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries for staged commands.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119`: update loop and timeout behavior.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for two-stage outcome if needed.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254`: final P7 matrix and invariant-violation gates.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/TimingConfig.cs:15-23`: fixed/random timing primitives; use fixed timing only.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries for staged commands.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119`: update loop and timeout behavior.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for two-stage outcome if needed.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-254`: final P7 matrix and invariant-violation gates.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json` as static scenario data.
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json` as static scenario data.
 2. Script fixed-timing commands so both sides' last command/production structures fall in the same P3 check window and the match reports `OutcomeStatus.SuddenDeath` rather than ending immediately.
 3. Script the next elimination after sudden death so the run then terminates as `OutcomeStatus.Decided` and `OutcomeReason.Eliminated`.
 4. Add outcome assertions for both lifecycle points: sudden-death transition first, final decided outcome second, with the expected winning/losing side. Do not check only the final frame.
@@ -40,9 +40,9 @@ Create the checked-in P7 MutualElimination scenario that reaches `SuddenDeath` a
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if two-stage outcome assertions need small support)
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/mutual-elimination.json` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if two-stage outcome assertions need small support)
 
 ## Acceptance criteria
 

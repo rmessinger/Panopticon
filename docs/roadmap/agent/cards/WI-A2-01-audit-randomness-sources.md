@@ -20,10 +20,10 @@ This is the first checklist item of A2 and the input to `WI-A2-03`. Read-only: n
 
 - `docs/roadmap/track-a-foundations.md`: the A2 phase row.
 - `docs/roadmap/open-questions.md`: the determinism-priority Decision.
-- `src/OpenSage.Mathematics/IRandom.cs`: the seeded-source interface and `SystemRandom`.
-- `src/OpenSage.Game/IGame.cs:200-210`: `CreateRandom()`, the factory every seeded consumer uses.
-- `src/OpenSage.Game/Logic/GameLogic.cs:60-75`: the logic-side `Random` instance.
-- `src/OpenSage.Game/Client/GameClient.cs:20-30`: the client-side `Random` instance.
+- `src/Panopticon.Mathematics/IRandom.cs`: the seeded-source interface and `SystemRandom`.
+- `src/Panopticon.Simulation/IGame.cs:200-210`: `CreateRandom()`, the factory every seeded consumer uses.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:60-75`: the logic-side `Random` instance.
+- `src/Panopticon.Simulation/Client/GameClient.cs:20-30`: the client-side `Random` instance.
 
 ## Steps
 

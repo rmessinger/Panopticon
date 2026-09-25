@@ -22,17 +22,17 @@ Create the checked-in P7 PlayerEliminated scenario that drives a human player's 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:111-111`: P7-1 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:279-291`: Regression directory, JSON format, and pending P3 `GameOutcome` query path.
 - `docs/roadmap/implementation-checklist.md:337-344`: six scenario files and expected `GameOutcome` ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: player faction/team/action slots.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries and open command payloads.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96`: `CreateOpen` for arbitrary `OrderType` commands.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point and frame timeout.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; replace placeholder `InProgress` behavior after P3.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix gate that will consume this scenario.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: player faction/team/action slots.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries and open command payloads.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96`: `CreateOpen` for arbitrary `OrderType` commands.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point and frame timeout.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; replace placeholder `InProgress` behavior after P3.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix gate that will consume this scenario.
 
 ## Steps
 
-1. Create `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/` if it still does not exist.
+1. Create `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/` if it still does not exist.
 2. Add `player-eliminated.json` as a `ReplayScenario` with explicit seed/timing and the minimum player setup needed for one human player to lose all command/production structures with no rebuild path.
 3. Script only P0 harness commands needed to reach the end state; prefer existing build/produce/attack command support and do not invent a new harness API.
 4. Add an outcome assertion that reads the P3 `GameOutcome` path and expects `OutcomeStatus.Decided`, `OutcomeReason.Eliminated`, the correct `WinningPlayer`, and the eliminated human as losing player. Verify the assertion cannot pass against default/sentinel `InProgress` values.
@@ -42,13 +42,13 @@ Create the checked-in P7 PlayerEliminated scenario that drives a human player's 
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/player-eliminated.json` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if the P3 `GameOutcome` path still needs to replace placeholders)
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/player-eliminated.json` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if the P3 `GameOutcome` path still needs to replace placeholders)
 
 ## Acceptance criteria
 
-- [ ] `player-eliminated.json` exists under `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/` and is static checked-in scenario data, not generated during tests.
+- [ ] `player-eliminated.json` exists under `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/` and is static checked-in scenario data, not generated during tests.
 - [ ] The scenario terminates headlessly with `OutcomeStatus.Decided` and `OutcomeReason.Eliminated`.
 - [ ] The expected `WinningPlayer` and losing human player are asserted; default/sentinel `GameOutcome` values cannot satisfy the assertion.
 - [ ] The focused test exits non-zero on scenario or assertion failure; it is not a skipped `[GameFact]`/`[Fact(Skip=...)]` acceptance gate.

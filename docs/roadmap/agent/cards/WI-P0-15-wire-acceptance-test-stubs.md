@@ -18,22 +18,22 @@ test wiring and two blocked-stub annotations.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the stubs to update
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the stubs to update
   (P0_3 OrderTypeMapping, P0_4 AssertionLayer, P0_5 RunAndAssertEntryPoint sections).
-- `src/OpenSage.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`: two remaining stubs:
+- `test/Panopticon.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`: two remaining stubs:
   `P0_2b_PlayerOwnerTargetingTests` and `P0_6_ProceduralAuthoringTests`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/MultiPlayerAttributionTests.cs`: real P0-2b tests
+- `test/Panopticon.Tools.ReplaySketch.Tests/MultiPlayerAttributionTests.cs`: real P0-2b tests
   already written by WI-P0-10 (copy the core assertion logic).
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: look for the procedural authoring scale test file
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: look for the procedural authoring scale test file
   written by WI-P0-09 to copy the 10k-order assertion logic into P0_6.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: `RunAndAssert` signature.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`: wiring reference.
-- `src/OpenSage.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs`: `RunInteractiveScenario`
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: `RunAndAssert` signature.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`: wiring reference.
+- `test/Panopticon.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs`: `RunInteractiveScenario`
   helper to reuse for the P0_3 / P0_5 tests.
 
 ## Steps
 
-### P0HarnessAcceptanceTests.cs: OpenSage.Game.Tests
+### P0HarnessAcceptanceTests.cs: Panopticon.Simulation.Tests
 
 1. P0_3_OrderTypeMappingTests (MoveOrder, AttackOrder, ConstructOrder, ProduceOrder,
    AbilityOrder):
@@ -80,7 +80,7 @@ test wiring and two blocked-stub annotations.
      two-command scenario (one `BuildObject` then one `MoveTo` with `AfterActionTiming`). Assert
      `report.AllPassed` (basic non-negative money assertion).
 
-### P0AcceptanceTests.cs: OpenSage.Tools.ReplaySketch.Tests
+### P0AcceptanceTests.cs: Panopticon.Tools.ReplaySketch.Tests
 
 4. P0_2b_PlayerOwnerTargetingTests.Scenario_ThreePlayers_CommandsAttributedToCorrectPlayerIndex:
    Remove `throw new NotImplementedException`. Copy the assertion logic from
@@ -94,10 +94,10 @@ test wiring and two blocked-stub annotations.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
-- `src/OpenSage.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`
-- `src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj`: may need a project reference to
-  `OpenSage.Tools.ReplaySketch.Core` if not already present.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
+- `test/Panopticon.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`
+- `test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj`: may need a project reference to
+  `Panopticon.Tools.ReplaySketch.Core` if not already present.
 
 ## Acceptance criteria
 
@@ -121,7 +121,7 @@ dotnet format src --verify-no-changes
 
 - Do not implement the blocked stubs (WI-P0-12, WI-P0-16, WI-P0-17, P3 dependencies): annotate and leave.
 - Do not change production code in this card; test wiring only.
-- If `OpenSage.Game.Tests` already references `ReplaySketch.Core` transitively, no `.csproj`
+- If `Panopticon.Simulation.Tests` already references `ReplaySketch.Core` transitively, no `.csproj`
   change is needed. Verify before adding the reference.
 
 ## On completion

@@ -18,9 +18,9 @@ creating a second entity runtime.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a4-simulation-domain-model.md`: graph validation contract.
-- `src/OpenSage.Game/Simulation/`: domain interfaces and RTS adapter.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs` and module base types.
-- Existing synthetic graph fixtures under `src/OpenSage.*Tests/`, if any.
+- `src/Panopticon.Simulation/Simulation/`: domain interfaces and RTS adapter.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs` and module base types.
+- Existing synthetic graph fixtures under `test/Panopticon.*Tests/`, if any.
 
 ## Steps
 
@@ -32,8 +32,8 @@ creating a second entity runtime.
 
 ## Files likely to change
 
-- New files under `src/OpenSage.Game/Simulation/Transport/`
-- Focused tests under `src/OpenSage.Game.Tests/Simulation/`
+- New files under `src/Panopticon.Simulation/Simulation/Transport/`
+- Focused tests under `test/Panopticon.Simulation.Tests/Simulation/`
 
 ## Acceptance criteria
 

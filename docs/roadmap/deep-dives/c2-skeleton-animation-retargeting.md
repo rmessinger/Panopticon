@@ -207,18 +207,18 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - Interchange skeleton and animation values:
-  `src/OpenSage.Game/Content/Importing/ImportedSkeleton.cs`,
+  `src/Panopticon.Simulation/Content/Importing/ImportedSkeleton.cs`,
   `ImportedBone.cs`, `ImportedAnimation.cs`, and `ImportedAnimationChannel.cs`.
 - Current W3D channel conversion:
-  `src/OpenSage.Game/Content/Importing/W3d/W3dAnimationImporter.cs`.
+  `src/Panopticon.Simulation/Content/Importing/W3d/W3dAnimationImporter.cs`.
 - Compatibility materialization:
-  `src/OpenSage.Game/Graphics/Animation/W3DAnimation.cs`.
+  `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation.cs`.
 - Runtime hierarchy and indexed playback:
-  `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`,
+  `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`,
   `ModelBone.cs`, `ModelInstance.cs`, and `Graphics/Animation/AnimationInstance.cs`.
 - Gameplay selection:
-  `src/OpenSage.Game/Logic/Object/ModelConditionState.cs`,
+  `src/Panopticon.Simulation/Logic/Object/ModelConditionState.cs`,
   `AnimationState.cs`, and `Draw/W3dModelDraw.cs`.
 - Asset lookup:
-  `src/OpenSage.Game/Content/LazyAssetReference.cs` and
-  `src/OpenSage.Game/Data/Ini/IniParser.cs`.
+  `src/Panopticon.Simulation/Content/LazyAssetReference.cs` and
+  `src/Panopticon.Simulation/Data/Ini/IniParser.cs`.

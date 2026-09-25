@@ -27,7 +27,7 @@ measure the trade-off between cost and simulation accuracy.
 
 | Technique | Idea | Strongest existing hook |
 |---|---|---|
-| Temporal LOD | Update distant/idle units less frequently, every N frames instead of every frame. | `UpdateModule.SetWakeFrame`/`NextCallFrame`/`UpdateOrder` already implement a per-module sleepy-update queue (`src/OpenSage.Game/Logic/Object/Update/UpdateModule.cs`, `GameLogic` sleepy queue). Temporal LOD generalizes this. |
+| Temporal LOD | Update distant/idle units less frequently, every N frames instead of every frame. | `UpdateModule.SetWakeFrame`/`NextCallFrame`/`UpdateOrder` already implement a per-module sleepy-update queue (`src/Panopticon.Simulation/Logic/Object/Update/UpdateModule.cs`, `GameLogic` sleepy queue). Temporal LOD generalizes this. |
 | Simplified behavior/physics | Keep F4a participation fixed but replace full Bepu stepping for background physical objects with sleep, game-driven kinematic motion, or an aggregate collider. Promote before decisive contact. | Module composition selects cheap behavior; F4a's physics registry owns body-mode transitions. |
 | Group aggregation | Represent a crowd of similar units as one statistical or aggregate entity, expanding back to individuals only when it matters, such as combat or a close camera. | Quadtree/partition (`PartitionCellManager`, `Quadtree`) can cluster; aggregate is a new entity kind. |
 | Precision reduction | Lower numeric or spatial precision for low-fidelity units. | Caution: contributes to bounded error. See §4. |
@@ -135,14 +135,14 @@ trade-off across matrix cells side by side.
 
 Variable fidelity attaches to the existing per-object update path. `GameLogic.Update` drains a
 sleepy-update queue of `UpdateModule` instances, each of which returns an `UpdateSleepTime` that
-sets its next wake frame (`src/OpenSage.Game/Logic/GameLogic.cs`,
-`src/OpenSage.Game/Logic/Object/Update/UpdateModule.cs`). B7 does not fork this loop. It adds a
+sets its next wake frame (`src/Panopticon.Simulation/Logic/GameLogic.cs`,
+`src/Panopticon.Simulation/Logic/Object/Update/UpdateModule.cs`). B7 does not fork this loop. It adds a
 fidelity policy seam (the A4 `Fidelity policy` seam in [seams.md](../seams.md)) that classifies each
 `GameObject` by importance, then leans on machinery that already exists: temporal LOD widens the
 wake stride through `AwakenUpdateModule`, simplified behavior substitutes a cheaper `UpdateModule`
 via module composition, F4a transitions physical bodies through sleep/kinematic/aggregate modes,
 and aggregation clusters units using `PartitionCellManager`. The engine's
-`StaticGameLod`/`LodType` machinery (`src/OpenSage.Game/Lod/`) is presentation-only (particles,
+`StaticGameLod`/`LodType` machinery (`src/Panopticon.Simulation/Lod/`) is presentation-only (particles,
 shadows, model detail) and is orthogonal: B7 introduces simulation-side fidelity and reuses the LOD
 naming convention without touching that path.
 

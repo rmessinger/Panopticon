@@ -12,7 +12,7 @@
 
 ## Goal
 
-Add `ValidationGroundHost` in `OpenSage.Tools.TestHarness` that applies a `SpawnPlan` to a live
+Add `ValidationGroundHost` in `Panopticon.Tools.TestHarness` that applies a `SpawnPlan` to a live
 `IGame` through `GameLogic.CreateObject`, sampling terrain height for each position, and runs the
 settle stage before any order is issued.
 
@@ -20,18 +20,18 @@ settle stage before any order is issued.
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.1 (four run stages), §2.2, and the
   "Direct-spawn seam" and "Host integration points" entries in the appendix.
-- `src/OpenSage.Game/Logic/GameLogic.cs:76`: `public GameObject CreateObject(ObjectDefinition, Player)`.
-- `src/OpenSage.Game/Logic/GameLogic.cs:412`: an existing `CreateObject` call site, for the
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:76`: `public GameObject CreateObject(ObjectDefinition, Player)`.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:412`: an existing `CreateObject` call site, for the
   definition-lookup and ownership pattern.
-- `src/OpenSage.Tools.TestHarness/Program.cs:206-260`: `RunWindowed`, including `game.StartRun()` at
+- `src/Panopticon.Tools.TestHarness/Program.cs:206-260`: `RunWindowed`, including `game.StartRun()` at
   `:217` (the spawn hook point) and the per-frame poll block at `:253-255`.
-- `src/OpenSage.Tools.TestHarness/EngineActionRecorder.cs:60-90`: how the recorder resolves objects
+- `src/Panopticon.Tools.TestHarness/EngineActionRecorder.cs:60-90`: how the recorder resolves objects
   and seeds per-object state from the live game.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/SpawnPlan.cs`: the plan shape from `WI-P9-02`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/SpawnPlan.cs`: the plan shape from `WI-P9-02`.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.TestHarness/ValidationGroundHost.cs`.
+1. Add `src/Panopticon.Tools.TestHarness/ValidationGroundHost.cs`.
 2. Implement `Spawn(SpawnPlan plan, IGame game)`: resolve each `DefinitionName` through the
    `AssetStore` object-definition collection, resolve the owning `Player` from the placement's player
    index, sample terrain height for the planar position, and call `GameLogic.CreateObject`.
@@ -48,7 +48,7 @@ settle stage before any order is issued.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/ValidationGroundHost.cs` (new)
+- `src/Panopticon.Tools.TestHarness/ValidationGroundHost.cs` (new)
 
 ## Acceptance criteria
 

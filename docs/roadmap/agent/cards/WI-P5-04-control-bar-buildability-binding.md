@@ -19,16 +19,16 @@ Locate and verify the Generals control-bar consumer for buildability state so co
 - `docs/roadmap/implementation-checklist.md:303-306`: checklist item and exact AC to satisfy.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:68-69`: audit gap for UI buildability binding.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271`: buildability methods to verify.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1222`: `CanPurchase`, `CanConstructUnit`, and `CanEnqueueUpgrade`.
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:407-505`: current Generals command-button enablement candidate.
-- `src/OpenSage.Mods.Generals/Gui/CommandButtonUtils.cs:15-70`: button wiring and callbacks.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base if a UI seam can be tested without game files.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1164-1222`: `CanPurchase`, `CanConstructUnit`, and `CanEnqueueUpgrade`.
+- `src/Panopticon.Mods.Generals/Gui/GeneralsControlBar.cs:407-505`: current Generals command-button enablement candidate.
+- `src/Panopticon.Mods.Generals/Gui/CommandButtonUtils.cs:15-70`: button wiring and callbacks.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base if a UI seam can be tested without game files.
 
 ## Steps
 
 1. Investigate with targeted searches only: confirm all Generals consumers of `CanPurchase`, `CanConstructUnit`, and `CanEnqueueUpgrade`. The current candidate is `GeneralsControlBar.ApplyCommandSet(...)`; note if Generals bypasses `CanPurchase(...)` and calls submethods directly.
 2. Document the located consumer in code comments only if needed for clarity; otherwise the test name and assertions are the artifact. Do not create a separate documentation file.
-3. Add `src/OpenSage.Game.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` as a headless `[Fact]` test file if the control-bar state can be exercised with `MockedGameTest`; ensure the new `.cs` file is UTF-8 with BOM.
+3. Add `test/Panopticon.Simulation.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` as a headless `[Fact]` test file if the control-bar state can be exercised with `MockedGameTest`; ensure the new `.cs` file is UTF-8 with BOM.
 4. Verification path first: drive the existing consumer with a selected producer and command buttons for dozer construct, unit build, and upgrade. Assert buttons are disabled when prerequisites or money are missing and enabled when both are satisfied.
 5. Fallback implement-if-missing: if no Generals binding exists for one command family, wire the smallest missing branch in `GeneralsControlBar.ApplyCommandSet(...)`, preserving existing special cases for dozers already building, container buttons, purchased/enqueued upgrade overlays, and script-only buttons.
 6. If `GameObject.CanPurchase(...)` remains unused by Generals but equivalent submethod calls cover the same states, record that as the verified consumer instead of forcing a wrapper-only refactor.
@@ -36,9 +36,9 @@ Locate and verify the Generals control-bar consumer for buildability state so co
 
 ## Files likely to change
 
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs`
-- `src/OpenSage.Mods.Generals/Gui/CommandButtonUtils.cs`
-- `src/OpenSage.Game.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` (new)
+- `src/Panopticon.Mods.Generals/Gui/GeneralsControlBar.cs`
+- `src/Panopticon.Mods.Generals/Gui/CommandButtonUtils.cs`
+- `test/Panopticon.Simulation.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -51,7 +51,7 @@ Locate and verify the Generals control-bar consumer for buildability state so co
 ## Validation commands
 
 ```sh
-rg -n "CanPurchase|CanConstructUnit|CanEnqueueUpgrade" src/OpenSage.Mods.Generals/Gui src/OpenSage.Game/Logic/Object/GameObject.cs
+rg -n "CanPurchase|CanConstructUnit|CanEnqueueUpgrade" src/Panopticon.Mods.Generals/Gui src/Panopticon.Simulation/Logic/Object/GameObject.cs
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~GeneralsControlBarBuildabilityTests"
 dotnet test src --filter Category!=Interactive
@@ -70,9 +70,9 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "Locate + verify the control-bar buildability consumer of `GameObject.CanPurchase/CanConstructUnit/CanEnqueueUpgrade`" P5 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` was created if a headless UI seam was available, or record the blocked seam in this card.
+- Confirm `test/Panopticon.Simulation.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` was created if a headless UI seam was available, or record the blocked seam in this card.
 
 ## Result
 
-Implemented on branch `track-p5-construction-production` alongside WI-P5-01..03, -05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` (9 non-skipped `[Fact]`s covering `CanConstructUnit`/`CanEnqueueUpgrade`/`CanPurchase` with prereq+money states). Buildability consumer identified as `GeneralsControlBar.ApplyCommandSet` (`GeneralsControlBar.cs:441,485,493`); `CanPurchase` itself is confirmed unused by the Generals control bar, gating is done via the other two methods, which this card's revised AC explicitly permitted. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01..03, -05 (see `.exchange` 2026-07-22 entry). Added `test/Panopticon.Simulation.Tests/Gui/GeneralsControlBarBuildabilityTests.cs` (9 non-skipped `[Fact]`s covering `CanConstructUnit`/`CanEnqueueUpgrade`/`CanPurchase` with prereq+money states). Buildability consumer identified as `GeneralsControlBar.ApplyCommandSet` (`GeneralsControlBar.cs:441,485,493`); `CanPurchase` itself is confirmed unused by the Generals control bar, gating is done via the other two methods, which this card's revised AC explicitly permitted. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

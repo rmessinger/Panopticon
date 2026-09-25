@@ -139,7 +139,7 @@ C4b decodes the texcache containers; pixel patches stay out of scope.
 
 - The survey validates the C1 seam's shape: separate model and animation importers, a CPU-only
   interchange graph, by-name texture references, and gameplay-side state binding all exist in a
-  second commercial engine with no forcing function from OpenSAGE's design.
+  second commercial engine with no forcing function from Panopticon's design.
 - C4a uses NIF 10.1 as a static second-format proof after C1. C4's production glTF scope is
   unchanged.
 - Known follow-up risks: three animation header vintages in one corpus (including 452 files of an

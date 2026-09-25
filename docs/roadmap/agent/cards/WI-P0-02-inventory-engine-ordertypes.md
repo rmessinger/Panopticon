@@ -23,10 +23,10 @@ list. Read-only; no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs`: the full enum (note the inline comments describing
+- `src/Panopticon.Simulation/Logic/Orders/OrderType.cs`: the full enum (note the inline comments describing
   each order's arguments).
-- `src/OpenSage.Game/Logic/Orders/Order.cs`: the `Order` object and how arguments are attached.
-- `src/OpenSage.Game/Logic/Orders/OrderArgumentType.cs` and `OrderArgumentValue.cs`: the argument
+- `src/Panopticon.Simulation/Logic/Orders/Order.cs`: the `Order` object and how arguments are attached.
+- `src/Panopticon.Simulation/Logic/Orders/OrderArgumentType.cs` and `OrderArgumentValue.cs`: the argument
   type system.
 
 ## Steps

@@ -18,8 +18,8 @@ save, and reload.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a5-6-worldbuilder-baseline.md`.
-- `src/OpenSage.Tools.WorldBuilder.Core/NewMapFactory.cs`, `EditorMap.cs`.
-- `src/OpenSage.Game/Data/Map/MapFile.cs`: `CreateEmpty` and `WriteTo`.
+- `src/Panopticon.Tools.WorldBuilder.Core/NewMapFactory.cs`, `EditorMap.cs`.
+- `src/Panopticon.Simulation/Data/Map/MapFile.cs`: `CreateEmpty` and `WriteTo`.
 - Required chunk types named by the audit.
 - Existing map read/write tests.
 
@@ -33,8 +33,8 @@ save, and reload.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Data/Map/MapFile.cs`
-- `src/OpenSage.Tools.WorldBuilder.Core/NewMapFactory.cs`
+- `src/Panopticon.Simulation/Data/Map/MapFile.cs`
+- `src/Panopticon.Tools.WorldBuilder.Core/NewMapFactory.cs`
 - Focused map and WorldBuilder tests
 
 ## Acceptance criteria

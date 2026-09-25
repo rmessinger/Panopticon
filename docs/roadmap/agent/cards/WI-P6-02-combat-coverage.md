@@ -18,19 +18,19 @@ Verify and close the baseline combat path: weapon fire applies damage through `D
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:76-95`: P6 verify-and-close design and combat sub-phase.
 - `docs/roadmap/implementation-checklist.md:283-286`: checklist ACs for weapon/damage/death coverage.
-- `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs:101-140`: target assignment and weapon firing.
-- `src/OpenSage.Game/Logic/Object/Weapon/WeaponTarget.cs:36-46`: target damage dispatch.
-- `src/OpenSage.Game/Logic/Object/Weapon/WeaponEffects/DamageNugget.cs:115-126`: weapon nugget damage execution.
-- `src/OpenSage.Game/Logic/Object/Damage/DamageModule.cs:9-18` and `:51-75`: damage callbacks and damage-type helpers.
-- `src/OpenSage.Game/Logic/Object/Body/ActiveBody.cs:58-83` and `:302-361`: health reduction, damage callbacks, and death trigger.
-- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs:29-33` and `:85-123`: current fire-weapon update behavior and parsed data.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1284-1337`: `Kill`/`OnDie` path and selection side effects.
-- `src/OpenSage.Game.Tests/Logic/Object/Body/ActiveBodyTests.cs:6-28`: existing active-body test style.
-- `src/OpenSage.Game.Tests/Logic/Object/ModuleTest.cs:5-12`: module test base.
+- `src/Panopticon.Simulation/Logic/Object/Weapon/Weapon.cs:101-140`: target assignment and weapon firing.
+- `src/Panopticon.Simulation/Logic/Object/Weapon/WeaponTarget.cs:36-46`: target damage dispatch.
+- `src/Panopticon.Simulation/Logic/Object/Weapon/WeaponEffects/DamageNugget.cs:115-126`: weapon nugget damage execution.
+- `src/Panopticon.Simulation/Logic/Object/Damage/DamageModule.cs:9-18` and `:51-75`: damage callbacks and damage-type helpers.
+- `src/Panopticon.Simulation/Logic/Object/Body/ActiveBody.cs:58-83` and `:302-361`: health reduction, damage callbacks, and death trigger.
+- `src/Panopticon.Simulation/Logic/Object/Update/FireWeaponUpdate.cs:29-33` and `:85-123`: current fire-weapon update behavior and parsed data.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1284-1337`: `Kill`/`OnDie` path and selection side effects.
+- `test/Panopticon.Simulation.Tests/Logic/Object/Body/ActiveBodyTests.cs:6-28`: existing active-body test style.
+- `test/Panopticon.Simulation.Tests/Logic/Object/ModuleTest.cs:5-12`: module test base.
 
 ## Steps
 
-1. Add `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs` as a headless `[Fact]` test file. Use `MockedGameTest`/`ModuleTest`; do not require game files.
+1. Add `test/Panopticon.Simulation.Tests/Logic/Object/CombatCoverageTests.cs` as a headless `[Fact]` test file. Use `MockedGameTest`/`ModuleTest`; do not require game files.
 2. Build a small baseline table of faction/reference attacker, target, weapon damage type, and expected kill outcome. Keep it small enough for S scope: at least one infantry/vehicle/building-relevant baseline case, and list any missing baseline damage type as an explicit gap.
 3. Exercise the real path where possible: assign a weapon target, execute a `DamageNugget` or equivalent real weapon damage path, and assert `ActiveBody.Health` decreases through `AttemptDamage`.
 4. Assert lethal damage drives health to zero or below and invokes `GameObject.OnDie`/death state. Verify the default/sentinel damage values used in the test are named and asserted.
@@ -40,12 +40,12 @@ Verify and close the baseline combat path: weapon fire applies damage through `D
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs` (new)
-- `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs` only if a tiny missing seam is required to test the real path
-- `src/OpenSage.Game/Logic/Object/Weapon/WeaponTarget.cs` only if a tiny missing seam is required to test the real path
-- `src/OpenSage.Game/Logic/Object/Weapon/WeaponEffects/DamageNugget.cs` only if a tiny missing seam is required to test the real path
-- `src/OpenSage.Game/Logic/Object/Body/ActiveBody.cs` only if a tightly coupled bug blocks the verified path
-- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs` only if closing its no-op behavior is required for the asserted path
+- `test/Panopticon.Simulation.Tests/Logic/Object/CombatCoverageTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Object/Weapon/Weapon.cs` only if a tiny missing seam is required to test the real path
+- `src/Panopticon.Simulation/Logic/Object/Weapon/WeaponTarget.cs` only if a tiny missing seam is required to test the real path
+- `src/Panopticon.Simulation/Logic/Object/Weapon/WeaponEffects/DamageNugget.cs` only if a tiny missing seam is required to test the real path
+- `src/Panopticon.Simulation/Logic/Object/Body/ActiveBody.cs` only if a tightly coupled bug blocks the verified path
+- `src/Panopticon.Simulation/Logic/Object/Update/FireWeaponUpdate.cs` only if closing its no-op behavior is required for the asserted path
 
 ## Acceptance criteria
 
@@ -78,9 +78,9 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the P6 weapon/damage/death coverage item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` listing verified baseline cases and explicit gaps.
-- Confirm `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Object/CombatCoverageTests.cs` was created and runs in CI.
 - Do not mark Track P P6 `Done` unless all P6 cards are complete.
 
 ## Result
 
-Done. Added `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs` (4 non-skipped `[Fact]`s). Verifies the weapon→damage→health→death terminal: a 5-case baseline table (infantry/vehicle/structure × Unresistable/SmallArms/ArmorPiercing/Explosion + a lethal case) drives `GameObject.AttemptDamage` (the real `ActiveBody.AttemptDamage` path that `DamageNugget` feeds), asserting health decreases per case, the lethal case reaches health 0 with `IsEffectivelyDead` and `IsSelectable=false`. `Kill()` runs `OnDie` end to end. Damage-type pass-through is documented with the armor/damage-type-reduction gap (needs asset-backed ArmorSets). One tiny seam fix in `GameObject.ExecuteRandomSlowDeathBehavior`: early-return when an object has no applicable `SlowDeathBehavior` modules, which would otherwise throw `Random.Next(0, -1)` on death of a baseline object (required to verify the death path headlessly; real units with death behaviors are unaffected). Explicit loud gap recorded for `FireWeaponUpdate.Update` (cannot fire parsed weapon data without Scene3D/projectile pipeline; the damage terminal is verified directly). Tests register objects via `gameObject.Id` assignment so the headless `_objects` collection resolves the default damage SourceID to null instead of throwing. Validation: dotnet build src (0 errors); CombatCoverageTests (4 passed); Category!=Interactive (757 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
+Done. Added `test/Panopticon.Simulation.Tests/Logic/Object/CombatCoverageTests.cs` (4 non-skipped `[Fact]`s). Verifies the weapon→damage→health→death terminal: a 5-case baseline table (infantry/vehicle/structure × Unresistable/SmallArms/ArmorPiercing/Explosion + a lethal case) drives `GameObject.AttemptDamage` (the real `ActiveBody.AttemptDamage` path that `DamageNugget` feeds), asserting health decreases per case, the lethal case reaches health 0 with `IsEffectivelyDead` and `IsSelectable=false`. `Kill()` runs `OnDie` end to end. Damage-type pass-through is documented with the armor/damage-type-reduction gap (needs asset-backed ArmorSets). One tiny seam fix in `GameObject.ExecuteRandomSlowDeathBehavior`: early-return when an object has no applicable `SlowDeathBehavior` modules, which would otherwise throw `Random.Next(0, -1)` on death of a baseline object (required to verify the death path headlessly; real units with death behaviors are unaffected). Explicit loud gap recorded for `FireWeaponUpdate.Update` (cannot fire parsed weapon data without Scene3D/projectile pipeline; the damage terminal is verified directly). Tests register objects via `gameObject.Id` assignment so the headless `_objects` collection resolves the default damage SourceID to null instead of throwing. Validation: dotnet build src (0 errors); CombatCoverageTests (4 passed); Category!=Interactive (757 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).

@@ -19,12 +19,12 @@ Implement the minimum legal-opponent military loop: when the AI has a threshold 
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:33-38`: target selection, attack threshold, and idempotence.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:73-82`: integration surface: relationships and owned-object set.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:106-116`: Track P scope is the minimum legal opponent with a difficulty seam.
-- `src/OpenSage.Game/Logic/Player.cs:126-134`: allies/enemies and owned-object counts.
-- `src/OpenSage.Game/Logic/Player.cs:785-805`: reciprocal ally/enemy helpers.
-- `src/OpenSage.Game/Logic/Player.cs:807-839`: maintained owned-object set and counts.
-- `src/OpenSage.Game/Logic/Player.cs:863-884`: relationship lookup.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:287-356`: object/ground attack order handlers.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs:42-64`: attack order monitoring pattern.
+- `src/Panopticon.Simulation/Logic/Player.cs:126-134`: allies/enemies and owned-object counts.
+- `src/Panopticon.Simulation/Logic/Player.cs:785-805`: reciprocal ally/enemy helpers.
+- `src/Panopticon.Simulation/Logic/Player.cs:807-839`: maintained owned-object set and counts.
+- `src/Panopticon.Simulation/Logic/Player.cs:863-884`: relationship lookup.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:287-356`: object/ground attack order handlers.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs:42-64`: attack order monitoring pattern.
 
 ## Steps
 
@@ -34,14 +34,14 @@ Implement the minimum legal-opponent military loop: when the AI has a threshold 
 4. Guard the ownership dependency: create, destroy, and ownership-transfer paths must all keep `OwnedObjects` correct before this planner relies on it. If transfer is not wired, mark this card `Blocked` or finish that prerequisite first.
 5. Emit attack behavior as orders through the AI actuation seam. Prefer the existing `ForceAttackGround` path if it provides the needed fallback for unselected AI units; otherwise emit any required selection order plus `ForceAttackObject`/`AttackObject`.
 6. Add a basic defense branch before offense: if enemy units are near an AI-owned structure, target the closest attacker; otherwise attack the selected enemy structure.
-7. Add `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIMilitaryBehaviorTests.cs` with headless `[Fact]` tests for target selection, attack-order emission, and a run that observes AI-initiated combat. If outcome assertions depend on P3, include the P3-backed test in the same file once available; do not skip it silently.
+7. Add `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIMilitaryBehaviorTests.cs` with headless `[Fact]` tests for target selection, attack-order emission, and a run that observes AI-initiated combat. If outcome assertions depend on P3, include the P3-backed test in the same file once available; do not skip it silently.
 8. New `.cs` files must be UTF-8 with BOM. After creating files, run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs` (only if shared planner state/seams belong in the base)
-- `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIMilitaryBehaviorTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs`
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs` (only if shared planner state/seams belong in the base)
+- `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIMilitaryBehaviorTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -77,7 +77,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "AI attack/defense behavior" P2 item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIMilitaryBehaviorTests.cs` was created and the tests run in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIMilitaryBehaviorTests.cs` was created and the tests run in CI.
 
 ## Result
 

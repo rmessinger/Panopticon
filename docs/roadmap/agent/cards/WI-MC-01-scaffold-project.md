@@ -12,12 +12,12 @@
 
 ## Goal
 
-Create `src/OpenSage.Tools.ModCollector/` as a buildable project skeleton that compiles
+Create `src/Panopticon.Tools.ModCollector/` as a buildable project skeleton that compiles
 and is wired into the solution, matching the BigTool pattern exactly.
 
 ## Steps
 
-1. Create `src/OpenSage.Tools.ModCollector/OpenSage.Tools.ModCollector.csproj`:
+1. Create `src/Panopticon.Tools.ModCollector/Panopticon.Tools.ModCollector.csproj`:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -32,7 +32,7 @@ and is wired into the solution, matching the BigTool pattern exactly.
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenSage.FileFormats.Big\OpenSage.FileFormats.Big.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats.Big\Panopticon.FileFormats.Big.csproj" />
   </ItemGroup>
 
 </Project>
@@ -40,15 +40,15 @@ and is wired into the solution, matching the BigTool pattern exactly.
 
 Do NOT add `<TargetFramework>`: it is inherited from `src/Directory.Build.props` (`net10.0`).
 
-2. Add the project to `src/OpenSage.sln`. Use `dotnet sln src/OpenSage.sln add src/OpenSage.Tools.ModCollector/OpenSage.Tools.ModCollector.csproj`.
+2. Add the project to `src/Panopticon.sln`. Use `dotnet sln src/Panopticon.sln add src/Panopticon.Tools.ModCollector/Panopticon.Tools.ModCollector.csproj`.
 
-3. Create `src/OpenSage.Tools.ModCollector/Program.cs` with a minimal skeleton:
+3. Create `src/Panopticon.Tools.ModCollector/Program.cs` with a minimal skeleton:
 
 ```csharp
 using System;
 using CommandLine;
 
-namespace OpenSage.Tools.ModCollector;
+namespace Panopticon.Tools.ModCollector;
 
 class Program
 {
@@ -60,19 +60,19 @@ class Program
 }
 ```
 
-4. Run `dotnet build src/OpenSage.Tools.ModCollector` and confirm zero errors.
+4. Run `dotnet build src/Panopticon.Tools.ModCollector` and confirm zero errors.
 
 ## Acceptance criteria
 
-- `dotnet build src/OpenSage.Tools.ModCollector` exits 0.
-- Project appears in `src/OpenSage.sln`.
+- `dotnet build src/Panopticon.Tools.ModCollector` exits 0.
+- Project appears in `src/Panopticon.sln`.
 - No new build warnings introduced.
 
 ## Validation
 
 ```sh
-dotnet build src/OpenSage.Tools.ModCollector
-dotnet run --project src/OpenSage.Tools.ModCollector
+dotnet build src/Panopticon.Tools.ModCollector
+dotnet run --project src/Panopticon.Tools.ModCollector
 ```
 
 ## Result

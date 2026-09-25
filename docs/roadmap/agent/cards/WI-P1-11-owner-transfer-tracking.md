@@ -22,17 +22,17 @@ data those counts feed.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291`: `public Player Owner { get; internal set; }`
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:291`: `public Player Owner { get; internal set; }`
   (the auto-property to convert into a guarded setter).
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1636-1640`: `Owner = Team.Template.Owner;`: an
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1636-1640`: `Owner = Team.Template.Owner;`: an
   existing runtime owner reassignment (object joins a team), proving transfers happen post-creation.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:55,476`: creation path
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:55,476`: creation path
   (`gameEngine.GameLogic.CreateObject(...)`, `Owner = owner ?? GetCivilianPlayer()`); the initial
   assignment must not double-count, since `GameLogic.AddObject` already calls
   `Owner.AddOwnedObject(this)` after creation.
-- `src/OpenSage.Game/Logic/GameLogic.cs:118-122,188-192`: the create/destroy hooks added by
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:118-122,188-192`: the create/destroy hooks added by
   `WI-P1-07` (`gameObject.Owner?.AddOwnedObject(gameObject)` / `RemoveOwnedObject(gameObject)`).
-- `src/OpenSage.Game/Logic/Player.cs:790-840`: `AddOwnedObject` / `RemoveOwnedObject` (idempotent
+- `src/Panopticon.Simulation/Logic/Player.cs:790-840`: `AddOwnedObject` / `RemoveOwnedObject` (idempotent
   via `HashSet` add/remove return value).
 
 ## Steps
@@ -57,8 +57,8 @@ data those counts feed.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`: `Owner` setter.
-- `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs`: add a transfer test (below).
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`: `Owner` setter.
+- `test/Panopticon.Simulation.Tests/Logic/PlayerOwnershipTests.cs`: add a transfer test (below).
 
 ## Acceptance criteria
 

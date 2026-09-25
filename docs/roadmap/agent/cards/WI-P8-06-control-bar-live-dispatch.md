@@ -24,10 +24,10 @@ headlessly for as many of these 7 actions as the mocked host can support.
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:55-64` and `:74-78`: the button→`OrderType`→handler design intent.
 - `docs/roadmap/agent/cards/WI-P6-01-command-coverage-matrix.md`: prior card; its Result section documents exactly which actions are gaps and why (Scene3D dependency).
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs`: the existing static-mapping tests and the `HandledOrderTypes` curated set to build real dispatch coverage on top of.
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs`: `ApplyCommandSet`, `CommandButtonCallback`, and how a button click ultimately calls into order generation; the real path to drive instead of asserting only the static mapping.
-- `src/OpenSage.Game/Logic/OrderGenerators/OrderGenerator.cs` and concrete order generators: what stands between a control-bar click and an `Order` being created; identify the minimum Scene3D/selection state the mocked host needs to drive this live.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; check what `Scene3D`/selection seams already exist (note: `WI-P5-01`'s Result section added several null-guards for headless object creation; check if those are sufficient here, or if more are needed).
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs`: the existing static-mapping tests and the `HandledOrderTypes` curated set to build real dispatch coverage on top of.
+- `src/Panopticon.Mods.Generals/Gui/GeneralsControlBar.cs`: `ApplyCommandSet`, `CommandButtonCallback`, and how a button click ultimately calls into order generation; the real path to drive instead of asserting only the static mapping.
+- `src/Panopticon.Simulation/Logic/OrderGenerators/OrderGenerator.cs` and concrete order generators: what stands between a control-bar click and an `Order` being created; identify the minimum Scene3D/selection state the mocked host needs to drive this live.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-70`: headless test base; check what `Scene3D`/selection seams already exist (note: `WI-P5-01`'s Result section added several null-guards for headless object creation; check if those are sufficient here, or if more are needed).
 
 ## Steps
 
@@ -39,8 +39,8 @@ headlessly for as many of these 7 actions as the mocked host can support.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs`
-- `src/OpenSage.Game.Tests/MockedGameTest.cs` (only if additional headless seams are required)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs`
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs` (only if additional headless seams are required)
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md`
 
 ## Acceptance criteria

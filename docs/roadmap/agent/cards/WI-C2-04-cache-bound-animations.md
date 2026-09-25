@@ -19,9 +19,9 @@ binding time.
 
 - `docs/roadmap/deep-dives/c2-skeleton-animation-retargeting.md` sections 4 and 5.
 - Runtime animation binding types from `WI-C2-02..03`.
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`.
-- Existing `NLog` warning patterns in `src/OpenSage.Game/Content/Loaders/`.
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`.
+- Existing `NLog` warning patterns in `src/Panopticon.Simulation/Content/Loaders/`.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`.
 
 ## Steps
 
@@ -37,8 +37,8 @@ binding time.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`
 
 ## Acceptance criteria
 

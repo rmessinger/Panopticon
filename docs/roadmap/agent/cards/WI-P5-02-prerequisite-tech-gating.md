@@ -20,16 +20,16 @@ Verify and close faction prerequisite/tech gating so `Player.CanProduceObject(..
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:60-69`: P5 gating scope.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-1 funding/gating row.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271`: `Player.CanProduceObject` and `GameObject` gating entry points.
-- `src/OpenSage.Game/Logic/Player.cs:363-427`: object/science prerequisite evaluation; preserve AND-of-OR semantics.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192`: `CanPurchase`/`CanConstructUnit` money + owner gating.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291`: producer-local gating.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:99-100` and `src/OpenSage.Game/Logic/AI/AIData.cs:242-245`: parsed `SkirmishBuildLists`.
-- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:65-82` and `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:228-236`: build-list fields and `IsBuildable`.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
+- `src/Panopticon.Simulation/Logic/Player.cs:363-427`: object/science prerequisite evaluation; preserve AND-of-OR semantics.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1164-1192`: `CanPurchase`/`CanConstructUnit` money + owner gating.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:271-291`: producer-local gating.
+- `src/Panopticon.Simulation/Logic/AI/AIData.cs:99-100` and `src/Panopticon.Simulation/Logic/AI/AIData.cs:242-245`: parsed `SkirmishBuildLists`.
+- `src/Panopticon.Simulation/Logic/Map/BuildListInfo.cs:65-82` and `src/Panopticon.Simulation/Logic/Map/BuildListInfo.cs:228-236`: build-list fields and `IsBuildable`.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 
-1. Add `src/OpenSage.Game.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` as a headless `[Fact]` test file; ensure the new `.cs` file is UTF-8 with BOM.
+1. Add `test/Panopticon.Simulation.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` as a headless `[Fact]` test file; ensure the new `.cs` file is UTF-8 with BOM.
 2. Verification path first: choose one real faction prereq chain from loaded object definitions. Assert the gated unit/structure returns `false` from `Player.CanProduceObject(...)` before prerequisites exist.
 3. Construct or inject the prerequisite structures through the same completed-building state `CanProduceObject` scans (`Owner == player`, matching definition, `BuildProgress >= 1.0`), then assert the gated unit/structure returns `true`.
 4. Include at least one science/upgrade-gated check if the selected chain exposes `Prerequisites.Sciences`; otherwise assert and document that the chosen chain exercises object prerequisites only.
@@ -39,9 +39,9 @@ Verify and close faction prerequisite/tech gating so `Player.CanProduceObject(..
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Player.cs`
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`
-- `src/OpenSage.Game.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Player.cs`
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -72,11 +72,11 @@ dotnet format src --verify-no-changes
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Tick the "Faction build trees with prerequisites / tech gating (`Player.CanProduceObject`, `src/OpenSage.Game/Logic/Player.cs:395`)" P5 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
+- Tick the "Faction build trees with prerequisites / tech gating (`Player.CanProduceObject`, `src/Panopticon.Simulation/Logic/Player.cs:395`)" P5 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` was created and runs in CI.
 
 ## Result
 
-Implemented on branch `track-p5-construction-production` alongside WI-P5-01, -03..05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` (8 non-skipped `[Fact]`s: AND/OR prerequisite gating, partial-build gating, money-vs-prereq separation). Caveat surfaced by the P3-P6 delta audit (2026-07-25): `MockedGameTest` has no loaded game files, so these tests exercise a synthetic 2-3-node `ObjectDefinition` prerequisite chain fabricated in-test rather than a real faction build tree; see WI-P8-05 (Track P phase P8) for closing that gap. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01, -03..05 (see `.exchange` 2026-07-22 entry). Added `test/Panopticon.Simulation.Tests/Logic/Production/PrerequisiteTechGatingTests.cs` (8 non-skipped `[Fact]`s: AND/OR prerequisite gating, partial-build gating, money-vs-prereq separation). Caveat surfaced by the P3-P6 delta audit (2026-07-25): `MockedGameTest` has no loaded game files, so these tests exercise a synthetic 2-3-node `ObjectDefinition` prerequisite chain fabricated in-test rather than a real faction build tree; see WI-P8-05 (Track P phase P8) for closing that gap. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

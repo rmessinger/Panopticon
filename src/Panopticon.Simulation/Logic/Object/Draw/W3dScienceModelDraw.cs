@@ -1,0 +1,37 @@
+using Panopticon.Client;
+using Panopticon.Data.Ini;
+
+namespace Panopticon.Logic.Object;
+
+public sealed class W3dScienceModelDraw : W3dModelDraw
+{
+    internal W3dScienceModelDraw(W3dScienceModelDrawModuleData data, Drawable drawable, IGameEngine gameEngine)
+        : base(data, drawable, gameEngine)
+    {
+    }
+
+    internal override void Load(StatePersister reader)
+    {
+        reader.PersistVersion(1);
+
+        base.Load(reader);
+    }
+}
+
+public sealed class W3dScienceModelDrawModuleData : W3dModelDrawModuleData
+{
+    internal static W3dScienceModelDrawModuleData Parse(IniParser parser) => parser.ParseBlock(FieldParseTable);
+
+    private static new readonly IniParseTable<W3dScienceModelDrawModuleData> FieldParseTable = W3dModelDrawModuleData.FieldParseTable
+        .Concat(new IniParseTable<W3dScienceModelDrawModuleData>
+        {
+            { "RequiredScience", (parser, x) => x.RequiredScience = parser.ParseAssetReference() }
+        });
+
+    public string RequiredScience { get; private set; }
+
+    internal override DrawModule CreateDrawModule(Drawable drawable, IGameEngine gameEngine)
+    {
+        return new W3dScienceModelDraw(this, drawable, gameEngine);
+    }
+}

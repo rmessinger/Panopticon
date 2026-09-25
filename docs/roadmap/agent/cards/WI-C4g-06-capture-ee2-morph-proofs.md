@@ -20,10 +20,10 @@ the farm yam seeding morph.
 - `docs/roadmap/deep-dives/c4g-ee2-morph-animation.md` sections 2, 9, and the reproduction
   appendix.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` section 8.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`.
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs`.
-- `src/OpenSage.Tools.TestHarness/Scenarios/`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`.
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs`.
+- `src/Panopticon.Tools.TestHarness/Scenarios/`.
 
 ## Steps
 
@@ -39,9 +39,9 @@ the farm yam seeding morph.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
-- `src/OpenSage.Tools.TestHarness/Scenarios/Ee2NifProofScenario.cs`
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `src/Panopticon.Tools.TestHarness/Scenarios/Ee2NifProofScenario.cs`
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs`
 
 ## Acceptance criteria
 

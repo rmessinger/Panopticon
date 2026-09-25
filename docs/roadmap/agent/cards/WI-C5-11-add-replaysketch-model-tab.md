@@ -20,18 +20,18 @@ deterministic fake-session screenshot path.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` section 9.
-- `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: screenshot-mode contract.
-- `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml`.
-- `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml.cs`: tab switching and screenshot mode.
-- `src/OpenSage.Tools.ReplaySketch.Maui/Views/MapPreviewView.xaml`.
-- `src/OpenSage.Tools.ReplaySketch.Maui/Views/MapPreviewView.xaml.cs`: platform picker guards.
-- `src/OpenSage.Tools.ReplaySketch.Maui/Views/ValidationGroundEditorView.xaml`.
-- `src/OpenSage.Tools.ReplaySketch.Maui/Views/ValidationGroundEditorView.xaml.cs`: file picker
+- `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: screenshot-mode contract.
+- `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml`.
+- `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml.cs`: tab switching and screenshot mode.
+- `src/Panopticon.Tools.ReplaySketch.Maui/Views/MapPreviewView.xaml`.
+- `src/Panopticon.Tools.ReplaySketch.Maui/Views/MapPreviewView.xaml.cs`: platform picker guards.
+- `src/Panopticon.Tools.ReplaySketch.Maui/Views/ValidationGroundEditorView.xaml`.
+- `src/Panopticon.Tools.ReplaySketch.Maui/Views/ValidationGroundEditorView.xaml.cs`: file picker
   precedent.
-- `src/OpenSage.Tools.ReplaySketch.Maui/OpenSage.Tools.ReplaySketch.Maui.csproj`.
-- `src/OpenSage.Tools.ReplaySketch.Core/ViewModels/ExternalModelViewModel.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Maui/Panopticon.Tools.ReplaySketch.Maui.csproj`.
+- `src/Panopticon.Tools.ReplaySketch.Core/ViewModels/ExternalModelViewModel.cs` (new, from
   `WI-C5-10`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IExternalModelFileSelector.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IExternalModelFileSelector.cs` (new, from
   `WI-C5-10`).
 
 ## Steps
@@ -57,13 +57,13 @@ deterministic fake-session screenshot path.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml`
-- `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml.cs`
-- `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`
-- `src/OpenSage.Tools.ReplaySketch.Maui/Views/ExternalModelView.xaml` (new)
-- `src/OpenSage.Tools.ReplaySketch.Maui/Views/ExternalModelView.xaml.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Maui/Services/MauiExternalModelFileSelector.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Maui/Services/ExternalModelScreenshotFixture.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml`
+- `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml.cs`
+- `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`
+- `src/Panopticon.Tools.ReplaySketch.Maui/Views/ExternalModelView.xaml` (new)
+- `src/Panopticon.Tools.ReplaySketch.Maui/Views/ExternalModelView.xaml.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Maui/Services/MauiExternalModelFileSelector.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Maui/Services/ExternalModelScreenshotFixture.cs` (new)
 
 ## Acceptance criteria
 
@@ -85,11 +85,11 @@ dotnet test src --filter "FullyQualifiedName~ExternalModelViewModelTests"
 mkdir -p artifacts/replaysketch-c5
 REPLAYSKETCH_SCREENSHOT_PATH="$PWD/artifacts/replaysketch-c5/model.png" \
 REPLAYSKETCH_SCREENSHOT_TAB=model \
-  dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+  dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 REPLAYSKETCH_SCREENSHOT_PATH="$PWD/artifacts/replaysketch-c5/map.png" \
 REPLAYSKETCH_SCREENSHOT_TAB=map \
-  dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+  dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

@@ -4,19 +4,19 @@ Status: work in progress; last updated 2026-06-22.
 
 ## What it is
 
-A CLI tool (`OpenSage.Tools.ModCollector`) that downloads and assembles a local asset
-collection from ModDB for use with OpenSAGE. It follows the same pattern as
-`OpenSage.Tools.BigTool` and `OpenSage.Tools.Sav2Json`.
+A CLI tool (`Panopticon.Tools.ModCollector`) that downloads and assembles a local asset
+collection from ModDB for use with Panopticon. It follows the same pattern as
+`Panopticon.Tools.BigTool` and `Panopticon.Tools.Sav2Json`.
 
 ## Design decisions
 
 ### Tool type
 
 CLI: `CommandLine` + `CommandParser`, `Program.cs` entry point. Match
-`src/OpenSage.Tools.BigTool/OpenSage.Tools.BigTool.csproj` exactly (no game install required).
+`src/Panopticon.Tools.BigTool/Panopticon.Tools.BigTool.csproj` exactly (no game install required).
 TFM is inherited from `src/Directory.Build.props` (`net10.0`); do not set it in the project file.
 
-Suggested project path: `src/OpenSage.Tools.ModCollector/`
+Suggested project path: `src/Panopticon.Tools.ModCollector/`
 
 ### Scope
 
@@ -57,13 +57,13 @@ implementation.
 
 Extract `.big` files from downloaded `.zip` archives; discard the archive.
 Leave `.big` files engine-ready so the user can point `CNC_GENERALS_ZH_PATH` (etc.)
-at a game+category directory and OpenSAGE picks them up via `SkudefReader`.
+at a game+category directory and Panopticon picks them up via `SkudefReader`.
 
 Key refs:
-- `src/OpenSage.IO/SkudefReader.cs`: recursively scans a root dir for `.big` files
+- `src/Panopticon.IO/SkudefReader.cs`: recursively scans a root dir for `.big` files
   in alphabetical order.
-- `src/OpenSage.FileFormats.Big/`: `BigArchive` reads the `.big` format.
-- `src/OpenSage.Tools.BigTool/Program.cs:201-221`: `ExtractMode` logic to borrow.
+- `src/Panopticon.FileFormats.Big/`: `BigArchive` reads the `.big` format.
+- `src/Panopticon.Tools.BigTool/Program.cs:201-221`: `ExtractMode` logic to borrow.
 
 ### ModDB access strategy
 
@@ -112,9 +112,9 @@ is a direct `.zip` download before committing.
 
 ## Implementation steps
 
-1. Create `src/OpenSage.Tools.ModCollector/` with `.csproj` matching BigTool
-   (`OutputType=Exe`, `CommandLineParser`, net8.0, reference `OpenSage.FileFormats.Big`).
-2. Add to `src/OpenSage.sln`.
+1. Create `src/Panopticon.Tools.ModCollector/` with `.csproj` matching BigTool
+   (`OutputType=Exe`, `CommandLineParser`, net8.0, reference `Panopticon.FileFormats.Big`).
+2. Add to `src/Panopticon.sln`.
 3. Create `manifest.json` as an embedded resource with the seed mod entries above
    (schema: `[{ "name", "game", "category", "moddbUrl", "downloadUrl" }]`).
 4. Implement `--list` mode (reads manifest, prints a table via `ConsoleTables`).

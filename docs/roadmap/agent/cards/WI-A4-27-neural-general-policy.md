@@ -30,8 +30,8 @@ directives.
 
 ## Files likely to change
 
-- New neural policy under `src/OpenSage.Game/Logic/AI/`
-- New tests under `src/OpenSage.Game.Tests/Logic/AI/`
+- New neural policy under `src/Panopticon.Simulation/Logic/AI/`
+- New tests under `test/Panopticon.Simulation.Tests/Logic/AI/`
 
 ## Acceptance criteria
 

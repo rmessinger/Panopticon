@@ -1,0 +1,58 @@
+{
+  // USA Tomahawk firing its cruise missile at a BattleMaster 330 units out (weapon window
+  // 100..350). Follow-projectile camera rides the missile; the pulled-back height keeps the
+  // ~150-unit cruise altitude inside the frame through the whole flight. Run with:
+  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-vehicle-tomahawk.json
+  "Name": "vehicle-tomahawk",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 150,
+  "SettleFrames": 5,
+  "CaptureStride": 2,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "launcher",
+      "Definition": "AmericaVehicleTomahawk",
+      "Owner": "usa",
+      "X": 450,
+      "Y": 640,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "target",
+      "Definition": "ChinaTankBattleMaster",
+      "Owner": "china",
+      "X": 780,
+      "Y": 640,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowProjectileSourceActorId": "launcher",
+    "SubjectActorIds": [ "launcher" ],
+    "DesiredSpanFraction": 0.45,
+    "InitialCameraHeight": 480,
+    "MinCameraHeight": 200,
+    "MaxCameraHeight": 800
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "launcher",
+      "TargetActorId": "target"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" }
+  ],
+  "StopWhenActorDestroyed": null
+}

@@ -21,12 +21,12 @@ half of A5-6. Read-only: no code changes.
 - `docs/roadmap/deep-dives/a5-visualization.md` §6 (A5-6 row) and §7: what A5-6 owes B4a.
 - `docs/roadmap/deep-dives/b4a-larger-maps.md`: what B4a will build on this baseline, so gaps are
   described in terms B4a can consume.
-- `src/OpenSage.Tools.WorldBuilder.Core/`: the whole directory. It is small. `EditorMap.cs`
+- `src/Panopticon.Tools.WorldBuilder.Core/`: the whole directory. It is small. `EditorMap.cs`
   (`CreateNew`, `Open`, `Save`, `SaveAs`, dirty tracking, undo stack), `NewMapFactory.cs`, the tool
   implementations (`HeightBrushTool`, `PaintSingleTileTool`, `PaintLargeTileTool`, `SpillPaintTool`,
   `MeshMoldTool`, `PlaceObjectTool`, `WaypointTool`, `SelectTool`, `DeleteTool`, `EyeDropperTool`),
   and the edit types (`HeightMapEdit`, `BlendTileEdit`, `ObjectPlacementEdit`).
-- `src/OpenSage.Tools.WorldBuilder.Maui/Views/` and `ViewModels/`: which Core capabilities the UI
+- `src/Panopticon.Tools.WorldBuilder.Maui/Views/` and `ViewModels/`: which Core capabilities the UI
   actually exposes.
 
 ## Steps

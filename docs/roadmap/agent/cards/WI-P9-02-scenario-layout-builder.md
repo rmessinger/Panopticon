@@ -20,24 +20,24 @@ dependency.
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.1, §2.4 (target assignment by index),
   §2.9, and §3 (component placement table).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PrimaryActionCatalog.cs`: the resolver from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PrimaryActionCatalog.cs`: the resolver from
   `WI-P9-01`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/UnitCatalog.cs`: roster and faction grouping.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/BuildingCatalog.cs`: destructible-target and
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/UnitCatalog.cs`: roster and faction grouping.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/BuildingCatalog.cs`: destructible-target and
   supply-source definition names.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PositionSpec.cs`: the existing normalized/landmark
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PositionSpec.cs`: the existing normalized/landmark
   position model, for how positions are expressed elsewhere in this project.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the existing scenario record, as a
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the existing scenario record, as a
   shape reference only. P9 is not a replay and must not export a `.rep`.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Model/ValidationGroundScenario.cs`: map path, roster,
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Model/ValidationGroundScenario.cs`: map path, roster,
    layout parameters (row spacing, faction row offsets, target-cluster centre and radius), target and
    supply-source definition names, `SettleFrames`, and `Seed`.
-2. Add `src/OpenSage.Tools.ReplaySketch.Core/Model/SpawnPlan.cs` with `UnitPlacement` (definition
+2. Add `src/Panopticon.Tools.ReplaySketch.Core/Model/SpawnPlan.cs` with `UnitPlacement` (definition
    name, player index, position, resolved `PrimaryAction`, target index) and `TargetPlacement`.
-3. Add `src/OpenSage.Tools.ReplaySketch.Core/Services/ValidationGroundBuilder.cs` with a
+3. Add `src/Panopticon.Tools.ReplaySketch.Core/Services/ValidationGroundBuilder.cs` with a
    `Build(ValidationGroundScenario)` method laying units out in one row per faction facing the target
    cluster, assigning targets by index (`unitIndex % targetCount`), and resolving each unit's action
    through `PrimaryActionCatalog`.
@@ -53,10 +53,10 @@ dependency.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ValidationGroundScenario.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/SpawnPlan.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ValidationGroundBuilder.cs` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/ValidationGroundBuilderTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ValidationGroundScenario.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/SpawnPlan.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ValidationGroundBuilder.cs` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ValidationGroundBuilderTests.cs` (new)
 
 ## Acceptance criteria
 

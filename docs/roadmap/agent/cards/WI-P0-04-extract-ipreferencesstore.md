@@ -19,52 +19,52 @@ for the ReplaySketch MAUI layer.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:114-137`: the constructor,
+- `src/Panopticon.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:114-137`: the constructor,
   which calls `Preferences.Default.Get("cnc_generals_path", string.Empty)` (line ~131).
-- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:220-225`: `LoadMapFromFolder`,
+- `src/Panopticon.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:220-225`: `LoadMapFromFolder`,
   which calls `Preferences.Default.Set("cnc_generals_path", folderPath)` (line ~223) before the
   map load is attempted (the unconditional-save behaviour under test).
-- `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: the MAUI seam table (validation context).
-- `src/OpenSage.Tools.ReplaySketch.Tests/GeneralsInstallationServiceTests.cs`: an existing test in
+- `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: the MAUI seam table (validation context).
+- `test/Panopticon.Tools.ReplaySketch.Tests/GeneralsInstallationServiceTests.cs`: an existing test in
   the target test project to mirror for style.
 
 ## Steps
 
 1. Add an `IPreferencesStore` interface (`string Get(string key, string defaultValue)` and
    `void Set(string key, string value)`). Place it where it is reachable from both the MAUI app
-   and the non-MAUI test project: prefer `OpenSage.Tools.ReplaySketch.Core` (so
-   `OpenSage.Tools.ReplaySketch.Tests` can reference it without a MAUI dependency).
+   and the non-MAUI test project: prefer `Panopticon.Tools.ReplaySketch.Core` (so
+   `Panopticon.Tools.ReplaySketch.Tests` can reference it without a MAUI dependency).
 2. Add a `MemoryPreferencesStore` (dictionary-backed) in `.Core` for tests, and a
    `MauiPreferencesStore` adapter in `.Maui` that forwards to `Preferences.Default`.
 3. Give `MainViewModel` a constructor parameter `IPreferencesStore` (default to the MAUI adapter
    for production call sites). Replace the two `Preferences.Default.*` calls with the injected
    store. Do not change any other behaviour or ordering.
-4. Add a unit test in `OpenSage.Tools.ReplaySketch.Tests` that constructs `MainViewModel` with a
+4. Add a unit test in `Panopticon.Tools.ReplaySketch.Tests` that constructs `MainViewModel` with a
    `MemoryPreferencesStore`, calls `LoadMapFromFolder` with a path where map loading will fail
    (no game files), and asserts the preference was saved regardless of the map-load outcome.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`: new `IPreferencesStore` + `MemoryPreferencesStore`.
-- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`: constructor injection.
-- `src/OpenSage.Tools.ReplaySketch.Maui/`: new `MauiPreferencesStore` adapter.
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: new unit test.
+- `src/Panopticon.Tools.ReplaySketch.Core/`: new `IPreferencesStore` + `MemoryPreferencesStore`.
+- `src/Panopticon.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`: constructor injection.
+- `src/Panopticon.Tools.ReplaySketch.Maui/`: new `MauiPreferencesStore` adapter.
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: new unit test.
 
 ## Acceptance criteria
 
 - [x] `MainViewModel` accepts an `IPreferencesStore` via constructor injection; production uses the
       `Preferences.Default` adapter; no direct `Preferences.Default` call remains in `MainViewModel`.
-- [x] A unit test in `OpenSage.Tools.ReplaySketch.Tests` exercises `MemoryPreferencesStore` headlessly.
+- [x] A unit test in `Panopticon.Tools.ReplaySketch.Tests` exercises `MemoryPreferencesStore` headlessly.
       The `LoadMapFromFolder` behavioral test is blocked by TFM mismatch (tests project is `net10.0`;
       MAUI project is `net10.0-maccatalyst`): tracked as a follow-up in P0-1c.
-- [x] The test runs headlessly (no MAUI runtime) under `dotnet test src/OpenSage.Tools.ReplaySketch.Tests`.
+- [x] The test runs headlessly (no MAUI runtime) under `dotnet test test/Panopticon.Tools.ReplaySketch.Tests`.
 - [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

@@ -24,14 +24,14 @@ matrix assertion says not to rely on. Close all three gaps.
 
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:138-153`: the P5 scenario matrix design: real distinct per-faction build trees, real spawn/upgrade application, `OrderProcessor` accessibility for both player types.
 - `docs/roadmap/agent/cards/WI-P5-05-scenario-matrix.md`: prior card; its Result section documents exactly what was faked and why.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` (the `P5_ScenarioMatrixTests` class, roughly lines 1020-1300): the current synthetic-chain implementation to replace.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` (the `P5_ScenarioMatrixTests` class, roughly lines 1020-1300): the current synthetic-chain implementation to replace.
 - `docs/roadmap/agent/cards/WI-P5-02-prerequisite-tech-gating.md`: notes the same synthetic-definition limitation exists in unit-level tests because `MockedGameTest` loads no real game files; read its Result section for the root cause.
-- `src/OpenSage.Content/` or wherever faction INI definitions are loaded from disk in non-mocked tests (search for `[GameFact]`-based tests that do load real definitions, e.g. under `src/OpenSage.Game.Tests` for any existing pattern of loading real `.ini` object definitions without a full game install); determine whether any subset of real USA/GLA/China build-tree data can be loaded headlessly (e.g. from the repo's own test fixture INI files, if any exist, or from `OpenSage.Mods.Generals`'s bundled built-in rules) without requiring a full game install.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs` (`BuildObject`, around lines 96-160): the real order path the `human` matrix cell should route through instead of direct `GameLogic.CreateObject`.
+- `src/Panopticon.Content/` or wherever faction INI definitions are loaded from disk in non-mocked tests (search for `[GameFact]`-based tests that do load real definitions, e.g. under `test/Panopticon.Simulation.Tests` for any existing pattern of loading real `.ini` object definitions without a full game install); determine whether any subset of real USA/GLA/China build-tree data can be loaded headlessly (e.g. from the repo's own test fixture INI files, if any exist, or from `Panopticon.Mods.Generals`'s bundled built-in rules) without requiring a full game install.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs` (`BuildObject`, around lines 96-160): the real order path the `human` matrix cell should route through instead of direct `GameLogic.CreateObject`.
 
 ## Steps
 
-1. Investigate whether real per-faction build-tree data (prerequisite chains as authored in the actual Generals/Zero Hour faction INI/build-list data) can be loaded in a headless (`MockedGameTest`) context, e.g. via `OpenSage.Mods.Generals`'s built-in rules/definitions that don't require a full game install. If real per-faction data is loadable headlessly, replace the synthetic per-cell chain with it, keeping the same tier-based axis structure.
+1. Investigate whether real per-faction build-tree data (prerequisite chains as authored in the actual Generals/Zero Hour faction INI/build-list data) can be loaded in a headless (`MockedGameTest`) context, e.g. via `Panopticon.Mods.Generals`'s built-in rules/definitions that don't require a full game install. If real per-faction data is loadable headlessly, replace the synthetic per-cell chain with it, keeping the same tier-based axis structure.
 2. If real per-faction data genuinely cannot be loaded without a full game install, keep the synthetic chain but make the `faction` axis meaningfully distinct (e.g. materially different tier depths, costs, or branching per synthetic "faction") rather than only varying a name string, and clearly document in the Result section that this remains synthetic and why.
 3. Change the `human` `playerType` matrix cell to issue `Order.CreateBuildObject` through `OrderProcessor`, matching the `AI` cell's existing approach, instead of calling `GameLogic.CreateObject` + setting `BuildProgress` directly.
 4. Strengthen the matrix's per-cell assertion so the gated unit/upgrade is confirmed to actually spawn or apply (a real `GameObject`/upgrade-applied check), not only that `Player.CanProduceObject` toggles true/false.
@@ -40,7 +40,7 @@ matrix assertion says not to rely on. Close all three gaps.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md`
 
 ## Acceptance criteria

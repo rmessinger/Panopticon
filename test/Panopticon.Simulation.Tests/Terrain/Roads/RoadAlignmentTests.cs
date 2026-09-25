@@ -1,0 +1,62 @@
+using System;
+using System.IO;
+using System.Runtime.CompilerServices;
+using Panopticon.Data.Map;
+using Panopticon.IO;
+using Panopticon.Terrain.Roads;
+using Xunit;
+using static Panopticon.Terrain.Roads.RoadTextureType;
+
+namespace Panopticon.Tests.Terrain.Roads;
+
+public class RoadAlignmentTests
+{
+    [Fact]
+    public void NoAlignmentChange()
+    {
+        var topology = LoadTopologyFromMapFile();
+
+        AssertCurveType(topology.Nodes[0], BroadCurve);
+        AssertCurveType(topology.Nodes[1], Straight);
+        AssertCurveType(topology.Nodes[2], Straight);
+        AssertCurveType(topology.Nodes[3], TightCurve);
+    }
+
+    [Fact]
+    public void AlignmentChange()
+    {
+        var topology = LoadTopologyFromMapFile();
+
+        AssertCurveType(topology.Nodes[0], Straight);
+        AssertCurveType(topology.Nodes[1], BroadCurve);
+        AssertCurveType(topology.Nodes[2], Straight);
+        AssertCurveType(topology.Nodes[3], BroadCurve);
+    }
+
+    [Fact]
+    public void CHI01()
+    {
+        var topology = LoadTopologyFromMapFile();
+
+        AssertCurveType(topology.Nodes[0], Straight);
+        AssertCurveType(topology.Nodes[1], BroadCurve);
+        AssertCurveType(topology.Nodes[3], Straight);
+    }
+
+    private RoadTopology LoadTopologyFromMapFile([CallerMemberName] string mapName = "")
+    {
+        var fileSystem = new DiskFileSystem(Path.Combine(Environment.CurrentDirectory, "Terrain", "Roads", "RoadAlignmentTests"));
+        var mapFile = MapFile.FromFileSystemEntry(fileSystem.GetFile(mapName + ".map"));
+
+        var topology = RoadTopologyLoader.FromMapObjects(mapFile.ObjectsList.Objects);
+        topology.AlignOrientation();
+
+        return topology;
+    }
+
+    private void AssertCurveType(RoadTopologyNode node, RoadTextureType expectedCurveType)
+    {
+        var actualCurveType = CurvedRoadSegment.ChooseCurveType(node.Edges[0], node.Edges[1], node.Position);
+        Assert.Equal(expectedCurveType, actualCurveType);
+    }
+}

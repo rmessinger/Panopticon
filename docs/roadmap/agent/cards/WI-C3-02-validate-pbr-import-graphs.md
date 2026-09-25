@@ -18,11 +18,11 @@ Validate the complete imported PBR material and mesh graph before any GPU or ass
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` section 4.
 - PBR interchange types from `WI-C3-01`.
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMeshPart.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedModelMaterializerTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMeshPart.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelMaterializerTests.cs`.
 
 ## Steps
 
@@ -40,9 +40,9 @@ Validate the complete imported PBR material and mesh graph before any GPU or ass
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Loaders/ImportedModelValidator.cs` (new)
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedModelMaterializerTests.cs`
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelValidator.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelMaterializerTests.cs`
 
 ## Acceptance criteria
 

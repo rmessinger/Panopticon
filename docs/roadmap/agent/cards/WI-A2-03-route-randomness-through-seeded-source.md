@@ -20,8 +20,8 @@ from the seeded `GameLogic.Random`, providing a selectable experiment input.
 - `docs/roadmap/implementation/track-a-a2-reproducibility.md`: the `uncontrolled` and
   simulation-affecting rows. These are the exact and only call sites in scope.
 - The A2 deep dive's architecture diagrams: the target seeded-source shape.
-- `src/OpenSage.Mathematics/IRandom.cs`: the interface to draw from.
-- `src/OpenSage.Game/Logic/GameLogic.cs:60-75`: the logic-side seeded instance.
+- `src/Panopticon.Mathematics/IRandom.cs`: the interface to draw from.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:60-75`: the logic-side seeded instance.
 
 ## Steps
 
@@ -38,7 +38,7 @@ from the seeded `GameLogic.Random`, providing a selectable experiment input.
 ## Files likely to change
 
 - The exact files named in the audit's simulation-affecting `uncontrolled` rows.
-- `src/OpenSage.Game.Tests/` (new test file)
+- `test/Panopticon.Simulation.Tests/` (new test file)
 
 ## Acceptance criteria
 

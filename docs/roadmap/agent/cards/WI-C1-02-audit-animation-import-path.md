@@ -20,24 +20,24 @@ isolate while preserving the gameplay animation-state contract. Read-only: no so
 
 - `docs/roadmap/implementation/track-c-c1-import-abstraction.md`: the model-path audit and C1
   boundary findings from `WI-C1-01`.
-- `src/OpenSage.Game/Data/Ini/IniParser.cs:716-727`: animation-reference parsing and lazy lookup.
-- `src/OpenSage.Game/Content/AssetStore.cs:137-140,311-314`: animation collection and loader
+- `src/Panopticon.Simulation/Data/Ini/IniParser.cs:716-727`: animation-reference parsing and lazy lookup.
+- `src/Panopticon.Simulation/Content/AssetStore.cs:137-140,311-314`: animation collection and loader
   registration.
-- `src/OpenSage.Game/Content/Loaders/OnDemandAnimationLoader.cs`: animation key parsing, path
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandAnimationLoader.cs`: animation key parsing, path
   resolution, W3D parsing, and name validation.
-- `src/OpenSage.Game/Graphics/Animation/W3DAnimation.cs`: W3D animation-chunk dispatch and the
+- `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation.cs`: W3D animation-chunk dispatch and the
   runtime asset surface.
-- `src/OpenSage.Game/Graphics/Animation/W3DAnimation.W3dAnimation.cs`: uncompressed channel
+- `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation.W3dAnimation.cs`: uncompressed channel
   conversion.
-- `src/OpenSage.Game/Graphics/Animation/W3DAnimation.W3dCompressedAnimation.cs`: time-coded,
+- `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation.W3dCompressedAnimation.cs`: time-coded,
   adaptive-delta, and motion-channel conversion.
-- `src/OpenSage.Game/Graphics/Animation/AnimationClip.cs`: the runtime clip shape.
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs:13-55,160-335`: runtime playback,
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClip.cs`: the runtime clip shape.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs:13-55,160-335`: runtime playback,
   interpolation, and bone updates.
-- `src/OpenSage.Game/Logic/Object/AnimationState.cs:90-125`: INI animation block fields.
-- `src/OpenSage.Game/Logic/Object/Draw/W3dModelDraw.cs:210-240,365-390`: gameplay animation-state
+- `src/Panopticon.Simulation/Logic/Object/AnimationState.cs:90-125`: INI animation block fields.
+- `src/Panopticon.Simulation/Logic/Object/Draw/W3dModelDraw.cs:210-240,365-390`: gameplay animation-state
   selection and attachment to a `ModelInstance`.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs:81-136,160-235`: hierarchy allocation, animation
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs:81-136,160-235`: hierarchy allocation, animation
   updates, and skinning transforms.
 
 ## Steps

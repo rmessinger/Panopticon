@@ -40,7 +40,7 @@ audit, in the existing subsystem the gap was found in:
 ## 2. Integration surface
 
 - Touches: `VictorySystem` (P8-1, P8-2), skirmish/game-start match configuration (P8-1), an
-  end-of-match UI panel and `OpenSage.Tools.TestHarness`'s exit path (P8-3), `SupplyAIUpdate`-driven
+  end-of-match UI panel and `Panopticon.Tools.TestHarness`'s exit path (P8-3), `SupplyAIUpdate`-driven
   harness scenarios (P8-4), per-faction `BuildList`/prerequisite data and `OrderProcessor` (P8-5),
   `GeneralsControlBar` dispatch (P8-6), `FireWeaponUpdate` (P8-7).
 - No new `GameSystem`, no new save-data version, no new `OrderType`: this phase closes gaps in
@@ -54,7 +54,7 @@ audit, in the existing subsystem the gap was found in:
 |---|---|---|
 | P8-1. Data-driven victory configuration seam | Expose `VictorySystem`'s frame limit and score metric through a real skirmish/scenario configuration path instead of only `internal` test-settable properties; document `ConditionRule` full pluggability as an explicit remaining gap (Track A's A4 concern) if left out of scope. | Done |
 | P8-2. Sudden-death repeat-elimination fix | Close the case where a mutually-eliminated match's `SuddenDeath` status never resolves to `Decided` because the next elimination check window also mutually eliminates the remaining players. | Done |
-| P8-3. End-of-match UI and `TestHarness` integration | Add a real UI/exit consumer of `GameOutcome` for interactive play, and migrate `OpenSage.Tools.TestHarness` off its pre-`GameOutcome` ad hoc exit path onto the same result. | Done |
+| P8-3. End-of-match UI and `TestHarness` integration | Add a real UI/exit consumer of `GameOutcome` for interactive play, and migrate `Panopticon.Tools.TestHarness` off its pre-`GameOutcome` ad hoc exit path onto the same result. | Done |
 | P8-4. Real gather-cycle harness verification | Replace the P4 scenario matrix's synthetic dump/debit assertion with one that runs a harvester through the real `SupplyAIUpdate` state machine (`SearchingForSupplySource → Approaching → Requesting → Gathering → DumpingSupplies`) via `Scene3D`. | Blocked (locomotor + PartitionCellManager not present in the headless host); precise gap recorded, verified terminals retained |
 | P8-5. Real per-faction build trees and production assertions | Replace the P5 scenario matrix's reflection-built synthetic prerequisite chain with real per-faction (`USA`/`GLA`/`China`) build trees, assert an actual unit/upgrade spawn (not only `CanProduceObject`), and route the `human` `playerType` cell through `OrderProcessor` like the `AI` cell. | Done (synthetic per-faction trees are materially distinct; real INI trees still require a full install) |
 | P8-6. Control-bar live dispatch verification | Replace the P6 command-coverage matrix's `OrderType`-mapping-only assertion with one that dispatches through `GeneralsControlBar` end to end. | Done at the order layer; the `GeneralsControlBar` button layer (WND Window + asset CommandSet) remains the documented UI gap |

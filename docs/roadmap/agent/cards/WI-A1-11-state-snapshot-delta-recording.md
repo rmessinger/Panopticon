@@ -19,8 +19,8 @@ reconstructed for analysis without assuming a re-run reproduces it bit-for-bit
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a1-headless-host.md` §2.5.
-- `src/OpenSage.Game/RunOutput.cs`: the artifact family this joins.
-- `src/OpenSage.Game/Logic/GameLogic.cs` and `src/OpenSage.Data.Sav/StatePersister.cs`: the
+- `src/Panopticon.Simulation/RunOutput.cs`: the artifact family this joins.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs` and `src/Panopticon.Data.Sav/StatePersister.cs`: the
   existing whole-world serialization to reuse, not duplicate.
 
 ## Steps
@@ -34,8 +34,8 @@ reconstructed for analysis without assuming a re-run reproduces it bit-for-bit
 
 ## Files likely to change
 
-- `src/OpenSage.Game/` (snapshot/delta recording types)
-- `src/OpenSage.Game.Tests/` (reconstruction test)
+- `src/Panopticon.Simulation/` (snapshot/delta recording types)
+- `test/Panopticon.Simulation.Tests/` (reconstruction test)
 
 ## Acceptance criteria
 

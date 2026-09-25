@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
+    <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
+    <ApplicationManifest>Resources\app.manifest</ApplicationManifest>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- On macOS arm64, the Veldrid.Sdl2 NuGet only ships an x86_64 dylib.
+       Copy the arm64 dylib from Homebrew directly into the output directory so
+       NativeLibraryLoader (used by Veldrid.Sdl2) can find it alongside the executable.
+       Homebrew's "sdl2" formula is now an alias for sdl2-compat, a shim that dlopens
+       libSDL3.dylib next to itself at runtime, so that must be copied too. -->
+  <Target Name="CopyArm64Sdl2" AfterTargets="Build"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">
+    <PropertyGroup>
+      <_Sdl2Arm64Source>/opt/homebrew/lib/libSDL2.dylib</_Sdl2Arm64Source>
+      <_Sdl3Arm64Source>/opt/homebrew/lib/libSDL3.dylib</_Sdl3Arm64Source>
+    </PropertyGroup>
+    <Copy SourceFiles="$(_Sdl2Arm64Source)" DestinationFiles="$(OutputPath)libsdl2.dylib"
+          Condition="Exists('$(_Sdl2Arm64Source)')" />
+    <Copy SourceFiles="$(_Sdl3Arm64Source)" DestinationFiles="$(OutputPath)libSDL3.dylib"
+          Condition="Exists('$(_Sdl3Arm64Source)')" />
+  </Target>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\AppIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.Simulation\Panopticon.Simulation.csproj" />
+    <ProjectReference Include="..\Panopticon.Mods.BuiltIn\Panopticon.Mods.BuiltIn.csproj" />
+  </ItemGroup>
+
+</Project>

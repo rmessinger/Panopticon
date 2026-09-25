@@ -1,19 +1,19 @@
 # WorldBuilder Map/Scenario Editor: Requirements
 
-This document specifies the requirements for implementing a WorldBuilder-compatible map and scenario editor in OpenSAGE, based on the tooling described in the [CNC Labs WorldBuilder tutorials](https://www.cnclabs.com/maps/generals/worldbuilder/).
+This document specifies the requirements for implementing a WorldBuilder-compatible map and scenario editor in Panopticon, based on the tooling described in the [CNC Labs WorldBuilder tutorials](https://www.cnclabs.com/maps/generals/worldbuilder/).
 
-WorldBuilder is the official scenario editor shipped with *Command & Conquer: Generals* and *Zero Hour*. It produces `.map` files (already parsed by `OpenSage.FileFormats.Map`) and companion files (`map.ini`, `Map.str`). The editor should round-trip with those formats so that maps authored in OpenSAGE can be played in the original engine and vice versa.
+WorldBuilder is the official scenario editor shipped with *Command & Conquer: Generals* and *Zero Hour*. It produces `.map` files (already parsed by `Panopticon.FileFormats.Map`) and companion files (`map.ini`, `Map.str`). The editor should round-trip with those formats so that maps authored in Panopticon can be played in the original engine and vice versa.
 
 ---
 
 ## UI Framework and Architecture
 
-The editor is implemented as a **.NET MAUI** desktop application following the same split-project pattern as `OpenSage.Tools.ReplaySketch`:
+The editor is implemented as a **.NET MAUI** desktop application following the same split-project pattern as `Panopticon.Tools.ReplaySketch`:
 
 | Project | Purpose |
 |---|---|
-| `OpenSage.Tools.WorldBuilder.Core` | Platform-agnostic editor logic: `EditorMap`, tools, undo/redo, viewport renderer |
-| `OpenSage.Tools.WorldBuilder.Avalonia` | Avalonia application: views, ViewModels, offscreen 3-D viewport presentation (runs on Linux, macOS, Windows) |
+| `Panopticon.Tools.WorldBuilder.Core` | Platform-agnostic editor logic: `EditorMap`, tools, undo/redo, viewport renderer |
+| `Panopticon.Tools.WorldBuilder.Avalonia` | Avalonia application: views, ViewModels, offscreen 3-D viewport presentation (runs on Linux, macOS, Windows) |
 
 ### UI Guidelines
 
@@ -21,7 +21,7 @@ The editor is implemented as a **.NET MAUI** desktop application following the s
 - Controls use standard MAUI components (`Entry`, `Picker`, `Slider`, `CheckBox`, `CollectionView`, `ListView`) rather than custom-drawn widgets, giving a platform-native look and feel.
 - Dialogs are MAUI `ContentPage` modals pushed onto the navigation stack or displayed via `DisplayAlert` / `DisplayPromptAsync` where appropriate.
 - Panels that must show long lists (object browser, script list, team list) use `CollectionView` with `DataTemplate` for efficient virtualised rendering.
-- The layout is **MVVM**: each view binds to a corresponding ViewModel in `OpenSage.Tools.WorldBuilder.Maui/ViewModels/`.
+- The layout is **MVVM**: each view binds to a corresponding ViewModel in `Panopticon.Tools.WorldBuilder.Maui/ViewModels/`.
 
 ### 3-D Viewport Embedding
 
@@ -29,7 +29,7 @@ The editor is implemented as a **.NET MAUI** desktop application following the s
 - On **Windows**: the handler creates a Win32 child `HWND`; Veldrid targets it with the Direct3D 11 backend.
 - On **macOS**: the handler creates a `CAMetalLayer`-backed `NSView`; Veldrid targets it with the Metal backend.
 - The MAUI project's `net10.0-windows` and `net10.0-maccatalyst` targets each provide the concrete `VeldridViewportHandler` in `Platforms/`.
-- The Core project's `GameViewportRenderer` manages the `OpenSage.Game` instance and renders the `Scene3D` to the native surface each frame. It exposes mouse/keyboard event hooks that the MAUI handler forwards.
+- The Core project's `GameViewportRenderer` manages the `Panopticon.Simulation` instance and renders the `Scene3D` to the native surface each frame. It exposes mouse/keyboard event hooks that the MAUI handler forwards.
 
 ---
 
@@ -66,7 +66,7 @@ The editor is implemented as a **.NET MAUI** desktop application following the s
 
 ## 1. Application Shell
 
-- The editor is an **Avalonia** desktop application (`OpenSage.Tools.WorldBuilder.Avalonia`).
+- The editor is an **Avalonia** desktop application (`Panopticon.Tools.WorldBuilder.Avalonia`).
 - The main window is a MAUI `Shell` with a desktop-style **menu bar** (`MenuBarItem` entries for File, Edit, View, Help), a horizontal **toolbar** strip below the menu bar, and a three-column layout:
   - **Left column** (fixed ~260 dp): Object Properties / tool-settings panel, implemented as a MAUI `ScrollView` containing context-sensitive `ContentView`s.
   - **Centre column** (fills remaining width): 3-D viewport (`VeldridViewport` custom control).
@@ -78,7 +78,7 @@ The editor is implemented as a **.NET MAUI** desktop application following the s
 
 ## 2. Viewport
 
-- Renders the map in 3-D using the existing OpenSAGE rendering pipeline via the `VeldridViewport` custom MAUI control (see *UI Framework and Architecture* above).
+- Renders the map in 3-D using the existing Panopticon rendering pipeline via the `VeldridViewport` custom MAUI control (see *UI Framework and Architecture* above).
 - Supports free-look camera navigation: orbit (right-drag), pan (middle-drag or Shift+drag), and zoom (scroll wheel).
 - **Lock Angle** toggle: prevents camera rotation (top-down/overhead mode only).
 - **Top-down view** toggle: forces the camera directly overhead.
@@ -235,7 +235,7 @@ The toolbar is a horizontal `HorizontalStackLayout` of MAUI `ImageButton` contro
 - Curve modes (selectable in Object Properties): **Broad Curve** (default), **Tight Curve**, **Angled**.
 - The road catalogue is loaded from game assets; roads can also represent decorative cracks or worn paths.
 - **Bridges**: a special road type that spans water or elevated terrain; can be placed from the same tool by selecting a bridge template.
-- Roads and bridges are stored in the `.map` format's road layer (already partially supported in `OpenSage.FileFormats.Map`).
+- Roads and bridges are stored in the `.map` format's road layer (already partially supported in `Panopticon.FileFormats.Map`).
 
 ---
 
@@ -257,7 +257,7 @@ The toolbar is a horizontal `HorizontalStackLayout` of MAUI `ImageButton` contro
 - **Ramp Tool (Z)**: levels a sloped region into a passable, traversable ramp.
 - User clicks and holds to define the ramp region; Object Properties exposes a **Width** field.
 - After defining the region, the user presses **Place Ramp** to apply.
-- **Safety constraint**: ramp width must not exceed 350 cells; exceeding this limit crashes the original WorldBuilder (should be validated and rejected with an error message in OpenSAGE).
+- **Safety constraint**: ramp width must not exceed 350 cells; exceeding this limit crashes the original WorldBuilder (should be validated and rejected with an error message in Panopticon).
 - Ramps can be applied iteratively (smaller widths) until the area is level enough to traverse.
 
 ---
@@ -534,7 +534,7 @@ Toggleable via the **View** menu:
 - **Open** (Ctrl+O): opens a `.map` file; prompts to save current unsaved changes.
 - **Save** (Ctrl+S): saves current map; prompts for filename if new.
 - **Save As**: saves with a new filename.
-- The editor uses `OpenSage.FileFormats.Map` for reading and writing `.map` files.
+- The editor uses `Panopticon.FileFormats.Map` for reading and writing `.map` files.
 - Maps are stored in `<UserDocuments>/Command and Conquer Generals Data/Maps/<MapName>/` for compatibility with the original game.
 - On save, the editor should also write `map.ini` and `Map.str` if those panels contain data.
 

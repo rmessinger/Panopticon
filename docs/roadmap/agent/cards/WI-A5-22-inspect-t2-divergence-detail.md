@@ -32,8 +32,8 @@ quantities with explicit missing-data diagnostics.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
-- Results detail files under `src/OpenSage.Tools.ReplaySketch.Maui/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
+- Results detail files under `src/Panopticon.Tools.ReplaySketch.Maui/`
 - ReplaySketch tests
 
 ## Acceptance criteria
@@ -50,7 +50,7 @@ quantities with explicit missing-data diagnostics.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~DivergenceDetail"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-t2.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-t2.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

@@ -50,8 +50,8 @@ screen-space size.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~ReplayLod|FullyQualifiedName~ReplayInstance"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-lod.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-lod.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

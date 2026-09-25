@@ -12,7 +12,7 @@
 
 ## Goal
 
-Run the validation ground from `OpenSage.Tools.TestHarness` in both the windowed and headless loops,
+Run the validation ground from `Panopticon.Tools.TestHarness` in both the windowed and headless loops,
 driven by one scenario definition, spawn host, and timer, without disturbing the existing
 replay-driven scenarios.
 
@@ -20,17 +20,17 @@ replay-driven scenarios.
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.1 and §2.8, plus the "Host integration
   points" appendix entry.
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs`: the enum to extend.
-- `src/OpenSage.Tools.TestHarness/TestHarnessConfig.cs`: the config surface, including `Headless`,
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs`: the enum to extend.
+- `src/Panopticon.Tools.TestHarness/TestHarnessConfig.cs`: the config surface, including `Headless`,
   `Scenario`, `GamePath`, and the camera options.
-- `src/OpenSage.Tools.TestHarness/Program.cs:190-205`: the mode branch between `RunHeadless` and
+- `src/Panopticon.Tools.TestHarness/Program.cs:190-205`: the mode branch between `RunHeadless` and
   `RunWindowed`.
-- `src/OpenSage.Tools.TestHarness/Program.cs:206-260`: `RunWindowed`, with `game.StartRun()` at
+- `src/Panopticon.Tools.TestHarness/Program.cs:206-260`: `RunWindowed`, with `game.StartRun()` at
   `:217` and the poll block at `:253-255`.
-- `src/OpenSage.Tools.TestHarness/Program.cs:262-340`: `RunHeadless`, with `game.StartRun()` at
+- `src/Panopticon.Tools.TestHarness/Program.cs:262-340`: `RunHeadless`, with `game.StartRun()` at
   `:271` and the poll block at `:331-333`.
-- `src/OpenSage.Tools.TestHarness/ValidationGroundHost.cs`: the host from `WI-P9-03`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/UnitActionTimer.cs`: the timer from `WI-P9-04`.
+- `src/Panopticon.Tools.TestHarness/ValidationGroundHost.cs`: the host from `WI-P9-03`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/UnitActionTimer.cs`: the timer from `WI-P9-04`.
 
 ## Steps
 
@@ -54,9 +54,9 @@ replay-driven scenarios.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs`
-- `src/OpenSage.Tools.TestHarness/TestHarnessConfig.cs`
-- `src/OpenSage.Tools.TestHarness/Program.cs`
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs`
+- `src/Panopticon.Tools.TestHarness/TestHarnessConfig.cs`
+- `src/Panopticon.Tools.TestHarness/Program.cs`
 
 ## Acceptance criteria
 
@@ -82,7 +82,7 @@ dotnet format src --verify-no-changes
 
 # Live run, requires a Generals install
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
-  dotnet run --project src/OpenSage.Tools.TestHarness
+  dotnet run --project src/Panopticon.Tools.TestHarness
 ```
 
 ## Out of scope / guardrails

@@ -21,9 +21,9 @@ aggregate tier only.
 - `docs/roadmap/deep-dives/a1-headless-host.md` §2.5, §3 (A1-5 row).
 - `docs/roadmap/deep-dives/a5-visualization.md` §5.1: the T0, T1, T2 tier definitions. This card
   implements T0 only.
-- `src/OpenSage.Game/SimulationHost.cs`: produced by `WI-A1-06`; the per-tick hook this card feeds.
-- `src/OpenSage.Game/Logic/GameLogic.cs`: the logic frame counter and `Random` seed to record.
-- The P0 harness assertion and JSON output path under `src/OpenSage.Tools.ReplaySketch.Core/`:
+- `src/Panopticon.Simulation/SimulationHost.cs`: produced by `WI-A1-06`; the per-tick hook this card feeds.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`: the logic frame counter and `Random` seed to record.
+- The P0 harness assertion and JSON output path under `src/Panopticon.Tools.ReplaySketch.Core/`:
   reuse its serialization conventions rather than inventing a second output format.
 
 ## Steps
@@ -42,8 +42,8 @@ aggregate tier only.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/` (new run-output types)
-- `src/OpenSage.Game.Tests/` (new test file)
+- `src/Panopticon.Simulation/` (new run-output types)
+- `test/Panopticon.Simulation.Tests/` (new test file)
 
 ## Acceptance criteria
 

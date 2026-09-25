@@ -1,16 +1,16 @@
-Contributing to OpenSage
+Contributing to Panopticon
 ======================
 
-This document describes contribution guidelines that are specific to OpenSage. It closely matches the guidelines defined by the [C# standard library](https://github.com/dotnet/corefx) itself
+This document describes contribution guidelines that are specific to Panopticon. It closely matches the guidelines defined by the [C# standard library](https://github.com/dotnet/corefx) itself
 
 Developer Guide
 --------------------
-In case you want some more knowledge on how to get started with development of OpenSage please take a look at our [Developer Guide](docs/developer-guide.md). 
+In case you want some more knowledge on how to get started with development of Panopticon please take a look at our [Developer Guide](docs/developer-guide.md). 
 
 Coding Style Changes
 --------------------
 
-OpenSage tries to strictly match the coding style described in [Coding Style](docs/coding-style.md). We plan to do that with tooling, in a holistic way. In the meantime, please:
+Panopticon tries to strictly match the coding style described in [Coding Style](docs/coding-style.md). We plan to do that with tooling, in a holistic way. In the meantime, please:
 
 * **DO NOT** send PRs for style changes.
 

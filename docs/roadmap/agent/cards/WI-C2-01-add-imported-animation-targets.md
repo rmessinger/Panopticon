@@ -18,10 +18,10 @@ without changing W3D output.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c2-skeleton-animation-retargeting.md` sections 1-3 and 5.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dAnimationImporter.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/W3dAnimationImporterTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dAnimationImporter.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dAnimationImporterTests.cs`.
 
 ## Steps
 
@@ -38,10 +38,10 @@ without changing W3D output.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationTarget.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/W3dAnimationImporterTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationTarget.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dAnimationImporterTests.cs`
 
 ## Acceptance criteria
 

@@ -23,10 +23,10 @@ skirmish setup already uses (map settings or `PlayerSetting`-adjacent skirmish o
 
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:46-68`: defeat rule / score metric / frame limit design intent as "configurable/data-driven".
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:133-145`: resolved design questions confirming these are meant to be config-driven, not hardcoded.
-- `src/OpenSage.Game/Logic/VictorySystem.cs:17-34`: current `internal` `ConditionRule`, `ScoreMetric`, `FrameLimit` properties: the seam that needs a real configuration entry point.
-- `src/OpenSage.Game/Logic/VictoryConditionRule.cs`: the rule type hierarchy (`VictoryConditionRule`, `DefaultVictoryConditionRule`).
-- `src/OpenSage.Network/SkirmishManager.cs` (or wherever skirmish/game-start settings are assembled): existing skirmish configuration surface to extend, e.g. a `GameOptions`/`SkirmishSettings`-like type if one exists.
-- `src/OpenSage.Game.Tests/Logic/Victory/VictoryRuleTests.cs` and `src/OpenSage.Game.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs`: existing tests that set these properties directly; keep them passing (they may continue to set the properties directly for isolated unit tests) while adding a new higher-level path.
+- `src/Panopticon.Simulation/Logic/VictorySystem.cs:17-34`: current `internal` `ConditionRule`, `ScoreMetric`, `FrameLimit` properties: the seam that needs a real configuration entry point.
+- `src/Panopticon.Simulation/Logic/VictoryConditionRule.cs`: the rule type hierarchy (`VictoryConditionRule`, `DefaultVictoryConditionRule`).
+- `src/Panopticon.Network/SkirmishManager.cs` (or wherever skirmish/game-start settings are assembled): existing skirmish configuration surface to extend, e.g. a `GameOptions`/`SkirmishSettings`-like type if one exists.
+- `test/Panopticon.Simulation.Tests/Logic/Victory/VictoryRuleTests.cs` and `test/Panopticon.Simulation.Tests/Logic/Victory/TimeLimitScoreDecisionTests.cs`: existing tests that set these properties directly; keep them passing (they may continue to set the properties directly for isolated unit tests) while adding a new higher-level path.
 
 ## Steps
 
@@ -39,9 +39,9 @@ skirmish setup already uses (map settings or `PlayerSetting`-adjacent skirmish o
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/VictorySystem.cs`
+- `src/Panopticon.Simulation/Logic/VictorySystem.cs`
 - The skirmish/game-start configuration type (exact file depends on what already exists; search before adding a new one)
-- `src/OpenSage.Game.Tests/Logic/Victory/` (new or extended test file)
+- `test/Panopticon.Simulation.Tests/Logic/Victory/` (new or extended test file)
 
 ## Acceptance criteria
 

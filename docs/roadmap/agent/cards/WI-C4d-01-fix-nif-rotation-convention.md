@@ -18,14 +18,14 @@ row-vector `Matrix4x4`, and regenerate the C4a and C4c locked outputs that chang
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4d-ee2-skinned-animation.md` section 5.
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs:42-68`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifRotationSampler.cs`: `EulerToMatrix` and
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs:42-68`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifRotationSampler.cs`: `EulerToMatrix` and
   `ToQuaternion`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs:356-368`.
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`,
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs:356-368`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`,
   `NifKeyCurveTests.cs`, `NifAnimationImporterTests.cs`, `Ee2NifImportTests.cs`, and
   `Ee2KfAnimationImportTests.cs`.
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`.
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`.
 
 ## Steps
 
@@ -46,12 +46,12 @@ row-vector `Matrix4x4`, and regenerate the C4a and C4c locked outputs that chang
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifRotationSampler.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImporterTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2KfAnimationImportTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifRotationSampler.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2KfAnimationImportTests.cs`
 
 ## Acceptance criteria
 
@@ -71,7 +71,7 @@ EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
   dotnet test src --filter "FullyQualifiedName~Ee2"
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario Ee2NifProof
+  dotnet run --project src/Panopticon.Tools.TestHarness -- --headless --built-in-scenario Ee2NifProof
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

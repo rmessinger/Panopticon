@@ -18,7 +18,7 @@ placement.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a5-6-worldbuilder-baseline.md`.
-- `src/OpenSage.Tools.WorldBuilder.Core/UndoRedoStack.cs`.
+- `src/Panopticon.Tools.WorldBuilder.Core/UndoRedoStack.cs`.
 - `ObjectPlacementEdit.cs`, `HeightMapEdit.cs`, and `BlendTileEdit.cs`.
 - Tool callers that construct and push those edits.
 
@@ -31,7 +31,7 @@ placement.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.WorldBuilder.Core/UndoRedoStack.cs`
+- `src/Panopticon.Tools.WorldBuilder.Core/UndoRedoStack.cs`
 - Affected edit/tool files identified by the audit
 - New WorldBuilder Core tests
 

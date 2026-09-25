@@ -17,12 +17,12 @@ Evaluate bound property-animation channels into per-instance sub-object and mate
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4e-ee2-property-animation.md` sections 6, 7, and 8.
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs:280-365`.
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs` and `BoundModelAnimation.cs`.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs:126-137` and `281-321`.
-- `src/OpenSage.Game/Graphics/ModelMeshInstance.cs:58-117`.
-- `src/OpenSage.Game/Graphics/Shaders/MeshShaderResources.cs:17-60`.
-- `src/OpenSage.Game/Graphics/Shaders/FixedFunctionShaderResources.cs:235-337`.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs:280-365`.
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs` and `BoundModelAnimation.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs:126-137` and `281-321`.
+- `src/Panopticon.Simulation/Graphics/ModelMeshInstance.cs:58-117`.
+- `src/Panopticon.Simulation/Graphics/Shaders/MeshShaderResources.cs:17-60`.
+- `src/Panopticon.Simulation/Graphics/Shaders/FixedFunctionShaderResources.cs:235-337`.
 
 ## Steps
 
@@ -35,14 +35,14 @@ Evaluate bound property-animation channels into per-instance sub-object and mate
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`
-- `src/OpenSage.Game/Graphics/Animation/BoundModelAnimation.cs`
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`
-- `src/OpenSage.Game/Graphics/ModelMeshInstance.cs`
-- `src/OpenSage.Game/Graphics/Shaders/MeshShaderResources.cs`
-- `src/OpenSage.Game/Graphics/Shaders/FixedFunctionShaderResources.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelPropertyAnimationTests.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/BoundModelAnimation.cs`
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`
+- `src/Panopticon.Simulation/Graphics/ModelMeshInstance.cs`
+- `src/Panopticon.Simulation/Graphics/Shaders/MeshShaderResources.cs`
+- `src/Panopticon.Simulation/Graphics/Shaders/FixedFunctionShaderResources.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelPropertyAnimationTests.cs` (new)
 
 ## Acceptance criteria
 

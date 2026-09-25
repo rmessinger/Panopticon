@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.Simulation\Panopticon.Simulation.csproj" />
+    <ProjectReference Include="..\Panopticon.Mods.BuiltIn\Panopticon.Mods.BuiltIn.csproj" />
+  </ItemGroup>
+
+</Project>

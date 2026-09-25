@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="/home/rmessinger/dev/OpenSAGE/src/OpenSage.FileFormats.W3d/OpenSage.FileFormats.W3d.csproj" />
+    <ProjectReference Include="/home/rmessinger/dev/Panopticon/src/Panopticon.FileFormats.W3d/Panopticon.FileFormats.W3d.csproj" />
   </ItemGroup>
 </EOF
 </Project>

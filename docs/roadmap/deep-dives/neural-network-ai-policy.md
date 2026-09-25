@@ -114,8 +114,8 @@ from (seed, weights) with no additional policy RNG.
 ## 6. Related
 
 - Seam and factory: [pluggable-ai.md](a4-pluggable-ai.md)
-- Reference policy: `RuleBasedAIDecisionPolicy` (`src/OpenSage.Game/Logic/AI/`)
-- Implementation: `NeuralNetworkAIDecisionPolicy` (`src/OpenSage.Game/Logic/AI/`)
-- Tests: `src/OpenSage.Game.Tests/Logic/AI/NeuralNetworkAIDecisionPolicyTests.cs` (hand-computed
+- Reference policy: `RuleBasedAIDecisionPolicy` (`src/Panopticon.Simulation/Logic/AI/`)
+- Implementation: `NeuralNetworkAIDecisionPolicy` (`src/Panopticon.Simulation/Logic/AI/`)
+- Tests: `test/Panopticon.Simulation.Tests/Logic/AI/NeuralNetworkAIDecisionPolicyTests.cs` (hand-computed
   forward pass, controlled-state encoding, bias-driven action selection through the full
   `AIPlayer` dispatch path)

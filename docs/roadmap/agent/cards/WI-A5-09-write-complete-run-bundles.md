@@ -18,10 +18,10 @@ tiered recording metadata, and structured events.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a5-scenario-visualization.md`: bundle layout.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs`.
-- `src/OpenSage.Tools.TestHarness/` action recorder and result writer.
-- `src/OpenSage.Game/Recording/RunRecording.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs`.
+- `src/Panopticon.Tools.TestHarness/` action recorder and result writer.
+- `src/Panopticon.Simulation/Recording/RunRecording.cs`.
 
 ## Steps
 
@@ -33,8 +33,8 @@ tiered recording metadata, and structured events.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
-- Narrow shared code in `src/OpenSage.Tools.TestHarness/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
+- Narrow shared code in `src/Panopticon.Tools.TestHarness/`
 - Focused tests
 
 ## Acceptance criteria

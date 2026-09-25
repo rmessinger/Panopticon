@@ -20,7 +20,7 @@ projection used by replay.
 - Preview flow in the A5 implementation plan.
 - Scenario validator from `WI-A5-10`.
 - Domain projection from `WI-A5-12`.
-- `src/OpenSage.Game/SimulationHost.cs`.
+- `src/Panopticon.Simulation/SimulationHost.cs`.
 - Existing `MapPreviewRenderer` and ReplaySketch view-model seams.
 
 ## Steps
@@ -33,7 +33,7 @@ projection used by replay.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
 - Narrow MAUI view/view-model files
 - ReplaySketch tests
 
@@ -51,7 +51,7 @@ projection used by replay.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~ScenarioPreview"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-preview.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-preview.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

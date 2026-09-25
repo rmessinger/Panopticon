@@ -21,13 +21,13 @@ eligibility, and a versioned external model report contract.
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 6 and 10.
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` section 9.
-- `src/OpenSage.Game/Content/Importing/ExternalAssetCatalog.cs` (new, from `WI-C5-01`).
-- `src/OpenSage.Game/Content/Importing/ExternalAssetInspectionDiagnostic.cs` (new, from
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetCatalog.cs` (new, from `WI-C5-01`).
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetInspectionDiagnostic.cs` (new, from
   `WI-C5-01`).
-- `src/OpenSage.Game/Content/Importing/ExternalFormatSelectionResult.cs` (new, from `WI-C5-01`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs`: immutable report precedent.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs`: JSON report precedent.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/Vector3JsonConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ExternalFormatSelectionResult.cs` (new, from `WI-C5-01`).
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs`: immutable report precedent.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs`: JSON report precedent.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/Vector3JsonConverter.cs`.
 
 ## Steps
 
@@ -52,12 +52,12 @@ eligibility, and a versioned external model report contract.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelDiagnostic.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelDiagnosticMapper.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/PreviewEligibility.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReportJson.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelContractTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelDiagnostic.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelDiagnosticMapper.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/PreviewEligibility.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReportJson.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelContractTests.cs` (new)
 
 ## Acceptance criteria
 

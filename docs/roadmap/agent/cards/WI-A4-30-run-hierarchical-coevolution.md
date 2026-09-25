@@ -31,8 +31,8 @@ co-evolution contract and emit rank-aware reports.
 
 ## Files likely to change
 
-- Evolution types under `src/OpenSage.Tools.ReplaySketch.Core/`
-- Tests under `src/OpenSage.Tools.ReplaySketch.Tests/`
+- Evolution types under `src/Panopticon.Tools.ReplaySketch.Core/`
+- Tests under `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 

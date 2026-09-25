@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>    
+    <RootNamespace>Panopticon.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Update="Terrain\Roads\RoadAlignmentTests\*.map">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="Content\Importing\Gltf\Fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Data\Map\Assets\*.map">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Rep\Assets\*.rep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Sav\Assets\**\*.sav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Wak\Assets\*.wak">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\InstallationLocator\Assets\*.vdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Panopticon.FileFormats.Nif\Panopticon.FileFormats.Nif.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Simulation\Panopticon.Simulation.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.IO\Panopticon.IO.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Mods.BuiltIn\Panopticon.Mods.BuiltIn.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Tools.ReplaySketch.Core\Panopticon.Tools.ReplaySketch.Core.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Tools.W3dPatcher\Panopticon.Tools.W3dPatcher.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Data\Big\Assets\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Data\Big\Assets\test.big">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- On macOS arm64, the Veldrid.Sdl2 NuGet only ships an x86_64 dylib.
+       Copy the arm64 dylib from Homebrew into the output directory so
+       NativeLibraryLoader (used by Veldrid.Sdl2) can find it alongside the test assembly.
+       Homebrew's "sdl2" formula is now an alias for sdl2-compat, a shim that dlopens
+       libSDL3.dylib next to itself at runtime, so that must be copied too. -->
+  <Target Name="CopyArm64Sdl2" AfterTargets="Build"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">
+    <PropertyGroup>
+      <_Sdl2Arm64Source>/opt/homebrew/lib/libSDL2.dylib</_Sdl2Arm64Source>
+      <_Sdl3Arm64Source>/opt/homebrew/lib/libSDL3.dylib</_Sdl3Arm64Source>
+    </PropertyGroup>
+    <Copy SourceFiles="$(_Sdl2Arm64Source)" DestinationFiles="$(OutputPath)libsdl2.dylib"
+          Condition="Exists('$(_Sdl2Arm64Source)')" />
+    <Copy SourceFiles="$(_Sdl3Arm64Source)" DestinationFiles="$(OutputPath)libSDL3.dylib"
+          Condition="Exists('$(_Sdl3Arm64Source)')" />
+  </Target>
+</Project>

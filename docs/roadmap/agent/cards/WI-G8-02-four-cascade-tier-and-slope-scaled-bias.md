@@ -21,8 +21,8 @@ bias, while `Faithful` keeps the current single-cascade result.
 - `docs/roadmap/implementation/track-g-g8-shadow-quality.md`: the `WI-G8-01` findings, which fix the
   exact plumbing endpoints and single-cascade assumptions to change.
 - The G8 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowSettings.cs:9-83`.
-- `src/OpenSage.Game/Assets/Shaders/Shadows.h:55-70`.
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs:9-83`.
+- `src/Panopticon.Simulation/Assets/Shaders/Shadows.h:55-70`.
 - The G2 settings shadow-tier member.
 
 ## Steps
@@ -43,10 +43,10 @@ bias, while `Faithful` keeps the current single-cascade result.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowSettings.cs`
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowMapRenderer.cs`
-- `src/OpenSage.Game/Assets/Shaders/Shadows.h`
-- `src/OpenSage.Game/Graphics/Shaders/GlobalShaderResources.cs`
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs`
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowMapRenderer.cs`
+- `src/Panopticon.Simulation/Assets/Shaders/Shadows.h`
+- `src/Panopticon.Simulation/Graphics/Shaders/GlobalShaderResources.cs`
 
 ## Acceptance criteria
 

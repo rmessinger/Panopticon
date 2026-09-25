@@ -20,12 +20,12 @@ removal plan. Read-only: no code changes.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a1-headless-host.md` §1 (H3, H5), §2.3, §2.4.
-- `src/OpenSage.Game/Game.cs:914-1000`: `StartRun`, `Update`, `LocalLogicTick`, `LogicTick`,
+- `src/Panopticon.Simulation/Game.cs:914-1000`: `StartRun`, `Update`, `LocalLogicTick`, `LogicTick`,
   `GetTimeInterval`, `EnableFixedLogicTimestep`.
-- `src/OpenSage.Game/Game.cs:1024-1028`: `Render`, the boundary the host must never call.
-- `src/OpenSage.Game/GameEngine.cs`: which logic services `IGameEngine` already exposes
+- `src/Panopticon.Simulation/Game.cs:1024-1028`: `Render`, the boundary the host must never call.
+- `src/Panopticon.Simulation/GameEngine.cs`: which logic services `IGameEngine` already exposes
   (`GameLogic`, `Scene3D`, `Terrain`, `Navigation`, `Quadtree`, `AssetLoadContext`).
-- `src/OpenSage.Tools.TestHarness/Program.cs`: the existing headless loop, the integration target
+- `src/Panopticon.Tools.TestHarness/Program.cs`: the existing headless loop, the integration target
   named in the deep dive's sequencing notes.
 
 ## Steps

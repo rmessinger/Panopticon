@@ -21,8 +21,8 @@ shimmer under camera motion.
 - `docs/roadmap/implementation/track-g-g7-texture-filtering.md`: the `WI-G7-01` audit, which is the
   exact list of samplers, consumers, and resource sets to change.
 - The G7 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs:22-48`.
-- `src/OpenSage.Game/Terrain/Terrain.cs:441-533`.
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs:22-48`.
+- `src/Panopticon.Simulation/Terrain/Terrain.cs:441-533`.
 - The G2 settings anisotropy and mip-bias members.
 
 ## Steps
@@ -42,9 +42,9 @@ shimmer under camera motion.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs`
-- `src/OpenSage.Game/Terrain/Terrain.cs`
-- `src/OpenSage.Game/Graphics/` (resource set rebuild)
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs`
+- `src/Panopticon.Simulation/Terrain/Terrain.cs`
+- `src/Panopticon.Simulation/Graphics/` (resource set rebuild)
 
 ## Acceptance criteria
 

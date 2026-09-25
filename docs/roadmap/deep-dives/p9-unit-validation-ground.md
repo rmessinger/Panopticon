@@ -63,7 +63,7 @@ differently here. That is treated as a reportable gap rather than worked around:
 
 ### 2.3 Roster
 
-The roster is the existing `UnitCatalog` in `OpenSage.Tools.ReplaySketch.Core`: 32 units across USA,
+The roster is the existing `UnitCatalog` in `Panopticon.Tools.ReplaySketch.Core`: 32 units across USA,
 GLA, and China. Reusing it means the ground grows as the catalog grows, and keeps one list of
 known-good definition names rather than a second parallel one. A completeness test asserts every
 catalog entry resolves to a primary action, so adding a unit to the catalog without deciding its
@@ -131,7 +131,7 @@ otherwise a regression would quietly become the new normal.
 
 | Mode | Host | Purpose |
 |---|---|---|
-| Windowed | `OpenSage.Tools.TestHarness` with normal camera control | A human watches the roster act and inspects anything that looks wrong |
+| Windowed | `Panopticon.Tools.TestHarness` with normal camera control | A human watches the roster act and inspects anything that looks wrong |
 | Headless | Same code path with headless configuration | Compares against the baseline and sets a non-zero exit code on regression |
 
 Both modes drive the same scenario definition, spawn host, and timer. Only presentation and the
@@ -148,7 +148,7 @@ normal execution variation.
 
 ## 3. Placement in the codebase
 
-Logic lives in `OpenSage.Tools.ReplaySketch.Core` so it is unit-testable headlessly, per the project
+Logic lives in `Panopticon.Tools.ReplaySketch.Core` so it is unit-testable headlessly, per the project
 convention that testable logic stays in `.Core` behind injectable seams. `TestHarness` only hosts it
 and owns the parts requiring a live `IGame`.
 
@@ -357,14 +357,14 @@ only practical way to place a roster of this size without production. There is n
 `OrderType`, so the spawn stage cannot be expressed as replay orders.
 
 ### Roster source
-`UnitCatalog` (`src/OpenSage.Tools.ReplaySketch.Core/Model/UnitCatalog.cs`) holds 32 `UnitOption`
+`UnitCatalog` (`src/Panopticon.Tools.ReplaySketch.Core/Model/UnitCatalog.cs`) holds 32 `UnitOption`
 records across USA, GLA, and China. `BuildingCatalog` in the same folder supplies structure
 definitions usable as destructible targets and as the dozer build target. `UnitArchetypeCatalog`
 (P6b) maps archetypes to reference units with their `ObjectKinds` tags and is the natural input for
 deriving each unit's primary action.
 
 ### Existing timing patterns to generalize
-`EngineActionRecorder` (`src/OpenSage.Tools.TestHarness/EngineActionRecorder.cs`) already implements
+`EngineActionRecorder` (`src/Panopticon.Tools.TestHarness/EngineActionRecorder.cs`) already implements
 per-frame completion polling: `CurrentFrame()` at `:477-478` derives the logic frame from
 `MapTime.TotalTime` and `GameEngine.MsPerLogicFrame`; `ApproachLeg.StartFrame` with the
 `travelFrames` computation at `:240` is a working per-leg frame measurement; `_pendingMoves`,
@@ -380,7 +380,7 @@ polls. `RunHeadless()` (`:262+`) mirrors it. `TestHarnessConfig` and the `BuiltI
 (currently `AlpineAssaultUSAvGLA` and `AlpineAssaultUSAvGLAFullBuild`) hold the config surface.
 
 ### Why the mocked host is insufficient
-`MockedGameTest.TestGame` (`src/OpenSage.Game.Tests/MockedGameTest.cs`) provides a real `AssetStore`,
+`MockedGameTest.TestGame` (`test/Panopticon.Simulation.Tests/MockedGameTest.cs`) provides a real `AssetStore`,
 `PlayerManager`, and `GameLogic` (`:168`), but leaves `Scene3D` uninitialized and throws
 `NotImplementedException` from `Update()`, `Render()`, and `Step()`. Movement, pathfinding, and
 combat resolution cannot run there, which is why P9's live half is install-gated with

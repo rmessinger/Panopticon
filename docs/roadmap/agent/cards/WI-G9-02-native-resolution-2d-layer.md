@@ -23,8 +23,8 @@ the logical points G1 established.
 - `docs/roadmap/implementation/track-g-g1-high-dpi.md`: the points-versus-pixels classification this
   card must not contradict.
 - The G9 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:138-158`.
-- `src/OpenSage.Game/Gui/DrawingContext2D.cs:12-60`.
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:138-158`.
+- `src/Panopticon.Simulation/Gui/DrawingContext2D.cs:12-60`.
 
 ## Steps
 
@@ -42,10 +42,10 @@ the logical points G1 established.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs`
-- `src/OpenSage.Game/Gui/DrawingContext2D.cs`
-- `src/OpenSage.Game/Gui/Wnd/WndWindowManager.cs`
-- `src/OpenSage.Game/Gui/Apt/AptWindowManager.cs`
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs`
+- `src/Panopticon.Simulation/Gui/DrawingContext2D.cs`
+- `src/Panopticon.Simulation/Gui/Wnd/WndWindowManager.cs`
+- `src/Panopticon.Simulation/Gui/Apt/AptWindowManager.cs`
 
 ## Acceptance criteria
 

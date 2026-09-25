@@ -19,16 +19,16 @@ Prove the baseline supply collection loop credits `Player.BankAccount` through `
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 goal, current gather/deposit wiring, and P4-1 sub-phase.
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:145-194`: P4 architecture diagram links for economy types.
 - `docs/roadmap/implementation-checklist.md:236-239`: checklist AC for supply collection → `BankAccount.Deposit`.
-- `src/OpenSage.Game/Logic/BankAccount.cs:22-60`: `Withdraw` clamps to current money; `Deposit` increments `Money` and records income.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257`: gather state machine from source search through `DumpBoxes`.
-- `src/OpenSage.Game/Logic/Object/Update/SupplyCenterDockUpdate.cs:17-35`: `DumpBoxes` calls `GameObject.Owner.BankAccount.Deposit(...)`.
-- `src/OpenSage.Game/Logic/Object/Update/SupplyWarehouseDockUpdate.cs:17-31`: source box availability and decrement.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:458-470`: spawned harvester targeting logic.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
+- `src/Panopticon.Simulation/Logic/BankAccount.cs:22-60`: `Withdraw` clamps to current money; `Deposit` increments `Money` and records income.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257`: gather state machine from source search through `DumpBoxes`.
+- `src/Panopticon.Simulation/Logic/Object/Update/SupplyCenterDockUpdate.cs:17-35`: `DumpBoxes` calls `GameObject.Owner.BankAccount.Deposit(...)`.
+- `src/Panopticon.Simulation/Logic/Object/Update/SupplyWarehouseDockUpdate.cs:17-31`: source box availability and decrement.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:458-470`: spawned harvester targeting logic.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 
-1. Add a headless `[Fact]` test file `src/OpenSage.Game.Tests/Logic/Economy/GatherDepositTests.cs`.
+1. Add a headless `[Fact]` test file `test/Panopticon.Simulation.Tests/Logic/Economy/GatherDepositTests.cs`.
 2. Build the smallest mocked scenario that contains one player, one supply source, one supply center/dock target, and one faction-appropriate harvester (`SupplyTruckAIUpdate`, `ChinookAIUpdate`, or `WorkerAIUpdate`).
 3. Drive logic ticks until the harvester reaches `FinishedDumpingSupplies` or until a fixed timeout. Fail loudly on timeout; do not skip the test.
 4. Record `BankAccount.Money` before the run, assert it increases after a dump, and assert every sampled tick keeps `BankAccount.Money >= 0`.
@@ -37,9 +37,9 @@ Prove the baseline supply collection loop credits `Player.BankAccount` through `
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Logic/Economy/GatherDepositTests.cs` (new)
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs` only if the test exposes a missing non-invasive transition fix
-- `src/OpenSage.Game/Logic/Object/Update/SupplyCenterDockUpdate.cs` only if `DumpBoxes` fails to deposit through the owning player
+- `test/Panopticon.Simulation.Tests/Logic/Economy/GatherDepositTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs` only if the test exposes a missing non-invasive transition fix
+- `src/Panopticon.Simulation/Logic/Object/Update/SupplyCenterDockUpdate.cs` only if `DumpBoxes` fails to deposit through the owning player
 
 ## Acceptance criteria
 
@@ -72,7 +72,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the supply collection → `BankAccount.Deposit` P4 item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/Economy/GatherDepositTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Economy/GatherDepositTests.cs` was created and runs in CI.
 
 ## Result
 

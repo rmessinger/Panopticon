@@ -12,17 +12,17 @@
 
 ## Goal
 
-Extend `OpenSage.FileFormats.Nif` to read the four NIF 10.1 KF block types to exact end-of-file,
+Extend `Panopticon.FileFormats.Nif` to read the four NIF 10.1 KF block types to exact end-of-file,
 with validated references, using synthetic byte streams only.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 1, 3, and 7.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:21-55` (block loop and footer), `118-155` (dispatch),
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:21-55` (block loop and footer), `118-155` (dispatch),
   and `157-312` (reference validation and roots).
-- `src/OpenSage.FileFormats.Nif/NifBinaryReader.cs` and `Blocks/NifStringExtraData.cs` (read
+- `src/Panopticon.FileFormats.Nif/NifBinaryReader.cs` and `Blocks/NifStringExtraData.cs` (read
   pattern for a non-`NiObjectNET` block).
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs:131-207` (block builders and footer).
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs:131-207` (block builders and footer).
 
 ## Steps
 
@@ -47,14 +47,14 @@ with validated references, using synthetic byte streams only.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifControllerSequence.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTextKeyExtraData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifKeyframeController.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifKeyframeData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/NifKeys.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifKeyframeTests.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifControllerSequence.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTextKeyExtraData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifKeyframeController.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifKeyframeData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifKeys.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifKeyframeTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -77,7 +77,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not evaluate curves, convert coordinates, or reference `OpenSage.Game`.
+- Do not evaluate curves, convert coordinates, or reference `Panopticon.Simulation`.
 - Do not add other controller families or NIF 10.0.1.0 support.
 - Do not commit or embed extracted EE2 bytes.
 

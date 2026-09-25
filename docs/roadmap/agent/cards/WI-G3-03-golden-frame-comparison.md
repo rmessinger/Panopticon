@@ -21,9 +21,9 @@ every later Track G phase validates against.
 - `docs/roadmap/implementation/track-g-g3-visual-regression.md`: the `WI-G3-01` gap list, which
   fixes what this card must add.
 - The G3 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Graphics/FrameCaptureService.cs`: the capture scheduling API to extend.
+- `src/Panopticon.Simulation/Graphics/FrameCaptureService.cs`: the capture scheduling API to extend.
 - The metrics type added by `WI-G3-02`.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`: the existing headless frame-capture test and its
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`: the existing headless frame-capture test and its
   output layout.
 
 ## Steps
@@ -43,7 +43,7 @@ every later Track G phase validates against.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/` (the comparison run and the scene set data)
+- `test/Panopticon.Simulation.Tests/` (the comparison run and the scene set data)
 - `docs/roadmap/implementation/track-g-g3-visual-regression.md`
 
 ## Acceptance criteria

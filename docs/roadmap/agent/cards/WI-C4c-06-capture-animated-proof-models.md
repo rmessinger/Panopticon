@@ -18,11 +18,11 @@ proof models at fixed clip times.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` section 8.
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs:41-95` (`configureInstance`).
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:41-95` (`configureInstance`).
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`
   (`PlayToTime`).
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
 
 ## Steps
 
@@ -41,8 +41,8 @@ proof models at fixed clip times.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
 
 ## Acceptance criteria
 
@@ -58,7 +58,7 @@ proof models at fixed clip times.
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario Ee2NifProof
 dotnet build src
 dotnet test src --filter Category!=Interactive

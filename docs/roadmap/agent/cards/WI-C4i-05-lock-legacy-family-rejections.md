@@ -38,10 +38,10 @@ C4e, C4g, and C4d.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImportTests.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifKeyframeTests.cs`
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImportTests.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifKeyframeTests.cs`
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs`
 
 ## Acceptance criteria
 

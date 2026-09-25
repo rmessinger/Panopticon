@@ -33,8 +33,8 @@ keep metrics and events synchronized.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
-- Results view files under `src/OpenSage.Tools.ReplaySketch.Maui/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
+- Results view files under `src/Panopticon.Tools.ReplaySketch.Maui/`
 - ReplaySketch tests
 
 ## Acceptance criteria
@@ -51,8 +51,8 @@ keep metrics and events synchronized.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~RunFrame|FullyQualifiedName~ResultsRenderer"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-results-state.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-results-state.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

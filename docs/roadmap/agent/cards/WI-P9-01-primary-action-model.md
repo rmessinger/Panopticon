@@ -20,21 +20,21 @@ unresolved.
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.3 and §2.4: roster source and the
   action table this card implements.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/UnitCatalog.cs`: the 32 `UnitOption` entries and the
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/UnitCatalog.cs`: the 32 `UnitOption` entries and the
   `{Faction}{Archetype}{Name}` definition-name convention.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/UnitArchetypeCatalog.cs`: P6b archetype-to-reference-unit
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/UnitArchetypeCatalog.cs`: P6b archetype-to-reference-unit
   mapping with `ObjectKinds` tags; use it to derive archetype where a unit is covered by it.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/BuildingCatalog.cs`: structure definitions, for the
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/BuildingCatalog.cs`: structure definitions, for the
   fixed cheap structure a builder unit constructs.
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs`: the `OrderType` values referenced by each action
+- `src/Panopticon.Simulation/Logic/Orders/OrderType.cs`: the `OrderType` values referenced by each action
   kind (`MoveTo`, `AttackObject`, `BuildObject`, `GatherDumpSupplies`, `SpecialPowerAtObject`,
   `SpecialPowerAtLocation`).
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Model/PrimaryActionKind.cs` with values `Move`,
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Model/PrimaryActionKind.cs` with values `Move`,
    `Attack`, `Build`, `Gather`, `SpecialPower`.
-2. Add `src/OpenSage.Tools.ReplaySketch.Core/Model/PrimaryAction.cs` as a record carrying `Kind`,
+2. Add `src/Panopticon.Tools.ReplaySketch.Core/Model/PrimaryAction.cs` as a record carrying `Kind`,
    the `OrderType` it dispatches, an optional `TargetDefinitionName` (the structure a builder builds),
    and `FrameBudget`.
 3. Add a static resolver (for example `PrimaryActionCatalog`) mapping every `UnitCatalog` definition
@@ -45,17 +45,17 @@ unresolved.
    attack budget. Values are a first estimate and will be tuned in `WI-P9-07`.
 5. Add a `[Fact]` test asserting the resolver returns a non-null `PrimaryAction` for every entry in
    `UnitCatalog`, and that no entry resolves to a `Build` action without a `TargetDefinitionName`.
-6. Follow the `OpenSage.Tools.ReplaySketch.Core` naming convention: private static fields are
+6. Follow the `Panopticon.Tools.ReplaySketch.Core` naming convention: private static fields are
    PascalCase in this project (IDE1006-enforced), not `s_`-prefixed.
 7. Ensure any new `.cs` file is UTF-8 with BOM. Run `dotnet format src`, then verify
    `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PrimaryActionKind.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PrimaryAction.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PrimaryActionCatalog.cs` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/PrimaryActionCatalogTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PrimaryActionKind.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PrimaryAction.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PrimaryActionCatalog.cs` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/PrimaryActionCatalogTests.cs` (new)
 
 ## Acceptance criteria
 

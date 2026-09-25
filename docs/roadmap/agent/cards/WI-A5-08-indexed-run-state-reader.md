@@ -17,8 +17,8 @@ Seek and reconstruct frames without loading every snapshot and delta into memory
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a5-scenario-visualization.md`: reader contract.
-- `src/OpenSage.Game/Recording/WorldStateSnapshot.cs`.
-- `src/OpenSage.Game/StatePersister/StateReader.cs`.
+- `src/Panopticon.Simulation/Recording/WorldStateSnapshot.cs`.
+- `src/Panopticon.Simulation/StatePersister/StateReader.cs`.
 - Existing tiered-recording tests.
 
 ## Steps
@@ -31,8 +31,8 @@ Seek and reconstruct frames without loading every snapshot and delta into memory
 
 ## Files likely to change
 
-- New or updated files under `src/OpenSage.Game/Recording/`
-- New cursor model under `src/OpenSage.Tools.ReplaySketch.Core/`
+- New or updated files under `src/Panopticon.Simulation/Recording/`
+- New cursor model under `src/Panopticon.Tools.ReplaySketch.Core/`
 - Focused Game and ReplaySketch tests
 
 ## Acceptance criteria

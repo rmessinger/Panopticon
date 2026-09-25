@@ -18,10 +18,10 @@ any sampler is touched. Read-only: no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs:13-48`: the three fixed samplers,
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs:13-48`: the three fixed samplers,
   including `Aniso4xClampSampler` and the `SamplerDescription.Aniso4x` preset it derives from.
 - Every consumer of those samplers. Find them with a repository search for each property name.
-- `src/OpenSage.Game/Terrain/Terrain.cs:441-533`: the terrain texture-array creation, the resample,
+- `src/Panopticon.Simulation/Terrain/Terrain.cs:441-533`: the terrain texture-array creation, the resample,
   and the per-mip copy loop.
 - `src/Veldrid.ImageSharp/MipmapHelper.cs:20-61`.
 

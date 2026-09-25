@@ -177,7 +177,7 @@ classDiagram
 
 ### Start path
 - `SkirmishManager.StartGame()` builds `List<PlayerSetting>` from `Settings.Slots` and calls
-  `Game.StartSkirmishOrMultiPlayerGame(...)` (`src/OpenSage.Game/Network/SkirmishManager.cs:55-93`).
+  `Game.StartSkirmishOrMultiPlayerGame(...)` (`src/Panopticon.Simulation/Network/SkirmishManager.cs:55-93`).
 - `LocalSkirmishManager.HandleStartButtonClickAsync()` only sets `Connection = new EchoConnection()`
   and flips status to `ReadyToStart`; no networking (`Network/SkirmishManager.cs:96-114`).
 - `HostSkirmishManager`/`ClientSkirmishManager` hold the real network path; SP never enters them
@@ -194,7 +194,7 @@ classDiagram
 
 ### Menu entry points
 - "Skirmish" button → `new LocalSkirmishManager(context.Game)` + opens `SkirmishGameOptionsMenu.wnd`
-  (`src/OpenSage.Mods.Generals/Gui/MainMenuCallbacks.cs:127-130`).
+  (`src/Panopticon.Mods.Generals/Gui/MainMenuCallbacks.cs:127-130`).
 - Lobby init: `SkirmishGameOptionsMenuCallbacks` → `GameOptionsUtil`
   (`Gui/SkirmishGameOptionsMenuCallbacks.cs:31-39`).
 - Start button validates slots, fills missing start positions/factions/colors, then calls
@@ -203,7 +203,7 @@ classDiagram
 
 ### Player model & relationships
 - `PlayerManager.OnNewGame(...)` creates players from map players, picks `LocalPlayer`, then
-  TODOs relationships (`src/OpenSage.Game/Logic/PlayerManager.cs:24-46`).
+  TODOs relationships (`src/Panopticon.Simulation/Logic/PlayerManager.cs:24-46`).
 - `PlayerManager.CreatePlayers(...)` maps `mapPlayer.Allies/Enemies` into `player.Allies`/
   `player.Enemies` (`PlayerManager.cs:50-76`), so map-defined relationships are read, but the
   skirmish-slot-driven setup is the gap.
@@ -220,7 +220,7 @@ classDiagram
 
 ### Start positions & factions
 - `Waypoints.TryGetPlayerStart(int playerIndex)` looks up `Player{i}_Start`
-  (`src/OpenSage.Game/Scripting/Waypoints.cs:76-81`); map load builds `Waypoints` from map objects
+  (`src/Panopticon.Simulation/Scripting/Waypoints.cs:76-81`); map load builds `Waypoints` from map objects
   (`Scene3D.cs:139-152`).
 - `Scene3D.CreateSkirmishPlayerStartingBuilding(...)` uses `TryGetPlayerStart`, falls back to
   `(80,80,0)` + heightmap Z (`Scene3D.cs:430-438`); `player.Template.StartingBuilding` +

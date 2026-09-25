@@ -87,22 +87,22 @@ Two reference kinds, both resolved at dispatch against `GameLogic`, replacing th
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` | Add produced-by + selector object-reference variants (or an `ObjectRef` on the id argument) |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/SelectorSpec.cs` | NEW : query selector model |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/DeferredAction.cs` | Carry unresolved object refs + the producing-command key |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs` | Record produced `ObjectId` per completed producing command |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Route ref-bearing commands to the deferred path; keep literal-only inline |
-| `src/OpenSage.Tools.TestHarness/Program.cs` | Resolve `ProducedBy`/`Selector` ids before `InjectOrders` (in the drain step) |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Tests below |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs` | Add produced-by + selector object-reference variants (or an `ObjectRef` on the id argument) |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/SelectorSpec.cs` | NEW : query selector model |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/DeferredAction.cs` | Carry unresolved object refs + the producing-command key |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs` | Record produced `ObjectId` per completed producing command |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Route ref-bearing commands to the deferred path; keep literal-only inline |
+| `src/Panopticon.Tools.TestHarness/Program.cs` | Resolve `ProducedBy`/`Selector` ids before `InjectOrders` (in the drain step) |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Tests below |
 
 ## Tests
 
-Model/export-level (no game boot, in `OpenSage.Game.Tests` or `ReplaySketch.Tests`):
+Model/export-level (no game boot, in `Panopticon.Simulation.Tests` or `ReplaySketch.Tests`):
 - A command with a `ProducedBy` ref serializes/deserializes and is routed to the deferred path
   (not written inline) by the exporter.
 - A `Selector` JSON round-trips and parses its relationship/faction/definition/near fields.
 
-Headless (in `OpenSage.Game.Tests`, `Category!=Interactive`), if a mocked/headless boot is available:
+Headless (in `Panopticon.Simulation.Tests`, `Category!=Interactive`), if a mocked/headless boot is available:
 - Author "build barracks (cmd A)" then "produce unit at A's structure (cmd B)" with B referencing A
   by produced-by handle; run headless; assert the unit was created at the expected producer.
 - Author a selector targeting an enemy structure; assert resolution returns that structure's id.

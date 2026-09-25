@@ -80,13 +80,13 @@ without a building name, which is acceptable).
 
 ### InternalsVisibleTo
 
-Create `src/OpenSage.Tools.ReplaySketch.Core/AssemblyInfo.cs`:
+Create `src/Panopticon.Tools.ReplaySketch.Core/AssemblyInfo.cs`:
 ```csharp
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("OpenSage.Game.Tests")]
+[assembly: InternalsVisibleTo("Panopticon.Simulation.Tests")]
 ```
 
-This follows the pattern used by `OpenSage.Game/AssemblyInfo.cs`.
+This follows the pattern used by `Panopticon.Simulation/AssemblyInfo.cs`.
 
 ### Tests
 
@@ -109,10 +109,10 @@ Add three tests in `ReplaySketchTests.cs`:
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Delete `KnownDefinitions` class; extract `ResolveConstructDefinitionName` and `ResolveUnitDefinitionName` helpers; remove `isGla` branch |
-| `src/OpenSage.Tools.ReplaySketch.Core/Profiles/ActionTreeController.cs` | Remove `?? KnownDefinitions.UsaBarracksName` fallback |
-| `src/OpenSage.Tools.ReplaySketch.Core/AssemblyInfo.cs` | NEW : `InternalsVisibleTo("OpenSage.Game.Tests")` |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add 3 tests for helper methods |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Delete `KnownDefinitions` class; extract `ResolveConstructDefinitionName` and `ResolveUnitDefinitionName` helpers; remove `isGla` branch |
+| `src/Panopticon.Tools.ReplaySketch.Core/Profiles/ActionTreeController.cs` | Remove `?? KnownDefinitions.UsaBarracksName` fallback |
+| `src/Panopticon.Tools.ReplaySketch.Core/AssemblyInfo.cs` | NEW : `InternalsVisibleTo("Panopticon.Simulation.Tests")` |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add 3 tests for helper methods |
 
 ## Out of Scope (Later P0 Items)
 

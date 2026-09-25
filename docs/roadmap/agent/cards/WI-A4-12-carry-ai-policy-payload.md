@@ -18,8 +18,8 @@ existing factory without changing rule-based defaults.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a4-ai-policy-evolution.md`.
-- `src/OpenSage.Game/Logic/PlayerSettings.cs`, `PlayerManager.cs`, and `Player.cs`.
-- `src/OpenSage.Game/Logic/AI/AIDecisionPolicyFactory.cs`.
+- `src/Panopticon.Simulation/Logic/PlayerSettings.cs`, `PlayerManager.cs`, and `Player.cs`.
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyFactory.cs`.
 - Existing AI policy factory and player-manager tests.
 
 ## Steps
@@ -32,10 +32,10 @@ existing factory without changing rule-based defaults.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/`
-- `src/OpenSage.Game/Logic/PlayerSettings.cs`
-- `src/OpenSage.Game/Logic/PlayerManager.cs`
-- Focused tests under `src/OpenSage.Game.Tests/Logic/AI/`
+- `src/Panopticon.Simulation/Logic/AI/`
+- `src/Panopticon.Simulation/Logic/PlayerSettings.cs`
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs`
+- Focused tests under `test/Panopticon.Simulation.Tests/Logic/AI/`
 
 ## Acceptance criteria
 

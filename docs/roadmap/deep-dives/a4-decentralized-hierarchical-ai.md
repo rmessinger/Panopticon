@@ -427,14 +427,14 @@ sequenceDiagram
 - No hierarchy or per-rank policy code exists yet; this phase is design-only.
 - Reference points this design builds on, already documented elsewhere:
   - `AIPlayer.OnDecisionTick()` / `AIPlayer.Update()` host and cadence
-    (`src/OpenSage.Game/Logic/AI/AIPlayer.cs`), unchanged, see
+    (`src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`), unchanged, see
     [pluggable-ai.md appendix](a4-pluggable-ai.md#appendix-current-code-agent-context).
   - `AIUpdateStateMachine` and its states (`GuardState`, `HuntState`, `AttackAreaState`, and
     others), the soldier rank's decision-substitution point, see
-    `src/OpenSage.Game/Logic/AI/AIUpdateStateMachine.cs` and
+    `src/Panopticon.Simulation/Logic/AI/AIUpdateStateMachine.cs` and
     [`docs/system-investigations/enemy-ai.md` §1.2](../../system-investigations/enemy-ai.md).
   - Existing team/multi-select grouping the squad model reuses: `Team`
-    (`src/OpenSage.Game/Logic/Team.cs`) and the box-selection path in
-    `src/OpenSage.Game/Logic/SelectionSystem.cs`.
+    (`src/Panopticon.Simulation/Logic/Team.cs`) and the box-selection path in
+    `src/Panopticon.Simulation/Logic/SelectionSystem.cs`.
   - Actuation path every rank's leaf output must still go through: `OrderProcessor.Process(...)`
-    (`src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`).
+    (`src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`).

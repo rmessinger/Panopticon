@@ -37,13 +37,13 @@ transforms, child references, property references, and extra-data references.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifFile.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifObjectNet.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifAvObject.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifNode.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifStringExtraData.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifSceneGraphTests.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `src/Panopticon.FileFormats.Nif/NifFile.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifObjectNet.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifAvObject.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifNode.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifStringExtraData.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifSceneGraphTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
 
 ## Acceptance criteria
 

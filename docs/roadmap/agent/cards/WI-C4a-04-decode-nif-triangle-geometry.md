@@ -37,14 +37,14 @@ Decode `NiTriShape` and `NiTriShapeData` into validated CPU geometry for the two
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/Blocks/NifGeometry.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTriBasedGeometry.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTriShape.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifGeometryData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTriBasedGeometryData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTriShapeData.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifGeometryTests.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifGeometry.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTriBasedGeometry.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTriShape.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifGeometryData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTriBasedGeometryData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTriShapeData.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifGeometryTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
 
 ## Acceptance criteria
 

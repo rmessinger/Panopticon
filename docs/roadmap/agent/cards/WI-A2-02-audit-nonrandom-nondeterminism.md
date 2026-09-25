@@ -21,9 +21,9 @@ Read-only: no code changes.
 
 - `docs/roadmap/track-a-foundations.md`: the A2 phase row.
 - `docs/roadmap/open-questions.md`: the determinism-priority Decision.
-- `src/OpenSage.Game/Game.cs:914-1000`: the tick path whose reachable code is in scope.
-- `src/OpenSage.Game/Logic/GameLogic.cs`: object storage and iteration during the logic update.
-- `src/OpenSage.Game/Logic/Player.cs`: player and owned-object collections iterated per tick.
+- `src/Panopticon.Simulation/Game.cs:914-1000`: the tick path whose reachable code is in scope.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`: object storage and iteration during the logic update.
+- `src/Panopticon.Simulation/Logic/Player.cs`: player and owned-object collections iterated per tick.
 
 ## Steps
 

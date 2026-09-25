@@ -20,7 +20,7 @@ whole world frame when only a viewport subset is needed.
 - Region-record layout in the A5 implementation plan.
 - Indexed frame reader from `WI-A5-08`.
 - Domain topology keys from `WI-A5-12`.
-- `src/OpenSage.Game/Recording/WorldStateSnapshot.cs` and `RunRecording.cs`.
+- `src/Panopticon.Simulation/Recording/WorldStateSnapshot.cs` and `RunRecording.cs`.
 
 ## Steps
 
@@ -32,7 +32,7 @@ whole world frame when only a viewport subset is needed.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Recording/`
+- `src/Panopticon.Simulation/Recording/`
 - Run manifest metadata
 - Game and ReplaySketch recording tests
 

@@ -183,29 +183,29 @@ sequenceDiagram
 
 ## Appendix: current code (agent context)
 
-- `src/OpenSage.Game/GameWindow.cs:73-107`: constructor. Reads `Sdl2Interop.GetDisplayScale(0)` into
+- `src/Panopticon.Simulation/GameWindow.cs:73-107`: constructor. Reads `Sdl2Interop.GetDisplayScale(0)` into
   `WindowScale`, pre-multiplies `x`/`y`/`width`/`height` by it, and calls
   `VeldridStartup.CreateWindow`, which cannot pass `AllowHighDpi`.
-- `src/OpenSage.Game/GameWindow.cs:36-43`: `ClientBounds`, returning `_window.Bounds` (points).
-- `src/OpenSage.Game/GameWindow.cs:110-115`: `CreateGraphicsDevice`, which assigns
+- `src/Panopticon.Simulation/GameWindow.cs:36-43`: `ClientBounds`, returning `_window.Bounds` (points).
+- `src/Panopticon.Simulation/GameWindow.cs:110-115`: `CreateGraphicsDevice`, which assigns
   `graphicsDevice.MainSwapchain`.
-- `src/OpenSage.Game/GameWindow.cs:120-129`: `HandleResized`, which calls `Swapchain.Resize` with
+- `src/Panopticon.Simulation/GameWindow.cs:120-129`: `HandleResized`, which calls `Swapchain.Resize` with
   `_window.Bounds` (points).
-- `src/OpenSage.Game/Utilities/Sdl2Interop.cs:56-80`: the `Sdl2Native.LoadFunction` P/Invoke pattern
+- `src/Panopticon.Simulation/Utilities/Sdl2Interop.cs:56-80`: the `Sdl2Native.LoadFunction` P/Invoke pattern
   to replicate, plus `GetDisplayScale`.
-- `src/OpenSage.Game/GamePanel.cs:18-39`: `Frame`, `ClientBounds`, `EnsureFrame` and the
+- `src/Panopticon.Simulation/GamePanel.cs:18-39`: `Frame`, `ClientBounds`, `EnsureFrame` and the
   `ClientSizeChanged` event.
-- `src/OpenSage.Game/Graphics/RenderTarget.cs:26-54`: `EnsureSize`, which allocates the colour target.
-- `src/OpenSage.Game/Game.cs:639`: `Panel.EnsureFrame(window?.ClientBounds ?? ...)`.
-- `src/OpenSage.Game/Game.cs:666-683`: `OnPanelSizeChanged`, the single place where the 3D
+- `src/Panopticon.Simulation/Graphics/RenderTarget.cs:26-54`: `EnsureSize`, which allocates the colour target.
+- `src/Panopticon.Simulation/Game.cs:639`: `Panel.EnsureFrame(window?.ClientBounds ?? ...)`.
+- `src/Panopticon.Simulation/Game.cs:666-683`: `OnPanelSizeChanged`, the single place where the 3D
   `Viewport` and the GUI managers are both fed `Panel.ClientBounds.Size`.
-- `src/OpenSage.Game/Graphics/Cameras/Camera.cs:145-161`: `Unproject`, the picking path that
+- `src/Panopticon.Simulation/Graphics/Cameras/Camera.cs:145-161`: `Unproject`, the picking path that
   consumes `Viewport`.
-- `src/OpenSage.Game/Gui/Wnd/WndWindowManager.cs:36` and
-  `src/OpenSage.Game/Gui/Apt/AptWindowManager.cs:30`: GUI layout sizing from `Panel.ClientBounds`.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:136-141`: `DrawingContext2D.Begin`, which
+- `src/Panopticon.Simulation/Gui/Wnd/WndWindowManager.cs:36` and
+  `src/Panopticon.Simulation/Gui/Apt/AptWindowManager.cs:30`: GUI layout sizing from `Panel.ClientBounds`.
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:136-141`: `DrawingContext2D.Begin`, which
   takes the render-target size, where the G1-4 scale transform belongs.
-- `src/OpenSage.Launcher/Program.cs:345`, `src/OpenSage.Tools.TestHarness/Program.cs:402,457`:
+- `src/Panopticon.Launcher/Program.cs:345`, `src/Panopticon.Tools.TestHarness/Program.cs:402,457`:
   the `Panel.EnsureFrame(window.ClientBounds)` call sites.
-- `src/OpenSage.Game/Input/Cursors/CursorManager.cs:70`: `CursorScale` consumer, which stays on the
+- `src/Panopticon.Simulation/Input/Cursors/CursorManager.cs:70`: `CursorScale` consumer, which stays on the
   logical/DPI-scale value.

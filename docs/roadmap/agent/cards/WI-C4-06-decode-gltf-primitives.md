@@ -20,13 +20,13 @@ primitives deterministically into runtime-sized meshes.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 4, 5, and 9.
-- `src/OpenSage.Game/Content/Importing/ImportedVertex.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMeshPart.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedSubObject.cs`.
-- `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs`: runtime vertex and `ushort` index layout.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfTransformConverter.cs` (new from `WI-C4-05`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMeshPart.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedSubObject.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs`: runtime vertex and `ushort` index layout.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfTransformConverter.cs` (new from `WI-C4-05`).
 
 ## Steps
 
@@ -55,10 +55,10 @@ primitives deterministically into runtime-sized meshes.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAccessorDecoder.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfMeshSplitter.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfPrimitiveConverterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAccessorDecoder.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfMeshSplitter.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfPrimitiveConverterTests.cs` (new)
 
 ## Acceptance criteria
 

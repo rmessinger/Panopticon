@@ -18,8 +18,8 @@ influence policy instead of rejecting the third and fourth.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4d-ee2-skinned-animation.md` section 4.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfSkinConverter.cs:123-258`.
-- `src/OpenSage.Game.Tests/Content/Importing/GltfSkinConverterTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSkinConverter.cs:123-258`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfSkinConverterTests.cs`.
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` scope list.
 
 ## Steps
@@ -37,8 +37,8 @@ influence policy instead of rejecting the third and fourth.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfSkinConverter.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/GltfSkinConverterTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSkinConverter.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfSkinConverterTests.cs`
 - `docs/roadmap/deep-dives/c4-gltf-importer.md`
 
 ## Acceptance criteria

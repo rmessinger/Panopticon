@@ -36,7 +36,7 @@ Six archetypes cover the meaningful variation in unit behaviour for Generals/ZH:
 | Superweapon | `FS_SUPERWEAPON` (ZH) or the equivalent structure for Generals particle cannon | USA Particle Cannon | Charge-then-fire cycle, cooldown, area effect; authored as a structure-triggered ability |
 
 The archetype set is defined in a small data file or constants block inside
-`OpenSage.Tools.ReplaySketch.Core` (or a P6b-specific scenario profile) so it can be extended
+`Panopticon.Tools.ReplaySketch.Core` (or a P6b-specific scenario profile) so it can be extended
 without changing production code.
 
 ### 2.2 Full contract per archetype

@@ -12,7 +12,7 @@
 
 ## Goal
 
-Replace the hard `MaxReplayFrames` frame cap removed from `OpenSage.Tools.TestHarness` with an
+Replace the hard `MaxReplayFrames` frame cap removed from `Panopticon.Tools.TestHarness` with an
 inactivity monitor: forcibly exit only when the replay has genuinely stalled (no
 `ActionDispatched`/`ActionCompleted` events and no logic-frame progress for some configurable
 window), instead of a fixed frame budget that forces every scenario, long or short, to fit under
@@ -20,15 +20,15 @@ one arbitrary ceiling.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.TestHarness/Program.cs`: `RunWindowed` and `RunHeadless` main loops; both
+- `src/Panopticon.Tools.TestHarness/Program.cs`: `RunWindowed` and `RunHeadless` main loops; both
   previously read `config.MaxReplayFrames` to force-exit after a fixed frame count (removed). Note
   the existing `runoutEndLogicFrame` pattern in `RunHeadless` (exits shortly after
   `ActionType.EnemyBaseDestroyed`) as a precedent for frame-counted exit conditions.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs`: `ActionDispatched` /
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs`: `ActionDispatched` /
   `ActionCompleted` events; the natural signal source for "is the replay still making progress".
-- `src/OpenSage.Tools.TestHarness/TestHarnessConfig.cs`: where `MaxReplayFrames` used to live;
+- `src/Panopticon.Tools.TestHarness/TestHarnessConfig.cs`: where `MaxReplayFrames` used to live;
   add the new config knob(s) here.
-- `src/OpenSage.Tools.TestHarness/TestHarness.json`: config file consumers edit; keep documented.
+- `src/Panopticon.Tools.TestHarness/TestHarness.json`: config file consumers edit; keep documented.
 
 ## Steps
 
@@ -50,9 +50,9 @@ one arbitrary ceiling.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/Program.cs`
-- `src/OpenSage.Tools.TestHarness/TestHarnessConfig.cs`
-- `src/OpenSage.Tools.TestHarness/TestHarness.json`
+- `src/Panopticon.Tools.TestHarness/Program.cs`
+- `src/Panopticon.Tools.TestHarness/TestHarnessConfig.cs`
+- `src/Panopticon.Tools.TestHarness/TestHarness.json`
 - Test project colocated with existing TestHarness/ReplaySketch tests, if a suitable harness exists
   for headless coverage; otherwise document why this remains manual-only in the card's completion
   note.

@@ -18,12 +18,12 @@ Verify that construction, unit production, and upgrades debit `BankAccount` corr
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 design says debit/refund wiring was not confirmed and must be verified or closed.
 - `docs/roadmap/implementation-checklist.md:240-243`: checklist AC for debit, cancel refunds, insufficient-funds blocking, and never-negative balance.
-- `src/OpenSage.Game/Logic/BankAccount.cs:22-60`: `Withdraw` currently clamps to available money; do not rely on partial withdraw as purchase approval.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-130`: `BuildObject` withdraws and `CancelBuild` deposits.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:148-169`: upgrade debit and cancel refund path.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-224`: unit production debit, producer selection, queue, and cancel refund path.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:472-549`: production/upgrade queue and cancel methods; preserve all queue and parking-place behavior.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
+- `src/Panopticon.Simulation/Logic/BankAccount.cs:22-60`: `Withdraw` currently clamps to available money; do not rely on partial withdraw as purchase approval.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:96-130`: `BuildObject` withdraws and `CancelBuild` deposits.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:148-169`: upgrade debit and cancel refund path.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:179-224`: unit production debit, producer selection, queue, and cancel refund path.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:472-549`: production/upgrade queue and cancel methods; preserve all queue and parking-place behavior.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 
@@ -31,7 +31,7 @@ Verify that construction, unit production, and upgrades debit `BankAccount` corr
 2. If any path allows a partial `Withdraw` to proceed, add an affordability guard before the side effect. The action must be blocked when `BankAccount.Money < cost`; do not create a building, enqueue a job, or start an upgrade after a failed affordability check.
 3. If a debit succeeds, ensure all lifecycle paths that cancel or remove pending work refund exactly once: explicit cancel orders, queued-production cancel, queued-upgrade cancel, and under-construction object death/destruction when that object represents cancelled work.
 4. Preserve every existing branch and guard when moving logic, including producer selection fallback, parking-place enqueue/cancel, upgrade status changes, and selected-unit behavior.
-5. Add `src/OpenSage.Game.Tests/Logic/Economy/SpendDebitTests.cs` with non-skipped headless `[Fact]` tests for:
+5. Add `test/Panopticon.Simulation.Tests/Logic/Economy/SpendDebitTests.cs` with non-skipped headless `[Fact]` tests for:
    - queueing a unit reduces `BankAccount.Money` by cost;
    - queueing a structure reduces `BankAccount.Money` by cost;
    - queueing an upgrade reduces `BankAccount.Money` by cost;
@@ -43,9 +43,9 @@ Verify that construction, unit production, and upgrades debit `BankAccount` corr
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs`
-- `src/OpenSage.Game.Tests/Logic/Economy/SpendDebitTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Economy/SpendDebitTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -80,7 +80,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the construction/production debit and cancel-refund P4 item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/Economy/SpendDebitTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Economy/SpendDebitTests.cs` was created and runs in CI.
 
 ## Result
 

@@ -20,8 +20,8 @@ envelope, artifact identity, and the A5 consumer contract.
 - Completed B1 implementation plan and benchmark API.
 - `docs/roadmap/seams.md`.
 - `docs/roadmap/deep-dives/a5-visualization.md` §§3.3 and 4.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
 - B1 benchmark runner and report types.
 
 ## Steps

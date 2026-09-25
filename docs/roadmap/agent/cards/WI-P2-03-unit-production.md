@@ -19,12 +19,12 @@ Add the minimum AI production planner: from existing production structures, queu
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:31-38`: production planner and budget/idempotence rules.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-263`: `OrderProcessor` and `ProductionUpdate` production path.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:268-271`: prerequisite and tech gating.
-- `src/OpenSage.Game/Logic/Player.cs:363-427`: `Player.CanProduceObject(...)` prerequisite/science checks.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1164-1192`: purchase and unit-construction gating.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:271-291`: producer-local production gating.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-204`: `CreateUnit` order handler and producer fallback.
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs:3-31`: AI subclass to extend from the prior cards.
-- `src/OpenSage.Game/Logic/Player.cs:130-134` and `:807-839`: owned-object counts used to measure force size.
+- `src/Panopticon.Simulation/Logic/Player.cs:363-427`: `Player.CanProduceObject(...)` prerequisite/science checks.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1164-1192`: purchase and unit-construction gating.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:271-291`: producer-local production gating.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:179-204`: `CreateUnit` order handler and producer fallback.
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs:3-31`: AI subclass to extend from the prior cards.
+- `src/Panopticon.Simulation/Logic/Player.cs:130-134` and `:807-839`: owned-object counts used to measure force size.
 
 ## Steps
 
@@ -33,14 +33,14 @@ Add the minimum AI production planner: from existing production structures, queu
 3. Select the first legal unit from the structure's command set or existing production metadata. Keep the first implementation minimal; if a richer target-composition design is needed, stop at the seam and point to the deep dive rather than inventing a strategy.
 4. Before emitting `CreateUnit`, require all gates to pass: `Player.CanProduceObject(...)`, producer `CanConstructUnit(...)`/`CanProduceObject(...)`, no duplicate queued job for that unit beyond the target count, and `BankAccount` can afford the cost.
 5. Emit unit production only as `OrderType.CreateUnit` through the AI order-actuation seam from `WI-P2-02`; do not call `ProductionUpdate.QueueProduction(...)` directly from the planner.
-6. Add `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIUnitProductionTests.cs` with headless `[Fact]` tests. Cover both affordable production and an unaffordable case where no order is emitted and money never goes negative.
+6. Add `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIUnitProductionTests.cs` with headless `[Fact]` tests. Cover both affordable production and an unaffordable case where no order is emitted and money never goes negative.
 7. New `.cs` files must be UTF-8 with BOM. After creating files, run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs` (only if shared planner state/seams belong in the base)
-- `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIUnitProductionTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs`
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs` (only if shared planner state/seams belong in the base)
+- `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIUnitProductionTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -74,7 +74,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "AI unit production" P2 item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIUnitProductionTests.cs` was created and the tests run in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIUnitProductionTests.cs` was created and the tests run in CI.
 
 ## Result
 

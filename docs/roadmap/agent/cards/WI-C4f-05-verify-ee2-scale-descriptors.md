@@ -18,12 +18,12 @@ the singular-rest failure contract.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4f-ee2-scale-animation.md` sections 2, 3, 9, and 10.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`: EE2 install guard and archive
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`: EE2 install guard and archive
   mounting.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2KfAnimationImportTests.cs`: C4c installed KF tests
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2KfAnimationImportTests.cs`: C4c installed KF tests
   after `WI-C4c-05`.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`: materialization path.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs:173-182`: animation binding entry point.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`: materialization path.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs:173-182`: animation binding entry point.
 
 ## Steps
 
@@ -45,7 +45,7 @@ the singular-rest failure contract.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2KfScaleAnimationImportTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2KfScaleAnimationImportTests.cs` (new)
 
 ## Acceptance criteria
 

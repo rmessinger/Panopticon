@@ -18,7 +18,7 @@ block) into validated CPU mip data, preserving DXT blocks without transcoding.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/ee2-gamebryo-model-storage.md` section 6 and section 9.1.1.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs` dispatch and footer validation.
+- `src/Panopticon.FileFormats.Nif/NifFile.cs` dispatch and footer validation.
 - Niftools `nif.xml` definitions for `NiPixelFormat` and `NiPixelData`.
 
 ## Steps
@@ -42,10 +42,10 @@ block) into validated CPU mip data, preserving DXT blocks without transcoding.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/Blocks/NifPixelData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifPixelDataTests.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifPixelData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifPixelDataTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
 
 ## Acceptance criteria
 

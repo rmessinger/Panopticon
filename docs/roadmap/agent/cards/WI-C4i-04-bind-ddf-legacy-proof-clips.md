@@ -21,8 +21,8 @@ sample through C4c and C2.
 
 - `docs/roadmap/deep-dives/c4i-ee2-legacy-kf-formats.md` sections 2, 6, and 9.
 - C4c installed clip tests added by `WI-C4c-05`.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs` animation binding changes from C2.
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs` animation binding changes from C2.
 
 ## Steps
 
@@ -38,8 +38,8 @@ sample through C4c and C2.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImportTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImportTests.cs`
 
 ## Acceptance criteria
 

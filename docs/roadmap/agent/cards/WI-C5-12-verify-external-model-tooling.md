@@ -20,23 +20,23 @@ coverage, and required Model-tab and Map-tab screenshots.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 10 and 11.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`: graphics and screenshot validation workflow.
-- `src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: conditional graphics-test
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`: graphics and screenshot validation workflow.
+- `test/Panopticon.Tools.ReplaySketch.Tests/Panopticon.Tools.ReplaySketch.Tests.csproj`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: conditional graphics-test
   precedent.
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelSessionTests.cs` (new, from `WI-C5-04`).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelContractTests.cs` (new, from `WI-C5-03`).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelHostTests.cs` (new, from `WI-C5-07`).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelRenderingTests.cs` (new, from `WI-C5-08`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.gltf` (new, from
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelSessionTests.cs` (new, from `WI-C5-04`).
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelContractTests.cs` (new, from `WI-C5-03`).
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelHostTests.cs` (new, from `WI-C5-07`).
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelRenderingTests.cs` (new, from `WI-C5-08`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.gltf` (new, from
   `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.bin` (new, from
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.bin` (new, from
   `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/base-color.png` (new, from
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/base-color.png` (new, from
   `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/animated-skin.glb` (new, from
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/animated-skin.glb` (new, from
   `WI-C4-11`).
-- `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml.cs`: Model and Map screenshot selection.
+- `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml.cs`: Model and Map screenshot selection.
 
 ## Steps
 
@@ -66,10 +66,10 @@ coverage, and required Model-tab and Map-tab screenshots.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelSessionTests.cs` (new, from `WI-C5-04`)
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelContractTests.cs` (new, from `WI-C5-03`)
-- `src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj`
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelToolingIntegrationTests.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelSessionTests.cs` (new, from `WI-C5-04`)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelContractTests.cs` (new, from `WI-C5-03`)
+- `test/Panopticon.Tools.ReplaySketch.Tests/Panopticon.Tools.ReplaySketch.Tests.csproj`
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelToolingIntegrationTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -96,11 +96,11 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 mkdir -p artifacts/replaysketch-c5
 REPLAYSKETCH_SCREENSHOT_PATH="$PWD/artifacts/replaysketch-c5/model.png" \
 REPLAYSKETCH_SCREENSHOT_TAB=model \
-  dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+  dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 REPLAYSKETCH_SCREENSHOT_PATH="$PWD/artifacts/replaysketch-c5/map.png" \
 REPLAYSKETCH_SCREENSHOT_TAB=map \
-  dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+  dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

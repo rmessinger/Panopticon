@@ -18,13 +18,13 @@ selection, modes, flags, and speed behavior.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c2-skeleton-animation-retargeting.md` sections 2, 4, and 6.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`.
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`.
-- `src/OpenSage.Game/Logic/Object/Draw/W3dModelDraw.cs:210-240`.
-- `src/OpenSage.Game/Logic/Object/AnimationState.cs`.
-- `src/OpenSage.Game.Tests/GameFixture.cs`.
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`.
-- `src/OpenSage.Game.Tests/Logic/Draw/W3dModelDrawTests.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`.
+- `src/Panopticon.Simulation/Logic/Object/Draw/W3dModelDraw.cs:210-240`.
+- `src/Panopticon.Simulation/Logic/Object/AnimationState.cs`.
+- `test/Panopticon.Simulation.Tests/GameFixture.cs`.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`.
+- `test/Panopticon.Simulation.Tests/Logic/Draw/W3dModelDrawTests.cs`.
 
 ## Steps
 
@@ -39,12 +39,12 @@ selection, modes, flags, and speed behavior.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`
-- `src/OpenSage.Game/Logic/Object/Draw/W3dModelDraw.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`
-- `src/OpenSage.Game.Tests/Logic/Draw/W3dModelDrawTests.cs`
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`
+- `src/Panopticon.Simulation/Logic/Object/Draw/W3dModelDraw.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Draw/W3dModelDrawTests.cs`
 
 ## Acceptance criteria
 

@@ -19,8 +19,8 @@ converter without allocating runtime or GPU resources.
 
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 2, 4, 5, and 7.
 - `docs/roadmap/implementation/track-c-c1-import-abstraction.md` model audit.
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs:17-99,149-206`.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dMaterialConverter.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs:17-99,149-206`.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dMaterialConverter.cs`.
 - Interchange types and tests from `WI-C1-04`.
 
 ## Steps
@@ -37,9 +37,9 @@ converter without allocating runtime or GPU resources.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/W3d/W3dMeshConverter.cs` (new)
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/W3dMeshConverterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dMeshConverter.cs` (new)
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dMeshConverterTests.cs` (new)
 
 ## Acceptance criteria
 

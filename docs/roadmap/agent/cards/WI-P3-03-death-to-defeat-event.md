@@ -18,17 +18,17 @@ Add a death/destroy/ownership-change notification that lets `VictorySystem` reac
 
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80`: required event sources and incremental reaction.
 - `docs/roadmap/implementation-checklist.md:209-211`: lifecycle-event AC.
-- `src/OpenSage.Game/Logic/GameLogic.cs:71-128`: object creation and owned-object add hook.
-- `src/OpenSage.Game/Logic/GameLogic.cs:178-199`: destroy path, owned-object removal, and existing destroyed event.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291-297`: current owner and structure fields.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1281-1337`: `Kill(...)`/`OnDie(...)` death path.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1360-1366`: `Destroy()` path.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121`: one current owner assignment after construction.
-- `src/OpenSage.Game/Logic/Object/Contain/GarrisonContain.cs:40-53`: owner transfer through garrisoning.
-- `src/OpenSage.Game/Logic/Object/Behaviors/CastleBehavior.cs:76-126`: owner transfer through castle behavior.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:352-356`: owner assignment for produced units.
-- `src/OpenSage.Game/Logic/Player.cs:807-839`: owned-object add/remove idempotence and count maintenance.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:71-128`: object creation and owned-object add hook.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:178-199`: destroy path, owned-object removal, and existing destroyed event.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:291-297`: current owner and structure fields.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1281-1337`: `Kill(...)`/`OnDie(...)` death path.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1360-1366`: `Destroy()` path.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:96-121`: one current owner assignment after construction.
+- `src/Panopticon.Simulation/Logic/Object/Contain/GarrisonContain.cs:40-53`: owner transfer through garrisoning.
+- `src/Panopticon.Simulation/Logic/Object/Behaviors/CastleBehavior.cs:76-126`: owner transfer through castle behavior.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:352-356`: owner assignment for produced units.
+- `src/Panopticon.Simulation/Logic/Player.cs:807-839`: owned-object add/remove idempotence and count maintenance.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-70`: headless test base; tests must run in CI.
 
 ## Steps
 
@@ -37,17 +37,17 @@ Add a death/destroy/ownership-change notification that lets `VictorySystem` reac
 3. Replace direct owner field assignment with a helper/setter that updates `OwnedObjects`/counts and fires owner-change notifications once per actual owner change.
 4. Subscribe `VictorySystem` to the notification and queue/re-check only affected players at its cadence.
 5. Preserve every existing branch/guard in death, destroy, construction, garrison, castle, and production ownership flows; no behavior loss on refactor.
-6. Add `src/OpenSage.Game.Tests/Logic/Victory/VictoryObjectLifecycleEventTests.cs` with headless `[Fact]` tests proving: `OnDie` fires once; `Destroy` fires once; ownership change fires once and updates both players' counts; `VictorySystem` reacts without scanning all objects.
+6. Add `test/Panopticon.Simulation.Tests/Logic/Victory/VictoryObjectLifecycleEventTests.cs` with headless `[Fact]` tests proving: `OnDie` fires once; `Destroy` fires once; ownership change fires once and updates both players' counts; `VictorySystem` reacts without scanning all objects.
 7. New `.cs` files must be UTF-8 with BOM. Run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`
-- `src/OpenSage.Game/Logic/GameLogic.cs`
-- `src/OpenSage.Game/Logic/Player.cs`
-- `src/OpenSage.Game/Logic/VictorySystem.cs`
-- `src/OpenSage.Game/Logic/GameObjectLifecycleEventArgs.cs` (new, or equivalent)
-- `src/OpenSage.Game.Tests/Logic/Victory/VictoryObjectLifecycleEventTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`
+- `src/Panopticon.Simulation/Logic/Player.cs`
+- `src/Panopticon.Simulation/Logic/VictorySystem.cs`
+- `src/Panopticon.Simulation/Logic/GameObjectLifecycleEventArgs.cs` (new, or equivalent)
+- `test/Panopticon.Simulation.Tests/Logic/Victory/VictoryObjectLifecycleEventTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -81,7 +81,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "Death→defeat event from `GameObject.OnDie/Destroy`" item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` listing each lifecycle path tested.
-- Confirm the required test file `src/OpenSage.Game.Tests/Logic/Victory/VictoryObjectLifecycleEventTests.cs` was created and runs in CI.
+- Confirm the required test file `test/Panopticon.Simulation.Tests/Logic/Victory/VictoryObjectLifecycleEventTests.cs` was created and runs in CI.
 
 ## Result
 

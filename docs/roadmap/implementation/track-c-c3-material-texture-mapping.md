@@ -36,7 +36,7 @@ scaffolding from lighting behavior. Card 11 reuses the shared runtime-model capt
 
 ## Agent context
 
-- Interchange root: `src/OpenSage.Game/Content/Importing/ImportedMaterial.cs`.
+- Interchange root: `src/Panopticon.Simulation/Content/Importing/ImportedMaterial.cs`.
 - PBR payload: optional typed data; fixed-function and PBR payloads cannot coexist.
 - Validation boundary: the entire imported graph is checked before GPU allocation or asset-store
   access.

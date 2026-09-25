@@ -18,19 +18,19 @@ Close small gaps that leave supply trucks, workers, or dozers stuck in economy/b
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 goal includes closing supply-truck/worker/dozer cycles.
 - `docs/roadmap/implementation-checklist.md:248-250`: checklist AC: worker/dozer/supply-truck complete full cycles without stuck states.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:15-28`: supply gather state enum.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257`: state transitions for gather, carry, target search, dump, and finish.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyTruckAIUpdate.cs:6-33`: supply-truck wrapper and persistence.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/ChinookAIUpdate.cs:9-52`: USA harvester subclass; preserve persistence branches.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:34-78` and `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:183-204`: worker reset/default-state behavior.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-72`: dozer build-target wiring and update.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAndWorkerState.cs:36-73`: shared builder state update and completion clearing.
-- `src/OpenSage.Game/Logic/AI/SupplyAIUpdateStateMachine.cs:16-47`: incomplete supply state-machine configuration.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:15-28`: supply gather state enum.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs:108-257`: state transitions for gather, carry, target search, dump, and finish.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/SupplyTruckAIUpdate.cs:6-33`: supply-truck wrapper and persistence.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/ChinookAIUpdate.cs:9-52`: USA harvester subclass; preserve persistence branches.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:34-78` and `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:183-204`: worker reset/default-state behavior.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-72`: dozer build-target wiring and update.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/DozerAndWorkerState.cs:36-73`: shared builder state update and completion clearing.
+- `src/Panopticon.Simulation/Logic/AI/SupplyAIUpdateStateMachine.cs:16-47`: incomplete supply state-machine configuration.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 
-1. Add `src/OpenSage.Game.Tests/Logic/Economy/SupplyCycleGapTests.cs` with sampled, non-skipped headless `[Fact]` tests.
+1. Add `test/Panopticon.Simulation.Tests/Logic/Economy/SupplyCycleGapTests.cs` with sampled, non-skipped headless `[Fact]` tests.
 2. Test the supply-truck path: source search → approach → request/gather boxes → carry → target search → dump → `FinishedDumpingSupplies` → resume/search again. Fail if the state does not change for a bounded number of ticks while prerequisites are available.
 3. Test the worker path in both roles:
    - supply role completes gather→dump without stalling;
@@ -42,14 +42,14 @@ Close small gaps that leave supply trucks, workers, or dozers stuck in economy/b
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs`
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/SupplyTruckAIUpdate.cs`
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/ChinookAIUpdate.cs`
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs`
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs`
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAndWorkerState.cs`
-- `src/OpenSage.Game/Logic/AI/SupplyAIUpdateStateMachine.cs`
-- `src/OpenSage.Game.Tests/Logic/Economy/SupplyCycleGapTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/SupplyAIUpdate.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/SupplyTruckAIUpdate.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/ChinookAIUpdate.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/DozerAndWorkerState.cs`
+- `src/Panopticon.Simulation/Logic/AI/SupplyAIUpdateStateMachine.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Economy/SupplyCycleGapTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -83,7 +83,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the supply-truck / worker / dozer cycle gaps P4 item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/Economy/SupplyCycleGapTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Economy/SupplyCycleGapTests.cs` was created and runs in CI.
 
 ## Result
 

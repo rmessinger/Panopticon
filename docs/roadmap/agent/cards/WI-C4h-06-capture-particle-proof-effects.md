@@ -13,15 +13,15 @@
 ## Goal
 
 Add deterministic TestHarness captures that prove the three DDF-bound EE2 particle effects render
-through the existing OpenSAGE particle runtime.
+through the existing Panopticon particle runtime.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4h-ee2-particle-effects.md` sections 2, 9, and 10.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs:41-95`.
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:41-95`.
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
 - The C4h binding helper from `WI-C4h-05`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
 
 ## Steps
 
@@ -39,9 +39,9 @@ through the existing OpenSAGE particle runtime.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/Ee2ParticleProofScenario.cs` (new)
-- `src/OpenSage.Tools.TestHarness/Program.cs` or scenario registration file
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2ParticleProofScenarioTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/Ee2ParticleProofScenario.cs` (new)
+- `src/Panopticon.Tools.TestHarness/Program.cs` or scenario registration file
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2ParticleProofScenarioTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -57,7 +57,7 @@ through the existing OpenSAGE particle runtime.
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario Ee2ParticleProof
 dotnet build src
 dotnet test src --filter Category!=Interactive

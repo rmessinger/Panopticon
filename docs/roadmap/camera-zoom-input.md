@@ -4,10 +4,10 @@ How mouse wheel and touchpad scroll gestures adjust tactical-view camera distanc
 
 ## Pipeline overview
 
-1. **`GameWindow.HandleMouseWheel`** (`src/OpenSage.Game/GameWindow.cs`) receives raw Veldrid/SDL2 `MouseWheelEventArgs` for both physical mouse wheels and touchpad scroll gestures; SDL reports both through the same event.
+1. **`GameWindow.HandleMouseWheel`** (`src/Panopticon.Simulation/GameWindow.cs`) receives raw Veldrid/SDL2 `MouseWheelEventArgs` for both physical mouse wheels and touchpad scroll gestures; SDL reports both through the same event.
 2. The handler accumulates fractional deltas in `_scrollAccumulator` and only enqueues a `MouseWheel` input message once a whole notch (`(int)_scrollAccumulator != 0`) has accrued.
-3. **`LookAtTranslator`** (`src/OpenSage.Game/Graphics/Cameras/LookAtTranslator.cs`) consumes `InputMessageType.MouseWheel` messages and calls `TacticalView.ZoomIn()`/`ZoomOut()` once per accumulated notch.
-4. **`TacticalView.ZoomIn`/`ZoomOut`** (`src/OpenSage.Game/Graphics/Cameras/TacticalView.cs`) adjust the *target* `_heightAboveGround` by ±10 via `SetHeightAboveGround`.
+3. **`LookAtTranslator`** (`src/Panopticon.Simulation/Graphics/Cameras/LookAtTranslator.cs`) consumes `InputMessageType.MouseWheel` messages and calls `TacticalView.ZoomIn()`/`ZoomOut()` once per accumulated notch.
+4. **`TacticalView.ZoomIn`/`ZoomOut`** (`src/Panopticon.Simulation/Graphics/Cameras/TacticalView.cs`) adjust the *target* `_heightAboveGround` by ±10 via `SetHeightAboveGround`.
 5. **`TacticalView.Update`** eases the actual `_zoom` value toward the height-derived target every frame, at a rate controlled by `GameData.CameraAdjustSpeed`. This is a straight port of the original engine's `View::zoomIn`/`zoomOut` and update loop, so zoom changes are never snapped instantly, they always ease in.
 
 ## Why accumulation is needed

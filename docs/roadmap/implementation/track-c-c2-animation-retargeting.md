@@ -31,9 +31,9 @@ The sequence starts after C1 completes. Card 6 is the completion point.
 ## Agent context
 
 - Imported channel ownership:
-  `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`.
+  `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`.
 - Runtime animation ownership:
-  `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`.
+  `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`.
 - Binding output: immutable `BoundModelAnimation` containing the animation name, duration, and
   existing target-indexed `AnimationClip` values.
 - Cache key: `ModelBoneHierarchy` object identity through

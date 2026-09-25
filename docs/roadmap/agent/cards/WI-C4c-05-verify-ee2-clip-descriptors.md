@@ -18,10 +18,10 @@ clips and the unreferenced negative clip.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 2 and 8.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`: install guard and archive
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`: install guard and archive
   mounting.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs` and
-  `src/OpenSage.Game/Graphics/ModelInstance.cs:170-183`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs` and
+  `src/Panopticon.Simulation/Graphics/ModelInstance.cs:170-183`.
 
 ## Steps
 
@@ -40,7 +40,7 @@ clips and the unreferenced negative clip.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2KfAnimationImportTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2KfAnimationImportTests.cs` (new)
 
 ## Acceptance criteria
 

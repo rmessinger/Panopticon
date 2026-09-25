@@ -19,12 +19,12 @@ end-to-end test for the live run, and document the workflow in the TestHarness a
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §3 and the "Why the mocked host is
   insufficient" appendix entry.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs`: the install-free host. `Scene3D` is uninitialized and
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs`: the install-free host. `Scene3D` is uninitialized and
   `Update`/`Render`/`Step` throw, which is why only engine-free logic can be tested here.
-- `src/OpenSage.Game.Tests/GameFactAttribute.cs`: the install-gated test attribute.
-- `src/OpenSage.Game.Tests/GameTestDiscoverer.cs:22-44`: how `[GameFact]` tests are skipped when the
+- `test/Panopticon.Simulation.Tests/GameFactAttribute.cs`: the install-gated test attribute.
+- `test/Panopticon.Simulation.Tests/GameTestDiscoverer.cs:22-44`: how `[GameFact]` tests are skipped when the
   game is not installed.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`: the agent validation playbook to extend.
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`: the agent validation playbook to extend.
 - The types delivered by `WI-P9-01` through `WI-P9-07`.
 
 ## Steps
@@ -39,15 +39,15 @@ end-to-end test for the live run, and document the workflow in the TestHarness a
    failed so the failure is actionable without re-running.
 4. Confirm the install-free tests run in CI (which skips `[GameFact]`) and that the suite passes with
    `--filter Category!=Interactive`.
-5. Add a Unit Validation Ground section to `src/OpenSage.Tools.TestHarness/AGENTS.md`: how to run it
+5. Add a Unit Validation Ground section to `src/Panopticon.Tools.TestHarness/AGENTS.md`: how to run it
    windowed, how to run it headless, how to refresh the baseline, and how to read gaps and timeouts.
 6. Ensure any new `.cs` file is UTF-8 with BOM. Run `dotnet format src`, then verify
    `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/ValidationGroundTests.cs` (new)
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ValidationGroundTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`
 
 ## Acceptance criteria
 

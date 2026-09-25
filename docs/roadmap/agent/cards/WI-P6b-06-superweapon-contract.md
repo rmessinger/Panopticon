@@ -21,21 +21,21 @@ Create a CI-running P0-harness contract scenario test for the USA Particle Canno
 - `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:72-77`: unimplemented special powers must surface as explicit gaps.
 - `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:192-223`: current code appendix for tags, orders, weapons, powers, and death cleanup.
 - `docs/roadmap/implementation-checklist.md:299-335`: checklist ACs to mirror.
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:912` and `src/OpenSage.Game/Logic/Object/ObjectKinds.cs:34-50,103-104,148-160,217-218,289-290`: `KindOf` tags for archetype detection.
-- `src/OpenSage.Game/Gui/ControlBar/CommandSet.cs:7-34` and `src/OpenSage.Game/Gui/ControlBar/CommandButton.cs:30-47,87-104,219-285`: command-set buttons, special powers, and weapon slots.
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs:50-54,87-101,111-115` and `src/OpenSage.Game/Logic/Orders/Order.cs:197-240`: order names and factory argument shapes.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:73-105,179-204,247-260,287-426,452-560`: move, build, produce, repair, attack, special-power, enter, and unimplemented-order dispatch.
-- `src/OpenSage.Game/Logic/Object/Weapon/WeaponSlot.cs:5-23`, `src/OpenSage.Game/Logic/Object/Weapon/WeaponTemplateSet.cs:7-53`, `src/OpenSage.Game/Logic/Object/Weapon/WeaponSet.cs:21-62`, `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs:64-126`: weapon-slot and firing state.
-- `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerApplicator.cs:13-37`, `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs:26-89`, `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerAtObjectApplicator.cs:22-50`: implemented vs. throwing special-power handlers.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291-330,897-900,1284-1337,1360-1435`: owner, selection flag, special-power behavior lookup, kill/die/destroy/container cleanup.
-- `src/OpenSage.Game/Logic/GameLogic.cs:71-128,178-199` and `src/OpenSage.Game/Logic/Player.cs:130-141,231-246,807-839`: object create/destroy owner tracking and selection cleanup.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-133,296-320`: P0 run-and-assert entry point and handle resolution.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:20-84,101-218` and `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs:7-16`: assertion vocabulary and code-predicate escape hatch.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-141` and `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:450-513`: current test helpers; note P6b must add CI-running `[Fact]` coverage rather than relying only on Interactive tests.
+- `src/Panopticon.Simulation/Logic/Object/ObjectDefinition.cs:912` and `src/Panopticon.Simulation/Logic/Object/ObjectKinds.cs:34-50,103-104,148-160,217-218,289-290`: `KindOf` tags for archetype detection.
+- `src/Panopticon.Simulation/Gui/ControlBar/CommandSet.cs:7-34` and `src/Panopticon.Simulation/Gui/ControlBar/CommandButton.cs:30-47,87-104,219-285`: command-set buttons, special powers, and weapon slots.
+- `src/Panopticon.Simulation/Logic/Orders/OrderType.cs:50-54,87-101,111-115` and `src/Panopticon.Simulation/Logic/Orders/Order.cs:197-240`: order names and factory argument shapes.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:73-105,179-204,247-260,287-426,452-560`: move, build, produce, repair, attack, special-power, enter, and unimplemented-order dispatch.
+- `src/Panopticon.Simulation/Logic/Object/Weapon/WeaponSlot.cs:5-23`, `src/Panopticon.Simulation/Logic/Object/Weapon/WeaponTemplateSet.cs:7-53`, `src/Panopticon.Simulation/Logic/Object/Weapon/WeaponSet.cs:21-62`, `src/Panopticon.Simulation/Logic/Object/Weapon/Weapon.cs:64-126`: weapon-slot and firing state.
+- `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerApplicator.cs:13-37`, `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs:26-89`, `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerAtObjectApplicator.cs:22-50`: implemented vs. throwing special-power handlers.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:291-330,897-900,1284-1337,1360-1435`: owner, selection flag, special-power behavior lookup, kill/die/destroy/container cleanup.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:71-128,178-199` and `src/Panopticon.Simulation/Logic/Player.cs:130-141,231-246,807-839`: object create/destroy owner tracking and selection cleanup.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:32-133,296-320`: P0 run-and-assert entry point and handle resolution.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:20-84,101-218` and `src/Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs:7-16`: assertion vocabulary and code-predicate escape hatch.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-141` and `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:450-513`: current test helpers; note P6b must add CI-running `[Fact]` coverage rather than relying only on Interactive tests.
 
 ## Steps
 
-1. Create `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bSuperweaponContractTests.cs` as a real xUnit `[Fact]` test file that runs under `dotnet test src --filter Category!=Interactive`. Base the test on `MockedGameTest` or another no-game-install harness seam; a `[GameFact]` may be added only as supplemental coverage, never as the acceptance gate.
+1. Create `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bSuperweaponContractTests.cs` as a real xUnit `[Fact]` test file that runs under `dotnet test src --filter Category!=Interactive`. Base the test on `MockedGameTest` or another no-game-install harness seam; a `[GameFact]` may be added only as supplemental coverage, never as the acceptance gate.
 2. Build one P0-harness `ReplayScenario` in code for the USA Particle Cannon. Use the reference unit from `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:31-41`; if exact asset names need resolution, resolve them through loaded `ObjectDefinition.KindOf`/`CommandSet` data instead of hardcoding an unrelated unit.
 3. Add code-defined predicates via `CodeAssertionRegistry` (or extend `ScenarioAssertion` only where necessary) for produced-object lookup, position delta, health delta, weapon-slot observation, command-set special-power enumeration, gap reporting, and death cleanup.
 4. Execute the contract in ordered phases: produce, move/static check, charge/fire/cooldown/sell, attack/decline, weapon modes plus every command-set `SpecialPowerType`, then death/sell cleanup.
@@ -45,9 +45,9 @@ Create a CI-running P0-harness contract scenario test for the USA Particle Canno
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bSuperweaponContractTests.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if new assertion paths are required)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (only if reusable predicates need registration helpers)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bSuperweaponContractTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if new assertion paths are required)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (only if reusable predicates need registration helpers)
 
 ## Acceptance criteria
 
@@ -84,7 +84,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + exact `P6b gap:` reason).
 - Tick the matching P6b-6 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` listing the scenario/test file created and any special-power gaps.
-- Confirm `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bSuperweaponContractTests.cs` exists and the targeted test command above ran.
+- Confirm `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bSuperweaponContractTests.cs` exists and the targeted test command above ran.
 
 ## Result
 

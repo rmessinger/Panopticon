@@ -18,12 +18,12 @@ to the renamed runtime asset without switching importer ownership yet.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 3, 4, 6, and 7.
-- `src/OpenSage.Game/Content/Loaders/OnDemandAnimationLoader.cs`.
-- `src/OpenSage.Game/Graphics/Animation/W3DAnimation.cs`.
-- `src/OpenSage.Game/Graphics/Animation/AnimationClip.cs`, `Keyframe.cs`, and
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandAnimationLoader.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClip.cs`, `Keyframe.cs`, and
   `AnimationInstance.cs:13-55`.
-- `src/OpenSage.Game/Data/Ini/IniParser.cs:716-727`.
-- `src/OpenSage.Game/Logic/Object/AnimationState.cs:110-140`.
+- `src/Panopticon.Simulation/Data/Ini/IniParser.cs:716-727`.
+- `src/Panopticon.Simulation/Logic/Object/AnimationState.cs:110-140`.
 - Repository search results for `W3DAnimation`.
 
 ## Steps
@@ -40,11 +40,11 @@ to the renamed runtime asset without switching importer ownership yet.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs` (new)
-- `src/OpenSage.Game/Content/Loaders/OnDemandAnimationLoader.cs` (type rename only)
-- `src/OpenSage.Game/Graphics/Animation/W3DAnimation*.cs` (rename/compatibility wrapper)
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandAnimationLoader.cs` (type rename only)
+- `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation*.cs` (rename/compatibility wrapper)
 - Typed `W3DAnimation` references reported by repository search
-- `src/OpenSage.Game.Tests/Graphics/Animation/`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/`
 
 ## Acceptance criteria
 

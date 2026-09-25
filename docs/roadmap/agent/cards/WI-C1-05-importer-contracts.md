@@ -18,12 +18,12 @@ selection path without changing the active W3D loaders yet.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 3 and 6.
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`: current loader and resolver ownership.
-- `src/OpenSage.Game/Content/Loaders/AssetLoadContext.cs`: source for the import-only context
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`: current loader and resolver ownership.
+- `src/Panopticon.Simulation/Content/Loaders/AssetLoadContext.cs`: source for the import-only context
   subset.
-- `src/OpenSage.Game/IGameDefinition.cs:30-42`: strategy creation contract.
-- `src/OpenSage.Mods.Generals/GeneralsDefinition.cs:44-47` and
-  `src/OpenSage.Mods.Bfme/BfmeDefinition.cs:44-47`: representative strategy construction.
+- `src/Panopticon.Simulation/IGameDefinition.cs:30-42`: strategy creation contract.
+- `src/Panopticon.Mods.Generals/GeneralsDefinition.cs:44-47` and
+  `src/Panopticon.Mods.Bfme/BfmeDefinition.cs:44-47`: representative strategy construction.
 
 ## Steps
 
@@ -41,11 +41,11 @@ selection path without changing the active W3D loaders yet.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/IModelImporter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/IAnimationImporter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/AssetImportContext.cs` (new)
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`
-- `src/OpenSage.Game.Tests/Content/OnDemandAssetLoadStrategyTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/IAnimationImporter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs` (new)
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`
+- `test/Panopticon.Simulation.Tests/Content/OnDemandAssetLoadStrategyTests.cs` (new)
 
 ## Acceptance criteria
 

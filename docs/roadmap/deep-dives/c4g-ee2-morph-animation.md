@@ -372,26 +372,26 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - NIF block dispatch currently has no morph blocks and rejects unknown types:
-  `src/OpenSage.FileFormats.Nif/NifFile.cs:118-155`.
+  `src/Panopticon.FileFormats.Nif/NifFile.cs:118-155`.
 - The NIF static converter bakes source positions directly into `ImportedVertex`:
-  `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs:119-135`.
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs:119-135`.
 - The current NIF converter parents every sub-object to bone 0:
-  `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs:215-219`. C4c replaces this
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs:215-219`. C4c replaces this
   with node-hierarchy bones before C4g lands.
 - glTF morph targets are explicitly rejected today:
-  `src/OpenSage.Game/Content/Importing/Gltf/GltfPrimitiveConverter.cs:108-112`.
+  `src/Panopticon.Simulation/Content/Importing/Gltf/GltfPrimitiveConverter.cs:108-112`.
 - glTF morph weight animation is explicitly rejected today:
-  `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs:121-123`.
+  `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs:121-123`.
 - `ImportedVertex` stores base and secondary positions and normals, not morph target arrays:
-  `src/OpenSage.Game/Content/Importing/ImportedVertex.cs:9-34`.
+  `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs:9-34`.
 - Imported meshes upload one static vertex buffer during materialization:
-  `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs:37-47`.
+  `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs:37-47`.
 - Runtime vertex inputs have no morph target attributes or weight buffer:
-  `src/OpenSage.Game/Assets/Shaders/Mesh.h:5-17`.
+  `src/Panopticon.Simulation/Assets/Shaders/Mesh.h:5-17`.
 - Existing shader skinning blends two positions and two normals after the vertex input:
-  `src/OpenSage.Game/Assets/Shaders/Mesh.h:60-76`.
+  `src/Panopticon.Simulation/Assets/Shaders/Mesh.h:60-76`.
 - Skinning buffer upload happens after bone animation in `ModelInstance.Update`:
-  `src/OpenSage.Game/Graphics/ModelInstance.cs:241-251`. C4g inserts morph buffer updates before
+  `src/Panopticon.Simulation/Graphics/ModelInstance.cs:241-251`. C4g inserts morph buffer updates before
   rendering and before any future shader skinning path consumes vertex data.
 
 ## Appendix: reproduction

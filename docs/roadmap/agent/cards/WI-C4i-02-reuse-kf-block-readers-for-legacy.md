@@ -21,9 +21,9 @@ nif.xml field conditions.
 
 - `docs/roadmap/deep-dives/c4i-ee2-legacy-kf-formats.md` sections 3.1, 4.2, and 8.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 3 and 4.
-- KF block types added by `WI-C4c-01` under `src/OpenSage.FileFormats.Nif/Blocks/`.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:118-180`.
-- `src/OpenSage.Game.Tests/Data/Nif/NifKeyframeTests.cs`.
+- KF block types added by `WI-C4c-01` under `src/Panopticon.FileFormats.Nif/Blocks/`.
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:118-180`.
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifKeyframeTests.cs`.
 
 ## Steps
 
@@ -39,12 +39,12 @@ nif.xml field conditions.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifControllerSequence.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifKeyframeController.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifKeyframeData.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifKeyframeTests.cs`
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifControllerSequence.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifKeyframeController.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifKeyframeData.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifKeyframeTests.cs`
 
 ## Acceptance criteria
 

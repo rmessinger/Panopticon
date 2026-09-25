@@ -12,15 +12,15 @@
 
 ## Goal
 
-Extend `OpenSage.FileFormats.Nif` to decode EE2 NIF 10.1 visibility, texture-transform, material-color, alpha, and UV data blocks with exact stream consumption.
+Extend `Panopticon.FileFormats.Nif` to decode EE2 NIF 10.1 visibility, texture-transform, material-color, alpha, and UV data blocks with exact stream consumption.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4e-ee2-property-animation.md` sections 3, 4, 5, and 8.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 3, 4.2, and 7.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:21-55`, `118-155`, and `157-312`.
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:21-55`, `118-155`, and `157-312`.
 - The KF key types and key-group helpers added by `WI-C4c-01`.
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`.
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`.
 
 ## Steps
 
@@ -33,12 +33,12 @@ Extend `OpenSage.FileFormats.Nif` to decode EE2 NIF 10.1 visibility, texture-tra
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifPropertyControllers.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifAnimationDataBlocks.cs` (new)
-- `src/OpenSage.FileFormats.Nif/NifKeys.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifPropertyControllerTests.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifPropertyControllers.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifAnimationDataBlocks.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifKeys.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifPropertyControllerTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -60,7 +60,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not import animations or touch `OpenSage.Game` conversion code.
+- Do not import animations or touch `Panopticon.Simulation` conversion code.
 - Do not add NIF 10.0.1.0 support.
 - Do not implement `NiFlipController` or morph animation.
 - Do not commit or embed EE2 asset bytes.

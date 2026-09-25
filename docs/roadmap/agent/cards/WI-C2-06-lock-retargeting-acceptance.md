@@ -19,9 +19,9 @@ parity tests.
 
 - `docs/roadmap/deep-dives/c2-skeleton-animation-retargeting.md` sections 5-7.
 - C2 tests added by `WI-C2-01..05`.
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`.
-- `src/OpenSage.Game.Tests/Logic/Draw/W3dModelDrawTests.cs`.
-- `src/OpenSage.Game.Tests/GameFixture.cs`.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`.
+- `test/Panopticon.Simulation.Tests/Logic/Draw/W3dModelDrawTests.cs`.
+- `test/Panopticon.Simulation.Tests/GameFixture.cs`.
 - C1 W3D import parity tests.
 
 ## Steps
@@ -39,8 +39,8 @@ parity tests.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationBindingTests.cs` (new)
-- `src/OpenSage.Game.Tests/Logic/Draw/W3dModelDrawTests.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationBindingTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Logic/Draw/W3dModelDrawTests.cs`
 - C1 W3D parity test files only if a shared fixture is required
 
 ## Acceptance criteria

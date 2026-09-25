@@ -20,9 +20,9 @@ preserving current shader, texture, render-state, and mesh-part grouping semanti
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 2, 4, 5, and 7.
 - `docs/roadmap/implementation/track-c-c1-import-abstraction.md` section
   `ModelMesh.W3d.cs conversion responsibilities`.
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs:23-67,101-147,208-554`.
-- `src/OpenSage.Game/Graphics/ModelMeshPart.cs`.
-- `src/OpenSage.Game/Graphics/Shaders/FixedFunctionShaderResources.cs`: engine material inputs
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs:23-67,101-147,208-554`.
+- `src/Panopticon.Simulation/Graphics/ModelMeshPart.cs`.
+- `src/Panopticon.Simulation/Graphics/Shaders/FixedFunctionShaderResources.cs`: engine material inputs
   used by the current conversion.
 
 ## Steps
@@ -41,9 +41,9 @@ preserving current shader, texture, render-state, and mesh-part grouping semanti
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/W3d/W3dMaterialConverter.cs` (new)
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs` (extraction only; legacy caller remains)
-- `src/OpenSage.Game.Tests/Content/Importing/W3dMaterialConverterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dMaterialConverter.cs` (new)
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs` (extraction only; legacy caller remains)
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dMaterialConverterTests.cs` (new)
 
 ## Acceptance criteria
 

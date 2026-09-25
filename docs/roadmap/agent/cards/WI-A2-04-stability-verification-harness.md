@@ -20,10 +20,10 @@ run's correctness invariants, and report aggregate metric distributions.
 - `docs/roadmap/open-questions.md`: the determinism-priority Decision.
 - The A2 deep dive: the statistical validation model and selected metrics.
 - `docs/roadmap/implementation/track-a-a2-reproducibility.md`: both audits.
-- The P7 scenario matrix tests under `src/OpenSage.Game.Tests/`: the existing multi-scenario
+- The P7 scenario matrix tests under `test/Panopticon.Simulation.Tests/`: the existing multi-scenario
   run-and-assert pattern to replicate. Find them with
-  `grep -r P7_ScenarioMatrixTests src/OpenSage.Game.Tests`.
-- The P0 harness assertion layer under `src/OpenSage.Tools.ReplaySketch.Core/`: reuse its assertion
+  `grep -r P7_ScenarioMatrixTests test/Panopticon.Simulation.Tests`.
+- The P0 harness assertion layer under `src/Panopticon.Tools.ReplaySketch.Core/`: reuse its assertion
   primitives instead of writing new ones.
 
 ## Steps
@@ -43,7 +43,7 @@ run's correctness invariants, and report aggregate metric distributions.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/` (new harness and test file)
+- `test/Panopticon.Simulation.Tests/` (new harness and test file)
 
 ## Acceptance criteria
 

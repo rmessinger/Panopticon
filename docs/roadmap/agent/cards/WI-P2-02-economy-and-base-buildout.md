@@ -20,14 +20,14 @@ Teach the AI scaffold to issue legal order-stream actions for economy and base b
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:46-58`: decision: AI actuates via orders, not direct APIs.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:244-250`: `AIData`/`BuildListInfo` are parsed but stranded.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-274`: order/construction actuation surface.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:7-113`: `AIData` parser includes `SkirmishBuildList`.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:242-245`: `SkirmishBuildLists` storage.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:325-342`: `AISkirmishBuildList` and `Structures`.
-- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:65-82`: AI fields: supply/gatherers/priority.
-- `src/OpenSage.Game/Logic/Map/BuildListInfo.cs:194-236`: INI parse and `IsBuildable`.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121`: `BuildObject` handler.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:482-514`: `GatherDumpSupplies` handler.
-- `src/OpenSage.Game/Network/NetworkMessageBuffer.cs:33-43` and `:45-76`: local orders vs immediate injection.
+- `src/Panopticon.Simulation/Logic/AI/AIData.cs:7-113`: `AIData` parser includes `SkirmishBuildList`.
+- `src/Panopticon.Simulation/Logic/AI/AIData.cs:242-245`: `SkirmishBuildLists` storage.
+- `src/Panopticon.Simulation/Logic/AI/AIData.cs:325-342`: `AISkirmishBuildList` and `Structures`.
+- `src/Panopticon.Simulation/Logic/Map/BuildListInfo.cs:65-82`: AI fields: supply/gatherers/priority.
+- `src/Panopticon.Simulation/Logic/Map/BuildListInfo.cs:194-236`: INI parse and `IsBuildable`.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:96-121`: `BuildObject` handler.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:482-514`: `GatherDumpSupplies` handler.
+- `src/Panopticon.Simulation/Network/NetworkMessageBuffer.cs:33-43` and `:45-76`: local orders vs immediate injection.
 
 ## Steps
 
@@ -36,17 +36,17 @@ Teach the AI scaffold to issue legal order-stream actions for economy and base b
 3. Select the AI player's build list from `AIData.SkirmishBuildLists` using the player's side/faction name. If no matching list exists, emit no order and log a low-noise warning once.
 4. Walk build-list structures in priority order (`PriorityBuild` before non-priority, then list order). For the first affordable, prerequisite-satisfied, buildable structure, emit a `BuildObject` order with template, location, and angle from `BuildListInfo`.
 5. Economy rule: if the AI lacks a supply building from the build list, prioritize one; if it has supply gatherers and a supply target/source, emit `GatherDumpSupplies` orders to assign idle harvesters. Do not duplicate assignments already in progress.
-6. Add `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs`. Use headless `[Fact]` tests on `MockedGameTest` or the P0 harness; do not satisfy acceptance with `[GameFact]` skipped on CI.
+6. Add `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs`. Use headless `[Fact]` tests on `MockedGameTest` or the P0 harness; do not satisfy acceptance with `[GameFact]` skipped on CI.
 7. Include one test that observes AI-issued `Order`s in the recorded/order-processed stream, and one test/run that shows building count moves toward the build-list target and income becomes positive.
 8. New `.cs` files must be UTF-8 with BOM. After creating files, run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs`
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`
-- `src/OpenSage.Game/Network/NetworkMessageBuffer.cs` (only if a queued AI-order seam is needed)
-- `src/OpenSage.Game/IGame.cs` / `src/OpenSage.Game/Game.cs` (only if exposing that seam is necessary)
-- `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs`
+- `src/Panopticon.Simulation/Network/NetworkMessageBuffer.cs` (only if a queued AI-order seam is needed)
+- `src/Panopticon.Simulation/IGame.cs` / `src/Panopticon.Simulation/Game.cs` (only if exposing that seam is necessary)
+- `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -81,7 +81,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the P2 checklist items for AI order actuation, AI base-building, and AI economy management in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs` was created and the tests run in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIEconomyBuildoutTests.cs` was created and the tests run in CI.
 
 ## Result
 

@@ -18,12 +18,12 @@ Add a no-behavior strategic AI tick scaffold: `Player.LogicTick()` invokes `Skir
 
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:20-39`: design for the coarse-cadence decision loop and idempotence.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:228-233`: current gap: AI classes are persistence-only.
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs:8-154`: base AI player persistence; preserve every persist branch and guard.
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs:3-31`: skirmish AI subclass with no behavior.
-- `src/OpenSage.Game/Logic/Player.cs:84-109`: `AIPlayer` property and current `LogicTick()`.
-- `src/OpenSage.Game/Logic/Player.cs:763-775`: creation of `SkirmishAIPlayer` for skirmish AI slots.
-- `src/OpenSage.Game/Logic/PlayerManager.cs:145-150`: player tick loop.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs:8-154`: base AI player persistence; preserve every persist branch and guard.
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs:3-31`: skirmish AI subclass with no behavior.
+- `src/Panopticon.Simulation/Logic/Player.cs:84-109`: `AIPlayer` property and current `LogicTick()`.
+- `src/Panopticon.Simulation/Logic/Player.cs:763-775`: creation of `SkirmishAIPlayer` for skirmish AI slots.
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs:145-150`: player tick loop.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 
@@ -31,15 +31,15 @@ Add a no-behavior strategic AI tick scaffold: `Player.LogicTick()` invokes `Skir
 2. Implement the scaffold so every player tick advances an internal countdown, calls a protected decision hook only when the countdown reaches zero, then resets to the default cadence. No orders or gameplay decisions are emitted in this card.
 3. Override or inherit the scaffold in `SkirmishAIPlayer` without changing the existing `Persist(...)` layout. If you move any persistence code, preserve every existing branch, guard, exception, skipped-byte count, and default value exactly.
 4. Wire `Player.LogicTick()` to call `AIPlayer?.Update()` after `Rank.Update()`. Do not tick neutral/human players that have `AIPlayer == null`.
-5. Add `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIPlayerTickTests.cs` as a headless `[Fact]` test file. The test should tick an AI player for a fixed number of frames and assert the exact decision-hook count from the stated cadence.
+5. Add `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIPlayerTickTests.cs` as a headless `[Fact]` test file. The test should tick an AI player for a fixed number of frames and assert the exact decision-hook count from the stated cadence.
 6. New `.cs` files must be UTF-8 with BOM. After creating files, run `dotnet format src`, then confirm `dotnet format src --verify-no-changes` is clean.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs`
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs`
-- `src/OpenSage.Game/Logic/Player.cs`
-- `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIPlayerTickTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs`
+- `src/Panopticon.Simulation/Logic/Player.cs`
+- `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIPlayerTickTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -73,7 +73,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "Add a coarse-cadence `Update(...)` decision loop" P2 item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/AI/SkirmishAIPlayerTickTests.cs` was created and the test runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/AI/SkirmishAIPlayerTickTests.cs` was created and the test runs in CI.
 
 ## Result
 

@@ -18,16 +18,16 @@ Create the P2 `ScenarioMatrix` test that sweeps `humanFaction × aiFaction × ma
 
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:120-140`: P2 matrix axes, 18 valid cells, and per-cell assertions.
 - `docs/roadmap/implementation-checklist.md:195-199`: checklist acceptance criteria for the P2 matrix.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: axes, filters, assertion templates, and expansion.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix execution via `HarnessRunner`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:20-84`: current assertion path resolver; extend paths here if needed.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs:7-35`: per-run pass/fail report.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:7-56`: aggregate report shape.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:42-67`: existing P2 stub style and intent.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: axes, filters, assertion templates, and expansion.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix execution via `HarnessRunner`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:20-84`: current assertion path resolver; extend paths here if needed.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs:7-35`: per-run pass/fail report.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:7-56`: aggregate report shape.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:42-67`: existing P2 stub style and intent.
 
 ## Steps
 
-1. Create `src/OpenSage.Game.Tests/Tools/ReplaySketch/P2ScenarioMatrixTests.cs` as a real, non-skipped test file. Keep the existing broad stub file intact unless a duplicate type/name requires a tiny adjustment.
+1. Create `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P2ScenarioMatrixTests.cs` as a real, non-skipped test file. Keep the existing broad stub file intact unless a duplicate type/name requires a tiny adjustment.
 2. Build a `ScenarioMatrix` with axes:
    - `humanFaction`: `USA`, `GLA`, `China`
    - `aiFaction`: `USA`, `GLA`, `China`
@@ -42,9 +42,9 @@ Create the P2 `ScenarioMatrix` test that sweeps `humanFaction × aiFaction × ma
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P2ScenarioMatrixTests.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (if assertion paths need real P2 values)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs` (if attack-order counts need exposure)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P2ScenarioMatrixTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (if assertion paths need real P2 values)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayActionMonitor.cs` (if attack-order counts need exposure)
 
 ## Acceptance criteria
 
@@ -80,7 +80,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "P2 scenario matrix" item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Tools/ReplaySketch/P2ScenarioMatrixTests.cs` was created and the matrix test runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P2ScenarioMatrixTests.cs` was created and the matrix test runs in CI.
 
 ## Result
 

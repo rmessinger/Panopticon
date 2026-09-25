@@ -13,7 +13,7 @@ games.
 The engine's distance unit is the foot (see
 `docs/system-investigations/physics-system.md` section 2 for the evidence:
 `GameData.ini` "our distance units are roughly one foot"). That scale is baked into
-every binary and data format OpenSAGE consumes:
+every binary and data format Panopticon consumes:
 
 | Surface | Where the unit is fixed |
 |---|---|
@@ -44,7 +44,7 @@ artifacts, and documentation.
 
 ### Single conversion source
 
-`OpenSage.Mathematics.WorldUnits`:
+`Panopticon.Mathematics.WorldUnits`:
 
 ```csharp
 public static class WorldUnits
@@ -68,7 +68,7 @@ human reads them, not rewritten.
 
 ## Implementation steps
 
-1. Add `WorldUnits` to `src/OpenSage.Mathematics` with round-trip tests.
+1. Add `WorldUnits` to `src/Panopticon.Mathematics` with round-trip tests.
 2. Add the "Units" section to `docs/developer-guide.md`; cross-link from
    `docs/maps.md` and AGENTS.md.
 3. ReplaySketch: map panel gains a scale bar and position tooltips in meters (logic
@@ -87,7 +87,7 @@ taken in any order.
 
 ## Optional step: unit declaration for authored content
 
-If and when OpenSAGE authors new content (the WorldBuilder-requirements editor, a mod
+If and when Panopticon authors new content (the WorldBuilder-requirements editor, a mod
 pipeline), that pipeline works in meters internally and converts on export to the
 foot-based formats, with an explicit unit declaration in the project file. Imported
 original content is never rescaled.
@@ -96,7 +96,7 @@ original content is never rescaled.
 
 For the record, a full conversion would touch: the map heightmap loader, the W3D
 loader, all INI parse-time converters (`ParseVelocityToLogicFrames` and friends in
-`src/OpenSage.Game/Data/Ini/IniParser.cs`), `GameData` gravity, replay order
+`src/Panopticon.Simulation/Data/Ini/IniParser.cs`), `GameData` gravity, replay order
 serialization (breaking playback of original `.rep` files, ReplaySketch's core
 function), save-game round trips, pathfinding cell sizes, camera constraints, and
 every numeric assertion and validation baseline. Effort is measured in weeks, and the
@@ -107,7 +107,7 @@ such as netplay co-hosting with a metric-native engine.
 
 - Standard gates: `dotnet build src`, `dotnet format src --verify-no-changes`,
   `dotnet test src --filter Category!=Interactive`, `scripts/check_brace_newline.py`.
-- No changes under `src/OpenSage.Game` logic beyond adding the read-only helper:
+- No changes under `src/Panopticon.Simulation` logic beyond adding the read-only helper:
   replay determinism and the ReplaySketch unit-timing baseline must remain
   byte-identical.
 - ReplaySketch screenshot mode still renders (per the AGENTS.md validation rule).

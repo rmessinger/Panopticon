@@ -18,8 +18,8 @@ Implement `NifAnimationImporter` so that a model-qualified KF key becomes a CPU-
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 4, 6, and 7.
-- `src/OpenSage.Game/Content/Importing/IAnimationImporter.cs` and `AssetImportContext.cs`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationImporter.cs` (key form and null rules)
+- `src/Panopticon.Simulation/Content/Importing/IAnimationImporter.cs` and `AssetImportContext.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationImporter.cs` (key form and null rules)
   and `GltfAnimationConverter.cs:121-132,211-229` (identity scale and offset rule).
 - The skeleton entry point from `WI-C4c-02` and the samplers from `WI-C4c-03`.
 
@@ -50,17 +50,17 @@ Implement `NifAnimationImporter` so that a model-qualified KF key becomes a CPU-
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationKey.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImporterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationKey.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImporterTests.cs` (new)
 
 ## Acceptance criteria
 
 - [ ] Every section 7 condition maps to its stated result, with asset context in messages.
 - [ ] Reconstructed `offset * rest` equals the converted authored sample within 1e-4.
 - [ ] The importer performs no GPU, `AssetStore`, or ZIP API work, and no NIF parser type
-      reaches `OpenSage.Game/Graphics/`.
+      reaches `Panopticon.Simulation/Graphics/`.
 - [ ] Standard validation passes.
 
 ## Validation commands

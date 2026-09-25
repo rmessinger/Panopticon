@@ -22,9 +22,9 @@ yet.
 - `docs/roadmap/implementation/track-g-g2-graphics-settings.md`: the `WI-G2-01` knob table. This is
   the authoritative list of members.
 - The G2 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowSettings.cs`: the closest existing pattern for
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs`: the closest existing pattern for
   a settings object with defaults and a validating setter.
-- `src/OpenSage.Game/Lod/StaticGameLod.cs:60-135`: the property names to mirror where a knob already
+- `src/Panopticon.Simulation/Lod/StaticGameLod.cs:60-135`: the property names to mirror where a knob already
   has an INI equivalent.
 
 ## Steps
@@ -42,9 +42,9 @@ yet.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/` (new settings and preset types)
-- `src/OpenSage.Game/Game.cs` (ownership of the active settings)
-- `src/OpenSage.Game.Tests/` (preset tests)
+- `src/Panopticon.Simulation/Graphics/` (new settings and preset types)
+- `src/Panopticon.Simulation/Game.cs` (ownership of the active settings)
+- `test/Panopticon.Simulation.Tests/` (preset tests)
 
 ## Acceptance criteria
 

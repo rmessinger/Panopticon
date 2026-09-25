@@ -34,7 +34,7 @@ Card 6 needs cards 1, 2, and 3. Card 7 needs cards 4 and 6 and is the completion
 
 - Convention: NIF `Matrix33` is column-vector. Transpose once when copying into `Matrix4x4`.
   Quaternion keys stay unchanged. Card 1 owns the only change to this rule.
-- Parser boundary: skin blocks join `OpenSage.FileFormats.Nif`. The C4a skinned-geometry
+- Parser boundary: skin blocks join `Panopticon.FileFormats.Nif`. The C4a skinned-geometry
   rejection in `NifFile.ValidateReferences` becomes typed reference validation.
 - Spaces: vertices are stored in skin space. Model space is `S^-1 * p`; inverse bind is `B_i * S`
   in column form, conjugated to the engine frame. The shape transform is ignored for skinned

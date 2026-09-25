@@ -48,7 +48,7 @@ Render an optional domain-supplied fidelity category without depending on B7 imp
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~FidelityOverlay"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-fidelity.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-fidelity.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

@@ -20,17 +20,17 @@ criteria of every other P1 card.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Network/SkirmishSlot.cs:1`: a correctly-encoded sibling file; its first
+- `src/Panopticon.Simulation/Network/SkirmishSlot.cs:1`: a correctly-encoded sibling file; its first
   three bytes are `EF BB BF` (UTF-8 BOM). Use it as the reference encoding.
 - `.editorconfig` (repo root): the `charset = utf-8-bom` rule that the format gate enforces.
 
 The offending files (all start with bytes `75 73 69` = `usi…`, i.e. no BOM):
 
-- `src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`
-- `src/OpenSage.Game.Tests/Logic/PlayerManagerTests.cs`
-- `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs`
-- `src/OpenSage.Game.Tests/Logic/PlayerRelationshipTests.cs`
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/PlatformPaths.cs`
+- `src/Panopticon.Simulation/Network/SkirmishSlotDefaults.cs`
+- `test/Panopticon.Simulation.Tests/Logic/PlayerManagerTests.cs`
+- `test/Panopticon.Simulation.Tests/Logic/PlayerOwnershipTests.cs`
+- `test/Panopticon.Simulation.Tests/Logic/PlayerRelationshipTests.cs`
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/PlatformPaths.cs`
 
 ## Steps
 
@@ -45,11 +45,11 @@ The offending files (all start with bytes `75 73 69` = `usi…`, i.e. no BOM):
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`
-- `src/OpenSage.Game.Tests/Logic/PlayerManagerTests.cs`
-- `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs`
-- `src/OpenSage.Game.Tests/Logic/PlayerRelationshipTests.cs`
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/PlatformPaths.cs`
+- `src/Panopticon.Simulation/Network/SkirmishSlotDefaults.cs`
+- `test/Panopticon.Simulation.Tests/Logic/PlayerManagerTests.cs`
+- `test/Panopticon.Simulation.Tests/Logic/PlayerOwnershipTests.cs`
+- `test/Panopticon.Simulation.Tests/Logic/PlayerRelationshipTests.cs`
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/PlatformPaths.cs`
 
 ## Acceptance criteria
 

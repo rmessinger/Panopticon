@@ -22,15 +22,15 @@ Lock P7 as the standing playability regression suite by ensuring the six end-sta
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:284-287`: current `P7_ScenarioMatrixTests` methods to unblock.
 - `docs/roadmap/implementation-checklist.md:345-360`: P6b promotion, CI/standing regression, and matrix ACs.
 - `docs/roadmap/agent/README.md:66-75`: standard validation commands.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:222-254`: current P7 skipped stubs and method names.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55`: aggregate report fields used by the tests.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: canonical matrix runner.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: canonical harness run-and-assert path.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:222-254`: current P7 skipped stubs and method names.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/MatrixReport.cs:19-55`: aggregate report fields used by the tests.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: canonical matrix runner.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: canonical harness run-and-assert path.
 - `.editorconfig:14-14`: new `.cs` files must be UTF-8 with BOM.
 
 ## Steps
 
-1. Verify all six scenario files exist under `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/` as source-controlled static inputs and are consumed by the P7 matrix from `WI-P7-07`.
+1. Verify all six scenario files exist under `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/` as source-controlled static inputs and are consumed by the P7 matrix from `WI-P7-07`.
 2. Replace the `P7_ScenarioMatrixTests` stubs in `TrackPScenarioMatrixTests.cs` with real tests while preserving the class name, method names, and useful traits so test discovery continues to find the same P7 gate.
 3. Remove the skip-only acceptance path. Prefer headless `[Fact]` tests that run under `dotnet test src --filter Category!=Interactive`; if a game install is truly unavoidable, document the exact runnable command and make the default test fail loudly with a clear blocked reason rather than silently passing/skipping.
 4. Preserve any existing guard semantics that protect unsupported environments, but do not preserve a guard by deleting discovery or converting failures into success.
@@ -43,8 +43,8 @@ Lock P7 as the standing playability regression suite by ensuring the six end-sta
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionMatrixTests.cs` (only if `WI-P7-07` created helper coverage that must be folded into the canonical test class)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionMatrixTests.cs` (only if `WI-P7-07` created helper coverage that must be folded into the canonical test class)
 - `docs/roadmap/agent/README.md` (or the nearest existing roadmap README that documents scenario-matrix validation)
 - `docs/roadmap/implementation-checklist.md`
 

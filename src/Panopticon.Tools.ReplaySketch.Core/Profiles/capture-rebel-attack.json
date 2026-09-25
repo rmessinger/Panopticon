@@ -1,0 +1,59 @@
+{
+  // Reproduction profile for the "Rebel stuck in run animation while attacking" bug: a GLA
+  // Rebel faces +Y, a Humvee parks 100 units to the east, and frame 0 commands the Rebel's
+  // weapon directly (no move order). The Rebel must turn ~90 degrees to engage, which is the
+  // rotation path that used to assert the MOVING condition flag, and the firing state
+  // (USING_WEAPON_A, defined after MOVING in the INI) must win condition-state matching
+  // while ATTACKING is set. Run with:
+  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-rebel-attack.json
+  "Name": "rebel-attack",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 60,
+  "SettleFrames": 5,
+  "CaptureStride": 2,
+  "HideHud": true,
+  "Players": [
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" },
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" }
+  ],
+  "Actors": [
+    {
+      "Id": "rebel",
+      "Definition": "GLAInfantryRebel",
+      "Owner": "gla",
+      "X": 540,
+      "Y": 600,
+      "FacingDegrees": 90,
+      "Role": "subject"
+    },
+    {
+      "Id": "humvee",
+      "Definition": "AmericaVehicleHumvee",
+      "Owner": "usa",
+      "X": 640,
+      "Y": 600,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "AutoFit",
+    "SubjectActorIds": [ "rebel" ],
+    "FramingPoints": [ { "X": 570, "Y": 600 } ],
+    "DesiredSpanFraction": 0.6,
+    "InitialCameraHeight": 120,
+    "MinCameraHeight": 40,
+    "MaxCameraHeight": 300
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "rebel",
+      "TargetActorId": "humvee"
+    }
+  ],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

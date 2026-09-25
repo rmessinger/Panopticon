@@ -21,10 +21,10 @@ NetImmerse 4.2.2.0 KF files with exact footer consumption.
 
 - `docs/roadmap/deep-dives/c4i-ee2-legacy-kf-formats.md` sections 1, 3, 4.1, 4.3, and 8.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 3 and 7.
-- `src/OpenSage.FileFormats.Nif/NifHeader.cs`.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:21-56`.
-- `src/OpenSage.FileFormats.Nif/NifBinaryReader.cs`.
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`.
+- `src/Panopticon.FileFormats.Nif/NifHeader.cs`.
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:21-56`.
+- `src/Panopticon.FileFormats.Nif/NifBinaryReader.cs`.
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`.
 
 ## Steps
 
@@ -43,10 +43,10 @@ NetImmerse 4.2.2.0 KF files with exact footer consumption.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifHeader.cs`
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifHeaderTests.cs`
+- `src/Panopticon.FileFormats.Nif/NifHeader.cs`
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifHeaderTests.cs`
 
 ## Acceptance criteria
 

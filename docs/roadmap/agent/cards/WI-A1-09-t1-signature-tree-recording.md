@@ -20,8 +20,8 @@ partition to entity bucket) suitable for tolerance-aware divergence screening, p
 
 - `docs/roadmap/deep-dives/a5-visualization.md` §5: the tier definitions.
 - `docs/roadmap/deep-dives/a2-reproducibility.md` §2.2: signatures are diagnostic, not parity gates.
-- `src/OpenSage.Game/RunOutput.cs`: the T0 artifact this extends.
-- `src/OpenSage.Game/SimulationHost.cs`: the per-tick hook.
+- `src/Panopticon.Simulation/RunOutput.cs`: the T0 artifact this extends.
+- `src/Panopticon.Simulation/SimulationHost.cs`: the per-tick hook.
 
 ## Steps
 
@@ -32,8 +32,8 @@ was the blocker this card was waiting on. The comparator UI stays A5-4.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/` (T1 recording types)
-- `src/OpenSage.Game.Tests/` (round-trip test)
+- `src/Panopticon.Simulation/` (T1 recording types)
+- `test/Panopticon.Simulation.Tests/` (round-trip test)
 
 ## Acceptance criteria
 

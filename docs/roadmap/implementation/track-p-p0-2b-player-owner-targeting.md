@@ -75,7 +75,7 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
   frame-sort tie-break (`:103-107`) still uses stable ordering across >2 players (it sorts by
   frame then `PlayerIndex`, which is fine).
 
-### Tests (`OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs`)
+### Tests (`Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchTests.cs`)
 
 - `Export_ThreePlayers_AttributesOrdersToCorrectPlayerIndex`: build a 3-player scenario (mixed
   factions), each with one distinguishable command; export; assert each emitted `Order.PlayerIndex`
@@ -94,9 +94,9 @@ relationship-driven enemy selection. Both are small, testable, and faction/relat
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Centralize owner→`PlayerIndex` mapping; relationship-driven enemy lookup; replace `+2` and `enemyIdx` literals |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/TerrainValidator.cs` | If `BuildContextPublic` assumes a single enemy index, accept the resolved enemy (no behavior change for 2-player) |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add the three tests above |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Centralize owner→`PlayerIndex` mapping; relationship-driven enemy lookup; replace `+2` and `enemyIdx` literals |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/TerrainValidator.cs` | If `BuildContextPublic` assumes a single enemy index, accept the resolved enemy (no behavior change for 2-player) |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add the three tests above |
 
 ## Out of scope (later P0 items)
 

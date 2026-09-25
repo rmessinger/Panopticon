@@ -19,7 +19,7 @@ running benchmarks yet.
 
 - `docs/roadmap/implementation/track-a-a4-experiment-harness.md`.
 - A4 seam identifiers and factories already landed.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`: matrix conventions.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`: matrix conventions.
 - B1 benchmark identifiers.
 
 ## Steps

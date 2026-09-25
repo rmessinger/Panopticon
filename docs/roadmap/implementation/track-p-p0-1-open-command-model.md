@@ -79,13 +79,13 @@ New `CommandSpecTests` class in `ReplaySketchTests.cs`:
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` | NEW : polymorphic argument hierarchy |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs` | NEW : open command model + `ToOrder`; no legacy identity stored |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs` | Add `CommandSpec Command` field; make `Type: ActionType?` a stored field (not derived); update JSON converter |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs` | Kept : still used as `ActionEntry.Type` for legacy dispatch |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | `BuildOrders`: dispatch on `action.Type` enum; open-command branch calls `ToOrder` |
-| `src/OpenSage.Tools.ReplaySketch.Core/Profiles/ActionTreeController.cs` | Verify compiles cleanly after `ActionEntry` changes |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add `CommandSpecTests` class |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs` | NEW : polymorphic argument hierarchy |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs` | NEW : open command model + `ToOrder`; no legacy identity stored |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionEntry.cs` | Add `CommandSpec Command` field; make `Type: ActionType?` a stored field (not derived); update JSON converter |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionType.cs` | Kept : still used as `ActionEntry.Type` for legacy dispatch |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | `BuildOrders`: dispatch on `action.Type` enum; open-command branch calls `ToOrder` |
+| `src/Panopticon.Tools.ReplaySketch.Core/Profiles/ActionTreeController.cs` | Verify compiles cleanly after `ActionEntry` changes |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Add `CommandSpecTests` class |
 
 ## Out of scope (later P0 items)
 

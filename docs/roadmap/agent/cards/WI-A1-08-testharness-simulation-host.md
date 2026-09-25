@@ -17,10 +17,10 @@ with the `SimulationHost` run loop, so the harness and the host share one steppi
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/SimulationHost.cs`: the host to migrate onto.
-- `src/OpenSage.Tools.TestHarness/Program.cs` and the runner it dispatches to
+- `src/Panopticon.Simulation/SimulationHost.cs`: the host to migrate onto.
+- `src/Panopticon.Tools.TestHarness/Program.cs` and the runner it dispatches to
   (`ReplayScenarioRunner` / `ValidationGroundRunner`): the loops to change.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:60-135`: the current frame/dispatch loop
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:60-135`: the current frame/dispatch loop
   the host's `InjectOrders(frame, ...)` + `Run` generalize.
 
 ## Steps
@@ -37,8 +37,8 @@ with the `SimulationHost` run loop, so the harness and the host share one steppi
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/` (runner wiring)
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`
+- `src/Panopticon.Tools.TestHarness/` (runner wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`
 
 ## Acceptance criteria
 

@@ -30,7 +30,7 @@ Card 6 is the completion point.
 
 ## Agent context
 
-- Parser boundary: KF block types join `OpenSage.FileFormats.Nif`. `NifFile.Roots` stays
+- Parser boundary: KF block types join `Panopticon.FileFormats.Nif`. `NifFile.Roots` stays
   NiNode-only, so KF files have no roots, and the importer selects block 0.
 - Skeleton: `NifSceneConverter` owns bone construction for both importers, so animation rests
   equal model rests.

@@ -18,17 +18,17 @@ Replace the P6 scenario-matrix stub with a CI-running 15-cell matrix sweeping or
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-144`: P6 matrix axes, constraints, and per-cell assertions.
 - `docs/roadmap/implementation-checklist.md:293-297`: checklist ACs for the P6 scenario matrix.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-152`: matrix expansion model.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix runner.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:165-188`: current skipped P6 matrix stubs.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:374-425`: existing matrix expansion/report test style.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-152`: matrix expansion model.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: matrix runner.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:165-188`: current skipped P6 matrix stubs.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs:374-425`: existing matrix expansion/report test style.
 - `docs/roadmap/agent/cards/WI-P6-01-command-coverage-matrix.md`: confirmed command/order coverage and gaps.
 - `docs/roadmap/agent/cards/WI-P6-02-combat-coverage.md`: verified combat assertions to reuse for attack cells.
 - `docs/roadmap/agent/cards/WI-P6-03-death-cleanup.md`: death cleanup assertions to reuse when combat cells kill targets.
 
 ## Steps
 
-1. Update `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` or split P6 into `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs`.
+1. Update `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` or split P6 into `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs`.
 2. Remove the skipped P6 matrix stubs and replace them with non-skipped `[Fact]` tests that run in CI.
 3. Define a `ScenarioMatrix` with axes:
    - `orderType` ∈ `MoveTo`, `AttackObject`, `BuildObject`, `CreateUnit`, `SpecialPower`
@@ -41,8 +41,8 @@ Replace the P6 scenario-matrix stub with a CI-running 15-cell matrix sweeping or
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs` (new, if splitting from the existing file)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs` (new, if splitting from the existing file)
 
 ## Acceptance criteria
 
@@ -81,5 +81,5 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-Done. Added `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs` (2 non-skipped `[Fact]`s) and removed the skipped P6 stub class from `TrackPScenarioMatrixTests.cs`. Built a `ScenarioMatrix` with axes `orderType` ∈ {MoveTo, AttackObject, BuildObject, CreateUnit, SpecialPower} × `faction` ∈ {USA, GLA, China} = 15 cells (no filters). Each cell asserts the order type has a real (non-default) OrderProcessor handler. BuildObject/CreateUnit cells additionally exercise the headless affordability-debit seam (`OrderProcessor.TryDebit`) for that faction's reference definition (real observable effect: money debited by cost). MoveTo/AttackObject/SpecialPower end-to-end effects run through `_game.Scene3D.GameObjects` (null in the headless host) and are recorded as explicit named `orderType-faction` gaps in the per-cell report JSON (not silent skips). A dedicated second test covers the 3 SpecialPower cells: handler dispatch to `SpecialPowerApplicator.Execute` is verified, and each cell documents the per-faction reference-power effect as an asset-dependent gap. No unimplemented handlers exist among the five order families, so no cell fails. Validation: dotnet build src (0 errors); P6ScenarioMatrixTests (2 passed); Category!=Interactive (762 passed, 13 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
+Done. Added `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs` (2 non-skipped `[Fact]`s) and removed the skipped P6 stub class from `TrackPScenarioMatrixTests.cs`. Built a `ScenarioMatrix` with axes `orderType` ∈ {MoveTo, AttackObject, BuildObject, CreateUnit, SpecialPower} × `faction` ∈ {USA, GLA, China} = 15 cells (no filters). Each cell asserts the order type has a real (non-default) OrderProcessor handler. BuildObject/CreateUnit cells additionally exercise the headless affordability-debit seam (`OrderProcessor.TryDebit`) for that faction's reference definition (real observable effect: money debited by cost). MoveTo/AttackObject/SpecialPower end-to-end effects run through `_game.Scene3D.GameObjects` (null in the headless host) and are recorded as explicit named `orderType-faction` gaps in the per-cell report JSON (not silent skips). A dedicated second test covers the 3 SpecialPower cells: handler dispatch to `SpecialPowerApplicator.Execute` is verified, and each cell documents the per-faction reference-power effect as an asset-dependent gap. No unimplemented handlers exist among the five order families, so no cell fails. Validation: dotnet build src (0 errors); P6ScenarioMatrixTests (2 passed); Category!=Interactive (762 passed, 13 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
 

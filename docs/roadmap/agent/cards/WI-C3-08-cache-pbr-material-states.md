@@ -20,10 +20,10 @@ double-sided rendering.
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 5 and 6.
 - PBR shader resources from `WI-C3-06..07`.
 - Texture and sampler materializer from `WI-C3-05`.
-- `src/OpenSage.Game/Graphics/Shaders/FixedFunctionShaderResources.cs`.
-- `src/OpenSage.Rendering/Material.cs`.
-- `src/OpenSage.Game.Tests/GameFixture.cs`.
-- Existing transparent surface ordering in `src/OpenSage.Game/Graphics/Rendering/`.
+- `src/Panopticon.Simulation/Graphics/Shaders/FixedFunctionShaderResources.cs`.
+- `src/Panopticon.Rendering/Material.cs`.
+- `test/Panopticon.Simulation.Tests/GameFixture.cs`.
+- Existing transparent surface ordering in `src/Panopticon.Simulation/Graphics/Rendering/`.
 
 ## Steps
 
@@ -39,9 +39,9 @@ double-sided rendering.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs`
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs`
-- `src/OpenSage.Game.Tests/Graphics/Shaders/PbrMetallicRoughnessShaderResourcesTests.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs`
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Shaders/PbrMetallicRoughnessShaderResourcesTests.cs` (new)
 
 ## Acceptance criteria
 

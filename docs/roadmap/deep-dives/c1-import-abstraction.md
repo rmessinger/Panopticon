@@ -26,7 +26,7 @@ runtime materializers.
 
 ## 2. Interchange model
 
-Types live under `OpenSage.Content.Importing`, one type per file.
+Types live under `Panopticon.Content.Importing`, one type per file.
 
 | Type | Owns |
 |---|---|
@@ -80,8 +80,8 @@ format-specific path resolver and parsing rules. The context contains no `AssetS
 
 `OnDemandAssetLoadStrategy` receives the selected model and animation importers and passes them to
 the existing on-demand loaders. The contracts and importer implementations remain internal to
-`OpenSage.Game`. A public `OnDemandAssetLoadStrategy.CreateW3d(w3dPathResolver,
-texturePathResolver)` factory lets the separate `OpenSage.Mods.*` assemblies select the shipped
+`Panopticon.Simulation`. A public `OnDemandAssetLoadStrategy.CreateW3d(w3dPathResolver,
+texturePathResolver)` factory lets the separate `Panopticon.Mods.*` assemblies select the shipped
 W3D implementation without exposing importer internals. `OnDemandAssetLoadStrategy.None`
 continues to return no presentation-asset loaders. A4 may later register importer identifiers, but
 C1 owns the contracts and construction.

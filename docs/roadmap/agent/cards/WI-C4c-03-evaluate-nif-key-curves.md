@@ -18,8 +18,8 @@ source-frame quaternion samples.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 4.1, 4.2, and 6.3.
-- Key types added by `WI-C4c-01` in `src/OpenSage.FileFormats.Nif/NifKeys.cs`.
-- `src/OpenSage.FileFormats.Nif/NifMatrix33.cs` (stored rotation reading).
+- Key types added by `WI-C4c-01` in `src/Panopticon.FileFormats.Nif/NifKeys.cs`.
+- `src/Panopticon.FileFormats.Nif/NifMatrix33.cs` (stored rotation reading).
 
 ## Steps
 
@@ -41,9 +41,9 @@ source-frame quaternion samples.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifKeyCurve.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifRotationSampler.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifKeyCurveTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifKeyCurve.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifRotationSampler.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifKeyCurveTests.cs` (new)
 
 ## Acceptance criteria
 

@@ -33,7 +33,7 @@ artifact. The result is a documented lossy projection, not a continuation-equiva
 
 ## Files likely to change
 
-- New service under `src/OpenSage.Tools.ReplaySketch.Core/Services/`
+- New service under `src/Panopticon.Tools.ReplaySketch.Core/Services/`
 - Scenario model extensions if required by the design
 - New ReplaySketch tests
 

@@ -18,8 +18,8 @@ state.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a5-scenario-visualization.md`: bundle schema.
-- `src/OpenSage.Game/RunOutput.cs`.
-- `src/OpenSage.Game/Recording/RunRecording.cs`, `SignatureTree.cs`,
+- `src/Panopticon.Simulation/RunOutput.cs`.
+- `src/Panopticon.Simulation/Recording/RunRecording.cs`, `SignatureTree.cs`,
   `WorldStateSnapshot.cs`.
 - Existing run-output and tiered-recording tests.
 
@@ -34,8 +34,8 @@ state.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/RunOutput.cs`
-- `src/OpenSage.Game/Recording/`
+- `src/Panopticon.Simulation/RunOutput.cs`
+- `src/Panopticon.Simulation/Recording/`
 - Existing recording tests
 
 ## Acceptance criteria

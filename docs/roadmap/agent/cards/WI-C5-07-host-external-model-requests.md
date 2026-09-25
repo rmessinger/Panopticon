@@ -20,20 +20,20 @@ optional C2 binding, and complete disposal. Rendering remains in `WI-C5-08`.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 2, 8, and 12.
-- `src/OpenSage.Tools.TestHarness/Program.cs`.
-- `src/OpenSage.Tools.TestHarness/ScenarioBuilder.cs`: game installation resolution.
-- `src/OpenSage.Tools.TestHarness/ITestHarnessReporter.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: conditional graphics-test
+- `src/Panopticon.Tools.TestHarness/Program.cs`.
+- `src/Panopticon.Tools.TestHarness/ScenarioBuilder.cs`: game installation resolution.
+- `src/Panopticon.Tools.TestHarness/ITestHarnessReporter.cs`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: conditional graphics-test
   precedent.
-- `src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj`.
-- `src/OpenSage.Game/AssemblyInfo.cs`: TestHarness friend assembly access.
-- `src/OpenSage.Game/Content/Loaders/AssetLoadContext.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`.
-- `src/OpenSage.Game/Content/Importing/ExternalFormatFactory.cs` (new, from `WI-C5-01`).
-- `src/OpenSage.Game/Content/Importing/ExternalAssetSourceMount.cs` (new, from `WI-C5-02`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequest.cs` (new, from
+- `test/Panopticon.Tools.ReplaySketch.Tests/Panopticon.Tools.ReplaySketch.Tests.csproj`.
+- `src/Panopticon.Simulation/AssemblyInfo.cs`: TestHarness friend assembly access.
+- `src/Panopticon.Simulation/Content/Loaders/AssetLoadContext.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ExternalFormatFactory.cs` (new, from `WI-C5-01`).
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetSourceMount.cs` (new, from `WI-C5-02`).
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequest.cs` (new, from
   `WI-C5-06`).
 
 ## Steps
@@ -66,12 +66,12 @@ optional C2 binding, and complete disposal. Rendering remains in `WI-C5-08`.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/Program.cs`
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelHost.cs` (new)
-- `src/OpenSage.Tools.TestHarness/ExternalModels/IExternalModelRenderStage.cs` (new)
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelHostResult.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj`
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelHostTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/Program.cs`
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelHost.cs` (new)
+- `src/Panopticon.Tools.TestHarness/ExternalModels/IExternalModelRenderStage.cs` (new)
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelHostResult.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/Panopticon.Tools.ReplaySketch.Tests.csproj`
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelHostTests.cs` (new)
 
 ## Acceptance criteria
 

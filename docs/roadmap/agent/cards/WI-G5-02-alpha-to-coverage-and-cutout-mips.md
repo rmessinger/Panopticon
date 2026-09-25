@@ -21,7 +21,7 @@ the original hard cutoff.
 - `docs/roadmap/implementation/track-g-g5-alpha-test-clarity.md`: the `WI-G5-01` findings, which fix
   the exact materials, mip routes, and cutoff sites to change.
 - The G5 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Assets/Shaders/Common.h:29-33`.
+- `src/Panopticon.Simulation/Assets/Shaders/Common.h:29-33`.
 - `src/Veldrid.ImageSharp/MipmapHelper.cs:36-61`.
 - The G2 settings alpha-test-mode member and the G4 sample count.
 
@@ -42,9 +42,9 @@ the original hard cutoff.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Assets/Shaders/Common.h`
-- `src/OpenSage.Game/Assets/Shaders/` (the calling shaders)
-- `src/OpenSage.Game/Graphics/Shaders/` (blend state for the affected pipelines)
+- `src/Panopticon.Simulation/Assets/Shaders/Common.h`
+- `src/Panopticon.Simulation/Assets/Shaders/` (the calling shaders)
+- `src/Panopticon.Simulation/Graphics/Shaders/` (blend state for the affected pipelines)
 - `src/Veldrid.ImageSharp/MipmapHelper.cs`
 
 ## Acceptance criteria

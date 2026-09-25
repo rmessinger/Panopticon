@@ -20,10 +20,10 @@ must be complete before they run. Read-only: no code changes.
 
 - `docs/roadmap/deep-dives/g1-high-dpi-resolution.md`: the design, particularly §3 and the
   appendix, which already lists the known call sites.
-- `src/OpenSage.Game/GameWindow.cs:36-43,73-129`: `ClientBounds`, the constructor, and `HandleResized`.
-- `src/OpenSage.Game/GamePanel.cs`: `Frame`, `ClientBounds`, `EnsureFrame`.
-- `src/OpenSage.Game/Game.cs:630-645,666-683`: the `EnsureFrame` call and `OnPanelSizeChanged`.
-- `src/OpenSage.Game/Graphics/Cameras/Camera.cs:80-90,140-200`: `ScreenSize`, `Unproject`, `Project`.
+- `src/Panopticon.Simulation/GameWindow.cs:36-43,73-129`: `ClientBounds`, the constructor, and `HandleResized`.
+- `src/Panopticon.Simulation/GamePanel.cs`: `Frame`, `ClientBounds`, `EnsureFrame`.
+- `src/Panopticon.Simulation/Game.cs:630-645,666-683`: the `EnsureFrame` call and `OnPanelSizeChanged`.
+- `src/Panopticon.Simulation/Graphics/Cameras/Camera.cs:80-90,140-200`: `ScreenSize`, `Unproject`, `Project`.
 
 ## Steps
 

@@ -20,17 +20,17 @@ Ensure dying or destroyed objects leave no dangling references: remove them from
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:89-112`: P6-3 sub-phase and sequencing dependency.
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:74-80`: death→defeat event that P6-3 must share.
 - `docs/roadmap/implementation-checklist.md:287-289`: checklist ACs for death cleanup.
-- `src/OpenSage.Game/Logic/SelectionSystem.cs:113-165`: selection mutation APIs.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291`: current `Owner` property shape.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1284-1366`: `Kill`, `OnDie`, and `Destroy`.
-- `src/OpenSage.Game/Logic/GameLogic.cs:180-201`: destroy lifecycle, owner removal, and object-destroyed event.
-- `src/OpenSage.Game/IGame.cs:140-144`, `src/OpenSage.Game/Game.cs:128-139`, and `src/OpenSage.Game/Logic/GameObjectDestroyedEventArgs.cs:6-14`: existing object-destroyed event surface.
-- `src/OpenSage.Game/Logic/Player.cs:130-134` and `:807-839`: `OwnedObjects`, `BuildingCount`, `UnitCount`, add/remove helpers from P1.
-- `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs:8-35`: ownership-tracking test style.
+- `src/Panopticon.Simulation/Logic/SelectionSystem.cs:113-165`: selection mutation APIs.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:291`: current `Owner` property shape.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1284-1366`: `Kill`, `OnDie`, and `Destroy`.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:180-201`: destroy lifecycle, owner removal, and object-destroyed event.
+- `src/Panopticon.Simulation/IGame.cs:140-144`, `src/Panopticon.Simulation/Game.cs:128-139`, and `src/Panopticon.Simulation/Logic/GameObjectDestroyedEventArgs.cs:6-14`: existing object-destroyed event surface.
+- `src/Panopticon.Simulation/Logic/Player.cs:130-134` and `:807-839`: `OwnedObjects`, `BuildingCount`, `UnitCount`, add/remove helpers from P1.
+- `test/Panopticon.Simulation.Tests/Logic/PlayerOwnershipTests.cs:8-35`: ownership-tracking test style.
 
 ## Steps
 
-1. Add `src/OpenSage.Game.Tests/Logic/Object/DeathCleanupTests.cs` as a headless `[Fact]` test file using `MockedGameTest`.
+1. Add `test/Panopticon.Simulation.Tests/Logic/Object/DeathCleanupTests.cs` as a headless `[Fact]` test file using `MockedGameTest`.
 2. Identify the shared P3-4 death/destroy notification surface. Reuse or extend it; do not create a parallel event bus.
 3. Wire all lifecycle paths: `GameObject.OnDie(...)` and `GameObject.Destroy()`/`GameLogic.DestroyObject(...)` must both remove the object from selection and from `Player.OwnedObjects`.
 4. Preserve every existing death branch and guard, including construction death handling, `IsSelectable = false`, die modules, sound playback, and destroy idempotence.
@@ -42,11 +42,11 @@ Ensure dying or destroyed objects leave no dangling references: remove them from
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Logic/Object/DeathCleanupTests.cs` (new)
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`
-- `src/OpenSage.Game/Logic/GameLogic.cs`
-- `src/OpenSage.Game/Logic/SelectionSystem.cs`
-- `src/OpenSage.Game/Logic/Player.cs` only if P1 ownership removal needs a directly coupled fix
+- `test/Panopticon.Simulation.Tests/Logic/Object/DeathCleanupTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`
+- `src/Panopticon.Simulation/Logic/SelectionSystem.cs`
+- `src/Panopticon.Simulation/Logic/Player.cs` only if P1 ownership removal needs a directly coupled fix
 
 ## Acceptance criteria
 
@@ -80,7 +80,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the P6 death cleanup item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` describing the shared event and both lifecycle paths tested.
-- Confirm `src/OpenSage.Game.Tests/Logic/Object/DeathCleanupTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Object/DeathCleanupTests.cs` was created and runs in CI.
 - Do not mark Track P P6 `Done` unless all P6 cards are complete.
 
 ## Result
@@ -88,5 +88,5 @@ dotnet format src --verify-no-changes
 Done. Wired cleanup onto both lifecycle seams, reusing the existing `Player.DeselectUnit`/`RemoveOwnedObject` and the shared `GameLogic.ObjectLifecycleChanged` notification (no new event bus):
 - `GameObject.OnDie` now calls `Owner?.RemoveOwnedObject(this)` right after the existing `Owner.DeselectUnit(this)` (and before the Died lifecycle event, so VictorySystem defeat evaluation sees correct counts). Previously OnDie deselected but left the object in OwnedObjects.
 - `GameLogic.DestroyObject` now calls `owner?.DeselectUnit(gameObject)` alongside the existing `owner?.RemoveOwnedObject(gameObject)`. Previously Destroy removed from ownership but not selection, and Destroy can run without a prior OnDie (Sell/CancelBuild/teardown).
-Both removals are idempotent, so the OnDie→Destroy flow double-removes safely and counts never go negative. Added `src/OpenSage.Game.Tests/Logic/Object/DeathCleanupTests.cs` (3 non-skipped `[Fact]`s): OnDie path (Kill a selected unit → absent from selection + OwnedObjects, counts drop by one, bystander untouched), Destroy path (Destroy a selected unit → same), and a mixed-path consistency test (2 buildings + 3 units removed through OnDie/Destroy/idempotent re-removal, counts stay consistent with OwnedObjects and never negative). Validation: dotnet build src (0 errors); DeathCleanupTests (3 passed); Category!=Interactive (760 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
+Both removals are idempotent, so the OnDie→Destroy flow double-removes safely and counts never go negative. Added `test/Panopticon.Simulation.Tests/Logic/Object/DeathCleanupTests.cs` (3 non-skipped `[Fact]`s): OnDie path (Kill a selected unit → absent from selection + OwnedObjects, counts drop by one, bystander untouched), Destroy path (Destroy a selected unit → same), and a mixed-path consistency test (2 buildings + 3 units removed through OnDie/Destroy/idempotent re-removal, counts stay consistent with OwnedObjects and never negative). Validation: dotnet build src (0 errors); DeathCleanupTests (3 passed); Category!=Interactive (760 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
 

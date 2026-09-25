@@ -17,7 +17,7 @@ print them as a console table, filtered by optional `--game` and `--category` fl
 
 ## Steps
 
-1. Create `src/OpenSage.Tools.ModCollector/manifest.json` as an embedded resource.
+1. Create `src/Panopticon.Tools.ModCollector/manifest.json` as an embedded resource.
    Schema: array of objects with fields `name`, `game`, `category`, `moddbUrl`, `downloadUrl`, `status`.
    Game values are the canonical slugs defined in the plan (e.g. `cnc-generals-zero-hour`, `bfme2`,
    `bfme2-rotwk`). See the [game slug table](../../plans/mod-collector.md#game-slug-table).
@@ -35,10 +35,10 @@ print them as a console table, filtered by optional `--game` and `--category` fl
 </ItemGroup>
 ```
 
-3. Create `src/OpenSage.Tools.ModCollector/ManifestEntry.cs`:
+3. Create `src/Panopticon.Tools.ModCollector/ManifestEntry.cs`:
 
 ```csharp
-namespace OpenSage.Tools.ModCollector;
+namespace Panopticon.Tools.ModCollector;
 
 sealed class ManifestEntry
 {
@@ -51,11 +51,11 @@ sealed class ManifestEntry
 }
 ```
 
-4. Create `src/OpenSage.Tools.ModCollector/ManifestLoader.cs` that reads the embedded
+4. Create `src/Panopticon.Tools.ModCollector/ManifestLoader.cs` that reads the embedded
    resource and deserializes it with `System.Text.Json.JsonSerializer`. Return
    `IReadOnlyList<ManifestEntry>`.
 
-5. Create `src/OpenSage.Tools.ModCollector/ListOptions.cs` with `[Verb("list")]`:
+5. Create `src/Panopticon.Tools.ModCollector/ListOptions.cs` with `[Verb("list")]`:
 
 ```csharp
 [Verb("list", HelpText = "List available mods in the manifest.")]
@@ -75,18 +75,18 @@ sealed class ListOptions
 
 ## Acceptance criteria
 
-- `dotnet run --project src/OpenSage.Tools.ModCollector -- list` prints a table with at least
+- `dotnet run --project src/Panopticon.Tools.ModCollector -- list` prints a table with at least
   one row.
-- `dotnet run --project src/OpenSage.Tools.ModCollector -- list --game cnc-generals-zero-hour`
+- `dotnet run --project src/Panopticon.Tools.ModCollector -- list --game cnc-generals-zero-hour`
   shows only Zero Hour entries.
 - Build is clean, `dotnet format src --verify-no-changes` passes.
 
 ## Validation
 
 ```sh
-dotnet build src/OpenSage.Tools.ModCollector
-dotnet run --project src/OpenSage.Tools.ModCollector -- list
-dotnet run --project src/OpenSage.Tools.ModCollector -- list --category mods
+dotnet build src/Panopticon.Tools.ModCollector
+dotnet run --project src/Panopticon.Tools.ModCollector -- list
+dotnet run --project src/Panopticon.Tools.ModCollector -- list --category mods
 dotnet format src --verify-no-changes
 ```
 

@@ -20,15 +20,15 @@ and documented exclusions without test-time downloads.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 1 and 10.
-- `src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj`: copied test-data patterns.
-- `src/OpenSage.Game.Tests/Content/Importing/W3dModelImporterTests.cs`: importer descriptor style.
-- `src/OpenSage.Game.Tests/Content/Importing/W3dAnimationImporterTests.cs`: fixed-time animation
+- `test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj`: copied test-data patterns.
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dModelImporterTests.cs`: importer descriptor style.
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dAnimationImporterTests.cs`: fixed-time animation
   assertions.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfModelImporter.cs` (new from `WI-C4-10`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationImporter.cs` (new from `WI-C4-08`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfImporterTests.cs` (new from `WI-C4-10`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfAnimationImporterTests.cs` (new from `WI-C4-08`).
-- `src/OpenSage.Game.Tests/Content/Importing/PbrImportedModelTestData.cs` (new from `WI-C3-10`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfModelImporter.cs` (new from `WI-C4-10`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationImporter.cs` (new from `WI-C4-08`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfImporterTests.cs` (new from `WI-C4-10`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfAnimationImporterTests.cs` (new from `WI-C4-08`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/PbrImportedModelTestData.cs` (new from `WI-C3-10`).
 
 ## Steps
 
@@ -59,33 +59,33 @@ and documented exclusions without test-time downloads.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj`
-- `src/OpenSage.Game.Tests/Content/Importing/GltfFixtureGenerator.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfFixtureGeneratorTests.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfFixtureTests.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/README.md` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/external-triangle.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/external-triangle.bin` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/data-uri-triangle.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/static-triangle.glb` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/accessor-layouts.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/accessor-layouts.bin` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.bin` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.bin` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/base-color.png` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/emissive.jpg` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/two-influence-skin.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/two-influence-skin.bin` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/animated-skin.glb` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/unsupported-morph.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/unsupported-third-influence.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/unsupported-multiple-skins.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/unsupported-cubicspline.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/unsupported-required-extension.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/unsupported-mirrored-node.gltf` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/malformed-accessor.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj`
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfFixtureGenerator.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfFixtureGeneratorTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfFixtureTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/README.md` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/external-triangle.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/external-triangle.bin` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/data-uri-triangle.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/static-triangle.glb` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/accessor-layouts.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/accessor-layouts.bin` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.bin` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.bin` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/base-color.png` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/emissive.jpg` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/two-influence-skin.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/two-influence-skin.bin` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/animated-skin.glb` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/unsupported-morph.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/unsupported-third-influence.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/unsupported-multiple-skins.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/unsupported-cubicspline.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/unsupported-required-extension.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/unsupported-mirrored-node.gltf` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/malformed-accessor.gltf` (new)
 
 ## Acceptance criteria
 

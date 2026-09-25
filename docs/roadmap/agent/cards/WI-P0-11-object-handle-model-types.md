@@ -23,32 +23,32 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: the five existing
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: the five existing
   `CommandArgument` subtypes and their `AppendTo(Order, PositionContext, Random)` signature.
   `ObjectIdCommandArgument` (line ~52) is the type the resolver will return.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:26-38`: `ToOrder(...)`:
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs:26-38`: `ToOrder(...)`:
   iterates `Arguments` calling `arg.AppendTo(...)`.
 - `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.2`: the handle/selector design
   decision (implicit auto-handles keyed to the producing command; query selectors for
   world/enemy objects).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference.
+- `test/Panopticon.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference.
 
 ## Steps
 
-1. In `OpenSage.Tools.ReplaySketch.Core/Model/`, create `IObjectReferenceResolver.cs`:
+1. In `Panopticon.Tools.ReplaySketch.Core/Model/`, create `IObjectReferenceResolver.cs`:
 
    ```csharp
-   namespace OpenSage.Tools.ReplaySketch.Model;
+   namespace Panopticon.Tools.ReplaySketch.Model;
 
    public interface IObjectReferenceResolver
    {
        /// Resolves the ObjectId of the first object produced by the command with the given id.
        /// Returns ObjectId.Invalid if not yet available.
-       OpenSage.Logic.Object.ObjectId ResolveHandle(string commandId);
+       Panopticon.Logic.Object.ObjectId ResolveHandle(string commandId);
 
        /// Resolves the ObjectId of the first game object matching the selector.
        /// Returns ObjectId.Invalid if no match.
-       OpenSage.Logic.Object.ObjectId ResolveSelector(QuerySelectorCommandArgument selector);
+       Panopticon.Logic.Object.ObjectId ResolveSelector(QuerySelectorCommandArgument selector);
    }
    ```
 
@@ -128,7 +128,7 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
    }
    ```
 
-6. Add unit tests in `OpenSage.Tools.ReplaySketch.Tests/ObjectReferenceModelTests.cs`:
+6. Add unit tests in `Panopticon.Tools.ReplaySketch.Tests/ObjectReferenceModelTests.cs`:
    - `HandleCommandArgument_SerializesAndDeserializes`: round-trip a `HandleCommandArgument`
      through `JsonSerializer` and assert `CommandId` is preserved and the `kind` discriminator
      is `"handle"`.
@@ -142,10 +142,10 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: new subtypes + `Resolve` method.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs`: `Resolve(IObjectReferenceResolver)`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs` (new).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ObjectReferenceModelTests.cs` (new).
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: new subtypes + `Resolve` method.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs`: `Resolve(IObjectReferenceResolver)`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs` (new).
+- `test/Panopticon.Tools.ReplaySketch.Tests/ObjectReferenceModelTests.cs` (new).
 
 ## Acceptance criteria
 
@@ -164,7 +164,7 @@ This is the model-only card. Runtime wiring into the run loop is WI-P0-12.
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```
@@ -175,7 +175,7 @@ dotnet format src --verify-no-changes
 - Do not implement a production `IObjectReferenceResolver`: only the interface and model
   types belong here.
 - Do not change `PositionContext`, `ActionEntry`, `ReplayExporter`, or existing argument types.
-- `ObjectId` lives in `OpenSage.Logic.Object`; import only what is needed. Do not change the
+- `ObjectId` lives in `Panopticon.Logic.Object`; import only what is needed. Do not change the
   engine `Order` type.
 
 ## On completion

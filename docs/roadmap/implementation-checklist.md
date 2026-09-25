@@ -31,7 +31,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 
 ### P0: ReplaySketch arbitrary-command harness ([deep dive](deep-dives/p0-playable-baseline-harness.md))
 - [x] Replace the closed `ActionType` enum with an open command model that can express any engine
-      `OrderType` (`OpenSage.Tools.ReplaySketch.Core/Model`).
+      `OrderType` (`Panopticon.Tools.ReplaySketch.Core/Model`).
   - AC: a scenario can specify a command as `OrderType` + typed args and it exports to the matching
     engine `Order`; a unit test covers ≥1 command per `OrderArgumentType`.
   - Completion: `CommandSpec` model created with polymorphic `CommandArgument` hierarchy (5 types).
@@ -65,7 +65,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
       (`ExecutePlayInGame`, `MainViewModel.cs:250-273`) through small injectable seams.
   - AC: `MainViewModel` takes a dispatcher seam (runs the continuation synchronously in tests) and a
     process-launcher seam (records the request instead of spawning); unit tests in
-    `OpenSage.Tools.ReplaySketch.Tests` exercise `ValidateCommand`, `ExportCommand`, `PlayInGameCommand`,
+    `Panopticon.Tools.ReplaySketch.Tests` exercise `ValidateCommand`, `ExportCommand`, `PlayInGameCommand`,
     and the apply-results half of the background load headlessly (no MAUI runtime), asserting
     command-state transitions and that `PlayInGame` records the expected launcher invocation.
 - [x] Remove hardcoded USA/GLA `KnownDefinitions`; resolve object definitions by name generically
@@ -111,10 +111,10 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
       (Full authoring/replay scaling is finalized under A5-5.)
   - AC: a scenario with ≥10k programmatically-generated orders exports and loads within a documented
     time/memory budget; test generates the orders without per-action hand-entry.
-- [x] Check in an agent validation playbook at `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: the
+- [x] Check in an agent validation playbook at `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: the
       documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change
       (Core test suite, screenshot mode for all visual verification, `dotnet format`, the run-and-assert
-      flow, and the MAUI testability seams), mirroring `OpenSage.Tools.TestHarness/AGENTS.md`.
+      flow, and the MAUI testability seams), mirroring `Panopticon.Tools.TestHarness/AGENTS.md`.
   - AC: `ReplaySketch.Maui/AGENTS.md` exists and documents the Core-vs-MAUI split, the exact build/
     test/format commands, the screenshot mode (env vars, commands, error handling), what is
     headlessly validatable vs MAUI-only, a step-by-step validation checklist (including a screenshot
@@ -123,17 +123,17 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - Completion: `AGENTS.md` created with all sections; screenshot mode (P0-1a) is the sole visual
     verification method; golden-image framework removed.
 - [ ] Decouple replay-driven selection state from interactive UI selection state, so a human
-      observer in `OpenSage.Tools.TestHarness` (or a live spectator) can drag-select units without
+      observer in `Panopticon.Tools.TestHarness` (or a live spectator) can drag-select units without
       the recorded replay's own `SetSelection`/`ClearSelection` orders overwriting their selection or
       `OrderGenerator.ActiveGenerator`.
-  - AC: while replaying a `.rep` with `OpenSage.Tools.TestHarness`, a human click-and-drag over units
+  - AC: while replaying a `.rep` with `Panopticon.Tools.TestHarness`, a human click-and-drag over units
     shows the selection rectangle and yields the dragged units as selected, even on frames where the
     replay itself issues a `SetSelection`/`ClearSelection` order for the same player; a headless test
     asserts the human's `SelectionSystem` state survives a replay-issued selection order on the same
     frame.
   - Note: follow-up to the "Allow box-selecting any object's stats while watching a replay" fix
     (`SelectionSystem.MultiSelect`); see `WI-P0-18`.
-- [ ] Add an inactivity monitor to `OpenSage.Tools.TestHarness` to replace the removed fixed
+- [ ] Add an inactivity monitor to `Panopticon.Tools.TestHarness` to replace the removed fixed
       `MaxReplayFrames` cap: force-exit only when the replay stalls (no
       `ActionDispatched`/`ActionCompleted` progress for a configurable window), not on total run
       length, so long scenarios (e.g. the full-build replay) aren't truncated early.
@@ -144,7 +144,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
 
 ### P1: Skirmish setup & player relationships ([deep dive](deep-dives/p1-skirmish-setup.md))
 - [x] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
-      neutrals): `src/OpenSage.Game/Logic/PlayerManager.cs:45`.
+      neutrals): `src/Panopticon.Simulation/Logic/PlayerManager.cs:45`.
   - AC: after `OnNewGame`, every player pair has a defined `RelationshipType` (no TODO/defaults left);
     a 2-player human-vs-AI skirmish reports them as mutual enemies via `GetRelationship`; unit test.
   - Done: `WI-P1-02` (commit d5acbbb7). Team-derived relationships wired in `OnNewGame`; covered by
@@ -428,7 +428,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     also mutually eliminates all remaining active players resolves to `Decided` rather than hanging
     in `SuddenDeath` indefinitely; test covers the repeat-elimination case.
 - [x] End-of-match UI and `TestHarness` integration (P8-3).
-  - AC: a real UI/exit consumer of `GameOutcome` exists for interactive play; `OpenSage.Tools.TestHarness`
+  - AC: a real UI/exit consumer of `GameOutcome` exists for interactive play; `Panopticon.Tools.TestHarness`
     exits through the same `GameOutcome`-driven path rather than its pre-`GameOutcome` ad hoc exit.
 - [x] Real gather-cycle harness verification (P8-4).
   - AC: the P4 scenario matrix's economy assertion drives a harvester through the real
@@ -486,7 +486,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
   - AC: the TestHarness windowed mode (and the validation ground's non-headless path) runs in a
     headless/CI/agent shell by providing a virtual display (e.g. `Xvfb`), so a window is not
     required to exercise the renderer and capture frames. Document the exact command in
-    `src/OpenSage.Tools.TestHarness/AGENTS.md`. Today a `tty`-type shell has no `DISPLAY` and cannot
+    `src/Panopticon.Tools.TestHarness/AGENTS.md`. Today a `tty`-type shell has no `DISPLAY` and cannot
     authorize against the host's X server, so only the headless path runs there.
 
 ---
@@ -537,7 +537,7 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 - [x] Verification harness: multi-sample metrics and per-run invariants.
   - AC: a harness runs a scenario sample set, checks each run's invariants, and reports aggregate
     distributions without requiring runs to agree.
-  - Done: `StatisticalRunHarness` in `OpenSage.Tools.ReplaySketch.Core` aggregates per-run
+  - Done: `StatisticalRunHarness` in `Panopticon.Tools.ReplaySketch.Core` aggregates per-run
     assertion reports and A1-5 T0 run outputs (mean, sample variance, Student-t 95% CI, Tukey
     outliers); `HarnessRunner.RunAndAssert` gained an optional T0 run-output callback. Tests in
     `A2StatisticalHarnessTests`: mocked-host default-N runs (non-interactive), install-backed
@@ -550,13 +550,13 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     logic reaches presentation only through `IGameObjectClient` commands and asset-derived bone
     queries, plus the one-way audio/FX/tracer services. All 15 audited read clusters removed
     ([audit](implementation/track-a-a3-sim-presentation-seam.md)); `ModelConditionFlags` are
-    logic-owned; `LogicPresentationBoundaryTests` reflects over `OpenSage.Logic` types and fails
+    logic-owned; `LogicPresentationBoundaryTests` reflects over `Panopticon.Logic` types and fails
     on any presentation-type reference (empty allowlist); headless logic runs are A1's host tests
     plus the P7/P6b suites, all green.
 
 ### A4: Experiment framework seams & harness
 - [x] A4-1 Simulation Domain Model seam (domain-agnostic entities/topology/interactions/metrics).
-  - Done: contracts in `src/OpenSage.Game/Simulation/` (`ISimulationDomainModel`,
+  - Done: contracts in `src/Panopticon.Simulation/Simulation/` (`ISimulationDomainModel`,
       `DomainEntitySummary`, metrics/topology/interaction/fidelity types);
       [design](deep-dives/a4-simulation-domain-model.md) and
       [audit](implementation/track-a-a4-simulation-domain-model.md). `SimulationHost` takes a

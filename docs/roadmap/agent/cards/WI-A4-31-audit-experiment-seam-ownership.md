@@ -20,8 +20,8 @@ entity storage, and model import without preempting their B/C-track implementati
 - `docs/roadmap/seams.md`: canonical experiment seam table.
 - `docs/roadmap/track-b-scale.md`: B3, B4, B6, and B7 ownership.
 - `docs/roadmap/track-c-external-assets.md`: C1 ownership.
-- `src/OpenSage.Game/Navigation/`, `Logic/GameLogic.cs`, `Logic/PartitionCellManager.cs`.
-- `src/OpenSage.Game/Content/Loaders/` and `Content/OnDemandAssetLoadStrategy.cs`.
+- `src/Panopticon.Simulation/Navigation/`, `Logic/GameLogic.cs`, `Logic/PartitionCellManager.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/` and `Content/OnDemandAssetLoadStrategy.cs`.
 - `docs/roadmap/deep-dives/b6-distributed-simulation.md` and `b7-variable-fidelity.md`.
 
 ## Steps

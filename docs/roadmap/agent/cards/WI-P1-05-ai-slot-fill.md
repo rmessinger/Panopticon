@@ -19,21 +19,21 @@ P0 harness. Close any gaps so that no AI player enters `StartGame` with an unset
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs:239-305`: `HandleStartButtonClickAsync`:
+- `src/Panopticon.Mods.Generals/Gui/GameOptionsUtil.cs:239-305`: `HandleStartButtonClickAsync`:
   fills missing start positions/factions/colors for each slot before calling
   `SkirmishManager.HandleStartButtonClickAsync()`. This is the lobby path: understand exactly
   what it fills and when it skips.
-- `src/OpenSage.Game/Network/SkirmishManager.cs:55-93`: `StartGame(...)`: builds
+- `src/Panopticon.Simulation/Network/SkirmishManager.cs:55-93`: `StartGame(...)`: builds
   `List<PlayerSetting>` from `Settings.Slots` and passes to `Game.StartSkirmishOrMultiPlayerGame`.
   Check: does it set default values for empty fields, or rely on the GUI to have done so?
-- `src/OpenSage.Game/Logic/PlayerSettings.cs:17-36`: `PlayerSetting` fields: `StartPosition`,
+- `src/Panopticon.Simulation/Logic/PlayerSettings.cs:17-36`: `PlayerSetting` fields: `StartPosition`,
   `SideName`, `Color`, `Team`, `Owner`, `Name`, `IsLocalForMultiplayer`.
-- `src/OpenSage.Game/Logic/PlayerManager.cs:50-76`: `CreatePlayers(...)`: how
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs:50-76`: `CreatePlayers(...)`: how
   `PlayerSetting` values feed into `Player` construction; identify what happens when
   `SideName` or `StartPosition` is unset.
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs:68-75`: `GetPlayableSides()`: source
+- `src/Panopticon.Mods.Generals/Gui/GameOptionsUtil.cs:68-75`: `GetPlayableSides()`: source
   for random faction assignment.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the harness
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the harness
   acceptance tests to understand how the P0 harness currently starts a skirmish, so you can
   tell whether it goes through the lobby fill code or bypasses it.
 
@@ -58,9 +58,9 @@ P0 harness. Close any gaps so that no AI player enters `StartGame` with an unset
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Network/SkirmishManager.cs`: slot defaults in the headless path,
+- `src/Panopticon.Simulation/Network/SkirmishManager.cs`: slot defaults in the headless path,
   or a shared helper call (if the gap exists).
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs`: extract shared helper (if needed).
+- `src/Panopticon.Mods.Generals/Gui/GameOptionsUtil.cs`: extract shared helper (if needed).
 - This card file only (append to Notes) if no gap is found.
 
 ## Acceptance criteria
@@ -95,7 +95,7 @@ dotnet format src --verify-no-changes
 ## Result
 
 Done (commit 677b7bc9, "Add skirmish slot defaulting"). Extracted a shared
-`SkirmishSlotDefaults.ApplyDefaults(...)` helper (`src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`)
+`SkirmishSlotDefaults.ApplyDefaults(...)` helper (`src/Panopticon.Simulation/Network/SkirmishSlotDefaults.cs`)
 that assigns a random playable side, a free color, and a free start position to any unset AI slot;
 called from `SkirmishManager.StartGame` so both the lobby and headless/programmatic start paths go
 through the same defaulting logic. A start-position collision bug in this helper was found and fixed

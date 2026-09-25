@@ -1,6 +1,6 @@
 # Enemy AI Architecture
 
-This document explains how "enemy AI" works in OpenSAGE today: which parts of the
+This document explains how "enemy AI" works in Panopticon today: which parts of the
 original SAGE AI have been ported, which are still stubs, and how the pieces fit
 together at runtime. It covers two distinct layers that the original engine calls
 "AI":
@@ -13,8 +13,8 @@ together at runtime. It covers two distinct layers that the original engine call
    players. **This layer is currently a save/load stub only**: the original
    fields are preserved (mostly as `_unknownXxx` placeholders) so replays and
    save files round-trip correctly, but none of the decision-making logic has
-   been ported yet. Computer players in OpenSAGE currently rely on map/team
-   scripts (`OpenSage.Scripting`) rather than autonomous strategic AI.
+   been ported yet. Computer players in Panopticon currently rely on map/team
+   scripts (`Panopticon.Scripting`) rather than autonomous strategic AI.
 
 Because of this, "enemy AI" in practice today means: individual units/structures
 reacting to their surroundings (scanning for enemies, chasing, guarding,
@@ -26,11 +26,11 @@ own default idle behavior.
 ### 1.1 Per-unit AI (`AIUpdate`)
 
 Every `GameObject` that can act autonomously has an `AIUpdate` module
-(`OpenSage.Logic.Object.Update.AIUpdate.AIUpdate`, subclassed for special
+(`Panopticon.Logic.Object.Update.AIUpdate.AIUpdate`, subclassed for special
 movement types like `JetAIUpdate`, `DozerAIUpdate`, `TransportAIUpdate`,
 `WorkerAIUpdate`, etc.). `AIUpdate`:
 
-- Owns a lazily-created `AIUpdateStateMachine` (`OpenSage.Logic.AI`) that
+- Owns a lazily-created `AIUpdateStateMachine` (`Panopticon.Logic.AI`) that
   implements the actual behavior (idle, move, attack, guard, hunt, wander,
   panic, dock, follow-waypoints, ...).
 - Drives locomotion: it holds a `LocomotorSet`/`Locomotor`, target point queue
@@ -46,7 +46,7 @@ movement types like `JetAIUpdate`, `DozerAIUpdate`, `TransportAIUpdate`,
 ### 1.2 Generic state machine framework
 
 The AI behavior is expressed with a small, reusable finite-state-machine
-framework in `OpenSage.Logic.AI`:
+framework in `Panopticon.Logic.AI`:
 
 - **`StateMachineBase`**: holds a dictionary of `StateId -> State`, the
   current state, a "goal object/position", and a sleep timer. `Update()` calls
@@ -81,9 +81,9 @@ or any decision-making logic** (build orders, attack waves, resource
 management). This is a known gap; see `docs/roadmap/` for where this fits
 in the long-term plan.
 
-In place of strategic AI, computer-controlled behavior in OpenSAGE today comes
+In place of strategic AI, computer-controlled behavior in Panopticon today comes
 from:
-- **Map/team scripts** (`OpenSage.Scripting`): trigger-based, authored per
+- **Map/team scripts** (`Panopticon.Scripting`): trigger-based, authored per
   map, can command teams to guard/attack/patrol using the same per-unit AI
   states described above.
 - **Default idle behavior**: turret auto-acquire, `Guard`/`Wander` states,
@@ -96,7 +96,7 @@ from:
 `AIUpdate.AppendPathToTargetPoint` calls `IGameEngine.Navigation.CalculatePath`
 to get a list of waypoints between the current position and a destination,
 which are queued in `TargetPoints` and walked one at a time each frame. The
-`Pathfinder` INI-data asset (`OpenSage.Logic.AI.Pathfinder`) currently only
+`Pathfinder` INI-data asset (`Panopticon.Logic.AI.Pathfinder`) currently only
 exposes parsed data (e.g. `SlopeLimits`); `ValidMovementTerrain`,
 `AddObjectToPathfindMap`, and `RemoveObjectFromPathfindMap` are stubs
 (`// TODO(Port): Implement this.`), so fine-grained terrain classification

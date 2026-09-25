@@ -15,14 +15,14 @@
 Diagnose and fix the deterministic engine stall at logic frame 10435 of the
 AlpineAssaultUSAvGLA headless scenario (both windowless-loop and `SimulationHost` stepping),
 right after a `GLAHoleCommandCenter` is destroyed: the logic thread spins forever inside
-`SleepyUpdateList.RebalanceChild` (`src/OpenSage.Game/Logic/GameLogic.cs`). Long headless
+`SleepyUpdateList.RebalanceChild` (`src/Panopticon.Simulation/Logic/GameLogic.cs`). Long headless
 matches cannot pass this state, which blocks the A1 host on full skirmish scenarios.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/GameLogic.cs`: `SleepyUpdateList` (Rebalance/RebalanceChild/
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`: `SleepyUpdateList` (Rebalance/RebalanceChild/
   RebalanceParent/IsLowerPriority) and `GameLogic.Update`'s wake loop.
-- `src/OpenSage.Game/Logic/Object/Die/OCLUpdate.cs` or the GLA hole spawn path
+- `src/Panopticon.Simulation/Logic/Object/Die/OCLUpdate.cs` or the GLA hole spawn path
   (`GLAHoleCommandCenter` destruction spawns `GLACommandCenter` via OCL): the state right
   before the stall.
 - Repro: TestHarness headless, `Scenario: AlpineAssaultUSAvGLA`; the stall reproduces on
@@ -42,7 +42,7 @@ matches cannot pass this state, which blocks the A1 host on full skirmish scenar
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/GameLogic.cs` (or the specific module found at fault)
+- `src/Panopticon.Simulation/Logic/GameLogic.cs` (or the specific module found at fault)
 
 ## Acceptance criteria
 

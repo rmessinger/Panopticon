@@ -18,11 +18,11 @@ bone-local space, while keeping the rest pose identical to the C4a bake.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` section 5.
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs` and `NifModelImporter.cs`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs:19-116`.
-- `src/OpenSage.Game/Content/Importing/ImportedBone.cs`, `ImportedSkeleton.cs`, and
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs` and `NifModelImporter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs:19-116`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs`, `ImportedSkeleton.cs`, and
   `ImportedSubObject.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs` and
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs` and
   `Ee2NifImportTests.cs:71-110`.
 
 ## Steps
@@ -47,11 +47,11 @@ bone-local space, while keeping the rest pose identical to the C4a bake.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifModelImporter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
 
 ## Acceptance criteria
 

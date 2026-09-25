@@ -20,22 +20,22 @@ a regression.
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.4 (completion-signal column), §2.5, and
   the "Existing timing patterns to generalize" appendix entry.
-- `src/OpenSage.Tools.TestHarness/EngineActionRecorder.cs:477-478`: `CurrentFrame()`, the logic-frame
+- `src/Panopticon.Tools.TestHarness/EngineActionRecorder.cs:477-478`: `CurrentFrame()`, the logic-frame
   derivation to reuse.
-- `src/OpenSage.Tools.TestHarness/EngineActionRecorder.cs:55-60`: the `_pendingMoves`,
+- `src/Panopticon.Tools.TestHarness/EngineActionRecorder.cs:55-60`: the `_pendingMoves`,
   `_pendingBuilds`, and `_lastHealth` completion trackers.
-- `src/OpenSage.Tools.TestHarness/EngineActionRecorder.cs:92-128`: `PollPendingMoves`, the
+- `src/Panopticon.Tools.TestHarness/EngineActionRecorder.cs:92-128`: `PollPendingMoves`, the
   arrival-detection pattern.
-- `src/OpenSage.Tools.TestHarness/EngineActionRecorder.cs:133-175`: `PollHealthChanges`, the
+- `src/Panopticon.Tools.TestHarness/EngineActionRecorder.cs:133-175`: `PollHealthChanges`, the
   health-delta detection pattern.
-- `src/OpenSage.Tools.TestHarness/EngineActionRecorder.cs:185-245`: `PollSupplyCycles` and
+- `src/Panopticon.Tools.TestHarness/EngineActionRecorder.cs:185-245`: `PollSupplyCycles` and
   `ApproachLeg`, including the `travelFrames = CurrentFrame() - leg.StartFrame` computation at `:240`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PrimaryAction.cs`: action kinds and `FrameBudget` from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PrimaryAction.cs`: action kinds and `FrameBudget` from
   `WI-P9-01`.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Services/UnitActionTimer.cs`.
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Services/UnitActionTimer.cs`.
 2. Expose `OnDispatched(unitId, PrimaryAction, uint frame)` recording the start frame per unit.
 3. Expose `Poll(uint frame, ...)` taking the per-frame observations it needs through an injected
    read-only seam rather than a direct `IGame` reference, so the timer stays in `.Core` and remains
@@ -59,9 +59,9 @@ a regression.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/UnitActionTimer.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/UnitActionTimerTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/UnitActionTimer.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/UnitActionTimerTests.cs` (new)
 
 ## Acceptance criteria
 

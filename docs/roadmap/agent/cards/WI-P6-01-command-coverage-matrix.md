@@ -19,17 +19,17 @@ Create a CI-running command coverage matrix proving every baseline control-bar a
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:56-95`: P6 goal, design, and P6-1 sub-phase.
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:132-144`: P6 order/faction matrix axes and expected observable effects.
 - `docs/roadmap/implementation-checklist.md:278-282`: checklist ACs for command coverage.
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:359-531`: control-bar command-set and special-power button wiring.
-- `src/OpenSage.Mods.Generals/Gui/GeneralsControlBar.cs:558-640`: selected-unit command and production-queue wiring.
-- `src/OpenSage.Mods.Generals/Gui/CommandButtonUtils.cs:15-37`: `CommandButton` callback entry point.
-- `src/OpenSage.Game/Gui/CommandButtonCallback.cs:27-190`: `CommandType` to `OrderType` mapping for baseline actions.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:73-430` and `:437-562`: handled `OrderType` cases and default unimplemented branch.
-- `src/OpenSage.Game/Logic/SelectionSystem.cs:113-165`: selection and rally-point APIs used by command assertions.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests must run in CI, not only as skipped game-file tests.
+- `src/Panopticon.Mods.Generals/Gui/GeneralsControlBar.cs:359-531`: control-bar command-set and special-power button wiring.
+- `src/Panopticon.Mods.Generals/Gui/GeneralsControlBar.cs:558-640`: selected-unit command and production-queue wiring.
+- `src/Panopticon.Mods.Generals/Gui/CommandButtonUtils.cs:15-37`: `CommandButton` callback entry point.
+- `src/Panopticon.Simulation/Gui/CommandButtonCallback.cs:27-190`: `CommandType` to `OrderType` mapping for baseline actions.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:73-430` and `:437-562`: handled `OrderType` cases and default unimplemented branch.
+- `src/Panopticon.Simulation/Logic/SelectionSystem.cs:113-165`: selection and rally-point APIs used by command assertions.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base; tests must run in CI, not only as skipped game-file tests.
 
 ## Steps
 
-1. Add `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` as a headless `[Fact]` test file using `MockedGameTest` or the existing non-interactive ReplaySketch test style.
+1. Add `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` as a headless `[Fact]` test file using `MockedGameTest` or the existing non-interactive ReplaySketch test style.
 2. In the test file, define a table with one row per baseline control-bar action: move, attack object, force-attack ground, build, produce, sell, repair, ability/special-power, and rally point.
 3. For each row, record the source `CommandType` or order-generator path, expected `OrderType`, and expected observable effect. Preserve all existing callback branches and guards if you refactor helpers.
 4. Assert every expected `OrderType` has a non-default handler in `OrderProcessor`; if one is missing, make the test fail with that exact action/order name instead of silently skipping it.
@@ -39,9 +39,9 @@ Create a CI-running command coverage matrix proving every baseline control-bar a
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` only if an observable assertion needed by this card is missing
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` only if that assertion must be evaluated
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` only if an observable assertion needed by this card is missing
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` only if that assertion must be evaluated
 
 ## Acceptance criteria
 
@@ -74,9 +74,9 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the P6 command coverage item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` listing confirmed handlers and explicit gaps.
-- Confirm `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` was created and runs in CI.
 - Do not mark Track P P6 `Done` unless all P6 cards are complete.
 
 ## Result
 
-Done. Added `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` (5 non-skipped `[Fact]`s). Enumerates the 9 baseline control-bar actions (move, attack-object, force-attack-ground, build, produce, sell, repair, special-power, rally-point) with their CommandType/OrderGenerator source and expected OrderType, asserts each maps into a curated `HandledOrderTypes` set mirroring OrderProcessor.Process's explicit `case` labels (no baseline action hits the default "Unimplemented" branch), and that the set discriminates against known-unhandled orders. Cross-checks the button-backed CommandTypes against CommandButtonCallback's wiring. Headless observable coverage: build/produce affordability guard (OrderProcessor.TryDebit) runs before Scene3D, so unaffordable BuildObject/CreateUnit orders are exercised live (handler runs, declines, money untouched, no throw). Explicit named gaps (not silent skips) for the 7 Scene3D-dependent rows (move/attack/force-attack/sell/repair/special-power/rally-point), each with a concrete reason. Validation: dotnet build src (0 errors); P6CommandCoverageTests (5 passed); Category!=Interactive (753 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).
+Done. Added `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6CommandCoverageTests.cs` (5 non-skipped `[Fact]`s). Enumerates the 9 baseline control-bar actions (move, attack-object, force-attack-ground, build, produce, sell, repair, special-power, rally-point) with their CommandType/OrderGenerator source and expected OrderType, asserts each maps into a curated `HandledOrderTypes` set mirroring OrderProcessor.Process's explicit `case` labels (no baseline action hits the default "Unimplemented" branch), and that the set discriminates against known-unhandled orders. Cross-checks the button-backed CommandTypes against CommandButtonCallback's wiring. Headless observable coverage: build/produce affordability guard (OrderProcessor.TryDebit) runs before Scene3D, so unaffordable BuildObject/CreateUnit orders are exercised live (handler runs, declines, money untouched, no throw). Explicit named gaps (not silent skips) for the 7 Scene3D-dependent rows (move/attack/force-attack/sell/repair/special-power/rally-point), each with a concrete reason. Validation: dotnet build src (0 errors); P6CommandCoverageTests (5 passed); Category!=Interactive (753 passed, 15 skipped, 0 failed); dotnet format src --verify-no-changes (clean).

@@ -19,10 +19,10 @@ materialization, and the core PBR shader without changing existing W3D material 
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 4-6.
 - C3 validator, tangent generator, texture materializer, and shader resources.
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/Shaders/ShaderResourceManager.cs`.
-- `src/OpenSage.Game/Graphics/ModelMesh.cs`.
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/Shaders/ShaderResourceManager.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs`.
 
 ## Steps
 
@@ -35,9 +35,9 @@ materialization, and the core PBR shader without changing existing W3D material 
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Shaders/ShaderResourceManager.cs`
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs`
-- `src/OpenSage.Game/Graphics/ModelMesh.cs`
+- `src/Panopticon.Simulation/Graphics/Shaders/ShaderResourceManager.cs`
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs`
+- `src/Panopticon.Simulation/Graphics/ModelMesh.cs`
 
 ## Acceptance criteria
 

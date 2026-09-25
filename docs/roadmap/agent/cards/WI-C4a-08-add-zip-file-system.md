@@ -17,10 +17,10 @@ file-system contract used by `AssetImportContext`.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.IO/FileSystem.cs` and `FileSystemEntry.cs`.
-- `src/OpenSage.IO/BigFileSystem.cs`: archive indexing and case-insensitive lookup pattern.
-- `src/OpenSage.IO/VirtualFileSystem.cs`: path projection pattern.
-- `src/OpenSage.Game.Tests/Data/DiskFileSystemTests.cs`: existing file-system test conventions.
+- `src/Panopticon.IO/FileSystem.cs` and `FileSystemEntry.cs`.
+- `src/Panopticon.IO/BigFileSystem.cs`: archive indexing and case-insensitive lookup pattern.
+- `src/Panopticon.IO/VirtualFileSystem.cs`: path projection pattern.
+- `test/Panopticon.Simulation.Tests/Data/DiskFileSystemTests.cs`: existing file-system test conventions.
 
 ## Steps
 
@@ -36,15 +36,15 @@ file-system contract used by `AssetImportContext`.
 
 ## Files likely to change
 
-- `src/OpenSage.IO/ZipFileSystem.cs` (new)
-- `src/OpenSage.Game.Tests/Data/ZipFileSystemTests.cs` (new)
+- `src/Panopticon.IO/ZipFileSystem.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/ZipFileSystemTests.cs` (new)
 
 ## Acceptance criteria
 
 - [ ] ZIP lookup is normalized and case-insensitive.
 - [ ] Enumeration matches existing `FileSystem` search semantics.
 - [ ] Duplicate normalized paths fail explicitly.
-- [ ] No EE2-specific path, asset, or parser logic enters `OpenSage.IO`.
+- [ ] No EE2-specific path, asset, or parser logic enters `Panopticon.IO`.
 - [ ] Standard validation passes.
 
 ## Validation commands

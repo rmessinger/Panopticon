@@ -16,9 +16,9 @@ Fix vehicles/units stopping at the edge of an enemy structure instead of attacki
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:311-378`: `AttackObject`/`ForceAttackObject` handler (missing `SetTargetPoint`) vs. `ForceAttackGround` (correct reference implementation).
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/AIUpdate.cs:327-390`: `Update()` already contains the generic "move toward `TargetPoints[0]`, stop once `CurrentWeapon.HasValidTarget`" logic; this only needs `TargetPoints` to be populated to work correctly; no `AttackState` changes are required.
-- `src/OpenSage.Game/Logic/AI/AIStates/AttackState.cs`: confirmed this AI-state stub (only `Persist()` overridden, no `Update()`/`OnEnter()`) is unrelated to the fix; `AIUpdate.Update()`'s target-point movement runs independently of the state machine.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:311-378`: `AttackObject`/`ForceAttackObject` handler (missing `SetTargetPoint`) vs. `ForceAttackGround` (correct reference implementation).
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/AIUpdate.cs:327-390`: `Update()` already contains the generic "move toward `TargetPoints[0]`, stop once `CurrentWeapon.HasValidTarget`" logic; this only needs `TargetPoints` to be populated to work correctly; no `AttackState` changes are required.
+- `src/Panopticon.Simulation/Logic/AI/AIStates/AttackState.cs`: confirmed this AI-state stub (only `Persist()` overridden, no `Update()`/`OnEnter()`) is unrelated to the fix; `AIUpdate.Update()`'s target-point movement runs independently of the state machine.
 
 ## Steps
 
@@ -28,7 +28,7 @@ Fix vehicles/units stopping at the edge of an enemy structure instead of attacki
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`
 
 ## Acceptance criteria
 

@@ -51,7 +51,7 @@ schema-driven controls without hard-coding RTS fields.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~ScenarioParameterEditor"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-parameters.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-parameters.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

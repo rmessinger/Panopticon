@@ -25,12 +25,12 @@ strengthen the matrix's production assertion to require a real spawned unit.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:13-38`: P4 design intent: "harvester gathers → BankAccount balance rises → a queued unit/structure debits the balance".
-- `src/OpenSage.Game/Logic/AI/AIUpdate/SupplyAIUpdate.cs`: the full gather-cycle state machine (`SearchingForSupplySource`, `Approaching`, `Requesting`, `Gathering`, `DumpingSupplies`) and `TickSupplyState()`.
-- `src/OpenSage.Game/Logic/Object/Update/SupplyCenterDockUpdate.cs`, `SupplyWarehouseDockUpdate.cs`: dock-side dump/request handling already covered by existing tests.
-- `src/OpenSage.Game.Tests/Logic/Economy/` (gather/deposit and supply-cycle test files from `WI-P4-01`/`WI-P4-04`): existing test structure and the white-box injection technique used to bypass the gather state machine; read to understand exactly what is NOT yet covered.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base and what Scene3D/PartitionCellManager support it does or does not provide (`WI-P5-01`'s Result section notes null-guards were added for headless `Scene3D`/`PartitionCellManager` creation; check whether that is sufficient for movement/pathfinding, or whether further guards are needed).
-- `src/OpenSage.Tools.ReplaySketch.Core/`: the P0 harness scenario-authoring surface, if the real gather cycle is easier to drive through an authored ReplaySketch scenario than raw unit tests.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:793-895` (`P4` matrix cells): the synthetic dump/debit loop and `jobsQueued` counter to replace or supplement with a real production assertion.
+- `src/Panopticon.Simulation/Logic/AI/AIUpdate/SupplyAIUpdate.cs`: the full gather-cycle state machine (`SearchingForSupplySource`, `Approaching`, `Requesting`, `Gathering`, `DumpingSupplies`) and `TickSupplyState()`.
+- `src/Panopticon.Simulation/Logic/Object/Update/SupplyCenterDockUpdate.cs`, `SupplyWarehouseDockUpdate.cs`: dock-side dump/request handling already covered by existing tests.
+- `test/Panopticon.Simulation.Tests/Logic/Economy/` (gather/deposit and supply-cycle test files from `WI-P4-01`/`WI-P4-04`): existing test structure and the white-box injection technique used to bypass the gather state machine; read to understand exactly what is NOT yet covered.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-70`: headless test base and what Scene3D/PartitionCellManager support it does or does not provide (`WI-P5-01`'s Result section notes null-guards were added for headless `Scene3D`/`PartitionCellManager` creation; check whether that is sufficient for movement/pathfinding, or whether further guards are needed).
+- `src/Panopticon.Tools.ReplaySketch.Core/`: the P0 harness scenario-authoring surface, if the real gather cycle is easier to drive through an authored ReplaySketch scenario than raw unit tests.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:793-895` (`P4` matrix cells): the synthetic dump/debit loop and `jobsQueued` counter to replace or supplement with a real production assertion.
 
 ## Steps
 
@@ -42,10 +42,10 @@ strengthen the matrix's production assertion to require a real spawned unit.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Logic/Economy/` (new test file)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
-- `src/OpenSage.Game/Logic/AI/AIUpdate/SupplyAIUpdate.cs` (only if a genuine bug blocks headless execution, not for new features)
-- `src/OpenSage.Game.Tests/MockedGameTest.cs` (only if additional headless seams are required)
+- `test/Panopticon.Simulation.Tests/Logic/Economy/` (new test file)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
+- `src/Panopticon.Simulation/Logic/AI/AIUpdate/SupplyAIUpdate.cs` (only if a genuine bug blocks headless execution, not for new features)
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs` (only if additional headless seams are required)
 
 ## Acceptance criteria
 

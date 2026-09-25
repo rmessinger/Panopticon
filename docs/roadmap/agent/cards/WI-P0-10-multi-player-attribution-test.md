@@ -18,19 +18,19 @@ commands to the correct engine `PlayerIndex` in the exported orders: confirming 
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:55-95`: the export loop:
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:55-95`: the export loop:
   `ownerIdx` iterates `scenario.Players`; `playerIndex = ownerIdx + 2` is the engine-side
   player index (`+2` because slots 0 and 1 are reserved for neutral/civilian in Generals).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs`: `FactionIndex`, `Actions`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91`: `CreateOpen(...)` factory.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `PositionCommandArgument`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PositionSpec.cs`: `NormalizedPosition`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference; note
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs`: `FactionIndex`, `Actions`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91`: `CreateOpen(...)` factory.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `PositionCommandArgument`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PositionSpec.cs`: `NormalizedPosition`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference; note
   how `MapMetadataService.CreateForTesting(...)` and `ReplayExporter` are constructed.
 
 ## Steps
 
-1. In `OpenSage.Tools.ReplaySketch.Tests`, add a new test class `MultiPlayerAttributionTests`
+1. In `Panopticon.Tools.ReplaySketch.Tests`, add a new test class `MultiPlayerAttributionTests`
    (new file `MultiPlayerAttributionTests.cs`).
 
 2. Add one test `ThreePlayerScenario_RoutesCommandsToCorrectPlayerIndex`:
@@ -54,7 +54,7 @@ commands to the correct engine `PlayerIndex` in the exported orders: confirming 
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Tests/MultiPlayerAttributionTests.cs` (new).
+- `test/Panopticon.Tools.ReplaySketch.Tests/MultiPlayerAttributionTests.cs` (new).
 
 ## Acceptance criteria
 
@@ -68,7 +68,7 @@ commands to the correct engine `PlayerIndex` in the exported orders: confirming 
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

@@ -18,13 +18,13 @@ requiring the ImGui-based diagnostic `ModelView`. This infrastructure card may e
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Diagnostics/AssetViews/ModelView.cs`: model-instance update, bounds, world
+- `src/Panopticon.Simulation/Diagnostics/AssetViews/ModelView.cs`: model-instance update, bounds, world
   matrix, and render-list callback.
-- `src/OpenSage.Game/Diagnostics/AssetViews/RenderedView.cs`: diagnostic scene, camera, render
+- `src/Panopticon.Simulation/Diagnostics/AssetViews/RenderedView.cs`: diagnostic scene, camera, render
   target, and render-pipeline setup.
-- `src/OpenSage.Tools.TestHarness/ScenarioCaptureRunner.cs`: headless render execution and
+- `src/Panopticon.Tools.TestHarness/ScenarioCaptureRunner.cs`: headless render execution and
   `FrameCapturer` output.
-- `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: TestHarness internal-test
+- `test/Panopticon.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: TestHarness internal-test
   pattern.
 
 ## Steps
@@ -42,8 +42,8 @@ requiring the ImGui-based diagnostic `ModelView`. This infrastructure card may e
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/StandaloneModelCaptureTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/StandaloneModelCaptureTests.cs` (new)
 
 ## Acceptance criteria
 

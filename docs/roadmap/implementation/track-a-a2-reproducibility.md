@@ -31,7 +31,7 @@ harness is `WI-A2-04`, out of scope here.
 Every `new Random(`, `Random.Shared`, `IRandom`, and `CreateRandom` site in `src/`, classified per
 [`WI-A2-01`](../agent/cards/WI-A2-01-audit-randomness-sources.md).
 
-### Engine (`src/OpenSage.Game`)
+### Engine (`src/Panopticon.Simulation`)
 
 | Site | Classification | Simulation-affecting | Notes |
 |---|---|---|---|

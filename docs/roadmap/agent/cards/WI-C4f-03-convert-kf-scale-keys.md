@@ -19,10 +19,10 @@ curve evaluation and rest-relative offset rules.
 
 - `docs/roadmap/deep-dives/c4f-ee2-scale-animation.md` sections 4, 5, 7, and 9.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 4.2, 6.2, and 6.3.
-- `src/OpenSage.FileFormats.Nif/NifKeys.cs`: key group types after `WI-C4c-01`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifKeyCurve.cs`: C4c float curve evaluator after
+- `src/Panopticon.FileFormats.Nif/NifKeys.cs`: key group types after `WI-C4c-01`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifKeyCurve.cs`: C4c float curve evaluator after
   `WI-C4c-03`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs`: C4c channel conversion after
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs`: C4c channel conversion after
   `WI-C4c-04`.
 
 ## Steps
@@ -42,10 +42,10 @@ curve evaluation and rest-relative offset rules.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImporterTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifKeyCurveTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifKeyCurveTests.cs`
 
 ## Acceptance criteria
 

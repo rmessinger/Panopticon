@@ -19,22 +19,22 @@ or filtered from the live game world, without the author specifying a raw `Objec
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (created by WI-P0-08): the
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs` (created by WI-P0-08): the
   `RunAndAssert` method and the headless game loop it runs. This is the only file to change.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs` (created by WI-P0-11):
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs` (created by WI-P0-11):
   the interface to implement.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs` (updated by WI-P0-11):
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs` (updated by WI-P0-11):
   `HandleCommandArgument.CommandId`, `QuerySelectorCommandArgument.Relationship/DefinitionName`,
   `CommandSpec.Resolve(resolver)`.
-- `src/OpenSage.Game/Game.cs:128,135`: `Game.ObjectCreated` event and
+- `src/Panopticon.Simulation/Game.cs:128,135`: `Game.ObjectCreated` event and
   `GameObjectCreatedEventArgs` (contains the created `GameObject`).
-- `src/OpenSage.Game/Logic/GameLogic.cs:42-57`: `GameLogic.Objects` (enumerable over all live
+- `src/Panopticon.Simulation/Logic/GameLogic.cs:42-57`: `GameLogic.Objects` (enumerable over all live
   objects, safe to iterate).
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:291`: `GameObject.Owner` (`Player`);
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:291`: `GameObject.Owner` (`Player`);
   line `125`: `GameObject.Id` (`ObjectId`).
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs`: `ObjectDefinition.Name` (compare
+- `src/Panopticon.Simulation/Logic/Object/ObjectDefinition.cs`: `ObjectDefinition.Name` (compare
   against `QuerySelectorCommandArgument.DefinitionName`).
-- `src/OpenSage.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference.
+- `test/Panopticon.Tools.ReplaySketch.Tests/ReplaySketchTests.cs`: test style reference.
 
 ## Steps
 
@@ -115,7 +115,7 @@ or filtered from the live game world, without the author specifying a raw `Objec
    unsubscribe from `Game.ObjectCreated`.
 
 5. Add one integration test tagged `[Trait("Category", "Interactive")]` in
-   `OpenSage.Tools.ReplaySketch.Tests` (or `OpenSage.Game.Tests` if game-test infrastructure
+   `Panopticon.Tools.ReplaySketch.Tests` (or `Panopticon.Simulation.Tests` if game-test infrastructure
    is easier there):
    - Build a two-command scenario: command A (`BuildObject` for a barracks-like structure with
      `FixedTiming(200)`) + command B (`AttackObject` with a `HandleCommandArgument("cmd-A")` and
@@ -123,7 +123,7 @@ or filtered from the live game world, without the author specifying a raw `Objec
    - Call `HarnessRunner.RunAndAssert(scenario, installation, tempDir)`.
    - Assert the run completes without throwing (no "Must be resolved before dispatch" exception).
 
-6. Add one headless unit test (non-Interactive) in `OpenSage.Tools.ReplaySketch.Tests`:
+6. Add one headless unit test (non-Interactive) in `Panopticon.Tools.ReplaySketch.Tests`:
    - Construct an `ObjectReferenceResolver` backed by a minimal stub `Game`-like object, or test
      the `ResolveHandle`/`ResolveSelector` logic directly via `ObjectReferenceResolver` in
      isolation (use internal visibility if needed).
@@ -132,8 +132,8 @@ or filtered from the live game world, without the author specifying a raw `Objec
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: nested resolver class + wiring.
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: one headless unit test + one Interactive test.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: nested resolver class + wiring.
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: one headless unit test + one Interactive test.
 
 ## Acceptance criteria
 

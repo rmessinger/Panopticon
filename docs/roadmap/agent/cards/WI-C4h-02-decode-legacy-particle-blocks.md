@@ -12,15 +12,15 @@
 
 ## Goal
 
-Extend `OpenSage.FileFormats.Nif` so the three C4h proof particle effects parse to exact EOF and
+Extend `Panopticon.FileFormats.Nif` so the three C4h proof particle effects parse to exact EOF and
 unsupported particle families fail explicitly.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4h-ee2-particle-effects.md` sections 4 and 10.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 3 and 4.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:118-155` and `NifFile.cs:157-312`.
-- `src/OpenSage.FileFormats.Nif/Blocks/NifGeometry.cs`, `NifGeometryData.cs`, and
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:118-155` and `NifFile.cs:157-312`.
+- `src/Panopticon.FileFormats.Nif/Blocks/NifGeometry.cs`, `NifGeometryData.cs`, and
   `NifTriShapeData.cs`.
 - The C4c key-group types and time-controller blocks added by `WI-C4c-01` and `WI-C4c-03`.
 
@@ -45,22 +45,22 @@ unsupported particle families fail explicitly.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifParticles.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifParticlesData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifParticleSystemController.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifParticleModifier.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifParticleColorModifier.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifParticleGrowFade.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifGravity.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifColorData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifFloatData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTriStrips.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTriStripsData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifBillboardNode.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifStencilProperty.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifParticleTests.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2ParticleEffectInventoryTests.cs`
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifParticles.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifParticlesData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifParticleSystemController.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifParticleModifier.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifParticleColorModifier.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifParticleGrowFade.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifGravity.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifColorData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifFloatData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTriStrips.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTriStripsData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifBillboardNode.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifStencilProperty.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifParticleTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2ParticleEffectInventoryTests.cs`
 
 ## Acceptance criteria
 

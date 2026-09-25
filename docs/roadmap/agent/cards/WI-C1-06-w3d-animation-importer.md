@@ -20,8 +20,8 @@ Move W3D key parsing and all channel conversion into `W3dAnimationImporter`, ret
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 4-7.
 - `docs/roadmap/implementation/track-c-c1-import-abstraction.md` section
   `Current animation import path`.
-- `src/OpenSage.Game/Content/Loaders/OnDemandAnimationLoader.cs`.
-- `src/OpenSage.Game/Graphics/Animation/W3DAnimation.cs` and both partial conversion files.
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandAnimationLoader.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation.cs` and both partial conversion files.
 - Interchange animation types from `WI-C1-04`.
 
 ## Steps
@@ -39,9 +39,9 @@ Move W3D key parsing and all channel conversion into `W3dAnimationImporter`, ret
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/W3d/W3dAnimationImporter.cs` (new)
-- `src/OpenSage.Game/Graphics/Animation/W3DAnimation*.cs` (compatibility delegation)
-- `src/OpenSage.Game.Tests/Content/Importing/W3dAnimationImporterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dAnimationImporter.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Animation/W3DAnimation*.cs` (compatibility delegation)
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dAnimationImporterTests.cs` (new)
 
 ## Acceptance criteria
 

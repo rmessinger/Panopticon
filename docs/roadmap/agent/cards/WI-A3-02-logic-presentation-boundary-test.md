@@ -22,12 +22,12 @@ audit produced and shrinks as violations are fixed.
   seed the baseline allowlist.
 - The A3 deep dive: the boundary definition the test encodes, and which namespaces count as logic
   versus presentation.
-- `src/OpenSage.Game.Tests/`: existing test conventions. Find a comparable structural test with
-  `grep -rl "Assembly" src/OpenSage.Game.Tests`.
+- `test/Panopticon.Simulation.Tests/`: existing test conventions. Find a comparable structural test with
+  `grep -rl "Assembly" test/Panopticon.Simulation.Tests`.
 
 ## Steps
 
-1. Add a test that reflects over `OpenSage.Game`'s logic types (the namespaces the deep dive names)
+1. Add a test that reflects over `Panopticon.Simulation`'s logic types (the namespaces the deep dive names)
    and asserts none of them reference the presentation types the deep dive names.
 2. Seed an explicit allowlist from the audit's `read` rows so the test passes on the current tree.
    Each allowlist entry carries the audit row it came from as a one-line justification.
@@ -40,7 +40,7 @@ audit produced and shrinks as violations are fixed.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/` (new test file)
+- `test/Panopticon.Simulation.Tests/` (new test file)
 
 ## Acceptance criteria
 

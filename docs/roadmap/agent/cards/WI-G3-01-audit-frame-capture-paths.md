@@ -17,15 +17,15 @@ needs, so G3 extends the current paths rather than adding a tool. Read-only: no 
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Graphics/FrameCapturer.cs`: `Capture(GraphicsDevice, Texture)` and the
+- `src/Panopticon.Simulation/Graphics/FrameCapturer.cs`: `Capture(GraphicsDevice, Texture)` and the
   `CapturedFrame` result type.
-- `src/OpenSage.Game/Graphics/FrameCaptureService.cs`: `ScheduleCapture`, `FlushPending`, `Capture`,
+- `src/Panopticon.Simulation/Graphics/FrameCaptureService.cs`: `ScheduleCapture`, `FlushPending`, `Capture`,
   `DeleteCaptures`, `ClearCaptureDirectory`, and the capture directory convention.
-- `src/OpenSage.Tools.ReplaySketch.Maui/MainPage.xaml.cs`: the `REPLAYSKETCH_SCREENSHOT_PATH`
+- `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml.cs`: the `REPLAYSKETCH_SCREENSHOT_PATH`
   screenshot path.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`: the existing frame-validation workflow and the
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`: the existing frame-validation workflow and the
   `validation_guide.md` convention.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:160-168`: the final blit, which fixes what
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:160-168`: the final blit, which fixes what
   texture a capture can read.
 
 ## Steps

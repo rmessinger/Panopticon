@@ -31,7 +31,7 @@ Tracks → phases → sub-phases. Phases with a dedicated design document are ma
 
 ```mermaid
 mindmap
-  root((OpenSAGE<br/>simulation<br/>roadmap))
+  root((Panopticon<br/>simulation<br/>roadmap))
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
         P0-1 Open command model
