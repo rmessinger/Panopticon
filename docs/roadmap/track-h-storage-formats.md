@@ -34,8 +34,8 @@ dives are yet to be written.
 
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
-| H1 | — | — | — |
-| H2 | — | — | — |
+| H1 | Written by `WI-H1-01` | — | [`WI-H1-01`](agent/cards/WI-H1-01-map-format-audit.md), [`WI-H1-02`](agent/cards/WI-H1-02-format-decision-options.md) |
+| H2 | Extended by `WI-H2-01` | — | [`WI-H2-01`](agent/cards/WI-H2-01-map-interchange-design.md) |
 | H3 | — | — | — |
 | H4 | — | — | — |
 | H5 | — | — | — |

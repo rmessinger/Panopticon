@@ -37,8 +37,8 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 | B2 | — | — | — |
 | B3 | — | — | — |
 | B4 | — | — | — |
-| B4a | [Larger maps](deep-dives/b4a-larger-maps.md) | [§](deep-dives/b4a-larger-maps.md#architecture-diagrams) | — |
-| B4b | [Geospatial map generation](deep-dives/b4b-geospatial-map-generation.md) | [§10](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | No cards |
+| B4a | [Larger maps](deep-dives/b4a-larger-maps.md) | [§](deep-dives/b4a-larger-maps.md#architecture-diagrams) | [`WI-B4a-01`](agent/cards/WI-B4a-01-chunk-contract.md) (B4a-5 chunk contract) |
+| B4b | [Geospatial map generation](deep-dives/b4b-geospatial-map-generation.md) | [§10](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | `WI-B4b-01..24` ([plan](implementation/track-b-b4b-geospatial.md)) |
 | B5 | — | — | — |
 | B6 | [Distributed sim](deep-dives/b6-distributed-simulation.md) | [§6](deep-dives/b6-distributed-simulation.md#6-architecture-diagrams) | — |
 | B7 | [Variable fidelity](deep-dives/b7-variable-fidelity.md) | [§8](deep-dives/b7-variable-fidelity.md#8-architecture-diagrams) | — |
@@ -54,7 +54,9 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 - B4b consumes B4a's large-map runtime representation and H3's versioned map container through
   H6's WorldBuilder read/write integration. Its
   [importer](deep-dives/b4b-geospatial-map-generation.md) targets the map interchange boundary
-  instead of coupling geospatial parsing to either storage implementation.
+  instead of coupling geospatial parsing to either storage implementation. B4b-1..6b (readers,
+  generation, standalone payload, dev preview) need neither B4a nor H and proceed first; only
+  B4b-7..9 wait on B4a-5, H2/H3, and H6.
 - B6's RTS implementation gives each shard one Bepu world. Owned bodies simulate; halo bodies are
   read-only kinematic proxies; handoff carries engine-level physics state.
 - B7 composes with [A2](track-a-foundations.md), B6, and F4a. Fidelity changes the cost of an

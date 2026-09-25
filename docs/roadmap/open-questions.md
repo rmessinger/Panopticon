@@ -355,6 +355,32 @@
   tests use synthetic fixtures. This keeps the importer deterministic and service-independent
   while leaving source-data rights with the operator under the existing single-operator scope.
   Affects [B4b](deep-dives/b4b-geospatial-map-generation.md).
+- B4b geospatial pipeline. Decision: the B4b-1 deferred choices are settled as follows.
+  1. Dependencies: `BitMiracle.LibTiff.NET` with in-house GeoTIFF key parsing; in-house WGS84
+     Transverse Mercator (Krüger series, order 6); no projection package.
+  2. Coordinate systems: sources are EPSG:4326 and WGS84 UTM only; others are reprojected by the
+     operator at export time.
+  3. Target: WGS84 Transverse Mercator with a custom central meridian (default: extent centre
+     rounded to 0.01 degrees) or a UTM preset. Import fails when point scale error exceeds 0.1%.
+     One import can therefore span UTM zones 31 and 32 for continuous panning across the front.
+  4. Vertical datum: metadata only, no geoid conversion; mixed known datums are rejected.
+  5. Payload: `float32` game-unit heights in 128-interval chunks (131 x 131 with apron) and
+     chunk-aligned RGBA8 PNG imagery.
+  6. KML altitude: geometry is always clamped to terrain; altitude and `styleUrl` are kept as
+     attributes.
+  7. Materials: integer classification values and polygon attributes map through manifest rules;
+     no built-in vocabulary. An ESA WorldCover mapping ships only as an example.
+  8. Legacy `.map` export: deferred until H5. A dev-only preview converts payloads into a resident
+     legacy `MapFile` for play testing.
+  9. Reimport: replace-only.
+  10. Placement: new CPU-only `Panopticon.Geospatial` project with no engine references.
+  B4b-1..6b proceed before B4a and H with a standalone payload; B4b-7..9 stay blocked. Affects
+  [B4b](deep-dives/b4b-geospatial-map-generation.md), [B4a-5](deep-dives/b4a-larger-maps.md),
+  [H1-H2](track-h-storage-formats.md).
+- Western Front terrain currency. Decision: only the geographic area must be historical. Modern
+  land cover, roads, and buildings from present-day sources are acceptable in W3 generated terrain;
+  1916 trench, wire, and crater state comes from W-track summaries, not from source imagery.
+  Affects [W3](deep-dives/w3-w6-integration-experiments.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
 - Western Front decision gates. Decision: the twelve gates of the
   [Western Front charter](deep-dives/western-front-scale-simulation.md#11-decision-gates) are
   settled as follows, and the goal becomes [Track W](track-w-western-front.md).

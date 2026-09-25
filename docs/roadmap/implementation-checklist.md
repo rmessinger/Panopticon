@@ -720,6 +720,34 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: a synthetic fixture and one operator-supplied real-world area generate maps whose extent,
     elevations, imagery, and named vector landmarks match source control points within declared
     tolerances; each map saves, reloads in WorldBuilder, and plays.
+- [ ] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest
+      (`WI-B4b-01`, `WI-B4b-02`).
+  - AC: the project references no engine assembly; malformed manifests fail with typed codes.
+- [ ] B4b-2 Geospatial interchange values and interfaces (`WI-B4b-03`).
+  - AC: interchange types reference no `MapFile`, LibTiff, or ImageSharp type.
+- [ ] B4b-3 KML, KMZ, and GeoTIFF readers with synthetic fixtures (`WI-B4b-07`..`10`).
+  - AC: unsafe archives and DTDs are rejected before expansion; GeoTIFF fixtures reproduce their
+    georeferencing, including south-up and pixel-is-point cases.
+- [ ] B4b-4 Transverse Mercator, CRS transformer, local map grid (`WI-B4b-04`..`06`).
+  - AC: round trips within 1 mm; a custom-meridian grid spans UTM 31/32 and scale error over 0.1%
+    fails.
+- [ ] B4b-5 Sampling, terrain, imagery, and material chunks (`WI-B4b-11`..`14`).
+  - AC: shared chunk edges are bit-identical; repeated runs produce identical chunk hashes.
+- [ ] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
+  - AC: clipped geometry matches exact boundary intersections; slope and water masks follow the
+    manifest thresholds.
+- [ ] B4b-6a Standalone payload, GeoImport CLI, control points (`WI-B4b-18`..`20`).
+  - AC: a synthetic import writes the full payload transactionally and control points pass within
+    tolerance.
+- [ ] B4b-6b Dev preview to a legacy `MapFile` (`WI-B4b-21`..`24`).
+  - AC: a generated synthetic map loads in Generals and runs 300 logic frames.
+- [ ] B4b-7 H3 package output through the H2 interchange (blocked on H2/H3, B4a-5).
+  - AC: TBD by `WI-H2-01`.
+- [ ] B4b-8 WorldBuilder import workflow (blocked on H6).
+  - AC: import is one transaction; cancellation leaves the session unchanged.
+- [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
+  - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
+    plays; B1 records import time and peak memory.
 - [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
   - AC: TBD, instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
     the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.

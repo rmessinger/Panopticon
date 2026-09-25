@@ -121,6 +121,8 @@ mindmap
         B4b-4 Coordinate normalization
         B4b-5 Terrain and imagery generation
         B4b-6 Vector semantics
+        B4b-6a Standalone payload
+        B4b-6b Dev preview
         B4b-7 H3 package output
         B4b-8 WorldBuilder workflow
         B4b-9 Validation and scale proof

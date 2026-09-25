@@ -66,6 +66,16 @@ Source of truth:
 |---|---|---|
 | [track-a-a4-domain-state-projection.md](track-a-a4-domain-state-projection.md) | A4-4a…A4-4d | Domain state projection (WI-A4-42..45) |
 
+## Track B · B4b : Geospatial map generation
+
+Source of truth:
+[deep-dives/b4b-geospatial-map-generation.md](../deep-dives/b4b-geospatial-map-generation.md) :
+[Architecture diagrams §10](../deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | B4b-1…B4b-6b | Geospatial map generation (WI-B4b-01..24) |
+
 ## Track C · C1 : Format-agnostic import abstraction
 
 Source of truth: [deep-dives/c1-import-abstraction.md](../deep-dives/c1-import-abstraction.md) :

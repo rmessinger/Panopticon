@@ -32,6 +32,9 @@ Design:
 - Regions follow a regular projected grid clipped to the box (default 2 km), with front sectors
   aligned to the digitized line. Cells follow B4a terrain chunks, so tactical and aggregate
   representations share one map transform.
+- Only the area must be historical: modern DEM, land cover, roads, and buildings are acceptable
+  per the [terrain-currency Decision](../open-questions.md); 1916 trench, wire, and crater state
+  comes from W summaries.
 - Order of battle stays synthetic, placed on real geography. A historical order of battle is a W6
   input, not a W3 requirement.
 
