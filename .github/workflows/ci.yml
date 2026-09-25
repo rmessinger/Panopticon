@@ -36,11 +36,19 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: dotnet workload install maui-maccatalyst
 
-    - name: Test
-      run: |
-        dotnet test src/OpenSage.Mathematics.Tests/OpenSage.Mathematics.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
-        dotnet test src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
-        dotnet test src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+    # One step per project: a multi-line pwsh block on Windows reports only the
+    # last command's exit code, which hid Game.Tests failures. !cancelled() keeps
+    # every project reporting after an earlier one fails.
+    - name: Test Mathematics
+      run: dotnet test src/OpenSage.Mathematics.Tests/OpenSage.Mathematics.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+
+    - name: Test Game
+      if: ${{ !cancelled() }}
+      run: dotnet test src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+
+    - name: Test ReplaySketch
+      if: ${{ !cancelled() }}
+      run: dotnet test src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
 
     - name: Upload coverage
       uses: codecov/codecov-action@v5
