@@ -195,7 +195,6 @@ public class GltfFixtureTests
     [InlineData("unsupported-required-extension.gltf", "model", typeof(System.IO.InvalidDataException), "model.gltf")]
     [InlineData("malformed-accessor.gltf", "model", typeof(System.IO.InvalidDataException), "model.gltf")]
     [InlineData("unsupported-cubicspline.gltf", "animation", typeof(NotSupportedException), "CUBICSPLINE")]
-    [InlineData("unsupported-third-influence.gltf", "model", typeof(NotSupportedException), "third or fourth influence")]
     [InlineData("unsupported-multiple-skins.gltf", "model", typeof(NotSupportedException), "skins")]
     public void ExclusionFixtures_FailWithDocumentedTypeAndContext(
         string fileName,

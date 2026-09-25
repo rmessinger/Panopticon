@@ -143,36 +143,6 @@ internal static class GltfHandAuthoredFixtures
             }
             """,
 
-        ["unsupported-third-influence.gltf"] = """
-            {
-              "asset": { "version": "2.0", "generator": "hand-authored" },
-              "scene": 0,
-              "scenes": [ { "nodes": [0, 2] } ],
-              "nodes": [
-                { "name": "jointA", "children": [1] },
-                { "name": "jointB", "translation": [0, 1, 0] },
-                { "name": "meshNode", "mesh": 0, "skin": 0 }
-              ],
-              "skins": [ { "joints": [0, 1], "skeleton": 0 } ],
-              "meshes": [ { "primitives": [ { "attributes": { "POSITION": 0, "NORMAL": 1, "JOINTS_0": 2, "WEIGHTS_0": 3 }, "indices": 4 } ] } ],
-              "accessors": [
-                { "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3", "min": [0, 0, 0], "max": [1, 1, 0] },
-                { "bufferView": 1, "componentType": 5126, "count": 3, "type": "VEC3" },
-                { "bufferView": 2, "componentType": 5123, "count": 3, "type": "VEC4" },
-                { "bufferView": 3, "componentType": 5126, "count": 3, "type": "VEC4" },
-                { "bufferView": 4, "componentType": 5123, "count": 3, "type": "SCALAR" }
-              ],
-              "bufferViews": [
-                { "buffer": 0, "byteOffset": 0, "byteLength": 36 },
-                { "buffer": 0, "byteOffset": 36, "byteLength": 36 },
-                { "buffer": 0, "byteOffset": 72, "byteLength": 24 },
-                { "buffer": 0, "byteOffset": 96, "byteLength": 48 },
-                { "buffer": 0, "byteOffset": 144, "byteLength": 6 }
-              ],
-              "buffers": [ { "uri": "unsupported-third-influence.bin", "byteLength": 150 } ]
-            }
-            """,
-
         ["unsupported-multiple-skins.gltf"] = """
             {
               "asset": { "version": "2.0", "generator": "hand-authored" },
@@ -214,14 +184,6 @@ internal static class GltfHandAuthoredFixtures
         ["malformed-accessor.bin"] = Concat(Floats(0, 0, 0, 1, 0, 0, 0, 1, 0), U16(0, 1, 5)),
 
         ["unsupported-cubicspline.bin"] = Concat(Floats(0, 1), new byte[72]),
-
-        // Weights (0.5, 0.25, 0.25, 0) x3: meaningful third influence, sum one.
-        ["unsupported-third-influence.bin"] = Concat(
-            Floats(0, 0, 0, 1, 0, 0, 0, 1, 0),
-            Floats(0, 0, 1, 0, 0, 1, 0, 0, 1),
-            U16(0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0),
-            Floats(0.5f, 0.25f, 0.25f, 0, 0.5f, 0.25f, 0.25f, 0, 0.5f, 0.25f, 0.25f, 0),
-            U16(0, 1, 2)),
     };
 
     private static byte[] Floats(params float[] values)

@@ -124,6 +124,12 @@ public sealed record NifFile(
                 return NifNode.Read(reader);
             case "NiStringExtraData":
                 return NifStringExtraData.Read(reader);
+
+            case "NiIntegerExtraData":
+                return NifIntegerExtraData.Read(reader);
+
+            case "NiBooleanExtraData":
+                return NifBooleanExtraData.Read(reader);
             case "NiTriShape":
                 return NifTriShape.Read(reader);
             case "NiTriShapeData":
@@ -194,7 +200,7 @@ public sealed record NifFile(
                     foreach (var extra in netBlock.ExtraDataReferences)
                     {
                         ValidateReference(extra, i, "ExtraData");
-                        if (extra >= 0 && blocks[extra] is not NifStringExtraData)
+                        if (extra >= 0 && blocks[extra] is not (NifStringExtraData or NifIntegerExtraData or NifBooleanExtraData))
                         {
                             throw new InvalidDataException(
                                 $"NIF block {i} references block {extra} as extra data, " +
