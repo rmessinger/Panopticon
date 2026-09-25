@@ -37,16 +37,16 @@ models without loading textures or creating renderer resources.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/Blocks/NifProperty.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifMaterialProperty.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifTexturingProperty.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifSourceTexture.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifAlphaProperty.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifSpecularProperty.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifZBufferProperty.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifVertexColorProperty.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifPropertyTests.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifProperty.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifMaterialProperty.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifTexturingProperty.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifSourceTexture.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifAlphaProperty.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifSpecularProperty.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifZBufferProperty.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifVertexColorProperty.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifPropertyTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
 
 ## Acceptance criteria
 

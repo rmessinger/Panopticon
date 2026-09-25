@@ -20,7 +20,7 @@ buffer, live during the run (a re-run will not reproduce the divergence).
 
 - `docs/roadmap/deep-dives/a5-visualization.md` §5: the tier definitions and the capture-on-trip
   rationale.
-- `src/OpenSage.Game/RunOutput.cs` and the T1 recording produced by `WI-A1-09`.
+- `src/Panopticon.Simulation/RunOutput.cs` and the T1 recording produced by `WI-A1-09`.
 
 ## Steps
 
@@ -30,8 +30,8 @@ between trips and pre-marked windows via `WithMarkedWindow`.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/` (T2 capture types)
-- `src/OpenSage.Game.Tests/` (trigger + bound test)
+- `src/Panopticon.Simulation/` (T2 capture types)
+- `test/Panopticon.Simulation.Tests/` (trigger + bound test)
 
 ## Acceptance criteria
 

@@ -19,9 +19,9 @@ Replace the P4 scenario-matrix stub with a CI-running matrix test that expands a
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:113-131`: P4 matrix axes and per-cell assertions; use the checklist's 18-cell count where it corrects the arithmetic.
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:145-194`: P4 architecture diagram links for economy types.
 - `docs/roadmap/implementation-checklist.md:251-255`: checklist AC: 18 cells for `faction` × `supplyDensity` × `startingMoney`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: `SweepAxis`, assertion templates, and expansion.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: running expanded cells with `HarnessRunner.RunAndAssert`.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:100-128`: existing P4 matrix stub to replace.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:9-152`: `SweepAxis`, assertion templates, and expansion.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: running expanded cells with `HarnessRunner.RunAndAssert`.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:100-128`: existing P4 matrix stub to replace.
 
 ## Steps
 
@@ -41,8 +41,8 @@ Replace the P4 scenario-matrix stub with a CI-running matrix test that expands a
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
-- `src/OpenSage.Game.Tests/Logic/Economy/P4ScenarioMatrixTestHelpers.cs` (new, only if shared helpers are needed)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Economy/P4ScenarioMatrixTestHelpers.cs` (new, only if shared helpers are needed)
 
 ## Acceptance criteria
 

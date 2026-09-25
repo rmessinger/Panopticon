@@ -21,14 +21,14 @@ double-sided state into the completed C3 interchange contract.
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` section 8.
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 3-7.
-- `src/OpenSage.Game/Content/Importing/ImportedMaterial.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMeshPart.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedImageSource.cs` (new from `WI-C3-01`).
-- `src/OpenSage.Game/Content/Importing/ImportedSampler.cs` (new from `WI-C3-01`).
-- `src/OpenSage.Game/Content/Importing/ImportedTextureBinding.cs` (new from `WI-C3-01`).
-- `src/OpenSage.Game/Content/Importing/ImportedPbrMetallicRoughness.cs` (new from `WI-C3-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfResourceResolver.cs` (new from `WI-C4-02`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedMaterial.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMeshPart.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedImageSource.cs` (new from `WI-C3-01`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedSampler.cs` (new from `WI-C3-01`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedTextureBinding.cs` (new from `WI-C3-01`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedPbrMetallicRoughness.cs` (new from `WI-C3-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfResourceResolver.cs` (new from `WI-C4-02`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`).
 
 ## Steps
 
@@ -52,10 +52,10 @@ double-sided state into the completed C3 interchange contract.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfMaterialConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImageSourceConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfMaterialConverterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfMaterialConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImageSourceConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfMaterialConverterTests.cs` (new)
 
 ## Acceptance criteria
 

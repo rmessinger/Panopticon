@@ -96,7 +96,7 @@ or water tile by using E1's terrain-passability data instead of today's land-onl
 
 Types carry a stereotype when they are E1 or E2 deliverables rather than existing code. `<<E1>>`
 and `<<E2>>` mark members or types that phase E1/E2 adds or changes; everything else exists today in
-`src/OpenSage.Game`. The design rationale lives in [section 2](#2-design); these diagrams show
+`src/Panopticon.Simulation`. The design rationale lives in [section 2](#2-design); these diagrams show
 structure and flow only.
 
 ### Movement and terrain types
@@ -383,26 +383,26 @@ sequenceDiagram
 
 ## Appendix: Current code (agent context)
 
-- `src/OpenSage.Game/Terrain/TerrainLogic.cs:88,97`: `GetLayerForDestination`/
+- `src/Panopticon.Simulation/Terrain/TerrainLogic.cs:88,97`: `GetLayerForDestination`/
   `GetHighestLayerForDestination` unconditionally return `PathfindLayerType.Ground`; this is the
   stub E1 replaces with real water/ground resolution.
-- `src/OpenSage.Game/Logic/AI/Pathfinder.cs:22-26`: `ValidMovementTerrain` unconditionally
+- `src/Panopticon.Simulation/Logic/AI/Pathfinder.cs:22-26`: `ValidMovementTerrain` unconditionally
   returns `true` (`// TODO(Port): Implement this.`); this is the stub E1 implements against
   locomotor surface + water depth.
-- `src/OpenSage.Game/Logic/Object/LocomotorTemplate.cs:655-670`: `Surfaces` enum already has
+- `src/Panopticon.Simulation/Logic/Object/LocomotorTemplate.cs:655-670`: `Surfaces` enum already has
   `Ground`/`Water`/`Cliff`/`Air` bits; E1 makes `Water` actually constrain movement.
-- `src/OpenSage.Game/Logic/Object/Locomotor.cs:1336-1354`: existing `OverWater` flag/model
+- `src/Panopticon.Simulation/Logic/Object/Locomotor.cs:1336-1354`: existing `OverWater` flag/model
   condition tracking, visual-only today; E1's terrain data should drive this rather than each side
   computing water state independently.
-- `src/OpenSage.Game/Logic/AI/AIData.cs:84,105,222,256`: `WadeWaterDepth`/`DeepWaterDepth`
+- `src/Panopticon.Simulation/Logic/AI/AIData.cs:84,105,222,256`: `WadeWaterDepth`/`DeepWaterDepth`
   already parsed from INI but unused for movement validation; E1 is their first real consumer.
-- `src/OpenSage.Game/Logic/Object/ObjectKinds.cs`: existing `SHIP`, `SHIP_BATTLESHIP`,
+- `src/Panopticon.Simulation/Logic/Object/ObjectKinds.cs`: existing `SHIP`, `SHIP_BATTLESHIP`,
   `SHIP_BOMBARD`, `SHIP_SUICIDE`, `SHIP_TRANSPORT`, `PORT`, `BOAT`, `AMPHIBIOUS` kinds
   (`AddedIn(SageGame.Bfme2)`/`Bfme2Rotwk`), the reference content E1-E4 validate against. No new
   `ObjectKind` values are needed for the initial reference scenario.
-- `src/OpenSage.Physics/` and `docs/roadmap/plans/physics-seam.md`: the Bepu seam exists in
+- `src/Panopticon.Physics/` and `docs/roadmap/plans/physics-seam.md`: the Bepu seam exists in
   proof-of-concept form; F4a adds ship classification, water support, filtering, lifecycle, and
   contact dispatch before E2 consumes it.
-- `src/OpenSage.Game/Logic/Object/Update/DockUpdate.cs`: existing dock/approach-position pattern
+- `src/Panopticon.Simulation/Logic/Object/Update/DockUpdate.cs`: existing dock/approach-position pattern
   used today for supply trucks; E3's `PORT` production building placement check follows the same
   module structure, distinct from this supply-specific behavior.

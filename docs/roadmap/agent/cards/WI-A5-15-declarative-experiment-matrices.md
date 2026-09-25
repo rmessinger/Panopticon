@@ -18,8 +18,8 @@ then reject unbound paths before execution.
 ## Context to read (and only this)
 
 - Matrix contract in the A5 implementation plan.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`.
 - A4 experiment definition and binding types.
 - Existing scenario-matrix tests.
 
@@ -33,7 +33,7 @@ then reject unbound paths before execution.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`
 - New loader/binding services
 - Existing matrix tests
 

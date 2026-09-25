@@ -61,11 +61,11 @@ A code-first authoring API plus a throughput check, reusing the landed open comm
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Authoring/ScenarioBuilder.cs` | NEW : programmatic builder + bulk generators (seeded) |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Streamlined large-set emission (preallocate, stream, no redundant copies); behaviour-preserving |
+| `src/Panopticon.Tools.ReplaySketch.Core/Authoring/ScenarioBuilder.cs` | NEW : programmatic builder + bulk generators (seeded) |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs` | Streamlined large-set emission (preallocate, stream, no redundant copies); behaviour-preserving |
 | `docs/roadmap/deep-dives/p0-playable-baseline-harness.md` | Document the authoring API and the export/load budget |
-| `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioBuilderTests.cs` | Unit tests for the builder (Core-only project) |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchScaleTests.cs` | NEW : 10k-order export/load round-trip + budget assertion |
+| `test/Panopticon.Tools.ReplaySketch.Tests/ScenarioBuilderTests.cs` | Unit tests for the builder (Core-only project) |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchScaleTests.cs` | NEW : 10k-order export/load round-trip + budget assertion |
 
 ## Tests
 

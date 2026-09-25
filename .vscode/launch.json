@@ -8,7 +8,7 @@
             "name": "Generals",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/src/OpenSage.Launcher/bin/Debug/net10.0/OpenSage.Launcher.dll",
+            "program": "${workspaceFolder}/src/Panopticon.Launcher/bin/Debug/net10.0/Panopticon.Launcher.dll",
             "args": [
                 "--game", "0"
             ]
@@ -17,7 +17,7 @@
           "name": "Generals (Alpine Assault)",
           "type": "coreclr",
           "request": "launch",
-          "program": "${workspaceFolder}/src/OpenSage.Launcher/bin/Debug/net10.0/OpenSage.Launcher.dll",
+          "program": "${workspaceFolder}/src/Panopticon.Launcher/bin/Debug/net10.0/Panopticon.Launcher.dll",
           "args": [
               "--game", "0",
               "--map", "maps\\Alpine Assault\\Alpine Assault.map"
@@ -27,14 +27,14 @@
           "name": "Generals (Tournament Island)",
           "type": "coreclr",
           "request": "launch",
-          "program": "${workspaceFolder}/src/OpenSage.Launcher/bin/Debug/net10.0/OpenSage.Launcher.dll",
+          "program": "${workspaceFolder}/src/Panopticon.Launcher/bin/Debug/net10.0/Panopticon.Launcher.dll",
           "args": [
               "--game", "0",
               "--map", "maps\\Tournament Island\\Tournament Island.map"
           ]
         },
         // TestHarness scenario is selected by the "Scenario" field in
-        // src/OpenSage.Tools.TestHarness/TestHarness.json (copied to the output dir on build).
+        // src/Panopticon.Tools.TestHarness/TestHarness.json (copied to the output dir on build).
         // Valid BuiltInScenario values:
         //   AlpineAssaultUSAvGLA
         //   AlpineAssaultUSAvGLAFullBuild
@@ -49,14 +49,14 @@
             "name": "TestHarness",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/OpenSage.Tools.TestHarness.dll",
+            "program": "${workspaceFolder}/src/Panopticon.Tools.TestHarness/bin/Debug/net10.0/Panopticon.Tools.TestHarness.dll",
             "preLaunchTask": "build-testharness-all"
         },
         {
             "name": "TestHarness (Headless)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/OpenSage.Tools.TestHarness.dll",
+            "program": "${workspaceFolder}/src/Panopticon.Tools.TestHarness/bin/Debug/net10.0/Panopticon.Tools.TestHarness.dll",
             "args": ["--headless"],
             "preLaunchTask": "build-testharness-all"
         },
@@ -64,11 +64,11 @@
             // Runs the generic ScenarioCapture profile named in the last --scenario argument;
             // swap it for another embedded profile name (e.g. capture-impulse.json) or a path to
             // your own capture profile JSON. See docs/screenshots.md and
-            // src/OpenSage.Tools.TestHarness/AGENTS.md for the profile schema.
+            // src/Panopticon.Tools.TestHarness/AGENTS.md for the profile schema.
             "name": "TestHarness (ScenarioCapture)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/OpenSage.Tools.TestHarness.dll",
+            "program": "${workspaceFolder}/src/Panopticon.Tools.TestHarness/bin/Debug/net10.0/Panopticon.Tools.TestHarness.dll",
             "args": ["--headless", "--built-in-scenario", "ScenarioCapture", "--scenario", "capture-construction.json"],
             "preLaunchTask": "build-testharness-all"
         },
@@ -82,14 +82,14 @@
             "name": "WorldBuilder",
             "type": "maui",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/OpenSage.Tools.WorldBuilder.Maui/OpenSage.Tools.WorldBuilder.Maui.csproj",
+            "projectPath": "${workspaceFolder}/src/Panopticon.Tools.WorldBuilder.Maui/Panopticon.Tools.WorldBuilder.Maui.csproj",
             "preLaunchTask": "maui: Build"
         },
         {
             "name": "Zero Hour",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/src/OpenSage.Launcher/bin/Debug/net10.0/OpenSage.Launcher.dll",
+            "program": "${workspaceFolder}/src/Panopticon.Launcher/bin/Debug/net10.0/Panopticon.Launcher.dll",
             "args": [
                 "--game", "1"
             ]

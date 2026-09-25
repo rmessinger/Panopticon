@@ -16,7 +16,7 @@ document is a charter and dependency map, not an implementation phase or task-ca
 
 The goal is a spatially explicit simulation in which geography, formations, logistics, command,
 combat, and uncertainty interact across multiple scales. The research question is whether
-OpenSAGE's domain, recording, map, fidelity, and partition seams can support that experiment while
+Panopticon's domain, recording, map, fidelity, and partition seams can support that experiment while
 keeping cost and approximation error measurable.
 
 Success is not defined as simulating every soldier or reproducing a particular campaign. The
@@ -484,15 +484,15 @@ sequenceDiagram
 
 ## Appendix: Current-state hooks (agent context)
 
-- `src/OpenSage.Game/Simulation/ISimulationDomainModel.cs:7-58` exposes domain identity, fidelity,
+- `src/Panopticon.Simulation/Simulation/ISimulationDomainModel.cs:7-58` exposes domain identity, fidelity,
   entity capture, topology, metrics, and interaction authority.
-- `src/OpenSage.Game/Simulation/RtsSimulationDomainModel.cs:17-75` projects current RTS objects,
+- `src/Panopticon.Simulation/Simulation/RtsSimulationDomainModel.cs:17-75` projects current RTS objects,
   players, position, health, money, fixed spatial-cell keys, and initiator authority.
-- `src/OpenSage.Game/SimulationHost.cs:47-97` runs one logic-frame clock from the game definition's
+- `src/Panopticon.Simulation/SimulationHost.cs:47-97` runs one logic-frame clock from the game definition's
   `MsPerLogicFrame`; it has no campaign/operational scheduler.
-- `src/OpenSage.Game/Recording/RunRecording.cs:60-113` reconstructs state from snapshots and
+- `src/Panopticon.Simulation/Recording/RunRecording.cs:60-113` reconstructs state from snapshots and
   per-frame deltas without input re-simulation.
-- `src/OpenSage.Game/Logic/AI/Hierarchy/SquadHierarchy.cs:7-75` owns current squad membership,
+- `src/Panopticon.Simulation/Logic/AI/Hierarchy/SquadHierarchy.cs:7-75` owns current squad membership,
   commander promotion, and persistence by stable object ID.
-- `src/OpenSage.Game/Terrain/TerrainLogic.cs:10-84` exposes the current heightmap-centered terrain
+- `src/Panopticon.Simulation/Terrain/TerrainLogic.cs:10-84` exposes the current heightmap-centered terrain
   queries and bounds.

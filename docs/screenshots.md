@@ -12,7 +12,7 @@ shows the newest image automatically: no refresh, upload, or login. Overwrite th
 for iteration snapshots so the viewer swaps instantly.
 
 ```sh
-cp /tmp/opensage_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/shot.png"
+cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/shot.png"
 ```
 
 ## Environment facts (Linux dev host)
@@ -36,14 +36,14 @@ Replay scenarios: set `"CaptureFrames": true` in `TestHarness.json` and run `--h
 capture is written after every completed replay action.
 
 Unit Validation Ground: set the `TESTHARNESS_VG_CAPTURE` environment variable; every logic step
-renders and captures a frame (capped at 500 files) into `/tmp/opensage_captures/capture_NNNN.png`.
+renders and captures a frame (capped at 500 files) into `/tmp/panopticon_captures/capture_NNNN.png`.
 
 ```sh
-rm -f /tmp/opensage_captures/*
+rm -f /tmp/panopticon_captures/*
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
 TESTHARNESS_VG_CAPTURE=1 \
-dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
-ls /tmp/opensage_captures/
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- --headless
+ls /tmp/panopticon_captures/
 ```
 
 Exit code 3 from a VG run means "frame cap with no baseline", which is expected when the
@@ -57,7 +57,7 @@ the attempt is not repeated blindly:
 
 ```sh
 Xvfb :99 -screen 0 1600x1000x24 &
-DISPLAY=:99 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json dotnet run --project src/OpenSage.Tools.TestHarness
+DISPLAY=:99 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json dotnet run --project src/Panopticon.Tools.TestHarness
 ffmpeg -y -f x11grab -video_size 1600x1000 -i :99 -frames:v 1 out.png   # captures only the window background
 ```
 
@@ -74,8 +74,8 @@ documented way to screenshot overlay visuals.
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
 TESTHARNESS_VG_OVERLAY_SHOT=1 \
 TESTHARNESS_VG_HOVER_OBJECT=AmericaInfantryRanger \
-dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- --headless
-# frames with scene + tooltip land in /tmp/opensage_captures/capture_NNNN.png
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- --headless
+# frames with scene + tooltip land in /tmp/panopticon_captures/capture_NNNN.png
 ```
 
 - `TESTHARNESS_VG_HOVER_OBJECT=<definition name>` pins the mouse on the first object with that
@@ -94,7 +94,7 @@ Captures one unit attacking another, with per-frame screen projections computed 
 engine so overlays land exactly on the units. Two committed pieces:
 
 - `EngagementCapture`, a TestHarness built-in scenario
-  (`src/OpenSage.Tools.TestHarness/EngagementCaptureRunner.cs`). It spawns an attacker and a
+  (`src/Panopticon.Tools.TestHarness/EngagementCaptureRunner.cs`). It spawns an attacker and a
   target, auto-fits the camera to them, commands the weapon directly, writes one PNG per logic
   frame, and writes `manifest.json` with per-frame screen positions, radii, health, and
   projectile positions.
@@ -102,10 +102,10 @@ engine so overlays land exactly on the units. Two committed pieces:
 
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
-dotnet run --project src/OpenSage.Tools.TestHarness -- \
+dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario EngagementCapture
 
-python3 scripts/annotate_engagement_gif.py /tmp/opensage_engagement \
+python3 scripts/annotate_engagement_gif.py /tmp/panopticon_engagement \
   "/mnt/pit2/Network Storage/temp/engagement.gif"
 ```
 
@@ -135,14 +135,14 @@ completion) and `capture-impulse.json` (a physics impulse slides a civilian car)
 
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
-dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
   --built-in-scenario ScenarioCapture --scenario capture-construction.json
-python3 scripts/annotate_capture_gif.py /tmp/opensage_capture_construction out.gif --labels
+python3 scripts/annotate_capture_gif.py /tmp/panopticon_capture_construction out.gif --labels
 ```
 
 `--scenario` takes a file path or an embedded profile name; the profile schema and failure
-behavior are documented in `src/OpenSage.Tools.TestHarness/AGENTS.md`. Output lands in
-`$TMPDIR/opensage_capture_<name>/` (PNG sequence plus a schema-2 manifest that extends the
+behavior are documented in `src/Panopticon.Tools.TestHarness/AGENTS.md`. Output lands in
+`$TMPDIR/panopticon_capture_<name>/` (PNG sequence plus a schema-2 manifest that extends the
 engagement manifest with world positions, velocities, construction state, and command/
 expectation results). Exit codes: 1 profile or setup error, 4 camera fit failure, 5 unmet
 expectation. Playback defaults to real time (each PNG held for the logic frames it covers at
@@ -170,9 +170,9 @@ post-validated against loose scatter bounds. Exit codes: 0 pass, 1 setup error, 
 
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
-dotnet run --project src/OpenSage.Tools.TestHarness --no-build -- \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
   --headless --built-in-scenario PhysicsStack
-python3 scripts/annotate_capture_gif.py /tmp/opensage_physics_stack \
+python3 scripts/annotate_capture_gif.py /tmp/panopticon_physics_stack \
   "/mnt/pit2/Network Storage/temp/physics_stack.gif" --labels
 ```
 
@@ -215,19 +215,19 @@ from `RenderPipeline.Execute`). If a "camera is ignored" symptom reappears, chec
 
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
-dotnet run --project src/OpenSage.Tools.ReplaySketch.Avalonia --no-build -- \
+dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia --no-build -- \
   --screenshot "/mnt/pit2/Network Storage/temp/vg_avalonia.png"
 ```
 
 Renders the editor scene via SkiaSharp, headless; works on Linux. The current Avalonia front-end's screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`, see
-`src/OpenSage.Tools.ReplaySketch.Avalonia/AGENTS.md`) runs on Linux under Xvfb with software
+`src/Panopticon.Tools.ReplaySketch.Avalonia/AGENTS.md`) runs on Linux under Xvfb with software
 GL (verified recipe below). The former MAUI front-end was removed.
 
 ```sh
 setsid nohup Xvfb :99 -screen 0 1600x1000x24 -nolisten tcp >/dev/null 2>&1 &
 DISPLAY=:99 LIBGL_ALWAYS_SOFTWARE=1 \
 REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png REPLAYSKETCH_SCREENSHOT_TAB=model \
-  dotnet run --project src/OpenSage.Tools.ReplaySketch.Avalonia --no-build
+  dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia --no-build
 ```
 
 The Model tab (`REPLAYSKETCH_SCREENSHOT_TAB=model`) uses a deterministic fake session

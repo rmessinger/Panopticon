@@ -22,17 +22,17 @@ default and the GUI mapping, then make the sentinel correct.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/PlayerManager.cs:24-90`: `OnNewGame(...)`: the
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs:24-90`: `OnNewGame(...)`: the
   `left.Team == right.Team && left.Team != -1` ally/enemy wiring and the `_players[i+2].Team = playerSettings[i].Team`
   copy.
-- `src/OpenSage.Game/Network/SkirmishSlot.cs:98-110`: `Team` is `sbyte`, backing field `_team`
+- `src/Panopticon.Simulation/Network/SkirmishSlot.cs:98-110`: `Team` is `sbyte`, backing field `_team`
   default `0` (no explicit initializer).
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs:57-66`: the `ComboBoxTeam` fill: labels
+- `src/Panopticon.Mods.Generals/Gui/GameOptionsUtil.cs:57-66`: the `ComboBoxTeam` fill: labels
   `Team:0..Team:4` map to data items `(sbyte)-1, 0, 1, 2, 3`. So GUI `Team:0` (the "no team" entry)
   → `-1`, and data value `0` is GUI `Team:1` (a real team).
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs:210-235`: slot reset (`slot.Team = 0`) when a
+- `src/Panopticon.Mods.Generals/Gui/GameOptionsUtil.cs:210-235`: slot reset (`slot.Team = 0`) when a
   slot is opened/closed, and `slot.Team = (sbyte)dataItem` when the combo changes.
-- `src/OpenSage.Game/Network/SkirmishManager.cs:415-426`: host disconnect reset also sets
+- `src/Panopticon.Simulation/Network/SkirmishManager.cs:415-426`: host disconnect reset also sets
   `slot.Team = 0`.
 
 ## Steps
@@ -55,8 +55,8 @@ default and the GUI mapping, then make the sentinel correct.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Network/SkirmishSlot.cs`: default team value (if the bug exists).
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs`: initial team-combo selection / reset value
+- `src/Panopticon.Simulation/Network/SkirmishSlot.cs`: default team value (if the bug exists).
+- `src/Panopticon.Mods.Generals/Gui/GameOptionsUtil.cs`: initial team-combo selection / reset value
   (if needed to keep GUI and data consistent).
 - This card file (Notes) if no gap is found.
 

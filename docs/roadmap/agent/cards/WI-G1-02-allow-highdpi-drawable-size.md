@@ -20,9 +20,9 @@ here; that is `WI-G1-03`.
 
 - `docs/roadmap/deep-dives/g1-high-dpi-resolution.md` §2 and §3: the Veldrid/SDL constraints that
   dictate the approach, and the `ClientBounds`/`DrawableBounds`/`DpiScale` split.
-- `src/OpenSage.Game/GameWindow.cs:36-43,73-129`: `ClientBounds`, `WindowScale`, `CursorScale`, the
+- `src/Panopticon.Simulation/GameWindow.cs:36-43,73-129`: `ClientBounds`, `WindowScale`, `CursorScale`, the
   constructor, `CreateGraphicsDevice`, `HandleResized`.
-- `src/OpenSage.Game/Utilities/Sdl2Interop.cs:1-80`: the `Sdl2Native.LoadFunction` delegate pattern
+- `src/Panopticon.Simulation/Utilities/Sdl2Interop.cs:1-80`: the `Sdl2Native.LoadFunction` delegate pattern
   to copy, and `GetDisplayScale`.
 
 ## Steps
@@ -55,9 +55,9 @@ here; that is `WI-G1-03`.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Utilities/Sdl2Interop.cs`
-- `src/OpenSage.Game/GameWindow.cs`
-- `src/OpenSage.Game.Tests/`: new unit test.
+- `src/Panopticon.Simulation/Utilities/Sdl2Interop.cs`
+- `src/Panopticon.Simulation/GameWindow.cs`
+- `test/Panopticon.Simulation.Tests/`: new unit test.
 
 ## Acceptance criteria
 

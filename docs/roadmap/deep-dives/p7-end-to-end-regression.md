@@ -45,7 +45,7 @@ universal invariant set (§3) plus an end-state-specific outcome assertion.
 Each scenario uses a small number of P0 harness commands, such as build, produce, attack, and
 `EndGame`, chosen to reach the target end state in the fewest ticks. Scenarios
 are written once by a human or agent, stored in
-`src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/`, and never re-generated. They use
+`src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/`, and never re-generated. They use
 fixed seeds, no random timing, and no optional branching. Any AI player that must make progress is
 scripted with explicit `BuildObject` and `CreateUnit` orders rather than the live AI so the
 scenario stays reproducible across builds.
@@ -88,7 +88,7 @@ Output: a six-cell aggregate JSON report. All six cells must pass for P7 to be c
 ## 5. Regression locking
 
 Locking means the six scenario files and their assertion sets are committed to source control in
-`src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/`, and the corresponding tests in
+`src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/`, and the corresponding tests in
 `TrackPScenarioMatrixTests.cs` are unblocked. From that point:
 
 - The `P7_ScenarioMatrixTests` xUnit tests run with every `dotnet test src --filter Category!=Interactive`
@@ -271,11 +271,11 @@ sequenceDiagram
 
 ### Scenario storage location
 Regression scenario files will live in
-`src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/` (directory to be created in P7-1).
+`src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/` (directory to be created in P7-1).
 Each scenario is a `ReplayScenario` serialized to JSON via `System.Text.Json`.
 
 ### Test class
-`src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` → `P7_ScenarioMatrixTests`:
+`test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` → `P7_ScenarioMatrixTests`:
 `Matrix_AllEndStateCells_PassWithInvariants` and `Matrix_InvariantViolation_AbortsRunAndReportsCell`.
 Both currently throw `NotImplementedException`; P7-8 unblocks them.
 

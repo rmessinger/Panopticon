@@ -22,17 +22,17 @@ Create the checked-in P7 PlayerSurrenders scenario where the human player issues
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:112-112`: P7-2 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300`: `OrderType.EndGame` dependency on P3-4.
 - `docs/roadmap/implementation-checklist.md:337-344`: scenario and outcome ACs.
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs:3-6`: `EndGame` enum value.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:426-428`: `EndGame` processing path.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96`: open command creation.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to wire to P3 `GameOutcome`.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
+- `src/Panopticon.Simulation/Logic/Orders/OrderType.cs:3-6`: `EndGame` enum value.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:426-428`: `EndGame` processing path.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs:86-96`: open command creation.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to wire to P3 `GameOutcome`.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json` as a static `ReplayScenario`.
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json` as a static `ReplayScenario`.
 2. Include a short fixed-frame opening sequence that proves the match booted, then emit `OrderType.EndGame` for the human player via the P0 open command model.
 3. Assert the P3 `GameOutcome` is `OutcomeStatus.Decided`, `OutcomeReason.Surrendered`, with the surrendering human as loser and the opposing side as winner. Verify default/sentinel values do not pass.
 4. Add or extend focused P7 scenario test wiring so this scenario is loaded from the JSON and run through `HarnessRunner.RunAndAssert` with a real failing exit code on mismatch.
@@ -41,9 +41,9 @@ Create the checked-in P7 PlayerSurrenders scenario where the human player issues
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if the P3 outcome assertion path is still placeholder-backed)
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/player-surrenders.json` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if the P3 outcome assertion path is still placeholder-backed)
 
 ## Acceptance criteria
 

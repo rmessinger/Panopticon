@@ -12,16 +12,16 @@
 
 ## Goal
 
-Materialize imported particle effects into existing OpenSAGE particle templates with deterministic
+Materialize imported particle effects into existing Panopticon particle templates with deterministic
 random seeding and no source-format branches in per-frame runtime code.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4h-ee2-particle-effects.md` sections 6, 7, 9, and 10.
-- `src/OpenSage.Game/Graphics/ParticleSystems/FXParticleSystemTemplate.cs:11-172`.
-- `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystem.cs:232-573`.
-- `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystemUtility.cs`.
-- `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystemManager.cs:32-112`.
+- `src/Panopticon.Simulation/Graphics/ParticleSystems/FXParticleSystemTemplate.cs:11-172`.
+- `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystem.cs:232-573`.
+- `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystemUtility.cs`.
+- `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystemManager.cs:32-112`.
 - Imported particle values from `WI-C4h-03`.
 
 ## Steps
@@ -40,10 +40,10 @@ random seeding and no source-format branches in per-frame runtime code.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Loaders/ImportedParticleEffectMaterializer.cs` (new)
-- `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystemUtility.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedParticleEffectMaterializerTests.cs` (new)
-- `src/OpenSage.Game.Tests/Graphics/ParticleSystems/ParticleSystemUtilityTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/ImportedParticleEffectMaterializer.cs` (new)
+- `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystemUtility.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedParticleEffectMaterializerTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Graphics/ParticleSystems/ParticleSystemUtilityTests.cs` (new)
 
 ## Acceptance criteria
 

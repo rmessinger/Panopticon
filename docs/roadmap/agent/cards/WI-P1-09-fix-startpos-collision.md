@@ -21,14 +21,14 @@ start point. Restore the "reserve already-taken positions first" behaviour the G
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`: `ApplyDefaults(...)`: the
+- `src/Panopticon.Simulation/Network/SkirmishSlotDefaults.cs`: `ApplyDefaults(...)`: the
   `availablePositions` build loop and the per-slot `if (slot.StartPosition == 0)` assignment that
   pops `availablePositions[^1]`. Note it never excludes positions already held by other slots.
-- `src/OpenSage.Mods.Generals/Gui/GameOptionsUtil.cs` (git history before the P1 refactor): the
+- `src/Panopticon.Mods.Generals/Gui/GameOptionsUtil.cs` (git history before the P1 refactor): the
   original code: it built `availablePositions` then did a first pass removing every
   `slot.StartPosition != 0` from the pool before the assignment pass. This is the behaviour to
   re-create.
-- `src/OpenSage.Game/Network/SkirmishManager.cs`: `HostSkirmishManager.SkirmishClientUpdatePacketReceived`
+- `src/Panopticon.Simulation/Network/SkirmishManager.cs`: `HostSkirmishManager.SkirmishClientUpdatePacketReceived`
   already guards start-position uniqueness for the network path; mirror that intent here.
 
 ## Steps
@@ -44,7 +44,7 @@ start point. Restore the "reserve already-taken positions first" behaviour the G
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Network/SkirmishSlotDefaults.cs`
+- `src/Panopticon.Simulation/Network/SkirmishSlotDefaults.cs`
 
 ## Acceptance criteria
 
@@ -73,14 +73,14 @@ dotnet format src --verify-no-changes
 - Set Status to `Done` (or `Blocked` + reason).
 - Append a result line to repo-root `.exchange`.
 - Consider adding a unit test for `ApplyDefaults` collision-freedom (small `[Fact]` in
-  `OpenSage.Game.Tests`, no game files needed).
+  `Panopticon.Simulation.Tests`, no game files needed).
 
 ## Result
 
 Added a reserve-first pass in `ApplyDefaults` that removes every non-`Open`/`Closed` slot's
 pre-set `StartPosition` from `availablePositions` before the original assignment loop runs, so
 manually-placed positions can no longer be re-handed to another slot. Added
-`src/OpenSage.Game.Tests/Network/SkirmishSlotDefaultsTests.cs` with
+`test/Panopticon.Simulation.Tests/Network/SkirmishSlotDefaultsTests.cs` with
 `ApplyDefaults_DoesNotReassignAlreadyTakenStartPositions` and
 `ApplyDefaults_SkipsOpenAndClosedSlots`. Along the way found that `MockedGameTest.TestGame
 .GetPlayableSides()` (test harness stub) threw `NotImplementedException`, blocking any test that

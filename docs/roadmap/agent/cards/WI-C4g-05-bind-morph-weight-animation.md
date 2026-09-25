@@ -19,11 +19,11 @@ morph target sets during playback.
 
 - `docs/roadmap/deep-dives/c4g-ee2-morph-animation.md` sections 5, 6, 7, and 8.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 4.2 and 6.
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs:121-132`.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/ModelAnimation.cs`.
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs:121-132`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelAnimation.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`.
 
 ## Steps
 
@@ -43,13 +43,13 @@ morph target sets during playback.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifAnimationImporter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifMorphConverter.cs`
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`
-- `src/OpenSage.Game/Graphics/ModelAnimation.cs`
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
-- `src/OpenSage.Game.Tests/Graphics/ModelMorphTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifAnimationImporter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifMorphConverter.cs`
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`
+- `src/Panopticon.Simulation/Graphics/ModelAnimation.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/ModelMorphTests.cs`
 
 ## Acceptance criteria
 

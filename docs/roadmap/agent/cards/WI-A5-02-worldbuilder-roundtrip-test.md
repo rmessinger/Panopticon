@@ -20,21 +20,21 @@ the saved file loads in the engine. B4a then builds on a tested baseline.
 
 - `docs/roadmap/implementation/track-a-a5-6-worldbuilder-baseline.md`: the round-trip verdicts from
   `WI-A5-01`. Only assert steps the audit marked implemented; skip or mark the rest as follow-ups.
-- `src/OpenSage.Tools.WorldBuilder.Core/EditorMap.cs`: `CreateNew`, `Open`, `Save`, `SaveAs`,
+- `src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs`: `CreateNew`, `Open`, `Save`, `SaveAs`,
   `IsDirty`, `MapIniContent`, `MapStrContent`.
-- `src/OpenSage.Tools.WorldBuilder.Core/NewMapFactory.cs`: blank-map construction.
-- `src/OpenSage.Tools.WorldBuilder.Core/HeightMapEdit.cs` and `ObjectPlacementEdit.cs`: the two edit
+- `src/Panopticon.Tools.WorldBuilder.Core/NewMapFactory.cs`: blank-map construction.
+- `src/Panopticon.Tools.WorldBuilder.Core/HeightMapEdit.cs` and `ObjectPlacementEdit.cs`: the two edit
   types the test applies.
-- `src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj:44-47`: the project reference list, which the
+- `test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj:44-47`: the project reference list, which the
   test needs extended.
-- `src/OpenSage.Game.Tests/GameFactAttribute.cs`: the `[GameFact]` attribute for the install-
+- `test/Panopticon.Simulation.Tests/GameFactAttribute.cs`: the `[GameFact]` attribute for the install-
   dependent half of the test.
 
 ## Steps
 
-1. Add a `ProjectReference` to `OpenSage.Tools.WorldBuilder.Core` in
-   `src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj`, keeping the existing alphabetical order.
-2. Add a test under `src/OpenSage.Game.Tests/Tools/WorldBuilder/` that builds a normal-sized map via
+1. Add a `ProjectReference` to `Panopticon.Tools.WorldBuilder.Core` in
+   `test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj`, keeping the existing alphabetical order.
+2. Add a test under `test/Panopticon.Simulation.Tests/Tools/WorldBuilder/` that builds a normal-sized map via
    `NewMapFactory`, applies one `HeightMapEdit` and one `ObjectPlacementEdit`, saves via `SaveAs` to
    a temp path, reopens via `EditorMap.Open`, and asserts both edits survived and `IsDirty` is
    false after save. This half needs no game install: keep it in the non-interactive suite.
@@ -49,8 +49,8 @@ the saved file loads in the engine. B4a then builds on a tested baseline.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj`
-- `src/OpenSage.Game.Tests/Tools/WorldBuilder/` (new test file)
+- `test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj`
+- `test/Panopticon.Simulation.Tests/Tools/WorldBuilder/` (new test file)
 
 ## Acceptance criteria
 
@@ -76,7 +76,7 @@ dotnet format src --verify-no-changes
 
 - Do not fix WorldBuilder bugs the test uncovers. Record new gaps as follow-up cards.
 - Do not test large or oversized maps. Normal sizes only; scaling is B4a.
-- Do not add a new test project. Extend `OpenSage.Game.Tests`.
+- Do not add a new test project. Extend `Panopticon.Simulation.Tests`.
 - Do not exercise the MAUI UI layer. The round-trip is a Core-level contract.
 
 ## On completion

@@ -18,12 +18,12 @@ skinned meshes.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 5 and 6.
-- `src/OpenSage.Game/Graphics/Shaders/FixedFunctionShaderResources.cs`.
-- `src/OpenSage.Game/Graphics/Shaders/NormalMappedShaderResources.cs`.
-- `src/OpenSage.Game/Graphics/Shaders/MeshShaderResources.cs`.
-- `src/OpenSage.Game/Assets/Shaders/NormalMapped.vert` and `NormalMapped.frag`.
-- Shared shader headers under `src/OpenSage.Game/Assets/Shaders/`.
-- `src/OpenSage.Game/OpenSage.Game.csproj`: shader compilation targets.
+- `src/Panopticon.Simulation/Graphics/Shaders/FixedFunctionShaderResources.cs`.
+- `src/Panopticon.Simulation/Graphics/Shaders/NormalMappedShaderResources.cs`.
+- `src/Panopticon.Simulation/Graphics/Shaders/MeshShaderResources.cs`.
+- `src/Panopticon.Simulation/Assets/Shaders/NormalMapped.vert` and `NormalMapped.frag`.
+- Shared shader headers under `src/Panopticon.Simulation/Assets/Shaders/`.
+- `src/Panopticon.Simulation/Panopticon.Simulation.csproj`: shader compilation targets.
 
 ## Steps
 
@@ -39,9 +39,9 @@ skinned meshes.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Assets/Shaders/PbrMetallicRoughness.vert` (new)
-- `src/OpenSage.Game/Assets/Shaders/PbrMetallicRoughness.frag` (new)
-- `src/OpenSage.Game/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs` (new)
+- `src/Panopticon.Simulation/Assets/Shaders/PbrMetallicRoughness.vert` (new)
+- `src/Panopticon.Simulation/Assets/Shaders/PbrMetallicRoughness.frag` (new)
+- `src/Panopticon.Simulation/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs` (new)
 
 ## Acceptance criteria
 

@@ -19,10 +19,10 @@ at the correct model or scenario location.
 
 - `docs/roadmap/deep-dives/c4h-ee2-particle-effects.md` sections 2, 8, and 10.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 5 and 6.
-- `src/OpenSage.Game/FX/FXNuggets/ParticleSystemFXNugget.cs:9-94`.
-- `src/OpenSage.Game/FX/FXNuggets/FXListAtBonePosFXNugget.cs`.
-- `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystemManager.cs:32-63`.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs` and `ModelBoneInstance.cs`.
+- `src/Panopticon.Simulation/FX/FXNuggets/ParticleSystemFXNugget.cs:9-94`.
+- `src/Panopticon.Simulation/FX/FXNuggets/FXListAtBonePosFXNugget.cs`.
+- `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystemManager.cs:32-63`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs` and `ModelBoneInstance.cs`.
 
 ## Steps
 
@@ -40,10 +40,10 @@ at the correct model or scenario location.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifParticleEffectBinding.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifParticleEffectAttachmentResolver.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifParticleEffectAttachmentResolverTests.cs` (new)
-- `src/OpenSage.Tools.TestHarness/Ee2ParticleProofScenario.cs` (new or updated when created)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifParticleEffectBinding.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifParticleEffectAttachmentResolver.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifParticleEffectAttachmentResolverTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/Ee2ParticleProofScenario.cs` (new or updated when created)
 
 ## Acceptance criteria
 

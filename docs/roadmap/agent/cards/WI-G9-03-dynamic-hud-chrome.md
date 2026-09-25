@@ -22,8 +22,8 @@ unchanged.
 - `docs/roadmap/implementation/track-g-g9-resolution-independent-2d.md`: the `WI-G9-01` inventory
   of HUD draw sites and hit regions; this card replaces the art behind those sites, not the sites.
 - `docs/roadmap/track-g-rendering-clarity.md` G9 row and the rendering-clarity scope Decision.
-- `src/OpenSage.Game/Gui/Wnd/` (control bar window/layout, button states) and
-  `src/OpenSage.Game/Gui/DrawingContext2D.cs` (the 2D draw path the dynamic chrome draws through).
+- `src/Panopticon.Simulation/Gui/Wnd/` (control bar window/layout, button states) and
+  `src/Panopticon.Simulation/Gui/DrawingContext2D.cs` (the 2D draw path the dynamic chrome draws through).
 - The WND control bar asset chain as loaded today (`.wnd` layouts plus window.big textures).
 
 ## Steps

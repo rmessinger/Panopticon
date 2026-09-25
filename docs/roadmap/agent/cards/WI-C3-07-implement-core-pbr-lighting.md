@@ -19,10 +19,10 @@ roles defined by C3.
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 5 and 6.
 - PBR shaders and resource layouts from `WI-C3-06`.
-- `src/OpenSage.Game/Assets/Shaders/Lighting.h`.
-- `src/OpenSage.Game/Assets/Shaders/NormalMapped.frag`.
-- `src/OpenSage.Game/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs`.
-- `src/OpenSage.Game.Tests/GameFixture.cs`.
+- `src/Panopticon.Simulation/Assets/Shaders/Lighting.h`.
+- `src/Panopticon.Simulation/Assets/Shaders/NormalMapped.frag`.
+- `src/Panopticon.Simulation/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs`.
+- `test/Panopticon.Simulation.Tests/GameFixture.cs`.
 
 ## Steps
 
@@ -37,10 +37,10 @@ roles defined by C3.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Assets/Shaders/PbrMetallicRoughness.vert`
-- `src/OpenSage.Game/Assets/Shaders/PbrMetallicRoughness.frag`
-- `src/OpenSage.Game/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs`
-- `src/OpenSage.Game.Tests/Graphics/Shaders/PbrShaderBindingTests.cs` (new)
+- `src/Panopticon.Simulation/Assets/Shaders/PbrMetallicRoughness.vert`
+- `src/Panopticon.Simulation/Assets/Shaders/PbrMetallicRoughness.frag`
+- `src/Panopticon.Simulation/Graphics/Shaders/PbrMetallicRoughnessShaderResources.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Shaders/PbrShaderBindingTests.cs` (new)
 
 ## Acceptance criteria
 

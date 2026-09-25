@@ -18,12 +18,12 @@ scale animation and unchanged lighting under uniform scale.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4f-ee2-scale-animation.md` sections 2, 8, and 10.
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`: C4c animated capture plan after
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`: C4c animated capture plan after
   `WI-C4c-06`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs:41-95`: `configureInstance` hook.
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`:
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:41-95`: `configureInstance` hook.
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`:
   `PlayToTime` sampling.
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`: capture plan tests.
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`: capture plan tests.
 
 ## Steps
 
@@ -42,8 +42,8 @@ scale animation and unchanged lighting under uniform scale.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
 
 ## Acceptance criteria
 
@@ -59,7 +59,7 @@ scale animation and unchanged lighting under uniform scale.
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario Ee2NifProof
 dotnet build src
 dotnet test src --filter Category!=Interactive

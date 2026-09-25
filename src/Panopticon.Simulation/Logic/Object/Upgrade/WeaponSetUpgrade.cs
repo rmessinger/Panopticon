@@ -1,0 +1,55 @@
+using Panopticon.Data.Ini;
+
+namespace Panopticon.Logic.Object;
+
+internal sealed class WeaponSetUpgrade : UpgradeModule
+{
+    private readonly WeaponSetUpgradeModuleData _moduleData;
+
+    internal WeaponSetUpgrade(GameObject gameObject, IGameEngine gameEngine, WeaponSetUpgradeModuleData moduleData)
+        : base(gameObject, gameEngine, moduleData)
+    {
+        _moduleData = moduleData;
+    }
+
+    protected override void OnUpgrade()
+    {
+        GameObject.SetWeaponSetCondition(WeaponSetConditions.PlayerUpgrade, true);
+
+        // The upgraded draw condition states (TOW launcher with its WeaponLaunchBone, upgraded
+        // models) are selected by this model condition flag.
+        GameObject.SetModelConditionState(ModelConditionFlag.WeaponSetPlayerUpgrade);
+    }
+
+    internal override void Load(StatePersister reader)
+    {
+        reader.PersistVersion(1);
+
+        reader.BeginObject("Base");
+        base.Load(reader);
+        reader.EndObject();
+    }
+}
+
+/// <summary>
+/// Triggers use of PLAYER_UPGRADE WeaponSet on this object.
+/// Allows the use of WeaponUpgradeSound within UnitSpecificSounds section of the object.
+/// Allows the use of the WEAPONSET_PLAYER_UPGRADE ModelConditionState.
+/// </summary>
+public sealed class WeaponSetUpgradeModuleData : UpgradeModuleData
+{
+    internal static WeaponSetUpgradeModuleData Parse(IniParser parser) => parser.ParseBlock(FieldParseTable);
+
+    private static new readonly IniParseTable<WeaponSetUpgradeModuleData> FieldParseTable = UpgradeModuleData.FieldParseTable
+        .Concat(new IniParseTable<WeaponSetUpgradeModuleData>
+        {
+            { "WeaponCondition", (parser, x) => x.WeaponCondition = parser.ParseEnum<WeaponSetConditions>() },
+        });
+
+    public WeaponSetConditions WeaponCondition { get; private set; }
+
+    internal override BehaviorModule CreateModule(GameObject gameObject, IGameEngine gameEngine)
+    {
+        return new WeaponSetUpgrade(gameObject, gameEngine, this);
+    }
+}

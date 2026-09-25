@@ -20,14 +20,14 @@ identity behavior for every existing W3D bone.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` section 6.
-- `src/OpenSage.Game/Content/Importing/ImportedBone.cs`.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dModelImporter.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/ModelBone.cs`.
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`: bind-pose initialization and skinning upload.
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/W3dModelImporterTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs`.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dModelImporter.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBone.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`: bind-pose initialization and skinning upload.
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dModelImporterTests.cs`.
 
 ## Steps
 
@@ -45,14 +45,14 @@ identity behavior for every existing W3D bone.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedBone.cs`
-- `src/OpenSage.Game/Content/Importing/W3d/W3dModelImporter.cs`
-- `src/OpenSage.Game/Graphics/ModelBone.cs`
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/W3dModelImporterTests.cs`
-- `src/OpenSage.Game.Tests/Graphics/ModelSkinningTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs`
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dModelImporter.cs`
+- `src/Panopticon.Simulation/Graphics/ModelBone.cs`
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dModelImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/ModelSkinningTests.cs` (new)
 
 ## Acceptance criteria
 

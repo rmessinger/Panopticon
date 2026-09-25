@@ -20,10 +20,10 @@ points while the 3D viewport is now in pixels. Completes phase G1.
 
 - `docs/roadmap/deep-dives/g1-high-dpi-resolution.md` §3 (the two consequences) and §4 (validation).
 - The `## Consumer classification` table in `docs/roadmap/implementation/track-g-g1-high-dpi.md`.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:130-160`: the `DrawingContext2D.Begin`
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:130-160`: the `DrawingContext2D.Begin`
   call and the 2D block.
-- `src/OpenSage.Game/Graphics/Cameras/Camera.cs:140-200`: `Unproject`, `Project`, `ScreenSize`.
-- `src/OpenSage.Game/Game.cs:666-683`: `OnPanelSizeChanged` as left by `WI-G1-03`.
+- `src/Panopticon.Simulation/Graphics/Cameras/Camera.cs:140-200`: `Unproject`, `Project`, `ScreenSize`.
+- `src/Panopticon.Simulation/Game.cs:666-683`: `OnPanelSizeChanged` as left by `WI-G1-03`.
 
 ## Steps
 
@@ -45,10 +45,10 @@ points while the 3D viewport is now in pixels. Completes phase G1.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs`
-- `src/OpenSage.Game/Gui/DrawingContext2D.cs`
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs`
+- `src/Panopticon.Simulation/Gui/DrawingContext2D.cs`
 - The input-to-picking call site identified in step 1.
-- `src/OpenSage.Game.Tests/`: new unit tests.
+- `test/Panopticon.Simulation.Tests/`: new unit tests.
 
 ## Acceptance criteria
 
@@ -67,7 +67,7 @@ dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 
 # Visual check (requires a game install; see the TestHarness AGENTS.md workflow)
-dotnet run --project src/OpenSage.Tools.TestHarness
+dotnet run --project src/Panopticon.Tools.TestHarness
 ```
 
 ## Out of scope / guardrails

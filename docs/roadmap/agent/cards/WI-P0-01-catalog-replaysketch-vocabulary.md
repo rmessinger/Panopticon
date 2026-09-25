@@ -24,10 +24,10 @@ action vocabulary and the hardcoded object definitions: so the P0 generalization
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs`: the closed action enum.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs`: the per-action data model.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the scenario shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: how actions become engine
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionType.cs`: the closed action enum.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionEntry.cs`: the per-action data model.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: the scenario shape.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: how actions become engine
   `Order`s and a `.rep`; note the `KnownDefinitions` class (hardcoded USA/GLA defs).
 
 ## Steps

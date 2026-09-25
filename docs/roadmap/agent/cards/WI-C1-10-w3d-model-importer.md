@@ -19,12 +19,12 @@ leaving the existing runtime loader active.
 
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 3, 5, 6, and 7.
 - `docs/roadmap/implementation/track-c-c1-import-abstraction.md` model stage trace.
-- `src/OpenSage.Game/Content/Loaders/OnDemandModelLoader.cs`.
-- `src/OpenSage.Game/Content/Loaders/OnDemandModelBoneHierarchyLoader.cs`.
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`.
-- `src/OpenSage.Game/Graphics/ModelSubObject.cs`.
-- `src/OpenSage.Game/Graphics/ModelBox.cs`.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dMeshConverter.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandModelLoader.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandModelBoneHierarchyLoader.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelSubObject.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBox.cs`.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dMeshConverter.cs`.
 
 ## Steps
 
@@ -40,8 +40,8 @@ leaving the existing runtime loader active.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/W3d/W3dModelImporter.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/W3dModelImporterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dModelImporter.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dModelImporterTests.cs` (new)
 
 ## Acceptance criteria
 

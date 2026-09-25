@@ -21,14 +21,14 @@ model and animation importer interfaces internal.
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 2-4 and 12.
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 2, 3, and 9.
-- `src/OpenSage.Game/Content/Importing/IModelImporter.cs`: internal C1 boundary.
-- `src/OpenSage.Game/Content/Importing/IAnimationImporter.cs`: internal C1 boundary.
-- `src/OpenSage.Game/Content/Importing/AssetImportContext.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new, from `WI-C4-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfModelImporter.cs` (new, from `WI-C4-10`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationImporter.cs` (new, from `WI-C4-08`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportDiagnostics.cs` (new, from `WI-C4-10`).
+- `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs`: internal C1 boundary.
+- `src/Panopticon.Simulation/Content/Importing/IAnimationImporter.cs`: internal C1 boundary.
+- `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new, from `WI-C4-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfModelImporter.cs` (new, from `WI-C4-10`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationImporter.cs` (new, from `WI-C4-08`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportDiagnostics.cs` (new, from `WI-C4-10`).
 
 ## Steps
 
@@ -50,16 +50,16 @@ model and animation importer interfaces internal.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ExternalAssetCatalog.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ExternalAnimationDescriptor.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ExternalAssetInspectionDiagnostic.cs` (new)
-- `src/OpenSage.Game/Content/Importing/IExternalAssetInspector.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ExternalFormatSelection.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ExternalFormatSelectionResult.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ExternalAssetInspection.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ExternalFormatFactory.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfExternalAssetInspector.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/ExternalAssetInspectionTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetCatalog.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalAnimationDescriptor.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetInspectionDiagnostic.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/IExternalAssetInspector.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalFormatSelection.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalFormatSelectionResult.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetInspection.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalFormatFactory.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfExternalAssetInspector.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/ExternalAssetInspectionTests.cs` (new)
 
 ## Acceptance criteria
 

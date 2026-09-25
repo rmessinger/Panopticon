@@ -380,11 +380,11 @@ sequenceDiagram
 
 | Concern | Current code | Note |
 |---|---|---|
-| Object storage | `GameLogic` `List<GameObject>` by `ObjectId` (`src/OpenSage.Game/Logic/GameLogic.cs`) | Single flat list; needs a region-owned view + non-resident "ghost" objects for neighbours. |
-| Spatial partitioning | `PartitionCellManager`, `Quadtree` (`src/OpenSage.Game/DataStructures/`) | Already cell-based; the partition grid is the candidate boundary primitive for the spatial-grid domain. Graph/zone domains plug in a different partition primitive (graph cut / district set) behind the same B6 boundary interface. |
-| Pathfinding | `Navigation` A* graph (`src/OpenSage.Game/Navigation/`) | Cross-shard paths need either a shared coarse graph or per-shard graphs with boundary stitching. Generalizes to domain routing/flow (transport routing, utility flow) via the domain model. |
-| Object physics | `IPhysicsWorld` / `IPhysicsBody` and Bepu backend (`src/OpenSage.Physics/`) | F4a supplies engine-level body state and contact dispatch. B6 adds one world per shard, kinematic halo proxies, ownership-authoritative contacts, and handle-free handoff. |
-| Order/frame model | `NetworkMessageBuffer`, `ReplayConnection` (`src/OpenSage.Game/Network/`) | Frame-ordered lockstep-style processing; the transport pattern for exchanging boundary/handoff messages. |
+| Object storage | `GameLogic` `List<GameObject>` by `ObjectId` (`src/Panopticon.Simulation/Logic/GameLogic.cs`) | Single flat list; needs a region-owned view + non-resident "ghost" objects for neighbours. |
+| Spatial partitioning | `PartitionCellManager`, `Quadtree` (`src/Panopticon.Simulation/DataStructures/`) | Already cell-based; the partition grid is the candidate boundary primitive for the spatial-grid domain. Graph/zone domains plug in a different partition primitive (graph cut / district set) behind the same B6 boundary interface. |
+| Pathfinding | `Navigation` A* graph (`src/Panopticon.Simulation/Navigation/`) | Cross-shard paths need either a shared coarse graph or per-shard graphs with boundary stitching. Generalizes to domain routing/flow (transport routing, utility flow) via the domain model. |
+| Object physics | `IPhysicsWorld` / `IPhysicsBody` and Bepu backend (`src/Panopticon.Physics/`) | F4a supplies engine-level body state and contact dispatch. B6 adds one world per shard, kinematic halo proxies, ownership-authoritative contacts, and handle-free handoff. |
+| Order/frame model | `NetworkMessageBuffer`, `ReplayConnection` (`src/Panopticon.Simulation/Network/`) | Frame-ordered lockstep-style processing; the transport pattern for exchanging boundary/handoff messages. |
 | Conflict resolution | B3 intent/merge model | Cross-shard write conflicts use the same [B3](../track-b-scale.md) conflict-resolution and authority rules. |
 
 ---

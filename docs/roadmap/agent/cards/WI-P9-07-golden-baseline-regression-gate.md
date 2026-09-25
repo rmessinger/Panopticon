@@ -18,16 +18,16 @@ real install, and make headless mode exit non-zero when a unit regresses beyond 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.5, §2.7, and §2.9.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs`: the report to compare.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ValidationGroundReportWriter.cs`: the writer from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs`: the report to compare.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ValidationGroundReportWriter.cs`: the writer from
   `WI-P9-06`, which renders the baseline columns.
-- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/`: where checked-in JSON data lives in this project.
-- `src/OpenSage.Tools.TestHarness/TestHarnessConfig.cs`: the baseline path and refresh flag added in
+- `src/Panopticon.Tools.ReplaySketch.Core/Profiles/`: where checked-in JSON data lives in this project.
+- `src/Panopticon.Tools.TestHarness/TestHarnessConfig.cs`: the baseline path and refresh flag added in
   `WI-P9-05`.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Model/UnitTimingBaseline.cs`: one entry per unit and
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Model/UnitTimingBaseline.cs`: one entry per unit and
    action holding the golden frame count, a tolerance percentage, and a minimum absolute frame floor.
 2. Implement `Compare(ValidationGroundReport)` returning per-unit verdicts. A unit passes when
    `|measured - golden| <= max(golden * tolerancePercent, minimumFrameFloor)`. A unit missing from
@@ -35,7 +35,7 @@ real install, and make headless mode exit non-zero when a unit regresses beyond 
 3. Implement `Load` and `Save`. `Save` runs only under the explicit refresh flag; a normal run must
    never write the baseline file.
 4. Capture the baseline against a real Generals install and commit it to
-   `src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json`.
+   `src/Panopticon.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json`.
 5. Set tolerances deliberately per entry. Do not derive them from the single capture run and do not
    use one global value.
 6. In headless mode, set a non-zero process exit code when any unit regresses. A timeout is also a
@@ -48,10 +48,10 @@ real install, and make headless mode exit non-zero when a unit regresses beyond 
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/UnitTimingBaseline.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/UnitTimingBaselineTests.cs` (new)
-- `src/OpenSage.Tools.TestHarness/Program.cs` (exit code)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/UnitTimingBaseline.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-baseline.json` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/UnitTimingBaselineTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/Program.cs` (exit code)
 
 ## Acceptance criteria
 
@@ -79,7 +79,7 @@ dotnet format src --verify-no-changes
 
 # Baseline capture, requires a Generals install
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- --headless
+  dotnet run --project src/Panopticon.Tools.TestHarness -- --headless
 ```
 
 ## Out of scope / guardrails

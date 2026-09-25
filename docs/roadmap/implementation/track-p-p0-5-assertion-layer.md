@@ -94,13 +94,13 @@ names it.
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/Assertion.cs` | NEW : assertion model (JSON predicates, 3 kinds) |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` | Add optional `Assertions` list (serialized in scenario JSON) |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/StatePath.cs` | NEW : closed path resolver over `Game` state |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/AssertionEvaluator.cs` | NEW : per-tick + end-of-run + outcome evaluation, abort on invariant failure |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/AssertionReport.cs` | NEW : machine-readable pass/fail report |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/CodePredicateRegistry.cs` | NEW : named C# predicate escape hatch |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Tests below |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/Assertion.cs` | NEW : assertion model (JSON predicates, 3 kinds) |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` | Add optional `Assertions` list (serialized in scenario JSON) |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/StatePath.cs` | NEW : closed path resolver over `Game` state |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/AssertionEvaluator.cs` | NEW : per-tick + end-of-run + outcome evaluation, abort on invariant failure |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/AssertionReport.cs` | NEW : machine-readable pass/fail report |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/CodePredicateRegistry.cs` | NEW : named C# predicate escape hatch |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchTests.cs` | Tests below |
 
 ## Tests
 

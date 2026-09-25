@@ -19,12 +19,12 @@ rest scale, while singular animated rest scale remains a clear failure.
 
 - `docs/roadmap/deep-dives/c4f-ee2-scale-animation.md` sections 3, 5, 7, and 9.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` section 5.
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`: C4c node skeleton and scaled
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`: C4c node skeleton and scaled
   subtree handling after `WI-C4c-02`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs`: source-to-engine transform
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs`: source-to-engine transform
   conversion.
-- `src/OpenSage.FileFormats.Nif/Blocks/NifAvObject.cs`: source scale field.
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`: synthetic hierarchy tests.
+- `src/Panopticon.FileFormats.Nif/Blocks/NifAvObject.cs`: source scale field.
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`: synthetic hierarchy tests.
 
 ## Steps
 
@@ -43,10 +43,10 @@ rest scale, while singular animated rest scale remains a clear failure.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
 
 ## Acceptance criteria
 

@@ -22,13 +22,13 @@ behavior change for the windowed game.
 - `docs/roadmap/implementation/track-a-a1-headless-host.md`: the `WI-A1-02` tick-path audit table.
   Its `logic` rows are exactly what moves; its `presentation` rows are exactly what stays.
 - `docs/roadmap/deep-dives/a1-headless-host.md` §2.3, §2.4, §5.
-- `src/OpenSage.Game/Game.cs:914-1000`: `StartRun`, `Update`, `LocalLogicTick`, `LogicTick`,
+- `src/Panopticon.Simulation/Game.cs:914-1000`: `StartRun`, `Update`, `LocalLogicTick`, `LogicTick`,
   `GetTimeInterval`, `EnableFixedLogicTimestep`.
-- `src/OpenSage.Game/GameEngine.cs`: the `IGameEngine` services the stepper reads.
+- `src/Panopticon.Simulation/GameEngine.cs`: the `IGameEngine` services the stepper reads.
 
 ## Steps
 
-1. Add `src/OpenSage.Game/LogicStepper.cs` owning the logic-side state the audit identified:
+1. Add `src/Panopticon.Simulation/LogicStepper.cs` owning the logic-side state the audit identified:
    `_nextLogicUpdate`, `_nextScriptingUpdate`, `LogicUpdateInterval`, the scripting interval,
    `CumulativeLogicUpdateError`, and the `IsLogicRunning` / stepping flags.
 2. Give it one public method that advances logic given the current map time, performing exactly the
@@ -39,15 +39,15 @@ behavior change for the windowed game.
    Do not resolve the two `// TODO: What is the order?` comments; carry them across unchanged.
 5. Keep `EnableFixedLogicTimestep` working: the P9 Unit Validation Ground depends on fixed-timestep
    logic-frame counts being explicit.
-6. Add a test under `src/OpenSage.Game.Tests/` that drives the stepper directly for N steps with no
+6. Add a test under `test/Panopticon.Simulation.Tests/` that drives the stepper directly for N steps with no
    `Game.Render` call and asserts the logic frame count advances by N.
 7. Run `dotnet format src` and confirm `dotnet format src --verify-no-changes`.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/LogicStepper.cs` (new)
-- `src/OpenSage.Game/Game.cs`
-- `src/OpenSage.Game.Tests/` (new test file)
+- `src/Panopticon.Simulation/LogicStepper.cs` (new)
+- `src/Panopticon.Simulation/Game.cs`
+- `test/Panopticon.Simulation.Tests/` (new test file)
 
 ## Acceptance criteria
 

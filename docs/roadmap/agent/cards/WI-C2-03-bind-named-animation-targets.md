@@ -19,9 +19,9 @@ and contextual failures.
 
 - `docs/roadmap/deep-dives/c2-skeleton-animation-retargeting.md` sections 3-5.
 - Runtime animation target and binding types from `WI-C2-02`.
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`.
-- `src/OpenSage.Game/Graphics/ModelBone.cs`.
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBone.cs`.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`.
 
 ## Steps
 
@@ -36,8 +36,8 @@ and contextual failures.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`
 
 ## Acceptance criteria
 

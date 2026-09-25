@@ -20,14 +20,14 @@ source document's rest transform and preserve `LINEAR` or `STEP` interpolation.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 3, 4, and 7.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimation.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationTarget.cs` (new from `WI-C2-01`).
-- `src/OpenSage.Game/Content/Importing/ImportedKeyframe.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAssetKey.cs` (new from `WI-C4-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimation.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationTarget.cs` (new from `WI-C2-01`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedKeyframe.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAssetKey.cs` (new from `WI-C4-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
 
 ## Steps
 
@@ -54,10 +54,10 @@ source document's rest transform and preserve `LINEAR` or `STEP` interpolation.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationImporter.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfAnimationImporterTests.cs` (new)
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationImporter.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfAnimationImporterTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`
 
 ## Acceptance criteria
 

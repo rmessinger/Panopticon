@@ -1,0 +1,56 @@
+using Panopticon.Content;
+using Panopticon.Data.Ini;
+
+namespace Panopticon.Logic.Object;
+
+public sealed class FireWeaponCollide : CollideModule
+{
+    private readonly FireWeaponCollideModuleData _moduleData;
+
+    private bool _unknown1;
+    private readonly Weapon _collideWeapon;
+    private bool _unknown2;
+
+    internal FireWeaponCollide(GameObject gameObject, IGameEngine gameEngine, FireWeaponCollideModuleData moduleData) : base(gameObject, gameEngine)
+    {
+        _moduleData = moduleData;
+
+        _collideWeapon = new Weapon(
+            gameObject,
+            moduleData.CollideWeapon.Value,
+            WeaponSlot.Primary,
+            gameEngine);
+    }
+
+    internal override void Load(StatePersister reader)
+    {
+        reader.PersistVersion(1);
+
+        reader.BeginObject("Base");
+        base.Load(reader);
+        reader.EndObject();
+
+        reader.PersistBoolean(ref _unknown1);
+        reader.PersistObject(_collideWeapon);
+        reader.PersistBoolean(ref _unknown2);
+    }
+}
+
+public sealed class FireWeaponCollideModuleData : CollideModuleData
+{
+    internal static FireWeaponCollideModuleData Parse(IniParser parser) => parser.ParseBlock(FieldParseTable);
+
+    private static readonly IniParseTable<FireWeaponCollideModuleData> FieldParseTable = new IniParseTable<FireWeaponCollideModuleData>
+    {
+        { "CollideWeapon", (parser, x) => x.CollideWeapon = parser.ParseWeaponTemplateReference() },
+        { "RequiredStatus", (parser, x) => x.RequiredStatus = parser.ParseEnum<ModelConditionFlag>() }
+    };
+
+    public LazyAssetReference<WeaponTemplate> CollideWeapon { get; private set; }
+    public ModelConditionFlag RequiredStatus { get; private set; }
+
+    internal override BehaviorModule CreateModule(GameObject gameObject, IGameEngine gameEngine)
+    {
+        return new FireWeaponCollide(gameObject, gameEngine, this);
+    }
+}

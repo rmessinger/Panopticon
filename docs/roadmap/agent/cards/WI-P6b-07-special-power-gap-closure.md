@@ -19,14 +19,14 @@ Close or explicitly document every unimplemented `SpecialPower*` handler surface
 - `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:72-77`: gap handling rule.
 - `docs/roadmap/deep-dives/p6b-unit-contract-validation.md:123-131`: sequencing and in-phase fixes.
 - `docs/roadmap/implementation-checklist.md:326-329`: checklist AC for P6b gap closure.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:388-426,556-560`: special-power dispatch and default unimplemented-order logging.
-- `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerApplicator.cs:13-37`: no-target special powers and current throwing handlers.
-- `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs:26-89`: location special powers and current throwing handlers.
-- `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerAtObjectApplicator.cs:22-50`: object-target special powers and current throwing handlers.
-- `src/OpenSage.Game/Logic/Object/SpecialPower.cs:116-180,823-843`: `SpecialPowerType` values and order flags.
-- `src/OpenSage.Game/Logic/Object/SpecialPower/SpecialPower.cs:143-149`: base activation/reload behavior.
-- `src/OpenSage.Game/Logic/Object/SpecialPower/OCLSpecialPower.cs:11-66,163-215` and `src/OpenSage.Game/Logic/Object/SpecialPower/CashHackSpecialPower.cs:9-30,60-81`: examples of concrete handlers to mirror.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6bInfantryContractTests.cs`, `P6bVehicleContractTests.cs`, `P6bAircraftContractTests.cs`, `P6bBuilderContractTests.cs`, `P6bSupportContractTests.cs`, `P6bSuperweaponContractTests.cs`: gap messages emitted by P6b-01 through P6b-06.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:388-426,556-560`: special-power dispatch and default unimplemented-order logging.
+- `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerApplicator.cs:13-37`: no-target special powers and current throwing handlers.
+- `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs:26-89`: location special powers and current throwing handlers.
+- `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerAtObjectApplicator.cs:22-50`: object-target special powers and current throwing handlers.
+- `src/Panopticon.Simulation/Logic/Object/SpecialPower.cs:116-180,823-843`: `SpecialPowerType` values and order flags.
+- `src/Panopticon.Simulation/Logic/Object/SpecialPower/SpecialPower.cs:143-149`: base activation/reload behavior.
+- `src/Panopticon.Simulation/Logic/Object/SpecialPower/OCLSpecialPower.cs:11-66,163-215` and `src/Panopticon.Simulation/Logic/Object/SpecialPower/CashHackSpecialPower.cs:9-30,60-81`: examples of concrete handlers to mirror.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6bInfantryContractTests.cs`, `P6bVehicleContractTests.cs`, `P6bAircraftContractTests.cs`, `P6bBuilderContractTests.cs`, `P6bSupportContractTests.cs`, `P6bSuperweaponContractTests.cs`: gap messages emitted by P6b-01 through P6b-06.
 
 ## Steps
 
@@ -40,10 +40,10 @@ Close or explicitly document every unimplemented `SpecialPower*` handler surface
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerApplicator.cs`
-- `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs`
-- `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerAtObjectApplicator.cs`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6b*ContractTests.cs` (only to correct assertions/gap messages)
+- `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerApplicator.cs`
+- `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs`
+- `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerAtObjectApplicator.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6b*ContractTests.cs` (only to correct assertions/gap messages)
 - `docs/roadmap/implementation-checklist.md` (tick the gap-closure item when complete)
 
 ## Acceptance criteria
@@ -82,7 +82,7 @@ dotnet format src --verify-no-changes
 - None unless an accepted out-of-scope special-power gap remains.
   - Accepted out-of-scope gaps (deep cross-cutting area-effect/superweapon systems, applicator arms
     throw NotImplementedException): CleanupArea, ParticleUplinkCannon, NuclearMissile, ScudStorm.
-    Tracked in `P6bAcceptedGaps` (src/OpenSage.Tools.ReplaySketch.Core/Model/P6bAcceptedGaps.cs)
+    Tracked in `P6bAcceptedGaps` (src/Panopticon.Tools.ReplaySketch.Core/Model/P6bAcceptedGaps.cs)
     under follow-up "special-power/area-effect handler track (P6b follow-up)". Scenario failures
     for these stay explicit until the follow-up lands.
 

@@ -20,17 +20,17 @@ This is A3's only checklist item's first half. Read-only: no code changes.
 
 - `docs/roadmap/track-a-foundations.md`: the A3 phase row and the note that A3 coordinates with C1
   because both touch the presentation seam.
-- `src/OpenSage.Game/Logic/`: the logic namespace, the audit's subject.
-- `src/OpenSage.Game/Logic/GameLogic.cs`: including the known `gameObject.Drawable?.Destroy()` call,
+- `src/Panopticon.Simulation/Logic/`: the logic namespace, the audit's subject.
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`: including the known `gameObject.Drawable?.Destroy()` call,
   which must appear in the audit.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`: the `Drawable` property, the main coupling point.
-- `src/OpenSage.Game/Game.cs:985-997`: `LogicTick`, which defines what "during a logic tick" means.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`: the `Drawable` property, the main coupling point.
+- `src/Panopticon.Simulation/Game.cs:985-997`: `LogicTick`, which defines what "during a logic tick" means.
 
 ## Steps
 
-1. Grep `src/OpenSage.Game/Logic/` for references to presentation types: `Drawable`, `Camera`,
+1. Grep `src/Panopticon.Simulation/Logic/` for references to presentation types: `Drawable`, `Camera`,
    `GraphicsDevice`, `Scene2D`, `AudioSystem`, `Cursors`, `RenderTime`, `ModelInstance`,
-   `W3d`-prefixed types, and the `OpenSage.Rendering` namespace.
+   `W3d`-prefixed types, and the `Panopticon.Rendering` namespace.
 2. For each hit record: `file:line`, the logic type, the presentation type referenced, and a
    classification of `read` (logic queries presentation state and branches on it), `write` (logic
    commands presentation, which is permitted under the seam), or `type-only` (a signature or field
@@ -56,7 +56,7 @@ This is A3's only checklist item's first half. Read-only: no code changes.
 
 ## Acceptance criteria
 
-- [ ] Every presentation-type reference under `src/OpenSage.Game/Logic/` appears in the table with a
+- [ ] Every presentation-type reference under `src/Panopticon.Simulation/Logic/` appears in the table with a
       classification.
 - [ ] Every `read` entry states whether the needed value already exists logic-side.
 - [ ] The `Logic/Object/Draw/` module tree is called out as presentation-by-role, not as violations.

@@ -19,7 +19,7 @@ implementations selectable without changing host callers.
 
 - `docs/roadmap/implementation/track-a-a4-experiment-seams.md`: partition boundary.
 - `docs/roadmap/deep-dives/b6-distributed-simulation.md`: B6-1 contract.
-- `src/OpenSage.Game/Logic/PartitionCellManager.cs` and `DataStructures/Quadtree.cs`.
+- `src/Panopticon.Simulation/Logic/PartitionCellManager.cs` and `DataStructures/Quadtree.cs`.
 - RTS and transport domain adapters from A4-1.
 
 ## Steps
@@ -32,7 +32,7 @@ implementations selectable without changing host callers.
 
 ## Files likely to change
 
-- New partitioning files under `src/OpenSage.Game/Simulation/`
+- New partitioning files under `src/Panopticon.Simulation/Simulation/`
 - Narrow domain-adapter integration
 - Focused partition tests
 

@@ -36,7 +36,7 @@ output (A1-5, metrics/events tier only; T1/T2 use A5-4 bucketing).
 ## GraphicsDevice coupling audit
 
 Every `GraphicsDevice` / `GraphicsLoadContext` / `ShaderSetStore` / `ShaderResourceManager` /
-`StandardGraphicsResources` reference in `src/OpenSage.Game`, classified per
+`StandardGraphicsResources` reference in `src/Panopticon.Simulation`, classified per
 [`WI-A1-01`](../agent/cards/WI-A1-01-audit-graphics-device-couplings.md). Classification key:
 `logic` (reached from `GameLogic.Update` / `Scene3D.LogicTick` / scripting), `asset-data`
 (reached while parsing INI, map, or object-definition data), `presentation` (reached only from
@@ -72,7 +72,7 @@ render, UI, diagnostics, or audio paths).
 Both on-demand loaders are only reachable when the strategy supplies them;
 `OnDemandAssetLoadStrategy.None` (`Content/OnDemandAssetLoadStrategy.cs:11`) passes null loaders,
 so under `None` the INI/map/object-definition parse path performs no GPU work. `TestGame`
-(`src/OpenSage.Game.Tests/MockedGameTest.cs:145`) already constructs `AssetStore` with all four
+(`test/Panopticon.Simulation.Tests/MockedGameTest.cs:145`) already constructs `AssetStore` with all four
 graphics parameters null plus `None`, proving the parse boundary is device-free. It would fail on
 a full map load (`Scene3D` ctor reaches terrain/road construction and `WaitForIdle`) and on any
 `ScriptingSystem` construction (below); it never runs a full logic tick today because `Update`
@@ -133,7 +133,7 @@ path, matching the card.
 ## Tick-path presentation audit
 
 Every call made from `Game.Update`, `LocalLogicTick`, and `LogicTick`
-(`src/OpenSage.Game/Game.cs:921-1000`), classified per
+(`src/Panopticon.Simulation/Game.cs:921-1000`), classified per
 [`WI-A1-02`](../agent/cards/WI-A1-02-audit-tick-presentation-couplings.md). Key: `logic` (must run
 headless), `presentation` (must not run headless), `mixed` (does both, needs splitting).
 
@@ -211,7 +211,7 @@ arithmetic; the stepper must keep `FixedDelta` behavior byte-identical when driv
 
 ## A1-5 tier implementation
 
-All tiers feed from one `WorldStateSampler` pass per tick (`src/OpenSage.Game/Recording/`):
+All tiers feed from one `WorldStateSampler` pass per tick (`src/Panopticon.Simulation/Recording/`):
 a `WorldStateSummary` (per-object id/definition/owner/position/health plus the player money
 vector, id-sorted) and the frame `WorldStateDelta` against the previous tick. Types:
 

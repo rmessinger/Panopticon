@@ -20,8 +20,8 @@ and observed particle block inventory without committing EE2 assets.
 - `docs/roadmap/deep-dives/c4h-ee2-particle-effects.md` sections 1, 2, 3, and the reproduction
   appendix.
 - `docs/roadmap/deep-dives/ee2-gamebryo-model-storage.md` sections 2, 3, and 5.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`: installed EE2 test pattern.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:21-55`: current NIF header and block loop.
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`: installed EE2 test pattern.
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:21-55`: current NIF header and block loop.
 
 ## Steps
 
@@ -39,7 +39,7 @@ and observed particle block inventory without committing EE2 assets.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2ParticleEffectInventoryTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2ParticleEffectInventoryTests.cs` (new)
 
 ## Acceptance criteria
 

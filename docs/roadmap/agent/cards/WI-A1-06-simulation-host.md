@@ -21,16 +21,16 @@ fast as the hardware allows, and exposes order-injection and per-tick result hoo
 
 - `docs/roadmap/deep-dives/a1-headless-host.md` §2.4, §3 (A1-4 row), §5.
 - `docs/roadmap/implementation/track-a-a1-headless-host.md`: the tick-path audit.
-- `src/OpenSage.Game/LogicStepper.cs`: produced by `WI-A1-05`; the host drives this.
-- `src/OpenSage.Game/GameEngine.cs`: the `IGameEngine` seam the host owns the world through.
-- `src/OpenSage.Tools.TestHarness/Program.cs`: the existing headless loop, which this host
+- `src/Panopticon.Simulation/LogicStepper.cs`: produced by `WI-A1-05`; the host drives this.
+- `src/Panopticon.Simulation/GameEngine.cs`: the `IGameEngine` seam the host owns the world through.
+- `src/Panopticon.Tools.TestHarness/Program.cs`: the existing headless loop, which this host
   generalizes. Do not modify it in this card.
-- `src/OpenSage.Tools.ReplaySketch.Core/`: the existing order-injection path, for the shape of
+- `src/Panopticon.Tools.ReplaySketch.Core/`: the existing order-injection path, for the shape of
   `InjectOrders`. Mirror it; do not duplicate its logic.
 
 ## Steps
 
-1. Add `src/OpenSage.Game/SimulationHost.cs` holding an `IGameEngine` and a `LogicStepper`.
+1. Add `src/Panopticon.Simulation/SimulationHost.cs` holding an `IGameEngine` and a `LogicStepper`.
 2. Give it a run method taking a frame budget and an optional stop predicate, stepping in a tight
    loop with no wall-clock sleep and no `Render` call.
 3. Add an order-injection hook that enqueues orders for a given logic frame, delegating to the same
@@ -40,14 +40,14 @@ fast as the hardware allows, and exposes order-injection and per-tick result hoo
 5. Keep the host domain-agnostic in shape: it must not reference RTS-specific types beyond what
    `IGameEngine` already exposes. Where a domain seam would be needed, take a parameter and note the
    A4 dependency in a comment rather than hard-wiring RTS.
-6. Add a test under `src/OpenSage.Game.Tests/` that runs the host for a fixed frame budget against
+6. Add a test under `test/Panopticon.Simulation.Tests/` that runs the host for a fixed frame budget against
    the mocked game and asserts the frame count and that a stop predicate terminates the run early.
 7. Run `dotnet format src` and confirm `dotnet format src --verify-no-changes`.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/SimulationHost.cs` (new)
-- `src/OpenSage.Game.Tests/` (new test file)
+- `src/Panopticon.Simulation/SimulationHost.cs` (new)
+- `test/Panopticon.Simulation.Tests/` (new test file)
 
 ## Acceptance criteria
 

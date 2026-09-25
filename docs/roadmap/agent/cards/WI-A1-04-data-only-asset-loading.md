@@ -22,10 +22,10 @@ generalizing the `OnDemandAssetLoadStrategy.None` path that `MockedGameTest.Test
 - `docs/roadmap/implementation/track-a-a1-headless-host.md`: the `asset-data` rows of the
   `WI-A1-01` audit. These are the exact call sites to make optional.
 - `docs/roadmap/deep-dives/a1-headless-host.md` §2.2 and §5.
-- `src/OpenSage.Game/Content/AssetStore.cs:170-200`: the constructor's graphics parameters.
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`: the `None` strategy.
-- `src/OpenSage.Game/Content/ContentManager.cs`: the load entry points.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs`: the existing null-device construction to mirror.
+- `src/Panopticon.Simulation/Content/AssetStore.cs:170-200`: the constructor's graphics parameters.
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`: the `None` strategy.
+- `src/Panopticon.Simulation/Content/ContentManager.cs`: the load entry points.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs`: the existing null-device construction to mirror.
 
 ## Steps
 
@@ -33,7 +33,7 @@ generalizing the `OnDemandAssetLoadStrategy.None` path that `MockedGameTest.Test
    removing it: accept a nullable graphics load context and skip GPU upload when it is absent.
 2. Do not change behavior when a real device is present. Every existing caller keeps its current
    construction and its current eager or on-demand upload behavior.
-3. Add a test under `src/OpenSage.Game.Tests/Content/` that builds an `AssetStore` with a null
+3. Add a test under `test/Panopticon.Simulation.Tests/Content/` that builds an `AssetStore` with a null
    graphics load context and `OnDemandAssetLoadStrategy.None`, then asserts that at least one
    `ObjectDefinition`, one `WeaponTemplate`, and one `LocomotorTemplate` resolve. Use the mocked
    path so it runs under `Category!=Interactive`; do not require a game install.
@@ -43,10 +43,10 @@ generalizing the `OnDemandAssetLoadStrategy.None` path that `MockedGameTest.Test
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/AssetStore.cs`
-- `src/OpenSage.Game/Content/ContentManager.cs`
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`
-- `src/OpenSage.Game.Tests/Content/` (new test file)
+- `src/Panopticon.Simulation/Content/AssetStore.cs`
+- `src/Panopticon.Simulation/Content/ContentManager.cs`
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`
+- `test/Panopticon.Simulation.Tests/Content/` (new test file)
 
 ## Acceptance criteria
 

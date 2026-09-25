@@ -21,7 +21,7 @@ while the `Faithful` preset stays at one sample and unchanged.
 - `docs/roadmap/implementation/track-g-g4-msaa.md`: the `WI-G4-01` inventory, which is the exact
   change list.
 - The G4 deep dive and its architecture diagrams.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:23-25,92-100,160-168`.
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:23-25,92-100,160-168`.
 - The G2 settings type and its sample-count member.
 
 ## Steps
@@ -41,9 +41,9 @@ while the `Faithful` preset stays at one sample and unchanged.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs`
-- `src/OpenSage.Game/Graphics/Shaders/` (the pipeline-owning shader resource classes)
-- `src/OpenSage.Game/Graphics/` (the G2 settings consumption)
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs`
+- `src/Panopticon.Simulation/Graphics/Shaders/` (the pipeline-owning shader resource classes)
+- `src/Panopticon.Simulation/Graphics/` (the G2 settings consumption)
 
 ## Acceptance criteria
 

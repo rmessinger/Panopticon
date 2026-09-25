@@ -18,12 +18,12 @@ Read-only: no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Assets/Shaders/Common.h:29-33`: `FailsAlphaTest` and the `0.37647f` cutoff.
-- Every shader in `src/OpenSage.Game/Assets/Shaders/` that calls `FailsAlphaTest`. Find them with a
+- `src/Panopticon.Simulation/Assets/Shaders/Common.h:29-33`: `FailsAlphaTest` and the `0.37647f` cutoff.
+- Every shader in `src/Panopticon.Simulation/Assets/Shaders/` that calls `FailsAlphaTest`. Find them with a
   repository search.
 - `src/Veldrid.ImageSharp/MipmapHelper.cs:20-61`: `ComputeMipLevels` and `GenerateMipmaps`, including
   the resampler it uses.
-- `src/OpenSage.Game/Terrain/Terrain.cs:441-533`: the terrain texture-array mip copy path, which is
+- `src/Panopticon.Simulation/Terrain/Terrain.cs:441-533`: the terrain texture-array mip copy path, which is
   a second, separate mip route.
 
 ## Steps

@@ -10,7 +10,7 @@ framework), `docs/system-investigations/scud-launch-transfer.md` (status summary
 The GLA SCUD Launcher (`GLAVehicleSCUDLauncher`) attacking a civilian car (`CarAsian1`) at 300
 world units, captured headlessly one PNG per logic frame (30 fps). Current capture:
 `/mnt/pit2/Network Storage/temp/scud_launch.gif`, with the raw frames and manifest under
-`/tmp/opensage_engagement/` from the latest run.
+`/tmp/panopticon_engagement/` from the latest run.
 
 Expected sequence, from the game's own data:
 
@@ -127,8 +127,8 @@ compromise used above.
 ## 5. Reproducing and analyzing
 
 Reproduce the capture with this `EngagementCapture` block in
-`src/OpenSage.Tools.TestHarness/TestHarness.json` (`--no-build` does NOT copy an edited
-config, copy it into `src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/` yourself):
+`src/Panopticon.Tools.TestHarness/TestHarness.json` (`--no-build` does NOT copy an edited
+config, copy it into `src/Panopticon.Tools.TestHarness/bin/Debug/net10.0/` yourself):
 
 ```json
 "EngagementCapture": {
@@ -144,12 +144,12 @@ config, copy it into `src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/` yoursel
 
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
-dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
 --built-in-scenario EngagementCapture
-python3 scripts/annotate_engagement_gif.py /tmp/opensage_engagement out.gif --duration 170
+python3 scripts/annotate_engagement_gif.py /tmp/panopticon_engagement out.gif --duration 170
 ```
 
-The manifest (`/tmp/opensage_engagement/manifest.json`) has per-frame screen positions,
+The manifest (`/tmp/panopticon_engagement/manifest.json`) has per-frame screen positions,
 health, and projectile sightings; damage frames and projectile lifespans come straight from
 it. Share results by writing into `/mnt/pit2/Network Storage/temp/` (quote the path; spaces)
 and report per-frame verdicts.

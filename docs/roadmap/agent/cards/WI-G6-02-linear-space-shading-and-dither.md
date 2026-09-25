@@ -22,7 +22,7 @@ shading unchanged.
   the exact list of textures to convert and to leave alone.
 - The G6 deep dive and its architecture diagrams.
 - `src/Veldrid.ImageSharp/MipmapHelper.cs:36-61`.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:92-100,160-168`.
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:92-100,160-168`.
 - The G2 settings colour-space-mode member.
 
 ## Steps
@@ -42,10 +42,10 @@ shading unchanged.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Assets/Shaders/` (lighting and output encode)
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs`
+- `src/Panopticon.Simulation/Assets/Shaders/` (lighting and output encode)
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs`
 - `src/Veldrid.ImageSharp/MipmapHelper.cs`
-- `src/OpenSage.Game/Graphics/` (texture view selection)
+- `src/Panopticon.Simulation/Graphics/` (texture view selection)
 
 ## Acceptance criteria
 

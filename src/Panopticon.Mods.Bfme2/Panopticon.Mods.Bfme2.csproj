@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.Simulation\Panopticon.Simulation.csproj" />
+    <ProjectReference Include="..\Panopticon.Mods.Bfme\Panopticon.Mods.Bfme.csproj" />
+  </ItemGroup>
+</Project>

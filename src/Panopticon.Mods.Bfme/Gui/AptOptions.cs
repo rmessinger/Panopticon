@@ -1,0 +1,32 @@
+using Panopticon.Gui.Apt;
+using Panopticon.Gui.Apt.ActionScript;
+
+namespace Panopticon.Mods.Bfme2.Gui;
+
+[AptCallbacks(SageGame.Bfme, SageGame.Bfme2, SageGame.Bfme2Rotwk)]
+static class AptOptions
+{
+    // Called after the initialization has been performed
+    public static void OnInitialized(string param, ActionContext context, AptWindow window, IGame game)
+    {
+
+    }
+
+    public static void Cancel(string param, ActionContext context, AptWindow window, IGame game)
+    {
+        // TODO: reset?
+        var aptWindow = game.LoadAptWindow("MainMenu.apt");
+        game.Scene2D.AptWindowManager.QueryTransition(aptWindow);
+    }
+
+    public static void Reset(string param, ActionContext context, AptWindow window, IGame game)
+    {
+    }
+
+    public static void Save(string param, ActionContext context, AptWindow window, IGame game)
+    {
+        // TODO: save
+        var aptWindow = game.LoadAptWindow("MainMenu.apt");
+        game.Scene2D.AptWindowManager.QueryTransition(aptWindow);
+    }
+}

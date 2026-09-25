@@ -18,14 +18,14 @@ for Gamebryo 10.1.0.0, without decoding scene blocks yet.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/ee2-gamebryo-model-storage.md` sections 3, 9, and 10.
-- `src/OpenSage.FileFormats.W3d/OpenSage.FileFormats.W3d.csproj`: file-format project pattern.
-- `src/OpenSage.FileFormats.W3d/W3dFile.cs`: stream-reader and validation pattern.
-- `src/OpenSage.Game.Tests/Data/W3d/W3dFileTests.cs`: parser-test pattern.
+- `src/Panopticon.FileFormats.W3d/Panopticon.FileFormats.W3d.csproj`: file-format project pattern.
+- `src/Panopticon.FileFormats.W3d/W3dFile.cs`: stream-reader and validation pattern.
+- `test/Panopticon.Simulation.Tests/Data/W3d/W3dFileTests.cs`: parser-test pattern.
 
 ## Steps
 
-1. Add `OpenSage.FileFormats.Nif` to the solution, reference the shared file-format and mathematics
-   projects, and reference it from `OpenSage.Game.Tests`.
+1. Add `Panopticon.FileFormats.Nif` to the solution, reference the shared file-format and mathematics
+   projects, and reference it from `Panopticon.Simulation.Tests`.
 2. Add a little-endian `NifBinaryReader` for bounded integers, floats, vectors, matrices, sized
    strings, and block references. Reject counts that exceed remaining stream data before
    allocating.
@@ -39,14 +39,14 @@ for Gamebryo 10.1.0.0, without decoding scene blocks yet.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/OpenSage.FileFormats.Nif.csproj` (new)
-- `src/OpenSage.FileFormats.Nif/NifBinaryReader.cs` (new)
-- `src/OpenSage.FileFormats.Nif/NifHeader.cs` (new)
-- `src/OpenSage.FileFormats.Nif/NifBlockDirectoryEntry.cs` (new)
-- `src/OpenSage.sln`
-- `src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj`
-- `src/OpenSage.Game.Tests/Data/Nif/NifHeaderTests.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Panopticon.FileFormats.Nif.csproj` (new)
+- `src/Panopticon.FileFormats.Nif/NifBinaryReader.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifHeader.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifBlockDirectoryEntry.cs` (new)
+- `src/Panopticon.sln`
+- `test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifHeaderTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs` (new)
 
 ## Acceptance criteria
 

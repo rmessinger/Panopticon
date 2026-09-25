@@ -18,11 +18,11 @@ playback clips.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c2-skeleton-animation-retargeting.md` sections 3-5.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`.
-- `src/OpenSage.Game/Graphics/Animation/AnimationClip.cs`.
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`.
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClip.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`.
 
 ## Steps
 
@@ -37,12 +37,12 @@ playback clips.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimationTarget.cs` (new)
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimationChannel.cs` (new)
-- `src/OpenSage.Game/Graphics/Animation/BoundModelAnimation.cs` (new)
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimationTarget.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimationChannel.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Animation/BoundModelAnimation.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`
 
 ## Acceptance criteria
 

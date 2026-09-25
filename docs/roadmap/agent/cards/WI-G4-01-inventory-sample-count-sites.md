@@ -18,13 +18,13 @@ code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:23-25,92-100,160-168`:
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:23-25,92-100,160-168`:
   `GameOutputDescription`, the intermediate colour and depth targets, and the final
   `TextureCopier` blit.
 - Every `GraphicsPipelineDescription` construction in `src/`. Find them with a repository search;
   there are nine, one of which belongs to the ImGui renderer rather than the game.
-- `src/OpenSage.Game/Graphics/Shaders/`: the shader resource classes owning those descriptions.
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowMapRenderer.cs`: the shadow depth pass, which
+- `src/Panopticon.Simulation/Graphics/Shaders/`: the shader resource classes owning those descriptions.
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowMapRenderer.cs`: the shadow depth pass, which
   must be considered separately from the main colour pass.
 
 ## Steps

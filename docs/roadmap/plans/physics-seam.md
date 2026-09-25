@@ -24,7 +24,7 @@ Two implementations sit behind the seam:
 
 - Reference: the current `PhysicsBehavior` pipeline (translation-only Euler integration, hand-set
   rotation rates), extracted verbatim from
-  `src/OpenSage.Game/Logic/Object/Behaviors/PhysicsBehavior.cs`. Proves the seam by reproducing
+  `src/Panopticon.Simulation/Logic/Object/Behaviors/PhysicsBehavior.cs`. Proves the seam by reproducing
   today's behavior exactly.
 - Bepu: `BepuPhysics` + `BepuUtilities` 2.4.0, gravity mapped from `GameData` `Gravity = -64`
   dist/sec².
@@ -53,9 +53,9 @@ contact bridge. F4a closes those gaps before Bepu becomes the default.
 
 Three layers keep Bepu out of gameplay code:
 
-1. Seam (`OpenSage.Physics`): world, body, shape, material, filter, and contact interfaces. No Bepu
+1. Seam (`Panopticon.Physics`): world, body, shape, material, filter, and contact interfaces. No Bepu
    types cross it.
-2. Registration (`OpenSage.Game`): resolves participation, builds shapes, owns body lifecycle, and
+2. Registration (`Panopticon.Simulation`): resolves participation, builds shapes, owns body lifecycle, and
    maps seam bodies back to `GameObject`s.
 3. Gameplay adapters: `PhysicsBehavior`, locomotors, projectile updates, containment, death
    behaviors, and collision modules translate game semantics into forces, constraints, state
@@ -191,7 +191,7 @@ public interface IPhysicsBody
 
 `PhysicsBodyDescription` carries motion type, sensor flag, compound shape, mass properties,
 material, initial transform, and collision filter. The game-side registry retains the
-`IPhysicsBody` to `ObjectId` mapping so `OpenSage.Physics` does not depend on game types.
+`IPhysicsBody` to `ObjectId` mapping so `Panopticon.Physics` does not depend on game types.
 
 ## Architecture diagrams
 
@@ -343,7 +343,7 @@ dynamic transforms are synchronized before partition/pathing consumers observe t
 
 | Phase | Scope | Exit criteria | Anchor |
 |---|---|---|---|
-| PS-0 | Seam carve-out: interfaces plus legacy backend extracted from `PhysicsBehavior` | Zero behavior change: P0 harness run and ReplaySketch screenshot output unchanged | Precedes F4; touches `OpenSage.Game` only |
+| PS-0 | Seam carve-out: interfaces plus legacy backend extracted from `PhysicsBehavior` | Zero behavior change: P0 harness run and ReplaySketch screenshot output unchanged | Precedes F4; touches `Panopticon.Simulation` only |
 | PS-1 | Bepu backend plus debris stack test scene, windowed and headless | Falling/stacking scene runs windowed and headless; ms per `Timestep` measured at 100/1k/10k bodies | F4 milestone |
 | PS-2 | Per-engine world configuration, participation resolver, body lifecycle, compound shapes, filters, and contact-event bridge | Parallel engines select worlds independently; every instantiated definition resolves to a mode; lifecycle leaves no stale body; one filtered contact produces one gameplay event | F4a foundation |
 | PS-3 | Loose dynamics: debris, hulks, crates, salvage, rocks, and thrown objects | Representative loose objects toss, collide, settle, sleep, wake, and clean up within authored bounds | F4a |
@@ -354,7 +354,7 @@ dynamic transforms are synchronized before partition/pathing consumers observe t
 | PS-8 | Ships, boats, and amphibious units | Hull contacts, water support, contain/release, and shore transitions pass representative E1 scenarios; E2 consumes the contact bridge for ramming | F4a; prerequisite for E2 |
 | PS-9 | Cross-game audit and default cutover | Installed definition catalogs for every supported `SageGame` have no unclassified instantiated objects; category matrix passes with Bepu as default and legacy as explicit comparison only | F4a milestone |
 
-PS-0 is not gated on Track P, A1, or B1: no new runtime dependency, `OpenSage.Game` internal
+PS-0 is not gated on Track P, A1, or B1: no new runtime dependency, `Panopticon.Simulation` internal
 refactor only. PS-1 follows F4's dependencies (headless host A1, benchmark harness B1). PS-2
 through PS-9 form F4a and reuse P6b's archetype catalog plus P0/P9 scenario infrastructure. PS-8
 uses E1's water data and supplies the contact path E2 uses for ramming.
@@ -364,8 +364,8 @@ uses E1's water data and supplies the contact path E2 uses for ramming.
 ## Project layout
 
 ```
-src/OpenSage.Physics/
-  OpenSage.Physics.csproj
+src/Panopticon.Physics/
+  Panopticon.Physics.csproj
   IPhysicsWorld.cs
   IPhysicsBody.cs
   PhysicsBodyDescription.cs
@@ -376,15 +376,15 @@ src/OpenSage.Physics/
   Bepu/BepuPhysicsBody.cs
   Legacy/LegacyPhysicsBody.cs
 
-src/OpenSage.Game/Logic/Physics/
+src/Panopticon.Simulation/Logic/Physics/
   GameObjectPhysicsRegistry.cs
   PhysicsParticipationResolver.cs
   PhysicsShapeBuilder.cs
   PhysicsContactDispatcher.cs
 ```
 
-Dependencies: `BepuPhysics`, `BepuUtilities` (2.4.0), `OpenSage.Mathematics`. Referenced by
-`OpenSage.Game`, which owns the adapter and the backend policy.
+Dependencies: `BepuPhysics`, `BepuUtilities` (2.4.0), `Panopticon.Mathematics`. Referenced by
+`Panopticon.Simulation`, which owns the adapter and the backend policy.
 
 ---
 
@@ -426,7 +426,7 @@ their exit evidence here instead.
 
 | Card | Description | Status |
 |---|---|---|
-| `WI-PS-01` | Seam interfaces and legacy backend carve-out (PS-0) | Complete: `src/OpenSage.Physics` seam + `LegacyPhysicsBody`; physics tests pass; impulse capture regression remains unchanged |
+| `WI-PS-01` | Seam interfaces and legacy backend carve-out (PS-0) | Complete: `src/Panopticon.Physics` seam + `LegacyPhysicsBody`; physics tests pass; impulse capture regression remains unchanged |
 | `WI-PS-02` | Bepu backend and test scene (PS-1) | Complete: `BepuPhysicsWorld` + `PhysicsStack` built-in scenario; loose settle bounds, stability probe, and ms/Timestep at 100/1k/10k bodies pass headlessly (windowed parity run pending, environment cannot present) |
 | `WI-PS-03` | Benchmark scenarios | Partial: ms/Timestep measured in-scenario (0.03/0.1/3.1 ms at 100/1k/10k); B1-harness scenarios (chunk rebuild cost, full-map broadphase) not started |
 | `WI-PS-04` | Participation resolver and cross-game definition audit (PS-2) | Not started |

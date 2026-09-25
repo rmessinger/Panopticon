@@ -18,10 +18,10 @@ without changing any existing importer's output.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4d-ee2-skinned-animation.md` sections 4 and 8.
-- `src/OpenSage.Game/Content/Importing/ImportedVertex.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs:157-180`.
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs:60-90`.
-- `src/OpenSage.Game/Content/Importing/ImportedTangentGenerator.cs:90-140`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs:157-180`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs:60-90`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedTangentGenerator.cs:90-140`.
 - `grep -rn "new ImportedVertex(" src` for every construction site.
 
 ## Steps
@@ -43,11 +43,11 @@ without changing any existing importer's output.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedVertex.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs`
-- `src/OpenSage.Game/Content/Importing/ImportedTangentGenerator.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedModelTests.cs` or the existing C1 model
+- `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedTangentGenerator.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelTests.cs` or the existing C1 model
   test file
 
 ## Acceptance criteria

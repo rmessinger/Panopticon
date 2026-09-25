@@ -112,7 +112,7 @@
   [C4g](track-c-external-assets.md).
 - EE2 particle runtime mapping. Decision: [C4h](track-c-external-assets.md) translates EE2
   legacy `NiParticles` effects into C1-style imported particle effect values and materializes
-  them onto the existing OpenSAGE particle runtime. The corpus has 129 particle `fx_*` files,
+  them onto the existing Panopticon particle runtime. The corpus has 129 particle `fx_*` files,
   259 `NiParticles` systems, and no `NiPSys*` blocks, so `NiPSys*` is an explicit rejection path.
   Attachment names stay in the DDF binding layer and resolve to C4c node bones or fixed world
   origins. Deterministic captures require request-scoped particle RNG seeding. See the
@@ -159,7 +159,7 @@
   [C6](track-c-external-assets.md).
 - Large-map ceiling & compatibility. Decision: no size cap; no compatibility constraint.
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
-  experiments; OpenSAGE may extend/replace the `.map` format and need not stay loadable in the
+  experiments; Panopticon may extend/replace the `.map` format and need not stay loadable in the
   original engine. Makes chunked storage (B4a-5) a core requirement. See
   [B4a deep dive](deep-dives/b4a-larger-maps.md).
 - Variable-fidelity consistency stance. Decision: fidelity is a function of replicated
@@ -228,18 +228,18 @@
   script (requires window ID detection, timing heuristics, and no communication with the app) and
   over UI-test frameworks (heavy, platform-bound, flaky). The in-app approach is self-contained,
   requires no extra tooling or permissions, and works with `dotnet run`. Implemented as P0-1a;
-  documented in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`. Affects
+  documented in `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`. Affects
   [P0](track-p-playable-baseline.md) (P0-1a).
 - P0 harness: MAUI validation reach + agent playbook. Decision: keep logic in `.Core`, validate
   headlessly through the test suite plus run-and-assert, minimize MAUI-only code behind injectable
   seams, and document the loop in a checked-in `AGENTS.md`. ReplaySketch logic stays in
-  `OpenSage.Tools.ReplaySketch.Core` and is validated headlessly by
-  `OpenSage.Tools.ReplaySketch.Tests` plus the [P0 harness](deep-dives/p0-playable-baseline-harness.md)
+  `Panopticon.Tools.ReplaySketch.Core` and is validated headlessly by
+  `Panopticon.Tools.ReplaySketch.Tests` plus the [P0 harness](deep-dives/p0-playable-baseline-harness.md)
   run-and-assert entry point (P0-5). `MainViewModel` is reduced to a thin shell by abstracting
   `Preferences.Default`, `MainThread`, and `Process.Start` or launcher behavior behind injectable
   seams (P0-1b/P0-1c), so the command surface is unit-testable without a MAUI runtime. The
-  documented validation loop lives in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md` (P0-7),
-  mirroring `OpenSage.Tools.TestHarness/AGENTS.md`. Chosen over MAUI UI automation and over leaving
+  documented validation loop lives in `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md` (P0-7),
+  mirroring `Panopticon.Tools.TestHarness/AGENTS.md`. Chosen over MAUI UI automation and over leaving
   validation undocumented. Affects [P0](track-p-playable-baseline.md) (P0-1b/P0-1c/P0-7).
 - P0 harness: ScenarioMatrix sweep placement. Decision: the cartesian-product matrix expansion
   primitive belongs in P0 (P0-5b), not deferred to A5. A5-2 adds tooling and visualization on

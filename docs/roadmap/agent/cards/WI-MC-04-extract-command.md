@@ -15,12 +15,12 @@
 Implement the `extract` verb: walk the output tree, find all `.zip` files, extract any `.big`
 files they contain into the same directory, then delete the `.zip`. After extraction, the
 directory tree is engine-ready: a user can point `CNC_GENERALS_ZH_PATH` (etc.) at a
-`<game>/<category>` directory and OpenSAGE picks up the `.big` files via `SkudefReader`.
+`<game>/<category>` directory and Panopticon picks up the `.big` files via `SkudefReader`.
 
 ## Context
 
 Key references:
-- `src/OpenSage.Tools.BigTool/Program.cs:201-221`: `ExtractMode` opens a `BigArchive` and
+- `src/Panopticon.Tools.BigTool/Program.cs:201-221`: `ExtractMode` opens a `BigArchive` and
   streams entries to disk. The extraction here is different (we're unpacking a `.zip` to find
   `.big` files, not extracting a `.big` archive), but the pattern of streaming to file is the
   same.
@@ -28,7 +28,7 @@ Key references:
 
 ## Steps
 
-1. Create `src/OpenSage.Tools.ModCollector/ExtractOptions.cs` with `[Verb("extract")]`:
+1. Create `src/Panopticon.Tools.ModCollector/ExtractOptions.cs` with `[Verb("extract")]`:
 
 ```csharp
 [Verb("extract", HelpText = "Extract .big files from downloaded .zip archives in the output tree.")]
@@ -39,7 +39,7 @@ sealed class ExtractOptions
 }
 ```
 
-2. Create `src/OpenSage.Tools.ModCollector/Extractor.cs`. Algorithm:
+2. Create `src/Panopticon.Tools.ModCollector/Extractor.cs`. Algorithm:
 
 ```
 For each .zip file found recursively under outputRoot:
@@ -70,9 +70,9 @@ Use `ZipFile.OpenRead(zipPath)` from `System.IO.Compression`.
 ## Validation
 
 ```sh
-dotnet build src/OpenSage.Tools.ModCollector
+dotnet build src/Panopticon.Tools.ModCollector
 # Assuming WI-MC-03 has been run and /tmp/mc-test has .zip files:
-dotnet run --project src/OpenSage.Tools.ModCollector -- extract --output /tmp/mc-test
+dotnet run --project src/Panopticon.Tools.ModCollector -- extract --output /tmp/mc-test
 ls /tmp/mc-test/**/*.big
 dotnet format src --verify-no-changes
 ```

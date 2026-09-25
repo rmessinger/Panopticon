@@ -37,15 +37,15 @@ independently after card 3. Card 11 is the completion point.
 
 ## Agent context
 
-- Interchange root: `src/OpenSage.Game/Content/Importing/ImportedModel.cs`.
+- Interchange root: `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`.
 - Static hierarchy: the parser retains the NIF node graph, then the importer bakes accumulated
   transforms into each mesh and attaches all sub-objects to one identity `ImportedBone`.
 - Geometry: `ImportedMesh` uses `ushort` indices and at least one material and mesh part.
 - Material properties: `ImportedMaterial` has fixed-function state plus typed named properties;
   texture references use `ImportedMaterialProperty.FromTextureName`.
-- Source access: `AssetImportContext` supplies `OpenSage.IO.FileSystem`; C4a adds a
+- Source access: `AssetImportContext` supplies `Panopticon.IO.FileSystem`; C4a adds a
   `ZipFileSystem` implementation rather than opening ZIP paths inside the importer.
-- Parser boundary: binary NIF types live in `OpenSage.FileFormats.Nif`; no type from that project
+- Parser boundary: binary NIF types live in `Panopticon.FileFormats.Nif`; no type from that project
   reaches runtime graphics classes.
 - Integration boundary: the proof invokes `NifModelImporter` and
   `ImportedModelMaterializer` directly. It does not add an `IGameDefinition`, global format

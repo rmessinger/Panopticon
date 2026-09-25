@@ -1,0 +1,54 @@
+using System.Collections.Generic;
+using System.IO;
+using Panopticon.Content;
+using Panopticon.Data;
+using Panopticon.Gui;
+using Panopticon.Gui.Apt;
+using Panopticon.Gui.CommandListOverlay;
+using Panopticon.Gui.ControlBar;
+using Panopticon.Mods.Bfme.Gui;
+
+namespace Panopticon.Mods.Bfme;
+
+public class BfmeDefinition : IGameDefinition
+{
+    public SageGame Game => SageGame.Bfme;
+    public string DisplayName => "The Lord of the Rings (tm): The Battle for Middle-earth (tm)";
+    public IGameDefinition BaseGame => null;
+
+    public bool LauncherImagePrefixLang => true;
+    public string LauncherImagePath => "Splash.jpg";
+
+    public IEnumerable<RegistryKeyPath> RegistryKeys { get; } = new[]
+    {
+        new RegistryKeyPath(@"SOFTWARE\Electronic Arts\EA Games\The Battle for Middle-earth", "InstallPath")
+    };
+
+    public IEnumerable<RegistryKeyPath> LanguageRegistryKeys { get; } = new[]
+{
+        new RegistryKeyPath(@"SOFTWARE\Electronic Arts\EA Games\The Battle for Middle-earth", "Language")
+    };
+
+    public SteamInstallationDefinition Steam { get; } = null;
+
+    public string Identifier { get; } = "bfme";
+
+    public IMainMenuSource MainMenu { get; } = new AptMainMenuSource("MainMenu.apt");
+    public IControlBarSource ControlBar { get; } = new AptControlBarSource();
+    public ICommandListOverlaySource CommandListOverlay { get; } = new RadialUnitOverlaySource();
+
+    public uint ScriptingTicksPerSecond => 5;
+
+    public string GetLocalizedStringsPath(string language) => Path.Combine("lang", language, "lotr");
+
+    public OnDemandAssetLoadStrategy CreateAssetLoadStrategy()
+    {
+        return OnDemandAssetLoadStrategy.CreateW3d(PathResolvers.W3d, PathResolvers.BfmeTexture);
+    }
+
+    public Scene25D CreateScene25D(IScene3D scene3D, AssetStore assetStore) => new(scene3D, assetStore);
+
+    public static BfmeDefinition Instance { get; } = new BfmeDefinition();
+
+    public string LauncherExecutable => "lotrbfme.exe";
+}

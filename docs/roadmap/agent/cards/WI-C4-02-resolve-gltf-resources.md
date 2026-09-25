@@ -20,13 +20,13 @@ system without traversal, ambient disk access, or repeated reads.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 2, 3, and 9.
-- `src/OpenSage.IO/FileSystem.cs`.
-- `src/OpenSage.IO/FileSystemEntry.cs`.
-- `src/OpenSage.IO/VirtualFileSystem.cs`: virtual-root behavior.
-- `src/OpenSage.Game/Content/Importing/AssetImportContext.cs`.
-- `src/OpenSage.Game.Tests/Content/DataOnlyAssetLoadingTests.cs`: `MemoryFileSystem`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`).
+- `src/Panopticon.IO/FileSystem.cs`.
+- `src/Panopticon.IO/FileSystemEntry.cs`.
+- `src/Panopticon.IO/VirtualFileSystem.cs`: virtual-root behavior.
+- `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs`.
+- `test/Panopticon.Simulation.Tests/Content/DataOnlyAssetLoadingTests.cs`: `MemoryFileSystem`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`).
 
 ## Steps
 
@@ -48,10 +48,10 @@ system without traversal, ambient disk access, or repeated reads.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfResourceResolver.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfResourceResolverTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfResourceResolver.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfResourceResolverTests.cs` (new)
 
 ## Acceptance criteria
 

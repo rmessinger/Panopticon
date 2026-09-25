@@ -19,19 +19,19 @@ invariant that P2/P3/P6 rely on.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-141`: the `MockedGameTest` base and its `Generals` /
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-141`: the `MockedGameTest` base and its `Generals` /
   `ZeroHour` `TestGame` (an `IGame` with a working `AssetStore`). Use it to satisfy the `Player` ctor.
-- `src/OpenSage.Game.Tests/Logic/Object/GameObjectTests.cs:1-23`: a minimal example of a
+- `test/Panopticon.Simulation.Tests/Logic/Object/GameObjectTests.cs:1-23`: a minimal example of a
   `MockedGameTest` subclass + xUnit `[Fact]`/`Assert` to replicate the shape of.
-- `src/OpenSage.Game/Logic/Player.cs:141-151`: the `Player(uint id, PlayerTemplate? template, in ColorRgb color, IGame game)`
+- `src/Panopticon.Simulation/Logic/Player.cs:141-151`: the `Player(uint id, PlayerTemplate? template, in ColorRgb color, IGame game)`
   ctor (initializes `Allies`/`Enemies`).
-- `src/OpenSage.Game/Logic/Player.cs:124-128,779-786`: `Allies`/`Enemies` sets and the
+- `src/Panopticon.Simulation/Logic/Player.cs:124-128,779-786`: `Allies`/`Enemies` sets and the
   `AddAlly`/`AddEnemy` methods under test.
 
 ## Steps
 
-1. Create `src/OpenSage.Game.Tests/Logic/PlayerRelationshipTests.cs`, namespace
-   `OpenSage.Tests.Logic`, class `PlayerRelationshipTests : MockedGameTest`.
+1. Create `test/Panopticon.Simulation.Tests/Logic/PlayerRelationshipTests.cs`, namespace
+   `Panopticon.Tests.Logic`, class `PlayerRelationshipTests : MockedGameTest`.
 2. Add a helper that builds a `Player` via the ctor using the base's `Generals` game, e.g.
    `new Player(id, null, new ColorRgb(0, 0, 0), Generals)`.
 3. Test 1: `AddEnemy` is reciprocal: create players `a` and `b`; call `a.AddEnemy(b)`; assert
@@ -43,7 +43,7 @@ invariant that P2/P3/P6 rely on.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Logic/PlayerRelationshipTests.cs` (new file only).
+- `test/Panopticon.Simulation.Tests/Logic/PlayerRelationshipTests.cs` (new file only).
 
 ## Acceptance criteria
 
@@ -79,5 +79,5 @@ dotnet format src --verify-no-changes
 ## Result
 
 Done (commit d5acbbb7, delivered alongside `WI-P1-02`).
-`src/OpenSage.Game.Tests/Logic/PlayerRelationshipTests.cs` covers `AddEnemy`/`AddAlly` reciprocity
+`test/Panopticon.Simulation.Tests/Logic/PlayerRelationshipTests.cs` covers `AddEnemy`/`AddAlly` reciprocity
 and idempotency; `PlayerManagerTests.cs` covers the `OnNewGame` team-derived wiring.

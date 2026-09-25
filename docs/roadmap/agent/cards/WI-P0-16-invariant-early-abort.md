@@ -19,11 +19,11 @@ frame and aborts") and the implementation.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`: `OnGameUpdating`
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`: `OnGameUpdating`
   records invariant failures but has no abort signal.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: the `while (game.IsRunning)` loop
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: the `while (game.IsRunning)` loop
   does not check for invariant violations.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the
   `InvariantAssertion_Violated_AbortsAndReportsOffendingFrame` stub to unblock.
 
 ## Steps
@@ -43,7 +43,7 @@ frame and aborts") and the implementation.
    results including the failing invariant with its frame number).
 
 3. Update the `InvariantAssertion_Violated_AbortsAndReportsOffendingFrame` stub in
-   `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`:
+   `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`:
    Tag `[Trait("Category", "Interactive")]`. Build a scenario with an `InvariantAssertion`
    that will fire on the first tick (e.g., `player[0].money < 0`: always false, so it fires
    immediately). Run via `HarnessRunner.RunAndAssert`. Assert:
@@ -53,9 +53,9 @@ frame and aborts") and the implementation.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs`
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
 
 ## Acceptance criteria
 

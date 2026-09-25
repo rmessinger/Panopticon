@@ -37,18 +37,18 @@ jobs:
       run: dotnet workload install maui-maccatalyst
 
     # One step per project: a multi-line pwsh block on Windows reports only the
-    # last command's exit code, which hid Game.Tests failures. !cancelled() keeps
+    # last command's exit code, which hid Simulation.Tests failures. !cancelled() keeps
     # every project reporting after an earlier one fails.
     - name: Test Mathematics
-      run: dotnet test src/OpenSage.Mathematics.Tests/OpenSage.Mathematics.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+      run: dotnet test test/Panopticon.Mathematics.Tests/Panopticon.Mathematics.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
 
-    - name: Test Game
+    - name: Test Simulation
       if: ${{ !cancelled() }}
-      run: dotnet test src/OpenSage.Game.Tests/OpenSage.Game.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+      run: dotnet test test/Panopticon.Simulation.Tests/Panopticon.Simulation.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
 
     - name: Test ReplaySketch
       if: ${{ !cancelled() }}
-      run: dotnet test src/OpenSage.Tools.ReplaySketch.Tests/OpenSage.Tools.ReplaySketch.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+      run: dotnet test test/Panopticon.Tools.ReplaySketch.Tests/Panopticon.Tools.ReplaySketch.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
 
     - name: Upload coverage
       uses: codecov/codecov-action@v5
@@ -56,7 +56,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Publish
-      run: dotnet publish src/OpenSage.Launcher --configuration Release --runtime ${{ matrix.runtime }} --self-contained --output build/artifacts/${{ matrix.runtime }}
+      run: dotnet publish src/Panopticon.Launcher --configuration Release --runtime ${{ matrix.runtime }} --self-contained --output build/artifacts/${{ matrix.runtime }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6
@@ -95,7 +95,7 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: ${{ github.ref }}
-        body: "## Instructions\n1. Download the correct .zip file for your operating system\n2. Linux/Mac: export the path to your game path as an environment variable e.g.: `export CNC_GENERALS_PATH=~/generals/`\n3. Start the `OpenSage.Launcher` executable\n\n## Launcher\nThis executable will start OpenSAGE with the C&C Generals game files. To specify a different SAGE game, or see what other command line options are available, run `OpenSage.Launcher.exe --help`."
+        body: "## Instructions\n1. Download the correct .zip file for your operating system\n2. Linux/Mac: export the path to your game path as an environment variable e.g.: `export CNC_GENERALS_PATH=~/generals/`\n3. Start the `Panopticon.Launcher` executable\n\n## Launcher\nThis executable will start Panopticon with the C&C Generals game files. To specify a different SAGE game, or see what other command line options are available, run `Panopticon.Launcher.exe --help`."
         draft: false
         prerelease: true
 

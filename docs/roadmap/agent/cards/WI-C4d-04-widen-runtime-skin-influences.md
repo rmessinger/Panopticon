@@ -18,12 +18,12 @@ shader, with W3D rendering unchanged.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4d-ee2-skinned-animation.md` section 8.
-- `src/OpenSage.Game/Graphics/Shaders/MeshShaderResources.cs:118-150`.
-- `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs:50-72`.
-- `src/OpenSage.Game/Assets/Shaders/Mesh.h:5-15` and `61-77`.
-- `src/OpenSage.Game/Assets/Shaders/FixedFunction.vert`, `NormalMapped.vert`, `Simple.vert`,
+- `src/Panopticon.Simulation/Graphics/Shaders/MeshShaderResources.cs:118-150`.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs:50-72`.
+- `src/Panopticon.Simulation/Assets/Shaders/Mesh.h:5-15` and `61-77`.
+- `src/Panopticon.Simulation/Assets/Shaders/FixedFunction.vert`, `NormalMapped.vert`, `Simple.vert`,
   `MeshDepth.vert`, and `PbrMetallicRoughness.vert`.
-- `src/OpenSage.Game.Tests/Content/Importing/W3dImportParityTests.cs:490-500`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dImportParityTests.cs:490-500`.
 
 ## Steps
 
@@ -45,15 +45,15 @@ shader, with W3D rendering unchanged.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Shaders/MeshShaderResources.cs`
-- `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs`
-- `src/OpenSage.Game/Assets/Shaders/Mesh.h`
-- `src/OpenSage.Game/Assets/Shaders/FixedFunction.vert`
-- `src/OpenSage.Game/Assets/Shaders/NormalMapped.vert`
-- `src/OpenSage.Game/Assets/Shaders/Simple.vert`
-- `src/OpenSage.Game/Assets/Shaders/MeshDepth.vert`
-- `src/OpenSage.Game/Assets/Shaders/PbrMetallicRoughness.vert`
-- `src/OpenSage.Game.Tests/Graphics/MeshVertexLayoutTests.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Shaders/MeshShaderResources.cs`
+- `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs`
+- `src/Panopticon.Simulation/Assets/Shaders/Mesh.h`
+- `src/Panopticon.Simulation/Assets/Shaders/FixedFunction.vert`
+- `src/Panopticon.Simulation/Assets/Shaders/NormalMapped.vert`
+- `src/Panopticon.Simulation/Assets/Shaders/Simple.vert`
+- `src/Panopticon.Simulation/Assets/Shaders/MeshDepth.vert`
+- `src/Panopticon.Simulation/Assets/Shaders/PbrMetallicRoughness.vert`
+- `test/Panopticon.Simulation.Tests/Graphics/MeshVertexLayoutTests.cs` (new)
 
 ## Acceptance criteria
 

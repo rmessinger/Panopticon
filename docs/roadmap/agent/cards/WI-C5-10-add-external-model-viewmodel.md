@@ -20,14 +20,14 @@ eligibility, reset, reload, and render commands without MAUI or graphics depende
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 5, 7, and 9.
-- `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`: current property-change and
+- `src/Panopticon.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs`: current property-change and
   command behavior; do not move Model-tab logic into this MAUI type.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IMainThreadDispatcher.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/SynchronousMainThreadDispatcher.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new, from `WI-C5-04`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IMainThreadDispatcher.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/SynchronousMainThreadDispatcher.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ExternalModelSession.cs` (new, from `WI-C5-04`).
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelSnapshot.cs` (new, from
   `WI-C5-04`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IExternalModelPreviewClient.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IExternalModelPreviewClient.cs` (new, from
   `WI-C5-09`).
 
 ## Steps
@@ -55,10 +55,10 @@ eligibility, reset, reload, and render commands without MAUI or graphics depende
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IExternalModelFileSelector.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/ViewModels/AsyncCommand.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/ViewModels/ExternalModelViewModel.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelViewModelTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IExternalModelFileSelector.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/ViewModels/AsyncCommand.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/ViewModels/ExternalModelViewModel.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelViewModelTests.cs` (new)
 
 ## Acceptance criteria
 

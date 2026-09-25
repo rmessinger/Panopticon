@@ -19,13 +19,13 @@ Implement `NifModelImporter` as a CPU-only adapter from the selected NIF 10.1 su
 
 - `docs/roadmap/deep-dives/ee2-gamebryo-model-storage.md` sections 7, 9, and 10.
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 2, 3, 4, and 6.
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs` and sibling interchange types.
-- `src/OpenSage.Game/Content/Importing/IModelImporter.cs` and `AssetImportContext.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs` and sibling interchange types.
+- `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs` and `AssetImportContext.cs`.
 - NIF parser types completed by `WI-C4a-04..06`.
 
 ## Steps
 
-1. Reference `OpenSage.FileFormats.Nif` from `OpenSage.Game` and add
+1. Reference `Panopticon.FileFormats.Nif` from `Panopticon.Simulation` and add
    `Content/Importing/Nif/NifModelImporter`.
 2. Resolve `<asset-key>.nifcache` beneath `cache/nifcache/` through
    `AssetImportContext.FileSystem`; return null only when the top-level entry is absent.
@@ -46,18 +46,18 @@ Implement `NifModelImporter` as a CPU-only adapter from the selected NIF 10.1 su
 
 ## Files likely to change
 
-- `src/OpenSage.Game/OpenSage.Game.csproj`
-- `src/OpenSage.Game/Content/Importing/Nif/NifModelImporter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifMaterialConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs` (new)
+- `src/Panopticon.Simulation/Panopticon.Simulation.csproj`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifMaterialConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs` (new)
 
 ## Acceptance criteria
 
 - [ ] Synthetic static and LOD models produce valid deterministic `ImportedModel` graphs.
 - [ ] Accumulated static transforms are baked into mesh data and bounds without losing placement.
-- [ ] No NIF parser type reaches `OpenSage.Game/Graphics/`.
+- [ ] No NIF parser type reaches `Panopticon.Simulation/Graphics/`.
 - [ ] The importer performs no GPU, `AssetStore`, texture decode, or ZIP API work.
 - [ ] Missing, malformed, and unsupported inputs follow the C1 failure contract.
 - [ ] Standard validation passes.

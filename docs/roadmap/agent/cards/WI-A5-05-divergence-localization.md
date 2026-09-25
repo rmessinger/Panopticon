@@ -21,8 +21,8 @@ that makes B3 parallelism and B6 sharding debuggable.
 - `docs/roadmap/deep-dives/a5-visualization.md` §5, §5.1, §5.2, §6 (A5-4 row), §8.
 - `docs/roadmap/open-questions.md`: the determinism-priority Decision. Comparison is diagnostic,
   never a correctness gate.
-- `src/OpenSage.Game/Recording/SignatureTree.cs`: the landed T1 input format.
-- `src/OpenSage.Tools.ReplaySketch.Core/`: where the comparison logic lives, headlessly testable.
+- `src/Panopticon.Simulation/Recording/SignatureTree.cs`: the landed T1 input format.
+- `src/Panopticon.Tools.ReplaySketch.Core/`: where the comparison logic lives, headlessly testable.
 
 ## Steps
 
@@ -41,9 +41,9 @@ that makes B3 parallelism and B6 sharding debuggable.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
-- `src/OpenSage.Tools.ReplaySketch.Maui/`
-- `src/OpenSage.Tools.ReplaySketch.Tests/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
+- `src/Panopticon.Tools.ReplaySketch.Maui/`
+- `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 
@@ -61,7 +61,7 @@ that makes B3 parallelism and B6 sharding debuggable.
 ```sh
 dotnet build src
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-divergence.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-divergence.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

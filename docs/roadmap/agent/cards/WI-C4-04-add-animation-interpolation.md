@@ -20,15 +20,15 @@ without changing W3D channel results.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` section 7.
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dAnimationImporter.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimationChannel.cs` (new from `WI-C2-02`).
-- `src/OpenSage.Game/Graphics/Animation/AnimationClip.cs`.
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/W3dAnimationImporterTests.cs`.
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`.
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dAnimationImporter.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimationChannel.cs` (new from `WI-C2-02`).
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClip.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dAnimationImporterTests.cs`.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`.
 
 ## Steps
 
@@ -46,18 +46,18 @@ without changing W3D channel results.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationInterpolation.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`
-- `src/OpenSage.Game/Content/Importing/W3d/W3dAnimationImporter.cs`
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`
-- `src/OpenSage.Game/Graphics/Animation/AnimationInterpolation.cs` (new)
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimationChannel.cs` (new from `WI-C2-02`)
-- `src/OpenSage.Game/Graphics/Animation/AnimationClip.cs`
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/W3dAnimationImporterTests.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`
-- `src/OpenSage.Game.Tests/Graphics/Animation/ModelAnimationTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationInterpolation.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dAnimationImporter.cs`
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInterpolation.cs` (new)
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimationChannel.cs` (new from `WI-C2-02`)
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationClip.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dAnimationImporterTests.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/ModelAnimationTests.cs`
 
 ## Acceptance criteria
 

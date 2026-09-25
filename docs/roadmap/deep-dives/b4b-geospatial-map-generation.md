@@ -3,10 +3,10 @@
 > Expands phase B4b of [Track B: Scale](../track-b-scale.md). Part of the
 > [Large-Scale RTS Roadmap](../README.md).
 >
-> Audience: human design for offline generation of OpenSAGE maps from operator-supplied
+> Audience: human design for offline generation of Panopticon maps from operator-supplied
 > geospatial data. Code references are in the agent-context appendix.
 
-Purpose: generate an editable, playable OpenSAGE map from a bounded real-world area selected in
+Purpose: generate an editable, playable Panopticon map from a bounded real-world area selected in
 Google Earth or prepared through Google Earth Engine. The importer converts local KML/KMZ from
 Google Earth and georeferenced raster exports from operator-authorized Earth Engine datasets or
 other authorized sources into the B4a/H3 map representation. Google basemap imagery and terrain
@@ -157,7 +157,7 @@ Import uses this sequence:
    to the terrain lattice and chunk boundaries. Retain the polygon as the playable-area mask.
 3. Choose the declared origin, normally the southwest corner or center of that rectangle.
 4. Subtract the origin to obtain local meters.
-5. Divide by `metersPerGameUnit` to obtain OpenSAGE horizontal world units.
+5. Divide by `metersPerGameUnit` to obtain Panopticon horizontal world units.
 6. For each output sample, inverse-transform its target-CRS location into each source raster and
    sample that raster exactly once.
 
@@ -277,7 +277,7 @@ imagery in game is deferred until B4a or B5 provides that binding. The playable 
 generated terrain material layers.
 
 Gameplay terrain materials remain explicit. A manifest can map a classification raster or vector
-polygon attributes to a controlled OpenSAGE material palette. Arbitrary imagery colors are not
+polygon attributes to a controlled Panopticon material palette. Arbitrary imagery colors are not
 silently quantized into legacy `BlendTileData`. The manifest requires one default base terrain
 material; cells not matched by a classification or vector rule use that material.
 
@@ -511,31 +511,31 @@ These do not block the deep dive. They are bounded decisions assigned to the fir
 
 ## Appendix: Current-state hooks (agent context)
 
-- `src/OpenSage.Tools.WorldBuilder.Maui/MainPage.xaml.cs:91-157` owns current new/open/save UI
+- `src/Panopticon.Tools.WorldBuilder.Maui/MainPage.xaml.cs:91-157` owns current new/open/save UI
   commands and opens legacy maps through `MapFile.FromStream`.
-- `src/OpenSage.Tools.WorldBuilder.Core/EditorMap.cs:8-72` owns editor map state, dirty tracking,
+- `src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs:8-72` owns editor map state, dirty tracking,
   undo, save, and save-as.
-- `src/OpenSage.Tools.WorldBuilder.Core/NewMapFactory.cs:7-38` creates maps through
+- `src/Panopticon.Tools.WorldBuilder.Core/NewMapFactory.cs:7-38` creates maps through
   `MapFile.CreateEmpty`.
-- `src/OpenSage.Game/Data/Map/MapFile.cs:166-206` creates the resident height grid;
+- `src/Panopticon.Simulation/Data/Map/MapFile.cs:166-206` creates the resident height grid;
   `MapFile.cs:348-430` writes legacy map assets eagerly.
-- `src/OpenSage.Game/Data/Map/HeightMapData.cs:6-64` stores dimensions, border, elevation encoding,
+- `src/Panopticon.Simulation/Data/Map/HeightMapData.cs:6-64` stores dimensions, border, elevation encoding,
   and the resident `ushort[,]`.
-- `src/OpenSage.Game/Terrain/HeightMap.cs:8-31,80-165` defines the current ten-world-unit sample
+- `src/Panopticon.Simulation/Terrain/HeightMap.cs:8-31,80-165` defines the current ten-world-unit sample
   spacing, border translation, horizontal X/Y axes, vertical Z axis, and height interpolation.
-- `src/OpenSage.Game/Data/Map/BlendTileData.cs:6-176` stores current texture, blend,
+- `src/Panopticon.Simulation/Data/Map/BlendTileData.cs:6-176` stores current texture, blend,
   passability, buildability, visibility, and related per-cell data.
-- `src/OpenSage.Game/Terrain/Terrain.cs:24-130` eagerly creates terrain resources and patches from
+- `src/Panopticon.Simulation/Terrain/Terrain.cs:24-130` eagerly creates terrain resources and patches from
   the full map.
-- `src/OpenSage.Game/Assets/Shaders/Terrain.frag:43,203-214` samples one whole-map macro texture in
+- `src/Panopticon.Simulation/Assets/Shaders/Terrain.frag:43,203-214` samples one whole-map macro texture in
   the current terrain shader.
-- `src/OpenSage.Game/Graphics/Shaders/TerrainShaderResources.cs:34-60` owns the current
+- `src/Panopticon.Simulation/Graphics/Shaders/TerrainShaderResources.cs:34-60` owns the current
   macro-texture and terrain resource bindings.
-- `src/OpenSage.Tools.WorldBuilder.Core/PlaceObjectTool.cs:6-44` maps viewport world coordinates
+- `src/Panopticon.Tools.WorldBuilder.Core/PlaceObjectTool.cs:6-44` maps viewport world coordinates
   directly into placed `MapObject` positions.
-- `src/OpenSage.Tools.WorldBuilder.Core/GameViewportRenderer.cs:47-130` creates the editor's game
+- `src/Panopticon.Tools.WorldBuilder.Core/GameViewportRenderer.cs:47-130` creates the editor's game
   viewport and reloads terrain after edits.
-- `src/OpenSage.Game.Tests/Data/Map/MapFileTests.cs:10-180` contains existing map round-trip and
+- `test/Panopticon.Simulation.Tests/Data/Map/MapFileTests.cs:10-180` contains existing map round-trip and
   blend/texture-cell coverage.
-- `src/OpenSage.Tools.WorldBuilder.Core/OpenSage.Tools.WorldBuilder.Core.csproj:1-14` has no current
+- `src/Panopticon.Tools.WorldBuilder.Core/Panopticon.Tools.WorldBuilder.Core.csproj:1-14` has no current
   geospatial package dependency.

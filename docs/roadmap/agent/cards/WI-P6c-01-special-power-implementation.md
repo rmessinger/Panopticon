@@ -34,7 +34,7 @@ All data from a vanilla Generals install (`INI.big`):
 ## Implementation notes
 
 - Location/object applicators dispatch in
-  `src/OpenSage.Game/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs` and
+  `src/Panopticon.Simulation/Logic/Orders/SpecialPower/SpecialPowerAtLocationApplicator.cs` and
   `SpecialPowerAtObjectApplicator.cs`; mirror `ExecuteCashHack`/`OCLSpecialPower` for structure.
 - Ownership transfer: `GameObject.Owner` (internal setter) plus team reassignment; money transfer:
   mirror `CashHackSpecialPower.Activate`.
@@ -48,7 +48,7 @@ All data from a vanilla Generals install (`INI.big`):
 
 - [x] No applicator in scope throws `NotImplementedException` for the powers listed above.
 - [x] Each power has an observable-effect assertion (heal amount, owner change, disabled state,
-      cash delta, vehicle ownership) in `OpenSage.Game.Tests`.
+      cash delta, vehicle ownership) in `Panopticon.Simulation.Tests`.
 - [x] The four validation-ground units complete with per-power completion predicates and carry
       baseline entries.
 - [x] `dotnet build src`, `dotnet test` (non-Interactive suites), `dotnet format src

@@ -93,7 +93,7 @@ rather than leaving permanent gaps. Candidate mechanics, each independently ship
   2-frame golden), and this surfaced an engine bug: Generals' `FLESHY_SNIPER` and Zero Hour's
   `SUBDUAL_MISSILE` share enum value 31, so every Generals sniper hit was classified as subdual
   damage and silently dropped (`DamageConstants.IsSubdualDamage`, fixed with a game-aware check;
-  regression test `src/OpenSage.Game.Tests/Logic/DamageTypeCollisionTests.cs`). The
+  regression test `test/Panopticon.Simulation.Tests/Logic/DamageTypeCollisionTests.cs`). The
   `TargetOverrides_AreDamageableByPrimaryWeapon` data test keeps every override consistent with
   the install's weapon and armor INI.
 - Bombing-run trigger: command `JetAIUpdate` aircraft through their AI update (attack order to a

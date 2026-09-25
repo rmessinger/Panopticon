@@ -21,16 +21,16 @@ This is the data model and evaluation logic only: the CLI entry point is WI-P0-0
 
 - `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.4`: the three assertion kinds
   (outcome, state, invariant) and the JSON predicate vocabulary.
-- `src/OpenSage.Game/Game.cs:876-959`: `Game.Updating` event (per-tick hook for invariant assertions).
-- `src/OpenSage.Game/Logic/Player.cs` and `src/OpenSage.Game/Logic/BankAccount.cs`: state readable
+- `src/Panopticon.Simulation/Game.cs:876-959`: `Game.Updating` event (per-tick hook for invariant assertions).
+- `src/Panopticon.Simulation/Logic/Player.cs` and `src/Panopticon.Simulation/Logic/BankAccount.cs`: state readable
   for assertions (money, unit count, building count). Find property names by grepping for `public.*Money`
   and `public.*int` in those files.
-- `src/OpenSage.Tools.ReplaySketch.Core/`: this is where the new types live (already has `OpenSage.Game`
-  as a transitive dependency via `OpenSage.Game` project reference).
+- `src/Panopticon.Tools.ReplaySketch.Core/`: this is where the new types live (already has `Panopticon.Simulation`
+  as a transitive dependency via `Panopticon.Simulation` project reference).
 
 ## Steps
 
-1. In `OpenSage.Tools.ReplaySketch.Core/Assertions/`, create:
+1. In `Panopticon.Tools.ReplaySketch.Core/Assertions/`, create:
 
    `ScenarioAssertion.cs`: abstract base class with `string Id` property and abstract
    `AssertionResult Evaluate(Game game, uint frame)` method.
@@ -72,7 +72,7 @@ This is the data model and evaluation logic only: the CLI entry point is WI-P0-0
 6. Extend `ReplayScenario` with `IReadOnlyList<ScenarioAssertion> Assertions` (default empty),
    serialized as `"assertions"` in the JSON profile.
 
-7. Add unit tests in `OpenSage.Tools.ReplaySketch.Tests`:
+7. Add unit tests in `Panopticon.Tools.ReplaySketch.Tests`:
    - A `StateAssertion` with `Path="player[0].money"`, `Op=">="`, `Value=0` and a stub `Game`
      (or mock via the test infrastructure) evaluates to `Passed=true` when money is non-negative.
    - An `AssertionReport.ToJson()` round-trips correctly (allPassed reflects results, IDs present).
@@ -81,12 +81,12 @@ This is the data model and evaluation logic only: the CLI entry point is WI-P0-0
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionResult.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: add `Assertions` property.
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: new unit tests.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionResult.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionReport.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: add `Assertions` property.
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: new unit tests.
 
 ## Acceptance criteria
 
@@ -104,7 +104,7 @@ This is the data model and evaluation logic only: the CLI entry point is WI-P0-0
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

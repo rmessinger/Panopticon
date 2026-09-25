@@ -19,9 +19,9 @@ Lock the two installed EE2 target models to the complete CPU descriptors recorde
 
 - Completed target descriptors in
   `docs/roadmap/deep-dives/ee2-gamebryo-model-storage.md` section 9.
-- `src/OpenSage.Game.Tests/Data/W3d/W3dFileTests.cs`: installed-asset assertion pattern.
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`.
-- `src/OpenSage.IO/ZipFileSystem.cs`.
+- `test/Panopticon.Simulation.Tests/Data/W3d/W3dFileTests.cs`: installed-asset assertion pattern.
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`.
+- `src/Panopticon.IO/ZipFileSystem.cs`.
 
 ## Steps
 
@@ -38,7 +38,7 @@ Lock the two installed EE2 target models to the complete CPU descriptors recorde
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs` (new)
 
 ## Acceptance criteria
 

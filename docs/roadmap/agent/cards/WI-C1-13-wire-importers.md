@@ -19,10 +19,10 @@ game select the internal W3D importers through the public strategy factory.
 
 - Passing `W3dImportParityTests` from `WI-C1-12`.
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 3, 4, and 9.
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`.
-- `src/OpenSage.Game/Content/AssetStore.cs:137-140,184-202,311-314`.
-- Model, hierarchy, and animation loaders under `src/OpenSage.Game/Content/Loaders/`.
-- All `CreateAssetLoadStrategy` implementations under `src/OpenSage.Mods.*`.
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`.
+- `src/Panopticon.Simulation/Content/AssetStore.cs:137-140,184-202,311-314`.
+- Model, hierarchy, and animation loaders under `src/Panopticon.Simulation/Content/Loaders/`.
+- All `CreateAssetLoadStrategy` implementations under `src/Panopticon.Mods.*`.
 
 ## Steps
 
@@ -30,7 +30,7 @@ game select the internal W3D importers through the public strategy factory.
    materialize the result.
 2. Pass importers from `OnDemandAssetLoadStrategy` into those loaders.
 3. Add public `OnDemandAssetLoadStrategy.CreateW3d(IPathResolver, IPathResolver)` inside
-   `OpenSage.Game`, then replace each mod assembly's resolver-based constructor call with that
+   `Panopticon.Simulation`, then replace each mod assembly's resolver-based constructor call with that
    factory while preserving its current model and texture resolvers.
 4. Remove the temporary public resolver-based constructor after repository search shows no caller.
 5. Add fake-importer tests proving one import per cache miss, runtime caching, hierarchy
@@ -39,12 +39,12 @@ game select the internal W3D importers through the public strategy factory.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Loaders/OnDemandModelLoader.cs`
-- `src/OpenSage.Game/Content/Loaders/OnDemandModelBoneHierarchyLoader.cs`
-- `src/OpenSage.Game/Content/Loaders/OnDemandAnimationLoader.cs`
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`
-- `src/OpenSage.Mods.*/` game definition files
-- `src/OpenSage.Game.Tests/Content/OnDemandImporterWiringTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandModelLoader.cs`
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandModelBoneHierarchyLoader.cs`
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandAnimationLoader.cs`
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`
+- `src/Panopticon.Mods.*/` game definition files
+- `test/Panopticon.Simulation.Tests/Content/OnDemandImporterWiringTests.cs` (new)
 
 ## Acceptance criteria
 

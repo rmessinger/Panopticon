@@ -19,25 +19,25 @@ regress, this test surfaces it.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the existing
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`: the existing
   P0 harness acceptance test class. Match its structure exactly: use `HarnessRunner`,
   load a map, run a fixed number of ticks, assert on the resulting `AssertionReport`.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: `RunAndAssert(...)` entry point
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: `RunAndAssert(...)` entry point
   and `HarnessRunnerOptions`; note how the test sets up a `ScenarioScript` (commands + assertions).
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: available assertion
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs`: available assertion
   subtypes: `PropertyAssertion`, `OutcomeAssertion`, `InvariantAssertion`, `CodeAssertion`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs`: register named
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs`: register named
   predicates keyed by string; this is the preferred way to write complex assertions.
-- `src/OpenSage.Game/Logic/PlayerManager.cs`: `Players` property (the list to query for
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs`: `Players` property (the list to query for
   relationship and ownership assertions).
-- `src/OpenSage.Game/Logic/Player.cs:811-831`: `GetRelationship(Team? that)` (use this to
+- `src/Panopticon.Simulation/Logic/Player.cs:811-831`: `GetRelationship(Team? that)` (use this to
   assert ally/enemy status between a pair of players).
 
 ## Steps
 
 1. Add a new test class `P1BootValidationTests` in
-   `src/OpenSage.Game.Tests/Tools/ReplaySketch/P1BootValidationTests.cs`, namespace
-   `OpenSage.Tests.Tools.ReplaySketch`.
+   `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P1BootValidationTests.cs`, namespace
+   `Panopticon.Tests.Tools.ReplaySketch`.
 
 2. Register the needed predicates in a static constructor or `[ModuleInitializer]` via
    `CodeAssertionRegistry`. The minimum set:
@@ -62,7 +62,7 @@ regress, this test surfaces it.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P1BootValidationTests.cs` (new file).
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P1BootValidationTests.cs` (new file).
 
 ## Acceptance criteria
 
@@ -96,7 +96,7 @@ dotnet format src --verify-no-changes
 
 ## Result
 
-`P1BootValidationTests` added at `src/OpenSage.Game.Tests/Tools/ReplaySketch/P1BootValidationTests.cs`.
+`P1BootValidationTests` added at `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P1BootValidationTests.cs`.
 The three predicates (`P1.HumanPlayerIsLocal`, `P1.RelationshipsAreSymmetric`,
 `P1.NoPlayerUnspawned`) are registered via `CodeAssertionRegistry` and referenced by a harness
 `CodeAssertion` scenario (1 USA slot vs 1 GLA slot on opposing teams).

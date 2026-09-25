@@ -14,13 +14,13 @@ Testing a replay requires:
 
 Add a **"Play in Game"** button to `ExportPanel` that in one click:
 1. Exports the current scenario to the game's Replays folder (same as the existing export, but with a fixed `sketch_preview.rep` name to avoid clutter)
-2. Locates `OpenSage.Launcher` by walking up from ReplaySketch's own executable directory and searching sibling build output dirs
+2. Locates `Panopticon.Launcher` by walking up from ReplaySketch's own executable directory and searching sibling build output dirs
 3. Spawns the launcher as a detached process with `--replay sketch_preview.rep --noaudio --noshellmap`
 
 A new `LauncherLocatorService` handles step 2. The search strategy:
 - Start from `AppContext.BaseDirectory` (ReplaySketch's own output dir)
 - Walk up to the `src/` parent
-- Look in `OpenSage.Launcher/bin/<config>/<tfm>/` for `OpenSage.Launcher[.exe]`
+- Look in `Panopticon.Launcher/bin/<config>/<tfm>/` for `Panopticon.Launcher[.exe]`
 - Match the same configuration (Debug/Release) as the running tool if possible, fall back to whichever is found
 - Return `null` if nothing found; the button shows a tooltip explaining the situation
 
@@ -28,7 +28,7 @@ A new `LauncherLocatorService` handles step 2. The search strategy:
 
 | File | Change |
 |---|---|
-| `Services/LauncherLocatorService.cs` | **New**: sibling-dir search for `OpenSage.Launcher[.exe]` |
+| `Services/LauncherLocatorService.cs` | **New**: sibling-dir search for `Panopticon.Launcher[.exe]` |
 | `UI/ExportPanel.cs` | Add "Play in Game" button; inject/create `LauncherLocatorService`; wire export+launch |
 | `UI/MainForm.cs` | Pass `GeneralsInstallationService` (already available) through to `ExportPanel` if needed |
 
@@ -37,12 +37,12 @@ A new `LauncherLocatorService` handles step 2. The search strategy:
 ## Launcher invocation details
 
 ```
-OpenSage.Launcher[.exe] --replay sketch_preview.rep --noaudio --noshellmap
+Panopticon.Launcher[.exe] --replay sketch_preview.rep --noaudio --noshellmap
 ```
 
 - `--replay` expects only the filename (no path), the launcher resolves it relative to the game's Replays folder
 - The process is started with `Process.Start` using `UseShellExecute = false`; ReplaySketch does not wait for it to exit
-- If the launcher exe is not found, the button is disabled with an `ImGui` tooltip: `"OpenSage.Launcher not found in sibling build dirs"`
+- If the launcher exe is not found, the button is disabled with an `ImGui` tooltip: `"Panopticon.Launcher not found in sibling build dirs"`
 - If the export fails before launch, the error is shown and the launcher is not started
 
 ## Todos

@@ -24,10 +24,10 @@ gap-message cells with real effect assertions.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:65-72` and the P6 scenario-matrix section: weapon-fire→damage design intent and the "expected observable effect" assertion the matrix is supposed to make.
-- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs`: the no-op stub to implement; trace what should invoke it (weapon cooldown/range checks) and what it should call into (`Weapon`/`WeaponTemplate`/`DamageModule`).
-- `src/OpenSage.Game/Logic/Object/Weapon/Weapon.cs`, `WeaponTemplate.cs`: the weapon-fire model `FireWeaponUpdate` should drive.
-- `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs`: existing damage-terminal tests (`WI-P6-02`); extend these once real weapon fire exists, without breaking the existing direct-`AttemptDamage` assertions.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs:180-220` (or wherever the 9 gap-message cells live): the current "GAP" placeholder assertions to replace with real effect checks for move/attack/special-power cells.
+- `src/Panopticon.Simulation/Logic/Object/Update/FireWeaponUpdate.cs`: the no-op stub to implement; trace what should invoke it (weapon cooldown/range checks) and what it should call into (`Weapon`/`WeaponTemplate`/`DamageModule`).
+- `src/Panopticon.Simulation/Logic/Object/Weapon/Weapon.cs`, `WeaponTemplate.cs`: the weapon-fire model `FireWeaponUpdate` should drive.
+- `test/Panopticon.Simulation.Tests/Logic/Object/CombatCoverageTests.cs`: existing damage-terminal tests (`WI-P6-02`); extend these once real weapon fire exists, without breaking the existing direct-`AttemptDamage` assertions.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs:180-220` (or wherever the 9 gap-message cells live): the current "GAP" placeholder assertions to replace with real effect checks for move/attack/special-power cells.
 - `docs/roadmap/agent/cards/WI-P6-02-combat-coverage.md` and `WI-P6-04-scenario-matrix.md`: prior cards; their Result sections document exactly what was skipped and why.
 
 ## Steps
@@ -40,9 +40,9 @@ gap-message cells with real effect assertions.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Object/Update/FireWeaponUpdate.cs`
-- `src/OpenSage.Game.Tests/Logic/Object/CombatCoverageTests.cs`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/FireWeaponUpdate.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Object/CombatCoverageTests.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P6ScenarioMatrixTests.cs`
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md`
 
 ## Acceptance criteria

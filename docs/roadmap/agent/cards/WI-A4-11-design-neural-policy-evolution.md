@@ -19,9 +19,9 @@ needed to evolve the existing 125-float neural policy.
 
 - `docs/roadmap/deep-dives/a4-pluggable-ai.md` §§4 and 6.
 - `docs/roadmap/deep-dives/neural-network-ai-policy.md`.
-- `src/OpenSage.Game/Logic/AI/` and `Logic/GameOutcome.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
+- `src/Panopticon.Simulation/Logic/AI/` and `Logic/GameOutcome.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
 
 ## Steps
 

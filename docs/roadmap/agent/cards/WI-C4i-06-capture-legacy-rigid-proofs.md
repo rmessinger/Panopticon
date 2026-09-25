@@ -21,8 +21,8 @@ same path as C4c clips.
 
 - `docs/roadmap/deep-dives/c4i-ee2-legacy-kf-formats.md` sections 2, 5, and 9.
 - C4c capture scenario added by `WI-C4c-06`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs`.
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs`.
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs`.
 
 ## Steps
 
@@ -37,8 +37,8 @@ same path as C4c clips.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/ExternalModels/Ee2NifProofScenario.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `src/Panopticon.Tools.TestHarness/ExternalModels/Ee2NifProofScenario.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
 - Capture guide files owned by the C4c proof scenario, if present.
 
 ## Acceptance criteria

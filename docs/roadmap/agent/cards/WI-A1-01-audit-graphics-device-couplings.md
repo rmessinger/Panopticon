@@ -21,17 +21,17 @@ can be scoped. Read-only: no code changes.
 
 - `docs/roadmap/deep-dives/a1-headless-host.md` §1 (blockers H1-H2), §2.1, §2.2, and the
   `Appendix: What already exists`: the design intent and the known couplings.
-- `src/OpenSage.Game/Game.cs:510-600`: the constructor's device creation, `StandardGraphicsResources`,
+- `src/Panopticon.Simulation/Game.cs:510-600`: the constructor's device creation, `StandardGraphicsResources`,
   `ShaderSetStore`, `ShaderResourceManager`, `GraphicsLoadContext`, `AssetStore` construction.
-- `src/OpenSage.Game/Content/AssetStore.cs:170-200`: the constructor's graphics parameters.
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`: the existing `None` strategy.
-- `src/OpenSage.Game/GameEngine.cs`: the `IGameEngine` seam and which services it exposes.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs`: the existing `GraphicsDevice = null` +
+- `src/Panopticon.Simulation/Content/AssetStore.cs:170-200`: the constructor's graphics parameters.
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`: the existing `None` strategy.
+- `src/Panopticon.Simulation/GameEngine.cs`: the `IGameEngine` seam and which services it exposes.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs`: the existing `GraphicsDevice = null` +
   `OnDemandAssetLoadStrategy.None` proof-of-concept, and exactly how far it gets.
 
 ## Steps
 
-1. Grep `src/OpenSage.Game` for `GraphicsDevice`, `GraphicsLoadContext`, `ShaderSetStore`,
+1. Grep `src/Panopticon.Simulation` for `GraphicsDevice`, `GraphicsLoadContext`, `ShaderSetStore`,
    `ShaderResourceManager`, and `StandardGraphicsResources`. Do not open files outside the hits and
    the context list above.
 2. For each hit record: `file:line`, the owning type, and a classification of `logic` (reached from
@@ -59,7 +59,7 @@ can be scoped. Read-only: no code changes.
 ## Acceptance criteria
 
 - [ ] Every `GraphicsDevice` / `GraphicsLoadContext` / `ShaderSetStore` / `ShaderResourceManager` /
-      `StandardGraphicsResources` reference in `src/OpenSage.Game` appears in the table with a
+      `StandardGraphicsResources` reference in `src/Panopticon.Simulation` appears in the table with a
       classification.
 - [ ] The candidate null-device surface is stated as an explicit member list, not a prose summary.
 - [ ] No `.cs` file is modified by this card.
@@ -75,7 +75,7 @@ git status --short -- 'src/*'
 
 - Do not write the null-device interface or any code. This card only scopes it.
 - Do not change `Game.cs`, `AssetStore.cs`, or the load strategy.
-- Do not extend the audit to `OpenSage.Rendering` internals; classify them as `presentation` at the
+- Do not extend the audit to `Panopticon.Rendering` internals; classify them as `presentation` at the
   call boundary.
 
 ## On completion

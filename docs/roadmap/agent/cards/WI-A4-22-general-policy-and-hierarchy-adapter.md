@@ -18,7 +18,7 @@ Add the general-level interface and reference policy, then compose all ranks beh
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a4-hierarchical-ai.md`: A4-3d flow.
-- `src/OpenSage.Game/Logic/AI/IAIDecisionPolicy.cs`, `AIPlayer.cs`.
+- `src/Panopticon.Simulation/Logic/AI/IAIDecisionPolicy.cs`, `AIPlayer.cs`.
 - New squad, soldier, and commander contracts.
 - `AIDecisionPolicyType.cs` and `AIDecisionPolicyFactory.cs`.
 
@@ -32,7 +32,7 @@ Add the general-level interface and reference policy, then compose all ranks beh
 
 ## Files likely to change
 
-- New hierarchy files under `src/OpenSage.Game/Logic/AI/`
+- New hierarchy files under `src/Panopticon.Simulation/Logic/AI/`
 - `AIDecisionPolicyType.cs`
 - `AIDecisionPolicyFactory.cs`
 - Focused tests

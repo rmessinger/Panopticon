@@ -18,12 +18,12 @@ skinning matrix composition without adding C4d influence widening.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4f-ee2-scale-animation.md` sections 8 and 10.
-- `src/OpenSage.Game/Graphics/ModelMesh.cs:51-109`: parent-bone world matrix and render bounds.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs:246-261`: skinning matrix upload and composition.
-- `src/OpenSage.Game/Assets/Shaders/Common.h`: current `TransformNormal` helper.
-- `src/OpenSage.Game/Assets/Shaders/FixedFunction.vert` and `FixedFunction.frag`: EE2 proof
+- `src/Panopticon.Simulation/Graphics/ModelMesh.cs:51-109`: parent-bone world matrix and render bounds.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs:246-261`: skinning matrix upload and composition.
+- `src/Panopticon.Simulation/Assets/Shaders/Common.h`: current `TransformNormal` helper.
+- `src/Panopticon.Simulation/Assets/Shaders/FixedFunction.vert` and `FixedFunction.frag`: EE2 proof
   shader path.
-- `src/OpenSage.Game.Tests/Graphics/ModelInstanceTests.cs`: runtime transform tests, if present.
+- `test/Panopticon.Simulation.Tests/Graphics/ModelInstanceTests.cs`: runtime transform tests, if present.
 
 ## Steps
 
@@ -39,12 +39,12 @@ skinning matrix composition without adding C4d influence widening.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Assets/Shaders/Common.h`
-- `src/OpenSage.Game/Assets/Shaders/FixedFunction.vert`
-- `src/OpenSage.Game/Assets/Shaders/PbrMetallicRoughness.vert`
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`
-- `src/OpenSage.Game.Tests/Graphics/ModelInstanceTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifAnimationImporterTests.cs`
+- `src/Panopticon.Simulation/Assets/Shaders/Common.h`
+- `src/Panopticon.Simulation/Assets/Shaders/FixedFunction.vert`
+- `src/Panopticon.Simulation/Assets/Shaders/PbrMetallicRoughness.vert`
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`
+- `test/Panopticon.Simulation.Tests/Graphics/ModelInstanceTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifAnimationImporterTests.cs`
 
 ## Acceptance criteria
 

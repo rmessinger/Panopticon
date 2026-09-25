@@ -19,10 +19,10 @@ contract.
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 6 and 8.
 - Synthetic PBR fixture from `WI-C3-10`.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`.
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs` and `Program.cs`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/StandaloneModelCaptureTests.cs`.
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`.
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs` and `Program.cs`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/StandaloneModelCaptureTests.cs`.
 - `docs/screenshots.md`.
 
 ## Steps
@@ -40,11 +40,11 @@ contract.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs`
-- `src/OpenSage.Tools.TestHarness/Program.cs`
-- `src/OpenSage.Tools.TestHarness/PbrMaterialProofScenario.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/PbrMaterialProofScenarioTests.cs` (new)
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs`
+- `src/Panopticon.Tools.TestHarness/Program.cs`
+- `src/Panopticon.Tools.TestHarness/PbrMaterialProofScenario.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/PbrMaterialProofScenarioTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`
 - `docs/screenshots.md` only if the capture workflow gains a new reusable capability
 
 ## Acceptance criteria
@@ -59,7 +59,7 @@ contract.
 
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario PbrMaterialProof
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~PbrMaterialProofScenarioTests"

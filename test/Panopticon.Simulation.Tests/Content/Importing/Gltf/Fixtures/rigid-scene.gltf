@@ -1,0 +1,245 @@
+{
+  "asset": {
+    "copyright": "Project-authored Panopticon test fixture",
+    "generator": "Panopticon glTF fixture generator 1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "name": "POSITION",
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 3,
+      "max": [
+        1,
+        1,
+        0
+      ],
+      "min": [
+        0,
+        0,
+        0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "name": "NORMAL",
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 3,
+      "max": [
+        0,
+        0,
+        1
+      ],
+      "min": [
+        0,
+        0,
+        1
+      ],
+      "type": "VEC3"
+    },
+    {
+      "name": "TEXCOORD_0",
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 3,
+      "max": [
+        0.75,
+        0.75
+      ],
+      "min": [
+        0.25,
+        0.25
+      ],
+      "type": "VEC2"
+    },
+    {
+      "name": "INDICES",
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 3,
+      "type": "SCALAR"
+    },
+    {
+      "name": "Animation.Input",
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 3,
+      "max": [
+        2
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "name": "Animation.Output",
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 3,
+      "max": [
+        0.5,
+        1,
+        0
+      ],
+      "min": [
+        0.5,
+        0,
+        0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "name": "Animation.Input",
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 3,
+      "max": [
+        2
+      ],
+      "min": [
+        0
+      ],
+      "type": "SCALAR"
+    },
+    {
+      "name": "Animation.Output",
+      "bufferView": 7,
+      "componentType": 5126,
+      "count": 3,
+      "type": "VEC4"
+    }
+  ],
+  "animations": [
+    {
+      "name": "armWave",
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 1,
+            "path": "translation"
+          }
+        },
+        {
+          "sampler": 1,
+          "target": {
+            "node": 1,
+            "path": "rotation"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 4,
+          "output": 5
+        },
+        {
+          "input": 6,
+          "interpolation": "STEP",
+          "output": 7
+        }
+      ]
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 36,
+      "byteOffset": 48
+    },
+    {
+      "buffer": 0,
+      "byteLength": 36,
+      "byteOffset": 84
+    },
+    {
+      "buffer": 0,
+      "byteLength": 24,
+      "byteOffset": 156
+    },
+    {
+      "buffer": 0,
+      "byteLength": 6,
+      "byteOffset": 204
+    },
+    {
+      "buffer": 0,
+      "byteLength": 12,
+      "byteOffset": 180
+    },
+    {
+      "buffer": 0,
+      "byteLength": 36,
+      "byteOffset": 120
+    },
+    {
+      "buffer": 0,
+      "byteLength": 12,
+      "byteOffset": 192
+    },
+    {
+      "buffer": 0,
+      "byteLength": 48
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 212,
+      "uri": "rigid-scene.bin"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "armMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "rig",
+      "children": [
+        1
+      ],
+      "rotation": [
+        0,
+        0.19509032,
+        0,
+        0.98078525
+      ],
+      "translation": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "arm",
+      "mesh": 0,
+      "translation": [
+        0.5,
+        0,
+        0
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "name": "rigid",
+      "nodes": [
+        0
+      ]
+    }
+  ]
+}

@@ -20,14 +20,14 @@ attachment plan with the documented basis, units, scale policy, and recomputed b
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 4 and 5.
-- `src/OpenSage.Game/Content/Importing/ImportedBone.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedSkeleton.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedSubObject.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`).
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedAssetTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedSkeleton.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedSubObject.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedAssetTests.cs`.
 
 ## Steps
 
@@ -56,17 +56,17 @@ attachment plan with the documented basis, units, scale policy, and recomputed b
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfScenePlan.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfSceneConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfTransformConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfBoundsCalculator.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfSceneConverterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfScenePlan.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSceneConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfTransformConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfBoundsCalculator.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfSceneConverterTests.cs` (new)
 
 ## Acceptance criteria
 
 - [ ] Imported bones are stable, parent-before-child, and use one synthetic root only when needed.
 - [ ] One meter becomes approximately `3.28084` world units by default.
-- [ ] Basis conversion makes authored +Z forward become OpenSAGE +X forward without reversing
+- [ ] Basis conversion makes authored +Z forward become Panopticon +X forward without reversing
       winding.
 - [ ] Rigid attachment plans retain their mesh-node bone, and the bounds helper returns expected
       transformed bounds for synthetic position sets.

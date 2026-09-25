@@ -18,9 +18,9 @@ changing existing RTS behavior.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a4-simulation-domain-model.md`.
-- `src/OpenSage.Game/SimulationHost.cs`.
-- `src/OpenSage.Game/IGame.cs`, `IGameEngine.cs`, and `GameEngine.cs`.
-- `src/OpenSage.Game/Recording/RunRecording.cs`.
+- `src/Panopticon.Simulation/SimulationHost.cs`.
+- `src/Panopticon.Simulation/IGame.cs`, `IGameEngine.cs`, and `GameEngine.cs`.
+- `src/Panopticon.Simulation/Recording/RunRecording.cs`.
 - Existing `SimulationHostTests`.
 
 ## Steps
@@ -33,9 +33,9 @@ changing existing RTS behavior.
 
 ## Files likely to change
 
-- New files under `src/OpenSage.Game/Simulation/`
-- `src/OpenSage.Game/SimulationHost.cs`
-- `src/OpenSage.Game.Tests/SimulationHostTests.cs`
+- New files under `src/Panopticon.Simulation/Simulation/`
+- `src/Panopticon.Simulation/SimulationHost.cs`
+- `test/Panopticon.Simulation.Tests/SimulationHostTests.cs`
 
 ## Acceptance criteria
 

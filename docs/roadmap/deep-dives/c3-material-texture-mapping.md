@@ -287,25 +287,25 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - C1 material interchange:
-  `src/OpenSage.Game/Content/Importing/ImportedMaterial.cs`,
+  `src/Panopticon.Simulation/Content/Importing/ImportedMaterial.cs`,
   `ImportedFixedFunctionShading.cs`, `ImportedMaterialProperty.cs`,
   `ImportedMeshPart.cs`, and `ImportedVertex.cs`.
 - Runtime material and mesh types:
-  `src/OpenSage.Rendering/Material.cs`,
-  `src/OpenSage.Game/Graphics/ModelMesh.cs`, and
+  `src/Panopticon.Rendering/Material.cs`,
+  `src/Panopticon.Simulation/Graphics/ModelMesh.cs`, and
   `Graphics/Shaders/MeshShaderResources.cs`.
 - Current material paths:
-  `src/OpenSage.Game/Graphics/Shaders/ShaderResourceManager.cs`,
+  `src/Panopticon.Simulation/Graphics/Shaders/ShaderResourceManager.cs`,
   `FixedFunctionShaderResources.cs`, `ShaderMaterialShaderResources.cs`, and
   `NormalMappedShaderResources.cs`.
 - Shader sources and build:
-  `src/OpenSage.Game/Assets/Shaders/NormalMapped.vert`,
+  `src/Panopticon.Simulation/Assets/Shaders/NormalMapped.vert`,
   `NormalMapped.frag`, shared mesh/lighting includes in the same directory, and the shader targets
-  in `src/OpenSage.Game/OpenSage.Game.csproj`.
+  in `src/Panopticon.Simulation/Panopticon.Simulation.csproj`.
 - Texture assets and loading:
-  `src/OpenSage.Game/Graphics/TextureAsset.cs`,
-  `src/OpenSage.Game/Content/AssetStore.cs`, and
+  `src/Panopticon.Simulation/Graphics/TextureAsset.cs`,
+  `src/Panopticon.Simulation/Content/AssetStore.cs`, and
   `Content/Loaders/OnDemandTextureLoader.cs`.
 - Frame capture:
-  `src/OpenSage.Tools.TestHarness/ScenarioCaptureRunner.cs` and
-  `src/OpenSage.Game/Graphics/FrameCapturer.cs`.
+  `src/Panopticon.Tools.TestHarness/ScenarioCaptureRunner.cs` and
+  `src/Panopticon.Simulation/Graphics/FrameCapturer.cs`.

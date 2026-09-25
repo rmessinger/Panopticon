@@ -18,12 +18,12 @@ Author and enable the P3 scenario matrix that sweeps end-state type by player co
 
 - `docs/roadmap/deep-dives/p3-victory-defeat.md:154-180`: matrix axes, constraints, and per-cell assertions.
 - `docs/roadmap/implementation-checklist.md:229-234`: scenario-matrix AC.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151`: matrix expansion, filters, and assertion templates.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: runner over expanded cells.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to use.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:69-98`: existing P3 matrix stubs to replace/enable.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-240`: P7 dependency on P3 end-state assertions.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-70`: headless test base; matrix validation must run in CI.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs:96-151`: matrix expansion, filters, and assertion templates.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs:9-23`: runner over expanded cells.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to use.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:69-98`: existing P3 matrix stubs to replace/enable.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-240`: P7 dependency on P3 end-state assertions.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-70`: headless test base; matrix validation must run in CI.
 
 ## Steps
 
@@ -37,10 +37,10 @@ Author and enable the P3 scenario matrix that sweeps end-state type by player co
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P3ScenarioMatrixTests.cs` (new, only if splitting P3 out of the shared stub file)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs` (only if matrix assertions need small model support)
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs` (only if runner reporting needs cell binding details)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P3ScenarioMatrixTests.cs` (new, only if splitting P3 out of the shared stub file)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs` (only if matrix assertions need small model support)
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs` (only if runner reporting needs cell binding details)
 
 ## Acceptance criteria
 
@@ -76,7 +76,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "P3 scenario matrix" item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` with the number of valid cells and tests run.
-- Confirm the required matrix test file `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` was updated, or create `src/OpenSage.Game.Tests/Tools/ReplaySketch/P3ScenarioMatrixTests.cs` if splitting the tests.
+- Confirm the required matrix test file `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs` was updated, or create `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P3ScenarioMatrixTests.cs` if splitting the tests.
 
 ## Result
 

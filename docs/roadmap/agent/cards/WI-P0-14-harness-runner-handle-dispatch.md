@@ -28,16 +28,16 @@ earlier commands, without the caller specifying raw `ObjectId` values.
 
 ## Context to read
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: the file to rewrite.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `HandleCommandArgument`,
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: the file to rewrite.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `HandleCommandArgument`,
   `QuerySelectorCommandArgument`, `CommandSpec.Resolve(resolver)`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs`: interface to implement.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: export path used for
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/IObjectReferenceResolver.cs`: interface to implement.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: export path used for
   concrete actions; handle-dependent actions must be replaced with no-ops (`EnemyBaseDestroyed`)
   to preserve cumulative frame alignment.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/TerrainValidator.cs`: `BuildContextPublic`
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/TerrainValidator.cs`: `BuildContextPublic`
   (internal; accessible from `HarnessRunner` in the same namespace).
-- `src/OpenSage.Game/Game.cs`: `Game.ObjectCreated` event; a new public helper
+- `src/Panopticon.Simulation/Game.cs`: `Game.ObjectCreated` event; a new public helper
   `FindFirstObjectByDefinitionName(string)` is added to `Game` for `ResolveSelector`.
 
 ## Steps
@@ -88,10 +88,10 @@ earlier commands, without the caller specifying raw `ObjectId` values.
 
 ## Files to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/HandleTracker.cs`: new file.
-- `src/OpenSage.Game/Game.cs`: add `FindFirstObjectByDefinitionName`.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`: rewrite.
-- `src/OpenSage.Tools.ReplaySketch.Tests/HandleTrackerTests.cs`: new headless tests.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/HandleTracker.cs`: new file.
+- `src/Panopticon.Simulation/Game.cs`: add `FindFirstObjectByDefinitionName`.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`: rewrite.
+- `test/Panopticon.Tools.ReplaySketch.Tests/HandleTrackerTests.cs`: new headless tests.
 
 ## Acceptance criteria
 

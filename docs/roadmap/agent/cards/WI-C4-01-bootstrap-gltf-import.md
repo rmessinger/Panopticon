@@ -21,17 +21,17 @@ root-document scaffold required by both glTF importers.
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 1-3 and 9.
 - `src/Directory.Packages.props`: centrally managed package versions.
-- `src/OpenSage.Game/OpenSage.Game.csproj`: engine package references.
-- `src/OpenSage.Game/Content/Importing/IModelImporter.cs`.
-- `src/OpenSage.Game/Content/Importing/IAnimationImporter.cs`.
-- `src/OpenSage.Game/Content/Importing/AssetImportContext.cs`.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dModelImporter.cs`: null and exception conventions.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dAnimationImporter.cs`: animation-key precedent.
+- `src/Panopticon.Simulation/Panopticon.Simulation.csproj`: engine package references.
+- `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/IAnimationImporter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs`.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dModelImporter.cs`: null and exception conventions.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dAnimationImporter.cs`: animation-key precedent.
 
 ## Steps
 
 1. Add centrally managed `SharpGLTF.Core` version `1.0.7` and reference it only from
-   `OpenSage.Game`.
+   `Panopticon.Simulation`.
 2. Add public sealed immutable `GltfImportOptions` with a positive finite `UnitsPerMeter`
    defaulting to `1 / 0.3048`, plus positive root-document and data-URI byte limits used by the
    initial loader.
@@ -50,11 +50,11 @@ root-document scaffold required by both glTF importers.
 ## Files likely to change
 
 - `src/Directory.Packages.props`
-- `src/OpenSage.Game/OpenSage.Game.csproj`
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAssetKey.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfDocumentLoader.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfImporterScaffoldTests.cs` (new)
+- `src/Panopticon.Simulation/Panopticon.Simulation.csproj`
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAssetKey.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfDocumentLoader.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfImporterScaffoldTests.cs` (new)
 
 ## Acceptance criteria
 

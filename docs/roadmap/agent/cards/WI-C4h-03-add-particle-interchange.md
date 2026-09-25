@@ -19,7 +19,7 @@ three proof effects without touching the live particle runtime.
 
 - `docs/roadmap/deep-dives/c4h-ee2-particle-effects.md` sections 5, 6, and 10.
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 1, 2, 4, and 6.
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs`, `ImportedMaterial.cs`, and
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`, `ImportedMaterial.cs`, and
   `ImportedAnimation.cs`.
 - The NIF particle blocks added by `WI-C4h-02`.
 
@@ -44,13 +44,13 @@ three proof effects without touching the live particle runtime.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/ImportedParticleEffect.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedParticleSystem.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedParticleEmitter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedParticleModifier.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ImportedParticleAttachment.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifParticleEffectConverter.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/NifParticleEffectConverterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedParticleEffect.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedParticleSystem.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedParticleEmitter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedParticleModifier.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ImportedParticleAttachment.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifParticleEffectConverter.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifParticleEffectConverterTests.cs` (new)
 
 ## Acceptance criteria
 

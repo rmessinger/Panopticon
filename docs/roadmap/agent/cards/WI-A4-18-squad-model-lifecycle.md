@@ -18,8 +18,8 @@ empty-squad cleanup.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a4-hierarchical-ai.md`: A4-3a contract.
-- `src/OpenSage.Game/Logic/Team.cs`, `Player.cs`, and `GameLogic.cs`.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`: identity and lifecycle.
+- `src/Panopticon.Simulation/Logic/Team.cs`, `Player.cs`, and `GameLogic.cs`.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`: identity and lifecycle.
 - Existing object ownership and destruction tests.
 
 ## Steps
@@ -32,9 +32,9 @@ empty-squad cleanup.
 
 ## Files likely to change
 
-- New hierarchy files under `src/OpenSage.Game/Logic/AI/`
-- Narrow lifecycle integration in `src/OpenSage.Game/Logic/`
-- New tests under `src/OpenSage.Game.Tests/Logic/AI/`
+- New hierarchy files under `src/Panopticon.Simulation/Logic/AI/`
+- Narrow lifecycle integration in `src/Panopticon.Simulation/Logic/`
+- New tests under `test/Panopticon.Simulation.Tests/Logic/AI/`
 
 ## Acceptance criteria
 

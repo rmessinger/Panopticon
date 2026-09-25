@@ -19,8 +19,8 @@ synthetic PBR assets.
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` sections 4, 5, and 8.
 - C3 focused tests from `WI-C3-01..08`.
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedModelMaterializerTests.cs`.
-- `src/OpenSage.Game.Tests/GameFixture.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelMaterializerTests.cs`.
+- `test/Panopticon.Simulation.Tests/GameFixture.cs`.
 - Existing `[GameFact(SageGame.CncGenerals)]` graphics-test pattern.
 
 ## Steps
@@ -37,8 +37,8 @@ synthetic PBR assets.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedModelMaterializerTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/PbrImportedModelTestData.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedModelMaterializerTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/PbrImportedModelTestData.cs` (new)
 - C3 focused test files only when sharing the synthetic fixture
 
 ## Acceptance criteria

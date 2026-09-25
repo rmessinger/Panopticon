@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.FileFormats\Panopticon.FileFormats.csproj" />
+    <ProjectReference Include="..\Panopticon.Mathematics\Panopticon.Mathematics.csproj" />
+  </ItemGroup>
+
+</Project>

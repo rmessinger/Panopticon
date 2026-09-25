@@ -17,11 +17,11 @@ Add installed-asset assertions and deterministic TestHarness captures that prove
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4e-ee2-property-animation.md` sections 2 and 9.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifPropertyAnimationTests.cs` from `WI-C4e-04`.
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs:41-95`.
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifPropertyAnimationTests.cs` from `WI-C4e-04`.
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:41-95`.
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
 
 ## Steps
 
@@ -34,9 +34,9 @@ Add installed-asset assertions and deterministic TestHarness captures that prove
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifPropertyAnimationTests.cs`
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifPropertyAnimationTests.cs`
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
 
 ## Acceptance criteria
 
@@ -54,7 +54,7 @@ EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
   dotnet test src --filter "FullyQualifiedName~Ee2NifPropertyAnimationTests"
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario Ee2PropertyProof
 dotnet build src
 dotnet test src --filter Category!=Interactive

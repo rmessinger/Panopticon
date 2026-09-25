@@ -20,14 +20,14 @@ joint remapping, inverse binds, and model-space primary and secondary geometry.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 5 and 6.
-- `src/OpenSage.Game/Content/Importing/ImportedBone.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedVertex.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedMesh.cs`.
-- `src/OpenSage.Game/Content/Importing/ImportedModel.cs`: skeleton and vertex-index validation.
-- `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs`: primary and secondary geometry upload.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAccessorDecoder.cs` (new from `WI-C4-06`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`).
+- `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedVertex.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedMesh.cs`.
+- `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`: skeleton and vertex-index validation.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs`: primary and secondary geometry upload.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAccessorDecoder.cs` (new from `WI-C4-06`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`).
 
 ## Steps
 
@@ -52,10 +52,10 @@ joint remapping, inverse binds, and model-space primary and secondary geometry.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfSkinConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfSkinConverterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSkinConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfSkinConverterTests.cs` (new)
 
 ## Acceptance criteria
 

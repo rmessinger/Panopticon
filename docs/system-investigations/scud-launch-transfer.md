@@ -52,9 +52,9 @@ Full evidence is in `docs/system-investigations/scud-launch-validation.md` secti
 
 ## 4. Reproducing
 
-`EngagementCapture` block for `src/OpenSage.Tools.TestHarness/TestHarness.json`. `--no-build`
+`EngagementCapture` block for `src/Panopticon.Tools.TestHarness/TestHarness.json`. `--no-build`
 does not copy an edited config, copy it into
-`src/OpenSage.Tools.TestHarness/bin/Debug/net10.0/` as well.
+`src/Panopticon.Tools.TestHarness/bin/Debug/net10.0/` as well.
 
 ```json
 "EngagementCapture": {
@@ -68,9 +68,9 @@ does not copy an edited config, copy it into
 
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
-dotnet run --project src/OpenSage.Tools.TestHarness -- --headless \
+dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
 --built-in-scenario EngagementCapture
-python3 scripts/annotate_engagement_gif.py /tmp/opensage_engagement out.gif
+python3 scripts/annotate_engagement_gif.py /tmp/panopticon_engagement out.gif
 ```
 
 The committed `TestHarness.json` default is unchanged (`{ "Frames": 192 }`); the block above

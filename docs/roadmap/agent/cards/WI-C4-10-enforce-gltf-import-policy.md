@@ -20,30 +20,30 @@ contract, and keep construction explicit for internal callers.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 1, 2, 8, and 9.
-- `src/OpenSage.Game/Content/Importing/IModelImporter.cs`.
-- `src/OpenSage.Game/Content/Importing/IAnimationImporter.cs`.
-- `src/OpenSage.Game/Content/Importing/AssetImportContext.cs`.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dModelImporter.cs`: importer failure boundary.
-- `src/OpenSage.Game/Content/Importing/W3d/W3dAnimationImporter.cs`: animation failure boundary.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfResourceResolver.cs` (new from `WI-C4-02`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfSceneConverter.cs` (new from `WI-C4-05`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAccessorDecoder.cs` (new from `WI-C4-06`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfSkinConverter.cs` (new from `WI-C4-07`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs` (new from `WI-C4-08`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationImporter.cs` (new from `WI-C4-08`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfMaterialConverter.cs` (new from `WI-C4-09`).
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImageSourceConverter.cs` (new from `WI-C4-09`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfImporterScaffoldTests.cs` (new from `WI-C4-01`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfResourceResolverTests.cs` (new from `WI-C4-02`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfSceneConverterTests.cs` (new from `WI-C4-05`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfPrimitiveConverterTests.cs` (new from `WI-C4-06`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfSkinConverterTests.cs` (new from `WI-C4-07`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfAnimationImporterTests.cs` (new from `WI-C4-08`).
-- `src/OpenSage.Game.Tests/Content/Importing/GltfMaterialConverterTests.cs` (new from `WI-C4-09`).
+- `src/Panopticon.Simulation/Content/Importing/IModelImporter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/IAnimationImporter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs`.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dModelImporter.cs`: importer failure boundary.
+- `src/Panopticon.Simulation/Content/Importing/W3d/W3dAnimationImporter.cs`: animation failure boundary.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfResourceResolver.cs` (new from `WI-C4-02`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfScenePlan.cs` (new from `WI-C4-05`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSceneConverter.cs` (new from `WI-C4-05`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAccessorDecoder.cs` (new from `WI-C4-06`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfPrimitiveConverter.cs` (new from `WI-C4-06`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSkinConverter.cs` (new from `WI-C4-07`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs` (new from `WI-C4-08`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationImporter.cs` (new from `WI-C4-08`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfMaterialConverter.cs` (new from `WI-C4-09`).
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImageSourceConverter.cs` (new from `WI-C4-09`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfImporterScaffoldTests.cs` (new from `WI-C4-01`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfResourceResolverTests.cs` (new from `WI-C4-02`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfSceneConverterTests.cs` (new from `WI-C4-05`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfPrimitiveConverterTests.cs` (new from `WI-C4-06`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfSkinConverterTests.cs` (new from `WI-C4-07`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfAnimationImporterTests.cs` (new from `WI-C4-08`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfMaterialConverterTests.cs` (new from `WI-C4-09`).
 
 ## Steps
 
@@ -73,12 +73,12 @@ contract, and keep construction explicit for internal callers.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfModelImporter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationImporter.cs` (new from `WI-C4-08`)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfImportDiagnostics.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`)
-- `src/OpenSage.Game.Tests/Content/Importing/GltfImporterTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportOptions.cs` (new from `WI-C4-01`)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfModelImporter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationImporter.cs` (new from `WI-C4-08`)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfImportDiagnostics.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfDocumentLoader.cs` (new from `WI-C4-01`)
+- `test/Panopticon.Simulation.Tests/Content/Importing/GltfImporterTests.cs` (new)
 - C4 focused test files only when adding whole-import limit assertions
 
 ## Acceptance criteria
@@ -98,7 +98,7 @@ contract, and keep construction explicit for internal callers.
 ```sh
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~GltfImporterTests|FullyQualifiedName~GltfAnimationImporterTests|FullyQualifiedName~GltfMaterialConverterTests"
-if git grep -n --untracked "SharpGLTF" -- 'src/OpenSage.Game/**/*.cs' | grep -v "Content/Importing/Gltf/"; then exit 1; fi
+if git grep -n --untracked "SharpGLTF" -- 'src/Panopticon.Simulation/**/*.cs' | grep -v "Content/Importing/Gltf/"; then exit 1; fi
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

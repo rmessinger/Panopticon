@@ -19,7 +19,7 @@ to the declarative scenario artifact.
 
 - Spatial-authoring ownership in the A5 implementation plan.
 - Initial-population controller from `WI-A5-14`.
-- `src/OpenSage.Tools.WorldBuilder.Core/PlaceObjectTool.cs`, `SelectTool.cs`, and `EditorMap.cs`.
+- `src/Panopticon.Tools.WorldBuilder.Core/PlaceObjectTool.cs`, `SelectTool.cs`, and `EditorMap.cs`.
 - Relevant WorldBuilder MAUI view models and views.
 
 ## Steps
@@ -32,7 +32,7 @@ to the declarative scenario artifact.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.WorldBuilder.Core/`
+- `src/Panopticon.Tools.WorldBuilder.Core/`
 - Narrow WorldBuilder MAUI files
 - WorldBuilder tests
 

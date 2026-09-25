@@ -20,7 +20,7 @@ profile.
 ### Capture profile
 
 Add the serializable profile model and validation in
-`OpenSage.Tools.ReplaySketch.Core`, alongside the existing scenario models and loaders:
+`Panopticon.Tools.ReplaySketch.Core`, alongside the existing scenario models and loaders:
 
 - Scenario metadata: name, map, fixed-timestep duration, settle frames, capture stride, output
   directory, and HUD visibility.
@@ -51,7 +51,7 @@ outside the first command set. ReplaySketch remains the tool for larger command 
 
 ### Runtime
 
-Create a generic `ScenarioCaptureRunner` in `OpenSage.Tools.TestHarness`. Separate profile
+Create a generic `ScenarioCaptureRunner` in `Panopticon.Tools.TestHarness`. Separate profile
 loading and validation, scene setup, command execution, camera setup, state observation, and
 artifact writing.
 
@@ -101,7 +101,7 @@ unchanged:
   - A dozer constructing one building in a compact field, tracked from placement through
     completion.
   - A physics-enabled object receiving an impulse and moving through a pre-framed field.
-- Update `TestHarness.json`, `src/OpenSage.Tools.TestHarness/AGENTS.md`, and
+- Update `TestHarness.json`, `src/Panopticon.Tools.TestHarness/AGENTS.md`, and
   `docs/screenshots.md` with the generic invocation, profile contract, examples, manifest
   fields, and failure behavior. Historical investigation documents remain unchanged because
   the engagement compatibility path stays valid.

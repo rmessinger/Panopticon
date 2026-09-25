@@ -8,14 +8,14 @@
 
 ## 1. Current state
 
-- `GameObject` (`OpenSage.Logic.Object`) holds a public `Drawable` field
-  (`src/OpenSage.Game/Logic/Object/GameObject.cs:490`) and constructs it through `GameClient`
+- `GameObject` (`Panopticon.Logic.Object`) holds a public `Drawable` field
+  (`src/Panopticon.Simulation/Logic/Object/GameObject.cs:490`) and constructs it through `GameClient`
   (`:528`). Every logic module reaches presentation directly through it.
 - Logic reads presentation state in 15 clusters (the
   [read audit](../implementation/track-a-a3-sim-presentation-seam.md)): construction state through
   `Drawable.ModelConditionFlags`, bone poses through `Drawable.FindBone` and
   `ModelInstance` transform arrays, debris model selection through a `W3dDebrisDraw` cast.
-- Presentation-by-role code lives under `OpenSage.Logic` namespaces: the `Draw/` and
+- Presentation-by-role code lives under `Panopticon.Logic` namespaces: the `Draw/` and
   `ClientUpdate/` module trees, `OrderGenerators/`, `SelectionSystem`, and `GhostObject`.
 - Update topology: `Scene3D.LogicTick` (`Scene3D.cs:364`) runs the fixed-rate simulation.
   `Scene3D.LocalLogicTick` (`:380`) runs the per-frame client-side pass (camera, input, client
@@ -31,7 +31,7 @@ State classes:
 
 | Class | Definition | Examples |
 |---|---|---|
-| Logic state | Owned by `OpenSage.Logic` types; determines simulation outcome | `GameObject.Transform`, `ObjectStatus`, `ModelConditionFlags`, health, team |
+| Logic state | Owned by `Panopticon.Logic` types; determines simulation outcome | `GameObject.Transform`, `ObjectStatus`, `ModelConditionFlags`, health, team |
 | Presentation state | Exists only because a renderer/audio client maintains it | `ModelInstance` animation output, draw-module condition-state selection, `Camera` matrices, drawable visibility, cursor, audio playback |
 | Shared asset data | Loaded content readable by both sides | `Model`, `ModelBone` bind pose, `*ModuleData` INI data, audio event assets, `AxisAlignedBoundingBox` mesh bounds |
 
@@ -52,9 +52,9 @@ presentation type; presentation decides which model instance serves the query.
 
 ## 3. Seam design
 
-`IGameObjectClient` (`src/OpenSage.Game/Logic/Object/IGameObjectClient.cs`, namespace
-`OpenSage.Logic.Object`) is the logic-facing surface of an object's client side. `Drawable`
-(`OpenSage.Client`) implements it. Members:
+`IGameObjectClient` (`src/Panopticon.Simulation/Logic/Object/IGameObjectClient.cs`, namespace
+`Panopticon.Logic.Object`) is the logic-facing surface of an object's client side. `Drawable`
+(`Panopticon.Client`) implements it. Members:
 
 | Member | Kind | Replaces |
 |---|---|---|
@@ -79,27 +79,27 @@ Supporting changes:
 
 ## 4. Enforcement
 
-`OpenSage.Game.Tests/Logic/LogicPresentationBoundaryTests.cs` reflects over the
-`OpenSage.Game` assembly.
+`Panopticon.Simulation.Tests/Logic/LogicPresentationBoundaryTests.cs` reflects over the
+`Panopticon.Simulation` assembly.
 
-Logic types: every type whose namespace starts with `OpenSage.Logic`, except the
+Logic types: every type whose namespace starts with `Panopticon.Logic`, except the
 presentation-by-role subtrees and types named in the
-[audit](../implementation/track-a-a3-sim-presentation-seam.md#presentation-by-role-under-opensagelogic):
+[audit](../implementation/track-a-a3-sim-presentation-seam.md#presentation-by-role-under-panopticonlogic):
 types deriving from `DrawModule`, `ClientUpdateModule`, `DrawModuleData`, or
 `ClientUpdateModuleData` (the draw/client-update module families, data classes included, along
-with their nested types); the `OpenSage.Logic.OrderGenerators` namespace;
-`OpenSage.Logic.OrderGeneratorSystem`, `OpenSage.Logic.SelectionSystem`,
-`OpenSage.Logic.SelectionMessageHandler`, `OpenSage.Logic.GhostObject`,
-`OpenSage.Logic.GhostObjectManager`; and `OpenSage.Logic.Object.W3dModelDrawConditionState`
+with their nested types); the `Panopticon.Logic.OrderGenerators` namespace;
+`Panopticon.Logic.OrderGeneratorSystem`, `Panopticon.Logic.SelectionSystem`,
+`Panopticon.Logic.SelectionMessageHandler`, `Panopticon.Logic.GhostObject`,
+`Panopticon.Logic.GhostObjectManager`; and `Panopticon.Logic.Object.W3dModelDrawConditionState`
 (declared alongside the draw module it serves; holds the active condition state's model
-instance). The draw and client-update trees share the `OpenSage.Logic.Object` namespace, so the
+instance). The draw and client-update trees share the `Panopticon.Logic.Object` namespace, so the
 exclusion is by base-type assignability rather than by namespace.
 
-Presentation types: `OpenSage.Client.Drawable`; `DrawModule` and anything deriving from it;
-`ClientUpdateModule` and anything deriving from it; `OpenSage.Graphics.Cameras.Camera`;
-`OpenSage.Graphics.ModelInstance`; `OpenSage.Graphics.Rendering.RenderList`;
-`OpenSage.Gui.DrawingContext2D`; `Veldrid.GraphicsDevice`; every type in namespace
-`OpenSage.Rendering` or its descendants.
+Presentation types: `Panopticon.Client.Drawable`; `DrawModule` and anything deriving from it;
+`ClientUpdateModule` and anything deriving from it; `Panopticon.Graphics.Cameras.Camera`;
+`Panopticon.Graphics.ModelInstance`; `Panopticon.Graphics.Rendering.RenderList`;
+`Panopticon.Gui.DrawingContext2D`; `Veldrid.GraphicsDevice`; every type in namespace
+`Panopticon.Rendering` or its descendants.
 
 The test collects every type referenced by each logic type's fields, properties, methods,
 parameters, return types, events, base types, and interfaces (generic arguments expanded), and
@@ -107,7 +107,7 @@ fails on any presentation-type reference. An allowlist maps `(logic type, presen
 a one-line justification and is asserted exact: a new violation fails, and a fixed violation left
 in the allowlist also fails. The allowlist is empty as of this phase.
 
-Out of structural scope, by design: `OpenSage.Scripting` (the shared Lua engine hosts SAGE
+Out of structural scope, by design: `Panopticon.Scripting` (the shared Lua engine hosts SAGE
 client scripting, the `CurDrawable*` functions), `Scene3D` and `IGameEngine` (composition layer,
 root namespace), and the one-way effect services.
 
@@ -130,7 +130,7 @@ root namespace), and the one-way effect services.
   `GameObject.Client` is null there and construction state still works because the condition
   flags are logic-owned.
 - Named follow-ups (not gating A3): relocate the presentation-by-role subtrees out of
-  `OpenSage.Logic`; split drawable scripting out of the shared Lua engine.
+  `Panopticon.Logic`; split drawable scripting out of the shared Lua engine.
 
 ## 7. Milestone demonstration
 

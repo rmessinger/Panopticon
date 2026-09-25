@@ -21,20 +21,20 @@ Verify and close structure production end-to-end: units queued through `Producti
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-2 upgrades row.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:257-263`: queue/spawn mechanism.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:275-277`: upgrade completion/application mechanism.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:148-168`: upgrade order, debit, cancel, and refund.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:179-224`: unit order, producer selection, queueing, cancel, and refund.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:59-156`: queue advancement and upgrade grant.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:343-430`: unit creation, ownership, spawn transform, natural rally point, and explicit rally point.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:472-549`: `QueueProduction`, `CancelProduction`, `QueueUpgrade`, and `CancelUpgrade`.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs:551-551`: queue-capacity sentinel.
-- `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs:130-145`: player/object upgrade application.
-- `src/OpenSage.Game/Logic/Player.cs:429-498`: player upgrade queue/completion state.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1232-1247`: object upgrade application and module updates.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:148-168`: upgrade order, debit, cancel, and refund.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:179-224`: unit order, producer selection, queueing, cancel, and refund.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:59-156`: queue advancement and upgrade grant.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:343-430`: unit creation, ownership, spawn transform, natural rally point, and explicit rally point.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:472-549`: `QueueProduction`, `CancelProduction`, `QueueUpgrade`, and `CancelUpgrade`.
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs:551-551`: queue-capacity sentinel.
+- `src/Panopticon.Simulation/Logic/Object/UpgradeTemplate.cs:130-145`: player/object upgrade application.
+- `src/Panopticon.Simulation/Logic/Player.cs:429-498`: player upgrade queue/completion state.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1232-1247`: object upgrade application and module updates.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 
-1. Add `src/OpenSage.Game.Tests/Logic/Production/UnitUpgradeProductionTests.cs` as a headless `[Fact]` test file; ensure the new `.cs` file is UTF-8 with BOM.
+1. Add `test/Panopticon.Simulation.Tests/Logic/Production/UnitUpgradeProductionTests.cs` as a headless `[Fact]` test file; ensure the new `.cs` file is UTF-8 with BOM.
 2. Verification path first: use a real producer structure and queue a real unit via the order path or `ProductionUpdate.QueueProduction(...)` only when the order path cannot be reached headlessly.
 3. Set a non-default rally point, advance production until the job finishes, and assert the produced unit is owned by the producer owner, spawned from the production exit, and has the rally target queued.
 4. Queue a real upgrade, advance production until completion, and assert the expected `Player.HasUpgrade(...)` or object upgrade/module effect is applied.
@@ -44,12 +44,12 @@ Verify and close structure production end-to-end: units queued through `Producti
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs`
-- `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs`
-- `src/OpenSage.Game/Logic/Player.cs`
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`
-- `src/OpenSage.Game.Tests/Logic/Production/UnitUpgradeProductionTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs`
+- `src/Panopticon.Simulation/Logic/Object/UpgradeTemplate.cs`
+- `src/Panopticon.Simulation/Logic/Player.cs`
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Production/UnitUpgradeProductionTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -82,9 +82,9 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "Unit/upgrade production from structures, end-to-end (`ProductionUpdate.QueueProduction/QueueUpgrade`)" P5 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/Production/UnitUpgradeProductionTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Production/UnitUpgradeProductionTests.cs` was created and runs in CI.
 
 ## Result
 
-Implemented on branch `track-p5-construction-production` alongside WI-P5-01, -02, -04, -05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Logic/Production/UnitUpgradeProductionTests.cs` (9 non-skipped `[Fact]`s: unit spawn/rally, player/object upgrade completion, cancel/refund, queue capacity, order-path debit). `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
+Implemented on branch `track-p5-construction-production` alongside WI-P5-01, -02, -04, -05 (see `.exchange` 2026-07-22 entry). Added `test/Panopticon.Simulation.Tests/Logic/Production/UnitUpgradeProductionTests.cs` (9 non-skipped `[Fact]`s: unit spawn/rally, player/object upgrade completion, cancel/refund, queue capacity, order-path debit). `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed; `dotnet format src --verify-no-changes` clean.
 

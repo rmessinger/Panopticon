@@ -2,7 +2,7 @@
   "files.associations": {
     "*.json": "jsonc"
   },
-  "dotnet.defaultSolution": "src/OpenSage.sln",
+  "dotnet.defaultSolution": "src/Panopticon.sln",
   "gitlens.advanced.blame.customArguments": [
     "--ignore-revs-file .git-blame-ignore-revs"
   ]

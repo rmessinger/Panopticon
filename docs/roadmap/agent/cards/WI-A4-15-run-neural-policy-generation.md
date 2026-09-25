@@ -19,8 +19,8 @@ population, and emit the designed generation report.
 
 - `docs/roadmap/implementation/track-a-a4-ai-policy-evolution.md`.
 - New policy configuration, population operators, and fitness scorer.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ScenarioMatrix.cs`.
 
 ## Steps
 
@@ -32,8 +32,8 @@ population, and emit the designed generation report.
 
 ## Files likely to change
 
-- New evolution runner and report types under `src/OpenSage.Tools.ReplaySketch.Core/`
-- New tests under `src/OpenSage.Tools.ReplaySketch.Tests/`
+- New evolution runner and report types under `src/Panopticon.Tools.ReplaySketch.Core/`
+- New tests under `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 

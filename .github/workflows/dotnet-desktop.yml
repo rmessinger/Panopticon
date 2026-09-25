@@ -24,11 +24,11 @@ jobs:
         dotnet-version: '8.x'
 
     - name: Build
-      run: dotnet build src --configuration ${{ matrix.configuration }}
+      run: dotnet build src/Panopticon.sln --configuration ${{ matrix.configuration }}
 
     # --blame-crash names the test running when a host crashes and saves a dump.
     - name: Test
-      run: dotnet test src --configuration ${{ matrix.configuration }} --filter Category!=Interactive --blame-crash --results-directory TestResults
+      run: dotnet test src/Panopticon.sln --configuration ${{ matrix.configuration }} --filter Category!=Interactive --blame-crash --results-directory TestResults
 
     - name: Upload crash diagnostics
       if: failure()

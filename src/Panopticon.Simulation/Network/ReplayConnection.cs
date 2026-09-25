@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Generic;
+using Panopticon.Data.Rep;
+using Panopticon.Logic.Orders;
+
+namespace Panopticon.Network;
+
+public sealed class ReplayConnection : IConnection
+{
+    private readonly Queue<ReplayChunk> _chunks = new Queue<ReplayChunk>();
+
+    public ReplayConnection(ReplayFile replayFile)
+    {
+        foreach (var chunk in replayFile.Chunks)
+        {
+            _chunks.Enqueue(chunk);
+        }
+    }
+
+    // Ignore locally generated orders.
+    public void Send(uint frame, List<Order> orders) { }
+
+    private static NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+    public void Receive(uint frame, Action<uint, Order> packetFn)
+    {
+        Logger.Trace($"Replay frame {frame}");
+        while (_chunks.Count != 0 && _chunks.Peek().Header.Timecode <= frame)
+        {
+            var chunk = _chunks.Dequeue();
+            packetFn(chunk.Header.Timecode, chunk.Order);
+        }
+    }
+
+    public void Dispose() { }
+}

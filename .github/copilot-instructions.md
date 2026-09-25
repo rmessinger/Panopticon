@@ -1,6 +1,6 @@
-# OpenSAGE Copilot Instructions
+# Panopticon Copilot Instructions
 
-OpenSAGE is a C# (.NET 8) simulation framework built on the SAGE game engine (Command & Conquer: Generals, Battle for Middle-earth, etc.). See `docs/roadmap/README.md` for the project vision and roadmap.
+Panopticon is a C# (.NET 8) simulation framework built on the SAGE game engine (Command & Conquer: Generals, Battle for Middle-earth, etc.). See `docs/roadmap/README.md` for the project vision and roadmap.
 
 ## Response Style
 
@@ -26,7 +26,7 @@ dotnet format src
 
 # Run the game (requires game files)
 # Set env vars: CNC_GENERALS_PATH, CNC_GENERALS_ZH_PATH, BFME_PATH, BFME2_PATH, BFME2_ROTWK_PATH
-dotnet run --project src/OpenSage.Launcher
+dotnet run --project src/Panopticon.Launcher
 ```
 
 Tests that need actual game files installed are annotated with `[GameFact(SageGame.X)]`. These are skipped in CI. Tests without game files extend `MockedGameTest`.
@@ -41,25 +41,25 @@ CI (`CI`, `Debug Build`, `Format`) only runs on pushes to `main`, not on branche
 
 | Project | Purpose |
 |---|---|
-| `OpenSage.Game` | Core engine: game loop, asset management, game logic, scripting, GUI |
-| `OpenSage.Rendering` | Veldrid-based graphics abstraction (D3D11, OpenGL, Metal, Vulkan) |
-| `OpenSage.FileFormats.*` | Parsers for `.big`, `.w3d`, `.ini`, `.map`, `.wnd`, `.apt`, etc. |
-| `OpenSage.Mathematics` | Math types and utilities |
-| `OpenSage.IO` | Virtual file system over `.big` archives |
-| `OpenSage.Mods.*` | Per-game definitions (Generals, ZeroHour, BFME, BFME2, BuiltIn) |
-| `OpenSage.Launcher` | Entry point / launcher |
-| `OpenSage.Tools.ReplaySketch.*` | Primary scenario-scripting tool: author and replay ordered command sequences against the engine |
-| `OpenSage.Tools.TestHarness` | Windowed visual-validation tool: renders a scripted scenario against a real game installation |
-| `OpenSage.Tools.WorldBuilder.*` | Map/scenario editor |
-| `OpenSage.Tools.BigEditor` | Inspector for `.big` archive files |
-| `OpenSage.Tools.Sav2Json` | Converts `.sav` save files to JSON |
-| `OpenSage.Game.Tests` | Unit and integration tests (xUnit) |
+| `Panopticon.Simulation` | Core engine: game loop, asset management, game logic, scripting, GUI |
+| `Panopticon.Rendering` | Veldrid-based graphics abstraction (D3D11, OpenGL, Metal, Vulkan) |
+| `Panopticon.FileFormats.*` | Parsers for `.big`, `.w3d`, `.ini`, `.map`, `.wnd`, `.apt`, etc. |
+| `Panopticon.Mathematics` | Math types and utilities |
+| `Panopticon.IO` | Virtual file system over `.big` archives |
+| `Panopticon.Mods.*` | Per-game definitions (Generals, ZeroHour, BFME, BFME2, BuiltIn) |
+| `Panopticon.Launcher` | Entry point / launcher |
+| `Panopticon.Tools.ReplaySketch.*` | Primary scenario-scripting tool: author and replay ordered command sequences against the engine |
+| `Panopticon.Tools.TestHarness` | Windowed visual-validation tool: renders a scripted scenario against a real game installation |
+| `Panopticon.Tools.WorldBuilder.*` | Map/scenario editor |
+| `Panopticon.Tools.BigEditor` | Inspector for `.big` archive files |
+| `Panopticon.Tools.Sav2Json` | Converts `.sav` save files to JSON |
+| `Panopticon.Simulation.Tests` | Unit and integration tests (xUnit) |
 
 ### Key Patterns
 
 #### IGameDefinition / SageGame
 
-Each supported game implements `IGameDefinition` in `OpenSage.Mods.*`. It specifies registry keys for auto-detection, Steam install info, asset load strategies, GUI source, and scripting tick rate. The `SageGame` enum is the canonical game identifier used throughout the codebase (e.g., `SageGame.CncGenerals`). `[AddedIn(SageGame.X)]` attributes mark fields/properties introduced in specific games beyond Generals.
+Each supported game implements `IGameDefinition` in `Panopticon.Mods.*`. It specifies registry keys for auto-detection, Steam install info, asset load strategies, GUI source, and scripting tick rate. The `SageGame` enum is the canonical game identifier used throughout the codebase (e.g., `SageGame.CncGenerals`). `[AddedIn(SageGame.X)]` attributes mark fields/properties introduced in specific games beyond Generals.
 
 #### AssetStore
 
@@ -83,7 +83,7 @@ Save and load use a single abstract `StatePersister` base class. The same `Persi
 
 #### File System
 
-Game files may be loose on disk or inside `.big` archives. `OpenSage.IO` provides a unified `FileSystem`/`FileSystemEntry` abstraction over both.
+Game files may be loose on disk or inside `.big` archives. `Panopticon.IO` provides a unified `FileSystem`/`FileSystemEntry` abstraction over both.
 
 ## Coding Style
 
@@ -103,17 +103,17 @@ Follows the [dotnet/corefx style](docs/coding-style.md):
 
 ## Testing and Visual Validation
 
-`OpenSage.Tools.ReplaySketch` is the primary tool for scripting and replaying ordered command sequences against the engine. Prefer it for testing game logic over one-off harnesses.
+`Panopticon.Tools.ReplaySketch` is the primary tool for scripting and replaying ordered command sequences against the engine. Prefer it for testing game logic over one-off harnesses.
 
-`OpenSage.Tools.TestHarness` is the primary tool for visual validation of the renderer. It opens a real game window (Metal on macOS, Direct3D 11 on Windows, Vulkan on Linux) and requires a game installation.
+`Panopticon.Tools.TestHarness` is the primary tool for visual validation of the renderer. It opens a real game window (Metal on macOS, Direct3D 11 on Windows, Vulkan on Linux) and requires a game installation.
 
 ```sh
-dotnet run --project src/OpenSage.Tools.TestHarness
+dotnet run --project src/Panopticon.Tools.TestHarness
 ```
 
 Configuration is in `TestHarness.json` (output directory). Set `GamePath` if auto-detection fails.
 
-To capture frames for automated visual validation, use `FrameCapturer` in `OpenSage.Game`, or run the headless test `DefaultScenario_CapturesFrames_ForVisualValidation`. Captured frames land in `$TMPDIR/opensage_frames/<test_name>_<timestamp>/` alongside a `validation_guide.md` listing per-frame checks. See `src/OpenSage.Tools.TestHarness/AGENTS.md` for the full agent validation workflow, common failure modes, and shader subsystem triage hints.
+To capture frames for automated visual validation, use `FrameCapturer` in `Panopticon.Simulation`, or run the headless test `DefaultScenario_CapturesFrames_ForVisualValidation`. Captured frames land in `$TMPDIR/panopticon_frames/<test_name>_<timestamp>/` alongside a `validation_guide.md` listing per-frame checks. See `src/Panopticon.Tools.TestHarness/AGENTS.md` for the full agent validation workflow, common failure modes, and shader subsystem triage hints.
 
 ## Roadmap and Agent Task Cards
 

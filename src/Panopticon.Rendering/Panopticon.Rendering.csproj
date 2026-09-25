@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Veldrid" />
+    <PackageReference Include="Veldrid.SPIRV" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.Core\Panopticon.Core.csproj" />
+    <ProjectReference Include="..\Panopticon.Mathematics\Panopticon.Mathematics.csproj" />
+  </ItemGroup>
+  
+</Project>

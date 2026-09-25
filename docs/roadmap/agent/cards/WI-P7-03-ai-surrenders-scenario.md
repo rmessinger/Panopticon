@@ -22,17 +22,17 @@ Create the checked-in P7 AISurrenders scenario where the scripted AI player issu
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:113-113`: P7-3 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:298-300`: `OrderType.EndGame` dependency on P3-4.
 - `docs/roadmap/implementation-checklist.md:337-351`: outcome and invariant ACs.
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs:3-6`: `EndGame` enum value.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:426-428`: `EndGame` processing path.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: AI slot configuration fields.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries for scripted AI orders.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73`: invariant subscription and early abort behavior.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to wire to P3 `GameOutcome`.
+- `src/Panopticon.Simulation/Logic/Orders/OrderType.cs:3-6`: `EndGame` enum value.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:426-428`: `EndGame` processing path.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: AI slot configuration fields.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionEntry.cs:7-20`: action entries for scripted AI orders.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs:23-73`: invariant subscription and early abort behavior.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface to wire to P3 `GameOutcome`.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json` as static scenario data.
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json` as static scenario data.
 2. Configure one human and one AI/scripted opponent slot. Before surrender, script at least one AI order so the AI-progress invariant has meaningful data.
 3. Emit `OrderType.EndGame` from the AI player's command stream via the P0 open command model.
 4. Assert `OutcomeStatus.Decided`, `OutcomeReason.Surrendered`, human side as winner, and the AI player as loser. Verify default/sentinel `GameOutcome` values do not pass.
@@ -42,10 +42,10 @@ Create the checked-in P7 AISurrenders scenario where the scripted AI player issu
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (only if an AI-progress predicate must be registered for the scenario)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if outcome paths still need P3 wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/ai-surrenders.json` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/CodeAssertionRegistry.cs` (only if an AI-progress predicate must be registered for the scenario)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if outcome paths still need P3 wiring)
 
 ## Acceptance criteria
 

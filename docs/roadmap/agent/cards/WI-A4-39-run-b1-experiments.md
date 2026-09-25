@@ -20,7 +20,7 @@ executes the configured warmup and samples.
 - `docs/roadmap/implementation/track-a-a4-experiment-harness.md`.
 - Experiment definition and registry from `WI-A4-38`.
 - B1 runner, hardware context, sample, and result APIs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
 
 ## Steps
 

@@ -18,9 +18,9 @@ components.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a4-ai-policy-evolution.md`.
-- `src/OpenSage.Game/Logic/GameOutcome.cs`.
-- `src/OpenSage.Game/RunOutput.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
+- `src/Panopticon.Simulation/Logic/GameOutcome.cs`.
+- `src/Panopticon.Simulation/RunOutput.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs`.
 
 ## Steps
 
@@ -31,8 +31,8 @@ components.
 
 ## Files likely to change
 
-- New scorer under `src/OpenSage.Tools.ReplaySketch.Core/Services/`
-- New tests under `src/OpenSage.Tools.ReplaySketch.Tests/`
+- New scorer under `src/Panopticon.Tools.ReplaySketch.Core/Services/`
+- New tests under `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 

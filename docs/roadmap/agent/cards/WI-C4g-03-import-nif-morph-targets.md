@@ -19,10 +19,10 @@ Convert EE2 NIF morph data into C6 morph target sets for embedded model controll
 
 - `docs/roadmap/deep-dives/c4g-ee2-morph-animation.md` sections 2, 5, 6, and 8.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 5 and 6.
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifModelImporter.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`.
 
 ## Steps
 
@@ -42,11 +42,11 @@ Convert EE2 NIF morph data into C6 morph target sets for embedded model controll
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifMorphConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifModelImporter.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifMorphConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs`
 
 ## Acceptance criteria
 

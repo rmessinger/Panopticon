@@ -18,13 +18,13 @@ Verify and close the power loop: owned objects' energy production/consumption dr
 
 - `docs/roadmap/deep-dives/p4-p6-economy-production-combat.md:16-55`: P4 power-loop design and the warning that the intended low-power effect must be verified.
 - `docs/roadmap/implementation-checklist.md:244-247`: checklist AC template for `_hasInsufficientPower` and its defined effect.
-- `src/OpenSage.Game/Logic/Player.cs:41-104`: `_hasInsufficientPower` field and `GetEnergy(...)` summing owned `EnergyProduction`.
-- `src/OpenSage.Game/Logic/Player.cs:550-554`: `_hasInsufficientPower` persistence; preserve field order.
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:100-111`: INI parse entries for `BuildCost`, `EnergyProduction`, and `EnergyBonus`.
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs:512-517`: stored energy fields.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:390` and `src/OpenSage.Game/Logic/Object/GameObject.cs:1060-1068`: runtime energy field and construction completion adding energy production.
-- `src/OpenSage.Game/Logic/Object/Production/ProductionJob.cs:10-12`: existing low-energy production-speed TODO; use as evidence, not as a design mandate.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
+- `src/Panopticon.Simulation/Logic/Player.cs:41-104`: `_hasInsufficientPower` field and `GetEnergy(...)` summing owned `EnergyProduction`.
+- `src/Panopticon.Simulation/Logic/Player.cs:550-554`: `_hasInsufficientPower` persistence; preserve field order.
+- `src/Panopticon.Simulation/Logic/Object/ObjectDefinition.cs:100-111`: INI parse entries for `BuildCost`, `EnergyProduction`, and `EnergyBonus`.
+- `src/Panopticon.Simulation/Logic/Object/ObjectDefinition.cs:512-517`: stored energy fields.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:390` and `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1060-1068`: runtime energy field and construction completion adding energy production.
+- `src/Panopticon.Simulation/Logic/Object/Production/ProductionJob.cs:10-12`: existing low-energy production-speed TODO; use as evidence, not as a design mandate.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base; tests here run in CI.
 
 ## Steps
 
@@ -33,7 +33,7 @@ Verify and close the power loop: owned objects' energy production/consumption dr
 3. If `_hasInsufficientPower` is not currently updated, add minimal wiring: compare owned production against owned consumption/negative production, set the field, and keep the default false when no owned power consumers exist.
 4. Verify the intended effect of insufficient power from existing code/data. If the only confirmed effect is a currently missing production slowdown/disabled-structure behavior, implement the smallest version and document it in the test name/assertions.
 5. Preserve persistence ordering in `Player.Persist(...)` and all existing construction/energy guards.
-6. Add `src/OpenSage.Game.Tests/Logic/Economy/PowerLoopTests.cs` with non-skipped headless `[Fact]` tests that:
+6. Add `test/Panopticon.Simulation.Tests/Logic/Economy/PowerLoopTests.cs` with non-skipped headless `[Fact]` tests that:
    - create enough owned power production for a sufficient-power state;
    - add/toggle consumption so consumption exceeds production;
    - assert `_hasInsufficientPower` (or a test-visible API exposing it) changes when the power balance crosses the threshold;
@@ -42,10 +42,10 @@ Verify and close the power loop: owned objects' energy production/consumption dr
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Player.cs`
-- `src/OpenSage.Game/Logic/Object/Production/ProductionJob.cs` only if the verified effect is production speed
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs` only if the verified effect is production gating/slowdown
-- `src/OpenSage.Game.Tests/Logic/Economy/PowerLoopTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Player.cs`
+- `src/Panopticon.Simulation/Logic/Object/Production/ProductionJob.cs` only if the verified effect is production speed
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs` only if the verified effect is production gating/slowdown
+- `test/Panopticon.Simulation.Tests/Logic/Economy/PowerLoopTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -79,7 +79,7 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the power model interactions P4 item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange` naming the verified low-power effect.
-- Confirm `src/OpenSage.Game.Tests/Logic/Economy/PowerLoopTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Economy/PowerLoopTests.cs` was created and runs in CI.
 
 ## Result
 

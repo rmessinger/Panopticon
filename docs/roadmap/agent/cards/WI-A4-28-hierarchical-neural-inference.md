@@ -32,7 +32,7 @@ assert the final orders.
 
 ## Files likely to change
 
-- New integration test under `src/OpenSage.Game.Tests/Logic/AI/`
+- New integration test under `test/Panopticon.Simulation.Tests/Logic/AI/`
 
 ## Acceptance criteria
 

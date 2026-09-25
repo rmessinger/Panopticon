@@ -19,7 +19,7 @@ one factory/configuration path.
 
 - `docs/roadmap/implementation/track-a-a4-experiment-seams.md`: pathfinding extraction.
 - The completed B4 design and diagrams.
-- `src/OpenSage.Game/Navigation/Navigation.cs`.
+- `src/Panopticon.Simulation/Navigation/Navigation.cs`.
 - Pathfinding callers named by the implementation plan.
 - Existing navigation and path-query tests.
 
@@ -33,7 +33,7 @@ one factory/configuration path.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Navigation/`
+- `src/Panopticon.Simulation/Navigation/`
 - Narrow engine construction and caller files named by the B4 design
 - Navigation tests
 

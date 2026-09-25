@@ -22,14 +22,14 @@ Create the checked-in P7 ScoreDecision scenario that reaches a small configured 
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:116-116`: P7-6 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:302-304`: `MatchConfig.FrameLimit` dependency on P3-6.
 - `docs/roadmap/implementation-checklist.md:337-344`: scenario and expected outcome ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119`: update loop and timeout; distinguish harness timeout from match frame limit.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape; extend only if P3 added match config fields.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for score-decision reason if needed.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:81-119`: update loop and timeout; distinguish harness timeout from match frame limit.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape; extend only if P3 added match config fields.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for score-decision reason if needed.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json` as static scenario data.
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json` as static scenario data.
 2. Configure the P3-6 `MatchConfig.FrameLimit` to a small explicit value. Verify the default/sentinel frame-limit value still means no score-decision limit and is not accidentally used by this scenario.
 3. Script early play that makes the intended winner have the higher score by the configured frame limit.
 4. Assert the match terminates because the configured frame limit expires, not because `HarnessRunner` hit its default timeout.
@@ -40,10 +40,10 @@ Create the checked-in P7 ScoreDecision scenario that reaches a small configured 
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` (only if P3-6 match config needs scenario serialization)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if score-decision outcome paths still need P3 wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/score-decision.json` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs` (only if P3-6 match config needs scenario serialization)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if score-decision outcome paths still need P3 wiring)
 
 ## Acceptance criteria
 

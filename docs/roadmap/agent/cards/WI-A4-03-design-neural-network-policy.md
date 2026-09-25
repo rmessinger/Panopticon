@@ -23,14 +23,14 @@ inline in a code card.
 
 - `docs/roadmap/deep-dives/a4-pluggable-ai.md` §3 (what this unblocks: NN policy) and §4
   (evolutionary training): the shape and constraints this design must satisfy.
-- `src/OpenSage.Game/Logic/AI/AIDecisionContext.cs` (added by `WI-A4-01`): the actual read
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionContext.cs` (added by `WI-A4-01`): the actual read
   surface a state encoding has to work from.
-- `src/OpenSage.Game/Logic/AI/RuleBasedAIDecisionPolicy.cs` (added by `WI-A4-01`): enumerate
+- `src/Panopticon.Simulation/Logic/AI/RuleBasedAIDecisionPolicy.cs` (added by `WI-A4-01`): enumerate
   every decision category the reference policy makes (economy/build-out, production, military)
   so the action space covers an equivalent decision surface, not a smaller one.
-- `src/OpenSage.Game/Logic/AI/AIDecisionPolicyType.cs`, `AIDecisionPolicyFactory.cs` (added by
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyType.cs`, `AIDecisionPolicyFactory.cs` (added by
   `WI-A4-02`): where the new policy type will register.
-- `src/OpenSage.Game/Logic/Orders/Order.cs` (or wherever `Order` and its factory/builder helpers
+- `src/Panopticon.Simulation/Logic/Orders/Order.cs` (or wherever `Order` and its factory/builder helpers
   live): the concrete order shapes the decoder must produce.
 
 ## Steps

@@ -18,7 +18,7 @@ report consumable by A5.
 ## Context to read (and only this)
 
 - Neural evolution runner and policy configuration from `WI-A4-12` through `WI-A4-15`.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs`.
 - Existing install-backed AI and scenario-matrix tests.
 - `docs/roadmap/deep-dives/a5-visualization.md`: report consumer.
 
@@ -31,8 +31,8 @@ report consumable by A5.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/`
-- `src/OpenSage.Tools.ReplaySketch.Tests/`
+- `src/Panopticon.Tools.ReplaySketch.Core/`
+- `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 

@@ -1,0 +1,83 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Panopticon</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FixedMath.NET" />
+    <PackageReference Include="LiteNetLib" />
+    <PackageReference Include="MoonSharp" />
+    <PackageReference Include="Open.NAT.Core" />
+    <PackageReference Include="OptimizedPriorityQueue" />
+    <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" />
+    <PackageReference Include="SharpAudio" />
+    <PackageReference Include="SharpAudio.Codec" />
+    <PackageReference Include="SharpGLTF.Core" />
+
+
+    <PackageReference Include="System.ValueTuple" />
+    <PackageReference Include="Veldrid" />
+    <PackageReference Include="Veldrid.RenderDoc" />
+    <PackageReference Include="Veldrid.SDL2" />
+    <PackageReference Include="Veldrid.StartupUtilities" />
+    <PackageReference Include="Veldrid.SPIRV" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.Core\Panopticon.Core.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats.Big\Panopticon.FileFormats.Big.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats.RefPack\Panopticon.FileFormats.RefPack.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats.Nif\Panopticon.FileFormats.Nif.csproj" />
+    <ProjectReference Include="..\Panopticon.FileFormats.W3d\Panopticon.FileFormats.W3d.csproj" />
+    <ProjectReference Include="..\Panopticon.Simulation.CodeGen\Panopticon.Simulation.CodeGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Panopticon.IO\Panopticon.IO.csproj" />
+    <ProjectReference Include="..\Panopticon.Mathematics\Panopticon.Mathematics.csproj" />
+    <ProjectReference Include="..\Panopticon.Physics\Panopticon.Physics.csproj" />
+    <ProjectReference Include="..\Panopticon.Rendering\Panopticon.Rendering.csproj" />
+    <ProjectReference Include="..\Veldrid.ImageSharp\Veldrid.ImageSharp.csproj" />
+    <ProjectReference Include="..\Veldrid.ImGui\Veldrid.ImGui.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Content\Fonts\*.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <VertexShaderFiles Include="Assets\Shaders\*.vert" />
+    <FragmentShaderFiles Include="Assets\Shaders\*.frag" />
+    
+    <ShaderFiles Include="@(VertexShaderFiles);@(FragmentShaderFiles)" />
+    <UpToDateCheckInput Include="@(ShaderFiles)" />
+
+    <ShaderHeaderFiles Include="Assets\Shaders\*.h" />
+    <UpToDateCheckInput Include="@(ShaderHeaderFiles)" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GlslangValidatorPath>win-x64/glslangValidator.exe</GlslangValidatorPath>
+    <GlslangValidatorPath Condition="$([MSBuild]::IsOSPlatform('osx'))">osx-x64/glslangValidator</GlslangValidatorPath>
+    <GlslangValidatorPath Condition="$([MSBuild]::IsOSPlatform('linux'))">linux-x64/glslangValidator</GlslangValidatorPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="Content\Fonts\FontFallbackSettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="CompileShaders" BeforeTargets="BeforeBuild" Inputs="@(ShaderFiles);@(ShaderHeaderFiles)" Outputs="@(ShaderFiles->'$(IntermediateOutputPath)Assets/Shaders/%(FileName)%(Extension).spv')">
+    <MakeDir Directories="$(IntermediateOutputPath)Assets/Shaders" />
+    <Exec Command="&quot;$(MSBuildThisFileDirectory)../../lib/$(GlslangValidatorPath)&quot; -I'.' -DCOMPILING_FOR_VERTEX_SHADER -V %(VertexShaderFiles.Identity) -o &quot;$(IntermediateOutputPath)Assets/Shaders/%(VertexShaderFiles.FileName)%(VertexShaderFiles.Extension).spv&quot;" />
+    <Exec Command="&quot;$(MSBuildThisFileDirectory)../../lib/$(GlslangValidatorPath)&quot; -I'.' -DCOMPILING_FOR_FRAGMENT_SHADER -V %(FragmentShaderFiles.Identity) -o &quot;$(IntermediateOutputPath)Assets/Shaders/%(FragmentShaderFiles.FileName)%(FragmentShaderFiles.Extension).spv&quot;" />
+  </Target>
+
+  <Target Name="EmbedShaders" AfterTargets="CompileShaders">
+    <ItemGroup>
+      <CompiledShaderFiles Include="$(IntermediateOutputPath)Assets/Shaders/*.*" />
+      <EmbeddedResource Include="@(CompiledShaderFiles)">
+        <LogicalName>Panopticon.Assets.Shaders.%(FileName)%(Extension)</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
+</Project>

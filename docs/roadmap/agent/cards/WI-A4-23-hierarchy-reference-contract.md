@@ -19,7 +19,7 @@ the same processing path as the flat policy.
 
 - Hierarchy implementation from `WI-A4-18` through `WI-A4-22`.
 - Existing `AIPlayer` dispatch tests.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`.
 - Existing mocked skirmish scenario helpers.
 
 ## Steps
@@ -32,7 +32,7 @@ the same processing path as the flat policy.
 
 ## Files likely to change
 
-- New integration tests under `src/OpenSage.Game.Tests/Logic/AI/`
+- New integration tests under `test/Panopticon.Simulation.Tests/Logic/AI/`
 
 ## Acceptance criteria
 

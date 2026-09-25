@@ -20,22 +20,22 @@ or human in the loop.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.TestHarness/Program.cs:128-200`: the `RunHeadless(...)` method: boots a
+- `src/Panopticon.Tools.TestHarness/Program.cs:128-200`: the `RunHeadless(...)` method: boots a
   `Game`, loads a `.rep` file, runs the update loop, exits on enemy-CC destruction or frame timeout.
   This is the loop this card wraps.
-- `src/OpenSage.Tools.TestHarness/Program.cs:280-337`: `BuildDeferredInjector(...)` and
+- `src/Panopticon.Tools.TestHarness/Program.cs:280-337`: `BuildDeferredInjector(...)` and
   `DrainPendingInjections(...)`: the deferred-action injection plumbing used by the headless loop.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (from WI-P0-07): the
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (from WI-P0-07): the
   evaluator to subscribe before the loop and call after.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100`: `Export(...)`:
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-100`: `Export(...)`:
   takes a `ReplayScenario`, produces a `.rep` file and a `deferredActions` list.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ScenarioProfileLoader.cs:13-55`: JSON loader
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ScenarioProfileLoader.cs:13-55`: JSON loader
   for `ReplayScenario` (case-insensitive enums, embedded or disk-based).
 - `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.5`: design intent.
 
 ## Steps
 
-1. In `OpenSage.Tools.ReplaySketch.Core/`, add a `HarnessRunner` static class with one method:
+1. In `Panopticon.Tools.ReplaySketch.Core/`, add a `HarnessRunner` static class with one method:
    ```csharp
    public static AssertionReport RunAndAssert(
        ReplayScenario scenario,
@@ -53,7 +53,7 @@ or human in the loop.
       `TestHarnessConfig.FrameTimeout` or default 18000), or all deferred actions exhausted.
    f. Returns `evaluator.Evaluate()`.
 
-2. In `OpenSage.Tools.TestHarness/`, add a `run-and-assert` sub-command to `Program.Main` (or
+2. In `Panopticon.Tools.TestHarness/`, add a `run-and-assert` sub-command to `Program.Main` (or
    a new `--run-assert` flag):
    - Arguments: `--scenario <path.json>` and optionally `--game-path <dir>` (falls back to
      auto-detection via `GeneralsInstallationService`).
@@ -62,7 +62,7 @@ or human in the loop.
    - Writes the `AssertionReport.ToJson()` result to stdout.
    - Exits with code 0 if `report.AllPassed`, else 1.
 
-3. Add an integration test in `OpenSage.Game.Tests` or `OpenSage.Tools.ReplaySketch.Tests` (use
+3. Add an integration test in `Panopticon.Simulation.Tests` or `Panopticon.Tools.ReplaySketch.Tests` (use
    whichever already has headless game infrastructure) tagged `[Trait("Category", "Interactive")]`
    (requires game files) that:
    - Loads `alpine-assault-usa-vs-gla.json`.
@@ -72,16 +72,16 @@ or human in the loop.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (new).
-- `src/OpenSage.Tools.TestHarness/Program.cs`: new `--run-assert` path.
-- `src/OpenSage.Game.Tests/` or `src/OpenSage.Tools.ReplaySketch.Tests/`: integration test
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs` (new).
+- `src/Panopticon.Tools.TestHarness/Program.cs`: new `--run-assert` path.
+- `test/Panopticon.Simulation.Tests/` or `test/Panopticon.Tools.ReplaySketch.Tests/`: integration test
   (tagged `Interactive`).
 
 ## Acceptance criteria
 
 - [ ] `HarnessRunner.RunAndAssert(scenario, installation, tempDir)` returns an `AssertionReport`
       without throwing for the `alpine-assault-usa-vs-gla` scenario (no assertions → `AllPassed=true`).
-- [ ] Running `dotnet run --project src/OpenSage.Tools.TestHarness -- --run-assert --scenario <path>`
+- [ ] Running `dotnet run --project src/Panopticon.Tools.TestHarness -- --run-assert --scenario <path>`
       writes JSON to stdout and exits 0 on all-passed, 1 on any failure.
 - [ ] A deliberately failing `StateAssertion` (e.g., `player[0].money < 0`) causes exit code 1
       and the JSON result contains the failing assertion ID.
@@ -95,7 +95,7 @@ dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 # With game files installed:
 dotnet test src --filter "FullyQualifiedName~RunAndAssert"
-dotnet run --project src/OpenSage.Tools.TestHarness -- --run-assert --scenario src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json
+dotnet run --project src/Panopticon.Tools.TestHarness -- --run-assert --scenario src/Panopticon.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json
 ```
 
 ## Out of scope / guardrails
@@ -104,13 +104,13 @@ dotnet run --project src/OpenSage.Tools.TestHarness -- --run-assert --scenario s
 - The `OutcomeAssertion` evaluation stubs until P3 lands; do not block on P3.
 - Do not change existing TestHarness scenarios or the default `RunHeadless` path.
 - If wiring into `TestHarness/Program.cs` is complex (many unrelated sub-commands), create a thin
-  separate `OpenSage.Tools.ReplaySketch.Cli` project instead. But exhaust the in-place approach first.
+  separate `Panopticon.Tools.ReplaySketch.Cli` project instead. But exhaust the in-place approach first.
 
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the P0-5 run-and-assert item in the [implementation checklist](../../implementation-checklist.md).
-- Update `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: replace the "forthcoming" note in the
+- Update `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: replace the "forthcoming" note in the
   "How agents should validate" section with the actual invocation command.
 - Append a result line to repo-root `.exchange`.
 - Update the P0 row in `docs/roadmap/track-p-playable-baseline.md` if this card completes P0.

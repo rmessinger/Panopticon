@@ -21,20 +21,20 @@ source changes.
 
 - `docs/roadmap/track-c-external-assets.md`: the C1 scope and milestone.
 - `docs/roadmap/seams.md:110-120`: the planned model/import seam.
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`: current loader construction and path
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`: current loader construction and path
   resolver ownership.
-- `src/OpenSage.Game/Content/ScopedAssetCollection.cs:61-88`: cache miss and on-demand dispatch.
-- `src/OpenSage.Game/Content/AssetStore.cs:137-140,184-202,311-314`: model collections, load context,
+- `src/Panopticon.Simulation/Content/ScopedAssetCollection.cs:61-88`: cache miss and on-demand dispatch.
+- `src/Panopticon.Simulation/Content/AssetStore.cs:137-140,184-202,311-314`: model collections, load context,
   and loader registration.
-- `src/OpenSage.Game/Content/Loaders/OnDemandModelLoader.cs`: file resolution, W3D parsing,
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandModelLoader.cs`: file resolution, W3D parsing,
   hierarchy selection, sub-object dispatch, and runtime `Model` construction.
-- `src/OpenSage.Game/Content/Loaders/OnDemandModelBoneHierarchyLoader.cs`: separately referenced
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandModelBoneHierarchyLoader.cs`: separately referenced
   hierarchy loading.
-- `src/OpenSage.Game/Graphics/Model.cs`: the format-neutral runtime model surface.
-- `src/OpenSage.Game/Graphics/ModelBoneHierarchy.cs`: current W3D-to-runtime hierarchy conversion.
-- `src/OpenSage.Game/Graphics/ModelMesh.W3d.cs`: current W3D mesh, material, texture, and GPU-resource
+- `src/Panopticon.Simulation/Graphics/Model.cs`: the format-neutral runtime model surface.
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs`: current W3D-to-runtime hierarchy conversion.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.W3d.cs`: current W3D mesh, material, texture, and GPU-resource
   conversion.
-- `src/OpenSage.Game/Graphics/ModelMesh.cs:17-55`: the runtime mesh fields consumed by rendering.
+- `src/Panopticon.Simulation/Graphics/ModelMesh.cs:17-55`: the runtime mesh fields consumed by rendering.
 
 ## Steps
 

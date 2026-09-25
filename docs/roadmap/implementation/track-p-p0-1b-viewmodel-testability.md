@@ -10,7 +10,7 @@
 
 `MainViewModel.LoadMapFromFolderAsync` persists the chosen install path by calling the MAUI
 static `Preferences.Default.Set("cnc_generals_path", folderPath)` directly
-(`src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:273`), before `LoadMapAsync`
+(`src/Panopticon.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs:273`), before `LoadMapAsync`
 runs. The save is therefore unconditional : it happens even when map loading subsequently fails.
 Because `Preferences.Default` is a MAUI static with no seam, that behavior cannot be unit-tested
 without a MAUI runtime, so the harness's own logic has no coverage here. The same static is read at
@@ -26,12 +26,12 @@ Checklist item AC:
 
 Where the seam lives and how production wires it. Options considered:
 
-- A (chosen): Define `IPreferencesStore` in `OpenSage.Tools.ReplaySketch.Core` (so the non-MAUI
+- A (chosen): Define `IPreferencesStore` in `Panopticon.Tools.ReplaySketch.Core` (so the non-MAUI
   test project can reference it), with a `MemoryPreferencesStore` implementation in Core for tests
   and a thin `MauiPreferencesStore` adapter (wrapping `Preferences.Default`) in the MAUI project.
   Inject via the `MainViewModel` constructor, defaulting to the MAUI adapter in the composition root.
 - B: Keep the interface in the MAUI project. Rejected : the test project
-  (`OpenSage.Tools.ReplaySketch.Tests`, `net10.0`, references Core only) cannot see MAUI types, so
+  (`Panopticon.Tools.ReplaySketch.Tests`, `net10.0`, references Core only) cannot see MAUI types, so
   the interface must live in Core to be testable there.
 - C: Wrap only the single call site with a `Func<string,string,bool>` delegate. Rejected : does not
   cover the read sites (`:135`, `MapPreviewView`) and gives no reusable seam.
@@ -61,7 +61,7 @@ prescribes (§3.1).
   injected store. Preserve the existing ordering in `LoadMapFromFolderAsync`: store the path first,
   then `await LoadMapAsync()` : so the unconditional-save behavior is unchanged (the test pins it).
 
-### Tests (`OpenSage.Tools.ReplaySketch.Tests`)
+### Tests (`Panopticon.Tools.ReplaySketch.Tests`)
 
 - `LoadMapFromFolder_SavesPreference_EvenWhenMapLoadFails`: construct `MainViewModel` with a
   `MemoryPreferencesStore` and a folder path that has no game files; call `LoadMapFromFolderAsync`;
@@ -81,13 +81,13 @@ escalate rather than widening scope (the card may need to extract a second seam)
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/IPreferencesStore.cs` | NEW : interface |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/MemoryPreferencesStore.cs` | NEW : in-memory impl for tests |
-| `src/OpenSage.Tools.ReplaySketch.Maui/Services/MauiPreferencesStore.cs` | NEW : `Preferences.Default` adapter |
-| `src/OpenSage.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs` | Inject `IPreferencesStore`; replace `Preferences.Default` uses (`:135`, `:273`) |
-| `src/OpenSage.Tools.ReplaySketch.Maui/Views/MapPreviewView.xaml.cs` | Use the injected store instead of `Preferences.Default` (`:69`), if it constructs/holds the VM |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/IPreferencesStore.cs` | NEW : interface |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/MemoryPreferencesStore.cs` | NEW : in-memory impl for tests |
+| `src/Panopticon.Tools.ReplaySketch.Maui/Services/MauiPreferencesStore.cs` | NEW : `Preferences.Default` adapter |
+| `src/Panopticon.Tools.ReplaySketch.Maui/ViewModels/MainViewModel.cs` | Inject `IPreferencesStore`; replace `Preferences.Default` uses (`:135`, `:273`) |
+| `src/Panopticon.Tools.ReplaySketch.Maui/Views/MapPreviewView.xaml.cs` | Use the injected store instead of `Preferences.Default` (`:69`), if it constructs/holds the VM |
 | MAUI composition root (where `MainViewModel` is `new`-ed) | Pass `new MauiPreferencesStore()` |
-| `src/OpenSage.Tools.ReplaySketch.Tests/PreferencesStoreTests.cs` | NEW : the two tests above |
+| `test/Panopticon.Tools.ReplaySketch.Tests/PreferencesStoreTests.cs` | NEW : the two tests above |
 
 ## Out of scope (later P0 items)
 

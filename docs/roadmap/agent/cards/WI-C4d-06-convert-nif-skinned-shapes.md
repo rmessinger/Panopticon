@@ -18,14 +18,14 @@ Convert skinned `NiTriShape` geometry into model-space skinned `ImportedMesh` su
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4d-ee2-skinned-animation.md` sections 4, 7, and 10.
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`.
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs`.
 - The skin block records from `WI-C4d-02`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfSkinConverter.cs:41-121` for inverse-bind and
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfSkinConverter.cs:41-121` for inverse-bind and
   skeleton rebuild precedent.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs:255-262`.
-- `src/OpenSage.Game.Tests/Content/Importing/NifModelImporterTests.cs` and
-  `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs:255-262`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifModelImporterTests.cs` and
+  `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`.
 
 ## Steps
 
@@ -49,11 +49,11 @@ Convert skinned `NiTriShape` geometry into model-space skinned `ImportedMesh` su
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Importing/Nif/NifSkinConverter.cs` (new)
-- `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`
-- `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs`
-- `src/OpenSage.Game.Tests/Content/Importing/NifSkinConverterTests.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSkinConverter.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`
+- `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/NifSkinConverterTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
 
 ## Acceptance criteria
 

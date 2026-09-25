@@ -20,26 +20,26 @@ author → export → headless-run → assert chain works for each order family.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs` (WI-P0-08): `RunAndAssert` signature.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (WI-P0-07): how
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs` (WI-P0-08): `RunAndAssert` signature.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/AssertionEvaluator.cs` (WI-P0-07): how
   assertions are wired.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (WI-P0-07): `StateAssertion`
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (WI-P0-07): `StateAssertion`
   fields (`Path`, `Op`, `Value`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91`: `CreateOpen(...)`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `PositionCommandArgument`,
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandSpec.cs:83-91`: `CreateOpen(...)`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/CommandArgument.cs`: `PositionCommandArgument`,
   `IntegerCommandArgument`, `HandleCommandArgument` (WI-P0-11).
-- `src/OpenSage.Game/Logic/Orders/OrderType.cs`: canonical names: `MoveTo`, `ForceAttackGround`,
+- `src/Panopticon.Simulation/Logic/Orders/OrderType.cs`: canonical names: `MoveTo`, `ForceAttackGround`,
   `BuildObject`, `CreateUnit`, `SpecialPower`.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:42-566`: the authoritative list of handled
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:42-566`: the authoritative list of handled
   order types; confirm each target type has a real handler (not the default "Unimplemented" log).
-- `src/OpenSage.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json`: USA faction
+- `src/Panopticon.Tools.ReplaySketch.Core/Profiles/alpine-assault-usa-vs-gla.json`: USA faction
   definition names to reuse for construct/produce steps (barracks name, ranger name).
-- `src/OpenSage.Game.Tests/`: existing Interactive test style (look for `[GameFact]` usage).
+- `test/Panopticon.Simulation.Tests/`: existing Interactive test style (look for `[GameFact]` usage).
 
 ## Steps
 
-1. Create `src/OpenSage.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs` (or add to
-   `OpenSage.Game.Tests` if `GameInstallation` is more accessible there. Use whichever project
+1. Create `test/Panopticon.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs` (or add to
+   `Panopticon.Simulation.Tests` if `GameInstallation` is more accessible there. Use whichever project
    already has Interactive test infrastructure and a `GameInstallation` fixture).
 
 2. Add a shared helper `BuildSingleCommandScenario(CommandSpec command, PositionSpec position,
@@ -90,8 +90,8 @@ author → export → headless-run → assert chain works for each order family.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs` (new), or a new file in
-  `src/OpenSage.Game.Tests/Tools/ReplaySketch/`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/OrderTypeCoverageTests.cs` (new), or a new file in
+  `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/`.
 
 ## Acceptance criteria
 

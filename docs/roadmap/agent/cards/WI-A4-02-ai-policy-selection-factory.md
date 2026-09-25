@@ -21,9 +21,9 @@ neural-network policy (`WI-A4-03`) plugs into without touching `Player`/`AIPlaye
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a4-pluggable-ai.md` §2.1: selection design.
-- `src/OpenSage.Game/Logic/Player.cs:763-777`: current `SkirmishAIPlayer` vs. `AIPlayer` vs.
+- `src/Panopticon.Simulation/Logic/Player.cs:763-777`: current `SkirmishAIPlayer` vs. `AIPlayer` vs.
   `null` selection based on `isHuman`/`isSkirmish`/`side`, in `Player.CreateNew(...)`.
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs`, `RuleBasedAIDecisionPolicy.cs`,
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs`, `RuleBasedAIDecisionPolicy.cs`,
   `IAIDecisionPolicy.cs` (all added by `WI-A4-01`): the interface/constructor shape to plug the
   factory output into.
 - Look for how other config-selected seams in this codebase already do this (e.g. search for
@@ -50,11 +50,11 @@ neural-network policy (`WI-A4-03`) plugs into without touching `Player`/`AIPlaye
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/AIDecisionPolicyType.cs` (new)
-- `src/OpenSage.Game/Logic/AI/AIDecisionPolicyFactory.cs` (new)
-- `src/OpenSage.Game/Logic/Player.cs`
-- `src/OpenSage.Game/Logic/AI/SkirmishAIPlayer.cs` (constructor signature change only)
-- Test file under `src/OpenSage.Game.Tests/Logic/AI/` (new)
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyType.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyFactory.cs` (new)
+- `src/Panopticon.Simulation/Logic/Player.cs`
+- `src/Panopticon.Simulation/Logic/AI/SkirmishAIPlayer.cs` (constructor signature change only)
+- Test file under `test/Panopticon.Simulation.Tests/Logic/AI/` (new)
 
 ## Acceptance criteria
 

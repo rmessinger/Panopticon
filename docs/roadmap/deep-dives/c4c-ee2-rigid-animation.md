@@ -171,12 +171,12 @@ end value.
   group must not decrease.
 - Controller start must be at least 0 and stop at most `D` plus tolerance. The Galley `ROOT`
   controllers report `[0, 0]` with a single key, which is valid.
-- Controller cycle type is ignored. EE2 DDF states and OpenSAGE `AnimationMode` own looping.
+- Controller cycle type is ignored. EE2 DDF states and Panopticon `AnimationMode` own looping.
 
 ### 4.4 Accumulation root
 
 The sequence's accumulation-root name (`root`, `ROOT`) names the model node that carries
-`KFAccumRoot` metadata. Gamebryo can turn that node's keyed motion into locomotion. In OpenSAGE,
+`KFAccumRoot` metadata. Gamebryo can turn that node's keyed motion into locomotion. In Panopticon,
 locomotors own world movement. C4c accepts an accumulation-root channel only when all its
 translation keys and all its sampled rotations are equal within 1e-5. Such channels apply as
 ordinary absolute pose channels. The `TakeOff` time-0 equality in section 2 confirms this
@@ -429,28 +429,28 @@ sequenceDiagram
 
 ## Appendix: current-code grounding
 
-- NIF block dispatch: `src/OpenSage.FileFormats.Nif/NifFile.cs:118-155`; reference validation
+- NIF block dispatch: `src/Panopticon.FileFormats.Nif/NifFile.cs:118-155`; reference validation
   and root discovery: `NifFile.cs:157-312`.
-- Static bake under one root bone: `src/OpenSage.Game/Content/Importing/Nif/NifSceneConverter.cs`.
+- Static bake under one root bone: `src/Panopticon.Simulation/Content/Importing/Nif/NifSceneConverter.cs`.
 - Source-to-engine matrix and local transform construction:
-  `src/OpenSage.Game/Content/Importing/Nif/NifTransformConverter.cs:19-116`.
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifTransformConverter.cs:19-116`.
 - C1 channel set (`TranslationX/Y/Z`, `Quaternion`, `Visibility`) and interpolation
-  (`Linear`, `Step`): `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs`,
+  (`Linear`, `Step`): `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs`,
   `ImportedAnimationInterpolation.cs`.
 - `ImportedBone` stores translation and rotation, no scale:
-  `src/OpenSage.Game/Content/Importing/ImportedBone.cs:12-24`.
+  `src/Panopticon.Simulation/Content/Importing/ImportedBone.cs:12-24`.
 - C4 rest-offset rule and identity-scale rule:
-  `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs:121-132,211-229`.
-- Importer contract: `src/OpenSage.Game/Content/Importing/IAnimationImporter.cs`.
+  `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs:121-132,211-229`.
+- Importer contract: `src/Panopticon.Simulation/Content/Importing/IAnimationImporter.cs`.
 - Runtime composition `AnimatedOffset.Matrix * bone transform`:
-  `src/OpenSage.Game/Graphics/ModelBoneInstance.cs:35`; C2 binding at
-  `src/OpenSage.Game/Graphics/ModelInstance.cs:180`.
+  `src/Panopticon.Simulation/Graphics/ModelBoneInstance.cs:35`; C2 binding at
+  `src/Panopticon.Simulation/Graphics/ModelInstance.cs:180`.
 - Capture hooks: `StandaloneModelCapture.Capture(..., configureInstance)` at
-  `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs:41-95`; time sampling
+  `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:41-95`; time sampling
   `ExternalModelSceneRenderer.PlayToTime` at
-  `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
+  `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
 - Single-bone descriptor assertions to replace:
-  `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs:78-82`.
+  `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs:78-82`.
 
 ## Appendix: reproduction
 

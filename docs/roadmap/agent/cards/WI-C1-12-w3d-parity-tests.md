@@ -20,8 +20,8 @@ import seam while legacy loaders remain active for side-by-side comparison.
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 6-8.
 - `docs/roadmap/implementation/track-c-c1-import-abstraction.md`: both audit traces.
 - New C1 importer and materializer tests.
-- `src/OpenSage.Game.Tests/Data/W3d/W3dFileTests.cs`: installed-file test pattern.
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`: fixed-time playback.
+- `test/Panopticon.Simulation.Tests/Data/W3d/W3dFileTests.cs`: installed-file test pattern.
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`: fixed-time playback.
 - Legacy model and animation loader entry points.
 
 ## Steps
@@ -38,8 +38,8 @@ import seam while legacy loaders remain active for side-by-side comparison.
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/W3dImportParityTests.cs` (new)
-- `src/OpenSage.Game.Tests/Graphics/Animation/AnimationInstanceTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/W3dImportParityTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Graphics/Animation/AnimationInstanceTests.cs`
 
 ## Acceptance criteria
 

@@ -1,0 +1,27 @@
+#nullable enable
+
+using System.Numerics;
+
+namespace Panopticon.Logic.AI.AIStates;
+
+internal sealed class WanderInPlaceState : MoveTowardsState
+{
+    private Vector3 _unknownPos;
+    private uint _unknownInt;
+
+    internal WanderInPlaceState(AIUpdateStateMachine stateMachine) : base(stateMachine)
+    {
+    }
+
+    public override void Persist(StatePersister reader)
+    {
+        reader.PersistVersion(1);
+
+        base.Persist(reader);
+
+        reader.PersistVector3(ref _unknownPos);
+        reader.PersistUInt32(ref _unknownInt);
+
+        reader.SkipUnknownBytes(4);
+    }
+}

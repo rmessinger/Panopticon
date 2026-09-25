@@ -31,7 +31,7 @@ the installation path. That makes the unconditional-save behaviour, where the pa
 before map load is attempted, untestable without a MAUI runtime. Before the harness expands
 further, extract an `IPreferencesStore` interface and inject it into `MainViewModel`, with a
 `MemoryPreferencesStore` for tests and the `Preferences.Default` adapter for production. The
-non-MAUI test project (`OpenSage.Tools.ReplaySketch.Tests`) then covers the full
+non-MAUI test project (`Panopticon.Tools.ReplaySketch.Tests`) then covers the full
 `LoadMapFromFolder` contract.
 
 `IPreferencesStore` is only the first MAUI seam. `MainViewModel` also binds directly to
@@ -43,7 +43,7 @@ remain inline, the agent-critical command flows, `ValidateCommand`, `ExportComma
 headlessly, so changes to them have no fast automated check. Abstract each behind a small
 injectable seam, a dispatcher that runs the continuation synchronously in tests and a process
 launcher that records the request instead of spawning, so the full `MainViewModel` command surface
-is unit-testable in `OpenSage.Tools.ReplaySketch.Tests` without a MAUI runtime. This is the
+is unit-testable in `Panopticon.Tools.ReplaySketch.Tests` without a MAUI runtime. This is the
 foundation the agent validation playbook (§2.7) documents.
 
 ### 2.2 Open command model (replaces the closed `ActionType`)
@@ -99,7 +99,7 @@ Add a layer on top of P0-5 that accepts a `ScenarioMatrix` file instead of a sin
 The matrix declares named sweep axes; the runner expands them into individual runs and aggregates
 the results into one keyed report.
 
-Data model (`OpenSage.Tools.ReplaySketch.Core/Model`):
+Data model (`Panopticon.Tools.ReplaySketch.Core/Model`):
 - `ScenarioMatrix`: wraps a `BaseScenario` template, one or more named `SweepAxes`, optional
   `ConstraintFilters`, and a list of `AssertionTemplates`.
 - `SweepAxis`: a named list of values (strings, ints, or enum names). Each axis name corresponds
@@ -152,13 +152,13 @@ including streaming, bounded-memory loading, and throughput benchmarks, is final
 ### 2.7 Agent validation playbook (new)
 ReplaySketch lacks a reliable, specific, repeatable validation loop for low-effort and automated
 agents, especially in the MAUI layer, which has no automated coverage and cannot be driven by a
-windowless agent. The renderer side already has this in `OpenSage.Tools.TestHarness/AGENTS.md`.
+windowless agent. The renderer side already has this in `Panopticon.Tools.TestHarness/AGENTS.md`.
 P0 adds the equivalent guide for command or scenario authoring and the MAUI tool:
-`src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`, documenting the exact runnable validation loop:
+`src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`, documenting the exact runnable validation loop:
 
 - The Core-vs-MAUI split (all logic lives in `.Core`; MAUI only hosts), so agents know which changes
   are headlessly checkable and which need the MAUI runtime.
-- Build / test / format commands: the non-MAUI `OpenSage.Tools.ReplaySketch.Tests` suite (controller,
+- Build / test / format commands: the non-MAUI `Panopticon.Tools.ReplaySketch.Tests` suite (controller,
   interaction, and service tests), the MAUI screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`) for visual
   verification of any renderer or MAUI-layer change, and `dotnet format src --verify-no-changes`.
 - The headless run-and-assert entry point (§2.5, P0-5) for command-level validation, once it lands.
@@ -174,13 +174,13 @@ validated.
 ---
 
 ## 3. Integration surface (what P0 plugs into)
-- Author: `CommandSpec`/assertion model in `OpenSage.Tools.ReplaySketch.Core/Model`; lowering in
+- Author: `CommandSpec`/assertion model in `Panopticon.Tools.ReplaySketch.Core/Model`; lowering in
   `Services/ReplayExporter` (`BuildOrders`/`Export`); definition resolution via `AssetStore`.
 - Drive: `ReplayFile.Write`/`ReplayHeader.Create`; `Order`/`OrderArgument*`; deferred path via
   `DeferredAction` + `Game.InjectOrders`.
 - Run: `TestHarness.RunHeadless`/`BuildDeferredInjector`/`DrainPendingInjections`.
 - Assert: `Game.Updating`/`Game.MapTime`; `Player`/`BankAccount`/`GameLogic`; P3 `GameOutcome`.
-- Validate (agent-facing): `OpenSage.Tools.ReplaySketch.Tests` (controller/interaction/service);
+- Validate (agent-facing): `Panopticon.Tools.ReplaySketch.Tests` (controller/interaction/service);
   MAUI screenshot mode (`REPLAYSKETCH_SCREENSHOT_PATH`) for visual verification; `dotnet format`;
   the §2.7 playbook (`ReplaySketch.Maui/AGENTS.md`).
 
@@ -189,16 +189,16 @@ validated.
 | Phase | Goal | Status |
 |---|---|---|
 | P0-1. Open command model | Replace closed `ActionType` with `CommandSpec` mapping to any `OrderType` + typed args + object references (implicit auto-handles keyed to the producing command, opt-in names, query selectors for world/enemy objects); `ActionType` is preserved as a convenience enum on `ActionEntry` only. | Done |
-| P0-1a. MAUI screenshot mode | Add screenshot-and-exit mode to `MainPage`: env-var `REPLAYSKETCH_SCREENSHOT_PATH` triggers capture via `Screenshot.Default.CaptureAsync()` after a configurable settle delay, then auto-exit. Env vars `REPLAYSKETCH_SCREENSHOT_TAB` (tree/map) and `REPLAYSKETCH_SCREENSHOT_DELAY` (seconds). Agents use this to verify MAUI-layer changes without manual app interaction. See `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`. | Done |
+| P0-1a. MAUI screenshot mode | Add screenshot-and-exit mode to `MainPage`: env-var `REPLAYSKETCH_SCREENSHOT_PATH` triggers capture via `Screenshot.Default.CaptureAsync()` after a configurable settle delay, then auto-exit. Env vars `REPLAYSKETCH_SCREENSHOT_TAB` (tree/map) and `REPLAYSKETCH_SCREENSHOT_DELAY` (seconds). Agents use this to verify MAUI-layer changes without manual app interaction. See `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`. | Done |
 | P0-1b. ViewModel testability | Extract `IPreferencesStore` from `MainViewModel`; inject it so `LoadMapFromFolder`'s unconditional path-persistence is unit-testable without a MAUI runtime. | Done |
-| P0-1c. MAUI command-flow testability | Abstract the remaining MAUI statics `MainViewModel` binds to: the `MainThread` dispatcher (background-load completion) and `Process.Start`/launcher (`ExecutePlayInGame`), behind small injectable seams so `ValidateCommand`/`ExportCommand`/`PlayInGameCommand` and the apply-results half of the background load are unit-testable headlessly in `OpenSage.Tools.ReplaySketch.Tests`. | Not started |
+| P0-1c. MAUI command-flow testability | Abstract the remaining MAUI statics `MainViewModel` binds to: the `MainThread` dispatcher (background-load completion) and `Process.Start`/launcher (`ExecutePlayInGame`), behind small injectable seams so `ValidateCommand`/`ExportCommand`/`PlayInGameCommand` and the apply-results half of the background load are unit-testable headlessly in `Panopticon.Tools.ReplaySketch.Tests`. | Not started |
 | P0-2. Generic definition/player resolution | Remove hardcoded `KnownDefinitions`; resolve any object definition/player by name via `AssetStore`. | Not started |
 | P0-3. Exporter generalization | Generalize `BuildOrders`/`Export` to emit orders for the full handled `OrderType` subset; preserve timing + deferred injection. | Not started |
 | P0-4. Assertion layer | Declarative outcome/state/invariant assertions, evaluated via `Game.Updating` + end-of-run state, producing a machine-readable pass/fail report. (JSON predicates over a fixed vocabulary + code-defined escape hatch; decided.) | Not started |
 | P0-5. Run-and-assert entry point | One CLI/library call: scenario+commands in → headless run → report out (exit code + JSON). Wraps `RunHeadless` + the evaluator; terminates on P3 outcome. | Not started |
 | P0-5b. Scenario matrix runner | Accept a `ScenarioMatrix` file with named sweep axes; expand to one run per cartesian-product cell; emit a per-cell result keyed by axis combination and an aggregate JSON report. Wraps P0-5; provides the expansion primitive that A5-2 (tooling/visualizer) builds on. | Not started |
 | P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
-| P0-7. Agent validation playbook | Check in `src/OpenSage.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, screenshot mode for visual verification, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Done |
+| P0-7. Agent validation playbook | Check in `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, screenshot mode for visual verification, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Done |
 
 ## 5. Sequencing and dependencies
 - P0-1a (screenshot mode) is complete, standalone agent tooling, and independent of the
@@ -224,7 +224,7 @@ validated.
   vocabulary, with a code-defined C# predicate escape hatch for complex invariants. See
   [open-questions](../open-questions.md).
 - MAUI validation reach + agent playbook: Decided: ReplaySketch logic stays in `.Core` and is
-  validated headlessly via `OpenSage.Tools.ReplaySketch.Tests` plus the P0-5 run-and-assert flow.
+  validated headlessly via `Panopticon.Tools.ReplaySketch.Tests` plus the P0-5 run-and-assert flow.
   MAUI-only behaviour is minimized behind injectable seams (P0-1b/P0-1c), and the documented
   surface agents follow is the checked-in `ReplaySketch.Maui/AGENTS.md` playbook (P0-7). See
   [open-questions](../open-questions.md).
@@ -257,8 +257,8 @@ fails with `NotImplementedException` until the sub-phase lands.
 | `P0_5b_ScenarioMatrixTests` | `Game.Tests` | P0-5b | Matrix expands ≥2-axis sweep to individual runs; all-pass → exit 0 + aggregate JSON; one-cell-fail → exit non-zero + cell-keyed failure detail |
 
 Stubs live at:
-- `src/OpenSage.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
+- `test/Panopticon.Tools.ReplaySketch.Tests/P0AcceptanceTests.cs`
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P0HarnessAcceptanceTests.cs`
 
 P0 is complete when all stubs pass and no test in either file throws
 `NotImplementedException`. The §4 sub-phase table tracks each item; this table is the aggregate
@@ -551,10 +551,10 @@ sequenceDiagram
 
 ### The closed authoring vocabulary
 - `ActionType` is a closed 5-value enum: `Construct, GatherResources, RecruitBasicUnit,
-  AttackEnemyBase, EnemyBaseDestroyed` (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionType.cs:3-10`).
+  AttackEnemyBase, EnemyBaseDestroyed` (`src/Panopticon.Tools.ReplaySketch.Core/Model/ActionType.cs:3-10`).
 - `ActionEntry` models one action with optional `BuildingDefinitionName`/`UnitDefinitionName`, a
   `PositionSpec`, and a `TimingConfig`
-  (`src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs:6-46`).
+  (`src/Panopticon.Tools.ReplaySketch.Core/Model/ActionEntry.cs:6-46`).
 - `ReplayScenario` holds `MapPath`, `BaseRadiusWorldUnits`, `Players`; `CreateAlpineAssaultUSAvGLA()`
   loads an embedded JSON profile (`Model/ReplayScenario.cs:6-31`).
 - `PositionSpec` is polymorphic (`NormalizedPosition`, `LandmarkRelativePosition`) resolved to world
@@ -592,7 +592,7 @@ sequenceDiagram
   `AddFloatArgument`, `AddBooleanArgument`, `AddObjectIdArgument`, `AddPositionArgument`,
   `AddScreenPositionArgument`, `AddScreenRectangleArgument`; plus static helpers (`CreateBuildObject`,
   `CreateMoveOrder`, `CreateAttackGround`, `CreateAttackObject`, …)
-  (`src/OpenSage.Game/Logic/Orders/Order.cs:10-260`).
+  (`src/Panopticon.Simulation/Logic/Orders/Order.cs:10-260`).
 - `OrderArgument` = `ArgumentType` + `OrderArgumentValue` (`Logic/Orders/OrderArgument.cs:6-60`);
   the value is an explicit-layout union over `int/float/bool/ObjectId/Vector3/Point2D/Rectangle`
   (`Logic/Orders/OrderArgumentValue.cs:8-30`).
@@ -611,18 +611,18 @@ sequenceDiagram
 - `TestHarness` `RunHeadless(...)` boots `new Game(...)` (audio off), `LoadReplayFile(repEntry)`,
   `StartRun()`, installs a `ReplayActionMonitor`, then loops
   `DrainPendingInjections → game.Update → EnsureFrame → Render → capture.FlushPending`, exiting on
-  enemy-CC destruction + runout or a frame timeout (`src/OpenSage.Tools.TestHarness/Program.cs:195-270`).
+  enemy-CC destruction + runout or a frame timeout (`src/Panopticon.Tools.TestHarness/Program.cs:195-270`).
 - Deferred runtime injection: `BuildDeferredInjector(...)` hooks
   `ReplayActionMonitor.ActionDispatched/ActionCompleted` and `DrainPendingInjections(...)` calls
   `game.InjectOrders(...)` when the delay expires (`Program.cs:280-337`).
 - Orders enter the logic tick via `NetworkMessageBuffer.Tick()` (process current-frame orders
   through `OrderProcessor`); `InjectOrdersNow(...)` bypasses the queue
-  (`src/OpenSage.Game/Network/NetworkMessageBuffer.cs:25-77`). Replay-backed orders flow through
+  (`src/Panopticon.Simulation/Network/NetworkMessageBuffer.cs:25-77`). Replay-backed orders flow through
   `ReplayConnection` keyed by timecode (`Network/ReplayConnection.cs:12-33`).
 - `.rep` container: `ReplayFile.FromFileSystemEntry/Write` (`Data/Rep/ReplayFile.cs:10-67`);
   `ReplayHeader.Create/Write/Parse` (`Data/Rep/ReplayHeader.cs:9-210`).
 - State readable for assertions: `Game.Updating` event + `Game.MapTime`
-  (`src/OpenSage.Game/Game.cs:126,342,876-959`); `Player` and `Player.BankAccount`
+  (`src/Panopticon.Simulation/Game.cs:126,342,876-959`); `Player` and `Player.BankAccount`
   (`Logic/Player.cs`, `Logic/BankAccount.cs:9`); the `GameLogic` world container
   (`Logic/GameLogic.cs:12`).
 

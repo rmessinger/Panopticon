@@ -22,15 +22,15 @@ Create the checked-in P7 TeamWin scenario where both losing-team players are eli
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:114-114`: P7-4 sub-phase row.
 - `docs/roadmap/deep-dives/p7-end-to-end-regression.md:194-200`: `GameOutcome` fields including `WinningTeam`.
 - `docs/roadmap/implementation-checklist.md:337-344`: scenario and expected outcome ACs.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: player slot `Team` assignment.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
-- `src/OpenSage.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for `WinningTeam` if needed.
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/PlayerSlotConfig.cs:6-24`: player slot `Team` assignment.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs:6-22`: scenario JSON shape.
+- `src/Panopticon.Tools.ReplaySketch.Core/HarnessRunner.cs:32-127`: run-and-assert entry point.
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs:169-189`: outcome assertion surface; extend for `WinningTeam` if needed.
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/TrackPScenarioMatrixTests.cs:226-242`: final P7 matrix consumer.
 
 ## Steps
 
-1. Add `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json` as static scenario data.
+1. Add `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json` as static scenario data.
 2. Configure a minimal multi-player team setup with one winning team and one losing team containing two players. Use fixed start positions and teams.
 3. Script build, attack, and elimination commands so both losing-team players lose all command/production structures with no rebuild path.
 4. Assert `OutcomeStatus.Decided`, `OutcomeReason.Eliminated`, the correct `WinningTeam`, and both losing-team players. Verify defaults/sentinels cannot satisfy these assertions.
@@ -40,9 +40,9 @@ Create the checked-in P7 TeamWin scenario where both losing-team players are eli
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json` (new)
-- `src/OpenSage.Game.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
-- `src/OpenSage.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if `WinningTeam`/loser outcome paths still need P3 wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Scenarios/Regression/team-win.json` (new)
+- `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/P7RegressionScenarioTests.cs` (new or updated focused test wiring)
+- `src/Panopticon.Tools.ReplaySketch.Core/Assertions/ScenarioAssertion.cs` (only if `WinningTeam`/loser outcome paths still need P3 wiring)
 
 ## Acceptance criteria
 

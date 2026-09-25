@@ -8,7 +8,7 @@ drop trace.
 
 ## 1. Summary
 
-Physics in OpenSAGE is one optional behavior module per object, not a standalone
+Physics in Panopticon is one optional behavior module per object, not a standalone
 simulation pass. Nearly every movable object carries one: 221 `PhysicsBehavior` blocks
 in `FactionUnit.ini`, 106 in `CivilianUnit.ini`, versus 2 in buildings. The module is a
 translation-only Euler integrator: "rigid body" in name, but rotation is handled with

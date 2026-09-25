@@ -44,7 +44,7 @@ was not separately verified.
 
 ## The framework
 
-`EngagementCapture` (`src/OpenSage.Tools.TestHarness/EngagementCaptureRunner.cs`) is a headless
+`EngagementCapture` (`src/Panopticon.Tools.TestHarness/EngagementCaptureRunner.cs`) is a headless
 built-in scenario. It spawns an attacker and a target, fits the camera to them, commands the
 weapon, captures one PNG per logic frame, and writes `manifest.json` with per-frame screen
 projections, marker radii, health, and projectile positions.
@@ -54,10 +54,10 @@ drift from what the engine actually rendered.
 
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
-dotnet run --project src/OpenSage.Tools.TestHarness -- \
+dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario EngagementCapture
 
-python3 scripts/annotate_engagement_gif.py /tmp/opensage_engagement out.gif
+python3 scripts/annotate_engagement_gif.py /tmp/panopticon_engagement out.gif
 ```
 
 The runner exits non-zero on a missing definition (1), a camera that cannot be fitted or an

@@ -199,7 +199,7 @@ EE2 `.kf` files use only base texture slot `0`, shader map `false`, and translat
 Embedded models add `NiUVController`, whose four groups map to translate U, translate V, scale U,
 and scale V on UV set `Texture Set`. C4e supports `Texture Set = 0` only.
 
-OpenSAGE currently has a per-mesh `UVOffset` vector for W3D treads. C4e replaces the C4e import
+Panopticon currently has a per-mesh `UVOffset` vector for W3D treads. C4e replaces the C4e import
 path's use of that scalar-only hook with a per-material-slot UV animation state containing offset,
 scale, rotation, and center. W3D tread control continues to call `SetUvOffset` and maps into the
 same state with rotation zero and scale one.
@@ -445,32 +445,32 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - NIF header, block dispatch, and reference validation:
-  `src/OpenSage.FileFormats.Nif/NifFile.cs:21-55`, `NifFile.cs:118-155`, and
+  `src/Panopticon.FileFormats.Nif/NifFile.cs:21-55`, `NifFile.cs:118-155`, and
   `NifFile.cs:157-312`.
 - C4c parser and importer design to reuse:
   [`c4c-ee2-rigid-animation.md#3-kf-10100-wire-layout`](c4c-ee2-rigid-animation.md#3-kf-10100-wire-layout)
   and [`#6-conversion-to-c1-channels`](c4c-ee2-rigid-animation.md#6-conversion-to-c1-channels).
 - Current C1 animation channel set:
-  `src/OpenSage.Game/Content/Importing/ImportedAnimationChannel.cs:8-15`.
+  `src/Panopticon.Simulation/Content/Importing/ImportedAnimationChannel.cs:8-15`.
 - Current interpolation set:
-  `src/OpenSage.Game/Content/Importing/ImportedAnimationInterpolation.cs:3-7`.
+  `src/Panopticon.Simulation/Content/Importing/ImportedAnimationInterpolation.cs:3-7`.
 - Runtime clip set:
-  `src/OpenSage.Game/Graphics/Animation/AnimationClipType.cs:3-10`.
+  `src/Panopticon.Simulation/Graphics/Animation/AnimationClipType.cs:3-10`.
 - Runtime visibility, translation, and quaternion evaluation:
-  `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs:299-365`.
+  `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs:299-365`.
 - C2 binding entry point:
-  `src/OpenSage.Game/Graphics/ModelInstance.cs:173-184`.
+  `src/Panopticon.Simulation/Graphics/ModelInstance.cs:173-184`.
 - Existing per-model pixel constants:
-  `src/OpenSage.Game/Graphics/ModelInstance.cs:126-137` and
+  `src/Panopticon.Simulation/Graphics/ModelInstance.cs:126-137` and
   `ModelInstance.cs:281-289`.
 - Existing per-mesh UV hook:
-  `src/OpenSage.Game/Graphics/ModelMeshInstance.cs:80-117`.
+  `src/Panopticon.Simulation/Graphics/ModelMeshInstance.cs:80-117`.
 - Fixed-function material constants containing colors, opacity, and texture mapping:
-  `src/OpenSage.Game/Graphics/Shaders/FixedFunctionShaderResources.cs:235-337`.
+  `src/Panopticon.Simulation/Graphics/Shaders/FixedFunctionShaderResources.cs:235-337`.
 - Mesh render resource layout for per-item constants:
-  `src/OpenSage.Game/Graphics/Shaders/MeshShaderResources.cs:17-60`.
+  `src/Panopticon.Simulation/Graphics/Shaders/MeshShaderResources.cs:17-60`.
 - C1 materials are immutable value descriptions:
-  `src/OpenSage.Game/Content/Importing/ImportedMaterial.cs:43-137`.
+  `src/Panopticon.Simulation/Content/Importing/ImportedMaterial.cs:43-137`.
 
 ## Appendix: reproduction
 

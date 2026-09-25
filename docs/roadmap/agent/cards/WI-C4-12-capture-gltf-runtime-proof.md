@@ -20,27 +20,27 @@ fixtures through the C1-C3 runtime path, completing C4 with deterministic visual
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` sections 10 and 11.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`: visual-validation workflow.
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs`.
-- `src/OpenSage.Tools.TestHarness/Program.cs`.
-- `src/OpenSage.Tools.TestHarness/TestHarnessConfig.cs`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs` (new from `WI-C4a-10`).
-- `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs`.
-- `src/OpenSage.Game/Content/Loaders/ImportedAnimationMaterializer.cs`.
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`.
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.gltf` (new from
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`: visual-validation workflow.
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs`.
+- `src/Panopticon.Tools.TestHarness/Program.cs`.
+- `src/Panopticon.Tools.TestHarness/TestHarnessConfig.cs`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs` (new from `WI-C4a-10`).
+- `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/ImportedAnimationMaterializer.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`.
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.gltf` (new from
   `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.bin` (new from
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/pbr-materials.bin` (new from
   `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/base-color.png` (new from `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/emissive.jpg` (new from `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.gltf` (new from
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/base-color.png` (new from `WI-C4-11`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/emissive.jpg` (new from `WI-C4-11`).
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.gltf` (new from
   `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.bin` (new from
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/rigid-scene.bin` (new from
   `WI-C4-11`).
-- `src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures/animated-skin.glb` (new from
+- `test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures/animated-skin.glb` (new from
   `WI-C4-11`).
-- `src/OpenSage.Tools.ReplaySketch.Tests/StandaloneModelCaptureTests.cs` (new from `WI-C4a-10`).
+- `test/Panopticon.Tools.ReplaySketch.Tests/StandaloneModelCaptureTests.cs` (new from `WI-C4a-10`).
 
 ## Steps
 
@@ -66,12 +66,12 @@ fixtures through the C1-C3 runtime path, completing C4 with deterministic visual
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/BuiltInScenario.cs`
-- `src/OpenSage.Tools.TestHarness/Program.cs`
-- `src/OpenSage.Tools.TestHarness/TestHarnessConfig.cs`
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs` (new from `WI-C4a-10`)
-- `src/OpenSage.Tools.TestHarness/GltfRuntimeProofScenario.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/GltfRuntimeProofScenarioTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/BuiltInScenario.cs`
+- `src/Panopticon.Tools.TestHarness/Program.cs`
+- `src/Panopticon.Tools.TestHarness/TestHarnessConfig.cs`
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs` (new from `WI-C4a-10`)
+- `src/Panopticon.Tools.TestHarness/GltfRuntimeProofScenario.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/GltfRuntimeProofScenarioTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -89,9 +89,9 @@ fixtures through the C1-C3 runtime path, completing C4 with deterministic visual
 
 ```sh
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
   --headless --built-in-scenario GltfRuntimeProof \
-  --gltf-fixture-root "$PWD/src/OpenSage.Game.Tests/Content/Importing/Gltf/Fixtures"
+  --gltf-fixture-root "$PWD/test/Panopticon.Simulation.Tests/Content/Importing/Gltf/Fixtures"
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~GltfRuntimeProofScenarioTests|FullyQualifiedName~GltfFixtureTests"
 dotnet test src --filter Category!=Interactive

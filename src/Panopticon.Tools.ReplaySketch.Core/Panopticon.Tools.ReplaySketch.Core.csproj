@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Profiles\*.json" />
+    <EmbeddedResource Include="Scenarios\Regression\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Panopticon.Core\Panopticon.Core.csproj" />
+    <ProjectReference Include="..\Panopticon.Simulation\Panopticon.Simulation.csproj" />
+    <ProjectReference Include="..\Panopticon.Mods.Generals\Panopticon.Mods.Generals.csproj" />
+  </ItemGroup>
+
+</Project>

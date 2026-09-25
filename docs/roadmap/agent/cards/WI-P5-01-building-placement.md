@@ -21,18 +21,18 @@ Verify and close the shared player/AI building-placement path: `OrderProcessor.B
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:84-93`: P5-1/P5-2 sub-phase mapping.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:252-258`: P5 action path through orders and builder AI.
 - `docs/roadmap/deep-dives/p2-p5-skirmish-ai.md:272-274`: builder placement mechanism.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:96-121`: `BuildObject` handler, debit, object creation, and builder target assignment.
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:123-130`: cancel/refund path to preserve.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/IBuilderAIUpdate.cs:12-18`: builder interface contract.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-46`: dozer build-target wiring.
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:48-54`: worker build-target wiring.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:991-1082`: construction lifecycle and completion event.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs:1298-1316`: builder cancellation when a construction target dies.
-- `src/OpenSage.Game.Tests/MockedGameTest.cs:24-34`: headless test base.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:96-121`: `BuildObject` handler, debit, object creation, and builder target assignment.
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:123-130`: cancel/refund path to preserve.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/IBuilderAIUpdate.cs:12-18`: builder interface contract.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs:41-46`: dozer build-target wiring.
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs:48-54`: worker build-target wiring.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:991-1082`: construction lifecycle and completion event.
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs:1298-1316`: builder cancellation when a construction target dies.
+- `test/Panopticon.Simulation.Tests/MockedGameTest.cs:24-34`: headless test base.
 
 ## Steps
 
-1. Add `src/OpenSage.Game.Tests/Logic/Construction/BuildingPlacementTests.cs` as a headless `[Fact]` test file using `MockedGameTest`; ensure the new `.cs` file is UTF-8 with BOM.
+1. Add `test/Panopticon.Simulation.Tests/Logic/Construction/BuildingPlacementTests.cs` as a headless `[Fact]` test file using `MockedGameTest`; ensure the new `.cs` file is UTF-8 with BOM.
 2. Verification path first: issue a valid `BuildObject` order for a human player and the same order for an AI-owned player through `OrderProcessor`; do not call `CreateObject`, `PrepareConstruction`, or `SetBuildTarget` directly from the test.
 3. Assert both orders withdraw the expected build cost, create a player-owned structure at the requested valid position/angle, assign a dozer/worker `IBuilderAIUpdate.BuildTarget`, and progress to `BuildProgress >= 1.0`.
 4. Assert cancel/refund and destroyed-target cleanup still work for the same path; preserve every existing guard/branch if refactoring is needed.
@@ -41,10 +41,10 @@ Verify and close the shared player/AI building-placement path: `OrderProcessor.B
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs`
-- `src/OpenSage.Game/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs`
-- `src/OpenSage.Game.Tests/Logic/Construction/BuildingPlacementTests.cs` (new)
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/DozerAIUpdate.cs`
+- `src/Panopticon.Simulation/Logic/Object/Update/AIUpdate/WorkerAIUpdate.cs`
+- `test/Panopticon.Simulation.Tests/Logic/Construction/BuildingPlacementTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -77,9 +77,9 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Tick the "Player and AI building placement (`OrderProcessor.BuildObject` + `IBuilderAIUpdate`)" P5 checklist item in [`implementation-checklist.md`](../../implementation-checklist.md).
 - Append a result line to repo-root `.exchange`.
-- Confirm `src/OpenSage.Game.Tests/Logic/Construction/BuildingPlacementTests.cs` was created and runs in CI.
+- Confirm `test/Panopticon.Simulation.Tests/Logic/Construction/BuildingPlacementTests.cs` was created and runs in CI.
 
 ## Result
 
-Implemented on branch `track-p5-construction-production` alongside WI-P5-02..05 (see `.exchange` 2026-07-22 entry). Added `src/OpenSage.Game.Tests/Logic/Construction/BuildingPlacementTests.cs` (5 non-skipped `[Fact]`s: human/AI `BuildObject` order path, cost debit, builder assignment, construction completion, cancel/refund). Required headless test-host enablers: `GameLogic.CreateObject` null-guards for `Scene3D`/`PartitionCellManager`, `OrderProcessor` guarded `GameObjects` helper, `AIUpdate.AppendPathToTargetPoint` null-guard, `GameObject`/`ProductionUpdate`/`DozerAndWorkerState` guarded model-condition-flag setters for a null `Drawable`. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed (781 passed, 0 failed); `dotnet format src --verify-no-changes` clean.
+Implemented on branch `track-p5-construction-production` alongside WI-P5-02..05 (see `.exchange` 2026-07-22 entry). Added `test/Panopticon.Simulation.Tests/Logic/Construction/BuildingPlacementTests.cs` (5 non-skipped `[Fact]`s: human/AI `BuildObject` order path, cost debit, builder assignment, construction completion, cancel/refund). Required headless test-host enablers: `GameLogic.CreateObject` null-guards for `Scene3D`/`PartitionCellManager`, `OrderProcessor` guarded `GameObjects` helper, `AIUpdate.AppendPathToTargetPoint` null-guard, `GameObject`/`ProductionUpdate`/`DozerAndWorkerState` guarded model-condition-flag setters for a null `Drawable`. `dotnet build src` and `dotnet test src --filter Category!=Interactive` passed (781 passed, 0 failed); `dotnet format src --verify-no-changes` clean.
 

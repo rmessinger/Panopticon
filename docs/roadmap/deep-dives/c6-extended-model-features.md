@@ -363,19 +363,19 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - Base interchange:
-  `src/OpenSage.Game/Content/Importing/ImportedModel.cs`, `ImportedVertex.cs`,
+  `src/Panopticon.Simulation/Content/Importing/ImportedModel.cs`, `ImportedVertex.cs`,
   `ImportedMesh.cs`, `ImportedMeshPart.cs`, `ImportedAnimation.cs`, and
   `ImportedAnimationChannel.cs`.
 - C1 materialization:
-  `src/OpenSage.Game/Content/Loaders/ImportedModelMaterializer.cs` and
+  `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs` and
   `ImportedAnimationMaterializer.cs`.
 - Runtime deformation:
-  `src/OpenSage.Game/Graphics/ModelMesh.Imported.cs`,
+  `src/Panopticon.Simulation/Graphics/ModelMesh.Imported.cs`,
   `ModelInstance.cs`, `Animation/ModelAnimation.cs`, and `Animation/AnimationInstance.cs`.
 - Existing material and shader resources:
-  `src/OpenSage.Game/Content/Importing/ImportedMaterial.cs`,
-  `src/OpenSage.Game/Graphics/Shaders/ShaderSetBase.cs`, and
-  `src/OpenSage.Game/Graphics/Shaders/ShaderResourceManager.cs`.
+  `src/Panopticon.Simulation/Content/Importing/ImportedMaterial.cs`,
+  `src/Panopticon.Simulation/Graphics/Shaders/ShaderSetBase.cs`, and
+  `src/Panopticon.Simulation/Graphics/Shaders/ShaderResourceManager.cs`.
 - C5 feature controls and reporting:
-  `src/OpenSage.Tools.ReplaySketch.Core` and
-  `src/OpenSage.Tools.TestHarness`.
+  `src/Panopticon.Tools.ReplaySketch.Core` and
+  `src/Panopticon.Tools.TestHarness`.

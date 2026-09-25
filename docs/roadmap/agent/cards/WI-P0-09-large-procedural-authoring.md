@@ -20,14 +20,14 @@ documents the result; if gaps exist, it surfaces them for a targeted follow-up.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: `PlayerSlotConfig.Actions`
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ReplayScenario.cs`: `PlayerSlotConfig.Actions`
   is a `List<ActionEntry>`, populated normally.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ActionEntry.cs`: `ActionEntry` constructor;
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ActionEntry.cs`: `ActionEntry` constructor;
   verify it has no hidden per-instance allocation beyond the fields.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-160`: the export loop;
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs:44-160`: the export loop;
   look for any N² behaviour (nested iteration, repeated LINQ materializations) that would blow
   up at 10k commands.
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: test style reference.
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: test style reference.
 - `docs/roadmap/deep-dives/p0-playable-baseline-harness.md §3.6`: intent.
 
 ## Steps
@@ -35,7 +35,7 @@ documents the result; if gaps exist, it surfaces them for a targeted follow-up.
 1. Read `ReplayExporter.Export` and `PlayerSlotConfig.Actions` for any N² or large-allocation
    patterns at scale. Document findings in the test file as a comment.
 
-2. In `OpenSage.Tools.ReplaySketch.Tests`, add a test
+2. In `Panopticon.Tools.ReplaySketch.Tests`, add a test
    `GenerateLargeScenario_ExportsWithinBudget`:
    - Build a `ReplayScenario` with one player and 10,000 `ActionEntry` values, each an open
      `CommandSpec` (`OrderType.MoveTo` + one `PositionCommandArgument(new NormalizedPosition(0.5f, 0.5f))`)
@@ -55,8 +55,8 @@ documents the result; if gaps exist, it surfaces them for a targeted follow-up.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Tests/`: two new tests.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: only if a real N² issue
+- `test/Panopticon.Tools.ReplaySketch.Tests/`: two new tests.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ReplayExporter.cs`: only if a real N² issue
   is found (see step 3).
 
 ## Acceptance criteria
@@ -72,7 +72,7 @@ documents the result; if gaps exist, it surfaces them for a targeted follow-up.
 
 ```sh
 dotnet build src
-dotnet test src/OpenSage.Tools.ReplaySketch.Tests --logger "console;verbosity=detailed" 2>&1 | grep -E "GenerateLarge|GenerateScenario|Elapsed"
+dotnet test test/Panopticon.Tools.ReplaySketch.Tests --logger "console;verbosity=detailed" 2>&1 | grep -E "GenerateLarge|GenerateScenario|Elapsed"
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes
 ```

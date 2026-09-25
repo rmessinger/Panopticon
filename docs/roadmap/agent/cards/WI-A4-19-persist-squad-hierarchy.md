@@ -18,7 +18,7 @@ versioned layout.
 ## Context to read (and only this)
 
 - `docs/roadmap/implementation/track-a-a4-hierarchical-ai.md`: persistence decision.
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs` and `SkirmishAIPlayer.cs`.
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs` and `SkirmishAIPlayer.cs`.
 - New squad model from `WI-A4-18`.
 - Existing AI persistence tests and `StatePersister` conventions.
 
@@ -31,7 +31,7 @@ versioned layout.
 
 ## Files likely to change
 
-- Hierarchy persistence files under `src/OpenSage.Game/Logic/AI/`
+- Hierarchy persistence files under `src/Panopticon.Simulation/Logic/AI/`
 - Existing or new AI persistence tests
 
 ## Acceptance criteria

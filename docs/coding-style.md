@@ -42,7 +42,7 @@ The general rule we follow is "use Visual Studio defaults".
     such as `{ get; set; }` are unaffected. Also enforced by
     `scripts/check_brace_newline.py`.
 
-An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been provided at the root of the OpenSage repository, enabling C# auto-formatting conforming to the above guidelines.
+An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been provided at the root of the Panopticon repository, enabling C# auto-formatting conforming to the above guidelines.
 
 
 ### Example File:

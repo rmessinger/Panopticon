@@ -13,7 +13,7 @@
 ## Goal
 
 Stop a replay's own recorded `SetSelection`/`ClearSelection` orders from overwriting a human
-observer's interactive drag-selection in `OpenSage.Tools.TestHarness`. Today both paths funnel
+observer's interactive drag-selection in `Panopticon.Tools.TestHarness`. Today both paths funnel
 through the single shared `SelectionSystem`/`Game.Selection`, so when the replay issues a
 selection order for the same player the human is inspecting, the human's box-select is silently
 stomped: no rectangle survives, and the wrong units end up selected. Reported symptom: "selection
@@ -21,17 +21,17 @@ is only broken when the replayer has a game object selected."
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/SelectionSystem.cs`: `SetSelectedObjects` (called by both the replay's
+- `src/Panopticon.Simulation/Logic/SelectionSystem.cs`: `SetSelectedObjects` (called by both the replay's
   `OrderProcessor` and the interactive `SingleSelect`/`MultiSelect` paths), and
   `OnStartDragSelection`/`OnDragSelection`/`OnEndDragSelection` (interactive drag state machine).
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs:280-300`: `OrderType.SetSelection` and
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs:280-300`: `OrderType.SetSelection` and
   `OrderType.ClearSelection` handling; both call `_game.Selection.SetSelectedObjects(...)`.
-- `src/OpenSage.Game/Logic/SelectionMessageHandler.cs`: routes real mouse input into
+- `src/Panopticon.Simulation/Logic/SelectionMessageHandler.cs`: routes real mouse input into
   `SelectionSystem`.
-- `src/OpenSage.Game/Network/NetworkMessageBuffer.cs:26`: `IsReplay`, already used by
+- `src/Panopticon.Simulation/Network/NetworkMessageBuffer.cs:26`: `IsReplay`, already used by
   `SelectionSystem.MultiSelect` for the "box-select any object while watching a replay" fix; the
   same signal is the natural gate for this card.
-- `src/OpenSage.Tools.TestHarness/AGENTS.md`: TestHarness is a windowed replay viewer; this is the
+- `src/Panopticon.Tools.TestHarness/AGENTS.md`: TestHarness is a windowed replay viewer; this is the
   primary place a human interacts with a running replay.
 
 ## Steps
@@ -60,9 +60,9 @@ is only broken when the replayer has a game object selected."
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/SelectionSystem.cs`
-- `src/OpenSage.Game/Logic/Orders/OrderProcessor.cs`
-- `src/OpenSage.Game.Tests/...` (new test, colocate with existing selection/order-processor tests)
+- `src/Panopticon.Simulation/Logic/SelectionSystem.cs`
+- `src/Panopticon.Simulation/Logic/Orders/OrderProcessor.cs`
+- `test/Panopticon.Simulation.Tests/...` (new test, colocate with existing selection/order-processor tests)
 
 ## Acceptance criteria
 
@@ -87,7 +87,7 @@ dotnet format src --verify-no-changes
   object's stats while watching a replay); this card is about state ownership/timing, not who can
   be selected.
 - Do not add a general pub/sub or event-bus refactor of `SelectionSystem`; keep the fix localized.
-- Do not change `OpenSage.Tools.ReplaySketch` scenario authoring/export; this is purely a runtime
+- Do not change `Panopticon.Tools.ReplaySketch` scenario authoring/export; this is purely a runtime
   playback/UI concern.
 
 ## On completion

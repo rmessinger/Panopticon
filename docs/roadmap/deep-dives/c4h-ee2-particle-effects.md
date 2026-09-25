@@ -3,12 +3,12 @@
 > Expands phase C4h of [Track C: External Models & Animations](../track-c-external-assets.md).
 >
 > Audience: human design for importing Empire Earth II Gamebryo particle effect NIFs through the
-> C1 import boundary and the existing OpenSAGE particle runtime. Code references are in the
+> C1 import boundary and the existing Panopticon particle runtime. Code references are in the
 > current-code appendix.
 
 Purpose: render DDF-bound EE2 `fx_*` particle NIFs without adding a second particle runtime. C4h
 parses the legacy particle blocks used by EE2, converts the supported subset into CPU-only
-interchange values, and materializes those values as existing OpenSAGE `FXParticleSystemTemplate`
+interchange values, and materializes those values as existing Panopticon `FXParticleSystemTemplate`
 instances attached to model bones or effect origins.
 
 Facts below were measured on 2026-09-22 against the local Empire Earth II Gold install. Temporary
@@ -37,7 +37,7 @@ C4h rejects:
 - older NIF versions, patch-layer merge semantics, and general EE2 game support;
 - sound, damage, and gameplay effect state machines beyond DDF effect-name discovery.
 
-Decision: translate NIF particles into the existing OpenSAGE particle template model. Reason: the
+Decision: translate NIF particles into the existing Panopticon particle template model. Reason: the
 runtime already has CPU simulation, emitter volumes, color and alpha keys, draw quads, burst
 creation, bone-follow creation hooks, rendering, and save/load; the EE2 proof subset fits after a
 C1-style import and materialization layer.
@@ -167,7 +167,7 @@ NIF flipbook sampler.
 
 ## 6. Mapping onto C1 interchange and runtime
 
-C4h adds CPU-only import values under `OpenSage.Game/Content/Importing`:
+C4h adds CPU-only import values under `Panopticon.Simulation/Content/Importing`:
 
 | Type | Owns |
 |---|---|
@@ -196,7 +196,7 @@ per-frame source-format branch is needed.
 The existing runtime fit:
 
 - `FXParticleSystemTemplate` owns particle system modules and parser tables at
-  `src/OpenSage.Game/Graphics/ParticleSystems/FXParticleSystemTemplate.cs:11`, with color,
+  `src/Panopticon.Simulation/Graphics/ParticleSystems/FXParticleSystemTemplate.cs:11`, with color,
   alpha, update, physics, draw, emission velocity, and emission volume modules registered at
   lines 20-31.
 - Emission velocities include cylinder, ortho, outward, sphere, and hemisphere families at
@@ -280,7 +280,7 @@ C4h is complete when:
 
 - the proof files parse to exact EOF;
 - all proof particle systems convert to CPU-only imported particle descriptors;
-- the materializer creates existing OpenSAGE particle templates without source-format branches in
+- the materializer creates existing Panopticon particle templates without source-format branches in
   per-frame runtime code;
 - deterministic captures show explosion, tank muzzle smoke, and water splash effects at their DDF
   attachment points or world origins;
@@ -364,9 +364,9 @@ sequenceDiagram
 ## Appendix: current-code grounding
 
 - Current NIF parser dispatch and reference validation:
-  `src/OpenSage.FileFormats.Nif/NifFile.cs:118-155` and `NifFile.cs:157-312`.
+  `src/Panopticon.FileFormats.Nif/NifFile.cs:118-155` and `NifFile.cs:157-312`.
 - C4a NIF geometry and material parser patterns:
-  `src/OpenSage.FileFormats.Nif/Blocks/NifGeometry.cs`, `NifGeometryData.cs`,
+  `src/Panopticon.FileFormats.Nif/Blocks/NifGeometry.cs`, `NifGeometryData.cs`,
   `NifTriShapeData.cs`, and `NifMaterialProperty.cs`.
 - C4c time-controller and key-group design:
   [C4c wire layout](c4c-ee2-rigid-animation.md#3-kf-10100-wire-layout) and
@@ -375,17 +375,17 @@ sequenceDiagram
   [C1 boundary](c1-import-abstraction.md#1-boundary) and
   [runtime materialization](c1-import-abstraction.md#4-runtime-materialization).
 - Particle template parser and module surface:
-  `src/OpenSage.Game/Graphics/ParticleSystems/FXParticleSystemTemplate.cs:11-172`.
+  `src/Panopticon.Simulation/Graphics/ParticleSystems/FXParticleSystemTemplate.cs:11-172`.
 - Runtime particle update, emission, initialization, per-particle update, rendering, and persistence:
-  `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystem.cs:232`, `ParticleSystem.cs:316`,
+  `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystem.cs:232`, `ParticleSystem.cs:316`,
   `ParticleSystem.cs:353`, `ParticleSystem.cs:408`, `ParticleSystem.cs:545`, and
   `ParticleSystem.cs:573`.
 - Particle manager creation and lifetime:
-  `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystemManager.cs:32-112`.
+  `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystemManager.cs:32-112`.
 - Current static seeded random source:
-  `src/OpenSage.Game/Graphics/ParticleSystems/ParticleSystemUtility.cs:9-58`.
+  `src/Panopticon.Simulation/Graphics/ParticleSystems/ParticleSystemUtility.cs:9-58`.
 - FX particle nugget parsing and current create path:
-  `src/OpenSage.Game/FX/FXNuggets/ParticleSystemFXNugget.cs:9-94`.
+  `src/Panopticon.Simulation/FX/FXNuggets/ParticleSystemFXNugget.cs:9-94`.
 
 ## Appendix: reproduction
 

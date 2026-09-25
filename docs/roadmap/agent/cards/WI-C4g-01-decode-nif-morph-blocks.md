@@ -12,7 +12,7 @@
 
 ## Goal
 
-Extend `OpenSage.FileFormats.Nif` to decode NIF 10.1 `NiGeomMorpherController` and
+Extend `Panopticon.FileFormats.Nif` to decode NIF 10.1 `NiGeomMorpherController` and
 `NiMorphData` blocks with exact stream consumption and validated references.
 
 ## Context to read (and only this)
@@ -20,9 +20,9 @@ Extend `OpenSage.FileFormats.Nif` to decode NIF 10.1 `NiGeomMorpherController` a
 - `docs/roadmap/deep-dives/c4g-ee2-morph-animation.md` sections 1, 3, 4, and 8.
 - `docs/roadmap/deep-dives/c4c-ee2-rigid-animation.md` sections 3 and 4.2 for controller and
   float-key precedent.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:21-55`, `118-155`, and `157-312`.
-- `src/OpenSage.FileFormats.Nif/NifBinaryReader.cs`.
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`.
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:21-55`, `118-155`, and `157-312`.
+- `src/Panopticon.FileFormats.Nif/NifBinaryReader.cs`.
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`.
 
 ## Steps
 
@@ -40,12 +40,12 @@ Extend `OpenSage.FileFormats.Nif` to decode NIF 10.1 `NiGeomMorpherController` a
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifGeomMorpherController.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifMorphData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/NifKeys.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifMorphTests.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifGeomMorpherController.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifMorphData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifKeys.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifMorphTests.cs` (new)
 
 ## Acceptance criteria
 

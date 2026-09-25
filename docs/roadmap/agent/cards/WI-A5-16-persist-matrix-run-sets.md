@@ -18,7 +18,7 @@ bindings.
 ## Context to read (and only this)
 
 - Matrix run-set schema in the A5 implementation plan.
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`.
 - Run-bundle writer from `WI-A5-09`.
 - A4 experiment runner from `WI-A4-39`.
 - `Assertions/MatrixReport.cs`.
@@ -33,7 +33,7 @@ bindings.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`
+- `src/Panopticon.Tools.ReplaySketch.Core/ScenarioMatrixRunner.cs`
 - Matrix report/manifest types
 - ReplaySketch tests
 

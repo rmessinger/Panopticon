@@ -264,21 +264,21 @@ sequenceDiagram
 
 ## Appendix: Current code (agent context)
 
-- `src/OpenSage.Game/Logic/Object/UpgradeTemplate.cs`: existing per-object upgrade template;
+- `src/Panopticon.Simulation/Logic/Object/UpgradeTemplate.cs`: existing per-object upgrade template;
   D1's adapter wraps this rather than replacing it.
-- `src/OpenSage.Game/Logic/Object/ObjectDefinition.cs`: build/produce prerequisite fields D1's
+- `src/Panopticon.Simulation/Logic/Object/ObjectDefinition.cs`: build/produce prerequisite fields D1's
   `TechNode.Requires` generalizes. The `Prerequisites` field (line 524) is an
-  `ObjectPrerequisites` (`src/OpenSage.Game/Logic/Object/ObjectPrerequisites.cs`): AND'd lists of
+  `ObjectPrerequisites` (`src/Panopticon.Simulation/Logic/Object/ObjectPrerequisites.cs`): AND'd lists of
   OR'd `ObjectPrerequisiteList`/`SciencePrerequisiteList`, evaluated by `Player.CanProduceObject`
-  (`src/OpenSage.Game/Logic/Player.cs:403`) and gated in `GameObject.CanConstructUnit`
-  (`src/OpenSage.Game/Logic/Object/GameObject.cs:1238`).
-- `src/OpenSage.Game/Logic/GameLogic.cs`: top-level per-match state; `TechTreeState`/`EraState`
+  (`src/Panopticon.Simulation/Logic/Player.cs:403`) and gated in `GameObject.CanConstructUnit`
+  (`src/Panopticon.Simulation/Logic/Object/GameObject.cs:1238`).
+- `src/Panopticon.Simulation/Logic/GameLogic.cs`: top-level per-match state; `TechTreeState`/`EraState`
   are added as per-player state here, alongside existing `BankAccount`/player state.
-- `src/OpenSage.Game/Logic/Object/Update/ProductionUpdate.cs`: the existing timed-completion
+- `src/Panopticon.Simulation/Logic/Object/Update/ProductionUpdate.cs`: the existing timed-completion
   pattern that age-up resolution should mirror rather than inventing a second timing mechanism.
   `Update()` (line 59) advances the front `ProductionJob` each frame via `ProductionJob.Update`
-  then `ProductionJob.Produce` (`src/OpenSage.Game/Logic/Object/Production/ProductionJob.cs`).
-- Orders: `src/OpenSage.Game/Logic/Orders/Order.cs`, `OrderType.cs`, and `OrderProcessor.cs`
+  then `ProductionJob.Produce` (`src/Panopticon.Simulation/Logic/Object/Production/ProductionJob.cs`).
+- Orders: `src/Panopticon.Simulation/Logic/Orders/Order.cs`, `OrderType.cs`, and `OrderProcessor.cs`
   (`Process` at line 28, `TryDebit` at line 651) are the pipeline the age-up order flows through.
 - Save/load: search `PersistVersion()` call sites in `Logic/` for the established
   `StatePersister` pattern D1/D2 state must follow.

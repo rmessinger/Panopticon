@@ -50,7 +50,7 @@ leaving spatial map/terrain topology in WorldBuilder.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~TopologyEditor"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-topology.png dotnet run --project src/OpenSage.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-topology.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
 dotnet format src --verify-no-changes
 ```
 

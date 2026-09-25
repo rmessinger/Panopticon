@@ -18,10 +18,10 @@ ambiguities so A4-3a through A4-3f can be implemented mechanically.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/a4-decentralized-hierarchical-ai.md`.
-- `src/OpenSage.Game/Logic/Team.cs`, `TeamFactory.cs`, `TeamTemplate.cs`.
-- `src/OpenSage.Game/Logic/SelectionSystem.cs`, `Player.cs`, and `GameLogic.cs`.
-- `src/OpenSage.Game/Logic/AI/AIUpdateStateMachine.cs` and its state classes.
-- `src/OpenSage.Game/Logic/AI/AIPlayer.cs` and `RuleBasedAIDecisionPolicy.cs`.
+- `src/Panopticon.Simulation/Logic/Team.cs`, `TeamFactory.cs`, `TeamTemplate.cs`.
+- `src/Panopticon.Simulation/Logic/SelectionSystem.cs`, `Player.cs`, and `GameLogic.cs`.
+- `src/Panopticon.Simulation/Logic/AI/AIUpdateStateMachine.cs` and its state classes.
+- `src/Panopticon.Simulation/Logic/AI/AIPlayer.cs` and `RuleBasedAIDecisionPolicy.cs`.
 
 ## Steps
 

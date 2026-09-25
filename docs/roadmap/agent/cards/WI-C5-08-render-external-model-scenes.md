@@ -20,17 +20,17 @@ and report artifacts, while supporting report-only execution.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 7, 8, and 10.
-- `src/OpenSage.Tools.TestHarness/ScenarioCaptureRunner.cs`: `FrameCapturer` usage.
-- `src/OpenSage.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: conditional graphics-test
+- `src/Panopticon.Tools.TestHarness/ScenarioCaptureRunner.cs`: `FrameCapturer` usage.
+- `test/Panopticon.Tools.ReplaySketch.Tests/ScenarioCaptureRunnerTests.cs`: conditional graphics-test
   precedent.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs` (new, from `WI-C4a-10`).
-- `src/OpenSage.Game/Graphics/ModelInstance.cs`.
-- `src/OpenSage.Game/Graphics/Animation/AnimationInstance.cs`.
-- `src/OpenSage.Game/Graphics/Animation/ModelAnimation.cs`.
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelHost.cs` (new, from `WI-C5-07`).
-- `src/OpenSage.Tools.TestHarness/ExternalModels/IExternalModelRenderStage.cs` (new, from
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs` (new, from `WI-C4a-10`).
+- `src/Panopticon.Simulation/Graphics/ModelInstance.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/AnimationInstance.cs`.
+- `src/Panopticon.Simulation/Graphics/Animation/ModelAnimation.cs`.
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelHost.cs` (new, from `WI-C5-07`).
+- `src/Panopticon.Tools.TestHarness/ExternalModels/IExternalModelRenderStage.cs` (new, from
   `WI-C5-07`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
   `WI-C5-03`).
 
 ## Steps
@@ -58,11 +58,11 @@ and report artifacts, while supporting report-only execution.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs` (new, from `WI-C4a-10`)
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs` (new)
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelArtifactWriter.cs` (new)
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelHost.cs` (new, from `WI-C5-07`)
-- `src/OpenSage.Tools.ReplaySketch.Tests/ExternalModelRenderingTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs` (new, from `WI-C4a-10`)
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs` (new)
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelArtifactWriter.cs` (new)
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelHost.cs` (new, from `WI-C5-07`)
+- `test/Panopticon.Tools.ReplaySketch.Tests/ExternalModelRenderingTests.cs` (new)
 
 ## Acceptance criteria
 

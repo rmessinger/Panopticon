@@ -20,17 +20,17 @@ precise owned-process termination, and a reusable sibling-build executable locat
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 5 and 8.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IProcessLauncher.cs`: fire-and-forget contract
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IProcessLauncher.cs`: fire-and-forget contract
   that must not be reused.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/LauncherLocatorService.cs`: sibling build-output
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/LauncherLocatorService.cs`: sibling build-output
   convention.
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/RecordingProcessLauncher.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Maui/Services/SystemProcessLauncher.cs`.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequest.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/RecordingProcessLauncher.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Maui/Services/SystemProcessLauncher.cs`.
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelRequest.cs` (new, from
   `WI-C5-06`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelProtocolJson.cs` (new,
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelProtocolJson.cs` (new,
   from `WI-C5-06`).
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ExternalModels/ExternalModelReport.cs` (new, from
   `WI-C5-03`).
 
 ## Steps
@@ -38,7 +38,7 @@ precise owned-process termination, and a reusable sibling-build executable locat
 1. Extract the project name, configuration preference, target-framework search, and platform
    executable naming from `LauncherLocatorService` into a reusable sibling-build locator.
 2. Preserve `LauncherLocatorService.Locate()` behavior by delegating to the new locator and add a
-   TestHarness locator for `OpenSage.Tools.TestHarness`.
+   TestHarness locator for `Panopticon.Tools.TestHarness`.
 3. Add `IExternalModelPreviewClient` with one asynchronous operation accepting a request,
    cancellation token, and caller-owned artifact lease.
 4. Serialize the request into the lease directory, launch the located TestHarness executable with
@@ -59,13 +59,13 @@ precise owned-process termination, and a reusable sibling-build executable locat
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/SiblingBuildExecutableLocator.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/LauncherLocatorService.cs`
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IExternalModelPreviewClient.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/IExternalModelProcess.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/TestHarnessPreviewClient.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/TestHarnessPreviewClientTests.cs` (new)
-- `src/OpenSage.Tools.ReplaySketch.Tests/SiblingBuildExecutableLocatorTests.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/SiblingBuildExecutableLocator.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/LauncherLocatorService.cs`
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IExternalModelPreviewClient.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/IExternalModelProcess.cs` (new)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/TestHarnessPreviewClient.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/TestHarnessPreviewClientTests.cs` (new)
+- `test/Panopticon.Tools.ReplaySketch.Tests/SiblingBuildExecutableLocatorTests.cs` (new)
 
 ## Acceptance criteria
 

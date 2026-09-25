@@ -37,7 +37,7 @@ scenarios and replaying runs.
 ## 2. What already exists (reuse, don't reinvent)
 
 > ReplaySketch is the primary tool. Scenario and end-to-end testing flows through
-> `OpenSage.Tools.ReplaySketch`. It is the entry point lower-effort/automated agents use, and the
+> `Panopticon.Tools.ReplaySketch`. It is the entry point lower-effort/automated agents use, and the
 > result replayer/visualizer below (A5-3) is built by extending it rather than starting a new
 > tool. [Track P, phase P0](../track-p-playable-baseline.md) finalizes ReplaySketch into a general
 > harness for authoring and validating any arbitrary command/order set (generalizing beyond its
@@ -46,10 +46,10 @@ scenarios and replaying runs.
 
 | Capability | Current code | Reuse for |
 |---|---|---|
-| Replay parsing + action monitoring | `OpenSage.Tools.ReplaySketch.`, `ReplayActionMonitor` | Loading runs, event logs, jump-to-frame. |
+| Replay parsing + action monitoring | `Panopticon.Tools.ReplaySketch.`, `ReplayActionMonitor` | Loading runs, event logs, jump-to-frame. |
 | Headless frame capture | `FrameCaptureService` (`[CAPTURE]` stdout, PNG export) | Exportable visual artifacts for CI. |
-| Headless run loop | `OpenSage.Tools.TestHarness` `RunHeadless` | Driving preview/replay re-simulation. |
-| Map authoring | `OpenSage.Tools.WorldBuilder.` | Terrain/topology authoring substrate for scenario setup. |
+| Headless run loop | `Panopticon.Tools.TestHarness` `RunHeadless` | Driving preview/replay re-simulation. |
+| Map authoring | `Panopticon.Tools.WorldBuilder.` | Terrain/topology authoring substrate for scenario setup. |
 | Windowed 3-D rendering | engine renderer / TestHarness windowed path | Optional full 3-D playback. |
 
 ---

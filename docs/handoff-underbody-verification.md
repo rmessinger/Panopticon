@@ -2,7 +2,7 @@
 
 Audience: verifying agent. Scope: everything changed in the "flipped cars are transparent and
 sink into the ground" workstream, how to independently verify each piece, and known limitations.
-All commands assume repo root `/home/rmessinger/dev/OpenSAGE` and
+All commands assume repo root `/home/rmessinger/dev/Panopticon` and
 `CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals"`.
 
 ## Summary of changes
@@ -18,16 +18,16 @@ Two problem classes were fixed:
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.W3dPatcher/` (new project, in solution) | CLI + `W3dUnderbodyPatcher.Patch`: transforms the body bounds through its complete bind-pose bone chain, creates a horizontal model-space grey `UNDERBODY`, transforms it back to body-local space, and reuses the body mesh's HLod bone. Single-mesh no-HLod files get a synthesized hierarchy + HLod. |
-| `src/OpenSage.FileFormats.W3d/W3dVertexMaterialInfo.cs` | Bug fix: chunk id written as 0x28 instead of 0x2D; written files failed to re-parse. |
-| `src/OpenSage.FileFormats.W3d/W3dShader.cs` | Bug fix: struct's 16th byte was discarded; now preserved as `RawTrailingByte`. |
-| `src/OpenSage.IO/DiskFileSystem.cs` | `GetFile` falls back to a segment-wise case-insensitive path walk, so loose override files load on case-sensitive filesystems regardless of query casing. |
-| `src/OpenSage.Game/Logic/Object/Behaviors/PhysicsBehavior.cs` | Bepu adapter: body-center offset rotates with the object; box Z half-extent comes from `GeometryHeight/2`; ground correction uses the maximum paired `terrainZ - cornerZ` penetration. |
-| `src/OpenSage.Tools.ReplaySketch.Core/Model/Capture/CaptureProfile.cs` + `ScenarioCaptureRunner.cs` | Actors support `PitchDegrees`/`RollDegrees` (roll 180 = upside down) and follow-camera captures. Actor `Z` is documented as absolute world Z. |
-| `src/OpenSage.Tools.ReplaySketch.Core/Profiles/capture-car-flipped.json` (new, embedded) | Isolation scene: one `CarSwatchEuro` spawned rolled 180 at absolute Z 65, with a camera that follows its downhill drift. |
-| `src/OpenSage.Game.Tests/Data/W3d/W3dUnderbodyPatcherTests.cs` (new) | 6 tests, including model-space placement and winding checks for rotated-axis `CarAsian1` and identity-axis `CarSwatchEuro`. |
-| `src/OpenSage.Game.Tests/Data/DiskFileSystemTests.cs` (new) | Case-insensitive `GetFile` resolution. |
-| `src/OpenSage.Tools.TestHarness/AGENTS.md` | Documents pitch/roll spawn fields and loose-override loading. |
+| `src/Panopticon.Tools.W3dPatcher/` (new project, in solution) | CLI + `W3dUnderbodyPatcher.Patch`: transforms the body bounds through its complete bind-pose bone chain, creates a horizontal model-space grey `UNDERBODY`, transforms it back to body-local space, and reuses the body mesh's HLod bone. Single-mesh no-HLod files get a synthesized hierarchy + HLod. |
+| `src/Panopticon.FileFormats.W3d/W3dVertexMaterialInfo.cs` | Bug fix: chunk id written as 0x28 instead of 0x2D; written files failed to re-parse. |
+| `src/Panopticon.FileFormats.W3d/W3dShader.cs` | Bug fix: struct's 16th byte was discarded; now preserved as `RawTrailingByte`. |
+| `src/Panopticon.IO/DiskFileSystem.cs` | `GetFile` falls back to a segment-wise case-insensitive path walk, so loose override files load on case-sensitive filesystems regardless of query casing. |
+| `src/Panopticon.Simulation/Logic/Object/Behaviors/PhysicsBehavior.cs` | Bepu adapter: body-center offset rotates with the object; box Z half-extent comes from `GeometryHeight/2`; ground correction uses the maximum paired `terrainZ - cornerZ` penetration. |
+| `src/Panopticon.Tools.ReplaySketch.Core/Model/Capture/CaptureProfile.cs` + `ScenarioCaptureRunner.cs` | Actors support `PitchDegrees`/`RollDegrees` (roll 180 = upside down) and follow-camera captures. Actor `Z` is documented as absolute world Z. |
+| `src/Panopticon.Tools.ReplaySketch.Core/Profiles/capture-car-flipped.json` (new, embedded) | Isolation scene: one `CarSwatchEuro` spawned rolled 180 at absolute Z 65, with a camera that follows its downhill drift. |
+| `test/Panopticon.Simulation.Tests/Data/W3d/W3dUnderbodyPatcherTests.cs` (new) | 6 tests, including model-space placement and winding checks for rotated-axis `CarAsian1` and identity-axis `CarSwatchEuro`. |
+| `test/Panopticon.Simulation.Tests/Data/DiskFileSystemTests.cs` (new) | Case-insensitive `GetFile` resolution. |
+| `src/Panopticon.Tools.TestHarness/AGENTS.md` | Documents pitch/roll spawn fields and loose-override loading. |
 
 ## Deployed artifacts (game install, not in repo)
 
@@ -46,8 +46,8 @@ placed by the Alpine Assault map (`CarBug3`, `CarCompact`, `CarLuxury02`, `CarSp
 ### Unit and round-trip tests
 
 ```sh
-CNC_GENERALS_PATH="..." dotnet test src/OpenSage.Game.Tests --filter "FullyQualifiedName~W3dUnderbodyPatcher"
-CNC_GENERALS_PATH="..." dotnet test src/OpenSage.Game.Tests --filter "FullyQualifiedName~DiskFileSystemTests"
+CNC_GENERALS_PATH="..." dotnet test test/Panopticon.Simulation.Tests --filter "FullyQualifiedName~W3dUnderbodyPatcher"
+CNC_GENERALS_PATH="..." dotnet test test/Panopticon.Simulation.Tests --filter "FullyQualifiedName~DiskFileSystemTests"
 ```
 
 Expected: 6 + 1 passed.
@@ -55,12 +55,12 @@ Expected: 6 + 1 passed.
 ### Isolation capture (single flipped car)
 
 ```sh
-dotnet build src/OpenSage.Tools.TestHarness -c Release
-CNC_GENERALS_PATH="..." dotnet run --project src/OpenSage.Tools.TestHarness -c Release --no-build -- \
+dotnet build src/Panopticon.Tools.TestHarness -c Release
+CNC_GENERALS_PATH="..." dotnet run --project src/Panopticon.Tools.TestHarness -c Release --no-build -- \
   --headless --built-in-scenario ScenarioCapture --scenario capture-car-flipped.json
 ```
 
-Output: `/tmp/opensage_capture_car-flipped/` (70 PNGs + `manifest.json`).
+Output: `/tmp/panopticon_capture_car-flipped/` (70 PNGs + `manifest.json`).
 
 Manifest checks (Python, JSON is plain here): the single actor's `WorldZ` starts at 65, falls,
 bounces once, and settles. Settled origin Z must equal terrain height at the final
@@ -86,9 +86,9 @@ Visual checks on `frame_0069.png` (settled and centered):
 ### Full stack capture
 
 ```sh
-CNC_GENERALS_PATH="..." dotnet run --project src/OpenSage.Tools.TestHarness -c Release --no-build -- \
+CNC_GENERALS_PATH="..." dotnet run --project src/Panopticon.Tools.TestHarness -c Release --no-build -- \
   --headless --built-in-scenario PhysicsStack
-python3 scripts/annotate_capture_gif.py /tmp/opensage_physics_stack \
+python3 scripts/annotate_capture_gif.py /tmp/panopticon_physics_stack \
   "/mnt/pit2/Network Storage/temp/physics_stack_underbody.gif" --labels
 ```
 

@@ -276,25 +276,25 @@ sequenceDiagram
 A surprising amount of headless plumbing already exists and should be reused:
 
 - Windowless graphics device. `GraphicsDeviceUtility.CreateGraphicsDevice`
-  (`src/OpenSage.Game/Graphics/GraphicsDeviceUtility.cs`) accepts a `null` window and creates a
+  (`src/Panopticon.Simulation/Graphics/GraphicsDeviceUtility.cs`) accepts a `null` window and creates a
   swapchain-less D3D11/Vulkan/Metal device. `new Game(installation, backend, config, window:
   null)` already works.
-- A headless run loop. `OpenSage.Tools.TestHarness` (`Program.cs`, `RunHeadless`)
+- A headless run loop. `Panopticon.Tools.TestHarness` (`Program.cs`, `RunHeadless`)
   constructs a windowless `Game`, loads a replay, and ticks `game.Update(empty)` + `game.Render()`
   in a loop with a frame cap.
 - Frame capture for inspection. `FrameCaptureService`
-  (`src/OpenSage.Game/Graphics/FrameCaptureService.cs`) renders to a texture and writes PNGs
+  (`src/Panopticon.Simulation/Graphics/FrameCaptureService.cs`) renders to a texture and writes PNGs
   with machine-parseable `[CAPTURE]` stdout lines for headless test runs.
 - Replay action monitoring. `ReplayActionMonitor` (ReplaySketch) surfaces dispatched/
   completed in-game actions with player + frame, used by the TestHarness for logging and
   deferred-order injection.
-- A logic-only mock. `MockedGameTest.TestGame` (`src/OpenSage.Game.Tests/MockedGameTest.cs`)
+- A logic-only mock. `MockedGameTest.TestGame` (`test/Panopticon.Simulation.Tests/MockedGameTest.cs`)
   implements `IGame` with `GraphicsDevice = null` and an `AssetStore` built with
   `OnDemandAssetLoadStrategy.None`, proving parts of the logic layer can exist without GPU
   resources.
-- A non-rendering data tool. `OpenSage.Tools.Sav2Json` constructs a `Game` purely to load/
+- A non-rendering data tool. `Panopticon.Tools.Sav2Json` constructs a `Game` purely to load/
   persist save state.
-- An engine seam. `IGameEngine` and `GameEngine` (`src/OpenSage.Game/GameEngine.cs`) already
+- An engine seam. `IGameEngine` and `GameEngine` (`src/Panopticon.Simulation/GameEngine.cs`) already
   abstract the logic-side services (`AssetLoadContext`, `GameLogic`, `Terrain`, `Navigation`,
   `Quadtree`, `Scene3D`, `IPhysicsWorld`) behind an interface, which is a natural foundation for a
   host.

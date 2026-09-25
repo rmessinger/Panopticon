@@ -19,24 +19,24 @@ through the C1 importer contracts and engine materializers.
 
 - `docs/roadmap/deep-dives/c1-import-abstraction.md` sections 7-9.
 - Passing `W3dImportParityTests` from `WI-C1-12`.
-- Remaining `OpenSage.FileFormats.W3d` references under `src/OpenSage.Game/Graphics/`.
-- Legacy branches in `src/OpenSage.Game/Content/Loaders/`.
+- Remaining `Panopticon.FileFormats.W3d` references under `src/Panopticon.Simulation/Graphics/`.
+- Legacy branches in `src/Panopticon.Simulation/Content/Loaders/`.
 - `docs/roadmap/seams.md`: model / animation import row.
 
 ## Steps
 
 1. Remove W3D constructors and partial conversion files from runtime model and animation types.
 2. Remove legacy loader constructors, conversion branches, and now-unused W3D imports.
-3. Search `src/OpenSage.Game/Graphics/` for `OpenSage.FileFormats.W3d`; the result must be empty.
+3. Search `src/Panopticon.Simulation/Graphics/` for `Panopticon.FileFormats.W3d`; the result must be empty.
 4. Run the parity tests after cleanup without changing expected descriptors.
 5. Update `seams.md` from planned to current and mark C1 complete in the track doc and
    implementation checklist.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Graphics/Model*.cs`
-- `src/OpenSage.Game/Graphics/Animation/`
-- `src/OpenSage.Game/Content/Loaders/`
+- `src/Panopticon.Simulation/Graphics/Model*.cs`
+- `src/Panopticon.Simulation/Graphics/Animation/`
+- `src/Panopticon.Simulation/Content/Loaders/`
 - `docs/roadmap/seams.md`
 - `docs/roadmap/track-c-external-assets.md`
 - `docs/roadmap/implementation-checklist.md`

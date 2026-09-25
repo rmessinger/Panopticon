@@ -1,0 +1,56 @@
+{
+  // Generic scenario-capture profile: a USA Dozer constructs one Barracks in a compact
+  // field, framed from placement through completion. Run with:
+  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-construction.json
+  "Name": "construction",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  // Barracks BuildTime is 900 frames plus the dozer's approach; stride 8 keeps the
+  // PNG count reasonable while preserving visible progress steps.
+  "DurationFrames": 550,
+  "SettleFrames": 15,
+  "CaptureStride": 8,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA", "StartingMoney": 8000 }
+  ],
+  "Actors": [
+    {
+      "Id": "dozer",
+      "Definition": "AmericaVehicleDozer",
+      "Owner": "usa",
+      "X": 560,
+      "Y": 600,
+      "FacingDegrees": 0,
+      "Role": "builder"
+    }
+  ],
+  "Camera": {
+    "Mode": "AutoFit",
+    "SubjectActorIds": [ "dozer" ],
+    // Frame the build site too: the construction appears where the command places it,
+    // not where an actor currently stands.
+    "FramingPoints": [ { "X": 660, "Y": 600 } ],
+    "DesiredSpanFraction": 0.5,
+    "InitialCameraHeight": 180,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 800
+  },
+  "Commands": [
+    {
+      "Type": "Construct",
+      "Frame": 0,
+      "BuilderActorId": "dozer",
+      "BuildingDefinition": "AmericaBarracks",
+      "X": 660,
+      "Y": 600,
+      "FacingDegrees": 0,
+      "ResultActorId": "barracks"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ConstructionProgressed", "ActorId": "barracks" },
+    { "Type": "ConstructionCompleted", "ActorId": "barracks" }
+  ],
+  "StopWhenActorDestroyed": null
+}

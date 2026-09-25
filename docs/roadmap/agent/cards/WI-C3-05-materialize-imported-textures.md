@@ -19,13 +19,13 @@ complete scoped identities.
 
 - `docs/roadmap/deep-dives/c3-material-texture-mapping.md` section 5.
 - Image decoding types from `WI-C3-04`.
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs`.
-- `src/OpenSage.Game/Content/Loaders/OnDemandTextureLoader.cs`.
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/OnDemandTextureLoader.cs`.
 - `src/Veldrid.ImageSharp/ImageSharpTexture.cs`.
-- `src/OpenSage.Game/Content/Loaders/AssetLoadContext.cs`.
-- `src/OpenSage.Game.Tests/GameFixture.cs`.
+- `src/Panopticon.Simulation/Content/Loaders/AssetLoadContext.cs`.
+- `test/Panopticon.Simulation.Tests/GameFixture.cs`.
 - Existing `[GameFact(SageGame.CncGenerals)]` graphics-test pattern.
-- Veldrid sampler creation patterns in `src/OpenSage.Game/Graphics/`.
+- Veldrid sampler creation patterns in `src/Panopticon.Simulation/Graphics/`.
 
 ## Steps
 
@@ -40,8 +40,8 @@ complete scoped identities.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Content/Loaders/ImportedTextureMaterializer.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/ImportedTextureMaterializerTests.cs` (new)
+- `src/Panopticon.Simulation/Content/Loaders/ImportedTextureMaterializer.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/ImportedTextureMaterializerTests.cs` (new)
 
 ## Acceptance criteria
 

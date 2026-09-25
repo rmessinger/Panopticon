@@ -20,7 +20,7 @@ directive into bounded soldier goals.
 - `docs/roadmap/implementation/track-a-a4-hierarchical-ai.md`: A4-3c contract.
 - Squad model from `WI-A4-18`.
 - Soldier goal and policy types from `WI-A4-20`.
-- `src/OpenSage.Game/Logic/AI/RuleBasedAIDecisionPolicy.cs`.
+- `src/Panopticon.Simulation/Logic/AI/RuleBasedAIDecisionPolicy.cs`.
 
 ## Steps
 
@@ -32,8 +32,8 @@ directive into bounded soldier goals.
 
 ## Files likely to change
 
-- New files under `src/OpenSage.Game/Logic/AI/`
-- New tests under `src/OpenSage.Game.Tests/Logic/AI/`
+- New files under `src/Panopticon.Simulation/Logic/AI/`
+- New tests under `test/Panopticon.Simulation.Tests/Logic/AI/`
 
 ## Acceptance criteria
 

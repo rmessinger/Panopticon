@@ -319,19 +319,19 @@ same C4c `ImportedAnimation` conversion:
 Current gaps:
 
 - `NifHeader` accepts only 10.1.0.0 with user version 0 at
-  `src/OpenSage.FileFormats.Nif/NifHeader.cs:19-43`.
+  `src/Panopticon.FileFormats.Nif/NifHeader.cs:19-43`.
 - `NifHeader` always reads user version before num blocks at
-  `src/OpenSage.FileFormats.Nif/NifHeader.cs:39-50`, which misreads 10.0.1.0.
+  `src/Panopticon.FileFormats.Nif/NifHeader.cs:39-50`, which misreads 10.0.1.0.
 - `NifFile.Read` assumes a leading `u32 0` for every block and a fixed `(1, 0)` footer at
-  `src/OpenSage.FileFormats.Nif/NifFile.cs:27-46`.
+  `src/Panopticon.FileFormats.Nif/NifFile.cs:27-46`.
 - `NifFile.ReadBlock` lacks all C4c KF block types at
-  `src/OpenSage.FileFormats.Nif/NifFile.cs:118-154` until C4c lands.
+  `src/Panopticon.FileFormats.Nif/NifFile.cs:118-154` until C4c lands.
 - `NifModelImporter` currently resolves only model entries and produces a default skeleton at
-  `src/OpenSage.Game/Content/Importing/Nif/NifModelImporter.cs:38-59`; C4c changes that before
+  `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs:38-59`; C4c changes that before
   C4i conversion can run.
 - C4 rest-offset and identity-scale precedent live in
-  `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs:121-128` and
-  `src/OpenSage.Game/Content/Importing/Gltf/GltfAnimationConverter.cs:211-229`.
+  `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs:121-128` and
+  `src/Panopticon.Simulation/Content/Importing/Gltf/GltfAnimationConverter.cs:211-229`.
 
 ## 8. Failure contract
 
@@ -446,12 +446,12 @@ sequenceDiagram
 
 ## Appendix: current-code grounding
 
-- Single-version header gate: `src/OpenSage.FileFormats.Nif/NifHeader.cs:19-43`.
-- Current user-version and block-table parse: `src/OpenSage.FileFormats.Nif/NifHeader.cs:39-77`.
-- Current fixed block leading word and fixed footer: `src/OpenSage.FileFormats.Nif/NifFile.cs:27-46`.
-- Current block dispatch before C4c: `src/OpenSage.FileFormats.Nif/NifFile.cs:118-154`.
-- Reference validation and root discovery: `src/OpenSage.FileFormats.Nif/NifFile.cs:157-312`.
-- Current NIF model importer path and default skeleton: `src/OpenSage.Game/Content/Importing/Nif/NifModelImporter.cs:38-59` and `:72-78`.
+- Single-version header gate: `src/Panopticon.FileFormats.Nif/NifHeader.cs:19-43`.
+- Current user-version and block-table parse: `src/Panopticon.FileFormats.Nif/NifHeader.cs:39-77`.
+- Current fixed block leading word and fixed footer: `src/Panopticon.FileFormats.Nif/NifFile.cs:27-46`.
+- Current block dispatch before C4c: `src/Panopticon.FileFormats.Nif/NifFile.cs:118-154`.
+- Reference validation and root discovery: `src/Panopticon.FileFormats.Nif/NifFile.cs:157-312`.
+- Current NIF model importer path and default skeleton: `src/Panopticon.Simulation/Content/Importing/Nif/NifModelImporter.cs:38-59` and `:72-78`.
 - C1 channel target and C2 binding context: [C1](c1-import-abstraction.md#2-interchange-model) and
   [C2](c2-skeleton-animation-retargeting.md#3-channel-target-contract).
 - C4c conversion source of truth: [C4c sections 3 to 6](c4c-ee2-rigid-animation.md#3-kf-10100-wire-layout).

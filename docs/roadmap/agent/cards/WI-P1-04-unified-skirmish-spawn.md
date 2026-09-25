@@ -19,16 +19,16 @@ that the multiplayer branch uses, for every non-neutral player. Replace the ad-h
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Game.cs:717-802`: `StartGame()`: focus on lines 745-763 (the MP-only
+- `src/Panopticon.Simulation/Game.cs:717-802`: `StartGame()`: focus on lines 745-763 (the MP-only
   guard for starting buildings + camera) and 722-743 (player loop before the guard).
-- `src/OpenSage.Game/Scene3D.cs:430-455`: `CreateSkirmishPlayerStartingBuilding(...)`: takes a
+- `src/Panopticon.Simulation/Scene3D.cs:430-455`: `CreateSkirmishPlayerStartingBuilding(...)`: takes a
   `Player` and index, looks up `Player{i}_Start` waypoint, creates starting building + units.
-- `src/OpenSage.Game/Logic/PlayerManager.cs:39-46`: current `LocalPlayer` selection: falls back to
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs:39-46`: current `LocalPlayer` selection: falls back to
   `_players[2]` when `isLocalForMultiplayer` not set. This is the ad-hoc indexing to fix.
-- `src/OpenSage.Game/Logic/PlayerSettings.cs:17-36`: `PlayerSetting.IsLocalForMultiplayer` flag.
-- `src/OpenSage.Game/Network/SkirmishManager.cs:55-93`: how `PlayerSetting.IsLocalForMultiplayer`
+- `src/Panopticon.Simulation/Logic/PlayerSettings.cs:17-36`: `PlayerSetting.IsLocalForMultiplayer` flag.
+- `src/Panopticon.Simulation/Network/SkirmishManager.cs:55-93`: how `PlayerSetting.IsLocalForMultiplayer`
   is already set for the human slot in the lobby path.
-- `src/OpenSage.Game/Scripting/Waypoints.cs:76-81`: `TryGetPlayerStart(int playerIndex)`.
+- `src/Panopticon.Simulation/Scripting/Waypoints.cs:76-81`: `TryGetPlayerStart(int playerIndex)`.
 
 ## Steps
 
@@ -50,8 +50,8 @@ that the multiplayer branch uses, for every non-neutral player. Replace the ad-h
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Game.cs`: spawn path guard (`~line 745-763`).
-- `src/OpenSage.Game/Logic/PlayerManager.cs`: `LocalPlayer` selection (`~line 39-46`).
+- `src/Panopticon.Simulation/Game.cs`: spawn path guard (`~line 745-763`).
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs`: `LocalPlayer` selection (`~line 39-46`).
 
 ## Acceptance criteria
 

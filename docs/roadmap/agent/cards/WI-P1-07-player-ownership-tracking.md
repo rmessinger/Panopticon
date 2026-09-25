@@ -20,16 +20,16 @@ can be implemented.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Logic/Player.cs:92-104`: existing `OwnedObjects`, `BuildingCount`,
+- `src/Panopticon.Simulation/Logic/Player.cs:92-104`: existing `OwnedObjects`, `BuildingCount`,
   `UnitCount` (or equivalents) if present. Identify what already exists vs. what is missing.
   If there is nothing, you are adding from scratch.
-- `src/OpenSage.Game/Logic/Object/GameObject.cs`: look for `Owner` property (the `Player`
+- `src/Panopticon.Simulation/Logic/Object/GameObject.cs`: look for `Owner` property (the `Player`
   that owns this object), `OnDie` or death-notification event/method, and any
   `Destroy`/dispose lifecycle hook. Note the exact names/signatures.
-- `src/OpenSage.Game/Logic/Object/GameObjectCollection.cs` (or equivalent): how objects
+- `src/Panopticon.Simulation/Logic/Object/GameObjectCollection.cs` (or equivalent): how objects
   are added to and removed from the live collection; identify the hooks where ownership
   tracking can be wired (object creation + destruction).
-- `src/OpenSage.Game/Logic/PlayerManager.cs:50-76`: `CreatePlayers()`: the earliest point
+- `src/Panopticon.Simulation/Logic/PlayerManager.cs:50-76`: `CreatePlayers()`: the earliest point
   at which `Player` instances exist; confirm `OwnedObjects` should be initialized here or
   on the `Player` ctor.
 
@@ -58,7 +58,7 @@ can be implemented.
    to the new owner's set, maintaining counts on both sides. If no setter exists yet, skip
    this and note it as a follow-up.
 
-5. Verify with a unit test: add a `[Fact]` to `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs`
+5. Verify with a unit test: add a `[Fact]` to `test/Panopticon.Simulation.Tests/Logic/PlayerOwnershipTests.cs`
    (new file) that:
    - Creates a `Player` and a mock/stub `GameObject` owned by it.
    - Simulates the create hook and asserts `OwnedObjects.Count == 1`.
@@ -67,10 +67,10 @@ can be implemented.
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/Player.cs`: add `OwnedObjects`, `BuildingCount`, `UnitCount`.
-- `src/OpenSage.Game/Logic/Object/GameObjectCollection.cs` (or `GameObject.cs`): create/
+- `src/Panopticon.Simulation/Logic/Player.cs`: add `OwnedObjects`, `BuildingCount`, `UnitCount`.
+- `src/Panopticon.Simulation/Logic/Object/GameObjectCollection.cs` (or `GameObject.cs`): create/
   destroy hooks.
-- `src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs` (new test file).
+- `test/Panopticon.Simulation.Tests/Logic/PlayerOwnershipTests.cs` (new test file).
 
 ## Acceptance criteria
 
@@ -115,4 +115,4 @@ Done (commit 8518ed49, "Track per-player owned objects"). `Player.OwnedObjects`
 `GameLogic.cs` calls `gameObject.Owner?.AddOwnedObject(gameObject)` on object registration and
 `gameObject.Owner?.RemoveOwnedObject(gameObject)` on removal/death. Transfer-on-owner-reassignment
 (step 4, optional) was completed separately by `WI-P1-11`. Covered by
-`src/OpenSage.Game.Tests/Logic/PlayerOwnershipTests.cs`.
+`test/Panopticon.Simulation.Tests/Logic/PlayerOwnershipTests.cs`.

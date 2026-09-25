@@ -1,0 +1,140 @@
+using System.Collections.Generic;
+using Panopticon.Mathematics;
+
+namespace Panopticon.Logic.Object;
+
+public sealed class WeaponSet : IPersistableObject
+{
+    private readonly GameObject _gameObject;
+    private readonly IGameEngine _gameEngine;
+    private readonly Weapon[] _weapons;
+    private WeaponTemplateSet _currentWeaponTemplateSet;
+    private WeaponSlot _currentWeaponSlot;
+    private uint _unknown1;
+    private uint _filledWeaponSlots;
+    private WeaponAntiFlags _combinedAntiMask;
+    private uint _unknown2;
+    private bool _unknown3;
+    private bool _unknown4;
+    private BitArray<DamageType> _damageTypes = new();
+
+    internal Weapon CurrentWeapon => _weapons[(int)_currentWeaponSlot];
+    public IEnumerable<Weapon> Weapons => _weapons;
+
+    internal WeaponSet(GameObject gameObject, IGameEngine gameEngine)
+    {
+        _gameObject = gameObject;
+        _gameEngine = gameEngine;
+
+        _weapons = new Weapon[WeaponTemplateSet.NumWeaponSlots];
+    }
+
+    internal void Update()
+    {
+        if (!_gameObject.Definition.WeaponSets.TryGetValue(_gameObject.WeaponSetConditions, out var weaponTemplateSet))
+        {
+            return;
+        }
+
+        if (_currentWeaponTemplateSet == weaponTemplateSet)
+        {
+            return;
+        }
+
+        _currentWeaponTemplateSet = weaponTemplateSet;
+
+        _currentWeaponSlot = WeaponSlot.Primary;
+
+        _filledWeaponSlots = 0;
+        _combinedAntiMask = WeaponAntiFlags.None;
+
+        for (var i = 0; i < _weapons.Length; i++)
+        {
+            var weaponTemplate = _currentWeaponTemplateSet.Slots[i]?.Weapon.Value;
+            if (weaponTemplate != null)
+            {
+                _weapons[i] = new Weapon(_gameObject, weaponTemplate, (WeaponSlot)i, _gameEngine);
+
+                _filledWeaponSlots |= (uint)(1 << i);
+                _combinedAntiMask |= weaponTemplate.AntiMask;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Assigns a warhead weapon template to the primary weapon slot.
+    /// Called for projectile objects that carry a warhead supplied by their launcher.
+    /// Subsequent <see cref="Update"/> calls will not overwrite this weapon as long as
+    /// the object's weapon-set conditions do not change.
+    /// </summary>
+    internal void SetWarhead(WeaponTemplate warheadTemplate)
+    {
+        _weapons[(int)WeaponSlot.Primary] = new Weapon(_gameObject, warheadTemplate, WeaponSlot.Primary, _gameEngine);
+        _currentWeaponSlot = WeaponSlot.Primary;
+    }
+
+    public void Persist(StatePersister reader)
+    {
+        reader.PersistVersion(1);
+
+        var objectDefinitionName = _currentWeaponTemplateSet?.ObjectDefinition.Name;
+        reader.PersistAsciiString(ref objectDefinitionName);
+
+        var conditions = _currentWeaponTemplateSet?.Conditions ?? new BitArray<WeaponSetConditions>();
+        reader.PersistBitArray(ref conditions);
+
+        if (reader.Mode == StatePersistMode.Read)
+        {
+            _currentWeaponTemplateSet = _gameObject.Definition.WeaponSets[conditions];
+        }
+
+        // In Generals there are 3 possible weapons.
+        // Later games have up to 5.
+        reader.BeginArray("Weapons");
+        for (var i = 0; i < 3; i++)
+        {
+            reader.BeginObject();
+
+            var slotFilled = _weapons[i] != null;
+            reader.PersistBoolean(ref slotFilled);
+            if (slotFilled)
+            {
+                if (reader.Mode == StatePersistMode.Read)
+                {
+                    _weapons[i] = new Weapon(
+                        _gameObject,
+                        _currentWeaponTemplateSet.Slots[i].Weapon.Value,
+                        (WeaponSlot)i, _gameEngine);
+                }
+
+                reader.PersistObject(_weapons[i], "Value");
+            }
+            else
+            {
+                _weapons[i] = null;
+            }
+
+            reader.EndObject();
+        }
+
+        reader.EndArray();
+
+        reader.PersistEnum(ref _currentWeaponSlot);
+        reader.PersistUInt32(ref _unknown1);
+        reader.PersistUInt32(ref _filledWeaponSlots);
+        reader.PersistEnumFlags(ref _combinedAntiMask);
+
+        if (reader.SageGame == SageGame.CncGenerals)
+        {
+            reader.PersistUInt32(ref _unknown2);
+        }
+
+        reader.PersistBoolean(ref _unknown3);
+        reader.PersistBoolean(ref _unknown4);
+
+        if (reader.SageGame == SageGame.CncGeneralsZeroHour)
+        {
+            reader.PersistBitArray(ref _damageTypes);
+        }
+    }
+}

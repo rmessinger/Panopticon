@@ -18,12 +18,12 @@ deterministic textured captures, and that the negative fixtures fail per contrac
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4d-ee2-skinned-animation.md` sections 2, 9, and 11.
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2NifImportTests.cs` and
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2NifImportTests.cs` and
   `Ee2KfAnimationImportTests.cs`.
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`.
-- `src/OpenSage.Tools.TestHarness/StandaloneModelCapture.cs:41-95`.
-- `src/OpenSage.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`.
+- `src/Panopticon.Tools.TestHarness/StandaloneModelCapture.cs:41-95`.
+- `src/Panopticon.Tools.TestHarness/ExternalModels/ExternalModelSceneRenderer.cs:100-120`.
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`.
 
 ## Steps
 
@@ -45,9 +45,9 @@ deterministic textured captures, and that the negative fixtures fail per contrac
 
 ## Files likely to change
 
-- `src/OpenSage.Game.Tests/Content/Importing/Ee2SkinnedImportTests.cs` (new)
-- `src/OpenSage.Tools.TestHarness/Ee2NifProofScenario.cs`
-- `src/OpenSage.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
+- `test/Panopticon.Simulation.Tests/Content/Importing/Ee2SkinnedImportTests.cs` (new)
+- `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs`
+- `test/Panopticon.Tools.ReplaySketch.Tests/Ee2NifProofScenarioTests.cs`
 
 ## Acceptance criteria
 
@@ -65,7 +65,7 @@ EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
   dotnet test src --filter "FullyQualifiedName~Ee2SkinnedImportTests"
 CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 EMPIRE_EARTH_II_PATH="/path/to/Empire Earth II Gold" \
-  dotnet run --project src/OpenSage.Tools.TestHarness -- --headless --built-in-scenario Ee2NifProof
+  dotnet run --project src/Panopticon.Tools.TestHarness -- --headless --built-in-scenario Ee2NifProof
 dotnet build src
 dotnet test src --filter Category!=Interactive
 dotnet format src --verify-no-changes

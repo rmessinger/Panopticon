@@ -36,13 +36,13 @@ Bomber without adding an LOD concept to C1.
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/Blocks/NifLodNode.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifSwitchNode.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifLodData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifRangeLodData.cs` (new)
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifLodTests.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifLodNode.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifSwitchNode.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifLodData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifRangeLodData.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifLodTests.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
 
 ## Acceptance criteria
 

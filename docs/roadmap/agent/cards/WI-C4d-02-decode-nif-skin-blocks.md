@@ -18,11 +18,11 @@ consumption and validated references, replacing the C4a blanket rejection of ski
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/c4d-ee2-skinned-animation.md` sections 6 and 10.
-- `src/OpenSage.FileFormats.Nif/NifFile.cs:118-160` and `162-330`.
-- `src/OpenSage.FileFormats.Nif/Blocks/NifGeometry.cs` and `NifKeyframeController.cs` (block
+- `src/Panopticon.FileFormats.Nif/NifFile.cs:118-160` and `162-330`.
+- `src/Panopticon.FileFormats.Nif/Blocks/NifGeometry.cs` and `NifKeyframeController.cs` (block
   record pattern).
-- `src/OpenSage.FileFormats.Nif/NifBinaryReader.cs`.
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs` and `NifSceneGraphTests.cs`.
+- `src/Panopticon.FileFormats.Nif/NifBinaryReader.cs`.
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs` and `NifSceneGraphTests.cs`.
 
 ## Steps
 
@@ -46,12 +46,12 @@ consumption and validated references, replacing the C4a blanket rejection of ski
 
 ## Files likely to change
 
-- `src/OpenSage.FileFormats.Nif/NifFile.cs`
-- `src/OpenSage.FileFormats.Nif/Blocks/NifSkinInstance.cs` (new)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifSkinData.cs` (new, with `NifSkinBoneData`)
-- `src/OpenSage.FileFormats.Nif/Blocks/NifSkinPartition.cs` (new)
-- `src/OpenSage.Game.Tests/Data/Nif/NifTestDataBuilder.cs`
-- `src/OpenSage.Game.Tests/Data/Nif/NifSkinTests.cs` (new)
+- `src/Panopticon.FileFormats.Nif/NifFile.cs`
+- `src/Panopticon.FileFormats.Nif/Blocks/NifSkinInstance.cs` (new)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifSkinData.cs` (new, with `NifSkinBoneData`)
+- `src/Panopticon.FileFormats.Nif/Blocks/NifSkinPartition.cs` (new)
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifTestDataBuilder.cs`
+- `test/Panopticon.Simulation.Tests/Data/Nif/NifSkinTests.cs` (new)
 
 ## Acceptance criteria
 
@@ -73,7 +73,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not convert skins or touch `OpenSage.Game` importer code beyond moving the rejection
+- Do not convert skins or touch `Panopticon.Simulation` importer code beyond moving the rejection
   message into `NifSceneConverter`.
 - Do not interpret partition data.
 - Do not commit EE2 asset bytes.

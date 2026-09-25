@@ -19,7 +19,7 @@ registry without duplicating importer contracts.
 
 - Completed C1 deep dive and importer implementation.
 - `docs/roadmap/implementation/track-a-a4-experiment-seams.md`.
-- `src/OpenSage.Game/Content/OnDemandAssetLoadStrategy.cs`.
+- `src/Panopticon.Simulation/Content/OnDemandAssetLoadStrategy.cs`.
 - C1 importer factory and W3D adapter tests.
 - A4 implementation registry from `WI-A4-38`.
 

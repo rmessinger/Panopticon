@@ -1,0 +1,57 @@
+{
+  // GLA Toxin Truck spraying its toxin stream (primary weapon, range 100) at Redguard infantry
+  // 70 units out. Stream weapon: the camera follows the truck, not a projectile. Run with:
+  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-vehicle-toxin-truck.json
+  "Name": "vehicle-toxin-truck",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 60,
+  "SettleFrames": 5,
+  "CaptureStride": 2,
+  "HideHud": true,
+  "Players": [
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "truck",
+      "Definition": "GLAVehicleToxinTruck",
+      "Owner": "gla",
+      "X": 480,
+      "Y": 640,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "target",
+      "Definition": "ChinaInfantryRedguard",
+      "Owner": "china",
+      "X": 550,
+      "Y": 640,
+      "FacingDegrees": 180,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowActorId": "truck",
+    "SubjectActorIds": [ "truck" ],
+    "DesiredSpanFraction": 0.5,
+    "InitialCameraHeight": 110,
+    "MinCameraHeight": 50,
+    "MaxCameraHeight": 400
+  },
+  "Commands": [
+    {
+      "Type": "Attack",
+      "Frame": 0,
+      "SourceActorId": "truck",
+      "TargetActorId": "target"
+    }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" }
+  ],
+  "StopWhenActorDestroyed": null
+}

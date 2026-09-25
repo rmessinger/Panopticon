@@ -22,9 +22,9 @@ consume it, so a scenario round-trips from file to run.
 - `docs/roadmap/deep-dives/a5-visualization.md` §3.1, §3.2, §3.4, §6 (A5-1 row), §8.
 - `docs/roadmap/deep-dives/p0-playable-baseline-harness.md` §8: the existing scenario and command
   model this extends. A5-1 builds on P0; it does not replace it.
-- `src/OpenSage.Tools.ReplaySketch.Core/`: the existing scenario, command, and assertion types, and
+- `src/Panopticon.Tools.ReplaySketch.Core/`: the existing scenario, command, and assertion types, and
   their JSON serialization conventions.
-- `src/OpenSage.Game/SimulationHost.cs`: produced by `WI-A1-06`; the consumer.
+- `src/Panopticon.Simulation/SimulationHost.cs`: produced by `WI-A1-06`; the consumer.
 
 ## Steps
 
@@ -42,8 +42,8 @@ consume it, so a scenario round-trips from file to run.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/` (scenario type extension and loader)
-- `src/OpenSage.Tools.ReplaySketch.Tests/` or `src/OpenSage.Game.Tests/` (new test file)
+- `src/Panopticon.Tools.ReplaySketch.Core/` (scenario type extension and loader)
+- `test/Panopticon.Tools.ReplaySketch.Tests/` or `test/Panopticon.Simulation.Tests/` (new test file)
 
 ## Acceptance criteria
 

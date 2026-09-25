@@ -17,8 +17,8 @@ host-facing API and verifies their domain-specific outputs.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/SimulationHost.cs`.
-- Domain contracts and both adapters under `src/OpenSage.Game/Simulation/`.
+- `src/Panopticon.Simulation/SimulationHost.cs`.
+- Domain contracts and both adapters under `src/Panopticon.Simulation/Simulation/`.
 - Existing host and transport-domain tests.
 - `docs/roadmap/implementation-checklist.md`: A4-1 acceptance criterion.
 
@@ -31,7 +31,7 @@ host-facing API and verifies their domain-specific outputs.
 
 ## Files likely to change
 
-- New test under `src/OpenSage.Game.Tests/Simulation/`
+- New test under `test/Panopticon.Simulation.Tests/Simulation/`
 
 ## Acceptance criteria
 

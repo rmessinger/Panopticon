@@ -1,0 +1,59 @@
+{
+  // Follow-camera example: a GLA Scorpion drives ~100 units east while the camera pans to keep
+  // it centered (initial AutoFit framing, then rigid centering at fixed height every logic
+  // frame). A second, stationary Scorpion marks the start line and visibly drifts out of frame
+  // as the camera tracks the mover. Run with:
+  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-follow-move.json
+  "Name": "follow-move",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 90,
+  "SettleFrames": 5,
+  "CaptureStride": 2,
+  "HideHud": true,
+  "Players": [
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" }
+  ],
+  "Actors": [
+    {
+      "Id": "mover",
+      "Definition": "GLATankScorpion",
+      "Owner": "gla",
+      "X": 470,
+      "Y": 700,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    },
+    {
+      "Id": "marker",
+      "Definition": "GLATankScorpion",
+      "Owner": "gla",
+      "X": 470,
+      "Y": 780,
+      "FacingDegrees": 0,
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Follow",
+    "FollowActorId": "mover",
+    "SubjectActorIds": [ "mover" ],
+    "DesiredSpanFraction": 0.45,
+    "InitialCameraHeight": 140,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 400
+  },
+  "Commands": [
+    {
+      "Type": "Move",
+      "Frame": 0,
+      "ActorId": "mover",
+      "X": 570,
+      "Y": 700
+    }
+  ],
+  "Expectations": [
+    { "Type": "MinDisplacement", "ActorId": "mover", "MinDisplacement": 80 }
+  ],
+  "StopWhenActorDestroyed": null
+}

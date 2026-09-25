@@ -11,14 +11,14 @@
 ## Purpose
 
 Vanilla Generals draws tracers through `Tracer` nuggets inside weapon `FireFX` FXLists
-(66 uses in `INI.big`, e.g. `WeaponFX_GenericMachineGunFireWithRedTracers`). OpenSAGE parses
+(66 uses in `INI.big`, e.g. `WeaponFX_GenericMachineGunFireWithRedTracers`). Panopticon parses
 the nugget data but never renders it: `TracerFXNugget.Execute` inherits the base no-op
-(`src/OpenSage.Game/FX/FXNugget.cs`), so every applicable weapon currently fires without a
+(`src/Panopticon.Simulation/FX/FXNugget.cs`), so every applicable weapon currently fires without a
 visual streak. This plan closes that gap with the least machinery.
 
 ## Current state
 
-- Data layer complete: `TracerFXNugget` (`src/OpenSage.Game/FX/FXNuggets/TracerFXNugget.cs`)
+- Data layer complete: `TracerFXNugget` (`src/Panopticon.Simulation/FX/FXNuggets/TracerFXNugget.cs`)
   parses `Color`, `DecayAt`, `Length`, `Probability`, `Speed`, `Width`, matching the shipped
   INI field set exactly. Shared nugget gates (`Weather`, `OnlyIfOnLand`,
   `RequiredSourceModelConditions`, `ExcludedSourceModelConditions`) already apply.

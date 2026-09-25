@@ -9,7 +9,7 @@ Implements the C4h row of [Track C](../track-c-external-assets.md). Design sourc
 ## Scope
 
 Import DDF-bound EE2 legacy `NiParticles` effects from `fx_*` NIFs, convert the supported subset
-into C1-style particle effect interchange, materialize it onto the existing OpenSAGE particle
+into C1-style particle effect interchange, materialize it onto the existing Panopticon particle
 runtime, and capture deterministic explosion, muzzle-smoke, and water-splash proofs. Newer
 `NiPSys*` blocks are absent from the measured EE2 corpus and fail explicitly.
 
@@ -31,7 +31,7 @@ Card 5 follows card 4. Card 6 is the completion point.
 
 ## Agent context
 
-- Parser boundary: legacy particle blocks join `OpenSage.FileFormats.Nif`; `NiPSys*` names are
+- Parser boundary: legacy particle blocks join `Panopticon.FileFormats.Nif`; `NiPSys*` names are
   registered as unsupported with explicit tests because EE2 `fx_*` NIFs do not use them.
 - Import boundary: `ImportedParticleEffect` and child values are CPU-only C1-style types. The NIF
   importer returns those values and never creates live particle systems.

@@ -246,7 +246,7 @@ classDiagram
 > require reading this section.
 
 - No outcome logic. No meaningful matches for `Victory|Defeat|GameOver|EndGame|IsDefeated|WinLose`
-  in `src/OpenSage.Game` beyond order plumbing/enum references; there is no win/lose controller.
+  in `src/Panopticon.Simulation` beyond order plumbing/enum references; there is no win/lose controller.
 - `OrderType.EndGame` exists but is unhandled. It is defined in
   `Logic/Orders/OrderType.cs`, but `OrderProcessor.Process(...)`
   (`Logic/Orders/OrderProcessor.cs`) has no `EndGame` handler; the default path logs

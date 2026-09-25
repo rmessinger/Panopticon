@@ -18,13 +18,13 @@ stage before any change is made. Read-only: no code changes.
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:138-158`: the 2D pass, including the size
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:138-158`: the 2D pass, including the size
   and sampler passed to `DrawingContext2D.Begin`.
-- `src/OpenSage.Game/Gui/DrawingContext2D.cs:12-60`: the constructor, its `SpriteBatch`, and `Begin`.
-- `src/OpenSage.Game/Gui/Wnd/WndWindowManager.cs`: where it receives its size and how it lays out.
-- `src/OpenSage.Game/Gui/Apt/AptWindowManager.cs`: the same, plus its size-dependent resource
+- `src/Panopticon.Simulation/Gui/DrawingContext2D.cs:12-60`: the constructor, its `SpriteBatch`, and `Begin`.
+- `src/Panopticon.Simulation/Gui/Wnd/WndWindowManager.cs`: where it receives its size and how it lays out.
+- `src/Panopticon.Simulation/Gui/Apt/AptWindowManager.cs`: the same, plus its size-dependent resource
   creation.
-- `src/OpenSage.Game/GamePanel.cs` and `src/OpenSage.Game/GameWindow.cs:37-58`: `ClientBounds`,
+- `src/Panopticon.Simulation/GamePanel.cs` and `src/Panopticon.Simulation/GameWindow.cs:37-58`: `ClientBounds`,
   `WindowScale`, and `CursorScale`, which are the sizes those managers consume.
 - `docs/roadmap/implementation/track-g-g1-high-dpi.md`: the G1 consumer classification, since G9's
   layout must stay in logical points while its drawing moves to pixels.

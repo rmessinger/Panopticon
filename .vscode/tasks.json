@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/OpenSage.Launcher/OpenSage.Launcher.csproj"
+                "${workspaceFolder}/src/Panopticon.Launcher/Panopticon.Launcher.csproj"
             ],
             "problemMatcher": "$tsc"
         },
@@ -17,7 +17,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/OpenSage.Tools.TestHarness/OpenSage.Tools.TestHarness.csproj"
+                "${workspaceFolder}/src/Panopticon.Tools.TestHarness/Panopticon.Tools.TestHarness.csproj"
             ],
             "problemMatcher": "$tsc"
         },
@@ -33,7 +33,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/src/OpenSage.Launcher/OpenSage.Launcher.csproj"
+                "${workspaceFolder}/src/Panopticon.Launcher/Panopticon.Launcher.csproj"
             ],
             "problemMatcher": "$tsc"
         },
@@ -44,7 +44,7 @@
             "args": [
                 "watch",
                 "run",
-                "${workspaceFolder}/src/OpenSage.Launcher/OpenSage.Launcher.csproj"
+                "${workspaceFolder}/src/Panopticon.Launcher/Panopticon.Launcher.csproj"
             ],
             "problemMatcher": "$tsc"
         }

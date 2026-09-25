@@ -22,16 +22,16 @@ layout keeps receiving logical points, splitting the single size value that
   `docs/roadmap/implementation/track-g-g1-high-dpi.md` (produced by `WI-G1-01`): the authoritative
   list of which consumer needs which space.
 - `docs/roadmap/deep-dives/g1-high-dpi-resolution.md` §3: the design and its two consequences.
-- `src/OpenSage.Game/GamePanel.cs`: `Frame`, `ClientBounds`, `EnsureFrame`.
-- `src/OpenSage.Game/Game.cs:630-645,666-683`: the `EnsureFrame` call and `OnPanelSizeChanged`.
-- `src/OpenSage.Launcher/Program.cs:340-350` and
-  `src/OpenSage.Tools.TestHarness/Program.cs:395-410,450-460`: the other `EnsureFrame` call sites.
+- `src/Panopticon.Simulation/GamePanel.cs`: `Frame`, `ClientBounds`, `EnsureFrame`.
+- `src/Panopticon.Simulation/Game.cs:630-645,666-683`: the `EnsureFrame` call and `OnPanelSizeChanged`.
+- `src/Panopticon.Launcher/Program.cs:340-350` and
+  `src/Panopticon.Tools.TestHarness/Program.cs:395-410,450-460`: the other `EnsureFrame` call sites.
 
 ## Steps
 
 1. Change every `Panel.EnsureFrame(window.ClientBounds)` call site to pass
-   `window.DrawableBounds`. There are three: `Game.cs`, `OpenSage.Launcher/Program.cs`, and
-   `OpenSage.Tools.TestHarness/Program.cs` (two calls). Keep the existing null-window fallback in
+   `window.DrawableBounds`. There are three: `Game.cs`, `Panopticon.Launcher/Program.cs`, and
+   `Panopticon.Tools.TestHarness/Program.cs` (two calls). Keep the existing null-window fallback in
    `Game.cs` unchanged.
 2. Add an XML doc comment on `GamePanel.Frame` and `GamePanel.ClientBounds` stating that both are
    now in physical pixels. Do not rename them.
@@ -48,11 +48,11 @@ layout keeps receiving logical points, splitting the single size value that
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Game.cs`
-- `src/OpenSage.Game/GamePanel.cs`
-- `src/OpenSage.Launcher/Program.cs`
-- `src/OpenSage.Tools.TestHarness/Program.cs`
-- `src/OpenSage.Game.Tests/`: new unit test.
+- `src/Panopticon.Simulation/Game.cs`
+- `src/Panopticon.Simulation/GamePanel.cs`
+- `src/Panopticon.Launcher/Program.cs`
+- `src/Panopticon.Tools.TestHarness/Program.cs`
+- `test/Panopticon.Simulation.Tests/`: new unit test.
 
 ## Acceptance criteria
 

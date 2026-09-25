@@ -30,7 +30,7 @@ decoupled from the windowed `TestHarness`.
 ### Library surface (the callable unit)
 
 - `HeadlessRunner.RunAndAssert(ReplayScenario scenario, MapMetadataService map, AssertionSet assertions, RunOptions options) -> AssertionReport`
-  (Core or a new `OpenSage.Tools.ReplaySketch.Core` service), which:
+  (Core or a new `Panopticon.Tools.ReplaySketch.Core` service), which:
   1. exports the scenario to a temp `.rep` + deferred actions via `ReplayExporter.Export`;
   2. boots a headless `Game` with `Configuration { NoAudio = true }` and no window : extract the
      boot/loop from `TestHarness/Program.cs:195-268` into a reusable, renderer-optional runner
@@ -62,7 +62,7 @@ decoupled from the windowed `TestHarness`.
 
 ### End-to-end test (the second checklist item)
 
-- A test in `OpenSage.Game.Tests` (extends `MockedGameTest`/headless boot, `Category!=Interactive`)
+- A test in `Panopticon.Simulation.Tests` (extends `MockedGameTest`/headless boot, `Category!=Interactive`)
   that programmatically authors a multi-command scenario (e.g. build → produce → move → attack),
   attaches state + invariant assertions (money never negative; a unit was produced), calls
   `RunAndAssert`, and asserts the returned report is all-pass. This is the standing "harness works"
@@ -77,12 +77,12 @@ decoupled from the windowed `TestHarness`.
 
 | File | Change |
 |---|---|
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/HeadlessRunner.cs` | NEW : `RunAndAssert` library entry point (renderer-optional boot/loop) |
-| `src/OpenSage.Tools.ReplaySketch.Core/Services/RunOptions.cs` | NEW : run options |
-| `src/OpenSage.Tools.TestHarness/Program.cs` | Refactor `RunHeadless` to call the shared runner with `render = true`; add the CLI `run` verb (or a sibling CLI) |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/HeadlessRunner.cs` | NEW : `RunAndAssert` library entry point (renderer-optional boot/loop) |
+| `src/Panopticon.Tools.ReplaySketch.Core/Services/RunOptions.cs` | NEW : run options |
+| `src/Panopticon.Tools.TestHarness/Program.cs` | Refactor `RunHeadless` to call the shared runner with `render = true`; add the CLI `run` verb (or a sibling CLI) |
 | `docs/roadmap/deep-dives/p0-playable-baseline-harness.md` | Document the CLI invocation + exit-code/report contract |
 | `docs/roadmap/agent/README.md` | Note the run-and-assert command as the harness entry point for cheap agents |
-| `src/OpenSage.Game.Tests/Tools/ReplaySketch/ReplaySketchEndToEndTests.cs` | NEW : the end-to-end authored-scenario test |
+| `test/Panopticon.Simulation.Tests/Tools/ReplaySketch/ReplaySketchEndToEndTests.cs` | NEW : the end-to-end authored-scenario test |
 
 ## Tests
 

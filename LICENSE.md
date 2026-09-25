@@ -1,6 +1,6 @@
-OpenSAGE code itself is licensed under the GPL V3 license; the full text can be found below.
+Panopticon code itself is licensed under the GPL V3 license; the full text can be found below.
 
-However, OpenSAGE includes code ported from EA's Command & Conquer Generals and 
+However, Panopticon includes code ported from EA's Command & Conquer Generals and 
 Command & Conquer Generals Zero Hour source code. That code was released under the GPL V3 license
 with some additional terms; the full text of that license and additional terms are in 
 [LICENSE-EA.md](LICENSE-EA.md). Since that is the most restrictive license, that is the one

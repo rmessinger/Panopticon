@@ -18,16 +18,16 @@ reporting gaps and timeouts distinctly from measured durations.
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/p9-unit-validation-ground.md`, §2.5 (timeout versus regression) and §2.6.
-- `src/OpenSage.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs`: the report shape from
+- `src/Panopticon.Tools.ReplaySketch.Core/Model/ValidationGroundReport.cs`: the report shape from
   `WI-P9-04`.
-- `src/OpenSage.Tools.TestHarness/ActionResultsWriter.cs`: the existing results-writing pattern in
+- `src/Panopticon.Tools.TestHarness/ActionResultsWriter.cs`: the existing results-writing pattern in
   this tool; follow it rather than inventing a second output style.
 - `docs/roadmap/deep-dives/p6b-unit-contract-validation.md`, §2.3: the P6b gap-reporting convention
   this output follows.
 
 ## Steps
 
-1. Add a report writer in `src/OpenSage.Tools.ReplaySketch.Core/Services/` producing a fixed-width
+1. Add a report writer in `src/Panopticon.Tools.ReplaySketch.Core/Services/` producing a fixed-width
    stdout table with one row per roster unit: unit, faction, action kind, measured frames, baseline
    frames, delta, verdict.
 2. Render a timeout row with an explicit timeout verdict and no measured duration, never as a zero or
@@ -43,8 +43,8 @@ reporting gaps and timeouts distinctly from measured durations.
 
 ## Files likely to change
 
-- `src/OpenSage.Tools.ReplaySketch.Core/Services/ValidationGroundReportWriter.cs` (new)
-- `src/OpenSage.Tools.TestHarness/Program.cs` (call the writer at the end of both loops)
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/ValidationGroundReportWriter.cs` (new)
+- `src/Panopticon.Tools.TestHarness/Program.cs` (call the writer at the end of both loops)
 
 ## Acceptance criteria
 

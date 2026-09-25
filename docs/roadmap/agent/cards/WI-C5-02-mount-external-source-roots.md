@@ -21,13 +21,13 @@ model and animation roots isolated from each other and from game assets.
 
 - `docs/roadmap/deep-dives/c5-external-model-tooling.md` sections 3, 5, and 8.
 - `docs/roadmap/deep-dives/c4-gltf-importer.md` section 3.
-- `src/OpenSage.IO/FileSystem.cs`.
-- `src/OpenSage.IO/FileSystemEntry.cs`.
-- `src/OpenSage.IO/DiskFileSystem.cs`: disk delegation and case-insensitive lookup.
-- `src/OpenSage.IO/VirtualFileSystem.cs`: existing prefix wrapper and its traversal limitations.
-- `src/OpenSage.Game/Content/Importing/AssetImportContext.cs`.
-- `src/OpenSage.Game/Content/Importing/Gltf/GltfResourceResolver.cs` (new, from `WI-C4-02`).
-- `src/OpenSage.Game/Content/Importing/ExternalFormatSelection.cs` (new, from `WI-C5-01`).
+- `src/Panopticon.IO/FileSystem.cs`.
+- `src/Panopticon.IO/FileSystemEntry.cs`.
+- `src/Panopticon.IO/DiskFileSystem.cs`: disk delegation and case-insensitive lookup.
+- `src/Panopticon.IO/VirtualFileSystem.cs`: existing prefix wrapper and its traversal limitations.
+- `src/Panopticon.Simulation/Content/Importing/AssetImportContext.cs`.
+- `src/Panopticon.Simulation/Content/Importing/Gltf/GltfResourceResolver.cs` (new, from `WI-C4-02`).
+- `src/Panopticon.Simulation/Content/Importing/ExternalFormatSelection.cs` (new, from `WI-C5-01`).
 
 ## Steps
 
@@ -47,9 +47,9 @@ model and animation roots isolated from each other and from game assets.
 
 ## Files likely to change
 
-- `src/OpenSage.IO/ExternalSourceFileSystem.cs` (new)
-- `src/OpenSage.Game/Content/Importing/ExternalAssetSourceMount.cs` (new)
-- `src/OpenSage.Game.Tests/Content/Importing/ExternalSourceFileSystemTests.cs` (new)
+- `src/Panopticon.IO/ExternalSourceFileSystem.cs` (new)
+- `src/Panopticon.Simulation/Content/Importing/ExternalAssetSourceMount.cs` (new)
+- `test/Panopticon.Simulation.Tests/Content/Importing/ExternalSourceFileSystemTests.cs` (new)
 
 ## Acceptance criteria
 

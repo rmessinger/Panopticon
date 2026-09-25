@@ -18,17 +18,17 @@ for each one where it is currently hardcoded and who consumes it. Read-only: no 
 
 ## Context to read (and only this)
 
-- `src/OpenSage.Game/Lod/StaticGameLod.cs:60-135`: the parsed per-level properties, including
+- `src/Panopticon.Simulation/Lod/StaticGameLod.cs:60-135`: the parsed per-level properties, including
   `SampleCount2D`, `SampleCount3D`, `TextureReductionFactor`, `UseAnisotropic`, `UseShadowMapping`,
   `ShadowLOD`.
-- `src/OpenSage.Game/Lod/DynamicGameLod.cs:30-37` and `src/OpenSage.Game/Lod/LodPreset.cs:29-42`.
-- `src/OpenSage.Game/Content/AssetStore.cs`: the `StaticGameLods` and `DynamicGameLods` collection
+- `src/Panopticon.Simulation/Lod/DynamicGameLod.cs:30-37` and `src/Panopticon.Simulation/Lod/LodPreset.cs:29-42`.
+- `src/Panopticon.Simulation/Content/AssetStore.cs`: the `StaticGameLods` and `DynamicGameLods` collection
   registrations.
-- `src/OpenSage.Game/Graphics/Rendering/RenderPipeline.cs:23-25,92-100`: `GameOutputDescription`
+- `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:23-25,92-100`: `GameOutputDescription`
   and the intermediate target creation.
-- `src/OpenSage.Game/Graphics/StandardGraphicsResources.cs:13-48`: the three fixed samplers.
-- `src/OpenSage.Game/Graphics/Rendering/Shadows/ShadowSettings.cs:9-77`: the shadow defaults.
-- `src/OpenSage.Game/Assets/Shaders/Common.h:29-33`: the fixed alpha-test threshold.
+- `src/Panopticon.Simulation/Graphics/StandardGraphicsResources.cs:13-48`: the three fixed samplers.
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs:9-77`: the shadow defaults.
+- `src/Panopticon.Simulation/Assets/Shaders/Common.h:29-33`: the fixed alpha-test threshold.
 
 ## Steps
 

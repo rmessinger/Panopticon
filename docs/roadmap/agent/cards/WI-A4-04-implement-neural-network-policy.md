@@ -25,15 +25,15 @@ explicitly out of scope (separate, later card set per pluggable-ai.md §4/§6).
   feature vector, network shape, and decoding scheme to implement. Follow it precisely; if
   anything in it is ambiguous or incomplete, stop and mark this card `Blocked` rather than
   filling gaps with new design decisions.
-- `src/OpenSage.Game/Logic/AI/IAIDecisionPolicy.cs`, `AIDecisionContext.cs` (from `WI-A4-01`).
-- `src/OpenSage.Game/Logic/AI/AIDecisionPolicyType.cs`, `AIDecisionPolicyFactory.cs` (from
+- `src/Panopticon.Simulation/Logic/AI/IAIDecisionPolicy.cs`, `AIDecisionContext.cs` (from `WI-A4-01`).
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyType.cs`, `AIDecisionPolicyFactory.cs` (from
   `WI-A4-02`): where to register the new type.
-- `src/OpenSage.Game/Logic/AI/RuleBasedAIDecisionPolicy.cs`: the sibling implementation to
+- `src/Panopticon.Simulation/Logic/AI/RuleBasedAIDecisionPolicy.cs`: the sibling implementation to
   mirror in class placement/style (namespace, visibility conventions).
 
 ## Steps
 
-1. Add `src/OpenSage.Game/Logic/AI/NeuralNetworkAIDecisionPolicy.cs` implementing
+1. Add `src/Panopticon.Simulation/Logic/AI/NeuralNetworkAIDecisionPolicy.cs` implementing
    `IAIDecisionPolicy`, constructed with a `float[]` weight vector (the "genome"). Implement the
    feature encoder, forward pass, and action decoder exactly per `WI-A4-03`'s design doc.
 2. Validate the weight-vector length matches the design doc's stated total parameter count;
@@ -47,10 +47,10 @@ explicitly out of scope (separate, later card set per pluggable-ai.md §4/§6).
 
 ## Files likely to change
 
-- `src/OpenSage.Game/Logic/AI/NeuralNetworkAIDecisionPolicy.cs` (new)
-- `src/OpenSage.Game/Logic/AI/AIDecisionPolicyType.cs`
-- `src/OpenSage.Game/Logic/AI/AIDecisionPolicyFactory.cs`
-- Test file under `src/OpenSage.Game.Tests/Logic/AI/` (new)
+- `src/Panopticon.Simulation/Logic/AI/NeuralNetworkAIDecisionPolicy.cs` (new)
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyType.cs`
+- `src/Panopticon.Simulation/Logic/AI/AIDecisionPolicyFactory.cs`
+- Test file under `test/Panopticon.Simulation.Tests/Logic/AI/` (new)
 
 ## Acceptance criteria
 
