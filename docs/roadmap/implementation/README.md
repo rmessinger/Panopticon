@@ -56,6 +56,16 @@ Source of truth: [deep-dives/a3-sim-presentation-seam.md](../deep-dives/a3-sim-p
 | [track-a-a4-ai-policy-evolution.md](track-a-a4-ai-policy-evolution.md) | A4 evolution follow-on | Neural-policy evolutionary training (WI-A4-11..16) |
 | [track-a-a4-hierarchical-ai.md](track-a-a4-hierarchical-ai.md) | A4-3 | Hierarchical AI: ranks, contracts, co-evolution (WI-A4-17..30) |
 
+## Track A · A4-4 : Domain state projection
+
+Source of truth:
+[deep-dives/a4-4-domain-state-projection.md](../deep-dives/a4-4-domain-state-projection.md) :
+[Architecture diagrams §8](../deep-dives/a4-4-domain-state-projection.md#8-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a4-domain-state-projection.md](track-a-a4-domain-state-projection.md) | A4-4a…A4-4d | Domain state projection (WI-A4-42..45) |
+
 ## Track C · C1 : Format-agnostic import abstraction
 
 Source of truth: [deep-dives/c1-import-abstraction.md](../deep-dives/c1-import-abstraction.md) :
@@ -193,3 +203,12 @@ Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dp
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-g-g1-high-dpi.md](track-g-g1-high-dpi.md) | G1-1…G1-4 | High-DPI drawable & resolution correctness |
+
+## Track W · W0 : Charter fixture
+
+Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :
+[Architecture diagrams §12](../deep-dives/w0-charter-fixture.md#12-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w0-charter-fixture.md](track-w-w0-charter-fixture.md) | W0-1…W0-9 | Charter fixture (WI-W0-01..09) |

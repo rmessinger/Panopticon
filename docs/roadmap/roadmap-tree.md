@@ -5,7 +5,8 @@
 > documents ([A](track-a-foundations.md) · [B](track-b-scale.md) ·
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
 > [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md) ·
-> [G](track-g-rendering-clarity.md) · [H](track-h-storage-formats.md)) and the deep dives as phases,
+> [G](track-g-rendering-clarity.md) · [H](track-h-storage-formats.md) ·
+> [W](track-w-western-front.md)) and the deep dives as phases,
 > sub-phases, or dependencies change; see [Tree maintenance](#tree-maintenance).
 >
 > Audience: human overview of roadmap structure and dependency flow.
@@ -92,6 +93,7 @@ mindmap
         A4-1 Simulation Domain Model seam
         A4-2 AI decision policy seam
         A4-3 Decentralized hierarchical AI seam ⮕
+        A4-4 Domain state projection ⮕
       A5 Scenario and visualization ⮕
         A5-1 Scenario authoring
         A5-2 Experiment matrix
@@ -248,6 +250,14 @@ mindmap
       H5 Legacy migration and compatibility tooling
       H6 Authoring and pipeline integration
       H7 Validation and round-trip regression
+    W. Western Front simulation
+      W0 Charter fixture ⮕
+      W1 Aggregate sector simulation ⮕
+      W2 Fidelity promotion and reconciliation ⮕
+      W3 Geospatial sector ⮕
+      W4 Command and logistics experiment ⮕
+      W5 Distributed regional simulation ⮕
+      W6 Long-run campaign experiment ⮕
 ```
 
 ---
@@ -256,7 +266,7 @@ mindmap
 
 This left-to-right progression shows when phases become workable. Arrows mean "must precede."
 Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal,
-F = red, G = violet, H = olive). Track G is the one track not gated by Stage P: it changes
+F = red, G = violet, H = olive, W = slate). Track G is the one track not gated by Stage P: it changes
 presentation only.
 The [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) gates the whole
 roadmap. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md) is its own highlighted
@@ -274,6 +284,7 @@ flowchart LR
   classDef trackH fill:#f6f9e8,stroke:#7a8a2f,color:#122;
   classDef seam fill:#ffd9f2,stroke:#b3559a,stroke-width:2px,color:#312;
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
+  classDef trackW fill:#eef0f3,stroke:#5a6a7a,color:#122;
 
   subgraph SP["Stage P · Playable baseline (prerequisite)"]
     direction TB
@@ -324,6 +335,7 @@ flowchart LR
   subgraph S2["Stage 2 · Harness & core scale"]
     direction TB
     A4["A4 Experiment harness"]
+    A4DS["A4-4 Domain state projection"]
     B3["B3 Parallel logic"]
     C4["C4 glTF · static + skinned"]
     C4A["C4a EE2 NIF static proof"]
@@ -343,6 +355,7 @@ flowchart LR
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
     direction TB
     A5["A5 Scenario & visualization"]
+    W0["W0 Charter fixture"]
     C4B["C4b EE2 cooked textures"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
@@ -362,6 +375,7 @@ flowchart LR
     E2["E2 Ship combat"]
     F5["F5 Physics-based structural destruction"]
     H6["H6 Authoring & pipeline integration"]
+    W1["W1 Aggregate sector simulation"]
   end
 
   subgraph S5["Stage 5 · Integration & round-trip validation"]
@@ -377,11 +391,20 @@ flowchart LR
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence & replay"]
     H7["H7 Validation & round-trip regression"]
+    W2["W2 Fidelity promotion & reconciliation"]
   end
 
-  subgraph S6["Stage 6 · Terrain/destruction tooling"]
+  subgraph S6["Stage 6 · Terrain/destruction tooling & theater experiments"]
     direction TB
     F8["F8 Authoring & validation tooling"]
+    W3["W3 Geospatial sector"]
+    W4["W4 Command & logistics experiment"]
+    W5["W5 Distributed regional simulation"]
+  end
+
+  subgraph S7["Stage 7 · Long-run campaign"]
+    direction TB
+    W6["W6 Long-run campaign experiment"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -454,6 +477,8 @@ flowchart LR
   G2 --> G3
   H2 --> H3
   H2 --> H4
+  A4S --> A4DS
+  A1 --> A4DS
 
   %% Stage 2 -> 3
   A1 --> A5
@@ -482,6 +507,8 @@ flowchart LR
   G3 --> G9
   H3 --> H5
   H4 --> H5
+  A4S --> W0
+  A4DS --> W0
 
   %% Stage 3 -> 4
   A4S --> B6
@@ -501,6 +528,8 @@ flowchart LR
   F4A --> E2
   F4A --> F5
   H5 --> H6
+  W0 --> W1
+  A2 --> W1
 
   %% Stage 4 -> 5
   C4C --> C4D
@@ -526,13 +555,26 @@ flowchart LR
   H6 --> H7
   B4A --> B4B
   H6 --> B4B
+  W1 --> W2
+  A4 --> W2
 
   %% Stage 5 -> 6
   F2 --> F8
   F6 --> F8
   F7 --> F8
+  W2 --> W3
+  B4B --> W3
+  W2 --> W4
+  A5 --> W4
+  W2 --> W5
+  B6 --> W5
 
-  class A1,A2,A3,A4,A5,A5WB trackA;
+  %% Stage 6 -> 7
+  W3 --> W6
+  W4 --> W6
+  W5 --> W6
+
+  class A1,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6 trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
@@ -541,6 +583,7 @@ flowchart LR
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;
+  class W0,W1,W2,W3,W4,W5,W6 trackW;
   class A4S seam;
 ```
 
@@ -551,7 +594,7 @@ flowchart LR
 > part of a lettered track and has no engine dependency, so it is omitted as a node. H3 (new map
 > storage format) coordinates with B4a-5 (chunked terrain storage) on the map-format terrain
 > section; this is likewise a coordination point rather than a strict dependency, so no arrow
-> connects them.
+> connects them. A4-3 has no separate node, so W2's A4-3 dependency is drawn from the A4 node.
 
 ---
 

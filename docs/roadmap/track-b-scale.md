@@ -59,4 +59,5 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
   read-only kinematic proxies; handoff carries engine-level physics state.
 - B7 composes with [A2](track-a-foundations.md), B6, and F4a. Fidelity changes the cost of an
   object's resolved physical representation, not whether its definition is physical.
+- [Track W](track-w-western-front.md) consumes B4b (W3 Somme sector), B6 (W5 regional shards), and B7-4: W2's formation promotion is the first group-aggregation instance and does not wait for B7.
 - Save/load is single-node only. Per the [StatePersister-reach Decision](open-questions.md), the `StatePersister` save/persist path serves single-node runs, and B3 SoA storage stays save-compatible. It does not need to serialize sharded B6 state. Distributed runs analyze and replay through the recorded snapshot/delta stream, not `StatePersister`.

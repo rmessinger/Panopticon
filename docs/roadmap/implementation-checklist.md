@@ -618,6 +618,16 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     the single documented soldier/order path, matching A2/P2's actuation constraint; fixed-contract
     per-rank neural policies run end to end (A4-3e); three populations advance through the
     documented co-evolution schedule with rank-aware reports (A4-3f).
+- [ ] A4-4 Domain state projection
+      ([deep dive](deep-dives/a4-4-domain-state-projection.md)): optional
+      `IDomainStateProjection` with a versioned schema, keyed multi-field records, a separate
+      domain-state artifact, and a schema-driven conservation check.
+  - [ ] A4-4a Contracts and schema validation (`WI-A4-42`).
+  - [ ] A4-4b Frame persistence, diff/apply, reconstruction, conservation residuals (`WI-A4-43`).
+  - [ ] A4-4c Recorder, artifact, `RunRecording`/`RunOutput` wiring (`WI-A4-44`).
+  - [ ] A4-4d Transport-graph reference projection (`WI-A4-45`).
+  - AC: the transport domain records and reconstructs state records at every sampled frame with
+    empty conservation residuals; RTS run-output JSON is byte-identical to the pre-A4-4 output.
 - [ ] Stable seams for pathfinding, partitioning, fidelity policy, storage layout, model import (see
       [seams.md](seams.md)).
   - AC: TBD, each seam has an interface + ≥1 swappable implementation selectable at runtime; all are
@@ -1103,3 +1113,70 @@ coordinates with rather than duplicates.
   - AC: a regression suite catches a round-trip mismatch for maps or object definitions, and a
     ReplaySketch scenario using new-format content passes the same headless assertions as its
     legacy-format equivalent.
+
+## Track W: Western Front Simulation
+
+See [`track-w-western-front.md`](track-w-western-front.md). W0 depends on A4-1 and A4-4; later
+phases depend on the Track A/B phases listed in the track doc.
+
+### W0: Charter fixture ([deep dive](deep-dives/w0-charter-fixture.md))
+- [ ] W0-1 Project, `InternalsVisibleTo`, stable keys, enums (`WI-W0-01`).
+  - AC: key helpers round-trip every §3 format and reject malformed keys.
+- [ ] W0-2 `WesternFrontSchema` version 1 (`WI-W0-02`).
+  - AC: the schema validates; every conserved family has a holding and a sink.
+- [ ] W0-3 Synthetic topology (`WI-W0-03`).
+  - AC: counts, ownership, link owner regions, and active-region cell listing match §5.
+- [ ] W0-4 Theater clock and multi-rate scheduler (`WI-W0-04`).
+  - AC: cadence, drift-free tactical time, and boundary-only mode changes hold without a host.
+- [ ] W0-5 State modules and formation registry (`WI-W0-05`).
+  - AC: no W0 module updates per frame; keys map to object ids both ways.
+- [ ] W0-6 Synthetic scenario (`WI-W0-06`).
+  - AC: formation counts and the promoted battalion's split match §6.
+- [ ] W0-7 Domain adapter (`WI-W0-07`).
+  - AC: `SimulationHost` runs the domain unchanged; captured records pass schema checks.
+- [ ] W0-8 Conservation ledger (`WI-W0-08`).
+  - AC: every ledger operation leaves residuals empty; failed operations change nothing.
+- [ ] W0-9 Charter fixture evidence (`WI-W0-09`).
+  - AC: every [§10](deep-dives/w0-charter-fixture.md#10-evidence-phase-milestone) assertion passes.
+
+### W1: Aggregate sector simulation ([deep dive](deep-dives/w1-aggregate-sector.md))
+- [ ] W1-1 Parameters document and loader; schema version 2.
+  - AC: every parameter loads with a unit; schema v2 validates.
+- [ ] W1-2 Communication system: message queue, links, orders, reports.
+  - AC: messages arrive after per-link latency and are lost or delayed under disruption.
+- [ ] W1-3 Intelligence pictures, echelon views, rule-based command policies.
+  - AC: a formation's decisions read only its echelon view (information audit passes).
+- [ ] W1-4 Movement over the road graph with stacking.
+  - AC: formations move at parameterized rates and respect region stacking limits.
+- [ ] W1-5 Logistics allocation, shipments, interdiction, consumption.
+  - AC: supply flow respects link capacity; every unit moved is ledger-recorded.
+- [ ] W1-6 Aggregate combat (stochastic Lanchester and mean-field), morale, terrain effects.
+  - AC: both variants resolve engagements with exact integer conservation.
+- [ ] W1-7 Offensive scenario, evidence tests, A2 experiment report.
+  - AC: the [W1 milestone](track-w-western-front.md) evidence passes for both combat variants.
+
+### W2: Fidelity promotion and reconciliation ([deep dive](deep-dives/w2-fidelity-promotion.md))
+- [ ] W2-1 `IActivationPolicy`, reference policies, hysteresis, concurrency cap.
+  - AC: policies are swappable and a region cannot oscillate inside the hysteresis window.
+- [ ] W2-2 Tactical template map and squad placement.
+  - AC: every squad maps to an object definition from the template and is placed in the region's cells by posture.
+- [ ] W2-3 Promotion with largest-remainder split and transition records.
+  - AC: promotion conserves every family exactly and records a transition.
+- [ ] W2-4 Squad casualty and ammunition behaviors.
+  - AC: squad losses and ammunition use flow through the ledger.
+- [ ] W2-5 Formation objectives to squad orders through A4-3.
+  - AC: squad orders are issued only by the A4-3 hierarchy through `SimulationHost.InjectOrders`.
+- [ ] W2-6 Demotion and reconciliation, terrain fold-in.
+  - AC: promote, engage, demote leaves identity and holdings exact.
+- [ ] W2-7 Reference comparison experiment and envelope report.
+  - AC: a report declares the first approximation-error envelope against an all-detailed run.
+
+### W3-W6: Integration experiments ([deep dive](deep-dives/w3-w6-integration-experiments.md))
+- [ ] W3 Geospatial sector on the B4b-generated Somme 1916 sector.
+  - AC: W1/W2 evidence repeats on the generated sector; control-point tolerances hold.
+- [ ] W4 Command and logistics experiment sweeps.
+  - AC: per-cell distributions with confidence intervals and a sensitivity ranking.
+- [ ] W5 Distributed regional simulation over B6.
+  - AC: shard invariants hold; outcomes compare within the W2 envelope.
+- [ ] W6 Long-run campaign experiment with save/load.
+  - AC: bounded memory and artifact size, measured scaling, declared error per fidelity policy.

@@ -355,6 +355,48 @@
   tests use synthetic fixtures. This keeps the importer deterministic and service-independent
   while leaving source-data rights with the operator under the existing single-operator scope.
   Affects [B4b](deep-dives/b4b-geospatial-map-generation.md).
+- Western Front decision gates. Decision: the twelve gates of the
+  [Western Front charter](deep-dives/western-front-scale-simulation.md#11-decision-gates) are
+  settled as follows, and the goal becomes [Track W](track-w-western-front.md).
+  1. Extent: a Somme 1916 sector of about 30 x 20 km in UTM zone 31N. W0-W2 use synthetic data;
+     W3 generates the sector through B4b; W6 covers July-November 1916.
+  2. Granularity: the battalion is the smallest persistent formation; the tactical entity is a
+     squad of about 10 personnel, one `GameObject` whose health is personnel times per-soldier hp.
+  3. Clocks: a domain-owned multi-rate scheduler over host logic frames. Campaign cadence 6 h,
+     operational 10 min, tactical one logic frame.
+  4. Aggregate combat: stochastic Lanchester (square law for aimed fire, linear law for area and
+     artillery fire) on a seeded `IRandom`, plus a mean-field variant for comparison.
+  5. Promotion and demotion: triggers and hysteresis are an experiment input behind an activation
+     policy; conservation is exact over integer quantities, with no tolerance.
+  6. Command and information: echelon-local fog; orders travel per link with latency by
+     communication type (runner, telephone, wireless) and can be disrupted.
+  7. Logistics: commodities are artillery ammunition, small-arms ammunition, and personnel
+     replacements; a link is owned by its tail node's region.
+  8. Terrain outside active regions: per-region summarized trench, wire, and crater levels.
+  9. Sharding: deferred to W5, keyed by region.
+  10. Persistence: recording tiers only through W5; save/load arrives in W6.
+  11. Interaction: headless runs plus A5 visualization; no player control.
+  12. Acceptance: W0 and W1 measure only; W2 sets the first approximation-error envelope against
+      an all-detailed reference run.
+  Affects [Track W](track-w-western-front.md).
+- Western Front clock compression. Decision: with no active tactical region, one host frame
+  advances 600 s of theater time (one operational tick). With an active region, a host frame
+  advances one logic frame, and theater time is `entryMs + round(frames * MsPerLogicFrame)` so the
+  float frame interval never accumulates drift. Mode changes apply only on operational boundaries
+  and are recorded as clock conversions. Affects [W0](deep-dives/w0-charter-fixture.md#7-clock-and-scheduler).
+- Western Front runtime placement. Decision: the domain lives in a separate
+  `Panopticon.Simulation.WesternFront` project on the shared `GameObject`/module runtime, granted
+  `InternalsVisibleTo` because `ModuleData.CreateModule` is internal. Conserved integers stay on
+  member formation records, including while a formation is inside an aggregate. W2 is the first
+  B7-4 group-aggregation instance and does not wait for B7. Affects
+  [Track W](track-w-western-front.md), [B7](track-b-scale.md).
+- Reconstructable domain state. Decision: add an optional `IDomainStateProjection` beside
+  `ISimulationDomainModel` (checklist item A4-4) rather than widening `DomainEntitySummary`. A
+  domain declares a versioned schema whose fields carry unit, layer, and conservation role
+  (`Holding`, `Sink`, `Source`, `None`); conserved fields must be integers. State records go to a
+  separate `*.domainstate.bin` artifact, and the new `RunOutput` fields are omitted when null, so
+  RTS run-output JSON is unchanged. Affects [A4](track-a-foundations.md),
+  [A4-4 deep dive](deep-dives/a4-4-domain-state-projection.md).
 - Non-RTS validation domain completeness. Decision: minimal partition-stress harness. The first
   non-RTS (transport/graph) domain (see the Simulation-domain scope Decision) is implemented only as
   far as needed to exercise graph-cut (non-spatial) partitioning and edge-coupled interaction/owner
