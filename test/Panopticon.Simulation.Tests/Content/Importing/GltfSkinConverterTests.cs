@@ -245,19 +245,83 @@ public class GltfSkinConverterTests
     }
 
     [Fact]
-    public void MeaningfulThirdInfluence_Throws()
+    public void FourInfluences_ImportSortedDescending()
     {
+        // Weights arrive unsorted with repeated joints; influences sort by descending weight.
         var (plan, root) = Load(BuildSkinJson(
-            jointsData: B64U16(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0),
-            weightsData: B64(0.5f, 0.25f, 0.25f, 0, 0.5f, 0.25f, 0.25f, 0, 0.5f, 0.25f, 0.25f, 0)));
+            jointsData: B64U16(1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0),
+            weightsData: B64(0.1f, 0.2f, 0.4f, 0.3f, 0.1f, 0.2f, 0.4f, 0.3f, 0.1f, 0.2f, 0.4f, 0.3f)));
 
         var skin = GltfSkinConverter.ConvertSkin(root, plan, Options);
+        var primitive = root.LogicalMeshes[0].Primitives[0];
+        var converted = GltfSkinConverter.ConvertSkinnedPrimitive(primitive, 2, skin, Options, _ => PlaceholderMaterial());
 
-        Assert.Throws<NotSupportedException>(() =>
-        {
-            var primitive = root.LogicalMeshes[0].Primitives[0];
-            GltfSkinConverter.ConvertSkinnedPrimitive(primitive, 2, skin, Options, _ => PlaceholderMaterial());
-        });
+        // Skin joint order is (jointB, jointA) with remap [2, 1]: joint 0 -> bone 2,
+        // joint 1 -> bone 1. Descending weights (0.4, 0.3, 0.2, 0.1) map to bones
+        // (2, 2, 1, 1); the sum is one, so weights pass through unchanged.
+        var vertex = Assert.Single(converted.Meshes).Vertices[0];
+        Assert.Equal(2u, vertex.BoneIndex0);
+        Assert.Equal(2u, vertex.BoneIndex1);
+        Assert.Equal(1u, vertex.BoneIndex2);
+        Assert.Equal(1u, vertex.BoneIndex3);
+        Assert.Equal(0.4f, vertex.BoneWeight0, 5);
+        Assert.Equal(0.3f, vertex.BoneWeight1, 5);
+        Assert.Equal(0.2f, vertex.BoneWeight2, 5);
+        Assert.Equal(0.1f, vertex.BoneWeight3, 5);
+    }
+
+    [Fact]
+    public void ThreeInfluences_ImportNormalizedWithUnusedSlotCleared()
+    {
+        // The raw sum must be one for SharpGLTF strict parse; the 0.0001 slot is
+        // dropped as noise, leaving 0.9999, so weights normalize by that sum.
+        var (plan, root) = Load(BuildSkinJson(
+            jointsData: B64U16(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0),
+            weightsData: B64(0.5f, 0.3f, 0.1999f, 0.0001f, 0.5f, 0.3f, 0.1999f, 0.0001f, 0.5f, 0.3f, 0.1999f, 0.0001f)));
+
+        var skin = GltfSkinConverter.ConvertSkin(root, plan, Options);
+        var primitive = root.LogicalMeshes[0].Primitives[0];
+        var converted = GltfSkinConverter.ConvertSkinnedPrimitive(primitive, 2, skin, Options, _ => PlaceholderMaterial());
+
+        // Joint 1 -> bone 1 (weight 0.5), joint 0 -> bone 2 (weight 0.3), joint 1
+        // again (weight 0.1999); dividing by 0.9999 gives the normalized weights.
+        var vertex = Assert.Single(converted.Meshes).Vertices[0];
+        Assert.Equal(1u, vertex.BoneIndex0);
+        Assert.Equal(2u, vertex.BoneIndex1);
+        Assert.Equal(1u, vertex.BoneIndex2);
+        Assert.Equal(0.50005f, vertex.BoneWeight0, 5);
+        Assert.Equal(0.30003f, vertex.BoneWeight1, 5);
+        Assert.Equal(0.19992f, vertex.BoneWeight2, 5);
+
+        // The unused fourth slot is bone 0 with weight 0.
+        Assert.Equal(0u, vertex.BoneIndex3);
+        Assert.Equal(0f, vertex.BoneWeight3);
+    }
+
+    [Fact]
+    public void WeightsAtOrBelowTolerance_AreDroppedBeforeSumming()
+    {
+        // The raw sum is one, so strict parse accepts it; the two noise slots are
+        // dropped, leaving 0.99985, which the meaningful weights normalize by.
+        var (plan, root) = Load(BuildSkinJson(
+            jointsData: B64U16(0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0),
+            weightsData: B64(0.6f, 0.39985f, 0.0001f, 0.00005f, 0.6f, 0.39985f, 0.0001f, 0.00005f, 0.6f, 0.39985f, 0.0001f, 0.00005f)));
+
+        var skin = GltfSkinConverter.ConvertSkin(root, plan, Options);
+        var primitive = root.LogicalMeshes[0].Primitives[0];
+        var converted = GltfSkinConverter.ConvertSkinnedPrimitive(primitive, 2, skin, Options, _ => PlaceholderMaterial());
+
+        // Only the two weights above the tolerance are meaningful; dividing by
+        // 0.99985 gives weights slightly above 0.6 and 0.39985.
+        var vertex = Assert.Single(converted.Meshes).Vertices[0];
+        Assert.Equal(2u, vertex.BoneIndex0);
+        Assert.Equal(1u, vertex.BoneIndex1);
+        Assert.Equal(0.60009f, vertex.BoneWeight0, 5);
+        Assert.Equal(0.39991f, vertex.BoneWeight1, 5);
+        Assert.Equal(0u, vertex.BoneIndex2);
+        Assert.Equal(0f, vertex.BoneWeight2);
+        Assert.Equal(0u, vertex.BoneIndex3);
+        Assert.Equal(0f, vertex.BoneWeight3);
     }
 
     [Fact]

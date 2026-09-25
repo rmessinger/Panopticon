@@ -34,8 +34,6 @@ Hand-authored (static by construction, `GltfHandAuthoredFixtures`):
   `InvalidDataException`.
 - `malformed-accessor.gltf` + `.bin` - out-of-range index; `InvalidDataException`.
 - `unsupported-cubicspline.gltf` + `.bin` - CUBICSPLINE sampler; `NotSupportedException`.
-- `unsupported-third-influence.gltf` + `.bin` - meaningful third influence;
-  `NotSupportedException`.
 - `unsupported-multiple-skins.gltf` - two skins; `NotSupportedException`.
 
 ## Regenerating

@@ -27,8 +27,8 @@ internal sealed class GltfSkinConversion
 
 /// <summary>
 /// Converts the single selected-scene skin: validates one skin per model, remaps joints into
-/// imported bone order, converts inverse binds, and builds two-influence skin vertices whose
-/// primary and secondary geometry share the same model-space data.
+/// imported bone order, converts inverse binds, and builds skin vertices with up to four
+/// influences whose primary and secondary geometry share the same model-space data.
 /// </summary>
 internal static class GltfSkinConverter
 {
@@ -154,23 +154,28 @@ internal static class GltfSkinConverter
 
         var basis = GltfTransformConverter.CreateBasis(options.UnitsPerMeter);
         var vertices = new ImportedVertex[positions.Length];
+        var influences = new (uint Joint, float Weight)[4];
         for (var i = 0; i < positions.Length; i++)
         {
             var position = GltfTransformConverter.ConvertPosition(positions[i], basis);
             var normal = Vector3.Normalize(GltfTransformConverter.ConvertDirection(normals[i]));
 
-            var (boneIndex0, boneIndex1, weight0, weight1) = DecodeInfluences(
-                jointsView[i], weightsView[i], skin.JointToBoneIndex, primitive, i);
+            DecodeInfluences(
+                jointsView[i], weightsView[i], skin.JointToBoneIndex, primitive, i, influences);
 
             vertices[i] = new ImportedVertex(
                 position,
                 normal,
                 secondaryPosition: position,
                 secondaryNormal: normal,
-                boneIndex0: boneIndex0,
-                boneIndex1: boneIndex1,
-                boneWeight0: weight0,
-                boneWeight1: weight1);
+                boneIndex0: influences[0].Joint,
+                boneIndex1: influences[1].Joint,
+                boneIndex2: influences[2].Joint,
+                boneIndex3: influences[3].Joint,
+                boneWeight0: influences[0].Weight,
+                boneWeight1: influences[1].Weight,
+                boneWeight2: influences[2].Weight,
+                boneWeight3: influences[3].Weight);
         }
 
         var triangles = GltfAccessorDecoder.CopyTriangles(primitive, positions.Length);
@@ -196,14 +201,20 @@ internal static class GltfSkinConverter
         return new GltfConvertedPrimitive(meshes, primitive.Material?.LogicalIndex ?? -1, sourceNodeIndex);
     }
 
-    private static (uint BoneIndex0, uint BoneIndex1, float Weight0, float Weight1) DecodeInfluences(
+    private static void DecodeInfluences(
         System.Numerics.Vector4 joints,
         System.Numerics.Vector4 weights,
         int[] jointToBoneIndex,
         MeshPrimitive primitive,
-        int vertexIndex)
+        int vertexIndex,
+        (uint Joint, float Weight)[] slots)
     {
-        var slots = new (uint Joint, float Weight, int Slot)[4];
+        for (var i = 0; i < slots.Length; i++)
+        {
+            slots[i] = (0, 0);
+        }
+
+        var count = 0;
         var sum = 0f;
         for (var i = 0; i < 4; i++)
         {
@@ -221,13 +232,6 @@ internal static class GltfSkinConverter
                 continue;
             }
 
-            if (i >= 2)
-            {
-                throw new NotSupportedException(
-                    $"Skinned primitive of mesh '{primitive.LogicalParent.Name}' vertex {vertexIndex} has a meaningful " +
-                    $"third or fourth influence ({weight}); the runtime supports two.");
-            }
-
             var jointIndex = (int)joint;
             if (jointIndex < 0 || jointIndex >= jointToBoneIndex.Length)
             {
@@ -236,7 +240,8 @@ internal static class GltfSkinConverter
                     $"{jointIndex}, but the skin has {jointToBoneIndex.Length} joints.");
             }
 
-            slots[i] = ((uint)jointToBoneIndex[jointIndex], weight, i);
+            slots[count] = ((uint)jointToBoneIndex[jointIndex], weight);
+            count++;
             sum += weight;
         }
 
@@ -247,14 +252,22 @@ internal static class GltfSkinConverter
                 $"{sum}; sums must be positive and within {WeightSumTolerance} of one.");
         }
 
-        var first = slots[0];
-        var second = slots[1];
-        if (second.Weight > first.Weight)
+        Array.Sort(slots, 0, count, InfluenceOrder.Instance);
+        for (var i = 0; i < count; i++)
         {
-            (first, second) = (second, first);
+            slots[i] = (slots[i].Joint, slots[i].Weight / sum);
         }
+    }
 
-        return (first.Joint, second.Joint, first.Weight / sum, second.Weight / sum);
+    private sealed class InfluenceOrder : IComparer<(uint Joint, float Weight)>
+    {
+        public static readonly InfluenceOrder Instance = new();
+
+        public int Compare((uint Joint, float Weight) x, (uint Joint, float Weight) y)
+        {
+            var byWeight = y.Weight.CompareTo(x.Weight);
+            return byWeight != 0 ? byWeight : x.Joint.CompareTo(y.Joint);
+        }
     }
 
     private static float GetComponent(System.Numerics.Vector4 vector, int index)
