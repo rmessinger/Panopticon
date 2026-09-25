@@ -131,8 +131,12 @@ internal static class ImportedTangentGenerator
                 binormal,
                 vertex.BoneIndex0,
                 vertex.BoneIndex1,
+                vertex.BoneIndex2,
+                vertex.BoneIndex3,
                 vertex.BoneWeight0,
-                vertex.BoneWeight1);
+                vertex.BoneWeight1,
+                vertex.BoneWeight2,
+                vertex.BoneWeight3);
             generatedAny = true;
         }
 

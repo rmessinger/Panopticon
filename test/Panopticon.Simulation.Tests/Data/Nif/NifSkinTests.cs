@@ -77,7 +77,7 @@ public sealed class NifSkinTests
         Assert.Equal(0.75f, arm.VertexWeights[1].Weight);
 
         var torso = data.Bones[1];
-        Assert.Equal(1, torso.VertexWeights.Count);
+        Assert.Single(torso.VertexWeights);
         Assert.Equal(1, torso.VertexWeights[0].VertexIndex);
         Assert.Equal(1.0f, torso.VertexWeights[0].Weight);
     }
@@ -108,7 +108,7 @@ public sealed class NifSkinTests
         Assert.Equal(2, part.VertexCount);
         Assert.Equal(1, part.TriangleCount);
         Assert.Equal([5, 2], part.Bones);
-        Assert.Equal(1, part.StripLengths.Count);
+        Assert.Single(part.StripLengths);
         Assert.Equal(4u, part.StripLengths[0]);
         Assert.True(part.HasVertexMap);
         Assert.Equal([1, 0], part.VertexMap);

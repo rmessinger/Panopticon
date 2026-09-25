@@ -75,7 +75,8 @@ public sealed class ImportedModel
             {
                 foreach (var vertex in mesh.Vertices)
                 {
-                    if (vertex.BoneIndex0 >= boneCount || vertex.BoneIndex1 >= boneCount)
+                    if (vertex.BoneIndex0 >= boneCount || vertex.BoneIndex1 >= boneCount ||
+                        vertex.BoneIndex2 >= boneCount || vertex.BoneIndex3 >= boneCount)
                     {
                         throw new ArgumentException(
                             $"Skinned mesh '{subObject.FullName}' has a vertex referencing a bone outside the " +
