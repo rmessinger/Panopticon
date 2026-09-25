@@ -23,8 +23,11 @@ namespace Panopticon.Tools.TestHarness;
 /// NifModelImporter -> ImportedModelMaterializer -> Model), and captures one
 /// static PNG per target plus C4c animated frames at fixed clip times
 /// (NifAnimationImporter -> ImportedAnimationMaterializer -> C2 named binding).
-/// Fixed-function diffuse renders with texture-stage count zero; source texture
-/// names stay in the imported descriptors. No EE2 asset is copied or committed.
+/// C4d adds the skinned Druid: body_LOD0 attaches to the root bone with
+/// four-influence skinning, and the GPU skinning path (WI-C4d-04) drives the
+/// walk/attack/death captures. Fixed-function diffuse renders with
+/// texture-stage count zero; source texture names stay in the imported
+/// descriptors. No EE2 asset is copied or committed.
 /// </summary>
 internal static class Ee2NifProofScenario
 {
@@ -52,11 +55,16 @@ internal static class Ee2NifProofScenario
             "and open cockpits; highest-detail body_LOD0 geometry (no LOD1 simplification seams); " +
             "upright and +X forward; DXT3 alpha blending on wheels/body keeps correct depth; " +
             "ab11_TwinEngineBomber.tga and af11_biplane_prop.tga mapped coherently"),
+        ("CIV1_Druid_british",
+            "Druid (skinned): upright biped standing on the ground plane, arms and cloak intact, " +
+            "no stretched or detached vertices at the bind pose; CIV1_Druid_british.tga mapped " +
+            "coherently; single body_LOD0 sub-object attached to the root bone"),
     ];
 
     /// <summary>
-    /// C4c animated plan: deterministic clip times from the deep dive section 8. File names
-    /// use the KF stem (which is already <model>_<clip>) plus zero-padded milliseconds.
+    /// C4c/C4d animated plan: deterministic clip times from the deep dives
+    /// (c4c section 8, c4d section 11). File names use the KF stem (which is
+    /// already <model>_<clip>) plus zero-padded milliseconds.
     /// </summary>
     public static readonly (string ModelKey, string KfPath, float TimeSeconds, string Check)[] AnimatedCapturePlan =
     [
@@ -76,6 +84,16 @@ internal static class Ee2NifProofScenario
             "ground pose: identical to the static ee2-ab11_TwinEngineBomber.png capture (root NonAccum carries the ground pose at time 0)"),
         ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 1.333f,
             "level raised flight pose: root keyed toward its flight rotation while root NonAccum carries the raised translation, clearly off the 0000 ground stance"),
+        ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_walk01.kf", 0f,
+            "walk stance at time 0: limbs at their first keys, feet on the ground, body upright, identical silhouette to the bind-pose capture"),
+        ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_walk01.kf", 0.2f,
+            "mid-stride: arms and legs visibly swung to intermediate angles, mesh deforming smoothly at joints, no stretched or detached vertices"),
+        ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_walk01.kf", 0.4f,
+            "late stride: limbs at their next keys, pose clearly different from both 0000 and 0200, joints still closed"),
+        ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_attack01.kf", 0.9333f,
+            "Attack1 swing: torso rotated with the striking arm extended, weapon arc readable, no vertex tearing at the shoulder"),
+        ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_death01.kf", 1.2333f,
+            "end of the death fall: the Druid collapsed toward the ground, limbs folded, mesh intact (no detached or exploded triangles)"),
     ];
 
     internal static string GetAnimatedCaptureFileName(string kfPath, float timeSeconds)
