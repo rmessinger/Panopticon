@@ -274,6 +274,29 @@ public sealed class NifModelImporterTests
     }
 
     [Fact]
+    public void StoredColumnVectorRotationMapsChildPlusYToPlusZ()
+    {
+        // The stored NIF 3x3 is the column-vector map: rows
+        // [[1,0,0],[0,0,-1],[0,1,0]] rotate +90 degrees about X, so a
+        // child at source +Y lands at source +Z once the matrix is
+        // transposed into the row-vector engine layout. A positional copy
+        // (the pre-C4d bug) would map +Y to -Z.
+        var stored = new FileFormats.Nif.NifMatrix33(
+            1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, -1.0f,
+            0.0f, 1.0f, 0.0f);
+
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", rotation: stored));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        var file = FileFormats.Nif.NifFile.Read(new MemoryStream(builder.Build()));
+
+        var local = NifTransformConverter.CreateLocalMatrix((FileFormats.Nif.NifAvObject)file.Blocks[0]);
+        AssertEqual(new Vector3(0, 0, 1), Vector3.Transform(new Vector3(0, 1, 0), local));
+    }
+
+    [Fact]
     public void BakesSourceToEngineMatrixIntoPositions()
     {
         // One meter along source -Y (the forward axis) must land on +X at

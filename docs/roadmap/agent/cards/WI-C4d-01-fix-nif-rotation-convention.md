@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-01` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Ready` |
+| Status | `Done` (core fix landed on main via PR #107; this card added the two synthetic acceptance tests) |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none |
