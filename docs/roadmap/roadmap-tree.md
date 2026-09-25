@@ -152,7 +152,14 @@ mindmap
         C4c-4 KF animation importer
         C4c-5 Installed clip checks
         C4c-6 Animated captures
-      C4d EE2 skinned animation
+      C4d EE2 skinned animation ⮕
+        C4d-1 NIF rotation convention
+        C4d-2 Skin block decoding
+        C4d-3 C1 four influences
+        C4d-4 Runtime four influences
+        C4d-5 glTF four influences
+        C4d-6 NIF skin conversion
+        C4d-7 Installed proof captures
       C4e EE2 property animation ⮕
         C4e-1 Controller block decoding
         C4e-2 Property target resolution

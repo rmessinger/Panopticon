@@ -126,7 +126,7 @@ C4b decodes the texcache containers; pixel patches stay out of scope.
 |---|---|---|
 | `NiNode` tree | `ImportedSkeleton` / `ImportedBone` | NIF bones are named nodes linked by reference; C1 uses parent indices. Conversion is a tree flatten, and bone identity is by name (helps C2 remapping). |
 | `NiTriShape` + data + shape transform | `ImportedMesh` / `ImportedSubObject` | One NiTriShape per sub-mesh, each with its own transform and properties; maps to sub-object + mesh. |
-| `NiSkinInstance` / `NiSkinData` | `ImportedVertex` skin fields | NIF carries up to 4 influences per vertex against the runtime's two-bone limit; the C1 rule is no silent truncation, so an importer must reject >2 nonzero influences until the runtime widens. |
+| `NiSkinInstance` / `NiSkinData` | `ImportedVertex` skin fields | NIF carries up to 4 influences per vertex against the runtime's two-bone limit; the C1 rule is no silent truncation. [C4d](c4d-ee2-skinned-animation.md#4-influence-policy) widens C1 and the runtime to four and rejects more. |
 | `NiMaterialProperty` + texture/alpha/z/stencil properties | `ImportedMaterial` + texture-name properties | Fixed-function state maps to the fixed-function shading fields and render-state enums; textures stay by-name. |
 | `NiLODNode` / `NiRangeLODData` | none | Runtime has no LOD-node concept in the C1 milestone; a decision for a later phase (drop, or bake the highest LOD). |
 | `.kf` `NiControllerSequence` | `ImportedAnimation` / `ImportedAnimationChannel` | Per-node named tracks must be resolved to bone indices against a skeleton; channels are translation/rotation/quaternion keyframes, within the C1 channel set. |
@@ -146,7 +146,7 @@ C4b decodes the texcache containers; pixel patches stay out of scope.
   older 10.0.1.0 layout with per-file user versions), 4-bone influences versus the two-bone
   runtime limit, cooked texture decoding, player-color patches, and DDF state binding.
 - Follow-ups: C4b decodes cooked textures. [C4c](c4c-ee2-rigid-animation.md) imports the proof
-  models' rigid KF clips. C4d owns the four-influence skinning risk.
+  models' rigid KF clips. [C4d](c4d-ee2-skinned-animation.md) owns the four-influence skinning risk.
   [C4e](c4e-ee2-property-animation.md), [C4f](c4f-ee2-scale-animation.md),
   [C4g](c4g-ee2-morph-animation.md), [C4h](c4h-ee2-particle-effects.md), and
   [C4i](c4i-ee2-legacy-kf-formats.md) own property controllers, scale, morphs, particles, and
