@@ -33,6 +33,9 @@ public sealed partial class ModelMesh : ModelRenderObject
 
     public readonly List<ModelMeshPart> MeshParts;
 
+    /// <summary>Number of materials in the imported mesh this mesh was built from; bounds valid material indices.</summary>
+    public readonly int MaterialCount;
+
     public readonly bool Skinned;
 
     public override bool Hidden { get; }
@@ -113,6 +116,13 @@ public sealed partial class ModelMesh : ModelRenderObject
             var meshPart = MeshParts[i];
 
             var forceBlendEnabled = renderItemConstantsPS != null && renderItemConstantsPS.Value.Opacity < 1.0f;
+            if (!forceBlendEnabled &&
+                modelInstance.PropertyState.TryGetAlpha(modelMeshInstance.SubObjectIndex, meshPart.MaterialIndex, out var animatedAlpha) &&
+                animatedAlpha < 1.0f)
+            {
+                forceBlendEnabled = true;
+            }
+
             var blendEnabled = meshPart.BlendEnabled || forceBlendEnabled;
 
             // Depth pass

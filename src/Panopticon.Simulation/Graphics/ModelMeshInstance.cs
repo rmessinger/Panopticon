@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Content.Loaders;
+using Panopticon.Graphics.Animation;
 using Panopticon.Graphics.Rendering;
 using Panopticon.Graphics.Shaders;
 using Veldrid;
@@ -10,6 +11,8 @@ namespace Panopticon.Graphics;
 internal sealed class ModelMeshPartInstance : DisposableBase
 {
     private readonly ResourceSet _renderItemConstantsResourceSet;
+    private readonly ConstantBuffer<MeshShaderResources.RenderItemConstantsPS> _renderItemConstantsBufferPS;
+    private MeshShaderResources.RenderItemConstantsPS _appliedConstants;
 
     public readonly ModelMeshPart ModelMeshPart;
     public readonly ModelMeshInstance MeshInstance;
@@ -25,12 +28,17 @@ internal sealed class ModelMeshPartInstance : DisposableBase
         ModelMeshPart = modelMeshPart;
         MeshInstance = modelMeshInstance;
 
+        _renderItemConstantsBufferPS = AddDisposable(
+            new ConstantBuffer<MeshShaderResources.RenderItemConstantsPS>(
+                loadContext.GraphicsDevice,
+                $"{modelMeshInstance.ModelInstance.Model.Name}.{modelMeshPart.ModelMesh.Name}.RenderItemConstantsPS"));
+
         _renderItemConstantsResourceSet = AddDisposable(
             loadContext.ShaderResources.Mesh.CreateRenderItemConstantsResourceSet(
                 modelMeshPart.ModelMesh.MeshConstantsBuffer,
                 modelMeshInstance.RenderItemConstantsBufferVS,
                 modelMeshInstance.ModelInstance.SkinningBuffer,
-                modelMeshInstance.ModelInstance.RenderItemConstantsBufferPS));
+                _renderItemConstantsBufferPS));
 
         BeforeRenderCallback = (CommandList cl, in RenderItem renderItem) =>
         {
@@ -49,9 +57,102 @@ internal sealed class ModelMeshPartInstance : DisposableBase
     {
         MeshInstance.OnBeforeRender(cl, renderItem);
 
+        UpdatePropertyConstants(cl);
+
         cl.SetGraphicsResourceSet(3, _renderItemConstantsResourceSet);
 
         ModelMeshPart.BeforeRender(cl);
+    }
+
+    /// <summary>
+    /// Composes the model-level constants (house color, opacity, tint) with this part's animated
+    /// material-slot overrides into the part's own constants buffer. Shared materials stay untouched.
+    /// </summary>
+    private void UpdatePropertyConstants(CommandList cl)
+    {
+        var modelInstance = MeshInstance.ModelInstance;
+        var value = modelInstance.RenderItemConstantsBufferPS.Value;
+
+        var hasSlotOverrides = modelInstance.PropertyState.TryGetSlotOverride(
+            MeshInstance.SubObjectIndex,
+            ModelMeshPart.MaterialIndex,
+            out var slot);
+        if (hasSlotOverrides)
+        {
+            ApplySlotOverrides(ref value, slot);
+        }
+
+        if (!EqualsApplied(value))
+        {
+            _renderItemConstantsBufferPS.Value = value;
+            _renderItemConstantsBufferPS.Update(cl);
+            _appliedConstants = value;
+        }
+    }
+
+    private static void ApplySlotOverrides(
+        ref MeshShaderResources.RenderItemConstantsPS value,
+        ModelMaterialSlotState slot)
+    {
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.Ambient) != 0)
+        {
+            value.AmbientOverride = new Vector4(slot.Ambient, 1.0f);
+        }
+
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.Diffuse) != 0)
+        {
+            value.DiffuseOverride = new Vector4(slot.Diffuse, 1.0f);
+        }
+
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.Specular) != 0)
+        {
+            value.SpecularOverride = new Vector4(slot.Specular, 1.0f);
+        }
+
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.Emissive) != 0)
+        {
+            value.EmissiveOverride = new Vector4(slot.Emissive, 1.0f);
+        }
+
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.Alpha) != 0)
+        {
+            value.MaterialOpacity = slot.Alpha;
+            value.OverrideFlags |= (uint)ModelMaterialOverrideFlags.Alpha;
+        }
+
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.UvTranslate) != 0)
+        {
+            value.UvTranslate = new Vector4(slot.UvTranslateU, slot.UvTranslateV, 0.0f, 0.0f);
+            value.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvTranslate;
+        }
+
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.UvScale) != 0)
+        {
+            value.UvScale = new Vector4(slot.UvScaleU, slot.UvScaleV, 0.0f, 0.0f);
+            value.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvScale;
+        }
+
+        if ((slot.OverrideFlags & (uint)ModelMaterialOverrideFlags.UvRotate) != 0)
+        {
+            value.UvRotate = new Vector4(slot.UvRotation, 0.0f, 0.0f, 0.0f);
+            value.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvRotate;
+        }
+    }
+
+    private bool EqualsApplied(in MeshShaderResources.RenderItemConstantsPS value)
+    {
+        return _appliedConstants.HouseColor == value.HouseColor &&
+               _appliedConstants.Opacity == value.Opacity &&
+               _appliedConstants.TintColor == value.TintColor &&
+               _appliedConstants.AmbientOverride.Equals(value.AmbientOverride) &&
+               _appliedConstants.DiffuseOverride.Equals(value.DiffuseOverride) &&
+               _appliedConstants.SpecularOverride.Equals(value.SpecularOverride) &&
+               _appliedConstants.EmissiveOverride.Equals(value.EmissiveOverride) &&
+               _appliedConstants.UvTranslate.Equals(value.UvTranslate) &&
+               _appliedConstants.UvScale.Equals(value.UvScale) &&
+               _appliedConstants.UvRotate.Equals(value.UvRotate) &&
+               _appliedConstants.MaterialOpacity == value.MaterialOpacity &&
+               _appliedConstants.OverrideFlags == value.OverrideFlags;
     }
 }
 
@@ -61,14 +162,19 @@ internal sealed class ModelMeshInstance : DisposableBase
 
     public readonly ModelInstance ModelInstance;
 
+    /// <summary>Index of this mesh's sub-object within the owning model's sub-object list.</summary>
+    public readonly int SubObjectIndex;
+
     public readonly List<ModelMeshPartInstance> MeshPartInstances = new();
 
     public ModelMeshInstance(
         ModelMesh modelMesh,
         ModelInstance modelInstance,
-        AssetLoadContext loadContext)
+        AssetLoadContext loadContext,
+        int subObjectIndex)
     {
         ModelInstance = modelInstance;
+        SubObjectIndex = subObjectIndex;
 
         RenderItemConstantsBufferVS = AddDisposable(
             new ConstantBuffer<MeshShaderResources.RenderItemConstantsVS>(

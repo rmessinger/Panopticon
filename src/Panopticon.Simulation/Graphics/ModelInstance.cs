@@ -80,6 +80,9 @@ public sealed class ModelInstance : DisposableBase
 
     internal readonly ConstantBuffer<MeshShaderResources.RenderItemConstantsPS> RenderItemConstantsBufferPS;
 
+    /// <summary>Animated sub-object visibility and material-slot state, written by animation instances.</summary>
+    internal readonly ModelPropertyAnimationState PropertyState;
+
     internal ModelInstance(Model model, AssetLoadContext loadContext)
     {
         Model = model;
@@ -147,6 +150,8 @@ public sealed class ModelInstance : DisposableBase
 
         MeshInstances = new ModelMeshInstance[model.SubObjects.Length];
 
+        PropertyState = new ModelPropertyAnimationState(model);
+
         for (var i = 0; i < model.SubObjects.Length; i++)
         {
             var renderObject = model.SubObjects[i].RenderObject;
@@ -160,7 +165,8 @@ public sealed class ModelInstance : DisposableBase
                 new ModelMeshInstance(
                     mesh,
                     this,
-                    loadContext));
+                    loadContext,
+                    i));
         }
 
         UnknownBools = new bool[model.SubObjects.Length];
@@ -168,7 +174,9 @@ public sealed class ModelInstance : DisposableBase
 
     /// <summary>
     /// Creates a playing-capable animation instance by binding the animation against this
-    /// instance's model hierarchy.
+    /// instance's model. Bone channels resolve against the hierarchy; sub-object and
+    /// material-slot channels resolve against the model's sub-objects, so every target is
+    /// validated here, before playback.
     /// </summary>
     public AnimationInstance CreateAnimationInstance(
         ModelAnimation animation,
@@ -177,9 +185,9 @@ public sealed class ModelInstance : DisposableBase
         GameObject gameObject,
         IRandom random)
     {
-        var bound = animation.Bind(Model.BoneHierarchy);
+        var bound = animation.Bind(Model);
 
-        return new AnimationInstance(ModelBoneInstances, bound, mode, flags, gameObject, random);
+        return new AnimationInstance(ModelBoneInstances, bound, mode, flags, gameObject, random, PropertyState);
     }
 
     public void Update(in TimeInterval gameTime)
@@ -316,6 +324,11 @@ public sealed class ModelInstance : DisposableBase
             // (SubObjectsUpgrade) entries override the model default. Entries are keyed by
             // bone name, so match the sub-object's bone as well as its own name.
             if (IsHidden(hiddenSubObjects, subObject) || IsHidden(shownSubObjects, subObject, invert: true))
+            {
+                continue;
+            }
+
+            if (!PropertyState.IsSubObjectVisible(i))
             {
                 continue;
             }

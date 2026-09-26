@@ -16,6 +16,9 @@ public sealed class ModelMeshPart
     public readonly MaterialPass Material;
     public readonly MaterialPass MaterialBlend;
 
+    /// <summary>Index of this part's material within the owning mesh's material list.</summary>
+    public readonly int MaterialIndex;
+
     internal ModelMeshPart(
         ModelMesh modelMesh,
         DeviceBuffer texCoordVertexBuffer,
@@ -23,7 +26,8 @@ public sealed class ModelMeshPart
         uint indexCount,
         bool blendEnabled,
         MaterialPass material,
-        MaterialPass materialBlend)
+        MaterialPass materialBlend,
+        int materialIndex)
     {
         ModelMesh = modelMesh;
 
@@ -35,6 +39,7 @@ public sealed class ModelMeshPart
         BlendEnabled = blendEnabled;
         Material = material;
         MaterialBlend = materialBlend;
+        MaterialIndex = materialIndex;
     }
 
     internal void BeforeRender(CommandList commandList)

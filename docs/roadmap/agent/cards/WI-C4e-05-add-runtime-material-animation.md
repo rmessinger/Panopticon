@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4e-05` |
 | Roadmap phase | [Track C · C4e](../../track-c-external-assets.md): EE2 property animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-C4e-03` |
@@ -46,11 +46,11 @@ Evaluate bound property-animation channels into per-instance sub-object and mate
 
 ## Acceptance criteria
 
-- [ ] Property clips bind by model identity and fail before playback when sub-object or material targets are missing.
-- [ ] Two `ModelInstance` objects using the same `Model` can hold different material animation samples.
-- [ ] Shared `Material`, `MaterialPass`, and fixed-function material-cache buffers are not mutated by playback.
-- [ ] Existing transform, visibility, and W3D animation tests pass unchanged.
-- [ ] Standard validation passes.
+- [x] Property clips bind by model identity and fail before playback when sub-object or material targets are missing.
+- [x] Two `ModelInstance` objects using the same `Model` can hold different material animation samples.
+- [x] Shared `Material`, `MaterialPass`, and fixed-function material-cache buffers are not mutated by playback.
+- [x] Existing transform, visibility, and W3D animation tests pass unchanged.
+- [x] Standard validation passes.
 
 ## Validation commands
 
