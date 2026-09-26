@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4e-02` |
 | Roadmap phase | [Track C · C4e](../../track-c-external-assets.md): EE2 property animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-02` |
@@ -41,12 +41,12 @@ Expose NIF source identity for sub-objects and material slots so C4e controllers
 
 ## Acceptance criteria
 
-- [ ] A NIF property target map identifies every imported sub-object and material slot needed by C4e.
-- [ ] Controlled-block property strings and embedded property refs resolve to the same slot ids in synthetic tests.
-- [ ] Shared properties produce deterministic multi-slot results.
-- [ ] Missing or ambiguous property targets fail with asset context.
-- [ ] Existing C4c rest-pose parity tests pass unchanged.
-- [ ] Standard validation passes.
+- [x] A NIF property target map identifies every imported sub-object and material slot needed by C4e.
+- [x] Controlled-block property strings and embedded property refs resolve to the same slot ids in synthetic tests.
+- [x] Shared properties produce deterministic multi-slot results.
+- [x] Missing or ambiguous property targets fail with asset context.
+- [x] Existing C4c rest-pose parity tests pass unchanged.
+- [x] Standard validation passes.
 
 ## Validation commands
 
