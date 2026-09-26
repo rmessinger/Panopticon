@@ -1,17 +1,26 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using Panopticon.Content;
 using Panopticon.Content.Importing;
 using Panopticon.Content.Importing.Nif;
+using Panopticon.Content.Loaders;
 using Panopticon.FileFormats.Nif;
+using Panopticon.Graphics;
+using Panopticon.Graphics.Animation;
 using Panopticon.IO;
+using Panopticon.Logic.Object;
+using Panopticon.Mathematics;
 using Xunit;
 
 namespace Panopticon.Tests.Content.Importing;
 
 /// <summary>
 /// Locks installed EE2 property-animation clips to the descriptors recorded
-/// in docs/roadmap/deep-dives/c4e-ee2-property-animation.md section 9.
+/// in docs/roadmap/deep-dives/c4e-ee2-property-animation.md section 9, and
+/// binds the proof clips to materialized models to sample the runtime
+/// property state at fixed times (WI-C4e-06).
 /// Interactive: requires EMPIRE_EARTH_II_PATH and zips/graphics.zip.
 /// </summary>
 [Trait("Category", "Interactive")]
@@ -293,5 +302,251 @@ public sealed class Ee2NifPropertyAnimationTests
         Assert.Equal(37, controller.TargetReference);
         Assert.True(graph.PropertyTargets.TryGetBoneName(controller.TargetReference, out var boneName));
         Assert.Equal("Object04", boneName);
+    }
+
+    //
+    // Runtime proof (WI-C4e-06): bind each proof clip to its materialized
+    // model and sample the per-instance property state at fixed times.
+    //
+
+    private static void PlayTo(ModelInstance instance, ModelAnimation animation, float seconds)
+    {
+        var animationInstance = instance.CreateAnimationInstance(
+            animation,
+            AnimationMode.Once,
+            AnimationFlags.StartFrameFirst,
+            gameObject: null!,
+            random: new ConstantRandom());
+        animationInstance.Play();
+        const int steps = 8;
+        var delta = TimeSpan.FromSeconds(seconds / steps);
+        for (var i = 0; i < steps; i++)
+        {
+            animationInstance.Update(new TimeInterval(TimeSpan.Zero, delta));
+        }
+
+        instance.Update(new TimeInterval(TimeSpan.FromSeconds(seconds), delta));
+    }
+
+    private sealed class RuntimeContext : IDisposable
+    {
+        public TestGraphicsContext Graphics { get; }
+
+        public AssetImportContext ImportContext { get; }
+
+        private RuntimeContext(TestGraphicsContext graphics, AssetImportContext importContext)
+        {
+            Graphics = graphics;
+            ImportContext = importContext;
+        }
+
+        public static RuntimeContext Create()
+        {
+            var root = Environment.GetEnvironmentVariable("EMPIRE_EARTH_II_PATH");
+            if (string.IsNullOrEmpty(root))
+            {
+                throw new InvalidOperationException(
+                    "Interactive test requires EMPIRE_EARTH_II_PATH pointing at an Empire Earth II install.");
+            }
+
+            var fileSystem = new ZipFileSystem(Path.Combine(root, ArchiveRelativePath));
+            return new RuntimeContext(new TestGraphicsContext(fileSystem), new AssetImportContext(fileSystem, language: null));
+        }
+
+        public (ModelInstance Instance, ModelAnimation Animation) Materialize(string modelKey, string kfPath)
+        {
+            var importedModel = new NifModelImporter().ImportModel(modelKey, ImportContext)
+                ?? throw new InvalidOperationException($"Model import returned null for '{modelKey}'.");
+            var model = ImportedModelMaterializer.MaterializeModel(importedModel, Graphics.Context);
+            var importedAnimation = new NifAnimationImporter().ImportAnimation($"{modelKey}#kf={kfPath}", ImportContext)
+                ?? throw new InvalidOperationException($"Animation import returned null for '{modelKey}#kf={kfPath}'.");
+            var animation = ImportedAnimationMaterializer.Materialize(importedAnimation);
+            var instance = new ModelInstance(model, Graphics.Context);
+            instance.Update(new TimeInterval(TimeSpan.Zero, TimeSpan.Zero));
+            return (instance, animation);
+        }
+
+        public void Dispose()
+        {
+            Graphics.Dispose();
+            ImportContext.FileSystem.Dispose();
+        }
+    }
+
+    private sealed class ConstantRandom : IRandom
+    {
+        public uint Seed => 0;
+
+        public void Initialize(uint seed)
+        {
+        }
+
+        public int Next(int lo, int hi) => lo;
+
+        public float NextSingle(float lo, float hi) => lo;
+    }
+
+    [Fact]
+    public void EifvWalkSamplesTreadUOffset()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var context = RuntimeContext.Create();
+        var (instance, animation) = context.Materialize(
+            "civ12_EIFV_egypt",
+            "Graphics/Vehicles/civ12_EIFV_egypt_walk.kf");
+
+        var meshIndex = Array.FindIndex(
+            instance.Model.SubObjects,
+            s => s.FullName.Contains("treads", StringComparison.OrdinalIgnoreCase));
+        Assert.True(meshIndex >= 0, "Expected a treads sub-object.");
+
+        PlayTo(instance, animation, 0f);
+        Assert.True(instance.PropertyState.TryGetSlotOverride(meshIndex, 0, out var atZero));
+        Assert.True((atZero.OverrideFlags & (uint)ModelMaterialOverrideFlags.UvTranslate) != 0);
+        Assert.Equal(0, atZero.UvTranslateU, 5);
+
+        PlayTo(instance, animation, 1f);
+        Assert.True(instance.PropertyState.TryGetSlotOverride(meshIndex, 0, out var atOne));
+        Assert.Equal(1.5, atOne.UvTranslateU, 4);
+    }
+
+    [Fact]
+    public void StealthFighterIdleSamplesAmbientAndSpecularColors()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var context = RuntimeContext.Create();
+        var (instance, animation) = context.Materialize(
+            "afb14_StealthFighterBomber",
+            "Graphics/Vehicles/afb14_StealthFighterBomber_idle.kf");
+
+        PlayTo(instance, animation, 0f);
+
+        var overridden = 0;
+        for (var i = 0; i < instance.Model.SubObjects.Length; i++)
+        {
+            if (!instance.PropertyState.TryGetSlotOverride(i, 0, out var state))
+            {
+                continue;
+            }
+
+            overridden++;
+            Assert.Equal(
+                (uint)(ModelMaterialOverrideFlags.Ambient | ModelMaterialOverrideFlags.Specular),
+                state.OverrideFlags & (uint)(ModelMaterialOverrideFlags.Ambient | ModelMaterialOverrideFlags.Specular));
+            Assert.Equal(new Vector3(1, 1, 1), state.Ambient);
+            Assert.Equal(Vector3.Zero, state.Specular);
+        }
+
+        Assert.Equal(8, overridden);
+    }
+
+    [Fact]
+    public void FaufishIdleSamplesAlphaFade()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var context = RuntimeContext.Create();
+        var (instance, animation) = context.Materialize(
+            "faufish",
+            "Graphics/Animals/sh_faufish_idle01.kf");
+
+        PlayTo(instance, animation, 0f);
+        AssertAlphaAllSlots(instance, 0, expected: 0);
+
+        PlayTo(instance, animation, 2f);
+        AssertAlphaAllSlots(instance, 0, expected: null);
+        // Sub-objects 7..14 are the eight alpha-animated planes; their
+        // sampled values at 2 s come straight from the clip keys.
+        Assert.True(instance.PropertyState.TryGetSlotOverride(7, 0, out var head));
+        Assert.Equal(1, head.Alpha, 3);
+        Assert.True(instance.PropertyState.TryGetSlotOverride(14, 0, out var tail));
+        Assert.Equal(0.7, tail.Alpha, 3);
+
+        PlayTo(instance, animation, 4f);
+        AssertAlphaAllSlots(instance, 0, expected: 0);
+    }
+
+    private static void AssertAlphaAllSlots(ModelInstance instance, int slot, float? expected)
+    {
+        for (var i = 0; i < instance.Model.SubObjects.Length; i++)
+        {
+            var hasOverride = instance.PropertyState.TryGetSlotOverride(i, slot, out var state);
+            if (!hasOverride)
+            {
+                continue;
+            }
+
+            Assert.True((state.OverrideFlags & (uint)ModelMaterialOverrideFlags.Alpha) != 0);
+            if (expected is { } value)
+            {
+                Assert.Equal(value, state.Alpha, 3);
+            }
+            else
+            {
+                Assert.InRange(state.Alpha, 0, 1);
+            }
+        }
+    }
+
+    [Fact]
+    public void SiegeGunIdleTogglesBaseVisibility()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var context = RuntimeContext.Create();
+        var (instance, animation) = context.Materialize(
+            "LHA10_siegegun",
+            "Graphics/Vehicles/LHA10_siegegun_idle01.kf");
+
+        var baseBone = instance.Model.BoneHierarchy.Bones.Single(b => b.Name == "base");
+
+        PlayTo(instance, animation, 0.9f);
+        Assert.True(instance.ModelBoneInstances[baseBone.Index].Visible);
+
+        PlayTo(instance, animation, 1f);
+        Assert.False(instance.ModelBoneInstances[baseBone.Index].Visible);
+        Assert.False(instance.BoneFrameVisibilities[baseBone.Index]);
+    }
+
+    [Fact]
+    public void MarketOpenBindFailsNamingMissingSubObject()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var context = RuntimeContext.Create();
+        var importedModel = new NifModelImporter().ImportModel("bld_market8", context.ImportContext)!;
+        var model = ImportedModelMaterializer.MaterializeModel(importedModel, context.Graphics.Context);
+        var importedAnimation = ImportAnimation(
+            "bld_market8",
+            "Graphics/Building/bld_market8_open.kf");
+        var animation = ImportedAnimationMaterializer.Materialize(importedAnimation);
+
+        var instance = new ModelInstance(model, context.Graphics.Context);
+        instance.Update(new TimeInterval(TimeSpan.Zero, TimeSpan.Zero));
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => PlayTo(instance, animation, 0f));
+
+        // The open/close .kf files target market_open_* nodes that exist in
+        // no cooked model; bind-time validation reports them by name.
+        Assert.Contains("market_open_1", exception.Message);
+        Assert.Contains("does not exist in model", exception.Message);
     }
 }

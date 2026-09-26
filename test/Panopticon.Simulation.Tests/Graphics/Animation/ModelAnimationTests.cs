@@ -413,6 +413,51 @@ public sealed class ModelAnimationTests
     }
 
     [Fact]
+    public void Bind_NamedTargets_UnrelatedDuplicateBoneNamesDoNotBlockBinding()
+    {
+        // EE2 content (LHA10_siegegun) contains unrelated bones with duplicate
+        // names; only names actually targeted must be unambiguous.
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("base"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("base", 0, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Editable Mesh", 0, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Editable Mesh", 0, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        var bound = animation.Bind(hierarchy);
+
+        Assert.Single(bound.Clips);
+        Assert.Equal(1, bound.Clips[0].Bone);
+
+        var ambiguous = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run2",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Editable Mesh"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var exception = Assert.Throws<InvalidDataException>(() => ambiguous.Bind(hierarchy));
+        Assert.Contains("Editable Mesh", exception.Message);
+        Assert.Contains("multiple bones", exception.Message);
+    }
+
+    [Fact]
     public void Bind_MixedTargets_PreservesChannelOrder()
     {
         var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(

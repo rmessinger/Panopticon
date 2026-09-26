@@ -874,7 +874,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     DDF-bound clips bind through C2, and the matching `walk01` channels have identity offsets at
     time 0; deterministic textured captures show the Druid upright and deforming; more than four
     influences and weight sums further than 0.01 from 1 fail explicitly.
-- [ ] C4e EE2 property animation
+- [x] C4e EE2 property animation
       ([deep dive](deep-dives/c4e-ee2-property-animation.md)).
   - AC: NIF property controller blocks decode with exact stream consumption; C1 and runtime
     animation targets cover sub-object visibility and material slots; the NIF converter emits UV,
