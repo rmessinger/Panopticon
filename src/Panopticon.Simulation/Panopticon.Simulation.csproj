@@ -19,7 +19,6 @@
 
 
     <PackageReference Include="System.ValueTuple" />
-    <PackageReference Include="Veldrid" />
     <PackageReference Include="Veldrid.RenderDoc" />
     <PackageReference Include="Veldrid.SDL2" />
     <PackageReference Include="Veldrid.StartupUtilities" />
@@ -37,6 +36,7 @@
     <ProjectReference Include="..\Panopticon.Mathematics\Panopticon.Mathematics.csproj" />
     <ProjectReference Include="..\Panopticon.Physics\Panopticon.Physics.csproj" />
     <ProjectReference Include="..\Panopticon.Rendering\Panopticon.Rendering.csproj" />
+    <ProjectReference Include="..\Veldrid\Veldrid.csproj" />
     <ProjectReference Include="..\Veldrid.ImageSharp\Veldrid.ImageSharp.csproj" />
     <ProjectReference Include="..\Veldrid.ImGui\Veldrid.ImGui.csproj" />
   </ItemGroup>
