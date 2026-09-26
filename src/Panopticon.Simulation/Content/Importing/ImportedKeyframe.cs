@@ -10,6 +10,7 @@ public enum ImportedKeyframeKind
     Float,
     Quaternion,
     Bool,
+    Vector3,
 }
 
 /// <summary>
@@ -29,6 +30,8 @@ public sealed class ImportedKeyframe
     public Quaternion QuaternionValue => ValueAs<Quaternion>(ImportedKeyframeKind.Quaternion);
 
     public bool BoolValue => ValueAs<bool>(ImportedKeyframeKind.Bool);
+
+    public Vector3 Vector3Value => ValueAs<Vector3>(ImportedKeyframeKind.Vector3);
 
     private ImportedKeyframe(TimeSpan time, ImportedKeyframeKind kind, object value)
     {
@@ -57,6 +60,11 @@ public sealed class ImportedKeyframe
         return new ImportedKeyframe(time, ImportedKeyframeKind.Bool, value);
     }
 
+    public static ImportedKeyframe FromVector3(TimeSpan time, in Vector3 value)
+    {
+        return new ImportedKeyframe(time, ImportedKeyframeKind.Vector3, value);
+    }
+
     public static ImportedKeyframeKind GetExpectedKind(ImportedAnimationChannelType channelType)
     {
         return channelType switch
@@ -68,6 +76,18 @@ public sealed class ImportedKeyframe
             ImportedAnimationChannelType.Quaternion => ImportedKeyframeKind.Quaternion,
 
             ImportedAnimationChannelType.Visibility => ImportedKeyframeKind.Bool,
+
+            ImportedAnimationChannelType.TextureTranslateU
+            or ImportedAnimationChannelType.TextureTranslateV
+            or ImportedAnimationChannelType.TextureScaleU
+            or ImportedAnimationChannelType.TextureScaleV
+            or ImportedAnimationChannelType.TextureRotate
+            or ImportedAnimationChannelType.MaterialAlpha => ImportedKeyframeKind.Float,
+
+            ImportedAnimationChannelType.MaterialAmbientColor
+            or ImportedAnimationChannelType.MaterialDiffuseColor
+            or ImportedAnimationChannelType.MaterialSpecularColor
+            or ImportedAnimationChannelType.MaterialEmissiveColor => ImportedKeyframeKind.Vector3,
 
             _ => throw new ArgumentOutOfRangeException(nameof(channelType)),
         };

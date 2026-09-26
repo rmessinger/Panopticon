@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4e-04` |
 | Roadmap phase | [Track C · C4e](../../track-c-external-assets.md): EE2 property animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4e-01`, `WI-C4e-02`, `WI-C4e-03`, `WI-C4c-04` |
@@ -43,11 +43,11 @@ Teach `NifAnimationImporter` to convert EE2 property controllers into C1 propert
 
 ## Acceptance criteria
 
-- [ ] Each proof clip emits the channel families and target counts listed in the deep dive.
-- [ ] `bld_farm_yam.kf` decodes its material-color blocks but fails because morph animation is unsupported.
-- [ ] Unsupported texture slots, shader maps, flags, missing targets, and alpha ranges fail with asset context.
-- [ ] C4c rigid proof clips still import and bind unchanged.
-- [ ] Standard validation passes.
+- [x] Each proof clip emits the channel families and target counts listed in the deep dive.
+- [x] `bld_farm_yam.kf` decodes its material-color blocks but fails because morph animation is unsupported.
+- [x] Unsupported texture slots, shader maps, flags, missing targets, and alpha ranges fail with asset context.
+- [x] C4c rigid proof clips still import and bind unchanged.
+- [x] Standard validation passes.
 
 ## Validation commands
 

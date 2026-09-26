@@ -6,5 +6,15 @@ public enum AnimationClipType
     TranslationY,
     TranslationZ,
     Quaternion,
-    Visibility
+    Visibility,
+    TextureTranslateU,
+    TextureTranslateV,
+    TextureScaleU,
+    TextureScaleV,
+    TextureRotate,
+    MaterialAmbientColor,
+    MaterialDiffuseColor,
+    MaterialSpecularColor,
+    MaterialEmissiveColor,
+    MaterialAlpha
 }

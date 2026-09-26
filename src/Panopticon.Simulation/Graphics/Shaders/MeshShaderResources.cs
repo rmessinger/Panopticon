@@ -82,8 +82,22 @@ internal sealed class MeshShaderResources : DisposableBase
         public Vector3 HouseColor;
         public float Opacity;
         public Vector3 TintColor;
-#pragma warning disable CS0169
         private readonly float _padding;
+
+        // Property-animation overrides (C4e). Color vectors use xyz as the value and w as an
+        // enabled flag (1 replaces the material color). OverrideFlags is
+        // ModelMaterialOverrideFlags; only its Alpha, UvTranslate, UvScale, and UvRotate bits
+        // gate shader behavior.
+        public Vector4 AmbientOverride;
+        public Vector4 DiffuseOverride;
+        public Vector4 SpecularOverride;
+        public Vector4 EmissiveOverride;
+        public Vector4 UvTranslate;
+        public Vector4 UvScale;
+        public Vector4 UvRotate;
+        public float MaterialOpacity;
+        public uint OverrideFlags;
+        public Vector2 _padding2;
 
         public override bool Equals(object obj)
         {

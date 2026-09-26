@@ -14,6 +14,7 @@ public sealed class AnimationInstance
     private readonly int[] _keyframeIndices;
     private readonly ModelBoneInstance[] _boneInstances;
     private readonly BoundModelAnimation _animation;
+    private readonly ModelPropertyAnimationState _propertyState;
 
     private TimeSpan _currentTimeValue;
 
@@ -39,8 +40,16 @@ public sealed class AnimationInstance
     /// <param name="flags">Additional animation flags</param>
     /// <param name="gameObject"></param>
     /// <param name="random">Random number generator used when combined with <see cref="AnimationFlags.RandomStart"/></param>
+    /// <param name="propertyState">Receives sampled sub-object visibility and material-slot values; null for bone-only animations</param>
     public AnimationInstance(ModelBoneInstance[] modelBoneInstances, BoundModelAnimation animation,
         AnimationMode mode, AnimationFlags flags, GameObject gameObject, IRandom random)
+        : this(modelBoneInstances, animation, mode, flags, gameObject, random, propertyState: null)
+    {
+    }
+
+    internal AnimationInstance(ModelBoneInstance[] modelBoneInstances, BoundModelAnimation animation,
+        AnimationMode mode, AnimationFlags flags, GameObject gameObject, IRandom random,
+        ModelPropertyAnimationState propertyState)
     {
         _animation = animation;
         _mode = mode;
@@ -49,6 +58,7 @@ public sealed class AnimationInstance
         _keyframeIndices = new int[animation.Clips.Length];
         _gameObject = gameObject;
         _random = random;
+        _propertyState = propertyState;
     }
 
     public void SetSpeedFactor(float speedFactor)
@@ -129,6 +139,8 @@ public sealed class AnimationInstance
 
             bone.Visible = true;
         }
+
+        _propertyState?.Reset();
     }
 
     internal void Update(in TimeInterval gameTime)
@@ -225,7 +237,7 @@ public sealed class AnimationInstance
 
             var clip = _animation.Clips[i];
 
-            if (clip.Bone >= _boneInstances.Length)
+            if (clip.TargetKind == AnimationClipTarget.Bone && clip.Bone >= _boneInstances.Length)
             {
                 continue;
             }
@@ -285,6 +297,12 @@ public sealed class AnimationInstance
         in Keyframe next,
         TimeSpan currentTime)
     {
+        if (clip.TargetKind != AnimationClipTarget.Bone)
+        {
+            EvaluateProperty(clip, previous, next, currentTime);
+            return;
+        }
+
         var animatedOffset = _boneInstances[clip.Bone].AnimatedOffset;
 
         if (clip.Interpolation == AnimationInterpolation.Step)
@@ -362,6 +380,122 @@ public sealed class AnimationInstance
 
             case AnimationClipType.Visibility:
                 _boneInstances[clip.Bone].Visible = previous.Value.BoolValue;
+                break;
+
+            default:
+                throw new InvalidOperationException();
+        }
+    }
+
+    private void EvaluateProperty(
+        AnimationClip clip,
+        in Keyframe previous,
+        in Keyframe next,
+        TimeSpan currentTime)
+    {
+        if (_propertyState is null)
+        {
+            throw new InvalidOperationException(
+                $"Animation '{_animation.Name}' evaluates a {clip.TargetKind} clip without property animation state.");
+        }
+
+        if (clip.TargetKind == AnimationClipTarget.SubObject)
+        {
+            // Visibility is step-keyed by construction; hold the key at or before the current time.
+            var held = previous.Time <= currentTime ? previous : next;
+            _propertyState.SetSubObjectVisible(clip.SubObjectIndex, held.Value.BoolValue);
+            return;
+        }
+
+        if (clip.Interpolation == AnimationInterpolation.Step)
+        {
+            var held = previous.Time <= currentTime ? previous : next;
+            WriteSlotValue(clip, held.Value);
+            return;
+        }
+
+        var progress = (float)(currentTime - previous.Time).TotalMilliseconds;
+        var duration = (float)(next.Time - previous.Time).TotalMilliseconds;
+
+        var amount = (duration != 0)
+            ? progress / duration
+            : 0;
+
+        switch (clip.ClipType)
+        {
+            case AnimationClipType.MaterialAmbientColor:
+            case AnimationClipType.MaterialDiffuseColor:
+            case AnimationClipType.MaterialSpecularColor:
+            case AnimationClipType.MaterialEmissiveColor:
+                WriteSlotValue(clip, new KeyframeValue
+                {
+                    Vector3Value = Vector3.Lerp(previous.Value.Vector3Value, next.Value.Vector3Value, amount),
+                });
+                break;
+
+            default:
+                WriteSlotValue(clip, new KeyframeValue
+                {
+                    FloatValue = MathUtility.Lerp(previous.Value.FloatValue, next.Value.FloatValue, amount),
+                });
+                break;
+        }
+    }
+
+    private void WriteSlotValue(AnimationClip clip, KeyframeValue value)
+    {
+        ref var slot = ref _propertyState!.GetSlot(clip.SubObjectIndex, clip.MaterialIndex);
+
+        switch (clip.ClipType)
+        {
+            case AnimationClipType.MaterialAmbientColor:
+                slot.Ambient = value.Vector3Value;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.Ambient;
+                break;
+
+            case AnimationClipType.MaterialDiffuseColor:
+                slot.Diffuse = value.Vector3Value;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.Diffuse;
+                break;
+
+            case AnimationClipType.MaterialSpecularColor:
+                slot.Specular = value.Vector3Value;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.Specular;
+                break;
+
+            case AnimationClipType.MaterialEmissiveColor:
+                slot.Emissive = value.Vector3Value;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.Emissive;
+                break;
+
+            case AnimationClipType.MaterialAlpha:
+                slot.Alpha = value.FloatValue;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.Alpha;
+                break;
+
+            case AnimationClipType.TextureTranslateU:
+                slot.UvTranslateU = value.FloatValue;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvTranslate;
+                break;
+
+            case AnimationClipType.TextureTranslateV:
+                slot.UvTranslateV = value.FloatValue;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvTranslate;
+                break;
+
+            case AnimationClipType.TextureScaleU:
+                slot.UvScaleU = value.FloatValue;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvScale;
+                break;
+
+            case AnimationClipType.TextureScaleV:
+                slot.UvScaleV = value.FloatValue;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvScale;
+                break;
+
+            case AnimationClipType.TextureRotate:
+                slot.UvRotation = value.FloatValue;
+                slot.OverrideFlags |= (uint)ModelMaterialOverrideFlags.UvRotate;
                 break;
 
             default:

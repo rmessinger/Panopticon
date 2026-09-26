@@ -27,6 +27,8 @@ partial class ModelMesh
             MeshParts.Add(CreateModelMeshPart(importedMesh, importedPart, loadContext));
         }
 
+        MaterialCount = importedMesh.Materials.Count;
+
         _boundingBox = importedMesh.BoundingBox;
         _boundingSphere = importedMesh.BoundingSphere;
 
@@ -220,7 +222,8 @@ partial class ModelMesh
             importedPart.IndexCount,
             blendEnabled,
             materialPass,
-            materialPassBlend);
+            materialPassBlend,
+            importedPart.MaterialIndex);
     }
 
     private static FixedFunctionShaderResources.MaterialConstantsType CreateFixedFunctionMaterialConstants(ImportedMaterial material)

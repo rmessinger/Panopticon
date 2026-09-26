@@ -209,12 +209,15 @@ public sealed class ModelAnimationTests
     [Fact]
     public void Bind_CacheStorageIsWeak_And_BoundResultHoldsNoHierarchyReference()
     {
-        var cacheField = typeof(ModelAnimation)
+        var cacheFields = typeof(ModelAnimation)
             .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            .Single(f => f.FieldType.IsGenericType &&
-                f.FieldType.GetGenericTypeDefinition() == typeof(System.Runtime.CompilerServices.ConditionalWeakTable<,>));
-        Assert.Equal(typeof(ModelBoneHierarchy), cacheField.FieldType.GetGenericArguments()[0]);
-        Assert.Equal(typeof(BoundModelAnimation), cacheField.FieldType.GetGenericArguments()[1]);
+            .Where(f => f.FieldType.IsGenericType &&
+                f.FieldType.GetGenericTypeDefinition() == typeof(System.Runtime.CompilerServices.ConditionalWeakTable<,>))
+            .ToList();
+        Assert.Equal(2, cacheFields.Count);
+        Assert.All(cacheFields, f => Assert.Equal(typeof(BoundModelAnimation), f.FieldType.GetGenericArguments()[1]));
+        Assert.Contains(cacheFields, f => f.FieldType.GetGenericArguments()[0] == typeof(ModelBoneHierarchy));
+        Assert.Contains(cacheFields, f => f.FieldType.GetGenericArguments()[0] == typeof(Model));
 
         Assert.DoesNotContain(
             typeof(ModelAnimation).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
@@ -294,7 +297,8 @@ public sealed class ModelAnimationTests
                     new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
             }));
 
-        Assert.Throws<ArgumentNullException>(() => animation.Bind(null!));
+        Assert.Throws<ArgumentNullException>(() => animation.Bind((ModelBoneHierarchy)null!));
+        Assert.Throws<ArgumentNullException>(() => animation.Bind((Model)null!));
     }
 
     [Fact]

@@ -1,13 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO;
 
 namespace Panopticon.FileFormats.Nif;
 
 /// <summary>
-/// One texture stage descriptor at 10.1.0.0. Texture transforms are out
-/// of C4a scope and fail with NotSupportedException.
+/// The static texture transform a texture slot may carry: translate,
+/// tile, rotate around a center, expressed in UV space.
+/// </summary>
+public readonly record struct NifTextureTransform(
+    float TranslationU,
+    float TranslationV,
+    float TilingU,
+    float TilingV,
+    float Rotation,
+    uint TransformType,
+    float CenterU,
+    float CenterV);
+
+/// <summary>
+/// One texture stage descriptor at 10.1.0.0, including the optional
+/// static texture transform.
 /// </summary>
 public sealed record NifTextureDescriptor(
     int SourceReference,
@@ -15,7 +28,8 @@ public sealed record NifTextureDescriptor(
     uint FilterMode,
     uint UvSet,
     short Ps2L,
-    short Ps2K)
+    short Ps2K,
+    NifTextureTransform? Transform = null)
 {
     internal static NifTextureDescriptor Read(NifBinaryReader reader, string slotName)
     {
@@ -38,12 +52,28 @@ public sealed record NifTextureDescriptor(
         var ps2L = reader.ReadInt16($"{slotName}.PS2L");
         var ps2K = reader.ReadInt16($"{slotName}.PS2K");
         var hasTransform = reader.ReadByte($"{slotName}.HasTextureTransform");
+        NifTextureTransform? transform = null;
         if (hasTransform != 0)
         {
-            throw new NotSupportedException(
-                $"NIF texture slot {slotName} has a texture transform; C4a does not decode them.");
+            var translationU = reader.ReadSingle($"{slotName}.Transform.TranslationU");
+            var translationV = reader.ReadSingle($"{slotName}.Transform.TranslationV");
+            var tilingU = reader.ReadSingle($"{slotName}.Transform.TilingU");
+            var tilingV = reader.ReadSingle($"{slotName}.Transform.TilingV");
+            var rotation = reader.ReadSingle($"{slotName}.Transform.Rotation");
+            var transformType = reader.ReadUInt32($"{slotName}.Transform.TransformType");
+            var centerU = reader.ReadSingle($"{slotName}.Transform.CenterU");
+            var centerV = reader.ReadSingle($"{slotName}.Transform.CenterV");
+            transform = new NifTextureTransform(
+                translationU,
+                translationV,
+                tilingU,
+                tilingV,
+                rotation,
+                transformType,
+                centerU,
+                centerV);
         }
 
-        return new NifTextureDescriptor(source, clampMode, filterMode, uvSet, ps2L, ps2K);
+        return new NifTextureDescriptor(source, clampMode, filterMode, uvSet, ps2L, ps2K, transform);
     }
 }

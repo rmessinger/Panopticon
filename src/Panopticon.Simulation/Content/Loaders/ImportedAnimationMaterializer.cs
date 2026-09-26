@@ -30,6 +30,16 @@ internal static class ImportedAnimationMaterializer
             ImportedAnimationChannelType.TranslationZ => AnimationClipType.TranslationZ,
             ImportedAnimationChannelType.Quaternion => AnimationClipType.Quaternion,
             ImportedAnimationChannelType.Visibility => AnimationClipType.Visibility,
+            ImportedAnimationChannelType.TextureTranslateU => AnimationClipType.TextureTranslateU,
+            ImportedAnimationChannelType.TextureTranslateV => AnimationClipType.TextureTranslateV,
+            ImportedAnimationChannelType.TextureScaleU => AnimationClipType.TextureScaleU,
+            ImportedAnimationChannelType.TextureScaleV => AnimationClipType.TextureScaleV,
+            ImportedAnimationChannelType.TextureRotate => AnimationClipType.TextureRotate,
+            ImportedAnimationChannelType.MaterialAmbientColor => AnimationClipType.MaterialAmbientColor,
+            ImportedAnimationChannelType.MaterialDiffuseColor => AnimationClipType.MaterialDiffuseColor,
+            ImportedAnimationChannelType.MaterialSpecularColor => AnimationClipType.MaterialSpecularColor,
+            ImportedAnimationChannelType.MaterialEmissiveColor => AnimationClipType.MaterialEmissiveColor,
+            ImportedAnimationChannelType.MaterialAlpha => AnimationClipType.MaterialAlpha,
             _ => throw new ArgumentOutOfRangeException(nameof(channel)),
         };
 
@@ -37,6 +47,9 @@ internal static class ImportedAnimationMaterializer
         {
             ImportedAnimationTargetKind.DirectIndex => ModelAnimationTarget.CreateDirectIndex(channel.Target.DirectIndex),
             ImportedAnimationTargetKind.BoneName => ModelAnimationTarget.CreateBoneName(channel.Target.BoneName),
+            ImportedAnimationTargetKind.SubObjectName => ModelAnimationTarget.CreateSubObjectName(channel.Target.SubObjectName),
+            ImportedAnimationTargetKind.MaterialSlot => ModelAnimationTarget.CreateMaterialSlot(
+                channel.Target.SubObjectName, channel.Target.MaterialIndex),
             _ => throw new ArgumentOutOfRangeException(nameof(channel)),
         };
 
@@ -61,6 +74,7 @@ internal static class ImportedAnimationMaterializer
             ImportedKeyframeKind.Float => new KeyframeValue { FloatValue = keyframe.FloatValue },
             ImportedKeyframeKind.Quaternion => new KeyframeValue { Quaternion = keyframe.QuaternionValue },
             ImportedKeyframeKind.Bool => new KeyframeValue { BoolValue = keyframe.BoolValue },
+            ImportedKeyframeKind.Vector3 => new KeyframeValue { Vector3Value = keyframe.Vector3Value },
             _ => throw new ArgumentOutOfRangeException(nameof(keyframe)),
         };
     }

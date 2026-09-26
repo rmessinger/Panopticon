@@ -227,6 +227,12 @@ internal static class NifSkinConverter
         FileFormatsNif.NifTriShapeData data,
         Matrix4x4 bake)
     {
+        if (data.Normals is null)
+        {
+            throw new NotSupportedException(
+                $"NIF shape '{shape.Name}' is skinned but has no stored normals; skinned normal synthesis is not supported.");
+        }
+
         var influences = new List<(int BoneIndex, float Weight)>();
         var sum = 0.0f;
         foreach (var influence in rawInfluences)
