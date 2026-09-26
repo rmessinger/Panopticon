@@ -28,8 +28,12 @@ void main()
             in_Normal1,
             _SkinningBuffer[in_BoneIndex0],
             _SkinningBuffer[in_BoneIndex1],
+            _SkinningBuffer[in_BoneIndex2],
+            _SkinningBuffer[in_BoneIndex3],
             in_BoneWeight0,
             in_BoneWeight1,
+            in_BoneWeight2,
+            in_BoneWeight3,
             modifiedPosition,
             modifiedNormal);
     }

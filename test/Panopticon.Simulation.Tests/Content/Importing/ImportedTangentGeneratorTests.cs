@@ -224,6 +224,51 @@ public sealed class ImportedTangentGeneratorTests
         Assert.Contains("nothing to generate", exception.Message);
     }
 
+    [Fact]
+    public void Generation_PreservesAllFourSkinSlots()
+    {
+        var quad = CreateQuadMesh();
+        var skinnedVertices = new ImportedVertex[quad.Vertices.Count];
+        for (var i = 0; i < quad.Vertices.Count; i++)
+        {
+            var source = quad.Vertices[i];
+            skinnedVertices[i] = new ImportedVertex(
+                source.Position,
+                source.Normal,
+                boneIndex0: 0,
+                boneIndex1: 1,
+                boneIndex2: 2,
+                boneIndex3: 3,
+                boneWeight0: 0.4f,
+                boneWeight1: 0.3f,
+                boneWeight2: 0.2f,
+                boneWeight3: 0.1f);
+        }
+
+        var skinned = new ImportedMesh(
+            skinnedVertices,
+            quad.Indices,
+            quad.BoundingBox,
+            quad.BoundingSphere,
+            quad.Hidden,
+            quad.CameraOriented,
+            quad.HasHouseColor,
+            isSkinned: true,
+            quad.Materials,
+            quad.MeshParts);
+
+        var generated = ImportedTangentGenerator.GenerateTangents(skinned);
+
+        for (var i = 0; i < generated.Vertices.Count; i++)
+        {
+            var vertex = generated.Vertices[i];
+            Assert.Equal(2u, vertex.BoneIndex2);
+            Assert.Equal(3u, vertex.BoneIndex3);
+            Assert.Equal(0.2f, vertex.BoneWeight2);
+            Assert.Equal(0.1f, vertex.BoneWeight3);
+        }
+    }
+
     private static ImportedVertex[] CreateQuadVertices()
     {
         return

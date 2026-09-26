@@ -124,11 +124,14 @@ public sealed class NifGeometryTests
     }
 
     [Fact]
-    public void SkinnedShapeFailsWithNotSupported()
+    public void SkinnedShapeWithWrongRefTypeFailsWithInvalidData()
     {
-        var ex = Assert.Throws<NotSupportedException>(
+        // Since C4d the skin block chain is decoded; a skin reference to a
+        // non-NiSkinInstance block is an InvalidDataException instead of
+        // the C4a blanket NotSupportedException.
+        var ex = Assert.Throws<InvalidDataException>(
             () => Read(ShapeBuilder(skin: 2).Build()));
-        Assert.Contains("skinned", ex.Message);
+        Assert.Contains("as a skin instance", ex.Message);
     }
 
     [Fact]

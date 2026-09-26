@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-03` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -52,11 +52,11 @@ without changing any existing importer's output.
 
 ## Acceptance criteria
 
-- [ ] All four slots are exposed, range-checked, and validated.
-- [ ] W3D, glTF, and NIF importer outputs are unchanged. Existing importer and parity tests pass
+- [x] All four slots are exposed, range-checked, and validated.
+- [x] W3D, glTF, and NIF importer outputs are unchanged. Existing importer and parity tests pass
       without edits.
-- [ ] Tangent generation round-trips all four slots.
-- [ ] Standard validation passes.
+- [x] Tangent generation round-trips all four slots.
+- [x] Standard validation passes.
 
 ## Validation commands
 

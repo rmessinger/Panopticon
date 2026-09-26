@@ -40,21 +40,22 @@ public sealed class Ee2NifProofScenarioTests
     }
 
     [Fact]
-    public void CapturePlanTargetsBothProofModels()
+    public void CapturePlanCoversRigidAndSkinnedProofModels()
     {
-        Assert.Equal(2, Ee2NifProofScenario.CapturePlan.Length);
+        Assert.Equal(3, Ee2NifProofScenario.CapturePlan.Length);
         Assert.Equal("nwg1_galley", Ee2NifProofScenario.CapturePlan[0].Key);
         Assert.Equal("ab11_TwinEngineBomber", Ee2NifProofScenario.CapturePlan[1].Key);
+        Assert.Equal("CIV1_Druid_british", Ee2NifProofScenario.CapturePlan[2].Key);
         Assert.All(
             Ee2NifProofScenario.CapturePlan,
             entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
     }
 
     [Fact]
-    public void AnimatedCapturePlanCoversDeepDiveSectionEight()
+    public void AnimatedCapturePlanCoversDeepDiveSectionsEightAndEleven()
     {
         var plan = Ee2NifProofScenario.AnimatedCapturePlan;
-        Assert.Equal(8, plan.Length);
+        Assert.Equal(13, plan.Length);
 
         var expected = new[]
         {
@@ -66,6 +67,11 @@ public sealed class Ee2NifProofScenarioTests
             ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_walk.kf", 1f / 12f),
             ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 0f),
             ("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 1.333f),
+            ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_walk01.kf", 0f),
+            ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_walk01.kf", 0.2f),
+            ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_walk01.kf", 0.4f),
+            ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_attack01.kf", 0.9333f),
+            ("CIV1_Druid_british", "Graphics/Humans/CIV1_Druid_british_death01.kf", 1.2333f),
         };
 
         for (var i = 0; i < expected.Length; i++)
@@ -98,6 +104,18 @@ public sealed class Ee2NifProofScenarioTests
             "ee2-ab11_TwinEngineBomber_takeoff_1333.png",
             Ee2NifProofScenario.GetAnimatedCaptureFileName(
                 "Graphics/Vehicles/ab11_TwinEngineBomber_takeoff.kf", 1.333f));
+        Assert.Equal(
+            "ee2-CIV1_Druid_british_walk01_0200.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Humans/CIV1_Druid_british_walk01.kf", 0.2f));
+        Assert.Equal(
+            "ee2-CIV1_Druid_british_attack01_0933.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Humans/CIV1_Druid_british_attack01.kf", 0.9333f));
+        Assert.Equal(
+            "ee2-CIV1_Druid_british_death01_1233.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Humans/CIV1_Druid_british_death01.kf", 1.2333f));
     }
 
     [Fact]

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-05` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4d-03`, `WI-C4d-04` |
@@ -43,11 +43,11 @@ influence policy instead of rejecting the third and fourth.
 
 ## Acceptance criteria
 
-- [ ] Three- and four-influence vertices import in descending weight order with normalized
+- [x] Three- and four-influence vertices import in descending weight order with normalized
       weights.
-- [ ] Bad sums still throw `InvalidDataException`.
-- [ ] Existing two-influence glTF fixtures produce identical vertices.
-- [ ] Standard validation passes.
+- [x] Bad sums still throw `InvalidDataException`.
+- [x] Existing two-influence glTF fixtures produce identical vertices.
+- [x] Standard validation passes.
 
 ## Validation commands
 

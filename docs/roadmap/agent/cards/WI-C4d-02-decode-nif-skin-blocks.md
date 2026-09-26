@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-02` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -55,12 +55,12 @@ consumption and validated references, replacing the C4a blanket rejection of ski
 
 ## Acceptance criteria
 
-- [ ] Synthetic streams for all three blocks parse to exact end-of-file.
-- [ ] Every wrong-type reference and the bone-count mismatch throw `InvalidDataException`.
-- [ ] A skinned shape no longer fails in the parser. The importer still rejects it until
+- [x] Synthetic streams for all three blocks parse to exact end-of-file.
+- [x] Every wrong-type reference and the bone-count mismatch throw `InvalidDataException`.
+- [x] A skinned shape no longer fails in the parser. The importer still rejects it until
       `WI-C4d-06`, with a message naming C4d.
-- [ ] Existing C4a, C4b, and C4c parser tests pass unchanged.
-- [ ] Standard validation passes.
+- [x] Existing C4a, C4b, and C4c parser tests pass unchanged.
+- [x] Standard validation passes.
 
 ## Validation commands
 

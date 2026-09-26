@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-06` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4d-01`, `WI-C4d-02`, `WI-C4d-03` |
@@ -57,12 +57,15 @@ Convert skinned `NiTriShape` geometry into model-space skinned `ImportedMesh` su
 
 ## Acceptance criteria
 
-- [ ] Synthetic skins import with correct inverse binds, four-slot influences, and bind-pose
+- [x] Synthetic skins import with correct inverse binds, four-slot influences, and bind-pose
       parity within 1e-4.
-- [ ] Every section 10 skin failure throws the listed exception with shape or node context.
-- [ ] No influence above 1e-4 is dropped.
-- [ ] Unskinned NIF imports are unchanged.
-- [ ] Standard validation passes.
+- [x] Every section 10 skin failure throws the listed exception with shape or node context.
+      Parser-level rows (truncation, bad references, wrong block types, bone-count mismatch)
+      are covered by the `NifSkinTests` suite from `WI-C4d-02`; converter-level rows are
+      covered by `NifSkinConverterTests`.
+- [x] No influence above 1e-4 is dropped.
+- [x] Unskinned NIF imports are unchanged.
+- [x] Standard validation passes.
 
 ## Validation commands
 

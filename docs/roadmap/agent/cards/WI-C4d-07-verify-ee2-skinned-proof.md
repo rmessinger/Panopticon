@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4d-07` |
 | Roadmap phase | [Track C · C4d](../../track-c-external-assets.md): EE2 skinned character animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C4d-04`, `WI-C4d-06` |
@@ -51,12 +51,12 @@ deterministic textured captures, and that the negative fixtures fail per contrac
 
 ## Acceptance criteria
 
-- [ ] All installed assertions in steps 1 to 4 pass.
-- [ ] Captures show the upright, textured Druid at rest and deforming through Walk, Attack1, and
+- [x] All installed assertions in steps 1 to 4 pass.
+- [x] Captures show the upright, textured Druid at rest and deforming through Walk, Attack1, and
       Death.
-- [ ] Repeat runs produce identical captures.
-- [ ] No EE2 asset or capture is committed.
-- [ ] Standard validation passes.
+- [x] Repeat runs produce identical captures.
+- [x] No EE2 asset or capture is committed.
+- [x] Standard validation passes.
 
 ## Validation commands
 

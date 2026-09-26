@@ -36,6 +36,8 @@ C4 rejects:
 - `CUBICSPLINE` animation;
 - advanced material extensions and texture transforms.
 
+C4d widens skinning to four influences per the [C4d influence policy](c4d-ee2-skinned-animation.md#4-influence-policy).
+
 Those are valid features outside the committed subset, so they fail with `NotSupportedException`.
 Malformed data fails with `InvalidDataException`.
 

@@ -784,7 +784,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     deterministic textured captures show oar sweep, a quarter propeller turn at 1/12 s, and the
     TakeOff ground-to-flight pose; the unreferenced `ab11_TwinEngineBomber.kf` fails naming
     `prop_1`; skinning, root motion, and other controllers fail explicitly.
-- [ ] C4d EE2 skinned character animation
+- [x] C4d EE2 skinned character animation
       ([deep dive](deep-dives/c4d-ee2-skinned-animation.md)).
   - AC: NIF node, shape, skin, and Euler rotations use the column-vector convention, and the C4a
     and C4c descriptors and captures are regenerated once and locked again; `NiSkinInstance`,

@@ -67,7 +67,7 @@ Model facts:
 | Runtime bones | 32 unit-scale nodes, root `CIV1_Druid_british.nif` |
 | LOD0 geometry | 648 vertices, 842 triangles, 19 skin bones |
 | LOD0 influences | 486 vertices with one, 158 with two, 2 with three, 2 with four |
-| Largest weight beyond two influences | 0.5 on vertices 151 and 153 |
+| Combined weight beyond two influences | 0.5 on vertices 151 and 153 (0.25 per slot) |
 | Weight sums | exactly 1 on every LOD0 vertex |
 | Skin partitions | none |
 | Accumulation root | `Bip01` (`KFAccumRoot` string extra data) |

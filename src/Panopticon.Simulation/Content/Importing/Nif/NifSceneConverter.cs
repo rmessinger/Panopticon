@@ -17,7 +17,8 @@ namespace Panopticon.Content.Importing.Nif;
 /// parent bone into vertices and attaches to that bone. Nodes with
 /// non-unit scale never become bones; their subtrees bake statically into
 /// the nearest bone ancestor. NiLODNode children other than the
-/// highest-detail selection are intentionally omitted.
+/// highest-detail selection are intentionally omitted. Skinned shapes
+/// defer to NifSkinConverter after the bone walk.
 /// </summary>
 internal static class NifSceneConverter
 {
@@ -30,6 +31,8 @@ internal static class NifSceneConverter
     {
         var bones = new List<ImportedBone>();
         var subObjects = new List<ImportedSubObject>();
+        var nodeToBoneIndex = new Dictionary<int, int>();
+        var skinnedShapes = new List<FileFormatsNif.NifTriShape>();
 
         foreach (var root in file.Roots)
         {
@@ -39,8 +42,14 @@ internal static class NifSceneConverter
                     parentBoneIndex: -1,
                     relativeToBone: Matrix4x4.Identity,
                     insideScaledSubtree: false,
-                    bones, subObjects, modelName, context);
+                    bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
             }
+        }
+
+        if (skinnedShapes.Count > 0)
+        {
+            NifSkinConverter.ConvertSkinnedShapes(
+                file, modelName, skinnedShapes, nodeToBoneIndex, bones, subObjects, context);
         }
 
         if (bones.Count == 0)
@@ -69,6 +78,8 @@ internal static class NifSceneConverter
         bool insideScaledSubtree,
         List<ImportedBone> bones,
         List<ImportedSubObject> subObjects,
+        Dictionary<int, int> nodeToBoneIndex,
+        List<FileFormatsNif.NifTriShape> skinnedShapes,
         string modelName,
         AssetImportContext context)
     {
@@ -76,6 +87,16 @@ internal static class NifSceneConverter
 
         if (file.Blocks[blockIndex] is FileFormatsNif.NifTriShape shape)
         {
+            if (shape.SkinInstanceReference >= 0)
+            {
+                // Skinning is authoritative for placement: the shape's
+                // vertex data is stored in skin space, so its node
+                // ancestors contribute nothing and no bone ancestor is
+                // required. Conversion waits for the full bone walk.
+                skinnedShapes.Add(shape);
+                return;
+            }
+
             if (parentBoneIndex < 0)
             {
                 throw new NotSupportedException(
@@ -99,6 +120,7 @@ internal static class NifSceneConverter
             childInsideScaledSubtree = false;
 
             var engineLocal = NifTransformConverter.CreateBoneLocalMatrix(avObject);
+            nodeToBoneIndex.Add(blockIndex, childParentBoneIndex);
             bones.Add(new ImportedBone(
                 avObject.Name,
                 parentBoneIndex,
@@ -120,7 +142,7 @@ internal static class NifSceneConverter
             // levels are dropped wholesale by contract.
             Descend(file, file.GetHighestDetailLodChild(lodNode),
                 childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
-                bones, subObjects, modelName, context);
+                bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
         }
         else if (file.Blocks[blockIndex] is FileFormatsNif.NifNode node)
         {
@@ -130,7 +152,7 @@ internal static class NifSceneConverter
                 {
                     Descend(file, child,
                         childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
-                        bones, subObjects, modelName, context);
+                        bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
                 }
             }
         }
@@ -144,6 +166,8 @@ internal static class NifSceneConverter
         bool insideScaledSubtree,
         List<ImportedBone> bones,
         List<ImportedSubObject> subObjects,
+        Dictionary<int, int> nodeToBoneIndex,
+        List<FileFormatsNif.NifTriShape> skinnedShapes,
         string modelName,
         AssetImportContext context)
     {
@@ -151,7 +175,7 @@ internal static class NifSceneConverter
         {
             Walk(file, childIndex, childAvObject,
                 parentBoneIndex, relativeToBone, insideScaledSubtree,
-                bones, subObjects, modelName, context);
+                bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
         }
     }
 
@@ -201,6 +225,86 @@ internal static class NifSceneConverter
             vertices[i] = new ImportedVertex(position, normal);
         }
 
+        var indices = CopyTriangleIndices(data, reverseWinding);
+        var material = ConvertShapeMaterial(file, shape, context);
+        var textureCoordinates = ConvertTextureCoordinates(data);
+        var meshPart = CreateMeshPart(textureCoordinates, (uint)indices.Count, material);
+
+        var positions = new Vector3[vertexCount];
+        for (var i = 0; i < vertexCount; i++)
+        {
+            positions[i] = vertices[i].Position;
+        }
+
+        var (boundingBox, boundingSphere) = ComputeBounds(positions);
+
+        var mesh = new ImportedMesh(
+            vertices,
+            indices,
+            boundingBox,
+            boundingSphere,
+            hidden: false,
+            cameraOriented: false,
+            hasHouseColor: false,
+            isSkinned: false,
+            materials: [material],
+            meshParts: [meshPart]);
+
+        return CreateSubObject(modelName, shape.Name, subObjectIndex, parentBoneIndex, mesh);
+    }
+
+    /// <summary>
+    /// Gathers a shape's property chain into one imported material.
+    /// Shared by the rigid and skinned shape paths.
+    /// </summary>
+    internal static ImportedMaterial ConvertShapeMaterial(
+        FileFormatsNif.NifFile file,
+        FileFormatsNif.NifTriShape shape,
+        AssetImportContext context)
+    {
+        var properties = new List<FileFormatsNif.NifProperty>();
+        foreach (var propertyReference in shape.PropertyReferences)
+        {
+            if (propertyReference >= 0 &&
+                file.Blocks[propertyReference] is FileFormatsNif.NifProperty property)
+            {
+                properties.Add(property);
+            }
+        }
+
+        return NifMaterialConverter.Convert(properties, file.Blocks, shape.Name, context);
+    }
+
+    /// <summary>
+    /// Copies UV set 0 with the V flip (NIF UVs are V-up; engine textures
+    /// are sampled top-down). Shared by the rigid and skinned shape paths.
+    /// </summary>
+    internal static Vector2[]? ConvertTextureCoordinates(
+        FileFormatsNif.NifTriShapeData data)
+    {
+        if (data.NumUvSets == 0)
+        {
+            return null;
+        }
+
+        var source = data.UvSets[0];
+        var textureCoordinates = new Vector2[source.Length];
+        for (var i = 0; i < source.Length; i++)
+        {
+            textureCoordinates[i] = new Vector2(source[i].X, 1.0f - source[i].Y);
+        }
+
+        return textureCoordinates;
+    }
+
+    /// <summary>
+    /// Copies triangle indices, swapping winding when the bake mirrors.
+    /// Shared by the rigid and skinned shape paths.
+    /// </summary>
+    internal static List<ushort> CopyTriangleIndices(
+        FileFormatsNif.NifTriShapeData data,
+        bool reverseWinding)
+    {
         var indices = new List<ushort>(data.Triangles.Count * 3);
         foreach (var triangle in data.Triangles)
         {
@@ -219,65 +323,46 @@ internal static class NifSceneConverter
             }
         }
 
-        var properties = new List<FileFormatsNif.NifProperty>();
-        foreach (var propertyReference in shape.PropertyReferences)
-        {
-            if (propertyReference >= 0 &&
-                file.Blocks[propertyReference] is FileFormatsNif.NifProperty property)
-            {
-                properties.Add(property);
-            }
-        }
+        return indices;
+    }
 
-        var material = NifMaterialConverter.Convert(properties, file.Blocks, shape.Name, context);
-
-        Vector2[]? textureCoordinates = null;
-        if (data.NumUvSets > 0)
-        {
-            // NIF UVs are V-up; engine textures are sampled top-down, so flip V.
-            var source = data.UvSets[0];
-            textureCoordinates = new Vector2[source.Length];
-            for (var i = 0; i < source.Length; i++)
-            {
-                textureCoordinates[i] = new Vector2(source[i].X, 1.0f - source[i].Y);
-            }
-        }
-
-        var meshPart = new ImportedMeshPart(
+    internal static ImportedMeshPart CreateMeshPart(
+        Vector2[]? textureCoordinates,
+        uint indexCount,
+        ImportedMaterial material)
+    {
+        return new ImportedMeshPart(
             textureCoordinates,
             textureCoordinates1: null,
             startIndex: 0,
-            indexCount: (uint)indices.Count,
+            indexCount,
             material.BlendEnabled,
             materialIndex: 0);
+    }
 
-        // Bounds are recomputed from baked positions; the NIF source bounds
-        // stay parser diagnostics by contract.
-        var positions = new Vector3[vertexCount];
-        for (var i = 0; i < vertexCount; i++)
-        {
-            positions[i] = vertices[i].Position;
-        }
-
+    /// <summary>
+    /// Bounds are recomputed from baked positions; the NIF source bounds
+    /// stay parser diagnostics by contract.
+    /// </summary>
+    internal static (AxisAlignedBoundingBox Box, BoundingSphere Sphere) ComputeBounds(
+        Vector3[] positions)
+    {
         var boundingBox = AxisAlignedBoundingBox.CreateFromPoints(positions);
         var sphereCenter = (boundingBox.Min + boundingBox.Max) / 2.0f;
         var boundingSphere = new BoundingSphere(
             sphereCenter,
             Vector3.Distance(sphereCenter, boundingBox.Max));
+        return (boundingBox, boundingSphere);
+    }
 
-        var mesh = new ImportedMesh(
-            vertices,
-            indices,
-            boundingBox,
-            boundingSphere,
-            hidden: false,
-            cameraOriented: false,
-            hasHouseColor: false,
-            isSkinned: false,
-            materials: [material],
-            meshParts: [meshPart]);
-
-        var displayName = shape.Name.Length == 0 ? $"Shape{subObjectIndex}" : shape.Name;
+    internal static ImportedSubObject CreateSubObject(
+        string modelName,
+        string shapeName,
+        int subObjectIndex,
+        int parentBoneIndex,
+        ImportedMesh mesh)
+    {
+        var displayName = shapeName.Length == 0 ? $"Shape{subObjectIndex}" : shapeName;
         return new ImportedSubObject(
             $"{modelName}.{subObjectIndex}.{displayName}",
             displayName,

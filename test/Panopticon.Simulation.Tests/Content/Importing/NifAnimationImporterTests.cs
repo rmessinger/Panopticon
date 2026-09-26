@@ -98,6 +98,32 @@ public sealed class NifAnimationImporterTests
     }
 
     [Fact]
+    public void QuaternionKeyEqualToNonSymmetricRestProducesIdentityOffset()
+    {
+        // The deep-dive section 9 regression proof: a quaternion key equal
+        // to a non-symmetric stored rest yields an identity offset at time
+        // 0. Under the pre-C4d positional copy the key and the rest lived
+        // in transposed spaces and the offset carried twice the rest
+        // rotation.
+        var file = FileFormats.Nif.NifFile.Read(new MemoryStream(ModelBytes()));
+        var local = NifTransformConverter.CreateLocalMatrix((FileFormats.Nif.NifAvObject)file.Blocks[1]);
+        var rest = Quaternion.CreateFromRotationMatrix(local);
+
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys:
+            [(0.0f, rest.W, rest.X, rest.Y, rest.Z)]);
+
+        var animation = Import(SingleChannelKf(data, duration: 2.0f))!;
+
+        var channel = Assert.Single(animation.Channels);
+        var offset = channel.Keyframes[0].QuaternionValue;
+        Assert.True(
+            MathF.Abs(offset.X) < 1e-4f &&
+            MathF.Abs(offset.Y) < 1e-4f &&
+            MathF.Abs(offset.Z) < 1e-4f,
+            $"Expected an identity rotation offset, got {offset}.");
+    }
+
+    [Fact]
     public void XyzRotationChannelUsesSamplerAndReconstructsSamples()
     {
         // A 15-degree Y spin over half a second: the k/30 grid plus the

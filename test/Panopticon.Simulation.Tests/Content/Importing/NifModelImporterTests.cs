@@ -66,6 +66,34 @@ public sealed class NifModelImporterTests
         return builder.Build();
     }
 
+    private static byte[] SkinnedModelBytes()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var materialType = builder.AddBlockType("NiMaterialProperty");
+        var textureType = builder.AddBlockType("NiTexturingProperty");
+        var sourceTextureType = builder.AddBlockType("NiSourceTexture");
+        var zBufferType = builder.AddBlockType("NiZBufferProperty");
+        var skinDataType = builder.AddBlockType("NiSkinData");
+        var skinInstanceType = builder.AddBlockType("NiSkinInstance");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [4]));
+        builder.AddBlock(zBufferType, NifTestProperties.ZBuffer(flags: 3, function: 3));
+        builder.AddBlock(materialType, NifTestProperties.Material());
+        builder.AddBlock(textureType, NifTestProperties.Texturing(baseSlot: (6, 3, 2, 0, 0, -100)));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 5, skin: 8));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(numVertices: 4));
+        builder.AddBlock(sourceTextureType, NifTestProperties.SourceTexture(fileName: "hull.tga"));
+        builder.AddBlock(skinDataType, NifTestBlocks.SkinData(
+            boneWeights: [[(0, 1.0f), (1, 1.0f), (2, 1.0f), (3, 1.0f)]]));
+        builder.AddBlock(skinInstanceType, NifTestBlocks.SkinInstance(
+            data: 7, skeletonRoot: 0, bones: [0]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
     [Fact]
     public void MissingEntryReturnsNull()
     {
@@ -157,6 +185,22 @@ public sealed class NifModelImporterTests
         var ex = Assert.Throws<NotSupportedException>(
             () => Import(ScaledSubtreeModelBytes(rootScale: 2.0f)));
         Assert.Contains("no unit-scale node ancestor", ex.Message);
+    }
+
+    [Fact]
+    public void SkinnedShapeImportsAsSkinnedMeshOnRootBone()
+    {
+        // Skinned-shape conversion landed with WI-C4d-06; the identity
+        // skin data of this fixture yields the identity inverse bind.
+        var model = Import(SkinnedModelBytes());
+
+        Assert.NotNull(model);
+        var subObject = Assert.Single(model.SubObjects);
+        Assert.Equal(0, subObject.ParentBoneIndex);
+        Assert.True(subObject.RenderObject is ImportedMesh { IsSkinned: true });
+        var bone = Assert.Single(model.Skeleton.Bones);
+        Assert.Equal(1f, bone.InverseBindMatrix.M11);
+        Assert.Equal(0f, bone.InverseBindMatrix.M41);
     }
 
     private static byte[] HierarchyModelBytes()
@@ -271,6 +315,29 @@ public sealed class NifModelImporterTests
                 MathF.Abs(expectedElements[i] - actualElements[i]) < 1e-4f,
                 $"Matrix element {i}: expected {expectedElements[i]}, got {actualElements[i]}.");
         }
+    }
+
+    [Fact]
+    public void StoredColumnVectorRotationMapsChildPlusYToPlusZ()
+    {
+        // The stored NIF 3x3 is the column-vector map: rows
+        // [[1,0,0],[0,0,-1],[0,1,0]] rotate +90 degrees about X, so a
+        // child at source +Y lands at source +Z once the matrix is
+        // transposed into the row-vector engine layout. A positional copy
+        // (the pre-C4d bug) would map +Y to -Z.
+        var stored = new FileFormats.Nif.NifMatrix33(
+            1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, -1.0f,
+            0.0f, 1.0f, 0.0f);
+
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", rotation: stored));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        var file = FileFormats.Nif.NifFile.Read(new MemoryStream(builder.Build()));
+
+        var local = NifTransformConverter.CreateLocalMatrix((FileFormats.Nif.NifAvObject)file.Blocks[0]);
+        AssertEqual(new Vector3(0, 0, 1), Vector3.Transform(new Vector3(0, 1, 0), local));
     }
 
     [Fact]

@@ -218,6 +218,131 @@ public static class NifTestBlocks
         body.WriteSingle(rotation.M33);
     }
 
+    public static byte[] SkinInstance(int data, int skeletonRoot, int[]? bones = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteInt32(data);
+        body.WriteInt32(skeletonRoot);
+        body.WriteUInt32((uint)(bones ?? []).Length);
+        foreach (var bone in bones ?? [])
+        {
+            body.WriteInt32(bone);
+        }
+
+        return stream.ToArray();
+    }
+
+    public static byte[] SkinData(
+        IReadOnlyList<(ushort VertexIndex, float Weight)[]>? boneWeights = null,
+        (float X, float Y, float Z)? skinTranslation = null,
+        float skinScale = 1.0f,
+        int partition = -1,
+        byte hasVertexWeights = 1,
+        IReadOnlyList<(float X, float Y, float Z)>? boundCenters = null,
+        IReadOnlyList<float>? boundRadii = null,
+        IReadOnlyList<(float X, float Y, float Z)>? boneTranslations = null)
+    {
+        var bones = boneWeights ?? [];
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        WriteMatrix33Identity(body);
+        WriteVector3(body, skinTranslation ?? (0, 0, 0));
+        body.WriteSingle(skinScale);
+        body.WriteUInt32((uint)bones.Count);
+        body.WriteInt32(partition);
+        body.WriteByte(hasVertexWeights);
+        for (var i = 0; i < bones.Count; i++)
+        {
+            WriteMatrix33Identity(body);
+            WriteVector3(body, boneTranslations is not null && i < boneTranslations.Count ? boneTranslations[i] : (0, 0, 0));
+            body.WriteSingle(1.0f);
+            WriteVector3(body, boundCenters is not null && i < boundCenters.Count ? boundCenters[i] : (0, 0, 0));
+            body.WriteSingle(boundRadii is not null && i < boundRadii.Count ? boundRadii[i] : 1.0f);
+            body.WriteUInt16((ushort)bones[i].Length);
+            foreach (var (vertexIndex, weight) in bones[i])
+            {
+                body.WriteUInt16(vertexIndex);
+                body.WriteSingle(weight);
+            }
+        }
+
+        return stream.ToArray();
+    }
+
+    public static byte[] SkinPartition(
+        ushort[]? bones = null,
+        ushort vertexCount = 0,
+        ushort triangleCount = 0,
+        ushort stripCount = 0,
+        ushort weightsPerVertex = 0,
+        bool hasVertexMap = false,
+        ushort[]? vertexMap = null,
+        bool hasVertexWeights = false,
+        float[]? vertexWeights = null,
+        uint[]? stripLengths = null,
+        bool hasFaces = false,
+        ushort[]? faces = null,
+        bool hasBoneIndices = false,
+        byte[]? boneIndices = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteUInt32(1);
+        body.WriteUInt16(vertexCount);
+        body.WriteUInt16(triangleCount);
+        body.WriteUInt16((ushort)(bones ?? []).Length);
+        body.WriteUInt16(stripCount);
+        body.WriteUInt16(weightsPerVertex);
+        foreach (var bone in bones ?? [])
+        {
+            body.WriteUInt16(bone);
+        }
+
+        body.WriteByte((byte)(hasVertexMap ? 1 : 0));
+        foreach (var index in hasVertexMap ? vertexMap ?? [] : [])
+        {
+            body.WriteUInt16(index);
+        }
+
+        body.WriteByte((byte)(hasVertexWeights ? 1 : 0));
+        if (hasVertexWeights)
+        {
+            foreach (var weight in vertexWeights ?? [])
+            {
+                body.WriteSingle(weight);
+            }
+        }
+
+        foreach (var length in stripCount > 0 ? stripLengths ?? [] : [])
+        {
+            body.WriteUInt32(length);
+        }
+
+        body.WriteByte((byte)(hasFaces ? 1 : 0));
+        if (hasFaces)
+        {
+            foreach (var index in faces ?? [])
+            {
+                body.WriteUInt16(index);
+            }
+        }
+
+        body.WriteByte((byte)(hasBoneIndices ? 1 : 0));
+        if (hasBoneIndices)
+        {
+            foreach (var index in boneIndices ?? [])
+            {
+                body.WriteByte(index);
+            }
+        }
+
+        return stream.ToArray();
+    }
+
     public static byte[] Footer()
     {
         var stream = new MemoryStream();

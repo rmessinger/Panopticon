@@ -112,6 +112,7 @@ public sealed class ImportedAssetTests
         var vertices = new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) };
         var indices = new ushort[] { 0, 1, 2 };
 
+
         var mesh = CreateMesh(vertices, indices);
         var model = CreateStaticModel();
 
@@ -200,6 +201,116 @@ public sealed class ImportedAssetTests
 
         Assert.True(model.SubObjects[0].RenderObject is ImportedMesh { IsSkinned: true });
         Assert.Equal(2, animation.Channels.Count);
+    }
+
+    [Fact]
+    public void FourSlots_Construct_WhenSecondaryGeometryMatchesPrimary()
+    {
+        var vertex = new ImportedVertex(
+            new Vector3(0, 0, 0),
+            Vector3.UnitZ,
+            secondaryPosition: new Vector3(0, 0, 0),
+            secondaryNormal: Vector3.UnitZ,
+            boneIndex0: 0,
+            boneIndex1: 1,
+            boneIndex2: 1,
+            boneIndex3: 0,
+            boneWeight0: 0.4f,
+            boneWeight1: 0.3f,
+            boneWeight2: 0.2f,
+            boneWeight3: 0.1f);
+
+        Assert.Equal(1u, vertex.BoneIndex2);
+        Assert.Equal(0u, vertex.BoneIndex3);
+        Assert.Equal(0.2f, vertex.BoneWeight2);
+        Assert.Equal(0.1f, vertex.BoneWeight3);
+    }
+
+    [Fact]
+    public void Constructor_RejectsOutOfRangeWeightOnSlotsTwoAndThree()
+    {
+        Assert.Throws<ArgumentException>(() => new ImportedVertex(
+            Vector3.Zero, Vector3.UnitZ, boneWeight2: 1.5f));
+
+        Assert.Throws<ArgumentException>(() => new ImportedVertex(
+            Vector3.Zero, Vector3.UnitZ, boneWeight3: -0.1f));
+    }
+
+    [Fact]
+    public void UnskinnedMesh_RejectsSkinningOnSlotsTwoAndThree()
+    {
+        var vertices = new[]
+        {
+            new ImportedVertex(Vector3.Zero, Vector3.UnitZ, boneIndex2: 1),
+            StaticVertex(1, 0, 0),
+            StaticVertex(0, 1, 0),
+        };
+
+        var ex = Assert.Throws<ArgumentException>(
+            () => CreateMesh(vertices, new ushort[] { 0, 1, 2 }));
+        Assert.Contains("not skinned", ex.Message);
+
+        var weighted = new[]
+        {
+            new ImportedVertex(Vector3.Zero, Vector3.UnitZ, boneWeight3: 0.5f),
+            StaticVertex(1, 0, 0),
+            StaticVertex(0, 1, 0),
+        };
+
+        Assert.Throws<ArgumentException>(
+            () => CreateMesh(weighted, new ushort[] { 0, 1, 2 }));
+    }
+
+    [Fact]
+    public void SkinnedMesh_RejectsSlotTwoWeightWithDifferingSecondaryGeometry()
+    {
+        var vertices = new[]
+        {
+            new ImportedVertex(
+                new Vector3(0, 0, 0),
+                Vector3.UnitZ,
+                secondaryPosition: new Vector3(1, 0, 0),
+                secondaryNormal: Vector3.UnitZ,
+                boneIndex2: 1,
+                boneWeight2: 0.5f),
+            StaticVertex(1, 0, 0),
+            StaticVertex(0, 1, 0),
+        };
+
+        var ex = Assert.Throws<ArgumentException>(
+            () => CreateMesh(vertices, new ushort[] { 0, 1, 2 }, isSkinned: true));
+        Assert.Contains("Vertex 0", ex.Message);
+        Assert.Contains("slots 2 and 3", ex.Message);
+    }
+
+    [Fact]
+    public void SkinnedModel_RejectsBoneIndexOutOfRangeOnSlotsTwoAndThree()
+    {
+        var skeleton = new ImportedSkeleton(
+            "S",
+            new[] { new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity) });
+
+        var vertices = new[]
+        {
+            new ImportedVertex(
+                Vector3.Zero, Vector3.UnitZ, boneIndex2: 3, boneWeight2: 0.5f),
+            StaticVertex(1, 0, 0),
+            StaticVertex(0, 1, 0),
+        };
+
+        var ex = Assert.Throws<ArgumentException>(() => new ImportedModel(
+            "M",
+            skeleton,
+            new[]
+            {
+                new ImportedSubObject(
+                    "M.Mesh",
+                    "Mesh",
+                    parentBoneIndex: 0,
+                    renderObject: CreateMesh(vertices, new ushort[] { 0, 1, 2 }, isSkinned: true)),
+            },
+            ImportedSkeletonOrigin.Embedded));
+        Assert.Contains("outside the skeleton", ex.Message);
     }
 
     [Fact]
