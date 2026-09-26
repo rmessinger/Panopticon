@@ -44,6 +44,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Panopticon.FileFormats.Casc\Panopticon.FileFormats.Casc.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.FileFormats.Nif\Panopticon.FileFormats.Nif.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Simulation\Panopticon.Simulation.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.IO\Panopticon.IO.csproj" />
