@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C7a-04` |
 | Roadmap phase | [Track C · C7a](../../track-c-external-assets.md): StarCraft II CASC storage |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C7a-02`, `WI-C7a-03` |
