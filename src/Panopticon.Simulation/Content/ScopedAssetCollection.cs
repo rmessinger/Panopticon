@@ -105,7 +105,7 @@ public sealed class ScopedAssetCollection<TAsset> : IScopedAssetCollection, IEnu
 
     public LazyAssetReference<TAsset> GetLazyAssetReferenceByName(string name)
     {
-        return new LazyAssetReference<TAsset>(() => GetByName(name));
+        return new LazyAssetReference<TAsset>(name, () => GetByName(name));
     }
 
     public TAsset GetByInternalId(int internalId)

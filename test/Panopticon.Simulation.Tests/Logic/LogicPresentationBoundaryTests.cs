@@ -47,6 +47,9 @@ public class LogicPresentationBoundaryTests
         // Declared alongside the draw module it serves (W3dModelDraw.cs); holds the active
         // condition state's ModelInstance and render state.
         "Panopticon.Logic.Object.W3dModelDrawConditionState",
+        // Draw helper (Draw/MuzzleFlashBones.cs) shared by W3dModelDraw and standalone model
+        // renders; sets ModelInstance bone visibility.
+        "Panopticon.Logic.Object.MuzzleFlashBones",
     ];
 
     // Presentation state types logic must not reference, by name.
