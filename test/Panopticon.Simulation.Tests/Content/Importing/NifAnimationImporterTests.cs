@@ -420,6 +420,320 @@ public sealed class NifAnimationImporterTests
         Assert.Contains("outside the clip range", ex.Message);
     }
 
+    [Fact]
+    public void VisControllerEmitsStepBoneVisibilityChannel()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, stopTime: 2.0f),
+            "NiVisData",
+            NifTestPropertyAnimation.VisData((0.0f, 0), (0.5f, 1), (2.0f, 1)),
+            targetName: "child"))!;
+
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal(ImportedAnimationChannelType.Visibility, channel.ChannelType);
+        Assert.Equal(ImportedAnimationInterpolation.Step, channel.Interpolation);
+        Assert.Equal("child", channel.Target.BoneName);
+        Assert.Equal(3, channel.Keyframes.Count);
+        Assert.False(channel.Keyframes[0].BoolValue);
+        Assert.True(channel.Keyframes[1].BoolValue);
+        Assert.True(channel.Keyframes[2].BoolValue);
+    }
+
+    [Fact]
+    public void VisControllerAcceptsBoolDataReplacementFormWithConstantKeys()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, stopTime: 2.0f),
+            "NiBoolData",
+            NifTestPropertyAnimation.BoolData(
+                [(0.0f, 0), (2.0f, 1)],
+                keyTypeOverride: 5u),
+            targetName: "child"))!;
+
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal(2, channel.Keyframes.Count);
+        Assert.False(channel.Keyframes[0].BoolValue);
+        Assert.True(channel.Keyframes[1].BoolValue);
+    }
+
+    [Fact]
+    public void VisTargetShapeNameResolvesToSubObjectChannel()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, stopTime: 2.0f),
+            "NiVisData",
+            NifTestPropertyAnimation.VisData((0.0f, 0), (2.0f, 1)),
+            targetName: "HULL"))!;
+
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal("test_model.0.hull", channel.Target.SubObjectName);
+    }
+
+    [Fact]
+    public void VisTargetMatchingNothingKeepsVerbatimName()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, stopTime: 2.0f),
+            "NiVisData",
+            NifTestPropertyAnimation.VisData((0.0f, 0), (2.0f, 1)),
+            targetName: "market_open_1"))!;
+
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal("market_open_1", channel.Target.SubObjectName);
+    }
+
+    [Fact]
+    public void VisControllerWrongFlagsRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, flags: 0x28, stopTime: 2.0f),
+            "NiVisData",
+            NifTestPropertyAnimation.VisData((0.0f, 0), (2.0f, 1)),
+            targetName: "child")));
+
+        Assert.Contains("visibility controller flags", ex.Message);
+    }
+
+    [Fact]
+    public void PropertyControllerFrequencyMustBeOne()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, frequency: 2.0f, stopTime: 2.0f),
+            "NiVisData",
+            NifTestPropertyAnimation.VisData((0.0f, 0), (2.0f, 1)),
+            targetName: "child")));
+
+        Assert.Contains("frequency", ex.Message);
+    }
+
+    [Fact]
+    public void AlphaControllerEmitsMaterialAlphaChannel()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiAlphaController",
+            NifTestPropertyAnimation.AlphaController(data: 3, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData(
+                [(0.0f, 1.0f, null, null), (2.0f, 0.25f, null, null)]),
+            targetName: "hull\nPROP\nNiMaterialProperty"))!;
+
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal(ImportedAnimationChannelType.MaterialAlpha, channel.ChannelType);
+        Assert.Equal("test_model.0.hull", channel.Target.SubObjectName);
+        Assert.Equal(0, channel.Target.MaterialIndex);
+        Assert.Equal(1.0f, channel.Keyframes[0].FloatValue);
+        Assert.Equal(0.25f, channel.Keyframes[1].FloatValue);
+    }
+
+    [Fact]
+    public void AlphaKeyOutsideUnitIntervalRejected()
+    {
+        var ex = Assert.Throws<InvalidDataException>(() => ImportProperty(PropertyKf(
+            "NiAlphaController",
+            NifTestPropertyAnimation.AlphaController(data: 3, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData([(0.0f, 1.5f, null, null)]),
+            targetName: "hull\nPROP\nNiMaterialProperty")));
+
+        Assert.Contains("outside [0, 1]", ex.Message);
+    }
+
+    [Fact]
+    public void AlphaControllerWrongFlagsRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiAlphaController",
+            NifTestPropertyAnimation.AlphaController(data: 3, flags: 0x2C, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData([(0.0f, 1.0f, null, null)]),
+            targetName: "hull\nPROP\nNiMaterialProperty")));
+
+        Assert.Contains("alpha controller flags", ex.Message);
+    }
+
+    [Fact]
+    public void TextureTransformTranslateUEmitsMaterialSlotChannel()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiTextureTransformController",
+            NifTestPropertyAnimation.TextureTransformController(data: 3, operation: 0, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData([(0.0f, 0.0f, null, null), (2.0f, 1.5f, null, null)]),
+            targetName: "hull\nPROP\nNiTexturingProperty"))!;
+
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal(ImportedAnimationChannelType.TextureTranslateU, channel.ChannelType);
+        Assert.Equal("test_model.0.hull", channel.Target.SubObjectName);
+        Assert.Equal(1.5f, channel.Keyframes[1].FloatValue);
+    }
+
+    [Fact]
+    public void TextureTransformRotateOperationRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiTextureTransformController",
+            NifTestPropertyAnimation.TextureTransformController(data: 3, operation: 2, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData([(0.0f, 0.0f, null, null)]),
+            targetName: "hull\nPROP\nNiTexturingProperty")));
+
+        Assert.Contains("operation", ex.Message);
+    }
+
+    [Fact]
+    public void TextureTransformShaderMapRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiTextureTransformController",
+            NifTestPropertyAnimation.TextureTransformController(data: 3, shaderMap: true, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData([(0.0f, 0.0f, null, null)]),
+            targetName: "hull\nPROP\nNiTexturingProperty")));
+
+        Assert.Contains("shader map", ex.Message);
+    }
+
+    [Fact]
+    public void TextureTransformNonZeroSlotRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiTextureTransformController",
+            NifTestPropertyAnimation.TextureTransformController(data: 3, textureSlot: 1, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData([(0.0f, 0.0f, null, null)]),
+            targetName: "hull\nPROP\nNiTexturingProperty")));
+
+        Assert.Contains("texture slot 1", ex.Message);
+    }
+
+    [Fact]
+    public void MaterialColorEmitsVector3Channel()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiMaterialColorController",
+            NifTestPropertyAnimation.MaterialColorController(data: 3, targetColor: 0, stopTime: 2.0f),
+            "NiPosData",
+            NifTestPropertyAnimation.PosData(
+                [(0.0f, (0, 0, 0), null, null), (2.0f, (1, 1, 1), null, null)]),
+            targetName: "hull\nPROP\nNiMaterialProperty"))!;
+
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal(ImportedAnimationChannelType.MaterialAmbientColor, channel.ChannelType);
+        Assert.Equal("test_model.0.hull", channel.Target.SubObjectName);
+        Assert.Equal(new Vector3(1, 1, 1), channel.Keyframes[1].Vector3Value);
+    }
+
+    [Fact]
+    public void MaterialColorUndefinedTargetRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiMaterialColorController",
+            NifTestPropertyAnimation.MaterialColorController(data: 3, targetColor: 9, stopTime: 2.0f),
+            "NiPosData",
+            NifTestPropertyAnimation.PosData([(0.0f, (0, 0, 0), null, null)]),
+            targetName: "hull\nPROP\nNiMaterialProperty")));
+
+        Assert.Contains("color 9", ex.Message);
+    }
+
+    [Fact]
+    public void PropertyTargetWithUnknownShapeRejected()
+    {
+        var ex = Assert.Throws<InvalidDataException>(() => ImportProperty(PropertyKf(
+            "NiAlphaController",
+            NifTestPropertyAnimation.AlphaController(data: 3, stopTime: 2.0f),
+            "NiFloatData",
+            NifTestPropertyAnimation.FloatData([(0.0f, 1.0f, null, null)]),
+            targetName: "nope\nPROP\nNiMaterialProperty")));
+
+        Assert.Contains("no converted shape named 'nope'", ex.Message);
+    }
+
+    [Fact]
+    public void MorpherControllerRejectedAsC6Work()
+    {
+        var morpherBody = new MemoryStream();
+        var writer = new NifBodyWriter(morpherBody);
+        writer.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(writer, -1, 0x2C, 1.0f, 0.0f, 0.0f, 2.0f, -1);
+        writer.WriteUInt16(0);
+        writer.WriteInt32(3);
+
+        var morphDataBody = new MemoryStream();
+        var dataWriter = new NifBodyWriter(morphDataBody);
+        dataWriter.WriteUInt32(0);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteUInt32(1);
+        dataWriter.WriteUInt32(0);
+        dataWriter.WriteByte(1);
+        NifTestKeyframe.WriteFloatGroup(dataWriter, [(0.0f, 0.0f, null, null)]);
+
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiGeomMorpherController",
+            morpherBody.ToArray(),
+            "NiMorphData",
+            morphDataBody.ToArray(),
+            targetName: "hull")));
+
+        Assert.Contains("NiGeomMorpherController", ex.Message);
+        Assert.Contains("C6", ex.Message);
+    }
+
+    [Fact]
+    public void MultiSequenceKfRejected()
+    {
+        // The parser only accepts the (1, 0) footer, so a multi-sequence
+        // KF (footer root count 2) fails at parse time, before import.
+        var builder = new NifTestDataBuilder();
+        var sequenceType = builder.AddBlockType("NiControllerSequence");
+        var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
+        var controllerType = builder.AddBlockType("NiVisController");
+        var dataType = builder.AddBlockType("NiVisData");
+
+        builder.AddBlock(sequenceType, NifTestKeyframe.ControllerSequence(
+            "clip", "ROOT", 1, ("child", 2)));
+        builder.AddBlock(textKeyType, NifTestKeyframe.TextKeyExtraData(
+            "", (0.0f, "start"), (2.0f, "end")));
+        builder.AddBlock(controllerType, NifTestPropertyAnimation.VisController(
+            data: 3, stopTime: 2.0f));
+        builder.AddBlock(dataType, NifTestPropertyAnimation.VisData((0.0f, 1), (2.0f, 1)));
+
+        var footer = new MemoryStream();
+        var footerWriter = new NifBodyWriter(footer);
+        footerWriter.WriteUInt32(2);
+        footerWriter.WriteInt32(0);
+        footerWriter.WriteInt32(1);
+        builder.AddTrailing(footer.ToArray());
+
+        var ex = Assert.Throws<InvalidDataException>(
+            () => ImportProperty(builder.Build()));
+
+        Assert.Contains("footer", ex.Message);
+    }
+
+    [Fact]
+    public void TexturingTransformDecodesAtImport()
+    {
+        var file = FileFormats.Nif.NifFile.Read(new MemoryStream(PropertyModelBytes()));
+        var texturing = Assert.IsType<FileFormats.Nif.NifTexturingProperty>(file.Blocks[5]);
+        var transform = texturing.Slots["Base"].Transform;
+        Assert.NotNull(transform);
+        Assert.Equal(0.25f, transform!.Value.TranslationU);
+        Assert.Equal(-0.5f, transform.Value.TranslationV);
+        Assert.Equal(2.0f, transform.Value.TilingU);
+        Assert.Equal(3.0f, transform.Value.TilingV);
+        Assert.Equal(1.5f, transform.Value.Rotation);
+        Assert.Equal(1u, transform.Value.TransformType);
+        Assert.Equal(0.25f, transform.Value.CenterU);
+        Assert.Equal(0.75f, transform.Value.CenterV);
+    }
+
     private static byte[] QuadraticFreeKf()
     {
         var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
@@ -452,6 +766,72 @@ public sealed class NifAnimationImporterTests
         builder.AddBlock(dataType, dataBytes);
         builder.AddTrailing(NifTestBlocks.Footer());
         return builder.Build();
+    }
+
+    private static byte[] PropertyKf(
+        string controllerTypeName,
+        byte[] controllerBody,
+        string dataTypeName,
+        byte[] dataBody,
+        string targetName,
+        float duration = 2.0f)
+    {
+        var builder = new NifTestDataBuilder();
+        var sequenceType = builder.AddBlockType("NiControllerSequence");
+        var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
+        var controllerType = builder.AddBlockType(controllerTypeName);
+        var dataType = builder.AddBlockType(dataTypeName);
+
+        builder.AddBlock(sequenceType, NifTestKeyframe.ControllerSequence(
+            "clip", "ROOT", 1, (targetName, 2)));
+        builder.AddBlock(textKeyType, NifTestKeyframe.TextKeyExtraData(
+            "", (0.0f, "start"), (duration, "end")));
+        builder.AddBlock(controllerType, controllerBody);
+        builder.AddBlock(dataType, dataBody);
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    private static byte[] PropertyModelBytes()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var materialType = builder.AddBlockType("NiMaterialProperty");
+        var texturingType = builder.AddBlockType("NiTexturingProperty");
+        var sourceTextureType = builder.AddBlockType("NiSourceTexture");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1, 2]));
+        builder.AddBlock(nodeType, NifTestBlocks.Node(
+            name: "child", translation: (0, -2, 0), rotation: OarRotation));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(
+            name: "hull", data: 4, properties: [3, 5]));
+        builder.AddBlock(materialType, NifTestProperties.Material());
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+            normals: [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)],
+            boundCenter: (0.5f, 0.5f, 0.5f),
+            boundRadius: 1.0f,
+            triangles: [(0, 1, 2), (0, 2, 3)]));
+        builder.AddBlock(texturingType, NifTestProperties.Texturing(
+            baseSlot: (6, 3, 2, 0, 0, -100),
+            baseTransform: (0.25f, -0.5f, 2.0f, 3.0f, 1.5f, 1u, 0.25f, 0.75f)));
+        builder.AddBlock(sourceTextureType, NifTestProperties.SourceTexture("hull.tga"));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    private static ImportedAnimation? ImportProperty(byte[]? kfBytes)
+    {
+        var fileSystem = new MemoryFileSystem();
+        fileSystem.AddFile($"cache/nifcache/{ModelName}.nifcache", PropertyModelBytes());
+        fileSystem.AddFile(KfPath, kfBytes!);
+
+        return new NifAnimationImporter().ImportAnimation(
+            AnimationKey,
+            new AssetImportContext(fileSystem, null));
     }
 
     private static byte[] ModelBytes()

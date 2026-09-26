@@ -56,15 +56,22 @@ internal sealed class NifAnimationImporter : IAnimationImporter
                 $"NIF animation '{key}': block 0 is not a controller sequence.");
         }
 
-        var skeleton = NifSceneConverter.ConvertGraph(
+        if (kfFile.Roots.Count > 1)
+        {
+            throw new NotSupportedException(
+                $"NIF animation '{key}' holds {kfFile.Roots.Count} root blocks; multi-sequence KF files need a selection rule and are not supported.");
+        }
+
+        var graph = NifSceneConverter.ConvertGraph(
             modelFile,
             animationKey.ModelName,
-            context).Skeleton;
+            context);
 
         return NifAnimationConverter.Convert(
             kfFile,
             sequence,
-            skeleton,
+            graph.Skeleton,
+            graph.PropertyTargets,
             GetAnimationName(animationKey.KfPath),
             key);
     }

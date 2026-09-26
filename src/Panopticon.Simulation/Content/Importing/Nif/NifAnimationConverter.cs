@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using Panopticon.FileFormats.Nif;
 
@@ -29,24 +30,61 @@ internal static class NifAnimationConverter
         NifFile file,
         NifControllerSequence sequence,
         ImportedSkeleton skeleton,
+        NifPropertyTargetMap targets,
         string animationName,
         string assetKey)
     {
         var duration = ReadDuration(file, sequence, assetKey);
         var channels = new List<ImportedAnimationChannel>();
         var boundTargets = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var hasPropertyControllers = sequence.ControlledBlocks.Any(
+            block => file.Blocks[block.ControllerReference] is not NifKeyframeController);
 
         foreach (var controlledBlock in sequence.ControlledBlocks)
         {
-            var controller = (NifKeyframeController)file.Blocks[controlledBlock.ControllerReference];
-            ValidateController(controller, controlledBlock.TargetName, duration, assetKey);
+            var block = file.Blocks[controlledBlock.ControllerReference];
+            if (block is not NifKeyframeController controller)
+            {
+                NifPropertyAnimationConverter.Convert(
+                    file,
+                    (NifTimeController)block,
+                    controlledBlock.TargetName,
+                    skeleton,
+                    targets,
+                    assetKey,
+                    duration,
+                    channels);
+                continue;
+            }
 
-            var boneIndex = ResolveTarget(skeleton, controlledBlock.TargetName, boundTargets, assetKey);
+            ValidateController(controller, controlledBlock.TargetName, duration, assetKey, enforceFlags: !hasPropertyControllers);
+
+            int boneIndex;
+            try
+            {
+                boneIndex = ResolveTarget(skeleton, controlledBlock.TargetName, boundTargets, assetKey);
+            }
+            catch (InvalidDataException) when (hasPropertyControllers)
+            {
+                // EE2 property clips routinely name rig nodes (for example
+                // "root NonAccum") that the bound model lacks; such blocks
+                // carry no convertible data for this model.
+                continue;
+            }
+
             var bone = skeleton.Bones[boneIndex];
             var data = (NifKeyframeData)file.Blocks[controller.DataReference];
 
             ValidateKeyTimes(data, controlledBlock.TargetName, duration, assetKey);
-            ValidateScale(data, controlledBlock.TargetName, assetKey);
+            try
+            {
+                ValidateScale(data, controlledBlock.TargetName, assetKey);
+            }
+            catch (NotSupportedException) when (hasPropertyControllers)
+            {
+                // Non-unit scale keys have no C1 channel; mixed property
+                // clips keep their rotation and translation channels.
+            }
 
             if (string.Equals(
                     controlledBlock.TargetName,
@@ -115,9 +153,10 @@ internal static class NifAnimationConverter
         NifKeyframeController controller,
         string targetName,
         float duration,
-        string assetKey)
+        string assetKey,
+        bool enforceFlags = true)
     {
-        if (controller.Flags != ExpectedControllerFlags)
+        if (enforceFlags && controller.Flags != ExpectedControllerFlags)
         {
             throw Unsupported(
                 $"target '{targetName}' has controller flags 0x{controller.Flags.ToString("X4", CultureInfo.InvariantCulture)} instead of 0x2C");

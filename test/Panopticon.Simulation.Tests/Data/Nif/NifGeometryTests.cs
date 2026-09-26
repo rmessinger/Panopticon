@@ -101,11 +101,11 @@ public sealed class NifGeometryTests
     }
 
     [Fact]
-    public void MissingNormalsFailsWithNotSupported()
+    public void NormallessGeometryDataParsesWithNullNormals()
     {
         var geometry = NifTestGeometry.GeometryData(numVertices: 3, hasNormals: false);
-        var ex = Assert.Throws<NotSupportedException>(() => Read(ShapeBuilder(geometry).Build()));
-        Assert.Contains("normal", ex.Message);
+        var data = (NifTriShapeData)Read(ShapeBuilder(geometry).Build()).Blocks[2];
+        Assert.Null(data.Normals);
     }
 
     [Fact]

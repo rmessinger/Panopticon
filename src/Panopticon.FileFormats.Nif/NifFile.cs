@@ -122,6 +122,8 @@ public sealed record NifFile(
         {
             case "NiNode":
                 return NifNode.Read(reader);
+            case "NiBillboardNode":
+                return NifBillboardNode.Read(reader);
             case "NiStringExtraData":
                 return NifStringExtraData.Read(reader);
 
@@ -146,6 +148,8 @@ public sealed record NifFile(
                 return NifSpecularProperty.Read(reader);
             case "NiZBufferProperty":
                 return NifZBufferProperty.Read(reader);
+            case "NiStencilProperty":
+                return NifStencilProperty.Read(reader);
             case "NiVertexColorProperty":
                 return NifVertexColorProperty.Read(reader);
             case "NiLODNode":
@@ -180,6 +184,10 @@ public sealed record NifFile(
                 return NifPosData.Read(reader);
             case "NiUVData":
                 return NifUVData.Read(reader);
+            case "NiGeomMorpherController":
+                return NifGeomMorpherController.Read(reader);
+            case "NiMorphData":
+                return NifMorphData.Read(reader);
             case "NiSkinInstance":
                 return NifSkinInstance.Read(reader);
             case "NiSkinData":
@@ -247,6 +255,12 @@ public sealed record NifFile(
                     matches = data >= 0 && data < blocks.Length && blocks[data] is NifPosData;
                     break;
 
+                case NifGeomMorpherController morpher:
+                    data = morpher.DataReference;
+                    expected = "morph data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifMorphData;
+                    break;
+
                 default:
                     return;
             }
@@ -275,7 +289,7 @@ public sealed record NifFile(
                     foreach (var extra in netBlock.ExtraDataReferences)
                     {
                         ValidateReference(extra, i, "ExtraData");
-                        if (extra >= 0 && blocks[extra] is not (NifStringExtraData or NifIntegerExtraData or NifBooleanExtraData))
+                        if (extra >= 0 && blocks[extra] is not (NifStringExtraData or NifIntegerExtraData or NifBooleanExtraData or NifTextKeyExtraData))
                         {
                             throw new InvalidDataException(
                                 $"NIF block {i} references block {extra} as extra data, " +

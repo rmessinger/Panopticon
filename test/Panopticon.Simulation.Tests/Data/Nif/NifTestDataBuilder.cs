@@ -518,7 +518,8 @@ public static class NifTestProperties
         (int Source, uint Clamp, uint Filter, uint UvSet, short Ps2L, short Ps2K)? baseSlot = null,
         string name = "",
         uint numShaderTextures = 0,
-        byte? baseTransformFlag = null)
+        byte? baseTransformFlag = null,
+        (float TranslationU, float TranslationV, float TilingU, float TilingV, float Rotation, uint TransformType, float CenterU, float CenterV)? baseTransform = null)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
@@ -542,7 +543,23 @@ public static class NifTestProperties
                 body.WriteUInt32(slot.UvSet);
                 body.WriteInt16(slot.Ps2L);
                 body.WriteInt16(slot.Ps2K);
-                body.WriteByte(baseTransformFlag ?? 0);
+                if (baseTransform is { } transform)
+                {
+                    body.WriteByte(1);
+                    body.WriteSingle(transform.TranslationU);
+                    body.WriteSingle(transform.TranslationV);
+                    body.WriteSingle(transform.TilingU);
+                    body.WriteSingle(transform.TilingV);
+                    body.WriteSingle(transform.Rotation);
+                    body.WriteUInt32(transform.TransformType);
+                    body.WriteSingle(transform.CenterU);
+                    body.WriteSingle(transform.CenterV);
+                }
+
+                else
+                {
+                    body.WriteByte(baseTransformFlag ?? 0);
+                }
             }
 
             else

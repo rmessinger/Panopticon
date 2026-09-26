@@ -189,6 +189,33 @@ internal static class NifSceneConverter
         return MathF.Abs(scale - 1.0f) <= UnitScaleTolerance;
     }
 
+    /// <summary>
+    /// Some EE2 models ship shapes without stored normals; C1 requires one
+    /// normal per vertex, so face normals are accumulated per vertex.
+    /// </summary>
+    private static Vector3[] SynthesizeNormals(FileFormatsNif.NifTriShapeData data)
+    {
+        var normals = new Vector3[data.NumVertices];
+        foreach (var (v1, v2, v3) in data.Triangles)
+        {
+            var a = data.Vertices[v1];
+            var b = data.Vertices[v2];
+            var c = data.Vertices[v3];
+            var face = Vector3.Cross(b - a, c - a);
+            normals[v1] += face;
+            normals[v2] += face;
+            normals[v3] += face;
+        }
+
+        for (var i = 0; i < normals.Length; i++)
+        {
+            var normal = normals[i];
+            normals[i] = normal.LengthSquared() > 0f ? Vector3.Normalize(normal) : Vector3.UnitZ;
+        }
+
+        return normals;
+    }
+
     private static Quaternion CanonicalRotation(Quaternion rotation)
     {
         // Same-rotation sign canonicalization, matching the glTF importer.
@@ -224,11 +251,12 @@ internal static class NifSceneConverter
         var reverseWinding = bakeDeterminant < 0;
 
         var vertexCount = data.NumVertices;
+        var sourceNormals = data.Normals ?? SynthesizeNormals(data);
         var vertices = new ImportedVertex[vertexCount];
         for (var i = 0; i < vertexCount; i++)
         {
             var position = NifTransformConverter.TransformPosition(data.Vertices[i], bake);
-            var normal = NifTransformConverter.TransformNormal(data.Normals![i], bake);
+            var normal = NifTransformConverter.TransformNormal(sourceNormals[i], bake);
             vertices[i] = new ImportedVertex(position, normal);
         }
 

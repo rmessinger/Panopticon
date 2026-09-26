@@ -95,6 +95,34 @@ public sealed class NifModelImporterTests
     }
 
     [Fact]
+    public void NormallessShapeImportsWithSynthesizedUnitNormals()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 2));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+            hasNormals: false,
+            boundCenter: (0.5f, 0.5f, 0.5f),
+            boundRadius: 1.0f,
+            triangles: [(0, 1, 2), (0, 2, 3)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var model = Import(builder.Build(), "normalless")!;
+
+        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        Assert.All(mesh.Vertices, vertex =>
+            Assert.True(
+                MathF.Abs(vertex.Normal.Length() - 1f) < 1e-4f,
+                $"Expected a unit normal, got {vertex.Normal}."));
+    }
+
+    [Fact]
     public void MissingEntryReturnsNull()
     {
         Assert.Null(Import([], omitFile: true));

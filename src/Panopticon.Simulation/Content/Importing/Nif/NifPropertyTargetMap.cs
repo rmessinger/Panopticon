@@ -99,6 +99,30 @@ internal sealed class NifPropertyTargetMap
     }
 
     /// <summary>
+    /// Resolves a visibility target name against converted shapes: a
+    /// unique name match yields the sub-object full name; duplicate shape
+    /// names are ambiguous and fail.
+    /// </summary>
+    public bool TryResolveShapeSubObject(string shapeName, out string subObjectFullName)
+    {
+        if (!_shapesByName.TryGetValue(shapeName, out var candidates))
+        {
+            subObjectFullName = "";
+            return false;
+        }
+
+        if (candidates.Count > 1)
+        {
+            throw new InvalidDataException(
+                $"NIF model '{_modelName}' has {candidates.Count} shapes named '{shapeName}'; " +
+                "the visibility target is ambiguous.");
+        }
+
+        subObjectFullName = _shapeToSubObject[candidates[0]];
+        return true;
+    }
+
+    /// <summary>
     /// Resolves an embedded controller target ref: every material slot
     /// whose shape uses the referenced property block, in walk order.
     /// </summary>
