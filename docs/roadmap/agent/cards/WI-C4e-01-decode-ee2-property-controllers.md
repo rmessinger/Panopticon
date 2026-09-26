@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4e-01` |
 | Roadmap phase | [Track C · C4e](../../track-c-external-assets.md): EE2 property animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-01` |
@@ -42,12 +42,12 @@ Extend `Panopticon.FileFormats.Nif` to decode EE2 NIF 10.1 visibility, texture-t
 
 ## Acceptance criteria
 
-- [ ] Synthetic streams for every C4e block parse to exact end-of-file.
-- [ ] Controller data references reject wrong block types with `InvalidDataException`.
-- [ ] `NiVisData` byte keys and `NiBoolData` key groups preserve values exactly.
-- [ ] TBC and unsupported key types follow the C4c failure contract.
-- [ ] Existing C4a, C4b, and C4c parser tests pass unchanged.
-- [ ] Standard validation passes.
+- [x] Synthetic streams for every C4e block parse to exact end-of-file.
+- [x] Controller data references reject wrong block types with `InvalidDataException`.
+- [x] `NiVisData` byte keys and `NiBoolData` key groups preserve values exactly.
+- [x] TBC and unsupported key types follow the C4c failure contract.
+- [x] Existing C4a, C4b, and C4c parser tests pass unchanged.
+- [x] Standard validation passes.
 
 ## Validation commands
 

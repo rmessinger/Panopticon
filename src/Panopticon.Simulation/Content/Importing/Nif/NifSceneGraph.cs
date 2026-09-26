@@ -11,4 +11,5 @@ namespace Panopticon.Content.Importing.Nif;
 /// </summary>
 internal sealed record NifSceneGraph(
     ImportedSkeleton Skeleton,
-    IReadOnlyList<ImportedSubObject> SubObjects);
+    IReadOnlyList<ImportedSubObject> SubObjects,
+    NifPropertyTargetMap PropertyTargets);
