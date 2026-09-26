@@ -618,6 +618,16 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     the single documented soldier/order path, matching A2/P2's actuation constraint; fixed-contract
     per-rank neural policies run end to end (A4-3e); three populations advance through the
     documented co-evolution schedule with rank-aware reports (A4-3f).
+- [ ] A4-4 Domain state projection
+      ([deep dive](deep-dives/a4-4-domain-state-projection.md)): optional
+      `IDomainStateProjection` with a versioned schema, keyed multi-field records, a separate
+      domain-state artifact, and a schema-driven conservation check.
+  - [ ] A4-4a Contracts and schema validation (`WI-A4-42`).
+  - [ ] A4-4b Frame persistence, diff/apply, reconstruction, conservation residuals (`WI-A4-43`).
+  - [ ] A4-4c Recorder, artifact, `RunRecording`/`RunOutput` wiring (`WI-A4-44`).
+  - [ ] A4-4d Transport-graph reference projection (`WI-A4-45`).
+  - AC: the transport domain records and reconstructs state records at every sampled frame with
+    empty conservation residuals; RTS run-output JSON is byte-identical to the pre-A4-4 output.
 - [ ] Stable seams for pathfinding, partitioning, fidelity policy, storage layout, model import (see
       [seams.md](seams.md)).
   - AC: TBD, each seam has an interface + ≥1 swappable implementation selectable at runtime; all are
@@ -683,6 +693,20 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     economy})
     runs each cell via the B1 harness; per-cell mean+variance is keyed for side-by-side comparison
     and regression detection.
+- [ ] B1-1 Benchmark hook audit and report schema (`WI-B1-01`).
+  - AC: the audit cites existing hooks; the JSON record is A2-compatible.
+- [ ] B1-2 Macro harness skeleton (`WI-B1-02`).
+  - AC: seeded warmup and measured runs execute through `SimulationHost`.
+- [ ] B1-3 Tick, allocation, GC, memory, and system spans (`WI-B1-03`).
+  - AC: each run records per-tick and per-system timings plus allocation and GC counts.
+- [ ] B1-4 JSON run records and CSV summaries (`WI-B1-04`).
+  - AC: records round-trip and carry hardware context.
+- [ ] B1-5 Median bootstrap confidence intervals and regression comparison (`WI-B1-05`).
+  - AC: a seeded bootstrap is reproducible; a stored baseline flags regressions.
+- [ ] B1-6 Seeded reference scenarios including the 10k-unit anchor (`WI-B1-06`).
+  - AC: scenarios run repeatably; micro benchmarks use BenchmarkDotNet.
+- [ ] B1-7 B4a, B4b, and Western Front adapters (`WI-B1-07`).
+  - AC: each consumer emits B1 records without a separate harness.
 - [ ] B2 Allocation & hot-path cleanup (per-tick allocations, collision-pair lists, cache hot
       queries, and data layout).
   - AC: per-tick allocations in the named hot paths are eliminated (allocation profiler shows ~0
@@ -701,6 +725,20 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: TBD (multi-sub-phase, see the deep dive). Rough template: very large maps author → save →
     reload → play within budgets; region edits are O(brush) not O(map area); large object populations
     are placeable/editable interactively.
+- [ ] B4a-1 WorldBuilder large-map limits audit (`WI-B4a-02`).
+  - AC: every size, memory, and format limit is cited by file and line.
+- [ ] B4a-2 Region-delta editing and undo (`WI-B4a-03`..`05`).
+  - AC: brush and layer edits cost O(brush) and undo restores exact values.
+- [ ] B4a-3 Large-map wizard presets and 16-bit defaults (`WI-B4a-06`).
+  - AC: presets create maps at each size with 16-bit heights.
+- [ ] B4a-4 CDLOD terrain streaming (`WI-B4a-07`..`09`).
+  - AC: quadtree selection is deterministic and only visible patches load.
+- [ ] B4a-5 Runtime terrain chunk store (`WI-B4a-01`, `WI-B4a-10`).
+  - AC: the store serves chunks behind the grounded contract; H3 owns the disk format.
+- [ ] B4a-6 Large-map round-trip and play (`WI-B4a-11`).
+  - AC: a large map authors, saves, reloads, and plays within B1 budgets.
+- [ ] B4a-7 Large-population authoring (no cards yet; pairs with A5-5) (`TBD`).
+  - AC: bulk placement and region multi-object edits stay interactive.
 - [ ] B4b Geospatial map generation
       ([deep dive](deep-dives/b4b-geospatial-map-generation.md)): import Google Earth KML/KMZ plus
       georeferenced DEM/imagery rasters from operator-authorized Earth Engine datasets or other
@@ -710,6 +748,34 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
   - AC: a synthetic fixture and one operator-supplied real-world area generate maps whose extent,
     elevations, imagery, and named vector landmarks match source control points within declared
     tolerances; each map saves, reloads in WorldBuilder, and plays.
+- [ ] B4b-1 Input contract: `Panopticon.Geospatial`, diagnostics, limits, manifest
+      (`WI-B4b-01`, `WI-B4b-02`).
+  - AC: the project references no engine assembly; malformed manifests fail with typed codes.
+- [ ] B4b-2 Geospatial interchange values and interfaces (`WI-B4b-03`).
+  - AC: interchange types reference no `MapFile`, LibTiff, or ImageSharp type.
+- [ ] B4b-3 KML, KMZ, and GeoTIFF readers with synthetic fixtures (`WI-B4b-07`..`10`).
+  - AC: unsafe archives and DTDs are rejected before expansion; GeoTIFF fixtures reproduce their
+    georeferencing, including south-up and pixel-is-point cases.
+- [ ] B4b-4 Transverse Mercator, CRS transformer, local map grid (`WI-B4b-04`..`06`).
+  - AC: round trips within 1 mm; a custom-meridian grid spans UTM 31/32 and scale error over 0.1%
+    fails.
+- [ ] B4b-5 Sampling, terrain, imagery, and material chunks (`WI-B4b-11`..`14`).
+  - AC: shared chunk edges are bit-identical; repeated runs produce identical chunk hashes.
+- [ ] B4b-6 Feature clipping, mapping, and masks (`WI-B4b-15`..`17`).
+  - AC: clipped geometry matches exact boundary intersections; slope and water masks follow the
+    manifest thresholds.
+- [ ] B4b-6a Standalone payload, GeoImport CLI, control points (`WI-B4b-18`..`20`).
+  - AC: a synthetic import writes the full payload transactionally and control points pass within
+    tolerance.
+- [ ] B4b-6b Dev preview to a legacy `MapFile` (`WI-B4b-21`..`24`).
+  - AC: a generated synthetic map loads in Generals and runs 300 logic frames.
+- [ ] B4b-7 H3 package output through the H2 interchange (blocked on H2/H3, B4a-5).
+  - AC: TBD by `WI-H2-01`.
+- [ ] B4b-8 WorldBuilder import workflow (blocked on H6).
+  - AC: import is one transaction; cancellation leaves the session unchanged.
+- [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
+  - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
+    plays; B1 records import time and peak memory.
 - [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
   - AC: TBD, instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
     the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.
@@ -724,6 +790,12 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     multiRegion}, `partitionStrategy` ∈ {spatial-grid, spatial-graph-cut}; invalid combos pruned)
     runs each cell; each asserts unit count matches the single-shard reference and aggregate metrics
     are within tolerance; see the deep dive matrix section.
+- [ ] B6-1 Partition, halo, and boundary message design (`WI-B6-01`..`03`).
+  - AC: contracts cover front-strip partitions, halo rules, and a versioned JSON message.
+- [ ] B6-2 In-process sharding for the Western Front (`WI-B6-04`..`07`).
+  - AC: the in-process coordinator runs W shards in lockstep with exactly-once handoff.
+- [ ] B6-6 Compact codec, multi-process transport, fault diagnostics (`WI-B6-08`..`10`).
+  - AC: the binary codec matches JSON results; transport faults report typed diagnostics.
 - [ ] B7 Variable simulation fidelity ([deep dive](deep-dives/b7-variable-fidelity.md)):
       after F4a, use replicated-state fidelity for shared/distributed and view-driven single-node
       only, with physical objects reduced through sleep/kinematic/aggregate modes.
@@ -736,6 +808,13 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     all-low}; cells requiring unitCount < 5000 for `aggregated` pruned) runs each cell; each asserts
     lower mean tick time than `full` baseline and aggregate metrics within tolerance; see the deep
     dive matrix section.
+
+- [ ] B7-1 Fidelity model, registry, replicated policy inputs, projection (`WI-B7-01`..`03`).
+  - AC: `FidelityRegistry` states project into domain state and metrics.
+- [ ] B7-4 Reusable group aggregation contract and error hooks (`WI-B7-04`..`05`).
+  - AC: the W2 aggregation runs through the generic contract with error hooks.
+- [ ] B7-6 Fidelity visualization bridge and error report (`WI-B7-06`..`07`).
+  - AC: A5 shows fidelity states; the report declares transitions and error.
 
 ---
 
@@ -1076,14 +1155,28 @@ coordinates with rather than duplicates.
   - AC: a written audit cites every current-state limitation by file:line, and each format-design
     question (read/write scope, human-editable vs. binary, shared vs. separate containers) has a
     recorded Decision.
+- [ ] H1-1 Legacy map storage audit (`WI-H1-01`).
+  - AC: the audit cites each `MapFile` limitation by file and line.
+- [ ] H1-2 Confirm settled H3 format choices (`WI-H1-02`).
+  - AC: the audit confirms or revises the directory package with raw little-endian chunks.
 - [ ] H2 Format-agnostic interchange abstraction (`IMapFormat`/`IObjectTemplateFormat`-style seam
   behind `AssetStore`/`OnDemandAssetLoadStrategy`, mirroring the C1 pattern).
   - AC: the legacy `.map` reader and INI `ObjectDefinition` parser load entirely as one
     implementation of the new format seam, with no behavior change.
+- [ ] H2-1 Map interchange design for the package format (`WI-H2-01`).
+  - AC: the design names interchange types without `MapFile` dependencies.
 - [ ] H3 New map storage format (versioned container; terrain section reserved for B4a-5's
   chunked heightmap representation).
   - AC: a map authored in the new format round-trips (write, reload) with terrain, blend, and
     placed-object data intact.
+- [ ] H3-1 Map package manifest schema (`WI-H3-01`).
+  - AC: manifests validate versions, layers, and chunk layout.
+- [ ] H3-2 Chunk layer reader and writer (`WI-H3-02`).
+  - AC: raw little-endian chunks round-trip byte-identically.
+- [ ] H3-3 Legacy-to-package importer hooks (`WI-H3-03`).
+  - AC: a legacy map imports into a package through H2.
+- [ ] H3-4 Map package round-trip tests (`WI-H3-04`).
+  - AC: terrain, blend, and object data survive write and reload.
 - [ ] H4 New object/unit-definition storage format (`ObjectDefinition` plus weapons/upgrades/
   locomotors and F4a engine-level physics metadata; INI stays a permanent legacy read path).
   - AC: a unit authored in the new format loads with full parity to its INI-authored equivalent,
@@ -1103,3 +1196,146 @@ coordinates with rather than duplicates.
   - AC: a regression suite catches a round-trip mismatch for maps or object definitions, and a
     ReplaySketch scenario using new-format content passes the same headless assertions as its
     legacy-format equivalent.
+
+## Track W: Western Front Simulation
+
+See [`track-w-western-front.md`](track-w-western-front.md). W0 depends on A4-1 and A4-4; later
+phases depend on the Track A/B phases listed in the track doc.
+
+### W0: Charter fixture ([deep dive](deep-dives/w0-charter-fixture.md))
+- [ ] W0-1 Project, `InternalsVisibleTo`, stable keys, enums (`WI-W0-01`).
+  - AC: key helpers round-trip every §3 format and reject malformed keys.
+- [ ] W0-2 `WesternFrontSchema` version 1 (`WI-W0-02`).
+  - AC: the schema validates; every conserved family has a holding and a sink.
+- [ ] W0-3 Synthetic topology (`WI-W0-03`).
+  - AC: counts, ownership, link owner regions, and active-region cell listing match §5.
+- [ ] W0-4 Theater clock and multi-rate scheduler (`WI-W0-04`).
+  - AC: cadence, drift-free tactical time, and boundary-only mode changes hold without a host.
+- [ ] W0-5 State modules and formation registry (`WI-W0-05`).
+  - AC: no W0 module updates per frame; keys map to object ids both ways.
+- [ ] W0-6 Synthetic scenario (`WI-W0-06`).
+  - AC: formation counts and the promoted platoon's split match §6.
+- [ ] W0-7 Domain adapter (`WI-W0-07`).
+  - AC: `SimulationHost` runs the domain unchanged; captured records pass schema checks.
+- [ ] W0-8 Conservation ledger (`WI-W0-08`).
+  - AC: every ledger operation leaves residuals empty; failed operations change nothing.
+- [ ] W0-9 Charter fixture evidence (`WI-W0-09`).
+  - AC: every [§10](deep-dives/w0-charter-fixture.md#10-evidence-phase-milestone) assertion passes.
+
+### W1: Aggregate sector simulation ([deep dive](deep-dives/w1-aggregate-sector.md))
+- [ ] W1-1 Parameters, schema version 2, seeded streams, Poisson sampler (`WI-W1-01`..`03`).
+  - AC: parameters load with checked units; v2 records reconstruct; streams repeat per key.
+- [ ] W1-2 Message queue, comm links, communication system (`WI-W1-04`).
+  - AC: messages arrive after per-link latency, fall back on cut links, and record loss.
+- [ ] W1-3 Intelligence pictures, echelon views, reactive command policies (`WI-W1-05`..`06`).
+  - AC: policies decide from `EchelonView` force ratios only.
+- [ ] W1-4 Movement over the road graph with stacking (`WI-W1-07`).
+  - AC: formations move at parameterized rates within stacking limits.
+- [ ] W1-5 Logistics allocation, shipments, interdiction, consumption (`WI-W1-08`..`09`).
+  - AC: allocations are exact integers; every moved or consumed unit is ledger-recorded.
+- [ ] W1-6 Platoon-level combat (both variants), morale, terrain, campaign systems (`WI-W1-10`..`13`).
+  - AC: both variants conserve exactly; 1 h campaign systems update weather, production, entrenchment.
+- [ ] W1-7 Offensive scenario, evidence tests, 64-seed A2 report (`WI-W1-14`..`15`).
+  - AC: the 10080-frame run reconstructs, repeats per seed, and reports distributions.
+
+### W2: Fidelity promotion and reconciliation ([deep dive](deep-dives/w2-fidelity-promotion.md))
+- [ ] W2-1 Activation policy interface, references, dwell (`WI-W2-01`).
+  - AC: every contested region promotes; transitions respect the 3-tick dwell.
+- [ ] W2-2 Transition records and schema additions (`WI-W2-02`).
+  - AC: promotion and demotion reconstruct without input replay.
+- [ ] W2-3 Tactical template map (`WI-W2-03`).
+  - AC: blue and red placeholder definitions resolve and validate.
+- [ ] W2-4 Soldier placement (`WI-W2-04`).
+  - AC: seeded posture and trench placement stays inside active cells.
+- [ ] W2-5 Promotion ledger split (`WI-W2-05`).
+  - AC: platoon personnel, MG, and SAA split onto soldiers exactly.
+- [ ] W2-6 Casualty classification (`WI-W2-06`).
+  - AC: each soldier death sinks one killed, wounded, or missing casualty.
+- [ ] W2-7 Soldier ammunition module (`WI-W2-07`).
+  - AC: shots decrement SAA; zero rounds block firing.
+- [ ] W2-8 MG teams (`WI-W2-08`).
+  - AC: MG carriers preserve and reconcile MG counts.
+- [ ] W2-9 Artillery impacts in active areas (`WI-W2-09`).
+  - AC: bombard orders consume rounds and apply `DamageInfo` impacts.
+- [ ] W2-10 Formation objectives to orders through A4-3 (`WI-W2-10`).
+  - AC: orders flow only through A4-3 and `SimulationHost.InjectOrders`.
+- [ ] W2-11 Demotion, reconciliation, terrain fold-in (`WI-W2-11`).
+  - AC: survivors, SAA, MG, and terrain fold back with empty residuals.
+- [ ] W2-12 Scheduler mode switching (`WI-W2-12`).
+  - AC: mode changes happen only on operational boundaries.
+- [ ] W2-13 Whole-sector all-tactical reference run (`WI-W2-13`).
+  - AC: the whole sector materializes tactically from frame zero.
+- [ ] W2-14 Aggregate error report (`WI-W2-14`).
+  - AC: 64 seeds per arm compare aggregate and mixed runs against all-tactical.
+
+### W3: Geospatial sector ([deep dive](deep-dives/w3-geospatial-sector.md))
+- [ ] W3-1 Operator geospatial inputs (`WI-W3-01`).
+  - AC: manifest template names sources, CRS, scale, datum, and uncommitted paths.
+- [ ] W3-2 Somme payload validation (`WI-W3-02`).
+  - AC: payload check rejects wrong CRS, scale, datum, bounds, or missing layers.
+- [ ] W3-3 Topology builder contract (`WI-W3-03`).
+  - AC: topology derives sectors, regions, cells, nodes, and links with source refs.
+- [ ] W3-4 Region and cell grid (`WI-W3-04`).
+  - AC: 1000 m regions and 125 m cells cover the projected extent.
+- [ ] W3-5 Vector features to topology (`WI-W3-05`).
+  - AC: generated links and annotations carry source feature ids.
+- [ ] W3-6 Synthetic forces on geography (`WI-W3-06`).
+  - AC: the scenario starts with valid depots, fronts, and links.
+- [ ] W3-7 W1 evidence on the sector (`WI-W3-07`).
+  - AC: W1 evidence passes on the generated topology.
+- [ ] W3-8 W2 evidence on the sector (`WI-W3-08`).
+  - AC: W2 evidence passes on the generated topology.
+- [ ] W3-9 A5 geospatial rendering (`WI-W3-09`).
+  - AC: A5 shows regions, cells, front line, nodes, links, and source ids.
+- [ ] W3-10 Geospatial sector report (`WI-W3-10`).
+  - AC: the report records control points, topology counts, evidence, provenance.
+
+### W4: Command and logistics experiment ([deep dive](deep-dives/w4-command-logistics-experiment.md))
+- [ ] W4-1 Matrix axis contract (`WI-W4-01`).
+  - AC: A5 expands exactly 216 cells with 64 seeds.
+- [ ] W4-2 Parameter binding (`WI-W4-02`).
+  - AC: axes change only intended parameters and record values.
+- [ ] W4-3 Information audit (`WI-W4-03`).
+  - AC: a read outside `EchelonView` fails with provenance.
+- [ ] W4-4 Cell result schema (`WI-W4-04`).
+  - AC: results key outcomes, losses, supply, latency, activation, cost.
+- [ ] W4-5 Sensitivity report (`WI-W4-05`).
+  - AC: the report includes confidence intervals and a sensitivity ranking.
+- [ ] W4-6 A5 comparison workspace (`WI-W4-06`).
+  - AC: A5 opens, filters, compares, and scrubs W4 run sets.
+
+### W5: Distributed regional simulation ([deep dive](deep-dives/w5-distributed-regional-simulation.md))
+- [ ] W5-1 Front-strip partition (`WI-W5-01`).
+  - AC: contested pairs stay inside one shard.
+- [ ] W5-2 Shard slice state (`WI-W5-02`).
+  - AC: owned and halo records separate by stable keys.
+- [ ] W5-3 In-process JSON transport (`WI-W5-03`).
+  - AC: boundary messages round-trip deterministically.
+- [ ] W5-4 Lockstep coordinator (`WI-W5-04`).
+  - AC: barriers match compressed and tactical cadence.
+- [ ] W5-5 Cross-boundary handoff (`WI-W5-05`).
+  - AC: each entity has exactly one owner through handoff.
+- [ ] W5-6 Boundary effects (`WI-W5-06`).
+  - AC: each boundary effect is sent, applied, and acknowledged once.
+- [ ] W5-7 Sharded versus single-process evidence (`WI-W5-07`).
+  - AC: shard invariants hold; outcome distributions compare with the single-process run.
+- [ ] W5-8 A5 shard visualization (`WI-W5-08`).
+  - AC: A5 shows shard ownership, halo age, handoffs, messages.
+
+### W6: Long-run campaign experiment ([deep dive](deep-dives/w6-long-run-campaign.md))
+- [ ] W6-1 Campaign file (`WI-W6-01`).
+  - AC: binds sector, parameters, shard layout, dates, seed, checkpoint cadence.
+- [ ] W6-2 Historical OOB investigation (`WI-W6-02`).
+  - AC: records an accepted source format or keeps the synthetic OOB.
+- [ ] W6-3 Long-run clock plan (`WI-W6-03`).
+  - AC: 201600 one-minute ticks run without drift.
+- [ ] W6-4 Domain snapshot plus host save (`WI-W6-04`).
+  - AC: load validates frame, time, active regions, schema, key map.
+- [ ] W6-5 Replay indexing (`WI-W6-05`).
+  - AC: scrub latency stays bounded across the artifact.
+- [ ] W6-6 Long-run metrics (`WI-W6-06`).
+  - AC: tick cost, memory, artifact size, save/load, reconstruction are recorded.
+- [ ] W6-7 Approximation error report (`WI-W6-07`).
+  - AC: every active fidelity policy declares its error against all-tactical.
+- [ ] W6-8 Campaign evidence report (`WI-W6-08`).
+  - AC: covers provenance, conservation, replay, save/load, scaling.

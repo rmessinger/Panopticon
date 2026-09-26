@@ -8,7 +8,9 @@
 
 Purpose: define how to investigate a theater-scale Western Front simulation without prematurely
 fixing its geography, force count, time resolution, combat model, or performance target. This
-document is a charter and dependency map, not an implementation phase or task-card source.
+document is a charter and dependency map, not an implementation phase or task-card source. The
+decision gates are settled, and the staged demonstrations are now phases of
+[Track W](../track-w-western-front.md).
 
 ---
 
@@ -19,9 +21,11 @@ combat, and uncertainty interact across multiple scales. The research question i
 Panopticon's domain, recording, map, fidelity, and partition seams can support that experiment while
 keeping cost and approximation error measurable.
 
-Success is not defined as simulating every soldier or reproducing a particular campaign. The
-first evidence must show that the same scenario can move between aggregate and detailed
-representations while preserving declared quantities and producing inspectable run output.
+Runs are offline, and detail outranks speed (see the detail-first stance Decision in
+[open-questions.md](../open-questions.md)): the target is an all-tactical run with one entity per
+soldier, not a real-time game. The first evidence must show that the same scenario can move
+between aggregate and detailed representations while preserving declared quantities and producing
+inspectable run output.
 
 The goal remains directional. These values are parameters until experiments justify commitments:
 
@@ -69,7 +73,7 @@ aggregation, tactical activation, sharding, save/load, and replay.
 The tactical layer activates only for bounded regions that require detailed resolution. It may
 contain:
 
-- soldiers or squads;
+- one `GameObject` per soldier, grouped into squads and sections through A4-3;
 - machine-gun and artillery positions;
 - engineers, vehicles, aircraft, and observation assets;
 - trenches, wire, craters, structures, and local terrain;
@@ -167,9 +171,9 @@ Geospatial fidelity is independent from simulation fidelity. A high-resolution D
 require every unit to be tactical, and an aggregate campaign can use the same map package as a
 detailed local engagement.
 
-B4b's first pipeline supports one bounded, low-distortion projected area. A theater spanning
-multiple projection zones requires a later multi-zone or extended-projection experiment. WF-3
-uses one bounded sector and does not claim that B4b already imports the whole front.
+B4b projects each import onto one Transverse Mercator grid with a custom central meridian, so a
+single import can span UTM zones 31 and 32 within its scale-error limit. WF-3 still uses one
+bounded sector.
 
 ## 5. Time and activation
 
@@ -195,7 +199,7 @@ without deterministic input re-simulation.
 ## 6. Command and information
 
 The existing general/commander/soldier hierarchy is a useful local pattern, not a complete
-theater command model. The experiment adds echelons above squads while retaining order-based
+theater command model. The experiment adds echelons above the A4-3 soldier groupings while retaining order-based
 actuation.
 
 Orders carry:
@@ -353,8 +357,9 @@ Evidence:
 
 ## 11. Decision gates
 
-Before this goal becomes a track or gains source-edit cards, a reviewed experiment charter must
-settle:
+Settled: see the Western Front decision gates Decision in [open-questions.md](../open-questions.md),
+revised by the detail-first stance Decision (offline runs; gates 2, 3, 9, 10, and 12).
+The gates were:
 
 1. Geographic extent, projection, dates, and source datasets.
 2. Persistent formation echelon and tactical entity granularity.
@@ -369,8 +374,9 @@ settle:
 11. Player interaction and visualization surfaces.
 12. Performance and accuracy acceptance envelopes.
 
-No task cards are written from this document yet. The first implementation planning step is WF-0,
-after its state vector and acceptance measurements are approved.
+Phase designs: [W0](w0-charter-fixture.md), [W1](w1-aggregate-sector.md),
+[W2](w2-fidelity-promotion.md), and [W3-W6](w3-w6-integration-experiments.md). WF-n in this
+charter is Track W phase Wn.
 
 ## 12. Architecture diagrams
 
@@ -474,23 +480,23 @@ sequenceDiagram
 
 ## 13. Sequencing
 
-1. Design and implement B4b independently; it is useful without the Western Front goal.
-2. Complete the existing A4 domain and recording contracts needed by WF-0.
-3. Approve the A1/A4 change request for reconstructable multi-layer state.
-4. Review the twelve decision gates and define the WF-0 synthetic fixture.
-5. Create a bounded implementation plan for WF-0 only.
-6. Use WF-0 evidence to decide whether the goal becomes a new roadmap track, several experiments
-   inside Tracks A/B/D, or remains a composition milestone.
+1. Done: the twelve decision gates are settled, and the goal is [Track W](../track-w-western-front.md).
+2. Implement [A4-4](a4-4-domain-state-projection.md) (`WI-A4-42..45`) for reconstructable
+   multi-layer state.
+3. Implement [W0](w0-charter-fixture.md) (`WI-W0-01..09`); `WI-W0-01`, `-03`, and `-04` do not
+   wait for A4-4.
+4. Decompose W1, then W2, into cards after the previous phase's evidence passes.
+5. Design and implement B4b independently; W3 consumes it.
 
 ## Appendix: Current-state hooks (agent context)
 
-- `src/Panopticon.Simulation/Simulation/ISimulationDomainModel.cs:7-58` exposes domain identity, fidelity,
+- `src/Panopticon.Simulation/Simulation/ISimulationDomainModel.cs:15-63` exposes domain identity, fidelity,
   entity capture, topology, metrics, and interaction authority.
 - `src/Panopticon.Simulation/Simulation/RtsSimulationDomainModel.cs:17-75` projects current RTS objects,
   players, position, health, money, fixed spatial-cell keys, and initiator authority.
 - `src/Panopticon.Simulation/SimulationHost.cs:47-97` runs one logic-frame clock from the game definition's
   `MsPerLogicFrame`; it has no campaign/operational scheduler.
-- `src/Panopticon.Simulation/Recording/RunRecording.cs:60-113` reconstructs state from snapshots and
+- `src/Panopticon.Simulation/Recording/RunRecording.cs:70-125` reconstructs state from snapshots and
   per-frame deltas without input re-simulation.
 - `src/Panopticon.Simulation/Logic/AI/Hierarchy/SquadHierarchy.cs:7-75` owns current squad membership,
   commander promotion, and persistence by stable object ID.

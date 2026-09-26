@@ -6,105 +6,137 @@
 > Audience: human overview of the larger-maps design.
 
 Purpose: scale WorldBuilder and map loading toward very large maps and large populations. The
-design treats terrain streaming and large-object authoring as the core requirements.
+design treats terrain streaming, chunk residency, scalable edit/undo, and large-object authoring as
+core requirements.
 
-> B4a assumes that WorldBuilder's basic author → save → load → play round-trip already
-> works at normal map sizes. That baseline is established in [A5-6](a5-visualization.md), an
-> early Track A sub-phase. B4a scales beyond those limits; it is not the first audit of basic
-> WorldBuilder functionality.
-
-> WorldBuilder is scenario-authoring tooling and must scale with the sim. It handles terrain and a
-> scenario's initial object population: units, structures, and props. A sim-scale experiment needs a
-> sim-scale authoring path that can place and edit thousands to millions of objects, not just a large
-> heightmap. Terrain scaling (B4a-1…6) and large-population scenario authoring (B4a-7) are the two
-> halves of that. B4a-7 is the WorldBuilder counterpart to ReplaySketch's
-> [A5-5](a5-visualization.md) authoring-at-scale work.
+B4a assumes that WorldBuilder's basic author, save, load, and play round-trip works at normal map
+sizes. That baseline is tracked by A5-6 in [implementation-checklist.md](../implementation-checklist.md).
+The only current A5-6 card found is [`WI-A5-06`](../agent/cards/WI-A5-06-ground-a5-architecture.md),
+which is `Ready` and grounds A5 architecture, not the full WorldBuilder baseline acceptance item.
+B4a implementation cards therefore call out the A5-6 checklist item where it affects execution.
 
 ## Decisions
 
-- No size cap. Design for arbitrarily large maps. The goal is to scale map size over time to
-  experiment with scaling techniques, so size must be bounded by disk, not RAM or the file format.
-  Streaming/chunking (B4a-5) is therefore a core requirement, and every per-cell-resident
-  assumption (C1, C5) must eventually go.
-- Original-engine `.map` compatibility is not required. Panopticon may extend or replace the `.map`
-  format for large maps from the start, consistent with the roadmap principle that scale and
-  extensibility outrank fidelity. Reading existing original maps remains valuable, but writing must
-  not be constrained by the original format's limits. This removes the compatibility half of C6 as a
-  blocker.
+- No size cap. Design for arbitrarily large maps. Map size is bounded by disk and authored data, not
+  by a hard format or RAM ceiling.
+- Original-engine `.map` write compatibility is not required for large maps. Reading legacy maps remains
+  useful, but large-map authoring targets the H2/H3 path.
+- B4a-2 undo uses region deltas: a rectangle plus before and after arrays for each edited layer.
+- B4a-4 terrain LOD uses CDLOD: quadtree selection with continuous morph between levels.
+- B4a-5 owns the runtime chunk store: chunk residency, paging, dirty tracking, and runtime access.
+  H3 owns on-disk chunk encoding.
+- The proposed runtime chunk layout matches B4b §5.1a: 128 lattice intervals per chunk, 129 lattice
+  points, one-sample apron on every side, and raw little-endian `float32` height payloads in game units.
 
 ## How maps are sized today
 
-- Terrain is a heightmap grid. `HeightMapData`
-  (`src/Panopticon.Simulation/Data/Map/HeightMapData.cs`) stores `Width`/`Height` (tiles) and a full
-  `ushort[,] Elevations` array, plus `Area = Width  Height`. Generals maps store elevations as
-  `uint8`; BFME and later as `uint16` (`ElevationsAre16Bit`, version ≥ 5).
-- Companion per-tile data scales with area too. Blend/texture tiles (`BlendTileData`), passability,
-  and similar data are all per-cell.
-- Rendering splits terrain into fixed 17×17-vertex patches. `Terrain`
-  (`src/Panopticon.Simulation/Terrain/Terrain.cs`, `PatchSize = 17`) builds a `List<TerrainPatch>` covering
-  the whole map up front. There is no streaming or terrain LOD.
-- Spatial systems scale with cell count. `PartitionCellManager`, the `Quadtree`
-  (`src/Panopticon.Simulation/DataStructures/`), and the navigation graph
-  (`src/Panopticon.Simulation/Navigation/`) are all sized from map dimensions.
-- WorldBuilder authoring assumes the full grid is resident and cheap to copy. The New Map wizard
-  (`NewMapWizardPage.xaml.cs`) only enforces minimums (width/height ≥ 10, border ≥ 2); there is no
-  upper bound. Height-edit tooling clones the entire elevation array per stroke
-  (`HeightBrushTool._strokeBefore = Elevations.Clone()`), so each edit is O(map area).
+- `HeightMapData` stores `Width`, `Height`, `Area`, and a resident `ushort[,] Elevations`
+  array. It verifies `Width * Height == Area` while parsing and creates resident arrays for new maps
+  (`src/Panopticon.Simulation/Data/Map/HeightMapData.cs:18-43,49-78`).
+- `BlendTileData` stores texture, blend, passability, buildability, visibility, and related per-cell
+  arrays sized from `HeightMapData` (`src/Panopticon.Simulation/Data/Map/BlendTileData.cs:11-50,82-170`).
+- `HeightMap` exposes ten world units per sample and builds a resident normal array from the whole
+  grid (`src/Panopticon.Simulation/Terrain/HeightMap.cs:9-31,166-185`).
+- `Terrain` uses `PatchSize = 17` and creates all patches up front in `CreatePatches`
+  (`src/Panopticon.Simulation/Terrain/Terrain.cs:31-36,263-322`).
+- `Terrain.CreateTileDataTexture` builds one whole-map tile-data texture from `BlendTileData`
+  (`src/Panopticon.Simulation/Terrain/Terrain.cs:326-376`).
+- `PartitionCellManager.OnNewGame` allocates its full cell array from the map boundary
+  (`src/Panopticon.Simulation/Logic/PartitionCellManager.cs:30-65`).
+- `Navigation` creates a whole-map graph from the passability array
+  (`src/Panopticon.Simulation/Navigation/Navigation.cs:14-31`).
+- `EditorMap` wraps a resident `MapFile` and saves through `MapFile.WriteTo`
+  (`src/Panopticon.Tools.WorldBuilder.Core/EditorMap.cs:9-25,51-69`).
+- `HeightMapEdit` already records a rectangular before and after patch
+  (`src/Panopticon.Tools.WorldBuilder.Core/HeightMapEdit.cs:8-26,33-64`).
+- `HeightBrushTool` still clones the whole `Elevations` array at pointer down and pointer up before
+  slicing the affected patch (`src/Panopticon.Tools.WorldBuilder.Core/HeightBrushTool.cs:14-17,42-48,87-124`).
+- `ObjectsList` uses flat arrays and copies the whole array on add/remove
+  (`src/Panopticon.Simulation/Data/Map/ObjectsList.cs:8-23`).
 
 ## Constraints to lift
 
 | # | Constraint | Where | Why it blocks large maps |
 |---|---|---|---|
-| C1 | Whole heightmap + per-cell arrays resident in memory | `HeightMapData`, `BlendTileData` | Memory grows with map area; very large maps exhaust RAM. |
-| C2 | All terrain patches built and kept up front; no LOD/streaming | `Terrain.cs` | Build time, GPU memory, and draw/cull cost grow with area. |
-| C3 | Per-stroke full-array clone in the editor | `HeightBrushTool.cs` and other tools | Editing latency grows with map area, not brush size. |
-| C4 | Undo/redo snapshots are full-grid | WorldBuilder edit/undo model | Memory + latency per edit scale with area. |
-| C5 | Spatial/path/partition sized to full grid eagerly | `PartitionCellManager`, `Quadtree`, `Navigation` | Allocation and per-tick cost grow with area (ties into B2/B4). |
-| C6 | No explicit, validated max size; `.map` format itself has size/precision limits | `NewMapWizardPage.xaml.cs`, `MapFile`, `HeightMapData` | Without an extended/replacement format, very large maps cannot be represented. The compatibility half is already resolved by the Decisions section. |
+| C1 | Whole heightmap and per-cell arrays resident in memory | `HeightMapData`, `BlendTileData` | Memory grows with total area. |
+| C2 | All terrain patches and tile-data texture built up front | `Terrain` | Build time, GPU memory, and draw cost grow with total area. |
+| C3 | Brush strokes clone the full elevation grid | `HeightBrushTool` | Edit latency and memory scale with map area, not brush area. |
+| C4 | Undo model needs layer-general region deltas | WorldBuilder edit model | Height already has a patch edit; blend, passability, and object edits need the same contract. |
+| C5 | Spatial and navigation structures size eagerly to full grid | `PartitionCellManager`, `Navigation` | Allocation and per-tick cost grow with map area. |
+| C6 | Legacy `.map` is the only save path in WorldBuilder | `EditorMap.Save`, `MapFile.WriteTo` | Chunked storage needs H2/H3 package output. |
+
+## Chunk contract (proposed)
+
+B4a adopts the B4b §5.1a layout as the proposed B4a-5 runtime chunk contract.
+
+| Property | Value |
+|---|---|
+| Lattice spacing | 10 game units |
+| Chunk extent | 128 sample intervals per axis |
+| Lattice points per chunk | 129 per axis; edge points duplicated in neighbours and equal |
+| Apron | one read-only sample on each side for normals |
+| Stored chunk sample count | 131 x 131 with apron |
+| Height payload | little-endian `float32` game units |
+| Chunk key | `(cx, cy)` from southwest origin; +X east, +Y north |
+| Runtime owner | B4a-5 chunk store |
+| On-disk owner | H3 package encoding |
+
+A 128-interval chunk aligns with eight current terrain patches in each axis because `Terrain.PatchSize`
+is 17 vertices, or 16 intervals. One chunk therefore holds an 8 x 8 patch grid at full detail before
+CDLOD coarsening.
+
+Approximate resident payload per chunk:
+
+| Layer | Estimate |
+|---|---|
+| Height apron | 131 x 131 x 4 bytes, about 67 KiB |
+| Material or tile indices | 129 x 129 x 1 to 2 bytes, about 16 to 33 KiB per layer |
+| Passability and buildability masks | 129 x 129 bits each, about 2 KiB per mask |
+| Current tile-data texture equivalent | 128 x 128 x 16 bytes, about 256 KiB before compression or packing changes |
+
+For the settled Somme extent in the Western Front decisions, about 78 x 52 chunks produce about
+4,056 chunks. Height aprons alone are about 266 MiB if fully resident. The whole Western Front is a
+later capacity problem and must page by region rather than relying on full residency.
 
 ## Sub-phases
 
 | Phase | Goal | Status |
 |---|---|---|
-| B4a-1. Baseline & limits audit | Measure where large maps break today: load time, memory, edit latency, render cost. Document the practical ceiling and which constraint (C1–C6) fails first to prioritize streaming/chunking work, not to pick a max size. See Decisions. | Not started |
-| B4a-2. Region-based editing in WorldBuilder | Replace full-array clone/undo with dirty-region edits: tools capture only the affected rectangle, the brush already tracks stroke bounds in `HeightBrushTool` min/max X/Y, and undo/redo stores region deltas. Edit latency becomes proportional to brush size rather than map size. | Not started |
-| B4a-3. New Map wizard for large maps | Surface large-size presets and validation in the New Map wizard: no hard cap, memory/perf guidance for the resident-grid path, and 16-bit elevation by default for large maps. | Not started |
-| B4a-4. Terrain streaming & LOD | Build terrain patches on demand around the camera, free distant patches, and add terrain LOD so render cost scales sub-linearly with map area (ties into B5). | Not started |
-| B4a-5. Chunked terrain storage & extended map format | Core requirement. Tile the heightmap/blend data into chunks so the whole grid need not be resident, and extend or replace the `.map` format to store chunked, arbitrarily large terrain. This resolves C1/C5/C6 and feeds B6 spatial sharding. | Not started |
-| B4a-6. Round-trip & play validation | Validate large maps author → save → reload in WorldBuilder → play in the engine; confirm partition/pathfinding/rendering behave at increasing sizes. | Not started |
-| B4a-7. Large-population scenario authoring | Scale WorldBuilder beyond terrain to placing and editing large object populations: bulk/procedural placement of units and structures, region-based multi-object edit/undo that extends B4a-2's dirty-region model from cells to objects, scalable selection/iteration, and instanced editor rendering that reuses [B5](../track-b-scale.md). This is the authoring counterpart to the engine-side [A5 scenario setup](a5-visualization.md) and ReplaySketch's [A5-5](a5-visualization.md). | Not started |
+| B4a-1. Baseline and limits audit | Measure normal and large map load time, memory, edit latency, render cost, save time, and the first failing constraint. | Not started |
+| B4a-2. Region-delta editing in WorldBuilder | Replace full-grid clones with rectangle plus before and after arrays per edited layer. Height, blend/material, passability/buildability, and object edits use one region-delta pattern. | Not started |
+| B4a-3. New Map wizard for large maps | Add large-map presets, 16-bit elevation defaults, and memory guidance without a hard cap. | Not started |
+| B4a-4. Terrain streaming and CDLOD | Select terrain by quadtree, page visible chunks, build render meshes on demand, and morph continuously between LOD levels. | Not started |
+| B4a-5. Runtime chunk store | Provide chunk residency, paging, dirty tracking, and region access over B4b's 128-interval chunk layout. H3 serializes the chunks. | Not started |
+| B4a-6. Round-trip and play validation | Validate large maps through WorldBuilder save, reload, engine load, and play. | Not started |
+| B4a-7. Large-population scenario authoring | Scale object placement, selection, multi-object edit/undo, and editor rendering for large populations. | Not started |
+
+## Cards
+
+| Card | Title | Status | Prerequisites |
+|---|---|---|---|
+| [`WI-B4a-01`](../agent/cards/WI-B4a-01-chunk-contract.md) | Ground the B4a-5 chunk contract | Ready | none |
+| [`WI-B4a-02`](../agent/cards/WI-B4a-02-baseline-limits-audit.md) | Audit WorldBuilder large-map limits | Ready | A5-6 checklist item |
+| [`WI-B4a-03`](../agent/cards/WI-B4a-03-region-delta-contract.md) | Add the region-delta edit contract | Ready | A5-6 checklist item |
+| [`WI-B4a-04`](../agent/cards/WI-B4a-04-height-brush-region-delta.md) | Remove full-grid height brush clones | Draft | `WI-B4a-03` |
+| [`WI-B4a-05`](../agent/cards/WI-B4a-05-layer-region-deltas.md) | Apply region deltas to map layers | Draft | `WI-B4a-03` |
+| [`WI-B4a-06`](../agent/cards/WI-B4a-06-large-map-wizard.md) | Add large-map wizard presets | Ready | A5-6 checklist item |
+| [`WI-B4a-07`](../agent/cards/WI-B4a-07-cdlod-streaming-design.md) | Design CDLOD and streaming seams | Draft | `WI-B4a-01` |
+| [`WI-B4a-08`](../agent/cards/WI-B4a-08-cdlod-selection.md) | Implement CDLOD quadtree selection | Draft | `WI-B4a-07` |
+| [`WI-B4a-09`](../agent/cards/WI-B4a-09-visible-patch-streaming.md) | Stream visible terrain patches | Draft | `WI-B4a-07` |
+| [`WI-B4a-10`](../agent/cards/WI-B4a-10-runtime-chunk-store.md) | Implement runtime chunk store | Draft | `WI-B4a-01`, `WI-H3-01`, `WI-H3-02` |
+| [`WI-B4a-11`](../agent/cards/WI-B4a-11-large-map-roundtrip.md) | Validate large-map round-trip and play | Draft | `WI-B4a-10`, H6 |
 
 ## Sequencing notes
 
-- B4a-1 is a prerequisite for the rest. Optimize against measured limits, not guesses.
-- B4a-2/3 are WorldBuilder-local and low-risk. They make large-map authoring usable before the
-  engine-side streaming work lands.
-- B4a-4/5 are engine-side and overlap with B2, B4, and B5. Coordinate so terrain chunking and the
-  partition/quadtree work share a chunk/region concept.
-- B4a-5 is required by the no-cap decision and is the natural bridge to B6 distributed simulation
-  through spatial sharding. Coordinate the chunk/region concept with B6-1.
-- B4a-7 reuses B4a-2's dirty-region edit/undo model, lifted from cells to objects, and B5's
-  instanced rendering. It pairs with the engine-side [A5-5](a5-visualization.md) so the author and replay
-  tools scale together. It can proceed in parallel with terrain streaming once B4a-2 exists.
+- B4a-1 is an investigation card and can run before code changes.
+- B4a-2 and B4a-3 are WorldBuilder-local and can proceed before H3 package encoding.
+- B4a-4 and B4a-5 depend on the chunk contract from `WI-B4a-01`.
+- B4a-5 must coordinate with H3. B4a owns runtime residency and dirty state; H3 owns bytes on disk.
+- B4a-7 can begin after B4a-2 establishes region-object edit patterns and B5 provides rendering scale hooks.
 
 ## Architecture Diagrams
 
-These diagrams show the current map and terrain types, and the types B4a adds on top of them.
-Types that exist today carry no stereotype. Types B4a introduces carry a sub-phase stereotype
-(`<<B4a-4>>`, `<<B4a-5>>`, `<<B4a-7>>`) matching the [sub-phase table](#sub-phases), and are drawn
-with a colored accent via `classDef`. For the rationale behind streaming, chunking, and
-large-population authoring, see the sections above; these diagrams cover only structure and flow.
-
 ### Current types and B4a additions
-
-`MapFile` (`src/Panopticon.Simulation/Data/Map/MapFile.cs`) owns the resident map data. `HeightMapData`
-holds the full `ushort[,] Elevations` grid and validates `Width * Height == Area`; `BlendTileData`
-holds per-cell tile arrays; `ObjectsList` holds the flat `MapObject[]`. `Terrain`
-(`src/Panopticon.Simulation/Terrain/Terrain.cs`) builds one `TerrainPatch` per `PatchSize` (17) block over
-the whole `HeightMap` up front in `CreatePatches`. On the editor side, `EditorMap` wraps a `MapFile`
-and an `UndoRedoStack~IMapEdit~`; tools push region-scoped `IMapEdit` records. B4a-5 replaces the
-single resident grid with chunked storage, B4a-4 builds patches on demand, and B4a-7 lifts the
-region-edit model from cells to objects.
 
 ```mermaid
 classDiagram
@@ -112,20 +144,18 @@ classDiagram
     +HeightMapData HeightMapData
     +BlendTileData BlendTileData
     +ObjectsList ObjectsList
-    +FromFileSystemEntry(entry) MapFile
     +WriteTo(stream)
   }
   class HeightMapData {
     +uint Width
     +uint Height
     +uint Area
-    +uint BorderWidth
-    +bool ElevationsAre16Bit
     +ushort[,] Elevations
   }
   class BlendTileData {
     +ushort[,] Tiles
     +uint[,] Blends
+    +bool[,] Impassability
   }
   class ObjectsList {
     +MapObject[] Objects
@@ -134,158 +164,123 @@ classDiagram
   }
   class Terrain {
     +HeightMap HeightMap
-    +int PatchSize$
+    +int PatchSize
     -List~TerrainPatch~ _patches
-    +OnHeightMapChanged()
     -CreatePatches()
   }
-  class TerrainPatch {
-    +Rectangle Bounds
-    +AxisAlignedBoundingBox BoundingBox
-  }
   class HeightMap {
-    +int HorizontalScale$
+    +int HorizontalScale
     +int Width
     +int Height
+    +Vector3[,] Normals
     +GetHeight(x, y) float
   }
   class EditorMap {
     +MapFile MapFile
     +UndoRedoStack~IMapEdit~ UndoStack
-    +CreateNew(mapFile) EditorMap
-    +Open(mapFile, path) EditorMap
     +Save()
   }
-  class IMapEdit {
-    <<interface>>
+  class HeightMapEdit {
+    +Capture(data, startX, startY, width, height, apply, desc) HeightMapEdit
+  }
+  class RegionDeltaEdit {
+    <<B4a-2>>
+    +Rectangle Bounds
+    +LayerDeltas
     +Apply()
     +Revert()
   }
-  class HeightMapEdit {
-    -int _startX
-    -int _startY
-    -ushort[,] _before
-    -ushort[,] _after
-    +Capture(data, startX, startY, w, h, apply, desc) HeightMapEdit
-  }
-
-  class ChunkedHeightMap:::b4a {
+  class RuntimeTerrainChunkStore {
     <<B4a-5>>
-    +int ChunkSize
-    +IReadOnlyList~HeightMapChunk~ Chunks
-    +LoadRegion(bounds) IEnumerable~HeightMapChunk~
+    +GetChunk(cx, cy) TerrainChunk
+    +LoadRegion(bounds)
+    +EvictNonResident()
   }
-  class HeightMapChunk:::b4a {
+  class TerrainChunk {
     <<B4a-5>>
-    +Rectangle WorldBounds
-    +ushort[,] Elevations
+    +ChunkKey Key
+    +Rectangle Bounds
     +bool IsResident
     +bool IsDirty
   }
-  class TerrainPatchStreamer:::b4a {
+  class CdlodTerrainStreamer {
     <<B4a-4>>
-    +UpdateVisible(cameraBounds)
-    +BuildPatch(bounds) TerrainPatch
-    +FreePatch(bounds)
+    +Select(camera) CdlodSelection
+    +BuildVisibleMeshes()
   }
-  class ObjectPopulationEdit:::b4a {
-    <<B4a-7>>
-    +IReadOnlyList~MapObject~ Before
-    +IReadOnlyList~MapObject~ After
-    +Apply()
-    +Revert()
+  class MapPackage {
+    <<H3>>
+    +manifest.json
+    +chunk layer files
   }
 
-  MapFile *-- HeightMapData
-  MapFile *-- BlendTileData
-  MapFile *-- ObjectsList
-  ObjectsList "1" --> "N" MapObject
+  MapFile --> HeightMapData
+  MapFile --> BlendTileData
+  MapFile --> ObjectsList
   Terrain --> HeightMap
-  Terrain "1" --> "N" TerrainPatch
+  Terrain --> TerrainPatch
   EditorMap --> MapFile
-  EditorMap --> IMapEdit : UndoRedoStack
-  HeightMapEdit ..|> IMapEdit
-  ObjectPopulationEdit ..|> IMapEdit
-  ChunkedHeightMap "1" --> "N" HeightMapChunk
-  ChunkedHeightMap ..> HeightMapData : replaces resident grid
-  TerrainPatchStreamer ..> ChunkedHeightMap : reads region
-  TerrainPatchStreamer ..> TerrainPatch : builds on demand
-  ObjectPopulationEdit ..> ObjectsList : bulk edit
-
-  classDef b4a fill:#eef,stroke:#55f,stroke-width:2px
+  EditorMap --> HeightMapEdit
+  RegionDeltaEdit --> HeightMapData
+  RegionDeltaEdit --> BlendTileData
+  RegionDeltaEdit --> ObjectsList
+  RuntimeTerrainChunkStore --> TerrainChunk
+  CdlodTerrainStreamer --> RuntimeTerrainChunkStore
+  CdlodTerrainStreamer --> TerrainPatch
+  MapPackage ..> RuntimeTerrainChunkStore : serialized by H3
 ```
 
-### Map load path for a large map with streaming
-
-Today `Game.LoadMap` reads the whole `MapFile`, seeds `TerrainLogic.HeightMap`, then `Scene3D`
-builds every `TerrainPatch` up front through `Terrain.CreatePatches`. B4a-5 makes the parse hydrate
-`ChunkedHeightMap` instead of one resident grid, and B4a-4 has `TerrainPatchStreamer` build patches
-only for chunks near the camera and free distant ones.
+### Large map runtime flow
 
 ```mermaid
 sequenceDiagram
-  participant G as Game.LoadMap
-  participant MF as MapFile
-  participant HD as HeightMapData
-  participant TL as TerrainLogic
-  participant S as Scene3D
-  participant T as Terrain
-  participant STR as TerrainPatchStreamer
-  participant CH as ChunkedHeightMap
+  participant E as Engine load
+  participant H2 as Map interchange
+  participant Store as RuntimeTerrainChunkStore
+  participant Streamer as CdlodTerrainStreamer
+  participant Terrain as Terrain
+  participant Camera as Camera
 
-  G->>MF: FromFileSystemEntry(entry)
-  MF->>HD: Parse(reader)
-  Note over HD,CH: B4a-5: parse into ChunkedHeightMap<br/>rather than one resident ushort[,]
-  MF-->>G: MapFile
-  G->>TL: SetHeightMapData(mapFile.HeightMapData)
-  TL-->>TL: new HeightMap
-  G->>S: new Scene3D(mapFile, ...)
-  S->>T: new Terrain(mapFile, heightMap, ...)
-  alt today
-    T->>T: CreatePatches() over whole grid
-    T->>T: new TerrainPatch per 17x17 block
-  else B4a-4 streaming
-    S->>STR: UpdateVisible(cameraBounds)
-    STR->>CH: LoadRegion(cameraBounds)
-    CH-->>STR: resident HeightMapChunks
-    STR->>T: BuildPatch(bounds) for near chunks
-    STR->>T: FreePatch(bounds) for distant chunks
+  E->>H2: Load map package through H2 seam
+  H2-->>Store: Create runtime chunk store
+  E->>Terrain: Create terrain renderer shell
+  loop Each camera update
+    Camera->>Streamer: camera position and view range
+    Streamer->>Store: LoadRegion(visible chunk bounds)
+    Store-->>Streamer: resident chunks
+    Streamer->>Streamer: quadtree CDLOD selection and morph factors
+    Streamer->>Terrain: build, update, or free visible meshes
   end
 ```
 
 ### WorldBuilder region edit and save
 
-A height brush stroke captures only the affected rectangle. `HeightMapEdit.Capture` already records
-a region `before`/`after` pair rather than the whole grid, and `UndoRedoStack.Push` applies it. The
-remaining full-grid cost is in `HeightBrushTool`, which still clones the entire `Elevations` array
-per stroke (`_strokeBefore = Elevations.Clone()`); B4a-2 removes that clone so stroke cost is
-O(brush), not O(map area). `EditorMap.Save` writes the map back through `MapFile.WriteTo`.
-
 ```mermaid
 sequenceDiagram
-  participant U as User (pointer)
-  participant HB as HeightBrushTool
-  participant HD as HeightMapData
-  participant HE as HeightMapEdit
-  participant US as UndoRedoStack
-  participant EM as EditorMap
-  participant MF as MapFile
+  participant User as User pointer
+  participant Tool as Editor tool
+  participant Delta as RegionDeltaEdit
+  participant Stack as UndoRedoStack
+  participant Map as EditorMap
+  participant H3 as H3 package writer
 
-  U->>HB: OnPointerDown / OnPointerMove
-  Note over HB: B4a-2: capture only the stroke rectangle,<br/>drop the full Elevations.Clone()
-  HB->>HD: apply brush to cells in radius
-  HB->>HB: track stroke min/max X and Y
-  U->>HB: OnPointerUp
-  HB->>HE: Capture(data, startX, startY, w, h, apply, desc)
-  HE->>HD: read region before and after
-  HB->>US: Push(edit)
-  US->>HE: Apply()
-  U->>EM: Save
-  EM->>MF: WriteTo(stream)
+  User->>Tool: pointer down, move, up
+  Tool->>Tool: track affected rectangle
+  Tool->>Delta: capture before and after arrays per layer
+  Tool->>Stack: Push(delta)
+  Stack->>Delta: Apply()
+  Map->>Map: mark dirty
+  User->>Map: Save
+  alt legacy normal map
+    Map->>Map: MapFile.WriteTo(stream)
+  else large map
+    Map->>H3: write package through H2 seam
+  end
 ```
 
 ## Related
 
 - Track B overview: [`../track-b-scale.md`](../track-b-scale.md)
-- Decision on the size ceiling & compatibility: [`../open-questions.md`](../open-questions.md)
+- B4b chunk layout: [`b4b-geospatial-map-generation.md#51a-chunk-layout`](b4b-geospatial-map-generation.md#51a-chunk-layout)
+- Track H storage formats: [`../track-h-storage-formats.md`](../track-h-storage-formats.md)
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)

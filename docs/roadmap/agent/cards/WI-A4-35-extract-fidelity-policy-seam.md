@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-10`, `WI-A4-31`; B7-1 contract must be implementation-ready |
-| Diagrams | [B7 §8](../../deep-dives/b7-variable-fidelity.md#8-architecture-diagrams) |
+| Diagrams | [B7 §9](../../deep-dives/b7-variable-fidelity.md#9-architecture-diagrams) |
 
 ## Goal
 

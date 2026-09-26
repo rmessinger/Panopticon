@@ -9,7 +9,7 @@
 |---|---|
 | Card ID | `WI-<PHASE>-<NN>` (e.g. `WI-P0-01`) |
 | Roadmap phase | [`<phase>`](../track-p-playable-baseline.md): link to the exact phase row |
-| Status | `Ready` \| `In progress` \| `Done` \| `Blocked` |
+| Status | `Draft` \| `Ready` \| `In progress` \| `Done` \| `Blocked` |
 | Type | `investigation` \| `pattern-replication` \| `mechanical-refactor` \| `test-addition` |
 | Effort | `S` (suitable for a low-effort model). If it isn't S, it doesn't belong here |
 | Prerequisites | other card ids that must be `Done` first, or `none` |
