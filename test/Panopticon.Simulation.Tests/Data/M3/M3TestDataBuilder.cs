@@ -6,6 +6,8 @@ using System.Text;
 
 namespace Panopticon.Tests.Data.M3;
 
+public readonly record struct M3TestVertex(Vector3 Position, Vector3 Normal, Vector2 Uv0, Vector2? Uv1 = null);
+
 public sealed class M3TestDataBuilder
 {
     public uint ModelVersion { get; set; } = 23;
@@ -16,17 +18,27 @@ public sealed class M3TestDataBuilder
 
     public bool AddUnreferencedTags { get; set; }
 
+    public M3TestVertex[] Vertices { get; set; } =
+    [
+        new(Vector3.Zero, Vector3.UnitZ, Vector2.Zero, Vector2.Zero),
+    ];
+
+    public ushort[] Faces { get; set; } = [0, 1, 2];
+
+    public int BatchCount { get; set; } = 1;
+
     public byte[] Build()
     {
         var chunks = new List<Chunk>();
         var modelNameIndex = AddString(chunks, "SyntheticModel");
         var boneNameIndex = AddString(chunks, "Root");
         var boneIndex = AddChunk(chunks, "BONE", 1, WriteBone(boneNameIndex));
-        var verticesIndex = AddChunk(chunks, "U8__", 0, new byte[36]);
-        var facesIndex = AddChunk(chunks, "U16_", 0, WriteUInt16s([0, 1, 2]));
+        var vertices = WriteVertices();
+        var verticesIndex = AddChunk(chunks, "U8__", 0, vertices);
+        var facesIndex = AddChunk(chunks, "U16_", 0, WriteUInt16s(Faces));
         var regionIndex = AddChunk(chunks, "REGN", RegionVersion, WriteRegion());
-        var batchIndex = AddChunk(chunks, "BAT_", 1, WriteBatch());
-        var divisionIndex = AddChunk(chunks, "DIV_", 2, WriteDivision(facesIndex, regionIndex, batchIndex));
+        var batchIndex = AddChunk(chunks, "BAT_", 1, WriteBatches());
+        var divisionIndex = AddChunk(chunks, "DIV_", 2, WriteDivision(facesIndex, regionIndex, batchIndex, BatchCount));
         var boneLookupIndex = AddChunk(chunks, "U16_", 0, WriteUInt16s([0]));
         var materialNameIndex = AddString(chunks, "SyntheticMaterial");
         var diffusePathIndex = AddString(chunks, "Assets/Textures/Synthetic_Diffuse.dds");
@@ -45,7 +57,7 @@ public sealed class M3TestDataBuilder
             chunks,
             "MODL",
             ModelVersion,
-            WriteModel(modelNameIndex, boneIndex, verticesIndex, divisionIndex, boneLookupIndex, materialReferenceIndex, materialIndex));
+            WriteModel(modelNameIndex, boneIndex, verticesIndex, vertices.Length, divisionIndex, boneLookupIndex, materialReferenceIndex, materialIndex));
 
         return WriteFile(chunks, modelIndex);
     }
@@ -82,16 +94,16 @@ public sealed class M3TestDataBuilder
         return stream.ToArray();
     }
 
-    private static byte[] WriteRegion()
+    private byte[] WriteRegion()
     {
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream, Encoding.Latin1, leaveOpen: true);
         writer.Write((uint)7);
         writer.Write((uint)8);
         writer.Write((uint)0);
-        writer.Write((uint)1);
+        writer.Write((uint)Vertices.Length);
         writer.Write((uint)0);
-        writer.Write((uint)3);
+        writer.Write((uint)Faces.Length);
         writer.Write((ushort)1);
         writer.Write((ushort)0);
         writer.Write((ushort)1);
@@ -102,27 +114,31 @@ public sealed class M3TestDataBuilder
         return stream.ToArray();
     }
 
-    private static byte[] WriteBatch()
+    private byte[] WriteBatches()
     {
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream, Encoding.Latin1, leaveOpen: true);
-        writer.Write((ushort)0x11);
-        writer.Write((ushort)0x22);
-        writer.Write((ushort)0);
-        writer.Write((ushort)0x33);
-        writer.Write((ushort)0x44);
-        writer.Write((ushort)0);
-        writer.Write((short)-1);
+        for (var i = 0; i < BatchCount; i++)
+        {
+            writer.Write((ushort)0x11);
+            writer.Write((ushort)0x22);
+            writer.Write((ushort)0);
+            writer.Write((ushort)0x33);
+            writer.Write((ushort)0x44);
+            writer.Write((ushort)0);
+            writer.Write((short)-1);
+        }
+
         return stream.ToArray();
     }
 
-    private static byte[] WriteDivision(int facesIndex, int regionIndex, int batchIndex)
+    private static byte[] WriteDivision(int facesIndex, int regionIndex, int batchIndex, int batchCount)
     {
         using var stream = new MemoryStream(new byte[52], writable: true);
         using var writer = new BinaryWriter(stream, Encoding.Latin1, leaveOpen: true);
         WriteReference(writer, 0, 3, facesIndex);
         WriteReference(writer, 12, 1, regionIndex);
-        WriteReference(writer, 24, 1, batchIndex);
+        WriteReference(writer, 24, (uint)batchCount, batchIndex);
         return stream.ToArray();
     }
 
@@ -167,6 +183,7 @@ public sealed class M3TestDataBuilder
         int nameIndex,
         int boneIndex,
         int verticesIndex,
+        int vertexByteCount,
         int divisionIndex,
         int boneLookupIndex,
         int materialReferenceIndex,
@@ -179,11 +196,38 @@ public sealed class M3TestDataBuilder
         writer.BaseStream.Position = 92;
         writer.Write((uint)1);
         writer.Write(VertexFlags);
-        WriteReference(writer, 100, 36, verticesIndex);
+        WriteReference(writer, 100, (uint)vertexByteCount, verticesIndex);
         WriteReference(writer, 112, 1, divisionIndex);
         WriteReference(writer, 124, 1, boneLookupIndex);
         WriteReference(writer, 300, 1, materialReferenceIndex);
         WriteReference(writer, 312, 1, materialIndex);
+        return stream.ToArray();
+    }
+
+    private byte[] WriteVertices()
+    {
+        var stride = VertexFlags == 0x0186007D ? 36 : 32;
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream, Encoding.Latin1, leaveOpen: true);
+        foreach (var vertex in Vertices)
+        {
+            writer.Write(vertex.Position.X);
+            writer.Write(vertex.Position.Y);
+            writer.Write(vertex.Position.Z);
+            writer.Write(new byte[8]);
+            WriteUv(writer, vertex.Uv0);
+            if (stride == 36)
+            {
+                WriteUv(writer, vertex.Uv1 ?? Vector2.Zero);
+            }
+
+            WriteNormalByte(writer, vertex.Normal.X);
+            WriteNormalByte(writer, vertex.Normal.Y);
+            WriteNormalByte(writer, vertex.Normal.Z);
+            writer.Write((byte)255);
+            writer.Write(new byte[4]);
+        }
+
         return stream.ToArray();
     }
 
@@ -282,6 +326,18 @@ public sealed class M3TestDataBuilder
         writer.Write(value.Y);
         writer.Write(value.Z);
         writer.Write(value.W);
+    }
+
+    private static void WriteUv(BinaryWriter writer, Vector2 value)
+    {
+        writer.Write((short)MathF.Round(value.X * 2048.0f));
+        writer.Write((short)MathF.Round(value.Y * 2048.0f));
+    }
+
+    private static void WriteNormalByte(BinaryWriter writer, float value)
+    {
+        var normalized = Math.Clamp((value + 1.0f) * 0.5f, 0.0f, 1.0f);
+        writer.Write((byte)MathF.Round(normalized * 255.0f));
     }
 
     private sealed record Chunk(string Tag, uint Version, byte[] Bytes);
