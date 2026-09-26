@@ -11,6 +11,8 @@ namespace Panopticon.Content.Importing.M3;
 
 internal sealed class M3ModelImporter : IModelImporter
 {
+    public M3ImportDiagnostics LastDiagnostics { get; private set; } = new();
+
     public string Id => "m3";
 
     public ImportedModel? ImportModel(string name, AssetImportContext context)
@@ -25,18 +27,44 @@ internal sealed class M3ModelImporter : IModelImporter
             return null;
         }
 
-        var file = ReadM3File(name, context);
-        if (file is null)
+        var resolved = ReadM3FileAndPath(name, context);
+        if (resolved is null)
         {
             return null;
         }
 
-        var material = CreatePlaceholderMaterial();
+        var (file, resolvedPath) = resolved.Value;
+        LastDiagnostics = new M3ImportDiagnostics();
+        var materialConverter = new M3MaterialConverter(
+            resolvedPath,
+            context,
+            new M3TextureConverter(),
+            LastDiagnostics);
+        var materialCache = new Dictionary<int, ImportedMaterial>();
         var subObjects = new List<ImportedSubObject>();
         foreach (var division in file.Model.Divisions)
         {
             for (var batchIndex = 0; batchIndex < division.Batches.Count; batchIndex++)
             {
+                var batch = division.Batches[batchIndex];
+                if (batch.MaterialReference >= file.Model.MaterialReferences.Count)
+                {
+                    throw new InvalidDataException(
+                        $"M3 batch {batchIndex} references material reference {batch.MaterialReference}, but the model has {file.Model.MaterialReferences.Count} references.");
+                }
+
+                var materialReference = file.Model.MaterialReferences[batch.MaterialReference];
+                if (!materialConverter.IsOpaqueStandard(materialReference, file.Model, batchIndex))
+                {
+                    continue;
+                }
+
+                if (!materialCache.TryGetValue(batch.MaterialReference, out var material))
+                {
+                    material = materialConverter.Convert(materialReference, file.Model);
+                    materialCache.Add(batch.MaterialReference, material);
+                }
+
                 subObjects.Add(M3GeometryConverter.ConvertBatch(file.Model, division, batchIndex, name, material));
             }
         }
@@ -85,6 +113,21 @@ internal sealed class M3ModelImporter : IModelImporter
         return M3File.Read(buffered, entry.FilePath);
     }
 
+    private static (M3File File, string Path)? ReadM3FileAndPath(string name, AssetImportContext context)
+    {
+        var entry = ResolveEntry(name, context.FileSystem);
+        if (entry is null)
+        {
+            return null;
+        }
+
+        using var stream = entry.Open();
+        using var buffered = new MemoryStream();
+        stream.CopyTo(buffered);
+        buffered.Position = 0;
+        return (M3File.Read(buffered, entry.FilePath), entry.FilePath);
+    }
+
     private static FileSystemEntry? ResolveEntry(string name, FileSystem fileSystem)
     {
         var entry = fileSystem.GetFile(name);
@@ -117,12 +160,4 @@ internal sealed class M3ModelImporter : IModelImporter
             [new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity)]);
     }
 
-    private static ImportedMaterial CreatePlaceholderMaterial()
-    {
-        return ImportedMaterial.CreatePbrMetallicRoughness(
-            new ImportedPbrMetallicRoughness(
-                baseColorFactor: Vector4.One,
-                metallicFactor: 0.0f,
-                roughnessFactor: 1.0f));
-    }
 }

@@ -8,6 +8,13 @@ namespace Panopticon.Tests.Data.M3;
 
 public readonly record struct M3TestVertex(Vector3 Position, Vector3 Normal, Vector2 Uv0, Vector2? Uv1 = null);
 
+public sealed record M3TestLayer(
+    Panopticon.FileFormats.M3.M3MaterialLayerSlot Slot,
+    string Path,
+    uint UvSource = 0,
+    uint ColorChannelSelector = 0,
+    uint Flags = 0x55);
+
 public sealed class M3TestDataBuilder
 {
     public uint ModelVersion { get; set; } = 23;
@@ -27,6 +34,19 @@ public sealed class M3TestDataBuilder
 
     public int BatchCount { get; set; } = 1;
 
+    public uint MaterialReferenceType { get; set; } = 1;
+
+    public uint MaterialBlendMode { get; set; }
+
+    public uint MaterialAlphaTestThreshold { get; set; } = 17;
+
+    public float MaterialSpecularity { get; set; } = 80.0f;
+
+    public M3TestLayer[] Layers { get; set; } =
+    [
+        new(Panopticon.FileFormats.M3.M3MaterialLayerSlot.Diffuse, "Assets/Textures/Synthetic_Diffuse.dds", UvSource: 1, ColorChannelSelector: 2),
+    ];
+
     public byte[] Build()
     {
         var chunks = new List<Chunk>();
@@ -41,10 +61,15 @@ public sealed class M3TestDataBuilder
         var divisionIndex = AddChunk(chunks, "DIV_", 2, WriteDivision(facesIndex, regionIndex, batchIndex, BatchCount));
         var boneLookupIndex = AddChunk(chunks, "U16_", 0, WriteUInt16s([0]));
         var materialNameIndex = AddString(chunks, "SyntheticMaterial");
-        var diffusePathIndex = AddString(chunks, "Assets/Textures/Synthetic_Diffuse.dds");
-        var layerIndex = AddChunk(chunks, "LAYR", 22, WriteLayer(diffusePathIndex));
+        var layerIndices = new Dictionary<Panopticon.FileFormats.M3.M3MaterialLayerSlot, int>();
+        foreach (var layer in Layers)
+        {
+            var pathIndex = AddString(chunks, layer.Path);
+            layerIndices.Add(layer.Slot, AddChunk(chunks, "LAYR", 22, WriteLayer(layer, pathIndex)));
+        }
+
         var materialReferenceIndex = AddChunk(chunks, "MATM", 0, WriteMaterialReference());
-        var materialIndex = AddChunk(chunks, "MAT_", 15, WriteMaterial(materialNameIndex, layerIndex));
+        var materialIndex = AddChunk(chunks, "MAT_", 15, WriteMaterial(materialNameIndex, layerIndices));
 
         if (AddUnreferencedTags)
         {
@@ -142,40 +167,46 @@ public sealed class M3TestDataBuilder
         return stream.ToArray();
     }
 
-    private static byte[] WriteMaterialReference()
+    private byte[] WriteMaterialReference()
     {
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream, Encoding.Latin1, leaveOpen: true);
-        writer.Write((uint)1);
+        writer.Write(MaterialReferenceType);
         writer.Write((uint)0);
         return stream.ToArray();
     }
 
-    private static byte[] WriteLayer(int pathIndex)
+    private static byte[] WriteLayer(M3TestLayer layer, int pathIndex)
     {
         using var stream = new MemoryStream(new byte[356], writable: true);
         using var writer = new BinaryWriter(stream, Encoding.Latin1, leaveOpen: true);
-        WriteReference(writer, 4, 38, pathIndex);
+        WriteReference(writer, 4, (uint)layer.Path.Length + 1, pathIndex);
         writer.BaseStream.Position = 36;
-        writer.Write((uint)0x55);
-        writer.Write((uint)1);
-        writer.Write((uint)2);
+        writer.Write(layer.Flags);
+        writer.Write(layer.UvSource);
+        writer.Write(layer.ColorChannelSelector);
         return stream.ToArray();
     }
 
-    private static byte[] WriteMaterial(int nameIndex, int layerIndex)
+    private byte[] WriteMaterial(
+        int nameIndex,
+        IReadOnlyDictionary<Panopticon.FileFormats.M3.M3MaterialLayerSlot, int> layerIndices)
     {
         using var stream = new MemoryStream(new byte[268], writable: true);
         using var writer = new BinaryWriter(stream, Encoding.Latin1, leaveOpen: true);
         WriteReference(writer, 0, 18, nameIndex);
         writer.BaseStream.Position = 16;
         writer.Write((uint)0x66);
-        writer.Write((uint)0);
+        writer.Write(MaterialBlendMode);
         writer.BaseStream.Position = 32;
-        writer.Write(80.0f);
+        writer.Write(MaterialSpecularity);
         writer.BaseStream.Position = 40;
-        writer.Write((uint)17);
-        WriteReference(writer, 52, 1, layerIndex);
+        writer.Write(MaterialAlphaTestThreshold);
+        foreach (var (slot, index) in layerIndices)
+        {
+            WriteReference(writer, 52 + (int)slot * 12, 1, index);
+        }
+
         return stream.ToArray();
     }
 

@@ -83,6 +83,9 @@ public sealed class M3ModelImporterTests
         var importer = new M3ModelImporter();
         var fileSystem = new MemoryFileSystem();
         fileSystem.AddFile(ModelPath, CreateTriangleModel());
+        fileSystem.AddFile(
+            "mods/liberty.sc2mod/base.sc2assets/Assets/Textures/Synthetic_Diffuse.dds",
+            CreateDxt1Dds());
 
         var model = importer.ImportModel(ModelPath.ToUpperInvariant(), new AssetImportContext(fileSystem, null));
 
@@ -94,6 +97,9 @@ public sealed class M3ModelImporterTests
         var importer = new M3ModelImporter();
         var fileSystem = new MemoryFileSystem();
         fileSystem.AddFile(ModelPath, bytes);
+        fileSystem.AddFile(
+            "mods/liberty.sc2mod/base.sc2assets/Assets/Textures/Synthetic_Diffuse.dds",
+            CreateDxt1Dds());
         return importer.ImportModel(ModelPath, new AssetImportContext(fileSystem, null))!;
     }
 
@@ -118,5 +124,28 @@ public sealed class M3ModelImporterTests
     private static void AssertEqual(Vector3 expected, Vector3 actual, float tolerance = 1e-4f)
     {
         Assert.True(Vector3.Distance(expected, actual) < tolerance, $"Expected {expected}, got {actual}.");
+    }
+
+    private static byte[] CreateDxt1Dds()
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream, System.Text.Encoding.ASCII, leaveOpen: true);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("DDS "));
+        writer.Write((uint)124);
+        writer.Write((uint)0x0002100F);
+        writer.Write((uint)4);
+        writer.Write((uint)4);
+        writer.Write((uint)8);
+        writer.Write((uint)0);
+        writer.Write((uint)1);
+        writer.Write(new byte[44]);
+        writer.Write((uint)32);
+        writer.Write((uint)0x4);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("DXT1"));
+        writer.Write(new byte[20]);
+        writer.Write((uint)0x1000);
+        writer.Write(new byte[16]);
+        writer.Write(new byte[] { 0x00, 0xF8, 0xE0, 0x07, 0, 0, 0, 0 });
+        return stream.ToArray();
     }
 }
