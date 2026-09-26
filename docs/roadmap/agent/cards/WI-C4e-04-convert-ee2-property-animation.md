@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4e-04` |
 | Roadmap phase | [Track C · C4e](../../track-c-external-assets.md): EE2 property animation |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4e-01`, `WI-C4e-02`, `WI-C4e-03`, `WI-C4c-04` |

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4e-03` |
 | Roadmap phase | [Track C · C4e](../../track-c-external-assets.md): EE2 property animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-C4e-01`, `WI-C4e-02` |
@@ -46,11 +46,11 @@ Add format-neutral animation targets and channel types for sub-object visibility
 
 ## Acceptance criteria
 
-- [ ] Existing transform and visibility bone channels materialize byte-for-byte equivalent runtime clips.
-- [ ] Sub-object visibility and material-slot channels validate their target kind and keyframe value kind.
-- [ ] Material color channels require `Vector3` keyframes.
-- [ ] Material alpha and UV channels require float keyframes.
-- [ ] Standard validation passes.
+- [x] Existing transform and visibility bone channels materialize byte-for-byte equivalent runtime clips.
+- [x] Sub-object visibility and material-slot channels validate their target kind and keyframe value kind.
+- [x] Material color channels require `Vector3` keyframes.
+- [x] Material alpha and UV channels require float keyframes.
+- [x] Standard validation passes.
 
 ## Validation commands
 

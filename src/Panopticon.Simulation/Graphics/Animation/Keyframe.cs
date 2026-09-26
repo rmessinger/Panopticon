@@ -27,4 +27,7 @@ public struct KeyframeValue
 
     [FieldOffset(0)]
     public bool BoolValue;
+
+    [FieldOffset(0)]
+    public Vector3 Vector3Value;
 }

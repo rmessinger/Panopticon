@@ -57,7 +57,7 @@ public sealed class ModelAnimation : BaseAsset
                     continue;
                 }
             }
-            else
+            else if (channel.Target.Kind == ModelAnimationTargetKind.BoneName)
             {
                 boneNameIndex ??= BuildBoneNameIndex(hierarchy);
                 var boneName = channel.Target.BoneName;
@@ -66,6 +66,11 @@ public sealed class ModelAnimation : BaseAsset
                     throw new InvalidDataException(
                         $"Animation '{Name}' targets bone '{boneName}', which does not exist in hierarchy '{hierarchy.Name}'.");
                 }
+            }
+            else
+            {
+                throw new NotSupportedException(
+                    $"Animation '{Name}' channel {i} uses a {channel.Target.Kind} target, which does not address a bone; animations with sub-object or material channels must bind against a model.");
             }
 
             clips.Add(new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes, channel.Interpolation));
