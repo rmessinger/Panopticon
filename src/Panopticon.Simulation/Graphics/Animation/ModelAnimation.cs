@@ -88,6 +88,12 @@ public sealed class ModelAnimation : BaseAsset
                                 $"Animation '{Name}' targets bone '{boneName}', which does not exist in hierarchy '{model.BoneHierarchy.Name}'.");
                         }
 
+                        if (boneIndex == AmbiguousBoneIndex)
+                        {
+                            throw new InvalidDataException(
+                                $"Animation '{Name}' targets bone '{boneName}', which matches multiple bones in hierarchy '{model.BoneHierarchy.Name}' differing only by case.");
+                        }
+
                         clips.Add(new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes, channel.Interpolation));
                         break;
                     }
@@ -194,6 +200,12 @@ public sealed class ModelAnimation : BaseAsset
                     throw new InvalidDataException(
                         $"Animation '{Name}' targets bone '{boneName}', which does not exist in hierarchy '{hierarchy.Name}'.");
                 }
+
+                if (boneIndex == AmbiguousBoneIndex)
+                {
+                    throw new InvalidDataException(
+                        $"Animation '{Name}' targets bone '{boneName}', which matches multiple bones in hierarchy '{hierarchy.Name}' differing only by case.");
+                }
             }
             else
             {
@@ -209,6 +221,9 @@ public sealed class ModelAnimation : BaseAsset
 
     private static Dictionary<string, int> BuildBoneNameIndex(ModelBoneHierarchy hierarchy)
     {
+        // Real content (EE2 LHA10_siegegun) contains unrelated bones with
+        // duplicate names; ambiguity is only fatal for names actually targeted,
+        // so duplicates mark the entry instead of rejecting the hierarchy.
         var index = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         for (var i = 0; i < hierarchy.Bones.Length; i++)
         {
@@ -218,15 +233,18 @@ public sealed class ModelAnimation : BaseAsset
                 continue;
             }
 
-            if (index.TryGetValue(bone.Name, out var existingIndex))
+            if (index.TryGetValue(bone.Name, out _))
             {
-                throw new InvalidDataException(
-                    $"Hierarchy '{hierarchy.Name}' contains bones '{hierarchy.Bones[existingIndex].Name}' at index {existingIndex} and '{bone.Name}' at index {i} differing only by case; named animation targets would be ambiguous.");
+                index[bone.Name] = AmbiguousBoneIndex;
             }
-
-            index.Add(bone.Name, i);
+            else
+            {
+                index.Add(bone.Name, i);
+            }
         }
 
         return index;
     }
+
+    private const int AmbiguousBoneIndex = -2;
 }
