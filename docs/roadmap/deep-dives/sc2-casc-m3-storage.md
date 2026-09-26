@@ -325,7 +325,7 @@ Face indices are relative to the region's first vertex. C7b emits one C1 sub-obj
 batch. It holds that region's vertices and its region-relative indices, so no index rebase is
 needed and every index fits `ushort`.
 
-BAT_ v1 (14 bytes): `u32` flags, `u16` priority, `u16` region, `u16` bounds, `u16` color,
+BAT_ v1 (14 bytes): `u16` flags, `u16` priority, `u16` region, `u16` bounds, `u16` color,
 `u16` material reference, `i16` bone. The proof batches all have bone -1.
 
 ### 7.3 Bind pose
