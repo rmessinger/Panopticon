@@ -929,7 +929,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     case-insensitive `/` paths with duplicate paths deduplicated; encrypted and unknown frames,
     unsupported versions, and conflicting duplicates fail explicitly; installed tests enumerate
     675,745 entries and match the proof model sizes and content keys.
-- [ ] C7b StarCraft II static M3 models
+- [x] C7b StarCraft II static M3 models
       ([deep dive](deep-dives/sc2-casc-m3-storage.md)).
   - AC: `MODL` v23 proof models import through `M3ModelImporter` with the recorded vertex and
     batch counts; opaque standard materials map DDS diffuse, normal, specular, and emissive onto

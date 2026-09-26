@@ -247,6 +247,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.Sc2M3Proof)
+        {
+            Environment.ExitCode = Sc2M3ProofScenario.Run(installation, config, reporter);
+            return;
+        }
+
         var plan = ScenarioBuilder.BuildReplayRun(installation, config, reporter);
         if (plan == null)
         {

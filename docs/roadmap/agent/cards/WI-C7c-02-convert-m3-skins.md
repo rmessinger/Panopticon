@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C7c-02` |
 | Roadmap phase | [Track C · C7c](../../track-c-external-assets.md): StarCraft II skinned M3 animation |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C7c-01`, `WI-C7b-05` |

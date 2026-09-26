@@ -104,6 +104,11 @@ internal sealed class M3MaterialConverter
             return null;
         }
 
+        if (string.IsNullOrEmpty(layer.Path))
+        {
+            return null;
+        }
+
         if (layer.UvSource > 1)
         {
             _diagnostics.AddIgnoredLayer(material.Name, slot, layer.Path, $"unsupported UV source {layer.UvSource}");

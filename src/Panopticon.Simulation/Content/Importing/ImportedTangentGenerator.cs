@@ -19,7 +19,7 @@ internal static class ImportedTangentGenerator
     private const float DeterminantEpsilon = 1e-12f;
     private const float ZeroLengthEpsilon = 1e-12f;
 
-    public static ImportedMesh GenerateTangents(ImportedMesh mesh)
+    public static ImportedMesh GenerateTangents(ImportedMesh mesh, bool allowDegenerateUvTriangles = false)
     {
         if (mesh is null)
         {
@@ -35,6 +35,7 @@ internal static class ImportedTangentGenerator
         var selectedUv = new Vector2[vertexCount];
         var uvOwnerSet = new int[vertexCount];
         var uvAssigned = new bool[vertexCount];
+        var requiresTangents = false;
 
         for (var partIndex = 0; partIndex < mesh.MeshParts.Count; partIndex++)
         {
@@ -45,6 +46,7 @@ internal static class ImportedTangentGenerator
                 continue;
             }
 
+            requiresTangents = true;
             var uv = (payload.NormalTexture.UvSet == 0 ? part.TextureCoordinates0 : part.TextureCoordinates1)
                 ?? throw new NotSupportedException(
                     $"Mesh part {partIndex} is normal-mapped but does not supply UV set {payload.NormalTexture.UvSet}.");
@@ -79,7 +81,7 @@ internal static class ImportedTangentGenerator
                     }
                 }
 
-                AccumulateTriangle(
+                _ = AccumulateTriangle(
                     mesh,
                     i0, i1, i2,
                     uv,
@@ -87,7 +89,8 @@ internal static class ImportedTangentGenerator
                     bitangentSums,
                     contributed,
                     partIndex,
-                    (int)i);
+                    (int)i,
+                    allowDegenerateUvTriangles);
             }
         }
 
@@ -98,15 +101,26 @@ internal static class ImportedTangentGenerator
             var vertex = mesh.Vertices[v];
             if (!contributed[v])
             {
-                vertices[v] = vertex;
+                vertices[v] = allowDegenerateUvTriangles && requiresTangents
+                    ? WithFallbackTangents(vertex)
+                    : vertex;
                 continue;
             }
 
             var tangentSum = tangentSums[v];
             if (tangentSum.LengthSquared() < ZeroLengthEpsilon)
             {
-                throw new NotSupportedException(
-                    $"Vertex {v} accumulated a zero-length tangent; UV gradients cancel out or inputs are degenerate.");
+                if (allowDegenerateUvTriangles)
+                {
+                    vertices[v] = WithFallbackTangents(vertex);
+                    generatedAny = true;
+                    continue;
+                }
+                else
+                {
+                    throw new NotSupportedException(
+                        $"Vertex {v} accumulated a zero-length tangent; UV gradients cancel out or inputs are degenerate.");
+                }
             }
 
             var normal = vertex.Normal;
@@ -140,7 +154,7 @@ internal static class ImportedTangentGenerator
             generatedAny = true;
         }
 
-        if (!generatedAny)
+        if (!generatedAny && !allowDegenerateUvTriangles)
         {
             throw new NotSupportedException(
                 "No normal-mapped triangle references any vertex; there is nothing to generate tangents from.");
@@ -159,7 +173,31 @@ internal static class ImportedTangentGenerator
             mesh.MeshParts);
     }
 
-    private static void AccumulateTriangle(
+    private static ImportedVertex WithFallbackTangents(ImportedVertex vertex)
+    {
+        var normal = Vector3.Normalize(vertex.Normal);
+        var reference = MathF.Abs(normal.Z) < 0.9f ? Vector3.UnitZ : Vector3.UnitY;
+        var tangent = Vector3.Normalize(Vector3.Cross(reference, normal));
+        var binormal = Vector3.Cross(normal, tangent);
+
+        return new ImportedVertex(
+            vertex.Position,
+            vertex.Normal,
+            vertex.SecondaryPosition,
+            vertex.SecondaryNormal,
+            tangent,
+            binormal,
+            vertex.BoneIndex0,
+            vertex.BoneIndex1,
+            vertex.BoneIndex2,
+            vertex.BoneIndex3,
+            vertex.BoneWeight0,
+            vertex.BoneWeight1,
+            vertex.BoneWeight2,
+            vertex.BoneWeight3);
+    }
+
+    private static bool AccumulateTriangle(
         ImportedMesh mesh,
         ushort i0,
         ushort i1,
@@ -169,7 +207,8 @@ internal static class ImportedTangentGenerator
         Vector3[] bitangentSums,
         bool[] contributed,
         int partIndex,
-        int indexOffset)
+        int indexOffset,
+        bool allowDegenerateUvTriangles)
     {
         var p0 = mesh.Vertices[i0].Position;
         var p1 = mesh.Vertices[i1].Position;
@@ -193,6 +232,11 @@ internal static class ImportedTangentGenerator
         var determinant = duv1.X * duv2.Y - duv1.Y * duv2.X;
         if (MathF.Abs(determinant) < DeterminantEpsilon)
         {
+            if (allowDegenerateUvTriangles)
+            {
+                return false;
+            }
+
             throw new NotSupportedException(
                 $"Mesh part {partIndex} triangle at index offset {indexOffset} has a degenerate UV mapping (zero area in UV space).");
         }
@@ -216,5 +260,6 @@ internal static class ImportedTangentGenerator
         contributed[i0] = true;
         contributed[i1] = true;
         contributed[i2] = true;
+        return true;
     }
 }

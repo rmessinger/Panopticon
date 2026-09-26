@@ -112,7 +112,9 @@ internal static class M3GeometryConverter
             mesh.IsSkinned,
             [temporaryMaterial],
             [temporaryPart]);
-        var tangentMesh = ImportedTangentGenerator.GenerateTangents(temporaryMesh);
+        var tangentMesh = ImportedTangentGenerator.GenerateTangents(
+            temporaryMesh,
+            allowDegenerateUvTriangles: true);
 
         return new ImportedMesh(
             tangentMesh.Vertices,
