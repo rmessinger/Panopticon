@@ -126,6 +126,7 @@ public sealed class AnimationInstance
         {
             bone.AnimatedOffset.Translation = Vector3.Zero;
             bone.AnimatedOffset.Rotation = Quaternion.Identity;
+            bone.AnimatedOffset.Scale = 1.0f;
 
             bone.Visible = true;
         }
@@ -316,6 +317,10 @@ public sealed class AnimationInstance
                     _boneInstances[clip.Bone].Visible = previous.Value.BoolValue;
                     break;
 
+                case AnimationClipType.Scale:
+                    animatedOffset.Scale = held.Value.FloatValue;
+                    break;
+
                 default:
                     throw new InvalidOperationException();
             }
@@ -362,6 +367,13 @@ public sealed class AnimationInstance
 
             case AnimationClipType.Visibility:
                 _boneInstances[clip.Bone].Visible = previous.Value.BoolValue;
+                break;
+
+            case AnimationClipType.Scale:
+                animatedOffset.Scale = MathUtility.Lerp(
+                    previous.Value.FloatValue,
+                    next.Value.FloatValue,
+                    amount);
                 break;
 
             default:

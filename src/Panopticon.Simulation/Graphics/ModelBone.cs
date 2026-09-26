@@ -14,6 +14,8 @@ public sealed class ModelBone
 
     public Transform Transform { get; }
 
+    public float BindScale { get; }
+
     public Matrix4x4 InverseBindMatrix { get; }
 
     internal ModelBone(
@@ -23,12 +25,25 @@ public sealed class ModelBone
         in Vector3 translation,
         in Quaternion rotation,
         in Matrix4x4 inverseBindMatrix)
+        : this(index, name, parent, translation, rotation, inverseBindMatrix, bindScale: 1.0f)
+    {
+    }
+
+    internal ModelBone(
+        int index,
+        string name,
+        ModelBone parent,
+        in Vector3 translation,
+        in Quaternion rotation,
+        in Matrix4x4 inverseBindMatrix,
+        float bindScale)
     {
         Index = index;
         Name = name;
         Parent = parent;
 
-        Transform = new Transform(translation, rotation);
+        BindScale = bindScale;
+        Transform = new Transform(translation, rotation, bindScale);
         InverseBindMatrix = inverseBindMatrix;
     }
 }

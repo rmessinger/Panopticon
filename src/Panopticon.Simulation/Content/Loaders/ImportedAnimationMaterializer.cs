@@ -30,6 +30,7 @@ internal static class ImportedAnimationMaterializer
             ImportedAnimationChannelType.TranslationZ => AnimationClipType.TranslationZ,
             ImportedAnimationChannelType.Quaternion => AnimationClipType.Quaternion,
             ImportedAnimationChannelType.Visibility => AnimationClipType.Visibility,
+            ImportedAnimationChannelType.Scale => AnimationClipType.Scale,
             _ => throw new ArgumentOutOfRangeException(nameof(channel)),
         };
 

@@ -43,13 +43,20 @@ public sealed class ModelAnimationTests
                     {
                         ImportedKeyframe.FromBool(TimeSpan.Zero, true),
                     }),
+                new ImportedAnimationChannel(
+                    boneIndex: 4,
+                    ImportedAnimationChannelType.Scale,
+                    new[]
+                    {
+                        ImportedKeyframe.FromFloat(TimeSpan.Zero, 1.5f),
+                    }),
             });
 
         var animation = ImportedAnimationMaterializer.Materialize(imported);
 
         Assert.Equal("HV.Run", animation.Name);
         Assert.Equal(TimeSpan.FromSeconds(2.0), animation.Duration);
-        Assert.Equal(3, animation.Channels.Length);
+        Assert.Equal(4, animation.Channels.Length);
 
         Assert.Equal(ModelAnimationTargetKind.DirectIndex, animation.Channels[0].Target.Kind);
         Assert.Equal(3, animation.Channels[0].Target.DirectIndex);
@@ -64,6 +71,10 @@ public sealed class ModelAnimationTests
         Assert.Equal(2, animation.Channels[2].Target.DirectIndex);
         Assert.Equal(AnimationClipType.Visibility, animation.Channels[2].ClipType);
         Assert.True(animation.Channels[2].Keyframes[0].Value.BoolValue);
+
+        Assert.Equal(4, animation.Channels[3].Target.DirectIndex);
+        Assert.Equal(AnimationClipType.Scale, animation.Channels[3].ClipType);
+        Assert.Equal(1.5f, animation.Channels[3].Keyframes[0].Value.FloatValue);
     }
 
     [Fact]

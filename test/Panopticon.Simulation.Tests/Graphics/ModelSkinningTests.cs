@@ -34,6 +34,24 @@ public class ModelSkinningTests
     }
 
     [Fact]
+    public void ImportedBone_CompatibilityConstructorDefaultsToUnitScale()
+    {
+        var bone = new ImportedBone("bone", 0, Vector3.Zero, Quaternion.Identity);
+
+        Assert.Equal(1.0f, bone.BindScale);
+    }
+
+    [Theory]
+    [InlineData(-0.1f)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.NaN)]
+    public void ImportedBone_RejectsInvalidBindScale(float bindScale)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ImportedBone("bone", 0, Vector3.Zero, Quaternion.Identity, bindScale));
+    }
+
+    [Fact]
     public void ImportedSkeletonToRuntimeHierarchy_CopiesInverseBindMatrix()
     {
         var inverseBind = CreateNonIdentityMatrix(1, 2, 3);
@@ -42,13 +60,14 @@ public class ModelSkinningTests
             new[]
             {
                 new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity),
-                new ImportedBone("child", 0, new Vector3(0, 0, 5), Quaternion.Identity, inverseBind),
+                new ImportedBone("child", 0, new Vector3(0, 0, 5), Quaternion.Identity, inverseBind, bindScale: 2.0f),
             });
 
         var hierarchy = new ModelBoneHierarchy(skeleton);
 
         Assert.Equal(Matrix4x4.Identity, hierarchy.Bones[0].InverseBindMatrix);
         Assert.Equal(inverseBind, hierarchy.Bones[1].InverseBindMatrix);
+        Assert.Equal(2.0f, hierarchy.Bones[1].BindScale);
     }
 
     [Fact]

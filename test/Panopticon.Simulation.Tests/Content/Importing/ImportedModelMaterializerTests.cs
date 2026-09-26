@@ -287,7 +287,7 @@ public sealed class ImportedModelMaterializerTests
 
         var skeleton = new ImportedSkeleton(
             "TestHierarchy",
-            [new ImportedBone("root", -1, new Vector3(1, 2, 3), Quaternion.Identity)]);
+            [new ImportedBone("root", -1, new Vector3(1, 2, 3), Quaternion.Identity, bindScale: 2.0f)]);
 
         var hierarchy = ImportedModelMaterializer.MaterializeSkeleton(skeleton);
 
@@ -295,6 +295,8 @@ public sealed class ImportedModelMaterializerTests
         var bone = Assert.Single(hierarchy.Bones);
         Assert.Equal("root", bone.Name);
         Assert.Equal(new Vector3(1, 2, 3), bone.Transform.Translation);
+        Assert.Equal(2.0f, bone.Transform.Scale);
+        Assert.Equal(Matrix4x4.CreateScale(2.0f) * Matrix4x4.CreateTranslation(1, 2, 3), bone.Transform.Matrix);
     }
 
     [Fact]

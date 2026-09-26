@@ -12,6 +12,7 @@ public enum ImportedAnimationChannelType
     TranslationZ,
     Quaternion,
     Visibility,
+    Scale,
 }
 
 /// <summary>

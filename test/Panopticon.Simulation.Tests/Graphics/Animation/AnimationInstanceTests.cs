@@ -353,6 +353,40 @@ public class AnimationInstanceTests
         Assert.Equal(1.5f, modelBoneInstances[0].AnimatedOffset.Translation.X, 3);
     }
 
+    [Fact]
+    public void StepScaleChannel_HoldsPreviousScaleBetweenKeys()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = NewStepAnimation(AnimationClipType.Scale);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(0, modelBoneInstances[0].AnimatedOffset.Scale);
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(1, modelBoneInstances[0].AnimatedOffset.Scale);
+    }
+
+    [Fact]
+    public void LinearScaleChannel_InterpolatesAndResetsToUnitScale()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = NewStepAnimation(AnimationClipType.Scale, AnimationInterpolation.Linear);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(1.5f));
+        Assert.Equal(1.5f, modelBoneInstances[0].AnimatedOffset.Scale, 3);
+
+        instance.Stop();
+        instance.Play();
+
+        Assert.Equal(1.0f, modelBoneInstances[0].AnimatedOffset.Scale);
+    }
+
     private static TimeInterval Step(float deltaSeconds)
     {
         return new TimeInterval(TimeSpan.Zero, TimeSpan.FromSeconds(deltaSeconds));
