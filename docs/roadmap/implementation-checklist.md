@@ -922,6 +922,28 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     typed payloads and normalized shader keys; every gate defaults off, required unsupported
     semantics fail, optional core-preserving fallbacks warn, and feature-disabled C1-C5 output is
     unchanged.
+- [ ] C7a StarCraft II CASC storage
+      ([deep dive](deep-dives/sc2-casc-m3-storage.md)).
+  - AC: an in-house read-only reader decodes `.build.info`, version 7 `.idx`, BLTE `N` and `Z`,
+    the encoding file, and the MNDX root with MAR name restore; `CascFileSystem` exposes
+    case-insensitive `/` paths with duplicate paths deduplicated; encrypted and unknown frames,
+    unsupported versions, and conflicting duplicates fail explicitly; installed tests enumerate
+    675,745 entries and match the proof model sizes and content keys.
+- [ ] C7b StarCraft II static M3 models
+      ([deep dive](deep-dives/sc2-casc-m3-storage.md)).
+  - AC: `MODL` v23 proof models import through `M3ModelImporter` with the recorded vertex and
+    batch counts; opaque standard materials map DDS diffuse, normal, specular, and emissive onto
+    C3 PBR through importer-side decoding to embedded images; non-opaque batches and unsupported
+    layers are skipped with diagnostics; the `S(10) * Rz(+90 degrees)` conversion is validated by
+    a capture beside a Generals Ranger; unsupported versions, vertex flags, material types, and
+    DDS formats fail with context.
+- [ ] C7c StarCraft II skinned M3 animation
+      ([deep dive](deep-dives/c7c-sc2-skinned-animation.md)).
+  - AC: C1 and the runtime gain per-axis bind scale, `ScaleX/Y/Z` channels, and absolute local
+    clip composition without changing existing format output; the skin-bone skeleton binds from
+    `IREF` with four-influence vertices; embedded sequences and `.m3a` clips (bound by animation
+    id with name checks) import through C2 for the twelve proof clips; deterministic captures show
+    the expected poses, and section 11 failures fire in synthetic tests.
 
 ## Track D: Gameplay Content Expansion
 

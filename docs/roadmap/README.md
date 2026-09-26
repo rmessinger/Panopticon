@@ -183,6 +183,8 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/c4i-ee2-legacy-kf-formats.md`](deep-dives/c4i-ee2-legacy-kf-formats.md) | Track C phase C4i - Empire Earth II NIF 10.0.1.0 KF support and NetImmerse 4.2.2.0 rejection. |
 | [`deep-dives/c5-external-model-tooling.md`](deep-dives/c5-external-model-tooling.md) | Track C phase C5 - ReplaySketch external-model inspection and TestHarness preview/report protocol. |
 | [`deep-dives/c6-extended-model-features.md`](deep-dives/c6-extended-model-features.md) | Track C phase C6 - Request-scoped morph-target and advanced-PBR experiment gates. |
+| [`deep-dives/sc2-casc-m3-storage.md`](deep-dives/sc2-casc-m3-storage.md) | Track C phases C7a/C7b - StarCraft II CASC storage reader and static M3 models with DDS materials on C3 PBR. |
+| [`deep-dives/c7c-sc2-skinned-animation.md`](deep-dives/c7c-sc2-skinned-animation.md) | Track C phase C7c - StarCraft II M3 skinning, embedded sequences, `.m3a` clips, per-axis scale, and absolute clip composition. |
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
 | [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
 | [`deep-dives/g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | Track G phase G1 - High-DPI drawable & resolution correctness (logical points versus physical pixels across window, panel, viewport and GUI). |
@@ -218,7 +220,8 @@ track document.
   textures · C4c EE2 rigid KF animation · C4d EE2 skinned character animation · C4e EE2
   property animation · C4f EE2 scale animation · C4g EE2 morph animation · C4h EE2 particle
   effects · C4i EE2 legacy KF formats · C5
-  authoring/validation tooling · C6 extended features (deferred: morph targets, advanced PBR).
+  authoring/validation tooling · C6 extended features (deferred: morph targets, advanced PBR) ·
+  C7a SC2 CASC storage · C7b SC2 static M3 models · C7c SC2 skinned M3 animation.
 - [Track D - Gameplay Content Expansion](track-d-gameplay-expansion.md): D1 tech-tree/
   prerequisite-graph generalization · D2 era/age progression mechanic · D3 external content
   ingestion (ModCollector + Track C) · D4 reference non-SAGE scenario. Depends on Track P
@@ -319,7 +322,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | Track A - Foundations | `██████░░░░` | 12 / 21 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 44 |
-| Track C - External Assets | `█████░░░░░` | 7 / 15 |
+| Track C - External Assets | `█████░░░░░` | 9 / 18 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
 

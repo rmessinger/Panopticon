@@ -294,6 +294,11 @@ inverse bind matrices, skinning normals, and influence-limit decisions.
 C4c must keep rejecting non-unit scale until C4f lands. C4f cards should change that rejection in
 one place and keep C4c's parser, target resolution, and Hermite evaluation as the shared path.
 
+C7c widens this surface after C4f lands: `Vector3` bind scale, `ScaleX/Y/Z` channels, and
+absolute local clip composition, with the uniform C4f paths unchanged. C4f should keep scale
+state per bone, not packed into `Transform`, so the widening stays local. See the
+[C7c deep dive](c7c-sc2-skinned-animation.md#73-widening-c4f).
+
 ## 12. Architecture diagrams
 
 ```mermaid

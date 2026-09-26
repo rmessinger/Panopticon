@@ -28,6 +28,9 @@
 | C4i. EE2 legacy KF formats | Extend the C4c reader to DDF-bound NIF 10.0.1.0 keyframe clips, including uppercase `.KF` paths, root-list footers, and legacy text keys, proven on rigid guntank and palisade clips; see the [deep dive](deep-dives/c4i-ee2-legacy-kf-formats.md). NetImmerse 4.2.2.0 is rejected, and legacy property, morph, and skinned clips route to C4e, C4g, and C4d. | Rigid proof clips import, bind, and capture deterministically, and NetImmerse 4.2.2.0 and unsupported legacy families fail with owning-phase diagnostics. | Not started | C4c |
 | C5. Authoring & validation tooling | Add a dedicated ReplaySketch Model tab backed by Core session state and structured diagnostics; see the [deep dive](deep-dives/c5-external-model-tooling.md). TestHarness performs isolated graphics-backed captures through a versioned request and report protocol. External roots remain separate from game assets, and preview corrections never rewrite sources. Licensing/provenance remains out of scope per the [Decision](open-questions.md). | ReplaySketch inspects a glTF source, pairs animation through C2, presents stable diagnostics, and produces a deterministic TestHarness preview and report. | Done | C4 |
 | C6. Extended model features (deferred) | Add morph targets and advanced PBR families only through named, request-scoped experiment gates; see the [deep dive](deep-dives/c6-extended-model-features.md). Default C4 and shipped-game behavior remains unchanged. | A triggering experiment implements and validates its selected morph or PBR family without changing feature-disabled output. | Not started | C4 |
+| C7a. StarCraft II CASC storage | Add an in-house, read-only reader for StarCraft II CASC local storage (`.build.info`, `.idx`, BLTE `N`/`Z`, encoding, MNDX root with marisa-trie names) exposed as a case-insensitive `CascFileSystem`; see the [deep dive](deep-dives/sc2-casc-m3-storage.md). Encrypted frames, online storage, and TVFS fail explicitly. | An operator-supplied install enumerates all 675,745 entries, and the Marine, Zealot, and Zergling models resolve case-insensitively with their recorded sizes and content keys. | Not started | C1 |
+| C7b. StarCraft II static M3 models | Import MD34 M3 unit models in bind pose through C1, and convert standard opaque materials onto the C3 PBR payload from DXT1/DXT5 DDS decoded in the importer; see the [deep dive](deep-dives/sc2-casc-m3-storage.md). Team color, effects, and unsupported tag versions fail or skip with diagnostics. | Marine, Zealot, and Zergling import from CASC, render textured and lit beside a Generals Ranger for scale and facing, and unsupported variants fail explicitly, without committing game assets. | Not started | C7a, C1, C3 |
+| C7c. StarCraft II skinned M3 animation | Skin the C7b models with `IREF` inverse binds and up to four influences, and play embedded sequences and external `.m3a` clips through C2 as absolute local-transform clips with per-axis scale, widening C4f; see the [deep dive](deep-dives/c7c-sc2-skinned-animation.md). Layered multi-clip sequences fail explicitly. | Twelve proof clips across the three units bind with no missing targets and produce deterministic captures, including Marine shield scale, Zergling tail scale, and a Zealot `.m3a` clip, while existing formats stay byte-identical. | Not started | C7b, C2, C4d, C4f |
 
 ## Phase resources
 
@@ -51,6 +54,9 @@ Diagrams are required before any phase's first source-edit task card is marked `
 | C4i | [`c4i-ee2-legacy-kf-formats.md`](deep-dives/c4i-ee2-legacy-kf-formats.md) | [Architecture diagrams](deep-dives/c4i-ee2-legacy-kf-formats.md#10-architecture-diagrams) | [`WI-C4i-01..06`](agent/cards/) |
 | C5 | [`c5-external-model-tooling.md`](deep-dives/c5-external-model-tooling.md) | [Architecture diagrams](deep-dives/c5-external-model-tooling.md#12-architecture-diagrams) | [`WI-C5-01..12`](agent/cards/) |
 | C6 | [`c6-extended-model-features.md`](deep-dives/c6-extended-model-features.md) | [Architecture diagrams](deep-dives/c6-extended-model-features.md#11-architecture-diagrams) | — |
+| C7a | [`sc2-casc-m3-storage.md`](deep-dives/sc2-casc-m3-storage.md) | [Architecture diagrams](deep-dives/sc2-casc-m3-storage.md#14-architecture-diagrams) | [`WI-C7a-01..04`](agent/cards/) |
+| C7b | [`sc2-casc-m3-storage.md`](deep-dives/sc2-casc-m3-storage.md#12-c7b-contract) | [Architecture diagrams](deep-dives/sc2-casc-m3-storage.md#14-architecture-diagrams) | [`WI-C7b-01..05`](agent/cards/) |
+| C7c | [`c7c-sc2-skinned-animation.md`](deep-dives/c7c-sc2-skinned-animation.md) | [Architecture diagrams](deep-dives/c7c-sc2-skinned-animation.md#13-architecture-diagrams) | [`WI-C7c-01..05`](agent/cards/) |
 
 ## Cross-track dependencies
 
@@ -60,3 +66,6 @@ Diagrams are required before any phase's first source-edit task card is marked `
   into a static second-format proof of the C1 seam. It does not replace C4 or add EE2 as a
   supported game. C4b through C4i extend that proof with textures, rigid, skinned, property,
   scale, and morph animation, particle effects, and legacy KF vintages under the same boundary.
+- C7a through C7c add StarCraft II as a third external format through the same operator-supplied,
+  no-committed-assets boundary. C7c widens the C4f scale work to per-axis scale and adds absolute
+  local-transform clips, so it follows C4f.

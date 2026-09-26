@@ -125,6 +125,41 @@
   outside the parser architecture. Legacy property, morph, and skinned consumers remain with
   C4e, C4g, and C4d. See the [C4i deep dive](deep-dives/c4i-ee2-legacy-kf-formats.md). Affects
   [C4i](track-c-external-assets.md).
+- StarCraft II storage access. Decision: [C7a](track-c-external-assets.md) is an in-house,
+  read-only reader for local CASC storage with an MNDX root, with no native dependency and no
+  CDN access. BLTE `N` and `Z` frames are supported; encrypted `E` and unknown frames are
+  rejected. `CascFileSystem` exposes case-insensitive `/` paths. Duplicate paths with equal
+  content keys collapse to one entry, and conflicting duplicates are rejected. SC2 roots stay
+  separate from game assets. See the [storage deep dive](deep-dives/sc2-casc-m3-storage.md). Affects [C7a](track-c-external-assets.md).
+- StarCraft II texture conversion. Decision: [C7b](track-c-external-assets.md) decodes DXT1 and
+  DXT5 top mips in the importer and emits C3 embedded RGBA images, so C3 keeps rejecting DDS.
+  Normal maps are DXT5nm (X in alpha, Y in green, Z reconstructed). Specular becomes metallic 0
+  and roughness `lerp(1, r0, luma(spec))` with `r0 = (2 / (n + 2))^(1/4)`. Diffuse alpha is
+  forced to 1 because it is the team-color mask. Layer paths resolve in the model's package, then
+  `mods/core.sc2mod/base.sc2assets`, never teen or locale packages. Team color, effects, decals,
+  and non-opaque batches are out of scope. See the [storage deep dive](deep-dives/sc2-casc-m3-storage.md). Affects
+  [C7b](track-c-external-assets.md).
+- StarCraft II coordinates and keys. Decision: M3 data is conjugated by `K = S(10) * Rz(+90
+  degrees)`, mapping `(x, y, z)` to `(-10y, 10x, 10z)`, so one SC2 unit is 10 world units and
+  -Y facing becomes +X. A Ranger side-by-side capture validates it, and a mismatch stops for
+  review. Model keys are full CASC paths; animation keys are `<model>#seq=<name>` and
+  `<model>#m3a=<path>#seq=<name>`. See the [storage deep dive](deep-dives/sc2-casc-m3-storage.md). Affects [C7b](track-c-external-assets.md) and
+  [C7c](track-c-external-assets.md).
+- StarCraft II skeleton and clips. Decision: [C7c](track-c-external-assets.md) keeps the first
+  `MODL` skin-bone-count bones (lookup bones plus ancestors) and drops attachment, volume, and
+  effect bones with their tracks. Bind transforms come from `IREF`, not `BONE` defaults; the
+  defaults become constant channels for unanimated components. Sequences must have exactly one
+  `STC_`, keys stay linear in milliseconds without resampling, and non-bone tracks are ignored.
+  `.m3a` clips bind by animation id and require matching bone names. Group blending, masks, and
+  root motion are out of scope. See the [C7c deep dive](deep-dives/c7c-sc2-skinned-animation.md). Affects [C7c](track-c-external-assets.md).
+- StarCraft II scale and composition. Decision: [C7c](track-c-external-assets.md) extends C4f
+  instead of adding a parallel path: `ImportedBone.BindScale` becomes `Vector3`, `ScaleX/Y/Z`
+  channels are added, and `ImportedAnimation.Composition` adds `AbsoluteLocal` beside the default
+  `RestRelative`. Non-uniform rest scale with animated rotation cannot be expressed as
+  `offset * rest`, so absolute clips supply complete local transforms. `Transform.Scale` stays a
+  float, existing formats stay byte-identical, and skinned normals keep the C4f normalize rule
+  without an inverse transpose. See the [C7c deep dive](deep-dives/c7c-sc2-skinned-animation.md). Affects [C7c](track-c-external-assets.md) and
+  [C4f](track-c-external-assets.md).
 - C1 import-seam shape. Decision: importers parse source files into CPU-only engine interchange
   values; engine-owned materializers validate those values and create runtime models, animations,
   materials, textures, and GPU resources. `OnDemandAssetLoadStrategy` carries the selected
