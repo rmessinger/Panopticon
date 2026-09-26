@@ -246,16 +246,16 @@ public sealed class M3TestDataBuilder
             writer.Write(vertex.Position.Y);
             writer.Write(vertex.Position.Z);
             writer.Write(new byte[8]);
+            WriteNormalByte(writer, vertex.Normal.X);
+            WriteNormalByte(writer, vertex.Normal.Y);
+            WriteNormalByte(writer, vertex.Normal.Z);
+            writer.Write((byte)255);
             WriteUv(writer, vertex.Uv0);
             if (stride == 36)
             {
                 WriteUv(writer, vertex.Uv1 ?? Vector2.Zero);
             }
 
-            WriteNormalByte(writer, vertex.Normal.X);
-            WriteNormalByte(writer, vertex.Normal.Y);
-            WriteNormalByte(writer, vertex.Normal.Z);
-            writer.Write((byte)255);
             writer.Write(new byte[4]);
         }
 

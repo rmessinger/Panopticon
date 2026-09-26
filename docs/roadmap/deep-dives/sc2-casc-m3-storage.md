@@ -300,8 +300,9 @@ proof renders region 0 only.
 | `0x0186007D` | 36 | Marine, Zealot |
 | `0x0182007D` | 32 | Zergling |
 
-Layout: position (3 `f32`), 4 `u8` weights, 4 `u8` bone lookups, UV0 (2 `i16`), UV1 (2 `i16`, only
-with flag `0x00040000`), normal (4 `u8`), tangent (4 `u8`).
+Layout: position (3 `f32`, offset 0), 4 `u8` weights (12), 4 `u8` bone lookups (16), normal
+(4 `u8`, 20), UV0 (2 `i16`, 24), UV1 (2 `i16`, 28, only with flag `0x00040000`), tangent (4 `u8`,
+last). Verified on the proof files: offset 20 decodes to unit normals, and offset 24 spans 0 to 2048.
 
 - Normal component: `b / 255 * 2 - 1`. The fourth byte is ignored.
 - UV: `i16 / 2048` (REGN v3 implies a multiplier of 16 over `i16 / 32768`). The V origin is top-left,

@@ -55,6 +55,14 @@ public sealed class Sc2M3ImportTests
         {
             Assert.NotEmpty(mesh.Indices);
             Assert.Equal(0, mesh.Indices.Count % 3);
+
+            // Guards the vertex field order: normal bytes misread as UVs span the whole i16 range.
+            var uv0 = Assert.Single(mesh.MeshParts).TextureCoordinates0;
+            Assert.NotNull(uv0);
+            Assert.All(uv0, uv => Assert.True(
+                uv.X >= -0.5f && uv.X <= 1.5f && uv.Y >= -0.5f && uv.Y <= 1.5f,
+                $"UV0 {uv} outside the expected atlas range."));
+
             var material = Assert.Single(mesh.Materials);
             Assert.Equal(ImportedMaterial.PbrMetallicRoughnessFamily, material.ShaderFamily);
             Assert.NotNull(material.PbrMetallicRoughness);

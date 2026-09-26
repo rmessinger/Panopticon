@@ -136,8 +136,7 @@ internal static class M3GeometryConverter
         {
             var offset = checked(((int)region.FirstVertex + i) * model.VertexFormat.Stride);
             var position = ReadVector3(model.VertexBytes, offset);
-            var normalOffset = offset + (model.VertexFormat.HasUv1 ? 28 : 24);
-            var normal = DecodeNormal(model.VertexBytes, normalOffset);
+            var normal = DecodeNormal(model.VertexBytes, offset + 20);
             var engineNormal = M3CoordinateConverter.ToEngineDirection(normal);
             vertices[i] = new ImportedVertex(
                 M3CoordinateConverter.ToEnginePosition(position),
@@ -150,7 +149,7 @@ internal static class M3GeometryConverter
     private static Vector2[] DecodeTextureCoordinates(M3Model model, M3Region region, int uvSet)
     {
         var coordinates = new Vector2[checked((int)region.VertexCount)];
-        var uvOffset = uvSet == 0 ? 20 : 24;
+        var uvOffset = uvSet == 0 ? 24 : 28;
         for (var i = 0; i < coordinates.Length; i++)
         {
             var offset = checked(((int)region.FirstVertex + i) * model.VertexFormat.Stride + uvOffset);
