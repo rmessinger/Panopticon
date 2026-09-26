@@ -72,7 +72,11 @@ internal static class NifKeyGroupReader
         var type = ReadKeyType(reader, fieldName);
         if (type != NifKeyType.Linear && type != NifKeyType.Quadratic)
         {
-            throw NewUnsupported(blockName, fieldName, type);
+            throw NewUnsupported(
+                blockName,
+                fieldName,
+                type,
+                "C4c supports Linear (1) and Quadratic (2) keys");
         }
 
         var keys = new NifKey<float>[count];
@@ -113,7 +117,11 @@ internal static class NifKeyGroupReader
         var type = ReadKeyType(reader, fieldName);
         if (type != NifKeyType.Linear && type != NifKeyType.Quadratic)
         {
-            throw NewUnsupported(blockName, fieldName, type);
+            throw NewUnsupported(
+                blockName,
+                fieldName,
+                type,
+                "C4c supports Linear (1) and Quadratic (2) keys");
         }
 
         var keys = new NifKey<Vector3>[count];
@@ -135,6 +143,43 @@ internal static class NifKeyGroupReader
         }
 
         return new NifKeyGroup<NifKey<Vector3>>(type, keys);
+    }
+
+    /// <summary>
+    /// Reads a byte key group (NiBoolData). Linear and constant keys share
+    /// the same wire shape; both are accepted. Returns null when the group
+    /// is empty.
+    /// </summary>
+    public static NifKeyGroup<NifKey<byte>>? ReadByteGroup(
+        NifBinaryReader reader,
+        string blockName,
+        string fieldName)
+    {
+        var count = reader.ReadElementCount(5, $"{fieldName}.Count");
+        if (count == 0)
+        {
+            return null;
+        }
+
+        var type = ReadKeyType(reader, fieldName);
+        if (type != NifKeyType.Linear && type != NifKeyType.Constant)
+        {
+            throw NewUnsupported(
+                blockName,
+                fieldName,
+                type,
+                "C4e bool keys support Linear (1) and Constant (5) keys");
+        }
+
+        var keys = new NifKey<byte>[count];
+        for (var i = 0; i < count; i++)
+        {
+            var time = reader.ReadSingle($"{fieldName}[{i}].Time");
+            var value = reader.ReadByte($"{fieldName}[{i}].Value");
+            keys[i] = new NifKey<byte>(time, value, null, null);
+        }
+
+        return new NifKeyGroup<NifKey<byte>>(type, keys);
     }
 
     /// <summary>
@@ -165,10 +210,11 @@ internal static class NifKeyGroupReader
     private static NotSupportedException NewUnsupported(
         string blockName,
         string fieldName,
-        NifKeyType type)
+        NifKeyType type,
+        string supported)
     {
         return new NotSupportedException(
             $"NIF {blockName} key group '{fieldName}' uses unsupported key type " +
-            $"{type} ({(uint)type}); C4c supports Linear (1) and Quadratic (2) keys.");
+            $"{type} ({(uint)type}); {supported}.");
     }
 }
