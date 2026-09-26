@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);VALIDATE_USAGE</DefineConstants>
+    <Version>4.9.0</Version>
+    <InformationalVersion>4.9.0+a121087cad.panopticon</InformationalVersion>
+    <NoWarn>$(NoWarn);CS0618;CS0649;CS0169;CS0414;CS1591;CA1416;CA2014;SYSLIB0004</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NativeLibraryLoader" />
+    <!-- Pins NativeLibraryLoader's transitive Newtonsoft.Json 9.0.1 (NU1903). -->
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Veldrid.MetalBindings" />
+    <PackageReference Include="Veldrid.OpenGLBindings" />
+    <PackageReference Include="Vk" />
+    <PackageReference Include="Vortice.D3DCompiler" />
+    <PackageReference Include="Vortice.Direct3D11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="MTL/EmbeddedShaders/MTL_UnalignedBufferCopy_macOS.metallib">
+      <LogicalName>MTL_UnalignedBufferCopy_macOS</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MTL/EmbeddedShaders/MTL_UnalignedBufferCopy_iOS.metallib">
+      <LogicalName>MTL_UnalignedBufferCopy_iOS</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

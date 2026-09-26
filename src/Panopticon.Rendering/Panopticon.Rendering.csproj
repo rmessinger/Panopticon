@@ -6,13 +6,13 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="Veldrid" />
     <PackageReference Include="Veldrid.SPIRV" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Panopticon.Core\Panopticon.Core.csproj" />
     <ProjectReference Include="..\Panopticon.Mathematics\Panopticon.Mathematics.csproj" />
+    <ProjectReference Include="..\Veldrid\Veldrid.csproj" />
   </ItemGroup>
   
 </Project>

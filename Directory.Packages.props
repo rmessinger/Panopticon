@@ -8,6 +8,7 @@
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="FixedMath.NET" Version="1.0.1" />
     <PackageVersion Include="ImGui.NET" Version="1.91.6.1" />
+    <PackageVersion Include="NativeLibraryLoader" Version="1.0.13" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="LiteNetLib" Version="1.3.5" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
@@ -25,11 +26,15 @@
     <PackageVersion Include="Sprintf.NET" Version="2.0.0" />
     <PackageVersion Include="System.Text.Encoding.CodePages" Version="10.0.1" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.1" />
-    <PackageVersion Include="Veldrid" Version="4.9.0" />
+    <PackageVersion Include="Veldrid.MetalBindings" Version="4.9.0" />
+    <PackageVersion Include="Veldrid.OpenGLBindings" Version="4.9.0" />
     <PackageVersion Include="Veldrid.RenderDoc" Version="1.0.1" />
     <PackageVersion Include="Veldrid.SDL2" Version="4.9.0" />
     <PackageVersion Include="Veldrid.StartupUtilities" Version="4.9.0" />
     <PackageVersion Include="Veldrid.SPIRV" Version="1.0.15" />
+    <PackageVersion Include="Vk" Version="1.0.25" />
+    <PackageVersion Include="Vortice.D3DCompiler" Version="2.3.0" />
+    <PackageVersion Include="Vortice.Direct3D11" Version="2.3.0" />
 
     <!-- Test projects only -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
