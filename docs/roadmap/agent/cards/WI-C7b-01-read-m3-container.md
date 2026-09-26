@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C7b-01` |
 | Roadmap phase | [Track C · C7b](../../track-c-external-assets.md): StarCraft II static M3 models |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C7a-04` |

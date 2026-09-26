@@ -8,12 +8,15 @@ public sealed class MndxRoot
     private const int ExpectedFormatVersion = 2;
     private const int CKeyEntrySize = 24;
 
-    private MndxRoot(IReadOnlyList<MndxRootEntry> entries)
+    public MndxRoot(IReadOnlyList<MndxRootEntry> entries, int rawEntryCount)
     {
         Entries = entries;
+        RawEntryCount = rawEntryCount;
     }
 
     public IReadOnlyList<MndxRootEntry> Entries { get; }
+
+    public int RawEntryCount { get; }
 
     public static MndxRoot Parse(byte[] decoded)
     {
@@ -61,7 +64,8 @@ public sealed class MndxRoot
             packages[i] = packageTrie.Restore(i);
         }
 
-        var entriesByPath = new Dictionary<string, MndxRootEntry>(StringComparer.OrdinalIgnoreCase);
+        var entriesByPath = new Dictionary<string, MndxRootEntry>(StringComparer.Ordinal);
+        var rawEntryCount = 0;
         var entryIndex = 0;
         for (var nameIndex = 0; nameIndex < fileNameCount; nameIndex++)
         {
@@ -83,6 +87,7 @@ public sealed class MndxRoot
 
                 var contentKey = new CascKey(data.Slice(entryOffset + 4, CascKey.Length));
                 var size = BinaryPrimitives.ReadInt32LittleEndian(data[(entryOffset + 20)..(entryOffset + 24)]);
+                rawEntryCount++;
                 AddEntry(entriesByPath, new MndxRootEntry(packages[packageIndex] + "/" + name, contentKey, size));
                 entryIndex++;
                 if ((flags & 0x80000000) != 0)
@@ -92,7 +97,7 @@ public sealed class MndxRoot
             }
         }
 
-        return new MndxRoot(entriesByPath.Values.ToArray());
+        return new MndxRoot(entriesByPath.Values.ToArray(), rawEntryCount);
     }
 
     private static Dictionary<int, MarTrie> LoadTries(byte[] decoded, int marInfoOffset, int marCount, int marInfoSize)

@@ -922,7 +922,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     typed payloads and normalized shader keys; every gate defaults off, required unsupported
     semantics fail, optional core-preserving fallbacks warn, and feature-disabled C1-C5 output is
     unchanged.
-- [ ] C7a StarCraft II CASC storage
+- [x] C7a StarCraft II CASC storage
       ([deep dive](deep-dives/sc2-casc-m3-storage.md)).
   - AC: an in-house read-only reader decodes `.build.info`, version 7 `.idx`, BLTE `N` and `Z`,
     the encoding file, and the MNDX root with MAR name restore; `CascFileSystem` exposes

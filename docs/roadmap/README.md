@@ -322,7 +322,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | Track A - Foundations | `██████░░░░` | 12 / 21 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 44 |
-| Track C - External Assets | `█████░░░░░` | 9 / 18 |
+| Track C - External Assets | `█████░░░░░` | 10 / 18 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)
 
