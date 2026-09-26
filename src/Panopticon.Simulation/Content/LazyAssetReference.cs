@@ -17,14 +17,24 @@ public sealed class LazyAssetReference<T> : ILazyAssetReference
 
     BaseAsset ILazyAssetReference.Value => Value;
 
+    // Referenced asset name, when known, so callers can match references without loading them.
+    public string Name { get; }
+
     public LazyAssetReference(Func<T> getValue)
     {
+        _getValue = getValue;
+    }
+
+    public LazyAssetReference(string name, Func<T> getValue)
+    {
+        Name = name;
         _getValue = getValue;
     }
 
     public LazyAssetReference(T value)
     {
         _value = value;
+        Name = value?.Name;
     }
 }
 

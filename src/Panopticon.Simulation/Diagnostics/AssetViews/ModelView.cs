@@ -2,6 +2,7 @@ using System.Numerics;
 using Panopticon.Graphics;
 using Panopticon.Graphics.Rendering;
 using Panopticon.Graphics.Shaders;
+using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 
 namespace Panopticon.Diagnostics.AssetViews;
@@ -16,6 +17,7 @@ internal sealed class ModelView : AssetView
         : base(context)
     {
         _modelInstance = AddDisposable(model.CreateInstance(context.Game.AssetStore.LoadContext));
+        MuzzleFlashBones.HideForStandaloneRender(_modelInstance, context.Game.AssetStore.ObjectDefinitions);
         _modelInstance.Update(TimeInterval.Zero);
 
         var enclosingBoundingBox = GetEnclosingBoundingBox(_modelInstance);

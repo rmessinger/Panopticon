@@ -8,6 +8,7 @@ using Panopticon.Graphics.Cameras;
 using Panopticon.Graphics.Rendering;
 using Panopticon.Graphics.Shaders;
 using Panopticon.Input;
+using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using Panopticon.Settings;
 using Veldrid;
@@ -90,6 +91,7 @@ internal static class StandaloneModelCapture
         var (cameraTarget, cameraDistance) = FitCamera(enclosingBounds);
 
         using var modelInstance = model.CreateInstance(loadContext);
+        MuzzleFlashBones.HideForStandaloneRender(modelInstance, game.AssetStore.ObjectDefinitions);
         if (configureInstance != null)
         {
             configureInstance(modelInstance);
