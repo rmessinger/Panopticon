@@ -201,6 +201,23 @@ mindmap
         C4i-6 Legacy proof captures
       C5 Authoring tooling ⮕
       C6 Extended features deferred ⮕
+      C7a SC2 CASC storage ⮕
+        C7a-1 Build info and index
+        C7a-2 BLTE and encoding
+        C7a-3 MNDX root and MAR tries
+        C7a-4 CASC file system
+      C7b SC2 static M3 models ⮕
+        C7b-1 M3 container reader
+        C7b-2 M3 geometry conversion
+        C7b-3 DDS decode and texture rules
+        C7b-4 M3 material conversion
+        C7b-5 Static proof captures
+      C7c SC2 skinned M3 animation ⮕
+        C7c-1 Per-axis scale and absolute clips
+        C7c-2 M3 skin conversion
+        C7c-3 M3 sequence conversion
+        C7c-4 External m3a clips
+        C7c-5 Animated proof captures
     D. Gameplay content expansion
       D1 Tech tree prerequisite graph ⮕
       D2 Era and age progression ⮕
@@ -328,6 +345,7 @@ flowchart LR
     B5["B5 Rendering at scale"]
     C2["C2 Skeleton retargeting"]
     C3["C3 Material mapping"]
+    C7A["C7a SC2 CASC storage"]
     D2["D2 Era and age progression"]
     E3["E3 Naval production"]
     G3["G3 Visual regression harness"]
@@ -341,6 +359,7 @@ flowchart LR
     B3["B3 Parallel logic"]
     C4["C4 glTF · static + skinned"]
     C4A["C4a EE2 NIF static proof"]
+    C7B["C7b SC2 static M3 models"]
     D3["D3 External content ingestion"]
     F1["F1 Terrain deformation data model"]
     F4["F4 Physics engine integration"]
@@ -398,6 +417,7 @@ flowchart LR
 
   subgraph S6["Stage 6 · Terrain/destruction tooling & theater experiments"]
     direction TB
+    C7C["C7c SC2 skinned M3 animation"]
     F8["F8 Authoring & validation tooling"]
     W3["W3 Geospatial sector"]
     W4["W4 Command & logistics experiment"]
@@ -456,6 +476,7 @@ flowchart LR
   A3 --> B5
   C1 --> C2
   C1 --> C3
+  C1 --> C7A
   D1 --> D2
   E1 --> E3
   H1 --> H2
@@ -470,6 +491,9 @@ flowchart LR
   C1 --> C4A
   C2 --> C4
   C3 --> C4
+  C7A --> C7B
+  C1 --> C7B
+  C3 --> C7B
   D1 --> D3
   C1 --> D3
   B4A --> F1
@@ -561,6 +585,10 @@ flowchart LR
   A4 --> W2
 
   %% Stage 5 -> 6
+  C7B --> C7C
+  C2 --> C7C
+  C4D --> C7C
+  C4F --> C7C
   F2 --> F8
   F6 --> F8
   F7 --> F8
@@ -578,7 +606,7 @@ flowchart LR
 
   class A1,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
-  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6 trackC;
+  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class H1,H2,H3,H4,H5,H6,H7 trackH;
