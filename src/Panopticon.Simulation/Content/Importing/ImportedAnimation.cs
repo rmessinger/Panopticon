@@ -16,12 +16,23 @@ public sealed class ImportedAnimation
 
     public TimeSpan Duration { get; }
 
+    public ImportedAnimationComposition Composition { get; }
+
     public IReadOnlyList<ImportedAnimationChannel> Channels { get; }
 
     public ImportedAnimation(
         string name,
         TimeSpan duration,
         IReadOnlyList<ImportedAnimationChannel> channels)
+        : this(name, duration, channels, ImportedAnimationComposition.RestRelative)
+    {
+    }
+
+    public ImportedAnimation(
+        string name,
+        TimeSpan duration,
+        IReadOnlyList<ImportedAnimationChannel> channels,
+        ImportedAnimationComposition composition)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -38,6 +49,11 @@ public sealed class ImportedAnimation
             throw new ArgumentNullException(nameof(channels));
         }
 
+        if (!Enum.IsDefined(composition))
+        {
+            throw new ArgumentOutOfRangeException(nameof(composition));
+        }
+
         for (var i = 0; i < channels.Count; i++)
         {
             if (channels[i] is null)
@@ -48,6 +64,7 @@ public sealed class ImportedAnimation
 
         Name = name;
         Duration = duration;
+        Composition = composition;
         Channels = channels.ToArray();
     }
 }

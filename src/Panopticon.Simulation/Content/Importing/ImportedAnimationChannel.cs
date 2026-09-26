@@ -13,6 +13,9 @@ public enum ImportedAnimationChannelType
     Quaternion,
     Visibility,
     Scale,
+    ScaleX,
+    ScaleY,
+    ScaleZ,
 }
 
 /// <summary>

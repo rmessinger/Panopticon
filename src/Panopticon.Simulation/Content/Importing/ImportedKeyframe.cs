@@ -64,7 +64,10 @@ public sealed class ImportedKeyframe
             ImportedAnimationChannelType.TranslationX
             or ImportedAnimationChannelType.TranslationY
             or ImportedAnimationChannelType.TranslationZ
-            or ImportedAnimationChannelType.Scale => ImportedKeyframeKind.Float,
+            or ImportedAnimationChannelType.Scale
+            or ImportedAnimationChannelType.ScaleX
+            or ImportedAnimationChannelType.ScaleY
+            or ImportedAnimationChannelType.ScaleZ => ImportedKeyframeKind.Float,
 
             ImportedAnimationChannelType.Quaternion => ImportedKeyframeKind.Quaternion,
 

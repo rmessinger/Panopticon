@@ -18,7 +18,14 @@ internal static class ImportedAnimationMaterializer
             .Select(ToRuntimeChannel)
             .ToArray();
 
-        return new ModelAnimation(imported.Name, imported.Duration, channels);
+        var composition = imported.Composition switch
+        {
+            ImportedAnimationComposition.RestRelative => ModelAnimationComposition.RestRelative,
+            ImportedAnimationComposition.AbsoluteLocal => ModelAnimationComposition.AbsoluteLocal,
+            _ => throw new ArgumentOutOfRangeException(nameof(imported)),
+        };
+
+        return new ModelAnimation(imported.Name, imported.Duration, channels, composition);
     }
 
     private static ModelAnimationChannel ToRuntimeChannel(ImportedAnimationChannel channel)
@@ -31,6 +38,9 @@ internal static class ImportedAnimationMaterializer
             ImportedAnimationChannelType.Quaternion => AnimationClipType.Quaternion,
             ImportedAnimationChannelType.Visibility => AnimationClipType.Visibility,
             ImportedAnimationChannelType.Scale => AnimationClipType.Scale,
+            ImportedAnimationChannelType.ScaleX => AnimationClipType.ScaleX,
+            ImportedAnimationChannelType.ScaleY => AnimationClipType.ScaleY,
+            ImportedAnimationChannelType.ScaleZ => AnimationClipType.ScaleZ,
             _ => throw new ArgumentOutOfRangeException(nameof(channel)),
         };
 

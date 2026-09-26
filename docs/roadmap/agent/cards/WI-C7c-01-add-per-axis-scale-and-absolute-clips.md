@@ -4,10 +4,10 @@
 |---|---|
 | Card ID | `WI-C7c-01` |
 | Roadmap phase | [Track C · C7c](../../track-c-external-assets.md): StarCraft II skinned M3 animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-C4f-01`, `WI-C4f-04` |
+| Prerequisites | `WI-C4f-01` |
 | Diagrams | [C7c architecture diagrams](../../deep-dives/c7c-sc2-skinned-animation.md#13-architecture-diagrams) |
 
 ## Goal

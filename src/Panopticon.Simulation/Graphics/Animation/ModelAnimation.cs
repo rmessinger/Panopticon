@@ -17,13 +17,25 @@ public sealed class ModelAnimation : BaseAsset
 
     public TimeSpan Duration { get; }
 
+    public ModelAnimationComposition Composition { get; }
+
     public ModelAnimationChannel[] Channels { get; }
 
     internal ModelAnimation(string name, TimeSpan duration, ModelAnimationChannel[] channels)
+        : this(name, duration, channels, ModelAnimationComposition.RestRelative)
+    {
+    }
+
+    internal ModelAnimation(
+        string name,
+        TimeSpan duration,
+        ModelAnimationChannel[] channels,
+        ModelAnimationComposition composition)
     {
         SetNameAndInstanceId("ModelAnimation", name);
 
         Duration = duration;
+        Composition = composition;
         Channels = channels;
     }
 
@@ -71,7 +83,7 @@ public sealed class ModelAnimation : BaseAsset
             clips.Add(new AnimationClip(channel.ClipType, boneIndex, channel.Keyframes, channel.Interpolation));
         }
 
-        return new BoundModelAnimation(Name, Duration, clips.ToArray());
+        return new BoundModelAnimation(Name, Duration, clips.ToArray(), Composition);
     }
 
     private static Dictionary<string, int> BuildBoneNameIndex(ModelBoneHierarchy hierarchy)

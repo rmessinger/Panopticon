@@ -7,5 +7,8 @@ public enum AnimationClipType
     TranslationZ,
     Quaternion,
     Visibility,
-    Scale
+    Scale,
+    ScaleX,
+    ScaleY,
+    ScaleZ
 }

@@ -12,12 +12,24 @@ public sealed class BoundModelAnimation
 
     public TimeSpan Duration { get; }
 
+    public ModelAnimationComposition Composition { get; }
+
     public AnimationClip[] Clips { get; }
 
     internal BoundModelAnimation(string name, TimeSpan duration, AnimationClip[] clips)
+        : this(name, duration, clips, ModelAnimationComposition.RestRelative)
+    {
+    }
+
+    internal BoundModelAnimation(
+        string name,
+        TimeSpan duration,
+        AnimationClip[] clips,
+        ModelAnimationComposition composition)
     {
         Name = name;
         Duration = duration;
+        Composition = composition;
         Clips = clips;
     }
 }

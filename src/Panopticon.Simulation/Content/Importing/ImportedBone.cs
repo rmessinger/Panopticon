@@ -19,7 +19,7 @@ public sealed class ImportedBone
 
     public Quaternion BindRotation { get; }
 
-    public float BindScale { get; }
+    public Vector3 BindScale { get; }
 
     public Matrix4x4 InverseBindMatrix { get; }
 
@@ -34,6 +34,16 @@ public sealed class ImportedBone
         in Vector3 bindTranslation,
         in Quaternion bindRotation,
         float bindScale)
+        : this(name, parentIndex, bindTranslation, bindRotation, Matrix4x4.Identity, new Vector3(bindScale))
+    {
+    }
+
+    public ImportedBone(
+        string name,
+        int parentIndex,
+        in Vector3 bindTranslation,
+        in Quaternion bindRotation,
+        in Vector3 bindScale)
         : this(name, parentIndex, bindTranslation, bindRotation, Matrix4x4.Identity, bindScale)
     {
     }
@@ -55,6 +65,17 @@ public sealed class ImportedBone
         in Quaternion bindRotation,
         in Matrix4x4 inverseBindMatrix,
         float bindScale)
+        : this(name, parentIndex, bindTranslation, bindRotation, inverseBindMatrix, new Vector3(bindScale))
+    {
+    }
+
+    public ImportedBone(
+        string name,
+        int parentIndex,
+        in Vector3 bindTranslation,
+        in Quaternion bindRotation,
+        in Matrix4x4 inverseBindMatrix,
+        in Vector3 bindScale)
     {
         if (name is null)
         {
@@ -66,9 +87,14 @@ public sealed class ImportedBone
             throw new ArgumentException("Parent index must be -1 (root) or a bone index.", nameof(parentIndex));
         }
 
-        if (!float.IsFinite(bindScale) || bindScale < 0.0f)
+        if (!float.IsFinite(bindScale.X) ||
+            !float.IsFinite(bindScale.Y) ||
+            !float.IsFinite(bindScale.Z) ||
+            bindScale.X <= 0.0f ||
+            bindScale.Y <= 0.0f ||
+            bindScale.Z <= 0.0f)
         {
-            throw new ArgumentOutOfRangeException(nameof(bindScale), "Bind scale must be finite and non-negative.");
+            throw new ArgumentOutOfRangeException(nameof(bindScale), "Bind scale must be finite and positive on every axis.");
         }
 
         Name = name;

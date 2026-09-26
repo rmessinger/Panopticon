@@ -56,6 +56,7 @@ public sealed class ModelAnimationTests
 
         Assert.Equal("HV.Run", animation.Name);
         Assert.Equal(TimeSpan.FromSeconds(2.0), animation.Duration);
+        Assert.Equal(ModelAnimationComposition.RestRelative, animation.Composition);
         Assert.Equal(4, animation.Channels.Length);
 
         Assert.Equal(ModelAnimationTargetKind.DirectIndex, animation.Channels[0].Target.Kind);
@@ -75,6 +76,44 @@ public sealed class ModelAnimationTests
         Assert.Equal(4, animation.Channels[3].Target.DirectIndex);
         Assert.Equal(AnimationClipType.Scale, animation.Channels[3].ClipType);
         Assert.Equal(1.5f, animation.Channels[3].Keyframes[0].Value.FloatValue);
+    }
+
+    [Fact]
+    public void Materialize_PreservesCompositionAndPerAxisScaleChannels()
+    {
+        var imported = new ImportedAnimation(
+            "M3.Stand",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    boneIndex: 0,
+                    ImportedAnimationChannelType.ScaleX,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 2.0f) }),
+                new ImportedAnimationChannel(
+                    boneIndex: 0,
+                    ImportedAnimationChannelType.ScaleY,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 3.0f) }),
+                new ImportedAnimationChannel(
+                    boneIndex: 0,
+                    ImportedAnimationChannelType.ScaleZ,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 4.0f) }),
+            },
+            ImportedAnimationComposition.AbsoluteLocal);
+
+        var animation = ImportedAnimationMaterializer.Materialize(imported);
+
+        Assert.Equal(ModelAnimationComposition.AbsoluteLocal, animation.Composition);
+        Assert.Equal(AnimationClipType.ScaleX, animation.Channels[0].ClipType);
+        Assert.Equal(AnimationClipType.ScaleY, animation.Channels[1].ClipType);
+        Assert.Equal(AnimationClipType.ScaleZ, animation.Channels[2].ClipType);
+
+        var bound = animation.Bind(new ModelBoneHierarchy(CreateSkeleton(1)));
+
+        Assert.Equal(ModelAnimationComposition.AbsoluteLocal, bound.Composition);
+        Assert.Equal(AnimationClipType.ScaleX, bound.Clips[0].ClipType);
+        Assert.Equal(AnimationClipType.ScaleY, bound.Clips[1].ClipType);
+        Assert.Equal(AnimationClipType.ScaleZ, bound.Clips[2].ClipType);
     }
 
     [Fact]

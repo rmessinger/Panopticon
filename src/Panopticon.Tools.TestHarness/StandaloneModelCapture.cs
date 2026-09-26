@@ -235,8 +235,8 @@ internal static class StandaloneModelCapture
         {
             var bone = model.BoneHierarchy.Bones[i];
             boneWorlds[i] = bone.Parent is null
-                ? bone.Transform.Matrix
-                : bone.Transform.Matrix * boneWorlds[bone.Parent.Index];
+                ? bone.RestMatrix
+                : bone.RestMatrix * boneWorlds[bone.Parent.Index];
         }
 
         var boundingBox = default(AxisAlignedBoundingBox);

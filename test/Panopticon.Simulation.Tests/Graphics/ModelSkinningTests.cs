@@ -38,10 +38,11 @@ public class ModelSkinningTests
     {
         var bone = new ImportedBone("bone", 0, Vector3.Zero, Quaternion.Identity);
 
-        Assert.Equal(1.0f, bone.BindScale);
+        Assert.Equal(Vector3.One, bone.BindScale);
     }
 
     [Theory]
+    [InlineData(0.0f)]
     [InlineData(-0.1f)]
     [InlineData(float.PositiveInfinity)]
     [InlineData(float.NaN)]
@@ -67,7 +68,7 @@ public class ModelSkinningTests
 
         Assert.Equal(Matrix4x4.Identity, hierarchy.Bones[0].InverseBindMatrix);
         Assert.Equal(inverseBind, hierarchy.Bones[1].InverseBindMatrix);
-        Assert.Equal(2.0f, hierarchy.Bones[1].BindScale);
+        Assert.Equal(new Vector3(2.0f), hierarchy.Bones[1].BindScale);
     }
 
     [Fact]

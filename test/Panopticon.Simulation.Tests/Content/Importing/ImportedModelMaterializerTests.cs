@@ -297,6 +297,8 @@ public sealed class ImportedModelMaterializerTests
         Assert.Equal(new Vector3(1, 2, 3), bone.Transform.Translation);
         Assert.Equal(2.0f, bone.Transform.Scale);
         Assert.Equal(Matrix4x4.CreateScale(2.0f) * Matrix4x4.CreateTranslation(1, 2, 3), bone.Transform.Matrix);
+        Assert.Equal(new Vector3(2.0f), bone.BindScale);
+        Assert.Equal(Matrix4x4.CreateScale(2.0f) * Matrix4x4.CreateTranslation(1, 2, 3), bone.RestMatrix);
     }
 
     [Fact]

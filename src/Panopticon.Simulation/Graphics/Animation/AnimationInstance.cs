@@ -127,6 +127,7 @@ public sealed class AnimationInstance
             bone.AnimatedOffset.Translation = Vector3.Zero;
             bone.AnimatedOffset.Rotation = Quaternion.Identity;
             bone.AnimatedOffset.Scale = 1.0f;
+            bone.ClearAbsoluteLocal();
 
             bone.Visible = true;
         }
@@ -286,7 +287,9 @@ public sealed class AnimationInstance
         in Keyframe next,
         TimeSpan currentTime)
     {
-        var animatedOffset = _boneInstances[clip.Bone].AnimatedOffset;
+        var bone = _boneInstances[clip.Bone];
+        var animatedOffset = bone.AnimatedOffset;
+        var isAbsolute = _animation.Composition == ModelAnimationComposition.AbsoluteLocal;
 
         if (clip.Interpolation == AnimationInterpolation.Step)
         {
@@ -298,27 +301,39 @@ public sealed class AnimationInstance
             switch (clip.ClipType)
             {
                 case AnimationClipType.TranslationX:
-                    animatedOffset.Translation = animatedOffset.Translation.WithX(held.Value.FloatValue);
+                    SetTranslationX(bone, animatedOffset, held.Value.FloatValue, isAbsolute);
                     break;
 
                 case AnimationClipType.TranslationY:
-                    animatedOffset.Translation = animatedOffset.Translation.WithY(held.Value.FloatValue);
+                    SetTranslationY(bone, animatedOffset, held.Value.FloatValue, isAbsolute);
                     break;
 
                 case AnimationClipType.TranslationZ:
-                    animatedOffset.Translation = animatedOffset.Translation.WithZ(held.Value.FloatValue);
+                    SetTranslationZ(bone, animatedOffset, held.Value.FloatValue, isAbsolute);
                     break;
 
                 case AnimationClipType.Quaternion:
-                    _boneInstances[clip.Bone].AnimatedOffset.Rotation = held.Value.Quaternion;
+                    SetRotation(bone, animatedOffset, held.Value.Quaternion, isAbsolute);
                     break;
 
                 case AnimationClipType.Visibility:
-                    _boneInstances[clip.Bone].Visible = previous.Value.BoolValue;
+                    bone.Visible = previous.Value.BoolValue;
                     break;
 
                 case AnimationClipType.Scale:
-                    animatedOffset.Scale = held.Value.FloatValue;
+                    SetUniformScale(bone, animatedOffset, held.Value.FloatValue, isAbsolute);
+                    break;
+
+                case AnimationClipType.ScaleX:
+                    SetScaleX(bone, held.Value.FloatValue, isAbsolute);
+                    break;
+
+                case AnimationClipType.ScaleY:
+                    SetScaleY(bone, held.Value.FloatValue, isAbsolute);
+                    break;
+
+                case AnimationClipType.ScaleZ:
+                    SetScaleZ(bone, held.Value.FloatValue, isAbsolute);
                     break;
 
                 default:
@@ -338,47 +353,158 @@ public sealed class AnimationInstance
         switch (clip.ClipType)
         {
             case AnimationClipType.TranslationX:
-                animatedOffset.Translation = animatedOffset.Translation.WithX(MathUtility.Lerp(
+                SetTranslationX(bone, animatedOffset, MathUtility.Lerp(
                     previous.Value.FloatValue,
                     next.Value.FloatValue,
-                    amount));
+                    amount), isAbsolute);
                 break;
 
             case AnimationClipType.TranslationY:
-                animatedOffset.Translation = animatedOffset.Translation.WithY(MathUtility.Lerp(
+                SetTranslationY(bone, animatedOffset, MathUtility.Lerp(
                     previous.Value.FloatValue,
                     next.Value.FloatValue,
-                    amount));
+                    amount), isAbsolute);
                 break;
 
             case AnimationClipType.TranslationZ:
-                animatedOffset.Translation = animatedOffset.Translation.WithZ(MathUtility.Lerp(
+                SetTranslationZ(bone, animatedOffset, MathUtility.Lerp(
                     previous.Value.FloatValue,
                     next.Value.FloatValue,
-                    amount));
+                    amount), isAbsolute);
                 break;
 
             case AnimationClipType.Quaternion:
-                _boneInstances[clip.Bone].AnimatedOffset.Rotation = Quaternion.Slerp(
+                SetRotation(bone, animatedOffset, Quaternion.Slerp(
                     previous.Value.Quaternion,
                     next.Value.Quaternion,
-                    amount);
+                    amount), isAbsolute);
                 break;
 
             case AnimationClipType.Visibility:
-                _boneInstances[clip.Bone].Visible = previous.Value.BoolValue;
+                bone.Visible = previous.Value.BoolValue;
                 break;
 
             case AnimationClipType.Scale:
-                animatedOffset.Scale = MathUtility.Lerp(
+                SetUniformScale(bone, animatedOffset, MathUtility.Lerp(
                     previous.Value.FloatValue,
                     next.Value.FloatValue,
-                    amount);
+                    amount), isAbsolute);
+                break;
+
+            case AnimationClipType.ScaleX:
+                SetScaleX(bone, MathUtility.Lerp(
+                    previous.Value.FloatValue,
+                    next.Value.FloatValue,
+                    amount), isAbsolute);
+                break;
+
+            case AnimationClipType.ScaleY:
+                SetScaleY(bone, MathUtility.Lerp(
+                    previous.Value.FloatValue,
+                    next.Value.FloatValue,
+                    amount), isAbsolute);
+                break;
+
+            case AnimationClipType.ScaleZ:
+                SetScaleZ(bone, MathUtility.Lerp(
+                    previous.Value.FloatValue,
+                    next.Value.FloatValue,
+                    amount), isAbsolute);
                 break;
 
             default:
                 throw new InvalidOperationException();
         }
+    }
+
+    private static void SetTranslationX(ModelBoneInstance bone, Transform animatedOffset, float value, bool isAbsolute)
+    {
+        if (isAbsolute)
+        {
+            bone.AbsoluteLocalTranslation = bone.AbsoluteLocalTranslation.WithX(value);
+        }
+        else
+        {
+            animatedOffset.Translation = animatedOffset.Translation.WithX(value);
+        }
+    }
+
+    private static void SetTranslationY(ModelBoneInstance bone, Transform animatedOffset, float value, bool isAbsolute)
+    {
+        if (isAbsolute)
+        {
+            bone.AbsoluteLocalTranslation = bone.AbsoluteLocalTranslation.WithY(value);
+        }
+        else
+        {
+            animatedOffset.Translation = animatedOffset.Translation.WithY(value);
+        }
+    }
+
+    private static void SetTranslationZ(ModelBoneInstance bone, Transform animatedOffset, float value, bool isAbsolute)
+    {
+        if (isAbsolute)
+        {
+            bone.AbsoluteLocalTranslation = bone.AbsoluteLocalTranslation.WithZ(value);
+        }
+        else
+        {
+            animatedOffset.Translation = animatedOffset.Translation.WithZ(value);
+        }
+    }
+
+    private static void SetRotation(ModelBoneInstance bone, Transform animatedOffset, Quaternion value, bool isAbsolute)
+    {
+        if (isAbsolute)
+        {
+            bone.AbsoluteLocalRotation = value;
+        }
+        else
+        {
+            animatedOffset.Rotation = value;
+        }
+    }
+
+    private static void SetUniformScale(ModelBoneInstance bone, Transform animatedOffset, float value, bool isAbsolute)
+    {
+        if (isAbsolute)
+        {
+            bone.AbsoluteLocalScale = new Vector3(value);
+        }
+        else
+        {
+            animatedOffset.Scale = value;
+        }
+    }
+
+    private static void SetScaleX(ModelBoneInstance bone, float value, bool isAbsolute)
+    {
+        if (!isAbsolute)
+        {
+            throw new InvalidOperationException("Per-axis scale clips require absolute-local animation composition.");
+        }
+
+        bone.AbsoluteLocalScale = bone.AbsoluteLocalScale.WithX(value);
+    }
+
+    private static void SetScaleY(ModelBoneInstance bone, float value, bool isAbsolute)
+    {
+        if (!isAbsolute)
+        {
+            throw new InvalidOperationException("Per-axis scale clips require absolute-local animation composition.");
+        }
+
+        bone.AbsoluteLocalScale = bone.AbsoluteLocalScale.WithY(value);
+    }
+
+    private static void SetScaleZ(ModelBoneInstance bone, float value, bool isAbsolute)
+    {
+        if (!isAbsolute)
+        {
+            throw new InvalidOperationException("Per-axis scale clips require absolute-local animation composition.");
+        }
+
+        bone.AbsoluteLocalScale = bone.AbsoluteLocalScale.WithZ(value);
     }
 
     internal void DrawInspector()
