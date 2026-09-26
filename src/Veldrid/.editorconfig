@@ -1,0 +1,3 @@
+# Vendored upstream source: keep upstream formatting so diffs against veldrid/veldrid stay reviewable.
+[*.cs]
+generated_code = true

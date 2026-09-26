@@ -11,6 +11,12 @@ directory is served read-only by the live viewer at `https://files.reid-corp.com
 shows the newest image automatically: no refresh, upload, or login. Overwrite the same filename
 for iteration snapshots so the viewer swaps instantly.
 
+Layout:
+- Top level: meaningful demonstrations of progress only (proof stills, before/after comparisons,
+  animation GIFs). Animated results ship as GIFs, not frame series.
+- `frames/<topic>/`: granular per-frame captures (animation sample stills, frame sequences), e.g.
+  `frames/sc2-anim/`.
+
 ```sh
 cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/shot.png"
 ```

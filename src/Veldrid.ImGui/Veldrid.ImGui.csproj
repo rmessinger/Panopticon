@@ -50,7 +50,6 @@
   <ItemGroup>
     <PackageReference Include="ImGui.NET" />
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="Veldrid" />
     <PackageReference Include="Veldrid.SDL2" />
   </ItemGroup>
 
@@ -58,5 +57,9 @@
     <Description>ImGui integration for Veldrid. Provides a simple interface for rendering and interacting with ImGui.NET.</Description>
     <PackageTags>3D Graphics Direct3D DirectX Vulkan OpenGL Metal Core Standard Game ImGui</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Veldrid\Veldrid.csproj" />
+  </ItemGroup>
 
 </Project>

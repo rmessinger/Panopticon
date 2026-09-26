@@ -26,6 +26,8 @@ import sys
 from pathlib import Path
 
 SKIP_DIRS = {"obj", "bin", ".git", "node_modules", "packages"}
+# Vendored upstream source keeps upstream formatting.
+SKIP_PATHS = {Path(__file__).resolve().parent.parent / "src" / "Veldrid"}
 
 # Keywords (or a colon, for nested sub-patterns) that introduce a property
 # pattern: a brace pair opened after one of these is a pattern, not a block,
@@ -195,6 +197,7 @@ def main():
             files.extend(
                 p for p in path.rglob("*.cs")
                 if not any(part in SKIP_DIRS for part in p.parts)
+                and not any(p.resolve().is_relative_to(skip) for skip in SKIP_PATHS)
             )
         elif path.suffix == ".cs":
             files.append(path)
