@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4e-06` |
 | Roadmap phase | [Track C · C4e](../../track-c-external-assets.md): EE2 property animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C4e-04`, `WI-C4e-05` |
@@ -40,12 +40,14 @@ Add installed-asset assertions and deterministic TestHarness captures that prove
 
 ## Acceptance criteria
 
-- [ ] Market captures show open and close visibility changes.
-- [ ] Egyptian EIFV captures show moving tread texture coordinates.
-- [ ] Stealth Fighter Bomber captures render the imported material color state.
-- [ ] ResourceFish captures show alpha fade at sampled times.
-- [ ] Repeat runs produce deterministic outputs, and no EE2 asset is copied or committed.
-- [ ] Standard validation passes.
+- [x] Market captures show open and close visibility changes.
+  - Deviation: the open/close .kf target names (`market_open_*`) exist in no cooked model, so those clips cannot bind; the bind failure is asserted as the documented `InvalidDataException` instead, and the visibility family is proven end-to-end with `LHA10_siegegun` (its `base` sub-object hides at 1 s).
+- [x] Egyptian EIFV captures show moving tread texture coordinates.
+  - The 1.5 U shift produces a measurable pixel delta; the fine-grained tread pattern wraps, so the strong evidence is the sampled state test plus the diff.
+- [x] Stealth Fighter Bomber captures render the imported material color state.
+- [x] ResourceFish captures show alpha fade at sampled times.
+- [x] Repeat runs produce deterministic outputs, and no EE2 asset is copied or committed.
+- [x] Standard validation passes.
 
 ## Validation commands
 

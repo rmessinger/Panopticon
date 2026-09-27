@@ -11,4 +11,5 @@ public enum BuiltInScenario
     PbrMaterialProof,
     GltfRuntimeProof,
     Ee2NifProof,
+    Ee2PropertyProof,
 }

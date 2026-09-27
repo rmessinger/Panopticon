@@ -166,11 +166,25 @@ public sealed class NifPropertyTests
     }
 
     [Fact]
-    public void TextureTransformFailsWithNotSupported()
+    public void TextureTransformDecodesAllFields()
     {
-        Assert.Throws<NotSupportedException>(
-            () => Read(("NiTexturingProperty", NifTestProperties.Texturing(
-                baseSlot: (0, 3, 2, 0, 0, 0), baseTransformFlag: 1))));
+        var file = Read(
+            ("NiTexturingProperty", NifTestProperties.Texturing(
+                baseSlot: (1, 3, 2, 0, 0, 0),
+                baseTransform: (0.25f, -0.5f, 2f, 3f, 1.5f, 1u, 0.25f, 0.75f))),
+            ("NiSourceTexture", NifTestProperties.SourceTexture()));
+
+        var texturing = (NifTexturingProperty)file.Blocks[0];
+        var transform = texturing.Slots["Base"].Transform;
+        Assert.NotNull(transform);
+        Assert.Equal(0.25f, transform!.Value.TranslationU);
+        Assert.Equal(-0.5f, transform.Value.TranslationV);
+        Assert.Equal(2f, transform.Value.TilingU);
+        Assert.Equal(3f, transform.Value.TilingV);
+        Assert.Equal(1.5f, transform.Value.Rotation);
+        Assert.Equal(1u, transform.Value.TransformType);
+        Assert.Equal(0.25f, transform.Value.CenterU);
+        Assert.Equal(0.75f, transform.Value.CenterV);
     }
 
     [Fact]

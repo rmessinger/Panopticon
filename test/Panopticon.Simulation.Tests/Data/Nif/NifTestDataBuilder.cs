@@ -518,7 +518,8 @@ public static class NifTestProperties
         (int Source, uint Clamp, uint Filter, uint UvSet, short Ps2L, short Ps2K)? baseSlot = null,
         string name = "",
         uint numShaderTextures = 0,
-        byte? baseTransformFlag = null)
+        byte? baseTransformFlag = null,
+        (float TranslationU, float TranslationV, float TilingU, float TilingV, float Rotation, uint TransformType, float CenterU, float CenterV)? baseTransform = null)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
@@ -542,7 +543,23 @@ public static class NifTestProperties
                 body.WriteUInt32(slot.UvSet);
                 body.WriteInt16(slot.Ps2L);
                 body.WriteInt16(slot.Ps2K);
-                body.WriteByte(baseTransformFlag ?? 0);
+                if (baseTransform is { } transform)
+                {
+                    body.WriteByte(1);
+                    body.WriteSingle(transform.TranslationU);
+                    body.WriteSingle(transform.TranslationV);
+                    body.WriteSingle(transform.TilingU);
+                    body.WriteSingle(transform.TilingV);
+                    body.WriteSingle(transform.Rotation);
+                    body.WriteUInt32(transform.TransformType);
+                    body.WriteSingle(transform.CenterU);
+                    body.WriteSingle(transform.CenterV);
+                }
+
+                else
+                {
+                    body.WriteByte(baseTransformFlag ?? 0);
+                }
             }
 
             else
@@ -720,6 +737,21 @@ public static class NifTestKeyframe
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
         body.WriteUInt32(0);
+        WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
+    internal static void WriteTimeControllerPrefix(
+        NifBodyWriter body,
+        int next,
+        ushort flags,
+        float frequency,
+        float phase,
+        float startTime,
+        float stopTime,
+        int target)
+    {
         body.WriteInt32(next);
         body.WriteUInt16(flags);
         body.WriteSingle(frequency);
@@ -727,8 +759,6 @@ public static class NifTestKeyframe
         body.WriteSingle(startTime);
         body.WriteSingle(stopTime);
         body.WriteInt32(target);
-        body.WriteInt32(data);
-        return stream.ToArray();
     }
 
     public static byte[] KeyframeData(
@@ -780,13 +810,28 @@ public static class NifTestKeyframe
         return stream.ToArray();
     }
 
-    private static void WriteFloatGroup(
+    internal static void WriteFloatGroup(
         NifBodyWriter body,
-        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)> keys)
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)> keys,
+        uint? keyTypeOverride = null)
     {
         body.WriteUInt32((uint)keys.Count);
         if (keys.Count == 0)
         {
+            return;
+        }
+
+        if (keyTypeOverride is { } overrideType)
+        {
+            // Rejection tests inject an unsupported type word; keys are
+            // written in linear shape because the parser stops at the type.
+            body.WriteUInt32(overrideType);
+            foreach (var (time, value, _, _) in keys)
+            {
+                body.WriteSingle(time);
+                body.WriteSingle(value);
+            }
+
             return;
         }
 
@@ -812,7 +857,7 @@ public static class NifTestKeyframe
         }
     }
 
-    private static void WriteVector3Group(
+    internal static void WriteVector3Group(
         NifBodyWriter body,
         IReadOnlyList<(float Time, (float X, float Y, float Z) Value, (float X, float Y, float Z)? Forward, (float X, float Y, float Z)? Backward)>? keys,
         uint? keyTypeOverride)
@@ -858,6 +903,164 @@ public static class NifTestKeyframe
                 NifTestBlocks.WriteVector3(body, backward ?? (0, 0, 0));
             }
         }
+    }
+}
+
+public static class NifTestPropertyAnimation
+{
+    public static byte[] VisController(
+        int data = -1,
+        ushort flags = 0x2C,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
+    public static byte[] AlphaController(
+        int data = -1,
+        ushort flags = 0x28,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
+    public static byte[] TextureTransformController(
+        int data = -1,
+        uint operation = 0,
+        bool shaderMap = false,
+        uint textureSlot = 0,
+        ushort flags = 0x2C,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteByte((byte)(shaderMap ? 1 : 0));
+        body.WriteUInt32(textureSlot);
+        body.WriteUInt32(operation);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
+    public static byte[] MaterialColorController(
+        int data = -1,
+        ushort targetColor = 0,
+        ushort flags = 0x2C,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteUInt16(targetColor);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
+    public static byte[] VisData(params (float Time, byte Visible)[] keys)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteUInt32((uint)keys.Length);
+        foreach (var (time, visible) in keys)
+        {
+            body.WriteSingle(time);
+            body.WriteByte(visible);
+        }
+
+        return stream.ToArray();
+    }
+
+    public static byte[] BoolData(
+        IReadOnlyList<(float Time, byte Value)>? keys = null,
+        uint? keyTypeOverride = null)
+    {
+        keys ??= [];
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteUInt32((uint)keys.Count);
+        if (keys.Count > 0)
+        {
+            body.WriteUInt32(keyTypeOverride ?? 1u);
+            foreach (var (time, value) in keys)
+            {
+                body.WriteSingle(time);
+                body.WriteByte(value);
+            }
+        }
+
+        return stream.ToArray();
+    }
+
+    public static byte[] FloatData(
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? keys = null,
+        uint? keyTypeOverride = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteFloatGroup(body, keys ?? [], keyTypeOverride);
+        return stream.ToArray();
+    }
+
+    public static byte[] PosData(
+        IReadOnlyList<(float Time, (float X, float Y, float Z) Value, (float X, float Y, float Z)? Forward, (float X, float Y, float Z)? Backward)>? keys = null,
+        uint? keyTypeOverride = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteVector3Group(body, keys, keyTypeOverride);
+        return stream.ToArray();
+    }
+
+    public static byte[] UVData(
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? uTranslationKeys = null,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? vTranslationKeys = null,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? uScaleKeys = null,
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? vScaleKeys = null)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteFloatGroup(body, uTranslationKeys ?? []);
+        NifTestKeyframe.WriteFloatGroup(body, vTranslationKeys ?? []);
+        NifTestKeyframe.WriteFloatGroup(body, uScaleKeys ?? []);
+        NifTestKeyframe.WriteFloatGroup(body, vScaleKeys ?? []);
+        return stream.ToArray();
     }
 }
 

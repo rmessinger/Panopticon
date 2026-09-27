@@ -209,12 +209,15 @@ public sealed class ModelAnimationTests
     [Fact]
     public void Bind_CacheStorageIsWeak_And_BoundResultHoldsNoHierarchyReference()
     {
-        var cacheField = typeof(ModelAnimation)
+        var cacheFields = typeof(ModelAnimation)
             .GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            .Single(f => f.FieldType.IsGenericType &&
-                f.FieldType.GetGenericTypeDefinition() == typeof(System.Runtime.CompilerServices.ConditionalWeakTable<,>));
-        Assert.Equal(typeof(ModelBoneHierarchy), cacheField.FieldType.GetGenericArguments()[0]);
-        Assert.Equal(typeof(BoundModelAnimation), cacheField.FieldType.GetGenericArguments()[1]);
+            .Where(f => f.FieldType.IsGenericType &&
+                f.FieldType.GetGenericTypeDefinition() == typeof(System.Runtime.CompilerServices.ConditionalWeakTable<,>))
+            .ToList();
+        Assert.Equal(2, cacheFields.Count);
+        Assert.All(cacheFields, f => Assert.Equal(typeof(BoundModelAnimation), f.FieldType.GetGenericArguments()[1]));
+        Assert.Contains(cacheFields, f => f.FieldType.GetGenericArguments()[0] == typeof(ModelBoneHierarchy));
+        Assert.Contains(cacheFields, f => f.FieldType.GetGenericArguments()[0] == typeof(Model));
 
         Assert.DoesNotContain(
             typeof(ModelAnimation).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance),
@@ -294,7 +297,8 @@ public sealed class ModelAnimationTests
                     new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
             }));
 
-        Assert.Throws<ArgumentNullException>(() => animation.Bind(null!));
+        Assert.Throws<ArgumentNullException>(() => animation.Bind((ModelBoneHierarchy)null!));
+        Assert.Throws<ArgumentNullException>(() => animation.Bind((Model)null!));
     }
 
     [Fact]
@@ -406,6 +410,51 @@ public sealed class ModelAnimationTests
 
         Assert.Single(bound.Clips);
         Assert.Equal(0, bound.Clips[0].Bone);
+    }
+
+    [Fact]
+    public void Bind_NamedTargets_UnrelatedDuplicateBoneNamesDoNotBlockBinding()
+    {
+        // EE2 content (LHA10_siegegun) contains unrelated bones with duplicate
+        // names; only names actually targeted must be unambiguous.
+        var animation = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("base"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var hierarchy = new ModelBoneHierarchy(new ImportedSkeleton("TargetSkeleton", new[]
+        {
+            new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("base", 0, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Editable Mesh", 0, Vector3.Zero, Quaternion.Identity),
+            new ImportedBone("Editable Mesh", 0, Vector3.Zero, Quaternion.Identity),
+        }));
+
+        var bound = animation.Bind(hierarchy);
+
+        Assert.Single(bound.Clips);
+        Assert.Equal(1, bound.Clips[0].Bone);
+
+        var ambiguous = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "HV.Run2",
+            TimeSpan.FromSeconds(1.0),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    ImportedAnimationTarget.CreateBoneName("Editable Mesh"),
+                    ImportedAnimationChannelType.Visibility,
+                    new[] { ImportedKeyframe.FromBool(TimeSpan.Zero, true) }),
+            }));
+
+        var exception = Assert.Throws<InvalidDataException>(() => ambiguous.Bind(hierarchy));
+        Assert.Contains("Editable Mesh", exception.Message);
+        Assert.Contains("multiple bones", exception.Message);
     }
 
     [Fact]

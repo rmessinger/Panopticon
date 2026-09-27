@@ -35,7 +35,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 
 ### Development model (standard since C4)
 
-* Track C (and later tracks) ship through phase staging branches (`staging/track-cX`): cards are implemented in dependency order, grouped onto shared branches (per-card commits, card Status flips, `.exchange` lines), each group = one stacked PR into the staging branch. Staging PR branches do not trigger CI (workflows run on push to `main` only); one final staging-to-main PR runs CI once per phase.
+* Track C (and later tracks) ship through phase staging branches (`staging/track-cX`): cards are implemented in dependency order, grouped onto shared branches (per-card commits, card Status flips, `.exchange` lines), each group = one stacked PR into the staging branch. Every PR (group PRs into staging and the final staging-to-main PR) is left open for the user to merge; agents never merge PRs themselves. Staging PR branches do not trigger CI (workflows run on push to `main` only); one final staging-to-main PR runs CI once per phase.
 * PR descriptions use atomic bullets, not prose paragraphs: one fact per bullet; split semicolon chains and multi-sentence blobs into separate bullets or nested sub-lists; one top-level bullet per card or change area; a short Validation list. Total verbosity stays roughly the same as paragraph text.
 
 ### Documentation style

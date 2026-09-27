@@ -95,6 +95,34 @@ public sealed class NifModelImporterTests
     }
 
     [Fact]
+    public void NormallessShapeImportsWithSynthesizedUnitNormals()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 2));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+            hasNormals: false,
+            boundCenter: (0.5f, 0.5f, 0.5f),
+            boundRadius: 1.0f,
+            triangles: [(0, 1, 2), (0, 2, 3)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var model = Import(builder.Build(), "normalless")!;
+
+        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        Assert.All(mesh.Vertices, vertex =>
+            Assert.True(
+                MathF.Abs(vertex.Normal.Length() - 1f) < 1e-4f,
+                $"Expected a unit normal, got {vertex.Normal}."));
+    }
+
+    [Fact]
     public void MissingEntryReturnsNull()
     {
         Assert.Null(Import([], omitFile: true));
@@ -461,6 +489,147 @@ public sealed class NifModelImporterTests
 
         var ex = Assert.Throws<InvalidDataException>(() => Import(builder.Build()));
         Assert.Contains("no convertible geometry", ex.Message);
+    }
+
+    private static NifSceneGraph ImportGraph(
+        byte[] fileBytes,
+        string name = "test_model")
+    {
+        var fileSystem = new MemoryFileSystem();
+        fileSystem.AddFile($"cache/nifcache/{name}.nifcache", fileBytes);
+        var context = new AssetImportContext(fileSystem, language: null);
+        var file = NifModelImporter.ReadNifFile(name, context);
+        Assert.NotNull(file);
+        return NifSceneConverter.ConvertGraph(file!, name, context);
+    }
+
+    private static byte[] NodeTargetModelBytes()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var materialType = builder.AddBlockType("NiMaterialProperty");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1, 2]));
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "Object04"));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(
+            name: "hull", data: 4, properties: [3]));
+        builder.AddBlock(materialType, NifTestProperties.Material());
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 3,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    private static byte[] TwinShapeModelBytes(params string[] shapeNames)
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var materialType = builder.AddBlockType("NiMaterialProperty");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [2, 3]));
+        builder.AddBlock(materialType, NifTestProperties.Material());
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(
+            name: shapeNames[0], data: 4, properties: [1]));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(
+            name: shapeNames[1], data: 5, properties: [1]));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 3,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0)]));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 3,
+            vertices: [(0, 0, 0), (0, 1, 0), (0, 0, 1)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    [Fact]
+    public void PropertyTargetMapResolvesNodeVisibilityTarget()
+    {
+        var graph = ImportGraph(NodeTargetModelBytes());
+
+        Assert.True(graph.PropertyTargets.TryGetBoneName(1, out var boneName));
+        Assert.Equal("Object04", boneName);
+        Assert.True(graph.PropertyTargets.TryGetBoneName(0, out var rootName));
+        Assert.Equal("root", rootName);
+    }
+
+    [Fact]
+    public void PropertyTargetMapResolvesShapeVisibilityTarget()
+    {
+        var graph = ImportGraph(StaticModelBytes());
+
+        Assert.True(graph.PropertyTargets.TryGetSubObjectFullName(4, out var fullName));
+        Assert.Equal("test_model.0.hull", fullName);
+        Assert.False(graph.PropertyTargets.TryGetSubObjectFullName(0, out _));
+    }
+
+    [Fact]
+    public void TexturingPropertyTargetResolvesByStringRefAndEmbeddedRef()
+    {
+        var graph = ImportGraph(StaticModelBytes());
+
+        Assert.True(NifPropertyTargetMap.TryParsePropertyTarget(
+            "hull\nPROP\nNiTexturingProperty", out var shapeName, out var propertyTypeName));
+        Assert.Equal("hull", shapeName);
+        Assert.Equal("NiTexturingProperty", propertyTypeName);
+        Assert.False(NifPropertyTargetMap.TryParsePropertyTarget("Object04", out _, out _));
+
+        var byName = graph.PropertyTargets.ResolvePropertySlots(shapeName, propertyTypeName);
+        var byReference = graph.PropertyTargets.ResolvePropertySlots(3);
+        var slot = Assert.Single(byName);
+        Assert.Equal(slot, Assert.Single(byReference));
+        Assert.Equal("test_model.0.hull", slot.SubObjectFullName);
+        Assert.Equal(0, slot.MaterialIndex);
+    }
+
+    [Fact]
+    public void SharedMaterialPropertyFansOutToBothShapes()
+    {
+        var graph = ImportGraph(TwinShapeModelBytes("canopy", "fuselage"));
+
+        var byReference = graph.PropertyTargets.ResolvePropertySlots(1);
+        Assert.Equal(2, byReference.Count);
+        Assert.Equal("test_model.0.canopy", byReference[0].SubObjectFullName);
+        Assert.Equal("test_model.1.fuselage", byReference[1].SubObjectFullName);
+        Assert.Equal(0, byReference[0].MaterialIndex);
+
+        var byName = graph.PropertyTargets.ResolvePropertySlots("canopy", "NiMaterialProperty");
+        Assert.Equal(byReference, byName);
+    }
+
+    [Fact]
+    public void DuplicateShapeNamesMakePropertyTargetsAmbiguous()
+    {
+        var graph = ImportGraph(TwinShapeModelBytes("wing", "wing"));
+
+        var ex = Assert.Throws<InvalidDataException>(
+            () => graph.PropertyTargets.ResolvePropertySlots("wing", "NiMaterialProperty"));
+        Assert.Contains("2 shapes named 'wing'", ex.Message);
+        Assert.Contains("ambiguous", ex.Message);
+    }
+
+    [Fact]
+    public void MissingPropertyTargetFailsWithModelContext()
+    {
+        var graph = ImportGraph(StaticModelBytes());
+
+        var missingShape = Assert.Throws<InvalidDataException>(
+            () => graph.PropertyTargets.ResolvePropertySlots("nope", "NiMaterialProperty"));
+        Assert.Contains("test_model", missingShape.Message);
+        Assert.Contains("no converted shape named 'nope'", missingShape.Message);
+
+        var unknownProperty = Assert.Throws<InvalidDataException>(
+            () => graph.PropertyTargets.ResolvePropertySlots(99));
+        Assert.Contains("test_model", unknownProperty.Message);
+
+        var unusedPropertyType = Assert.Throws<InvalidDataException>(
+            () => graph.PropertyTargets.ResolvePropertySlots("hull", "NiAlphaProperty"));
+        Assert.Contains("has no NiAlphaProperty to animate", unusedPropertyType.Message);
     }
 
     private static void AssertEqual(Vector3 expected, Vector3 actual)

@@ -12,11 +12,24 @@ public enum ImportedAnimationChannelType
     TranslationZ,
     Quaternion,
     Visibility,
+    TextureTranslateU,
+    TextureTranslateV,
+    TextureScaleU,
+    TextureScaleV,
+    TextureRotate,
+    MaterialAmbientColor,
+    MaterialDiffuseColor,
+    MaterialSpecularColor,
+    MaterialEmissiveColor,
+    MaterialAlpha,
 }
 
 /// <summary>
 /// One animation channel: target bone in the source skeleton, channel type, and keyframes with
-/// monotonically non-decreasing times whose value kind matches the channel type.
+/// monotonically non-decreasing times whose value kind matches the channel type. Direct-index and
+/// bone-name targets address bone channels (translation, rotation, visibility on a bone);
+/// sub-object names address visibility on a sub-object; material slots address UV and material
+/// color channels.
 /// </summary>
 public sealed class ImportedAnimationChannel
 {
@@ -78,6 +91,8 @@ public sealed class ImportedAnimationChannel
             throw new ArgumentException("A channel must have at least one keyframe.", nameof(keyframes));
         }
 
+        ValidateTargetKind(target, channelType);
+
         var expectedKind = ImportedKeyframe.GetExpectedKind(channelType);
 
         var copiedKeyframes = new ImportedKeyframe[keyframes.Count];
@@ -110,5 +125,59 @@ public sealed class ImportedAnimationChannel
         ChannelType = channelType;
         Keyframes = copiedKeyframes;
         Interpolation = interpolation;
+    }
+
+    private static void ValidateTargetKind(ImportedAnimationTarget target, ImportedAnimationChannelType channelType)
+    {
+        var wrongForKind = target.Kind switch
+        {
+            ImportedAnimationTargetKind.DirectIndex
+                when !IsBoneChannel(channelType) =>
+                $"Direct-index targets address bones; channel type {channelType} is a property channel.",
+
+            ImportedAnimationTargetKind.BoneName
+                when !IsBoneChannel(channelType) =>
+                $"Bone-name targets address bones; channel type {channelType} is a property channel.",
+
+            ImportedAnimationTargetKind.SubObjectName
+                when channelType != ImportedAnimationChannelType.Visibility =>
+                $"Sub-object targets address visibility; channel type {channelType} is not a visibility channel.",
+
+            ImportedAnimationTargetKind.MaterialSlot
+                when !IsMaterialChannel(channelType) =>
+                $"Material-slot targets address UV and material color channels; channel type {channelType} is a bone channel.",
+
+            _ => null,
+        };
+
+        if (wrongForKind is not null)
+        {
+            throw new ArgumentException(
+                $"Target kind {target.Kind} does not accept channel type {channelType}. {wrongForKind}",
+                nameof(target));
+        }
+    }
+
+    internal static bool IsBoneChannel(ImportedAnimationChannelType channelType)
+    {
+        return channelType is ImportedAnimationChannelType.TranslationX
+            or ImportedAnimationChannelType.TranslationY
+            or ImportedAnimationChannelType.TranslationZ
+            or ImportedAnimationChannelType.Quaternion
+            or ImportedAnimationChannelType.Visibility;
+    }
+
+    internal static bool IsMaterialChannel(ImportedAnimationChannelType channelType)
+    {
+        return channelType is ImportedAnimationChannelType.TextureTranslateU
+            or ImportedAnimationChannelType.TextureTranslateV
+            or ImportedAnimationChannelType.TextureScaleU
+            or ImportedAnimationChannelType.TextureScaleV
+            or ImportedAnimationChannelType.TextureRotate
+            or ImportedAnimationChannelType.MaterialAmbientColor
+            or ImportedAnimationChannelType.MaterialDiffuseColor
+            or ImportedAnimationChannelType.MaterialSpecularColor
+            or ImportedAnimationChannelType.MaterialEmissiveColor
+            or ImportedAnimationChannelType.MaterialAlpha;
     }
 }

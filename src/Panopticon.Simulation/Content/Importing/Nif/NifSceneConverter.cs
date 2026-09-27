@@ -32,7 +32,8 @@ internal static class NifSceneConverter
         var bones = new List<ImportedBone>();
         var subObjects = new List<ImportedSubObject>();
         var nodeToBoneIndex = new Dictionary<int, int>();
-        var skinnedShapes = new List<FileFormatsNif.NifTriShape>();
+        var skinnedShapes = new List<(int BlockIndex, FileFormatsNif.NifTriShape Shape)>();
+        var targets = new NifPropertyTargetMap(modelName);
 
         foreach (var root in file.Roots)
         {
@@ -42,14 +43,14 @@ internal static class NifSceneConverter
                     parentBoneIndex: -1,
                     relativeToBone: Matrix4x4.Identity,
                     insideScaledSubtree: false,
-                    bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
+                    bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
             }
         }
 
         if (skinnedShapes.Count > 0)
         {
             NifSkinConverter.ConvertSkinnedShapes(
-                file, modelName, skinnedShapes, nodeToBoneIndex, bones, subObjects, context);
+                file, modelName, skinnedShapes, nodeToBoneIndex, bones, subObjects, targets, context);
         }
 
         if (bones.Count == 0)
@@ -66,7 +67,8 @@ internal static class NifSceneConverter
 
         return new NifSceneGraph(
             new ImportedSkeleton(modelName, bones),
-            subObjects);
+            subObjects,
+            targets);
     }
 
     private static void Walk(
@@ -79,7 +81,8 @@ internal static class NifSceneConverter
         List<ImportedBone> bones,
         List<ImportedSubObject> subObjects,
         Dictionary<int, int> nodeToBoneIndex,
-        List<FileFormatsNif.NifTriShape> skinnedShapes,
+        List<(int BlockIndex, FileFormatsNif.NifTriShape Shape)> skinnedShapes,
+        NifPropertyTargetMap targets,
         string modelName,
         AssetImportContext context)
     {
@@ -93,7 +96,7 @@ internal static class NifSceneConverter
                 // vertex data is stored in skin space, so its node
                 // ancestors contribute nothing and no bone ancestor is
                 // required. Conversion waits for the full bone walk.
-                skinnedShapes.Add(shape);
+                skinnedShapes.Add((blockIndex, shape));
                 return;
             }
 
@@ -104,8 +107,8 @@ internal static class NifSceneConverter
             }
 
             subObjects.Add(ConvertShape(
-                file, shape, local * relativeToBone, parentBoneIndex,
-                subObjects.Count, modelName, context));
+                file, blockIndex, shape, local * relativeToBone, parentBoneIndex,
+                subObjects.Count, targets, modelName, context));
             return;
         }
 
@@ -121,6 +124,7 @@ internal static class NifSceneConverter
 
             var engineLocal = NifTransformConverter.CreateBoneLocalMatrix(avObject);
             nodeToBoneIndex.Add(blockIndex, childParentBoneIndex);
+            targets.RecordBone(blockIndex, avObject.Name);
             bones.Add(new ImportedBone(
                 avObject.Name,
                 parentBoneIndex,
@@ -142,7 +146,7 @@ internal static class NifSceneConverter
             // levels are dropped wholesale by contract.
             Descend(file, file.GetHighestDetailLodChild(lodNode),
                 childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
-                bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
+                bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
         }
         else if (file.Blocks[blockIndex] is FileFormatsNif.NifNode node)
         {
@@ -152,7 +156,7 @@ internal static class NifSceneConverter
                 {
                     Descend(file, child,
                         childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
-                        bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
+                        bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
                 }
             }
         }
@@ -167,7 +171,8 @@ internal static class NifSceneConverter
         List<ImportedBone> bones,
         List<ImportedSubObject> subObjects,
         Dictionary<int, int> nodeToBoneIndex,
-        List<FileFormatsNif.NifTriShape> skinnedShapes,
+        List<(int BlockIndex, FileFormatsNif.NifTriShape Shape)> skinnedShapes,
+        NifPropertyTargetMap targets,
         string modelName,
         AssetImportContext context)
     {
@@ -175,13 +180,40 @@ internal static class NifSceneConverter
         {
             Walk(file, childIndex, childAvObject,
                 parentBoneIndex, relativeToBone, insideScaledSubtree,
-                bones, subObjects, nodeToBoneIndex, skinnedShapes, modelName, context);
+                bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
         }
     }
 
     private static bool IsUnitScale(float scale)
     {
         return MathF.Abs(scale - 1.0f) <= UnitScaleTolerance;
+    }
+
+    /// <summary>
+    /// Some EE2 models ship shapes without stored normals; C1 requires one
+    /// normal per vertex, so face normals are accumulated per vertex.
+    /// </summary>
+    private static Vector3[] SynthesizeNormals(FileFormatsNif.NifTriShapeData data)
+    {
+        var normals = new Vector3[data.NumVertices];
+        foreach (var (v1, v2, v3) in data.Triangles)
+        {
+            var a = data.Vertices[v1];
+            var b = data.Vertices[v2];
+            var c = data.Vertices[v3];
+            var face = Vector3.Cross(b - a, c - a);
+            normals[v1] += face;
+            normals[v2] += face;
+            normals[v3] += face;
+        }
+
+        for (var i = 0; i < normals.Length; i++)
+        {
+            var normal = normals[i];
+            normals[i] = normal.LengthSquared() > 0f ? Vector3.Normalize(normal) : Vector3.UnitZ;
+        }
+
+        return normals;
     }
 
     private static Quaternion CanonicalRotation(Quaternion rotation)
@@ -192,10 +224,12 @@ internal static class NifSceneConverter
 
     private static ImportedSubObject ConvertShape(
         FileFormatsNif.NifFile file,
+        int shapeBlockIndex,
         FileFormatsNif.NifTriShape shape,
         Matrix4x4 relativeToParentBone,
         int parentBoneIndex,
         int subObjectIndex,
+        NifPropertyTargetMap targets,
         string modelName,
         AssetImportContext context)
     {
@@ -217,11 +251,12 @@ internal static class NifSceneConverter
         var reverseWinding = bakeDeterminant < 0;
 
         var vertexCount = data.NumVertices;
+        var sourceNormals = data.Normals ?? SynthesizeNormals(data);
         var vertices = new ImportedVertex[vertexCount];
         for (var i = 0; i < vertexCount; i++)
         {
             var position = NifTransformConverter.TransformPosition(data.Vertices[i], bake);
-            var normal = NifTransformConverter.TransformNormal(data.Normals![i], bake);
+            var normal = NifTransformConverter.TransformNormal(sourceNormals[i], bake);
             vertices[i] = new ImportedVertex(position, normal);
         }
 
@@ -250,7 +285,32 @@ internal static class NifSceneConverter
             materials: [material],
             meshParts: [meshPart]);
 
-        return CreateSubObject(modelName, shape.Name, subObjectIndex, parentBoneIndex, mesh);
+        var subObject = CreateSubObject(modelName, shape.Name, subObjectIndex, parentBoneIndex, mesh);
+        targets.RecordShape(
+            shapeBlockIndex, shape.Name, subObject.FullName, GatherShapePropertyTypes(file, shape));
+        return subObject;
+    }
+
+    /// <summary>
+    /// Collects a shape's property references as (block index, wire type
+    /// name) pairs for the property target map; non-property refs are
+    /// skipped.
+    /// </summary>
+    internal static List<(int PropertyIndex, string TypeName)> GatherShapePropertyTypes(
+        FileFormatsNif.NifFile file,
+        FileFormatsNif.NifTriShape shape)
+    {
+        var properties = new List<(int PropertyIndex, string TypeName)>();
+        foreach (var propertyReference in shape.PropertyReferences)
+        {
+            if (propertyReference >= 0 &&
+                file.Blocks[propertyReference] is FileFormatsNif.NifProperty)
+            {
+                properties.Add((propertyReference, file.Header.Blocks[propertyReference].TypeName));
+            }
+        }
+
+        return properties;
     }
 
     /// <summary>

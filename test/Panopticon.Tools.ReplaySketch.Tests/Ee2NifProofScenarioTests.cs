@@ -194,5 +194,97 @@ public sealed class Ee2NifProofScenarioTests
     public void ScenarioIsDispatchedByBuiltInScenario()
     {
         Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2NifProof));
+        Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2PropertyProof));
+    }
+
+    [Fact]
+    public void PropertyCapturePlanCoversAllFourFamilies()
+    {
+        var plan = Ee2NifProofScenario.PropertyCapturePlan;
+        Assert.Equal(5, plan.Length);
+        Assert.Equal("civ12_EIFV_egypt", plan[0].Key);
+        Assert.Equal("afb14_StealthFighterBomber", plan[1].Key);
+        Assert.Equal("faufish", plan[2].Key);
+        Assert.Equal("LHA10_siegegun", plan[3].Key);
+        Assert.Equal("bld_market8", plan[4].Key);
+        Assert.All(plan, entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
+    }
+
+    [Fact]
+    public void PropertyAnimatedCapturePlanCoversAllFourFamilies()
+    {
+        var plan = Ee2NifProofScenario.PropertyAnimatedCapturePlan;
+        Assert.Equal(8, plan.Length);
+
+        var expected = new[]
+        {
+            ("civ12_EIFV_egypt", "Graphics/Vehicles/civ12_EIFV_egypt_walk.kf", 0f),
+            ("civ12_EIFV_egypt", "Graphics/Vehicles/civ12_EIFV_egypt_walk.kf", 1f),
+            ("afb14_StealthFighterBomber", "Graphics/Vehicles/afb14_StealthFighterBomber_idle.kf", 0f),
+            ("afb14_StealthFighterBomber", "Graphics/Vehicles/afb14_StealthFighterBomber_idle.kf", 0.0333f),
+            ("faufish", "Graphics/Animals/sh_faufish_idle01.kf", 0f),
+            ("faufish", "Graphics/Animals/sh_faufish_idle01.kf", 1f),
+            ("faufish", "Graphics/Animals/sh_faufish_idle01.kf", 2f),
+            ("LHA10_siegegun", "Graphics/Vehicles/LHA10_siegegun_idle01.kf", 1f),
+        };
+
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].Item1, plan[i].ModelKey);
+            Assert.Equal(expected[i].Item2, plan[i].KfPath);
+            Assert.Equal(expected[i].Item3, plan[i].TimeSeconds);
+        }
+
+        Assert.All(plan, entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
+    }
+
+    [Fact]
+    public void PropertyCaptureFileNamesUseKfStemAndPaddedMilliseconds()
+    {
+        Assert.Equal(
+            "ee2-civ12_EIFV_egypt_walk_1000.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Vehicles/civ12_EIFV_egypt_walk.kf", 1f));
+        Assert.Equal(
+            "ee2-sh_faufish_idle01_0200.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Animals/sh_faufish_idle01.kf", 0.2f));
+        Assert.Equal(
+            "ee2-LHA10_siegegun_idle01_1000.png",
+            Ee2NifProofScenario.GetAnimatedCaptureFileName(
+                "Graphics/Vehicles/LHA10_siegegun_idle01.kf", 1f));
+    }
+
+    [Fact]
+    public void PropertyValidationGuideListsMarketBindLimitation()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "ee2-property-guide-test");
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            var captures = new List<(string FileName, string Check)>
+            {
+                ("ee2-bld_market8.png", "static market"),
+                ("ee2-sh_faufish_idle01_1000.png", "mid-fade fish"),
+            };
+
+            Ee2NifProofScenario.WriteValidationGuide(
+                directory,
+                captures,
+                title: "# EE2 property animation proof - validation guide",
+                preamble: new[] { "market_open_* targets exist in no cooked model" });
+
+            var guide = File.ReadAllText(Path.Combine(directory, "validation_guide.md"));
+            Assert.Contains("# EE2 property animation proof - validation guide", guide);
+            Assert.Contains("market_open_*", guide);
+            Assert.Contains("ee2-sh_faufish_idle01_1000.png", guide);
+            Assert.Contains("Deterministic repeat", guide);
+        }
+
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
     }
 }

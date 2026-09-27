@@ -122,6 +122,8 @@ public sealed record NifFile(
         {
             case "NiNode":
                 return NifNode.Read(reader);
+            case "NiBillboardNode":
+                return NifBillboardNode.Read(reader);
             case "NiStringExtraData":
                 return NifStringExtraData.Read(reader);
 
@@ -146,6 +148,8 @@ public sealed record NifFile(
                 return NifSpecularProperty.Read(reader);
             case "NiZBufferProperty":
                 return NifZBufferProperty.Read(reader);
+            case "NiStencilProperty":
+                return NifStencilProperty.Read(reader);
             case "NiVertexColorProperty":
                 return NifVertexColorProperty.Read(reader);
             case "NiLODNode":
@@ -162,6 +166,28 @@ public sealed record NifFile(
                 return NifKeyframeController.Read(reader);
             case "NiKeyframeData":
                 return NifKeyframeData.Read(reader);
+            case "NiVisController":
+                return NifVisController.Read(reader);
+            case "NiTextureTransformController":
+                return NifTextureTransformController.Read(reader);
+            case "NiMaterialColorController":
+                return NifMaterialColorController.Read(reader);
+            case "NiAlphaController":
+                return NifAlphaController.Read(reader);
+            case "NiVisData":
+                return NifVisData.Read(reader);
+            case "NiBoolData":
+                return NifBoolData.Read(reader);
+            case "NiFloatData":
+                return NifFloatData.Read(reader);
+            case "NiPosData":
+                return NifPosData.Read(reader);
+            case "NiUVData":
+                return NifUVData.Read(reader);
+            case "NiGeomMorpherController":
+                return NifGeomMorpherController.Read(reader);
+            case "NiMorphData":
+                return NifMorphData.Read(reader);
             case "NiSkinInstance":
                 return NifSkinInstance.Read(reader);
             case "NiSkinData":
@@ -192,6 +218,69 @@ public sealed record NifFile(
             }
         }
 
+        void ValidateControllerData(int owner, NifTimeController controller)
+        {
+            int data;
+            string expected;
+            bool matches;
+            switch (controller)
+            {
+                case NifKeyframeController keyframe:
+                    data = keyframe.DataReference;
+                    expected = "data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifKeyframeData;
+                    break;
+
+                case NifVisController vis:
+                    data = vis.DataReference;
+                    expected = "visibility data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifVisData or NifBoolData;
+                    break;
+
+                case NifAlphaController alpha:
+                    data = alpha.DataReference;
+                    expected = "float data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifFloatData;
+                    break;
+
+                case NifTextureTransformController textureTransform:
+                    data = textureTransform.DataReference;
+                    expected = "float data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifFloatData;
+                    break;
+
+                case NifMaterialColorController materialColor:
+                    data = materialColor.DataReference;
+                    expected = "position data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifPosData;
+                    break;
+
+                case NifGeomMorpherController morpher:
+                    data = morpher.DataReference;
+                    expected = "morph data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifMorphData;
+                    break;
+
+                default:
+                    return;
+            }
+
+            ValidateReference(data, owner, "Data");
+            if (data >= 0 && !matches)
+            {
+                if (controller is NifKeyframeController)
+                {
+                    throw new InvalidDataException(
+                        $"NIF keyframe controller block {owner} references block " +
+                        $"{data} as data, but that block is a {blocks[data].GetType().Name}.");
+                }
+
+                throw new InvalidDataException(
+                    $"NIF {controller.GetType().Name} block {owner} references block " +
+                    $"{data} as {expected}, but that block is a {blocks[data].GetType().Name}.");
+            }
+        }
+
         for (var i = 0; i < blocks.Length; i++)
         {
             switch (blocks[i])
@@ -200,7 +289,7 @@ public sealed record NifFile(
                     foreach (var extra in netBlock.ExtraDataReferences)
                     {
                         ValidateReference(extra, i, "ExtraData");
-                        if (extra >= 0 && blocks[extra] is not (NifStringExtraData or NifIntegerExtraData or NifBooleanExtraData))
+                        if (extra >= 0 && blocks[extra] is not (NifStringExtraData or NifIntegerExtraData or NifBooleanExtraData or NifTextKeyExtraData))
                         {
                             throw new InvalidDataException(
                                 $"NIF block {i} references block {extra} as extra data, " +
@@ -335,7 +424,7 @@ public sealed record NifFile(
                         var controlled = sequence.ControlledBlocks[j];
                         ValidateReference(controlled.ControllerReference, i, $"ControlledBlocks[{j}].Controller");
                         if (controlled.ControllerReference >= 0 &&
-                            blocks[controlled.ControllerReference] is not NifKeyframeController)
+                            blocks[controlled.ControllerReference] is not NifTimeController)
                         {
                             throw new InvalidDataException(
                                 $"NIF controller sequence block {i} references block " +
@@ -346,19 +435,10 @@ public sealed record NifFile(
 
                     break;
 
-                case NifKeyframeController keyframeController:
-                    ValidateReference(keyframeController.NextControllerReference, i, "NextController");
-                    ValidateReference(keyframeController.TargetReference, i, "Target");
-                    ValidateReference(keyframeController.DataReference, i, "Data");
-                    if (keyframeController.DataReference >= 0 &&
-                        blocks[keyframeController.DataReference] is not NifKeyframeData)
-                    {
-                        throw new InvalidDataException(
-                            $"NIF keyframe controller block {i} references block " +
-                            $"{keyframeController.DataReference} as data, but that block is a " +
-                            $"{blocks[keyframeController.DataReference].GetType().Name}.");
-                    }
-
+                case NifTimeController controller:
+                    ValidateReference(controller.NextControllerReference, i, "NextController");
+                    ValidateReference(controller.TargetReference, i, "Target");
+                    ValidateControllerData(i, controller);
                     break;
 
                 case NifSkinInstance skinInstance:

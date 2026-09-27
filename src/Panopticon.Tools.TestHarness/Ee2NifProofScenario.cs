@@ -28,6 +28,9 @@ namespace Panopticon.Tools.TestHarness;
 /// walk/attack/death captures. Fixed-function diffuse renders with
 /// texture-stage count zero; source texture names stay in the imported
 /// descriptors. No EE2 asset is copied or committed.
+/// C4e adds Ee2PropertyProof: the same pipeline with property channels
+/// (visibility, texture transform, material color, alpha) sampled at fixed
+/// times through CreateAnimationInstance.
 /// </summary>
 internal static class Ee2NifProofScenario
 {
@@ -96,6 +99,62 @@ internal static class Ee2NifProofScenario
             "end of the death fall: the Druid collapsed toward the ground, limbs folded, mesh intact (no detached or exploded triangles)"),
     ];
 
+    /// <summary>
+    /// C4e property proof plan: one static baseline per family model plus
+    /// animated frames at the fixed sample times asserted by
+    /// Ee2NifPropertyAnimationTests. The market open/close clips cannot bind:
+    /// their target node names exist in no cooked model, so the market entry
+    /// covers the embedded static state only (the bind failure is asserted by
+    /// the interactive tests).
+    /// </summary>
+    public static readonly (string Key, string Check)[] PropertyCapturePlan =
+    [
+        ("civ12_EIFV_egypt",
+            "Egyptian EIFV: complete vehicle with treads; static baseline shows the tread texture at " +
+            "its unanimated UV offset for comparison with the walk frames"),
+        ("afb14_StealthFighterBomber",
+            "Stealth Fighter Bomber: static baseline renders the model's own material colors; the " +
+            "idle frames apply the animated ambient (1,1,1) and specular (0,0,0) overrides per slot"),
+        ("faufish",
+            "Resource fish: static baseline with no alpha animation applied (solid fish)"),
+        ("LHA10_siegegun",
+            "Siege gun: static baseline with the base sub-object (Editable Mesh_LOD0 under bone " +
+            "'base') visible; the idle frame at 1 s hides it"),
+        ("bld_market8",
+            "Market 8: static model with Object04 visible; the open/close .kf clips do not bind " +
+            "because their market_open_* node names exist in no cooked model"),
+    ];
+
+    public static readonly (string ModelKey, string KfPath, float TimeSeconds, string Check)[] PropertyAnimatedCapturePlan =
+    [
+        ("civ12_EIFV_egypt", "Graphics/Vehicles/civ12_EIFV_egypt_walk.kf", 0f,
+            "tread UV offset at 0: texture aligned with the static baseline"),
+        ("civ12_EIFV_egypt", "Graphics/Vehicles/civ12_EIFV_egypt_walk.kf", 1f,
+            "tread UV offset at 1.5 after the 1 s walk clip: the tread strip shows a measurable pixel " +
+            "delta against 0000; the fine-grained tread pattern wraps over 1.5 units, so the check is " +
+            "the diff plus the sampled state (Ee2NifPropertyAnimationTests), not a large visual slide"),
+        ("afb14_StealthFighterBomber", "Graphics/Vehicles/afb14_StealthFighterBomber_idle.kf", 0f,
+            "idle clip at time 0: ambient color overridden to (1,1,1) and specular to (0,0,0) on " +
+            "every material slot; airframe otherwise identical to the static baseline"),
+        ("afb14_StealthFighterBomber", "Graphics/Vehicles/afb14_StealthFighterBomber_idle.kf", 0.0333f,
+            "idle clip at its final key: same material color state as 0000 (both keys hold the " +
+            "same values), rendering identically"),
+        ("faufish", "Graphics/Animals/sh_faufish_idle01.kf", 0f,
+            "alpha fade at 0 s: the eight animated Plane sub-objects sample alpha 0 and render " +
+            "invisible; the packed school of un-animated fish covers nearly the same pixels, so the " +
+            "visible delta vs the static baseline is small and appears only where the animated fish " +
+            "protrude from the pack"),
+        ("faufish", "Graphics/Animals/sh_faufish_idle01.kf", 1f,
+            "alpha fade at 1 s: planes sample mid-fade alphas (0 to 1 per slot); faint translucent " +
+            "plane detail appears over the body, differing from both 0000 and 2000"),
+        ("faufish", "Graphics/Animals/sh_faufish_idle01.kf", 2f,
+            "alpha fade at 2 s: most planes near-opaque (up to 1) with two fully transparent; clearly " +
+            "more plane detail than 0000 and stronger than 1000"),
+        ("LHA10_siegegun", "Graphics/Vehicles/LHA10_siegegun_idle01.kf", 1f,
+            "visibility toggle at 1 s: the 'base' bone hides, removing the Editable Mesh_LOD0 " +
+            "sub-object from the render; every other part unchanged from the static baseline"),
+    ];
+
     internal static string GetAnimatedCaptureFileName(string kfPath, float timeSeconds)
     {
         var stem = Path.GetFileNameWithoutExtension(kfPath);
@@ -104,6 +163,47 @@ internal static class Ee2NifProofScenario
     }
 
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
+    {
+        return RunCore(
+            installation,
+            config,
+            reporter,
+            "ee2-nif-proof",
+            CapturePlan,
+            AnimatedCapturePlan,
+            guideTitle: null,
+            guidePreamble: null);
+    }
+
+    public static int RunPropertyProof(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
+    {
+        return RunCore(
+            installation,
+            config,
+            reporter,
+            "ee2-property-proof",
+            PropertyCapturePlan,
+            PropertyAnimatedCapturePlan,
+            guideTitle: "# EE2 property animation proof - validation guide",
+            guidePreamble:
+            [
+                "Every capture comes from the same import pipeline as ee2-nif-proof; animated frames",
+                "add C4e property channels (visibility, texture transform, material color, material",
+                "alpha) sampled at fixed clip times through CreateAnimationInstance. The market",
+                "open/close clips do not bind: their market_open_* targets exist in no cooked model,",
+                "which the interactive tests assert as the documented InvalidDataException.",
+            ]);
+    }
+
+    private static int RunCore(
+        GameInstallation installation,
+        TestHarnessConfig config,
+        ITestHarnessReporter reporter,
+        string outputDirectory,
+        (string Key, string Check)[] capturePlan,
+        (string ModelKey, string KfPath, float TimeSeconds, string Check)[] animatedPlan,
+        string? guideTitle,
+        string[]? guidePreamble)
     {
         var ee2Root = Environment.GetEnvironmentVariable("EMPIRE_EARTH_II_PATH");
         if (string.IsNullOrEmpty(ee2Root))
@@ -126,7 +226,6 @@ internal static class Ee2NifProofScenario
             return 1;
         }
 
-        var outputDirectory = "ee2-nif-proof";
         Directory.CreateDirectory(outputDirectory);
 
         using var game = new Game(
@@ -154,7 +253,7 @@ internal static class Ee2NifProofScenario
 
         var captures = new List<(string FileName, string Check)>();
 
-        foreach (var (key, check) in CapturePlan)
+        foreach (var (key, check) in capturePlan)
         {
             var imported = importer.ImportModel(key, importContext)
                 ?? throw new InvalidOperationException($"EE2 import returned null for '{key}'.");
@@ -197,13 +296,28 @@ internal static class Ee2NifProofScenario
             captures.Add((outputName, check));
             reporter.Info($"Captured {outputName}");
 
-            foreach (var (_, kfPath, timeSeconds, animatedCheck) in AnimatedCapturePlan.Where(e => e.ModelKey == key))
+            foreach (var (_, kfPath, timeSeconds, animatedCheck) in animatedPlan.Where(e => e.ModelKey == key))
             {
                 var importedAnimation = animationImporter.ImportAnimation($"{key}#kf={kfPath}", importContext)
                     ?? throw new InvalidOperationException($"EE2 animation import returned null for '{key}#kf={kfPath}'.");
                 var animation = ImportedAnimationMaterializer.Materialize(importedAnimation);
 
                 var animatedName = GetAnimatedCaptureFileName(kfPath, timeSeconds);
+
+                // Property animation can select pipeline variants the static
+                // warm-up never exercises (for example the blend pass forced
+                // by a sampled alpha), so warm each pose once too.
+                StandaloneModelCapture.Capture(
+                    game,
+                    model,
+                    loadContext,
+                    Path.Combine(Path.GetTempPath(), $"ee2-nif-proof-warmup-{animatedName}"),
+                    new Size(CaptureSize, CaptureSize),
+                    configureInstance: instance => PlayToTime(instance, animation, timeSeconds),
+                    worldMatrix: System.Numerics.Matrix4x4.CreateRotationZ(CaptureYawRadians),
+                    options: new StandaloneCaptureOptions(
+                        Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f)));
+
                 StandaloneModelCapture.Capture(
                     game,
                     model,
@@ -220,7 +334,7 @@ internal static class Ee2NifProofScenario
             }
         }
 
-        WriteValidationGuide(outputDirectory, captures);
+        WriteValidationGuide(outputDirectory, captures, guideTitle, guidePreamble);
         reporter.Info($"Validation guide: {Path.GetFullPath(Path.Combine(outputDirectory, "validation_guide.md"))}");
 
         return 0;
@@ -287,11 +401,25 @@ internal static class Ee2NifProofScenario
         public float NextSingle(float lo, float hi) => lo;
     }
 
-    internal static void WriteValidationGuide(string outputDirectory, List<(string FileName, string Check)> captures)
+    internal static void WriteValidationGuide(
+        string outputDirectory,
+        List<(string FileName, string Check)> captures,
+        string? title = null,
+        string[]? preamble = null)
     {
         using var writer = new StreamWriter(Path.Combine(outputDirectory, "validation_guide.md"));
-        writer.WriteLine("# EE2 NIF proof - validation guide");
+        writer.WriteLine(title ?? "# EE2 NIF proof - validation guide");
         writer.WriteLine();
+        if (preamble != null)
+        {
+            foreach (var line in preamble)
+            {
+                writer.WriteLine(line);
+            }
+
+            writer.WriteLine();
+        }
+
         writer.WriteLine("Every capture comes from ZipFileSystem(graphics.zip + textures.zip) ->");
         writer.WriteLine("NifModelImporter -> texcache decode -> ImportedModelMaterializer -> runtime");
         writer.WriteLine("Model -> StandaloneModelCapture. The cooked DXT mips upload block-for-block");

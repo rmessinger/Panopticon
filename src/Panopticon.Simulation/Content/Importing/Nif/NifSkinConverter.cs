@@ -26,16 +26,17 @@ internal static class NifSkinConverter
     internal static void ConvertSkinnedShapes(
         FileFormatsNif.NifFile file,
         string modelName,
-        IReadOnlyList<FileFormatsNif.NifTriShape> shapes,
+        IReadOnlyList<(int BlockIndex, FileFormatsNif.NifTriShape Shape)> shapes,
         Dictionary<int, int> nodeToBoneIndex,
         List<ImportedBone> bones,
         List<ImportedSubObject> subObjects,
+        NifPropertyTargetMap targets,
         AssetImportContext context)
     {
         // Bones shared by shapes get one inverse bind; disagreements fail.
         var inverseBinds = new Dictionary<int, Matrix4x4>();
 
-        foreach (var shape in shapes)
+        foreach (var (shapeBlockIndex, shape) in shapes)
         {
             var instance = (FileFormatsNif.NifSkinInstance)file.Blocks[shape.SkinInstanceReference];
             var skinData = (FileFormatsNif.NifSkinData)file.Blocks[instance.DataReference];
@@ -110,8 +111,12 @@ internal static class NifSkinConverter
                 }
             }
 
-            subObjects.Add(ConvertShape(
-                file, shape, data, inverseSkin, influences, subObjects.Count, modelName, context));
+            var subObject = ConvertShape(
+                file, shape, data, inverseSkin, influences, subObjects.Count, modelName, context);
+            subObjects.Add(subObject);
+            targets.RecordShape(
+                shapeBlockIndex, shape.Name, subObject.FullName,
+                NifSceneConverter.GatherShapePropertyTypes(file, shape));
         }
 
         for (var i = 0; i < bones.Count; i++)
@@ -222,6 +227,12 @@ internal static class NifSkinConverter
         FileFormatsNif.NifTriShapeData data,
         Matrix4x4 bake)
     {
+        if (data.Normals is null)
+        {
+            throw new NotSupportedException(
+                $"NIF shape '{shape.Name}' is skinned but has no stored normals; skinned normal synthesis is not supported.");
+        }
+
         var influences = new List<(int BoneIndex, float Weight)>();
         var sum = 0.0f;
         foreach (var influence in rawInfluences)

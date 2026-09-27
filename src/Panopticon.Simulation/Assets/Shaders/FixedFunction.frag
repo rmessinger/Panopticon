@@ -224,6 +224,34 @@ vec4 SampleTexture(
     return texture(sampler2D(diffuseTexture, Sampler), uv);
 }
 
+const uint MATERIAL_OVERRIDE_ALPHA = 16u;
+const uint MATERIAL_OVERRIDE_UV_TRANSLATE = 32u;
+const uint MATERIAL_OVERRIDE_UV_SCALE = 64u;
+const uint MATERIAL_OVERRIDE_UV_ROTATE = 128u;
+
+vec2 ApplyUvOverride(vec2 uv)
+{
+    if ((_RenderItemConstantsPS.OverrideFlags & MATERIAL_OVERRIDE_UV_TRANSLATE) != 0u)
+    {
+        uv += _RenderItemConstantsPS.UvTranslate.xy;
+    }
+
+    if ((_RenderItemConstantsPS.OverrideFlags & MATERIAL_OVERRIDE_UV_SCALE) != 0u)
+    {
+        uv = (uv - vec2(0.5, 0.5)) * _RenderItemConstantsPS.UvScale.xy + vec2(0.5, 0.5);
+    }
+
+    if ((_RenderItemConstantsPS.OverrideFlags & MATERIAL_OVERRIDE_UV_ROTATE) != 0u)
+    {
+        float s = sin(_RenderItemConstantsPS.UvRotate.x);
+        float c = cos(_RenderItemConstantsPS.UvRotate.x);
+        vec2 d = uv - vec2(0.5, 0.5);
+        uv = vec2(c * d.x - s * d.y, s * d.x + c * d.y) + vec2(0.5, 0.5);
+    }
+
+    return uv;
+}
+
 void main()
 {
     float nDotL = saturate(dot(in_WorldNormal, -_GlobalLightingConstantsPS.Object.Lights[0].Direction));
@@ -236,10 +264,32 @@ void main()
 
     vec3 materialAmbientColor = _MaterialConstants.Material.Ambient;
     vec3 materialDiffuseColor = _MaterialConstants.Material.Diffuse;
+    vec3 materialSpecularColor = _MaterialConstants.Material.Specular;
+    vec3 materialEmissiveColor = _MaterialConstants.Material.Emissive;
     if (_MeshConstants.HasHouseColor)
     {
         materialAmbientColor = _RenderItemConstantsPS.HouseColor;
         materialDiffuseColor = _RenderItemConstantsPS.HouseColor;
+    }
+
+    if (_RenderItemConstantsPS.AmbientOverride.w > 0.0)
+    {
+        materialAmbientColor = _RenderItemConstantsPS.AmbientOverride.xyz;
+    }
+
+    if (_RenderItemConstantsPS.DiffuseOverride.w > 0.0)
+    {
+        materialDiffuseColor = _RenderItemConstantsPS.DiffuseOverride.xyz;
+    }
+
+    if (_RenderItemConstantsPS.SpecularOverride.w > 0.0)
+    {
+        materialSpecularColor = _RenderItemConstantsPS.SpecularOverride.xyz;
+    }
+
+    if (_RenderItemConstantsPS.EmissiveOverride.w > 0.0)
+    {
+        materialEmissiveColor = _RenderItemConstantsPS.EmissiveOverride.xyz;
     }
 
     vec3 diffuseColor;
@@ -251,7 +301,7 @@ void main()
         in_WorldNormal,
         materialAmbientColor,
         materialDiffuseColor,
-        _MaterialConstants.Material.Specular,
+        materialSpecularColor,
         _MaterialConstants.Material.Shininess,
         true,
         shadowVisibility,
@@ -264,7 +314,7 @@ void main()
         vec3 v = CalculateViewVector(in_WorldPosition);
 
         diffuseTextureColor = SampleTexture(
-            in_WorldNormal, in_UV0, gl_FragCoord.xy,
+            in_WorldNormal, ApplyUvOverride(in_UV0), gl_FragCoord.xy,
             _MaterialConstants.Material.TextureMappingStage0,
             Texture0,
             v);
@@ -340,7 +390,7 @@ void main()
         diffuseTextureColor = vec4(1, 1, 1, 1);
     }
     
-    vec3 totalObjectLighting = saturate(diffuseColor + _MaterialConstants.Material.Emissive);
+    vec3 totalObjectLighting = saturate(diffuseColor + materialEmissiveColor);
 
     vec3 objectColor = diffuseTextureColor.xyz;
 
@@ -366,7 +416,13 @@ void main()
 
     vec3 cloudColor = GetCloudColor(in_CloudUV);
 
+    float materialOpacity = _MaterialConstants.Material.Opacity;
+    if ((_RenderItemConstantsPS.OverrideFlags & MATERIAL_OVERRIDE_ALPHA) != 0u)
+    {
+        materialOpacity = _RenderItemConstantsPS.MaterialOpacity;
+    }
+
     out_Color = vec4(
         objectColor * cloudColor * _RenderItemConstantsPS.TintColor,
-        _MaterialConstants.Material.Opacity * diffuseTextureColor.w * _RenderItemConstantsPS.Opacity);
+        materialOpacity * diffuseTextureColor.w * _RenderItemConstantsPS.Opacity);
 }

@@ -54,16 +54,14 @@ public abstract record NifGeometryData : NifBlock
         }
 
         var hasNormals = reader.ReadByte("HasNormals");
-        if (hasNormals == 0)
+        Vector3[]? normals = null;
+        if (hasNormals != 0)
         {
-            throw new NotSupportedException(
-                $"NIF geometry data has no normals; C1 requires one normal per vertex.");
-        }
-
-        var normals = new Vector3[NumVertices];
-        for (var i = 0; i < NumVertices; i++)
-        {
-            normals[i] = reader.ReadVector3($"Normals[{i}]");
+            normals = new Vector3[NumVertices];
+            for (var i = 0; i < NumVertices; i++)
+            {
+                normals[i] = reader.ReadVector3($"Normals[{i}]");
+            }
         }
 
         Normals = normals;

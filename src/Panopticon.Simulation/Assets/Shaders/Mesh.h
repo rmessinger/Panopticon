@@ -39,6 +39,16 @@ struct RenderItemConstantsPSType
     float Opacity;
     vec3 TintColor;
     float _Padding;
+    vec4 AmbientOverride;   // xyz color, w = 1 replaces material ambient
+    vec4 DiffuseOverride;   // xyz color, w = 1 replaces material diffuse
+    vec4 SpecularOverride;  // xyz color, w = 1 replaces material specular
+    vec4 EmissiveOverride;  // xyz color, w = 1 replaces material emissive
+    vec4 UvTranslate;       // xy offset in texture units
+    vec4 UvScale;           // xy scale about (0.5, 0.5)
+    vec4 UvRotate;          // x rotation in radians about (0.5, 0.5)
+    float MaterialOpacity;  // replaces material opacity when OverrideFlags.Alpha
+    uint OverrideFlags;
+    vec2 _Padding2;
 };
 
 layout(set = RENDER_ITEM_CONSTANTS_RESOURCE_SET, binding = 0) uniform MeshConstants
