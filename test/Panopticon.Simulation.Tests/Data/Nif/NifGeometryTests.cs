@@ -94,10 +94,12 @@ public sealed class NifGeometryTests
     }
 
     [Fact]
-    public void VertexColorsEnabledFailsWithNotSupported()
+    public void VertexColorsAreConsumedAndIgnored()
     {
-        var geometry = NifTestGeometry.GeometryData(numVertices: 3, hasColors: true);
-        Assert.Throws<NotSupportedException>(() => Read(ShapeBuilder(geometry).Build()));
+        var data = (NifTriShapeData)Read(ShapeBuilder(
+            NifTestGeometry.GeometryData(numVertices: 3, hasColors: true)).Build()).Blocks[2];
+        Assert.Equal(3, data.NumVertices);
+        Assert.Single(data.UvSets);
     }
 
     [Fact]

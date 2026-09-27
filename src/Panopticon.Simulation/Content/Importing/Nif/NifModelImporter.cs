@@ -64,7 +64,7 @@ internal sealed class NifModelImporter : IModelImporter
             return null;
         }
 
-        return NifSceneConverter.ConvertGraph(file, name, context).Skeleton;
+        return NifSceneConverter.ConvertGraph(file, name, context, convertMeshes: false).Skeleton;
     }
 
     internal static FileFormats.Nif.NifFile? ReadNifFile(string name, AssetImportContext context)

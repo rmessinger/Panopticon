@@ -65,7 +65,8 @@ internal sealed class NifAnimationImporter : IAnimationImporter
         var graph = NifSceneConverter.ConvertGraph(
             modelFile,
             animationKey.ModelName,
-            context);
+            context,
+            convertMeshes: false);
 
         return NifAnimationConverter.Convert(
             kfFile,

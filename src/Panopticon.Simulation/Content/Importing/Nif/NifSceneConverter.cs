@@ -30,7 +30,8 @@ internal static class NifSceneConverter
     internal static NifSceneGraph ConvertGraph(
         FileFormatsNif.NifFile file,
         string modelName,
-        AssetImportContext context)
+        AssetImportContext context,
+        bool convertMeshes = true)
     {
         var bones = new List<ImportedBone>();
         var subObjects = new List<ImportedSubObject>();
@@ -38,6 +39,7 @@ internal static class NifSceneConverter
         var skinnedShapes = new List<(int BlockIndex, FileFormatsNif.NifTriShape Shape)>();
         var targets = new NifPropertyTargetMap(modelName);
         var collapsedScaleNodes = new Dictionary<string, float>();
+        var shapeNames = new List<string>();
 
         foreach (var root in file.Roots)
         {
@@ -48,11 +50,11 @@ internal static class NifSceneConverter
                     relativeToBone: Matrix4x4.Identity,
                     insideScaledSubtree: false,
                     bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                    collapsedScaleNodes, modelName, context);
+                    collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
             }
         }
 
-        if (skinnedShapes.Count > 0)
+        if (convertMeshes && skinnedShapes.Count > 0)
         {
             NifSkinConverter.ConvertSkinnedShapes(
                 file, modelName, skinnedShapes, nodeToBoneIndex, bones, subObjects, targets, context);
@@ -64,7 +66,7 @@ internal static class NifSceneConverter
                 $"NIF model '{modelName}' contains no node with a usable rest scale to use as a bone.");
         }
 
-        if (subObjects.Count == 0)
+        if (convertMeshes && subObjects.Count == 0)
         {
             throw new InvalidDataException(
                 $"NIF model '{modelName}' contains no convertible geometry.");
@@ -91,7 +93,9 @@ internal static class NifSceneConverter
         NifPropertyTargetMap targets,
         Dictionary<string, float> collapsedScaleNodes,
         string modelName,
-        AssetImportContext context)
+        AssetImportContext context,
+        bool convertMeshes,
+        List<string> shapeNames)
     {
         var hasValidRestScale = IsValidRestScale(avObject.Scale);
 
@@ -104,6 +108,19 @@ internal static class NifSceneConverter
 
         if (file.Blocks[blockIndex] is FileFormatsNif.NifTriShape shape)
         {
+            if (!convertMeshes)
+            {
+                // Skeleton-only walks (KF import, ImportSkeleton) need the
+                // property target map but no mesh conversion, so animation
+                // contracts never depend on shape convertibility.
+                var displayName = shape.Name.Length == 0 ? $"Shape{shapeNames.Count}" : shape.Name;
+                targets.RecordShape(
+                    blockIndex, shape.Name, $"{modelName}.{shapeNames.Count}.{displayName}",
+                    GatherShapePropertyTypes(file, shape));
+                shapeNames.Add(displayName);
+                return;
+            }
+
             if (shape.SkinInstanceReference >= 0)
             {
                 // Skinning is authoritative for placement: the shape's
@@ -170,7 +187,7 @@ internal static class NifSceneConverter
             Descend(file, file.GetHighestDetailLodChild(lodNode),
                 childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
                 bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                collapsedScaleNodes, modelName, context);
+                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
         }
         else if (file.Blocks[blockIndex] is FileFormatsNif.NifNode node)
         {
@@ -181,7 +198,7 @@ internal static class NifSceneConverter
                     Descend(file, child,
                         childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
                         bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                        collapsedScaleNodes, modelName, context);
+                        collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
                 }
             }
         }
@@ -200,14 +217,16 @@ internal static class NifSceneConverter
         NifPropertyTargetMap targets,
         Dictionary<string, float> collapsedScaleNodes,
         string modelName,
-        AssetImportContext context)
+        AssetImportContext context,
+        bool convertMeshes,
+        List<string> shapeNames)
     {
         if (file.Blocks[childIndex] is FileFormatsNif.NifAvObject childAvObject)
         {
             Walk(file, childIndex, childAvObject,
                 parentBoneIndex, relativeToBone, insideScaledSubtree,
                 bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                collapsedScaleNodes, modelName, context);
+                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
         }
     }
 

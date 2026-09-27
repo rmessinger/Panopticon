@@ -427,6 +427,16 @@ public static class NifTestGeometry
         NifTestBlocks.WriteVector3(body, boundCenter);
         body.WriteSingle(boundRadius);
         body.WriteByte((byte)(hasColors ? 1 : 0));
+        if (hasColors)
+        {
+            for (var i = 0; i < numVertices; i++)
+            {
+                body.WriteSingle(1.0f);
+                body.WriteSingle(1.0f);
+                body.WriteSingle(1.0f);
+                body.WriteSingle(1.0f);
+            }
+        }
         var numUvSets = dataFlags & 0x3F;
         for (var set = 0; set < numUvSets; set++)
         {
