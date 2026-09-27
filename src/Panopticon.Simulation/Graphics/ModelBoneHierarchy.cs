@@ -40,7 +40,8 @@ public sealed class ModelBoneHierarchy : BaseAsset
                 parent,
                 importedBone.BindTranslation,
                 importedBone.BindRotation,
-                importedBone.InverseBindMatrix);
+                importedBone.InverseBindMatrix,
+                importedBone.BindScale);
         }
     }
 }

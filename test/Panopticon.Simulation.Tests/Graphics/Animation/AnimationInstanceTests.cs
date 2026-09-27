@@ -353,6 +353,69 @@ public class AnimationInstanceTests
         Assert.Equal(1.5f, modelBoneInstances[0].AnimatedOffset.Translation.X, 3);
     }
 
+    [Fact]
+    public void ScaleChannel_InterpolatesLinearly()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = NewStepAnimation(AnimationClipType.Scale, AnimationInterpolation.Linear);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(0.5f, modelBoneInstances[0].AnimatedOffset.Scale, 3);
+
+        instance.Update(Step(1.0f));
+        Assert.Equal(1.5f, modelBoneInstances[0].AnimatedOffset.Scale, 3);
+    }
+
+    [Fact]
+    public void ScaleChannel_StepHoldsValueBetweenKeys()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = NewStepAnimation(AnimationClipType.Scale);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(0, modelBoneInstances[0].AnimatedOffset.Scale);
+
+        instance.Update(Step(0.5f));
+        Assert.Equal(1, modelBoneInstances[0].AnimatedOffset.Scale);
+
+        instance.Update(Step(0.75f));
+        Assert.Equal(1, modelBoneInstances[0].AnimatedOffset.Scale);
+    }
+
+    [Fact]
+    public void ScaleChannel_ResetsToUnitOnReplay()
+    {
+        var modelBoneInstances = NewDefaultModelBoneInstances();
+        var animation = new ModelAnimation(string.Empty, TimeSpan.FromSeconds(2),
+        [
+            new ModelAnimationChannel(
+                ModelAnimationTarget.CreateDirectIndex(0),
+                AnimationClipType.Scale,
+                new[]
+                {
+                    new Keyframe(TimeSpan.FromSeconds(0), new KeyframeValue { FloatValue = 2.0f }),
+                    new Keyframe(TimeSpan.FromSeconds(2), new KeyframeValue { FloatValue = 3.0f }),
+                },
+                AnimationInterpolation.Linear),
+        ]);
+
+        var instance = CreateInstance(modelBoneInstances, animation, AnimationMode.Once, AnimationFlags.StartFrameFirst);
+        instance.Play();
+
+        instance.Update(Step(1.0f));
+        Assert.Equal(2.5f, modelBoneInstances[0].AnimatedOffset.Scale);
+
+        instance.Stop();
+        instance.Play();
+        Assert.Equal(1.0f, modelBoneInstances[0].AnimatedOffset.Scale);
+    }
+
     private static TimeInterval Step(float deltaSeconds)
     {
         return new TimeInterval(TimeSpan.Zero, TimeSpan.FromSeconds(deltaSeconds));

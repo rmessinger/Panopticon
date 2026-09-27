@@ -29,6 +29,7 @@ internal static class ImportedAnimationMaterializer
             ImportedAnimationChannelType.TranslationY => AnimationClipType.TranslationY,
             ImportedAnimationChannelType.TranslationZ => AnimationClipType.TranslationZ,
             ImportedAnimationChannelType.Quaternion => AnimationClipType.Quaternion,
+            ImportedAnimationChannelType.Scale => AnimationClipType.Scale,
             ImportedAnimationChannelType.Visibility => AnimationClipType.Visibility,
             ImportedAnimationChannelType.TextureTranslateU => AnimationClipType.TextureTranslateU,
             ImportedAnimationChannelType.TextureTranslateV => AnimationClipType.TextureTranslateV,

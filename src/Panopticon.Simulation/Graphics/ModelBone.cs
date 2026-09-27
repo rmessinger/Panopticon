@@ -22,13 +22,14 @@ public sealed class ModelBone
         ModelBone parent,
         in Vector3 translation,
         in Quaternion rotation,
-        in Matrix4x4 inverseBindMatrix)
+        in Matrix4x4 inverseBindMatrix,
+        float scale = 1.0f)
     {
         Index = index;
         Name = name;
         Parent = parent;
 
-        Transform = new Transform(translation, rotation);
+        Transform = new Transform(translation, rotation, scale);
         InverseBindMatrix = inverseBindMatrix;
     }
 }
