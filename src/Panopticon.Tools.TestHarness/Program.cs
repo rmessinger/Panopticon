@@ -253,6 +253,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.Ee2ScaleProof)
+        {
+            Environment.ExitCode = Ee2NifProofScenario.RunScaleProof(installation, config, reporter);
+            return;
+        }
+
         var plan = ScenarioBuilder.BuildReplayRun(installation, config, reporter);
         if (plan == null)
         {

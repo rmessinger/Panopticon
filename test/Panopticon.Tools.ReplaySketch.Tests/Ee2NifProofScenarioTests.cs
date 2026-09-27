@@ -195,6 +195,65 @@ public sealed class Ee2NifProofScenarioTests
     {
         Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2NifProof));
         Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2PropertyProof));
+        Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2ScaleProof));
+    }
+
+    [Fact]
+    public void ScaleCapturePlanCoversTheThreeAircraft()
+    {
+        var plan = Ee2NifProofScenario.ScaleCapturePlan;
+        Assert.Equal(3, plan.Length);
+        Assert.Equal("ab14_stealthbomber", plan[0].Key);
+        Assert.Equal("ab15_orbital", plan[1].Key);
+        Assert.Equal("afb13_StrikeFighter", plan[2].Key);
+        Assert.All(plan, entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
+    }
+
+    [Fact]
+    public void ScaleAnimatedCapturePlanCoversFirstAndFinalTakeoffKeys()
+    {
+        var plan = Ee2NifProofScenario.ScaleAnimatedCapturePlan;
+        Assert.Equal(6, plan.Length);
+
+        var expected = new[]
+        {
+            ("ab14_stealthbomber", "Graphics/Vehicles/ab14_stealthbomber_takeoff.kf", 0f),
+            ("ab14_stealthbomber", "Graphics/Vehicles/ab14_stealthbomber_takeoff.kf", 3.3333f),
+            ("ab15_orbital", "Graphics/Vehicles/ab15_orbital_takeoff.kf", 0f),
+            ("ab15_orbital", "Graphics/Vehicles/ab15_orbital_takeoff.kf", 0.6667f),
+            ("afb13_StrikeFighter", "Graphics/Vehicles/afb13_StrikeFighter_takeoff.kf", 0f),
+            ("afb13_StrikeFighter", "Graphics/Vehicles/afb13_StrikeFighter_takeoff.kf", 3.3333f),
+        };
+
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].Item1, plan[i].ModelKey);
+            Assert.Equal(expected[i].Item2, plan[i].KfPath);
+            Assert.Equal(expected[i].Item3, plan[i].TimeSeconds);
+        }
+
+        Assert.All(plan, entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
+    }
+
+    [Fact]
+    public void ScaleCaptureFileNamesUseStemAndScaleSuffix()
+    {
+        Assert.Equal(
+            "ab14_stealthbomber_takeoff-scale-0000.png",
+            Ee2NifProofScenario.GetScaleCaptureFileName(
+                "Graphics/Vehicles/ab14_stealthbomber_takeoff.kf", 0f));
+        Assert.Equal(
+            "ab14_stealthbomber_takeoff-scale-3333.png",
+            Ee2NifProofScenario.GetScaleCaptureFileName(
+                "Graphics/Vehicles/ab14_stealthbomber_takeoff.kf", 3.3333f));
+        Assert.Equal(
+            "ab15_orbital_takeoff-scale-0667.png",
+            Ee2NifProofScenario.GetScaleCaptureFileName(
+                "Graphics/Vehicles/ab15_orbital_takeoff.kf", 0.6667f));
+        Assert.Equal(
+            "afb13_StrikeFighter_takeoff-scale-3333.png",
+            Ee2NifProofScenario.GetScaleCaptureFileName(
+                "Graphics/Vehicles/afb13_StrikeFighter_takeoff.kf", 3.3333f));
     }
 
     [Fact]

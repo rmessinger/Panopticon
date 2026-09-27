@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4f-06` |
 | Roadmap phase | [Track C · C4f](../../track-c-external-assets.md): EE2 scale animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C4f-05` |
@@ -47,12 +47,21 @@ scale animation and unchanged lighting under uniform scale.
 
 ## Acceptance criteria
 
-- [ ] Stealth bomber and orbital takeoff captures show landing gear scale changing.
-- [ ] Strike fighter captures show the rear wheel scale changing from minimum to full size.
+- [x] Stealth bomber and orbital takeoff captures show landing gear scale changing.
+- [x] Strike fighter captures show the rear wheel scale changing from minimum to full size.
 - [ ] Royal Chariot capture preserves positive rest-scale placement.
-- [ ] Lighting on scaled parts stays stable enough for fixed-function visual validation.
-- [ ] Repeat runs produce identical PNGs, and no EE2 asset is copied or committed.
-- [ ] Standard validation passes.
+- [x] Lighting on scaled parts stays stable enough for fixed-function visual validation.
+- [x] Repeat runs produce identical PNGs, and no EE2 asset is copied or committed.
+- [x] Standard validation passes.
+
+Deviations:
+
+- Royal Chariot has no capture: its skinned shape stays rejected by the C4d non-unit-rest skin
+  guard, and skinned scale captures are out of scope by guardrail. The 0.8499998 rest-scale
+  parity is asserted on the skeleton path by `Ee2KfScaleAnimationImportTests` (WI-C4f-05).
+- The scaled gear parts hang from bone origins inside the airframe, so the final-key frames show
+  them pulled up out of sight rather than visibly smaller in place; the pixel delta localizes at
+  the named part and the numeric scale samples are asserted by the interactive tests.
 
 ## Validation commands
 
