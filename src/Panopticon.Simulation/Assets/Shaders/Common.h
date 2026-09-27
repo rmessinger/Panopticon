@@ -34,7 +34,14 @@ bool FailsAlphaTest(float alpha)
 
 vec3 TransformNormal(vec3 v, mat4 m)
 {
-    return (m * vec4(v, 0)).xyz;
+    vec3 transformed = (m * vec4(v, 0)).xyz;
+    float lengthSquared = dot(transformed, transformed);
+    // Uniform bone scale changes normal length, not direction; renormalize so lighting
+    // stays stable. The unit-length fast path stays bit-identical to the unnormalized
+    // result, and zero-length inputs pass through instead of producing NaN.
+    return lengthSquared > 0.0 && lengthSquared != 1.0
+        ? transformed * inversesqrt(lengthSquared)
+        : transformed;
 }
 
 float saturate(float v)
