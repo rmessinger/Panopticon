@@ -190,29 +190,92 @@ public sealed class NifModelImporterTests
     }
 
     [Fact]
-    public void ScaledSubtreeBakesIntoNearestBoneAncestor()
+    public void ScaledSubtreeBecomesBoneWithBindScale()
     {
         var model = Import(ScaledSubtreeModelBytes());
 
-        var bone = Assert.Single(model.Skeleton.Bones);
-        Assert.Equal("root", bone.Name);
+        Assert.Equal(2, model.Skeleton.Bones.Count);
+        Assert.Equal("root", model.Skeleton.Bones[0].Name);
+        var scaled = model.Skeleton.Bones[1];
+        Assert.Equal("scaled", scaled.Name);
+        Assert.Equal(0, scaled.ParentIndex);
+        Assert.Equal(2f, scaled.BindScale, 5);
         var subObject = Assert.Single(model.SubObjects);
-        Assert.Equal(0, subObject.ParentBoneIndex);
+        Assert.Equal(1, subObject.ParentBoneIndex);
 
-        // The scaled child node (scale 2, translated (0, -1, 0)) bakes into
-        // the root bone frame: v * [2I | (0,-1,0)] * E.
+        // Composing the scaled bone locals must equal the conjugated
+        // source world chain, the rest-pose parity for scaled rests.
+        var file = FileFormats.Nif.NifFile.Read(new MemoryStream(ScaledSubtreeModelBytes()));
+        var rootLocal = NifTransformConverter.CreateLocalMatrix((FileFormats.Nif.NifAvObject)file.Blocks[0]);
+        var scaledLocal = NifTransformConverter.CreateLocalMatrix((FileFormats.Nif.NifAvObject)file.Blocks[1]);
+        var expectedWorld = NifTransformConverter.ConjugateSourceToEngine(scaledLocal * rootLocal);
+        var actualWorld = BoneLocal(model.Skeleton.Bones[1]) * BoneLocal(model.Skeleton.Bones[0]);
+        AssertMatricesEqual(expectedWorld, actualWorld);
+
+        // Vertices are baked identity-relative to the scaled bone, so the
+        // bone chain lands them on the C4a world bake.
         var mesh = (ImportedMesh)subObject.RenderObject;
-        const float f = 3.280839895f;
-        // (1, 0, 0) -> (2, -1, 0) -> (1, 2, 0) * feet.
-        AssertEqual(new Vector3(1 * f, 2 * f, 0), mesh.Vertices[1].Position);
+        var bake = scaledLocal * rootLocal * SourceToEngineMatrix();
+        for (var i = 0; i < mesh.Vertices.Count; i++)
+        {
+            var expected = Vector3.Transform(SourceVertices[i], bake);
+            var actual = Vector3.Transform(mesh.Vertices[i].Position, actualWorld);
+            AssertEqual(expected, actual);
+        }
     }
 
     [Fact]
-    public void ScaledRootWithShapeFailsWithClearMessage()
+    public void ScaledRootBecomesBoneAndShapeAttaches()
+    {
+        var model = Import(ScaledSubtreeModelBytes(rootScale: 2.0f));
+
+        Assert.Equal(2, model.Skeleton.Bones.Count);
+        Assert.Equal(2f, model.Skeleton.Bones[0].BindScale, 5);
+        Assert.Equal(2f, model.Skeleton.Bones[1].BindScale, 5);
+        var subObject = Assert.Single(model.SubObjects);
+        Assert.Equal(1, subObject.ParentBoneIndex);
+
+        // The shape bakes identity-relative to its direct parent bone:
+        // (1, 0, 0) -> (0, 1, 0) * feet; the doubled ancestors act only
+        // through the bone chain.
+        var mesh = (ImportedMesh)subObject.RenderObject;
+        const float f = 3.280839895f;
+        AssertEqual(new Vector3(0, 1 * f, 0), mesh.Vertices[1].Position);
+    }
+
+    [Fact]
+    public void SingularRootWithShapeFailsWithClearMessage()
     {
         var ex = Assert.Throws<NotSupportedException>(
-            () => Import(ScaledSubtreeModelBytes(rootScale: 2.0f)));
-        Assert.Contains("no unit-scale node ancestor", ex.Message);
+            () => Import(ScaledSubtreeModelBytes(rootScale: 0.0f)));
+        Assert.Contains("no bone ancestor with a usable rest scale", ex.Message);
+    }
+
+    [Fact]
+    public void SingularRestSubtreeStaysPlaceableWhenUnanimated()
+    {
+        var graph = ImportGraph(SingularSubtreeModelBytes());
+
+        var bone = Assert.Single(graph.Skeleton.Bones);
+        Assert.Equal("root", bone.Name);
+        var subObject = Assert.Single(graph.SubObjects);
+        Assert.Equal(0, subObject.ParentBoneIndex);
+        Assert.True(graph.CollapsedScaleNodes.TryGetValue("boom", out var scale));
+        Assert.Equal(0.0f, scale);
+
+        // The unanimated shape keeps its C4c placement: identity bake, v * E.
+        var mesh = (ImportedMesh)subObject.RenderObject;
+        AssertEqual(new Vector3(0, 3.280839895f, 0), mesh.Vertices[1].Position);
+    }
+
+    [Fact]
+    public void NonFiniteRestScaleCollapsesInsteadOfThrowing()
+    {
+        var graph = ImportGraph(SingularSubtreeModelBytes(boomScale: float.NaN));
+
+        Assert.Single(graph.Skeleton.Bones);
+        Assert.True(graph.CollapsedScaleNodes.TryGetValue("boom", out var scale));
+        Assert.True(float.IsNaN(scale));
     }
 
     [Fact]
@@ -281,6 +344,23 @@ public sealed class NifModelImporterTests
         return builder.Build();
     }
 
+    private static byte[] SingularSubtreeModelBytes(float boomScale = 0.0f)
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1, 2]));
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "boom", scale: boomScale));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 3));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 3,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
     // The real R_OAR14 stored rest rotation from nwg1_galley.nifcache.
     private static readonly FileFormats.Nif.NifMatrix33 OarRotation = new(
         0.38575035f, -0.5062548f, -0.7712994f,
@@ -315,6 +395,17 @@ public sealed class NifModelImporterTests
     private static Matrix4x4 BoneLocal(ImportedBone bone)
     {
         var local = Matrix4x4.CreateFromQuaternion(bone.BindRotation);
+        // BindScale multiplies the linear part only; the translation row
+        // is already in engine units.
+        local.M11 *= bone.BindScale;
+        local.M12 *= bone.BindScale;
+        local.M13 *= bone.BindScale;
+        local.M21 *= bone.BindScale;
+        local.M22 *= bone.BindScale;
+        local.M23 *= bone.BindScale;
+        local.M31 *= bone.BindScale;
+        local.M32 *= bone.BindScale;
+        local.M33 *= bone.BindScale;
         local.M41 = bone.BindTranslation.X;
         local.M42 = bone.BindTranslation.Y;
         local.M43 = bone.BindTranslation.Z;
