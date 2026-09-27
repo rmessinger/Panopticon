@@ -305,16 +305,202 @@ public sealed class NifAnimationImporterTests
     }
 
     [Fact]
-    public void NonUnitScaleKeysAreRejected()
+    public void LinearScaleKeysConvertToRestRelativeChannelAtSourceTimes()
     {
         var data = NifTestKeyframe.KeyframeData(
             quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
-            scaleKeys: [(0.0f, 1.0f, null, null), (2.0f, 1.5f, null, null)]);
+            scaleKeys: [(0.0f, 1.0f, null, null), (2.0f, 2.0f, null, null)]);
+
+        var animation = Import(SingleChannelKf(data, duration: 2.0f))!;
+
+        Assert.Equal(2, animation.Channels.Count);
+        var scaleChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.Scale);
+        Assert.Equal(ImportedAnimationInterpolation.Linear, scaleChannel.Interpolation);
+        Assert.Equal("child", scaleChannel.Target.BoneName);
+        Assert.Equal(2, scaleChannel.Keyframes.Count);
+        Assert.Equal(0.0, scaleChannel.Keyframes[0].Time.TotalSeconds, 5);
+        Assert.Equal(2.0, scaleChannel.Keyframes[1].Time.TotalSeconds, 5);
+
+        var bone = GetBone("child");
+        Assert.Equal(1.0f * bone.BindScale, scaleChannel.Keyframes[0].FloatValue, 5);
+        Assert.Equal(2.0f * bone.BindScale, scaleChannel.Keyframes[1].FloatValue, 5);
+    }
+
+    [Fact]
+    public void ConstantNonUnitScaleKeysEmitAChannel()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            scaleKeys: [(0.0f, 1.5f, null, null), (2.0f, 1.5f, null, null)]);
+
+        var animation = Import(SingleChannelKf(data, duration: 2.0f))!;
+
+        var scaleChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.Scale);
+        Assert.All(scaleChannel.Keyframes, keyframe =>
+            Assert.Equal(1.5f, keyframe.FloatValue, 5));
+    }
+
+    [Fact]
+    public void ZeroAnimatedScaleSampleIsAccepted()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            scaleKeys:
+            [
+                (0.0f, 1.0f, null, null),
+                (1.0f, 0.0f, null, null),
+                (2.0f, 1.0f, null, null),
+            ]);
+
+        var animation = Import(SingleChannelKf(data, duration: 2.0f))!;
+
+        var scaleChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.Scale);
+        Assert.Contains(scaleChannel.Keyframes, keyframe => keyframe.FloatValue == 0f);
+    }
+
+    [Fact]
+    public void NegativeScaleKeyIsRejected()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            scaleKeys: [(0.0f, 1.0f, null, null), (2.0f, -0.5f, null, null)]);
+
+        var ex = Assert.Throws<InvalidDataException>(
+            () => Import(SingleChannelKf(data, duration: 2.0f)));
+
+        Assert.Contains("scale key", ex.Message);
+        Assert.Contains("non-negative", ex.Message);
+    }
+
+    [Fact]
+    public void NonFiniteScaleKeyIsRejected()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            scaleKeys: [(0.0f, 1.0f, null, null), (2.0f, float.NaN, null, null)]);
+
+        var ex = Assert.Throws<InvalidDataException>(
+            () => Import(SingleChannelKf(data, duration: 2.0f)));
+
+        Assert.Contains("scale key", ex.Message);
+        Assert.Contains("finite", ex.Message);
+    }
+
+    [Fact]
+    public void TbcScaleKeysAreRejected()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            scaleKeys: [(0.0f, 1.0f, null, null), (2.0f, 1.5f, null, null)],
+            scaleKeyTypeOverride: 3);
 
         var ex = Assert.Throws<NotSupportedException>(
             () => Import(SingleChannelKf(data, duration: 2.0f)));
 
-        Assert.Contains("scale key", ex.Message);
+        Assert.Contains("unsupported key type", ex.Message);
+    }
+
+    [Fact]
+    public void QuadraticScaleKeysResampleAtThirtyHertzWithHermiteMidpoint()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            scaleKeys:
+            [
+                (0.0f, 1.0f, Forward: 0.0f, Backward: 6.0f),
+                (1.0f, 2.0f, Forward: 0.0f, Backward: 0.0f),
+            ]);
+
+        var animation = Import(SingleChannelKf(data, duration: 1.0f))!;
+
+        var scaleChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.Scale);
+        // 30 Hz steps over 1 s plus the duration and source key times.
+        Assert.Equal(31, scaleChannel.Keyframes.Count);
+        Assert.Equal(1.0f, scaleChannel.Keyframes[0].FloatValue, 5);
+        Assert.Equal(2.0f, scaleChannel.Keyframes[^1].FloatValue, 5);
+
+        // Segment-normalized Hermite: the outgoing tangent is the first
+        // key's backward field (6), so the 0.5 s sample is
+        // 0.5 * 1 + 0.5 * 2 + h10(0.5) * 6 = 2.25.
+        var midpoint = scaleChannel.Keyframes.Single(
+            keyframe => MathF.Abs((float)keyframe.Time.TotalSeconds - 0.5f) < 1e-3f);
+        Assert.Equal(2.25f, midpoint.FloatValue, 4);
+    }
+
+    [Fact]
+    public void ScaledRestDividesOffsetsForScaleAndTranslation()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            translationKeys:
+            [
+                (0.0f, (0.0f, -2.0f, 0.0f), null, null),
+                (2.0f, (0.0f, -3.0f, 0.0f), null, null),
+            ],
+            scaleKeys: [(0.0f, 2.0f, null, null), (2.0f, 4.0f, null, null)]);
+
+        var animation = Import(
+            SingleChannelKf(data, duration: 2.0f),
+            modelBytes: ScaledModelBytes(childScale: 2.0f))!;
+
+        var bone = GetBoneFromModel(ScaledModelBytes(childScale: 2.0f), "child");
+        Assert.Equal(2f, bone.BindScale, 5);
+
+        var scaleChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.Scale);
+        Assert.Equal(1.0f, scaleChannel.Keyframes[0].FloatValue, 5);
+        Assert.Equal(2.0f, scaleChannel.Keyframes[1].FloatValue, 5);
+        // offsetScale * restScale reconstructs the authored samples.
+        Assert.Equal(2.0f, scaleChannel.Keyframes[0].FloatValue * bone.BindScale, 4);
+        Assert.Equal(4.0f, scaleChannel.Keyframes[1].FloatValue * bone.BindScale, 4);
+
+        // Translation offsets reconstruct authored samples through the
+        // scaled rest: bindTranslation + offset * restScale * restRotation.
+        var samples = new[] { new Vector3(0, -2, 0), new Vector3(0, -3, 0) };
+        for (var i = 0; i < 2; i++)
+        {
+            var xChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.TranslationX);
+            var yChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.TranslationY);
+            var zChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.TranslationZ);
+            var offset = new Vector3(
+                xChannel.Keyframes[i].FloatValue,
+                yChannel.Keyframes[i].FloatValue,
+                zChannel.Keyframes[i].FloatValue);
+            var expected = NifTransformConverter.ConvertSourceTranslationToEngine(samples[i]);
+            var reconstructed = bone.BindTranslation +
+                Vector3.Transform(offset * bone.BindScale, bone.BindRotation);
+            AssertEqual(expected, reconstructed, $"translation key {i}");
+        }
+    }
+
+    [Fact]
+    public void IdentityScaleOffsetsOnScaledRestAreDropped()
+    {
+        var data = NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
+            scaleKeys: [(0.0f, 2.0f, null, null), (2.0f, 2.0f, null, null)]);
+
+        var animation = Import(
+            SingleChannelKf(data, duration: 2.0f),
+            modelBytes: ScaledModelBytes(childScale: 2.0f))!;
+
+        // Keys equal to the rest scale produce identity offsets and the
+        // group is dropped, matching the C4c identity-group rule.
+        var channel = Assert.Single(animation.Channels);
+        Assert.Equal(ImportedAnimationChannelType.Quaternion, channel.ChannelType);
+    }
+
+    [Fact]
+    public void SingularRestTargetIsRejectedNamingNodeAndScale()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var ex = Assert.Throws<NotSupportedException>(
+            () => Import(
+                SingleChannelKf(data, duration: 2.0f, targetName: "boom"),
+                modelBytes: CollapsedModelBytes()));
+
+        Assert.Contains("'boom'", ex.Message);
+        Assert.Contains("singular rest scale 0", ex.Message);
     }
 
     [Fact]
@@ -862,12 +1048,13 @@ public sealed class NifAnimationImporterTests
         byte[]? kfBytes,
         string key = AnimationKey,
         bool omitModel = false,
-        bool omitKf = false)
+        bool omitKf = false,
+        byte[]? modelBytes = null)
     {
         var fileSystem = new MemoryFileSystem();
         if (!omitModel)
         {
-            fileSystem.AddFile($"cache/nifcache/{ModelName}.nifcache", ModelBytes());
+            fileSystem.AddFile($"cache/nifcache/{ModelName}.nifcache", modelBytes ?? ModelBytes());
         }
 
         if (!omitKf && kfBytes is not null)
@@ -880,11 +1067,66 @@ public sealed class NifAnimationImporterTests
             new AssetImportContext(fileSystem, null));
     }
 
+    private static byte[] ScaledModelBytes(float childScale)
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var zBufferType = builder.AddBlockType("NiZBufferProperty");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(nodeType, NifTestBlocks.Node(
+            name: "child", children: [3], translation: (0, -2, 0), rotation: OarRotation,
+            scale: childScale));
+        builder.AddBlock(zBufferType, NifTestProperties.ZBuffer(flags: 3, function: 3));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 4, properties: [2]));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+            normals: [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)],
+            boundCenter: (0.5f, 0.5f, 0.5f),
+            boundRadius: 1.0f,
+            triangles: [(0, 1, 2), (0, 2, 3)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    private static byte[] CollapsedModelBytes()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var zBufferType = builder.AddBlockType("NiZBufferProperty");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1, 3]));
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "boom", scale: 0.0f));
+        builder.AddBlock(zBufferType, NifTestProperties.ZBuffer(flags: 3, function: 3));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(name: "hull", data: 4, properties: [2]));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+            normals: [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)],
+            boundCenter: (0.5f, 0.5f, 0.5f),
+            boundRadius: 1.0f,
+            triangles: [(0, 1, 2), (0, 2, 3)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
     private static ImportedBone GetBone(string name)
     {
+        return GetBoneFromModel(ModelBytes(), name);
+    }
+
+    private static ImportedBone GetBoneFromModel(byte[] modelBytes, string name)
+    {
+        var fileSystem = new MemoryFileSystem();
+        fileSystem.AddFile($"cache/nifcache/{ModelName}.nifcache", modelBytes);
         var model = new NifModelImporter().ImportModel(
             ModelName,
-            new AssetImportContext(CreateFileSystem(), null))!;
+            new AssetImportContext(fileSystem, null))!;
         return Assert.Single(model.Skeleton.Bones, bone => bone.Name == name);
     }
 
