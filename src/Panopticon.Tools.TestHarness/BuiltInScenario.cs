@@ -12,4 +12,5 @@ public enum BuiltInScenario
     GltfRuntimeProof,
     Ee2NifProof,
     Ee2PropertyProof,
+    Ee2ScaleProof,
 }

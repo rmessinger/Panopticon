@@ -306,5 +306,6 @@ DeveloperMode.ini
 # Derived EE2 proof captures (operator install content; never committed)
 ee2-nif-proof/
 ee2-property-proof/
+ee2-scale-proof/
 # Local WorldBuilder screenshot captures
 /worldbuilder-shot/

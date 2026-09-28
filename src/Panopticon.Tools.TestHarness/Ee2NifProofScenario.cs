@@ -31,6 +31,8 @@ namespace Panopticon.Tools.TestHarness;
 /// C4e adds Ee2PropertyProof: the same pipeline with property channels
 /// (visibility, texture transform, material color, alpha) sampled at fixed
 /// times through CreateAnimationInstance.
+/// C4f adds Ee2ScaleProof: uniform scale channels (WI-C4f-03) sampled at the
+/// first and final takeoff keys, with the static baselines framed identically.
 /// </summary>
 internal static class Ee2NifProofScenario
 {
@@ -162,6 +164,61 @@ internal static class Ee2NifProofScenario
         return $"ee2-{stem}_{milliseconds:0000}.png";
     }
 
+    internal static string GetScaleCaptureFileName(string kfPath, float timeSeconds)
+    {
+        var stem = Path.GetFileNameWithoutExtension(kfPath);
+        var milliseconds = (int)MathF.Round(timeSeconds * 1000f);
+        return $"{stem}-scale-{milliseconds:0000}.png";
+    }
+
+    /// <summary>
+    /// C4f scale proof plan: one static baseline per aircraft plus the first
+    /// and final takeoff keys. Takeoff scales run from uniform 1.0 down to
+    /// the clip minimum (deep-dive table values are min to max, not time
+    /// order). The scaled gear parts hang from bone origins inside the
+    /// airframe, so the final-key frames show them pulled up out of sight;
+    /// the numeric scale samples are asserted by
+    /// Ee2KfScaleAnimationImportTests and the captures prove the channel
+    /// drives the geometry with stable lighting.
+    /// </summary>
+    public static readonly (string Key, string Check)[] ScaleCapturePlan =
+    [
+        ("ab14_stealthbomber",
+            "Stealth bomber: static baseline with both LandingGear_02/03 struts at their authored " +
+            "rest scale (uniform 1.0); airframe, textures, and framing identical to the takeoff frames"),
+        ("ab15_orbital",
+            "Orbital: static baseline with both LandingGear_02/03 struts at uniform rest scale 1.0"),
+        ("afb13_StrikeFighter",
+            "Strike fighter: static baseline with the rearwheeltwo wheel at uniform rest scale 1.0"),
+    ];
+
+    public static readonly (string ModelKey, string KfPath, float TimeSeconds, string Check)[] ScaleAnimatedCapturePlan =
+    [
+        ("ab14_stealthbomber", "Graphics/Vehicles/ab14_stealthbomber_takeoff.kf", 0f,
+            "takeoff first key: LandingGear_02 and LandingGear_03 sample uniform scale 1.0, matching " +
+            "the static baseline"),
+        ("ab14_stealthbomber", "Graphics/Vehicles/ab14_stealthbomber_takeoff.kf", 3.3333f,
+            "takeoff final key: both landing-gear struts scaled to 0.883883 of rest; the struts hang " +
+            "from bone origins inside the airframe, so the scaled gear pulls up out of sight against " +
+            "the 0000 frame (the pixel delta localizes exactly at the gear blob; the numeric 1.0 -> " +
+            "0.883883 samples are asserted by Ee2KfScaleAnimationImportTests); airframe and lighting " +
+            "unchanged"),
+        ("ab15_orbital", "Graphics/Vehicles/ab15_orbital_takeoff.kf", 0f,
+            "takeoff first key: LandingGear_02 and LandingGear_03 sample uniform scale 1.0, matching " +
+            "the static baseline (byte-identical to it)"),
+        ("ab15_orbital", "Graphics/Vehicles/ab15_orbital_takeoff.kf", 0.6667f,
+            "takeoff final key: both landing-gear struts scaled to 0.883883 of rest toward their bone " +
+            "origins and retracted behind the wing (delta localizes at the gear nub); the numeric " +
+            "samples are asserted by Ee2KfScaleAnimationImportTests; lighting stable"),
+        ("afb13_StrikeFighter", "Graphics/Vehicles/afb13_StrikeFighter_takeoff.kf", 0f,
+            "takeoff first key: the rearwheeltwo wheel samples uniform scale 1.0, matching the static " +
+            "baseline (byte-identical to it)"),
+        ("afb13_StrikeFighter", "Graphics/Vehicles/afb13_StrikeFighter_takeoff.kf", 3.3333f,
+            "takeoff final key: the rearwheeltwo wheel scaled to 0.665078 of rest toward its bone " +
+            "origin and fully retracted behind the airframe (delta localizes at the wheel; numeric " +
+            "samples asserted by Ee2KfScaleAnimationImportTests); no lighting blowout or artifacts"),
+    ];
+
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
     {
         return RunCore(
@@ -195,6 +252,32 @@ internal static class Ee2NifProofScenario
             ]);
     }
 
+    public static int RunScaleProof(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
+    {
+        return RunCore(
+            installation,
+            config,
+            reporter,
+            "ee2-scale-proof",
+            ScaleCapturePlan,
+            ScaleAnimatedCapturePlan,
+            guideTitle: "# EE2 scale animation proof - validation guide",
+            guidePreamble:
+            [
+                "Every capture comes from the same import pipeline as ee2-nif-proof; animated frames",
+                "add C4f uniform scale channels sampled at the first and final takeoff keys through",
+                "CreateAnimationInstance. Takeoff clips scale landing gear and the rear wheel down",
+                "from uniform 1.0 to the clip minimum toward their bone origins inside the airframe,",
+                "so each final-key frame shows the named gear part pulled up out of sight against its",
+                "0000 counterpart, with the pixel delta localized at that part. The numeric 1.0 ->",
+                "minimum samples are asserted by Ee2KfScaleAnimationImportTests. The Royal Chariot",
+                "rest-scale parity proof is not captured here: its skinned shape stays behind the",
+                "C4d non-unit-rest skin guard, and Ee2KfScaleAnimationImportTests asserts the",
+                "0.8499998 rest reconstruction on the skeleton path instead.",
+            ],
+            animatedFileName: GetScaleCaptureFileName);
+    }
+
     private static int RunCore(
         GameInstallation installation,
         TestHarnessConfig config,
@@ -203,7 +286,8 @@ internal static class Ee2NifProofScenario
         (string Key, string Check)[] capturePlan,
         (string ModelKey, string KfPath, float TimeSeconds, string Check)[] animatedPlan,
         string? guideTitle,
-        string[]? guidePreamble)
+        string[]? guidePreamble,
+        Func<string, float, string>? animatedFileName = null)
     {
         var ee2Root = Environment.GetEnvironmentVariable("EMPIRE_EARTH_II_PATH");
         if (string.IsNullOrEmpty(ee2Root))
@@ -302,7 +386,8 @@ internal static class Ee2NifProofScenario
                     ?? throw new InvalidOperationException($"EE2 animation import returned null for '{key}#kf={kfPath}'.");
                 var animation = ImportedAnimationMaterializer.Materialize(importedAnimation);
 
-                var animatedName = GetAnimatedCaptureFileName(kfPath, timeSeconds);
+                var nameForTime = animatedFileName ?? GetAnimatedCaptureFileName;
+                var animatedName = nameForTime(kfPath, timeSeconds);
 
                 // Property animation can select pipeline variants the static
                 // warm-up never exercises (for example the blend pass forced

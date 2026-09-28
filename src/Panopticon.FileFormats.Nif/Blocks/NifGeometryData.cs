@@ -72,9 +72,16 @@ public abstract record NifGeometryData : NifBlock
         var hasColors = reader.ReadByte("HasVertexColors");
         if (hasColors != 0)
         {
-            throw new NotSupportedException(
-                "NIF geometry data carries vertex colors; C4a-01 proved them absent in both " +
-                "targets and C1 has no vertex-color field, so they are rejected.");
+            // C1 has no vertex-color field; EE2 10.1 stores float RGBA colors, which
+            // are consumed to keep the stream aligned and then ignored (widened from
+            // a C4a rejection in C4f).
+            for (var i = 0; i < NumVertices; i++)
+            {
+                reader.ReadSingle($"VertexColors[{i}].R");
+                reader.ReadSingle($"VertexColors[{i}].G");
+                reader.ReadSingle($"VertexColors[{i}].B");
+                reader.ReadSingle($"VertexColors[{i}].A");
+            }
         }
 
         var uvSets = new Vector2[NumUvSets][];
