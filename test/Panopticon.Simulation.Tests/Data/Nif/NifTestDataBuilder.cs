@@ -362,14 +362,15 @@ public static class NifTestGeometry
         byte hasShader = 0,
         int[]? properties = null,
         (float X, float Y, float Z)? translation = null,
-        float scale = 1.0f)
+        float scale = 1.0f,
+        int controller = -1)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
         body.WriteUInt32(0);
         body.WriteSizedString(name);
         NifTestBlocks.WriteRefList(body, []);
-        body.WriteInt32(-1);
+        body.WriteInt32(controller);
         body.WriteUInt16(0);
         NifTestBlocks.WriteVector3(body, translation ?? (0, 0, 0));
         NifTestBlocks.WriteMatrix33Identity(body);
