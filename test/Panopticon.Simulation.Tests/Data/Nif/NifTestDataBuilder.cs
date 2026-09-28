@@ -770,7 +770,8 @@ public static class NifTestKeyframe
         IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? zRotationKeys = null,
         IReadOnlyList<(float Time, (float X, float Y, float Z) Value, (float X, float Y, float Z)? Forward, (float X, float Y, float Z)? Backward)>? translationKeys = null,
         IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? scaleKeys = null,
-        uint? translationKeyTypeOverride = null)
+        uint? translationKeyTypeOverride = null,
+        uint? scaleKeyTypeOverride = null)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
@@ -806,7 +807,7 @@ public static class NifTestKeyframe
         }
 
         WriteVector3Group(body, translationKeys, translationKeyTypeOverride);
-        WriteFloatGroup(body, scaleKeys ?? []);
+        WriteFloatGroup(body, scaleKeys ?? [], scaleKeyTypeOverride);
         return stream.ToArray();
     }
 

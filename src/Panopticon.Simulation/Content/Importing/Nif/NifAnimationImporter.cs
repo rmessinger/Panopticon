@@ -72,6 +72,7 @@ internal sealed class NifAnimationImporter : IAnimationImporter
             sequence,
             graph.Skeleton,
             graph.PropertyTargets,
+            graph.CollapsedScaleNodes,
             GetAnimationName(animationKey.KfPath),
             key);
     }

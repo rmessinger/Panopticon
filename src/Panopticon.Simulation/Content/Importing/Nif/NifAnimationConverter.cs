@@ -16,14 +16,19 @@ namespace Panopticon.Content.Importing.Nif;
 /// with samples converted to the engine frame. The runtime composes
 /// offsets before the bone rest (row-vector), so a rotation offset
 /// Concatenate(sample, Inverse(rest)) and a translation offset
-/// Transform(sample - rest, Inverse(restRotation)) reconstruct the
-/// authored sample exactly.
+/// Transform(sample - rest, Inverse(restRotation)) / restScale
+/// reconstruct the authored sample exactly. Scale groups convert to
+/// rest-relative Scale channels (sample / restScale); linear groups
+/// keep their source key times, quadratic groups resample through
+/// <see cref="NifKeyCurve"/> on the C4c 30 Hz time set.
 /// </summary>
 internal static class NifAnimationConverter
 {
     private const float TimeTolerance = 1e-4f;
     private const float UnitScaleTolerance = 1e-4f;
     private const float AccumulationTolerance = 1e-5f;
+    private const float SampleTimeEpsilon = 1e-6f;
+    private const float SamplesPerSecond = 30f;
     private const ushort ExpectedControllerFlags = 0x2C;
 
     public static ImportedAnimation Convert(
@@ -31,6 +36,7 @@ internal static class NifAnimationConverter
         NifControllerSequence sequence,
         ImportedSkeleton skeleton,
         NifPropertyTargetMap targets,
+        IReadOnlyDictionary<string, float> collapsedScaleNodes,
         string animationName,
         string assetKey)
     {
@@ -62,7 +68,7 @@ internal static class NifAnimationConverter
             int boneIndex;
             try
             {
-                boneIndex = ResolveTarget(skeleton, controlledBlock.TargetName, boundTargets, assetKey);
+                boneIndex = ResolveTarget(skeleton, controlledBlock.TargetName, boundTargets, collapsedScaleNodes, assetKey);
             }
             catch (InvalidDataException) when (hasPropertyControllers)
             {
@@ -76,15 +82,7 @@ internal static class NifAnimationConverter
             var data = (NifKeyframeData)file.Blocks[controller.DataReference];
 
             ValidateKeyTimes(data, controlledBlock.TargetName, duration, assetKey);
-            try
-            {
-                ValidateScale(data, controlledBlock.TargetName, assetKey);
-            }
-            catch (NotSupportedException) when (hasPropertyControllers)
-            {
-                // Non-unit scale keys have no C1 channel; mixed property
-                // clips keep their rotation and translation channels.
-            }
+            ValidateScaleKeys(data, controlledBlock.TargetName, assetKey);
 
             if (string.Equals(
                     controlledBlock.TargetName,
@@ -96,6 +94,7 @@ internal static class NifAnimationConverter
 
             AddRotationChannel(data, bone, duration, channels);
             AddTranslationChannels(data, bone, channels);
+            AddScaleChannel(data, bone, duration, channels);
         }
 
         return new ImportedAnimation(
@@ -196,6 +195,7 @@ internal static class NifAnimationConverter
         ImportedSkeleton skeleton,
         string targetName,
         Dictionary<string, int> boundTargets,
+        IReadOnlyDictionary<string, float> collapsedScaleNodes,
         string assetKey)
     {
         if (boundTargets.TryGetValue(targetName, out var existing))
@@ -213,8 +213,36 @@ internal static class NifAnimationConverter
             }
         }
 
+        if (TryFindCollapsedScale(collapsedScaleNodes, targetName, out var restScale))
+        {
+            throw Unsupported(
+                $"target '{targetName}' resolved to a collapsed node with singular rest scale {restScale.ToString(CultureInfo.InvariantCulture)}; animating singular-rest nodes needs an absolute track");
+        }
+
         throw new InvalidDataException(
             $"NIF animation '{assetKey}' targets '{targetName}', which has no matching bone in the model skeleton.");
+    }
+
+    private static bool TryFindCollapsedScale(
+        IReadOnlyDictionary<string, float> collapsedScaleNodes,
+        string targetName,
+        out float restScale)
+    {
+        if (collapsedScaleNodes.TryGetValue(targetName, out restScale))
+        {
+            return true;
+        }
+
+        foreach (var (name, scale) in collapsedScaleNodes)
+        {
+            if (string.Equals(name, targetName, StringComparison.OrdinalIgnoreCase))
+            {
+                restScale = scale;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void ValidateKeyTimes(
@@ -261,7 +289,7 @@ internal static class NifAnimationConverter
         }
     }
 
-    private static void ValidateScale(NifKeyframeData data, string targetName, string assetKey)
+    private static void ValidateScaleKeys(NifKeyframeData data, string targetName, string assetKey)
     {
         if (data.ScaleKeys is null)
         {
@@ -270,10 +298,10 @@ internal static class NifAnimationConverter
 
         foreach (var key in data.ScaleKeys.Keys)
         {
-            if (MathF.Abs(key.Value - 1f) > UnitScaleTolerance)
+            if (!float.IsFinite(key.Value) || key.Value < 0f)
             {
-                throw Unsupported(
-                    $"target '{targetName}' has scale key {key.Value.ToString(CultureInfo.InvariantCulture)}; only unit scale is supported");
+                throw new InvalidDataException(
+                    $"NIF animation '{assetKey}' target '{targetName}' has a scale key {key.Value.ToString(CultureInfo.InvariantCulture)}; scale keys must be finite and non-negative.");
             }
         }
     }
@@ -380,6 +408,83 @@ internal static class NifAnimationConverter
         AddChannel(bone, ImportedAnimationChannelType.TranslationZ, z, channels);
     }
 
+    /// <summary>
+    /// Converts a scale group into one rest-relative Scale channel. Linear
+    /// groups keep their source key times; quadratic groups resample on
+    /// the C4c 30 Hz time set through NifKeyCurve. Groups whose emitted
+    /// offsets are all the identity scale carry no animation and are
+    /// dropped, matching the C4c identity-group rule.
+    /// </summary>
+    private static void AddScaleChannel(
+        NifKeyframeData data,
+        ImportedBone bone,
+        float duration,
+        List<ImportedAnimationChannel> channels)
+    {
+        if (data.ScaleKeys is not { } group)
+        {
+            return;
+        }
+
+        var keyframes = new List<ImportedKeyframe>();
+        if (group.Interpolation == NifKeyType.Linear)
+        {
+            foreach (var key in group.Keys)
+            {
+                keyframes.Add(ImportedKeyframe.FromFloat(
+                    TimeSpan.FromSeconds(key.Time),
+                    key.Value / bone.BindScale));
+            }
+        }
+        else
+        {
+            foreach (var time in BuildScaleSampleTimes(group, duration))
+            {
+                keyframes.Add(ImportedKeyframe.FromFloat(
+                    TimeSpan.FromSeconds(time),
+                    NifKeyCurve.Evaluate(group, time) / bone.BindScale));
+            }
+        }
+
+        foreach (var keyframe in keyframes)
+        {
+            if (MathF.Abs(keyframe.FloatValue - 1f) > UnitScaleTolerance)
+            {
+                AddChannel(bone, ImportedAnimationChannelType.Scale, keyframes, channels);
+                return;
+            }
+        }
+    }
+
+    private static List<float> BuildScaleSampleTimes(NifKeyGroup<NifKey<float>> group, float duration)
+    {
+        var times = new List<float>();
+        var stepCount = (int)MathF.Floor(SamplesPerSecond * duration);
+        for (var k = 0; k <= stepCount; k++)
+        {
+            times.Add(k / SamplesPerSecond);
+        }
+
+        times.Add(duration);
+        foreach (var key in group.Keys)
+        {
+            times.Add(key.Time);
+        }
+
+        times.Sort();
+
+        var deduplicated = new List<float>(times.Count);
+        foreach (var time in times)
+        {
+            if (deduplicated.Count == 0 || time - deduplicated[^1] > SampleTimeEpsilon)
+            {
+                deduplicated.Add(time);
+            }
+        }
+
+        return deduplicated;
+    }
+
     private static void AddChannel(
         ImportedBone bone,
         ImportedAnimationChannelType channelType,
@@ -401,9 +506,13 @@ internal static class NifAnimationConverter
     private static Vector3 CreateTranslationOffset(Vector3 sample, ImportedBone bone)
     {
         var engineSample = NifTransformConverter.ConvertSourceTranslationToEngine(sample);
+
+        // The runtime composes the offset before the scaled rest linear
+        // (row-vector), so undoing the rest applies the inverse rotation
+        // first and the inverse rest scale second.
         return Vector3.Transform(
             engineSample - bone.BindTranslation,
-            Quaternion.Inverse(bone.BindRotation));
+            Quaternion.Inverse(bone.BindRotation)) / bone.BindScale;
     }
 
     private static bool HasXyzRotation(NifKeyframeData data)
