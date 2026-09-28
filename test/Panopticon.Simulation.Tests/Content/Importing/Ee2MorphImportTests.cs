@@ -190,6 +190,31 @@ public sealed class Ee2MorphImportTests
     }
 
     [Fact]
+    public void EmpFlashEmbeddedSmokeCoversAQuadraticWeightCurve()
+    {
+        // The embedded morph smoke per WI-C4g-06: at least one embedded
+        // weight curve must be Quadratic. fx_emp_flash carries morph 1 with
+        // five Quadratic keys and morph 2 with four.
+        using var fileSystem = new ZipFileSystem($"{InstallationPath()}/{GraphicsZipPath}");
+        var entry = fileSystem.GetFile("cache/nifcache/fx_emp_flash.nifcache");
+        Assert.NotNull(entry);
+
+        using var buffer = new System.IO.MemoryStream();
+        using (var stream = entry!.Open())
+        {
+            stream.CopyTo(buffer);
+        }
+
+        buffer.Position = 0;
+        var file = FileFormats.Nif.NifFile.Read(buffer);
+        var morphData = Assert.IsType<FileFormats.Nif.NifMorphData>(
+            file.Blocks.First(block => block is FileFormats.Nif.NifMorphData));
+        Assert.Contains(
+            morphData.Morphs,
+            morph => morph?.WeightKeys is { } group && group.Interpolation == FileFormats.Nif.NifKeyType.Quadratic);
+    }
+
+    [Fact]
     public void MuzzleCannonStillFailsAtTheNiUVControllerParseGuard()
     {
         // fx_muzzle_cannon carries an embedded NiUVController; NIF UV

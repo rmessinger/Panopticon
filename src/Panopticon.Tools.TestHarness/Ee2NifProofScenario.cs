@@ -33,6 +33,9 @@ namespace Panopticon.Tools.TestHarness;
 /// times through CreateAnimationInstance.
 /// C4f adds Ee2ScaleProof: uniform scale channels (WI-C4f-03) sampled at the
 /// first and final takeoff keys, with the static baselines framed identically.
+/// C4g adds Ee2MorphProof: farm yam imports through the morph KF pairing key
+/// with the MorphTargets feature gate, and Target1 weight keys drive the CPU
+/// morph buffer at weights 0, 0.5, and 1 (WI-C4g-03/04/05).
 /// </summary>
 internal static class Ee2NifProofScenario
 {
@@ -171,6 +174,49 @@ internal static class Ee2NifProofScenario
         return $"{stem}-scale-{milliseconds:0000}.png";
     }
 
+    internal static string GetMorphCaptureFileName(string kfPath, float timeSeconds)
+    {
+        var stem = Path.GetFileNameWithoutExtension(kfPath);
+        var milliseconds = (int)MathF.Round(timeSeconds * 1000f);
+        return $"{stem}-morph-{milliseconds:0000}.png";
+    }
+
+    /// <summary>
+    /// The single import key for the C4g morph proof: the paired morph KF
+    /// request plus the MorphTargets gate carried by the import context.
+    /// </summary>
+    public const string FarmYamMorphModelKey = "bld_farm_yam#morph-kf=Graphics/Building/bld_farm_yam.kf";
+
+    /// <summary>
+    /// C4g morph proof plan: the farm yam base shape (all morph weights at
+    /// their default 0) plus the seeding clip sampled at weights 0, 0.5, and
+    /// 1 (linear keys 0 -> 1 over 0.9666667 s, asserted by
+    /// Ee2MorphImportTests).
+    /// </summary>
+    public static readonly (string Key, string Check)[] MorphCapturePlan =
+    [
+        (FarmYamMorphModelKey,
+            "Farm yam base shape: morph weights at their default 0 and no clip applied; complete " +
+            "textured yam mound, no deformities; framed by its own arcball fit"),
+    ];
+
+    public static readonly (string ModelKey, string KfPath, float TimeSeconds, string Check)[] MorphAnimatedCapturePlan =
+    [
+        (FarmYamMorphModelKey, "Graphics/Building/bld_farm_yam.kf", 0f,
+            "seeding clip at weight 0: Target1 deforms nothing; framing differs from the static " +
+            "baseline because the clip's root bone keys pose the model before the arcball fit, so " +
+            "the morph comparison runs within this animated sequence (0000 -> 0483 -> 0967 share " +
+            "one camera)"),
+        (FarmYamMorphModelKey, "Graphics/Building/bld_farm_yam.kf", 0.4833f,
+            "seeding clip at weight 0.5: Target1 deltas applied at half weight, silhouette visibly " +
+            "grown from 0000 and smaller than 0967, mesh still closed and textured; ambient/diffuse " +
+            "color keys darken the material toward green (C4e channels riding the same clip)"),
+        (FarmYamMorphModelKey, "Graphics/Building/bld_farm_yam.kf", 0.9667f,
+            "seeding clip at weight 1: full Target1 deformation (largest delta 5.4214 source units " +
+            "converted to engine feet), the largest silhouette of the three frames (mounds merged " +
+            "into one canopy), no detached or inverted geometry"),
+    ];
+
     /// <summary>
     /// C4f scale proof plan: one static baseline per aircraft plus the first
     /// and final takeoff keys. Takeoff scales run from uniform 1.0 down to
@@ -278,6 +324,37 @@ internal static class Ee2NifProofScenario
             animatedFileName: GetScaleCaptureFileName);
     }
 
+    public static int RunMorphProof(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
+    {
+        return RunCore(
+            installation,
+            config,
+            reporter,
+            "ee2-morph-proof",
+            MorphCapturePlan,
+            MorphAnimatedCapturePlan,
+            guideTitle: "# EE2 morph animation proof - validation guide",
+            guidePreamble:
+            [
+                "The farm yam imports through the paired morph KF key",
+                "bld_farm_yam#morph-kf=Graphics/Building/bld_farm_yam.kf with the MorphTargets feature",
+                "gate enabled on the import context (the gate-disabled diagnostic is asserted by",
+                "Ee2MorphImportTests). Animated frames sample the linear Target1 weight keys 0 -> 1",
+                "over 0.9666667 s through CreateAnimationInstance; the CPU morph buffer rebuilds",
+                "before the draw. The morph proof is the animated sequence itself (one shared",
+                "camera, monotonic silhouette growth); the static baseline is framed differently",
+                "because the clip's root bone keys pose the model before the arcball fit. The 0 /",
+                "0.5 / 1 weight samples are asserted by",
+                "Ee2MorphImportTests.FarmYamAnimationDrivesTarget1WeightsAtRuntime. The embedded",
+                "morph smoke (quadratic weight curves on fx_emp_flash) is covered by the interactive",
+                "tests; fx_muzzle_cannon stays behind the NiUVController parse guard.",
+            ],
+            animatedFileName: GetMorphCaptureFileName,
+            staticFileName: _ => "bld_farm_yam-morph-static",
+            animationModelKey: _ => "bld_farm_yam",
+            enabledFeatureGates: [ImportedFeatureGates.MorphTargets]);
+    }
+
     private static int RunCore(
         GameInstallation installation,
         TestHarnessConfig config,
@@ -287,7 +364,10 @@ internal static class Ee2NifProofScenario
         (string ModelKey, string KfPath, float TimeSeconds, string Check)[] animatedPlan,
         string? guideTitle,
         string[]? guidePreamble,
-        Func<string, float, string>? animatedFileName = null)
+        Func<string, float, string>? animatedFileName = null,
+        Func<string, string>? staticFileName = null,
+        Func<string, string>? animationModelKey = null,
+        string[]? enabledFeatureGates = null)
     {
         var ee2Root = Environment.GetEnvironmentVariable("EMPIRE_EARTH_II_PATH");
         if (string.IsNullOrEmpty(ee2Root))
@@ -321,7 +401,7 @@ internal static class Ee2NifProofScenario
         using var ee2FileSystem = new ZipFileSystem(archivePath);
         using var ee2TexturesFileSystem = new ZipFileSystem(texturesArchivePath);
         var compositeFileSystem = new CompositeFileSystem(ee2FileSystem, ee2TexturesFileSystem);
-        var importContext = new AssetImportContext(compositeFileSystem, language: null);
+        var importContext = new AssetImportContext(compositeFileSystem, language: null, enabledFeatureGates);
         var importer = new NifModelImporter();
         var animationImporter = new NifAnimationImporter();
 
@@ -352,8 +432,10 @@ internal static class Ee2NifProofScenario
 
             var model = ImportedModelMaterializer.MaterializeModel(imported, loadContext);
 
-            var outputName = $"ee2-{key}.png";
-            var outputPath = Path.Combine(outputDirectory, outputName);
+            // Import keys for gated models (for example the morph KF pairing
+            // key) contain path separators; callers supply a file-safe name.
+            var outputName = staticFileName != null ? staticFileName(key) : $"ee2-{key}";
+            var outputPath = Path.Combine(outputDirectory, $"{outputName}.png");
 
             // First execution of each material pipeline variant after device
             // creation is unstable (see GltfRuntimeProof); warm every model once.
@@ -361,7 +443,7 @@ internal static class Ee2NifProofScenario
                 game,
                 model,
                 loadContext,
-                Path.Combine(Path.GetTempPath(), $"ee2-nif-proof-warmup-{key}.png"),
+                Path.Combine(Path.GetTempPath(), $"ee2-nif-proof-warmup-{outputName}.png"),
                 new Size(CaptureSize, CaptureSize),
                 worldMatrix: System.Numerics.Matrix4x4.CreateRotationZ(CaptureYawRadians),
                 options: new StandaloneCaptureOptions(
@@ -377,13 +459,16 @@ internal static class Ee2NifProofScenario
                 options: new StandaloneCaptureOptions(
                     Background: new Mathematics.ColorRgbaF(0.2f, 0.4f, 0.9f, 1f)));
 
-            captures.Add((outputName, check));
-            reporter.Info($"Captured {outputName}");
+            captures.Add(($"{outputName}.png", check));
+            reporter.Info($"Captured {outputName}.png");
 
             foreach (var (_, kfPath, timeSeconds, animatedCheck) in animatedPlan.Where(e => e.ModelKey == key))
             {
-                var importedAnimation = animationImporter.ImportAnimation($"{key}#kf={kfPath}", importContext)
-                    ?? throw new InvalidOperationException($"EE2 animation import returned null for '{key}#kf={kfPath}'.");
+                // Gated import keys are not plain model names; the animation
+                // request always targets the bare model key.
+                var animationModel = animationModelKey != null ? animationModelKey(key) : key;
+                var importedAnimation = animationImporter.ImportAnimation($"{animationModel}#kf={kfPath}", importContext)
+                    ?? throw new InvalidOperationException($"EE2 animation import returned null for '{animationModel}#kf={kfPath}'.");
                 var animation = ImportedAnimationMaterializer.Materialize(importedAnimation);
 
                 var nameForTime = animatedFileName ?? GetAnimatedCaptureFileName;

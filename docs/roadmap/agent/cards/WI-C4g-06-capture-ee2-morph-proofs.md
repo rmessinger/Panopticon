@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4g-06` |
 | Roadmap phase | [Track C · C4g](../../track-c-external-assets.md): EE2 morph animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C4g-05` |
@@ -45,11 +45,18 @@ the farm yam seeding morph.
 
 ## Acceptance criteria
 
-- [ ] Installed tests pass when the EE2 install is available.
-- [ ] Captures show visible farm yam shape change between weights 0, 0.5, and 1.
-- [ ] The embedded morph smoke test covers at least one quadratic weight curve.
-- [ ] Gate-disabled import fails before GPU allocation with a morph-target diagnostic.
-- [ ] Standard validation passes.
+- [x] Installed tests pass when the EE2 install is available.
+- [x] Captures show visible farm yam shape change between weights 0, 0.5, and 1.
+- [x] The embedded morph smoke test covers at least one quadratic weight curve.
+- [x] Gate-disabled import fails before GPU allocation with a morph-target diagnostic.
+- [x] Standard validation passes.
+
+Notes: the installed assertions live in `Ee2MorphImportTests` (cards 03/05 already
+covered steps 2-3 and 6; this card added the capture scenario, the quadratic
+embedded smoke on `fx_emp_flash`, and the scenario plan tests). The static
+baseline is framed differently from the animated frames because the clip's root
+bone keys pose the model before the arcball fit; the morph proof is the shared-
+camera animated sequence (content pixels 31465 -> 38128 -> 43651).
 
 ## Validation commands
 

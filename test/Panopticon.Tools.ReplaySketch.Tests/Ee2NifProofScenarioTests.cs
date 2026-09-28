@@ -196,6 +196,53 @@ public sealed class Ee2NifProofScenarioTests
         Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2NifProof));
         Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2PropertyProof));
         Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2ScaleProof));
+        Assert.True(Enum.IsDefined<BuiltInScenario>(BuiltInScenario.Ee2MorphProof));
+    }
+
+    [Fact]
+    public void MorphCapturePlanCoversTheFarmYam()
+    {
+        var plan = Ee2NifProofScenario.MorphCapturePlan;
+        var entry = Assert.Single(plan);
+        Assert.Equal(Ee2NifProofScenario.FarmYamMorphModelKey, entry.Key);
+        Assert.False(string.IsNullOrWhiteSpace(entry.Check));
+    }
+
+    [Fact]
+    public void MorphAnimatedCapturePlanCoversWeightsZeroHalfAndOne()
+    {
+        var plan = Ee2NifProofScenario.MorphAnimatedCapturePlan;
+        Assert.Equal(3, plan.Length);
+
+        var expected = new[]
+        {
+            (Ee2NifProofScenario.FarmYamMorphModelKey, "Graphics/Building/bld_farm_yam.kf", 0f),
+            (Ee2NifProofScenario.FarmYamMorphModelKey, "Graphics/Building/bld_farm_yam.kf", 0.4833f),
+            (Ee2NifProofScenario.FarmYamMorphModelKey, "Graphics/Building/bld_farm_yam.kf", 0.9667f),
+        };
+
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].Item1, plan[i].ModelKey);
+            Assert.Equal(expected[i].Item2, plan[i].KfPath);
+            Assert.Equal(expected[i].Item3, plan[i].TimeSeconds);
+        }
+
+        Assert.All(plan, entry => Assert.False(string.IsNullOrWhiteSpace(entry.Check)));
+    }
+
+    [Fact]
+    public void MorphCaptureFileNamesUseStemAndMorphSuffix()
+    {
+        Assert.Equal(
+            "bld_farm_yam-morph-0000.png",
+            Ee2NifProofScenario.GetMorphCaptureFileName("Graphics/Building/bld_farm_yam.kf", 0f));
+        Assert.Equal(
+            "bld_farm_yam-morph-0483.png",
+            Ee2NifProofScenario.GetMorphCaptureFileName("Graphics/Building/bld_farm_yam.kf", 0.4833f));
+        Assert.Equal(
+            "bld_farm_yam-morph-0967.png",
+            Ee2NifProofScenario.GetMorphCaptureFileName("Graphics/Building/bld_farm_yam.kf", 0.9667f));
     }
 
     [Fact]
