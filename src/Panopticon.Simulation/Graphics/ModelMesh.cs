@@ -36,6 +36,16 @@ public sealed partial class ModelMesh : ModelRenderObject
     /// <summary>Number of materials in the imported mesh this mesh was built from; bounds valid material indices.</summary>
     public readonly int MaterialCount;
 
+    /// <summary>
+    /// Runtime morph target set materialized under the MorphTargets gate, or null for the
+    /// feature-disabled path. Morph-enabled instances deform a dynamic copy; the static
+    /// vertex buffer stays intact.
+    /// </summary>
+    internal readonly ModelMorphTargetSet? MorphTargetSet;
+
+    /// <summary>Base vertices for CPU morph application; null when the mesh has no morph targets.</summary>
+    internal readonly MeshShaderResources.MeshVertex.Basic[]? MorphBaseVertices;
+
     public readonly bool Skinned;
 
     public override bool Hidden { get; }

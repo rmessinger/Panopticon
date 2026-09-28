@@ -19,7 +19,7 @@ public sealed class AssetImportContext
 
     public string? Language { get; }
 
-    private IReadOnlySet<string> EnabledFeatureGates { get; }
+    public IReadOnlySet<string> EnabledFeatureGates { get; }
 
     public AssetImportContext(
         FileSystem fileSystem,

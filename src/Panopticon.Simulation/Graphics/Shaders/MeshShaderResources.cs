@@ -131,6 +131,8 @@ internal sealed class MeshShaderResources : DisposableBase
 
     public static class MeshVertex
     {
+        public static readonly int BasicStride = System.Runtime.InteropServices.Marshal.SizeOf<Basic>();
+
         [StructLayout(LayoutKind.Sequential)]
         public struct Basic
         {

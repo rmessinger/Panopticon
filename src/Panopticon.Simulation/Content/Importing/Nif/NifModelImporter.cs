@@ -50,7 +50,12 @@ internal sealed class NifModelImporter : IModelImporter
 
         var graph = NifSceneConverter.ConvertGraph(file, name, context);
 
-        return new ImportedModel(name, graph.Skeleton, graph.SubObjects, ImportedSkeletonOrigin.Embedded);
+        return new ImportedModel(
+            name,
+            graph.Skeleton,
+            graph.SubObjects,
+            ImportedSkeletonOrigin.Embedded,
+            context.EnabledFeatureGates);
     }
 
     /// <summary>
@@ -130,7 +135,12 @@ internal sealed class NifModelImporter : IModelImporter
         var graph = NifSceneConverter.ConvertGraph(
             file, morphKey.ModelName, context, convertMeshes: true, morphSources);
 
-        return new ImportedModel(modelKey, graph.Skeleton, graph.SubObjects, ImportedSkeletonOrigin.Embedded);
+        return new ImportedModel(
+            modelKey,
+            graph.Skeleton,
+            graph.SubObjects,
+            ImportedSkeletonOrigin.Embedded,
+            context.EnabledFeatureGates);
     }
 
     public ImportedSkeleton? ImportSkeleton(string name, AssetImportContext context)
