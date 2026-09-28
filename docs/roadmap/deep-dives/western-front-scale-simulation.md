@@ -375,7 +375,7 @@ The gates were:
 12. Performance and accuracy acceptance envelopes.
 
 Phase designs: [W0](w0-charter-fixture.md), [W1](w1-aggregate-sector.md),
-[W2](w2-fidelity-promotion.md), and [W3-W6](w3-w6-integration-experiments.md). WF-n in this
+[W2](w2-fidelity-promotion.md), and [W3a-W6](w3-w6-integration-experiments.md). WF-n in this
 charter is Track W phase Wn.
 
 ## 12. Architecture diagrams
@@ -486,7 +486,7 @@ sequenceDiagram
 3. Implement [W0](w0-charter-fixture.md) (`WI-W0-01..09`); `WI-W0-01`, `-03`, and `-04` do not
    wait for A4-4.
 4. Decompose W1, then W2, into cards after the previous phase's evidence passes.
-5. Design and implement B4b independently; W3 consumes it.
+5. Design and implement B4b independently; W3a and W3b consume it.
 
 ## Appendix: Current-state hooks (agent context)
 

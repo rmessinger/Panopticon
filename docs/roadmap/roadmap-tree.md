@@ -273,7 +273,8 @@ mindmap
       W0 Charter fixture ⮕
       W1 Aggregate sector simulation ⮕
       W2 Fidelity promotion and reconciliation ⮕
-      W3 Geospatial sector ⮕
+      W3a Sedan 1870 ⮕
+      W3b Somme sector ⮕
       W4 Command and logistics experiment ⮕
       W5 Distributed regional simulation ⮕
       W6 Long-run campaign experiment ⮕
@@ -419,12 +420,17 @@ flowchart LR
     direction TB
     C7C["C7c SC2 skinned M3 animation"]
     F8["F8 Authoring & validation tooling"]
-    W3["W3 Geospatial sector"]
+    W3A["W3a Sedan 1870"]
     W4["W4 Command & logistics experiment"]
     W5["W5 Distributed regional simulation"]
   end
 
-  subgraph S7["Stage 7 · Long-run campaign"]
+  subgraph S7["Stage 7 · Somme sector"]
+    direction TB
+    W3B["W3b Somme sector"]
+  end
+
+  subgraph S8["Stage 8 · Long-run campaign"]
     direction TB
     W6["W6 Long-run campaign experiment"]
   end
@@ -592,15 +598,17 @@ flowchart LR
   F2 --> F8
   F6 --> F8
   F7 --> F8
-  W2 --> W3
-  B4B --> W3
+  W2 --> W3A
+  B4B --> W3A
   W2 --> W4
   A5 --> W4
   W2 --> W5
   B6 --> W5
 
   %% Stage 6 -> 7
-  W3 --> W6
+  W3A --> W3B
+  %% Stages 6-7 -> 8
+  W3B --> W6
   W4 --> W6
   W5 --> W6
 
@@ -613,7 +621,7 @@ flowchart LR
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;
-  class W0,W1,W2,W3,W4,W5,W6 trackW;
+  class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
   class A4S seam;
 ```
 

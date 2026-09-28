@@ -1,25 +1,25 @@
-# Task Card `WI-W3-10`: Write the W3 evidence report
+# Task Card `WI-W3b-06`: Write the W3b evidence report
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-W3-10` |
-| Roadmap phase | [Track W · W3](../../track-w-western-front.md): geospatial sector |
+| Card ID | `WI-W3b-06` |
+| Roadmap phase | [Track W · W3b](../../track-w-western-front.md): Somme sector |
 | Status | `Draft` |
 | Type | `investigation` |
 | Effort | `S` |
-| Prerequisites | `WI-W3-07`, `WI-W3-08`, `WI-W3-09` |
-| Diagrams | [W3 §6](../../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams) |
+| Prerequisites | `WI-W3b-04`, `WI-W3b-05`, `WI-W3a-27` |
+| Diagrams | [W3b §5](../../deep-dives/w3b-somme-sector.md#5-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W3-07`, `WI-W3-08`, and `WI-W3-09` are Done.
+Draft: flip to Ready once `WI-W3b-04`, `WI-W3b-05`, and `WI-W3a-27` are Done.
 
-Produce the W3 evidence report summarizing payload validation, topology derivation, and W1/W2 evidence.
+Produce the W3b evidence report summarizing payload validation, topology derivation, and W1/W2 evidence.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §4-§5.
-- Evidence artifacts from prior W3 cards.
+- `docs/roadmap/deep-dives/w3b-somme-sector.md` §3-§4.
+- Evidence artifacts from prior W3b cards.
 
 ## Steps
 
@@ -30,7 +30,7 @@ Produce the W3 evidence report summarizing payload validation, topology derivati
 
 ## Files likely to change
 
-- W3 evidence report location chosen by prior cards
+- W3b evidence report location chosen by prior cards
 
 ## Acceptance criteria
 
@@ -40,7 +40,7 @@ Produce the W3 evidence report summarizing payload validation, topology derivati
 ## Validation commands
 
 ```sh
-python docs/roadmap/scripts/check_links.py docs/roadmap/deep-dives/w3-geospatial-sector.md || true
+python docs/roadmap/scripts/check_links.py docs/roadmap/deep-dives/w3b-somme-sector.md || true
 ```
 
 ## Out of scope / guardrails

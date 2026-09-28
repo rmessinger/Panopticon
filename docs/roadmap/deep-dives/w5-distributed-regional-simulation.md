@@ -36,7 +36,7 @@ boundary effects, and bounded comparison drift against the single-process refere
 - halo: lateral neighbour regions, boundary links, pending cross-strip messages, and formations
   within one handoff frame of the boundary.
 
-The scheme partitions region ownership, not source data. The B4b payload and W3 topology remain
+The scheme partitions region ownership, not source data. The B4b payload and W3a/W3b topology remain
 shared read-only inputs.
 
 ## 3. Shard execution
@@ -86,7 +86,7 @@ Required evidence:
 
 | Item | Card | Deliverable | Acceptance criteria |
 |---|---|---|---|
-| W5-1 | [`WI-W5-01`](../agent/cards/WI-W5-01-front-strip-partition.md) | Front-strip partition design and tests. | No contested pair crosses shards for synthetic and W3 topologies. |
+| W5-1 | [`WI-W5-01`](../agent/cards/WI-W5-01-front-strip-partition.md) | Front-strip partition design and tests. | No contested pair crosses shards for synthetic and W3b topologies. |
 | W5-2 | [`WI-W5-02`](../agent/cards/WI-W5-02-shard-slice-state.md) | Western Front shard slice state. | Owned and halo records are separated and keyed by stable W keys. |
 | W5-3 | [`WI-W5-03`](../agent/cards/WI-W5-03-inprocess-json-transport.md) | In-process JSON boundary transport. | Messages round-trip deterministically and preserve frame ordering. |
 | W5-4 | [`WI-W5-04`](../agent/cards/WI-W5-04-lockstep-coordinator.md) | Lockstep coordinator. | Barriers occur per operational tick in compressed mode and per logic frame in tactical mode. |
@@ -110,7 +110,7 @@ classDiagram
     +Build(topology, frontLine, shardCount)
   }
   class WesternFrontTopology {
-    <<W0/W3>>
+    <<W0/W3a>>
     +Regions
     +Cells
     +Links

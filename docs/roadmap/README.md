@@ -36,8 +36,9 @@ Long-term goals:
    a theater-scale, spatially explicit simulation combining
    [geospatial terrain](deep-dives/b4b-geospatial-map-generation.md),
    large/distributed/variable-fidelity simulation, and extensible gameplay content. Staged as
-   [Track W](track-w-western-front.md) on a Somme 1916 sector; order of battle, performance, and
-   interactive-rate targets remain uncommitted until W2 sets the first error envelope.
+   [Track W](track-w-western-front.md): Sedan 1870 is the first real battle and the large-scale
+   proof of concept, then a Somme 1916 sector; performance and interactive-rate targets remain
+   uncommitted until W2 sets the first error envelope.
 
 Scope notes:
 
@@ -164,8 +165,9 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/w0-charter-fixture.md`](deep-dives/w0-charter-fixture.md) | Track W phase W0 - Stable keys, state schema, synthetic topology and scenario, multi-rate theater clock, and conservation ledger. |
 | [`deep-dives/w1-aggregate-sector.md`](deep-dives/w1-aggregate-sector.md) | Track W phase W1 - Command and information, movement, logistics, consumption, and platoon-level stochastic and mean-field combat at operational cadence. |
 | [`deep-dives/w2-fidelity-promotion.md`](deep-dives/w2-fidelity-promotion.md) | Track W phase W2 - Activation of every contested region, promotion to soldier objects with A4-3 groupings, tactical engagement, demotion with exact reconciliation, and the all-tactical reference comparison. |
-| [`deep-dives/w3-w6-integration-experiments.md`](deep-dives/w3-w6-integration-experiments.md) | Track W phases W3-W6 - Overview of the geospatial sector, command and logistics sweeps, distributed regions, and the long-run campaign. |
-| [`deep-dives/w3-geospatial-sector.md`](deep-dives/w3-geospatial-sector.md) | Track W phase W3 - Somme 1916 sector at true scale in UTM 31N, topology derived from the B4b payload, and W1/W2 evidence on real geography. |
+| [`deep-dives/w3-w6-integration-experiments.md`](deep-dives/w3-w6-integration-experiments.md) | Track W phases W3a-W6 - Overview of the Sedan battle, the Somme sector, command and logistics sweeps, distributed regions, and the long-run campaign. |
+| [`deep-dives/w3a-sedan-1870.md`](deep-dives/w3a-sedan-1870.md) | Track W phase W3a - Battle of Sedan 1870 at true scale: historical order of battle and orders timeline, period weapons, tactical artillery and cavalry, surrender and capitulation, the generic geospatial topology builder, and a 320,000-soldier all-tactical reference. |
+| [`deep-dives/w3b-somme-sector.md`](deep-dives/w3b-somme-sector.md) | Track W phase W3b - Somme 1916 sector at true scale in UTM 31N, front-line bands on the W3a topology builder, and W1/W2 evidence on real geography. |
 | [`deep-dives/w4-command-logistics-experiment.md`](deep-dives/w4-command-logistics-experiment.md) | Track W phase W4 - 216-cell command and logistics matrix, information audit, and sensitivity report. |
 | [`deep-dives/w5-distributed-regional-simulation.md`](deep-dives/w5-distributed-regional-simulation.md) | Track W phase W5 - Front-strip shards over B6, lockstep coordination, and cross-boundary handoff. |
 | [`deep-dives/w6-long-run-campaign.md`](deep-dives/w6-long-run-campaign.md) | Track W phase W6 - Long-run campaign file, domain snapshot plus host save, replay indexing, and approximation error reporting. |
@@ -250,9 +252,9 @@ track document.
   regression. A persistence/schema-design track, distinct from B3/B4a-5's runtime-performance
   focus. Depends on Track P only.
 - [Track W - Western Front Simulation](track-w-western-front.md): W0 charter fixture · W1
-  aggregate sector simulation · W2 fidelity promotion and reconciliation · W3 geospatial sector ·
-  W4 command and logistics experiment · W5 distributed regional simulation · W6 long-run campaign
-  experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
+  aggregate sector simulation · W2 fidelity promotion and reconciliation · W3a Sedan 1870 · W3b
+  Somme sector · W4 command and logistics experiment · W5 distributed regional simulation · W6
+  long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
 
 ### Cross-track dependencies
 
@@ -289,7 +291,7 @@ track document.
   H4/H6 feed Track D's D3 external content ingestion and the standalone [ModCollector
   tool](plans/mod-collector.md) once the new object-definition format exists.
 - Track W builds on Track A: W0 needs A4-1 and the A4-4 state projection, W1 needs A2, W2 needs
-  A4-3. W2 is the first B7-4 group-aggregation instance and does not wait for B7. W3 consumes
+  A4-3. W2 is the first B7-4 group-aggregation instance and does not wait for B7. W3a consumes
   B4b, W4 and W6 consume A5, and W5 consumes B6.
 
 ---
@@ -395,11 +397,12 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | W0 - Charter fixture | `░░░░░░░░░░` | 0 / 9 |
 | W1 - Aggregate sector simulation | `░░░░░░░░░░` | 0 / 7 |
 | W2 - Fidelity promotion and reconciliation | `░░░░░░░░░░` | 0 / 14 |
-| W3 - Geospatial sector | `░░░░░░░░░░` | 0 / 10 |
+| W3a - Sedan 1870 | `░░░░░░░░░░` | 0 / 30 |
+| W3b - Somme sector | `░░░░░░░░░░` | 0 / 6 |
 | W4 - Command and logistics experiment | `░░░░░░░░░░` | 0 / 6 |
 | W5 - Distributed regional simulation | `░░░░░░░░░░` | 0 / 8 |
 | W6 - Long-run campaign experiment | `░░░░░░░░░░` | 0 / 8 |
-| Track W total | `░░░░░░░░░░` | 0 / 62 |
+| Track W total | `░░░░░░░░░░` | 0 / 88 |
 
 ---
 

@@ -285,14 +285,23 @@ Source of truth: [deep-dives/w2-fidelity-promotion.md](../deep-dives/w2-fidelity
 |---|---|---|
 | [track-w-w2-fidelity-promotion.md](track-w-w2-fidelity-promotion.md) | W2-1…W2-14 | Fidelity promotion (WI-W2-01..14) |
 
-## Track W · W3 : Geospatial sector
+## Track W · W3a : Sedan 1870
 
-Source of truth: [deep-dives/w3-geospatial-sector.md](../deep-dives/w3-geospatial-sector.md) :
-[Architecture diagrams §6](../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams).
+Source of truth: [deep-dives/w3a-sedan-1870.md](../deep-dives/w3a-sedan-1870.md) :
+[Architecture diagrams §13](../deep-dives/w3a-sedan-1870.md#13-architecture-diagrams).
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-w-w3-geospatial-sector.md](track-w-w3-geospatial-sector.md) | W3-1…W3-10 | Geospatial sector (WI-W3-01..10) |
+| [track-w-w3a-sedan-1870.md](track-w-w3a-sedan-1870.md) | W3a-1…W3a-30 | Sedan 1870 (WI-W3a-01..30) |
+
+## Track W · W3b : Somme sector
+
+Source of truth: [deep-dives/w3b-somme-sector.md](../deep-dives/w3b-somme-sector.md) :
+[Architecture diagrams §5](../deep-dives/w3b-somme-sector.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-w-w3b-somme-sector.md](track-w-w3b-somme-sector.md) | W3b-1…W3b-6 | Somme sector (WI-W3b-01..06) |
 
 ## Track W · W4 : Command and logistics experiment
 

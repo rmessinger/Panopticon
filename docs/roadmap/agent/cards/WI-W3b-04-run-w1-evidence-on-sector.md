@@ -1,24 +1,24 @@
-# Task Card `WI-W3-07`: Run W1 evidence on generated sector
+# Task Card `WI-W3b-04`: Run W1 evidence on generated sector
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-W3-07` |
-| Roadmap phase | [Track W · W3](../../track-w-western-front.md): geospatial sector |
+| Card ID | `WI-W3b-04` |
+| Roadmap phase | [Track W · W3b](../../track-w-western-front.md): Somme sector |
 | Status | `Draft` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `WI-W3-06`, W1 evidence cards |
-| Diagrams | [W3 §6](../../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams) |
+| Prerequisites | `WI-W3b-03`, W1 evidence cards |
+| Diagrams | [W3b §5](../../deep-dives/w3b-somme-sector.md#5-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W3-06` and W1 evidence cards are Done.
+Draft: flip to Ready once `WI-W3b-03` and W1 evidence cards are Done.
 
 Run the W1 conservation, reconstruction, fixed-seed, and metrics evidence against a generated-sector fixture.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §4.
+- `docs/roadmap/deep-dives/w3b-somme-sector.md` §3.
 - `docs/roadmap/deep-dives/w1-aggregate-sector.md` §11.
 
 ## Steps

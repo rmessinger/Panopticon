@@ -7,19 +7,19 @@
 | Status | `Draft` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | W3 evidence, W4 result schema, W5 shard config cards |
+| Prerequisites | W3b evidence, W4 result schema, W5 shard config cards |
 | Diagrams | [W6 §6](../../deep-dives/w6-long-run-campaign.md#6-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once W3 evidence, W4 result schema, and W5 shard config cards are Done.
+Draft: flip to Ready once W3b evidence, W4 result schema, and W5 shard config cards are Done.
 
 Create the versioned W6 campaign definition.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w6-long-run-campaign.md` §2.
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §2.
+- `docs/roadmap/deep-dives/w3b-somme-sector.md` §2.
 
 ## Steps
 

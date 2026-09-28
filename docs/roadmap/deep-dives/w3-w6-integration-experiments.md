@@ -1,6 +1,6 @@
-# Deep Dive: W3-W6 Integration Experiments
+# Deep Dive: W3a-W6 Integration Experiments
 
-> Expands phases W3-W6 of [Track W: Western Front Simulation](../track-w-western-front.md).
+> Expands phases W3a-W6 of [Track W: Western Front Simulation](../track-w-western-front.md).
 > Detailed phase designs now live in per-phase deep dives.
 >
 > Audience: human + agent navigation overview.
@@ -11,13 +11,27 @@ cards.
 
 ---
 
-## 1. W3 Geospatial sector
+## 1. W3 Geospatial battles
 
-Detailed design: [W3 geospatial sector](w3-geospatial-sector.md).
+### W3a Sedan 1870
 
-Implementation plan: [Track W · W3](../implementation/track-w-w3-geospatial-sector.md).
+Detailed design: [W3a Sedan 1870](w3a-sedan-1870.md).
 
-Card range: [`WI-W3-01..10`](../agent/cards/).
+Implementation plan: [Track W · W3a](../implementation/track-w-w3a-sedan-1870.md).
+
+Card range: [`WI-W3a-01..30`](../agent/cards/).
+
+Scope: simulate the Battle of Sedan, 31 August to 2 September 1870, all-tactical at about 320,000
+soldiers on a B4b-generated payload, with a historical order of battle and orders timeline. W3a
+owns the generic geospatial topology builder.
+
+### W3b Somme sector
+
+Detailed design: [W3b Somme sector](w3b-somme-sector.md).
+
+Implementation plan: [Track W · W3b](../implementation/track-w-w3b-somme-sector.md).
+
+Card range: [`WI-W3b-01..06`](../agent/cards/).
 
 Scope: run W1 and W2 evidence on a B4b generated Somme sector. The sector uses lat 49.90-50.17 N,
 lon 2.52-2.80 E, UTM 31N, true scale, `metersPerGameUnit` 0.3048, a 1000 m region grid, and 8 x 8
@@ -62,7 +76,8 @@ scrubbing.
 
 | Phase | Primary evidence |
 |---|---|
-| W3 | B4b control-point tolerances, generated topology source keys, W1/W2 evidence on real geography. |
+| W3a | Exact conservation with 1870 families, 60 h all-tactical reference, aggregate and mixed error, order metrics, and a measured divergence table against the historical record. |
+| W3b | B4b control-point tolerances, generated topology source keys, W1/W2 evidence on real geography. |
 | W4 | Matrix distributions, sensitivity ranking, information-audit failures when policies read outside their `EchelonView`. |
 | W5 | Shard ownership, conservation, boundary-message, handoff, and comparison metrics against the single-process reference. |
 | W6 | Memory and artifact bounds, save/load reconstruction, replay scrub latency, provenance, and declared approximation error. |
