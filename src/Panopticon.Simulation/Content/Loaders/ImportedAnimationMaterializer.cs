@@ -18,7 +18,7 @@ internal static class ImportedAnimationMaterializer
             .Select(ToRuntimeChannel)
             .ToArray();
 
-        return new ModelAnimation(imported.Name, imported.Duration, channels);
+        return new ModelAnimation(imported.Name, imported.Duration, channels, imported.MorphChannels);
     }
 
     private static ModelAnimationChannel ToRuntimeChannel(ImportedAnimationChannel channel)

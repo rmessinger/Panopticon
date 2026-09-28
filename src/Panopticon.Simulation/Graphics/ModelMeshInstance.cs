@@ -278,6 +278,42 @@ internal sealed class ModelMeshInstance : DisposableBase
         _morphDirty = true;
     }
 
+    internal int MorphWeightCount => _morphWeights.Length;
+
+    /// <summary>Live weight vector snapshot; null when the mesh has no morph targets.</summary>
+    internal float[]? MorphWeights => _morphTargetSet == null ? null : _morphWeights;
+
+    /// <summary>Copies the morph set's default weights into the given span.</summary>
+    internal void CopyMorphDefaultWeights(Span<float> destination)
+    {
+        if (_morphTargetSet == null)
+        {
+            throw new InvalidOperationException(
+                $"Mesh '{ModelInstance.Model.SubObjects[SubObjectIndex].FullName}' has no morph targets.");
+        }
+
+        if (destination.Length != _morphWeights.Length)
+        {
+            throw new ArgumentException(
+                $"Morph target set '{_morphTargetSet.PrimitiveId}' expects {_morphWeights.Length} weights but received {destination.Length}.");
+        }
+
+        _morphTargetSet.DefaultWeights.AsSpan().CopyTo(destination);
+    }
+
+    /// <summary>Resets the weight vector to the set's defaults and rebuilds the CPU vertices.</summary>
+    internal void ResetMorphWeightsToDefault()
+    {
+        if (_morphTargetSet == null)
+        {
+            return;
+        }
+
+        _morphTargetSet.DefaultWeights.AsSpan().CopyTo(_morphWeights);
+        _morphTargetSet.Apply(_morphBaseVertices, _morphWeights, MorphedVertices);
+        _morphDirty = true;
+    }
+
     /// <summary>
     /// Scroll offset (xy, texture units) for this mesh's primary texture, and a scale (z) for the
     /// material's own time-based UV animation (1 = baked scroll runs, 0 = suppressed so the draw

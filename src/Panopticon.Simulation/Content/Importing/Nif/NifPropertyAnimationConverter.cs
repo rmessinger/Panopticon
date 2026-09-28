@@ -59,9 +59,6 @@ internal static class NifPropertyAnimationConverter
                 ValidateFlags(alpha.Flags, AlphaFlags, targetName, "alpha");
                 ConvertAlpha(file, alpha, targetName, targets, animationName, duration, channels);
                 break;
-            case NifGeomMorpherController:
-                throw Unsupported(
-                    $"target '{targetName}' uses a NiGeomMorpherController; morph animation is C6 work");
             default:
                 throw Unsupported(
                     $"target '{targetName}' uses controller family '{controller.GetType().Name}'");
@@ -309,7 +306,7 @@ internal static class NifPropertyAnimationConverter
         }
     }
 
-    private static void ValidateTiming(
+    internal static void ValidateTiming(
         NifTimeController controller,
         string targetName,
         float duration,
@@ -345,7 +342,7 @@ internal static class NifPropertyAnimationConverter
         }
     }
 
-    private static void ValidateFlags(
+    internal static void ValidateFlags(
         ushort flags,
         ushort[] allowed,
         string targetName,

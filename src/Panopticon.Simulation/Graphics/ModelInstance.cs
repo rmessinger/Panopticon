@@ -187,7 +187,7 @@ public sealed class ModelInstance : DisposableBase
     {
         var bound = animation.Bind(Model);
 
-        return new AnimationInstance(ModelBoneInstances, bound, mode, flags, gameObject, random, PropertyState);
+        return new AnimationInstance(ModelBoneInstances, bound, mode, flags, gameObject, random, PropertyState, MeshInstances);
     }
 
     public void Update(in TimeInterval gameTime)

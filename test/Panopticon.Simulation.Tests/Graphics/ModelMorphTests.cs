@@ -1,9 +1,12 @@
 using System;
+using System.IO;
 using System.Numerics;
 using Panopticon.Content.Importing;
 using Panopticon.Content.Loaders;
 using Panopticon.Graphics;
+using Panopticon.Graphics.Animation;
 using Panopticon.Graphics.Shaders;
+using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using Panopticon.Tests.Content.Importing;
 using Xunit;
@@ -184,6 +187,127 @@ public class ModelMorphTests
 
         Assert.Null(instance.MeshInstances[0].MorphVertexBuffer);
         Assert.Null(instance.MeshInstances[0].MorphedVertices);
+    }
+
+    [Fact]
+    public void MorphAnimationChannel_PlaysLinearWeightsOntoMeshInstance()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var context = new TestGraphicsContext();
+        var instance = CreateMorphModelInstance(context, withGate: true);
+        var animation = ImportedAnimationMaterializer.Materialize(CreateMorphAnimation(
+            "TestModel.Mesh",
+            new[] { "Target1", "Target2" },
+            new[] { 0f, 1f },
+            new[] { new[] { 0f, 0f }, new[] { 1f, 0.5f } }));
+
+        var start = PlayTo(instance, animation, 0f);
+        Assert.Equal(0f, start[0], 5);
+        Assert.Equal(0f, start[1], 5);
+
+        var middle = PlayTo(instance, animation, 0.5f);
+        Assert.Equal(0.5f, middle[0], 5);
+        Assert.Equal(0.25f, middle[1], 5);
+
+        var end = PlayTo(instance, animation, 1f);
+        Assert.Equal(1f, end[0], 5);
+        Assert.Equal(0.5f, end[1], 5);
+    }
+
+    [Fact]
+    public void MorphBinding_FailsForMissingPrimitiveTargetNameAndSet()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var context = new TestGraphicsContext();
+        var model = ImportedModelMaterializer.MaterializeModel(
+            CreateImportedModel(withMorph: true, withGate: true), context.Context);
+
+        var missingPrimitive = ImportedAnimationMaterializer.Materialize(
+            CreateMorphAnimation("TestModel.Absent", new[] { "Target1" }, new[] { 0f }, new[] { new[] { 0f } }));
+        var primitiveError = Assert.Throws<InvalidDataException>(() => missingPrimitive.Bind(model));
+        Assert.Contains("TestModel.Absent", primitiveError.Message);
+        Assert.Contains("does not exist in model", primitiveError.Message);
+
+        var missingTarget = ImportedAnimationMaterializer.Materialize(
+            CreateMorphAnimation("TestModel.Mesh", new[] { "Target9" }, new[] { 0f }, new[] { new[] { 0f } }));
+        var targetError = Assert.Throws<InvalidDataException>(() => missingTarget.Bind(model));
+        Assert.Contains("Target9", targetError.Message);
+        Assert.Contains("does not exist on primitive", targetError.Message);
+
+        var plainModel = ImportedModelMaterializer.MaterializeModel(
+            CreateImportedModel(withMorph: false), context.Context);
+        var missingSet = ImportedAnimationMaterializer.Materialize(
+            CreateMorphAnimation("TestModel.Mesh", new[] { "Target1" }, new[] { 0f }, new[] { new[] { 0f } }));
+        var setError = Assert.Throws<InvalidDataException>(() => missingSet.Bind(plainModel));
+        Assert.Contains("no morph target set", setError.Message);
+    }
+
+    [Fact]
+    public void HierarchyBinding_RejectsMorphChannels()
+    {
+        var animation = ImportedAnimationMaterializer.Materialize(
+            CreateMorphAnimation("TestModel.Mesh", new[] { "Target1" }, new[] { 0f }, new[] { new[] { 0f } }));
+        var hierarchy = new ModelBoneHierarchy(
+            new ImportedSkeleton(
+                "TestSkeleton",
+                new[] { new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity) }));
+
+        var exception = Assert.Throws<NotSupportedException>(() => animation.Bind(hierarchy));
+        Assert.Contains("must bind against a model", exception.Message);
+    }
+
+    private static float[] PlayTo(ModelInstance instance, ModelAnimation animation, float seconds)
+    {
+        var animationInstance = instance.CreateAnimationInstance(
+            animation,
+            AnimationMode.Once,
+            AnimationFlags.StartFrameFirst,
+            gameObject: null!,
+            random: new ConstantRandom());
+        animationInstance.Play();
+
+        var delta = seconds / 8f;
+        for (var i = 0; i < 8; i++)
+        {
+            animationInstance.Update(new TimeInterval(TimeSpan.Zero, TimeSpan.FromSeconds(delta)));
+        }
+
+        instance.Update(new TimeInterval(TimeSpan.FromSeconds(seconds), TimeSpan.FromSeconds(delta)));
+        return instance.MeshInstances[0].MorphWeights!;
+    }
+
+    private static ImportedAnimation CreateMorphAnimation(
+        string primitiveId,
+        string[] targetNames,
+        float[] times,
+        float[][] weightVectors)
+    {
+        return new ImportedAnimation(
+            "morph_clip",
+            TimeSpan.FromSeconds(1),
+            Array.Empty<ImportedAnimationChannel>(),
+            new[] { new ImportedMorphAnimationChannel(primitiveId, targetNames, times, weightVectors) });
+    }
+
+    private sealed class ConstantRandom : IRandom
+    {
+        public uint Seed => 0;
+
+        public void Initialize(uint seed)
+        {
+        }
+
+        public int Next(int minValue, int maxValue) => minValue;
+
+        public float NextSingle(float minValue, float maxValue) => minValue;
     }
 
     private static ModelInstance CreateMorphModelInstance(TestGraphicsContext context, bool withGate)
