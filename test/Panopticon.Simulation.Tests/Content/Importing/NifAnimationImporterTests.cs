@@ -844,27 +844,11 @@ public sealed class NifAnimationImporterTests
     [Fact]
     public void MorpherControllerRejectedAsC6Work()
     {
-        var morpherBody = new MemoryStream();
-        var writer = new NifBodyWriter(morpherBody);
-        writer.WriteUInt32(0);
-        NifTestKeyframe.WriteTimeControllerPrefix(writer, -1, 0x2C, 1.0f, 0.0f, 0.0f, 2.0f, -1);
-        writer.WriteUInt16(0);
-        writer.WriteInt32(3);
-
-        var morphDataBody = new MemoryStream();
-        var dataWriter = new NifBodyWriter(morphDataBody);
-        dataWriter.WriteUInt32(0);
-        dataWriter.WriteByte(0);
-        dataWriter.WriteUInt32(1);
-        dataWriter.WriteUInt32(0);
-        dataWriter.WriteByte(1);
-        NifTestKeyframe.WriteFloatGroup(dataWriter, [(0.0f, 0.0f, null, null)]);
-
         var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
             "NiGeomMorpherController",
-            morpherBody.ToArray(),
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 2.0f),
             "NiMorphData",
-            morphDataBody.ToArray(),
+            NifTestPropertyAnimation.MorphData(0, [([(0.0f, 0.0f, null, null)], null)]),
             targetName: "hull")));
 
         Assert.Contains("NiGeomMorpherController", ex.Message);

@@ -18,10 +18,13 @@ public sealed class ImportedAnimation
 
     public IReadOnlyList<ImportedAnimationChannel> Channels { get; }
 
+    public IReadOnlyList<ImportedMorphAnimationChannel> MorphChannels { get; }
+
     public ImportedAnimation(
         string name,
         TimeSpan duration,
-        IReadOnlyList<ImportedAnimationChannel> channels)
+        IReadOnlyList<ImportedAnimationChannel> channels,
+        IReadOnlyList<ImportedMorphAnimationChannel>? morphChannels = null)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -46,8 +49,20 @@ public sealed class ImportedAnimation
             }
         }
 
+        if (morphChannels is not null)
+        {
+            for (var i = 0; i < morphChannels.Count; i++)
+            {
+                if (morphChannels[i] is null)
+                {
+                    throw new ArgumentException($"Morph channel at index {i} must not be null.", nameof(morphChannels));
+                }
+            }
+        }
+
         Name = name;
         Duration = duration;
         Channels = channels.ToArray();
+        MorphChannels = morphChannels?.ToArray() ?? Array.Empty<ImportedMorphAnimationChannel>();
     }
 }

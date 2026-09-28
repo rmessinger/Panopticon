@@ -34,6 +34,16 @@ internal static class ImportedModelMaterializer
     /// </summary>
     public static Model MaterializeModel(ImportedModel importedModel, ModelBoneHierarchy boneHierarchy, AssetLoadContext context)
     {
+        for (var i = 0; i < importedModel.SubObjects.Count; i++)
+        {
+            if (importedModel.SubObjects[i].RenderObject is ImportedMesh { MorphTargetSets.Count: > 0 })
+            {
+                throw new NotSupportedException(
+                    $"Model '{importedModel.Name}' carries morph target sets; materializing morph targets requires " +
+                    $"the '{ImportedFeatureGates.MorphTargets}' feature gate and the C4g morph runtime.");
+            }
+        }
+
         ImportedModelValidator.Validate(importedModel, boneHierarchy);
 
         var subObjects = new ModelSubObject[importedModel.SubObjects.Count];

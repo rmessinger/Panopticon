@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Content.Importing;
 using Panopticon.Mathematics;
@@ -55,7 +56,12 @@ public sealed class ImportedAssetTests
             stepsPerSecond: 0.0f);
     }
 
-    private static ImportedMesh CreateMesh(ImportedVertex[] vertices, ushort[] indices, bool isSkinned = false)
+    private static ImportedMesh CreateMesh(
+        ImportedVertex[] vertices,
+        ushort[] indices,
+        bool isSkinned = false,
+        string? primitiveId = null,
+        IReadOnlyList<ImportedMorphTargetSet>? morphTargetSets = null)
     {
         return new ImportedMesh(
             vertices,
@@ -76,7 +82,9 @@ public sealed class ImportedAssetTests
                     indexCount: 3,
                     blendEnabled: false,
                     materialIndex: 0),
-            });
+            },
+            primitiveId,
+            morphTargetSets);
     }
 
     private static ImportedVertex StaticVertex(float x, float y, float z)
@@ -891,6 +899,235 @@ public sealed class ImportedAssetTests
             (ImportedAnimationInterpolation)99));
 
         Assert.Equal("interpolation", exception.ParamName);
+    }
+
+    [Fact]
+    public void MorphTarget_RejectsAllAbsentAndUnequalDeltaArrays()
+    {
+        Assert.Throws<ArgumentException>(() => new ImportedMorphTarget(null, null, null));
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphTarget(
+            new[] { Vector3.Zero, Vector3.Zero, Vector3.Zero },
+            new[] { Vector3.Zero }));
+
+        var target = new ImportedMorphTarget(new[] { Vector3.Zero, Vector3.Zero, Vector3.Zero });
+        Assert.Null(target.NormalDeltas);
+        Assert.Equal(3, target.PositionDeltas!.Count);
+    }
+
+    private static ImportedMorphTargetSet CreateMorphSet(int targetCount = 1, int vertexCount = 3)
+    {
+        var names = new string[targetCount];
+        var weights = new float[targetCount];
+        var ranges = new ImportedMorphWeightRange[targetCount];
+        var targets = new ImportedMorphTarget[targetCount];
+        for (var i = 0; i < targetCount; i++)
+        {
+            names[i] = $"Target{i + 1}";
+            weights[i] = 0.0f;
+            ranges[i] = new ImportedMorphWeightRange(0.0f, 1.0f);
+            targets[i] = new ImportedMorphTarget(new Vector3[vertexCount]);
+        }
+
+        return new ImportedMorphTargetSet("TestModel.Mesh", names, weights, ranges, targets);
+    }
+
+    [Fact]
+    public void MorphTargetSet_ValidatesTargets()
+    {
+        var set = CreateMorphSet(targetCount: 2);
+        Assert.Equal("TestModel.Mesh", set.PrimitiveId);
+        Assert.Equal(2, set.TargetNames.Count);
+        Assert.Equal(0.0f, set.DefaultWeights[1]);
+        Assert.Equal(1.0f, set.AllowedWeightRanges[0].Maximum);
+
+        Assert.Throws<NotSupportedException>(() => CreateMorphSet(targetCount: ImportedMorphTargetSet.MaximumTargetCount + 1));
+
+        var exception = Assert.Throws<ArgumentException>(() => new ImportedMorphTargetSet(
+            "TestModel.Mesh",
+            new[] { "Target1" },
+            new float[] { 0.0f, 0.0f },
+            new[] { new ImportedMorphWeightRange(0.0f, 1.0f) },
+            new[] { new ImportedMorphTarget(new[] { Vector3.Zero, Vector3.Zero, Vector3.Zero }) }));
+        Assert.Equal("defaultWeights", exception.ParamName);
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphTargetSet(
+            "TestModel.Mesh",
+            new[] { "Target1", "Target1" },
+            new float[] { 0.0f, 0.0f },
+            new[] { new ImportedMorphWeightRange(0.0f, 1.0f), new ImportedMorphWeightRange(0.0f, 1.0f) },
+            new[]
+            {
+                new ImportedMorphTarget(new Vector3[3]),
+                new ImportedMorphTarget(new Vector3[3]),
+            }));
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphTargetSet(
+            "TestModel.Mesh",
+            new[] { "Target1" },
+            new[] { 1.5f },
+            new[] { new ImportedMorphWeightRange(0.0f, 1.0f) },
+            new[] { new ImportedMorphTarget(new Vector3[3]) }));
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphTargetSet(
+            "TestModel.Mesh",
+            new[] { "Target1" },
+            new[] { 0.5f },
+            new[] { new ImportedMorphWeightRange(1.0f, 0.0f) },
+            new[] { new ImportedMorphTarget(new Vector3[3]) }));
+    }
+
+    [Fact]
+    public void Mesh_AttachesMorphTargetSet_AndRejectsMismatchedDeltasAndSecondSet()
+    {
+        var mesh = CreateMesh(
+            new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) },
+            new ushort[] { 0, 1, 2 },
+            primitiveId: "TestModel.Mesh",
+            morphTargetSets: new[] { CreateMorphSet() });
+        Assert.Equal("TestModel.Mesh", mesh.PrimitiveId);
+        Assert.Single(mesh.MorphTargetSets);
+
+        Assert.Equal(string.Empty, CreateMesh(
+            new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) },
+            new ushort[] { 0, 1, 2 }).PrimitiveId);
+
+        Assert.Throws<ArgumentException>(() => CreateMesh(
+            new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) },
+            new ushort[] { 0, 1, 2 },
+            primitiveId: "TestModel.Mesh",
+            morphTargetSets: new[]
+            {
+                new ImportedMorphTargetSet(
+                    "TestModel.Mesh",
+                    new[] { "Target1" },
+                    new[] { 0.0f },
+                    new[] { new ImportedMorphWeightRange(0.0f, 1.0f) },
+                    new[] { new ImportedMorphTarget(new[] { Vector3.Zero, Vector3.Zero }) }),
+            }));
+
+        Assert.Throws<ArgumentException>(() => CreateMesh(
+            new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) },
+            new ushort[] { 0, 1, 2 },
+            primitiveId: "TestModel.Mesh",
+            morphTargetSets: new[] { CreateMorphSet(), CreateMorphSet() }));
+    }
+
+    [Fact]
+    public void MorphAnimationChannel_ValidatesTimesVectorsAndWeights()
+    {
+        var channel = new ImportedMorphAnimationChannel(
+            "TestModel.Mesh",
+            new[] { "Target1", "Target2" },
+            new[] { 0.0f, 1.0f },
+            new[] { new[] { 0.0f, 0.0f }, new[] { 1.0f, 0.5f } });
+        Assert.Equal(2, channel.TargetNames.Count);
+        Assert.Equal(1.0f, channel.WeightVectors[1][0]);
+        Assert.Equal(0.5f, channel.WeightVectors[1][1]);
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphAnimationChannel(
+            "TestModel.Mesh",
+            new[] { "Target1" },
+            new[] { 1.0f, 0.0f },
+            new[] { new[] { 0.0f }, new[] { 1.0f } }));
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphAnimationChannel(
+            "TestModel.Mesh",
+            new[] { "Target1" },
+            new[] { 0.0f },
+            new[] { new[] { 0.0f, 0.0f } }));
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphAnimationChannel(
+            "TestModel.Mesh",
+            new[] { "Target1" },
+            new[] { 0.0f },
+            new[] { new[] { float.NaN } }));
+
+        Assert.Throws<ArgumentException>(() => new ImportedMorphAnimationChannel(
+            "TestModel.Mesh",
+            new[] { "Target1", "Target1" },
+            new[] { 0.0f },
+            new[] { new[] { 0.0f, 0.0f } }));
+    }
+
+    [Fact]
+    public void Animation_DefaultsToNoMorphChannels_AndAcceptsMorphChannels()
+    {
+        var animation = new ImportedAnimation(
+            "Idle",
+            TimeSpan.FromSeconds(1),
+            new[]
+            {
+                new ImportedAnimationChannel(
+                    0,
+                    ImportedAnimationChannelType.TranslationX,
+                    new[] { ImportedKeyframe.FromFloat(TimeSpan.Zero, 0) }),
+            });
+        Assert.Empty(animation.MorphChannels);
+
+        var morphChannel = new ImportedMorphAnimationChannel(
+            "TestModel.Mesh",
+            new[] { "Target1" },
+            new[] { 0.0f, 1.0f },
+            new[] { new[] { 0.0f }, new[] { 1.0f } });
+        var withMorph = new ImportedAnimation(
+            "Idle",
+            TimeSpan.FromSeconds(1),
+            Array.Empty<ImportedAnimationChannel>(),
+            new[] { morphChannel });
+        Assert.Same(morphChannel, withMorph.MorphChannels[0]);
+
+        Assert.Throws<ArgumentException>(() => new ImportedAnimation(
+            "Idle",
+            TimeSpan.FromSeconds(1),
+            Array.Empty<ImportedAnimationChannel>(),
+            new ImportedMorphAnimationChannel?[] { null }));
+    }
+
+    [Fact]
+    public void AssetImportContext_EnablesFeatureGatesByRequest()
+    {
+        using var fileSystem = new MemoryFileSystem();
+        var plain = new AssetImportContext(fileSystem, null);
+        Assert.False(plain.IsFeatureGateEnabled(ImportedFeatureGates.MorphTargets));
+
+        var gated = new AssetImportContext(fileSystem, null, new[] { ImportedFeatureGates.MorphTargets });
+        Assert.True(gated.IsFeatureGateEnabled(ImportedFeatureGates.MorphTargets));
+        Assert.False(gated.IsFeatureGateEnabled("SomethingElse"));
+    }
+
+    [Fact]
+    public void Materializer_RefusesMorphTargetSets_NamingTheGate()
+    {
+        if (!Panopticon.Graphics.GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        using var graphics = new TestGraphicsContext();
+        var skeleton = new ImportedSkeleton(
+            "TestSkeleton",
+            new[] { new ImportedBone("Root", -1, Vector3.Zero, Quaternion.Identity) });
+        var model = new ImportedModel(
+            "TestModel",
+            skeleton,
+            new[]
+            {
+                new ImportedSubObject(
+                    "TestModel.Mesh",
+                    "Mesh",
+                    parentBoneIndex: 0,
+                    renderObject: CreateMesh(
+                        new[] { StaticVertex(0, 0, 0), StaticVertex(1, 0, 0), StaticVertex(0, 1, 0) },
+                        new ushort[] { 0, 1, 2 },
+                        primitiveId: "TestModel.Mesh",
+                        morphTargetSets: new[] { CreateMorphSet() })),
+            },
+            ImportedSkeletonOrigin.Embedded);
+
+        var exception = Assert.Throws<NotSupportedException>(() =>
+            Panopticon.Content.Loaders.ImportedModelMaterializer.MaterializeModel(model, graphics.Context));
+        Assert.Contains(ImportedFeatureGates.MorphTargets, exception.Message);
     }
 
 }

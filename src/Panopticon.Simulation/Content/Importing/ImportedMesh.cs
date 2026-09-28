@@ -35,6 +35,10 @@ public sealed class ImportedMesh : ImportedRenderObject
 
     public IReadOnlyList<ImportedMeshPart> MeshParts { get; }
 
+    public string PrimitiveId { get; }
+
+    public IReadOnlyList<ImportedMorphTargetSet> MorphTargetSets { get; }
+
     public ImportedMesh(
         IReadOnlyList<ImportedVertex> vertices,
         IReadOnlyList<ushort> indices,
@@ -45,7 +49,9 @@ public sealed class ImportedMesh : ImportedRenderObject
         bool hasHouseColor,
         bool isSkinned,
         IReadOnlyList<ImportedMaterial> materials,
-        IReadOnlyList<ImportedMeshPart> meshParts)
+        IReadOnlyList<ImportedMeshPart> meshParts,
+        string? primitiveId = null,
+        IReadOnlyList<ImportedMorphTargetSet>? morphTargetSets = null)
     {
         if (vertices is null)
         {
@@ -106,6 +112,7 @@ public sealed class ImportedMesh : ImportedRenderObject
 
         var copiedVertices = CopyVertices(vertices, isSkinned);
         var copiedIndices = CopyIndices(indices, copiedVertices.Length);
+        var copiedMorphTargetSets = CopyMorphTargetSets(morphTargetSets, copiedVertices.Length);
 
         for (var i = 0; i < materials.Count; i++)
         {
@@ -152,6 +159,69 @@ public sealed class ImportedMesh : ImportedRenderObject
         IsSkinned = isSkinned;
         Materials = materials.ToArray();
         MeshParts = meshParts.ToArray();
+        PrimitiveId = primitiveId ?? string.Empty;
+        MorphTargetSets = copiedMorphTargetSets;
+    }
+
+    private static ImportedMorphTargetSet[] CopyMorphTargetSets(
+        IReadOnlyList<ImportedMorphTargetSet>? morphTargetSets,
+        int vertexCount)
+    {
+        if (morphTargetSets is null)
+        {
+            return Array.Empty<ImportedMorphTargetSet>();
+        }
+
+        if (morphTargetSets.Count > 1)
+        {
+            throw new ArgumentException(
+                "A mesh carries at most one morph target set.",
+                nameof(morphTargetSets));
+        }
+
+        var copiedSets = new ImportedMorphTargetSet[morphTargetSets.Count];
+        for (var i = 0; i < morphTargetSets.Count; i++)
+        {
+            var set = morphTargetSets[i];
+            if (set is null)
+            {
+                throw new ArgumentException($"Morph target set at index {i} must not be null.", nameof(morphTargetSets));
+            }
+
+            for (var t = 0; t < set.Targets.Count; t++)
+            {
+                var target = set.Targets[t];
+                ValidateDeltaCount(set, t, target.PositionDeltas, vertexCount, "position", nameof(morphTargetSets));
+                ValidateDeltaCount(set, t, target.NormalDeltas, vertexCount, "normal", nameof(morphTargetSets));
+                ValidateDeltaCount(set, t, target.TangentDeltas, vertexCount, "tangent", nameof(morphTargetSets));
+            }
+
+            copiedSets[i] = set;
+        }
+
+        return copiedSets;
+    }
+
+    private static void ValidateDeltaCount(
+        ImportedMorphTargetSet set,
+        int targetIndex,
+        IReadOnlyList<Vector3>? deltas,
+        int vertexCount,
+        string kind,
+        string paramName)
+    {
+        if (deltas is null)
+        {
+            return;
+        }
+
+        if (deltas.Count != vertexCount)
+        {
+            throw new ArgumentException(
+                $"Morph target set '{set.PrimitiveId}' target {targetIndex} has {deltas.Count} {kind} deltas, " +
+                $"expected one per vertex ({vertexCount}).",
+                paramName);
+        }
     }
 
     private static ImportedVertex[] CopyVertices(IReadOnlyList<ImportedVertex> vertices, bool isSkinned)
