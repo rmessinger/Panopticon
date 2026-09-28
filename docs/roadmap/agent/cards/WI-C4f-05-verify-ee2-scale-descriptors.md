@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4f-05` |
 | Roadmap phase | [Track C · C4f](../../track-c-external-assets.md): EE2 scale animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C4f-04` |
@@ -49,11 +49,21 @@ the singular-rest failure contract.
 
 ## Acceptance criteria
 
-- [ ] Skinless DDF-bound scale clips import, materialize, bind, and sample deterministically.
-- [ ] Positive non-unit rest scale reconstructs the authored source scale.
-- [ ] Singular rest scale fails before playback with a message naming `boom`.
-- [ ] Tests are `Category=Interactive` and never copy extracted assets.
-- [ ] Standard validation passes.
+- [x] Skinless DDF-bound scale clips import, materialize, bind, and sample deterministically.
+- [x] Positive non-unit rest scale reconstructs the authored source scale.
+- [x] Singular rest scale fails before playback with a message naming `boom`.
+- [x] Tests are `Category=Interactive` and never copy extracted assets.
+- [x] Standard validation passes.
+
+Deviations:
+
+- `NifGeometryData` now consumes EE2 10.1 float RGBA vertex colors (user decision: widen parser,
+  keep proof) so `CIV1_RoyalChariot_Egyptian` imports; colors are read and ignored.
+- RoyalChariot proof uses `ImportSkeleton` (bone rest + channel assertion) because its skinned
+  shape stays rejected by the C4d non-unit-rest-skin guard; full mesh conversion is C4f out of
+  scope. Its idle01 keys are constant 0.85, so no `Scale` channel survives the identity drop.
+- Deep-dive table values are min to max, not time order; takeoff clips start at 1.0 and ease down
+  to the listed minimum.
 
 ## Validation commands
 

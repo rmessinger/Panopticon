@@ -85,6 +85,27 @@ public class ModelSkinningTests
     }
 
     [Fact]
+    public void SkinningMatrix_ComposesRestScaleThroughBoneInstanceRelative()
+    {
+        // Rest scale participates via ModelBone.Transform inside the bone instance's
+        // relative matrix; the animated sample multiplies on top of it.
+        var bone = new ModelBone(
+            0,
+            "bone",
+            null,
+            Vector3.Zero,
+            Quaternion.Identity,
+            Matrix4x4.Identity,
+            scale: 2.5f);
+        var boneInstance = new ModelBoneInstance(bone);
+        boneInstance.AnimatedOffset.Scale = 1.2f;
+
+        var skinning = ModelInstance.ComputeSkinningMatrix(bone, boneInstance.Matrix);
+
+        Assert.Equal(3.0f, Vector3.TransformNormal(Vector3.UnitX, skinning).Length(), 5);
+    }
+
+    [Fact]
     public void W3dBones_GetIdentityInverseBind()
     {
         // W3D has no inverse-bind concept; conversion must produce identity so the GPU

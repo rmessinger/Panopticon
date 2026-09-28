@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4f-04` |
 | Roadmap phase | [Track C · C4f](../../track-c-external-assets.md): EE2 scale animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C4f-03` |
@@ -48,11 +48,11 @@ skinning matrix composition without adding C4d influence widening.
 
 ## Acceptance criteria
 
-- [ ] Uniform scale changes rigid render bounds by the expected factor.
-- [ ] Uniform scale does not change normalized normal direction in the fixed-function proof path.
-- [ ] Skinning matrix composition includes rest scale without changing influence count limits.
-- [ ] Existing C4c unit-scale proof assertions remain green.
-- [ ] Standard validation passes.
+- [x] Uniform scale changes rigid render bounds by the expected factor.
+- [x] Uniform scale does not change normalized normal direction in the fixed-function proof path.
+- [x] Skinning matrix composition includes rest scale without changing influence count limits.
+- [x] Existing C4c unit-scale proof assertions remain green.
+- [x] Standard validation passes.
 
 ## Validation commands
 

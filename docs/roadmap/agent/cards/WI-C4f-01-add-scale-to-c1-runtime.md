@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4f-01` |
 | Roadmap phase | [Track C · C4f](../../track-c-external-assets.md): EE2 scale animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-06` |
@@ -58,11 +58,11 @@ runtime animation path, with default behavior unchanged for existing assets.
 
 ## Acceptance criteria
 
-- [ ] Existing constructor call sites compile without passing scale.
-- [ ] Rest scale defaults to 1 and preserves existing W3D, glTF, and C4c descriptors.
-- [ ] A runtime scale clip sets `AnimatedOffset.Scale` and resets it to 1 when playback restarts.
-- [ ] Invalid negative or non-finite rest scale is rejected before runtime materialization.
-- [ ] Standard validation passes.
+- [x] Existing constructor call sites compile without passing scale.
+- [x] Rest scale defaults to 1 and preserves existing W3D, glTF, and C4c descriptors.
+- [x] A runtime scale clip sets `AnimatedOffset.Scale` and resets it to 1 when playback restarts.
+- [x] Invalid negative or non-finite rest scale is rejected before runtime materialization.
+- [x] Standard validation passes.
 
 ## Validation commands
 

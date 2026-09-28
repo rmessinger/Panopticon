@@ -427,6 +427,16 @@ public static class NifTestGeometry
         NifTestBlocks.WriteVector3(body, boundCenter);
         body.WriteSingle(boundRadius);
         body.WriteByte((byte)(hasColors ? 1 : 0));
+        if (hasColors)
+        {
+            for (var i = 0; i < numVertices; i++)
+            {
+                body.WriteSingle(1.0f);
+                body.WriteSingle(1.0f);
+                body.WriteSingle(1.0f);
+                body.WriteSingle(1.0f);
+            }
+        }
         var numUvSets = dataFlags & 0x3F;
         for (var set = 0; set < numUvSets; set++)
         {
@@ -770,7 +780,8 @@ public static class NifTestKeyframe
         IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? zRotationKeys = null,
         IReadOnlyList<(float Time, (float X, float Y, float Z) Value, (float X, float Y, float Z)? Forward, (float X, float Y, float Z)? Backward)>? translationKeys = null,
         IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? scaleKeys = null,
-        uint? translationKeyTypeOverride = null)
+        uint? translationKeyTypeOverride = null,
+        uint? scaleKeyTypeOverride = null)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
@@ -806,7 +817,7 @@ public static class NifTestKeyframe
         }
 
         WriteVector3Group(body, translationKeys, translationKeyTypeOverride);
-        WriteFloatGroup(body, scaleKeys ?? []);
+        WriteFloatGroup(body, scaleKeys ?? [], scaleKeyTypeOverride);
         return stream.ToArray();
     }
 

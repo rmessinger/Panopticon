@@ -65,13 +65,15 @@ internal sealed class NifAnimationImporter : IAnimationImporter
         var graph = NifSceneConverter.ConvertGraph(
             modelFile,
             animationKey.ModelName,
-            context);
+            context,
+            convertMeshes: false);
 
         return NifAnimationConverter.Convert(
             kfFile,
             sequence,
             graph.Skeleton,
             graph.PropertyTargets,
+            graph.CollapsedScaleNodes,
             GetAnimationName(animationKey.KfPath),
             key);
     }

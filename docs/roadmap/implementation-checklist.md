@@ -882,7 +882,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     applies per-instance material state without mutating shared materials; deterministic
     installed-asset tests and captures prove all four families; unsupported flags, slots, morph
     mixes, missing targets, and malformed data fail with asset context.
-- [ ] C4f EE2 scale animation
+- [x] C4f EE2 scale animation
       ([deep dive](deep-dives/c4f-ee2-scale-animation.md)).
   - AC: C1 exposes bone rest scale and scale animation channels; C4c scale rejection is replaced
     by shared C4c curve evaluation for linear and quadratic scale keys; DDF-bound skinless scale

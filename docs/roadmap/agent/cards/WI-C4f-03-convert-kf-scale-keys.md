@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4f-03` |
 | Roadmap phase | [Track C · C4f](../../track-c-external-assets.md): EE2 scale animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4f-01`, `WI-C4f-02` |
@@ -49,11 +49,11 @@ curve evaluation and rest-relative offset rules.
 
 ## Acceptance criteria
 
-- [ ] Scale channel values reconstruct source scale by `offsetScale * restScale` within 1e-4.
-- [ ] Quadratic scale uses the same Hermite tangent convention as C4c Euler curves.
-- [ ] Translation offsets still reconstruct source samples for unit-rest and scaled-rest targets.
-- [ ] Singular rest scale fails before channel emission and names the target.
-- [ ] Standard validation passes.
+- [x] Scale channel values reconstruct source scale by `offsetScale * restScale` within 1e-4.
+- [x] Quadratic scale uses the same Hermite tangent convention as C4c Euler curves.
+- [x] Translation offsets still reconstruct source samples for unit-rest and scaled-rest targets.
+- [x] Singular rest scale fails before channel emission and names the target.
+- [x] Standard validation passes.
 
 ## Validation commands
 

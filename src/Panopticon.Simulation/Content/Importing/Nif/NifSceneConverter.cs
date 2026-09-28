@@ -10,30 +10,36 @@ using FileFormatsNif = Panopticon.FileFormats.Nif;
 namespace Panopticon.Content.Importing.Nif;
 
 /// <summary>
-/// Walks the validated NIF scene graph and converts every unit-scale
-/// NiNode and NiLODNode into an ImportedBone, depth-first, root first,
+/// Walks the validated NIF scene graph and converts every NiNode and
+/// NiLODNode with a finite positive rest scale into an ImportedBone
+/// (rest scale preserved as BindScale), depth-first, root first,
 /// keeping source node names and the nearest bone ancestor as parent.
 /// Every attached shape bakes its accumulated transform relative to its
 /// parent bone into vertices and attaches to that bone. Nodes with
-/// non-unit scale never become bones; their subtrees bake statically into
-/// the nearest bone ancestor. NiLODNode children other than the
-/// highest-detail selection are intentionally omitted. Skinned shapes
-/// defer to NifSkinConverter after the bone walk.
+/// singular rest scale (zero, negative, tiny, or non-finite) never
+/// become bones; their subtrees bake statically into the nearest bone
+/// ancestor and the node is recorded in CollapsedScaleNodes. NiLODNode
+/// children other than the highest-detail selection are intentionally
+/// omitted. Skinned shapes defer to NifSkinConverter after the bone
+/// walk.
 /// </summary>
 internal static class NifSceneConverter
 {
-    private const float UnitScaleTolerance = 1e-4f;
+    private const float MinimumRestScale = 1e-4f;
 
     internal static NifSceneGraph ConvertGraph(
         FileFormatsNif.NifFile file,
         string modelName,
-        AssetImportContext context)
+        AssetImportContext context,
+        bool convertMeshes = true)
     {
         var bones = new List<ImportedBone>();
         var subObjects = new List<ImportedSubObject>();
         var nodeToBoneIndex = new Dictionary<int, int>();
         var skinnedShapes = new List<(int BlockIndex, FileFormatsNif.NifTriShape Shape)>();
         var targets = new NifPropertyTargetMap(modelName);
+        var collapsedScaleNodes = new Dictionary<string, float>();
+        var shapeNames = new List<string>();
 
         foreach (var root in file.Roots)
         {
@@ -43,11 +49,12 @@ internal static class NifSceneConverter
                     parentBoneIndex: -1,
                     relativeToBone: Matrix4x4.Identity,
                     insideScaledSubtree: false,
-                    bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
+                    bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
+                    collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
             }
         }
 
-        if (skinnedShapes.Count > 0)
+        if (convertMeshes && skinnedShapes.Count > 0)
         {
             NifSkinConverter.ConvertSkinnedShapes(
                 file, modelName, skinnedShapes, nodeToBoneIndex, bones, subObjects, targets, context);
@@ -56,10 +63,10 @@ internal static class NifSceneConverter
         if (bones.Count == 0)
         {
             throw new NotSupportedException(
-                $"NIF model '{modelName}' contains no unit-scale node to use as a bone.");
+                $"NIF model '{modelName}' contains no node with a usable rest scale to use as a bone.");
         }
 
-        if (subObjects.Count == 0)
+        if (convertMeshes && subObjects.Count == 0)
         {
             throw new InvalidDataException(
                 $"NIF model '{modelName}' contains no convertible geometry.");
@@ -68,7 +75,8 @@ internal static class NifSceneConverter
         return new NifSceneGraph(
             new ImportedSkeleton(modelName, bones),
             subObjects,
-            targets);
+            targets,
+            collapsedScaleNodes);
     }
 
     private static void Walk(
@@ -83,13 +91,36 @@ internal static class NifSceneConverter
         Dictionary<int, int> nodeToBoneIndex,
         List<(int BlockIndex, FileFormatsNif.NifTriShape Shape)> skinnedShapes,
         NifPropertyTargetMap targets,
+        Dictionary<string, float> collapsedScaleNodes,
         string modelName,
-        AssetImportContext context)
+        AssetImportContext context,
+        bool convertMeshes,
+        List<string> shapeNames)
     {
-        var local = NifTransformConverter.CreateLocalMatrix(avObject);
+        var hasValidRestScale = IsValidRestScale(avObject.Scale);
+
+        // A non-finite scale cannot feed CreateLocalMatrix (it rejects
+        // non-finite transforms); nothing meaningful can accumulate from
+        // such a node, so its subtree keeps the accumulated transform.
+        Matrix4x4 local = float.IsFinite(avObject.Scale)
+            ? NifTransformConverter.CreateLocalMatrix(avObject)
+            : relativeToBone;
 
         if (file.Blocks[blockIndex] is FileFormatsNif.NifTriShape shape)
         {
+            if (!convertMeshes)
+            {
+                // Skeleton-only walks (KF import, ImportSkeleton) need the
+                // property target map but no mesh conversion, so animation
+                // contracts never depend on shape convertibility.
+                var displayName = shape.Name.Length == 0 ? $"Shape{shapeNames.Count}" : shape.Name;
+                targets.RecordShape(
+                    blockIndex, shape.Name, $"{modelName}.{shapeNames.Count}.{displayName}",
+                    GatherShapePropertyTypes(file, shape));
+                shapeNames.Add(displayName);
+                return;
+            }
+
             if (shape.SkinInstanceReference >= 0)
             {
                 // Skinning is authoritative for placement: the shape's
@@ -103,7 +134,7 @@ internal static class NifSceneConverter
             if (parentBoneIndex < 0)
             {
                 throw new NotSupportedException(
-                    $"NIF shape '{shape.Name}' has no unit-scale node ancestor to attach to.");
+                    $"NIF shape '{shape.Name}' has no bone ancestor with a usable rest scale to attach to.");
             }
 
             subObjects.Add(ConvertShape(
@@ -116,12 +147,15 @@ internal static class NifSceneConverter
         Matrix4x4 childRelativeToBone;
         bool childInsideScaledSubtree;
 
-        if (!insideScaledSubtree && IsUnitScale(avObject.Scale))
+        if (!insideScaledSubtree && hasValidRestScale)
         {
             childParentBoneIndex = bones.Count;
             childRelativeToBone = Matrix4x4.Identity;
             childInsideScaledSubtree = false;
 
+            // The conjugated local is T(t * E) * s * (E^-1 R E): scalar
+            // scale commutes with the conjugation, so dividing the linear
+            // part by the rest scale recovers the conjugated rotation.
             var engineLocal = NifTransformConverter.CreateBoneLocalMatrix(avObject);
             nodeToBoneIndex.Add(blockIndex, childParentBoneIndex);
             targets.RecordBone(blockIndex, avObject.Name);
@@ -129,15 +163,21 @@ internal static class NifSceneConverter
                 avObject.Name,
                 parentBoneIndex,
                 new Vector3(engineLocal.M41, engineLocal.M42, engineLocal.M43),
-                CanonicalRotation(Quaternion.CreateFromRotationMatrix(engineLocal))));
+                CanonicalRotation(Quaternion.CreateFromRotationMatrix(engineLocal * (1.0f / avObject.Scale))),
+                avObject.Scale));
         }
         else
         {
-            // A scaled node (or any node inside one) never becomes a bone;
-            // its subtree bakes into the nearest bone ancestor.
+            // A singular-rest-scale node (or any node inside one) never
+            // becomes a bone; its subtree bakes into the nearest bone
+            // ancestor.
             childParentBoneIndex = parentBoneIndex;
             childRelativeToBone = local * relativeToBone;
             childInsideScaledSubtree = true;
+            if (!hasValidRestScale)
+            {
+                collapsedScaleNodes.TryAdd(avObject.Name, avObject.Scale);
+            }
         }
 
         if (file.Blocks[blockIndex] is FileFormatsNif.NifLodNode lodNode)
@@ -146,7 +186,8 @@ internal static class NifSceneConverter
             // levels are dropped wholesale by contract.
             Descend(file, file.GetHighestDetailLodChild(lodNode),
                 childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
-                bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
+                bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
+                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
         }
         else if (file.Blocks[blockIndex] is FileFormatsNif.NifNode node)
         {
@@ -156,7 +197,8 @@ internal static class NifSceneConverter
                 {
                     Descend(file, child,
                         childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
-                        bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
+                        bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
+                        collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
                 }
             }
         }
@@ -173,20 +215,24 @@ internal static class NifSceneConverter
         Dictionary<int, int> nodeToBoneIndex,
         List<(int BlockIndex, FileFormatsNif.NifTriShape Shape)> skinnedShapes,
         NifPropertyTargetMap targets,
+        Dictionary<string, float> collapsedScaleNodes,
         string modelName,
-        AssetImportContext context)
+        AssetImportContext context,
+        bool convertMeshes,
+        List<string> shapeNames)
     {
         if (file.Blocks[childIndex] is FileFormatsNif.NifAvObject childAvObject)
         {
             Walk(file, childIndex, childAvObject,
                 parentBoneIndex, relativeToBone, insideScaledSubtree,
-                bones, subObjects, nodeToBoneIndex, skinnedShapes, targets, modelName, context);
+                bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
+                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
         }
     }
 
-    private static bool IsUnitScale(float scale)
+    private static bool IsValidRestScale(float scale)
     {
-        return MathF.Abs(scale - 1.0f) <= UnitScaleTolerance;
+        return scale > MinimumRestScale && float.IsFinite(scale);
     }
 
     /// <summary>
