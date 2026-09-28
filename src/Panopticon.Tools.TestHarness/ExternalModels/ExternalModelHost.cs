@@ -180,9 +180,9 @@ internal sealed class ExternalModelHost
 
         var gltfOptions = new GltfImportOptions(unitsPerMeter: request.ImportOptions.UnitsPerMeter);
 
-        using var modelMount = CreateMount(request.ModelSource, gltfOptions);
+        using var modelMount = CreateMount(request.ModelSource, gltfOptions, request.ImportOptions);
         using var animationMount = request.AnimationSource is { } animationSource
-            ? CreateMount(animationSource, gltfOptions)
+            ? CreateMount(animationSource, gltfOptions, request.ImportOptions)
             : null;
 
         ImportedModel? importedModel = null;
@@ -380,10 +380,14 @@ internal sealed class ExternalModelHost
 
     internal static ExternalAssetSourceMount CreateMount(
         ExternalModelSourceRequest source,
-        GltfImportOptions options)
+        GltfImportOptions options,
+        ExternalModelImportOptions importOptions)
     {
         var absoluteFile = Path.Combine(source.AbsoluteRoot, source.VirtualKey);
-        return new ExternalAssetSourceMount(absoluteFile, options);
+        var enabledFeatureGates = importOptions.IsFeatureGateEnabled(ExternalModelImportOptions.MorphTargetsGate)
+            ? new[] { ImportedFeatureGates.MorphTargets }
+            : null;
+        return new ExternalAssetSourceMount(absoluteFile, options, enabledFeatureGates);
     }
 
     internal static string? ResolveAnimationKey(ExternalModelRequest request)

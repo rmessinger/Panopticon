@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Panopticon.Content.Importing.Gltf;
 using Panopticon.IO;
@@ -25,7 +26,10 @@ public sealed class ExternalAssetSourceMount : IDisposable
 
     public AssetImportContext ImportContext { get; }
 
-    public ExternalAssetSourceMount(string absoluteSelectedFile, GltfImportOptions? options = null)
+    public ExternalAssetSourceMount(
+        string absoluteSelectedFile,
+        GltfImportOptions? options = null,
+        IEnumerable<string>? enabledFeatureGates = null)
     {
         if (string.IsNullOrWhiteSpace(absoluteSelectedFile))
         {
@@ -62,7 +66,7 @@ public sealed class ExternalAssetSourceMount : IDisposable
         RootVirtualKey = fileName;
         FormatSelection = selection;
         _fileSystem = new ExternalSourceFileSystem(new DiskFileSystem(CanonicalRootPath));
-        ImportContext = new AssetImportContext(_fileSystem, language: null);
+        ImportContext = new AssetImportContext(_fileSystem, language: null, enabledFeatureGates);
     }
 
     public void Dispose()
