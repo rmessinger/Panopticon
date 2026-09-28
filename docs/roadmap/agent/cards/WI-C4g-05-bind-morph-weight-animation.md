@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4g-05` |
 | Roadmap phase | [Track C · C4g](../../track-c-external-assets.md): EE2 morph animation |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4g-03`, `WI-C4g-04` |

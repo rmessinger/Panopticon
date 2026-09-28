@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4g-03` |
 | Roadmap phase | [Track C · C4g](../../track-c-external-assets.md): EE2 morph animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4g-01`, `WI-C4g-02` |
@@ -50,12 +50,12 @@ Convert EE2 NIF morph data into C6 morph target sets for embedded model controll
 
 ## Acceptance criteria
 
-- [ ] Morph 0 base mismatch fails with `InvalidDataException`.
-- [ ] `RelativeTargets = 0` fails with `NotSupportedException`.
-- [ ] `bld_farm_yam#morph-kf=Graphics/Building/bld_farm_yam.kf` imports one C6 target set.
-- [ ] Embedded morph controllers import target sets when their base vertices validate.
-- [ ] Feature-disabled morph model import produces a blocking diagnostic before GPU allocation.
-- [ ] Standard validation passes.
+- [x] Morph 0 base mismatch fails with `InvalidDataException`.
+- [x] `RelativeTargets = 0` fails with `NotSupportedException`.
+- [x] `bld_farm_yam#morph-kf=Graphics/Building/bld_farm_yam.kf` imports one C6 target set.
+- [x] Embedded morph controllers import target sets when their base vertices validate.
+- [x] Feature-disabled morph model import produces a blocking diagnostic before GPU allocation.
+- [x] Standard validation passes.
 
 ## Validation commands
 

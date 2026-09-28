@@ -34,13 +34,18 @@ internal static class ImportedModelMaterializer
     /// </summary>
     public static Model MaterializeModel(ImportedModel importedModel, ModelBoneHierarchy boneHierarchy, AssetLoadContext context)
     {
-        for (var i = 0; i < importedModel.SubObjects.Count; i++)
+        // Blocking diagnostic before any GPU allocation: morph models only materialize under their gate.
+        // The gates travel on the imported model from the importing context (NIF is the only gated importer).
+        if (!importedModel.IsFeatureGateEnabled(ImportedFeatureGates.MorphTargets))
         {
-            if (importedModel.SubObjects[i].RenderObject is ImportedMesh { MorphTargetSets.Count: > 0 })
+            for (var i = 0; i < importedModel.SubObjects.Count; i++)
             {
-                throw new NotSupportedException(
-                    $"Model '{importedModel.Name}' carries morph target sets; materializing morph targets requires " +
-                    $"the '{ImportedFeatureGates.MorphTargets}' feature gate and the C4g morph runtime.");
+                if (importedModel.SubObjects[i].RenderObject is ImportedMesh { MorphTargetSets.Count: > 0 })
+                {
+                    throw new NotSupportedException(
+                        $"Model '{importedModel.Name}' carries morph target sets; materializing morph targets requires " +
+                        $"the '{ImportedFeatureGates.MorphTargets}' feature gate and the C4g morph runtime.");
+                }
             }
         }
 
