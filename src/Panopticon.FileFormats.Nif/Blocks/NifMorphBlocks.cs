@@ -6,21 +6,23 @@ namespace Panopticon.FileFormats.Nif;
 
 /// <summary>
 /// NiGeomMorpherController at 10.1.0.0 (EE2 cooked): time-controller
-/// fields, one unknown flags word, and a NiMorphData reference. Decoded
-/// structurally only; morph conversion is C6 work and the importer
-/// rejects the family.
+/// fields, morpher flags, a NiMorphData reference, and the always-update
+/// byte.
 /// </summary>
 public sealed record NifGeomMorpherController : NifTimeController
 {
-    public ushort UnknownFlags { get; }
+    public ushort MorpherFlags { get; }
 
     public int DataReference { get; }
+
+    public byte AlwaysUpdate { get; }
 
     private NifGeomMorpherController(NifBinaryReader reader)
         : base(reader)
     {
-        UnknownFlags = reader.ReadUInt16("UnknownFlags");
+        MorpherFlags = reader.ReadUInt16("MorpherFlags");
         DataReference = reader.ReadBlockReference("Data");
+        AlwaysUpdate = reader.ReadByte("AlwaysUpdate");
     }
 
     internal static NifGeomMorpherController Read(NifBinaryReader reader)
@@ -30,32 +32,33 @@ public sealed record NifGeomMorpherController : NifTimeController
 }
 
 /// <summary>
-/// One morph inside NiMorphData: weight keys plus one offset vector per
-/// model vertex.
+/// One morph inside NiMorphData: weight keys plus one vector per model
+/// vertex. Morph 0 holds the base shape; morphs 1..N hold relative deltas
+/// when RelativeTargets is set.
 /// </summary>
-public sealed record NifMorph(NifKeyGroup<NifKey<float>>? WeightKeys, IReadOnlyList<Vector3> Offsets);
+public sealed record NifMorph(NifKeyGroup<NifKey<float>>? WeightKeys, IReadOnlyList<Vector3> Vectors);
 
 /// <summary>
-/// NiMorphData at 10.1.0.0 (EE2 cooked): morph and vertex counts wrapped
-/// by two unexplained flag bytes, then per morph a float key group and the
-/// vertex offsets. Decoded structurally only; conversion is C6 work.
+/// NiMorphData at 10.1.0.0 (EE2 cooked): morph and vertex counts, the
+/// relative-targets flag, then per morph a float key group and the vertex
+/// vectors.
 /// </summary>
 public sealed record NifMorphData : NifBlock
 {
-    public byte Unknown0 { get; }
+    public uint NumMorphs { get; }
 
     public uint NumVertices { get; }
 
-    public byte Unknown1 { get; }
+    public bool RelativeTargets { get; }
 
     public IReadOnlyList<NifMorph> Morphs { get; }
 
     private NifMorphData(NifBinaryReader reader)
     {
-        Unknown0 = reader.ReadByte("Unknown0");
         var morphCount = reader.ReadElementCount(4, "Morphs.Count");
+        NumMorphs = (uint)morphCount;
         NumVertices = reader.ReadUInt32("NumVertices");
-        Unknown1 = reader.ReadByte("Unknown1");
+        RelativeTargets = reader.ReadByte("RelativeTargets") != 0;
 
         var morphs = new NifMorph[morphCount];
         var offsetBytes = (int)(NumVertices * 12);
@@ -65,17 +68,17 @@ public sealed record NifMorphData : NifBlock
             if (reader.RemainingBytes < offsetBytes)
             {
                 throw new InvalidDataException(
-                    $"NIF NiMorphData morph {i} declares {NumVertices} vertex offsets " +
+                    $"NIF NiMorphData morph {i} declares {NumVertices} vertex vectors " +
                     $"({offsetBytes} bytes) but only {reader.RemainingBytes} bytes remain.");
             }
 
-            var offsets = new Vector3[NumVertices];
+            var vectors = new Vector3[NumVertices];
             for (var v = 0; v < NumVertices; v++)
             {
-                offsets[v] = reader.ReadVector3($"Morphs[{i}].Offsets[{v}]");
+                vectors[v] = reader.ReadVector3($"Morphs[{i}].Vectors[{v}]");
             }
 
-            morphs[i] = new NifMorph(weightKeys, offsets);
+            morphs[i] = new NifMorph(weightKeys, vectors);
         }
 
         Morphs = morphs;
