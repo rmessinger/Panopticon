@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4f-02` |
 | Roadmap phase | [Track C · C4f](../../track-c-external-assets.md): EE2 scale animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-06`, `WI-C4f-01` |
@@ -50,11 +50,11 @@ rest scale, while singular animated rest scale remains a clear failure.
 
 ## Acceptance criteria
 
-- [ ] Positive non-unit NIF node scale becomes `ImportedBone.BindScale`.
-- [ ] Unit-scale C4c proof model descriptors and static captures remain unchanged.
-- [ ] Static singular-scale subtrees remain placeable when not animated.
-- [ ] The animation importer can report a targeted singular-rest node by name.
-- [ ] Standard validation passes.
+- [x] Positive non-unit NIF node scale becomes `ImportedBone.BindScale`.
+- [x] Unit-scale C4c proof model descriptors and static captures remain unchanged.
+- [x] Static singular-scale subtrees remain placeable when not animated.
+- [x] The animation importer can report a targeted singular-rest node by name.
+- [x] Standard validation passes.
 
 ## Validation commands
 

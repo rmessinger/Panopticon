@@ -196,4 +196,32 @@ public sealed class ImportedAnimationTests
             ImportedAnimationTarget.CreateMaterialSlot("test_model.0.hull", -1));
         Assert.Throws<ArgumentException>(() => ImportedAnimationTarget.CreateSubObjectName(""));
     }
+
+    [Fact]
+    public void ScaleChannel_MaterializesWithFloatKeys()
+    {
+        var channel = new ImportedAnimationChannel(
+            ImportedAnimationTarget.CreateBoneName("gear"),
+            ImportedAnimationChannelType.Scale,
+            new[] { ImportedKeyframe.FromFloat(TimeSpan.FromSeconds(0), 0.5f),
+                ImportedKeyframe.FromFloat(TimeSpan.FromSeconds(1), 1.0f) });
+
+        var runtime = ImportedAnimationMaterializer.Materialize(new ImportedAnimation(
+            "extend", TimeSpan.FromSeconds(1), new[] { channel }));
+
+        var runtimeChannel = Assert.Single(runtime.Channels);
+        Assert.Equal(AnimationClipType.Scale, runtimeChannel.ClipType);
+        Assert.Equal(ModelAnimationTargetKind.BoneName, runtimeChannel.Target.Kind);
+        Assert.Equal(0.5f, runtimeChannel.Keyframes[0].Value.FloatValue);
+        Assert.Equal(1.0f, runtimeChannel.Keyframes[1].Value.FloatValue);
+    }
+
+    [Fact]
+    public void ScaleChannel_RejectsQuaternionKeys()
+    {
+        Assert.Throws<ArgumentException>(() => new ImportedAnimationChannel(
+            ImportedAnimationTarget.CreateBoneName("gear"),
+            ImportedAnimationChannelType.Scale,
+            new[] { ImportedKeyframe.FromQuaternion(TimeSpan.FromSeconds(0), Quaternion.Identity) }));
+    }
 }

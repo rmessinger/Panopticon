@@ -136,6 +136,7 @@ public sealed class AnimationInstance
         {
             bone.AnimatedOffset.Translation = Vector3.Zero;
             bone.AnimatedOffset.Rotation = Quaternion.Identity;
+            bone.AnimatedOffset.Scale = 1.0f;
 
             bone.Visible = true;
         }
@@ -330,6 +331,10 @@ public sealed class AnimationInstance
                     _boneInstances[clip.Bone].AnimatedOffset.Rotation = held.Value.Quaternion;
                     break;
 
+                case AnimationClipType.Scale:
+                    _boneInstances[clip.Bone].AnimatedOffset.Scale = held.Value.FloatValue;
+                    break;
+
                 case AnimationClipType.Visibility:
                     _boneInstances[clip.Bone].Visible = previous.Value.BoolValue;
                     break;
@@ -375,6 +380,13 @@ public sealed class AnimationInstance
                 _boneInstances[clip.Bone].AnimatedOffset.Rotation = Quaternion.Slerp(
                     previous.Value.Quaternion,
                     next.Value.Quaternion,
+                    amount);
+                break;
+
+            case AnimationClipType.Scale:
+                _boneInstances[clip.Bone].AnimatedOffset.Scale = MathUtility.Lerp(
+                    previous.Value.FloatValue,
+                    next.Value.FloatValue,
                     amount);
                 break;
 

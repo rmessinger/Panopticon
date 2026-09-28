@@ -318,10 +318,13 @@ public sealed class NifSkinConverterTests
     [Fact]
     public void ScaledSkinBoneNamesC4f()
     {
+        // Since WI-C4f-02 the scaled arm node is a runtime bone with
+        // BindScale 2; the skin converter keeps rejecting it explicitly
+        // because the C4d bind math assumes unit-scale bone locals.
         var ex = Assert.Throws<NotSupportedException>(
             () => Import(TwoBoneSkinBytes(armScale: 2.0f)));
         Assert.Contains("'arm'", ex.Message);
-        Assert.Contains("not a runtime bone", ex.Message);
+        Assert.Contains("non-unit rest scale", ex.Message);
         Assert.Contains("C4f", ex.Message);
     }
 

@@ -81,7 +81,16 @@ internal static class NifSkinConverter
                 if (!nodeToBoneIndex.TryGetValue(boneReference, out var runtimeBoneIndex))
                 {
                     throw new NotSupportedException(
-                        $"NIF shape '{shape.Name}' references node '{boneNode.Name}' as a skin bone, but it is not a runtime bone (non-unit-scale subtree or dropped LOD); support for that is C4f work.");
+                        $"NIF shape '{shape.Name}' references node '{boneNode.Name}' as a skin bone, but it is not a runtime bone (singular rest scale or dropped LOD); support for that is C4f work.");
+                }
+
+                // The C4d skin math assumes unit-scale bone locals; a
+                // non-unit BindScale on a skin bone would silently break
+                // bind-pose parity, so it stays an explicit failure.
+                if (MathF.Abs(bones[runtimeBoneIndex].BindScale - 1.0f) > 1e-4f)
+                {
+                    throw new NotSupportedException(
+                        $"NIF shape '{shape.Name}' references node '{boneNode.Name}' as a skin bone with non-unit rest scale {bones[runtimeBoneIndex].BindScale}; skinned scale conversion is C4f work.");
                 }
 
                 AccumulateInfluences(shape, boneNode.Name, data, skinData.Bones[b].VertexWeights,

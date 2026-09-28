@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4f-03` |
 | Roadmap phase | [Track C · C4f](../../track-c-external-assets.md): EE2 scale animation |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4f-01`, `WI-C4f-02` |

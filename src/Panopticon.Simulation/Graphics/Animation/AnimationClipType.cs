@@ -6,6 +6,7 @@ public enum AnimationClipType
     TranslationY,
     TranslationZ,
     Quaternion,
+    Scale,
     Visibility,
     TextureTranslateU,
     TextureTranslateV,

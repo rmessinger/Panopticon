@@ -11,6 +11,7 @@ public enum ImportedAnimationChannelType
     TranslationY,
     TranslationZ,
     Quaternion,
+    Scale,
     Visibility,
     TextureTranslateU,
     TextureTranslateV,
@@ -164,6 +165,7 @@ public sealed class ImportedAnimationChannel
             or ImportedAnimationChannelType.TranslationY
             or ImportedAnimationChannelType.TranslationZ
             or ImportedAnimationChannelType.Quaternion
+            or ImportedAnimationChannelType.Scale
             or ImportedAnimationChannelType.Visibility;
     }
 

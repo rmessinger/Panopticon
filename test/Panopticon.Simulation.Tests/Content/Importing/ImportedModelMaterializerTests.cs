@@ -298,6 +298,48 @@ public sealed class ImportedModelMaterializerTests
     }
 
     [Fact]
+    public void MaterializeSkeleton_DefaultBoneScaleIsUnit()
+    {
+        var skeleton = new ImportedSkeleton(
+            "TestHierarchy",
+            [
+                new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity),
+                new ImportedBone("turret", 0, new Vector3(1, 2, 3), Quaternion.Identity, Matrix4x4.Identity),
+            ]);
+
+        var hierarchy = ImportedModelMaterializer.MaterializeSkeleton(skeleton);
+
+        Assert.All(hierarchy.Bones, bone => Assert.Equal(1.0f, bone.Transform.Scale));
+    }
+
+    [Fact]
+    public void MaterializeSkeleton_ScaledRestBone_ProducesScaledTransform()
+    {
+        var skeleton = new ImportedSkeleton(
+            "TestHierarchy",
+            [new ImportedBone("root", -1, new Vector3(4, 5, 6), Quaternion.Identity, bindScale: 2.5f)]);
+
+        var bone = Assert.Single(ImportedModelMaterializer.MaterializeSkeleton(skeleton).Bones);
+
+        Assert.Equal(2.5f, bone.Transform.Scale);
+        Assert.True(Matrix4x4.Decompose(bone.Transform.Matrix, out var scale, out _, out var translation));
+        Assert.Equal(2.5f, scale.X);
+        Assert.Equal(2.5f, scale.Y);
+        Assert.Equal(2.5f, scale.Z);
+        Assert.Equal(new Vector3(4, 5, 6), translation);
+    }
+
+    [Theory]
+    [InlineData(-1.0f)]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    public void BindScale_RejectsNegativeAndNonFinite(float bindScale)
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new ImportedBone("root", -1, Vector3.Zero, Quaternion.Identity, bindScale));
+    }
+
+    [Fact]
     public void PbrModel_MalformedInput_FailsBeforeGpuOrFileSystemAccess()
     {
         // No graphics device and no real file system: any attempt to allocate GPU resources or

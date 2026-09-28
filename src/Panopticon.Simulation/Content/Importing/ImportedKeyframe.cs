@@ -75,6 +75,8 @@ public sealed class ImportedKeyframe
 
             ImportedAnimationChannelType.Quaternion => ImportedKeyframeKind.Quaternion,
 
+            ImportedAnimationChannelType.Scale => ImportedKeyframeKind.Float,
+
             ImportedAnimationChannelType.Visibility => ImportedKeyframeKind.Bool,
 
             ImportedAnimationChannelType.TextureTranslateU
