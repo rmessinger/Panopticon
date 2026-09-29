@@ -100,7 +100,7 @@ B6-6 preserves the B6-2 message semantics and replaces the transport:
 |---|---|---|
 | Domain | `western-front` | First implementation domain. |
 | Shard count | 1, 2, 4, 8 | One shard is the reference. |
-| Scenario | W1 synthetic, W2 tactical contact, W3 generated sector when available | W3 is optional until its payload exists. |
+| Scenario | W1 synthetic, W2 tactical contact, W3b generated sector when available | W3b is optional until its payload exists. |
 | Partition | front strips | Other schemes are design-only until separate domains need them. |
 | Mode | compressed, tactical | Tactical mode validates per-frame barriers. |
 

@@ -1,24 +1,24 @@
-# Task Card `WI-W3-04`: Derive 1000 m regions and 125 m cells
+# Task Card `WI-W3a-05`: Derive 1000 m regions and 125 m cells
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-W3-04` |
-| Roadmap phase | [Track W · W3](../../track-w-western-front.md): geospatial sector |
+| Card ID | `WI-W3a-05` |
+| Roadmap phase | [Track W · W3a](../../track-w-western-front.md): Sedan 1870 |
 | Status | `Draft` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-W3-03`, `WI-B4b-06` |
-| Diagrams | [W3 §6](../../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams) |
+| Prerequisites | `WI-W3a-04`, `WI-B4b-06` |
+| Diagrams | [W3a §13](../../deep-dives/w3a-sedan-1870.md#13-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W3-03` and `WI-B4b-06` are Done and `LocalMapGrid` exists.
+Draft: flip to Ready once `WI-W3a-04` and `WI-B4b-06` are Done and `LocalMapGrid` exists.
 
-Implement the W3 region and cell grid over the B4b projected extent.
+Implement the region and cell grid over the B4b projected extent.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §1 and §3.
+- `docs/roadmap/deep-dives/w3a-sedan-1870.md` §1 and §4.
 - `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §5.1a.
 
 ## Steps

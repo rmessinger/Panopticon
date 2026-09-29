@@ -1,24 +1,24 @@
-# Task Card `WI-W3-08`: Run W2 evidence on generated sector
+# Task Card `WI-W3b-05`: Run W2 evidence on generated sector
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-W3-08` |
-| Roadmap phase | [Track W · W3](../../track-w-western-front.md): geospatial sector |
+| Card ID | `WI-W3b-05` |
+| Roadmap phase | [Track W · W3b](../../track-w-western-front.md): Somme sector |
 | Status | `Draft` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `WI-W3-07`, W2 evidence cards |
-| Diagrams | [W3 §6](../../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams) |
+| Prerequisites | `WI-W3b-04`, W2 evidence cards |
+| Diagrams | [W3b §5](../../deep-dives/w3b-somme-sector.md#5-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W3-07` and W2 evidence cards are Done.
+Draft: flip to Ready once `WI-W3b-04` and W2 evidence cards are Done.
 
 Run the W2 promotion and demotion evidence against generated cells.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §4.
+- `docs/roadmap/deep-dives/w3b-somme-sector.md` §3.
 - `docs/roadmap/deep-dives/w2-fidelity-promotion.md` §8.
 
 ## Steps

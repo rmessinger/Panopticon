@@ -413,14 +413,17 @@
   [B4b](deep-dives/b4b-geospatial-map-generation.md), [B4a-5](deep-dives/b4a-larger-maps.md),
   [H1-H2](track-h-storage-formats.md).
 - Western Front terrain currency. Decision: only the geographic area must be historical. Modern
-  land cover, roads, and buildings from present-day sources are acceptable in W3 generated terrain;
-  1916 trench, wire, and crater state comes from W-track summaries, not from source imagery.
-  Affects [W3](deep-dives/w3-w6-integration-experiments.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
+  land cover, roads, and buildings from present-day sources are acceptable in W3a and W3b
+  generated terrain; 1916 trench, wire, and crater state comes from W-track summaries, not from
+  source imagery. W3a adds operator-digitized 1870 features (rail, bridges, fortress, inundations,
+  border) over modern layers.
+  Affects [W3a-W3b](deep-dives/w3-w6-integration-experiments.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
 - Western Front decision gates. Decision: the twelve gates of the
   [Western Front charter](deep-dives/western-front-scale-simulation.md#11-decision-gates) are
   settled as follows, and the goal becomes [Track W](track-w-western-front.md).
   1. Extent: a Somme 1916 sector of about 30 x 20 km in UTM zone 31N. W0-W2 use synthetic data;
-     W3 generates the sector through B4b; W6 covers July-November 1916.
+     W3b generates the sector through B4b; W6 covers July-November 1916. Sedan 1870 (W3a)
+     precedes it; see the Sedan Decisions below.
   2. Granularity (revised by the detail-first stance below): the platoon (about 50) is the
      smallest persistent formation; the tactical entity is one soldier, one `GameObject` with its
      own health, weapon, and ammunition. Squads and sections are A4-3 groupings, not objects.
@@ -460,15 +463,45 @@
   an active area only when a bombard order targets it, as direct `DamageInfo` impacts. Every
   contested region activates by default, with no concurrency cap, no fixed engagement bound, and a
   3-tick dwell. Affects [W2](deep-dives/w2-fidelity-promotion.md).
-- Western Front sector. Decision: W3 covers lat 49.90-50.17 N, lon 2.52-2.80 E in UTM 31N at true
+- Western Front sector. Decision: W3b covers lat 49.90-50.17 N, lon 2.52-2.80 E in UTM 31N at true
   scale (0.3048 m per game unit), from IGN RGE ALTI 1 m reprojected by the operator, modern
   OSM-derived features, and operator-digitized 1916 front lines. Regions are 1 km with 8 x 8 cells.
-  Affects [W3](track-w-western-front.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
+  Affects [W3b](track-w-western-front.md), [B4b](deep-dives/b4b-geospatial-map-generation.md).
+- Sedan 1870 interim goal. Decision: before the Somme, Track W simulates the Battle of Sedan,
+  31 August 00:00 to 2 September 12:00 1870 local mean time, as phase W3a, the first geospatial
+  battle and the large-scale proof of concept. The former W3 Somme sector becomes W3b and depends
+  on W3a; W3a owns the generic topology builder, grid, feature mapping, and A5 geospatial
+  rendering. The all-tactical run (about 320,000 soldier `GameObject`s) is the reference, with
+  aggregate and mixed arms measured against it. Forces follow the historical order of battle to
+  battalion, battery, and squadron, expanded to the platoon floor by period templates. Orders
+  follow a historical timeline delivered with simulated latency; recipients execute, adapt, or
+  reject; the outcome emerges. Acceptance is measure only; historical figures are a reference.
+  Affects [W3a](deep-dives/w3a-sedan-1870.md), [W3b](deep-dives/w3b-somme-sector.md),
+  [W6](deep-dives/w6-long-run-campaign.md).
+- Sedan geography and datasets. Decision: the extent is lat 49.58-49.82 N, lon 4.72-5.20 E in UTM
+  31N at true scale, from IGN RGE ALTI 1 m and the Wallonia 1 m DTM mosaicked by the operator
+  (Belgian heights shifted to `NGF-IGN69` by a recorded constant), modern OSM-derived layers, and
+  operator-digitized 1870 features from public-domain staff maps. No geospatial data is committed.
+  The order-of-battle and orders-timeline datasets are committed JSON transcribed from
+  public-domain primary sources (Moltke/Forbes 1893, Clarke's General Staff translation, Hooper
+  1887) with per-entry source and confidence. Times use Sedan local mean time, UTC+00:19:48.
+  Affects [W3a](deep-dives/w3a-sedan-1870.md).
+- Sedan tactical model. Decision: artillery is tactical, each gun a crewed direct-fire object with
+  limber and caisson; period fire uses a seeded per-shot hit table behind a new weapon
+  hit-resolution seam that is null by default; shells burst with a lethal radius and La Hitte
+  time fuzes have two presets; cavalry troopers carry a `horse` holding. New families `horse` and
+  `mitrailleuse` and sinks `captured` and `interned` join the ledger; equipment capture is a
+  holding transfer. Couriers and a field telegraph join the comm types; telephone and wireless are
+  disabled. Command changes are timeline entries. Local surrender and army capitulation are
+  policies over encirclement and cohesion; capitulation sets `GameOutcome` `Decided` with
+  `Surrendered`. Reference runs use 4 seeds and comparison arms 64. No save/load before W6; the
+  scale probe escalates if a reference seed projects beyond 14 days of wall-clock. Affects
+  [W3a](deep-dives/w3a-sedan-1870.md), [seams](seams.md).
 - Western Front experiments and distribution. Decision: W4 sweeps the full 216-cell grid. W5 is the
   first B6 implementation domain, ahead of RTS and F4a: shards are strips perpendicular to the
   front so contested pairs never cross shards, lockstep per operational tick in compressed mode and
   per logic frame in tactical mode, handoffs every host frame, JSON boundary messages in process
-  and compact binary across processes. The W6 historical order-of-battle format is decided at W6.
+  and compact binary across processes. W3a defines the historical order-of-battle schema; whether W6 uses it for 1916 is decided at W6.
   Affects [W4-W6](track-w-western-front.md), [B6](deep-dives/b6-distributed-simulation.md).
 - Benchmark harness. Decision: B1 is a custom macro harness over the headless `SimulationHost`
   (per-tick and per-system time, allocations, GC, peak memory) with BenchmarkDotNet for micro

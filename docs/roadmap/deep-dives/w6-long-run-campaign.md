@@ -1,15 +1,15 @@
 # Deep Dive: W6 Long-Run Campaign
 
 > Expands phase W6 of [Track W: Western Front Simulation](../track-w-western-front.md).
-> Builds on [W3](w3-geospatial-sector.md), [W4](w4-command-logistics-experiment.md),
+> Builds on [W3b](w3b-somme-sector.md), [W4](w4-command-logistics-experiment.md),
 > [W5](w5-distributed-regional-simulation.md), and [A5](a5-visualization.md).
 >
 > Audience: human + agent design for `WI-W6-01..08`.
 
-Purpose: run a parameterized July-November 1916 campaign on the W3 sector with one-minute
+Purpose: run a parameterized July-November 1916 campaign on the W3b sector with one-minute
 operational ticks, bounded artifacts, reconstructable replay, and save/load that combines a
 domain-state artifact snapshot with a host save. W6 is still synthetic unless its investigation
-card accepts an operator-supplied historical OOB format.
+card accepts a historical OOB for 1916 in the [W3a order-of-battle schema](w3a-sedan-1870.md#53-dataset-and-expansion).
 
 ---
 
@@ -22,14 +22,14 @@ card accepts an operator-supplied historical OOB format.
 | Reference product | All-tactical remains primary where capacity permits; aggregate remains for rear and quiet sectors. |
 | Save/load | Domain-state artifact snapshot plus host save. |
 | `StatePersister` | Host objects only. Domain state is not forced through `StatePersister`. |
-| Historical OOB | Deferred to W6 execution as an investigation and decision card. |
+| Historical OOB | W3a defines the schema; whether a 1916 dataset uses it is a W6 investigation and decision card. |
 | Replay | A5 replayer provides timeline scrubbing over recorded domain-state artifacts. |
 
 ## 2. Campaign model
 
 W6 defines a campaign file that binds:
 
-- W3 geospatial sector payload and topology;
+- W3b geospatial sector payload and topology;
 - W4 parameter set or matrix-selected parameter cell;
 - W5 shard layout when running sharded;
 - campaign start and end time;

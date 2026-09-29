@@ -14,16 +14,17 @@
 
 Draft: flip to Ready once `WI-W6-01` is Done.
 
-Investigate and decide whether W6 accepts an operator-supplied historical OOB format or remains synthetic.
+Investigate and decide whether W6 uses a 1916 historical OOB in the W3a order-of-battle schema or remains synthetic.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w6-long-run-campaign.md` §1-§2.
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §3.
+- `docs/roadmap/deep-dives/w3a-sedan-1870.md` §5.
 
 ## Steps
 
-1. Evaluate candidate OOB fields against W formation keys down to platoon.
+1. Evaluate the W3a order-of-battle schema and templates against 1916 formation keys down to platoon.
 2. Define provenance requirements and validation rules.
 3. Record the decision in the W6 implementation plan or decision log owner if accepted by the coordinator.
 4. Create follow-up parser cards only if the decision accepts a format.
@@ -35,7 +36,7 @@ Investigate and decide whether W6 accepts an operator-supplied historical OOB fo
 ## Acceptance criteria
 
 - [ ] Decision states accepted format or explicitly keeps synthetic OOB.
-- [ ] No source dataset is committed.
+- [ ] A committed 1916 dataset, if accepted, derives from public-domain sources with per-entry provenance, as in W3a.
 
 ## Validation commands
 

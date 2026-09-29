@@ -1,24 +1,25 @@
-# Task Card `WI-W3-02`: Validate W3 Somme payload metadata
+# Task Card `WI-W3b-02`: Validate W3b Somme payload metadata
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-W3-02` |
-| Roadmap phase | [Track W · W3](../../track-w-western-front.md): geospatial sector |
+| Card ID | `WI-W3b-02` |
+| Roadmap phase | [Track W · W3b](../../track-w-western-front.md): Somme sector |
 | Status | `Draft` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `WI-W3-01`, `WI-B4b-18` |
-| Diagrams | [W3 §6](../../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams) |
+| Prerequisites | `WI-W3b-01`, `WI-B4b-18` |
+| Diagrams | [W3b §5](../../deep-dives/w3b-somme-sector.md#5-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W3-01` and `WI-B4b-18` are Done and payload types exist.
+Draft: flip to Ready once `WI-W3b-01` and `WI-B4b-18` are Done and payload types exist.
 
-Add validation that rejects a generated payload that does not match the W3 sector contract.
+Add validation that rejects a generated payload that does not match the W3b sector contract.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §1-§2.
+- `docs/roadmap/deep-dives/w3b-somme-sector.md` §1-§2.
+- `docs/roadmap/deep-dives/w3a-sedan-1870.md` §3.
 - B4b payload reader types from `WI-B4b-18`.
 
 ## Steps
