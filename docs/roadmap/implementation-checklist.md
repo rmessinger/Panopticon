@@ -902,7 +902,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     paths without a new particle runtime; DDF world or bone attachments resolve through C4c node
     names; captures are seeded deterministically; `NiPSys*`, bomb, morph, UV, texture-transform,
     mesh-emission, collision, and unsupported gravity semantics fail with contextual errors.
-- [ ] C4i EE2 legacy KF formats
+- [x] C4i EE2 legacy KF formats
       ([deep dive](deep-dives/c4i-ee2-legacy-kf-formats.md)).
   - AC: NIF 10.0.1.0 headers and KF blocks decode; legacy text keys, flags, and uppercase paths
     normalize; rigid proof clips bind and capture; NetImmerse 4.2.2.0, property, morph, and
