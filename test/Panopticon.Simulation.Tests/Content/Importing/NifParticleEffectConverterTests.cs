@@ -130,6 +130,31 @@ public sealed class NifParticleEffectConverterTests
     }
 
     [Fact]
+    public void DuplicateSystemNamesGetBlockIndexSuffix()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var particlesType = builder.AddBlockType("NiParticles");
+        var particlesDataType = builder.AddBlockType("NiParticlesData");
+        var controllerType = builder.AddBlockType("NiParticleSystemController");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1, 4]));
+        builder.AddBlock(particlesType, NifTestGeometry.Shape(name: "SuperSpray", data: 2, controller: 3));
+        builder.AddBlock(particlesDataType, NifParticleTests.ParticlesData());
+        builder.AddBlock(controllerType, NifParticleTests.ParticleSystemController(target: 1, emitter: 0));
+        builder.AddBlock(particlesType, NifTestGeometry.Shape(name: "SuperSpray", data: 5, controller: 6));
+        builder.AddBlock(particlesDataType, NifParticleTests.ParticlesData());
+        builder.AddBlock(controllerType, NifParticleTests.ParticleSystemController(target: 4, emitter: 0));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var effect = Convert(Read(builder.Build()));
+
+        Assert.Equal(2, effect.Systems.Count);
+        Assert.Equal("SuperSpray", effect.Systems[0].Name);
+        Assert.Equal("SuperSpray#4", effect.Systems[1].Name);
+    }
+
+    [Fact]
     public void NarrowDeclinationConvertsToConeVelocity()
     {
         var file = BuildSingleSystemFile(controllerBody: NifParticleTests.ParticleSystemController(
@@ -210,7 +235,7 @@ public sealed class NifParticleEffectConverterTests
     }
 
     [Fact]
-    public void RejectsMaterialColorControllerOnParticleMaterial()
+    public void FoldsSingleMaterialColorChannelIntoColorCurve()
     {
         var builder = new NifTestDataBuilder();
         var nodeType = builder.AddBlockType("NiNode");
@@ -228,7 +253,81 @@ public sealed class NifParticleEffectConverterTests
         builder.AddBlock(controllerType, NifParticleTests.ParticleSystemController(target: 1, emitter: 0));
         builder.AddBlock(materialType, MaterialPropertyWithController(name: "mat", controller: 5));
         builder.AddBlock(materialControllerType, NifTestPropertyAnimation.MaterialColorController(
+            data: 6, target: 4, startTime: 0.25f));
+        builder.AddBlock(posDataType, NifTestPropertyAnimation.PosData(
+            [(0.25f, (1, 1, 1), null, null), (1.25f, (0.5f, 0.5f, 0.5f), null, null)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var effect = Convert(Read(builder.Build()));
+
+        var curve = Assert.Single(effect.Systems[0].Modifiers, m => m.Kind == ImportedParticleModifierKind.ColorOverLife);
+        Assert.Equal(
+            new ImportedParticleColorKey(0.0f, 1f, 1f, 1f, 1f), curve.ColorKeys[0]);
+        Assert.Equal(
+            new ImportedParticleColorKey(1.0f, 0.5f, 0.5f, 0.5f, 1f), curve.ColorKeys[1]);
+    }
+
+    [Fact]
+    public void SkipsSharedMaterialColorCurveWhenSystemHasItsOwnCurve()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var particlesType = builder.AddBlockType("NiParticles");
+        var particlesDataType = builder.AddBlockType("NiParticlesData");
+        var controllerType = builder.AddBlockType("NiParticleSystemController");
+        var materialType = builder.AddBlockType("NiMaterialProperty");
+        var materialControllerType = builder.AddBlockType("NiMaterialColorController");
+        var posDataType = builder.AddBlockType("NiPosData");
+        var colorModifierType = builder.AddBlockType("NiParticleColorModifier");
+        var colorDataType = builder.AddBlockType("NiColorData");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(particlesType, NifTestGeometry.Shape(
+            name: "sparks", data: 2, controller: 3, properties: [4]));
+        builder.AddBlock(particlesDataType, NifParticleTests.ParticlesData());
+        builder.AddBlock(controllerType, NifParticleTests.ParticleSystemController(
+            target: 1, emitter: 0, particleModifier: 7));
+        builder.AddBlock(materialType, MaterialPropertyWithController(name: "mat", controller: 5));
+        builder.AddBlock(materialControllerType, NifTestPropertyAnimation.MaterialColorController(
             data: 6, target: 4));
+        builder.AddBlock(posDataType, NifTestPropertyAnimation.PosData(
+            [(0.0f, (1, 1, 1), null, null)]));
+        builder.AddBlock(colorModifierType, NifParticleTests.ParticleColorModifier(controller: 3, colorData: 8));
+        builder.AddBlock(colorDataType, NifParticleTests.ColorData(
+            (0.0f, 0.25f, 0.5f, 0.75f, 1f), (1.0f, 0.25f, 0.5f, 0.75f, 1f)));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var effect = Convert(Read(builder.Build()));
+
+        // The system's own NiParticleColorModifier curve owns the color; the shared
+        // material channel belongs to the helper mesh and is not folded.
+        var curve = Assert.Single(effect.Systems[0].Modifiers, m => m.Kind == ImportedParticleModifierKind.ColorOverLife);
+        Assert.Equal(2, curve.ColorKeys.Count);
+        Assert.All(curve.ColorKeys, key => Assert.Equal(0.25f, key.R));
+    }
+
+    [Fact]
+    public void RejectsMultipleAnimatedMaterialChannelsWithoutOwnCurve()
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var particlesType = builder.AddBlockType("NiParticles");
+        var particlesDataType = builder.AddBlockType("NiParticlesData");
+        var controllerType = builder.AddBlockType("NiParticleSystemController");
+        var materialType = builder.AddBlockType("NiMaterialProperty");
+        var materialControllerType = builder.AddBlockType("NiMaterialColorController");
+        var posDataType = builder.AddBlockType("NiPosData");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(particlesType, NifTestGeometry.Shape(
+            name: "sparks", data: 2, controller: 3, properties: [4]));
+        builder.AddBlock(particlesDataType, NifParticleTests.ParticlesData());
+        builder.AddBlock(controllerType, NifParticleTests.ParticleSystemController(target: 1, emitter: 0));
+        builder.AddBlock(materialType, MaterialPropertyWithController(name: "mat", controller: 5));
+        builder.AddBlock(materialControllerType, NifTestPropertyAnimation.MaterialColorController(
+            data: 7, target: 4, next: 6));
+        builder.AddBlock(materialControllerType, NifTestPropertyAnimation.MaterialColorController(
+            data: 7, target: 4));
         builder.AddBlock(posDataType, NifTestPropertyAnimation.PosData(
             [(0.0f, (1, 1, 1), null, null)]));
         builder.AddTrailing(NifTestBlocks.Footer());
@@ -236,8 +335,41 @@ public sealed class NifParticleEffectConverterTests
         var exception = Assert.Throws<NotSupportedException>(
             () => Convert(Read(builder.Build())));
 
-        Assert.Contains("animated particle material colors", exception.Message);
-        Assert.Contains("block 5", exception.Message);
+        Assert.Contains("2 animated color channels", exception.Message);
+        Assert.Contains("block 1", exception.Message);
+    }
+
+    [Fact]
+    public void ForeignControllersSplicedIntoTheChainAreSkipped()
+    {
+        // fx_explosion_1 shape: the particle controller's Next chain runs into a
+        // NiMaterialColorController animating the helper mesh's material; the
+        // walk must skip foreign targets instead of rejecting the system.
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var particlesType = builder.AddBlockType("NiParticles");
+        var particlesDataType = builder.AddBlockType("NiParticlesData");
+        var controllerType = builder.AddBlockType("NiParticleSystemController");
+        var materialControllerType = builder.AddBlockType("NiMaterialColorController");
+        var foreignMaterialType = builder.AddBlockType("NiMaterialProperty");
+        var posDataType = builder.AddBlockType("NiPosData");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(particlesType, NifTestGeometry.Shape(
+            name: "sparks", data: 2, controller: 3));
+        builder.AddBlock(particlesDataType, NifParticleTests.ParticlesData());
+        builder.AddBlock(controllerType, NifParticleTests.ParticleSystemController(
+            target: 1, emitter: 0, next: 4));
+        builder.AddBlock(materialControllerType, NifTestPropertyAnimation.MaterialColorController(
+            data: 6, target: 5));
+        builder.AddBlock(foreignMaterialType, NifTestProperties.Material(name: "meshMaterial"));
+        builder.AddBlock(posDataType, NifTestPropertyAnimation.PosData(
+            [(0.0f, (1, 1, 1), null, null)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var system = Convert(Read(builder.Build())).Systems[0];
+
+        Assert.Empty(system.AlphaKeys);
     }
 
     [Fact]

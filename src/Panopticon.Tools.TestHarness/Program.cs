@@ -265,6 +265,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.Ee2ParticleProof)
+        {
+            Environment.ExitCode = Ee2ParticleProofScenario.Run(installation, config, reporter);
+            return;
+        }
+
         var plan = ScenarioBuilder.BuildReplayRun(installation, config, reporter);
         if (plan == null)
         {

@@ -21,13 +21,14 @@ internal static class NifParticleEffectConverter
     {
         var systems = new List<ImportedParticleSystem>();
         var helperNames = new List<string>();
+        var usedSystemNames = new HashSet<string>(StringComparer.Ordinal);
 
         for (var i = 0; i < file.Blocks.Count; i++)
         {
             switch (file.Blocks[i])
             {
                 case NifParticles particles:
-                    systems.Add(ConvertSystem(file, effectName, i, particles));
+                    systems.Add(ConvertSystem(file, effectName, i, particles, usedSystemNames));
                     break;
                 case NifTriShape shape when shape.Name.Length > 0:
                     helperNames.Add(shape.Name);
@@ -46,7 +47,7 @@ internal static class NifParticleEffectConverter
         return new ImportedParticleEffect(effectName, systems, helperNames);
     }
 
-    private static ImportedParticleSystem ConvertSystem(NifFile file, string effectName, int index, NifParticles particles)
+    private static ImportedParticleSystem ConvertSystem(NifFile file, string effectName, int index, NifParticles particles, HashSet<string> usedSystemNames)
     {
         if (particles.ControllerReference < 0 || file.Blocks[particles.ControllerReference] is not NifParticleSystemController controller)
         {
@@ -60,7 +61,16 @@ internal static class NifParticleEffectConverter
                 $"Effect '{effectName}': NiParticleSystemController block {particles.ControllerReference} emits from mesh block {controller.EmitterReference}; C4h does not import mesh emission.");
         }
 
-        var name = particles.Name.Length > 0 ? particles.Name : $"Particles{index}";
+        // EE2 cooked effects reuse emitter names across systems (fx_watersplash_1 names every system
+        // "SuperSpray"); suffix duplicates with the block index so interchange names stay unique.
+        var baseName = particles.Name.Length > 0 ? particles.Name : $"Particles{index}";
+        var name = baseName;
+        while (!usedSystemNames.Add(name))
+        {
+            name = $"{baseName}#{index}";
+            baseName = name;
+        }
+
         var localTransform = NifTransformConverter.ConjugateSourceToEngine(
             NifTransformConverter.CreateLocalMatrix(particles));
 
@@ -93,6 +103,12 @@ internal static class NifParticleEffectConverter
         var velocity = ConvertVelocity(controller);
         var emitter = ConvertEmitter(effectName, particles.ControllerReference, controller.EmitterDimensions);
         var modifiers = ConvertModifiers(file, effectName, controller);
+
+        // A particle system may share the helper mesh's NiMaterialProperty; when the
+        // mesh animates that material's colors, the curve is mesh-scoped and skipped
+        // for systems with their own color curve, folded for systems without one.
+        var hasOwnColorCurve = modifiers.Any(m => m.Kind == ImportedParticleModifierKind.ColorOverLife);
+        FoldMaterialColorCurve(file, effectName, index, particles, modifiers, controller.InitialColor.A, hasOwnColorCurve);
 
         var textureName = ResolveTextureName(file, particles);
         var materialName = ResolveMaterialName(file, particles);
@@ -305,22 +321,20 @@ internal static class NifParticleEffectConverter
 
         // Alpha controllers animate the NiAlphaProperty; also accept one chained
         // behind the particle controller for layouts that attach it to the system.
+        // Cooked files splice controllers of unrelated objects into shared chains,
+        // so every walk is target-scoped: only controllers whose target is the
+        // walked block belong to this system; foreign links are skipped.
         foreach (var reference in particles.PropertyReferences)
         {
             if (file.Blocks[reference] is NifAlphaProperty alpha)
             {
                 CollectAlphaKeysFromControllerChain(
-                    file, effectName, particlesIndex, alpha.ControllerReference, keys, visitedControllers);
-            }
-
-            if (file.Blocks[reference] is NifMaterialProperty material)
-            {
-                RejectMaterialColorController(file, effectName, particlesIndex, material.ControllerReference);
+                    file, effectName, particlesIndex, reference, alpha.ControllerReference, keys, visitedControllers);
             }
         }
 
         CollectAlphaKeysFromControllerChain(
-            file, effectName, particlesIndex, controller.NextControllerReference, keys, visitedControllers);
+            file, effectName, particlesIndex, particlesIndex, controller.NextControllerReference, keys, visitedControllers);
 
         return keys.OrderBy(k => k.TimeSeconds).ThenBy(k => k.Alpha).ToList();
     }
@@ -329,6 +343,7 @@ internal static class NifParticleEffectConverter
         NifFile file,
         string effectName,
         int particlesIndex,
+        int ownerIndex,
         int head,
         List<ImportedParticleAlphaKey> keys,
         HashSet<int> visitedControllers)
@@ -341,7 +356,8 @@ internal static class NifParticleEffectConverter
 
             if (block is NifAlphaController alphaController)
             {
-                if (alphaController.DataReference >= 0 &&
+                if (alphaController.TargetReference == ownerIndex &&
+                    alphaController.DataReference >= 0 &&
                     file.Blocks[alphaController.DataReference] is NifFloatData floatData &&
                     floatData.Keys is { } group)
                 {
@@ -355,15 +371,20 @@ internal static class NifParticleEffectConverter
                 return;
             }
 
-            if (block is NifMaterialColorController)
+            if (block is NifMaterialColorController colorController)
             {
-                throw NewMaterialColorRejected(effectName, particlesIndex, current);
+                if (colorController.TargetReference == ownerIndex)
+                {
+                    throw NewMaterialColorRejected(effectName, particlesIndex, current);
+                }
             }
-
-            if (block is NifTextureTransformController)
+            else if (block is NifTextureTransformController transformController)
             {
-                throw new NotSupportedException(
-                    $"Effect '{effectName}': NiParticles block {particlesIndex} carries a NiTextureTransformController (block {current}); C4h does not import animated particle textures.");
+                if (transformController.TargetReference == ownerIndex)
+                {
+                    throw new NotSupportedException(
+                        $"Effect '{effectName}': NiParticles block {particlesIndex} carries a NiTextureTransformController (block {current}); C4h does not import animated particle textures.");
+                }
             }
 
             if (block is not NifTimeController timeController)
@@ -375,24 +396,73 @@ internal static class NifParticleEffectConverter
         }
     }
 
-    private static void RejectMaterialColorController(NifFile file, string effectName, int particlesIndex, int head)
+    private static void FoldMaterialColorCurve(
+        NifFile file,
+        string effectName,
+        int particlesIndex,
+        NifParticles particles,
+        List<ImportedParticleModifier> modifiers,
+        float initialAlpha,
+        bool hasOwnColorCurve)
     {
-        var current = head;
+        NifMaterialColorController? single = null;
+        var singleIndex = -1;
+        var channelCount = 0;
 
-        while (current >= 0)
+        foreach (var reference in particles.PropertyReferences)
         {
-            if (file.Blocks[current] is NifMaterialColorController)
+            if (file.Blocks[reference] is not NifMaterialProperty material)
             {
-                throw NewMaterialColorRejected(effectName, particlesIndex, current);
+                continue;
             }
 
-            if (file.Blocks[current] is not NifTimeController controller)
+            // Cooked files splice foreign controllers into shared chains; only
+            // controllers targeting this material animate it.
+            var current = material.ControllerReference;
+            while (current >= 0 && file.Blocks[current] is NifTimeController controller)
             {
-                return;
-            }
+                if (file.Blocks[current] is NifMaterialColorController colorController &&
+                    colorController.TargetReference == reference)
+                {
+                    channelCount++;
+                    single = colorController;
+                    singleIndex = current;
+                }
 
-            current = controller.NextControllerReference;
+                current = controller.NextControllerReference;
+            }
         }
+
+        if (channelCount == 0)
+        {
+            return;
+        }
+
+        if (hasOwnColorCurve)
+        {
+            // The mesh animates the shared material; the system's own particle color
+            // curve owns the visual, so the mesh-scoped channel is skipped.
+            return;
+        }
+
+        if (channelCount > 1 || single is null)
+        {
+            throw new NotSupportedException(
+                $"Effect '{effectName}': NiParticles block {particlesIndex} shares a material with {channelCount} animated color channels; C4h folds at most one channel into the particle color curve.");
+        }
+
+        if (single.DataReference < 0 || file.Blocks[single.DataReference] is not NifPosData posData ||
+            posData.Keys is not { } group)
+        {
+            throw new NotSupportedException(
+                $"Effect '{effectName}': NiParticles block {particlesIndex} has a material color controller (block {singleIndex}) without key data; C4h cannot fold the material color curve.");
+        }
+
+        var keys = group.Keys
+            .Select(k => new ImportedParticleColorKey(
+                MathF.Max(0, k.Time - single.StartTime), k.Value.X, k.Value.Y, k.Value.Z, initialAlpha))
+            .ToList();
+        modifiers.Add(ImportedParticleModifier.CreateColorOverLife(keys));
     }
 
     private static NotSupportedException NewMaterialColorRejected(string effectName, int particlesIndex, int controllerIndex)

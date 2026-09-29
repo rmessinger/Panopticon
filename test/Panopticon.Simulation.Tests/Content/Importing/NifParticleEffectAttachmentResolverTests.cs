@@ -196,7 +196,8 @@ public class NifParticleEffectAttachmentResolverTests
         Assert.Equal("Muzzle", muzzle.TargetBoneName);
         Assert.True(muzzle.FollowTarget);
         Assert.False(muzzle.OneShot);
-        Assert.Equal("db/Visuals/visual_fx_weapon.ddf:MuzzleSmokeEffect", muzzle.DdfSource);
+        Assert.Equal("db/Visuals/visual_fx_weapon.ddf:Muzzle_Fortress12.MuzzleSmokeEffect", muzzle.DdfSource);
+        Assert.Equal(0.05f, muzzle.WorldScale);
 
         var splash = bindings[2];
         Assert.Equal("fx_watersplash_1", splash.EffectName);

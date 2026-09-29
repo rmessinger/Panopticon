@@ -99,12 +99,13 @@ public sealed class NifParticleTests
         float declinationVariation = (float)Math.PI,
         float planarAngleVariation = (float)Math.PI,
         float initialSize = 5.0f,
-        (float X, float Y, float Z) emitterDimensions = default)
+        (float X, float Y, float Z) emitterDimensions = default,
+        int next = -1)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
         body.WriteUInt32(0);
-        NifTestKeyframe.WriteTimeControllerPrefix(body, -1, 0x2C, 1.0f, 0.0f, 0.0f, stopTime, target);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, 0x2C, 1.0f, 0.0f, 0.0f, stopTime, target);
         body.WriteSingle(speed);
         body.WriteSingle(speedVariation);
         body.WriteSingle(declination);

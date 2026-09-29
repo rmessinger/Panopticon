@@ -18,7 +18,10 @@ namespace Panopticon.Content.Loaders;
 /// (meters) and are converted to engine units (feet) here once; the per-frame runtime stays
 /// format-agnostic. Cone emission is expressed as a cylindrical velocity around local +Z with
 /// the axis rotation folded into <see cref="MaterializedParticleSystem.EmitterTransform"/>, so
-/// spawn matrices orient the cone without runtime changes.
+/// spawn matrices orient the cone without runtime changes. An optional world scale (from DDF
+/// binding data) multiplies particle sizes and the spawn matrix; the matrix then scales spawn
+/// positions and velocities through the runtime's transform path, while sizes bake the scale
+/// directly because the runtime does not scale per-particle quad sizes by the world matrix.
 /// </summary>
 internal static class ImportedParticleEffectMaterializer
 {
@@ -26,17 +29,23 @@ internal static class ImportedParticleEffectMaterializer
 
     public static MaterializedParticleEffect Materialize(
         ImportedParticleEffect effect,
-        Func<string, LazyAssetReference<TextureAsset>>? textureResolver = null)
+        Func<string, LazyAssetReference<TextureAsset>>? textureResolver = null,
+        float worldScale = 1f)
     {
         if (effect is null)
         {
             throw new ArgumentNullException(nameof(effect));
         }
 
+        if (!float.IsFinite(worldScale) || worldScale <= 0f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(worldScale), worldScale, "World scale must be finite and positive.");
+        }
+
         var systems = new List<MaterializedParticleSystem>(effect.Systems.Count);
         for (var i = 0; i < effect.Systems.Count; i++)
         {
-            systems.Add(MaterializeSystem(effect, effect.Systems[i], textureResolver));
+            systems.Add(MaterializeSystem(effect, effect.Systems[i], textureResolver, worldScale));
         }
 
         return new MaterializedParticleEffect(effect.Name, systems);
@@ -45,7 +54,8 @@ internal static class ImportedParticleEffectMaterializer
     private static MaterializedParticleSystem MaterializeSystem(
         ImportedParticleEffect effect,
         ImportedParticleSystem system,
-        Func<string, LazyAssetReference<TextureAsset>>? textureResolver)
+        Func<string, LazyAssetReference<TextureAsset>>? textureResolver,
+        float worldScale)
     {
         var systemName = $"{effect.Name}.{system.Name}";
 
@@ -60,7 +70,11 @@ internal static class ImportedParticleEffectMaterializer
         var template = new FXParticleSystemTemplate(systemName)
         {
             IsOneShot = true,
-            Shader = system.AlphaBlended ? ParticleSystemShader.Alpha : ParticleSystemShader.Additive,
+
+            // EE2 fx textures are cooked additive-style (grayscale art on black); their DXT1
+            // texcaches carry no source alpha, so SrcAlpha blending would draw the black
+            // background as opaque quads. Composite additively like the source game.
+            Shader = ParticleSystemShader.Additive,
         };
 
         template.ParticleTexture = textureResolver is not null
@@ -106,11 +120,16 @@ internal static class ImportedParticleEffectMaterializer
         template.Update = update;
         template.Draw = new FXParticleDrawDefault();
 
-        MaterializeSize(template, update, system);
+        MaterializeSize(template, update, system, worldScale);
         MaterializeColors(template, system);
         MaterializeAlpha(template, system, lifetimeHigh);
 
         var emitterTransform = MaterializeEmission(template, system, systemName);
+
+        // The spawn matrix carries the world scale: the runtime transforms both spawn
+        // positions and velocities through it, so speeds and volumes stay in unscaled
+        // source units while quad sizes (matrix-independent) bake the scale directly.
+        emitterTransform = Matrix4x4.Multiply(Matrix4x4.CreateScale(worldScale), emitterTransform);
 
         return new MaterializedParticleSystem(system.Name, template, emitterTransform);
     }
@@ -166,9 +185,13 @@ internal static class ImportedParticleEffectMaterializer
         }
     }
 
-    private static void MaterializeSize(FXParticleSystemTemplate template, FXParticleUpdateDefault update, ImportedParticleSystem system)
+    private static void MaterializeSize(
+        FXParticleSystemTemplate template,
+        FXParticleUpdateDefault update,
+        ImportedParticleSystem system,
+        float worldScale)
     {
-        var sizeEngine = system.InitialSize * NifTransformConverter.FeetPerMeter;
+        var sizeEngine = system.InitialSize * NifTransformConverter.FeetPerMeter * worldScale;
         var growSeconds = 0f;
         foreach (var modifier in system.Modifiers)
         {
@@ -178,16 +201,18 @@ internal static class ImportedParticleEffectMaterializer
             }
         }
 
-        var growFrames = growSeconds * FramesPerSecond;
+        var growFrames = MathF.Round(growSeconds * FramesPerSecond, MidpointRounding.AwayFromZero);
         if (growFrames > 0)
         {
-            // Ramp from ~0 to the full size over the grow window; damping 1 keeps the rate linear.
+            // Geometric SizeRate damping: the rate decays each tick so growth converges on the
+            // full size instead of continuing linearly for the whole particle lifetime (the
+            // legacy grow window is always far shorter than the lifetime). Damping is chosen so
+            // the residual tail past the grow window adds ~5% (1 / 0.95) of the final size.
+            var damping = MathF.Pow(0.05f, 1f / growFrames);
+            var rate = sizeEngine * (1f - damping) / (1f - MathF.Pow(damping, growFrames));
             template.Size = new RandomVariable(0, 0, DistributionType.Uniform);
-            update.SizeRate = new RandomVariable(
-                sizeEngine / growFrames,
-                sizeEngine / growFrames,
-                DistributionType.Uniform);
-            update.SizeRateDamping = new RandomVariable(1, 1, DistributionType.Uniform);
+            update.SizeRate = new RandomVariable(rate, rate, DistributionType.Uniform);
+            update.SizeRateDamping = new RandomVariable(damping, damping, DistributionType.Uniform);
         }
         else
         {
@@ -333,11 +358,13 @@ internal static class ImportedParticleEffectMaterializer
             var localAxis = Vector3.Normalize(Vector3.TransformNormal(axis, inverseLocal));
             axisRotation = CreateRotationFromUnitZTo(localAxis);
 
+            // The runtime integrates Position += Velocity once per 30 Hz tick, so speeds
+            // convert to per-tick displacements here, not per-second values.
             var angle = system.Velocity.ConeAngle;
-            var radialLow = system.Velocity.SpeedLow * MathF.Sin(angle) * NifTransformConverter.FeetPerMeter;
-            var radialHigh = system.Velocity.SpeedHigh * MathF.Sin(angle) * NifTransformConverter.FeetPerMeter;
-            var normalLow = system.Velocity.SpeedLow * MathF.Cos(angle) * NifTransformConverter.FeetPerMeter;
-            var normalHigh = system.Velocity.SpeedHigh * MathF.Cos(angle) * NifTransformConverter.FeetPerMeter;
+            var radialLow = system.Velocity.SpeedLow * MathF.Sin(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
+            var radialHigh = system.Velocity.SpeedHigh * MathF.Sin(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
+            var normalLow = system.Velocity.SpeedLow * MathF.Cos(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
+            var normalHigh = system.Velocity.SpeedHigh * MathF.Cos(angle) * NifTransformConverter.FeetPerMeter / FramesPerSecond;
 
             template.EmissionVelocity = new FXParticleEmissionVelocityCylinder
             {
@@ -347,8 +374,8 @@ internal static class ImportedParticleEffectMaterializer
         }
         else
         {
-            var speedLow = system.Velocity.SpeedLow * NifTransformConverter.FeetPerMeter;
-            var speedHigh = system.Velocity.SpeedHigh * NifTransformConverter.FeetPerMeter;
+            var speedLow = system.Velocity.SpeedLow * NifTransformConverter.FeetPerMeter / FramesPerSecond;
+            var speedHigh = system.Velocity.SpeedHigh * NifTransformConverter.FeetPerMeter / FramesPerSecond;
             template.EmissionVelocity = new FXParticleEmissionVelocitySphere
             {
                 Speed = new RandomVariable(speedLow, speedHigh, DistributionType.Uniform),

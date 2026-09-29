@@ -133,9 +133,9 @@ public sealed class NifParticleEffectBinding
                 targetBoneName: "Muzzle",
                 followTarget: true,
                 localOffset: Vector3.Zero,
-                worldScale: 1.0f,
+                worldScale: 0.05f,
                 oneShot: false,
-                ddfSource: "db/Visuals/visual_fx_weapon.ddf:MuzzleSmokeEffect"),
+                ddfSource: "db/Visuals/visual_fx_weapon.ddf:Muzzle_Fortress12.MuzzleSmokeEffect"),
             new NifParticleEffectBinding(
                 "fx_watersplash_1",
                 "fx_watersplash_1.nif",

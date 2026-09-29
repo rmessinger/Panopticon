@@ -14,4 +14,5 @@ public enum BuiltInScenario
     Ee2PropertyProof,
     Ee2ScaleProof,
     Ee2MorphProof,
+    Ee2ParticleProof,
 }
