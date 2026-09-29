@@ -32,7 +32,7 @@ correctness. It does not tune the model to historical outcomes.
 | Activation policy | `never`, `contact`, `operator-interest` |
 | Combat variant | `stochastic`, `mean-field` |
 
-Each cell runs 64 seeds. The scenario source is the W2 synthetic fixture unless W3 evidence is
+Each cell runs 64 seeds. The scenario source is the W2 synthetic fixture unless W3b evidence is
 available, in which case the generated sector becomes an additional named scenario arm rather than
 changing the base 216-cell matrix.
 

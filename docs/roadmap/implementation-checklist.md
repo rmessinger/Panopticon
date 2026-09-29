@@ -1290,26 +1290,80 @@ phases depend on the Track A/B phases listed in the track doc.
 - [ ] W2-14 Aggregate error report (`WI-W2-14`).
   - AC: 64 seeds per arm compare aggregate and mixed runs against all-tactical.
 
-### W3: Geospatial sector ([deep dive](deep-dives/w3-geospatial-sector.md))
-- [ ] W3-1 Operator geospatial inputs (`WI-W3-01`).
-  - AC: manifest template names sources, CRS, scale, datum, and uncommitted paths.
-- [ ] W3-2 Somme payload validation (`WI-W3-02`).
-  - AC: payload check rejects wrong CRS, scale, datum, bounds, or missing layers.
-- [ ] W3-3 Topology builder contract (`WI-W3-03`).
+### W3a: Sedan 1870 ([deep dive](deep-dives/w3a-sedan-1870.md))
+- [ ] W3a-1 Scale probe (`WI-W3a-01`).
+  - AC: per-frame cost and peak memory at 320,000 soldier objects with long-range acquisition, and a projected reference wall-clock.
+- [ ] W3a-2 Operator geospatial inputs (`WI-W3a-02`).
+  - AC: manifest names DEM, vector, and digitized 1870 sources, CRS, datum offset, and uncommitted paths.
+- [ ] W3a-3 Sedan payload validation (`WI-W3a-03`).
+  - AC: payload check rejects wrong CRS, scale, datum, bounds, or missing W3a layers.
+- [ ] W3a-4 Topology builder contract (`WI-W3a-04`).
   - AC: topology derives sectors, regions, cells, nodes, and links with source refs.
-- [ ] W3-4 Region and cell grid (`WI-W3-04`).
+- [ ] W3a-5 Region and cell grid (`WI-W3a-05`).
   - AC: 1000 m regions and 125 m cells cover the projected extent.
-- [ ] W3-5 Vector features to topology (`WI-W3-05`).
-  - AC: generated links and annotations carry source feature ids.
-- [ ] W3-6 Synthetic forces on geography (`WI-W3-06`).
+- [ ] W3a-6 Vector features to topology (`WI-W3a-06`).
+  - AC: links and annotations carry source feature ids; W3a layers apply their topology effects.
+- [ ] W3a-7 Neutral territory (`WI-W3a-07`).
+  - AC: German entry is blocked; French entry moves holdings to `interned`.
+- [ ] W3a-8 Order-of-battle schema (`WI-W3a-08`).
+  - AC: schema validates keys, echelons, parents, strengths, templates, and provenance.
+- [ ] W3a-9 French order of battle (`WI-W3a-09`).
+  - AC: every French battalion, battery, and squadron has a source; totals match the deep dive.
+- [ ] W3a-10 German order of battle (`WI-W3a-10`).
+  - AC: every German battalion, battery, and squadron has a source; totals match the deep dive.
+- [ ] W3a-11 Organization template expansion (`WI-W3a-11`).
+  - AC: expansion to the platoon floor is deterministic with stable keys.
+- [ ] W3a-12 Period ledger families (`WI-W3a-12`).
+  - AC: `horse`, `mitrailleuse`, `captured`, and `interned` conserve exactly.
+- [ ] W3a-13 Period weapon parameters (`WI-W3a-13`).
+  - AC: every value has a unit and a source.
+- [ ] W3a-14 Period content definitions (`WI-W3a-14`).
+  - AC: period objects and weapons load in a scope above Generals.
+- [ ] W3a-15 Weapon hit resolution (`WI-W3a-15`).
+  - AC: the null resolver keeps RTS behavior identical; period hits follow the table per seed.
+- [ ] W3a-16 Shells and fuzes (`WI-W3a-16`).
+  - AC: percussion, shrapnel, case, and La Hitte presets behave as designed.
+- [ ] W3a-17 Line of sight (`WI-W3a-17`).
+  - AC: fire and detection require line of sight over terrain and feature occluders.
+- [ ] W3a-18 Environment schedule (`WI-W3a-18`).
+  - AC: light, fog, and rain modify detection, fire, and movement per schedule.
+- [ ] W3a-19 Tactical artillery (`WI-W3a-19`).
+  - AC: crew minimum, limbering, ammunition flow, and capture transfer hold.
+- [ ] W3a-20 Cavalry troopers (`WI-W3a-20`).
+  - AC: horse holdings, dismounting, and charges behave as designed.
+- [ ] W3a-21 Courier and telegraph links (`WI-W3a-21`).
+  - AC: latency and disruption follow the comm-type table; telephone and wireless are disabled.
+- [ ] W3a-22 Orders timeline dataset (`WI-W3a-22`).
+  - AC: every order and command change has a source and resolvable keys.
+- [ ] W3a-23 Order applicability (`WI-W3a-23`).
+  - AC: orders issue from simulated headquarters; applicability and arrival-offset metrics record.
+- [ ] W3a-24 Local surrender (`WI-W3a-24`).
+  - AC: encircled, broken platoons move to `captured`; equipment transfers.
+- [ ] W3a-25 Army capitulation (`WI-W3a-25`).
+  - AC: capitulation sets `Decided`/`Surrendered`; window end without it records `InProgress`.
+- [ ] W3a-26 Sedan scenario assembly (`WI-W3a-26`).
+  - AC: the 31 August 00:00 state places every formation in its assembly area.
+- [ ] W3a-27 A5 geospatial rendering (`WI-W3a-27`).
+  - AC: A5 shows regions, cells, features, nodes, links, and source ids.
+- [ ] W3a-28 All-tactical reference run (`WI-W3a-28`).
+  - AC: 4 reference seeds complete the 60 h window.
+- [ ] W3a-29 Aggregate and mixed runs (`WI-W3a-29`).
+  - AC: 64 seeds per arm report error against the reference.
+- [ ] W3a-30 Sedan evidence report (`WI-W3a-30`).
+  - AC: the report records evidence, the historical divergence table, and provenance.
+
+### W3b: Somme sector ([deep dive](deep-dives/w3b-somme-sector.md))
+- [ ] W3b-1 Operator geospatial inputs (`WI-W3b-01`).
+  - AC: manifest template names sources, CRS, scale, datum, and uncommitted paths.
+- [ ] W3b-2 Somme payload validation (`WI-W3b-02`).
+  - AC: payload check rejects wrong CRS, scale, datum, bounds, or missing layers.
+- [ ] W3b-3 Synthetic forces on geography (`WI-W3b-03`).
   - AC: the scenario starts with valid depots, fronts, and links.
-- [ ] W3-7 W1 evidence on the sector (`WI-W3-07`).
+- [ ] W3b-4 W1 evidence on the sector (`WI-W3b-04`).
   - AC: W1 evidence passes on the generated topology.
-- [ ] W3-8 W2 evidence on the sector (`WI-W3-08`).
+- [ ] W3b-5 W2 evidence on the sector (`WI-W3b-05`).
   - AC: W2 evidence passes on the generated topology.
-- [ ] W3-9 A5 geospatial rendering (`WI-W3-09`).
-  - AC: A5 shows regions, cells, front line, nodes, links, and source ids.
-- [ ] W3-10 Geospatial sector report (`WI-W3-10`).
+- [ ] W3b-6 Somme sector report (`WI-W3b-06`).
   - AC: the report records control points, topology counts, evidence, provenance.
 
 ### W4: Command and logistics experiment ([deep dive](deep-dives/w4-command-logistics-experiment.md))

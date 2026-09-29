@@ -1,24 +1,24 @@
-# Task Card `WI-W3-03`: Define the topology builder contract
+# Task Card `WI-W3a-04`: Define the topology builder contract
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-W3-03` |
-| Roadmap phase | [Track W · W3](../../track-w-western-front.md): geospatial sector |
+| Card ID | `WI-W3a-04` |
+| Roadmap phase | [Track W · W3a](../../track-w-western-front.md): Sedan 1870 |
 | Status | `Draft` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-W3-02`, `WI-W0-03`, `WI-B4b-18` |
-| Diagrams | [W3 §6](../../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams) |
+| Prerequisites | `WI-W3a-03`, `WI-W0-03`, `WI-B4b-18` |
+| Diagrams | [W3a §13](../../deep-dives/w3a-sedan-1870.md#13-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W3-02`, `WI-W0-03`, and `WI-B4b-18` are Done and the named topology and payload types are reconciled.
+Draft: flip to Ready once `WI-W3a-03`, `WI-W0-03`, and `WI-B4b-18` are Done and the named topology and payload types are reconciled.
 
 Create `WesternFrontTopologyBuilder` and its build result contract.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §3.
+- `docs/roadmap/deep-dives/w3a-sedan-1870.md` §3-§4.
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §3 and §5.
 
 ## Steps

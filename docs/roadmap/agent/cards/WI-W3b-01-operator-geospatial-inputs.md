@@ -1,14 +1,14 @@
-# Task Card `WI-W3-01`: Document operator-local Somme geospatial inputs
+# Task Card `WI-W3b-01`: Document operator-local Somme geospatial inputs
 
 | Field | Value |
 |---|---|
-| Card ID | `WI-W3-01` |
-| Roadmap phase | [Track W · W3](../../track-w-western-front.md): geospatial sector |
+| Card ID | `WI-W3b-01` |
+| Roadmap phase | [Track W · W3b](../../track-w-western-front.md): Somme sector |
 | Status | `Draft` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | W2 and `WI-B4b-18` |
-| Diagrams | [W3 §6](../../deep-dives/w3-geospatial-sector.md#6-architecture-diagrams) |
+| Diagrams | [W3b §5](../../deep-dives/w3b-somme-sector.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -18,7 +18,8 @@ Create the operator-local input checklist and manifest example for the Somme sec
 
 ## Context to read (and only this)
 
-- `docs/roadmap/deep-dives/w3-geospatial-sector.md` §1-§2.
+- `docs/roadmap/deep-dives/w3b-somme-sector.md` §1-§2.
+- `docs/roadmap/deep-dives/w3a-sedan-1870.md` §3.
 - `docs/roadmap/deep-dives/b4b-geospatial-map-generation.md` §2, §4, and §6.1.
 
 ## Steps
@@ -42,7 +43,7 @@ Create the operator-local input checklist and manifest example for the Somme sec
 ## Validation commands
 
 ```sh
-python docs/roadmap/scripts/check_links.py docs/roadmap/deep-dives/w3-geospatial-sector.md || true
+python docs/roadmap/scripts/check_links.py docs/roadmap/deep-dives/w3b-somme-sector.md || true
 ```
 
 ## Out of scope / guardrails
