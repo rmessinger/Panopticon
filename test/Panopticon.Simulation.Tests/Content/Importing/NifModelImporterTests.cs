@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using Panopticon.Content.Importing;
@@ -721,6 +722,300 @@ public sealed class NifModelImporterTests
         var unusedPropertyType = Assert.Throws<InvalidDataException>(
             () => graph.PropertyTargets.ResolvePropertySlots("hull", "NiAlphaProperty"));
         Assert.Contains("has no NiAlphaProperty to animate", unusedPropertyType.Message);
+    }
+
+    private static byte[] MorphModelBytes(
+        byte relativeTargets = 1,
+        bool baseOnly = false,
+        bool mismatchBase = false,
+        uint morphVertexCount = 4,
+        bool skinned = false,
+        bool embedded = true)
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var shapeType = builder.AddBlockType("NiTriShape");
+        var dataType = builder.AddBlockType("NiTriShapeData");
+        var morpherType = builder.AddBlockType("NiGeomMorpherController");
+        var morphDataType = builder.AddBlockType("NiMorphData");
+        var skinDataType = builder.AddBlockType("NiSkinData");
+        var skinInstanceType = builder.AddBlockType("NiSkinInstance");
+
+        var vertices = new (float, float, float)[] { (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1) };
+        var baseVectors = mismatchBase
+            ? new (float, float, float)[] { (0, 0, 0), (1, 0, 0), (0, 1, 0), (9, 9, 9) }
+            : vertices;
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(shapeType, NifTestGeometry.Shape(
+            name: "Editable Mesh",
+            data: 2,
+            skin: skinned ? 6 : -1,
+            controller: embedded ? 3 : -1));
+        builder.AddBlock(dataType, NifTestGeometry.GeometryData(
+            numVertices: 4,
+            vertices: vertices,
+            normals: [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)]));
+        builder.AddBlock(morpherType, NifTestPropertyAnimation.MorphController(data: 4));
+
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)> zeroKeys =
+            [(0f, 0f, null, null), (1f, 0f, null, null)];
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)> oneKeys =
+            [(0f, 0f, null, null), (1f, 1f, null, null)];
+        IReadOnlyList<(float X, float Y, float Z)> deltaVectors =
+            [(1f, 0f, 0f), (0f, 2f, 0f), (0f, 0f, 3f), (0.5f, 0.5f, 0.5f)];
+
+        var morphs = new List<(
+            IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? WeightKeys,
+            IReadOnlyList<(float X, float Y, float Z)>? Vectors)>
+        {
+            (zeroKeys, baseVectors),
+        };
+        if (!baseOnly)
+        {
+            morphs.Add((oneKeys, deltaVectors));
+        }
+
+        builder.AddBlock(morphDataType, NifTestPropertyAnimation.MorphData(
+            numVertices: morphVertexCount,
+            morphs: morphs,
+            relativeTargets: relativeTargets));
+
+        if (skinned)
+        {
+            builder.AddBlock(skinDataType, NifTestBlocks.SkinData(
+                boneWeights: [[(0, 1.0f), (1, 1.0f), (2, 1.0f), (3, 1.0f)]]));
+            builder.AddBlock(skinInstanceType, NifTestBlocks.SkinInstance(
+                data: 5, skeletonRoot: 0, bones: [0]));
+        }
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    private static byte[] MorphKfBytes(
+        string targetName = "Editable Mesh",
+        bool keyframeOnly = false,
+        bool duplicateTargets = false)
+    {
+        var builder = new NifTestDataBuilder();
+        var sequenceType = builder.AddBlockType("NiControllerSequence");
+        var morpherType = builder.AddBlockType("NiGeomMorpherController");
+        var morphDataType = builder.AddBlockType("NiMorphData");
+        var keyframeControllerType = builder.AddBlockType("NiKeyframeController");
+        var keyframeDataType = builder.AddBlockType("NiKeyframeData");
+
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)> zeroKey =
+            [(0f, 0f, null, null)];
+        IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)> weightKeys =
+            [(0f, 0f, null, null), (1f, 1f, null, null)];
+        IReadOnlyList<(float X, float Y, float Z)> baseVectors =
+            [(0f, 0f, 0f), (1f, 0f, 0f), (0f, 1f, 0f), (0f, 0f, 1f)];
+        IReadOnlyList<(float X, float Y, float Z)> deltaVectors =
+            [(1f, 0f, 0f), (0f, 2f, 0f), (0f, 0f, 3f), (0.5f, 0.5f, 0.5f)];
+
+        if (keyframeOnly)
+        {
+            builder.AddBlock(sequenceType, NifTestKeyframe.ControllerSequence(
+                "EMPTY_SEQUENCE", "root", textKeys: -1, ("root", 1)));
+            builder.AddBlock(keyframeControllerType, NifTestKeyframe.KeyframeController(data: 2));
+            builder.AddBlock(keyframeDataType, NifTestKeyframe.KeyframeData());
+        }
+        else if (duplicateTargets)
+        {
+            builder.AddBlock(sequenceType, NifTestKeyframe.ControllerSequence(
+                "EMPTY_SEQUENCE", "root", textKeys: -1, (targetName, 1), (targetName, 2)));
+            builder.AddBlock(morpherType, NifTestPropertyAnimation.MorphController(data: 3));
+            builder.AddBlock(morpherType, NifTestPropertyAnimation.MorphController(data: 3));
+            builder.AddBlock(morphDataType, NifTestPropertyAnimation.MorphData(
+                numVertices: 4,
+                morphs: [(zeroKey, baseVectors), (weightKeys, deltaVectors)]));
+        }
+        else
+        {
+            builder.AddBlock(sequenceType, NifTestKeyframe.ControllerSequence(
+                "EMPTY_SEQUENCE", "root", textKeys: -1, (targetName, 1)));
+            builder.AddBlock(morpherType, NifTestPropertyAnimation.MorphController(data: 2));
+            builder.AddBlock(morphDataType, NifTestPropertyAnimation.MorphData(
+                numVertices: 4,
+                morphs: [(zeroKey, baseVectors), (weightKeys, deltaVectors)]));
+        }
+
+        builder.AddTrailing(NifTestBlocks.Footer());
+        return builder.Build();
+    }
+
+    private static ImportedModel? ImportMorph(
+        byte[] fileBytes,
+        string name = "test_model",
+        bool gate = true,
+        byte[]? kfBytes = null,
+        string kfPath = "Graphics/Building/test.kf")
+    {
+        var importer = new NifModelImporter();
+        var fileSystem = new MemoryFileSystem();
+        fileSystem.AddFile($"cache/nifcache/{name}.nifcache", fileBytes);
+        if (kfBytes is not null)
+        {
+            fileSystem.AddFile(kfPath, kfBytes);
+        }
+
+        var key = kfBytes is null ? name : $"{name}#morph-kf={kfPath}";
+        return importer.ImportModel(
+            key,
+            new AssetImportContext(
+                fileSystem,
+                language: null,
+                gate ? [ImportedFeatureGates.MorphTargets] : null));
+    }
+
+    private static ImportedMesh MorphMesh(ImportedModel model)
+    {
+        return Assert.IsType<ImportedMesh>(model.SubObjects[0].RenderObject);
+    }
+
+    [Fact]
+    public void EmbeddedMorphControllerAttachesTargetSetWithConvertedDeltas()
+    {
+        var model = ImportMorph(MorphModelBytes());
+        Assert.NotNull(model);
+
+        var mesh = MorphMesh(model!);
+        Assert.Equal("test_model.0.Editable Mesh", mesh.PrimitiveId);
+
+        var set = Assert.Single(mesh.MorphTargetSets);
+        Assert.Equal("test_model.0.Editable Mesh", set.PrimitiveId);
+        Assert.Equal("Target1", Assert.Single(set.TargetNames));
+        Assert.Equal(0.0f, Assert.Single(set.DefaultWeights));
+        Assert.Equal(new ImportedMorphWeightRange(0.0f, 1.0f), Assert.Single(set.AllowedWeightRanges));
+
+        var sourceDeltas = new Vector3[]
+        {
+            new(1, 0, 0),
+            new(0, 2, 0),
+            new(0, 0, 3),
+            new(0.5f, 0.5f, 0.5f),
+        };
+        var engine = SourceToEngineMatrix();
+        var deltas = Assert.Single(set.Targets).PositionDeltas!;
+        Assert.Equal(4, deltas.Count);
+        for (var i = 0; i < sourceDeltas.Length; i++)
+        {
+            AssertEqual(Vector3.Transform(sourceDeltas[i], engine), deltas[i]);
+        }
+    }
+
+    [Fact]
+    public void BaseOnlyMorphDataYieldsNoTargetSet()
+    {
+        var model = ImportMorph(MorphModelBytes(baseOnly: true));
+        Assert.NotNull(model);
+
+        var mesh = MorphMesh(model!);
+        Assert.Equal(string.Empty, mesh.PrimitiveId);
+        Assert.Empty(mesh.MorphTargetSets);
+    }
+
+    [Fact]
+    public void Morph0MismatchWithBasePositionsFails()
+    {
+        var ex = Assert.Throws<InvalidDataException>(
+            () => ImportMorph(MorphModelBytes(mismatchBase: true)));
+        Assert.Contains("morph 0", ex.Message);
+        Assert.Contains("vertex 3", ex.Message);
+    }
+
+    [Fact]
+    public void AbsoluteMorphTargetsRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(
+            () => ImportMorph(MorphModelBytes(relativeTargets: 0)));
+        Assert.Contains("RelativeTargets=0", ex.Message);
+    }
+
+    [Fact]
+    public void MorphVertexCountMismatchFails()
+    {
+        var ex = Assert.Throws<InvalidDataException>(
+            () => ImportMorph(MorphModelBytes(morphVertexCount: 3)));
+        Assert.Contains("3 morph vectors", ex.Message);
+        Assert.Contains("4 vertices", ex.Message);
+    }
+
+    [Fact]
+    public void MorphModelWithoutGateFailsNamingGate()
+    {
+        var ex = Assert.Throws<NotSupportedException>(
+            () => ImportMorph(MorphModelBytes(), gate: false));
+        Assert.Contains("MorphTargets", ex.Message);
+    }
+
+    [Fact]
+    public void SkinnedShapeWithMorphFails()
+    {
+        var ex = Assert.Throws<NotSupportedException>(
+            () => ImportMorph(MorphModelBytes(skinned: true)));
+        Assert.Contains("combines skinning with morph targets", ex.Message);
+    }
+
+    [Fact]
+    public void MorphKfPairingAttachesTargetSetByShapeName()
+    {
+        var model = ImportMorph(
+            MorphModelBytes(embedded: false),
+            kfBytes: MorphKfBytes());
+        Assert.NotNull(model);
+
+        var mesh = MorphMesh(model!);
+        var set = Assert.Single(mesh.MorphTargetSets);
+        Assert.Equal("Target1", Assert.Single(set.TargetNames));
+        Assert.Equal(4, Assert.Single(set.Targets).PositionDeltas!.Count);
+    }
+
+    [Fact]
+    public void UnpairedMorphKfReturnsNull()
+    {
+        var model = ImportMorph(
+            MorphModelBytes(embedded: false),
+            kfBytes: MorphKfBytes(keyframeOnly: true));
+        Assert.Null(model);
+    }
+
+    [Fact]
+    public void MissingKfEntryReturnsNull()
+    {
+        var importer = new NifModelImporter();
+        var fileSystem = new MemoryFileSystem();
+        fileSystem.AddFile("cache/nifcache/test_model.nifcache", MorphModelBytes());
+
+        var model = importer.ImportModel(
+            "test_model#morph-kf=Graphics/Building/absent.kf",
+            new AssetImportContext(fileSystem, language: null, [ImportedFeatureGates.MorphTargets]));
+        Assert.Null(model);
+    }
+
+    [Fact]
+    public void MorphKfTargetingMissingShapeFails()
+    {
+        var ex = Assert.Throws<InvalidDataException>(
+            () => ImportMorph(MorphModelBytes(embedded: false), kfBytes: MorphKfBytes(targetName: "nope")));
+        Assert.Contains("'nope'", ex.Message);
+        Assert.Contains("does not exist", ex.Message);
+    }
+
+    [Fact]
+    public void DuplicateMorphTargetsInKfRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(
+            () => ImportMorph(MorphModelBytes(embedded: false), kfBytes: MorphKfBytes(duplicateTargets: true)));
+        Assert.Contains("multiple morph controllers", ex.Message);
+    }
+
+    [Fact]
+    public void EmbeddedAndPairedMorphSourcesRejected()
+    {
+        var ex = Assert.Throws<NotSupportedException>(
+            () => ImportMorph(MorphModelBytes(), kfBytes: MorphKfBytes()));
+        Assert.Contains("both an embedded morpher controller and a paired morph KF source", ex.Message);
     }
 
     private static void AssertEqual(Vector3 expected, Vector3 actual)

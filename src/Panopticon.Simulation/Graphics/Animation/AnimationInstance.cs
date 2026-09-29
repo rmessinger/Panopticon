@@ -12,9 +12,11 @@ public sealed class AnimationInstance
 {
     private readonly GameObject _gameObject;
     private readonly int[] _keyframeIndices;
+    private readonly int[] _morphKeyframeIndices;
     private readonly ModelBoneInstance[] _boneInstances;
     private readonly BoundModelAnimation _animation;
     private readonly ModelPropertyAnimationState _propertyState;
+    private readonly ModelMeshInstance[] _meshInstances;
 
     private TimeSpan _currentTimeValue;
 
@@ -49,13 +51,23 @@ public sealed class AnimationInstance
 
     internal AnimationInstance(ModelBoneInstance[] modelBoneInstances, BoundModelAnimation animation,
         AnimationMode mode, AnimationFlags flags, GameObject gameObject, IRandom random,
-        ModelPropertyAnimationState propertyState)
+        ModelPropertyAnimationState propertyState, ModelMeshInstance[]? meshInstances = null)
     {
+        if (animation.MorphTracks.Length > 0 &&
+            (meshInstances is null || meshInstances.Length == 0))
+        {
+            throw new ArgumentException(
+                "Animations with morph tracks require the model's mesh instances.",
+                nameof(meshInstances));
+        }
+
         _animation = animation;
         _mode = mode;
         _flags = flags;
         _boneInstances = modelBoneInstances;
         _keyframeIndices = new int[animation.Clips.Length];
+        _meshInstances = meshInstances ?? Array.Empty<ModelMeshInstance>();
+        _morphKeyframeIndices = new int[animation.MorphTracks.Length];
         _gameObject = gameObject;
         _random = random;
         _propertyState = propertyState;
@@ -142,6 +154,20 @@ public sealed class AnimationInstance
         }
 
         _propertyState?.Reset();
+
+        Array.Clear(_morphKeyframeIndices, 0, _morphKeyframeIndices.Length);
+        if (_flags.HasFlag(AnimationFlags.StartFrameLast) || Reverse && !_flags.HasFlag(AnimationFlags.StartFrameFirst))
+        {
+            for (var i = 0; i < _morphKeyframeIndices.Length; i++)
+            {
+                _morphKeyframeIndices[i] = _animation.MorphTracks[i].Keyframes.Length - 1;
+            }
+        }
+
+        foreach (var track in _animation.MorphTracks)
+        {
+            _meshInstances[track.SubObjectIndex].ResetMorphWeightsToDefault();
+        }
     }
 
     internal void Update(in TimeInterval gameTime)
@@ -290,6 +316,97 @@ public sealed class AnimationInstance
                 next ?? previous,
                 _currentTimeValue);
         }
+
+        for (var i = 0; i < _animation.MorphTracks.Length; i++)
+        {
+            var track = _animation.MorphTracks[i];
+            MorphWeightKeyframe? next = null;
+
+            var previous = track.Keyframes[_morphKeyframeIndices[i]];
+
+            if (Reverse)
+            {
+                for (var j = _morphKeyframeIndices[i]; j >= 0; j--)
+                {
+                    var keyframe = track.Keyframes[j];
+
+                    if (keyframe.Time < _currentTimeValue)
+                    {
+                        next = keyframe;
+                        break;
+                    }
+
+                    previous = keyframe;
+                    _morphKeyframeIndices[i] = j;
+                }
+            }
+            else
+            {
+                for (var j = _morphKeyframeIndices[i]; j < track.Keyframes.Length; j++)
+                {
+                    var keyframe = track.Keyframes[j];
+
+                    if (keyframe.Time > _currentTimeValue)
+                    {
+                        next = keyframe;
+                        break;
+                    }
+
+                    previous = keyframe;
+                    _morphKeyframeIndices[i] = j;
+                }
+            }
+
+            EvaluateMorph(
+                track,
+                previous,
+                next ?? previous,
+                _currentTimeValue);
+        }
+    }
+
+    private void EvaluateMorph(
+        MorphWeightTrack track,
+        in MorphWeightKeyframe previous,
+        in MorphWeightKeyframe next,
+        TimeSpan currentTime)
+    {
+        var mesh = _meshInstances[track.SubObjectIndex];
+
+        float[] vector;
+        if (track.Interpolation == AnimationInterpolation.Step || next.Time == previous.Time)
+        {
+            vector = previous.Weights;
+        }
+        else
+        {
+            var span = (next.Time - previous.Time).TotalSeconds;
+            var amount = span <= 0 ? 0 : (currentTime - previous.Time).TotalSeconds / span;
+            if (amount < 0)
+            {
+                amount = 0;
+            }
+
+            if (amount > 1)
+            {
+                amount = 1;
+            }
+
+            vector = new float[previous.Weights.Length];
+            for (var j = 0; j < vector.Length; j++)
+            {
+                vector[j] = MathUtility.Lerp(previous.Weights[j], next.Weights[j], (float)amount);
+            }
+        }
+
+        var weights = new float[mesh.MorphWeightCount];
+        mesh.CopyMorphDefaultWeights(weights);
+        for (var t = 0; t < track.TargetSlots.Length; t++)
+        {
+            weights[track.TargetSlots[t]] = vector[t];
+        }
+
+        mesh.SetMorphWeights(weights);
     }
 
     private void Evaluate(

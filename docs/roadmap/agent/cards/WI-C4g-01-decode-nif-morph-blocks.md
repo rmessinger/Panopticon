@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4g-01` |
 | Roadmap phase | [Track C · C4g](../../track-c-external-assets.md): EE2 morph animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-06` |
@@ -49,13 +49,13 @@ Extend `Panopticon.FileFormats.Nif` to decode NIF 10.1 `NiGeomMorpherController`
 
 ## Acceptance criteria
 
-- [ ] Synthetic morph streams parse to exact end-of-file.
-- [ ] The decoded controller exposes flags, start, stop, target reference, morpher flags, data
+- [x] Synthetic morph streams parse to exact end-of-file.
+- [x] The decoded controller exposes flags, start, stop, target reference, morpher flags, data
       reference, and always-update.
-- [ ] The decoded morph data exposes target count, vertex count, relative flag, keys, and vectors.
-- [ ] A bad controller data reference throws `InvalidDataException`.
-- [ ] TBC or unknown morph key types throw `NotSupportedException`.
-- [ ] Standard validation passes.
+- [x] The decoded morph data exposes target count, vertex count, relative flag, keys, and vectors.
+- [x] A bad controller data reference throws `InvalidDataException`.
+- [x] TBC or unknown morph key types throw `NotSupportedException`.
+- [x] Standard validation passes.
 
 ## Validation commands
 

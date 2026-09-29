@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4g-02` |
 | Roadmap phase | [Track C · C4g](../../track-c-external-assets.md): EE2 morph animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-06` |
@@ -50,12 +50,16 @@ feature-disabled model output.
 
 ## Acceptance criteria
 
-- [ ] Imported morph target sets validate counts, finite deltas, default weights, ranges, and the
+- [x] Imported morph target sets validate counts, finite deltas, default weights, ranges, and the
       eight-target limit.
-- [ ] Imported morph animation channels validate target names, time order, and weight vector length.
-- [ ] Feature-disabled imports preserve existing C4a/C4b descriptors.
-- [ ] Morph payloads require the `morph-targets` gate before materialization.
-- [ ] Standard validation passes.
+- [x] Imported morph animation channels validate target names, time order, and weight vector length.
+- [x] Feature-disabled imports preserve existing C4a/C4b descriptors.
+      Synthetic coverage: mesh/animation default to no morph payload and empty primitive id.
+      Installed galley/bomber no-morph assertions land with `WI-C4g-03`.
+- [x] Morph payloads require the `morph-targets` gate before materialization.
+      `ImportedModelMaterializer` refuses morph-carrying models naming the gate; runtime
+      materialization arrives with `WI-C4g-04`.
+- [x] Standard validation passes.
 
 ## Validation commands
 

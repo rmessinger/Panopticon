@@ -34,6 +34,21 @@ internal static class ImportedModelMaterializer
     /// </summary>
     public static Model MaterializeModel(ImportedModel importedModel, ModelBoneHierarchy boneHierarchy, AssetLoadContext context)
     {
+        // Blocking diagnostic before any GPU allocation: morph models only materialize under their gate.
+        // The gates travel on the imported model from the importing context (NIF is the only gated importer).
+        if (!importedModel.IsFeatureGateEnabled(ImportedFeatureGates.MorphTargets))
+        {
+            for (var i = 0; i < importedModel.SubObjects.Count; i++)
+            {
+                if (importedModel.SubObjects[i].RenderObject is ImportedMesh { MorphTargetSets.Count: > 0 })
+                {
+                    throw new NotSupportedException(
+                        $"Model '{importedModel.Name}' carries morph target sets; materializing morph targets requires " +
+                        $"the '{ImportedFeatureGates.MorphTargets}' feature gate and the C4g morph runtime.");
+                }
+            }
+        }
+
         ImportedModelValidator.Validate(importedModel, boneHierarchy);
 
         var subObjects = new ModelSubObject[importedModel.SubObjects.Count];

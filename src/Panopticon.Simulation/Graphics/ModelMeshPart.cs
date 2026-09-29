@@ -42,9 +42,9 @@ public sealed class ModelMeshPart
         MaterialIndex = materialIndex;
     }
 
-    internal void BeforeRender(CommandList commandList)
+    internal void BeforeRender(CommandList commandList, DeviceBuffer? vertexBufferOverride = null)
     {
-        commandList.SetVertexBuffer(0, ModelMesh.VertexBuffer);
+        commandList.SetVertexBuffer(0, vertexBufferOverride ?? ModelMesh.VertexBuffer);
 
         if (TexCoordVertexBuffer != null)
         {

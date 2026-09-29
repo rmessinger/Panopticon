@@ -888,7 +888,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     by shared C4c curve evaluation for linear and quadratic scale keys; DDF-bound skinless scale
     clips bind and sample correctly; fixed-function normals and bounds remain valid under uniform
     scale; singular rest scale reports a contextual unsupported-feature error.
-- [ ] C4g EE2 morph animation
+- [x] C4g EE2 morph animation
       ([deep dive](deep-dives/c4g-ee2-morph-animation.md)).
   - AC: NIF 10.1 morph controller and morph data blocks parse with validated references; C6
     morph-target interchange and the request-scoped gate exist; KF-owned target data pairs into

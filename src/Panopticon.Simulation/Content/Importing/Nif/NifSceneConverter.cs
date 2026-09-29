@@ -31,7 +31,8 @@ internal static class NifSceneConverter
         FileFormatsNif.NifFile file,
         string modelName,
         AssetImportContext context,
-        bool convertMeshes = true)
+        bool convertMeshes = true,
+        IReadOnlyList<NifMorphSource>? morphSources = null)
     {
         var bones = new List<ImportedBone>();
         var subObjects = new List<ImportedSubObject>();
@@ -40,6 +41,16 @@ internal static class NifSceneConverter
         var targets = new NifPropertyTargetMap(modelName);
         var collapsedScaleNodes = new Dictionary<string, float>();
         var shapeNames = new List<string>();
+
+        var morphLookup = new Dictionary<string, NifMorphSource>(StringComparer.OrdinalIgnoreCase);
+        var consumedMorphShapes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (morphSources is not null)
+        {
+            foreach (var source in morphSources)
+            {
+                morphLookup.Add(source.ShapeName, source);
+            }
+        }
 
         foreach (var root in file.Roots)
         {
@@ -50,7 +61,18 @@ internal static class NifSceneConverter
                     relativeToBone: Matrix4x4.Identity,
                     insideScaledSubtree: false,
                     bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                    collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
+                    collapsedScaleNodes, modelName, context, convertMeshes, shapeNames,
+                    morphLookup, consumedMorphShapes);
+            }
+        }
+
+        foreach (var source in morphLookup.Values)
+        {
+            if (!consumedMorphShapes.Contains(source.ShapeName))
+            {
+                throw new InvalidDataException(
+                    $"The morph KF targets shape '{source.ShapeName}', which does not exist " +
+                    $"among the converted shapes of NIF model '{modelName}'.");
             }
         }
 
@@ -95,7 +117,9 @@ internal static class NifSceneConverter
         string modelName,
         AssetImportContext context,
         bool convertMeshes,
-        List<string> shapeNames)
+        List<string> shapeNames,
+        Dictionary<string, NifMorphSource> morphLookup,
+        HashSet<string> consumedMorphShapes)
     {
         var hasValidRestScale = IsValidRestScale(avObject.Scale);
 
@@ -121,8 +145,23 @@ internal static class NifSceneConverter
                 return;
             }
 
+            var morphSource = TryFindMorphSource(file, shape, morphLookup);
+            if (morphSource is not null && !context.IsFeatureGateEnabled(ImportedFeatureGates.MorphTargets))
+            {
+                throw new NotSupportedException(
+                    $"NIF shape '{shape.Name}' carries morph targets; importing morph targets " +
+                    $"requires the '{ImportedFeatureGates.MorphTargets}' feature gate.");
+            }
+
             if (shape.SkinInstanceReference >= 0)
             {
+                if (morphSource is not null)
+                {
+                    throw new NotSupportedException(
+                        $"NIF shape '{shape.Name}' combines skinning with morph targets; " +
+                        "skinned morph conversion is not supported.");
+                }
+
                 // Skinning is authoritative for placement: the shape's
                 // vertex data is stored in skin space, so its node
                 // ancestors contribute nothing and no bone ancestor is
@@ -139,7 +178,7 @@ internal static class NifSceneConverter
 
             subObjects.Add(ConvertShape(
                 file, blockIndex, shape, local * relativeToBone, parentBoneIndex,
-                subObjects.Count, targets, modelName, context));
+                subObjects.Count, targets, modelName, context, morphSource, consumedMorphShapes));
             return;
         }
 
@@ -187,7 +226,8 @@ internal static class NifSceneConverter
             Descend(file, file.GetHighestDetailLodChild(lodNode),
                 childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
                 bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
+                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames,
+                morphLookup, consumedMorphShapes);
         }
         else if (file.Blocks[blockIndex] is FileFormatsNif.NifNode node)
         {
@@ -198,7 +238,8 @@ internal static class NifSceneConverter
                     Descend(file, child,
                         childParentBoneIndex, childRelativeToBone, childInsideScaledSubtree,
                         bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                        collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
+                        collapsedScaleNodes, modelName, context, convertMeshes, shapeNames,
+                        morphLookup, consumedMorphShapes);
                 }
             }
         }
@@ -219,15 +260,54 @@ internal static class NifSceneConverter
         string modelName,
         AssetImportContext context,
         bool convertMeshes,
-        List<string> shapeNames)
+        List<string> shapeNames,
+        Dictionary<string, NifMorphSource> morphLookup,
+        HashSet<string> consumedMorphShapes)
     {
         if (file.Blocks[childIndex] is FileFormatsNif.NifAvObject childAvObject)
         {
             Walk(file, childIndex, childAvObject,
                 parentBoneIndex, relativeToBone, insideScaledSubtree,
                 bones, subObjects, nodeToBoneIndex, skinnedShapes, targets,
-                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames);
+                collapsedScaleNodes, modelName, context, convertMeshes, shapeNames,
+                morphLookup, consumedMorphShapes);
         }
+    }
+
+    /// <summary>
+    /// Resolves the morph data bound to a shape: a paired KF source by
+    /// shape name, or an embedded NiGeomMorpherController through the
+    /// shape's controller reference. Both present is rejected.
+    /// </summary>
+    private static NifMorphSource? TryFindMorphSource(
+        FileFormatsNif.NifFile file,
+        FileFormatsNif.NifTriShape shape,
+        Dictionary<string, NifMorphSource> morphLookup)
+    {
+        morphLookup.TryGetValue(shape.Name, out var paired);
+
+        NifMorphSource? embedded = null;
+        if (shape.ControllerReference >= 0 &&
+            file.Blocks[shape.ControllerReference] is FileFormatsNif.NifGeomMorpherController controller)
+        {
+            if (file.Blocks[controller.DataReference] is not FileFormatsNif.NifMorphData morphData)
+            {
+                throw new InvalidDataException(
+                    $"NIF shape '{shape.Name}' controller references block {controller.DataReference} " +
+                    "as morph data, but that block is not a NiMorphData.");
+            }
+
+            embedded = new NifMorphSource(shape.Name, morphData);
+        }
+
+        if (paired is not null && embedded is not null)
+        {
+            throw new NotSupportedException(
+                $"NIF shape '{shape.Name}' has both an embedded morpher controller and a paired " +
+                "morph KF source; only one morph source per shape is supported.");
+        }
+
+        return paired ?? embedded;
     }
 
     private static bool IsValidRestScale(float scale)
@@ -277,7 +357,9 @@ internal static class NifSceneConverter
         int subObjectIndex,
         NifPropertyTargetMap targets,
         string modelName,
-        AssetImportContext context)
+        AssetImportContext context,
+        NifMorphSource? morphSource,
+        HashSet<string> consumedMorphShapes)
     {
         if (shape.DataReference < 0 ||
             file.Blocks[shape.DataReference] is not FileFormatsNif.NifTriShapeData data)
@@ -319,6 +401,16 @@ internal static class NifSceneConverter
 
         var (boundingBox, boundingSphere) = ComputeBounds(positions);
 
+        var displayName = shape.Name.Length == 0 ? $"Shape{subObjectIndex}" : shape.Name;
+        var fullName = $"{modelName}.{subObjectIndex}.{displayName}";
+
+        ImportedMorphTargetSet? morphSet = null;
+        if (morphSource is not null)
+        {
+            morphSet = NifMorphConverter.Convert(shape.Name, fullName, morphSource.MorphData, data, bake);
+            consumedMorphShapes.Add(shape.Name);
+        }
+
         var mesh = new ImportedMesh(
             vertices,
             indices,
@@ -329,7 +421,9 @@ internal static class NifSceneConverter
             hasHouseColor: false,
             isSkinned: false,
             materials: [material],
-            meshParts: [meshPart]);
+            meshParts: [meshPart],
+            primitiveId: morphSet is null ? null : fullName,
+            morphTargetSets: morphSet is null ? null : [morphSet]);
 
         var subObject = CreateSubObject(modelName, shape.Name, subObjectIndex, parentBoneIndex, mesh);
         targets.RecordShape(

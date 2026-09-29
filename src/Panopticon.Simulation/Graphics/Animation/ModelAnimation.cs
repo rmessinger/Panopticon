@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Panopticon.Content.Importing;
 using Panopticon.Graphics;
 
 namespace Panopticon.Graphics.Animation;
@@ -18,16 +19,23 @@ public sealed class ModelAnimation : BaseAsset
 
     private readonly ConditionalWeakTable<Model, BoundModelAnimation> _modelBoundCache = new();
 
+    private readonly IReadOnlyList<ImportedMorphAnimationChannel>? _morphChannels;
+
     public TimeSpan Duration { get; }
 
     public ModelAnimationChannel[] Channels { get; }
 
-    internal ModelAnimation(string name, TimeSpan duration, ModelAnimationChannel[] channels)
+    internal ModelAnimation(
+        string name,
+        TimeSpan duration,
+        ModelAnimationChannel[] channels,
+        IReadOnlyList<ImportedMorphAnimationChannel>? morphChannels = null)
     {
         SetNameAndInstanceId("ModelAnimation", name);
 
         Duration = duration;
         Channels = channels;
+        _morphChannels = morphChannels;
     }
 
     /// <summary>
@@ -134,7 +142,79 @@ public sealed class ModelAnimation : BaseAsset
             }
         }
 
-        return new BoundModelAnimation(Name, Duration, clips.ToArray());
+        return new BoundModelAnimation(Name, Duration, clips.ToArray(), BuildMorphTracks(model));
+    }
+
+    private MorphWeightTrack[] BuildMorphTracks(Model model)
+    {
+        if (_morphChannels is not { Count: > 0 })
+        {
+            return Array.Empty<MorphWeightTrack>();
+        }
+
+        var tracks = new List<MorphWeightTrack>(_morphChannels.Count);
+        for (var i = 0; i < _morphChannels.Count; i++)
+        {
+            tracks.Add(BindMorphChannel(model, _morphChannels[i], i));
+        }
+
+        return tracks.ToArray();
+    }
+
+    private MorphWeightTrack BindMorphChannel(Model model, ImportedMorphAnimationChannel channel, int channelIndex)
+    {
+        for (var i = 0; i < model.SubObjects.Length; i++)
+        {
+            if (!string.Equals(model.SubObjects[i].FullName, channel.PrimitiveId, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (model.SubObjects[i].RenderObject is not ModelMesh mesh || mesh.MorphTargetSet is not { } targetSet)
+            {
+                throw new InvalidDataException(
+                    $"Animation '{Name}' morph channel {channelIndex} targets primitive '{channel.PrimitiveId}', which has no morph target set.");
+            }
+
+            var slots = new int[channel.TargetNames.Count];
+            for (var t = 0; t < channel.TargetNames.Count; t++)
+            {
+                var slot = -1;
+                for (var s = 0; s < targetSet.TargetNames.Length; s++)
+                {
+                    if (string.Equals(targetSet.TargetNames[s], channel.TargetNames[t], StringComparison.Ordinal))
+                    {
+                        slot = s;
+                        break;
+                    }
+                }
+
+                if (slot < 0)
+                {
+                    throw new InvalidDataException(
+                        $"Animation '{Name}' morph channel {channelIndex} targets morph target '{channel.TargetNames[t]}', which does not exist on primitive '{channel.PrimitiveId}'.");
+                }
+
+                slots[t] = slot;
+            }
+
+            var keyframes = new MorphWeightKeyframe[channel.Times.Count];
+            for (var k = 0; k < channel.Times.Count; k++)
+            {
+                keyframes[k] = new MorphWeightKeyframe(
+                    TimeSpan.FromSeconds(channel.Times[k]),
+                    channel.WeightVectors[k]);
+            }
+
+            var interpolation = channel.Interpolation == ImportedAnimationInterpolation.Step
+                ? AnimationInterpolation.Step
+                : AnimationInterpolation.Linear;
+
+            return new MorphWeightTrack(i, channel.PrimitiveId, slots, keyframes, interpolation);
+        }
+
+        throw new InvalidDataException(
+            $"Animation '{Name}' morph channel {channelIndex} targets primitive '{channel.PrimitiveId}', which does not exist in model '{model.Name}'.");
     }
 
     private int ResolveSubObjectIndex(Model model, string name, int channelIndex)
@@ -175,6 +255,12 @@ public sealed class ModelAnimation : BaseAsset
 
     private BoundModelAnimation ComputeBinding(ModelBoneHierarchy hierarchy)
     {
+        if (_morphChannels is { Count: > 0 })
+        {
+            throw new NotSupportedException(
+                $"Animation '{Name}' carries morph weight channels; morph animations must bind against a model.");
+        }
+
         Dictionary<string, int>? boneNameIndex = null;
         var clips = new List<AnimationClip>(Channels.Length);
         for (var i = 0; i < Channels.Length; i++)

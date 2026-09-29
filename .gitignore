@@ -307,5 +307,6 @@ DeveloperMode.ini
 ee2-nif-proof/
 ee2-property-proof/
 ee2-scale-proof/
+ee2-morph-proof/
 # Local WorldBuilder screenshot captures
 /worldbuilder-shot/

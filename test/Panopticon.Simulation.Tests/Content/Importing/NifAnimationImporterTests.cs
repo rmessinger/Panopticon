@@ -842,33 +842,93 @@ public sealed class NifAnimationImporterTests
     }
 
     [Fact]
-    public void MorpherControllerRejectedAsC6Work()
+    public void LinearMorphWeightKeysKeepSourceTimesAndValues()
     {
-        var morpherBody = new MemoryStream();
-        var writer = new NifBodyWriter(morpherBody);
-        writer.WriteUInt32(0);
-        NifTestKeyframe.WriteTimeControllerPrefix(writer, -1, 0x2C, 1.0f, 0.0f, 0.0f, 2.0f, -1);
-        writer.WriteUInt16(0);
-        writer.WriteInt32(3);
-
-        var morphDataBody = new MemoryStream();
-        var dataWriter = new NifBodyWriter(morphDataBody);
-        dataWriter.WriteUInt32(0);
-        dataWriter.WriteByte(0);
-        dataWriter.WriteUInt32(1);
-        dataWriter.WriteUInt32(0);
-        dataWriter.WriteByte(1);
-        NifTestKeyframe.WriteFloatGroup(dataWriter, [(0.0f, 0.0f, null, null)]);
-
-        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+        var animation = ImportProperty(PropertyKf(
             "NiGeomMorpherController",
-            morpherBody.ToArray(),
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 2.0f),
             "NiMorphData",
-            morphDataBody.ToArray(),
+            NifTestPropertyAnimation.MorphData(4, [
+                (null, null),
+                ([(0.0f, 0.0f, null, null), (2.0f, 1.0f, null, null)], null)]),
+            targetName: "hull"));
+
+        Assert.NotNull(animation);
+        var channel = Assert.Single(animation!.MorphChannels);
+        Assert.Equal("test_model.0.hull", channel.PrimitiveId);
+        var targetName = Assert.Single(channel.TargetNames);
+        Assert.Equal("Target1", targetName);
+        Assert.Equal(2, channel.Times.Count);
+        Assert.Equal(0.0f, channel.Times[0]);
+        Assert.Equal(2.0f, channel.Times[1]);
+        Assert.Equal(0.0f, channel.WeightVectors[0][0]);
+        Assert.Equal(1.0f, channel.WeightVectors[1][0]);
+    }
+
+    [Fact]
+    public void QuadraticMorphWeightKeysResampleAtThirtyHertz()
+    {
+        var animation = ImportProperty(PropertyKf(
+            "NiGeomMorpherController",
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 1.0f),
+            "NiMorphData",
+            NifTestPropertyAnimation.MorphData(4, [
+                (null, null),
+                ([(0.0f, 0.0f, 0.0f, 2.0f), (1.0f, 1.0f, 0.0f, 0.0f)], null)]),
+            targetName: "hull",
+            duration: 1.0f));
+
+        Assert.NotNull(animation);
+        var channel = Assert.Single(animation!.MorphChannels);
+        Assert.Equal(31, channel.Times.Count);
+        Assert.Equal(0.5f, channel.Times[15]);
+        // Segment-normalized Hermite: outgoing tangent is the first key's
+        // backward field, so the midpoint lands at 0.5 + 0.125 * 2 = 0.75.
+        Assert.Equal(0.75f, channel.WeightVectors[15][0], 5);
+        Assert.Equal(1.0f, channel.WeightVectors[^1][0]);
+    }
+
+    [Fact]
+    public void MorphWeightOutsideUnitIntervalRejected()
+    {
+        var ex = Assert.Throws<InvalidDataException>(() => ImportProperty(PropertyKf(
+            "NiGeomMorpherController",
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 2.0f),
+            "NiMorphData",
+            NifTestPropertyAnimation.MorphData(4, [
+                (null, null),
+                ([(0.0f, 1.5f, null, null), (2.0f, 1.0f, null, null)], null)]),
             targetName: "hull")));
 
-        Assert.Contains("NiGeomMorpherController", ex.Message);
-        Assert.Contains("C6", ex.Message);
+        Assert.Contains("outside [0, 1]", ex.Message);
+    }
+
+    [Fact]
+    public void MorphWeightTargetWithoutShapeFails()
+    {
+        var ex = Assert.Throws<InvalidDataException>(() => ImportProperty(PropertyKf(
+            "NiGeomMorpherController",
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 2.0f),
+            "NiMorphData",
+            NifTestPropertyAnimation.MorphData(4, [
+                (null, null),
+                ([(0.0f, 0.0f, null, null), (2.0f, 1.0f, null, null)], null)]),
+            targetName: "nope")));
+
+        Assert.Contains("does not match any converted shape", ex.Message);
+    }
+
+    [Fact]
+    public void MorpherWithoutTargetsFails()
+    {
+        var ex = Assert.Throws<InvalidDataException>(() => ImportProperty(PropertyKf(
+            "NiGeomMorpherController",
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 2.0f),
+            "NiMorphData",
+            NifTestPropertyAnimation.MorphData(0, [([(0.0f, 0.0f, null, null)], null)]),
+            targetName: "hull")));
+
+        Assert.Contains("no morphable targets", ex.Message);
     }
 
     [Fact]

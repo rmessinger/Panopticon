@@ -195,10 +195,12 @@ public sealed class ExternalModelHostTests : IDisposable
 
         using var modelMount = ExternalModelHost.CreateMount(
             new ExternalModelSourceRequest(_modelRoot, "pbr-materials.gltf", ExternalAssetInspection.GltfFormatId),
-            GltfImportOptions.Default);
+            GltfImportOptions.Default,
+            ExternalModelImportOptions.Default);
         using var animationMount = ExternalModelHost.CreateMount(
             new ExternalModelSourceRequest(_animationRoot, "rigid-scene.gltf", ExternalAssetInspection.GltfFormatId),
-            GltfImportOptions.Default);
+            GltfImportOptions.Default,
+            ExternalModelImportOptions.Default);
 
         Assert.NotNull(modelMount.ImportContext.FileSystem.GetFile("pbr-materials.gltf"));
         Assert.Null(modelMount.ImportContext.FileSystem.GetFile("rigid-scene.gltf"));

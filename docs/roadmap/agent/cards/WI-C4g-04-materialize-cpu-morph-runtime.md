@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4g-04` |
 | Roadmap phase | [Track C · C4g](../../track-c-external-assets.md): EE2 morph animation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-C4g-02` |
@@ -48,11 +48,11 @@ buffers before existing skinning.
 
 ## Acceptance criteria
 
-- [ ] Feature-disabled meshes allocate the same static vertex path as before.
-- [ ] Morph-enabled mesh instances own per-instance dynamic vertex data.
-- [ ] CPU morphing applies position deltas before existing skinning.
-- [ ] Synthetic runtime tests pass for weights 0, 0.5, and 1.
-- [ ] Standard validation passes.
+- [x] Feature-disabled meshes allocate the same static vertex path as before.
+- [x] Morph-enabled mesh instances own per-instance dynamic vertex data.
+- [x] CPU morphing applies position deltas before existing skinning.
+- [x] Synthetic runtime tests pass for weights 0, 0.5, and 1.
+- [x] Standard validation passes.
 
 ## Validation commands
 

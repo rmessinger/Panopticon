@@ -3,6 +3,7 @@
 using System;
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Panopticon.Content.Importing;
 
@@ -31,11 +32,20 @@ public sealed class ImportedModel
 
     public IReadOnlyList<ImportedSubObject> SubObjects { get; }
 
+    /// <summary>Feature gates the importing context had enabled; morph sets only materialize under theirs.</summary>
+    public IReadOnlySet<string> EnabledFeatureGates { get; }
+
+    public bool IsFeatureGateEnabled(string name)
+    {
+        return EnabledFeatureGates.Contains(name);
+    }
+
     public ImportedModel(
         string name,
         ImportedSkeleton skeleton,
         IReadOnlyList<ImportedSubObject> subObjects,
-        ImportedSkeletonOrigin skeletonOrigin)
+        ImportedSkeletonOrigin skeletonOrigin,
+        IReadOnlyCollection<string>? enabledFeatureGates = null)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -51,6 +61,10 @@ public sealed class ImportedModel
         {
             throw new ArgumentNullException(nameof(subObjects));
         }
+
+        EnabledFeatureGates = enabledFeatureGates is null
+            ? new HashSet<string>()
+            : enabledFeatureGates.ToHashSet(StringComparer.Ordinal);
 
         var boneCount = skeleton.Bones.Count;
 

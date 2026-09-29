@@ -36,8 +36,16 @@ partial class ModelMesh
         Hidden = importedMesh.Hidden;
         CameraOriented = importedMesh.CameraOriented;
 
+        var vertices = CreateVertices(importedMesh);
+
+        if (importedMesh.MorphTargetSets.Count > 0)
+        {
+            MorphTargetSet = ModelMorphTargetSet.Create(importedMesh.MorphTargetSets[0], vertices.Length);
+            MorphBaseVertices = vertices;
+        }
+
         VertexBuffer = AddDisposable(loadContext.GraphicsDevice.CreateStaticBuffer(
-            MemoryMarshal.AsBytes(new ReadOnlySpan<MeshShaderResources.MeshVertex.Basic>(CreateVertices(importedMesh))),
+            MemoryMarshal.AsBytes(new ReadOnlySpan<MeshShaderResources.MeshVertex.Basic>(vertices)),
             BufferUsage.VertexBuffer));
 
         _indexBuffer = AddDisposable(loadContext.GraphicsDevice.CreateStaticBuffer(

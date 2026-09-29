@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Content.Loaders;
@@ -61,7 +62,7 @@ internal sealed class ModelMeshPartInstance : DisposableBase
 
         cl.SetGraphicsResourceSet(3, _renderItemConstantsResourceSet);
 
-        ModelMeshPart.BeforeRender(cl);
+        ModelMeshPart.BeforeRender(cl, MeshInstance.MorphVertexBuffer);
     }
 
     /// <summary>
@@ -167,6 +168,17 @@ internal sealed class ModelMeshInstance : DisposableBase
 
     public readonly List<ModelMeshPartInstance> MeshPartInstances = new();
 
+    /// <summary>Per-instance dynamic vertex buffer for morph-enabled meshes; null otherwise.</summary>
+    internal readonly DeviceBuffer? MorphVertexBuffer;
+
+    /// <summary>Current CPU morph result; only valid when MorphVertexBuffer is present.</summary>
+    internal readonly MeshShaderResources.MeshVertex.Basic[]? MorphedVertices;
+
+    private readonly ModelMorphTargetSet? _morphTargetSet;
+    private readonly MeshShaderResources.MeshVertex.Basic[]? _morphBaseVertices;
+    private readonly float[] _morphWeights;
+    private bool _morphDirty;
+
     public ModelMeshInstance(
         ModelMesh modelMesh,
         ModelInstance modelInstance,
@@ -184,6 +196,28 @@ internal sealed class ModelMeshInstance : DisposableBase
         // z=1 keeps the material's own time-based UV animation (e.g. waterfalls) running;
         // tread meshes set it to 0 so W3dTankDraw can drive the texture by drive speed.
         RenderItemConstantsBufferVS.Value.UVOffset = new Vector4(0f, 0f, 1f, 0f);
+
+        if (modelMesh.MorphTargetSet != null && modelMesh.MorphBaseVertices != null)
+        {
+            _morphTargetSet = modelMesh.MorphTargetSet;
+            _morphBaseVertices = modelMesh.MorphBaseVertices;
+            _morphWeights = new float[_morphTargetSet.TargetNames.Length];
+            _morphTargetSet.DefaultWeights.AsSpan().CopyTo(_morphWeights);
+
+            MorphedVertices = new MeshShaderResources.MeshVertex.Basic[_morphBaseVertices.Length];
+            _morphTargetSet.Apply(_morphBaseVertices, _morphWeights, MorphedVertices);
+
+            MorphVertexBuffer = AddDisposable(loadContext.GraphicsDevice.ResourceFactory.CreateBuffer(
+                new BufferDescription(
+                    (uint)(_morphBaseVertices.Length * MeshShaderResources.MeshVertex.BasicStride),
+                    BufferUsage.VertexBuffer | BufferUsage.Dynamic)));
+
+            _morphDirty = true;
+        }
+        else
+        {
+            _morphWeights = Array.Empty<float>();
+        }
 
         foreach (var modelMeshPart in modelMesh.MeshParts)
         {
@@ -207,9 +241,78 @@ internal sealed class ModelMeshInstance : DisposableBase
             _appliedUvOffset = value.UVOffset;
             RenderItemConstantsBufferVS.Update(cl);
         }
+
+        if (_morphDirty && MorphVertexBuffer != null && MorphedVertices != null)
+        {
+            cl.UpdateBuffer(
+                MorphVertexBuffer,
+                0,
+                MorphedVertices);
+            _morphDirty = false;
+        }
     }
 
     private Vector4 _appliedUvOffset = new(0f, 0f, 1f, 0f);
+
+    /// <summary>
+    /// Sets the morph weight vector for this mesh's primitive (one weight per target, target
+    /// order) and rebuilds the CPU-deformed vertices. The dynamic buffer uploads on the next
+    /// render; existing skinning then runs on the morphed positions unchanged.
+    /// </summary>
+    internal void SetMorphWeights(ReadOnlySpan<float> weights)
+    {
+        if (_morphTargetSet == null)
+        {
+            throw new InvalidOperationException(
+                $"Mesh '{ModelInstance.Model.SubObjects[SubObjectIndex].FullName}' has no morph targets.");
+        }
+
+        if (weights.Length != _morphWeights.Length)
+        {
+            throw new ArgumentException(
+                $"Morph target set '{_morphTargetSet.PrimitiveId}' expects {_morphWeights.Length} weights but received {weights.Length}.");
+        }
+
+        weights.CopyTo(_morphWeights);
+        _morphTargetSet.Apply(_morphBaseVertices, _morphWeights, MorphedVertices);
+        _morphDirty = true;
+    }
+
+    internal int MorphWeightCount => _morphWeights.Length;
+
+    /// <summary>Live weight vector snapshot; null when the mesh has no morph targets.</summary>
+    internal float[]? MorphWeights => _morphTargetSet == null ? null : _morphWeights;
+
+    /// <summary>Copies the morph set's default weights into the given span.</summary>
+    internal void CopyMorphDefaultWeights(Span<float> destination)
+    {
+        if (_morphTargetSet == null)
+        {
+            throw new InvalidOperationException(
+                $"Mesh '{ModelInstance.Model.SubObjects[SubObjectIndex].FullName}' has no morph targets.");
+        }
+
+        if (destination.Length != _morphWeights.Length)
+        {
+            throw new ArgumentException(
+                $"Morph target set '{_morphTargetSet.PrimitiveId}' expects {_morphWeights.Length} weights but received {destination.Length}.");
+        }
+
+        _morphTargetSet.DefaultWeights.AsSpan().CopyTo(destination);
+    }
+
+    /// <summary>Resets the weight vector to the set's defaults and rebuilds the CPU vertices.</summary>
+    internal void ResetMorphWeightsToDefault()
+    {
+        if (_morphTargetSet == null)
+        {
+            return;
+        }
+
+        _morphTargetSet.DefaultWeights.AsSpan().CopyTo(_morphWeights);
+        _morphTargetSet.Apply(_morphBaseVertices, _morphWeights, MorphedVertices);
+        _morphDirty = true;
+    }
 
     /// <summary>
     /// Scroll offset (xy, texture units) for this mesh's primary texture, and a scale (z) for the

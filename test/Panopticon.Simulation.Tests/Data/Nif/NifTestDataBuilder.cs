@@ -362,14 +362,15 @@ public static class NifTestGeometry
         byte hasShader = 0,
         int[]? properties = null,
         (float X, float Y, float Z)? translation = null,
-        float scale = 1.0f)
+        float scale = 1.0f,
+        int controller = -1)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
         body.WriteUInt32(0);
         body.WriteSizedString(name);
         NifTestBlocks.WriteRefList(body, []);
-        body.WriteInt32(-1);
+        body.WriteInt32(controller);
         body.WriteUInt16(0);
         NifTestBlocks.WriteVector3(body, translation ?? (0, 0, 0));
         NifTestBlocks.WriteMatrix33Identity(body);
@@ -996,6 +997,53 @@ public static class NifTestPropertyAnimation
         NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
         body.WriteUInt16(targetColor);
         body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
+    public static byte[] MorphController(
+        int data = -1,
+        ushort morpherFlags = 0,
+        byte alwaysUpdate = 0,
+        ushort flags = 0x2C,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteUInt16(morpherFlags);
+        body.WriteInt32(data);
+        body.WriteByte(alwaysUpdate);
+        return stream.ToArray();
+    }
+
+    public static byte[] MorphData(
+        uint numVertices,
+        IReadOnlyList<(IReadOnlyList<(float Time, float Value, float? Forward, float? Backward)>? WeightKeys, IReadOnlyList<(float X, float Y, float Z)>? Vectors)>? morphs = null,
+        byte relativeTargets = 1,
+        uint? keyTypeOverride = null)
+    {
+        morphs ??= [];
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        body.WriteUInt32((uint)morphs.Count);
+        body.WriteUInt32(numVertices);
+        body.WriteByte(relativeTargets);
+        foreach (var (weightKeys, vectors) in morphs)
+        {
+            NifTestKeyframe.WriteFloatGroup(body, weightKeys ?? [], keyTypeOverride);
+            for (var i = 0; i < numVertices; i++)
+            {
+                NifTestBlocks.WriteVector3(body, vectors is not null && i < vectors.Count ? vectors[i] : (0, 0, 0));
+            }
+        }
+
         return stream.ToArray();
     }
 
