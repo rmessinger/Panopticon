@@ -53,8 +53,8 @@ public sealed class NifKeyframeTests
         var file = Read(FullClipBuilder().Build());
 
         Assert.Equal(6, file.Blocks.Count);
-        // KF files carry no NiNode blocks, so Roots stays empty.
-        Assert.Empty(file.Roots);
+        // The root-list footer points at the controller sequence.
+        Assert.Equal([0], file.Roots);
 
         var sequence = (NifControllerSequence)file.Blocks[0];
         Assert.Equal("EMPTY_SEQUENCE_AT_0f", sequence.Name);

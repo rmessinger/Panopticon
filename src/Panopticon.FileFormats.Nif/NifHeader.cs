@@ -5,8 +5,11 @@ using System.IO;
 namespace Panopticon.FileFormats.Nif;
 
 /// <summary>
-/// Parsed NIF 10.1.0.0 header and block directory. Only
-/// Gamebryo 10.1.0.0 with user version 0 and zero groups is accepted.
+/// Parsed NIF header and block directory for Gamebryo 10.1.0.0 and
+/// NetImmerse 10.0.1.0 files. 10.1.0.0 carries a user-version word after
+/// the version; 10.0.1.0 omits it (the field is gated from 10.0.1.8 in
+/// nif.xml). Both vintages carry zero groups. NetImmerse 4.2.2.0 has no
+/// block directory at all and is rejected.
 /// </summary>
 public sealed record NifHeader(
     string HeaderString,
@@ -19,28 +22,57 @@ public sealed record NifHeader(
     public const string SupportedHeaderString = "Gamebryo File Format, Version 10.1.0.0";
     public const uint SupportedVersion = 0x0A010000;
     public const uint SupportedUserVersion = 0;
+    public const string LegacyHeaderString = "NetImmerse File Format, Version 10.0.1.0";
+    public const uint LegacyVersion = 0x0A000100;
+    public const uint NetImmerseVersion = 0x04020200;
+
+    /// <summary>
+    /// True when the version word is followed by a user-version word
+    /// (10.1.0.0 layout); false for the 10.0.1.0 layout.
+    /// </summary>
+    public bool HasUserVersion => Version == SupportedVersion;
 
     public static NifHeader Parse(NifBinaryReader reader)
     {
         var headerString = reader.ReadLineString("HeaderString");
-        if (headerString != SupportedHeaderString)
-        {
-            throw new NotSupportedException(
-                $"NIF header string '{headerString}' is not '{SupportedHeaderString}'.");
-        }
-
         var version = reader.ReadUInt32("Version");
-        if (version != SupportedVersion)
+
+        string expectedString;
+        uint userVersion;
+        switch (version)
         {
-            throw new NotSupportedException(
-                $"NIF version 0x{version:X8} is not supported; only 0x{SupportedVersion:X8} (10.1.0.0) is.");
+            case SupportedVersion:
+                expectedString = SupportedHeaderString;
+                userVersion = reader.ReadUInt32("UserVersion");
+                if (userVersion != SupportedUserVersion)
+                {
+                    throw new NotSupportedException(
+                        $"NIF user version {userVersion} is not supported; only {SupportedUserVersion} is.");
+                }
+
+                break;
+
+            case LegacyVersion:
+                expectedString = LegacyHeaderString;
+                userVersion = 0;
+                break;
+
+            case NetImmerseVersion:
+                throw new NotSupportedException(
+                    "NetImmerse File Format 4.2.2.0 (0x04020200) has no block directory and no DDF " +
+                    "binding references it; C4i does not import it.");
+
+            default:
+                throw new NotSupportedException(
+                    $"NIF version 0x{version:X8} is not supported; only 0x{SupportedVersion:X8} " +
+                    $"(10.1.0.0) and 0x{LegacyVersion:X8} (10.0.1.0) are.");
         }
 
-        var userVersion = reader.ReadUInt32("UserVersion");
-        if (userVersion != SupportedUserVersion)
+        if (headerString != expectedString)
         {
             throw new NotSupportedException(
-                $"NIF user version {userVersion} is not supported; only {SupportedUserVersion} is.");
+                $"NIF header string '{headerString}' does not match version 0x{version:X8}; " +
+                $"'{expectedString}' is required.");
         }
 
         // The smallest block body is the leading u32 plus an empty sized string,

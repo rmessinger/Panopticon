@@ -69,9 +69,10 @@ public sealed class NifSceneGraphTests
     public void FooterIsRejectedWhenWrong()
     {
         var builder = NestedGraphBuilder();
-        builder.AddTrailing([2, 0, 0, 0, 0, 0, 0, 0]);
+        // Root count 1, but the root index is outside the block range.
+        builder.AddTrailing([1, 0, 0, 0, 9, 0, 0, 0]);
         var ex = Assert.Throws<InvalidDataException>(() => Read(builder.Build()));
-        Assert.Contains("footer", ex.Message);
+        Assert.Contains("footer root", ex.Message);
     }
 
     [Fact]
@@ -202,7 +203,7 @@ public sealed class NifSceneGraphTests
         builder.AddBlock(nodeType, NifTestBlocks.Node(name: "a", children: [1]));
         builder.AddBlock(nodeType, NifTestBlocks.Node(name: "b"));
         builder.AddBlock(nodeType, NifTestBlocks.Node(name: "c"));
-        builder.AddTrailing(NifTestBlocks.Footer());
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0, 2));
         var file = Read(builder.Build());
         Assert.Equal([0, 2], file.Roots);
     }

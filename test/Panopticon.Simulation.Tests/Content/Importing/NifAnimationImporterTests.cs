@@ -935,8 +935,8 @@ public sealed class NifAnimationImporterTests
     [Fact]
     public void MultiSequenceKfRejected()
     {
-        // The parser only accepts the (1, 0) footer, so a multi-sequence
-        // KF (footer root count 2) fails at parse time, before import.
+        // The root-list footer parses cleanly for two sequences, so the
+        // importer's own multi-sequence guard fires during import.
         var builder = new NifTestDataBuilder();
         var sequenceType = builder.AddBlockType("NiControllerSequence");
         var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
@@ -951,17 +951,13 @@ public sealed class NifAnimationImporterTests
             data: 3, stopTime: 2.0f));
         builder.AddBlock(dataType, NifTestPropertyAnimation.VisData((0.0f, 1), (2.0f, 1)));
 
-        var footer = new MemoryStream();
-        var footerWriter = new NifBodyWriter(footer);
-        footerWriter.WriteUInt32(2);
-        footerWriter.WriteInt32(0);
-        footerWriter.WriteInt32(1);
-        builder.AddTrailing(footer.ToArray());
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0, 1));
 
-        var ex = Assert.Throws<InvalidDataException>(
+        var ex = Assert.Throws<NotSupportedException>(
             () => ImportProperty(builder.Build()));
 
-        Assert.Contains("footer", ex.Message);
+        Assert.Contains("2 root blocks", ex.Message);
+        Assert.Contains("multi-sequence", ex.Message);
     }
 
     [Fact]
