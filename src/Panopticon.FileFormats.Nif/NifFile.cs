@@ -172,6 +172,8 @@ public sealed record NifFile(
                 return NifKeyframeData.Read(reader);
             case "NiVisController":
                 return NifVisController.Read(reader);
+            case "NiUVController":
+                return NifUVController.Read(reader);
             case "NiTextureTransformController":
                 return NifTextureTransformController.Read(reader);
             case "NiMaterialColorController":
@@ -278,6 +280,12 @@ public sealed record NifFile(
                     data = vis.DataReference;
                     expected = "visibility data";
                     matches = data >= 0 && data < blocks.Length && blocks[data] is NifVisData or NifBoolData;
+                    break;
+
+                case NifUVController uv:
+                    data = uv.DataReference;
+                    expected = "UV data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifUVData;
                     break;
 
                 case NifAlphaController alpha:

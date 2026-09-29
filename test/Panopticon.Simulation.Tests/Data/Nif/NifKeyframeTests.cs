@@ -416,17 +416,17 @@ public sealed class NifKeyframeTests
     [Fact]
     public void LegacyUnsupportedBlockNameFailsExplicitly()
     {
-        // NiUVController has no reader in any phase. Legacy material-color,
-        // visibility, and morpher controllers do parse (C4e/C4g block types)
-        // and are rejected with owning-phase diagnostics by the animation
-        // importer instead (fixtures land with WI-C4i-05).
+        // NiDitherProperty has no reader in any phase. Legacy material-
+        // color, visibility, UV, and morpher controllers do parse
+        // (C4e/C4g block types) and are rejected with owning-phase
+        // diagnostics by the animation importer instead.
         var builder = LegacyClipBuilder();
-        var uvControllerType = builder.AddBlockType("NiUVController");
-        builder.AddBlock(uvControllerType, [0, 0, 0, 0]);
+        var ditherType = builder.AddBlockType("NiDitherProperty");
+        builder.AddBlock(ditherType, [0, 0, 0, 0]);
         builder.AddTrailing(NifTestBlocks.RootsFooter(0));
 
         var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
-        Assert.Contains("NiUVController", ex.Message);
+        Assert.Contains("NiDitherProperty", ex.Message);
         Assert.Contains("unsupported type", ex.Message);
     }
 }
