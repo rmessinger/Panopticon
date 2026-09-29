@@ -29,6 +29,7 @@ Add Sedan mixed and aggregate experiment arms with 64 seeds each and error distr
 3. Run 64 seeds per arm over the Sedan 60 h window.
 4. Compare casualty, ground, ammunition, artillery, dwell, and terrain distributions against the reference.
 5. Store error distributions in the run output without permanent thresholds.
+6. Record every arm in `Operational` mode so any seed can be reconstructed for inspection.
 
 ## Files likely to change
 

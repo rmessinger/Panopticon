@@ -29,8 +29,12 @@ Measure the headless tactical runtime cost for Sedan-scale soldier counts with C
 2. Boot a headless `SimulationHost` and spawn `AmericaInfantryRanger` and `ChinaInfantryRedguard` placeholder infantry at increasing counts up to 320,000.
 3. Raise weapon `AttackRange` and `VisionRange` to about 3,937 game units.
 4. Measure per-logic-frame time, per-system time if available, peak memory, and target acquisition cost.
-5. Extrapolate the measured frame cost to 6.48M frames.
-6. Add a W3a appendix named `Scale probe results` and append one `.exchange` result line.
+5. At the largest count, write a `SaveFile.Persist` save through `StateWriter` in write mode and
+   record its size and write time plus mean persisted bytes per soldier object, as inputs to the
+   [A1-6 §7](../../deep-dives/a1-6-operational-recording.md#7-size-and-latency) checkpoint
+   estimate. If the save path fails, record the failure and continue.
+6. Extrapolate the measured frame cost to 6.48M frames.
+7. Add a W3a appendix named `Scale probe results` and append one `.exchange` result line.
 
 ## Files likely to change
 
@@ -43,6 +47,7 @@ Measure the headless tactical runtime cost for Sedan-scale soldier counts with C
 - [ ] Report includes per-frame cost and peak memory at the largest measured count, targeting 320,000 soldier objects.
 - [ ] Report includes target acquisition cost with about 3,937 game-unit attack and vision range.
 - [ ] Report projects wall-clock for 6.48M frames.
+- [ ] Report includes save size, save write time, and mean persisted bytes per soldier object, or the save-path failure.
 - [ ] If projected reference wall-clock exceeds 14 days per seed, the card stops and escalates to the operator.
 - [ ] If no map can host the probe, the blocker and largest measured count are recorded.
 

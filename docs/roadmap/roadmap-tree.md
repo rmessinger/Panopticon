@@ -87,6 +87,7 @@ mindmap
         A1-3 Logic-tick extraction
         A1-4 SimulationHost FTRT
         A1-5 Run outputs T0/T1/T2
+        A1-6 Operational recording ⮕
       A2 Statistical validation
       A3 Sim/presentation seam
       A4 Experiment framework ⮕
@@ -377,6 +378,7 @@ flowchart LR
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
     direction TB
     A5["A5 Scenario & visualization"]
+    A1OR["A1-6 Operational recording"]
     W0["W0 Charter fixture"]
     C4B["C4b EE2 cooked textures"]
     C5["C5 Authoring tooling"]
@@ -541,6 +543,8 @@ flowchart LR
   H4 --> H5
   A4S --> W0
   A4DS --> W0
+  A1 --> A1OR
+  A4DS --> A1OR
 
   %% Stage 3 -> 4
   A4S --> B6
@@ -600,6 +604,7 @@ flowchart LR
   F7 --> F8
   W2 --> W3A
   B4B --> W3A
+  A1OR --> W3A
   W2 --> W4
   A5 --> W4
   W2 --> W5
@@ -612,7 +617,7 @@ flowchart LR
   W4 --> W6
   W5 --> W6
 
-  class A1,A2,A3,A4,A4DS,A5,A5WB trackA;
+  class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
   class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;

@@ -4,7 +4,7 @@
 > Builds on [W2](w2-fidelity-promotion.md) and [B4b](b4b-geospatial-map-generation.md). Precedes
 > [W3b](w3b-somme-sector.md).
 >
-> Audience: human + agent design for `WI-W3a-01..30`.
+> Audience: human + agent design for `WI-W3a-01..31`.
 
 Purpose: simulate the Battle of Sedan (Franco-Prussian War, 31 August to 2 September 1870) as the
 first geospatial battle of Track W. It is a large-scale proof of concept before the Somme: about
@@ -313,6 +313,12 @@ reference points only.
 Wall-clock is unknown until measured: 50 ms per frame is about 90 h; 200 ms is about 15 days. The
 run is single-process; W5 sharding comes later.
 
+All arms record in the [A1-6](a1-6-operational-recording.md) `Operational` mode: operational
+records every operational tick (3,600), engine checkpoints at frame zero and every theater hour
+(61), and state hashes per boundary. Tactical frames are reconstructed on demand. Estimated bundle
+size per reference seed is about 25-45 GB ([A1-6 §7](a1-6-operational-recording.md#7-size-and-latency));
+`WI-W3a-01` measures per-object persisted bytes and checkpoint size to confirm it.
+
 Run families (W2):
 
 | Arm | Activation | Seeds |
@@ -331,8 +337,9 @@ snapshot forward or reducing reference seeds; modelled detail is not reduced by 
 Milestone evidence, all measured:
 
 - every family conserves exactly, including `horse`, `mitrailleuse`, `captured`, and `interned`;
-- recording reconstructs each layer at selected frames;
-- a fixed seed reproduces its run;
+- recording reconstructs each layer at selected frames, including tactical frames reconstructed
+  from checkpoints with every operational hash in the interval matching;
+- a fixed seed reproduces its run within one run identity;
 - order metrics from §8.2;
 - aggregate and mixed error distributions against the reference;
 - a divergence table against the historical reference below.
@@ -382,9 +389,10 @@ Milestone evidence, all measured:
 | W3a-25 | [`WI-W3a-25`](../agent/cards/WI-W3a-25-army-capitulation.md) | Army capitulation policy. | Capitulation sets `Decided`/`Surrendered`; window end without it records `InProgress`. |
 | W3a-26 | [`WI-W3a-26`](../agent/cards/WI-W3a-26-sedan-scenario-assembly.md) | Sedan scenario assembly. | 31 August 00:00 state places every formation in its assembly area with valid links. |
 | W3a-27 | [`WI-W3a-27`](../agent/cards/WI-W3a-27-a5-geospatial-rendering.md) | A5 geospatial rendering. | A5 shows regions, cells, features, nodes, links, and source ids. |
-| W3a-28 | [`WI-W3a-28`](../agent/cards/WI-W3a-28-all-tactical-reference-run.md) | All-tactical reference run. | Reference seeds complete the 60 h window and record the primary product. |
+| W3a-28 | [`WI-W3a-28`](../agent/cards/WI-W3a-28-all-tactical-reference-run.md) | All-tactical reference run. | Reference seeds complete the 60 h window in `Operational` mode; sampled reconstructions verify. |
 | W3a-29 | [`WI-W3a-29`](../agent/cards/WI-W3a-29-aggregate-and-mixed-runs.md) | Aggregate and mixed arms. | 64 seeds per arm with error distributions against the reference. |
 | W3a-30 | [`WI-W3a-30`](../agent/cards/WI-W3a-30-sedan-evidence-report.md) | Sedan evidence report. | Report records §11 evidence, the divergence table, and provenance. |
+| W3a-31 | [`WI-W3a-31`](../agent/cards/WI-W3a-31-operational-recording-adapter.md) | Operational recording adapter. | Western Front `IReconstructableDomain`, `rollup` record kind; a reconstructed tactical interval matches a `Full` recording of the same seed. |
 
 ## 13. Architecture diagrams
 

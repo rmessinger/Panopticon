@@ -66,10 +66,10 @@ frames or until a stop condition at FTRT speed and exposes hooks for input or or
 model.
 
 ### 2.5 Result outputs
-Emit structured run outputs that the analysis layer consumes. Recorded state supports inspection
-without requiring input-only re-simulation:
+Emit structured run outputs that the analysis layer consumes. This is the `Full` recording mode;
+large runs use the `Operational` mode of [A1-6](a1-6-operational-recording.md) instead:
 - Recorded state snapshots and deltas: periodic world snapshots and per-frame deltas so any
-  frame can be reconstructed for analysis without assuming a re-run reproduces it bit-for-bit.
+  frame can be read back without re-simulation.
 - Metrics and events stream: domain-defined probes for RTS, city, or transport runs, and the
   primary basis for comparing runs.
 - Hierarchical state signature per frame: a tolerance-aware signature tree, from world to
@@ -77,17 +77,17 @@ without requiring input-only re-simulation:
   only flagged globally. The tier design is in [visualization.md §5](a5-visualization.md). An opt-in
 - Triggered detail capture: when the signature tree trips a configured threshold, the host writes
   detailed per-entity and per-system deltas for the affected frame and region window into a
-  bounded ring buffer. Captured live because a re-run will not reproduce the same divergence, as
-  described in [visualization.md §5](a5-visualization.md).
+  bounded ring buffer, as described in [visualization.md §5](a5-visualization.md). In
+  `Operational` mode the same windows come from verified reconstruction.
 - Replay recording of inputs, including orders, seed, and map, reusing the existing `.rep` path
-  (`ReplayConnection`, TestHarness export). This is useful for launching another experiment run,
-  not reconstructing an authoritative prior run.
+  (`ReplayConnection`, TestHarness export).
 - Optional frame captures via `FrameCaptureService` when a GPU is available.
 
 ### 2.6 Result analysis and visualization: see phase A5
 Replaying, visualizing, comparing, and localizing divergences between runs, plus authoring the
 scenarios that feed the host, belong to [A5: Scenario authoring and visualization](a5-visualization.md).
-A1 ends at emitting the run outputs in §2.5. A5 consumes them, makes them inspectable, and is the
+A1 ends at emitting the run outputs in §2.5 and, for large runs, the A1-6 operational bundle and
+reconstructor. A5 consumes them, makes them inspectable, and is the
 validation surface for [B3](../track-b-scale.md) parallelism and
 [B6](b6-distributed-simulation.md) sharding. The tiered recording, T0, T1, and T2, emitted here is
 specified in [visualization.md §5](a5-visualization.md).
@@ -103,9 +103,10 @@ specified in [visualization.md §5](a5-visualization.md).
 | A1-3. Logic-tick extraction | Extract the logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Done |
 | A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Done (domain seam parameterized pending A4) |
 | A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered diagnostic recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay input recordings from a headless run. | Done (T0 metrics/events + terminal outcome; T1 tolerance-quantized spatial-cell signature trees; T2 ring-buffer triggered detail with pre-marked windows; snapshot/delta binary artifact with reconstruction; replay input recording via the existing `.rep` path) |
+| A1-6. Operational recording and seeded reconstruction | Record large runs at operational cadence with engine checkpoints at campaign cadence, and reconstruct granular frames by re-simulating from the nearest checkpoint with the same seeds, verified against live state hashes. See the [deep dive](a1-6-operational-recording.md). | Not started |
 
-> Result analysis, visualization, and scenario authoring were previously sketched here as
-> A1-6/A1-7; they now live in their own phase, [A5](a5-visualization.md) (A5-1 scenario authoring,
+> Result analysis, visualization, and scenario authoring were previously sketched here under
+> other sub-phase numbers; they now live in their own phase, [A5](a5-visualization.md) (A5-1 scenario authoring,
 > A5-2 sweeps, A5-3 replayer/visualizer, A5-4 divergence localization).
 
 ---
@@ -117,6 +118,8 @@ specified in [visualization.md §5](a5-visualization.md).
   The TestHarness `RunHeadless` loop is the integration target throughout.
 - A1-5 outputs are consumed by [A2 statistical validation](../track-a-foundations.md) and
   [A5 visualization](a5-visualization.md).
+- A1-6 depends on A1-5 and the [A4-4 domain state projection](a4-4-domain-state-projection.md);
+  W3a reference runs and W6 save/load consume it.
 
 ## 5. Architecture Diagrams
 
@@ -264,6 +267,7 @@ sequenceDiagram
 - Architecture snapshot: [`../agent/current-state.md`](../agent/current-state.md)
 - Scenario authoring & visualization (consumes A1 outputs): [`a5-visualization.md`](a5-visualization.md)
 - Determinism-priority Decision: [`../open-questions.md`](../open-questions.md)
+- Operational recording and reconstruction: [`a1-6-operational-recording.md`](a1-6-operational-recording.md)
 
 ---
 

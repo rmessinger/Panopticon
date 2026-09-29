@@ -7,12 +7,13 @@
 | Status | `Draft` |
 | Type | `test-addition` |
 | Effort | `S` |
-| Prerequisites | `WI-W3a-01`, `WI-W3a-15`..`WI-W3a-26`, `WI-W2-13` |
+| Prerequisites | `WI-W3a-01`, `WI-W3a-15`..`WI-W3a-26`, `WI-W3a-31`, `WI-W2-13`, `WI-A1-24` |
 | Diagrams | [W3a §13](../../deep-dives/w3a-sedan-1870.md#13-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W3a-01`, `WI-W3a-15` through `WI-W3a-26`, and `WI-W2-13` are Done.
+Draft: flip to Ready once `WI-W3a-01`, `WI-W3a-15` through `WI-W3a-26`, `WI-W3a-31`, `WI-W2-13`,
+and `WI-A1-24` are Done.
 
 Add and run the Sedan all-tactical reference family for four seeds over the full 60 h window.
 
@@ -22,14 +23,19 @@ Add and run the Sedan all-tactical reference family for four seeds over the full
 - `docs/roadmap/deep-dives/w2-fidelity-promotion.md` §3 and §7.
 - `docs/roadmap/deep-dives/w0-charter-fixture.md` §6-§7.
 - `docs/roadmap/deep-dives/w1-aggregate-sector.md` §11.
+- `docs/roadmap/deep-dives/a1-6-operational-recording.md` §4-§6.
 
 ## Steps
 
 1. Add Sedan reference run wiring with `AllTacticalActivationPolicy` from frame zero.
 2. Require the operator geospatial payload and a Generals install before execution.
 3. Run four seeds from 31 August 00:00 through 2 September 12:00 local mean time.
-4. Record the reference artifacts as the primary product.
-5. Stop and preserve artifacts on determinism failure per the repository rule.
+4. Record in `Operational` mode; the operational stream, checkpoints, and hashes are the primary
+   product.
+5. Reconstruct at least three sampled tactical intervals per seed (early, middle, late) and verify
+   every operational hash in each interval.
+6. Stop and preserve artifacts on determinism or reconstruction-verification failure per the
+   repository rule.
 
 ## Files likely to change
 
@@ -41,7 +47,8 @@ Add and run the Sedan all-tactical reference family for four seeds over the full
 
 - [ ] Four reference seeds complete the 60 h window.
 - [ ] Every run uses all-tactical activation from frame zero.
-- [ ] Product records contain state layers, metrics, and run metadata.
+- [ ] Product records contain operational state layers, rollups, metrics, run identity, and checkpoints.
+- [ ] Sampled tactical reconstructions match every recorded operational hash.
 - [ ] Standard validation passes.
 
 ## Validation commands

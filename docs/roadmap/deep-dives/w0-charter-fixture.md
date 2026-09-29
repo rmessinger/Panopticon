@@ -150,6 +150,11 @@ and the members' movement and combat while inactive.
 References: `formation`, `cell`. A partially promoted platoon keeps the unmaterialized remainder
 on its `formation` record; soldiers hold the rest. A soldier record normally holds one person.
 
+In the [A1-6](a1-6-operational-recording.md) `Operational` recording mode, `tactical` is the
+granular layer: `soldier` records appear only in checkpoints and reconstructions. `WI-W3a-31` adds
+a per-formation `rollup` kind carrying soldier totals so conservation still checks at every
+operational boundary.
+
 ## 5. Topology fixture
 
 Synthetic, in world units, one side per half:

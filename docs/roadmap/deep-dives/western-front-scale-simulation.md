@@ -193,8 +193,9 @@ Activation policy is an experiment input. Candidate triggers include contact, ob
 operator interest, proximity to an objective, or measured uncertainty. Hysteresis prevents a
 region from oscillating between fidelity levels.
 
-Clock conversion, activation, and reconciliation events are recorded. A run must be explainable
-without deterministic input re-simulation.
+Clock conversion, activation, and reconciliation events are recorded at operational level.
+Tactical detail is recovered by seeded re-simulation from engine checkpoints, verified against
+recorded operational hashes ([A1-6](a1-6-operational-recording.md)).
 
 ## 6. Command and information
 
@@ -259,7 +260,7 @@ resolution produce conservation reports.
 | Need | Roadmap dependency | Evidence required before implementation |
 |---|---|---|
 | Playable detailed combat loop | Track P | One complete reference battle can run, terminate, and report outcomes. |
-| Headless runs and recording | A1-A3, A5 | Long runs produce reconstructable snapshots/deltas and bounded-memory replay. |
+| Headless runs and recording | A1-A3, A1-6, A5 | Long runs record operational state and checkpoints; tactical frames reconstruct with verified hashes; replay stays bounded-memory. |
 | Domain projections and topology | A4-1 | A non-default domain reports entities, topology, metrics, and interaction authority. |
 | Reconstructable multi-layer state | A1/A4 follow-up | A versioned snapshot projection carries formation, logistics, command, and layer state beyond `DomainEntitySummary`'s two scalar slots. |
 | Hierarchical decisions | A4-3 | Rank policies issue orders through the shared order path with persisted hierarchy state. |
@@ -497,7 +498,7 @@ sequenceDiagram
 - `src/Panopticon.Simulation/SimulationHost.cs:47-97` runs one logic-frame clock from the game definition's
   `MsPerLogicFrame`; it has no campaign/operational scheduler.
 - `src/Panopticon.Simulation/Recording/RunRecording.cs:70-125` reconstructs state from snapshots and
-  per-frame deltas without input re-simulation.
+  per-frame deltas without input re-simulation (`Full` mode); A1-6 adds the `Operational` mode.
 - `src/Panopticon.Simulation/Logic/AI/Hierarchy/SquadHierarchy.cs:7-75` owns current squad membership,
   commander promotion, and persistence by stable object ID.
 - `src/Panopticon.Simulation/Terrain/TerrainLogic.cs:10-84` exposes the current heightmap-centered terrain
