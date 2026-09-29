@@ -223,13 +223,19 @@ public sealed class Ee2NifPropertyAnimationTests
     }
 
     [Fact]
-    public void FarmYamFailsOnMorphControllerNamingC6()
+    public void FarmYamImportsWithMorphWeightChannel()
     {
-        var exception = Assert.Throws<NotSupportedException>(
-            () => ImportAnimation("bld_farm_yam", "Graphics/Building/bld_farm_yam.kf"));
+        var animation = ImportAnimation("bld_farm_yam", "Graphics/Building/bld_farm_yam.kf");
 
-        Assert.Contains("NiGeomMorpherController", exception.Message);
-        Assert.Contains("C6", exception.Message);
+        var morphChannel = Assert.Single(animation.MorphChannels);
+        Assert.Equal("bld_farm_yam.0.Editable Mesh", morphChannel.PrimitiveId);
+        Assert.Equal("Target1", Assert.Single(morphChannel.TargetNames));
+
+        var keys = morphChannel.Times.ToArray();
+        Assert.Equal(0f, keys[0]);
+        Assert.Equal(animation.Duration.TotalSeconds, keys[^1], 4);
+        Assert.Equal(0f, morphChannel.WeightVectors[0][0], 5);
+        Assert.Equal(1f, morphChannel.WeightVectors[^1][0], 5);
     }
 
     [Fact]

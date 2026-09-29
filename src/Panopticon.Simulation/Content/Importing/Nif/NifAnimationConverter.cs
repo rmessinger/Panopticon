@@ -42,6 +42,7 @@ internal static class NifAnimationConverter
     {
         var duration = ReadDuration(file, sequence, assetKey);
         var channels = new List<ImportedAnimationChannel>();
+        var morphChannels = new List<ImportedMorphAnimationChannel>();
         var boundTargets = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var hasPropertyControllers = sequence.ControlledBlocks.Any(
             block => file.Blocks[block.ControllerReference] is not NifKeyframeController);
@@ -49,6 +50,19 @@ internal static class NifAnimationConverter
         foreach (var controlledBlock in sequence.ControlledBlocks)
         {
             var block = file.Blocks[controlledBlock.ControllerReference];
+            if (block is NifGeomMorpherController morpher)
+            {
+                NifMorphConverter.ConvertWeightChannel(
+                    file,
+                    morpher,
+                    controlledBlock.TargetName,
+                    targets,
+                    assetKey,
+                    duration,
+                    morphChannels);
+                continue;
+            }
+
             if (block is not NifKeyframeController controller)
             {
                 NifPropertyAnimationConverter.Convert(
@@ -100,7 +114,8 @@ internal static class NifAnimationConverter
         return new ImportedAnimation(
             animationName,
             TimeSpan.FromSeconds(duration),
-            channels);
+            channels,
+            morphChannels.Count == 0 ? null : morphChannels);
     }
 
     private static float ReadDuration(NifFile file, NifControllerSequence sequence, string assetKey)

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4g-05` |
 | Roadmap phase | [Track C · C4g](../../track-c-external-assets.md): EE2 morph animation |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4g-03`, `WI-C4g-04` |
@@ -53,11 +53,11 @@ morph target sets during playback.
 
 ## Acceptance criteria
 
-- [ ] Morph animation binding fails when primitive ids or target names do not match.
-- [ ] Linear weight keys preserve source key times and values.
-- [ ] Quadratic weight keys are resampled to linear weight vectors with source key times included.
-- [ ] `bld_farm_yam.kf` evaluates `Target1` weight 0 at start and 1 at end.
-- [ ] Standard validation passes.
+- [x] Morph animation binding fails when primitive ids or target names do not match.
+- [x] Linear weight keys preserve source key times and values.
+- [x] Quadratic weight keys are resampled to linear weight vectors with source key times included.
+- [x] `bld_farm_yam.kf` evaluates `Target1` weight 0 at start and 1 at end.
+- [x] Standard validation passes.
 
 ## Validation commands
 

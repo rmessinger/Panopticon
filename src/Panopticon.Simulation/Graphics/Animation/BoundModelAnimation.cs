@@ -14,10 +14,17 @@ public sealed class BoundModelAnimation
 
     public AnimationClip[] Clips { get; }
 
-    internal BoundModelAnimation(string name, TimeSpan duration, AnimationClip[] clips)
+    internal MorphWeightTrack[] MorphTracks { get; }
+
+    internal BoundModelAnimation(
+        string name,
+        TimeSpan duration,
+        AnimationClip[] clips,
+        MorphWeightTrack[]? morphTracks = null)
     {
         Name = name;
         Duration = duration;
         Clips = clips;
+        MorphTracks = morphTracks ?? Array.Empty<MorphWeightTrack>();
     }
 }

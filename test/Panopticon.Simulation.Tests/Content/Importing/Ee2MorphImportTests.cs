@@ -4,8 +4,14 @@ using System.Linq;
 using System.Numerics;
 using Panopticon.Content.Importing;
 using Panopticon.Content.Importing.Nif;
+using Panopticon.Content.Loaders;
+using Panopticon.Graphics;
+using Panopticon.Graphics.Animation;
 using Panopticon.IO;
+using Panopticon.Logic.Object;
+using Panopticon.Mathematics;
 using Panopticon.Tests.Content;
+using Panopticon.Utilities;
 using Xunit;
 
 namespace Panopticon.Tests.Content.Importing;
@@ -69,6 +75,76 @@ public sealed class Ee2MorphImportTests
     }
 
     [Fact]
+    public void FarmYamAnimationDrivesTarget1WeightsAtRuntime()
+    {
+        if (!GraphicsDeviceUtility.CanCreateHeadlessDevice())
+        {
+            return;
+        }
+
+        var (context, fileSystem, importer) = OpenArchive(gate: true);
+        using var _ = fileSystem;
+        using var graphics = new TestGraphicsContext(fileSystem);
+
+        var model = importer.ImportModel(
+            "bld_farm_yam#morph-kf=Graphics/Building/bld_farm_yam.kf", context);
+        Assert.NotNull(model);
+        var animation = new NifAnimationImporter().ImportAnimation(
+            "bld_farm_yam#kf=Graphics/Building/bld_farm_yam.kf", context);
+        Assert.NotNull(animation);
+
+        var instance = new ModelInstance(
+            ImportedModelMaterializer.MaterializeModel(model!, graphics.Context),
+            graphics.Context);
+        instance.Update(new TimeInterval(TimeSpan.Zero, TimeSpan.Zero));
+
+        var runtimeAnimation = ImportedAnimationMaterializer.Materialize(animation);
+        var duration = (float)animation!.Duration.TotalSeconds;
+
+        var start = PlayTo(instance, runtimeAnimation, 0f);
+        Assert.Equal(0f, start[0], 5);
+
+        var middle = PlayTo(instance, runtimeAnimation, duration / 2f);
+        Assert.Equal(0.5f, middle[0], 5);
+
+        var end = PlayTo(instance, runtimeAnimation, duration);
+        Assert.Equal(1f, end[0], 5);
+    }
+
+    private static float[] PlayTo(ModelInstance instance, ModelAnimation animation, float seconds)
+    {
+        var animationInstance = instance.CreateAnimationInstance(
+            animation,
+            AnimationMode.Once,
+            AnimationFlags.StartFrameFirst,
+            gameObject: null!,
+            random: new ConstantRandom());
+        animationInstance.Play();
+
+        var delta = seconds / 8f;
+        for (var i = 0; i < 8; i++)
+        {
+            animationInstance.Update(new TimeInterval(TimeSpan.Zero, TimeSpan.FromSeconds(delta)));
+        }
+
+        instance.Update(new TimeInterval(TimeSpan.FromSeconds(seconds), TimeSpan.FromSeconds(delta)));
+        return instance.MeshInstances[0].MorphWeights!;
+    }
+
+    private sealed class ConstantRandom : IRandom
+    {
+        public uint Seed => 0;
+
+        public void Initialize(uint seed)
+        {
+        }
+
+        public int Next(int minValue, int maxValue) => minValue;
+
+        public float NextSingle(float minValue, float maxValue) => minValue;
+    }
+
+    [Fact]
     public void FarmYamMorphModelWithoutGateFailsNamingGate()
     {
         var (context, fileSystem, importer) = OpenArchive(gate: false);
@@ -111,6 +187,31 @@ public sealed class Ee2MorphImportTests
         Assert.Equal(mesh.PrimitiveId, set.PrimitiveId);
         Assert.Equal(["Target1", "Target2"], set.TargetNames);
         Assert.All(set.Targets, target => Assert.Equal(4, target.PositionDeltas!.Count));
+    }
+
+    [Fact]
+    public void EmpFlashEmbeddedSmokeCoversAQuadraticWeightCurve()
+    {
+        // The embedded morph smoke per WI-C4g-06: at least one embedded
+        // weight curve must be Quadratic. fx_emp_flash carries morph 1 with
+        // five Quadratic keys and morph 2 with four.
+        using var fileSystem = new ZipFileSystem($"{InstallationPath()}/{GraphicsZipPath}");
+        var entry = fileSystem.GetFile("cache/nifcache/fx_emp_flash.nifcache");
+        Assert.NotNull(entry);
+
+        using var buffer = new System.IO.MemoryStream();
+        using (var stream = entry!.Open())
+        {
+            stream.CopyTo(buffer);
+        }
+
+        buffer.Position = 0;
+        var file = FileFormats.Nif.NifFile.Read(buffer);
+        var morphData = Assert.IsType<FileFormats.Nif.NifMorphData>(
+            file.Blocks.First(block => block is FileFormats.Nif.NifMorphData));
+        Assert.Contains(
+            morphData.Morphs,
+            morph => morph?.WeightKeys is { } group && group.Interpolation == FileFormats.Nif.NifKeyType.Quadratic);
     }
 
     [Fact]
