@@ -7,25 +7,27 @@
 | Status | `Draft` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-W6-01`, `WI-A5-08`, `WI-A5-18` |
+| Prerequisites | `WI-W6-01`, `WI-A5-08`, `WI-A5-18`, `WI-A1-20`, `WI-A1-23` |
 | Diagrams | [W6 §6](../../deep-dives/w6-long-run-campaign.md#6-architecture-diagrams) |
 
 ## Goal
 
-Draft: flip to Ready once `WI-W6-01`, `WI-A5-08`, and `WI-A5-18` are Done.
+Draft: flip to Ready once `WI-W6-01`, `WI-A5-08`, `WI-A5-18`, `WI-A1-20`, and `WI-A1-23` are
+Done.
 
-Add replay indexing for long Western Front domain-state artifacts.
+Add replay indexing for long Western Front operational recordings.
 
 ## Context to read (and only this)
 
 - `docs/roadmap/deep-dives/w6-long-run-campaign.md` §3-§4.
 - `docs/roadmap/deep-dives/a5-visualization.md` §4.
+- `docs/roadmap/deep-dives/a1-6-operational-recording.md` §5.2 and §6.
 
 ## Steps
 
-1. Create an index keyed by frame and theater time.
-2. Store nearest snapshot offsets and summary counts.
-3. Use the index in A5 scrubbing.
+1. Extend the operational-stream footer index with theater time.
+2. Store nearest checkpoint and domain-snapshot offsets and summary counts.
+3. Use the index in A5 scrubbing; route tactical-frame requests to the A1-6 reconstructor.
 4. Test seek performance on a generated large synthetic artifact.
 
 ## Files likely to change
@@ -36,6 +38,7 @@ Add replay indexing for long Western Front domain-state artifacts.
 ## Acceptance criteria
 
 - [ ] A5 seeks early, middle, and late frames without scanning the whole artifact.
+- [ ] A tactical frame request re-simulates at most one operational interval once the cache is warm.
 - [ ] Index metadata records schema and campaign key.
 - [ ] Standard validation passes.
 
@@ -49,7 +52,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-No rerun-based replay.
+Granular frames come only from verified A1-6 reconstruction; no unverified rerun-based replay.
 
 ## On completion
 

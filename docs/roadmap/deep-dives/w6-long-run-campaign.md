@@ -43,19 +43,23 @@ decision is made.
 
 ## 3. Persistence and replay
 
-Save/load uses two artifacts:
+Save/load uses the [A1-6 engine checkpoint](a1-6-operational-recording.md#53-engine-checkpoint).
+One checkpoint holds:
 
-1. Domain-state artifact snapshot at a selected frame, with schema version, topology key, campaign
-   key, and parameter hash.
-2. Host save for active host objects, tactical soldiers, pending engine orders, and ordinary game
-   services.
+1. The engine section: active host objects, tactical soldiers, pending engine orders, and ordinary
+   game services through `StatePersister`.
+2. The domain-state section: an A4-4 snapshot with schema version, topology key, campaign key, and
+   parameter hash.
+3. Random, host, and domain-runtime sections (scheduler queues).
 
-Load checks that the host save and domain snapshot agree on frame, theater time, schema, active
-regions, and object-key mapping. `StatePersister` handles host objects only. The Western Front
-domain reconstructs its state from the domain-state artifact.
+A W6 save manifest adds theater time, active regions, and object-key mapping. Load restores
+through the A1-6 host restore and checks that manifest, engine section, and domain section agree.
+`StatePersister` handles host objects only. The Western Front domain reconstructs its state from
+the domain-state section.
 
-A5 replay scrubbing reads indexed domain-state records. It does not rerun the simulation to answer
-historical frame queries.
+A5 replay scrubbing reads indexed operational records for operational and campaign views. Tactical
+frames come from the [A1-6 reconstructor](a1-6-operational-recording.md#6-reconstruction), verified
+against recorded operational hashes; unverified re-execution is not replay.
 
 ## 4. Long-run evidence
 

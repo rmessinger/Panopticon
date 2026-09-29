@@ -6,26 +6,36 @@
 >
 > Audience: human reference for roadmap decisions.
 
-- Determinism priority. Decision: determinism is not a roadmap requirement or a gate for
-  parallelism, distribution, physics, AI, replay, or experiment tooling. Runs may diverge across
-  executions, platforms, builds, thread schedules, and shard layouts. Validation uses per-run
-  invariants, authored bounds, aggregate distributions, and performance statistics where useful.
-  Seed controls remain available as an experiment input, but do not imply reproducibility.
-  Within a tick, data-parallel systems may run concurrently and write freely; conflicting writes
-  are reconciled through explicit intent/command buffers and authority rules for correctness.
-  Consequences:
-  - [A2](track-a-foundations.md) is statistical validation: its harness reports distributions and
-    checks invariants without requiring same-seed agreement or state-hash parity.
-  - [B3](track-b-scale.md) adopts the free-intra-tick + conflict-resolution model as its
-    concrete parallelism design (read/modify via intent buffers, merge by rules).
-  - [B6](deep-dives/b6-distributed-simulation.md) validates handoff/boundary sync by
-    invariants such as no unit duplication/loss and conservation. Cross-shard conflicts use the
-    same authority/resolution rules.
-  - Recorded state snapshots/deltas, not input-only re-simulation, back the replayer. For
-    diagnostic comparisons, A1-5 records and A5-4
-    localizes via a tiered, hierarchical recording (aggregate metrics → per-region/entity
-    signature tree → triggered per-entity detail) captured live; see
-    [visualization.md §5](deep-dives/a5-visualization.md).
+- Determinism priority. Decision (revised): determinism is scoped to one run identity: build,
+  runtime, operating system, architecture, SIMD capability, inputs, and shard layout. Within an
+  identity, one seed reproduces its run at every frame. Determinism across builds, platforms, or
+  shard layouts is not required, and thread count is not part of the identity. Experiments across
+  seeds still validate through per-run invariants, authored bounds, aggregate distributions, and
+  performance statistics. Supersedes the earlier Decision that runs may diverge across executions
+  and thread schedules and that recorded per-frame state, not re-simulation, backs the replayer;
+  per-frame recording does not scale to the Sedan reference run. Consequences:
+  - [A2](track-a-foundations.md) keeps cross-seed statistical validation. Same-seed agreement
+    within an identity is a correctness property; failures follow the repository
+    determinism-test rule (stop, preserve artifacts, report).
+  - [B3](track-b-scale.md) parallel systems compute concurrently but commit intents in a fixed
+    order (system registration order, entity id, intent sequence); floating-point reductions use
+    fixed partitions independent of worker count.
+  - [B6](deep-dives/b6-distributed-simulation.md) and W5 apply cross-shard messages in frame,
+    source shard key, then sequence order; handoff validity still uses invariants such as no
+    unit duplication or loss and conservation.
+  - Physics steps single-threaded; a multithreaded Bepu dispatcher requires
+    `Simulation.Deterministic`.
+  - Rules and verification: [A1-6 §3](deep-dives/a1-6-operational-recording.md#3-determinism-contract).
+- Operational recording. Decision: large runs record in `Operational` mode: operational-level
+  records per operational boundary plus full engine checkpoints at frame zero and every domain
+  campaign boundary (1 h theater for Track W). Granular frames are reconstructed for the whole
+  world by re-simulating from the nearest checkpoint with the same seeds and logged inputs, and
+  every operational boundary is verified against state hashes recorded live. A local cache of
+  derived checkpoints bounds repeat scrubs to one operational interval. `Full` mode (A1-5
+  per-frame recording) stays the RTS default so existing baselines are unchanged.
+  `GameLogic.Random` becomes the persisted `SageRandom`. A reconstructor refuses a mismatched run
+  identity unless overridden. Region-local reconstruction is out of scope. Design and size
+  estimates: [A1-6](deep-dives/a1-6-operational-recording.md).
 - ECS adoption depth. Decision: incremental data-oriented storage behind the module API
   (no full ECS rewrite). This follows from the Simulation-domain scope & mapping Decision below:
   every domain, RTS and non-RTS alike, is hosted by extending the `GameObject`/module system

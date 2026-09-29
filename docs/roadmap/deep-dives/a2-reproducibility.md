@@ -8,8 +8,10 @@
 > implementation plan linked above.
 
 Purpose: measure experiment outcomes across samples and validate per-run correctness invariants.
-Determinism and same-seed agreement are not requirements. Seed controls remain available as
-experiment inputs.
+Seed controls remain available as experiment inputs. Same-seed agreement is required only within
+one run identity, as defined by the [determinism Decision](../open-questions.md) and
+[A1-6 §3](a1-6-operational-recording.md#3-determinism-contract); A2 gates do not compare runs
+across seeds or identities.
 
 ---
 
@@ -40,16 +42,16 @@ The A2 harness:
 - checks correctness invariants independently in every run;
 - reports mean, variance, confidence intervals, and outliers for selected metrics;
 - compares aggregate distributions when an experiment has a reference implementation;
-- never fails because two executions with the same seed differ.
+- never fails on outcome differences between seeds.
 
-State signatures and snapshots remain diagnostic artifacts for inspecting the run that produced
-them. They are not parity gates.
+Same-seed agreement within an identity is verified by A1-6 operational state hashes, not by A2.
+A2 snapshots remain diagnostic artifacts for inspecting the run that produced them.
 
 ### 2.3 Concurrent-write correctness
 
 B3 and B6 own their conflict-resolution and authority rules. Those rules prevent invalid outcomes
-such as duplicate ownership or lost resources; they do not prescribe execution order or require
-cross-run identity.
+such as duplicate ownership or lost resources. Commit and message order is fixed so a run
+reproduces within its identity ([A1-6 §3](a1-6-operational-recording.md#3-determinism-contract)).
 
 ## 3. Sub-phases
 
@@ -61,7 +63,9 @@ cross-run identity.
 
 ## 4. Sequencing notes
 
-- A1-5 records the selected seed as run metadata.
+- A1-5 records the selected seed as run metadata; A1-6 records it in the run identity.
+- A1-6 replaces the `SystemRandom` behind `GameLogic.Random` with a persisted `SageRandom`
+  seeded by the A2-b run seed.
 - A2-c consumes A1-5 metrics and invariants.
 - B3 and B6 define conflict rules in their own phases. A2 can measure their output distributions
   but does not gate their implementation.

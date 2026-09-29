@@ -35,6 +35,16 @@ Source of truth: [deep-dives/a1-headless-host.md](../deep-dives/a1-headless-host
 |---|---|---|
 | [track-a-a1-headless-host.md](track-a-a1-headless-host.md) | A1-1…A1-5 | Headless simulation host |
 
+## Track A · A1-6 : Operational recording and seeded reconstruction
+
+Source of truth:
+[deep-dives/a1-6-operational-recording.md](../deep-dives/a1-6-operational-recording.md) :
+[Architecture diagrams §10](../deep-dives/a1-6-operational-recording.md#10-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a1-6-operational-recording.md](track-a-a1-6-operational-recording.md) | A1-6a…A1-6g | Operational recording and seeded reconstruction (WI-A1-13..24) |
+
 ## Track A · A2 : Statistical validation
 
 Source of truth: [deep-dives/a2-reproducibility.md](../deep-dives/a2-reproducibility.md) :
@@ -292,7 +302,7 @@ Source of truth: [deep-dives/w3a-sedan-1870.md](../deep-dives/w3a-sedan-1870.md)
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-w-w3a-sedan-1870.md](track-w-w3a-sedan-1870.md) | W3a-1…W3a-30 | Sedan 1870 (WI-W3a-01..30) |
+| [track-w-w3a-sedan-1870.md](track-w-w3a-sedan-1870.md) | W3a-1…W3a-31 | Sedan 1870 (WI-W3a-01..31) |
 
 ## Track W · W3b : Somme sector
 
