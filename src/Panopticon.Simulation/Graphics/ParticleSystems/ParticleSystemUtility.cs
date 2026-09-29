@@ -6,7 +6,53 @@ namespace Panopticon.Graphics.ParticleSystems;
 
 internal static class ParticleSystemUtility
 {
-    private static readonly Random Random = new Random(1000);
+    private static Random Random = new Random(1000);
+
+    /// <summary>
+    /// Scopes all particle randomness to a fresh seed and restores the previous generator on
+    /// disposal, so repeated capture setups with the same seed sample identical sequences.
+    /// </summary>
+    internal static IDisposable BeginSeedScope(int seed)
+    {
+        var previous = Random;
+        Random = new Random(seed);
+        return new SeedScope(previous);
+    }
+
+    /// <summary>
+    /// Process-stable seed derivation (string.GetHashCode is randomized per process) for
+    /// effect keys plus a sample index, per the C4h determinism contract.
+    /// </summary>
+    internal static int ComputeDeterministicSeed(string effectKey, int sampleIndex)
+    {
+        unchecked
+        {
+            var hash = 2166136261u;
+            foreach (var c in effectKey)
+            {
+                hash = (hash ^ c) * 16777619u;
+            }
+
+            hash = (hash ^ (uint)sampleIndex) * 16777619u;
+            return (int)(hash | 1u);
+        }
+    }
+
+    private sealed class SeedScope : IDisposable
+    {
+        private Random _previous;
+
+        public SeedScope(Random previous)
+        {
+            _previous = previous;
+        }
+
+        public void Dispose()
+        {
+            Random = _previous;
+            _previous = null;
+        }
+    }
 
     public static float GetRandomFloat(float min, float max)
     {
