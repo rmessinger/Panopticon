@@ -837,11 +837,18 @@ public static class NifTestKeyframe
         {
             // Rejection tests inject an unsupported type word; keys are
             // written in linear shape because the parser stops at the type.
+            // Tbc is supported, so its keys carry the 12-byte tangents tail.
             body.WriteUInt32(overrideType);
             foreach (var (time, value, _, _) in keys)
             {
                 body.WriteSingle(time);
                 body.WriteSingle(value);
+                if (overrideType == 3u)
+                {
+                    body.WriteSingle(0.0f);
+                    body.WriteSingle(0.0f);
+                    body.WriteSingle(0.0f);
+                }
             }
 
             return;
@@ -885,11 +892,18 @@ public static class NifTestKeyframe
         {
             // Rejection tests inject an unsupported type word; keys are
             // written in linear shape because the parser stops at the type.
+            // Tbc is supported, so its keys carry the 12-byte tangents tail.
             body.WriteUInt32(overrideType);
             foreach (var (time, value, _, _) in keys)
             {
                 body.WriteSingle(time);
                 NifTestBlocks.WriteVector3(body, value);
+                if (overrideType == 3u)
+                {
+                    body.WriteSingle(0.0f);
+                    body.WriteSingle(0.0f);
+                    body.WriteSingle(0.0f);
+                }
             }
 
             return;

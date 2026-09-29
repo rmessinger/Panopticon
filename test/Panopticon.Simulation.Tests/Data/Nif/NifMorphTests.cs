@@ -101,16 +101,21 @@ public sealed class NifMorphTests
     }
 
     [Fact]
-    public void TbcWeightKeysAreRejected()
+    public void TbcWeightKeysParseWithNullTangents()
     {
-        var ex = Assert.Throws<NotSupportedException>(() => Read(MorphFileBytes(
+        var file = Read(MorphFileBytes(
             morphData: NifTestPropertyAnimation.MorphData(
                 1,
-                [([(0.0f, 0.0f, null, null)], null)],
-                keyTypeOverride: 3))));
+                [([(0.0f, 0.0f, null, null), (1.0f, 0.5f, null, null)], null)],
+                keyTypeOverride: 3)));
 
-        Assert.Contains("Morphs[0]", ex.Message);
-        Assert.Contains("unsupported key type", ex.Message);
+        var morphData = Assert.IsType<NifMorphData>(file.Blocks[2]);
+        var morph = Assert.Single(morphData.Morphs);
+        Assert.NotNull(morph.WeightKeys);
+        Assert.Equal(NifKeyType.Tbc, morph.WeightKeys!.Interpolation);
+        Assert.Equal(2, morph.WeightKeys.Keys.Count);
+        Assert.Equal(0.5f, morph.WeightKeys.Keys[1].Value);
+        Assert.Null(morph.WeightKeys.Keys[1].Forward);
     }
 
     [Fact]

@@ -236,4 +236,25 @@ public sealed class Ee2ParticleEffectInventoryTests
             Assert.Contains(ddfPath, files, StringComparer.OrdinalIgnoreCase);
         }
     }
+
+    [Fact]
+    public void ProofEffectsParseToExactEndOfFile()
+    {
+        using var archive = OpenArchive(GraphicsArchiveRelativePath);
+        foreach (var (name, expectedBlocks, _) in ProofEffects)
+        {
+            var bytes = ReadEntry(archive, $"cache/nifcache/{name}.nifcache");
+            using var stream = new MemoryStream(bytes);
+            var file = NifFile.Read(stream);
+
+            Assert.Equal(expectedBlocks, file.Blocks.Count);
+            Assert.NotEmpty(file.Roots);
+            Assert.Contains(
+                file.Blocks,
+                block => block is NifParticles);
+            Assert.Contains(
+                file.Blocks,
+                block => block is NifParticleSystemController);
+        }
+    }
 }
