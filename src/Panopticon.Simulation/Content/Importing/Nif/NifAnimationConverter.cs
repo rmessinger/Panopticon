@@ -29,7 +29,6 @@ internal static class NifAnimationConverter
     private const float AccumulationTolerance = 1e-5f;
     private const float SampleTimeEpsilon = 1e-6f;
     private const float SamplesPerSecond = 30f;
-    private const ushort ExpectedControllerFlags = 0x2C;
 
     public static ImportedAnimation Convert(
         NifFile file,
@@ -77,7 +76,13 @@ internal static class NifAnimationConverter
                 continue;
             }
 
-            ValidateController(controller, controlledBlock.TargetName, duration, assetKey, enforceFlags: !hasPropertyControllers);
+            ValidateController(
+                controller,
+                controlledBlock.TargetName,
+                duration,
+                assetKey,
+                file.Header.Version,
+                enforceFlags: !hasPropertyControllers);
 
             int boneIndex;
             try
@@ -133,7 +138,10 @@ internal static class NifAnimationConverter
 
         foreach (var key in textKeys.Keys)
         {
-            if (string.Equals(key.Value, "start", StringComparison.OrdinalIgnoreCase))
+            // Legacy 10.0.1.0 clips pad marker values with trailing
+            // spaces ("end "); 10.1 values are already trimmed.
+            var marker = NifLegacyVersionPolicy.TrimTextKeyValue(key.Value);
+            if (string.Equals(marker, "start", StringComparison.OrdinalIgnoreCase))
             {
                 startCount++;
                 if (MathF.Abs(key.Time) > TimeTolerance)
@@ -142,7 +150,7 @@ internal static class NifAnimationConverter
                         $"NIF animation '{assetKey}' has a 'start' text key at {key.Time.ToString(CultureInfo.InvariantCulture)} s instead of 0.");
                 }
             }
-            else if (string.Equals(key.Value, "end", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(marker, "end", StringComparison.OrdinalIgnoreCase))
             {
                 endCount++;
                 duration = key.Time;
@@ -168,12 +176,15 @@ internal static class NifAnimationConverter
         string targetName,
         float duration,
         string assetKey,
+        uint version,
         bool enforceFlags = true)
     {
-        if (enforceFlags && controller.Flags != ExpectedControllerFlags)
+        if (enforceFlags && !NifLegacyVersionPolicy.IsAcceptedControllerFlags(controller.Flags, version))
         {
             throw Unsupported(
-                $"target '{targetName}' has controller flags 0x{controller.Flags.ToString("X4", CultureInfo.InvariantCulture)} instead of 0x2C");
+                $"NIF animation '{assetKey}' target '{targetName}' has controller flags " +
+                $"{NifLegacyVersionPolicy.FormatFlags(controller.Flags)}; accepted flags are " +
+                $"{NifLegacyVersionPolicy.DescribeAcceptedFlags(version)}");
         }
 
         if (controller.Frequency != 1f)
