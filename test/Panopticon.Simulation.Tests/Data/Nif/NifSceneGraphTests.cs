@@ -185,13 +185,13 @@ public sealed class NifSceneGraphTests
     public void UnknownBlockTypeFailsNamingBlockAndIndex()
     {
         var builder = new NifTestDataBuilder();
-        // NiParticlesData is a real NIF block type with no Panopticon support.
-        var particlesType = builder.AddBlockType("NiParticlesData");
-        builder.AddBlock(particlesType, [0, 0, 0, 0]);
+        // NiDitherProperty is a real NIF block type with no Panopticon support.
+        var ditherType = builder.AddBlockType("NiDitherProperty");
+        builder.AddBlock(ditherType, [0, 0, 0, 0]);
         builder.AddTrailing(NifTestBlocks.Footer());
         var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
         Assert.Contains("block 0", ex.Message);
-        Assert.Contains("NiParticlesData", ex.Message);
+        Assert.Contains("NiDitherProperty", ex.Message);
     }
 
     [Fact]
