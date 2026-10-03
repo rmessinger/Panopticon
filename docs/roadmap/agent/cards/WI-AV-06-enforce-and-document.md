@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-AV-06` |
 | Plan | [Single-line argument validation](../../plans/argument-validation.md) |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-AV-02`, `WI-AV-03`, `WI-AV-04`, `WI-AV-05` |

@@ -18,8 +18,7 @@ public class OrderGeneratorSystem : GameSystem
         get => _activeGenerator;
         set
         {
-            if (value == null)
-                throw new ArgumentNullException();
+            ArgumentNullException.ThrowIfNull(value);
 
             if (_activeGenerator is IDisposable disposable)
             {

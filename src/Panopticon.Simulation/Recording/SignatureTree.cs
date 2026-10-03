@@ -80,8 +80,7 @@ public static class SignatureTreeBuilder
         SignatureTolerances? tolerances = null,
         float cellSize = DefaultCellSize)
     {
-        if (cellSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(cellSize));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellSize);
 
         return Build(
             frame,

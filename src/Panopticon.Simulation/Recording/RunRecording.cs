@@ -254,8 +254,7 @@ public sealed class TriggeredDetailCapture : IDisposable
 
     public TriggeredDetailCapture(WorldStateSampler sampler, int ringDepth = DefaultRingDepth, int maxWindows = DefaultMaxWindows)
     {
-        if (ringDepth <= 0)
-            throw new ArgumentOutOfRangeException(nameof(ringDepth));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(ringDepth);
 
         _sampler = sampler;
         RingDepth = ringDepth;
