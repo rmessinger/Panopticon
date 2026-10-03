@@ -36,6 +36,10 @@ namespace Panopticon.Tools.TestHarness;
 /// C4g adds Ee2MorphProof: farm yam imports through the morph KF pairing key
 /// with the MorphTargets feature gate, and Target1 weight keys drive the CPU
 /// morph buffer at weights 0, 0.5, and 1 (WI-C4g-03/04/05).
+/// C4i adds Ee2LegacyKfProof: the DDF-bound rigid proof clips drive the same
+/// pipeline from NetImmerse 10.0.1.0 KF entries (legacy header, root-list
+/// footer, cooked flags 0x0C/0x05), with guntank wheel rotation and palisade
+/// gate translation sampled at first and final keys.
 /// </summary>
 internal static class Ee2NifProofScenario
 {
@@ -265,6 +269,49 @@ internal static class Ee2NifProofScenario
             "samples asserted by Ee2KfScaleAnimationImportTests); no lighting blowout or artifacts"),
     ];
 
+    /// <summary>
+    /// C4i legacy proof plan: two rigid DDF-bound targets driven by 10.0.1.0
+    /// clips (NetImmerse File Format header, legacy controller flags 0x0C and
+    /// 0x05, trimmed "end " text keys). Guntank wheels are rotation-only
+    /// channels; the palisade leaves are translation-only channels.
+    /// </summary>
+    public static readonly (string Key, string Check)[] LegacyKfCapturePlan =
+    [
+        ("LLM11_guntank",
+            "Gun tank (rigid): complete hull, turret, and six road wheels at their bind rotations; " +
+            "upright with +X forward after the source conversion; textures mapped coherently"),
+        ("bld_palisade1_gate",
+            "Palisade gate (rigid): timber palisade with both gate leaves at their closed bind " +
+            "positions; upright; textures mapped coherently"),
+    ];
+
+    public static readonly (string ModelKey, string KfPath, float TimeSeconds, string Check)[] LegacyKfAnimatedCapturePlan =
+    [
+        ("LLM11_guntank", "Graphics/Vehicles/LLM11_guntank_idle.kf", 0f,
+            "idle at time 0: wheels at their first keys, matching the static baseline silhouette"),
+        ("LLM11_guntank", "Graphics/Vehicles/LLM11_guntank_idle.kf", 0.7833f,
+            "idle mid-clip: constant root channels hold the pose; wheels that carry idle keys stay " +
+            "at their keyed angles, so the frame reads identical to 0000 (the idle clip holds the " +
+            "wheels still while the tank stands)"),
+        ("LLM11_guntank", "Graphics/Vehicles/LLM11_guntank_walk.kf", 0f,
+            "walk at time 0: same hull pose as idle; wheels at their first walk keys"),
+        ("LLM11_guntank", "Graphics/Vehicles/LLM11_guntank_walk.kf", 0.7833f,
+            "walk mid-clip: the track silhouette shifts along the wheel line (178 px localized diff vs idle; " +
+            "the skirts occlude the hubs, so wheel rotation is asserted numerically by Ee2LegacyKfImportTests, " +
+            ">1 degree at mid-clip); hull otherwise held"),
+        ("bld_palisade1_gate", "Graphics/Building/bld_palisade1_gate_open.kf", 0f,
+            "open at time 0: both gate leaves at the closed bind pose, matching the static baseline"),
+        ("bld_palisade1_gate", "Graphics/Building/bld_palisade1_gate_open.kf", 0.9667f,
+            "open final key: the two gate leaves slid in opposite directions along the gate axis " +
+            "(translation-only channels; deltas asserted by Ee2LegacyKfImportTests), leaving the " +
+            "gateway open"),
+        ("bld_palisade1_gate", "Graphics/Building/bld_palisade1_gate_close.kf", 0f,
+            "close at time 0: leaves at the open pose, matching the open final-key frame"),
+        ("bld_palisade1_gate", "Graphics/Building/bld_palisade1_gate_close.kf", 0.9667f,
+            "close final key: both leaves returned to the closed bind pose, matching the static " +
+            "baseline silhouette"),
+    ];
+
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
     {
         return RunCore(
@@ -276,6 +323,30 @@ internal static class Ee2NifProofScenario
             AnimatedCapturePlan,
             guideTitle: null,
             guidePreamble: null);
+    }
+
+    public static int RunLegacyKfProof(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
+    {
+        return RunCore(
+            installation,
+            config,
+            reporter,
+            "ee2-legacy-kf-proof",
+            LegacyKfCapturePlan,
+            LegacyKfAnimatedCapturePlan,
+            guideTitle: "# EE2 legacy KF proof - validation guide",
+            guidePreamble:
+            [
+                "Rigid DDF-bound proof clips from the C4i legacy seam: the KF entries carry the",
+                "NetImmerse File Format, Version 10.0.1.0 header (no user-version word, root-list",
+                "footer), the readers are the C4c block types, and the import path accepts the cooked",
+                "legacy controller flags 0x0C and 0x05 while trimming text-key values before the",
+                "start/end comparison. Uppercase .KF lookup resolves through the case-insensitive",
+                "zip file system. Skinned legacy targets and the NetImmerse 4.2.2.0 container are",
+                "rejected with owning-phase diagnostics (asserted by Ee2LegacyKfImportTests). The",
+                "walk/idle wheel rotation and gate-leaf translation samples are asserted by",
+                "Ee2LegacyKfImportTests; these captures show the same bindings visually.",
+            ]);
     }
 
     public static int RunPropertyProof(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)

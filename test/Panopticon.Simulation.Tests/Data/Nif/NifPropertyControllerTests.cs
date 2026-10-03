@@ -29,6 +29,46 @@ public sealed class NifPropertyControllerTests
     }
 
     [Fact]
+    public void UVControllerPreservesItsDataReference()
+    {
+        var builder = new NifTestDataBuilder();
+        var controllerType = builder.AddBlockType("NiUVController");
+        var dataType = builder.AddBlockType("NiUVData");
+
+        builder.AddBlock(controllerType, NifTestPropertyAnimation.UVController(
+            data: 1, flags: 0x2C, stopTime: 2.0f));
+        builder.AddBlock(dataType, NifTestPropertyAnimation.UVData(
+            uTranslationKeys: [(0.0f, 0.0f, null, null), (2.0f, 1.0f, null, null)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var file = Read(builder.Build());
+
+        var controller = (NifUVController)file.Blocks[0];
+        Assert.Equal(1, controller.DataReference);
+        Assert.Equal(0x2C, controller.Flags);
+        Assert.Equal(2.0f, controller.StopTime);
+    }
+
+    [Fact]
+    public void UVControllerWithWrongDataBlockFails()
+    {
+        var builder = new NifTestDataBuilder();
+        var controllerType = builder.AddBlockType("NiUVController");
+        var dataType = builder.AddBlockType("NiFloatData");
+
+        builder.AddBlock(controllerType, NifTestPropertyAnimation.UVController(
+            data: 1, stopTime: 2.0f));
+        builder.AddBlock(dataType, NifTestPropertyAnimation.FloatData(
+            [(0.0f, 1.0f, null, null)]));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var ex = Assert.Throws<InvalidDataException>(() => Read(builder.Build()));
+
+        Assert.Contains("NifUVController", ex.Message);
+        Assert.Contains("UV data", ex.Message);
+    }
+
+    [Fact]
     public void VisControllerAndVisDataRoundTripExactly()
     {
         var file = Read(VisClipBuilder().Build());

@@ -5,7 +5,8 @@ using System.IO;
 namespace Panopticon.Tests.Data.Nif;
 
 /// <summary>
-/// Builds synthetic NIF 10.1.0.0 byte streams in code. No game bytes.
+/// Builds synthetic NIF 10.1.0.0 and 10.0.1.0 byte streams in code.
+/// No game bytes.
 /// </summary>
 public sealed class NifTestDataBuilder
 {
@@ -16,6 +17,13 @@ public sealed class NifTestDataBuilder
 
     public string HeaderString { get; set; } = "Gamebryo File Format, Version 10.1.0.0";
     public uint Version { get; set; } = 0x0A010000;
+
+    /// <summary>
+    /// False for 10.0.1.0 headers, which carry no user-version word after
+    /// the version.
+    /// </summary>
+    public bool HasUserVersion { get; set; } = true;
+
     public uint UserVersion { get; set; } = 0;
     public uint NumGroups { get; set; } = 0;
 
@@ -45,7 +53,10 @@ public sealed class NifTestDataBuilder
 
         writer.WriteString(HeaderString + "\n");
         writer.WriteUInt32(Version);
-        writer.WriteUInt32(UserVersion);
+        if (HasUserVersion)
+        {
+            writer.WriteUInt32(UserVersion);
+        }
         writer.WriteUInt32((uint)_blockBodies.Count);
         writer.WriteUInt16((ushort)_blockTypes.Count);
         foreach (var typeName in _blockTypes)
@@ -345,10 +356,19 @@ public static class NifTestBlocks
 
     public static byte[] Footer()
     {
+        return RootsFooter(0);
+    }
+
+    public static byte[] RootsFooter(params int[] roots)
+    {
         var stream = new MemoryStream();
         var writer = new NifBodyWriter(stream);
-        writer.WriteUInt32(1);
-        writer.WriteUInt32(0);
+        writer.WriteUInt32((uint)roots.Length);
+        foreach (var root in roots)
+        {
+            writer.WriteInt32(root);
+        }
+
         return stream.ToArray();
     }
 }
@@ -934,6 +954,24 @@ public static class NifTestKeyframe
 
 public static class NifTestPropertyAnimation
 {
+    public static byte[] UVController(
+        int data = -1,
+        ushort flags = 0x2C,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
     public static byte[] VisController(
         int data = -1,
         ushort flags = 0x2C,

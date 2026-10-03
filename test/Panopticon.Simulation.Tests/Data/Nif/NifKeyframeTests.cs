@@ -53,8 +53,8 @@ public sealed class NifKeyframeTests
         var file = Read(FullClipBuilder().Build());
 
         Assert.Equal(6, file.Blocks.Count);
-        // KF files carry no NiNode blocks, so Roots stays empty.
-        Assert.Empty(file.Roots);
+        // The root-list footer points at the controller sequence.
+        Assert.Equal([0], file.Roots);
 
         var sequence = (NifControllerSequence)file.Blocks[0];
         Assert.Equal("EMPTY_SEQUENCE_AT_0f", sequence.Name);
@@ -280,5 +280,153 @@ public sealed class NifKeyframeTests
 
         var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
         Assert.Contains("Linear (1), Tbc (3), and XyzRotation (4)", ex.Message);
+    }
+
+    private static NifTestDataBuilder LegacyClipBuilder()
+    {
+        var builder = new NifTestDataBuilder
+        {
+            HeaderString = NifHeader.LegacyHeaderString,
+            Version = NifHeader.LegacyVersion,
+            HasUserVersion = false,
+        };
+        var sequenceType = builder.AddBlockType("NiControllerSequence");
+        builder.AddBlockType("NiTextKeyExtraData");
+        var controllerType = builder.AddBlockType("NiKeyframeController");
+        var dataType = builder.AddBlockType("NiKeyframeData");
+
+        builder.AddBlock(sequenceType, NifTestKeyframe.ControllerSequence(
+            "LLM11_guntank_idle",
+            "Dummy01",
+            1,
+            ("wheel_F", 2)));
+        builder.AddBlock(1, NifTestKeyframe.TextKeyExtraData(
+            "",
+            (0.0f, "start"), (1.5667f, "end ")));
+        builder.AddBlock(controllerType, NifTestKeyframe.KeyframeController(
+            data: 3, flags: 0x0C, stopTime: 1.5667f));
+        builder.AddBlock(dataType, NifTestKeyframe.KeyframeData(
+            quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f), (1.5667f, 0.0f, 0.7071f, 0.0f, 0.7071f)],
+            translationKeys: [(0.0f, (1, 2, 3), null, null)],
+            scaleKeys: [(0.0f, 1.0f, null, null)]));
+        // Callers append their own footer (root lists differ per test).
+        return builder;
+    }
+
+    [Fact]
+    public void LegacyQuaternionClipParsesWithTheSameReaders()
+    {
+        var builder = LegacyClipBuilder();
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0));
+        var file = Read(builder.Build());
+
+        Assert.False(file.Header.HasUserVersion);
+        Assert.Equal(0u, file.Header.UserVersion);
+        Assert.Equal([0], file.Roots);
+
+        var sequence = Assert.IsType<NifControllerSequence>(file.Blocks[0]);
+        Assert.Equal("LLM11_guntank_idle", sequence.Name);
+        Assert.Equal("Dummy01", sequence.AccumulationRootName);
+        Assert.Equal(1, sequence.TextKeysReference);
+        var controlled = Assert.Single(sequence.ControlledBlocks);
+        Assert.Equal("wheel_F", controlled.TargetName);
+        Assert.Equal(2, controlled.ControllerReference);
+
+        var textKeys = Assert.IsType<NifTextKeyExtraData>(file.Blocks[1]);
+        // The corpus writes "end " with a trailing space; the parser keeps it
+        // verbatim and the import policy (WI-C4i-03) trims before comparing.
+        Assert.Equal("end ", textKeys.Keys[1].Value);
+
+        var controller = Assert.IsType<NifKeyframeController>(file.Blocks[2]);
+        Assert.Equal(0x0C, controller.Flags);
+        Assert.Equal(1.5667f, controller.StopTime);
+        Assert.Equal(3, controller.DataReference);
+
+        var data = Assert.IsType<NifKeyframeData>(file.Blocks[3]);
+        Assert.NotNull(data.QuaternionRotationKeys);
+        Assert.Equal(NifKeyType.Linear, data.QuaternionRotationKeys.Interpolation);
+        Assert.Equal(2, data.QuaternionRotationKeys.Keys.Count);
+        Assert.Equal(
+            new Quaternion(0.7071f, 0.0f, 0.7071f, 0.0f),
+            data.QuaternionRotationKeys.Keys[1].Value);
+        Assert.NotNull(data.TranslationKeys);
+        Assert.NotNull(data.ScaleKeys);
+    }
+
+    [Fact]
+    public void LegacyXyzQuadraticRotationParsesWithTangents()
+    {
+        var builder = LegacyClipBuilder();
+        // Append a second controller+data pair (file indices 4 and 5) so the
+        // XYZ variant parses alongside the quaternion system.
+        builder.AddBlock(2, NifTestKeyframe.KeyframeController(
+            data: 5, flags: 0x05, stopTime: 1.5667f));
+        builder.AddBlock(3, NifTestKeyframe.KeyframeData(
+            xyzRotationOrder: 0.0f,
+            xRotationKeys: [(0.0f, 2.3865f, 0.5f, -0.25f), (1.5667f, 2.0f, 0.1f, -0.1f)],
+            yRotationKeys: [(0.0f, 0.5080f, 0.1f, -0.05f)],
+            zRotationKeys: [(0.0f, -1.1135f, 0.2f, -0.1f), (1.5667f, -1.0f, 0.05f, -0.05f)]));
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0));
+
+        var file = Read(builder.Build());
+        Assert.Equal(6, file.Blocks.Count);
+
+        var data = Assert.IsType<NifKeyframeData>(file.Blocks[5]);
+        Assert.Null(data.QuaternionRotationKeys);
+        Assert.Equal(0.0f, data.XyzRotationOrder);
+        Assert.NotNull(data.XRotationKeys);
+        Assert.Equal(NifKeyType.Quadratic, data.XRotationKeys.Interpolation);
+        Assert.Equal(0.5f, data.XRotationKeys.Keys[0].Forward);
+        Assert.Equal(-0.25f, data.XRotationKeys.Keys[0].Backward);
+        Assert.NotNull(data.ZRotationKeys);
+        Assert.Equal(2, data.ZRotationKeys.Keys.Count);
+    }
+
+    [Fact]
+    public void LegacyTwoRootFooterParsesBothRoots()
+    {
+        var builder = LegacyClipBuilder();
+        builder.AddBlock(0, NifTestKeyframe.ControllerSequence(
+            "LLM11_guntank_walk",
+            "Dummy01",
+            1,
+            ("wheel_r", 2)));
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0, 4));
+
+        var file = Read(builder.Build());
+
+        Assert.Equal([0, 4], file.Roots);
+        var second = Assert.IsType<NifControllerSequence>(file.Blocks[4]);
+        Assert.Equal("LLM11_guntank_walk", second.Name);
+    }
+
+    [Fact]
+    public void LegacyWrongTypeDataReferenceFailsWithContext()
+    {
+        var builder = LegacyClipBuilder();
+        // Append a controller pointing at the text-key block instead of data.
+        builder.AddBlock(2, NifTestKeyframe.KeyframeController(
+            data: 1, flags: 0x0C, stopTime: 1.5667f));
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0));
+
+        var ex = Assert.Throws<InvalidDataException>(() => Read(builder.Build()));
+        Assert.Contains("as data", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyUnsupportedBlockNameFailsExplicitly()
+    {
+        // NiDitherProperty has no reader in any phase. Legacy material-
+        // color, visibility, UV, and morpher controllers do parse
+        // (C4e/C4g block types) and are rejected with owning-phase
+        // diagnostics by the animation importer instead.
+        var builder = LegacyClipBuilder();
+        var ditherType = builder.AddBlockType("NiDitherProperty");
+        builder.AddBlock(ditherType, [0, 0, 0, 0]);
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0));
+
+        var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
+        Assert.Contains("NiDitherProperty", ex.Message);
+        Assert.Contains("unsupported type", ex.Message);
     }
 }

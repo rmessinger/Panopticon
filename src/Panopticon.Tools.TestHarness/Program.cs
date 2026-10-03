@@ -271,6 +271,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.Ee2LegacyKfProof)
+        {
+            Environment.ExitCode = Ee2NifProofScenario.RunLegacyKfProof(installation, config, reporter);
+            return;
+        }
+
         var plan = ScenarioBuilder.BuildReplayRun(installation, config, reporter);
         if (plan == null)
         {

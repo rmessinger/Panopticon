@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using Panopticon.IO;
 
 namespace Panopticon.Content.Importing.Nif;
@@ -34,6 +35,17 @@ internal sealed class NifAnimationImporter : IAnimationImporter
         if (modelFile is null)
         {
             return null;
+        }
+
+        if (modelFile.Blocks.Any(
+                block => block is FileFormats.Nif.NifTriShape shape && shape.SkinInstanceReference >= 0))
+        {
+            // C4i proves rigid clips only; skinned unit animation is the
+            // C4d skinning consumer's domain, so the seam fails loudly
+            // instead of importing channels through the rigid path.
+            throw new NotSupportedException(
+                $"NIF animation '{key}': target model '{animationKey.ModelName}' carries skinned shapes; " +
+                "skinned unit animation binding is C4d work and is not imported by this rigid seam.");
         }
 
         var kfEntry = context.FileSystem.GetFile(animationKey.KfPath);

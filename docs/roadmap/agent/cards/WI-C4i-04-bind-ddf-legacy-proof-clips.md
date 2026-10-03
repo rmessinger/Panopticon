@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C4i-04` |
 | Roadmap phase | [Track C · C4i](../../track-c-external-assets.md): EE2 legacy KF formats |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-C4i-03`, `WI-C4c-05` |
