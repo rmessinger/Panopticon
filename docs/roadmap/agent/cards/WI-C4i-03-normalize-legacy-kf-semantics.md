@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-C4i-03` |
 | Roadmap phase | [Track C · C4i](../../track-c-external-assets.md): EE2 legacy KF formats |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-C4i-02`, `WI-C4c-04` |

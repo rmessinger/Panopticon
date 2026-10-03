@@ -555,6 +555,92 @@ public sealed class NifAnimationImporterTests
         Assert.Contains("flags", ex.Message);
     }
 
+    [Theory]
+    [InlineData(0x0C)]
+    [InlineData(0x05)]
+    public void LegacyProofControllerFlagsImport(ushort flags)
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var animation = Import(SingleChannelKf(data, duration: 2.0f, flags: flags, legacy: true));
+
+        Assert.NotNull(animation);
+        Assert.Equal(TimeSpan.FromSeconds(2.0f), animation!.Duration);
+    }
+
+    [Fact]
+    public void LegacyTrailingSpaceEndTextKeyImports()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var animation = Import(SingleChannelKf(
+            data,
+            duration: 2.0f,
+            textKeys: [(0.0f, "start"), (2.0f, "end ")],
+            flags: 0x0C,
+            legacy: true));
+
+        Assert.NotNull(animation);
+        Assert.Equal(TimeSpan.FromSeconds(2.0f), animation!.Duration);
+    }
+
+    [Fact]
+    public void UnknownLegacyFlagIsRejectedNamingFlagAndAsset()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var ex = Assert.Throws<NotSupportedException>(
+            () => Import(SingleChannelKf(data, duration: 2.0f, flags: 0x18, legacy: true)));
+
+        Assert.Contains(AnimationKey, ex.Message);
+        Assert.Contains("0x0018", ex.Message);
+        Assert.Contains("0x0C and 0x05", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyFlagsAreRejectedForModernClips()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var ex = Assert.Throws<NotSupportedException>(
+            () => Import(SingleChannelKf(data, duration: 2.0f, flags: 0x05)));
+
+        Assert.Contains("0x2C", ex.Message);
+    }
+
+    [Fact]
+    public void UppercaseKfExtensionResolvesThroughZipLookup()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+        var kfBytes = SingleChannelKf(data, duration: 2.0f, flags: 0x0C, legacy: true);
+
+        using var archive = new MemoryStream();
+        using (var writer = new System.IO.Compression.ZipArchive(archive, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var model = writer.CreateEntry($"cache/nifcache/{ModelName}.nifcache");
+            using (var modelStream = model.Open())
+            {
+                modelStream.Write(ModelBytes(), 0, ModelBytes().Length);
+            }
+
+            // The DDF stack references legacy clips with uppercase .KF
+            // extensions; the archive entry keeps that exact casing.
+            var clip = writer.CreateEntry("anims/clip.KF");
+            using (var clipStream = clip.Open())
+            {
+                clipStream.Write(kfBytes, 0, kfBytes.Length);
+            }
+        }
+
+        archive.Position = 0;
+        var animation = new NifAnimationImporter().ImportAnimation(
+            ModelName + "#kf=anims/clip.KF",
+            new AssetImportContext(new ZipFileSystem(archive), null));
+
+        Assert.NotNull(animation);
+        Assert.Equal(TimeSpan.FromSeconds(2.0f), animation!.Duration);
+    }
+
     [Fact]
     public void ChainedControllerIsRejected()
     {
@@ -990,9 +1076,17 @@ public sealed class NifAnimationImporterTests
         string accumulationRoot = "ROOT",
         IReadOnlyList<(float Time, string Value)>? textKeys = null,
         ushort flags = 0x2C,
-        float stopTime = float.NaN)
+        float stopTime = float.NaN,
+        bool legacy = false)
     {
         var builder = new NifTestDataBuilder();
+        if (legacy)
+        {
+            builder.HeaderString = FileFormats.Nif.NifHeader.LegacyHeaderString;
+            builder.Version = FileFormats.Nif.NifHeader.LegacyVersion;
+            builder.HasUserVersion = false;
+        }
+
         var sequenceType = builder.AddBlockType("NiControllerSequence");
         var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
         var controllerType = builder.AddBlockType("NiKeyframeController");
