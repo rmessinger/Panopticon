@@ -4,7 +4,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Panopticon.Content.Importing;
+using Panopticon.Content.Importing.Nif;
 using Panopticon.FileFormats.Nif;
+using Panopticon.IO;
 using Xunit;
 
 namespace Panopticon.Tests.Content.Importing;
@@ -256,5 +259,40 @@ public sealed class Ee2ParticleEffectInventoryTests
                 file.Blocks,
                 block => block is NifParticleSystemController);
         }
+    }
+
+    [Fact]
+    public void MuzzleBindingTargetsFiringTagNotGeometry()
+    {
+        var root = InstallRoot();
+        using var graphics = new ZipFileSystem(Path.Combine(root, GraphicsArchiveRelativePath));
+        using var textures = new ZipFileSystem(Path.Combine(root, "zips/textures.zip"));
+        using var fileSystem = new CompositeFileSystem(graphics, textures);
+
+        var imported = new NifModelImporter().ImportModel(
+            "lhm13_mainbattletank",
+            new AssetImportContext(fileSystem, language: null))
+            ?? throw new InvalidOperationException("proof model import returned null");
+
+        var binding = NifParticleEffectBinding.GetProofBindings()
+            .Single(b => b.EffectName == "fx_muzzle_tank");
+
+        // The firing tag comes from the turret or unit DDF tag banks (tag_muzzle_N); the
+        // model's bare muzzle node is the barrel geometry pivot, not a firing tag.
+        Assert.Equal("tag_muzzle_1", binding.TargetBoneName);
+
+        var matches = imported.Skeleton.Bones
+            .Select((bone, index) => (bone, index))
+            .Where(entry => string.Equals(entry.bone.Name, binding.TargetBoneName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var tag = Assert.Single(matches);
+
+        Assert.True(
+            imported.SubObjects.All(subObject => subObject.ParentBoneIndex != tag.index),
+            "the firing tag must parent no geometry");
+
+        Assert.Contains(
+            imported.Skeleton.Bones,
+            bone => string.Equals(bone.Name, "muzzle", StringComparison.OrdinalIgnoreCase));
     }
 }

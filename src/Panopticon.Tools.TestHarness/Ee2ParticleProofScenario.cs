@@ -32,7 +32,7 @@ namespace Panopticon.Tools.TestHarness;
 /// into template sizes, speeds, and volumes) and render through the existing
 /// particle runtime (FXParticleSystemTemplate -&gt; Scene3D.ParticleSystemManager
 /// -&gt; RenderPipeline particle bucket). fx_explosion_1 and fx_watersplash_1
-/// spawn at fixed world origins; fx_muzzle_tank attaches to the Muzzle tag of
+/// spawn at fixed world origins; fx_muzzle_tank attaches to the tag_muzzle_1 firing tag of
 /// the imported lhm13_mainbattletank model through the follow-matrix overload.
 /// Every frame replays from t=0 under a seeded random scope, so repeated runs
 /// produce identical captures. No EE2 asset is copied or committed.
@@ -74,7 +74,7 @@ internal static class Ee2ParticleProofScenario
             "main battle tank at the fixed three-quarter yaw; the first burst's puffs are " +
             "sub-pixel because every muzzle system grows from size zero"),
         ("fx_muzzle_tank", 0.5f,
-            "small smoke puffs (tens of px) at the resolved Muzzle tag beside the barrel; " +
+            "small smoke puffs (tens of px) at the resolved tag_muzzle_1 firing tag at the barrel tip; " +
             "the tank itself unchanged"),
         ("fx_muzzle_tank", 1f,
             "puffs grown larger (grow windows 0.33-1.25 s at EffectScale 0.05) and spread " +
@@ -183,7 +183,7 @@ internal static class Ee2ParticleProofScenario
         }
 
         // The muzzle proof model: same import pipeline as the other EE2 model
-        // proofs; its Muzzle tag hosts the follow-matrix smoke system.
+        // proofs; its tag_muzzle_1 firing tag hosts the follow-matrix smoke system.
         var importContext = new AssetImportContext(compositeFileSystem, language: null);
         var muzzleBinding = bindings.Single(b => b.EffectName == "fx_muzzle_tank");
         var muzzleModelImporter = new NifModelImporter();
@@ -243,7 +243,7 @@ internal static class Ee2ParticleProofScenario
                 "bucket. DDF world scales (explosion 0.005, splash 0.15) are baked into template",
                 "sizes, speeds, and emitter volumes because the runtime does not scale particle",
                 "quad sizes by the world matrix. Muzzle frames render lhm13_mainbattletank through",
-                "the C4 model pipeline with the smoke following its Muzzle tag via the",
+                "the C4 model pipeline with the smoke following its tag_muzzle_1 firing tag via the",
                 "follow-matrix overload; explosion and splash frames spawn at the world origin.",
                 "Frame 0000 is the first emitted burst (one 30 Hz tick), not an empty spawn; each",
                 "frame replays from t=0 under ParticleSystemUtility.BeginSeedScope seeded from the",

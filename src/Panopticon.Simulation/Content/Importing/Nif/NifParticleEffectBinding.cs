@@ -111,8 +111,9 @@ public sealed class NifParticleEffectBinding
     /// <summary>
     /// Proof bindings from the verified install: explosion via ammo ExplosionSequence, muzzle
     /// smoke via the weapon-table MuzzleSmokeEffect, water splash via bridge SplashNifNames.
-    /// The muzzle tag name is supplied by the firing object per the weapon-table contract, so
-    /// the binding carries the conventional "Muzzle" tag for the proof model.
+    /// The firing tag comes from the object's turret or unit DDF tag banks, which name
+    /// tag_muzzle_N nodes; the proof model's firing tag is tag_muzzle_1. The model's bare
+    /// muzzle node is the barrel geometry pivot (mid-barrel), not a firing tag.
     /// </summary>
     public static IReadOnlyList<NifParticleEffectBinding> GetProofBindings()
     {
@@ -130,7 +131,7 @@ public sealed class NifParticleEffectBinding
             new NifParticleEffectBinding(
                 "fx_muzzle_tank",
                 "fx_muzzle_tank.nif",
-                targetBoneName: "Muzzle",
+                targetBoneName: "tag_muzzle_1",
                 followTarget: true,
                 localOffset: Vector3.Zero,
                 worldScale: 0.05f,

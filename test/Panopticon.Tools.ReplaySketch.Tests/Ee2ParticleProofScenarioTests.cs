@@ -126,7 +126,7 @@ public sealed class Ee2ParticleProofScenarioTests
             var captures = new List<(string FileName, string Check)>
             {
                 ("fx_explosion_1-particle-0500.png", "expanded fading cloud"),
-                ("fx_muzzle_tank-particle-0000.png", "first smoke burst at the Muzzle tag"),
+                ("fx_muzzle_tank-particle-0000.png", "first smoke burst at the tag_muzzle_1 firing tag"),
                 ("fx_watersplash_1-particle-1000.png", "collapsing splash"),
             };
 
