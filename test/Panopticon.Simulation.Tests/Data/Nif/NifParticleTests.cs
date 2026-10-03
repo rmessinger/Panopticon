@@ -11,13 +11,13 @@ namespace Panopticon.Tests.Data.Nif;
 
 public sealed class NifParticleTests
 {
-    private static NifFile Read(byte[] bytes)
+    internal static NifFile Read(byte[] bytes)
     {
         using var stream = new MemoryStream(bytes);
         return NifFile.Read(stream);
     }
 
-    private static void WriteGeometryDataBase(
+    internal static void WriteGeometryDataBase(
         NifBodyWriter body,
         int numVertices)
     {
@@ -39,7 +39,7 @@ public sealed class NifParticleTests
         body.WriteUInt16(0);
     }
 
-    private static byte[] ParticlesData(
+    internal static byte[] ParticlesData(
         int numVertices = 3,
         bool hasRadii = true,
         ushort activeCount = 3,
@@ -83,7 +83,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] ParticleSystemController(
+    internal static byte[] ParticleSystemController(
         int target,
         int emitter,
         int particleModifier = -1,
@@ -93,24 +93,30 @@ public sealed class NifParticleTests
         float stopTime = 1.5f,
         float speed = 120.0f,
         float birthRate = 300.0f,
-        float lifetime = 0.5f)
+        float lifetime = 0.5f,
+        float speedVariation = 1.0f,
+        float declination = (float)Math.PI,
+        float declinationVariation = (float)Math.PI,
+        float planarAngleVariation = (float)Math.PI,
+        float initialSize = 5.0f,
+        (float X, float Y, float Z) emitterDimensions = default)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
         body.WriteUInt32(0);
         NifTestKeyframe.WriteTimeControllerPrefix(body, -1, 0x2C, 1.0f, 0.0f, 0.0f, stopTime, target);
         body.WriteSingle(speed);
-        body.WriteSingle(1.0f);
+        body.WriteSingle(speedVariation);
+        body.WriteSingle(declination);
+        body.WriteSingle(declinationVariation);
         body.WriteSingle((float)Math.PI);
-        body.WriteSingle((float)Math.PI);
-        body.WriteSingle((float)Math.PI);
-        body.WriteSingle((float)Math.PI);
+        body.WriteSingle(planarAngleVariation);
         NifTestBlocks.WriteVector3(body, (1, 0, 0));
         body.WriteSingle(1.0f);
         body.WriteSingle(1.0f);
         body.WriteSingle(1.0f);
         body.WriteSingle(1.0f);
-        body.WriteSingle(5.0f);
+        body.WriteSingle(initialSize);
         body.WriteSingle(0.0f);
         body.WriteSingle(0.15f);
         body.WriteByte(0);
@@ -119,7 +125,7 @@ public sealed class NifParticleTests
         body.WriteSingle(0.0f);
         body.WriteByte(1);
         body.WriteByte(0);
-        NifTestBlocks.WriteVector3(body, (0, 0, 0));
+        NifTestBlocks.WriteVector3(body, emitterDimensions);
         body.WriteInt32(emitter);
         body.WriteUInt16(0);
         body.WriteSingle(1.0f);
@@ -138,7 +144,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] ParticleColorModifier(
+    internal static byte[] ParticleColorModifier(
         int controller,
         int colorData,
         int next = -1)
@@ -152,7 +158,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] ParticleGrowFade(
+    internal static byte[] ParticleGrowFade(
         int controller,
         float growTime,
         float fadeTime,
@@ -168,7 +174,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] Gravity(
+    internal static byte[] Gravity(
         int controller,
         float force,
         uint forceType = 0,
@@ -187,7 +193,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] ColorData(params (float Time, float R, float G, float B, float A)[] keys)
+    internal static byte[] ColorData(params (float Time, float R, float G, float B, float A)[] keys)
     {
         var stream = new MemoryStream();
         var body = new NifBodyWriter(stream);
@@ -209,7 +215,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] StencilProperty(
+    internal static byte[] StencilProperty(
         string name = "stencil",
         ushort flags = 3,
         byte enabled = 1)
@@ -226,7 +232,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] TriStripsData(
+    internal static byte[] TriStripsData(
         ushort numTriangles,
         int[][] strips,
         int numVertices = 4)
@@ -253,7 +259,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] CookedGeometryWithoutExtras(
+    internal static byte[] CookedGeometryWithoutExtras(
         string name,
         int data)
     {
@@ -274,7 +280,7 @@ public sealed class NifParticleTests
         return stream.ToArray();
     }
 
-    private static byte[] ParticleFileBytes(
+    internal static byte[] ParticleFileBytes(
         byte[]? controller = null,
         byte[]? particlesData = null,
         byte[]? colorModifier = null,
