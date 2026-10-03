@@ -954,6 +954,24 @@ public static class NifTestKeyframe
 
 public static class NifTestPropertyAnimation
 {
+    public static byte[] UVController(
+        int data = -1,
+        ushort flags = 0x2C,
+        float frequency = 1.0f,
+        float phase = 0.0f,
+        float startTime = 0.0f,
+        float stopTime = 0.0f,
+        int next = -1,
+        int target = -1)
+    {
+        var stream = new MemoryStream();
+        var body = new NifBodyWriter(stream);
+        body.WriteUInt32(0);
+        NifTestKeyframe.WriteTimeControllerPrefix(body, next, flags, frequency, phase, startTime, stopTime, target);
+        body.WriteInt32(data);
+        return stream.ToArray();
+    }
+
     public static byte[] VisController(
         int data = -1,
         ushort flags = 0x2C,

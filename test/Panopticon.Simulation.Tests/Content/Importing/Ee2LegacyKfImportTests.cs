@@ -299,6 +299,45 @@ public sealed class Ee2LegacyKfImportTests
         }
     }
 
+    [Theory]
+    [InlineData("Graphics/Humans/sh_gunattack01_a.KF")]
+    [InlineData("Graphics/Humans/sh_swordrun02.KF")]
+    [InlineData("Graphics/Vehicles/lha2_onager_reload.KF")]
+    public void NetImmerse4220ClipsAreRejectedBeforeBlockParsing(string kfPath)
+    {
+        var (fileSystem, _) = OpenArchive();
+        using var _ = fileSystem;
+
+        var entry = fileSystem.GetFile(kfPath)
+            ?? throw new InvalidOperationException($"Missing archive entry '{kfPath}'.");
+        using var stream = entry.Open();
+        using var buffered = new MemoryStream();
+        stream.CopyTo(buffered);
+        buffered.Position = 0;
+
+        var ex = Assert.Throws<NotSupportedException>(
+            () => FileFormats.Nif.NifFile.Read(buffered));
+
+        Assert.Contains("4.2.2.0", ex.Message);
+        Assert.Contains("block directory", ex.Message);
+    }
+
+    [Fact]
+    public void SkinnedLegacyTargetIsBlockedOnTheC4dSeam()
+    {
+        var (fileSystem, importer) = OpenArchive();
+        using var _ = fileSystem;
+        var context = new AssetImportContext(fileSystem, language: null);
+
+        var ex = Assert.Throws<NotSupportedException>(
+            () => importer.ImportAnimation(
+                "lhi11_rifleman_me#kf=Graphics/Humans/sh_rifleman_walk01.kf",
+                context));
+
+        Assert.Contains("skinned", ex.Message);
+        Assert.Contains("C4d", ex.Message);
+    }
+
     private sealed class ConstantRandom : IRandom
     {
         public uint Seed => 0;

@@ -49,6 +49,18 @@ internal static class NifAnimationConverter
         foreach (var controlledBlock in sequence.ControlledBlocks)
         {
             var block = file.Blocks[controlledBlock.ControllerReference];
+
+            if (file.Header.Version == NifHeader.LegacyVersion &&
+                block is not NifKeyframeController)
+            {
+                // C4i proves rigid keyframe clips only; the legacy
+                // property and morph families stay with their owners.
+                throw new NotSupportedException(
+                    $"NIF animation '{assetKey}': controlled target '{controlledBlock.TargetName}' " +
+                    $"uses a {block.GetType().Name}; legacy 10.0.1.0 {DescribeLegacyFamily(block)} " +
+                    $"clips are {GetLegacyOwningPhase(block)} work and are not imported by the C4i rigid seam.");
+            }
+
             if (block is NifGeomMorpherController morpher)
             {
                 NifMorphConverter.ConvertWeightChannel(
@@ -121,6 +133,20 @@ internal static class NifAnimationConverter
             TimeSpan.FromSeconds(duration),
             channels,
             morphChannels.Count == 0 ? null : morphChannels);
+    }
+
+    private static string DescribeLegacyFamily(NifBlock block)
+    {
+        return block switch
+        {
+            NifGeomMorpherController => "morph",
+            _ => "property",
+        };
+    }
+
+    private static string GetLegacyOwningPhase(NifBlock block)
+    {
+        return block is NifGeomMorpherController ? "C4g" : "C4e";
     }
 
     private static float ReadDuration(NifFile file, NifControllerSequence sequence, string assetKey)

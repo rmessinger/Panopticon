@@ -75,6 +75,27 @@ public sealed record NifVisController : NifTimeController
 }
 
 /// <summary>
+/// NiUVController: time-controller fields plus a reference to NiUVData.
+/// The legacy 10.0.1.0 KF census carries one such clip; conversion leaves
+/// UV animation to C4e, so the parser only preserves the reference.
+/// </summary>
+public sealed record NifUVController : NifTimeController
+{
+    public int DataReference { get; }
+
+    private NifUVController(NifBinaryReader reader)
+        : base(reader)
+    {
+        DataReference = reader.ReadBlockReference("Data");
+    }
+
+    internal static NifUVController Read(NifBinaryReader reader)
+    {
+        return new NifUVController(reader);
+    }
+}
+
+/// <summary>
 /// NiAlphaController at 10.1.0.0: time-controller fields plus a reference
 /// to NiFloatData. EE2 files use flags 0x28 with quadratic keys.
 /// </summary>

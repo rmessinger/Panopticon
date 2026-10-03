@@ -642,6 +642,69 @@ public sealed class NifAnimationImporterTests
     }
 
     [Fact]
+    public void LegacyMaterialColorControllerIsRejectedNamingC4e()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiMaterialColorController",
+            NifTestPropertyAnimation.MaterialColorController(data: 3, targetColor: 0, stopTime: 2.0f),
+            "NiPosData",
+            NifTestPropertyAnimation.PosData([(0.0f, (0, 0, 0), null, null)]),
+            targetName: "hull\nPROP\nNiMaterialProperty",
+            legacy: true)));
+
+        Assert.Contains("NifMaterialColorController", ex.Message);
+        Assert.Contains("C4e", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyVisControllerIsRejectedNamingC4e()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, stopTime: 2.0f),
+            "NiVisData",
+            NifTestPropertyAnimation.VisData((0.0f, 0), (2.0f, 1)),
+            targetName: "child",
+            legacy: true)));
+
+        Assert.Contains("NifVisController", ex.Message);
+        Assert.Contains("C4e", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyUVControllerIsRejectedNamingC4e()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiUVController",
+            NifTestPropertyAnimation.UVController(data: 3, stopTime: 2.0f),
+            "NiUVData",
+            NifTestPropertyAnimation.UVData(
+                uTranslationKeys: [(0.0f, 0.0f, null, null), (2.0f, 1.0f, null, null)]),
+            targetName: "hull\nPROP\nNiTexturingProperty",
+            legacy: true)));
+
+        Assert.Contains("NifUVController", ex.Message);
+        Assert.Contains("C4e", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyMorphControllerIsRejectedNamingC4g()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiGeomMorpherController",
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 2.0f),
+            "NiMorphData",
+            NifTestPropertyAnimation.MorphData(4, [
+                (null, null),
+                ([(0.0f, 0.0f, null, null), (2.0f, 1.0f, null, null)], null)]),
+            targetName: "hull",
+            legacy: true)));
+
+        Assert.Contains("NifGeomMorpherController", ex.Message);
+        Assert.Contains("C4g", ex.Message);
+    }
+
+    [Fact]
     public void ChainedControllerIsRejected()
     {
         var builder = new NifTestDataBuilder();
@@ -1111,9 +1174,17 @@ public sealed class NifAnimationImporterTests
         string dataTypeName,
         byte[] dataBody,
         string targetName,
-        float duration = 2.0f)
+        float duration = 2.0f,
+        bool legacy = false)
     {
         var builder = new NifTestDataBuilder();
+        if (legacy)
+        {
+            builder.HeaderString = FileFormats.Nif.NifHeader.LegacyHeaderString;
+            builder.Version = FileFormats.Nif.NifHeader.LegacyVersion;
+            builder.HasUserVersion = false;
+        }
+
         var sequenceType = builder.AddBlockType("NiControllerSequence");
         var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
         var controllerType = builder.AddBlockType(controllerTypeName);
