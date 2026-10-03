@@ -12,13 +12,9 @@ namespace Panopticon.Content.Importing;
 public enum ImportedParticleEmitterKind
 {
     Point,
-
     Line,
-
     Box,
-
     Sphere,
-
     Cone,
 }
 

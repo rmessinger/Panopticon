@@ -14,11 +14,8 @@ namespace Panopticon.Content.Importing;
 public enum ImportedParticleModifierKind
 {
     GrowFade,
-
     ColorOverLife,
-
     Gravity,
-
     Unsupported,
 }
 
