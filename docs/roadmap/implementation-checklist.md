@@ -895,7 +895,7 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     model-side target sets; morph weight animations bind by primitive and target names; CPU morph
     deformation runs before skinning; farm yam captures at weights 0, 0.5, and 1 show visible
     deformation without changing feature-disabled output.
-- [ ] C4h EE2 particle effects
+- [x] C4h EE2 particle effects
       ([deep dive](deep-dives/c4h-ee2-particle-effects.md)).
   - AC: the proof `fx_*` NIFs parse to exact end of file; CPU-only imported particle effect
     values materialize onto the existing `FXParticleSystemTemplate` and `ParticleSystemManager`

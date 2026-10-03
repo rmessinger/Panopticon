@@ -55,18 +55,21 @@ public class ImportedParticleEffectMaterializerTests
         Assert.Equal(15, template.Lifetime.High);
 
         var velocity = Assert.IsType<FXParticleEmissionVelocitySphere>(template.EmissionVelocity);
-        Assert.Equal(120 * FeetPerMeter, velocity.Speed.Low, 4);
-        Assert.Equal(120 * FeetPerMeter, velocity.Speed.High, 4);
+        Assert.Equal(120 * FeetPerMeter / 30, velocity.Speed.Low, 4);
+        Assert.Equal(120 * FeetPerMeter / 30, velocity.Speed.High, 4);
 
         Assert.IsType<FXParticleEmissionVolumePoint>(template.EmissionVolume);
         var physics = Assert.IsType<FXParticleDefaultPhysics>(template.Physics);
         Assert.Equal(1, physics.VelocityDamping.Low);
 
-        // Grow ramps size from zero; fade appends the alpha tail.
+        // Grow ramps size from zero with geometric damping so growth converges on the full
+        // size instead of continuing linearly for the whole lifetime.
         Assert.Equal(0, template.Size.Low);
         var update = Assert.IsType<FXParticleUpdateDefault>(template.Update);
-        Assert.Equal(5 * FeetPerMeter / (0.05f * 30), update.SizeRate.Low, 4);
-        Assert.Equal(1, update.SizeRateDamping.Low);
+        var growFrames = MathF.Round(0.05f * 30, MidpointRounding.AwayFromZero);
+        var expectedDamping = MathF.Pow(0.05f, 1f / growFrames);
+        Assert.Equal(expectedDamping, update.SizeRateDamping.Low, 6);
+        Assert.Equal(5 * FeetPerMeter * (1 - expectedDamping) / (1 - MathF.Pow(expectedDamping, growFrames)), update.SizeRate.Low, 4);
 
         Assert.Equal(new ColorRgbF(1, 1, 1), template.Colors.ColorKeyframes[0].Color);
         Assert.Equal(0u, template.Colors.ColorKeyframes[0].Time);
@@ -108,9 +111,9 @@ public class ImportedParticleEffectMaterializerTests
         Assert.Equal(38, template.Lifetime.High);
 
         var velocity = Assert.IsType<FXParticleEmissionVelocityCylinder>(template.EmissionVelocity);
-        Assert.Equal(5.625f * MathF.Sin(0.349f) * FeetPerMeter, velocity.Radial.Low, 4);
-        Assert.Equal(9.375f * MathF.Sin(0.349f) * FeetPerMeter, velocity.Radial.High, 4);
-        Assert.Equal(9.375f * MathF.Cos(0.349f) * FeetPerMeter, velocity.Normal.High, 4);
+        Assert.Equal(5.625f * MathF.Sin(0.349f) * FeetPerMeter / 30, velocity.Radial.Low, 4);
+        Assert.Equal(9.375f * MathF.Sin(0.349f) * FeetPerMeter / 30, velocity.Radial.High, 4);
+        Assert.Equal(9.375f * MathF.Cos(0.349f) * FeetPerMeter / 30, velocity.Normal.High, 4);
 
         // The spawn matrix maps local +Z onto the engine-frame cone axis (direction only;
         // the local translation applies to positions, not the axis check).
@@ -118,6 +121,41 @@ public class ImportedParticleEffectMaterializerTests
         Assert.Equal(0, spawnedAxis.X, 3);
         Assert.Equal(1, spawnedAxis.Y, 3);
         Assert.Equal(0, spawnedAxis.Z, 3);
+    }
+
+    [Fact]
+    public void WorldScaleMultipliesSizesAndTheSpawnMatrix()
+    {
+        var effect = CreateEffect(CreateSystem(
+            "scaled",
+            velocity: new ImportedParticleVelocity(ImportedParticleVelocityKind.Spherical, Vector3.UnitZ, 4, 8, 0),
+            birthRate: 60,
+            lifetime: 1,
+            lifetimeVariation: 0,
+            initialSize: 2,
+            emissionStop: 0.5f,
+            emitter: new ImportedParticleEmitter(ImportedParticleEmitterKind.Box, new Vector3(3, 3, 0))));
+
+        var materialized = ImportedParticleEffectMaterializer.Materialize(effect, textureResolver: null, worldScale: 0.005f);
+        var template = materialized.Systems[0].Template;
+
+        // Quad sizes bake the world scale directly; the runtime does not scale them by the matrix.
+        Assert.Equal(2 * FeetPerMeter * 0.005f, template.Size.High, 6);
+
+        // Speeds and volumes stay in unscaled source units: the spawn matrix carries the
+        // scale and multiplies both through the runtime's transform path.
+        var volume = Assert.IsType<FXParticleEmissionVolumeBox>(template.EmissionVolume);
+        Assert.Equal(1.5f * FeetPerMeter, volume.HalfSize.X, 6);
+
+        var velocity = Assert.IsType<FXParticleEmissionVelocitySphere>(template.EmissionVelocity);
+        Assert.Equal(4 * FeetPerMeter / 30, velocity.Speed.Low, 6);
+        Assert.Equal(8 * FeetPerMeter / 30, velocity.Speed.High, 6);
+
+        Assert.Equal(0.005f, materialized.Systems[0].EmitterTransform.M11, 6);
+
+        // Non-positive or non-finite scales are rejected before any template is built.
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => ImportedParticleEffectMaterializer.Materialize(effect, textureResolver: null, worldScale: 0f));
     }
 
     [Fact]
@@ -138,6 +176,8 @@ public class ImportedParticleEffectMaterializerTests
         var materialized = ImportedParticleEffectMaterializer.Materialize(effect);
         var template = materialized.Systems[0].Template;
 
+        // Alpha flags fold into the alpha curve; the shader stays additive (EE2 fx textures
+        // carry no usable source alpha for SrcAlpha blending).
         Assert.Equal(ParticleSystemShader.Alpha, template.Shader);
 
         var volume = Assert.IsType<FXParticleEmissionVolumeBox>(template.EmissionVolume);
@@ -278,6 +318,17 @@ public class ImportedParticleEffectMaterializerTests
         return new ImportedParticleEffect("fx_proof", systems, Array.Empty<string>());
     }
 
+    [Fact]
+    public void SourceColorAdditiveUsesItsOwnBlendPipeline()
+    {
+        var effect = CreateEffect(CreateSystem("glow", alphaBlended: true,
+            blendMode: ImportedParticleBlendMode.SourceColorAdditive));
+
+        var template = Assert.Single(ImportedParticleEffectMaterializer.Materialize(effect).Systems).Template;
+
+        Assert.Equal(ParticleSystemShader.SourceColorAdditive, template.Shader);
+    }
+
     private static ImportedParticleSystem CreateSystem(
         string name,
         ImportedParticleVelocity? velocity = null,
@@ -292,7 +343,8 @@ public class ImportedParticleEffectMaterializerTests
         IReadOnlyList<ImportedParticleAlphaKey>? alphaKeys = null,
         string? textureName = "smoke.tga",
         bool alphaBlended = false,
-        Matrix4x4 localTransform = default)
+        Matrix4x4 localTransform = default,
+        ImportedParticleBlendMode? blendMode = null)
     {
         localTransform = localTransform == default ? Matrix4x4.Identity : localTransform;
 
@@ -314,6 +366,7 @@ public class ImportedParticleEffectMaterializerTests
             alphaKeys: alphaKeys ?? Array.Empty<ImportedParticleAlphaKey>(),
             textureName: textureName,
             materialName: "SmokeMaterial",
-            alphaBlended: alphaBlended);
+            alphaBlended: alphaBlended,
+            blendMode: blendMode);
     }
 }

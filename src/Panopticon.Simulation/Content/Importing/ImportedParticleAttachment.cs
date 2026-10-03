@@ -21,6 +21,8 @@ public sealed class ImportedParticleAttachment
 
     public Vector3 LocalOffset { get; }
 
+    public Vector3 BoneLocalOffset { get; }
+
     /// <summary>DDF world scale applied to the effect; source units are engine-converted at materialization.</summary>
     public float WorldScale { get; }
 
@@ -31,7 +33,8 @@ public sealed class ImportedParticleAttachment
         bool followTarget,
         Vector3 localOffset,
         float worldScale,
-        bool oneShot)
+        bool oneShot,
+        Vector3 boneLocalOffset = default)
     {
         if (followTarget && string.IsNullOrEmpty(targetBoneName))
         {
@@ -51,6 +54,12 @@ public sealed class ImportedParticleAttachment
         }
 
         TargetBoneName = targetBoneName;
+        if (!float.IsFinite(boneLocalOffset.X) || !float.IsFinite(boneLocalOffset.Y) || !float.IsFinite(boneLocalOffset.Z))
+        {
+            throw new ArgumentException("Attachment bone-local offset must be finite.", nameof(boneLocalOffset));
+        }
+
+        BoneLocalOffset = boneLocalOffset;
         FollowTarget = followTarget;
         LocalOffset = localOffset;
         WorldScale = worldScale;
