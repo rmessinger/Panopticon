@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using System.Text.RegularExpressions;
+using Panopticon.Content.Importing;
+using Panopticon.Content.Importing.Nif;
+using Panopticon.IO;
 using Panopticon.Tools.TestHarness;
 using Xunit;
 using ActionType = Panopticon.Tools.ReplaySketch.Model.ActionType;
@@ -9,6 +14,67 @@ namespace Panopticon.Tools.ReplaySketch.Tests;
 
 public sealed class Ee2ParticleProofScenarioTests
 {
+    [Theory]
+    [InlineData("assault-tank", "lhm12_assaulttank", 0.09f, "fx_muzzle_tank", 0.09f)]
+    [InlineData("heavy-artillery", "lha12_selfpropelled", 0.09f, "fx_muzzle_heavyartillery_1", 0.08f)]
+    [InlineData("myrmidon-tank", "lhm15_myrmidontank", 0.07f, "fx_muzzle_tank", 0.09f)]
+    public void ModelReferencesUseIndependentModelAndEffectScales(
+        string profile, string model, float modelScale, string effect, float effectScale)
+    {
+        var reference = Ee2ParticleProofScenario.GetModelReference(profile);
+        Assert.Equal(model, reference.ModelKey);
+        Assert.Equal(modelScale, reference.ModelScale);
+        Assert.Equal(effect, reference.Binding.EffectName);
+        Assert.Equal(effectScale, reference.Binding.WorldScale);
+        Assert.Equal("tag_muzzle_1", reference.Binding.TargetBoneName);
+        Assert.Equal(System.Numerics.Vector3.Zero, reference.Binding.BoneLocalOffset);
+    }
+
+    [Theory]
+    [Trait("Category", "Interactive")]
+    [InlineData("assault-tank")]
+    [InlineData("heavy-artillery")]
+    [InlineData("myrmidon-tank")]
+    public void ModelReferencesMatchInstalledDdfAndFiringTags(string profile)
+    {
+        var root = Environment.GetEnvironmentVariable("EMPIRE_EARTH_II_PATH")
+            ?? throw new InvalidOperationException("Interactive test requires EMPIRE_EARTH_II_PATH.");
+        var reference = Ee2ParticleProofScenario.GetModelReference(profile);
+        using var db = ZipFile.OpenRead(Path.Combine(root, "zips/db.zip"));
+        string ReadText(string name)
+        {
+            using var reader = new StreamReader(db.GetEntry(name)!.Open());
+            return reader.ReadToEnd();
+        }
+
+        var unitSource = reference.UnitSource.Split(':');
+        var units = ReadText("db/Units/" + unitSource[0]);
+        var start = units.IndexOf("UnitModel " + unitSource[1], StringComparison.Ordinal);
+        Assert.True(start >= 0);
+        var end = units.IndexOf("UnitModel ", start + 10, StringComparison.Ordinal);
+        var block = end < 0 ? units[start..] : units[start..end];
+        Assert.Contains(reference.ModelKey + ".nif", block, StringComparison.OrdinalIgnoreCase);
+        float ReadScale(string text, string property)
+        {
+            var match = Regex.Match(text, property + @"\s*=\s*([0-9.]+)");
+            Assert.True(match.Success);
+            return float.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        Assert.Equal(reference.ModelScale, ReadScale(block, "ForceScale"));
+        var child = reference.Binding.DdfSource.Split(':')[1].Split('.')[0];
+        Assert.Contains(child, Regex.Match(block, @"ChildNames\s*=\s*\[([^]]+)\]").Groups[1].Value);
+        var weapons = ReadText("db/Visuals/visual_fx_weapon.ddf");
+        var effectBlock = Regex.Match(weapons, @"MuzzleSmokeEffect\s+" + child + @"\s*\{([^}]+)\}").Groups[1].Value;
+        Assert.Contains(reference.Binding.NifFileName, effectBlock, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(reference.Binding.WorldScale, ReadScale(effectBlock, "EffectScale"));
+        using var graphics = new ZipFileSystem(Path.Combine(root, "zips/graphics.zip"));
+        var model = new NifModelImporter().ImportModel(reference.ModelKey, new AssetImportContext(graphics, language: null));
+        Assert.NotNull(model);
+        Assert.Single(model.Skeleton.Bones, b => string.Equals(
+            b.Name, reference.Binding.TargetBoneName, StringComparison.OrdinalIgnoreCase));
+    }
+
     private sealed class StringReporter : ITestHarnessReporter
     {
         public System.Text.StringBuilder Errors { get; } = new();

@@ -119,9 +119,33 @@ internal static class Ee2ParticleProofScenario
         return emitterTransform * Matrix4x4.CreateScale(1f / attachmentScale);
     }
 
-    internal static Matrix4x4 GetMuzzleModelWorld()
+    internal static Matrix4x4 GetMuzzleModelWorld(float modelScale = MuzzleModelScale)
     {
-        return Matrix4x4.CreateScale(MuzzleModelScale) * Matrix4x4.CreateRotationZ(CaptureYawRadians);
+        return Matrix4x4.CreateScale(modelScale) * Matrix4x4.CreateRotationZ(CaptureYawRadians);
+    }
+
+    internal static (string ModelKey, float ModelScale, string UnitSource, NifParticleEffectBinding Binding)
+        GetModelReference(string? profileName)
+    {
+        if (string.IsNullOrEmpty(profileName) || profileName == "main-battle-tank")
+        {
+            return (MuzzleModelKey, MuzzleModelScale, "heavy_mounted1.ddf:HeavyMounted1_13",
+                NifParticleEffectBinding.GetProofBindings().Single(b => b.EffectName == "fx_muzzle_tank"));
+        }
+
+        var (model, scale, unit, effect, effectScale, child) = profileName switch
+        {
+            "assault-tank" => ("lhm12_assaulttank", 0.09f, "heavy_mounted1.ddf:HeavyMounted1_12",
+                "fx_muzzle_tank", 0.09f, "Muzzle_FiringShell"),
+            "heavy-artillery" => ("lha12_selfpropelled", 0.09f, "heavy_artillery.ddf:HeavyArtillery_12",
+                "fx_muzzle_heavyartillery_1", 0.08f, "Muzzle_HeavyArtillery"),
+            "myrmidon-tank" => ("lhm15_myrmidontank", 0.07f, "heavy_mounted1.ddf:HeavyMounted1_15",
+                "fx_muzzle_tank", 0.09f, "Muzzle_FiringShell"),
+            _ => throw new ArgumentException($"Unknown EE2 particle model reference '{profileName}'.", nameof(profileName)),
+        };
+        return (model, scale, unit, new NifParticleEffectBinding(
+            effect, effect + ".nif", "tag_muzzle_1", true, Vector3.Zero, effectScale, false,
+            $"db/Visuals/visual_fx_weapon.ddf:{child}.MuzzleSmokeEffect"));
     }
 
     /// <summary>Camera distance for the world-spawn effects; muzzle frames fit the tank bounds.</summary>
@@ -158,7 +182,11 @@ internal static class Ee2ParticleProofScenario
             return 1;
         }
 
-        const string outputDirectory = "ee2-particle-proof";
+        var profileName = Environment.GetEnvironmentVariable("EE2_PARTICLE_PROOF_MODEL");
+        var modelReference = GetModelReference(profileName);
+        var outputDirectory = string.IsNullOrEmpty(profileName)
+            ? "ee2-particle-proof"
+            : Path.Combine("ee2-particle-proof", profileName);
         Directory.CreateDirectory(outputDirectory);
 
         using var game = new Game(
@@ -183,7 +211,10 @@ internal static class Ee2ParticleProofScenario
 
         // Import every bound effect first so texcache textures install before
         // any ParticleSystem constructor resolves its texture reference.
-        var bindings = NifParticleEffectBinding.GetProofBindings();
+        var bindings = string.IsNullOrEmpty(profileName)
+            ? NifParticleEffectBinding.GetProofBindings()
+                .Select(b => b.EffectName == "fx_muzzle_tank" ? modelReference.Binding : b).ToArray()
+            : new[] { modelReference.Binding };
         var effects = new List<(NifParticleEffectBinding Binding, MaterializedParticleEffect Materialized)>();
         foreach (var binding in bindings)
         {
@@ -207,16 +238,16 @@ internal static class Ee2ParticleProofScenario
         // The muzzle proof model: same import pipeline as the other EE2 model
         // proofs; its tag_muzzle_1 firing tag hosts the follow-matrix smoke system.
         var importContext = new AssetImportContext(compositeFileSystem, language: null);
-        var muzzleBinding = bindings.Single(b => b.EffectName == "fx_muzzle_tank");
+        var muzzleBinding = modelReference.Binding;
         var muzzleModelImporter = new NifModelImporter();
-        var muzzleImported = muzzleModelImporter.ImportModel(MuzzleModelKey, importContext)
-            ?? throw new InvalidOperationException($"EE2 import returned null for '{MuzzleModelKey}'.");
+        var muzzleImported = muzzleModelImporter.ImportModel(modelReference.ModelKey, importContext)
+            ?? throw new InvalidOperationException($"EE2 import returned null for '{modelReference.ModelKey}'.");
         Ee2TexcacheTextureInstaller.Install(
             game,
             compositeFileSystem,
             Ee2NifProofScenario.CollectTextureNames(muzzleImported));
         var muzzleModel = ImportedModelMaterializer.MaterializeModel(muzzleImported, loadContext);
-        reporter.Info($"Imported muzzle proof model '{MuzzleModelKey}'.");
+        reporter.Info($"Imported muzzle proof model '{modelReference.ModelKey}' at scale {modelReference.ModelScale}.");
 
         var captures = new List<(string FileName, string Check)>();
         foreach (var (binding, materialized) in effects)
@@ -233,9 +264,11 @@ internal static class Ee2ParticleProofScenario
                 timeSeconds: 0f,
                 ticks: 1,
                 outputPath: warmUpPath,
-                reporter);
+                reporter,
+                modelScale: modelReference.ModelScale);
 
-            foreach (var (_, timeSeconds, check) in CapturePlan.Where(e => e.EffectName == binding.EffectName))
+            var planEffectName = binding == muzzleBinding ? "fx_muzzle_tank" : binding.EffectName;
+            foreach (var (_, timeSeconds, check) in CapturePlan.Where(e => e.EffectName == planEffectName))
             {
                 var fileName = GetParticleCaptureFileName(binding.EffectName, timeSeconds);
                 CaptureFrame(
@@ -247,8 +280,11 @@ internal static class Ee2ParticleProofScenario
                     timeSeconds,
                     ticks: 1 + (int)MathF.Round(timeSeconds * 30f, MidpointRounding.AwayFromZero),
                     Path.Combine(outputDirectory, fileName),
-                    reporter);
-                captures.Add((fileName, check));
+                    reporter,
+                    modelScale: modelReference.ModelScale);
+                captures.Add((fileName, binding == muzzleBinding
+                    ? $"{modelReference.ModelKey}: firing-tag placement, alpha edges and relative particle scale at {timeSeconds:F3} s"
+                    : check));
                 reporter.Info($"Captured {fileName}");
             }
         }
@@ -262,14 +298,14 @@ internal static class Ee2ParticleProofScenario
                 "Every capture comes from ZipFileSystem(graphics.zip + textures.zip) ->",
                 "NifFile.Read -> NifParticleEffectConverter -> ImportedParticleEffectMaterializer ->",
                 "FXParticleSystemTemplate -> Scene3D.ParticleSystemManager -> RenderPipeline particle",
-                "bucket. DDF world scales (explosion 0.005, tank muzzle 0.09, splash 0.15) are baked into template",
+                "bucket. DDF effect scales are baked into template",
                 "sizes, speeds, and emitter volumes because the runtime does not scale particle",
-                "quad sizes by the world matrix. Muzzle frames render lhm13_mainbattletank through",
+                $"quad sizes by the world matrix. Muzzle frames render {modelReference.ModelKey} through",
                 "the C4 model pipeline with the smoke following its tag_muzzle_1 firing tag via the",
                 "follow-matrix overload; explosion and splash frames spawn at the world origin.",
-                "Tank muzzle source: heavy_mounted1.ddf HeavyMounted1_13.ChildNames references",
-                "Muzzle_FiringShell in visual_fx_weapon.ddf, using fx_muzzle_tank.nif at scale 0.09.",
-                "The tank uses HeavyMounted1_13.ForceScale 0.09, not raw NIF model size.",
+                $"Unit source: {modelReference.UnitSource}, ForceScale {modelReference.ModelScale}.",
+                $"Effect source: {muzzleBinding.DdfSource}, {muzzleBinding.NifFileName}, EffectScale {muzzleBinding.WorldScale}.",
+                $"Attachment: {muzzleBinding.TargetBoneName}, bone-local offset {muzzleBinding.BoneLocalOffset}.",
                 "EffectScale and ForceScale are applied independently; follow transforms retain",
                 "the scaled tag position without rescaling materialized particle sizes or motion.",
                 "Frame 0000 is the first emitted burst (one 30 Hz tick), not an empty spawn; each",
@@ -318,7 +354,8 @@ internal static class Ee2ParticleProofScenario
         float timeSeconds,
         int ticks,
         string outputPath,
-        ITestHarnessReporter reporter)
+        ITestHarnessReporter reporter,
+        float modelScale = MuzzleModelScale)
     {
         var inputMessageBuffer = new InputMessageBuffer();
         var width = (float)CaptureSize;
@@ -338,7 +375,7 @@ internal static class Ee2ParticleProofScenario
 
         ModelInstance? muzzleInstance = null;
         NifParticleAttachmentPlan? muzzlePlan = null;
-        var modelWorld = GetMuzzleModelWorld();
+        var modelWorld = GetMuzzleModelWorld(modelScale);
         var cameraTarget = Vector3.Zero;
         var cameraDistance = GetEffectCameraDistance(binding.EffectName);
 
@@ -399,7 +436,7 @@ internal static class Ee2ParticleProofScenario
                     var composed = new ComposedFollowSource();
                     created.Add(manager.Create(system.Template, composed.Bind(
                         RemoveDuplicateAttachmentScale(
-                            system.EmitterTransform, binding.WorldScale * MuzzleModelScale), follow)));
+                            system.EmitterTransform, binding.WorldScale * modelScale), follow)));
                 }
                 else
                 {
