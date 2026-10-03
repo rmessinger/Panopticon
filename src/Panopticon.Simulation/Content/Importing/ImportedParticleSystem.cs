@@ -15,7 +15,6 @@ namespace Panopticon.Content.Importing;
 public enum ImportedParticleVelocityKind
 {
     Cone,
-
     Spherical,
 }
 
