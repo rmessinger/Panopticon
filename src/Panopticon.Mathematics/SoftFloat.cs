@@ -665,7 +665,9 @@ public readonly struct SoftFloat : IEquatable<SoftFloat>, IComparable<SoftFloat>
     public int CompareTo(object? obj)
     {
         if (obj is not SoftFloat softFloat)
+        {
             throw new ArgumentException("obj");
+        }
 
         return CompareTo(softFloat);
     }

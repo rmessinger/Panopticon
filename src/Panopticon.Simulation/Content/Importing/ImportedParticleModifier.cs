@@ -105,7 +105,9 @@ public sealed class ImportedParticleModifier
         ValidateNonNegative(force, nameof(force));
 
         if (!float.IsFinite(direction.X) || !float.IsFinite(direction.Y) || !float.IsFinite(direction.Z))
+        {
             throw new ArgumentException("Gravity direction must be finite.", nameof(direction));
+        }
 
         ValidateNonNegative(decay, nameof(decay));
 
@@ -126,7 +128,9 @@ public sealed class ImportedParticleModifier
     private static void ValidateNonNegative(float value, string name)
     {
         if (!float.IsFinite(value) || value < 0)
+        {
             throw new ArgumentException("Value must be finite and non-negative.", name);
+        }
     }
 
     private static void ValidateColorKeys(IReadOnlyList<ImportedParticleColorKey> keys)

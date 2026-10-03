@@ -33,7 +33,9 @@ public sealed class ImportedMorphAnimationChannel
         Ensure.NotNullOrEmpty(primitiveId, "Primitive id must not be null or empty.");
 
         if (!Enum.IsDefined(interpolation))
+        {
             throw new ArgumentOutOfRangeException(nameof(interpolation));
+        }
 
         Ensure.NotEmpty(targetNames, "A morph channel must name at least one target.");
 
@@ -57,12 +59,16 @@ public sealed class ImportedMorphAnimationChannel
         }
 
         if (times is null || weightVectors is null)
+        {
             throw new ArgumentNullException(times is null ? nameof(times) : nameof(weightVectors));
+        }
 
         if (times.Count == 0 || times.Count != weightVectors.Count)
+        {
             throw new ArgumentException(
                 "Times and weight vectors must be non-empty and share one length.",
                 nameof(times));
+        }
 
         var previousTime = float.NegativeInfinity;
         for (var i = 0; i < times.Count; i++)

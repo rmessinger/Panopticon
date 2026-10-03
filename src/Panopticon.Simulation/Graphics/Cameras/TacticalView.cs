@@ -768,7 +768,9 @@ public sealed class TacticalView : IPersistableObject
     internal void MoveCameraAlongWaypointPath(Waypoint? waypoint, double milliseconds, int shutter, bool orient, float easeIn, float easeOut)
     {
         if (waypoint == null)
+        {
             throw new ArgumentNullException(nameof(waypoint), "Waypoint path must have at least one waypoint.");
+        }
 
         const float MinDelta = HeightMap.HorizontalScale;
         var path = new MoveAlongWaypointPathInfo();

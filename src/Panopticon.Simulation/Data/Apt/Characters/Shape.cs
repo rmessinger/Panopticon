@@ -22,7 +22,9 @@ public sealed class Shape : Character
     public static Shape Create(AptFile container, uint geometryId)
     {
         if (!container.GeometryMap.TryGetValue(geometryId, out var geometry))
+        {
             throw new ArgumentException(null, nameof(geometryId));
+        }
 
         var box = geometry.BoundingBox;
         var bounds = new Vector4
@@ -43,7 +45,9 @@ public sealed class Shape : Character
     public void Modify(uint newGeometryId, bool modifyBounds = false, Vector4? newBounds = null)
     {
         if (!Container.GeometryMap.TryGetValue(newGeometryId, out var geometry))
+        {
             throw new ArgumentException(null, nameof(newGeometryId));
+        }
 
         if (modifyBounds)
         {

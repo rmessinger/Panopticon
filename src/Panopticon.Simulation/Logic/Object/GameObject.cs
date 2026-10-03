@@ -1581,7 +1581,9 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
     public void SetCaptured(bool isCaptured)
     {
         if (!isCaptured)
+        {
             throw new ArgumentException("Clearing captured status. This should never happen.");
+        }
 
         SetPrivateStatus(ObjectPrivateStatusFlags.Captured, isCaptured);
 

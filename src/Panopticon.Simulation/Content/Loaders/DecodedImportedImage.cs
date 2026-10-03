@@ -29,10 +29,14 @@ public sealed class DecodedImportedImage
         ImportedImageSource source)
     {
         if (width <= 0 || height <= 0)
+        {
             throw new ArgumentOutOfRangeException(nameof(width), "Decoded image dimensions must be positive.");
+        }
 
         if (rgbaPixels.Length != width * height * 4)
+        {
             throw new ArgumentOutOfRangeException(nameof(rgbaPixels), "Pixel buffer size does not match dimensions.");
+        }
 
         Width = width;
         Height = height;

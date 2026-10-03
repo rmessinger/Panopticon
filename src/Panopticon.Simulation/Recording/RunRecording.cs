@@ -82,7 +82,9 @@ public sealed class SnapshotDeltaRecorder : IDisposable
         ArgumentOutOfRangeException.ThrowIfZero(snapshotInterval);
 
         if (artifactPath is not null && game is null)
+        {
             throw new ArgumentException($"{nameof(game)} is required when {nameof(artifactPath)} is set.", nameof(game));
+        }
 
         _sampler = sampler;
         SnapshotInterval = snapshotInterval;

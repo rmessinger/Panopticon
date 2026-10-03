@@ -23,7 +23,9 @@ public sealed class ImportedBox : ImportedRenderObject
     public ImportedBox(in Vector3 center, in Vector3 extent)
     {
         if (extent.X < 0 || extent.Y < 0 || extent.Z < 0)
+        {
             throw new ArgumentException("Box extent must not be negative.", nameof(extent));
+        }
 
         Center = center;
         Extent = extent;

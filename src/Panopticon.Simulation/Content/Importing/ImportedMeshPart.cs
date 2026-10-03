@@ -35,10 +35,14 @@ public sealed class ImportedMeshPart
         int materialIndex)
     {
         if (startIndex % 3 != 0)
+        {
             throw new ArgumentException("Part start index must fall on a triangle boundary.", nameof(startIndex));
+        }
 
         if (indexCount == 0 || indexCount % 3 != 0)
+        {
             throw new ArgumentException("Part index count must be a positive multiple of three.", nameof(indexCount));
+        }
 
         Ensure.AtLeast(materialIndex, 0, "Material index must not be negative.");
 

@@ -59,7 +59,9 @@ public readonly struct AxisAlignedBoundingBox : IBoundingVolume
         }
 
         if (empty)
+        {
             throw new ArgumentException();
+        }
 
         return new AxisAlignedBoundingBox(minVec, maxVec);
     }

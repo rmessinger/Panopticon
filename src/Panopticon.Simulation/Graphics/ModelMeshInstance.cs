@@ -268,8 +268,10 @@ internal sealed class ModelMeshInstance : DisposableBase
         }
 
         if (weights.Length != _morphWeights.Length)
+        {
             throw new ArgumentException(
                 $"Morph target set '{_morphTargetSet.PrimitiveId}' expects {_morphWeights.Length} weights but received {weights.Length}.");
+        }
 
         weights.CopyTo(_morphWeights);
         _morphTargetSet.Apply(_morphBaseVertices, _morphWeights, MorphedVertices);
@@ -291,8 +293,10 @@ internal sealed class ModelMeshInstance : DisposableBase
         }
 
         if (destination.Length != _morphWeights.Length)
+        {
             throw new ArgumentException(
                 $"Morph target set '{_morphTargetSet.PrimitiveId}' expects {_morphWeights.Length} weights but received {destination.Length}.");
+        }
 
         _morphTargetSet.DefaultWeights.AsSpan().CopyTo(destination);
     }

@@ -44,7 +44,8 @@ The general rule we follow is "use Visual Studio defaults".
 
 19. Argument validation is one line: BCL `ThrowIf*` helpers (`ArgumentNullException.ThrowIfNull`,
     `ArgumentOutOfRangeException.ThrowIfZero`, ...) when no custom message exists,
-    `Panopticon.Ensure` when one does, and a brace-less `if` for conditions neither expresses.
+    `Panopticon.Ensure` when one does. Conditions neither helper expresses keep a braced `if` throw;
+    do not drop braces without converting to one of the one-line forms.
     CA1510/CA1511/CA1512 warnings (`.editorconfig`) guard the first two forms.
 
 An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been provided at the root of the Panopticon repository, enabling C# auto-formatting conforming to the above guidelines.

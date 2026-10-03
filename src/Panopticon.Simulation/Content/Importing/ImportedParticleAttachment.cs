@@ -37,19 +37,27 @@ public sealed class ImportedParticleAttachment
         Vector3 boneLocalOffset = default)
     {
         if (followTarget && string.IsNullOrEmpty(targetBoneName))
+        {
             throw new ArgumentException(
                 "A following particle attachment requires a target bone or tag name.",
                 nameof(targetBoneName));
+        }
 
         if (!float.IsFinite(localOffset.X) || !float.IsFinite(localOffset.Y) || !float.IsFinite(localOffset.Z))
+        {
             throw new ArgumentException("Attachment local offset must be finite.", nameof(localOffset));
+        }
 
         if (!float.IsFinite(worldScale) || worldScale <= 0.0f)
+        {
             throw new ArgumentException("Attachment world scale must be finite and positive.", nameof(worldScale));
+        }
 
         TargetBoneName = targetBoneName;
         if (!float.IsFinite(boneLocalOffset.X) || !float.IsFinite(boneLocalOffset.Y) || !float.IsFinite(boneLocalOffset.Z))
+        {
             throw new ArgumentException("Attachment bone-local offset must be finite.", nameof(boneLocalOffset));
+        }
 
         BoneLocalOffset = boneLocalOffset;
         FollowTarget = followTarget;

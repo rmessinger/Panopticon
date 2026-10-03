@@ -83,7 +83,9 @@ public sealed class ExternalModelDiagnostic
         Ensure.NotNullOrWhiteSpace(message, "Diagnostic message must not be empty.");
 
         if (occurrenceCount < 1)
+        {
             throw new ArgumentOutOfRangeException(nameof(occurrenceCount), "Occurrence count must be at least 1.");
+        }
 
         Code = code;
         Severity = severity;

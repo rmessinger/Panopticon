@@ -33,10 +33,14 @@ public sealed class ImportedParticleEmitter
     public ImportedParticleEmitter(ImportedParticleEmitterKind kind, Vector3 dimensions)
     {
         if (!float.IsFinite(dimensions.X) || !float.IsFinite(dimensions.Y) || !float.IsFinite(dimensions.Z))
+        {
             throw new ArgumentException("Emitter dimensions must be finite.", nameof(dimensions));
+        }
 
         if (dimensions.X < 0 || dimensions.Y < 0 || dimensions.Z < 0)
+        {
             throw new ArgumentException("Emitter dimensions must be non-negative.", nameof(dimensions));
+        }
 
         var nonZeroAxes =
             (dimensions.X > 0 ? 1 : 0) +

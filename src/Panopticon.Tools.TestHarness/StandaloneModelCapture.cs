@@ -54,7 +54,9 @@ internal static class StandaloneModelCapture
         ArgumentNullException.ThrowIfNull(model);
 
         if (string.IsNullOrEmpty(outputPath))
+        {
             throw new ArgumentException("Output path must not be null or empty.", nameof(outputPath));
+        }
 
         if (model.SubObjects.Length == 0)
         {

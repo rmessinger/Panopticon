@@ -74,7 +74,9 @@ public sealed class ImportedAnimationChannel
         ImportedAnimationInterpolation interpolation)
     {
         if (!Enum.IsDefined(interpolation))
+        {
             throw new ArgumentOutOfRangeException(nameof(interpolation));
+        }
 
         ArgumentNullException.ThrowIfNull(target);
 
@@ -140,9 +142,11 @@ public sealed class ImportedAnimationChannel
         };
 
         if (wrongForKind is not null)
+        {
             throw new ArgumentException(
                 $"Target kind {target.Kind} does not accept channel type {channelType}. {wrongForKind}",
                 nameof(target));
+        }
     }
 
     internal static bool IsBoneChannel(ImportedAnimationChannelType channelType)

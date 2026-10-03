@@ -91,8 +91,10 @@ public sealed class ImportedPbrMetallicRoughness
     private static void ValidateRole(string paramName, ImportedTextureBinding? binding, ImportedTextureRole expectedRole)
     {
         if (binding is { } && binding.Role != expectedRole)
+        {
             throw new ArgumentException(
                 $"Binding for '{paramName}' must use the {expectedRole} role, but it uses {binding.Role}.",
                 paramName);
+        }
     }
 }

@@ -153,7 +153,9 @@ public class OrderGeneratorSystem : GameSystem
     public void StartConstructBuilding(ObjectDefinition buildingDefinition)
     {
         if (!buildingDefinition.KindOf.Get(ObjectKinds.Structure))
+        {
             throw new ArgumentException("Building must have the STRUCTURE kind.", nameof(buildingDefinition));
+        }
 
         // TODO: Handle ONLY_BY_AI
         // TODO: Copy default settings from DefaultThingTemplate

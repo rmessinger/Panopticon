@@ -35,7 +35,9 @@ internal static class ImportedParticleEffectMaterializer
         ArgumentNullException.ThrowIfNull(effect);
 
         if (!float.IsFinite(worldScale) || worldScale <= 0f)
+        {
             throw new ArgumentOutOfRangeException(nameof(worldScale), worldScale, "World scale must be finite and positive.");
+        }
 
         var systems = new List<MaterializedParticleSystem>(effect.Systems.Count);
         for (var i = 0; i < effect.Systems.Count; i++)

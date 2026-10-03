@@ -63,7 +63,9 @@ public sealed class ImportedBone
         Ensure.AtLeast(parentIndex, -1, "Parent index must be -1 (root) or a bone index.");
 
         if (!float.IsFinite(bindScale) || bindScale < 0.0f)
+        {
             throw new ArgumentException("Bind scale must be finite and non-negative.", nameof(bindScale));
+        }
 
         Name = name;
         ParentIndex = parentIndex;

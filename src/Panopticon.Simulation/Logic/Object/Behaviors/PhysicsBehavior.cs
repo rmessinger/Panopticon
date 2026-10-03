@@ -762,9 +762,11 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         ReadOnlySpan<float> groundHeights)
     {
         if (cornerHeights.IsEmpty || cornerHeights.Length != groundHeights.Length)
+        {
             throw new ArgumentException(
                 "Corner and ground height samples must have the same non-zero length.",
                 nameof(groundHeights));
+        }
 
         var maximumPenetration = groundHeights[0] - cornerHeights[0];
         for (var index = 1; index < cornerHeights.Length; index++)

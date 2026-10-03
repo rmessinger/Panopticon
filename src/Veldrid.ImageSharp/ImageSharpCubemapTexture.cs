@@ -139,7 +139,9 @@ public class ImageSharpCubemapTexture
     {
         CubemapTextures = new Image<Rgba32>[6][];
         if (positiveX.Length == 0)
+        {
             throw new ArgumentException("Texture should have at least one mip level.");
+        }
 
         if (positiveX.Length != negativeX.Length ||
             positiveX.Length != positiveY.Length ||

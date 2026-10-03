@@ -35,9 +35,11 @@ public sealed class ExternalAssetSourceMount : IDisposable
         Ensure.NotNullOrWhiteSpace(absoluteSelectedFile, "Selected file path must not be empty.");
 
         if (!Path.IsPathRooted(absoluteSelectedFile))
+        {
             throw new ArgumentException(
                 $"Selected file path '{absoluteSelectedFile}' must be absolute.",
                 nameof(absoluteSelectedFile));
+        }
 
         var fileName = Path.GetFileName(absoluteSelectedFile);
         Ensure.NotNullOrEmpty(

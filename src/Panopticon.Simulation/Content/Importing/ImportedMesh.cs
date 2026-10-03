@@ -58,16 +58,20 @@ public sealed class ImportedMesh : ImportedRenderObject
         Ensure.NotEmpty(vertices, "A mesh must have at least one vertex.");
 
         if (vertices.Count > ushort.MaxValue)
+        {
             throw new ArgumentException(
                 $"A mesh must have at most {ushort.MaxValue} vertices to match the runtime index format.",
                 nameof(vertices));
+        }
 
         ArgumentNullException.ThrowIfNull(indices);
 
         Ensure.NotEmpty(indices, "A mesh must have at least one index.");
 
         if (indices.Count % 3 != 0)
+        {
             throw new ArgumentException("Index count must be a multiple of three.", nameof(indices));
+        }
 
         Ensure.AtLeast(boundingSphere.Radius, 0f, "Bounding sphere radius must not be negative.", nameof(boundingSphere));
 
@@ -133,9 +137,11 @@ public sealed class ImportedMesh : ImportedRenderObject
         }
 
         if (morphTargetSets.Count > 1)
+        {
             throw new ArgumentException(
                 "A mesh carries at most one morph target set.",
                 nameof(morphTargetSets));
+        }
 
         var copiedSets = new ImportedMorphTargetSet[morphTargetSets.Count];
         Ensure.NoNullElements(morphTargetSets, "Morph target set");
@@ -172,10 +178,12 @@ public sealed class ImportedMesh : ImportedRenderObject
         }
 
         if (deltas.Count != vertexCount)
+        {
             throw new ArgumentException(
                 $"Morph target set '{set.PrimitiveId}' target {targetIndex} has {deltas.Count} {kind} deltas, " +
                 $"expected one per vertex ({vertexCount}).",
                 paramName);
+        }
     }
 
     private static ImportedVertex[] CopyVertices(IReadOnlyList<ImportedVertex> vertices, bool isSkinned)
@@ -257,9 +265,11 @@ public sealed class ImportedMesh : ImportedRenderObject
         }
 
         if (textureCoordinates.Count != vertexCount)
+        {
             throw new ArgumentException(
                 $"Mesh part {partIndex} texture stage {stage} has {textureCoordinates.Count} coordinate pairs, " +
                 $"expected one per vertex ({vertexCount}).",
                 paramName);
+        }
     }
 }
