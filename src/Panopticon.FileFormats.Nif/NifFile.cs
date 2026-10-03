@@ -5,19 +5,17 @@ using System.IO;
 namespace Panopticon.FileFormats.Nif;
 
 /// <summary>
-/// A fully decoded NIF 10.1.0.0 file: header, block directory, block
-/// bodies, and validated references. Every block body starts with the
-/// leading u32 0 documented in the C4a deep dive; the file ends with the
-/// 8-byte footer (1, 0).
+/// A fully decoded NIF file: header, block directory, block bodies, and
+/// validated references. Gamebryo 10.1.0.0 and NetImmerse 10.0.1.0 are
+/// accepted. Every block body starts with the leading u32 0 documented in
+/// the C4a deep dive; the file ends with a root count followed by one
+/// block index per root (10.1 model files carry the single root 0).
 /// </summary>
 public sealed record NifFile(
     NifHeader Header,
     IReadOnlyList<NifBlock> Blocks,
     IReadOnlyList<int> Roots)
 {
-    public const uint Footer1 = 1;
-    public const uint Footer2 = 0;
-
     public static NifFile Read(Stream stream)
     {
         var reader = new NifBinaryReader(stream);
@@ -37,12 +35,18 @@ public sealed record NifFile(
             blocks[i] = ReadBlock(reader, header, i);
         }
 
-        var footer1 = reader.ReadUInt32("Footer1");
-        var footer2 = reader.ReadUInt32("Footer2");
-        if (footer1 != Footer1 || footer2 != Footer2)
+        var numRoots = reader.ReadElementCount(4, "Footer.NumRoots");
+        var footerRoots = new int[numRoots];
+        for (var i = 0; i < numRoots; i++)
         {
-            throw new InvalidDataException(
-                $"NIF footer ({footer1}, {footer2}) is invalid; expected ({Footer1}, {Footer2}).");
+            var root = reader.ReadInt32($"Footer.Roots[{i}]");
+            if (root < 0 || root >= header.NumBlocks)
+            {
+                throw new InvalidDataException(
+                    $"NIF footer root {i} is block index {root}, but the file has {header.NumBlocks} blocks.");
+            }
+
+            footerRoots[i] = root;
         }
 
         if (reader.RemainingBytes != 0)
@@ -51,9 +55,9 @@ public sealed record NifFile(
                 $"NIF stream has {reader.RemainingBytes} trailing bytes after the footer.");
         }
 
-        var roots = ValidateReferences(header, blocks);
+        ValidateReferences(header, blocks);
 
-        return new NifFile(header, blocks, roots);
+        return new NifFile(header, blocks, footerRoots);
     }
 
     /// <summary>
@@ -239,7 +243,7 @@ public sealed record NifFile(
         }
     }
 
-    private static IReadOnlyList<int> ValidateReferences(NifHeader header, NifBlock[] blocks)
+    private static void ValidateReferences(NifHeader header, NifBlock[] blocks)
     {
         int[]? parents = new int[blocks.Length];
         for (var i = 0; i < parents.Length; i++)
@@ -635,8 +639,6 @@ public sealed record NifFile(
         }
 
         DetectCycles(blocks, roots);
-
-        return roots;
     }
 
     private static void DetectCycles(NifBlock[] blocks, IReadOnlyList<int> roots)

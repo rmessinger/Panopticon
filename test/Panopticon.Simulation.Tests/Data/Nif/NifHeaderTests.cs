@@ -62,9 +62,56 @@ public sealed class NifHeaderTests
     public void WrongVersionFailsWithNotSupported()
     {
         var builder = ValidBuilder();
-        builder.Version = 0x0A000100;
+        builder.Version = 0x0A010001;
         var ex = Assert.Throws<NotSupportedException>(() => Parse(builder.Build()));
-        Assert.Contains("0x0A000100", ex.Message);
+        Assert.Contains("0x0A010001", ex.Message);
+        Assert.Contains("10.0.1.0", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyHeaderOmitsTheUserVersionWord()
+    {
+        var builder = new NifTestDataBuilder
+        {
+            HeaderString = NifHeader.LegacyHeaderString,
+            Version = NifHeader.LegacyVersion,
+            HasUserVersion = false,
+        };
+        var nodeType = builder.AddBlockType("NiNode");
+        builder.AddBlock(nodeType, [0, 0, 0, 0]);
+
+        var header = Parse(builder.Build());
+
+        Assert.Equal(NifHeader.LegacyHeaderString, header.HeaderString);
+        Assert.Equal(NifHeader.LegacyVersion, header.Version);
+        Assert.False(header.HasUserVersion);
+        Assert.Equal(0u, header.UserVersion);
+        Assert.Equal(1, header.NumBlocks);
+        Assert.Equal("NiNode", header.BlockTypes[0]);
+    }
+
+    [Fact]
+    public void LegacyVersionWithGamebryoHeaderStringFails()
+    {
+        // Keeps the user-version word so the stream length matches the
+        // 10.1 layout; the string/version pair must still fail.
+        var builder = ValidBuilder();
+        builder.Version = NifHeader.LegacyVersion;
+        var ex = Assert.Throws<NotSupportedException>(() => Parse(builder.Build()));
+        Assert.Contains(NifHeader.LegacyHeaderString, ex.Message);
+    }
+
+    [Fact]
+    public void NetImmerse4220IsRejectedBeforeBlockParsing()
+    {
+        var builder = new NifTestDataBuilder
+        {
+            HeaderString = "NetImmerse File Format, Version 4.2.2.0",
+            Version = NifHeader.NetImmerseVersion,
+        };
+        var ex = Assert.Throws<NotSupportedException>(() => Parse(builder.Build()));
+        Assert.Contains("4.2.2.0", ex.Message);
+        Assert.Contains("block directory", ex.Message);
     }
 
     [Fact]
@@ -140,5 +187,68 @@ public sealed class NifHeaderTests
         // Cut into the block-type indices so a later index read runs past the end.
         var truncated = bytes[..^20];
         Assert.Throws<InvalidDataException>(() => Parse(truncated));
+    }
+
+    private static NifFile ReadFile(byte[] bytes)
+    {
+        using var stream = new MemoryStream(bytes);
+        return NifFile.Read(stream);
+    }
+
+    [Fact]
+    public void LegacyFileWithNodeBlockParsesToEnd()
+    {
+        var builder = new NifTestDataBuilder
+        {
+            HeaderString = NifHeader.LegacyHeaderString,
+            Version = NifHeader.LegacyVersion,
+            HasUserVersion = false,
+        };
+        var nodeType = builder.AddBlockType("NiNode");
+        builder.AddBlock(nodeType, NifTestBlocks.Node("root"));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var file = ReadFile(builder.Build());
+
+        Assert.Equal([0], file.Roots);
+        var node = Assert.IsType<NifNode>(file.Blocks[0]);
+        Assert.Equal("root", node.Name);
+    }
+
+    [Fact]
+    public void TwoRootFooterParsesBothRoots()
+    {
+        var builder = new NifTestDataBuilder
+        {
+            HeaderString = NifHeader.LegacyHeaderString,
+            Version = NifHeader.LegacyVersion,
+            HasUserVersion = false,
+        };
+        var nodeType = builder.AddBlockType("NiNode");
+        builder.AddBlock(nodeType, NifTestBlocks.Node("first"));
+        builder.AddBlock(nodeType, NifTestBlocks.Node("second"));
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0, 1));
+
+        var file = ReadFile(builder.Build());
+
+        Assert.Equal([0, 1], file.Roots);
+    }
+
+    [Fact]
+    public void FooterRootOutsideTheBlockRangeFails()
+    {
+        var builder = new NifTestDataBuilder
+        {
+            HeaderString = NifHeader.LegacyHeaderString,
+            Version = NifHeader.LegacyVersion,
+            HasUserVersion = false,
+        };
+        var nodeType = builder.AddBlockType("NiNode");
+        builder.AddBlock(nodeType, NifTestBlocks.Node("root"));
+        builder.AddTrailing(NifTestBlocks.RootsFooter(7));
+
+        var ex = Assert.Throws<InvalidDataException>(() => ReadFile(builder.Build()));
+        Assert.Contains("footer root 0", ex.Message);
+        Assert.Contains("7", ex.Message);
     }
 }
