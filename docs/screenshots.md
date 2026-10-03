@@ -44,6 +44,8 @@ bone attachment, and particle seed. Run this diagnostic from a separate working 
 to preserve the composited proofs. Compare matching muzzle frames to isolate barrel occlusion.
 `EE2_PARTICLE_PROOF_SIDE_VIEW=1` rotates the camera orbit 90 degrees for a side-angle reference.
 The muzzle binding uses the tank's `Muzzle_FiringShell` DDF entry at scale `0.09`.
+The tank uses `HeavyMounted1_13.ForceScale = 0.09`. The model and effect scales
+are independent; materialized particle motion does not inherit the model scale again.
 Capture timestamps are nonuniform. Reference GIF frame durations follow timestamp differences,
 with a final-frame pause. Filename order alone does not imply a constant frame rate.
 

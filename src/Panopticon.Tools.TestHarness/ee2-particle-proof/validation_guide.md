@@ -10,6 +10,9 @@ the C4 model pipeline with the smoke following its tag_muzzle_1 firing tag via t
 follow-matrix overload; explosion and splash frames spawn at the world origin.
 Tank muzzle source: heavy_mounted1.ddf HeavyMounted1_13.ChildNames references
 Muzzle_FiringShell in visual_fx_weapon.ddf, using fx_muzzle_tank.nif at scale 0.09.
+The tank uses HeavyMounted1_13.ForceScale 0.09, not raw NIF model size.
+EffectScale and ForceScale are applied independently; follow transforms retain
+the scaled tag position without rescaling materialized particle sizes or motion.
 Frame 0000 is the first emitted burst (one 30 Hz tick), not an empty spawn; each
 frame replays from t=0 under ParticleSystemUtility.BeginSeedScope seeded from the
 effect key, so a second run must produce identical frames. No EE2 asset is copied

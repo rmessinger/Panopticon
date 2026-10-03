@@ -138,6 +138,26 @@ public sealed class Ee2ParticleProofScenarioTests
     }
 
     [Fact]
+    public void ModelForceScaleDoesNotRescaleMaterializedParticleMotion()
+    {
+        const float effectScale = 0.09f;
+        var modelScale = Ee2ParticleProofScenario.MuzzleModelScale;
+        var emitter = System.Numerics.Matrix4x4.CreateScale(effectScale);
+        var follow = System.Numerics.Matrix4x4.CreateScale(effectScale)
+            * System.Numerics.Matrix4x4.CreateTranslation(3, 0, 0)
+            * System.Numerics.Matrix4x4.CreateTranslation(48, 0, 0)
+            * System.Numerics.Matrix4x4.CreateScale(modelScale);
+        var composed = Ee2ParticleProofScenario.RemoveDuplicateAttachmentScale(
+            emitter, effectScale * modelScale) * follow;
+        Assert.True(MathF.Abs(composed.M11 - effectScale) < 0.00001f);
+        Assert.True(MathF.Abs(composed.Translation.X - 51f * modelScale) < 0.00001f);
+        Assert.True(System.Numerics.Matrix4x4.Decompose(
+            Ee2ParticleProofScenario.GetMuzzleModelWorld(), out var scale, out _, out _));
+        Assert.True(System.Numerics.Vector3.Distance(
+            scale, new System.Numerics.Vector3(modelScale)) < 0.00001f);
+    }
+
+    [Fact]
     public void ValidationGuideListsParticleCapturesAndSeedDeterminism()
     {
         var directory = Path.Combine(Path.GetTempPath(), "ee2-particle-guide-test");

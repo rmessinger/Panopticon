@@ -345,6 +345,7 @@ public sealed class Ee2ParticleEffectInventoryTests
         var end = units.IndexOf("UnitModel", start + "UnitModel".Length, StringComparison.Ordinal);
         var tank = end < 0 ? units[start..] : units[start..end];
         Assert.Contains("LHM13_MainBattleTank.NIF", tank);
+        Assert.Matches(@"ForceScale\s*=\s*0\.09\b", tank);
         Assert.Contains("Muzzle_FiringShell", tank);
 
         var weapons = ReadDdf("db/Visuals/visual_fx_weapon.ddf");

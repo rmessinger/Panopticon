@@ -47,6 +47,9 @@ internal static class Ee2ParticleProofScenario
     /// <summary>The muzzle proof model: a cooked unit model with a Muzzle node.</summary>
     public const string MuzzleModelKey = "lhm13_mainbattletank";
 
+    /// <summary>HeavyMounted1_13.ForceScale from db/Units/heavy_mounted1.ddf.</summary>
+    public const float MuzzleModelScale = 0.09f;
+
     /// <summary>Presentation-only yaw, matching the other EE2 model proofs.</summary>
     public const float CaptureYawRadians = -MathF.PI / 3f;
 
@@ -109,10 +112,16 @@ internal static class Ee2ParticleProofScenario
         return ParticleSystemUtility.ComputeDeterministicSeed("c4h-particle-proof:" + effectName, 0);
     }
 
-    internal static Matrix4x4 RemoveDuplicateAttachmentScale(Matrix4x4 emitterTransform, float worldScale)
+    internal static Matrix4x4 RemoveDuplicateAttachmentScale(Matrix4x4 emitterTransform, float attachmentScale)
     {
-        // Materialization already scales emitter motion; the resolver also prefixes that scale.
-        return emitterTransform * Matrix4x4.CreateScale(1f / worldScale);
+        // Particle sizes and motion already carry EffectScale. Remove inherited scale,
+        // retaining the follow matrix's scaled firing-tag position and bone-local offset.
+        return emitterTransform * Matrix4x4.CreateScale(1f / attachmentScale);
+    }
+
+    internal static Matrix4x4 GetMuzzleModelWorld()
+    {
+        return Matrix4x4.CreateScale(MuzzleModelScale) * Matrix4x4.CreateRotationZ(CaptureYawRadians);
     }
 
     /// <summary>Camera distance for the world-spawn effects; muzzle frames fit the tank bounds.</summary>
@@ -260,6 +269,9 @@ internal static class Ee2ParticleProofScenario
                 "follow-matrix overload; explosion and splash frames spawn at the world origin.",
                 "Tank muzzle source: heavy_mounted1.ddf HeavyMounted1_13.ChildNames references",
                 "Muzzle_FiringShell in visual_fx_weapon.ddf, using fx_muzzle_tank.nif at scale 0.09.",
+                "The tank uses HeavyMounted1_13.ForceScale 0.09, not raw NIF model size.",
+                "EffectScale and ForceScale are applied independently; follow transforms retain",
+                "the scaled tag position without rescaling materialized particle sizes or motion.",
                 "Frame 0000 is the first emitted burst (one 30 Hz tick), not an empty spawn; each",
                 "frame replays from t=0 under ParticleSystemUtility.BeginSeedScope seeded from the",
                 "effect key, so a second run must produce identical frames. No EE2 asset is copied",
@@ -326,7 +338,7 @@ internal static class Ee2ParticleProofScenario
 
         ModelInstance? muzzleInstance = null;
         NifParticleAttachmentPlan? muzzlePlan = null;
-        var modelWorld = Matrix4x4.CreateRotationZ(CaptureYawRadians);
+        var modelWorld = GetMuzzleModelWorld();
         var cameraTarget = Vector3.Zero;
         var cameraDistance = GetEffectCameraDistance(binding.EffectName);
 
@@ -386,7 +398,8 @@ internal static class Ee2ParticleProofScenario
                 {
                     var composed = new ComposedFollowSource();
                     created.Add(manager.Create(system.Template, composed.Bind(
-                        RemoveDuplicateAttachmentScale(system.EmitterTransform, binding.WorldScale), follow)));
+                        RemoveDuplicateAttachmentScale(
+                            system.EmitterTransform, binding.WorldScale * MuzzleModelScale), follow)));
                 }
                 else
                 {
