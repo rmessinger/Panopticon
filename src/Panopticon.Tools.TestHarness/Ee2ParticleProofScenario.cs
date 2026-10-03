@@ -74,11 +74,10 @@ internal static class Ee2ParticleProofScenario
             "main battle tank at the fixed three-quarter yaw; the first burst's puffs are " +
             "sub-pixel because every muzzle system grows from size zero"),
         ("fx_muzzle_tank", 0.5f,
-            "alpha-blended muzzle puffs near tag_muzzle_1; much of the effect is occluded " +
-            "by the barrel at this proof camera angle"),
+            "alpha-blended muzzle puffs just beyond the barrel end, using the firing tag's " +
+            "model-local forward offset"),
         ("fx_muzzle_tank", 1f,
-            "faint translucent puffs near the barrel tip; the firing tag remains inset " +
-            "from the visible barrel end and the barrel occludes much of the effect"),
+            "translucent puffs beyond the barrel tip, without opaque square edges"),
         ("fx_watersplash_1", 0f,
             "single small seed quad (~20 px) at the fixed splash origin: the first particle " +
             "of the 15/s column system"),
@@ -387,7 +386,7 @@ internal static class Ee2ParticleProofScenario
 
         void OnBuildingRenderList(object sender, BuildingRenderListEventArgs e)
         {
-            if (muzzleInstance is null)
+            if (muzzleInstance is null || Environment.GetEnvironmentVariable("EE2_PARTICLE_PROOF_HIDE_MODEL") == "1")
             {
                 return;
             }

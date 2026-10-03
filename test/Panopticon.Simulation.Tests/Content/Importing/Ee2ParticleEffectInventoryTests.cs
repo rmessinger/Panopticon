@@ -308,6 +308,16 @@ public sealed class Ee2ParticleEffectInventoryTests
             .Where(entry => string.Equals(entry.bone.Name, binding.TargetBoneName, StringComparison.OrdinalIgnoreCase))
             .ToList();
         var tag = Assert.Single(matches);
+        var transform = System.Numerics.Matrix4x4.Identity;
+        for (var index = tag.index; index >= 0; index = imported.Skeleton.Bones[index].ParentIndex)
+        {
+            var bone = imported.Skeleton.Bones[index];
+            transform *= System.Numerics.Matrix4x4.CreateScale(bone.BindScale)
+                * System.Numerics.Matrix4x4.CreateFromQuaternion(bone.BindRotation)
+                * System.Numerics.Matrix4x4.CreateTranslation(bone.BindTranslation);
+        }
+        var forward = System.Numerics.Vector3.TransformNormal(System.Numerics.Vector3.UnitX, transform);
+        Assert.True(System.Numerics.Vector3.Distance(forward, System.Numerics.Vector3.UnitX) < 0.001f);
 
         Assert.True(
             imported.SubObjects.All(subObject => subObject.ParentBoneIndex != tag.index),

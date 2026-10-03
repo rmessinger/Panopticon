@@ -34,6 +34,14 @@ cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/sho
 | `xdotool` / ImageMagick `import` | Not installed; no key/mouse injection into Xvfb from agent shells |
 | `PIL` (python3) | Available; used for pixel-level A/B verification of captures |
 
+## EE2 particle attachment diagnostics
+
+`Ee2ParticleProof` writes nine frames to `ee2-particle-proof/` under the working directory.
+Both `CNC_GENERALS_PATH` and `EMPIRE_EARTH_II_PATH` must resolve installed games.
+`EE2_PARTICLE_PROOF_HIDE_MODEL=1` omits the tank draw while retaining the same camera,
+bone attachment, and particle seed. Run this diagnostic from a separate working directory
+to preserve the composited proofs. Compare matching muzzle frames to isolate barrel occlusion.
+
 ## Recipe: 3D scene screenshots (headless, reliable)
 
 The TestHarness renders offscreen with Vulkan and captures PNGs; no display is needed.
