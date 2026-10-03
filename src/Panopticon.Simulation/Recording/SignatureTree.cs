@@ -81,9 +81,7 @@ public static class SignatureTreeBuilder
         float cellSize = DefaultCellSize)
     {
         if (cellSize <= 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(cellSize));
-        }
 
         return Build(
             frame,

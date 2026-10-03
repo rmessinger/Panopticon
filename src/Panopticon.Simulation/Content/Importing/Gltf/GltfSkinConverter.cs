@@ -47,10 +47,7 @@ internal static class GltfSkinConverter
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(options);
 
-        if (plan.SkinnedNodes.Count == 0)
-        {
-            throw new ArgumentException("The scene plan contains no skinned nodes.", nameof(plan));
-        }
+        Ensure.NotEmpty(plan.SkinnedNodes, "The scene plan contains no skinned nodes.");
 
         var skinIndex = -1;
         foreach (var skinnedNode in plan.SkinnedNodes)

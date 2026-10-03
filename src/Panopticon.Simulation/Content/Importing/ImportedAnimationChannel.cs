@@ -74,18 +74,13 @@ public sealed class ImportedAnimationChannel
         ImportedAnimationInterpolation interpolation)
     {
         if (!Enum.IsDefined(interpolation))
-        {
             throw new ArgumentOutOfRangeException(nameof(interpolation));
-        }
 
         ArgumentNullException.ThrowIfNull(target);
 
         ArgumentNullException.ThrowIfNull(keyframes);
 
-        if (keyframes.Count == 0)
-        {
-            throw new ArgumentException("A channel must have at least one keyframe.", nameof(keyframes));
-        }
+        Ensure.NotEmpty(keyframes, "A channel must have at least one keyframe.");
 
         ValidateTargetKind(target, channelType);
 
@@ -145,11 +140,9 @@ public sealed class ImportedAnimationChannel
         };
 
         if (wrongForKind is not null)
-        {
             throw new ArgumentException(
                 $"Target kind {target.Kind} does not accept channel type {channelType}. {wrongForKind}",
                 nameof(target));
-        }
     }
 
     internal static bool IsBoneChannel(ImportedAnimationChannelType channelType)

@@ -21,10 +21,7 @@ public sealed class ImportedSkeleton
 
         ArgumentNullException.ThrowIfNull(bones);
 
-        if (bones.Count == 0)
-        {
-            throw new ArgumentException("A skeleton must have at least one bone.", nameof(bones));
-        }
+        Ensure.NotEmpty(bones, "A skeleton must have at least one bone.");
 
         var copiedBones = new ImportedBone[bones.Count];
         Ensure.NoNullElements(bones, "Bone");

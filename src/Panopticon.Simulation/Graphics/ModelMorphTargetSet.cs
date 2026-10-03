@@ -93,16 +93,12 @@ internal sealed class ModelMorphTargetSet
         Span<MeshShaderResources.MeshVertex.Basic> result)
     {
         if (baseVertices.Length != VertexCount || result.Length != VertexCount)
-        {
             throw new ArgumentException(
                 $"Morph target set '{PrimitiveId}' covers {VertexCount} vertices but was given {baseVertices.Length}.");
-        }
 
         if (weights.Length != TargetNames.Length)
-        {
             throw new ArgumentException(
                 $"Morph target set '{PrimitiveId}' expects {TargetNames.Length} weights but received {weights.Length}.");
-        }
 
         for (var i = 0; i < VertexCount; i++)
         {

@@ -38,13 +38,11 @@ public sealed class NeuralNetworkAIDecisionPolicy : IAIDecisionPolicy
     {
         ArgumentNullException.ThrowIfNull(weights);
         if (weights.Length != WeightCount)
-        {
             throw new ArgumentException(
                 $"The neural-network AI decision policy requires exactly {WeightCount} weights "
                 + $"({InputSize}x{HiddenSize} + {HiddenSize} + {HiddenSize}x{OutputSize} + {OutputSize}); "
                 + $"got {weights.Length}.",
                 nameof(weights));
-        }
 
         _weights = (float[])weights.Clone();
     }

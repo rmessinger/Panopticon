@@ -25,9 +25,7 @@ public sealed class ImportedMorphTarget
         IReadOnlyList<Vector3>? tangentDeltas = null)
     {
         if (positionDeltas is null && normalDeltas is null && tangentDeltas is null)
-        {
             throw new ArgumentException("A morph target must carry at least one delta array.", nameof(positionDeltas));
-        }
 
         var expectedCount = (positionDeltas ?? normalDeltas ?? tangentDeltas)!.Count;
         ValidateDeltas(positionDeltas, expectedCount, nameof(positionDeltas));
@@ -47,11 +45,9 @@ public sealed class ImportedMorphTarget
         }
 
         if (deltas.Count != expectedCount)
-        {
             throw new ArgumentException(
                 $"Delta arrays must share one length; {paramName} has {deltas.Count} entries, expected {expectedCount}.",
                 paramName);
-        }
 
         for (var i = 0; i < deltas.Count; i++)
         {

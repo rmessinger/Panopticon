@@ -48,9 +48,7 @@ public sealed class BitArray<TEnum> : IEquatable<BitArray<TEnum>>
     public BitArray(System.Collections.BitArray bitArray)
     {
         if (bitArray.Length >= 512)
-        {
             throw new ArgumentException($"Cannot construct BitArray512 from a BitArray of length {bitArray.Length}.");
-        }
 
         _data = new BitArray512(bitArray.Length);
 

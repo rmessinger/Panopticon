@@ -44,14 +44,10 @@ public sealed class ImportedParticleVelocity
         float coneAngle)
     {
         if (!float.IsFinite(axis.X) || !float.IsFinite(axis.Y) || !float.IsFinite(axis.Z))
-        {
             throw new ArgumentException("Velocity axis must be finite.", nameof(axis));
-        }
 
         if (!float.IsFinite(speedLow) || !float.IsFinite(speedHigh) || speedLow < 0 || speedHigh < speedLow)
-        {
             throw new ArgumentException("Velocity speeds must satisfy 0 <= low <= high.", nameof(speedHigh));
-        }
 
         if (kind == ImportedParticleVelocityKind.Cone)
         {
@@ -153,51 +149,33 @@ public sealed class ImportedParticleSystem
         Ensure.NotNullOrEmpty(name, "System name must not be empty.");
 
         if (!IsFinite(localTransform))
-        {
             throw new ArgumentException("Local transform must be finite.", nameof(localTransform));
-        }
 
         if (!float.IsFinite(birthRatePerSecond) || birthRatePerSecond < 0)
-        {
             throw new ArgumentException("Birth rate must be finite and non-negative.", nameof(birthRatePerSecond));
-        }
 
         if (!float.IsFinite(emissionStartSeconds) || emissionStartSeconds < 0)
-        {
             throw new ArgumentException("Emission start must be finite and non-negative.", nameof(emissionStartSeconds));
-        }
 
         if (!float.IsFinite(emissionStopSeconds) || emissionStopSeconds < emissionStartSeconds)
-        {
             throw new ArgumentException("Emission stop must be finite and >= emission start.", nameof(emissionStopSeconds));
-        }
 
         if (!float.IsFinite(particleLifetimeSeconds) || particleLifetimeSeconds <= 0)
-        {
             throw new ArgumentException("Particle lifetime must be finite and positive.", nameof(particleLifetimeSeconds));
-        }
 
         if (!float.IsFinite(particleLifetimeVariationSeconds) || particleLifetimeVariationSeconds < 0)
-        {
             throw new ArgumentException("Particle lifetime variation must be finite and non-negative.",
                 nameof(particleLifetimeVariationSeconds));
-        }
 
         if (particleLifetimeSeconds - particleLifetimeVariationSeconds <= 0)
-        {
             throw new ArgumentException("Particle lifetime minus variation must stay positive.",
                 nameof(particleLifetimeVariationSeconds));
-        }
 
         if (!float.IsFinite(initialAlpha))
-        {
             throw new ArgumentException("Initial alpha must be finite.", nameof(initialAlpha));
-        }
 
         if (!float.IsFinite(initialSize) || initialSize <= 0)
-        {
             throw new ArgumentException("Initial size must be finite and positive.", nameof(initialSize));
-        }
 
         ArgumentNullException.ThrowIfNull(velocity);
 
@@ -206,9 +184,7 @@ public sealed class ImportedParticleSystem
         ArgumentNullException.ThrowIfNull(modifiers);
 
         if (modifiers.Any(m => m is null))
-        {
             throw new ArgumentException("Modifiers must not contain null entries.", nameof(modifiers));
-        }
 
         ArgumentNullException.ThrowIfNull(alphaKeys);
 

@@ -115,9 +115,7 @@ public sealed class HeightMap
     {
         var tilePosition = GetTilePosition(worldPosition);
         if (!tilePosition.HasValue)
-        {
             throw new ArgumentOutOfRangeException(nameof(worldPosition));
-        }
 
         return GetPosition(tilePosition.Value.X, tilePosition.Value.Y);
     }

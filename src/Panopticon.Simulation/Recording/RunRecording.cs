@@ -82,9 +82,7 @@ public sealed class SnapshotDeltaRecorder : IDisposable
         ArgumentOutOfRangeException.ThrowIfZero(snapshotInterval);
 
         if (artifactPath is not null && game is null)
-        {
             throw new ArgumentException($"{nameof(game)} is required when {nameof(artifactPath)} is set.", nameof(game));
-        }
 
         _sampler = sampler;
         SnapshotInterval = snapshotInterval;
@@ -257,9 +255,7 @@ public sealed class TriggeredDetailCapture : IDisposable
     public TriggeredDetailCapture(WorldStateSampler sampler, int ringDepth = DefaultRingDepth, int maxWindows = DefaultMaxWindows)
     {
         if (ringDepth <= 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(ringDepth));
-        }
 
         _sampler = sampler;
         RingDepth = ringDepth;

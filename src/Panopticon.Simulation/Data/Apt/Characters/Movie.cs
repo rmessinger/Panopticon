@@ -35,9 +35,7 @@ public sealed class Movie : Playable
     public static Movie CreateEmpty(AptFile container, int width, int height, int millisecondsPerFrame)
     {
         if (container.Movie != null)
-        {
             throw new ArgumentException("AptFile already has a Movie");
-        }
 
         var movie = new Movie
         {

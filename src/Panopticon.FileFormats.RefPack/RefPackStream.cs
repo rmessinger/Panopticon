@@ -141,9 +141,7 @@ public class RefPackStream : Stream
     public override int Read(byte[] buffer, int offset, int count)
     {
         if (count > RefPackOutputBuffer.MaxByteReadCount)
-        {
             throw new ArgumentOutOfRangeException();
-        }
 
         var actualCount = (int)Math.Min(count, Length - _currentOutputPosition);
 

@@ -32,30 +32,21 @@ public sealed class ImportedParticleEffect
     {
         Ensure.NotNullOrEmpty(name, "Effect name must not be empty.");
 
-        if (systems is null || systems.Count == 0)
-        {
-            throw new ArgumentException("Effects require at least one particle system.", nameof(systems));
-        }
+        Ensure.NotEmpty(systems, "Effects require at least one particle system.");
 
         if (systems.Any(s => s is null))
-        {
             throw new ArgumentException("Particle systems must not contain null entries.", nameof(systems));
-        }
 
         var duplicate = systems.GroupBy(s => s.Name, StringComparer.Ordinal)
             .FirstOrDefault(g => g.Count() > 1);
 
         if (duplicate is not null)
-        {
             throw new ArgumentException($"Particle system name '{duplicate.Key}' is not unique.", nameof(systems));
-        }
 
         ArgumentNullException.ThrowIfNull(helperSubObjectNames);
 
         if (helperSubObjectNames.Any(n => string.IsNullOrEmpty(n)))
-        {
             throw new ArgumentException("Helper sub-object names must not be empty.", nameof(helperSubObjectNames));
-        }
 
         Name = name;
         Systems = systems.ToArray();

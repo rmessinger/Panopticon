@@ -62,9 +62,7 @@ public sealed class ModelAnimationTarget
     public static ModelAnimationTarget CreateDirectIndex(int directIndex)
     {
         if (directIndex < 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(directIndex), "Direct index must not be negative.");
-        }
 
         return new ModelAnimationTarget(ModelAnimationTargetKind.DirectIndex, directIndex, null, null, -1);
     }
@@ -88,9 +86,7 @@ public sealed class ModelAnimationTarget
         Ensure.NotNullOrEmpty(subObjectFullName, "Sub-object name must not be null or empty.");
 
         if (materialIndex < 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(materialIndex), "Material index must not be negative.");
-        }
 
         return new ModelAnimationTarget(ModelAnimationTargetKind.MaterialSlot, -1, null, subObjectFullName, materialIndex);
     }

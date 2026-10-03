@@ -54,10 +54,7 @@ public sealed class ImportedImageSource
 
     public static ImportedImageSource CreateEmbeddedBytes(byte[] bytes, string mimeType, string diagnosticName)
     {
-        if (bytes is null || bytes.Length == 0)
-        {
-            throw new ArgumentException("Embedded image bytes must not be null or empty.", nameof(bytes));
-        }
+        Ensure.NotEmpty(bytes, "Embedded image bytes must not be null or empty.");
 
         Ensure.NotNullOrEmpty(mimeType, "MIME type must not be null or empty.");
 

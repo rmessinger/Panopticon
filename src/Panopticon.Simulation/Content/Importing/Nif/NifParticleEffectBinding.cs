@@ -58,28 +58,20 @@ public sealed class NifParticleEffectBinding
         Ensure.NotNullOrEmpty(nifFileName, "NIF file name must not be empty.");
 
         if (!nifFileName.EndsWith(".nif", StringComparison.OrdinalIgnoreCase))
-        {
             throw new ArgumentException(
                 $"NIF file name '{nifFileName}' must end with .nif.",
                 nameof(nifFileName));
-        }
 
         if (followTarget && string.IsNullOrEmpty(targetBoneName))
-        {
             throw new ArgumentException(
                 "A following effect binding requires a target bone or tag name.",
                 nameof(targetBoneName));
-        }
 
         if (!float.IsFinite(localOffset.X) || !float.IsFinite(localOffset.Y) || !float.IsFinite(localOffset.Z))
-        {
             throw new ArgumentException("Binding local offset must be finite.", nameof(localOffset));
-        }
 
         if (!float.IsFinite(worldScale) || worldScale <= 0.0f)
-        {
             throw new ArgumentException("Binding world scale must be finite and positive.", nameof(worldScale));
-        }
 
         Ensure.NotNullOrEmpty(ddfSource, "DDF source must not be empty.");
 
@@ -90,9 +82,7 @@ public sealed class NifParticleEffectBinding
         FollowTarget = followTarget;
         LocalOffset = localOffset;
         if (!float.IsFinite(boneLocalOffset.X) || !float.IsFinite(boneLocalOffset.Y) || !float.IsFinite(boneLocalOffset.Z))
-        {
             throw new ArgumentException("Bone-local offset must be finite.", nameof(boneLocalOffset));
-        }
 
         BoneLocalOffset = boneLocalOffset;
         WorldScale = worldScale;

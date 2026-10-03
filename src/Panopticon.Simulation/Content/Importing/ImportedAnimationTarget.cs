@@ -87,9 +87,7 @@ public sealed class ImportedAnimationTarget
         Ensure.NotNullOrEmpty(subObjectFullName, "Sub-object name must not be null or empty.");
 
         if (materialIndex < 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(materialIndex), "Material index must not be negative.");
-        }
 
         return new ImportedAnimationTarget(
             ImportedAnimationTargetKind.MaterialSlot, -1, null, subObjectFullName, materialIndex);

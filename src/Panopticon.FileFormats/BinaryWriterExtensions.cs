@@ -28,9 +28,7 @@ public static class BinaryWriterExtensions
     public static void WriteBytePrefixedAsciiString(this BinaryWriter writer, string? value)
     {
         if (value?.Length > byte.MaxValue)
-        {
             throw new ArgumentException($"String is too long to fit length in 1 byte: {value.Length}", nameof(value));
-        }
 
         if (value == null)
         {
@@ -46,9 +44,7 @@ public static class BinaryWriterExtensions
     public static void WriteUInt16PrefixedAsciiString(this BinaryWriter writer, string? value)
     {
         if (value?.Length > ushort.MaxValue)
-        {
             throw new ArgumentException($"String is too long to fit length in 2 bytes: {value.Length}", nameof(value));
-        }
 
         if (value == null)
         {
@@ -64,9 +60,7 @@ public static class BinaryWriterExtensions
     public static void WriteBytePrefixedUnicodeString(this BinaryWriter writer, string? value)
     {
         if (value?.Length > byte.MaxValue)
-        {
             throw new ArgumentException($"String is too long to fit length in 1 byte: {value.Length}", nameof(value));
-        }
 
         if (value == null)
         {
@@ -82,9 +76,7 @@ public static class BinaryWriterExtensions
     public static void WriteUInt16PrefixedUnicodeString(this BinaryWriter writer, string? value)
     {
         if (value?.Length > ushort.MaxValue)
-        {
             throw new ArgumentException($"String is too long to fit length in 2 bytes: {value.Length}", nameof(value));
-        }
 
         if (value == null)
         {
@@ -415,9 +407,7 @@ public static class BinaryWriterExtensions
     public static void WriteFourCc(this BinaryWriter writer, string fourCc, bool bigEndian = false)
     {
         if (string.IsNullOrEmpty(fourCc) || fourCc.Length != 4)
-        {
             throw new ArgumentException($"Invalid FourCC: {fourCc}", nameof(fourCc));
-        }
 
         if (bigEndian)
         {

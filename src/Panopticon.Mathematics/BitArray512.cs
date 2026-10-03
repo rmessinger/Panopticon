@@ -54,12 +54,10 @@ public struct BitArray512
     public BitArray512(int length) : this()
     {
         if (length < 0 || length > 512)
-        {
             throw new ArgumentOutOfRangeException(
                 nameof(length),
                 $"Length must between 0 and 512."
             );
-        }
 
         Length = length;
     }
@@ -181,9 +179,7 @@ public struct BitArray512
     public void CopyFrom(in BitArray512 other)
     {
         if (Length != other.Length)
-        {
             throw new ArgumentException(nameof(other), "Both BitArrays must have the same length.");
-        }
 
         _a0 = other._a0;
         _a1 = other._a1;

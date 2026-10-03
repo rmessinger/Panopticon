@@ -18,9 +18,7 @@ public sealed class WaterSettings
         set
         {
             if (value <= 0u)
-            {
                 throw new ArgumentOutOfRangeException(nameof(value), "Reflection map size must be greater than 0.");
-            }
 
             _reflectionMapSize = MathUtility.NextPowerOfTwo(value);
         }
@@ -35,9 +33,7 @@ public sealed class WaterSettings
         set
         {
             if (value <= 0u)
-            {
                 throw new ArgumentOutOfRangeException(nameof(value), "Refraction map size must be greater than 0.");
-            }
 
             _refractionMapSize = MathUtility.NextPowerOfTwo(value);
         }

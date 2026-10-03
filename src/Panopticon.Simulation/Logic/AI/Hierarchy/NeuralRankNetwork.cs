@@ -26,12 +26,10 @@ internal sealed class NeuralRankNetwork
         ArgumentNullException.ThrowIfNull(weights);
         var expected = inputSize * hiddenSize + hiddenSize + hiddenSize * outputSize + outputSize;
         if (weights.Length != expected)
-        {
             throw new ArgumentException(
                 $"This rank network requires exactly {expected} weights "
                 + $"({inputSize}x{hiddenSize} + {hiddenSize} + {hiddenSize}x{outputSize} + {outputSize}); got {weights.Length}.",
                 nameof(weights));
-        }
 
         InputSize = inputSize;
         HiddenSize = hiddenSize;

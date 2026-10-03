@@ -43,9 +43,7 @@ public sealed class ImportedMorphTargetSet
         ArgumentNullException.ThrowIfNull(targetNames);
 
         if (targetNames.Count == 0)
-        {
             throw new ArgumentException("A morph target set must name at least one target.", nameof(targetNames));
-        }
 
         if (targetNames.Count > MaximumTargetCount)
         {
@@ -54,25 +52,19 @@ public sealed class ImportedMorphTargetSet
         }
 
         if (defaultWeights is null || defaultWeights.Count != targetNames.Count)
-        {
             throw new ArgumentException(
                 $"Default weights must supply one entry per target ({targetNames.Count}).",
                 nameof(defaultWeights));
-        }
 
         if (allowedWeightRanges is null || allowedWeightRanges.Count != targetNames.Count)
-        {
             throw new ArgumentException(
                 $"Allowed weight ranges must supply one entry per target ({targetNames.Count}).",
                 nameof(allowedWeightRanges));
-        }
 
         if (targets is null || targets.Count != targetNames.Count)
-        {
             throw new ArgumentException(
                 $"Targets must supply one entry per name ({targetNames.Count}).",
                 nameof(targets));
-        }
 
         Ensure.NoNullElements(targets, "Target");
 

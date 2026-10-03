@@ -432,9 +432,7 @@ public static class WorldStateArtifact
         }
 
         if (baselineIndex < 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(frame), $"No snapshot at or before frame {frame}.");
-        }
 
         var baseline = snapshots[baselineIndex];
         var objects = new Dictionary<uint, WorldObjectState>();

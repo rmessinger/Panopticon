@@ -88,18 +88,14 @@ public sealed class ImportedMaterial
 
         var isPbrFamily = shaderFamily == PbrMetallicRoughnessFamily;
         if (isPbrFamily != (pbrMetallicRoughness is not null))
-        {
             throw new ArgumentException(
                 $"Shader family '{PbrMetallicRoughnessFamily}' and the PBR payload must appear together.",
                 nameof(shaderFamily));
-        }
 
         if (pbrMetallicRoughness is not null && fixedFunctionShading is not null)
-        {
             throw new ArgumentException(
                 "A material cannot combine a PBR payload with fixed-function shading.",
                 nameof(fixedFunctionShading));
-        }
 
         ShaderFamily = shaderFamily;
         CullMode = cullMode;
