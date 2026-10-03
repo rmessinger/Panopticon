@@ -78,11 +78,13 @@ Scope notes:
   reference domain rather than a baked-in assumption.
 - Scale and extensibility win over original-engine fidelity when they conflict. Reading
   original SAGE data remains valuable, but it must not block the architectural changes scale
-  requires. Recorded state rather than input re-simulation backs run analysis.
+  requires.
 - Separate simulation from presentation cleanly. Headless and distributed scenarios need a
   logic core that runs without a renderer, audio, or window.
-- Determinism is not a roadmap requirement. Validation uses per-run invariants, authored bounds,
-  aggregate distributions, and performance statistics. Seeds remain optional experiment inputs.
+- Determinism is scoped to one run identity (build, runtime, platform, inputs, shard layout): a
+  seed reproduces its run there, which lets large runs record operational state and reconstruct
+  granular frames by verified re-simulation ([A1-6](deep-dives/a1-6-operational-recording.md)).
+  Cross-seed experiments validate through per-run invariants, authored bounds, and distributions.
 - Incremental, always-shippable: each phase leaves the engine building and the existing games
   playable.
 - Single-operator scope: the framework is a personal research tool for one operator for the
@@ -154,6 +156,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/a1-headless-host.md`](deep-dives/a1-headless-host.md) | Track A phase A1 - Headless simulation host. |
 | [`deep-dives/a4-pluggable-ai.md`](deep-dives/a4-pluggable-ai.md) | Track A phase A4 - Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
 | [`deep-dives/a4-decentralized-hierarchical-ai.md`](deep-dives/a4-decentralized-hierarchical-ai.md) | Track A phase A4 - Decentralized hierarchical AI (unit-level ANNs organized as general/commander/soldier ranks, generalizing the flat pluggable-AI policy seam). |
+| [`deep-dives/a1-6-operational-recording.md`](deep-dives/a1-6-operational-recording.md) | Track A sub-phase A1-6 - Operational recording: operational stream, campaign-cadence engine checkpoints, bucketed state hashes, and verified seeded reconstruction of granular frames. |
 | [`deep-dives/a4-4-domain-state-projection.md`](deep-dives/a4-4-domain-state-projection.md) | Track A checklist item A4-4 - Optional domain state projection: versioned schema, keyed multi-field records, domain-state artifact, and schema-driven conservation check. |
 | [`deep-dives/a5-visualization.md`](deep-dives/a5-visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
 | [`deep-dives/b1-benchmarking.md`](deep-dives/b1-benchmarking.md) | Track B phase B1 - Macro benchmark harness, BenchmarkDotNet micro benchmarks, A2-compatible JSON records, bootstrap confidence intervals, and regression comparison. |
@@ -205,7 +208,8 @@ track document.
   P3 victory/defeat conditions · P4 economy loop · P5 construction & production · P6 combat &
   command · P6b unit-contract validation · P7 end-to-end skirmish validation · P8 implementation
   delta remediation · P9 unit validation ground. Gates all other tracks.
-- [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host · A2 statistical
+- [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host (incl. A1-6 operational
+  recording and seeded reconstruction) · A2 statistical
   validation · A3 simulation/presentation seam · A4 experiment framework seams & harness
   (incl. the Simulation Domain Model seam - RTS, city-builder, transport, … - and the A4-4 domain
   state projection) · A5 scenario
@@ -322,7 +326,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Track | Progress | Items |
 |---|---|---|
-| Track A - Foundations | `██████░░░░` | 12 / 21 |
+| Track A - Foundations | `█████▌░░░░` | 12 / 22 |
 | Track B - Scale | `░░░░░░░░░░` | 0 / 44 |
 | Track C - External Assets | `█████░░░░░` | 9 / 18 |
 
@@ -397,12 +401,12 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | W0 - Charter fixture | `░░░░░░░░░░` | 0 / 9 |
 | W1 - Aggregate sector simulation | `░░░░░░░░░░` | 0 / 7 |
 | W2 - Fidelity promotion and reconciliation | `░░░░░░░░░░` | 0 / 14 |
-| W3a - Sedan 1870 | `░░░░░░░░░░` | 0 / 30 |
+| W3a - Sedan 1870 | `░░░░░░░░░░` | 0 / 31 |
 | W3b - Somme sector | `░░░░░░░░░░` | 0 / 6 |
 | W4 - Command and logistics experiment | `░░░░░░░░░░` | 0 / 6 |
 | W5 - Distributed regional simulation | `░░░░░░░░░░` | 0 / 8 |
 | W6 - Long-run campaign experiment | `░░░░░░░░░░` | 0 / 8 |
-| Track W total | `░░░░░░░░░░` | 0 / 88 |
+| Track W total | `░░░░░░░░░░` | 0 / 89 |
 
 ---
 

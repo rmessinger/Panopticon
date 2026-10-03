@@ -547,6 +547,7 @@ public enum ParticleSystemShader
 
     [IniEnum("W3D_DIFFUSE"), AddedIn(SageGame.Bfme)]
     W3dDiffuse,
+    SourceColorAdditive,
 }
 
 public enum ParticleSystemType

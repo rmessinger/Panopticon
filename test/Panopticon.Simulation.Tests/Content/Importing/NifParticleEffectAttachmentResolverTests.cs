@@ -166,6 +166,22 @@ public class NifParticleEffectAttachmentResolverTests
     }
 
     [Fact]
+    public void BoneLocalOffsetFollowsRotationWithoutEffectScaling()
+    {
+        var bones = CreateBones((0, "Root", -1), (1, "Muzzle", 0));
+        var binding = new NifParticleEffectBinding(
+            "fx_proof", "fx_proof.nif", "Muzzle", true, Vector3.Zero, 0.05f, false, "proof",
+            boneLocalOffset: new Vector3(3, 0, 0));
+        var boneWorld = Matrix4x4.CreateTranslation(10, 20, 30);
+        var plan = NifParticleEffectAttachmentResolver.ResolveToBone(binding, bones, _ => boneWorld);
+        var follow = plan.FollowMatrix!;
+        Assert.Equal(new Vector3(13, 20, 30), follow().Translation);
+
+        boneWorld = Matrix4x4.CreateRotationZ(MathF.PI / 2) * Matrix4x4.CreateTranslation(10, 20, 30);
+        Assert.True(Vector3.Distance(new Vector3(10, 23, 30), follow().Translation) < 0.0001f);
+    }
+
+    [Fact]
     public void FollowBindingCannotResolveToAWorldMatrix()
     {
         var binding = CreateBinding(targetBoneName: "Muzzle", followTarget: true);
@@ -193,11 +209,12 @@ public class NifParticleEffectAttachmentResolverTests
         var muzzle = bindings[1];
         Assert.Equal("fx_muzzle_tank", muzzle.EffectName);
         Assert.Equal("cache/nifcache/fx_muzzle_tank.nifcache", muzzle.NifAssetKey);
-        Assert.Equal("Muzzle", muzzle.TargetBoneName);
+        Assert.Equal("tag_muzzle_1", muzzle.TargetBoneName);
+        Assert.Equal(new Vector3(3, 0, 0), muzzle.BoneLocalOffset);
         Assert.True(muzzle.FollowTarget);
         Assert.False(muzzle.OneShot);
-        Assert.Equal("db/Visuals/visual_fx_weapon.ddf:Muzzle_Fortress12.MuzzleSmokeEffect", muzzle.DdfSource);
-        Assert.Equal(0.05f, muzzle.WorldScale);
+        Assert.Equal("db/Visuals/visual_fx_weapon.ddf:Muzzle_FiringShell.MuzzleSmokeEffect", muzzle.DdfSource);
+        Assert.Equal(0.09f, muzzle.WorldScale);
 
         var splash = bindings[2];
         Assert.Equal("fx_watersplash_1", splash.EffectName);
@@ -210,6 +227,7 @@ public class NifParticleEffectAttachmentResolverTests
             var attachment = binding.ToAttachment();
             Assert.Equal(binding.TargetBoneName, attachment.TargetBoneName);
             Assert.Equal(binding.FollowTarget, attachment.FollowTarget);
+            Assert.Equal(binding.BoneLocalOffset, attachment.BoneLocalOffset);
             Assert.Equal(binding.WorldScale, attachment.WorldScale);
             Assert.Equal(binding.OneShot, attachment.OneShot);
         }
@@ -228,5 +246,8 @@ public class NifParticleEffectAttachmentResolverTests
             () => new NifParticleEffectBinding("fx", "fx.nif", null, false, Vector3.Zero, 0, true, "s"));
         Assert.Throws<ArgumentException>(
             () => new NifParticleEffectBinding("fx", "fx.nif", null, false, Vector3.Zero, 1, true, ""));
+        Assert.Throws<ArgumentException>(
+            () => new NifParticleEffectBinding("fx", "fx.nif", "Muzzle", true, Vector3.Zero, 1, false, "s",
+                boneLocalOffset: new Vector3(float.NaN, 0, 0)));
     }
 }

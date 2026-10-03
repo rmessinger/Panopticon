@@ -30,6 +30,9 @@ public sealed class NifParticleEffectBinding
 
     public Vector3 LocalOffset { get; }
 
+    /// <summary>Attachment-space offset in model units, applied before the bone world transform.</summary>
+    public Vector3 BoneLocalOffset { get; }
+
     /// <summary>DDF world scale (SequenceWorldScales, SplashScales, EffectScale); 1 when absent.</summary>
     public float WorldScale { get; }
 
@@ -46,7 +49,8 @@ public sealed class NifParticleEffectBinding
         Vector3 localOffset,
         float worldScale,
         bool oneShot,
-        string ddfSource)
+        string ddfSource,
+        Vector3 boneLocalOffset = default)
     {
         if (string.IsNullOrEmpty(effectName))
         {
@@ -93,6 +97,12 @@ public sealed class NifParticleEffectBinding
         TargetBoneName = targetBoneName;
         FollowTarget = followTarget;
         LocalOffset = localOffset;
+        if (!float.IsFinite(boneLocalOffset.X) || !float.IsFinite(boneLocalOffset.Y) || !float.IsFinite(boneLocalOffset.Z))
+        {
+            throw new ArgumentException("Bone-local offset must be finite.", nameof(boneLocalOffset));
+        }
+
+        BoneLocalOffset = boneLocalOffset;
         WorldScale = worldScale;
         OneShot = oneShot;
         DdfSource = ddfSource;
@@ -105,14 +115,16 @@ public sealed class NifParticleEffectBinding
             FollowTarget,
             LocalOffset,
             WorldScale,
-            OneShot);
+            OneShot,
+            BoneLocalOffset);
     }
 
     /// <summary>
     /// Proof bindings from the verified install: explosion via ammo ExplosionSequence, muzzle
     /// smoke via the weapon-table MuzzleSmokeEffect, water splash via bridge SplashNifNames.
-    /// The muzzle tag name is supplied by the firing object per the weapon-table contract, so
-    /// the binding carries the conventional "Muzzle" tag for the proof model.
+    /// The firing tag comes from the object's turret or unit DDF tag banks, which name
+    /// tag_muzzle_N nodes; the proof model's firing tag is tag_muzzle_1. The model's bare
+    /// muzzle node is the barrel geometry pivot (mid-barrel), not a firing tag.
     /// </summary>
     public static IReadOnlyList<NifParticleEffectBinding> GetProofBindings()
     {
@@ -130,12 +142,14 @@ public sealed class NifParticleEffectBinding
             new NifParticleEffectBinding(
                 "fx_muzzle_tank",
                 "fx_muzzle_tank.nif",
-                targetBoneName: "Muzzle",
+                targetBoneName: "tag_muzzle_1",
                 followTarget: true,
                 localOffset: Vector3.Zero,
-                worldScale: 0.05f,
+                worldScale: 0.09f,
                 oneShot: false,
-                ddfSource: "db/Visuals/visual_fx_weapon.ddf:Muzzle_Fortress12.MuzzleSmokeEffect"),
+                ddfSource: "db/Visuals/visual_fx_weapon.ddf:Muzzle_FiringShell.MuzzleSmokeEffect",
+                // This proof model's firing tag is 2.7 model units inside the barrel end.
+                boneLocalOffset: new Vector3(3f, 0f, 0f)),
             new NifParticleEffectBinding(
                 "fx_watersplash_1",
                 "fx_watersplash_1.nif",

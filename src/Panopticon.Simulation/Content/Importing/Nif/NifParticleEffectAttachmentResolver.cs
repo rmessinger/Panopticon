@@ -11,7 +11,6 @@ namespace Panopticon.Content.Importing.Nif;
 internal enum NifParticleAttachmentKind
 {
     WorldSpawn,
-
     FollowBone,
 }
 
@@ -85,12 +84,12 @@ internal sealed class NifParticleAttachmentPlan
         return new NifParticleAttachmentPlan(binding, NifParticleAttachmentKind.WorldSpawn, boneIndex, matrix, null);
     }
 
-    // Row-vector composition, leftmost applies first: the effect scales in its local space,
-    // then takes the bone world transform, then the offset shifts it in world space. Offset and
-    // scale enter exactly once.
+    // Keep the attachment offset independent of effect scale and rotate it with the bone.
+    // LocalOffset retains its existing world-space semantics.
     private static Matrix4x4 Compose(NifParticleEffectBinding binding, in Matrix4x4 worldMatrix)
     {
         return Matrix4x4.CreateScale(binding.WorldScale)
+            * Matrix4x4.CreateTranslation(binding.BoneLocalOffset)
             * worldMatrix
             * Matrix4x4.CreateTranslation(binding.LocalOffset);
     }

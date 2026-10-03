@@ -19,7 +19,7 @@ Detailed design: [W3a Sedan 1870](w3a-sedan-1870.md).
 
 Implementation plan: [Track W · W3a](../implementation/track-w-w3a-sedan-1870.md).
 
-Card range: [`WI-W3a-01..30`](../agent/cards/).
+Card range: [`WI-W3a-01..31`](../agent/cards/).
 
 Scope: simulate the Battle of Sedan, 31 August to 2 September 1870, all-tactical at about 320,000
 soldiers on a B4b-generated payload, with a historical order of battle and orders timeline. W3a

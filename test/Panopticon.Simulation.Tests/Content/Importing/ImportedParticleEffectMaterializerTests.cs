@@ -178,7 +178,7 @@ public class ImportedParticleEffectMaterializerTests
 
         // Alpha flags fold into the alpha curve; the shader stays additive (EE2 fx textures
         // carry no usable source alpha for SrcAlpha blending).
-        Assert.Equal(ParticleSystemShader.Additive, template.Shader);
+        Assert.Equal(ParticleSystemShader.Alpha, template.Shader);
 
         var volume = Assert.IsType<FXParticleEmissionVolumeBox>(template.EmissionVolume);
         Assert.Equal(1.5f * FeetPerMeter, volume.HalfSize.X, 4);
@@ -318,6 +318,17 @@ public class ImportedParticleEffectMaterializerTests
         return new ImportedParticleEffect("fx_proof", systems, Array.Empty<string>());
     }
 
+    [Fact]
+    public void SourceColorAdditiveUsesItsOwnBlendPipeline()
+    {
+        var effect = CreateEffect(CreateSystem("glow", alphaBlended: true,
+            blendMode: ImportedParticleBlendMode.SourceColorAdditive));
+
+        var template = Assert.Single(ImportedParticleEffectMaterializer.Materialize(effect).Systems).Template;
+
+        Assert.Equal(ParticleSystemShader.SourceColorAdditive, template.Shader);
+    }
+
     private static ImportedParticleSystem CreateSystem(
         string name,
         ImportedParticleVelocity? velocity = null,
@@ -332,7 +343,8 @@ public class ImportedParticleEffectMaterializerTests
         IReadOnlyList<ImportedParticleAlphaKey>? alphaKeys = null,
         string? textureName = "smoke.tga",
         bool alphaBlended = false,
-        Matrix4x4 localTransform = default)
+        Matrix4x4 localTransform = default,
+        ImportedParticleBlendMode? blendMode = null)
     {
         localTransform = localTransform == default ? Matrix4x4.Identity : localTransform;
 
@@ -354,6 +366,7 @@ public class ImportedParticleEffectMaterializerTests
             alphaKeys: alphaKeys ?? Array.Empty<ImportedParticleAlphaKey>(),
             textureName: textureName,
             materialName: "SmokeMaterial",
-            alphaBlended: alphaBlended);
+            alphaBlended: alphaBlended,
+            blendMode: blendMode);
     }
 }

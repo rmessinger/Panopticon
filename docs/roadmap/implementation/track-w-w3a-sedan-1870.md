@@ -43,6 +43,7 @@ Simulate the Battle of Sedan, 31 August to 2 September 1870, on a B4b-generated 
 | W3a-28 | `WI-W3a-28` | All-tactical reference run. |
 | W3a-29 | `WI-W3a-29` | Aggregate and mixed arms. |
 | W3a-30 | `WI-W3a-30` | Evidence report. |
+| W3a-31 | `WI-W3a-31` | Operational recording adapter. |
 
 ---
 

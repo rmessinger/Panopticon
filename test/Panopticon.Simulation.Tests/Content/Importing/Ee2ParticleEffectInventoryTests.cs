@@ -4,7 +4,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Panopticon.Content.Importing;
+using Panopticon.Content.Importing.Nif;
 using Panopticon.FileFormats.Nif;
+using Panopticon.IO;
 using Xunit;
 
 namespace Panopticon.Tests.Content.Importing;
@@ -256,5 +259,102 @@ public sealed class Ee2ParticleEffectInventoryTests
                 file.Blocks,
                 block => block is NifParticleSystemController);
         }
+    }
+
+    [Fact]
+    public void ProofEffectsPreservePerSystemBlendModes()
+    {
+        using var archive = OpenArchive(GraphicsArchiveRelativePath);
+        foreach (var (name, _, _) in ProofEffects)
+        {
+            using var stream = new MemoryStream(ReadEntry(archive, $"cache/nifcache/{name}.nifcache"));
+            var effect = NifParticleEffectConverter.Convert(NifFile.Read(stream), name)!;
+
+            Assert.NotEmpty(effect.Systems);
+            if (name == "fx_watersplash_1")
+            {
+                Assert.All(effect.Systems, system => Assert.Equal(ImportedParticleBlendMode.Alpha, system.BlendMode));
+            }
+            if (name == "fx_muzzle_tank")
+            {
+                Assert.Contains(effect.Systems, system => system.BlendMode == ImportedParticleBlendMode.Alpha);
+                Assert.Contains(effect.Systems, system => system.BlendMode == ImportedParticleBlendMode.SourceColorAdditive);
+            }
+        }
+    }
+
+    [Fact]
+    public void MuzzleBindingTargetsFiringTagNotGeometry()
+    {
+        var root = InstallRoot();
+        using var graphics = new ZipFileSystem(Path.Combine(root, GraphicsArchiveRelativePath));
+        using var textures = new ZipFileSystem(Path.Combine(root, "zips/textures.zip"));
+        using var fileSystem = new CompositeFileSystem(graphics, textures);
+
+        var imported = new NifModelImporter().ImportModel(
+            "lhm13_mainbattletank",
+            new AssetImportContext(fileSystem, language: null))
+            ?? throw new InvalidOperationException("proof model import returned null");
+
+        var binding = NifParticleEffectBinding.GetProofBindings()
+            .Single(b => b.EffectName == "fx_muzzle_tank");
+
+        // The firing tag comes from the turret or unit DDF tag banks (tag_muzzle_N); the
+        // model's bare muzzle node is the barrel geometry pivot, not a firing tag.
+        Assert.Equal("tag_muzzle_1", binding.TargetBoneName);
+
+        var matches = imported.Skeleton.Bones
+            .Select((bone, index) => (bone, index))
+            .Where(entry => string.Equals(entry.bone.Name, binding.TargetBoneName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var tag = Assert.Single(matches);
+        var transform = System.Numerics.Matrix4x4.Identity;
+        for (var index = tag.index; index >= 0; index = imported.Skeleton.Bones[index].ParentIndex)
+        {
+            var bone = imported.Skeleton.Bones[index];
+            transform *= System.Numerics.Matrix4x4.CreateScale(bone.BindScale)
+                * System.Numerics.Matrix4x4.CreateFromQuaternion(bone.BindRotation)
+                * System.Numerics.Matrix4x4.CreateTranslation(bone.BindTranslation);
+        }
+        var forward = System.Numerics.Vector3.TransformNormal(System.Numerics.Vector3.UnitX, transform);
+        Assert.True(System.Numerics.Vector3.Distance(forward, System.Numerics.Vector3.UnitX) < 0.001f);
+
+        Assert.True(
+            imported.SubObjects.All(subObject => subObject.ParentBoneIndex != tag.index),
+            "the firing tag must parent no geometry");
+
+        Assert.Contains(
+            imported.Skeleton.Bones,
+            bone => string.Equals(bone.Name, "muzzle", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void MuzzleProofUsesTheMainBattleTankDdfEffectAndScale()
+    {
+        using var database = new ZipFileSystem(Path.Combine(InstallRoot(), "zips/db.zip"));
+        string ReadDdf(string path)
+        {
+            using var stream = database.GetFile(path)!.Open();
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
+        var units = ReadDdf("db/Units/heavy_mounted1.ddf");
+        var start = units.IndexOf("UnitModel HeavyMounted1_13", StringComparison.Ordinal);
+        Assert.True(start >= 0);
+        var end = units.IndexOf("UnitModel", start + "UnitModel".Length, StringComparison.Ordinal);
+        var tank = end < 0 ? units[start..] : units[start..end];
+        Assert.Contains("LHM13_MainBattleTank.NIF", tank);
+        Assert.Matches(@"ForceScale\s*=\s*0\.09\b", tank);
+        Assert.Contains("Muzzle_FiringShell", tank);
+
+        var weapons = ReadDdf("db/Visuals/visual_fx_weapon.ddf");
+        var effect = System.Text.RegularExpressions.Regex.Match(
+            weapons, @"MuzzleSmokeEffect\s+Muzzle_FiringShell\s*\{([^}]*)\}").Groups[1].Value;
+        Assert.Contains("fx_muzzle_tank.NIF", effect);
+        Assert.Matches(@"EffectScale\s*=\s*0\.09\b", effect);
+        var binding = NifParticleEffectBinding.GetProofBindings().Single(b => b.EffectName == "fx_muzzle_tank");
+        Assert.Equal(0.09f, binding.WorldScale);
+        Assert.Contains("Muzzle_FiringShell", binding.DdfSource);
     }
 }

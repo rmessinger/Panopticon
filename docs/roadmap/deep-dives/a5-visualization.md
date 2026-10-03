@@ -108,9 +108,11 @@ batch runs are inspectable rather than opaque.
 - Load a run from its recorded artifacts: the recorded state snapshots/deltas and the
   metrics/events/signature stream from [A1-5 run outputs](a1-headless-host.md) (and/or the `.rep`
   inputs for re-running).
-- State reconstruction from recorded snapshots/deltas: reconstruct any frame from what was
-  recorded. A new `SimulationHost` execution is a separate run; authoritative analysis of a prior
-  run uses its recorded state.
+- State reconstruction: `Full`-mode runs reconstruct any frame from recorded snapshots/deltas.
+  `Operational`-mode runs read operational records directly and obtain granular frames from the
+  [A1-6 reconstructor](a1-6-operational-recording.md#6-reconstruction), which re-simulates from
+  the nearest checkpoint and verifies against recorded hashes. Unverified re-execution is a
+  separate run, not analysis of the prior one.
 - Timeline scrubbing: step/seek to any logic frame; play/pause/fast-forward.
 - Visualizations, domain-parameterized as the domain model supplies the view:
   - A spatial 2-D overview/heatmap of entity positions/movement for grid domains (RTS), a
@@ -132,8 +134,9 @@ batch runs are inspectable rather than opaque.
 ## 5. Run comparison & divergence localization
 
 Comparing runs by frame, partition, entity, and system helps investigate an experiment without
-making cross-run agreement a correctness gate. Diagnostic detail must be captured in the original
-run because another execution may follow a different path.
+making cross-seed agreement a correctness gate. Within one run identity, A1-6 reconstruction
+recovers granular detail; across identities another execution may follow a different path, so
+T2 detail for such comparisons is captured in the original run.
 
 ### 5.1 Tiered recording (emitted by [A1-5](a1-headless-host.md), consumed here)
 The recording is tiered so always-on cost stays proportional to the scale this roadmap targets:
@@ -148,9 +151,11 @@ The recording is tiered so always-on cost stays proportional to the scale this r
 - Hierarchical, addressable signatures (T1). A single global hash only answers "diverged
   yes/no at frame N." A tree keyed by partition and entity-bucket lets the comparator descend to
   the smallest node that diverged, turning O(world) inspection into O(log) drill-down.
-- Live triggering (T2), not re-run. T2 is armed
+- Live triggering (T2). T2 is armed
   before a run and fires when a T1 subtree (or a T0 invariant) breaches tolerance, snapshotting
   recent detailed deltas from a ring buffer. A user can also pre-mark a frame/region window.
+  For `Operational`-mode runs, the same window can be reconstructed after the fact within the
+  run identity.
 - Tolerance-aware comparison. "Divergence" is first place drift exceeds a configured
   tolerance, reported per subtree, not first non-identical bit. Tolerances are per-quantity
   (e.g. position ε, health ε) and surfaced in the comparator.

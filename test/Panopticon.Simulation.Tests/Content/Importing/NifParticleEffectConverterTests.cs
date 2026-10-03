@@ -229,9 +229,33 @@ public sealed class NifParticleEffectConverterTests
         var system = Convert(Read(builder.Build())).Systems[0];
 
         Assert.True(system.AlphaBlended);
+        Assert.Equal(ImportedParticleBlendMode.Alpha, system.BlendMode);
         Assert.Equal(2, system.AlphaKeys.Count);
         Assert.Equal(new ImportedParticleAlphaKey(0.0f, 1.0f), system.AlphaKeys[0]);
         Assert.Equal(new ImportedParticleAlphaKey(2.0f, 0.0f), system.AlphaKeys[1]);
+    }
+
+    [Theory]
+    [InlineData((ushort)4613, ImportedParticleBlendMode.SourceColorAdditive)]
+    [InlineData((ushort)4845, ImportedParticleBlendMode.Alpha)]
+    public void PreservesNifBlendFactors(ushort flags, ImportedParticleBlendMode expected)
+    {
+        var builder = new NifTestDataBuilder();
+        var nodeType = builder.AddBlockType("NiNode");
+        var particlesType = builder.AddBlockType("NiParticles");
+        var particlesDataType = builder.AddBlockType("NiParticlesData");
+        var controllerType = builder.AddBlockType("NiParticleSystemController");
+        var alphaPropertyType = builder.AddBlockType("NiAlphaProperty");
+
+        builder.AddBlock(nodeType, NifTestBlocks.Node(name: "root", children: [1]));
+        builder.AddBlock(particlesType, NifTestGeometry.Shape(
+            name: "sparks", data: 2, controller: 3, properties: [4]));
+        builder.AddBlock(particlesDataType, NifParticleTests.ParticlesData());
+        builder.AddBlock(controllerType, NifParticleTests.ParticleSystemController(target: 1, emitter: 0));
+        builder.AddBlock(alphaPropertyType, AlphaPropertyWithController(controller: -1, flags: flags));
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        Assert.Equal(expected, Convert(Read(builder.Build())).Systems[0].BlendMode);
     }
 
     [Fact]
