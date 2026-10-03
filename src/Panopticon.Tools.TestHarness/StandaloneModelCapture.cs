@@ -188,7 +188,7 @@ internal static class StandaloneModelCapture
     /// meshes with stale world matrices; serializing drivers (llvmpipe) never expose the race.
     /// Captures serialize frames via WaitForIdle, so synchronous CPU writes are safe here.
     /// </summary>
-    private static void FlushMeshWorldConstants(Game game, ModelInstance modelInstance)
+    internal static void FlushMeshWorldConstants(Game game, ModelInstance modelInstance)
     {
         var model = modelInstance.Model;
         for (var i = 0; i < model.SubObjects.Length; i++)

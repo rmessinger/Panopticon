@@ -214,19 +214,24 @@ public sealed class NifKeyframeTests
     }
 
     [Fact]
-    public void TbcKeysAreRejected()
+    public void TbcKeysParse()
     {
         var builder = new NifTestDataBuilder();
         var controllerType = builder.AddBlockType("NiKeyframeController");
         var dataType = builder.AddBlockType("NiKeyframeData");
         builder.AddBlock(controllerType, NifTestKeyframe.KeyframeController(data: 1));
         builder.AddBlock(dataType, NifTestKeyframe.KeyframeData(
-            translationKeys: [(0.0f, (1, 2, 3), null, null)],
+            translationKeys: [(0.0f, (1, 2, 3), null, null), (1.0f, (4, 5, 6), null, null)],
             translationKeyTypeOverride: 3));
         builder.AddTrailing(NifTestBlocks.Footer());
 
-        var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
-        Assert.Contains("Tbc", ex.Message);
+        var file = Read(builder.Build());
+        var data = Assert.IsType<NifKeyframeData>(file.Blocks[1]);
+        Assert.NotNull(data.TranslationKeys);
+        Assert.Equal(NifKeyType.Tbc, data.TranslationKeys!.Interpolation);
+        Assert.Equal(2, data.TranslationKeys.Keys.Count);
+        Assert.Equal(new Vector3(1, 2, 3), data.TranslationKeys.Keys[0].Value);
+        Assert.Null(data.TranslationKeys.Keys[0].Forward);
     }
 
     [Fact]
@@ -274,6 +279,6 @@ public sealed class NifKeyframeTests
         builder.AddTrailing(NifTestBlocks.Footer());
 
         var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
-        Assert.Contains("Linear (1) quaternion", ex.Message);
+        Assert.Contains("Linear (1), Tbc (3), and XyzRotation (4)", ex.Message);
     }
 }

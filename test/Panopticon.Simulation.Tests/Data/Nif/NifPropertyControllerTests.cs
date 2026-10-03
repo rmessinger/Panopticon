@@ -132,16 +132,22 @@ public sealed class NifPropertyControllerTests
     }
 
     [Fact]
-    public void FloatDataRejectsTbcKeys()
+    public void FloatDataParsesTbcKeys()
     {
         var builder = new NifTestDataBuilder();
         var dataType = builder.AddBlockType("NiFloatData");
         builder.AddBlock(dataType, NifTestPropertyAnimation.FloatData(
-            [(0.0f, 0.5f, null, null)], keyTypeOverride: 3u));
+            [(0.0f, 0.5f, null, null), (1.0f, 1.25f, null, null)], keyTypeOverride: 3u));
         builder.AddTrailing(NifTestBlocks.Footer());
 
-        var ex = Assert.Throws<NotSupportedException>(() => Read(builder.Build()));
-        Assert.Contains("unsupported key type Tbc (3)", ex.Message);
+        var data = (NifFloatData)Read(builder.Build()).Blocks[0];
+        Assert.NotNull(data.Keys);
+        Assert.Equal(NifKeyType.Tbc, data.Keys.Interpolation);
+        Assert.Equal(2, data.Keys.Keys.Count);
+        Assert.Equal(0.5f, data.Keys.Keys[0].Value);
+        Assert.Null(data.Keys.Keys[0].Forward);
+        Assert.Null(data.Keys.Keys[0].Backward);
+        Assert.Equal(1.25f, data.Keys.Keys[1].Value);
     }
 
     [Fact]

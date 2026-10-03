@@ -27,6 +27,23 @@ internal static class RasterizerStateDescriptionUtility
 
 internal static class BlendStateDescriptionUtility
 {
+    public static readonly BlendStateDescription SingleSourceColorAdditiveBlend = new BlendStateDescription
+    {
+        AttachmentStates = new[]
+        {
+            new BlendAttachmentDescription
+            {
+                BlendEnabled = true,
+                SourceColorFactor = BlendFactor.SourceColor,
+                DestinationColorFactor = BlendFactor.One,
+                ColorFunction = BlendFunction.Add,
+                SourceAlphaFactor = BlendFactor.One,
+                DestinationAlphaFactor = BlendFactor.One,
+                AlphaFunction = BlendFunction.Add,
+            }
+        }
+    };
+
     public static readonly BlendStateDescription SingleAdditiveBlendNoAlpha = new BlendStateDescription
     {
         AttachmentStates = new[]

@@ -13,6 +13,7 @@ internal sealed class ParticleShaderResources : ShaderSetBase
 {
     private readonly Pipeline _alphaPipeline;
     private readonly Pipeline _additivePipeline;
+    private readonly Pipeline _sourceColorAdditivePipeline;
 
     private readonly ConstantBuffer<ParticleConstantsVS> _particleConstantsBufferIsGroundAlignedFalse;
     private readonly ConstantBuffer<ParticleConstantsVS> _particleConstantsBufferIsGroundAlignedTrue;
@@ -38,6 +39,7 @@ internal sealed class ParticleShaderResources : ShaderSetBase
 
         _alphaPipeline = CreatePipeline(BlendStateDescription.SingleAlphaBlend);
         _additivePipeline = CreatePipeline(BlendStateDescriptionUtility.SingleAdditiveBlendNoAlpha);
+        _sourceColorAdditivePipeline = CreatePipeline(BlendStateDescriptionUtility.SingleSourceColorAdditiveBlend);
 
         ConstantBuffer<ParticleConstantsVS> CreateParticleConstantsBuffer(bool isGroundAligned)
         {
@@ -77,6 +79,7 @@ internal sealed class ParticleShaderResources : ShaderSetBase
                 ParticleSystemShader.Alpha => _alphaPipeline,
                 ParticleSystemShader.AlphaTest => _alphaPipeline, // TODO: Proper implementation
                 ParticleSystemShader.Additive => _additivePipeline,
+                ParticleSystemShader.SourceColorAdditive => _sourceColorAdditivePipeline,
                 _ => throw new ArgumentOutOfRangeException(nameof(template)),
             };
 

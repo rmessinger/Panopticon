@@ -387,17 +387,18 @@ public sealed class NifAnimationImporterTests
     }
 
     [Fact]
-    public void TbcScaleKeysAreRejected()
+    public void TbcScaleKeysImportWithZeroTangentsAsLinearValues()
     {
         var data = NifTestKeyframe.KeyframeData(
             quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
             scaleKeys: [(0.0f, 1.0f, null, null), (2.0f, 1.5f, null, null)],
             scaleKeyTypeOverride: 3);
 
-        var ex = Assert.Throws<NotSupportedException>(
-            () => Import(SingleChannelKf(data, duration: 2.0f)));
+        var animation = Import(SingleChannelKf(data, duration: 2.0f))!;
 
-        Assert.Contains("unsupported key type", ex.Message);
+        var scaleChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.Scale);
+        Assert.Equal(1.0, scaleChannel.Keyframes[0].FloatValue, 5);
+        Assert.Equal(1.5, scaleChannel.Keyframes[^1].FloatValue, 5);
     }
 
     [Fact]

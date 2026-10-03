@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-C4h-01` |
 | Roadmap phase | [Track C · C4h](../../track-c-external-assets.md): EE2 particle effects |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-C4c-06` |
