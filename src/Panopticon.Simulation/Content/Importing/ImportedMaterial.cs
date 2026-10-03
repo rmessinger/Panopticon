@@ -1,9 +1,9 @@
 #nullable enable
 
 using System;
-
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -81,20 +81,10 @@ public sealed class ImportedMaterial
         IReadOnlyList<ImportedMaterialProperty> properties,
         ImportedPbrMetallicRoughness? pbrMetallicRoughness = null)
     {
-        if (string.IsNullOrEmpty(shaderFamily))
-        {
-            throw new ArgumentException("Shader family must not be null or empty.", nameof(shaderFamily));
-        }
+        Ensure.NotNullOrEmpty(shaderFamily, "Shader family must not be null or empty.");
 
         ArgumentNullException.ThrowIfNull(properties);
-
-        for (var i = 0; i < properties.Count; i++)
-        {
-            if (properties[i] is null)
-            {
-                throw new ArgumentException($"Property at index {i} must not be null.", nameof(properties));
-            }
-        }
+        Ensure.NoNullElements(properties, "Property");
 
         var isPbrFamily = shaderFamily == PbrMetallicRoughnessFamily;
         if (isPbrFamily != (pbrMetallicRoughness is not null))

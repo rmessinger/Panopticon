@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -29,10 +30,7 @@ public sealed class ImportedParticleEffect
         IReadOnlyList<string> helperSubObjectNames,
         IReadOnlyList<ImportedParticleAttachment>? attachments = null)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException("Effect name must not be empty.", nameof(name));
-        }
+        Ensure.NotNullOrEmpty(name, "Effect name must not be empty.");
 
         if (systems is null || systems.Count == 0)
         {

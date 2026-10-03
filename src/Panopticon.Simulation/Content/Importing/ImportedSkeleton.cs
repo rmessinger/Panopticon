@@ -1,8 +1,8 @@
 #nullable enable
 
 using System;
-
 using System.Collections.Generic;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -17,10 +17,7 @@ public sealed class ImportedSkeleton
 
     public ImportedSkeleton(string name, IReadOnlyList<ImportedBone> bones)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException("Skeleton name must not be null or empty.", nameof(name));
-        }
+        Ensure.NotNullOrEmpty(name, "Skeleton name must not be null or empty.");
 
         ArgumentNullException.ThrowIfNull(bones);
 
@@ -30,13 +27,11 @@ public sealed class ImportedSkeleton
         }
 
         var copiedBones = new ImportedBone[bones.Count];
+        Ensure.NoNullElements(bones, "Bone");
+
         for (var i = 0; i < bones.Count; i++)
         {
             var bone = bones[i];
-            if (bone is null)
-            {
-                throw new ArgumentException($"Bone at index {i} must not be null.", nameof(bones));
-            }
 
             if (bone.ParentIndex >= i)
             {

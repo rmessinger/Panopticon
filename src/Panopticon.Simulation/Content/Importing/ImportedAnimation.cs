@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -26,10 +27,7 @@ public sealed class ImportedAnimation
         IReadOnlyList<ImportedAnimationChannel> channels,
         IReadOnlyList<ImportedMorphAnimationChannel>? morphChannels = null)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException("Animation name must not be null or empty.", nameof(name));
-        }
+        Ensure.NotNullOrEmpty(name, "Animation name must not be null or empty.");
 
         if (duration < TimeSpan.Zero)
         {
@@ -37,25 +35,10 @@ public sealed class ImportedAnimation
         }
 
         ArgumentNullException.ThrowIfNull(channels);
-
-        for (var i = 0; i < channels.Count; i++)
-        {
-            if (channels[i] is null)
-            {
-                throw new ArgumentException($"Channel at index {i} must not be null.", nameof(channels));
-            }
-        }
+        Ensure.NoNullElements(channels, "Channel");
 
         if (morphChannels is not null)
-        {
-            for (var i = 0; i < morphChannels.Count; i++)
-            {
-                if (morphChannels[i] is null)
-                {
-                    throw new ArgumentException($"Morph channel at index {i} must not be null.", nameof(morphChannels));
-                }
-            }
-        }
+            Ensure.NoNullElements(morphChannels, "Morph channel");
 
         Name = name;
         Duration = duration;

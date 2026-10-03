@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -71,10 +72,7 @@ public sealed class ExternalAssetCatalog
         IReadOnlyList<ExternalAnimationDescriptor> animations,
         IReadOnlyList<ExternalAssetInspectionDiagnostic> diagnostics)
     {
-        if (string.IsNullOrWhiteSpace(sourceDisplayName))
-        {
-            throw new ArgumentException("Source display name must not be empty.", nameof(sourceDisplayName));
-        }
+        Ensure.NotNullOrWhiteSpace(sourceDisplayName, "Source display name must not be empty.");
 
         ArgumentNullException.ThrowIfNull(bounds);
 

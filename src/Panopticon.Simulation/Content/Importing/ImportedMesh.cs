@@ -1,10 +1,10 @@
 #nullable enable
 
 using System;
-
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon;
 using Panopticon.Mathematics;
 
 namespace Panopticon.Content.Importing;
@@ -102,21 +102,12 @@ public sealed class ImportedMesh : ImportedRenderObject
         var copiedIndices = CopyIndices(indices, copiedVertices.Length);
         var copiedMorphTargetSets = CopyMorphTargetSets(morphTargetSets, copiedVertices.Length);
 
-        for (var i = 0; i < materials.Count; i++)
-        {
-            if (materials[i] is null)
-            {
-                throw new ArgumentException($"Material at index {i} must not be null.", nameof(materials));
-            }
-        }
+        Ensure.NoNullElements(materials, "Material");
+        Ensure.NoNullElements(meshParts, "Mesh part");
 
         for (var i = 0; i < meshParts.Count; i++)
         {
             var meshPart = meshParts[i];
-            if (meshPart is null)
-            {
-                throw new ArgumentException($"Mesh part at index {i} must not be null.", nameof(meshParts));
-            }
 
             if (meshPart.MaterialIndex >= materials.Count)
             {
@@ -168,13 +159,11 @@ public sealed class ImportedMesh : ImportedRenderObject
         }
 
         var copiedSets = new ImportedMorphTargetSet[morphTargetSets.Count];
+        Ensure.NoNullElements(morphTargetSets, "Morph target set");
+
         for (var i = 0; i < morphTargetSets.Count; i++)
         {
             var set = morphTargetSets[i];
-            if (set is null)
-            {
-                throw new ArgumentException($"Morph target set at index {i} must not be null.", nameof(morphTargetSets));
-            }
 
             for (var t = 0; t < set.Targets.Count; t++)
             {
@@ -214,14 +203,12 @@ public sealed class ImportedMesh : ImportedRenderObject
 
     private static ImportedVertex[] CopyVertices(IReadOnlyList<ImportedVertex> vertices, bool isSkinned)
     {
+        Ensure.NoNullElements(vertices, "Vertex");
+
         var copiedVertices = new ImportedVertex[vertices.Count];
         for (var i = 0; i < vertices.Count; i++)
         {
             var vertex = vertices[i];
-            if (vertex is null)
-            {
-                throw new ArgumentException($"Vertex at index {i} must not be null.", nameof(vertices));
-            }
 
             if (!isSkinned &&
                 (vertex.BoneIndex0 != 0 || vertex.BoneIndex1 != 0 ||

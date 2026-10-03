@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -29,10 +30,7 @@ public sealed class ImportedMorphAnimationChannel
         IReadOnlyList<float[]> weightVectors,
         ImportedAnimationInterpolation interpolation = ImportedAnimationInterpolation.Linear)
     {
-        if (string.IsNullOrEmpty(primitiveId))
-        {
-            throw new ArgumentException("Primitive id must not be null or empty.", nameof(primitiveId));
-        }
+        Ensure.NotNullOrEmpty(primitiveId, "Primitive id must not be null or empty.");
 
         if (!Enum.IsDefined(interpolation))
         {
@@ -47,10 +45,10 @@ public sealed class ImportedMorphAnimationChannel
         for (var i = 0; i < targetNames.Count; i++)
         {
             var name = targetNames[i];
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentException($"Target name at index {i} must not be null or empty.", nameof(targetNames));
-            }
+            Ensure.NotNullOrEmpty(
+                name,
+                $"Target name at index {i} must not be null or empty.",
+                nameof(targetNames));
 
             for (var j = i + 1; j < targetNames.Count; j++)
             {

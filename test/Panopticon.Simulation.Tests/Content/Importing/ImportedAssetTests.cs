@@ -659,7 +659,7 @@ public sealed class ImportedAssetTests
     public void AnimationTarget_RejectsInvalidInputs()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => ImportedAnimationTarget.CreateDirectIndex(-1));
-        Assert.Throws<ArgumentException>(() => ImportedAnimationTarget.CreateBoneName(null!));
+        Assert.Throws<ArgumentNullException>(() => ImportedAnimationTarget.CreateBoneName(null!));
         Assert.Throws<ArgumentException>(() => ImportedAnimationTarget.CreateBoneName(""));
     }
 

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Panopticon;
 using Panopticon.Content.Importing;
 
 namespace Panopticon.Content.Importing.Nif;
@@ -52,15 +53,9 @@ public sealed class NifParticleEffectBinding
         string ddfSource,
         Vector3 boneLocalOffset = default)
     {
-        if (string.IsNullOrEmpty(effectName))
-        {
-            throw new ArgumentException("Effect name must not be empty.", nameof(effectName));
-        }
+        Ensure.NotNullOrEmpty(effectName, "Effect name must not be empty.");
 
-        if (string.IsNullOrEmpty(nifFileName))
-        {
-            throw new ArgumentException("NIF file name must not be empty.", nameof(nifFileName));
-        }
+        Ensure.NotNullOrEmpty(nifFileName, "NIF file name must not be empty.");
 
         if (!nifFileName.EndsWith(".nif", StringComparison.OrdinalIgnoreCase))
         {
@@ -86,10 +81,7 @@ public sealed class NifParticleEffectBinding
             throw new ArgumentException("Binding world scale must be finite and positive.", nameof(worldScale));
         }
 
-        if (string.IsNullOrEmpty(ddfSource))
-        {
-            throw new ArgumentException("DDF source must not be empty.", nameof(ddfSource));
-        }
+        Ensure.NotNullOrEmpty(ddfSource, "DDF source must not be empty.");
 
         EffectName = effectName;
         NifFileName = nifFileName;

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -120,10 +121,7 @@ public sealed class ImportedParticleModifier
 
     public static ImportedParticleModifier CreateUnsupported(string feature)
     {
-        if (string.IsNullOrEmpty(feature))
-        {
-            throw new ArgumentException("Unsupported modifiers must name the feature.", nameof(feature));
-        }
+        Ensure.NotNullOrEmpty(feature, "Unsupported modifiers must name the feature.");
 
         return new ImportedParticleModifier(
             ImportedParticleModifierKind.Unsupported, 0, 0, Array.Empty<ImportedParticleColorKey>(),

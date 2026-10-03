@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -72,30 +73,21 @@ public sealed class ImportedAnimationTarget
 
     public static ImportedAnimationTarget CreateBoneName(string boneName)
     {
-        if (string.IsNullOrEmpty(boneName))
-        {
-            throw new ArgumentException("Bone name must not be null or empty.", nameof(boneName));
-        }
+        Ensure.NotNullOrEmpty(boneName, "Bone name must not be null or empty.");
 
         return new ImportedAnimationTarget(ImportedAnimationTargetKind.BoneName, -1, boneName, null, -1);
     }
 
     public static ImportedAnimationTarget CreateSubObjectName(string subObjectName)
     {
-        if (string.IsNullOrEmpty(subObjectName))
-        {
-            throw new ArgumentException("Sub-object name must not be null or empty.", nameof(subObjectName));
-        }
+        Ensure.NotNullOrEmpty(subObjectName, "Sub-object name must not be null or empty.");
 
         return new ImportedAnimationTarget(ImportedAnimationTargetKind.SubObjectName, -1, null, subObjectName, -1);
     }
 
     public static ImportedAnimationTarget CreateMaterialSlot(string subObjectFullName, int materialIndex)
     {
-        if (string.IsNullOrEmpty(subObjectFullName))
-        {
-            throw new ArgumentException("Sub-object name must not be null or empty.", nameof(subObjectFullName));
-        }
+        Ensure.NotNullOrEmpty(subObjectFullName, "Sub-object name must not be null or empty.");
 
         if (materialIndex < 0)
         {

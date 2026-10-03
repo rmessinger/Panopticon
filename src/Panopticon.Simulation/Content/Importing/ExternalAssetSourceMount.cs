@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Panopticon;
 using Panopticon.Content.Importing.Gltf;
 using Panopticon.IO;
 
@@ -31,10 +32,7 @@ public sealed class ExternalAssetSourceMount : IDisposable
         GltfImportOptions? options = null,
         IEnumerable<string>? enabledFeatureGates = null)
     {
-        if (string.IsNullOrWhiteSpace(absoluteSelectedFile))
-        {
-            throw new ArgumentException("Selected file path must not be empty.", nameof(absoluteSelectedFile));
-        }
+        Ensure.NotNullOrWhiteSpace(absoluteSelectedFile, "Selected file path must not be empty.");
 
         if (!Path.IsPathRooted(absoluteSelectedFile))
         {
@@ -44,12 +42,10 @@ public sealed class ExternalAssetSourceMount : IDisposable
         }
 
         var fileName = Path.GetFileName(absoluteSelectedFile);
-        if (string.IsNullOrEmpty(fileName))
-        {
-            throw new ArgumentException(
-                "Selected file path must name a file, not end at a directory.",
-                nameof(absoluteSelectedFile));
-        }
+        Ensure.NotNullOrEmpty(
+            fileName,
+            "Selected file path must name a file, not end at a directory.",
+            nameof(absoluteSelectedFile));
 
         var selectionResult = ExternalAssetInspection.SelectFormat(fileName, options);
         if (!selectionResult.IsSuccess || selectionResult.Selection is not { } selection)

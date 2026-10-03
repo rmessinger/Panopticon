@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -91,13 +92,11 @@ public sealed class ImportedAnimationChannel
         var expectedKind = ImportedKeyframe.GetExpectedKind(channelType);
 
         var copiedKeyframes = new ImportedKeyframe[keyframes.Count];
+        Ensure.NoNullElements(keyframes, "Keyframe");
+
         for (var i = 0; i < keyframes.Count; i++)
         {
             var keyframe = keyframes[i];
-            if (keyframe is null)
-            {
-                throw new ArgumentException($"Keyframe at index {i} must not be null.", nameof(keyframes));
-            }
 
             if (keyframe.Kind != expectedKind)
             {

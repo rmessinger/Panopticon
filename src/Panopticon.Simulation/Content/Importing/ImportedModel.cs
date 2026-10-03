@@ -1,9 +1,9 @@
 #nullable enable
 
 using System;
-
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -47,10 +47,7 @@ public sealed class ImportedModel
         ImportedSkeletonOrigin skeletonOrigin,
         IReadOnlyCollection<string>? enabledFeatureGates = null)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException("Model name must not be null or empty.", nameof(name));
-        }
+        Ensure.NotNullOrEmpty(name, "Model name must not be null or empty.");
 
         ArgumentNullException.ThrowIfNull(skeleton);
 
@@ -63,13 +60,11 @@ public sealed class ImportedModel
         var boneCount = skeleton.Bones.Count;
 
         var copiedSubObjects = new ImportedSubObject[subObjects.Count];
+        Ensure.NoNullElements(subObjects, "Sub-object");
+
         for (var i = 0; i < subObjects.Count; i++)
         {
             var subObject = subObjects[i];
-            if (subObject is null)
-            {
-                throw new ArgumentException($"Sub-object at index {i} must not be null.", nameof(subObjects));
-            }
 
             if (subObject.ParentBoneIndex >= boneCount)
             {

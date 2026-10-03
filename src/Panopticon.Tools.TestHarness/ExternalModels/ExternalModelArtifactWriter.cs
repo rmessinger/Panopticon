@@ -22,9 +22,7 @@ internal static class ExternalModelArtifactWriter
     public static void Publish(string finalPath, Action<string> writeStagingFile)
     {
         if (string.IsNullOrWhiteSpace(finalPath))
-        {
             throw new ArgumentException("Artifact path must not be empty.", nameof(finalPath));
-        }
 
         var stagingPath = finalPath + StagingSuffix;
         writeStagingFile(stagingPath);

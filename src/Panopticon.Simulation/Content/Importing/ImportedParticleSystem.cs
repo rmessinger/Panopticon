@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -149,10 +150,7 @@ public sealed class ImportedParticleSystem
         bool alphaBlended,
         ImportedParticleBlendMode? blendMode = null)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException("System name must not be empty.", nameof(name));
-        }
+        Ensure.NotNullOrEmpty(name, "System name must not be empty.");
 
         if (!IsFinite(localTransform))
         {
