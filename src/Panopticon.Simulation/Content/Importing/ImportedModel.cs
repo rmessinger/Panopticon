@@ -52,15 +52,9 @@ public sealed class ImportedModel
             throw new ArgumentException("Model name must not be null or empty.", nameof(name));
         }
 
-        if (skeleton is null)
-        {
-            throw new ArgumentNullException(nameof(skeleton));
-        }
+        ArgumentNullException.ThrowIfNull(skeleton);
 
-        if (subObjects is null)
-        {
-            throw new ArgumentNullException(nameof(subObjects));
-        }
+        ArgumentNullException.ThrowIfNull(subObjects);
 
         EnabledFeatureGates = enabledFeatureGates is null
             ? new HashSet<string>()

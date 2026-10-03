@@ -36,10 +36,7 @@ public sealed class ImportedAnimation
             throw new ArgumentException("Animation duration must not be negative.", nameof(duration));
         }
 
-        if (channels is null)
-        {
-            throw new ArgumentNullException(nameof(channels));
-        }
+        ArgumentNullException.ThrowIfNull(channels);
 
         for (var i = 0; i < channels.Count; i++)
         {

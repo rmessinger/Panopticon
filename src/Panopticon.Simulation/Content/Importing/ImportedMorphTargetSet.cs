@@ -42,10 +42,7 @@ public sealed class ImportedMorphTargetSet
             throw new ArgumentException("Primitive id must not be null or empty.", nameof(primitiveId));
         }
 
-        if (targetNames is null)
-        {
-            throw new ArgumentNullException(nameof(targetNames));
-        }
+        ArgumentNullException.ThrowIfNull(targetNames);
 
         if (targetNames.Count == 0)
         {

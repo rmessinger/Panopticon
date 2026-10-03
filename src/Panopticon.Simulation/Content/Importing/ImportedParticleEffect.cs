@@ -52,10 +52,7 @@ public sealed class ImportedParticleEffect
             throw new ArgumentException($"Particle system name '{duplicate.Key}' is not unique.", nameof(systems));
         }
 
-        if (helperSubObjectNames is null)
-        {
-            throw new ArgumentNullException(nameof(helperSubObjectNames));
-        }
+        ArgumentNullException.ThrowIfNull(helperSubObjectNames);
 
         if (helperSubObjectNames.Any(n => string.IsNullOrEmpty(n)))
         {

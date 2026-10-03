@@ -26,10 +26,7 @@ public sealed class AssetImportContext
         string? language,
         IEnumerable<string>? enabledFeatureGates = null)
     {
-        if (fileSystem is null)
-        {
-            throw new ArgumentNullException(nameof(fileSystem));
-        }
+        ArgumentNullException.ThrowIfNull(fileSystem);
 
         FileSystem = fileSystem;
         Language = language;

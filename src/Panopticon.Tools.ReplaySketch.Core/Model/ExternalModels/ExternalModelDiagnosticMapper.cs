@@ -54,10 +54,7 @@ public static class ExternalModelDiagnosticMapper
         Exception exception,
         string? fixHint = null)
     {
-        if (exception is null)
-        {
-            throw new ArgumentNullException(nameof(exception));
-        }
+        ArgumentNullException.ThrowIfNull(exception);
 
         if (exception is InvalidDataException)
         {
@@ -102,10 +99,7 @@ public static class ExternalModelDiagnosticMapper
     public static IReadOnlyList<ExternalModelDiagnostic> SortAndCollapse(
         IEnumerable<ExternalModelDiagnostic> diagnostics)
     {
-        if (diagnostics is null)
-        {
-            throw new ArgumentNullException(nameof(diagnostics));
-        }
+        ArgumentNullException.ThrowIfNull(diagnostics);
 
         var collapsed = new Dictionary<ExternalModelDiagnostic, List<ExternalModelDiagnostic>>();
 

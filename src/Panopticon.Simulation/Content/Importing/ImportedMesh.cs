@@ -53,10 +53,7 @@ public sealed class ImportedMesh : ImportedRenderObject
         string? primitiveId = null,
         IReadOnlyList<ImportedMorphTargetSet>? morphTargetSets = null)
     {
-        if (vertices is null)
-        {
-            throw new ArgumentNullException(nameof(vertices));
-        }
+        ArgumentNullException.ThrowIfNull(vertices);
 
         if (vertices.Count == 0)
         {
@@ -70,10 +67,7 @@ public sealed class ImportedMesh : ImportedRenderObject
                 nameof(vertices));
         }
 
-        if (indices is null)
-        {
-            throw new ArgumentNullException(nameof(indices));
-        }
+        ArgumentNullException.ThrowIfNull(indices);
 
         if (indices.Count == 0)
         {
@@ -90,20 +84,14 @@ public sealed class ImportedMesh : ImportedRenderObject
             throw new ArgumentException("Bounding sphere radius must not be negative.", nameof(boundingSphere));
         }
 
-        if (materials is null)
-        {
-            throw new ArgumentNullException(nameof(materials));
-        }
+        ArgumentNullException.ThrowIfNull(materials);
 
         if (materials.Count == 0)
         {
             throw new ArgumentException("A mesh must have at least one material.", nameof(materials));
         }
 
-        if (meshParts is null)
-        {
-            throw new ArgumentNullException(nameof(meshParts));
-        }
+        ArgumentNullException.ThrowIfNull(meshParts);
 
         if (meshParts.Count == 0)
         {

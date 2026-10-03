@@ -30,10 +30,7 @@ internal sealed class W3dModelImporter : IModelImporter
 
     public ImportedModel? ImportModel(string name, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         var w3dFile = FindAndParseFile(name, context);
         if (w3dFile is null)
@@ -47,10 +44,7 @@ internal sealed class W3dModelImporter : IModelImporter
 
     public ImportedSkeleton? ImportSkeleton(string name, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         var w3dFile = FindAndParseFile(name, context);
         if (w3dFile is null)

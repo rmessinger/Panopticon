@@ -21,10 +21,7 @@ internal static class ImportedTangentGenerator
 
     public static ImportedMesh GenerateTangents(ImportedMesh mesh)
     {
-        if (mesh is null)
-        {
-            throw new ArgumentNullException(nameof(mesh));
-        }
+        ArgumentNullException.ThrowIfNull(mesh);
 
         var vertexCount = mesh.Vertices.Count;
         var tangentSums = new Vector3[vertexCount];

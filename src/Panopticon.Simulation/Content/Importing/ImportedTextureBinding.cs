@@ -42,15 +42,9 @@ public sealed class ImportedTextureBinding
         ImportedSampler sampler,
         ImportedTextureRole role)
     {
-        if (imageSource is null)
-        {
-            throw new ArgumentNullException(nameof(imageSource));
-        }
+        ArgumentNullException.ThrowIfNull(imageSource);
 
-        if (sampler is null)
-        {
-            throw new ArgumentNullException(nameof(sampler));
-        }
+        ArgumentNullException.ThrowIfNull(sampler);
 
         if (uvSet is < 0 or > 1)
         {

@@ -201,30 +201,18 @@ public sealed class ImportedParticleSystem
             throw new ArgumentException("Initial size must be finite and positive.", nameof(initialSize));
         }
 
-        if (velocity is null)
-        {
-            throw new ArgumentNullException(nameof(velocity));
-        }
+        ArgumentNullException.ThrowIfNull(velocity);
 
-        if (emitter is null)
-        {
-            throw new ArgumentNullException(nameof(emitter));
-        }
+        ArgumentNullException.ThrowIfNull(emitter);
 
-        if (modifiers is null)
-        {
-            throw new ArgumentNullException(nameof(modifiers));
-        }
+        ArgumentNullException.ThrowIfNull(modifiers);
 
         if (modifiers.Any(m => m is null))
         {
             throw new ArgumentException("Modifiers must not contain null entries.", nameof(modifiers));
         }
 
-        if (alphaKeys is null)
-        {
-            throw new ArgumentNullException(nameof(alphaKeys));
-        }
+        ArgumentNullException.ThrowIfNull(alphaKeys);
 
         for (var i = 0; i < alphaKeys.Count; i++)
         {

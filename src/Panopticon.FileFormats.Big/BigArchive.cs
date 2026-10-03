@@ -130,10 +130,7 @@ public class BigArchive : DisposableBase
 
     public BigArchiveEntry? GetEntry(string entryName)
     {
-        if (entryName == null)
-        {
-            throw new ArgumentNullException(nameof(entryName));
-        }
+        ArgumentNullException.ThrowIfNull(entryName);
 
         _entriesDictionary.TryGetValue(entryName, out var result);
         return result;

@@ -36,10 +36,7 @@ internal sealed class GltfExternalAssetInspector : IExternalAssetInspector
 
     public ExternalAssetCatalog? InspectModel(string assetKey, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         if (!GltfAssetKey.TryParseModel(assetKey, out var modelKey))
         {

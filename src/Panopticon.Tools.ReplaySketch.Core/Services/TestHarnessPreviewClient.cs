@@ -50,15 +50,9 @@ public sealed class TestHarnessPreviewClient : IExternalModelPreviewClient
         IExternalModelArtifactLease lease,
         CancellationToken cancellationToken)
     {
-        if (request is null)
-        {
-            throw new ArgumentNullException(nameof(request));
-        }
+        ArgumentNullException.ThrowIfNull(request);
 
-        if (lease is null)
-        {
-            throw new ArgumentNullException(nameof(lease));
-        }
+        ArgumentNullException.ThrowIfNull(lease);
 
         var executablePath = _locateExecutable();
         if (executablePath is null)

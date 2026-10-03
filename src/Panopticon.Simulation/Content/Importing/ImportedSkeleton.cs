@@ -22,10 +22,7 @@ public sealed class ImportedSkeleton
             throw new ArgumentException("Skeleton name must not be null or empty.", nameof(name));
         }
 
-        if (bones is null)
-        {
-            throw new ArgumentNullException(nameof(bones));
-        }
+        ArgumentNullException.ThrowIfNull(bones);
 
         if (bones.Count == 0)
         {

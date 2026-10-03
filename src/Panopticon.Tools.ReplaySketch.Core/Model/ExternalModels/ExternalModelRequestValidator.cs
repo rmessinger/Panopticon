@@ -24,10 +24,7 @@ public static class ExternalModelRequestValidator
     /// <summary>Returns an empty list when the request is valid.</summary>
     public static IReadOnlyList<ExternalModelDiagnostic> Validate(ExternalModelRequest request)
     {
-        if (request is null)
-        {
-            throw new ArgumentNullException(nameof(request));
-        }
+        ArgumentNullException.ThrowIfNull(request);
 
         var diagnostics = new List<ExternalModelDiagnostic>();
 

@@ -77,15 +77,9 @@ public sealed class ImportedAnimationChannel
             throw new ArgumentOutOfRangeException(nameof(interpolation));
         }
 
-        if (target is null)
-        {
-            throw new ArgumentNullException(nameof(target));
-        }
+        ArgumentNullException.ThrowIfNull(target);
 
-        if (keyframes is null)
-        {
-            throw new ArgumentNullException(nameof(keyframes));
-        }
+        ArgumentNullException.ThrowIfNull(keyframes);
 
         if (keyframes.Count == 0)
         {

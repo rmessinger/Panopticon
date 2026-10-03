@@ -86,10 +86,7 @@ public sealed class ImportedMaterial
             throw new ArgumentException("Shader family must not be null or empty.", nameof(shaderFamily));
         }
 
-        if (properties is null)
-        {
-            throw new ArgumentNullException(nameof(properties));
-        }
+        ArgumentNullException.ThrowIfNull(properties);
 
         for (var i = 0; i < properties.Count; i++)
         {
@@ -135,10 +132,7 @@ public sealed class ImportedMaterial
         ImportedPbrMetallicRoughness payload,
         IReadOnlyList<ImportedMaterialProperty>? properties = null)
     {
-        if (payload is null)
-        {
-            throw new ArgumentNullException(nameof(payload));
-        }
+        ArgumentNullException.ThrowIfNull(payload);
 
         var blendEnabled = payload.AlphaMode == ImportedAlphaMode.Blend;
 

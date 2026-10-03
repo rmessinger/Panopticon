@@ -23,25 +23,16 @@ public sealed class ImportedSubObject
         int parentBoneIndex,
         ImportedRenderObject renderObject)
     {
-        if (fullName is null)
-        {
-            throw new ArgumentNullException(nameof(fullName));
-        }
+        ArgumentNullException.ThrowIfNull(fullName);
 
-        if (displayName is null)
-        {
-            throw new ArgumentNullException(nameof(displayName));
-        }
+        ArgumentNullException.ThrowIfNull(displayName);
 
         if (parentBoneIndex < 0)
         {
             throw new ArgumentException("Parent bone index must not be negative.", nameof(parentBoneIndex));
         }
 
-        if (renderObject is null)
-        {
-            throw new ArgumentNullException(nameof(renderObject));
-        }
+        ArgumentNullException.ThrowIfNull(renderObject);
 
         FullName = fullName;
         DisplayName = displayName;

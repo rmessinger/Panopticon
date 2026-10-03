@@ -23,10 +23,7 @@ public sealed record ExternalSourceIdentity(
         string virtualKey,
         Stream content)
     {
-        if (content is null)
-        {
-            throw new ArgumentNullException(nameof(content));
-        }
+        ArgumentNullException.ThrowIfNull(content);
 
         return new ExternalSourceIdentity(
             displayName,
@@ -37,10 +34,7 @@ public sealed record ExternalSourceIdentity(
 
     public static string ComputeContentHash(Stream content)
     {
-        if (content is null)
-        {
-            throw new ArgumentNullException(nameof(content));
-        }
+        ArgumentNullException.ThrowIfNull(content);
 
         var position = content.Position;
 

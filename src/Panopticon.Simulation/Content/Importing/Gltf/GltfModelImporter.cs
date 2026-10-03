@@ -28,10 +28,7 @@ internal sealed class GltfModelImporter : IModelImporter
 
     public ImportedModel? ImportModel(string name, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         if (!GltfAssetKey.TryParseModel(name, out var modelKey))
         {
@@ -150,10 +147,7 @@ internal sealed class GltfModelImporter : IModelImporter
 
     public ImportedSkeleton? ImportSkeleton(string name, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         if (!GltfAssetKey.TryParseModel(name, out var modelKey))
         {

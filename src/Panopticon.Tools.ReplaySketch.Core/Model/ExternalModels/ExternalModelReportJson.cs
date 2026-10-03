@@ -25,10 +25,7 @@ public static class ExternalModelReportJson
 
     public static string Serialize(ExternalModelReport report)
     {
-        if (report is null)
-        {
-            throw new ArgumentNullException(nameof(report));
-        }
+        ArgumentNullException.ThrowIfNull(report);
 
         var payload = new ReportPayload
         {

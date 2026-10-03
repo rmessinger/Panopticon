@@ -47,10 +47,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
             throw new ObjectDisposedException(nameof(ImportedTextureMaterializer));
         }
 
-        if (source is null)
-        {
-            throw new ArgumentNullException(nameof(source));
-        }
+        ArgumentNullException.ThrowIfNull(source);
 
         if (source.Kind == ImportedImageSourceKind.VirtualPath)
         {
@@ -83,10 +80,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
             throw new ObjectDisposedException(nameof(ImportedTextureMaterializer));
         }
 
-        if (sampler is null)
-        {
-            throw new ArgumentNullException(nameof(sampler));
-        }
+        ArgumentNullException.ThrowIfNull(sampler);
 
         var key = new SamplerKey(
             sampler.AddressModeU,

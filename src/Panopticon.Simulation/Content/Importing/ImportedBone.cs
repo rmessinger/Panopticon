@@ -57,10 +57,7 @@ public sealed class ImportedBone
         in Matrix4x4 inverseBindMatrix,
         float bindScale)
     {
-        if (name is null)
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
+        ArgumentNullException.ThrowIfNull(name);
 
         if (parentIndex < -1)
         {

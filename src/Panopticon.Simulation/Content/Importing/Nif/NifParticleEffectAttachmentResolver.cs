@@ -60,10 +60,7 @@ internal sealed class NifParticleAttachmentPlan
         int boneIndex,
         Func<int, Matrix4x4> getBoneWorldMatrix)
     {
-        if (getBoneWorldMatrix == null)
-        {
-            throw new ArgumentNullException(nameof(getBoneWorldMatrix));
-        }
+        ArgumentNullException.ThrowIfNull(getBoneWorldMatrix);
 
         var source = new FollowMatrixSource(binding, boneIndex, getBoneWorldMatrix);
         return new NifParticleAttachmentPlan(

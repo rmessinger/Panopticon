@@ -76,10 +76,7 @@ public sealed class ExternalAssetCatalog
             throw new ArgumentException("Source display name must not be empty.", nameof(sourceDisplayName));
         }
 
-        if (bounds is null)
-        {
-            throw new ArgumentNullException(nameof(bounds));
-        }
+        ArgumentNullException.ThrowIfNull(bounds);
 
         SourceDisplayName = sourceDisplayName;
         FormatId = formatId;
