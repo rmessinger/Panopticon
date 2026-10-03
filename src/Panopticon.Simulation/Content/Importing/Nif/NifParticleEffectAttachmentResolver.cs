@@ -11,7 +11,6 @@ namespace Panopticon.Content.Importing.Nif;
 internal enum NifParticleAttachmentKind
 {
     WorldSpawn,
-
     FollowBone,
 }
 
