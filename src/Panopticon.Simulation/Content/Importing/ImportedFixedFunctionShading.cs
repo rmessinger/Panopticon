@@ -1,8 +1,8 @@
 #nullable enable
 
 using System;
-
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -77,10 +77,7 @@ public sealed class ImportedFixedFunctionShading
         ImportedTextureMapping textureMappingStage0,
         ImportedTextureMapping textureMappingStage1)
     {
-        if (textureStageCount < 0 || textureStageCount > 2)
-        {
-            throw new ArgumentException("Texture stage count must be 0, 1, or 2.", nameof(textureStageCount));
-        }
+        Ensure.InRange(textureStageCount, 0, 2, "Texture stage count must be 0, 1, or 2.");
 
         DiffuseLightingType = diffuseLightingType;
         SpecularEnabled = specularEnabled;

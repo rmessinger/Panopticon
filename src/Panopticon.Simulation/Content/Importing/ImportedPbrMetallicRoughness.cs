@@ -2,6 +2,7 @@
 
 using System;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -69,10 +70,7 @@ public sealed class ImportedPbrMetallicRoughness
         ValidateRole(nameof(occlusionTexture), occlusionTexture, ImportedTextureRole.Occlusion);
         ValidateRole(nameof(emissiveTexture), emissiveTexture, ImportedTextureRole.Emissive);
 
-        if (alphaCutoff is < 0.0f or > 1.0f)
-        {
-            throw new ArgumentOutOfRangeException(nameof(alphaCutoff), "Alpha cutoff must be within [0, 1].");
-        }
+        Ensure.InRange(alphaCutoff, 0.0f, 1.0f, "Alpha cutoff must be within [0, 1].");
 
         BaseColorFactor = baseColorFactor ?? Vector4.One;
         BaseColorTexture = baseColorTexture;

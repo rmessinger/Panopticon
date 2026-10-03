@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 using Panopticon.Simulation;
 
 namespace Panopticon.Recording;
@@ -78,10 +79,7 @@ public sealed class SnapshotDeltaRecorder : IDisposable
 
     public SnapshotDeltaRecorder(WorldStateSampler sampler, uint snapshotInterval = 300, string? artifactPath = null, IGame? game = null)
     {
-        if (snapshotInterval == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(snapshotInterval));
-        }
+        ArgumentOutOfRangeException.ThrowIfZero(snapshotInterval);
 
         if (artifactPath is not null && game is null)
         {

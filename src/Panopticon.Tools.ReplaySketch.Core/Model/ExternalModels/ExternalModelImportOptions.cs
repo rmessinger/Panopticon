@@ -35,10 +35,7 @@ public sealed class ExternalModelImportOptions
         IReadOnlyDictionary<string, bool>? featureGates,
         IReadOnlyDictionary<string, ExternalMorphWeightRange>? morphWeightRanges)
     {
-        if (float.IsNaN(unitsPerMeter) || float.IsInfinity(unitsPerMeter) || unitsPerMeter <= 0)
-        {
-            throw new ArgumentException("Units per meter must be a positive finite value.", nameof(unitsPerMeter));
-        }
+        Ensure.FinitePositive(unitsPerMeter, "Units per meter must be a positive finite value.");
 
         foreach (var (name, enabled) in featureGates ?? new Dictionary<string, bool>())
         {

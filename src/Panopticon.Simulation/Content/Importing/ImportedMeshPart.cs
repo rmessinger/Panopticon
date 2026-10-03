@@ -1,9 +1,9 @@
 #nullable enable
 
 using System;
-
 using System.Collections.Generic;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -44,10 +44,7 @@ public sealed class ImportedMeshPart
             throw new ArgumentException("Part index count must be a positive multiple of three.", nameof(indexCount));
         }
 
-        if (materialIndex < 0)
-        {
-            throw new ArgumentException("Material index must not be negative.", nameof(materialIndex));
-        }
+        Ensure.AtLeast(materialIndex, 0, "Material index must not be negative.");
 
         TextureCoordinates0 = textureCoordinates0 == null ? null : (Vector2[])textureCoordinates0.Clone();
         TextureCoordinates1 = textureCoordinates1 == null ? null : (Vector2[])textureCoordinates1.Clone();

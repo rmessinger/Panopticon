@@ -30,17 +30,17 @@ public class GltfImporterScaffoldTests
     [Fact]
     public void Options_RejectNonPositiveOrNonFiniteUnits()
     {
-        Assert.Throws<ArgumentException>(() => new GltfImportOptions(unitsPerMeter: 0));
-        Assert.Throws<ArgumentException>(() => new GltfImportOptions(unitsPerMeter: -1));
-        Assert.Throws<ArgumentException>(() => new GltfImportOptions(unitsPerMeter: float.NaN));
-        Assert.Throws<ArgumentException>(() => new GltfImportOptions(unitsPerMeter: float.PositiveInfinity));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GltfImportOptions(unitsPerMeter: 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GltfImportOptions(unitsPerMeter: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GltfImportOptions(unitsPerMeter: float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GltfImportOptions(unitsPerMeter: float.PositiveInfinity));
     }
 
     [Fact]
     public void Options_RejectNonPositiveLimits()
     {
-        Assert.Throws<ArgumentException>(() => new GltfImportOptions(maxRootDocumentBytes: 0));
-        Assert.Throws<ArgumentException>(() => new GltfImportOptions(maxDataUriBytes: -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GltfImportOptions(maxRootDocumentBytes: 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new GltfImportOptions(maxDataUriBytes: -1));
     }
 
     [Fact]

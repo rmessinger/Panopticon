@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using Panopticon;
 
 namespace Panopticon.Content.Importing.Gltf;
 
@@ -64,30 +65,15 @@ public sealed class GltfImportOptions
         int maxImageDimension = 16_384,
         int maxDataUriNestingDepth = 8)
     {
-        if (float.IsNaN(unitsPerMeter) || float.IsInfinity(unitsPerMeter) || unitsPerMeter <= 0)
-        {
-            throw new ArgumentException("Units per meter must be a positive finite value.", nameof(unitsPerMeter));
-        }
+        Ensure.FinitePositive(unitsPerMeter, "Units per meter must be a positive finite value.");
 
-        if (maxRootDocumentBytes <= 0)
-        {
-            throw new ArgumentException("Maximum root document bytes must be positive.", nameof(maxRootDocumentBytes));
-        }
+        Ensure.GreaterThan(maxRootDocumentBytes, 0L, "Maximum root document bytes must be positive.");
 
-        if (maxDataUriBytes <= 0)
-        {
-            throw new ArgumentException("Maximum data-URI bytes must be positive.", nameof(maxDataUriBytes));
-        }
+        Ensure.GreaterThan(maxDataUriBytes, 0L, "Maximum data-URI bytes must be positive.");
 
-        if (maxExternalResourceBytes <= 0)
-        {
-            throw new ArgumentException("Maximum external resource bytes must be positive.", nameof(maxExternalResourceBytes));
-        }
+        Ensure.GreaterThan(maxExternalResourceBytes, 0L, "Maximum external resource bytes must be positive.");
 
-        if (maxAggregateExternalResourceBytes <= 0)
-        {
-            throw new ArgumentException("Maximum aggregate external resource bytes must be positive.", nameof(maxAggregateExternalResourceBytes));
-        }
+        Ensure.GreaterThan(maxAggregateExternalResourceBytes, 0L, "Maximum aggregate external resource bytes must be positive.");
 
         foreach (var (value, name) in new[]
         {
@@ -104,10 +90,7 @@ public sealed class GltfImportOptions
             (maxDataUriNestingDepth, nameof(maxDataUriNestingDepth)),
         })
         {
-            if (value <= 0)
-            {
-                throw new ArgumentException($"Limit '{name}' must be positive.", name);
-            }
+            Ensure.GreaterThan(value, 0, $"Limit '{name}' must be positive.", name);
         }
 
         UnitsPerMeter = unitsPerMeter;

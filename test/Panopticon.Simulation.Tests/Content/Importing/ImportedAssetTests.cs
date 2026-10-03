@@ -237,10 +237,10 @@ public sealed class ImportedAssetTests
     [Fact]
     public void Constructor_RejectsOutOfRangeWeightOnSlotsTwoAndThree()
     {
-        Assert.Throws<ArgumentException>(() => new ImportedVertex(
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ImportedVertex(
             Vector3.Zero, Vector3.UnitZ, boneWeight2: 1.5f));
 
-        Assert.Throws<ArgumentException>(() => new ImportedVertex(
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ImportedVertex(
             Vector3.Zero, Vector3.UnitZ, boneWeight3: -0.1f));
     }
 
@@ -343,7 +343,7 @@ public sealed class ImportedAssetTests
     [Fact]
     public void Bone_RejectsInvalidParentIndex()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ImportedBone("B", -2, Vector3.Zero, Quaternion.Identity));
     }
 
@@ -517,7 +517,7 @@ public sealed class ImportedAssetTests
     [Fact]
     public void Vertex_RejectsOutOfRangeBoneWeight()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ImportedVertex(
                 Vector3.Zero,
                 Vector3.UnitZ,

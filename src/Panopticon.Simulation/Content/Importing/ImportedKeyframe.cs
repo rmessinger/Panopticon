@@ -2,6 +2,7 @@
 
 using System;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -35,10 +36,7 @@ public sealed class ImportedKeyframe
 
     private ImportedKeyframe(TimeSpan time, ImportedKeyframeKind kind, object value)
     {
-        if (time < TimeSpan.Zero)
-        {
-            throw new ArgumentException("Keyframe time must not be negative.", nameof(time));
-        }
+        Ensure.AtLeast(time, TimeSpan.Zero, "Keyframe time must not be negative.");
 
         Time = time;
         Kind = kind;

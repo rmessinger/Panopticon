@@ -79,10 +79,7 @@ public sealed class ImportedMesh : ImportedRenderObject
             throw new ArgumentException("Index count must be a multiple of three.", nameof(indices));
         }
 
-        if (boundingSphere.Radius < 0)
-        {
-            throw new ArgumentException("Bounding sphere radius must not be negative.", nameof(boundingSphere));
-        }
+        Ensure.AtLeast(boundingSphere.Radius, 0f, "Bounding sphere radius must not be negative.", nameof(boundingSphere));
 
         ArgumentNullException.ThrowIfNull(materials);
 

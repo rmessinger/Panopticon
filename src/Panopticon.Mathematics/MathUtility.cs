@@ -63,9 +63,7 @@ public static class MathUtility
         Debug.Assert(!float.IsNaN(angle), "Angle is NaN");
 
         if (float.IsNaN(angle))
-        {
             throw new ArgumentOutOfRangeException(nameof(angle));
-        }
 
         while (angle > MathF.PI)
         {

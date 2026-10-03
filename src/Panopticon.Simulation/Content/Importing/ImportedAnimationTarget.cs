@@ -63,10 +63,7 @@ public sealed class ImportedAnimationTarget
 
     public static ImportedAnimationTarget CreateDirectIndex(int directIndex)
     {
-        if (directIndex < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(directIndex), "Direct index must not be negative.");
-        }
+        Ensure.AtLeast(directIndex, 0, "Direct index must not be negative.");
 
         return new ImportedAnimationTarget(ImportedAnimationTargetKind.DirectIndex, directIndex, null, null, -1);
     }

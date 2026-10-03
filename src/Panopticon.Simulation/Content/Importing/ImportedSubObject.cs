@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -27,10 +28,7 @@ public sealed class ImportedSubObject
 
         ArgumentNullException.ThrowIfNull(displayName);
 
-        if (parentBoneIndex < 0)
-        {
-            throw new ArgumentException("Parent bone index must not be negative.", nameof(parentBoneIndex));
-        }
+        Ensure.AtLeast(parentBoneIndex, 0, "Parent bone index must not be negative.");
 
         ArgumentNullException.ThrowIfNull(renderObject);
 

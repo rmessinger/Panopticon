@@ -29,10 +29,7 @@ public sealed class ImportedAnimation
     {
         Ensure.NotNullOrEmpty(name, "Animation name must not be null or empty.");
 
-        if (duration < TimeSpan.Zero)
-        {
-            throw new ArgumentException("Animation duration must not be negative.", nameof(duration));
-        }
+        Ensure.AtLeast(duration, TimeSpan.Zero, "Animation duration must not be negative.");
 
         ArgumentNullException.ThrowIfNull(channels);
         Ensure.NoNullElements(channels, "Channel");

@@ -224,10 +224,7 @@ public sealed class RunOutputRecorder : IDisposable
         string? scenarioId = null,
         uint sampleInterval = DefaultSampleInterval)
     {
-        if (sampleInterval == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(sampleInterval));
-        }
+        ArgumentOutOfRangeException.ThrowIfZero(sampleInterval);
 
         _host = host;
         _game = game;

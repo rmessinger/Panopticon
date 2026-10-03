@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Panopticon;
 using Panopticon.FileFormats.Nif;
 
 namespace Panopticon.Content.Importing.Nif;
@@ -22,10 +23,7 @@ internal static class NifKeyCurve
     {
         var keys = group.Keys;
         var last = keys.Count - 1;
-        if (last < 0)
-        {
-            throw new ArgumentException("Key group has no keys.", nameof(group));
-        }
+        Ensure.AtLeast(last, 0, "Key group has no keys.", nameof(group));
 
         if (time <= keys[0].Time)
         {
