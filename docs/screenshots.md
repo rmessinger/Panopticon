@@ -36,11 +36,16 @@ cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/sho
 
 ## EE2 particle attachment diagnostics
 
-`Ee2ParticleProof` writes nine frames to `ee2-particle-proof/` under the working directory.
+`Ee2ParticleProof` writes 17 frames to `ee2-particle-proof/` under the working directory,
+including early muzzle samples at 0.033, 0.1, 0.2, and 0.3 seconds.
 Both `CNC_GENERALS_PATH` and `EMPIRE_EARTH_II_PATH` must resolve installed games.
 `EE2_PARTICLE_PROOF_HIDE_MODEL=1` omits the tank draw while retaining the same camera,
 bone attachment, and particle seed. Run this diagnostic from a separate working directory
 to preserve the composited proofs. Compare matching muzzle frames to isolate barrel occlusion.
+`EE2_PARTICLE_PROOF_SIDE_VIEW=1` rotates the camera orbit 90 degrees for a side-angle reference.
+The muzzle binding uses the tank's `Muzzle_FiringShell` DDF entry at scale `0.09`.
+Capture timestamps are nonuniform. Reference GIF frame durations follow timestamp differences,
+with a final-frame pause. Filename order alone does not imply a constant frame rate.
 
 ## Recipe: 3D scene screenshots (headless, reliable)
 

@@ -40,20 +40,28 @@ public sealed class Ee2ParticleProofScenarioTests
     }
 
     [Fact]
-    public void CapturePlanCoversThreeEffectsAtThreeTimes()
+    public void CapturePlanCoversEarlyBurstsAndLateReferenceFrames()
     {
         var plan = Ee2ParticleProofScenario.CapturePlan;
-        Assert.Equal(9, plan.Length);
+        Assert.Equal(17, plan.Length);
 
         var expected = new (string EffectName, float TimeSeconds)[]
         {
             ("fx_explosion_1", 0f),
+            ("fx_explosion_1", 0.1f),
+            ("fx_explosion_1", 0.2f),
             ("fx_explosion_1", 0.5f),
             ("fx_explosion_1", 1f),
             ("fx_muzzle_tank", 0f),
+            ("fx_muzzle_tank", 1f / 30f),
+            ("fx_muzzle_tank", 0.1f),
+            ("fx_muzzle_tank", 0.2f),
+            ("fx_muzzle_tank", 0.3f),
             ("fx_muzzle_tank", 0.5f),
             ("fx_muzzle_tank", 1f),
             ("fx_watersplash_1", 0f),
+            ("fx_watersplash_1", 0.1f),
+            ("fx_watersplash_1", 0.2f),
             ("fx_watersplash_1", 0.5f),
             ("fx_watersplash_1", 1f),
         };
@@ -113,6 +121,20 @@ public sealed class Ee2ParticleProofScenarioTests
         Assert.NotEqual(
             Ee2ParticleProofScenario.GetEffectSeed("fx_muzzle_tank"),
             Ee2ParticleProofScenario.GetEffectSeed("fx_watersplash_1"));
+    }
+
+    [Fact]
+    public void FollowCompositionAppliesWorldScaleOnceAndPreservesBoneOffset()
+    {
+        const float scale = 0.09f;
+        var emitter = System.Numerics.Matrix4x4.CreateScale(scale)
+            * System.Numerics.Matrix4x4.CreateTranslation(2, 0, 0);
+        var follow = System.Numerics.Matrix4x4.CreateScale(scale)
+            * System.Numerics.Matrix4x4.CreateTranslation(3, 0, 0)
+            * System.Numerics.Matrix4x4.CreateTranslation(10, 0, 0);
+        var composed = Ee2ParticleProofScenario.RemoveDuplicateAttachmentScale(emitter, scale) * follow;
+        Assert.True(MathF.Abs(composed.M11 - scale) < 0.00001f);
+        Assert.True(MathF.Abs(composed.Translation.X - 15f) < 0.00001f);
     }
 
     [Fact]

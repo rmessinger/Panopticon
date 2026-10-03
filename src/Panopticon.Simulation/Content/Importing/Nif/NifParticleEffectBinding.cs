@@ -145,9 +145,9 @@ public sealed class NifParticleEffectBinding
                 targetBoneName: "tag_muzzle_1",
                 followTarget: true,
                 localOffset: Vector3.Zero,
-                worldScale: 0.05f,
+                worldScale: 0.09f,
                 oneShot: false,
-                ddfSource: "db/Visuals/visual_fx_weapon.ddf:Muzzle_Fortress12.MuzzleSmokeEffect",
+                ddfSource: "db/Visuals/visual_fx_weapon.ddf:Muzzle_FiringShell.MuzzleSmokeEffect",
                 // This proof model's firing tag is 2.7 model units inside the barrel end.
                 boneLocalOffset: new Vector3(3f, 0f, 0f)),
             new NifParticleEffectBinding(
