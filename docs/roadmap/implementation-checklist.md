@@ -908,14 +908,14 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     model-side target sets; morph weight animations bind by primitive and target names; CPU morph
     deformation runs before skinning; farm yam captures at weights 0, 0.5, and 1 show visible
     deformation without changing feature-disabled output.
-- [ ] C4h EE2 particle effects
+- [x] C4h EE2 particle effects
       ([deep dive](deep-dives/c4h-ee2-particle-effects.md)).
   - AC: the proof `fx_*` NIFs parse to exact end of file; CPU-only imported particle effect
     values materialize onto the existing `FXParticleSystemTemplate` and `ParticleSystemManager`
     paths without a new particle runtime; DDF world or bone attachments resolve through C4c node
     names; captures are seeded deterministically; `NiPSys*`, bomb, morph, UV, texture-transform,
     mesh-emission, collision, and unsupported gravity semantics fail with contextual errors.
-- [ ] C4i EE2 legacy KF formats
+- [x] C4i EE2 legacy KF formats
       ([deep dive](deep-dives/c4i-ee2-legacy-kf-formats.md)).
   - AC: NIF 10.0.1.0 headers and KF blocks decode; legacy text keys, flags, and uppercase paths
     normalize; rigid proof clips bind and capture; NetImmerse 4.2.2.0, property, morph, and

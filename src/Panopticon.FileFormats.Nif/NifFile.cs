@@ -5,19 +5,17 @@ using System.IO;
 namespace Panopticon.FileFormats.Nif;
 
 /// <summary>
-/// A fully decoded NIF 10.1.0.0 file: header, block directory, block
-/// bodies, and validated references. Every block body starts with the
-/// leading u32 0 documented in the C4a deep dive; the file ends with the
-/// 8-byte footer (1, 0).
+/// A fully decoded NIF file: header, block directory, block bodies, and
+/// validated references. Gamebryo 10.1.0.0 and NetImmerse 10.0.1.0 are
+/// accepted. Every block body starts with the leading u32 0 documented in
+/// the C4a deep dive; the file ends with a root count followed by one
+/// block index per root (10.1 model files carry the single root 0).
 /// </summary>
 public sealed record NifFile(
     NifHeader Header,
     IReadOnlyList<NifBlock> Blocks,
     IReadOnlyList<int> Roots)
 {
-    public const uint Footer1 = 1;
-    public const uint Footer2 = 0;
-
     public static NifFile Read(Stream stream)
     {
         var reader = new NifBinaryReader(stream);
@@ -37,12 +35,18 @@ public sealed record NifFile(
             blocks[i] = ReadBlock(reader, header, i);
         }
 
-        var footer1 = reader.ReadUInt32("Footer1");
-        var footer2 = reader.ReadUInt32("Footer2");
-        if (footer1 != Footer1 || footer2 != Footer2)
+        var numRoots = reader.ReadElementCount(4, "Footer.NumRoots");
+        var footerRoots = new int[numRoots];
+        for (var i = 0; i < numRoots; i++)
         {
-            throw new InvalidDataException(
-                $"NIF footer ({footer1}, {footer2}) is invalid; expected ({Footer1}, {Footer2}).");
+            var root = reader.ReadInt32($"Footer.Roots[{i}]");
+            if (root < 0 || root >= header.NumBlocks)
+            {
+                throw new InvalidDataException(
+                    $"NIF footer root {i} is block index {root}, but the file has {header.NumBlocks} blocks.");
+            }
+
+            footerRoots[i] = root;
         }
 
         if (reader.RemainingBytes != 0)
@@ -51,9 +55,9 @@ public sealed record NifFile(
                 $"NIF stream has {reader.RemainingBytes} trailing bytes after the footer.");
         }
 
-        var roots = ValidateReferences(header, blocks);
+        ValidateReferences(header, blocks);
 
-        return new NifFile(header, blocks, roots);
+        return new NifFile(header, blocks, footerRoots);
     }
 
     /// <summary>
@@ -168,6 +172,8 @@ public sealed record NifFile(
                 return NifKeyframeData.Read(reader);
             case "NiVisController":
                 return NifVisController.Read(reader);
+            case "NiUVController":
+                return NifUVController.Read(reader);
             case "NiTextureTransformController":
                 return NifTextureTransformController.Read(reader);
             case "NiMaterialColorController":
@@ -194,13 +200,52 @@ public sealed record NifFile(
                 return NifSkinData.Read(reader);
             case "NiSkinPartition":
                 return NifSkinPartition.Read(reader);
+            case "NiParticles":
+                return NifParticles.Read(reader);
+            case "NiParticlesData":
+                return NifParticlesData.Read(reader);
+            case "NiTriStrips":
+                return NifTriStrips.Read(reader);
+            case "NiTriStripsData":
+                return NifTriStripsData.Read(reader);
+            case "NiParticleSystemController":
+                return NifParticleSystemController.Read(reader);
+            case "NiParticleColorModifier":
+                return NifParticleColorModifier.Read(reader);
+            case "NiParticleGrowFade":
+                return NifParticleGrowFade.Read(reader);
+            case "NiGravity":
+                return NifGravity.Read(reader);
+            case "NiColorData":
+                return NifColorData.Read(reader);
             default:
+                if (typeName.StartsWith("NiPSys", StringComparison.Ordinal))
+                {
+                    throw new NotSupportedException(
+                        $"NIF block {index} has unsupported type '{typeName}'; C4h imports " +
+                        "legacy NiParticles effects only, not NiPSys blocks.");
+                }
+
+                if (typeName == "NiParticleBomb")
+                {
+                    throw new NotSupportedException(
+                        $"NIF block {index} has unsupported type '{typeName}'; C4h does not " +
+                        "import the bomb-force particle modifier.");
+                }
+
+                if (typeName == "NiFlipController")
+                {
+                    throw new NotSupportedException(
+                        $"NIF block {index} has unsupported type '{typeName}'; C4h does not " +
+                        "import flipbook textures.");
+                }
+
                 throw new NotSupportedException(
                     $"NIF block {index} has unsupported type '{typeName}'.");
         }
     }
 
-    private static IReadOnlyList<int> ValidateReferences(NifHeader header, NifBlock[] blocks)
+    private static void ValidateReferences(NifHeader header, NifBlock[] blocks)
     {
         int[]? parents = new int[blocks.Length];
         for (var i = 0; i < parents.Length; i++)
@@ -235,6 +280,12 @@ public sealed record NifFile(
                     data = vis.DataReference;
                     expected = "visibility data";
                     matches = data >= 0 && data < blocks.Length && blocks[data] is NifVisData or NifBoolData;
+                    break;
+
+                case NifUVController uv:
+                    data = uv.DataReference;
+                    expected = "UV data";
+                    matches = data >= 0 && data < blocks.Length && blocks[data] is NifUVData;
                     break;
 
                 case NifAlphaController alpha:
@@ -278,6 +329,79 @@ public sealed record NifFile(
                 throw new InvalidDataException(
                     $"NIF {controller.GetType().Name} block {owner} references block " +
                     $"{data} as {expected}, but that block is a {blocks[data].GetType().Name}.");
+            }
+        }
+
+        void ValidateModifierChain(int owner, string field, int head)
+        {
+            ValidateReference(head, owner, field);
+            var visited = new HashSet<int>();
+            var current = head;
+            while (current >= 0)
+            {
+                if (!visited.Add(current))
+                {
+                    throw new InvalidDataException(
+                        $"NIF block {owner} has a cycle in its {field} modifier chain.");
+                }
+
+                if (blocks[current] is not NifParticleModifier modifier)
+                {
+                    throw new InvalidDataException(
+                        $"NIF block {owner} references block {current} as {field}, but that " +
+                        $"block is a {blocks[current].GetType().Name}.");
+                }
+
+                ValidateReference(modifier.NextModifierReference, current, "NextModifier");
+                ValidateReference(modifier.ControllerReference, current, "Controller");
+                if (modifier.ControllerReference >= 0 &&
+                    blocks[modifier.ControllerReference] is not NifParticleSystemController)
+                {
+                    throw new InvalidDataException(
+                        $"NIF {modifier.GetType().Name} block {current} references block " +
+                        $"{modifier.ControllerReference} as a particle system controller, but that " +
+                        $"block is a {blocks[modifier.ControllerReference].GetType().Name}.");
+                }
+
+                if (modifier is NifParticleColorModifier colorModifier)
+                {
+                    ValidateReference(colorModifier.ColorDataReference, current, "ColorData");
+                    if (colorModifier.ColorDataReference >= 0 &&
+                        blocks[colorModifier.ColorDataReference] is not NifColorData)
+                    {
+                        throw new InvalidDataException(
+                            $"NIF NiParticleColorModifier block {current} references block " +
+                            $"{colorModifier.ColorDataReference} as color data, but that block is a " +
+                            $"{blocks[colorModifier.ColorDataReference].GetType().Name}.");
+                    }
+                }
+
+                current = modifier.NextModifierReference;
+            }
+        }
+
+        void ValidateParticleSystemController(int owner, NifParticleSystemController controller)
+        {
+            ValidateReference(controller.EmitterReference, owner, "Emitter");
+            if (controller.EmitterReference >= 0 &&
+                blocks[controller.EmitterReference] is not NifAvObject)
+            {
+                throw new InvalidDataException(
+                    $"NIF NiParticleSystemController block {owner} references block " +
+                    $"{controller.EmitterReference} as an emitter, but that block is a " +
+                    $"{blocks[controller.EmitterReference].GetType().Name}.");
+            }
+
+            ValidateModifierChain(owner, "ParticleModifier", controller.ParticleModifierReference);
+            ValidateModifierChain(owner, "EmitterModifier", controller.EmitterModifierReference);
+
+            ValidateReference(controller.ColliderReference, owner, "Collider");
+            if (controller.ColliderReference >= 0)
+            {
+                throw new NotSupportedException(
+                    $"NIF NiParticleSystemController block {owner} references block " +
+                    $"{controller.ColliderReference} as a particle collider; C4h does not " +
+                    "import particle colliders.");
             }
         }
 
@@ -331,12 +455,22 @@ public sealed record NifFile(
                         if (blocks[i] is NifGeometry geometry)
                         {
                             ValidateReference(geometry.DataReference, i, "Data");
-                            if (geometry.DataReference >= 0 &&
-                                blocks[geometry.DataReference] is not NifTriShapeData)
+                            if (geometry.DataReference >= 0)
                             {
-                                throw new InvalidDataException(
-                                    $"NIF geometry block {i} references block {geometry.DataReference} " +
-                                    $"as data, but that block is a {blocks[geometry.DataReference].GetType().Name}.");
+                                var dataMatches = geometry switch
+                                {
+                                    NifTriShape => blocks[geometry.DataReference] is NifTriShapeData,
+                                    NifTriStrips => blocks[geometry.DataReference] is NifTriStripsData,
+                                    NifParticles => blocks[geometry.DataReference] is NifParticlesData,
+                                    _ => false,
+                                };
+
+                                if (!dataMatches)
+                                {
+                                    throw new InvalidDataException(
+                                        $"NIF geometry block {i} references block {geometry.DataReference} " +
+                                        $"as data, but that block is a {blocks[geometry.DataReference].GetType().Name}.");
+                                }
                             }
 
                             ValidateReference(geometry.SkinInstanceReference, i, "SkinInstance");
@@ -435,6 +569,12 @@ public sealed record NifFile(
 
                     break;
 
+                case NifParticleSystemController particleController:
+                    ValidateReference(particleController.NextControllerReference, i, "NextController");
+                    ValidateReference(particleController.TargetReference, i, "Target");
+                    ValidateParticleSystemController(i, particleController);
+                    break;
+
                 case NifTimeController controller:
                     ValidateReference(controller.NextControllerReference, i, "NextController");
                     ValidateReference(controller.TargetReference, i, "Target");
@@ -507,8 +647,6 @@ public sealed record NifFile(
         }
 
         DetectCycles(blocks, roots);
-
-        return roots;
     }
 
     private static void DetectCycles(NifBlock[] blocks, IReadOnlyList<int> roots)

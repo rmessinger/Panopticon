@@ -34,6 +34,43 @@ cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/sho
 | `xdotool` / ImageMagick `import` | Not installed; no key/mouse injection into Xvfb from agent shells |
 | `PIL` (python3) | Available; used for pixel-level A/B verification of captures |
 
+## EE2 particle attachment diagnostics
+
+`Ee2ParticleProof` writes 17 frames to `ee2-particle-proof/` under the working directory,
+including early muzzle samples at 0.033, 0.1, 0.2, and 0.3 seconds.
+Both `CNC_GENERALS_PATH` and `EMPIRE_EARTH_II_PATH` must resolve installed games.
+`EE2_PARTICLE_PROOF_HIDE_MODEL=1` omits the tank draw while retaining the same camera,
+bone attachment, and particle seed. Run this diagnostic from a separate working directory
+to preserve the composited proofs. Compare matching muzzle frames to isolate barrel occlusion.
+`EE2_PARTICLE_PROOF_SIDE_VIEW=1` rotates the camera orbit 90 degrees for a side-angle reference.
+The muzzle binding uses the tank's `Muzzle_FiringShell` DDF entry at scale `0.09`.
+The tank uses `HeavyMounted1_13.ForceScale = 0.09`. The model and effect scales
+are independent; materialized particle motion does not inherit the model scale again.
+
+`EE2_PARTICLE_PROOF_MODEL` selects an additional model reference. Each profile writes
+seven muzzle frames and a source/scale guide to `ee2-particle-proof/<profile>/`.
+`EE2_PARTICLE_PROOF_SIDE_VIEW=1` also applies to these profiles.
+
+| Profile | Model | ForceScale | Effect | EffectScale |
+|---|---|---|---|---|
+| `assault-tank` | `lhm12_assaulttank` | 0.09 | `fx_muzzle_tank` | 0.09 |
+| `heavy-artillery` | `lha12_selfpropelled` | 0.09 | `fx_muzzle_heavyartillery_1` | 0.08 |
+| `myrmidon-tank` | `lhm15_myrmidontank` | 0.07 | `fx_muzzle_tank` | 0.09 |
+
+Sources: `HeavyMounted1_12`, `HeavyArtillery_12`, `HeavyMounted1_15` and their
+`ChildNames` in `db/Units/`, with effects from `db/Visuals/visual_fx_weapon.ddf`.
+All use `tag_muzzle_1` with no added barrel offset. The Myrmidon proof shows only
+the first muzzle, not its second muzzle or secondary dust effect. Captures verify
+import/render placement, not original-game attack timing or animation parity.
+
+Tracked model references live under `ee2-particle-proof/<profile>/front/` and
+`side/`. Selected profiles initialize only their muzzle effect. Repeatability
+checks compare identical builds and initialization sequences, not earlier
+captures that also initialized explosion and splash resources.
+
+Capture timestamps are nonuniform. Reference GIF frame durations follow timestamp differences,
+with a final-frame pause. Filename order alone does not imply a constant frame rate.
+
 ## Recipe: 3D scene screenshots (headless, reliable)
 
 The TestHarness renders offscreen with Vulkan and captures PNGs; no display is needed.

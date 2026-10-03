@@ -37,6 +37,11 @@ public sealed record NifKeyframeData : NifBlock
                         reader, rotationCount, BlockName, "RotationKeys");
                     break;
 
+                case NifKeyType.Tbc:
+                    QuaternionRotationKeys = NifKeyGroupReader.ReadTbcQuaternionKeys(
+                        reader, rotationCount, BlockName, "RotationKeys");
+                    break;
+
                 case NifKeyType.XyzRotation:
                     if (rotationCount != 1)
                     {
@@ -53,7 +58,7 @@ public sealed record NifKeyframeData : NifBlock
                 default:
                     throw new NotSupportedException(
                         $"NIF NiKeyframeData rotation keys use unsupported key type " +
-                        $"{rotationType} ({(uint)rotationType}); C4c supports Linear (1) quaternion " +
+                        $"{rotationType} ({(uint)rotationType}); C4c supports Linear (1), Tbc (3), " +
                         $"and XyzRotation (4) keys.");
             }
         }

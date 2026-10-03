@@ -387,17 +387,18 @@ public sealed class NifAnimationImporterTests
     }
 
     [Fact]
-    public void TbcScaleKeysAreRejected()
+    public void TbcScaleKeysImportWithZeroTangentsAsLinearValues()
     {
         var data = NifTestKeyframe.KeyframeData(
             quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)],
             scaleKeys: [(0.0f, 1.0f, null, null), (2.0f, 1.5f, null, null)],
             scaleKeyTypeOverride: 3);
 
-        var ex = Assert.Throws<NotSupportedException>(
-            () => Import(SingleChannelKf(data, duration: 2.0f)));
+        var animation = Import(SingleChannelKf(data, duration: 2.0f))!;
 
-        Assert.Contains("unsupported key type", ex.Message);
+        var scaleChannel = animation.Channels.Single(c => c.ChannelType == ImportedAnimationChannelType.Scale);
+        Assert.Equal(1.0, scaleChannel.Keyframes[0].FloatValue, 5);
+        Assert.Equal(1.5, scaleChannel.Keyframes[^1].FloatValue, 5);
     }
 
     [Fact]
@@ -552,6 +553,155 @@ public sealed class NifAnimationImporterTests
             () => Import(SingleChannelKf(data, duration: 2.0f, flags: 0x30)));
 
         Assert.Contains("flags", ex.Message);
+    }
+
+    [Theory]
+    [InlineData(0x0C)]
+    [InlineData(0x05)]
+    public void LegacyProofControllerFlagsImport(ushort flags)
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var animation = Import(SingleChannelKf(data, duration: 2.0f, flags: flags, legacy: true));
+
+        Assert.NotNull(animation);
+        Assert.Equal(TimeSpan.FromSeconds(2.0f), animation!.Duration);
+    }
+
+    [Fact]
+    public void LegacyTrailingSpaceEndTextKeyImports()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var animation = Import(SingleChannelKf(
+            data,
+            duration: 2.0f,
+            textKeys: [(0.0f, "start"), (2.0f, "end ")],
+            flags: 0x0C,
+            legacy: true));
+
+        Assert.NotNull(animation);
+        Assert.Equal(TimeSpan.FromSeconds(2.0f), animation!.Duration);
+    }
+
+    [Fact]
+    public void UnknownLegacyFlagIsRejectedNamingFlagAndAsset()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var ex = Assert.Throws<NotSupportedException>(
+            () => Import(SingleChannelKf(data, duration: 2.0f, flags: 0x18, legacy: true)));
+
+        Assert.Contains(AnimationKey, ex.Message);
+        Assert.Contains("0x0018", ex.Message);
+        Assert.Contains("0x0C and 0x05", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyFlagsAreRejectedForModernClips()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+
+        var ex = Assert.Throws<NotSupportedException>(
+            () => Import(SingleChannelKf(data, duration: 2.0f, flags: 0x05)));
+
+        Assert.Contains("0x2C", ex.Message);
+    }
+
+    [Fact]
+    public void UppercaseKfExtensionResolvesThroughZipLookup()
+    {
+        var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
+        var kfBytes = SingleChannelKf(data, duration: 2.0f, flags: 0x0C, legacy: true);
+
+        using var archive = new MemoryStream();
+        using (var writer = new System.IO.Compression.ZipArchive(archive, System.IO.Compression.ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var model = writer.CreateEntry($"cache/nifcache/{ModelName}.nifcache");
+            using (var modelStream = model.Open())
+            {
+                modelStream.Write(ModelBytes(), 0, ModelBytes().Length);
+            }
+
+            // The DDF stack references legacy clips with uppercase .KF
+            // extensions; the archive entry keeps that exact casing.
+            var clip = writer.CreateEntry("anims/clip.KF");
+            using (var clipStream = clip.Open())
+            {
+                clipStream.Write(kfBytes, 0, kfBytes.Length);
+            }
+        }
+
+        archive.Position = 0;
+        var animation = new NifAnimationImporter().ImportAnimation(
+            ModelName + "#kf=anims/clip.KF",
+            new AssetImportContext(new ZipFileSystem(archive), null));
+
+        Assert.NotNull(animation);
+        Assert.Equal(TimeSpan.FromSeconds(2.0f), animation!.Duration);
+    }
+
+    [Fact]
+    public void LegacyMaterialColorControllerIsRejectedNamingC4e()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiMaterialColorController",
+            NifTestPropertyAnimation.MaterialColorController(data: 3, targetColor: 0, stopTime: 2.0f),
+            "NiPosData",
+            NifTestPropertyAnimation.PosData([(0.0f, (0, 0, 0), null, null)]),
+            targetName: "hull\nPROP\nNiMaterialProperty",
+            legacy: true)));
+
+        Assert.Contains("NifMaterialColorController", ex.Message);
+        Assert.Contains("C4e", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyVisControllerIsRejectedNamingC4e()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiVisController",
+            NifTestPropertyAnimation.VisController(data: 3, stopTime: 2.0f),
+            "NiVisData",
+            NifTestPropertyAnimation.VisData((0.0f, 0), (2.0f, 1)),
+            targetName: "child",
+            legacy: true)));
+
+        Assert.Contains("NifVisController", ex.Message);
+        Assert.Contains("C4e", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyUVControllerIsRejectedNamingC4e()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiUVController",
+            NifTestPropertyAnimation.UVController(data: 3, stopTime: 2.0f),
+            "NiUVData",
+            NifTestPropertyAnimation.UVData(
+                uTranslationKeys: [(0.0f, 0.0f, null, null), (2.0f, 1.0f, null, null)]),
+            targetName: "hull\nPROP\nNiTexturingProperty",
+            legacy: true)));
+
+        Assert.Contains("NifUVController", ex.Message);
+        Assert.Contains("C4e", ex.Message);
+    }
+
+    [Fact]
+    public void LegacyMorphControllerIsRejectedNamingC4g()
+    {
+        var ex = Assert.Throws<NotSupportedException>(() => ImportProperty(PropertyKf(
+            "NiGeomMorpherController",
+            NifTestPropertyAnimation.MorphController(data: 3, stopTime: 2.0f),
+            "NiMorphData",
+            NifTestPropertyAnimation.MorphData(4, [
+                (null, null),
+                ([(0.0f, 0.0f, null, null), (2.0f, 1.0f, null, null)], null)]),
+            targetName: "hull",
+            legacy: true)));
+
+        Assert.Contains("NifGeomMorpherController", ex.Message);
+        Assert.Contains("C4g", ex.Message);
     }
 
     [Fact]
@@ -934,8 +1084,8 @@ public sealed class NifAnimationImporterTests
     [Fact]
     public void MultiSequenceKfRejected()
     {
-        // The parser only accepts the (1, 0) footer, so a multi-sequence
-        // KF (footer root count 2) fails at parse time, before import.
+        // The root-list footer parses cleanly for two sequences, so the
+        // importer's own multi-sequence guard fires during import.
         var builder = new NifTestDataBuilder();
         var sequenceType = builder.AddBlockType("NiControllerSequence");
         var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
@@ -950,17 +1100,13 @@ public sealed class NifAnimationImporterTests
             data: 3, stopTime: 2.0f));
         builder.AddBlock(dataType, NifTestPropertyAnimation.VisData((0.0f, 1), (2.0f, 1)));
 
-        var footer = new MemoryStream();
-        var footerWriter = new NifBodyWriter(footer);
-        footerWriter.WriteUInt32(2);
-        footerWriter.WriteInt32(0);
-        footerWriter.WriteInt32(1);
-        builder.AddTrailing(footer.ToArray());
+        builder.AddTrailing(NifTestBlocks.RootsFooter(0, 1));
 
-        var ex = Assert.Throws<InvalidDataException>(
+        var ex = Assert.Throws<NotSupportedException>(
             () => ImportProperty(builder.Build()));
 
-        Assert.Contains("footer", ex.Message);
+        Assert.Contains("2 root blocks", ex.Message);
+        Assert.Contains("multi-sequence", ex.Message);
     }
 
     [Fact]
@@ -993,9 +1139,17 @@ public sealed class NifAnimationImporterTests
         string accumulationRoot = "ROOT",
         IReadOnlyList<(float Time, string Value)>? textKeys = null,
         ushort flags = 0x2C,
-        float stopTime = float.NaN)
+        float stopTime = float.NaN,
+        bool legacy = false)
     {
         var builder = new NifTestDataBuilder();
+        if (legacy)
+        {
+            builder.HeaderString = FileFormats.Nif.NifHeader.LegacyHeaderString;
+            builder.Version = FileFormats.Nif.NifHeader.LegacyVersion;
+            builder.HasUserVersion = false;
+        }
+
         var sequenceType = builder.AddBlockType("NiControllerSequence");
         var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
         var controllerType = builder.AddBlockType("NiKeyframeController");
@@ -1020,9 +1174,17 @@ public sealed class NifAnimationImporterTests
         string dataTypeName,
         byte[] dataBody,
         string targetName,
-        float duration = 2.0f)
+        float duration = 2.0f,
+        bool legacy = false)
     {
         var builder = new NifTestDataBuilder();
+        if (legacy)
+        {
+            builder.HeaderString = FileFormats.Nif.NifHeader.LegacyHeaderString;
+            builder.Version = FileFormats.Nif.NifHeader.LegacyVersion;
+            builder.HasUserVersion = false;
+        }
+
         var sequenceType = builder.AddBlockType("NiControllerSequence");
         var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
         var controllerType = builder.AddBlockType(controllerTypeName);
