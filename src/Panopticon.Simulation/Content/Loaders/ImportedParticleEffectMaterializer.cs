@@ -71,10 +71,12 @@ internal static class ImportedParticleEffectMaterializer
         {
             IsOneShot = true,
 
-            // EE2 fx textures are cooked additive-style (grayscale art on black); their DXT1
-            // texcaches carry no source alpha, so SrcAlpha blending would draw the black
-            // background as opaque quads. Composite additively like the source game.
-            Shader = ParticleSystemShader.Additive,
+            Shader = system.BlendMode switch
+            {
+                ImportedParticleBlendMode.Alpha => ParticleSystemShader.Alpha,
+                ImportedParticleBlendMode.SourceColorAdditive => ParticleSystemShader.SourceColorAdditive,
+                _ => ParticleSystemShader.Additive,
+            },
         };
 
         template.ParticleTexture = textureResolver is not null

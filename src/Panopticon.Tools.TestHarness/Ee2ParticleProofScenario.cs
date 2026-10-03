@@ -74,17 +74,17 @@ internal static class Ee2ParticleProofScenario
             "main battle tank at the fixed three-quarter yaw; the first burst's puffs are " +
             "sub-pixel because every muzzle system grows from size zero"),
         ("fx_muzzle_tank", 0.5f,
-            "small smoke puffs (tens of px) at the resolved tag_muzzle_1 firing tag at the barrel tip; " +
-            "the tank itself unchanged"),
+            "alpha-blended muzzle puffs near tag_muzzle_1; much of the effect is occluded " +
+            "by the barrel at this proof camera angle"),
         ("fx_muzzle_tank", 1f,
-            "puffs grown larger (grow windows 0.33-1.25 s at EffectScale 0.05) and spread " +
-            "along the muzzle axis; still additive and anchored at the barrel"),
+            "faint translucent puffs near the barrel tip; the firing tag remains inset " +
+            "from the visible barrel end and the barrel occludes much of the effect"),
         ("fx_watersplash_1", 0f,
             "single small seed quad (~20 px) at the fixed splash origin: the first particle " +
             "of the 15/s column system"),
         ("fx_watersplash_1", 0.5f,
-            "centered spray column of overlapping additive quads (mature sizes ~85 px at " +
-            "this camera); clearly denser and wider than 0000"),
+            "centered spray column of alpha-blended, feathered quads; no opaque square " +
+            "around the spray"),
         ("fx_watersplash_1", 1f,
             "column larger and brighter than 0500: the late systems (emission start 0.5 s, " +
             "lifetimes up to 2.67 s) are now dominant and still growing"),

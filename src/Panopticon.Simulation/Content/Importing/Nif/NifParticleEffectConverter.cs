@@ -113,6 +113,7 @@ internal static class NifParticleEffectConverter
         var textureName = ResolveTextureName(file, particles);
         var materialName = ResolveMaterialName(file, particles);
         var alphaBlended = IsAlphaBlended(file, particles);
+        var blendMode = ResolveBlendMode(file, particles);
 
         var alphaKeys = CollectAlphaKeys(file, effectName, index, particles, controller);
 
@@ -134,7 +135,8 @@ internal static class NifParticleEffectConverter
             alphaKeys,
             textureName,
             materialName,
-            alphaBlended);
+            alphaBlended,
+            blendMode);
     }
 
     private static ImportedParticleVelocity ConvertVelocity(NifParticleSystemController controller)
@@ -307,6 +309,29 @@ internal static class NifParticleEffectConverter
         }
 
         return false;
+    }
+
+    private static ImportedParticleBlendMode ResolveBlendMode(NifFile file, NifParticles particles)
+    {
+        foreach (var reference in particles.PropertyReferences)
+        {
+            if (file.Blocks[reference] is not NifAlphaProperty alpha || (alpha.Flags & 1) == 0)
+            {
+                continue;
+            }
+
+            var source = (alpha.Flags >> 1) & 0xF;
+            var destination = (alpha.Flags >> 5) & 0xF;
+            return (source, destination) switch
+            {
+                (6, 7) => ImportedParticleBlendMode.Alpha,
+                (2, 0) => ImportedParticleBlendMode.SourceColorAdditive,
+                _ => throw new NotSupportedException(
+                    $"NiParticles '{particles.Name}' uses unsupported blend factors {source}/{destination}."),
+            };
+        }
+
+        return ImportedParticleBlendMode.Additive;
     }
 
     private static List<ImportedParticleAlphaKey> CollectAlphaKeys(

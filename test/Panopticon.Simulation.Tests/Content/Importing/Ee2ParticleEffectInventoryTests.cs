@@ -262,6 +262,28 @@ public sealed class Ee2ParticleEffectInventoryTests
     }
 
     [Fact]
+    public void ProofEffectsPreservePerSystemBlendModes()
+    {
+        using var archive = OpenArchive(GraphicsArchiveRelativePath);
+        foreach (var (name, _, _) in ProofEffects)
+        {
+            using var stream = new MemoryStream(ReadEntry(archive, $"cache/nifcache/{name}.nifcache"));
+            var effect = NifParticleEffectConverter.Convert(NifFile.Read(stream), name)!;
+
+            Assert.NotEmpty(effect.Systems);
+            if (name == "fx_watersplash_1")
+            {
+                Assert.All(effect.Systems, system => Assert.Equal(ImportedParticleBlendMode.Alpha, system.BlendMode));
+            }
+            if (name == "fx_muzzle_tank")
+            {
+                Assert.Contains(effect.Systems, system => system.BlendMode == ImportedParticleBlendMode.Alpha);
+                Assert.Contains(effect.Systems, system => system.BlendMode == ImportedParticleBlendMode.SourceColorAdditive);
+            }
+        }
+    }
+
+    [Fact]
     public void MuzzleBindingTargetsFiringTagNotGeometry()
     {
         var root = InstallRoot();

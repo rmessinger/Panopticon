@@ -127,6 +127,8 @@ public sealed class ImportedParticleSystem
     /// <summary>True when the source carried an NiAlphaProperty with blending enabled.</summary>
     public bool AlphaBlended { get; }
 
+    public ImportedParticleBlendMode BlendMode { get; }
+
     public ImportedParticleSystem(
         string name,
         Matrix4x4 localTransform,
@@ -145,7 +147,8 @@ public sealed class ImportedParticleSystem
         IReadOnlyList<ImportedParticleAlphaKey> alphaKeys,
         string? textureName,
         string? materialName,
-        bool alphaBlended)
+        bool alphaBlended,
+        ImportedParticleBlendMode? blendMode = null)
     {
         if (string.IsNullOrEmpty(name))
         {
@@ -255,6 +258,7 @@ public sealed class ImportedParticleSystem
         TextureName = textureName;
         MaterialName = materialName;
         AlphaBlended = alphaBlended;
+        BlendMode = blendMode ?? (alphaBlended ? ImportedParticleBlendMode.Alpha : ImportedParticleBlendMode.Additive);
     }
 
     private static bool IsFinite(in Matrix4x4 m) =>
