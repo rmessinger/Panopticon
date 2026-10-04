@@ -356,23 +356,33 @@ public sealed class RunRecording : IDisposable
     public TriggeredDetailCapture T2 { get; }
     public SnapshotDeltaRecorder Snapshots { get; }
 
+    /// <summary>
+    /// Domain state recording (A4-4); null unless the host's domain implements
+    /// <see cref="IDomainStateProjection"/>.
+    /// </summary>
+    public DomainStateRecorder? DomainState { get; }
+
     private RunRecording(
         WorldStateSampler sampler,
         RunOutputRecorder t0,
         TieredSignatureRecorder t1,
         TriggeredDetailCapture t2,
-        SnapshotDeltaRecorder snapshots)
+        SnapshotDeltaRecorder snapshots,
+        DomainStateRecorder? domainState)
     {
         Sampler = sampler;
         T0 = t0;
         T1 = t1;
         T2 = t2;
         Snapshots = snapshots;
+        DomainState = domainState;
     }
 
     /// <summary>
     /// Attaches the full recording stack to a host run. The snapshot artifact streams to
-    /// <paramref name="snapshotArtifactPath"/> when given.
+    /// <paramref name="snapshotArtifactPath"/> when given; the domain-state artifact (A4-4)
+    /// streams to <paramref name="domainStateArtifactPath"/> when the domain implements
+    /// <see cref="IDomainStateProjection"/>.
     /// </summary>
     public static RunRecording Attach(
         SimulationHost host,
@@ -382,7 +392,8 @@ public sealed class RunRecording : IDisposable
         uint sampleInterval = RunOutputRecorder.DefaultSampleInterval,
         uint snapshotInterval = 300,
         SignatureTolerances? tolerances = null,
-        string? snapshotArtifactPath = null)
+        string? snapshotArtifactPath = null,
+        string? domainStateArtifactPath = null)
     {
         var sampler = new WorldStateSampler(host, game);
         var t0 = new RunOutputRecorder(host, game, seed, scenarioId, sampleInterval);
@@ -391,7 +402,10 @@ public sealed class RunRecording : IDisposable
         var t2 = new TriggeredDetailCapture(sampler);
         var t1 = new TieredSignatureRecorder(sampler, tolerances, sampleInterval, domain: host.DomainModel);
         var snapshots = new SnapshotDeltaRecorder(sampler, snapshotInterval, snapshotArtifactPath, snapshotArtifactPath is null ? null : game);
-        return new RunRecording(sampler, t0, t1, t2, snapshots);
+        var domainState = host.DomainModel is IDomainStateProjection projection
+            ? new DomainStateRecorder(sampler, projection, snapshotInterval, domainStateArtifactPath, domainStateArtifactPath is null ? null : game)
+            : null;
+        return new RunRecording(sampler, t0, t1, t2, snapshots, domainState);
     }
 
     /// <summary>
@@ -429,6 +443,14 @@ public sealed class RunRecording : IDisposable
         output.SnapshotInterval = Snapshots.SnapshotInterval;
         output.SnapshotArtifactPath = Snapshots.ArtifactPath;
         output.SnapshotFrames.AddRange(Snapshots.Snapshots.Select(s => s.Frame));
+
+        if (DomainState is not null)
+        {
+            output.DomainStateSchemaVersion = DomainState.Schema.Version;
+            output.DomainStateArtifactPath = DomainState.ArtifactPath;
+            output.DomainStateSnapshotFrames = DomainState.Snapshots.Select(s => s.Frame).ToList();
+        }
+
         return output;
     }
 
@@ -439,5 +461,6 @@ public sealed class RunRecording : IDisposable
         T1.Dispose();
         T2.Dispose();
         Snapshots.Dispose();
+        DomainState?.Dispose();
     }
 }

@@ -84,6 +84,17 @@ public sealed class RunOutput
     public string? SnapshotArtifactPath { get; set; }
     public List<uint> SnapshotFrames { get; set; } = new();
 
+    // A4-4 domain state projection (WI-A4-44): present only when the domain implements
+    // IDomainStateProjection; omitted from JSON otherwise so RTS outputs are unchanged.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? DomainStateSchemaVersion { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DomainStateArtifactPath { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<uint>? DomainStateSnapshotFrames { get; set; }
+
     internal static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
