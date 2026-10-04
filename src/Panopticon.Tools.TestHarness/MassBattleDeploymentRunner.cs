@@ -198,7 +198,7 @@ public static class MassBattleDeploymentRunner
                 Separation = new SeparationResult { Gap = separationGap, MaxWeaponRange = maxWeaponRange },
                 GridPathNodes = gridPathNodes,
                 GridEndPassable = gridEndPassable,
-                Reachability = reachability.Results,
+                Reachability = reachability,
                 AllPassed = false,
             };
             report = report with
@@ -207,7 +207,7 @@ public static class MassBattleDeploymentRunner
                     && report.Separation.Verdict == "OK"
                     && gridPathNodes > 0
                     && gridEndPassable
-                    && reachability.Results.All(probe => probe.Verdict == "OK"),
+                    && reachability.All(probe => probe.Verdict == "OK"),
             };
 
             reporter.Info(MassBattleDeploymentReport.WriteText(report));
@@ -232,42 +232,12 @@ public static class MassBattleDeploymentRunner
         }
     }
 
-    private sealed class ReachabilityRun
-    {
-        public List<ReachabilityClassResult> Results { get; init; } = new();
-    }
-
-    private sealed class Probe
-    {
-        public required Surfaces Surfaces { get; init; }
-
-        public required string RepresentativeDefinition { get; init; }
-
-        public required float MaxSpeed { get; init; }
-
-        public required GameObject Unit { get; init; }
-
-        public required Vector3 Target { get; init; }
-
-        public required int FrameBudget { get; init; }
-
-        public required float Distance { get; init; }
-
-        public uint StartFrame { get; set; }
-
-        public uint FinishFrame { get; set; }
-
-        public bool SawPath { get; set; }
-
-        public bool Finished { get; set; }
-    }
-
     /// <summary>
     /// Spawns one representative per distinct ground locomotor class at zone A, orders each to the
     /// zone B centroid through a real pathfinded move order, and polls until every probe arrives
     /// or its budget runs out.
     /// </summary>
-    private static ReachabilityRun RunReachabilityProbes(
+    private static List<ReachabilityClassResult> RunReachabilityProbes(
         Game game,
         MassBattleDeploymentProfile profile,
         Action step,
@@ -278,7 +248,7 @@ public static class MassBattleDeploymentRunner
         var owner = game.Scene3D.Players[2];
         var target = GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
         var classes = EnumerateGroundLocomotorClasses(game).ToList();
-        var probes = new List<Probe>();
+        var probes = new List<ReachabilityProbe>();
 
         for (var i = 0; i < classes.Count; i++)
         {
@@ -295,7 +265,7 @@ public static class MassBattleDeploymentRunner
                 + profile.Reachability.MinTimeoutFrames;
             var budget = Math.Clamp(computedBudget, profile.Reachability.MinTimeoutFrames, profile.Reachability.MaxFrameBudget);
             unit.AIUpdate?.SetTargetPoint(target);
-            probes.Add(new Probe
+            probes.Add(new ReachabilityProbe
             {
                 Surfaces = surfaces,
                 RepresentativeDefinition = representative.DefinitionName,
@@ -382,7 +352,7 @@ public static class MassBattleDeploymentRunner
             });
         }
 
-        return new ReachabilityRun { Results = results };
+        return results;
     }
 
     private sealed record GroundClass(string DefinitionName, float MaxSpeed);
