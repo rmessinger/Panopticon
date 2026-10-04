@@ -130,7 +130,7 @@ Full per-map record of all 948 community files (same columns and ranking as the 
 
 ## Provisional map selection
 
-Operator selection: `deepdivide`. M0-3 validates deployment capacity, per-ground-locomotor reachability, and headless/windowed loading before the map is locked for M1. Selection remains provisional until those checks pass. M0-2 authored fallback is deferred.
+Operator selection (2026-10-04): `heavyfire`. The operator confirmed the choice after an in-engine deployment preview on the real map (1000 vs 1000 Generals stand-in units, corner-anchored zone blocks), which supersedes the survey reading's deepdivide recommendation above; `deepdivide` stays first alternate. The survey `sep` verdict is a component-ranking artifact, not a deployment obstacle: both leading dry-flat components sit on the same z31.2 plateau, while corner-anchored zone centroids are roughly 6400 world units apart, far above the 400-unit separation screen. M0-3 validates deployment capacity, per-ground-locomotor reachability, and headless/windowed loading before the map is locked for M1. Selection remains provisional until those checks pass. M0-2 authored fallback is deferred and folds into the post-track programmatic map-development effort noted in [Track M](../track-m-mass-battle.md).
 
 ## Files likely to change
 

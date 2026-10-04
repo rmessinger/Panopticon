@@ -51,3 +51,10 @@ marked `Ready`. `†` marks conceptual diagrams awaiting grounding.
 - M2 consumes the Track C EE2 importers; C4h particle effects are optional polish, not a gate.
 - B5 instancing must cover Track C models, as already noted under Track B.
 - The track does not use B6, B7, or any Track W domain code.
+
+## Post-track direction
+
+Operator note (2026-10-04): after this track completes, map development starts as its own
+effort, creating large maps programmatically (generation and authoring tooling for
+mass-battle-scale battlefields) instead of sourcing community maps. Track M stays on the
+sourced `heavyfire` map; the deferred M0-2 authored fallback folds into that later effort.
