@@ -39,6 +39,10 @@ Long-term goals:
    [Track W](track-w-western-front.md): Sedan 1870 is the first real battle and the large-scale
    proof of concept, then a Somme 1916 sector; performance and interactive-rate targets remain
    uncommitted until W2 sets the first error envelope.
+4. [1000 vs 1000 mixed-roster battle](deep-dives/mass-battle-1k.md) - an AI versus AI battle of
+   1000 Command & Conquer Generals and Empire Earth II units per side on a large community or
+   authored map, run headless in batches and watchable live in real time. Staged as
+   [Track M](track-m-mass-battle.md); independent of Track W.
 
 Scope notes:
 
@@ -133,6 +137,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md) | human | Rendering clarity & image quality: high-DPI/resolution correctness, graphics settings & fidelity presets, visual regression harness, MSAA, cutout/alpha-test clarity, gamma-correct rendering, texture filtering & mip quality, shadow quality tier, resolution-independent 2D/UI, optional realistic proportions. Not gated on Track P. |
 | [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Map & unit storage formats: a new on-disk storage system for maps and object/unit template data. Format-agnostic interchange abstraction, a versioned successor to the `.map` format, a versioned successor to per-game INI object-definition storage, legacy migration/compatibility tooling, authoring/pipeline integration, round-trip regression. Persistence/schema concern, distinct from B3/B4a-5's runtime-performance focus. Gated on Track P. |
 | [`track-w-western-front.md`](track-w-western-front.md) | human | Western Front simulation: charter fixture, aggregate sector model, fidelity promotion and reconciliation, geospatial sector, command and logistics experiments, distributed regions, and a long-run campaign. Built as a domain through the A4-1 seam and A4-4 state projection. |
+| [`track-m-mass-battle.md`](track-m-mass-battle.md) | human | Mixed-roster mass battle: capacity probe, battle map, EE2 combat units, roster normalization, army-scale AI, and the 1000 vs 1000 battle in batch, replay, and live modes. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `Panopticon.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
 | [`plans/tracer-rounds.md`](plans/tracer-rounds.md) | human | Plan for rendering bullet tracers through the existing `Tracer` FXList nugget: client-side `TracerManager`, directional additive quads, no projectile or logic-side involvement. |
@@ -177,6 +182,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/w4-command-logistics-experiment.md`](deep-dives/w4-command-logistics-experiment.md) | Track W phase W4 - 216-cell command and logistics matrix, information audit, and sensitivity report. |
 | [`deep-dives/w5-distributed-regional-simulation.md`](deep-dives/w5-distributed-regional-simulation.md) | Track W phase W5 - Front-strip shards over B6, lockstep coordination, and cross-boundary handoff. |
 | [`deep-dives/w6-long-run-campaign.md`](deep-dives/w6-long-run-campaign.md) | Track W phase W6 - Long-run campaign file, domain snapshot plus host save, replay indexing, and approximation error reporting. |
+| [`deep-dives/mass-battle-1k.md`](deep-dives/mass-battle-1k.md) | Long-term goal and Track M phases M0-M5 - Viewing model, map requirements and sourcing, EE2 DDF translation and roster normalization, army-scale AI, and scale dependencies. |
 | [`deep-dives/c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | Track C phase C1 - CPU-only model and animation import contracts, W3D reference adapters, runtime materialization, and parity. |
 | [`deep-dives/c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | Track C phase C2 - Direct-index and exact-name animation-channel binding to runtime model hierarchies. |
 | [`deep-dives/c3-material-texture-mapping.md`](deep-dives/c3-material-texture-mapping.md) | Track C phase C3 - Format-neutral core metallic-roughness materials, texture bindings, and engine PBR materialization. |
@@ -203,7 +209,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 
 Track layout: a prerequisite Playable Baseline track, a shared Foundations track, and parallel
 Scale, External Assets, Gameplay Content, Naval Warfare, Object Physics/Terrain/Destruction,
-Rendering Clarity, Storage Formats, and Western Front tracks. Phase order is approximate; cross-track dependencies appear in each
+Rendering Clarity, Storage Formats, Western Front, and Mass Battle tracks. Phase order is approximate; cross-track dependencies appear in each
 track document.
 
 - [Track P - Playable Baseline](track-p-playable-baseline.md) (prerequisite): P0 ReplaySketch
@@ -262,6 +268,9 @@ track document.
   aggregate sector simulation · W2 fidelity promotion and reconciliation · W3a Sedan 1870 · W3b
   Somme sector · W4 command and logistics experiment · W5 distributed regional simulation · W6
   long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
+- [Track M - Mixed-Roster Mass Battle](track-m-mass-battle.md): M0 capacity probe · M1 battle
+  map · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
+  battle. Depends on P9, A1, B1, then C4d, A4, B4, B5, and A5.
 
 ### Cross-track dependencies
 
@@ -410,6 +419,18 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | W5 - Distributed regional simulation | `░░░░░░░░░░` | 0 / 8 |
 | W6 - Long-run campaign experiment | `░░░░░░░░░░` | 0 / 8 |
 | Track W total | `░░░░░░░░░░` | 0 / 89 |
+
+### Track M - Mixed-Roster Mass Battle (gated on P9, A1, and B1)
+
+| Phase | Progress | Items |
+|---|---|---|
+| M0 - Capacity probe | `░░░░░░░░░░` | 0 / 3 |
+| M1 - Battle map | `░░░░░░░░░░` | 0 / 3 |
+| M2 - EE2 combat units | `░░░░░░░░░░` | 0 / 4 |
+| M3 - Mixed roster normalization | `░░░░░░░░░░` | 0 / 3 |
+| M4 - Army-scale AI | `░░░░░░░░░░` | 0 / 3 |
+| M5 - 1000 vs 1000 battle | `░░░░░░░░░░` | 0 / 4 |
+| Track M total | `░░░░░░░░░░` | 0 / 20 |
 
 ---
 

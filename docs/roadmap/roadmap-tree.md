@@ -6,7 +6,7 @@
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
 > [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md) ·
 > [G](track-g-rendering-clarity.md) · [H](track-h-storage-formats.md) ·
-> [W](track-w-western-front.md)) and the deep dives as phases,
+> [W](track-w-western-front.md) · [M](track-m-mass-battle.md)) and the deep dives as phases,
 > sub-phases, or dependencies change; see [Tree maintenance](#tree-maintenance).
 >
 > Audience: human overview of roadmap structure and dependency flow.
@@ -279,6 +279,13 @@ mindmap
       W4 Command and logistics experiment ⮕
       W5 Distributed regional simulation ⮕
       W6 Long-run campaign experiment ⮕
+    M. Mixed-roster mass battle
+      M0 Capacity probe ⮕
+      M1 Battle map ⮕
+      M2 EE2 combat units ⮕
+      M3 Mixed roster normalization ⮕
+      M4 Army-scale AI ⮕
+      M5 1000 vs 1000 battle ⮕
 ```
 
 ---
@@ -287,7 +294,7 @@ mindmap
 
 This left-to-right progression shows when phases become workable. Arrows mean "must precede."
 Nodes keep their track colour (P = stone, A = blue, B = green, C = amber, D = pink, E = teal,
-F = red, G = violet, H = olive, W = slate). Track G is the one track not gated by Stage P: it changes
+F = red, G = violet, H = olive, W = slate, M = rust). Track G is the one track not gated by Stage P: it changes
 presentation only.
 The [playable-baseline prerequisite (Stage P)](track-p-playable-baseline.md) gates the whole
 roadmap. The [Simulation Domain Model seam (A4-1)](track-a-foundations.md) is its own highlighted
@@ -306,6 +313,7 @@ flowchart LR
   classDef seam fill:#ffd9f2,stroke:#b3559a,stroke-width:2px,color:#312;
   classDef trackP fill:#f0ece4,stroke:#7a6f5a,color:#221;
   classDef trackW fill:#eef0f3,stroke:#5a6a7a,color:#122;
+  classDef trackM fill:#fbefe6,stroke:#a0583a,color:#311;
 
   subgraph SP["Stage P · Playable baseline (prerequisite)"]
     direction TB
@@ -373,6 +381,7 @@ flowchart LR
     G10["G10 Realistic proportions"]
     H3["H3 New map storage format"]
     H4["H4 New object/unit-definition storage format"]
+    M0["M0 Capacity probe"]
   end
 
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
@@ -389,6 +398,8 @@ flowchart LR
     F4A["F4a Game-object physics adoption"]
     G5["G5 Cutout & alpha-test clarity"]
     H5["H5 Legacy migration & compatibility tooling"]
+    M1["M1 Battle map"]
+    M4["M4 Army-scale AI"]
   end
 
   subgraph S4["Stage 4 · Fidelity scaling & physics consumers"]
@@ -425,16 +436,19 @@ flowchart LR
     W3A["W3a Sedan 1870"]
     W4["W4 Command & logistics experiment"]
     W5["W5 Distributed regional simulation"]
+    M2["M2 EE2 combat units"]
   end
 
-  subgraph S7["Stage 7 · Somme sector"]
+  subgraph S7["Stage 7 · Somme sector & mixed rosters"]
     direction TB
     W3B["W3b Somme sector"]
+    M3["M3 Mixed roster normalization"]
   end
 
-  subgraph S8["Stage 8 · Long-run campaign"]
+  subgraph S8["Stage 8 · Long-run campaign & mass battle"]
     direction TB
     W6["W6 Long-run campaign experiment"]
+    M5["M5 1000 vs 1000 battle"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -616,6 +630,21 @@ flowchart LR
   W3B --> W6
   W4 --> W6
   W5 --> W6
+  P9 --> M0
+  A1 --> M0
+  B1 --> M0
+  M0 --> M1
+  C4D --> M2
+  P9 --> M2
+  M2 --> M3
+  M0 --> M4
+  A4 --> M4
+  M1 --> M5
+  M3 --> M5
+  M4 --> M5
+  B4 --> M5
+  B5 --> M5
+  A5 --> M5
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
@@ -627,6 +656,7 @@ flowchart LR
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;
   class W0,W1,W2,W3A,W3B,W4,W5,W6 trackW;
+  class M0,M1,M2,M3,M4,M5 trackM;
   class A4S seam;
 ```
 
@@ -637,7 +667,7 @@ flowchart LR
 > part of a lettered track and has no engine dependency, so it is omitted as a node. H3 (new map
 > storage format) coordinates with B4a-5 (chunked terrain storage) on the map-format terrain
 > section; this is likewise a coordination point rather than a strict dependency, so no arrow
-> connects them. A4-3 has no separate node, so W2's A4-3 dependency is drawn from the A4 node.
+> connects them. A4-3 has no separate node, so the A4-3 dependencies of W2 and M4 are drawn from the A4 node.
 
 ---
 

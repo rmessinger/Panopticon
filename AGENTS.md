@@ -47,6 +47,7 @@ Builds on the repository-wide documentation style above. Additional rules specif
 
 * Unmerged branches reserve track letters D (`docs/track-d-gameplay-expansion`, Gameplay Content Expansion) and E (`docs/track-e-naval-warfare`, Naval Warfare). The deformable terrain & destruction track is Track F (`docs/roadmap/track-f-terrain-destruction.md`) to avoid both collisions.
 * Deformable terrain & destruction is its own track, Track E (`docs/roadmap/track-e-terrain-destruction.md`), not folded into Tracks B/P, named E instead of D to avoid colliding with the unmerged Track D (Gameplay Content Expansion) branch. (Note: a later decision superseded this with Track F above once both D and E were confirmed in use by other branches.)
+* The 1000 vs 1000 mixed-roster battle (Generals + EE2 ground units and aircraft, asymmetric armies balanced by points, AI vs AI, large map, headless batches plus live real-time viewing) is Track M (`docs/roadmap/track-m-mass-battle.md`), independent of Track W and its Sedan scenario.
 
 ### Roadmap structure
 
