@@ -130,7 +130,7 @@ Full per-map record of all 948 community files (same columns and ranking as the 
 
 ## Provisional map selection
 
-Operator selection: `deepdivide`. M0-3 validates deployment capacity, per-ground-locomotor reachability, and headless/windowed loading before the map is locked for M1. Selection remains provisional until those checks pass. M0-2 authored fallback is deferred.
+Operator selection: `deepdivide`. The operator previewed heavyfire as the largest community map (2026-10-04, in-engine deployment preview: 1000 vs 1000 Generals stand-in units, corner-anchored blocks, rendered on the real map) and confirmed deepdivide after all; heavyfire keeps its recorded `sep` verdict. M0-3 validates deployment capacity, per-ground-locomotor reachability, and headless/windowed loading before the map is locked for M1. Selection remains provisional until those checks pass. M0-2 authored fallback is deferred and folds into the post-track programmatic map-development effort noted in [Track M](../track-m-mass-battle.md).
 
 ## Files likely to change
 
