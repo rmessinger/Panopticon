@@ -58,8 +58,8 @@ through the A1-6 host restore and checks that manifest, engine section, and doma
 the domain-state section.
 
 A5 replay scrubbing reads indexed operational records for operational and campaign views. Tactical
-frames come from the [A1-6 reconstructor](a1-6-operational-recording.md#6-reconstruction), verified
-against recorded operational hashes; unverified re-execution is not replay.
+frames come from the [A1-6 reconstructor](a1-6-operational-recording.md#6-reconstruction) and are
+labelled rebuilt ([A1-6 §3](a1-6-operational-recording.md#3-reconstruction-fidelity)).
 
 ## 4. Long-run evidence
 

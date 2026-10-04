@@ -35,7 +35,7 @@ Source of truth: [deep-dives/a1-headless-host.md](../deep-dives/a1-headless-host
 |---|---|---|
 | [track-a-a1-headless-host.md](track-a-a1-headless-host.md) | A1-1…A1-5 | Headless simulation host |
 
-## Track A · A1-6 : Operational recording and seeded reconstruction
+## Track A · A1-6 : Operational recording and checkpoint re-simulation
 
 Source of truth:
 [deep-dives/a1-6-operational-recording.md](../deep-dives/a1-6-operational-recording.md) :
@@ -43,7 +43,7 @@ Source of truth:
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-a-a1-6-operational-recording.md](track-a-a1-6-operational-recording.md) | A1-6a…A1-6g | Operational recording and seeded reconstruction (WI-A1-13..24) |
+| [track-a-a1-6-operational-recording.md](track-a-a1-6-operational-recording.md) | A1-6a…A1-6g | Operational recording and checkpoint re-simulation (WI-A1-13..24) |
 
 ## Track A · A2 : Statistical validation
 

@@ -30,12 +30,10 @@ Add and run the Sedan all-tactical reference family for four seeds over the full
 1. Add Sedan reference run wiring with `AllTacticalActivationPolicy` from frame zero.
 2. Require the operator geospatial payload and a Generals install before execution.
 3. Run four seeds from 31 August 00:00 through 2 September 12:00 local mean time.
-4. Record in `Operational` mode; the operational stream, checkpoints, and hashes are the primary
-   product.
-5. Reconstruct at least three sampled tactical intervals per seed (early, middle, late) and verify
-   every operational hash in each interval.
-6. Stop and preserve artifacts on determinism or reconstruction-verification failure per the
-   repository rule.
+4. Record in `Operational` mode; the operational stream and checkpoints are the primary product.
+5. Rebuild at least three sampled tactical intervals per seed (early, middle, late) from their
+   checkpoints and check conservation on the rebuilt frames.
+6. Stop and preserve artifacts on a checkpoint restore failure per the repository rule.
 
 ## Files likely to change
 
@@ -47,8 +45,8 @@ Add and run the Sedan all-tactical reference family for four seeds over the full
 
 - [ ] Four reference seeds complete the 60 h window.
 - [ ] Every run uses all-tactical activation from frame zero.
-- [ ] Product records contain operational state layers, rollups, metrics, run identity, and checkpoints.
-- [ ] Sampled tactical reconstructions match every recorded operational hash.
+- [ ] Product records contain operational state layers, rollups, metrics, and checkpoints.
+- [ ] Sampled tactical intervals rebuild from checkpoints and conserve.
 - [ ] Standard validation passes.
 
 ## Validation commands

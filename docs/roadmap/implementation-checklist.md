@@ -525,19 +525,20 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     headless + P0 `HarnessRunner` onto `SimulationHost`). Replay input recording is the existing
     `.rep` path. Milestone test: headless run to a decided outcome with all tiers written and
     reloadable (`TieredRecordingTests.HeadlessRun_ReachesMatchEnd_AndWritesAllTiers`).
-- [x] A1-6 Operational recording and seeded reconstruction
+- [ ] A1-6 Operational recording and checkpoint re-simulation
       ([deep dive](deep-dives/a1-6-operational-recording.md)): `Operational` recording mode,
-      engine checkpoints, bucketed state hashes, and a verified whole-world reconstructor.
-  - [x] A1-6a Checkpoint coverage audit (`WI-A1-13`); persisted `SageRandom` logic random (`WI-A1-14`).
-  - [x] A1-6b Engine checkpoint format (`WI-A1-15`); host restore (`WI-A1-16`).
-  - [x] A1-6c Run identity (`WI-A1-17`); operational state hash (`WI-A1-18`).
-  - [x] A1-6d Recording modes and cadence (`WI-A1-19`); operational stream (`WI-A1-20`).
-  - [x] A1-6e Operational run bundle: checkpoint scheduling and manifest (`WI-A1-21`).
-  - [x] A1-6f Reconstructor with verification and sinks (`WI-A1-22`); reconstruction cache (`WI-A1-23`).
-  - [x] A1-6g Conformance evidence (`WI-A1-24`).
-  - AC: RTS and transport-graph `Operational` runs reconstruct randomly chosen frames from their
-    checkpoints with every operational hash matching and state equal to a `Full` run of the same
-    seed; `Full` mode JSON and artifacts are byte-identical to the pre-A1-6 output.
+      sparse engine checkpoints, and a whole-world reconstructor.
+  - [ ] A1-6a Checkpoint coverage audit (`WI-A1-13`); persisted `SageRandom` logic random (`WI-A1-14`).
+  - [ ] A1-6b Engine checkpoint format (`WI-A1-15`); host restore (`WI-A1-16`).
+  - A1-6c Withdrawn: run identity (`WI-A1-17`) and operational state hash (`WI-A1-18`).
+  - [ ] A1-6d Recording modes and cadence (`WI-A1-19`); operational stream (`WI-A1-20`).
+  - [ ] A1-6e Operational run bundle: checkpoint scheduling and manifest (`WI-A1-21`).
+  - [ ] A1-6f Reconstructor and sinks (`WI-A1-22`); in-memory reconstruction cache (`WI-A1-23`).
+  - [ ] A1-6g Conformance evidence (`WI-A1-24`).
+  - AC: RTS and transport-graph `Operational` runs rebuild randomly chosen frames from their
+    checkpoints; restore at a checkpoint frame equals a `Full` capture of that frame; rebuilt
+    frames satisfy domain invariants; `Full` mode JSON and artifacts are byte-identical to the
+    pre-A1-6 output.
 
 ### A2: Statistical validation
 - [x] Add seed controls and audit randomness sources.
@@ -1360,7 +1361,7 @@ phases depend on the Track A/B phases listed in the track doc.
   - AC: A5 shows regions, cells, features, nodes, links, and source ids.
 - [ ] W3a-28 All-tactical reference run (`WI-W3a-28`).
   - AC: 4 reference seeds complete the 60 h window in `Operational` recording mode; sampled
-    reconstructions verify against every recorded operational hash.
+    tactical intervals rebuild from checkpoints.
 - [ ] W3a-29 Aggregate and mixed runs (`WI-W3a-29`).
   - AC: 64 seeds per arm report error against the reference.
 - [ ] W3a-30 Sedan evidence report (`WI-W3a-30`).

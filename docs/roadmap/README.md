@@ -81,10 +81,12 @@ Scope notes:
   requires.
 - Separate simulation from presentation cleanly. Headless and distributed scenarios need a
   logic core that runs without a renderer, audio, or window.
-- Determinism is scoped to one run identity (build, runtime, platform, inputs, shard layout): a
-  seed reproduces its run there, which lets large runs record operational state and reconstruct
-  granular frames by verified re-simulation ([A1-6](deep-dives/a1-6-operational-recording.md)).
-  Cross-seed experiments validate through per-run invariants, authored bounds, and distributions.
+- Determinism is not a roadmap requirement. Validation uses per-run invariants, authored bounds,
+  aggregate distributions, and performance statistics. Seeds remain optional experiment inputs.
+- Disk use beats responsiveness for run analysis: large runs record operational state and sparse
+  checkpoints, and rebuild granular frames by re-simulation
+  ([A1-6](deep-dives/a1-6-operational-recording.md)). Rebuilt frames are plausible, not
+  authoritative.
 - Incremental, always-shippable: each phase leaves the engine building and the existing games
   playable.
 - Single-operator scope: the framework is a personal research tool for one operator for the
@@ -157,7 +159,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/a1-headless-host.md`](deep-dives/a1-headless-host.md) | Track A phase A1 - Headless simulation host. |
 | [`deep-dives/a4-pluggable-ai.md`](deep-dives/a4-pluggable-ai.md) | Track A phase A4 - Pluggable AI decision policy seam (rule-based reference implementation from P2, unblocking a neural-network policy trained via evolved seeded weight populations). |
 | [`deep-dives/a4-decentralized-hierarchical-ai.md`](deep-dives/a4-decentralized-hierarchical-ai.md) | Track A phase A4 - Decentralized hierarchical AI (unit-level ANNs organized as general/commander/soldier ranks, generalizing the flat pluggable-AI policy seam). |
-| [`deep-dives/a1-6-operational-recording.md`](deep-dives/a1-6-operational-recording.md) | Track A sub-phase A1-6 - Operational recording: operational stream, campaign-cadence engine checkpoints, bucketed state hashes, and verified seeded reconstruction of granular frames. |
+| [`deep-dives/a1-6-operational-recording.md`](deep-dives/a1-6-operational-recording.md) | Track A sub-phase A1-6 - Operational recording: operational stream, sparse engine checkpoints (every 6 campaign hours), and re-simulation of granular frames from the nearest checkpoint. |
 | [`deep-dives/a4-4-domain-state-projection.md`](deep-dives/a4-4-domain-state-projection.md) | Track A checklist item A4-4 - Optional domain state projection: versioned schema, keyed multi-field records, domain-state artifact, and schema-driven conservation check. |
 | [`deep-dives/a5-visualization.md`](deep-dives/a5-visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
 | [`deep-dives/b1-benchmarking.md`](deep-dives/b1-benchmarking.md) | Track B phase B1 - Macro benchmark harness, BenchmarkDotNet micro benchmarks, A2-compatible JSON records, bootstrap confidence intervals, and regression comparison. |
@@ -210,7 +212,7 @@ track document.
   command · P6b unit-contract validation · P7 end-to-end skirmish validation · P8 implementation
   delta remediation · P9 unit validation ground. Gates all other tracks.
 - [Track A - Foundations](track-a-foundations.md): A1 headless/FTRT host (incl. A1-6 operational
-  recording and seeded reconstruction) · A2 statistical
+  recording and checkpoint re-simulation) · A2 statistical
   validation · A3 simulation/presentation seam · A4 experiment framework seams & harness
   (incl. the Simulation Domain Model seam - RTS, city-builder, transport, … - and the A4-4 domain
   state projection) · A5 scenario

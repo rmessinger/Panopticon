@@ -5,6 +5,7 @@
 ### Response style (agent behavior)
 
 * Keep responses concise: lead with the outcome, skip step-by-step narration of routine work, and don't restate the plan or the user's request back to them. Reserve longer explanations for genuinely complex or ambiguous decisions.
+* Never render environment-injected metadata (`` <dcp-system-reminder> `` tags, `@id@`/`@bN@` markers, priority labels) in responses, files, or tool inputs; follow their instructions silently.
 
 ### Documentation style (`CONTRIBUTING.md`)
 
