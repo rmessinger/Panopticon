@@ -65,6 +65,22 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
     public readonly IRandom Random;
 
+    internal uint[]? PendingRandomStateWords { get; set; }
+
+    internal void ApplyPendingRandomState()
+    {
+        if (PendingRandomStateWords is not { } words)
+        {
+            return;
+        }
+
+        PendingRandomStateWords = null;
+        if (Random is SageRandom random)
+        {
+            random.RestoreState(words);
+        }
+    }
+
     public GameLogic(IGame game)
     {
         _game = game;
@@ -384,11 +400,40 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
     public void Persist(StatePersister reader)
     {
-        var version = reader.PersistVersion(10);
+        var version = reader.PersistVersion(11);
 
         var currentFrame = _currentFrame.Value;
         reader.PersistUInt32(ref currentFrame);
         _currentFrame = new LogicFrame(currentFrame);
+
+        // Version 11 adds the logic random state so restored runs continue
+        // the exact draw stream; retail version 10 saves carry no words here.
+        // Read mode only stages the words: recreating the persisted objects
+        // consumes draws, so SaveFile applies the state after the full
+        // restore completes.
+        if (version >= 11)
+        {
+            var randomWords = new uint[SageRandom.StateWordCount];
+            if (reader.Mode == StatePersistMode.Write)
+            {
+                if (Random is not SageRandom writeableRandom)
+                {
+                    throw new InvalidStateException();
+                }
+
+                writeableRandom.CopyState(randomWords);
+            }
+
+            for (var i = 0; i < randomWords.Length; i++)
+            {
+                reader.PersistUInt32(ref randomWords[i]);
+            }
+
+            if (reader.Mode == StatePersistMode.Read)
+            {
+                PendingRandomStateWords = randomWords;
+            }
+        }
 
         // Write mode must assign every object definition an id before the
         // lookup table hits the stream; GetId otherwise appends entries after

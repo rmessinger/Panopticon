@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-14` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6a persistable logic random |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-13` |
@@ -64,3 +64,12 @@ Do not regenerate golden baselines. If a golden or same-seed artifact differs, s
 - Unblock `WI-A1-15`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+- `IGame.CreateRandom()` now returns `SageRandom` (was `SystemRandom`); `GameClient.Random` inherits the same change (presentation-only consumer). Run seed remains the only initial source via the existing A2-b `Initialize(runSeed)` path in `Game.StartGame`.
+- `SageRandom` gained `StateWordCount = 6`, `CopyState(Span<uint>)`, `RestoreState(ReadOnlySpan<uint>)`; base seed is deliberately not restored (reinitialization stays with the seed path).
+- `GameLogic.Persist` version bumped 10 -> 11: six random words persisted after `currentFrame`; write mode throws `InvalidStateException` when `Random` is not `SageRandom`; read mode stages the words in `internal uint[]? PendingRandomStateWords` and `ApplyPendingRandomState()` applies them. Application is deferred to the end of `SaveFile` restore because object re-creation during the chunk read itself consumes draws (BuildVariations et al.), which shifted the stream when restored in place.
+- Tests: `PersistableLogicRandomTests` (state round-trip through words; logic checkpoint restored into a fresh host produces identical next draws, and the restored draws differ from pre-checkpoint draws so the test is non-vacuous).
+- Guardrails: `SeededRunTests` green; `CheckpointCoverageTests` green; `ValidationGroundTests` JSON gates 6/6; live headless validation-ground runs (5 with the swap, 2 parent-code controls) show identical outcomes to parent code. Pre-existing findings recorded, none caused by this card: `ChinaJetMIG` golden 34 vs stable measured 48 (stale golden on parent code too), `GLAInfantryAngryMobNexus` bimodal 25/2 across processes independent of the swap (golden captured the rare fast path), four headless timeouts (Tomahawk, NukeLauncher, Terrorist, SCUDLauncher) and the TroopCrawler gap reproduce identically on parent code. No baseline regenerated.
+

@@ -169,6 +169,11 @@ public static class SaveFile
                 persister.EndObject();
             }
 
+            // The logic random state is staged during the GameLogic chunk read
+            // because object re-creation consumes draws; apply it only after
+            // every chunk has been restored (WI-A1-14).
+            persister.Game.GameLogic?.ApplyPendingRandomState();
+
             // If we haven't started a game yet (which will be the case for
             // "mission start" save files), then start it now.
             if (!persister.Game.InGame)
