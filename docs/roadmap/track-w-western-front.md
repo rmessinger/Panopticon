@@ -65,7 +65,7 @@ conceptual diagrams awaiting grounding.
   1870 definitions in the domain project and adds the weapon hit-resolution seam
   ([seams](seams.md)).
 - W3a records in the [A1-6](deep-dives/a1-6-operational-recording.md) `Operational` mode and
-  reconstructs tactical frames from its checkpoints; W6 save/load uses the same checkpoints.
+  rebuilds tactical frames from its checkpoints; W6 save/load uses the same checkpoints.
 - W3a and W3b consume B4b's generated package and B4a chunking; W5 consumes B6 partitioning; W4 and W6
   consume A5 sweeps and replay.
 - Track F deformation is not required through W6; region terrain levels summarize trench, wire,

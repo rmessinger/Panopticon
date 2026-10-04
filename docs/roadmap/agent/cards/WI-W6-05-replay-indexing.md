@@ -52,7 +52,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-Granular frames come only from verified A1-6 reconstruction; no unverified rerun-based replay.
+Granular frames come only from the A1-6 reconstructor and are labelled rebuilt.
 
 ## On completion
 

@@ -78,7 +78,7 @@ large runs use the `Operational` mode of [A1-6](a1-6-operational-recording.md) i
 - Triggered detail capture: when the signature tree trips a configured threshold, the host writes
   detailed per-entity and per-system deltas for the affected frame and region window into a
   bounded ring buffer, as described in [visualization.md §5](a5-visualization.md). In
-  `Operational` mode the same windows come from verified reconstruction.
+  `Operational` mode the same windows come from checkpoint re-simulation.
 - Replay recording of inputs, including orders, seed, and map, reusing the existing `.rep` path
   (`ReplayConnection`, TestHarness export).
 - Optional frame captures via `FrameCaptureService` when a GPU is available.
@@ -103,7 +103,7 @@ specified in [visualization.md §5](a5-visualization.md).
 | A1-3. Logic-tick extraction | Extract the logic step from `Game.Update`/`LocalLogicTick` into a reusable stepper that runs without presentation systems (H3/H5). | Done |
 | A1-4. `SimulationHost` | Introduce the domain-agnostic host that owns a simulation world via `IGameEngine` + the [domain model seam (A4)](../track-a-foundations.md), steps N frames / until a condition at FTRT, and supports input injection + result hooks (H4). RTS is the first domain adapter. | Done (domain seam parameterized pending A4) |
 | A1-5. Run outputs | Emit recorded state snapshots/deltas, a metrics/events stream, the tiered diagnostic recording ([visualization.md §5](a5-visualization.md): T0 aggregate + T1 hierarchical signature tree + T2 triggered detail), and replay input recordings from a headless run. | Done (T0 metrics/events + terminal outcome; T1 tolerance-quantized spatial-cell signature trees; T2 ring-buffer triggered detail with pre-marked windows; snapshot/delta binary artifact with reconstruction; replay input recording via the existing `.rep` path) |
-| A1-6. Operational recording and seeded reconstruction | Record large runs at operational cadence with engine checkpoints at campaign cadence, and reconstruct granular frames by re-simulating from the nearest checkpoint with the same seeds, verified against live state hashes. See the [deep dive](a1-6-operational-recording.md). | Not started |
+| A1-6. Operational recording and checkpoint re-simulation | Record large runs at operational cadence with sparse engine checkpoints (every 6 campaign hours), and rebuild granular frames by re-simulating from the nearest checkpoint with logged inputs. Rebuilt frames are plausible, not authoritative. See the [deep dive](a1-6-operational-recording.md). | Not started |
 
 > Result analysis, visualization, and scenario authoring were previously sketched here under
 > other sub-phase numbers; they now live in their own phase, [A5](a5-visualization.md) (A5-1 scenario authoring,

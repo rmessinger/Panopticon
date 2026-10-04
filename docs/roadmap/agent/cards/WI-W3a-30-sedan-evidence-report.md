@@ -25,8 +25,8 @@ Create the measure-only Sedan evidence report with provenance, visual links, and
 
 ## Steps
 
-1. Collect conservation, reconstruction (including verified A1-6 tactical reconstructions),
-   determinism, order metrics, and run-family error artifacts.
+1. Collect conservation, reconstruction (including rebuilt A1-6 tactical intervals), order
+   metrics, and run-family error artifacts.
 2. Add A5 visual references for regions, cells, features, nodes, links, and source ids.
 3. Populate the W3a §11 divergence table from measured outputs and historical reference values.
 4. Record source provenance and run metadata for each table value.
