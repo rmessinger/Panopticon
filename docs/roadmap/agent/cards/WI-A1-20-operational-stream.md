@@ -85,3 +85,7 @@ full non-interactive suite shows 8 failures on this branch; 7 of them (Bse/Cur/S
 round-trips, SteamLocator, P2ScenarioMatrix) reproduce identically on `origin/main` full-suite
 runs and pass focused, and the 8th (ModelAnimationBindingTests) passes 3/3 focused on this branch;
 all are order/context-dependent environmental failures, not regressions from this work.
+
+## Revision: storage-first A1-6 (#147)
+
+- The `Hashes` record type is removed from the stream.

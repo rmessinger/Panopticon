@@ -36,7 +36,7 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
     [Fact]
     public void RoundTrips_HeaderAndSections_PreservingBytes()
     {
-        var header = new EngineCheckpointHeader(1234, 56789, "AB12CD34", "run-1");
+        var header = new EngineCheckpointHeader(1234, 56789, "run-1");
         var sections = new List<KeyValuePair<string, byte[]>>
         {
             new(EngineCheckpointData.EngineSection, new byte[] { 3, 1, 4, 1, 5 }),
@@ -84,7 +84,7 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
     public void Rejects_TruncatedCompressedPayload()
     {
         using var stream = new MemoryStream();
-        var header = new EngineCheckpointHeader(1, 2, "hash", "run");
+        var header = new EngineCheckpointHeader(1, 2, "run");
         EngineCheckpoint.Write(
             stream,
             header,
@@ -120,7 +120,6 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
         writer.Write(1u);
         writer.Write(1u);
         writer.Write(2L);
-        writer.Write("hash");
         writer.Write("run");
         writer.Write(1);
         writer.Write(EngineCheckpointData.EngineSection);
@@ -142,7 +141,7 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
     [Fact]
     public void Rejects_DuplicateSection()
     {
-        var header = new EngineCheckpointHeader(1, 2, "hash", "run");
+        var header = new EngineCheckpointHeader(1, 2, "run");
         using var stream = new MemoryStream();
         EngineCheckpoint.Write(
             stream,
@@ -161,7 +160,7 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
     [Fact]
     public void Rejects_MissingRequiredSection()
     {
-        var header = new EngineCheckpointHeader(1, 2, "hash", "run");
+        var header = new EngineCheckpointHeader(1, 2, "run");
         using var stream = new MemoryStream();
         EngineCheckpoint.Write(
             stream,
@@ -191,7 +190,6 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
         writer.Write(1u);
         writer.Write(1u);
         writer.Write(2L);
-        writer.Write("hash");
         writer.Write("run");
         writer.Write(1);
         writer.Write(EngineCheckpointData.EngineSection);
@@ -292,8 +290,8 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
         var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         host.Run(30);
 
-        var sections = EngineCheckpoint.CaptureSections(host, "AB12CD34", "run-1");
-        var header = new EngineCheckpointHeader(host.LogicFrame.Value, 0, "AB12CD34", "run-1");
+        var sections = EngineCheckpoint.CaptureSections(host);
+        var header = new EngineCheckpointHeader(host.LogicFrame.Value, 0, "run-1");
         using var stream = new MemoryStream();
         EngineCheckpoint.Write(stream, header, sections);
         stream.Position = 0;
@@ -360,7 +358,7 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
         using var stream = new MemoryStream();
         EngineCheckpoint.Write(
             stream,
-            new EngineCheckpointHeader(1, 2, "hash", "run"),
+            new EngineCheckpointHeader(1, 2, "run"),
         [
             new(EngineCheckpointData.EngineSection, [1]),
             new(EngineCheckpointData.RandomSection, [2]),
@@ -376,7 +374,6 @@ public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
         reader.ReadUInt32(); // version
         reader.ReadUInt32(); // frame
         reader.ReadInt64(); // theater time ticks
-        reader.ReadString(); // identity hash
         reader.ReadString(); // run id
         reader.ReadInt32(); // section count
         reader.ReadString(); // section name

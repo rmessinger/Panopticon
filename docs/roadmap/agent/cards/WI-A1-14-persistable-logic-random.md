@@ -8,7 +8,7 @@
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-13` |
-| Diagrams | [A1-6 §3](../../deep-dives/a1-6-operational-recording.md#3-determinism-contract) and [A1-6 §5.3](../../deep-dives/a1-6-operational-recording.md#53-engine-checkpoint) |
+| Diagrams | [A1-6 §3](../../deep-dives/a1-6-operational-recording.md#3-reconstruction-fidelity) and [A1-6 §5.3](../../deep-dives/a1-6-operational-recording.md#53-engine-checkpoint) |
 
 ## Goal
 
@@ -73,3 +73,6 @@ Do not regenerate golden baselines. If a golden or same-seed artifact differs, s
 - Tests: `PersistableLogicRandomTests` (state round-trip through words; logic checkpoint restored into a fresh host produces identical next draws, and the restored draws differ from pre-checkpoint draws so the test is non-vacuous).
 - Guardrails: `SeededRunTests` green; `CheckpointCoverageTests` green; `ValidationGroundTests` JSON gates 6/6; live headless validation-ground runs (5 with the swap, 2 parent-code controls) show identical outcomes to parent code. Pre-existing findings recorded, none caused by this card: `ChinaJetMIG` golden 34 vs stable measured 48 (stale golden on parent code too), `GLAInfantryAngryMobNexus` bimodal 25/2 across processes independent of the swap (golden captured the rare fast path), four headless timeouts (Tomahawk, NukeLauncher, Terrorist, SCUDLauncher) and the TroopCrawler gap reproduce identically on parent code. No baseline regenerated.
 
+## Revision: storage-first A1-6 (#147)
+
+- Determinism is no longer a requirement; persisted `SageRandom` stays so a restored host continues from the recorded generator state.

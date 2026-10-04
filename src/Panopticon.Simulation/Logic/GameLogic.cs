@@ -494,6 +494,8 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
                 reader.EndObject();
             }
+
+            _sleepyUpdates.Remake();
         }
         else
         {
@@ -899,9 +901,17 @@ internal sealed class SleepyUpdateList
         return updateModule;
     }
 
-    // TODO(Port): Call this from GameLogic.LoadPostProcess().
+    /// <summary>
+    /// Restores heap order after a save load: each module's wake frame is persisted after its
+    /// object was added to the list, so the heap is rebuilt once all objects are loaded.
+    /// </summary>
     public void Remake()
     {
+        if (_inner.Count == 0)
+        {
+            return;
+        }
+
         var parent = _inner.Count / 2;
         while (true)
         {

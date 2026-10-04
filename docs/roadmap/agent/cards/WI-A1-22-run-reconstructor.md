@@ -8,7 +8,7 @@
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-16`, `WI-A1-21` |
-| Diagrams | [A1-6 §6.1](../../deep-dives/a1-6-operational-recording.md#61-flow) and [A1-6 §6.2](../../deep-dives/a1-6-operational-recording.md#62-verification-failure) |
+| Diagrams | [A1-6 §6.1](../../deep-dives/a1-6-operational-recording.md#61-flow) and [A1-6 §6.2](../../deep-dives/a1-6-operational-recording.md#62-restore-failure) |
 
 ## Goal
 
@@ -94,3 +94,9 @@ as the recorder), so writer and verifier cannot drift. Validation: 6/6 `RunRecon
 installed (identity refusal, verified delivery with per-object byte equality vs the uninterrupted
 run, mid-run checkpoint replay, divergence stops all delivery, A1-5-loadable export slice);
 recording suites 63/63 with env; format/brace/diff clean.
+
+## Revision: storage-first A1-6 (#147)
+
+- `Open(bundle, bootstrap, cache)` has no options and no identity refusal.
+- Rebuilt boundaries are delivered without hash verification; `ReconstructionDivergence` is removed.
+- Tests cover delivery of drifted state rather than a divergence stop.

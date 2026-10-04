@@ -77,3 +77,7 @@ Implemented 2026-10-04 on `track-a-a1-6a-foundations` (commit follows `24b13a647
 - `RunOutput` unchanged (manifest fields are A1-21 scope).
 - Tests (`RecordingOptionsTests`, 4): default cadence values; `Full`-options vs omitted-options JSON byte-identical after normalizing the per-attach `runId` and wall-clock `*Milliseconds` fields; Operational mode samples frames 5/10/15/20 under a %5 cadence with T2 null and no domain cadence; domain cadence wins over the caller default (frames 3/6/9). Host frames start at 1, so frame 0 is never sampled.
 - Validation: 26 recording-suite tests unmodified and green, `dotnet format` verify clean, `check_brace_newline` clean, `git diff --check` clean.
+
+## Revision: storage-first A1-6 (#147)
+
+- Default checkpoint interval is 648,000 frames (6 h at 30 Hz); operational interval stays 1,800.

@@ -96,3 +96,9 @@ Enablers required by conformance (the WI-A1-16 finding):
 Validation: focused suites 82/82 with install (Recording, Transport, contract, checkpoint,
 SeededRun guardrail), `ReconstructionConformanceTests` 3/3, `dotnet format` verify 0 errors,
 brace check and `git diff --check` clean.
+
+## Revision: storage-first A1-6 (#147)
+
+- Conformance no longer compares rebuilt frames with a `Full` run of the same seed.
+- Each checkpoint restores exactly to the recording run's own sampled state; rebuilt windows deliver every boundary; transport rebuilt frames conserve vehicles; a cached boundary returns the first reconstruction's state.
+- The stronger transport restore test exposed a `PersistAuthorityResolutions` read bug (indexing a cleared list), fixed in `TransportGraphDomainModel`.

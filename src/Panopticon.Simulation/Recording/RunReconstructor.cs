@@ -9,35 +9,25 @@ using Panopticon.Simulation;
 namespace Panopticon.Recording;
 
 /// <summary>
-/// Options for reconstruction (WI-A1-22). An identity mismatch refuses the bundle unless
-/// <see cref="AllowIdentityMismatch"/> is set; boundary hash verification always runs.
-/// </summary>
-public sealed record ReconstructionOptions
-{
-    public bool AllowIdentityMismatch { get; init; }
-}
-
-/// <summary>
 /// Reconstructs a recorded operational bundle (WI-A1-22 §6.1): restores the nearest checkpoint
 /// at or before the requested frame through <see cref="IReconstructionBootstrap"/> +
 /// <see cref="EngineCheckpointRestorer"/>, replays recorded inputs at their dispatch frames,
-/// and delivers verified boundary state to a sink. The first boundary whose world hash fails
-/// verification throws <see cref="ReconstructionDivergence"/> and stops all delivery.
+/// and delivers rebuilt boundary state to a sink. Runs are not deterministic, so frames after
+/// the restored checkpoint are plausible, not authoritative (A1-6 §3); nothing is verified
+/// against the recorded run beyond the checkpoint restore itself.
 /// </summary>
 public sealed class RunReconstructor
 {
     private readonly string _bundleDirectory;
     private readonly IReconstructionBootstrap _bootstrap;
-    private readonly ReconstructionOptions _options;
     private readonly RunOutput _manifest;
     private readonly string _streamPath;
     private readonly ReconstructionCache? _cache;
 
-    private RunReconstructor(string bundleDirectory, IReconstructionBootstrap bootstrap, ReconstructionOptions options, RunOutput manifest, ReconstructionCache? cache)
+    private RunReconstructor(string bundleDirectory, IReconstructionBootstrap bootstrap, RunOutput manifest, ReconstructionCache? cache)
     {
         _bundleDirectory = bundleDirectory;
         _bootstrap = bootstrap;
-        _options = options;
         _manifest = manifest;
         _streamPath = Path.Combine(bundleDirectory, manifest.OperationalStreamPath!);
         _cache = cache;
@@ -47,12 +37,11 @@ public sealed class RunReconstructor
     public RunOutput Manifest => _manifest;
 
     /// <summary>
-    /// Opens a bundle: parses run.json, requires an operational manifest with checkpoints and a
-    /// stream, and validates identity. The bootstrap contract (same install, scenario, seed,
-    /// roster, domain) is what identity binds on; a mismatch refuses the bundle unless
-    /// <paramref name="options"/> allows it.
+    /// Opens a bundle: parses run.json and requires an operational manifest with checkpoints and
+    /// a stream. The bootstrap must boot the bundle's scenario (same install, scenario, seed,
+    /// roster, domain); checkpoint restore rejects a host whose domain state does not match.
     /// </summary>
-    public static RunReconstructor Open(string bundlePath, IReconstructionBootstrap bootstrap, ReconstructionOptions? options = null, ReconstructionCache? cache = null)
+    public static RunReconstructor Open(string bundlePath, IReconstructionBootstrap bootstrap, ReconstructionCache? cache = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(bundlePath);
         ArgumentNullException.ThrowIfNull(bootstrap);
@@ -60,7 +49,6 @@ public sealed class RunReconstructor
         var manifest = RunOutput.LoadFromFile(Path.Combine(bundlePath, "run.json"))
             ?? throw new InvalidDataException($"The bundle manifest at '{bundlePath}' is null.");
         if (manifest.RecordingMode != RecordingMode.Operational
-            || manifest.Identity is null
             || string.IsNullOrEmpty(manifest.OperationalStreamPath)
             || manifest.Checkpoints is not { Count: > 0 })
         {
@@ -73,25 +61,15 @@ public sealed class RunReconstructor
             throw new FileNotFoundException("The operational stream is missing from the bundle.", streamPath);
         }
 
-        var effectiveOptions = options ?? new ReconstructionOptions();
-        var expected = OperationalRecorder.CaptureBundleIdentity(manifest.Seed, manifest.ScenarioId);
-        var differences = manifest.Identity.Differences(expected);
-        if (differences.Count > 0 && !effectiveOptions.AllowIdentityMismatch)
-        {
-            throw new InvalidOperationException(
-                $"Bundle identity mismatch: {string.Join("; ", differences)}");
-        }
-
-        return new RunReconstructor(bundlePath, bootstrap, effectiveOptions, manifest, cache);
+        return new RunReconstructor(bundlePath, bootstrap, manifest, cache);
     }
 
     /// <summary>
     /// Reconstructs the range [<paramref name="fromFrame"/>, <paramref name="toFrame"/>]:
-    /// restores the nearest checkpoint at or before <paramref name="fromFrame"/> (a verified
-    /// cached derived checkpoint when one is valid, else the nearest bundle checkpoint),
-    /// replays recorded inputs, steps to the last recorded boundary at or before
-    /// <paramref name="toFrame"/>, and delivers every verified boundary in the range to
-    /// <paramref name="sink"/>. Returns the booted host, now at the final stepped frame.
+    /// restores the nearest checkpoint at or before <paramref name="fromFrame"/> (a cached
+    /// derived checkpoint when one exists, else the nearest bundle checkpoint), replays recorded
+    /// inputs, steps to the last recorded boundary at or before <paramref name="toFrame"/>, and
+    /// delivers every rebuilt boundary in the range to <paramref name="sink"/>. Returns the booted host, now at the final stepped frame.
     /// </summary>
     public SimulationHost Reconstruct(uint fromFrame, uint toFrame, IReconstructionSink sink)
     {
@@ -103,7 +81,6 @@ public sealed class RunReconstructor
 
         var host = _bootstrap.Boot();
         var projection = host.DomainModel as IDomainStateProjection;
-        var reconstructable = host.DomainModel as IReconstructableDomain;
 
         using (var reader = OpenReader(host))
         {
@@ -113,18 +90,14 @@ public sealed class RunReconstructor
                 .OrderBy(entry => entry.Frame)
                 .ToList();
 
-            var recordedHashes = new Dictionary<uint, OperationalHashes>();
+            var boundaryFrames = entries.Select(entry => entry.Frame).ToHashSet();
             var recordedInputs = new List<(uint InjectionFrame, uint DispatchFrame, IReadOnlyList<Order> Orders)>();
             foreach (var entry in entries.Where(entry => entry.Frame <= toFrame))
             {
                 var (_, records) = reader.ReadChunk(entry);
                 foreach (var record in records)
                 {
-                    if (record is OperationalHashes hashes)
-                    {
-                        recordedHashes[entry.Frame] = hashes;
-                    }
-                    else if (record is OperationalInputs inputs)
+                    if (record is OperationalInputs inputs)
                     {
                         foreach (var dispatch in inputs.Orders)
                         {
@@ -134,17 +107,10 @@ public sealed class RunReconstructor
                 }
             }
 
-            // Prefer the nearest cached derived checkpoint: entries were stored only after
-            // their boundary hash was verified, and TryGetNearest revalidates each candidate
-            // against this bundle's recorded hashes and identity before use.
+            // Prefer the nearest cached derived checkpoint so repeat scrubs re-simulate at most
+            // one operational interval and agree with the earlier reconstruction.
             var runId = _manifest.RunId;
-            var identityHash = _manifest.Identity!.StableHash();
-            CachedCheckpoint? cached = null;
-            if (_cache is not null)
-            {
-                var worldHashes = recordedHashes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Hashes.WorldHash);
-                cached = _cache.TryGetNearest(runId, identityHash, fromFrame, worldHashes);
-            }
+            var cached = _cache?.TryGetNearest(runId, fromFrame);
 
             uint checkpointFrame;
             if (cached is not null)
@@ -171,18 +137,10 @@ public sealed class RunReconstructor
                 .Max();
 
             // A checkpoint at or after fromFrame that is itself a recorded boundary delivers
-            // that boundary before stepping: the restored state is exactly the state that was
-            // hashed there, so it is verified against the recorded hash and delivered first.
-            if (checkpointFrame >= fromFrame && recordedHashes.TryGetValue(checkpointFrame, out var checkpointBoundary))
+            // that boundary before stepping: the restored state is exactly the recorded state.
+            if (checkpointFrame >= fromFrame && boundaryFrames.Contains(checkpointFrame))
             {
                 var summary = WorldStateSummary.Capture(host.DomainModel, checkpointFrame);
-                var reconstructed = OperationalStateHasher.HashHostState(host, host.Game, projection, reconstructable, summary);
-                if (reconstructed.WorldHash != checkpointBoundary.Hashes.WorldHash)
-                {
-                    var diverged = ReconstructionDivergence.FindDivergedBuckets(checkpointBoundary.Hashes, reconstructed);
-                    throw new ReconstructionDivergence(checkpointFrame, checkpointBoundary.Hashes.WorldHash, reconstructed.WorldHash, diverged);
-                }
-
                 sink.OnBoundary(checkpointFrame, summary, projection?.CaptureState(checkpointFrame));
             }
 
@@ -211,7 +169,7 @@ public sealed class RunReconstructor
                 }
             }
 
-            Step(host, fromFrame, effectiveTo, checkpointFrame, recordedHashes, pendingReplayInputs, sink, projection, reconstructable, runId, identityHash);
+            Step(host, fromFrame, effectiveTo, checkpointFrame, boundaryFrames, pendingReplayInputs, sink, projection, runId);
         }
 
         return host;
@@ -256,7 +214,7 @@ public sealed class RunReconstructor
         }
 
         var bytes = File.ReadAllBytes(checkpointPath);
-        var contentHash = OperationalStateHasher.HashBytes(bytes).ToString("X16");
+        var contentHash = EngineCheckpoint.ContentHash(bytes);
         if (!string.Equals(contentHash, record.XxHash3, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidDataException($"Checkpoint '{record.Path}' does not match its manifest hash.");
@@ -274,11 +232,6 @@ public sealed class RunReconstructor
             throw new InvalidDataException($"Checkpoint {sourceDescription} was written for run {checkpoint.Header.RunId}.");
         }
 
-        if (checkpoint.Header.IdentityHash != _manifest.Identity!.StableHash())
-        {
-            throw new InvalidDataException($"Checkpoint {sourceDescription} was written under a different identity.");
-        }
-
         EngineCheckpointRestorer.Restore(host, checkpoint);
     }
 
@@ -287,13 +240,11 @@ public sealed class RunReconstructor
         uint fromFrame,
         uint effectiveTo,
         uint checkpointFrame,
-        Dictionary<uint, OperationalHashes> recordedHashes,
+        HashSet<uint> boundaryFrames,
         List<(uint InjectionFrame, uint DispatchFrame, IReadOnlyList<Order> Orders)> replayInputs,
         IReconstructionSink sink,
         IDomainStateProjection? projection,
-        IReconstructableDomain? reconstructable,
-        string runId,
-        string identityHash)
+        string runId)
     {
         var replayByInjectionFrame = replayInputs
             .GroupBy(input => input.InjectionFrame)
@@ -302,23 +253,14 @@ public sealed class RunReconstructor
         void OnTickComplete(object? sender, SimulationHostTickEventArgs e)
         {
             var frame = e.LogicFrame.Value;
-            if (recordedHashes.TryGetValue(frame, out var recorded))
+            if (boundaryFrames.Contains(frame))
             {
                 var summary = WorldStateSummary.Capture(host.DomainModel, frame);
-                var reconstructed = OperationalStateHasher.HashHostState(host, host.Game, projection, reconstructable, summary);
-                if (reconstructed.WorldHash != recorded.Hashes.WorldHash)
-                {
-                    // Thrown from the host's step loop: the reconstruction is abandoned at the first
-                    // diverging boundary, and nothing at or after it is delivered.
-                    var diverged = ReconstructionDivergence.FindDivergedBuckets(recorded.Hashes, reconstructed);
-                    throw new ReconstructionDivergence(frame, recorded.Hashes.WorldHash, reconstructed.WorldHash, diverged);
-                }
 
-                // Derived checkpoints are cached only at boundaries whose hash just verified,
-                // so later scrubs can restore straight here (WI-A1-23).
+                // Derived checkpoints let later scrubs restore straight here (WI-A1-23).
                 if (_cache is not null && frame != checkpointFrame)
                 {
-                    StoreDerivedCheckpoint(host, frame, recorded.Hashes.WorldHash, runId, identityHash);
+                    StoreDerivedCheckpoint(host, frame, runId);
                 }
 
                 if (frame >= fromFrame)
@@ -330,8 +272,8 @@ public sealed class RunReconstructor
             if (replayByInjectionFrame.Remove(frame, out var dueInputs))
             {
                 // The recorded run scheduled these orders after this frame fully completed
-                // (InjectOrders fires between frames, after boundary hashing), so replay
-                // re-injects only after verification and delivery for this frame.
+                // (InjectOrders fires between frames, after boundary sampling), so replay
+                // re-injects only after delivery for this frame.
                 foreach (var input in dueInputs)
                 {
                     host.InjectOrders(input.DispatchFrame, input.Orders);
@@ -351,12 +293,12 @@ public sealed class RunReconstructor
         }
     }
 
-    private void StoreDerivedCheckpoint(SimulationHost host, uint frame, ulong recordedWorldHash, string runId, string identityHash)
+    private void StoreDerivedCheckpoint(SimulationHost host, uint frame, string runId)
     {
         var hostState = host.CaptureHostState();
-        var sections = EngineCheckpoint.CaptureSections(host, identityHash, _manifest.RunId);
+        var sections = EngineCheckpoint.CaptureSections(host);
         using var buffer = new MemoryStream();
-        EngineCheckpoint.Write(buffer, new EngineCheckpointHeader(frame, hostState.MapTime.Ticks, identityHash, _manifest.RunId), sections);
-        _cache!.Store(runId, frame, identityHash, recordedWorldHash, buffer.ToArray());
+        EngineCheckpoint.Write(buffer, new EngineCheckpointHeader(frame, hostState.MapTime.Ticks, _manifest.RunId), sections);
+        _cache!.Store(runId, frame, buffer.ToArray());
     }
 }

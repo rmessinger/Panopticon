@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A1-17` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6c run identity |
-| Status | `Done` |
+| Status | `Done` (withdrawn by the A1-6 storage-first revision; code removed) |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | [A1-6 §5.4](../../deep-dives/a1-6-operational-recording.md#54-run-identity) |
+| Diagrams | A1-6 §5.4 (removed) |
 
 ## Goal
 
@@ -75,3 +75,6 @@ Do not implement reconstructor identity refusal yet. Do not make `Full` run-outp
 - `System.IO.Hashing` 10.0.0 added once to `Directory.Packages.props`; `Panopticon.Simulation.csproj` gained the versionless reference. Not wired into `RunOutput` or any refusal path (A1-21 scope).
 - Tests: `RunIdentityTests` 11/11 (equality + stable hash, seed/shard/runtime/module/archive mismatch details, missing-side reporting, per-field hash sensitivity, `Capture` runtime/module fill, cache reuse + mtime-keyed recompute + persistence reload, `Capture` archive hashing through the cache).
 
+## Revision: storage-first A1-6 (#147)
+
+- Withdrawn. `RunIdentity`, `ArchiveContentHashCache`, and their tests are removed; bundles carry no identity and reconstruction does not refuse on identity.

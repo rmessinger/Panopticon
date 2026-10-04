@@ -4,26 +4,21 @@ using System.Collections.Generic;
 
 namespace Panopticon.Recording;
 
-/// <summary>A cached derived checkpoint (WI-A1-23 §6.3) with the boundary facts needed to validate it.</summary>
-public sealed record CachedCheckpoint(uint Frame, string IdentityHash, ulong RecordedWorldHash, byte[] Checkpoint)
+/// <summary>A cached derived checkpoint (WI-A1-23 §6.3).</summary>
+public sealed record CachedCheckpoint(uint Frame, byte[] Checkpoint)
 {
 }
 
 /// <summary>
 /// An in-memory LRU of derived checkpoints (WI-A1-23 §6.3), keyed by run id and frame under a byte
-/// budget. Entries are only valid for the identity that produced them, and only while the bundle's
-/// recorded hash still matches the hash captured with the checkpoint; <see cref="TryGetNearest"/>
-/// discards entries that fail either rule before they are used. Nothing is written inside the
-/// immutable bundle directory.
+/// budget. Nothing is written to disk. A derived checkpoint captures the rebuilt path, so later
+/// scrubs that restore from it agree with the first reconstruction rather than with the original
+/// run (A1-6 §3).
 /// </summary>
 public sealed class ReconstructionCache
 {
     private sealed class Entry
     {
-        public required string IdentityHash { get; init; }
-
-        public required ulong RecordedWorldHash { get; init; }
-
         public required byte[] Checkpoint { get; init; }
     }
 
@@ -57,10 +52,9 @@ public sealed class ReconstructionCache
     /// Replaces any entry already cached at that key; entries over the budget are not stored,
     /// and the least recently used entries are evicted until the budget is met.
     /// </summary>
-    public void Store(string runId, uint frame, string identityHash, ulong recordedWorldHash, byte[] checkpoint)
+    public void Store(string runId, uint frame, byte[] checkpoint)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(runId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(identityHash);
         ArgumentNullException.ThrowIfNull(checkpoint);
 
         lock (_gate)
@@ -73,8 +67,6 @@ public sealed class ReconstructionCache
 
             var node = new LinkedListNode<(string, uint, Entry)>((runId, frame, new Entry
             {
-                IdentityHash = identityHash,
-                RecordedWorldHash = recordedWorldHash,
                 Checkpoint = checkpoint,
             }));
             _lru.AddFirst(node);
@@ -92,19 +84,11 @@ public sealed class ReconstructionCache
 
     /// <summary>
     /// Returns the cached checkpoint nearest at or before <paramref name="frame"/>, or null when
-    /// no valid entry remains. An entry stored under a different identity purges the whole run
-    /// (identity change invalidates every derived checkpoint); an entry whose frame is missing
-    /// from <paramref name="recordedWorldHashes"/>, or whose stored hash differs from it, is
-    /// discarded and the search continues downward.
+    /// none is cached for <paramref name="runId"/>.
     /// </summary>
-    public CachedCheckpoint? TryGetNearest(
-        string runId,
-        string identityHash,
-        uint frame,
-        IReadOnlyDictionary<uint, ulong>? recordedWorldHashes = null)
+    public CachedCheckpoint? TryGetNearest(string runId, uint frame)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(runId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(identityHash);
 
         lock (_gate)
         {
@@ -115,24 +99,9 @@ public sealed class ReconstructionCache
                     continue;
                 }
 
-                var entry = node.Value.Entry;
-                if (!string.Equals(entry.IdentityHash, identityHash, StringComparison.Ordinal))
-                {
-                    PurgeRunLocked(runId);
-                    return null;
-                }
-
-                if (recordedWorldHashes is not null
-                    && (!recordedWorldHashes.TryGetValue((uint)candidate, out var recorded)
-                        || recorded != entry.RecordedWorldHash))
-                {
-                    RemoveLocked(runId, (uint)candidate);
-                    continue;
-                }
-
                 _lru.Remove(node);
                 _lru.AddFirst(node);
-                return new CachedCheckpoint((uint)candidate, entry.IdentityHash, entry.RecordedWorldHash, entry.Checkpoint);
+                return new CachedCheckpoint((uint)candidate, node.Value.Entry.Checkpoint);
             }
 
             return null;
@@ -156,23 +125,6 @@ public sealed class ReconstructionCache
         {
             TotalBytes -= node.Value.Entry.Checkpoint.LongLength;
             _lru.Remove(node);
-        }
-    }
-
-    private void PurgeRunLocked(string runId)
-    {
-        var node = _lru.First;
-        while (node is not null)
-        {
-            var next = node.Next;
-            if (string.Equals(node.Value.RunId, runId, StringComparison.Ordinal))
-            {
-                TotalBytes -= node.Value.Entry.Checkpoint.LongLength;
-                _index.Remove((node.Value.RunId, node.Value.Frame));
-                _lru.Remove(node);
-            }
-
-            node = next;
         }
     }
 }

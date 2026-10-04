@@ -80,16 +80,6 @@ public class OperationalStreamTests : StatePersisterTest
             new OperationalMetrics(10, new[] { new OperationalMetricSample("money", "player:0", 3.5) }),
             new OperationalEvents(10, new[] { new DomainEvent("attack", "tank fired") }),
             new OperationalInputs(new[] { new OperationalDispatchedOrder(8, 9, BuildOrder()) }),
-            new OperationalHashes(10, new OperationalStateHashes
-            {
-                WorldHash = 0x1111111111111111UL,
-                GlobalsHash = 0x2222222222222222UL,
-                Buckets = new Dictionary<string, ulong>
-                {
-                    ["cell:1,1"] = 0xAAAAAAAAAAAAAAAAUL,
-                    ["cell:2,2"] = 0xBBBBBBBBBBBBBBBBUL,
-                },
-            }),
             new OperationalT1(10, new byte[] { 1, 2, 3, 4 }),
         };
     }
@@ -157,13 +147,6 @@ public class OperationalStreamTests : StatePersisterTest
         var dispatched = Assert.Single(inputs.Orders);
         Assert.Equal(9u, dispatched.DispatchFrame);
         Assert.Equal(BuildOrder().ToString(), dispatched.Order.ToString());
-
-        var hashes = Assert.IsType<OperationalHashes>(actual.Single(r => r is OperationalHashes));
-        Assert.Equal(0x1111111111111111UL, hashes.Hashes.WorldHash);
-        Assert.Equal(0x2222222222222222UL, hashes.Hashes.GlobalsHash);
-        Assert.Equal(2, hashes.Hashes.Buckets.Count);
-        Assert.Equal(0xAAAAAAAAAAAAAAAAUL, hashes.Hashes.Buckets["cell:1,1"]);
-        Assert.Equal(0xBBBBBBBBBBBBBBBBUL, hashes.Hashes.Buckets["cell:2,2"]);
 
         var t1 = Assert.IsType<OperationalT1>(actual.Single(r => r is OperationalT1));
         Assert.Equal(new byte[] { 1, 2, 3, 4 }, t1.Payload);
@@ -270,40 +253,6 @@ public class OperationalStreamTests : StatePersisterTest
         using var reader = OperationalStreamReader.Open(new MemoryStream(stream.ToArray(), writable: false));
         var entry = Assert.Single(reader.BuildScanIndex());
         Assert.Throws<InvalidDataException>(() => reader.ReadChunk(entry));
-    }
-
-    [Fact]
-    public void Hashes_MatchOperationalStateHasherOutputs()
-    {
-        var objects = new List<(string BucketKey, ulong ObjectHash)>
-        {
-            ("cell:1,1", OperationalStateHasher.HashBytes(new byte[] { 1, 2, 3 })),
-            ("cell:1,1", OperationalStateHasher.HashBytes(new byte[] { 4, 5, 6 })),
-            ("cell:2,2", OperationalStateHasher.HashBytes(new byte[] { 7, 8, 9 })),
-        };
-
-        var sections = new List<(string SectionName, ulong SectionHash)>
-        {
-            ("random", OperationalStateHasher.HashBytes(new byte[] { 0x0A })),
-            ("host", OperationalStateHasher.HashBytes(new byte[] { 0x0B })),
-        };
-
-        var hashes = OperationalStateHasher.Build(objects, sections);
-
-        using var stream = new MemoryStream();
-        using (var writer = new OperationalStreamWriter(stream, "run-1", "rts", 1))
-        {
-            writer.WriteChunk(10, new OperationalRecord[] { new OperationalHashes(10, hashes) });
-            writer.WriteFooter();
-        }
-
-        using var reader = OperationalStreamReader.Open(new MemoryStream(stream.ToArray(), writable: false));
-        var entry = Assert.Single(reader.ReadIndex());
-        var (_, records) = reader.ReadChunk(entry);
-        var loaded = Assert.IsType<OperationalHashes>(records.Single(r => r is OperationalHashes));
-        Assert.Equal(hashes.WorldHash, loaded.Hashes.WorldHash);
-        Assert.Equal(hashes.GlobalsHash, loaded.Hashes.GlobalsHash);
-        Assert.Equal(hashes.Buckets, loaded.Hashes.Buckets);
     }
 
     [Fact]

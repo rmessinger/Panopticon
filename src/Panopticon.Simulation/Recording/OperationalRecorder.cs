@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Hashing;
 using System.Linq;
 using System.Text.Json;
 using Panopticon.Logic.Orders;
@@ -19,12 +18,10 @@ namespace Panopticon.Recording;
 internal sealed class OperationalRecorder : IDisposable
 {
     private readonly SimulationHost _host;
-    private readonly IGame _game;
     private readonly WorldStateSampler _sampler;
     private readonly RecordingCadence _cadence;
     private readonly string _bundleDirectory;
     private readonly string _runId;
-    private readonly RunIdentity _identity;
     private readonly OperationalStreamWriter _stream;
     private readonly IDomainStateProjection? _projection;
     private readonly IReconstructableDomain? _reconstructable;
@@ -55,7 +52,6 @@ internal sealed class OperationalRecorder : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(options.BundleDirectory);
 
         _host = host;
-        _game = game;
         _sampler = sampler;
         _cadence = cadence;
         _bundleDirectory = options.BundleDirectory;
@@ -67,7 +63,6 @@ internal sealed class OperationalRecorder : IDisposable
         _domain = host.DomainModel;
         _tolerances = tolerances;
         _runId = Guid.NewGuid().ToString("N");
-        _identity = CaptureIdentity();
 
         Directory.CreateDirectory(Path.Combine(_bundleDirectory, "checkpoints"));
         _stream = new OperationalStreamWriter(
@@ -87,24 +82,6 @@ internal sealed class OperationalRecorder : IDisposable
 
     /// <summary>The bundle's run id; the manifest and every checkpoint share it.</summary>
     internal string RunId => _runId;
-
-    /// <summary>The run identity captured at attach (module, runtime, seed, and scenario input).</summary>
-    internal RunIdentity Identity => _identity;
-
-    private RunIdentity CaptureIdentity() => CaptureBundleIdentity(_seed, _scenarioId);
-
-    /// <summary>
-    /// The bundle identity formula shared with the reconstructor: modules, runtime, seed, and
-    /// the scenario input. The archive list is deferred: the composite file system does not
-    /// expose the installed .big paths, and identity refusal still binds on the rest.
-    /// </summary>
-    internal static RunIdentity CaptureBundleIdentity(uint seed, string? scenarioId)
-    {
-        var inputs = string.IsNullOrEmpty(scenarioId)
-            ? Array.Empty<InputContent>()
-            : new[] { new InputContent("scenario", System.Text.Encoding.UTF8.GetBytes(scenarioId)) };
-        return RunIdentity.Capture(seed, shardLayoutId: "", inputs, Array.Empty<string>());
-    }
 
     private void OnOrdersInjected(uint injectionFrame, uint dispatchFrame, IReadOnlyList<Order> orders)
     {
@@ -170,8 +147,6 @@ internal sealed class OperationalRecorder : IDisposable
             _dispatched.Clear();
         }
 
-        records.Add(new OperationalHashes(frame, HashState(summary)));
-
         if (_recordT1)
         {
             var tree = SignatureTreeBuilder.Build(frame, summary, _domain, _tolerances);
@@ -181,14 +156,6 @@ internal sealed class OperationalRecorder : IDisposable
 
         _stream.WriteChunk(frame, records);
     }
-
-    /// <summary>
-    /// Bucket hashes follow the domain's state of record (WI-A1-22 shares this implementation
-    /// with reconstruction verification through
-    /// <see cref="OperationalStateHasher.HashHostState"/>).
-    /// </summary>
-    private OperationalStateHashes HashState(WorldStateSummary summary) =>
-        OperationalStateHasher.HashHostState(_host, _game, _projection, _reconstructable, summary);
 
     private void OnTickComplete(object? sender, SimulationHostTickEventArgs e)
     {
@@ -204,11 +171,10 @@ internal sealed class OperationalRecorder : IDisposable
         var frame = _host.LogicFrame.Value;
         var relativePath = $"checkpoints/{frame:D9}.ckpt";
         var fullPath = Path.Combine(_bundleDirectory, relativePath);
-        var identityHash = _identity.StableHash();
-        var sections = EngineCheckpoint.CaptureSections(_host, identityHash, _runId);
+        var sections = EngineCheckpoint.CaptureSections(_host);
         using (var output = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read))
         {
-            EngineCheckpoint.Write(output, new EngineCheckpointHeader(frame, mapTime.Ticks, identityHash, _runId), sections);
+            EngineCheckpoint.Write(output, new EngineCheckpointHeader(frame, mapTime.Ticks, _runId), sections);
         }
 
         var bytes = File.ReadAllBytes(fullPath);
@@ -217,7 +183,7 @@ internal sealed class OperationalRecorder : IDisposable
             Frame = frame,
             Path = relativePath,
             Bytes = bytes.Length,
-            XxHash3 = OperationalStateHasher.HashBytes(bytes).ToString("X16"),
+            XxHash3 = EngineCheckpoint.ContentHash(bytes),
         });
     }
 
@@ -234,7 +200,6 @@ internal sealed class OperationalRecorder : IDisposable
             ScenarioId = _scenarioId,
             DomainId = _domain.DomainId,
             RecordingMode = RecordingMode.Operational,
-            Identity = _identity,
             OperationalStreamPath = "operational.bin",
             Checkpoints = _checkpoints.ToList(),
         };
@@ -250,7 +215,6 @@ internal sealed class OperationalRecorder : IDisposable
         _stream.WriteFooter();
         output.RunId = _runId;
         output.RecordingMode = RecordingMode.Operational;
-        output.Identity = _identity;
         output.OperationalStreamPath = "operational.bin";
         output.Checkpoints = _checkpoints.ToList();
         output.SaveToFile(Path.Combine(_bundleDirectory, "run.json"));

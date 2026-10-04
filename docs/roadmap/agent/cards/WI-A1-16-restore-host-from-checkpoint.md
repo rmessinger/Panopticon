@@ -94,3 +94,8 @@ reconstruction-conformance card.
 Validation: EngineCheckpointRestoreTests 2/2 with the installed game; recording suites 43/43;
 `dotnet format src/Panopticon.sln --verify-no-changes` clean;
 `scripts/check_brace_newline.py` clean; `git diff --check` clean.
+
+## Revision: storage-first A1-6 (#147)
+
+- The domain-state check compares the persisted section bytes with a fresh capture directly (no hasher) and throws `InvalidDataException`.
+- Load now calls `SleepyUpdateList.Remake()` after all objects are read; without it a mid-run checkpoint left the wake-frame heap out of order on the next step.

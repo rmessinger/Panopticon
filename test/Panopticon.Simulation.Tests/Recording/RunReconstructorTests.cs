@@ -16,10 +16,10 @@ using Xunit;
 
 namespace Panopticon.Tests.Recording;
 
-// WI-A1-22: reconstruction from an operational bundle. Identity refusal and structural
-// failures run against a synthetic bundle without an install; checkpoint restore, input
-// replay, boundary verification, divergence, and ExportSlice run against the installed
-// skirmish boot (GameFact), because checkpoints can only be captured from a booted game.
+// WI-A1-22: reconstruction from an operational bundle. Structural failures run against a
+// synthetic bundle without an install; checkpoint restore, input replay, unverified delivery of
+// rebuilt boundaries, and ExportSlice run against the installed skirmish boot (GameFact),
+// because checkpoints can only be captured from a booted game.
 
 [Collection("SerialGameTests")]
 public sealed class RunReconstructorTests : MockedGameTest, IDisposable
@@ -35,33 +35,21 @@ public sealed class RunReconstructorTests : MockedGameTest, IDisposable
     }
 
     [Fact]
-    public void Open_RefusesIdentityMismatch_WithoutAllowFlag()
+    public void Open_AcceptsOperationalManifest_ReconstructNeedsABootableHost()
     {
-        var bundle = WriteSyntheticBundle(manifestSeed: 99, identitySeed: 7);
+        // The synthetic manifest lists a frame-15 checkpoint whose file does not exist; Open
+        // only checks the manifest shape, and reconstruction fails at boot.
+        var bundle = WriteSyntheticBundle();
         var bootstrap = new UnreachableBootstrap();
-
-        var exception = Assert.Throws<InvalidOperationException>(
-            () => RunReconstructor.Open(bundle, bootstrap));
-        Assert.Contains("identity mismatch", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Seed", exception.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Open_WithAllowIdentityMismatch_OpensButReconstructNeedsACheckpointFile()
-    {
-        // The synthetic manifest lists a frame-15 checkpoint whose file does not exist; the
-        // identity pass succeeds with the flag, and reconstruction fails on the missing file.
-        var bundle = WriteSyntheticBundle(manifestSeed: 99, identitySeed: 7);
-        var bootstrap = new UnreachableBootstrap();
-        var reconstructor = RunReconstructor.Open(bundle, bootstrap, new ReconstructionOptions { AllowIdentityMismatch = true });
+        var reconstructor = RunReconstructor.Open(bundle, bootstrap);
 
         Assert.Throws<InvalidOperationException>(() => reconstructor.Reconstruct(20, 30, new BufferedReconstructionSink()));
     }
 
     [GameFact(SageGame.CncGenerals)]
-    public void Reconstruct_DeliversVerifiedBoundariesAndMatchesUninterruptedRun()
+    public void Reconstruct_DeliversEveryRecordedBoundaryInRange()
     {
-        var (bundle, game, _) = RecordBundle(injectOrder: true, frames: 45);
+        var (bundle, _, _) = RecordBundle(injectOrder: true, frames: 45);
 
         var reconstructor = RunReconstructor.Open(bundle, CreateInstalledBootstrap());
         var sink = new BufferedReconstructionSink();
@@ -69,16 +57,8 @@ public sealed class RunReconstructorTests : MockedGameTest, IDisposable
 
         Assert.Equal(Enumerable.Range(1, 9).Select(i => (uint)(i * 5)), sink.Frames);
         Assert.All(sink.DomainStates, domainState => Assert.Null(domainState));
-
-        // The uninterrupted run and the reconstruction land on identical per-object bytes, so
-        // checkpoint restore + input replay reproduced the run exactly up to the last boundary.
-        var liveObjects = PersistedObjects(game);
-        var reconstructedObjects = PersistedObjects((Game)reconstructedHost.Game);
-        Assert.Equal(liveObjects.Keys.OrderBy(k => k), reconstructedObjects.Keys.OrderBy(k => k));
-        foreach (var (id, bytes) in liveObjects)
-        {
-            Assert.Equal(bytes, reconstructedObjects[id]);
-        }
+        Assert.All(sink.Summaries, summary => Assert.NotEmpty(summary.Objects));
+        Assert.Equal(45u, reconstructedHost.LogicFrame.Value);
     }
 
     [GameFact(SageGame.CncGenerals)]
@@ -91,25 +71,23 @@ public sealed class RunReconstructorTests : MockedGameTest, IDisposable
         reconstructor.Reconstruct(32, 45, sink);
 
         // Checkpoint 30 carries the already-dispatched order schedule as consumed state; the
-        // replay must not double-dispatch it (a double dispatch would diverge every later hash).
+        // replay must not double-dispatch it.
         Assert.Equal(new uint[] { 35, 40, 45 }, sink.Frames);
     }
 
     [GameFact(SageGame.CncGenerals)]
-    public void Reconstruct_FirstDivergenceStopsAllDelivery()
+    public void Reconstruct_DriftedState_IsDeliveredUnverified()
     {
         var (bundle, _, _) = RecordBundle(injectOrder: false, frames: 30);
 
+        // The diverging domain reports every entity 1000 units east of the recorded run; rebuilt
+        // frames are plausible, not authoritative (A1-6 §3), so they are delivered as rebuilt.
         var reconstructor = RunReconstructor.Open(bundle, CreateDivergingBootstrap());
         var sink = new BufferedReconstructionSink();
-        var exception = Assert.Throws<ReconstructionDivergence>(() => reconstructor.Reconstruct(0, 30, sink));
+        reconstructor.Reconstruct(0, 30, sink);
 
-        Assert.Equal(5u, exception.BoundaryFrame);
-        Assert.NotEqual(exception.RecordedWorldHash, exception.ReconstructedWorldHash);
-        Assert.NotEmpty(exception.DivergedBucketKeys);
-        Assert.Empty(sink.Frames);
+        Assert.Equal(new uint[] { 5, 10, 15, 20, 25, 30 }, sink.Frames);
     }
-
     [GameFact(SageGame.CncGenerals)]
     public void ExportSlice_WritesArtifactLoadableByA1Readers()
     {
@@ -175,18 +153,16 @@ public sealed class RunReconstructorTests : MockedGameTest, IDisposable
         return (bundle, game, host);
     }
 
-    private static string WriteSyntheticBundle(uint manifestSeed, uint identitySeed)
+    private static string WriteSyntheticBundle()
     {
         var bundle = Path.Combine(Path.GetTempPath(), "a1-22-synthetic-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(bundle, "checkpoints"));
-        var identity = OperationalRecorder.CaptureBundleIdentity(identitySeed, "a1-22-synthetic");
         var manifest = new RunOutput
         {
             RunId = "a1-22-synthetic",
-            Seed = manifestSeed,
+            Seed = 99,
             ScenarioId = "a1-22-synthetic",
             RecordingMode = RecordingMode.Operational,
-            Identity = identity,
             OperationalStreamPath = "operational.bin",
             Checkpoints = new List<RunCheckpointRecord>
             {
@@ -202,22 +178,6 @@ public sealed class RunReconstructorTests : MockedGameTest, IDisposable
         manifest.SaveToFile(Path.Combine(bundle, "run.json"));
         File.WriteAllBytes(Path.Combine(bundle, "operational.bin"), [1]);
         return bundle;
-    }
-
-    private static Dictionary<uint, byte[]> PersistedObjects(Game game)
-    {
-        var result = new Dictionary<uint, byte[]>();
-        foreach (var gameObject in game.Scene3D.GameObjects.Objects)
-        {
-            using var stream = new MemoryStream();
-            using (var writer = new StateWriter(stream, game))
-            {
-                writer.PersistObject(gameObject, "Object");
-            }
-            result[gameObject.Id.Index] = stream.ToArray();
-        }
-
-        return result;
     }
 
     private static Game BootGame()
@@ -263,7 +223,7 @@ public sealed class RunReconstructorTests : MockedGameTest, IDisposable
 
     /// <summary>
     /// Reports every entity a thousand units east of where the recorded run saw it: the same
-    /// game logic, but summaries (and therefore boundary hashes) that cannot match the bundle.
+    /// game logic, but summaries that cannot match the recorded run.
     /// </summary>
     private sealed class DivergingRtsDomain(RtsSimulationDomainModel inner) : ISimulationDomainModel
     {

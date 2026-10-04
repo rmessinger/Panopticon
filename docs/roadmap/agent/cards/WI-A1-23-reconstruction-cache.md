@@ -85,3 +85,8 @@ run-scoped identity purge, boundary-hash discard incl. missing frames, oversized
 installed cache-hit run that hides the bundle checkpoints and still reconstructs [20..45] from
 the cached frame-20 checkpoint); `RunReconstructorTests` 6/6 unchanged; recording suites 69/69
 with env; format/brace/diff clean.
+
+## Revision: storage-first A1-6 (#147)
+
+- The cache is keyed by run id and frame only (no identity or recorded hash) and stays in memory.
+- A cached derived checkpoint serves later scrubs with the first reconstruction's state.

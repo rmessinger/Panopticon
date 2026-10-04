@@ -258,19 +258,6 @@ internal sealed class OperationalStreamWriter : IDisposable
 
                 break;
 
-            case OperationalHashes hashes:
-                writer.Write(hashes.BoundaryFrame);
-                writer.Write(hashes.Hashes.WorldHash);
-                writer.Write(hashes.Hashes.GlobalsHash);
-                writer.Write(hashes.Hashes.Buckets.Count);
-                foreach (var bucket in hashes.Hashes.Buckets.OrderBy(k => k.Key, StringComparer.Ordinal))
-                {
-                    writer.Write(InternString(bucket.Key));
-                    writer.Write(bucket.Value);
-                }
-
-                break;
-
             case OperationalT1 t1:
                 writer.Write(t1.BoundaryFrame);
                 writer.Write(t1.Payload.Count);

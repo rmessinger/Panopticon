@@ -423,11 +423,12 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainS
 
         for (var i = 0; i < count; i++)
         {
-            var edgeKey = resolutions[i].EdgeKey;
-            var authorityId = resolutions[i].AuthorityId;
+            var reading = persister.Mode == StatePersistMode.Read;
+            var edgeKey = reading ? "" : resolutions[i].EdgeKey;
+            var authorityId = reading ? 0u : resolutions[i].AuthorityId;
             persister.PersistAsciiString(ref edgeKey, "EdgeKey");
             persister.PersistUInt32(ref authorityId, "AuthorityId");
-            if (persister.Mode == StatePersistMode.Read)
+            if (reading)
             {
                 resolutions.Add((edgeKey, authorityId));
             }

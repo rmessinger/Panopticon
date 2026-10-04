@@ -17,16 +17,18 @@ using Xunit;
 
 namespace Panopticon.Tests.Recording;
 
-// WI-A1-24: operational-recording conformance. Same-seed Full and Operational runs of the RTS
-// and transport-graph domains must produce identical state, reconstruction must verify every
-// recorded boundary hash while delivering state that equals the Full run, and the derived
-// checkpoint cache must not change reconstruction output. Full-mode JSON must stay byte-shaped
-// like pre-A1-6 output (no operational manifest fields).
+// WI-A1-24: operational-recording conformance (A1-6 §3). Restoring a checkpoint reproduces the
+// recording run's own state at that frame exactly; frames rebuilt after a checkpoint are delivered
+// at every recorded boundary and keep domain invariants, without being compared to the original
+// run; a cached derived checkpoint serves later scrubs. Full-mode JSON must stay byte-shaped like
+// pre-A1-6 output (no operational manifest fields).
 
 [Collection("SerialGameTests")]
 public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
 {
     private const uint Seed = 41u;
+
+    private static readonly RecordingCadence TestCadence = new(frame => frame % 5 == 0, frame => frame % 15 == 0);
 
     private readonly List<Game> _bootedGames = new();
 
@@ -39,153 +41,131 @@ public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
     }
 
     [GameFact(SageGame.CncGenerals)]
-    public void RtsOperationalBundle_MatchesFullRunAtEveryBoundary()
+    public void FullModeJson_CarriesNoOperationalManifestFields()
     {
-        // Full run (the pre-A1-6 shape): no recording options, summary sampled every frame.
-        var gameA = BootGame();
-        _bootedGames.Add(gameA);
-        var hostA = new SimulationHost(gameA.GameEngine, new RtsSimulationDomainModel(gameA.GameEngine));
-        var recordingA = RunRecording.Attach(hostA, gameA, seed: Seed, scenarioId: "a1-24-conformance");
-        var fullSummaries = new SortedDictionary<uint, byte[]>();
-        recordingA.Sampler.FrameSampled += (summary, _) =>
-        {
-            fullSummaries[summary.Frame] = PersistedSummary(summary, gameA);
-        };
-        hostA.Run(45);
-        var outputA = recordingA.Complete();
-        recordingA.Dispose();
+        var game = BootGame();
+        _bootedGames.Add(game);
+        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
+        using var recording = RunRecording.Attach(host, game, seed: Seed, scenarioId: "a1-24-conformance");
+        host.Run(15);
 
-        // Full-mode JSON carries none of the operational manifest fields.
-        var fullJson = outputA.ToJson();
+        var fullJson = recording.Complete().ToJson();
         Assert.DoesNotContain("recordingMode", fullJson, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("operationalStreamPath", fullJson, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("checkpoints", fullJson, StringComparison.OrdinalIgnoreCase);
+    }
 
-        // Operational run of the same scenario and seed.
-        var bundle = RecordRtsBundle(injectOrder: true, frames: 45);
+    [GameFact(SageGame.CncGenerals)]
+    public void RtsCheckpointRestore_MatchesRecordingRunAndRebuildsTheWindow()
+    {
+        var (bundle, liveSummaries) = RecordRtsBundle(injectOrder: true, frames: 45);
+        var reconstructor = RunReconstructor.Open(bundle, CreateRtsBootstrap());
 
-        // "Random" (seed-derived, deterministic) window: reconstruct [5, 35] from checkpoint 0.
+        // Each bundle checkpoint restores to exactly the state the recording run sampled there.
+        foreach (var checkpoint in reconstructor.Manifest.Checkpoints!.Where(c => c.Frame > 0))
+        {
+            var restoreSink = new BufferedReconstructionSink();
+            var restoredHost = reconstructor.Reconstruct(checkpoint.Frame, checkpoint.Frame, restoreSink);
+            Assert.Equal(checkpoint.Frame, restoreSink.Frames[0]);
+            Assert.Equal(liveSummaries[checkpoint.Frame], PersistedSummary(restoreSink.Summaries[0], (Game)restoredHost.Game));
+        }
+
+        // A seed-derived window rebuilds every recorded boundary in range.
         var from = 5u * (Seed % 4u);
         var to = 45u - 5u * (Seed % 3u);
-        var reconstructor = RunReconstructor.Open(bundle, CreateRtsBootstrap());
         var sink = new BufferedReconstructionSink();
-        var reconstructedHost = reconstructor.Reconstruct(from, to, sink);
-        var reconstructedGame = (Game)reconstructedHost.Game;
+        reconstructor.Reconstruct(from, to, sink);
 
         var expectedFrames = Enumerable.Range((int)(from / 5), (int)(to / 5 - from / 5) + 1).Select(i => (uint)(i * 5));
         Assert.Equal(expectedFrames, sink.Frames);
-        for (var i = 0; i < sink.Frames.Count; i++)
-        {
-            Assert.Equal(fullSummaries[sink.Frames[i]], PersistedSummary(sink.Summaries[i], reconstructedGame));
-        }
+        Assert.All(sink.Summaries, summary => Assert.NotEmpty(summary.Objects));
     }
 
     [GameFact(SageGame.CncGenerals)]
-    public void TransportOperationalBundle_MatchesFullRunDomainState()
+    public void TransportRebuiltFrames_ConserveVehiclesAndCheckpointsRestoreExactly()
     {
-        // Full run: collect the projected domain state at every sampled frame.
-        var gameA = BootGame();
-        _bootedGames.Add(gameA);
-        var domainA = TransportGraphDomainModel.CreateDefault(gameA.GameEngine);
-        var hostA = new SimulationHost(gameA.GameEngine, domainA);
-        var recordingA = RunRecording.Attach(hostA, gameA, seed: Seed, scenarioId: "a1-24-transport");
-        var fullStates = new SortedDictionary<uint, byte[]>();
-        recordingA.Sampler.FrameSampled += (summary, _) =>
-        {
-            using var stream = new MemoryStream();
-            using (var writer = new StateWriter(stream, gameA))
-            {
-                writer.PersistObject(domainA.CaptureState(summary.Frame), "DomainStateFrame");
-            }
-            fullStates[summary.Frame] = stream.ToArray();
-        };
-        hostA.Run(600, _ => domainA.AllRoutesComplete);
-        Assert.True(domainA.AllRoutesComplete);
-        var finalFrame = hostA.LogicFrame.Value;
-        recordingA.Complete();
-        recordingA.Dispose();
-
-        // Operational run: identical boot and cadence, output to a bundle.
-        var gameB = BootGame();
-        _bootedGames.Add(gameB);
-        var cadence = new RecordingCadence(frame => frame % 5 == 0, frame => frame % 15 == 0);
-        var domainB = TransportGraphDomainModel.CreateDefault(gameB.GameEngine);
-        domainB.Cadence = cadence;
-        var hostB = new SimulationHost(gameB.GameEngine, domainB);
+        var game = BootGame();
+        _bootedGames.Add(game);
+        var domain = TransportGraphDomainModel.CreateDefault(game.GameEngine);
+        domain.Cadence = TestCadence;
+        var host = new SimulationHost(game.GameEngine, domain);
         var bundle = Path.Combine(Path.GetTempPath(), "a1-24-transport-" + Guid.NewGuid().ToString("N"));
-        var recordingB = RunRecording.Attach(
-            hostB, gameB, seed: Seed, scenarioId: "a1-24-transport",
-            options: new RecordingOptions { Mode = RecordingMode.Operational, BundleDirectory = bundle, DefaultCadence = cadence });
-        hostB.Run(600, _ => domainB.AllRoutesComplete);
-        recordingB.Complete();
-        recordingB.Dispose();
-        Assert.Equal(finalFrame, hostB.LogicFrame.Value);
+        var recording = RunRecording.Attach(
+            host, game, seed: Seed, scenarioId: "a1-24-transport",
+            options: new RecordingOptions { Mode = RecordingMode.Operational, BundleDirectory = bundle, DefaultCadence = TestCadence });
+        var liveStates = new SortedDictionary<uint, byte[]>();
+        recording.Sampler.FrameSampled += (summary, _) =>
+        {
+            liveStates[summary.Frame] = PersistedFrame(domain.CaptureState(summary.Frame), game);
+        };
+        host.Run(600, _ => domain.AllRoutesComplete);
+        Assert.True(domain.AllRoutesComplete);
+        var finalFrame = host.LogicFrame.Value;
+        recording.Complete();
+        recording.Dispose();
 
-        // Reconstruct the whole run; every boundary must match the Full run's captured state.
-        var reconstructor = RunReconstructor.Open(bundle, CreateTransportBootstrap(cadence));
+        var reconstructor = RunReconstructor.Open(bundle, CreateTransportBootstrap());
+
+        foreach (var checkpoint in reconstructor.Manifest.Checkpoints!.Where(c => c.Frame > 0))
+        {
+            var restoreSink = new BufferedReconstructionSink();
+            var restoredHost = reconstructor.Reconstruct(checkpoint.Frame, checkpoint.Frame, restoreSink);
+            Assert.Equal(liveStates[checkpoint.Frame], PersistedFrame(restoreSink.DomainStates[0]!, (Game)restoredHost.Game));
+        }
+
+        // Rebuild the whole run: every boundary is delivered and vehicle conservation holds on
+        // rebuilt frames, whether or not they match the recording run.
         var sink = new BufferedReconstructionSink();
-        var reconstructedHost = reconstructor.Reconstruct(0, finalFrame, sink);
-        var reconstructedGame = (Game)reconstructedHost.Game;
+        reconstructor.Reconstruct(0, finalFrame, sink);
 
         var expectedFrames = Enumerable.Range(1, (int)(finalFrame / 5)).Select(i => (uint)(i * 5));
         Assert.Equal(expectedFrames, sink.Frames);
-        var baseline = domainA.CaptureState(0);
-        for (var i = 0; i < sink.Frames.Count; i++)
+        var baseline = domain.CaptureState(0);
+        foreach (var domainState in sink.DomainStates)
         {
-            var frame = sink.Frames[i];
-            var domainState = sink.DomainStates[i];
             Assert.NotNull(domainState);
-            Assert.Equal(fullStates[frame], PersistedFrame(domainState!, reconstructedGame));
-
-            // Vehicle conservation holds across reconstruction, not just the live run.
-            Assert.Empty(DomainConservation.Residuals(domainB.StateSchema, baseline, domainState!));
-        }
-
-        // The operational run reaches the same terminal edge throughput as the Full run; the
-        // last delivered boundary may precede the final crossing by up to one cadence interval.
-        var lastEdgeRecords = sink.DomainStates[^1]!.Records.Where(r => r.Kind == "edge").ToList();
-        Assert.NotEmpty(lastEdgeRecords);
-        foreach (var record in lastEdgeRecords)
-        {
-            Assert.Equal(domainA.EdgeThroughput(record.Key), domainB.EdgeThroughput(record.Key));
+            Assert.Empty(DomainConservation.Residuals(domain.StateSchema, baseline, domainState!));
         }
     }
 
     [GameFact(SageGame.CncGenerals)]
-    public void SecondReconstruction_WithCache_ProducesIdenticalOutput()
+    public void CachedBoundary_ServesLaterScrubWithTheFirstReconstructionsState()
     {
-        var bundle = RecordRtsBundle(injectOrder: false, frames: 45);
+        var (bundle, _) = RecordRtsBundle(injectOrder: false, frames: 45);
 
         var cache = new ReconstructionCache(4_000_000);
         var first = RunReconstructor.Open(bundle, CreateRtsBootstrap(), cache: cache);
         var firstSink = new BufferedReconstructionSink();
         var firstHost = first.Reconstruct(0, 45, firstSink);
 
+        // Frame 20 is not a bundle checkpoint; the second scrub restores the cached derived
+        // checkpoint there and delivers the first reconstruction's state without re-simulating.
         var second = RunReconstructor.Open(bundle, CreateRtsBootstrap(), cache: cache);
         var secondSink = new BufferedReconstructionSink();
-        var secondHost = second.Reconstruct(5, 45, secondSink);
+        var secondHost = second.Reconstruct(20, 20, secondSink);
 
-        // The cached boundary-5 checkpoint serves the second pass; delivered state is identical.
-        Assert.Equal(firstSink.Frames, secondSink.Frames);
-        for (var i = 0; i < firstSink.Frames.Count; i++)
-        {
-            Assert.Equal(
-                PersistedSummary(firstSink.Summaries[i], (Game)firstHost.Game),
-                PersistedSummary(secondSink.Summaries[i], (Game)secondHost.Game));
-        }
+        Assert.Equal(new uint[] { 20 }, secondSink.Frames);
+        var firstIndex = firstSink.Frames.IndexOf(20);
+        Assert.Equal(
+            PersistedSummary(firstSink.Summaries[firstIndex], (Game)firstHost.Game),
+            PersistedSummary(secondSink.Summaries[0], (Game)secondHost.Game));
     }
 
-    private string RecordRtsBundle(bool injectOrder, uint frames)
+    private (string Bundle, SortedDictionary<uint, byte[]> LiveSummaries) RecordRtsBundle(bool injectOrder, uint frames)
     {
         var game = BootGame();
         _bootedGames.Add(game);
         var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         var bundle = Path.Combine(Path.GetTempPath(), "a1-24-bundle-" + Guid.NewGuid().ToString("N"));
-        var cadence = new RecordingCadence(frame => frame % 5 == 0, frame => frame % 15 == 0);
 
         var recording = RunRecording.Attach(
             host, game, seed: Seed, scenarioId: "a1-24-conformance",
-            options: new RecordingOptions { Mode = RecordingMode.Operational, BundleDirectory = bundle, DefaultCadence = cadence });
+            options: new RecordingOptions { Mode = RecordingMode.Operational, BundleDirectory = bundle, DefaultCadence = TestCadence });
+        var liveSummaries = new SortedDictionary<uint, byte[]>();
+        recording.Sampler.FrameSampled += (summary, _) =>
+        {
+            liveSummaries[summary.Frame] = PersistedSummary(summary, game);
+        };
         if (injectOrder)
         {
             host.Run(10);
@@ -199,7 +179,7 @@ public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
 
         recording.Complete();
         recording.Dispose();
-        return bundle;
+        return (bundle, liveSummaries);
     }
 
     private InstalledBootstrap CreateRtsBootstrap()
@@ -212,14 +192,14 @@ public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
         });
     }
 
-    private InstalledBootstrap CreateTransportBootstrap(RecordingCadence cadence)
+    private InstalledBootstrap CreateTransportBootstrap()
     {
         return new InstalledBootstrap(() =>
         {
             var game = BootGame();
             _bootedGames.Add(game);
             var domain = TransportGraphDomainModel.CreateDefault(game.GameEngine);
-            domain.Cadence = cadence;
+            domain.Cadence = TestCadence;
             return new SimulationHost(game.GameEngine, domain);
         });
     }
