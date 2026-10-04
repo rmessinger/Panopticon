@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Panopticon.Tools.ReplaySketch.Model;
 
@@ -56,7 +57,19 @@ public static class ValidationGroundBuilder
 
         // Supply sources are placed after the formation: in cluster mode they must clear the
         // cluster discs, which are only known once clusters are chosen.
-        var supplySources = BuildSupplySources(scenario, layout, clusterInfos);
+        var supplySources = BuildSupplySources(scenario, layout, clusterInfos, map);
+
+        if (map != null)
+        {
+            foreach (var position in units.ConvertAll(u => u.Position)
+                .Concat(targets.ConvertAll(t => t.Position)).Concat(supplySources.ConvertAll(s => s.Position)))
+            {
+                if (map.IsUnderwater(position.X, position.Y))
+                {
+                    throw new InvalidOperationException($"Validation-ground placement is underwater at {position}.");
+                }
+            }
+        }
 
         return new SpawnPlan
         {
@@ -370,7 +383,8 @@ public static class ValidationGroundBuilder
                     continue;
                 }
 
-                if (map != null && StructureInsideDisc(map, candidate, clusterRadius))
+                if (map != null && (StructureInsideDisc(map, candidate, clusterRadius)
+                    || WaterInsideDisc(map, candidate, clusterRadius)))
                 {
                     continue;
                 }
@@ -389,7 +403,26 @@ public static class ValidationGroundBuilder
             }
         }
 
-        return best?.Center ?? preferred;
+        return best?.Center ?? throw new InvalidOperationException("No dry, structure-free validation-ground cluster fits the map.");
+    }
+
+    private static bool WaterInsideDisc(MapMetadataService map, Vector2 center, float radius)
+    {
+        // Terrain-cell sampling avoids mistaking a flat lakebed for usable ground.
+        const float step = 10f;
+        for (var dy = -radius; dy <= radius; dy += step)
+        {
+            for (var dx = -radius; dx <= radius; dx += step)
+            {
+                if (dx * dx + dy * dy <= radius * radius
+                    && map.IsUnderwater(center.X + dx, center.Y + dy))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static bool StructureInsideDisc(MapMetadataService map, Vector2 center, float radius)
@@ -433,7 +466,8 @@ public static class ValidationGroundBuilder
     private static List<TargetPlacement> BuildSupplySources(
         ValidationGroundScenario scenario,
         LayoutConfig layout,
-        List<(Vector2 Center, float Radius)> clusterInfos)
+        List<(Vector2 Center, float Radius)> clusterInfos,
+        MapMetadataService? map)
     {
         var sources = new List<TargetPlacement>();
         var center = layout.TargetClusterCenter;
@@ -468,6 +502,13 @@ public static class ValidationGroundBuilder
                 for (var x = center.X - 1000f; x <= center.X + 1000f; x += sourceStep)
                 {
                     var candidate = new Vector2(x, y);
+                    if (map != null && (candidate.X < map.ExtentMin.X || candidate.Y < map.ExtentMin.Y
+                        || candidate.X > map.ExtentMax.X || candidate.Y > map.ExtentMax.Y
+                        || WaterInsideDisc(map, candidate, sourceMargin)))
+                    {
+                        continue;
+                    }
+
                     var clear = true;
                     foreach (var (clusterCenter, radius) in clusterInfos)
                     {
@@ -497,7 +538,7 @@ public static class ValidationGroundBuilder
             }
 
             var position = best?.Pos
-                ?? new Vector2(center.X + layout.TargetClusterRadius * 2 + i * layout.UnitSpacing, center.Y);
+                ?? throw new InvalidOperationException("No dry validation-ground supply-source position fits the map.");
             placed.Add(position);
             sources.Add(new TargetPlacement(scenario.SupplySourceDefinitions[i], new Vector3(position.X, position.Y, 0f)));
         }

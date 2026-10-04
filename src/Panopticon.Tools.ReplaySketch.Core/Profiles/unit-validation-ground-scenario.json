@@ -1,5 +1,5 @@
 {
-  "MapPath": "maps/alpine assault/alpine assault.map",
+  "MapPath": "maps/Dark Mountain/Dark Mountain.map",
   "FactionIndices": [2, 3, 4],
   "Layout": {
     "TargetClusterCenter": { "x": 600, "y": 600, "z": 0 },

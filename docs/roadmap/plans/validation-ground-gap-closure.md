@@ -37,6 +37,7 @@ them, so a vanilla run no longer reports the gap (31 total, 3 gaps, 28 measured)
 | `WI-VG-02` | SpecialPower order construction in the host | M | none |
 | `WI-VG-03` | Game-aware unit catalog | S | none |
 | `WI-VG-04` | Sandbox mechanics for remaining unmeasurables | M/L | `WI-VG-01` verdicts |
+| `WI-VG-05` | Switch the validation ground to Dark Mountain | S | none |
 
 ### WI-VG-01: Re-verify catalog gaps against the car target
 
@@ -123,6 +124,7 @@ Track D content expansion for horde/transport behaviors).
 `WI-VG-02` and `WI-VG-03` are independent and can proceed in parallel. `WI-VG-04` consumes
 `WI-VG-01` verdicts. After every promotion: baseline refresh and the
 `BaselineGoldenFrames_AreConsistentWithWeaponIniData` gate, per the P9 capture workflow.
+`WI-VG-05` is independent and re-baselines the ground on the new map (2026-10-04).
 
 ## Non-goals
 
