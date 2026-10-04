@@ -76,10 +76,10 @@ Sourcing order:
 
 1. Community Generals map. The operator downloads candidate large maps (8-player and "huge"
    community maps) into the install's user map folder or stages them through
-   [ModCollector](../plans/mod-collector.md). M1 evaluates each candidate against the requirements
+   [ModCollector](../plans/mod-collector.md). M0 evaluates each candidate against the requirements
    and records size in cells, player slots, waypoints, passability, load result, and provenance.
    Community maps are never committed to the repo.
-2. Authored map. If no candidate passes, M1 authors one with the B4a large-map wizard and object
+2. Authored map. If no candidate passes, M0 authors one with the B4a large-map wizard and object
    population tools, saved in the B4a/H3 format.
 
 Deployment zones and army anchors are scenario data, not map edits, so either source works without
@@ -146,20 +146,20 @@ points-balanced battle is a natural co-evolution arena but is not a goal of this
 | Benchmarks and first-bottleneck report | [B1](b1-benchmarking.md) | Every stage reports through B1. |
 | Headless host and recording | [A1](a1-headless-host.md), A1-6 | Batch runs and replay input. |
 | Group pathfinding | [B4](../track-b-scale.md) | 2000 concurrent movers on a large map. |
-| Large maps | [B4a](b4a-larger-maps.md) | Only if no community map passes M1. |
+| Large maps | [B4a](b4a-larger-maps.md) | Only if no community map passes M0. |
 | Instanced rendering | [B5](../track-b-scale.md) | Live view at 30 fps, including Track C models. |
 | Replay and visualization | [A5](a5-visualization.md) | Scrubbing finished runs. |
 | EE2 skinned infantry | [C4d](c4d-ee2-skinned-animation.md) | EE2 infantry are skinned. |
 
-B2/B3 are not hard dependencies: M0 decides whether allocation cleanup or parallel logic is needed
+B2/B3 are not hard dependencies: M1 decides whether allocation cleanup or parallel logic is needed
 at 2000 units. B6 and B7 are not used.
 
 ## 8. Phases
 
 Phase table, milestones, and dependencies live in [Track M](../track-m-mass-battle.md). Order:
-M0 measures the current engine with a Generals-only 1000 vs 1000, aircraft included; M1 (map), M2 (EE2 units), and M4
-(army AI) proceed in parallel; M3 normalizes the mixed roster; M5 runs the full battle in all three
-viewing modes.
+M0 selects the map; M1 measures the current engine on it with a Generals-only 1000 vs 1000,
+aircraft included; M2 (EE2 units) runs in parallel from the start; M4 (army AI) follows M1; M3
+normalizes the mixed roster; M5 runs the full battle in all three viewing modes.
 
 ## 9. Architecture Diagrams
 

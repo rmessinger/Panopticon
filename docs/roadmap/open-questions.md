@@ -714,11 +714,12 @@
   field different mixed Generals and EE2 rosters of equal points (see the points Decision below); a
   mirrored run serves only as a map-bias control. Named "Track M" because no branch reserves M. Affects
   [Track M](track-m-mass-battle.md).
-- Mass battle map source. Decision: evaluate operator-supplied community Generals maps first and
+- Mass battle map source. Decision: map selection is the first phase (M0), so the capacity probe and
+  every later scenario run on the real battlefield. Evaluate operator-supplied community Generals maps first and
   author a map with B4a only if none meets the requirements in the
   [deep dive](deep-dives/mass-battle-1k.md#4-map). Community maps are never committed. Deployment
   zones are scenario data, so downloaded maps stay unmodified. Affects
-  [M1](track-m-mass-battle.md).
+  [M0](track-m-mass-battle.md).
 - EE2 gameplay definitions. Decision: a bounded `.ddf` reader and translator in M2 emits scoped
   `ObjectDefinition`s for ground combat units and aircraft; M3 normalizes model scale, tile distances, and `rps`
   counter classes through authored, recorded factors and tables. Affects

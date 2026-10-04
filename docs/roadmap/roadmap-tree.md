@@ -280,8 +280,8 @@ mindmap
       W5 Distributed regional simulation ⮕
       W6 Long-run campaign experiment ⮕
     M. Mixed-roster mass battle
-      M0 Capacity probe ⮕
-      M1 Battle map ⮕
+      M0 Battle map ⮕
+      M1 Capacity probe ⮕
       M2 EE2 combat units ⮕
       M3 Mixed roster normalization ⮕
       M4 Army-scale AI ⮕
@@ -381,7 +381,7 @@ flowchart LR
     G10["G10 Realistic proportions"]
     H3["H3 New map storage format"]
     H4["H4 New object/unit-definition storage format"]
-    M0["M0 Capacity probe"]
+    M0["M0 Battle map"]
   end
 
   subgraph S3["Stage 3 · Adoption, scenario & tooling"]
@@ -398,8 +398,7 @@ flowchart LR
     F4A["F4a Game-object physics adoption"]
     G5["G5 Cutout & alpha-test clarity"]
     H5["H5 Legacy migration & compatibility tooling"]
-    M1["M1 Battle map"]
-    M4["M4 Army-scale AI"]
+    M1["M1 Capacity probe"]
   end
 
   subgraph S4["Stage 4 · Fidelity scaling & physics consumers"]
@@ -411,6 +410,7 @@ flowchart LR
     F5["F5 Physics-based structural destruction"]
     H6["H6 Authoring & pipeline integration"]
     W1["W1 Aggregate sector simulation"]
+    M4["M4 Army-scale AI"]
   end
 
   subgraph S5["Stage 5 · Integration & round-trip validation"]
@@ -632,14 +632,14 @@ flowchart LR
   W5 --> W6
   P9 --> M0
   A1 --> M0
-  B1 --> M0
   M0 --> M1
+  B1 --> M1
   C4D --> M2
   P9 --> M2
   M2 --> M3
-  M0 --> M4
+  M1 --> M4
   A4 --> M4
-  M1 --> M5
+  M0 --> M5
   M3 --> M5
   M4 --> M5
   B4 --> M5

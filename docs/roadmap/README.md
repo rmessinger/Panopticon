@@ -268,9 +268,9 @@ track document.
   aggregate sector simulation · W2 fidelity promotion and reconciliation · W3a Sedan 1870 · W3b
   Somme sector · W4 command and logistics experiment · W5 distributed regional simulation · W6
   long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
-- [Track M - Mixed-Roster Mass Battle](track-m-mass-battle.md): M0 capacity probe · M1 battle
-  map · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
-  battle. Depends on P9, A1, B1, then C4d, A4, B4, B5, and A5.
+- [Track M - Mixed-Roster Mass Battle](track-m-mass-battle.md): M0 battle map · M1 capacity
+  probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
+  battle. Depends on P9 and A1, then B1, C4d, A4, B4, B5, and A5.
 
 ### Cross-track dependencies
 
@@ -420,12 +420,12 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | W6 - Long-run campaign experiment | `░░░░░░░░░░` | 0 / 8 |
 | Track W total | `░░░░░░░░░░` | 0 / 89 |
 
-### Track M - Mixed-Roster Mass Battle (gated on P9, A1, and B1)
+### Track M - Mixed-Roster Mass Battle (gated on P9 and A1)
 
 | Phase | Progress | Items |
 |---|---|---|
-| M0 - Capacity probe | `░░░░░░░░░░` | 0 / 3 |
-| M1 - Battle map | `░░░░░░░░░░` | 0 / 3 |
+| M0 - Battle map | `░░░░░░░░░░` | 0 / 3 |
+| M1 - Capacity probe | `░░░░░░░░░░` | 0 / 3 |
 | M2 - EE2 combat units | `░░░░░░░░░░` | 0 / 4 |
 | M3 - Mixed roster normalization | `░░░░░░░░░░` | 0 / 3 |
 | M4 - Army-scale AI | `░░░░░░░░░░` | 0 / 3 |

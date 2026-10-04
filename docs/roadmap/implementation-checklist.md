@@ -1438,30 +1438,30 @@ phases depend on the Track A/B phases listed in the track doc.
 
 ## Track M: Mixed-Roster Mass Battle
 
-See [`track-m-mass-battle.md`](track-m-mass-battle.md). M0 depends on P9, A1, and B1; later phases
+See [`track-m-mass-battle.md`](track-m-mass-battle.md). M0 depends on P9 and A1; later phases
 depend on the Track A/B/C phases listed in the track doc. Design:
 [deep dive](deep-dives/mass-battle-1k.md).
 
-### M0: Capacity probe
-- [ ] M0-1 Generals-only 1000 vs 1000 scenario: direct-spawn two armies of ground units and
-  aircraft, with pre-placed airfields, on the largest shipped map through the P9 direct-spawn host
+### M0: Battle map
+- [ ] M0-1 Community map evaluation against the map requirements.
+  - AC: each operator-supplied candidate has a record of size, slots, waypoints, passability, load
+    result, and provenance; no map file is committed.
+- [ ] M0-2 Authored fallback map with B4a, only if no candidate passes.
+  - AC: TBD; tighten once M0-1 records whether B4a is needed.
+- [ ] M0-3 Deployment zones and reachability check as scenario data.
+  - AC: both zones hold 1000 units at twice footprint spacing with airfields behind them; every
+    ground locomotor reaches the opposing zone.
+
+### M1: Capacity probe
+- [ ] M1-1 Generals-only 1000 vs 1000 scenario: direct-spawn two armies of ground units and
+  aircraft, with pre-placed airfields, on the M0 map through the P9 direct-spawn host
   and order a general attack.
   - AC: the scenario runs headless and windowed from one definition; both sides spawn 1000 units;
     aircraft take off, attack, and rearm.
-- [ ] M0-2 Capacity measurements through B1.
+- [ ] M1-2 Capacity measurements through B1.
   - AC: B1 records tick cost, frame rate, memory, and path requests per second over the engagement.
-- [ ] M0-3 First-bottleneck report.
+- [ ] M1-3 First-bottleneck report.
   - AC: the report names the first failing constraint and whether B2/B3 are needed for M5.
-
-### M1: Battle map
-- [ ] M1-1 Community map evaluation against the map requirements.
-  - AC: each operator-supplied candidate has a record of size, slots, waypoints, passability, load
-    result, and provenance; no map file is committed.
-- [ ] M1-2 Authored fallback map with B4a, only if no candidate passes.
-  - AC: TBD; tighten once M1-1 records whether B4a is needed.
-- [ ] M1-3 Deployment zones and reachability check as scenario data.
-  - AC: both zones hold 1000 units at twice footprint spacing with airfields behind them; every
-    ground locomotor reaches the opposing zone.
 
 ### M2: EE2 combat units
 - [ ] M2-1 DDF reader for `db.zip` unit definitions with `parent` inheritance.
@@ -1492,13 +1492,13 @@ depend on the Track A/B/C phases listed in the track doc. Design:
   - AC: every unit is assigned to a squad and commander at start and after every casualty;
     aircraft fly strike, patrol, or escort missions and return to rearm.
 - [ ] M4-2 Squad-level group movement orders served by B4.
-  - AC: path requests per tick scale with squads, not units, in the M0 scenario.
+  - AC: path requests per tick scale with squads, not units, in the M1 scenario.
 - [ ] M4-3 Per-tick AI cost budget.
   - AC: B1 shows AI decision cost within the authored budget; no unit idles longer than the stall
     threshold while enemies remain.
 
 ### M5: 1000 vs 1000 battle
-- [ ] M5-1 Mixed-roster battle scenario on the M1 map with M3 armies and M4 AI.
+- [ ] M5-1 Mixed-roster battle scenario on the M0 map with M3 armies and M4 AI.
   - AC: one scenario definition drives batch, replay, and live modes.
 - [ ] M5-2 Seeded batch runs with a mirrored map-bias control.
   - AC: every run reaches a P3 outcome; reports give per-side win rates with confidence intervals
