@@ -382,6 +382,12 @@ public sealed class RunRecording : IDisposable
     /// <summary>The host's domain viewed as an operational-recording participant; null when absent.</summary>
     public IReconstructableDomain? ReconstructableDomain { get; }
 
+    /// <summary>
+    /// Operational bundle writer (WI-A1-21); null unless operational mode requested a bundle
+    /// directory.
+    /// </summary>
+    internal OperationalRecorder? Operational { get; }
+
     private RunRecording(
         WorldStateSampler sampler,
         RunOutputRecorder t0,
@@ -391,7 +397,8 @@ public sealed class RunRecording : IDisposable
         DomainStateRecorder? domainState,
         RecordingOptions? options,
         RecordingCadence effectiveCadence,
-        IReconstructableDomain? reconstructableDomain)
+        IReconstructableDomain? reconstructableDomain,
+        OperationalRecorder? operational)
     {
         Sampler = sampler;
         T0 = t0;
@@ -402,6 +409,7 @@ public sealed class RunRecording : IDisposable
         Options = options;
         EffectiveCadence = effectiveCadence;
         ReconstructableDomain = reconstructableDomain;
+        Operational = operational;
     }
 
     /// <summary>
@@ -438,7 +446,12 @@ public sealed class RunRecording : IDisposable
         var domainState = host.DomainModel is IDomainStateProjection projection
             ? new DomainStateRecorder(sampler, projection, snapshotInterval, domainStateArtifactPath, domainStateArtifactPath is null ? null : game)
             : null;
-        return new RunRecording(sampler, t0, t1, t2, snapshots, domainState, options, effectiveCadence, reconstructable);
+        // The operational recorder subscribes last: at a both-boundary frame the stream chunk
+        // (written from FrameSampled) lands before the checkpoint (written from TickComplete).
+        var operational = options is { Mode: RecordingMode.Operational } && !string.IsNullOrEmpty(options.BundleDirectory)
+            ? new OperationalRecorder(host, game, sampler, seed, scenarioId, options, effectiveCadence, tolerances ?? SignatureTolerances.Default)
+            : null;
+        return new RunRecording(sampler, t0, t1, t2, snapshots, domainState, options, effectiveCadence, reconstructable, operational);
     }
 
     /// <summary>
@@ -484,6 +497,8 @@ public sealed class RunRecording : IDisposable
             output.DomainStateSnapshotFrames = DomainState.Snapshots.Select(s => s.Frame).ToList();
         }
 
+        Operational?.Complete(output);
+
         return output;
     }
 
@@ -495,5 +510,6 @@ public sealed class RunRecording : IDisposable
         T2?.Dispose();
         Snapshots.Dispose();
         DomainState?.Dispose();
+        Operational?.Dispose();
     }
 }

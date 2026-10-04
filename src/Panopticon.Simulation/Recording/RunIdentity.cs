@@ -11,6 +11,7 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Panopticon.Recording;
 
@@ -42,6 +43,9 @@ public sealed class RunIdentity
 
     public IReadOnlyList<ArchiveHash> Archives { get; }
 
+    // The manifest round-trips this class through System.Text.Json (WI-A1-21); the constructor
+    // parameter names bind to the properties case-insensitively.
+    [JsonConstructor]
     internal RunIdentity(
         IReadOnlyList<ModuleVersion> modules,
         string runtimeDescription,
