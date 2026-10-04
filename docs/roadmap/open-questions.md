@@ -707,3 +707,24 @@
   metrics that do not exist yet; when they land, the co-evolution contract grows per-rank credit
   assignment without changing the schedule. Affects
   [Track A](track-a-foundations.md) (A4-3f).
+- Mixed-roster mass battle scope. Decision: own track (Track M), on the RTS domain and independent
+  of Track W. The battle is AI versus AI, 1000 ground and air combat units per side,
+  pre-deployed with fixed airfields and no economy or production. Batch runs are headless; because 2000 units sit well inside the near-term
+  scale anchor, a live real-time windowed view is also a milestone, not only replay. The two sides
+  field different mixed Generals and EE2 rosters of equal points (see the points Decision below); a
+  mirrored run serves only as a map-bias control. Named "Track M" because no branch reserves M. Affects
+  [Track M](track-m-mass-battle.md).
+- Mass battle map source. Decision: map selection is the first phase (M0), so the capacity probe and
+  every later scenario run on the real battlefield. Evaluate operator-supplied community Generals maps first and
+  author a map with B4a only if none meets the requirements in the
+  [deep dive](deep-dives/mass-battle-1k.md#4-map). Community maps are never committed. Deployment
+  zones are scenario data, so downloaded maps stay unmodified. Affects
+  [M0](track-m-mass-battle.md).
+- EE2 gameplay definitions. Decision: a bounded `.ddf` reader and translator in M2 emits scoped
+  `ObjectDefinition`s for ground combat units and aircraft; M3 normalizes model scale, tile distances, and `rps`
+  counter classes through authored, recorded factors and tables. Affects
+  [M2, M3](track-m-mass-battle.md).
+- Mass battle fairness. Decision: armies are asymmetric and balanced by points, not mirrored.
+  Generals `BuildCost` and EE2 `dbtechtreenode.csv` resource costs convert to one points scale
+  through authored per-resource rates; both 1000-unit manifests total equal points within a recorded
+  tolerance. Unit stats are not tuned for balance. Affects [M3, M5](track-m-mass-battle.md).

@@ -1433,3 +1433,77 @@ phases depend on the Track A/B phases listed in the track doc.
   - AC: every active fidelity policy declares its error against all-tactical.
 - [ ] W6-8 Campaign evidence report (`WI-W6-08`).
   - AC: covers provenance, conservation, replay, save/load, scaling.
+
+---
+
+## Track M: Mixed-Roster Mass Battle
+
+See [`track-m-mass-battle.md`](track-m-mass-battle.md). M0 depends on P9 and A1; later phases
+depend on the Track A/B/C phases listed in the track doc. Design:
+[deep dive](deep-dives/mass-battle-1k.md).
+
+### M0: Battle map
+- [ ] M0-1 Community map evaluation against the map requirements.
+  - AC: each operator-supplied candidate has a record of size, slots, waypoints, passability, load
+    result, and provenance; no map file is committed.
+- [ ] M0-2 Authored fallback map with B4a, only if no candidate passes.
+  - AC: TBD; tighten once M0-1 records whether B4a is needed.
+- [ ] M0-3 Deployment zones and reachability check as scenario data.
+  - AC: both zones hold 1000 units at twice footprint spacing with airfields behind them; every
+    ground locomotor reaches the opposing zone.
+
+### M1: Capacity probe
+- [ ] M1-1 Generals-only 1000 vs 1000 scenario: direct-spawn two armies of ground units and
+  aircraft, with pre-placed airfields, on the M0 map through the P9 direct-spawn host
+  and order a general attack.
+  - AC: the scenario runs headless and windowed from one definition; both sides spawn 1000 units;
+    aircraft take off, attack, and rearm.
+- [ ] M1-2 Capacity measurements through B1.
+  - AC: B1 records tick cost, frame rate, memory, and path requests per second over the engagement.
+- [ ] M1-3 First-bottleneck report.
+  - AC: the report names the first failing constraint and whether B2/B3 are needed for M5.
+
+### M2: EE2 combat units
+- [ ] M2-1 DDF reader for `db.zip` unit definitions with `parent` inheritance.
+  - AC: resolves `properties` and `abilities` for every file under `db/Units/` against the
+    operator-supplied EE2 install; unknown fields are reported, not fatal.
+- [ ] M2-2 DDF to `ObjectDefinition` translator for ground combat units and aircraft.
+  - AC: each reference unit gets locomotor, weapon, armor, body, and draw modules from DDF values;
+    aircraft get a jet or helicopter locomotor with return-to-airfield rearm.
+- [ ] M2-3 Scoped content layer for translated EE2 definitions.
+  - AC: EE2 definitions load beside Generals definitions without overriding any Generals entry.
+- [ ] M2-4 EE2 units in the P9 validation ground.
+  - AC: each reference EE2 unit spawns, moves, attacks, and dies; gaps surface as explicit failures.
+
+### M3: Mixed roster normalization
+- [ ] M3-1 Model scale and tiles-to-world factor.
+  - AC: EE2 model heights match Generals references within authored bounds; the factor is
+    recorded with the manifest.
+- [ ] M3-2 `rps` counter class and `dbcombat.csv` matrix to Generals armor and damage type table.
+  - AC: every reference EE2 unit maps to an armor set and damage type; unmapped classes fail load.
+- [ ] M3-3 Cross-game points budget, asymmetric roster manifests, and duel matrix.
+  - AC: Generals `BuildCost` and EE2 tech-tree resource costs convert to points through recorded
+    rates; two different 1000-unit manifests, each with anti-air, total equal points within the
+    tolerance; each EE2 versus Generals archetype duel, air included, resolves within authored
+    time-to-kill bounds.
+
+### M4: Army-scale AI
+- [ ] M4-1 Army hierarchy sizing for 1000 units over A4-3, including an air commander.
+  - AC: every unit is assigned to a squad and commander at start and after every casualty;
+    aircraft fly strike, patrol, or escort missions and return to rearm.
+- [ ] M4-2 Squad-level group movement orders served by B4.
+  - AC: path requests per tick scale with squads, not units, in the M1 scenario.
+- [ ] M4-3 Per-tick AI cost budget.
+  - AC: B1 shows AI decision cost within the authored budget; no unit idles longer than the stall
+    threshold while enemies remain.
+
+### M5: 1000 vs 1000 battle
+- [ ] M5-1 Mixed-roster battle scenario on the M0 map with M3 armies and M4 AI.
+  - AC: one scenario definition drives batch, replay, and live modes.
+- [ ] M5-2 Seeded batch runs with a mirrored map-bias control.
+  - AC: every run reaches a P3 outcome; reports give per-side win rates with confidence intervals
+    and kills and losses per unit type; the mirrored control's interval includes 50%.
+- [ ] M5-3 Replay of batch runs in A5.
+  - AC: a finished run scrubs from start to outcome with all 2000 units shown.
+- [ ] M5-4 Live windowed spectator view.
+  - AC: B1 records a 30 fps median with the full battle in view on the operator's machine.
