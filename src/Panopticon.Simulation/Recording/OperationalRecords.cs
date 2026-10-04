@@ -73,7 +73,7 @@ internal sealed record OperationalEvents(uint BoundaryFrame, IReadOnlyList<Domai
 }
 
 /// <summary>One order dispatched since the previous boundary and the frame it dispatched at.</summary>
-internal sealed record OperationalDispatchedOrder(uint DispatchFrame, Order Order);
+internal sealed record OperationalDispatchedOrder(uint InjectionFrame, uint DispatchFrame, Order Order);
 
 /// <summary>Orders dispatched since the previous boundary.</summary>
 internal sealed record OperationalInputs(IReadOnlyList<OperationalDispatchedOrder> Orders) : OperationalRecord

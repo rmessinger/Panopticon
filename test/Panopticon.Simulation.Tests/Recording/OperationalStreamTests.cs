@@ -79,7 +79,7 @@ public class OperationalStreamTests : StatePersisterTest
             new OperationalDomainDelta(10, delta),
             new OperationalMetrics(10, new[] { new OperationalMetricSample("money", "player:0", 3.5) }),
             new OperationalEvents(10, new[] { new DomainEvent("attack", "tank fired") }),
-            new OperationalInputs(new[] { new OperationalDispatchedOrder(9, BuildOrder()) }),
+            new OperationalInputs(new[] { new OperationalDispatchedOrder(8, 9, BuildOrder()) }),
             new OperationalHashes(10, new OperationalStateHashes
             {
                 WorldHash = 0x1111111111111111UL,

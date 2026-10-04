@@ -251,6 +251,7 @@ internal sealed class OperationalStreamWriter : IDisposable
                 writer.Write(inputs.Orders.Count);
                 foreach (var dispatched in inputs.Orders)
                 {
+                    writer.Write(dispatched.InjectionFrame);
                     writer.Write(dispatched.DispatchFrame);
                     EngineCheckpoint.WriteOrder(writer, dispatched.Order);
                 }

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-22` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6f run reconstructor |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-16`, `WI-A1-21` |
@@ -70,3 +70,27 @@ Do not implement the LRU derived-checkpoint cache. On determinism mismatch, pres
 - Unblock `WI-A1-23`, `WI-A1-24`, and `WI-W3a-31`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+Implemented `RunReconstructor` (Open/Reconstruct/ExportSlice) with `IReconstructionBootstrap`,
+`IReconstructionSink` + `BufferedReconstructionSink`, and `ReconstructionDivergence` carrying the
+boundary frame, both world hashes, and diverged bucket keys. Three fidelity findings surfaced by
+the conformance tests and fixed here:
+
+- Neutral map structures (bridges, supply docks, oil derricks) are teamless, and their owner was
+  not derivable on restore: `GameObject.Persist` now persists the owner index for teamless objects
+  (format version 10; version 9 retail saves still load).
+- Input replay originally re-injected everything up front; the recorded host-section hashes
+  capture the pending schedule as it evolved, so replay must reproduce the injection moment.
+  `SimulationHost.OrdersInjected` (injection frame, dispatch frame, orders) now feeds the
+  `OperationalInputs` records (which gained `InjectionFrame`), and the reconstructor re-injects
+  after the injection frame's boundary verification completes.
+- The PNOR string table is file-global: the reconstructor decodes every chunk from the start and
+  collects only in-window records, instead of skipping earlier chunks.
+
+Hash verification runs through the shared `OperationalStateHasher.HashHostState` (same code path
+as the recorder), so writer and verifier cannot drift. Validation: 6/6 `RunReconstructorTests`
+installed (identity refusal, verified delivery with per-object byte equality vs the uninterrupted
+run, mid-run checkpoint replay, divergence stops all delivery, A1-5-loadable export slice);
+recording suites 63/63 with env; format/brace/diff clean.

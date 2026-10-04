@@ -79,6 +79,13 @@ public sealed class SimulationHost
     internal event Action<uint, IReadOnlyList<Order>>? OrdersDispatched;
 
     /// <summary>
+    /// Raised when <see cref="InjectOrders"/> schedules orders (WI-A1-22): carries the logic
+    /// frame the scheduling happened at, so replay can reproduce the exact moment an order
+    /// entered the pending schedule.
+    /// </summary>
+    internal event Action<uint, uint, IReadOnlyList<Order>>? OrdersInjected;
+
+    /// <summary>
     /// Current frame step count since the run started.
     /// </summary>
     public uint Frame => _frame;
@@ -134,13 +141,15 @@ public sealed class SimulationHost
     /// </summary>
     public void InjectOrders(uint frame, IEnumerable<Order> orders)
     {
+        var injected = orders as IReadOnlyList<Order> ?? orders.ToList();
         if (!_pendingOrders.TryGetValue(frame, out var list))
         {
             list = new List<Order>();
             _pendingOrders[frame] = list;
         }
 
-        list.AddRange(orders);
+        list.AddRange(injected);
+        OrdersInjected?.Invoke(LogicFrame.Value, frame, injected);
     }
 
     /// <summary>

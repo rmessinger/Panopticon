@@ -78,7 +78,7 @@ internal sealed class OperationalRecorder : IDisposable
             game);
 
         _sampler.FrameSampled += OnFrameSampled;
-        _host.OrdersDispatched += OnOrdersDispatched;
+        _host.OrdersInjected += OnOrdersInjected;
         _host.TickComplete += OnTickComplete;
 
         WriteCheckpoint();
@@ -91,21 +91,26 @@ internal sealed class OperationalRecorder : IDisposable
     /// <summary>The run identity captured at attach (module, runtime, seed, and scenario input).</summary>
     internal RunIdentity Identity => _identity;
 
-    private RunIdentity CaptureIdentity()
+    private RunIdentity CaptureIdentity() => CaptureBundleIdentity(_seed, _scenarioId);
+
+    /// <summary>
+    /// The bundle identity formula shared with the reconstructor: modules, runtime, seed, and
+    /// the scenario input. The archive list is deferred: the composite file system does not
+    /// expose the installed .big paths, and identity refusal still binds on the rest.
+    /// </summary>
+    internal static RunIdentity CaptureBundleIdentity(uint seed, string? scenarioId)
     {
-        // The archive list is deferred: the composite file system does not expose the installed
-        // .big paths, and identity refusal still binds on modules, runtime, seed, and scenario.
-        var inputs = string.IsNullOrEmpty(_scenarioId)
+        var inputs = string.IsNullOrEmpty(scenarioId)
             ? Array.Empty<InputContent>()
-            : new[] { new InputContent("scenario", System.Text.Encoding.UTF8.GetBytes(_scenarioId)) };
-        return RunIdentity.Capture(_seed, shardLayoutId: "", inputs, Array.Empty<string>());
+            : new[] { new InputContent("scenario", System.Text.Encoding.UTF8.GetBytes(scenarioId)) };
+        return RunIdentity.Capture(seed, shardLayoutId: "", inputs, Array.Empty<string>());
     }
 
-    private void OnOrdersDispatched(uint frame, IReadOnlyList<Order> orders)
+    private void OnOrdersInjected(uint injectionFrame, uint dispatchFrame, IReadOnlyList<Order> orders)
     {
         foreach (var order in orders)
         {
-            _dispatched.Add(new OperationalDispatchedOrder(frame, order));
+            _dispatched.Add(new OperationalDispatchedOrder(injectionFrame, dispatchFrame, order));
         }
     }
 
@@ -178,35 +183,12 @@ internal sealed class OperationalRecorder : IDisposable
     }
 
     /// <summary>
-    /// Bucket hashes follow the domain's state of record: spatial cells over the world summary
-    /// without a projection (T1's RTS strategy), state-record layers with one (deterministic and
-    /// state-covering, since projection records carry no topology coordinates).
+    /// Bucket hashes follow the domain's state of record (WI-A1-22 shares this implementation
+    /// with reconstruction verification through
+    /// <see cref="OperationalStateHasher.HashHostState"/>).
     /// </summary>
-    private OperationalStateHashes HashState(WorldStateSummary summary)
-    {
-        if (_projection is not null)
-        {
-            var schema = _projection.StateSchema;
-            var frame = _projection.CaptureState(summary.Frame);
-            var objects = frame.Records.Select(r =>
-                ("layer:" + schema.FindKind(r.Kind).Layer, OperationalStateHasher.HashPersisted(r, _game)));
-            return OperationalStateHasher.Build(objects, HashSections());
-        }
-
-        var worldObjects = summary.Objects.Select(o =>
-            (SignatureTreeBuilder.RtsCellKey(o.Position, SignatureTreeBuilder.DefaultCellSize), OperationalStateHasher.HashPersisted(o, _game)));
-        return OperationalStateHasher.Build(worldObjects, HashSections());
-    }
-
-    private IEnumerable<(string Name, ulong Hash)> HashSections()
-    {
-        yield return (EngineCheckpointData.RandomSection, OperationalStateHasher.HashBytes(EngineCheckpoint.CaptureRandomSection(_host)));
-        yield return (EngineCheckpointData.HostSection, OperationalStateHasher.HashBytes(EngineCheckpoint.CaptureHostSection(_host)));
-        if (_reconstructable is not null)
-        {
-            yield return (EngineCheckpointData.DomainRuntimeSection, OperationalStateHasher.HashBytes(EngineCheckpoint.CaptureDomainRuntimeSection(_host, _reconstructable)));
-        }
-    }
+    private OperationalStateHashes HashState(WorldStateSummary summary) =>
+        OperationalStateHasher.HashHostState(_host, _game, _projection, _reconstructable, summary);
 
     private void OnTickComplete(object? sender, SimulationHostTickEventArgs e)
     {
@@ -277,7 +259,7 @@ internal sealed class OperationalRecorder : IDisposable
     public void Dispose()
     {
         _sampler.FrameSampled -= OnFrameSampled;
-        _host.OrdersDispatched -= OnOrdersDispatched;
+        _host.OrdersInjected -= OnOrdersInjected;
         _host.TickComplete -= OnTickComplete;
         _stream.Dispose();
     }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Hashing;
 using System.Linq;
+using Panopticon.Simulation;
 
 namespace Panopticon.Recording;
 
@@ -17,6 +18,45 @@ namespace Panopticon.Recording;
 /// </summary>
 public static class OperationalStateHasher
 {
+    /// <summary>
+    /// Hashes a host's state of record at a boundary exactly as the operational recorder hashed
+    /// it when writing the bundle (WI-A1-21/WI-A1-22 share this path so the two can never
+    /// drift). Bucket keys follow the domain's state surface: spatial cells over the world
+    /// summary without a projection (T1's RTS strategy), state-record layers with one.
+    /// </summary>
+    internal static OperationalStateHashes HashHostState(
+        SimulationHost host,
+        IGame game,
+        IDomainStateProjection? projection,
+        IReconstructableDomain? reconstructable,
+        WorldStateSummary summary)
+    {
+        if (projection is not null)
+        {
+            var schema = projection.StateSchema;
+            var frame = projection.CaptureState(summary.Frame);
+            var records = frame.Records.Select(r =>
+                ("layer:" + schema.FindKind(r.Kind).Layer, HashPersisted(r, game)));
+            return Build(records, HashHostSections(host, reconstructable));
+        }
+
+        var worldObjects = summary.Objects.Select(o =>
+            (SignatureTreeBuilder.RtsCellKey(o.Position, SignatureTreeBuilder.DefaultCellSize), HashPersisted(o, game)));
+        return Build(worldObjects, HashHostSections(host, reconstructable));
+    }
+
+    private static IEnumerable<(string Name, ulong Hash)> HashHostSections(
+        SimulationHost host,
+        IReconstructableDomain? reconstructable)
+    {
+        yield return (EngineCheckpointData.RandomSection, HashBytes(EngineCheckpoint.CaptureRandomSection(host)));
+        yield return (EngineCheckpointData.HostSection, HashBytes(EngineCheckpoint.CaptureHostSection(host)));
+        if (reconstructable is not null)
+        {
+            yield return (EngineCheckpointData.DomainRuntimeSection, HashBytes(EngineCheckpoint.CaptureDomainRuntimeSection(host, reconstructable)));
+        }
+    }
+
     public static ulong HashBytes(ReadOnlySpan<byte> bytes) => XxHash3.HashToUInt64(bytes);
 
     /// <summary>Hashes the bytes <paramref name="value"/> would contribute to a checkpoint section.</summary>
