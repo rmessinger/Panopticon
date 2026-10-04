@@ -225,6 +225,42 @@ public static class EngineCheckpoint
         return stream.ToArray();
     }
 
+    internal static (uint Seed, uint[] Words) DecodeRandomSection(byte[] payload)
+    {
+        using var reader = new BinaryReader(new MemoryStream(payload, writable: false));
+        var seed = reader.ReadUInt32();
+        var words = new uint[SageRandom.StateWordCount];
+        for (var i = 0; i < words.Length; i++)
+        {
+            words[i] = reader.ReadUInt32();
+        }
+
+        return (seed, words);
+    }
+
+    internal static (uint Frame, TimeSpan MapTime, SortedDictionary<uint, List<Order>> PendingOrders) DecodeHostSection(byte[] payload)
+    {
+        using var reader = new BinaryReader(new MemoryStream(payload, writable: false));
+        var frame = reader.ReadUInt32();
+        var mapTime = TimeSpan.FromTicks(reader.ReadInt64());
+        var pendingOrders = new SortedDictionary<uint, List<Order>>();
+        var entryCount = reader.ReadInt32();
+        for (var i = 0; i < entryCount; i++)
+        {
+            var scheduledFrame = reader.ReadUInt32();
+            var orderCount = reader.ReadInt32();
+            var orders = new List<Order>(orderCount);
+            for (var j = 0; j < orderCount; j++)
+            {
+                orders.Add(ReadOrder(reader));
+            }
+
+            pendingOrders[scheduledFrame] = orders;
+        }
+
+        return (frame, mapTime, pendingOrders);
+    }
+
     internal static byte[] CaptureDomainRuntimeSection(SimulationHost host, IReconstructableDomain domain)
     {
         var stream = new MemoryStream();
@@ -240,6 +276,14 @@ public static class EngineCheckpoint
         using var writer = new StateWriter(stream, host.Game);
         writer.PersistObject(stateFrame, "DomainStateFrame");
         return stream.ToArray();
+    }
+
+    internal static DomainStateFrame DecodeDomainStateSection(byte[] payload, IGame game)
+    {
+        using var reader = new StateReader(new MemoryStream(payload, writable: false), game);
+        var frame = new DomainStateFrame();
+        reader.PersistObject(frame, "DomainStateFrame");
+        return frame;
     }
 
     internal static void WriteOrder(BinaryWriter writer, Order order)

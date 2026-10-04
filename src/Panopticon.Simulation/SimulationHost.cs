@@ -98,6 +98,19 @@ public sealed class SimulationHost
         return (_frame, _mapTime, _pendingOrders);
     }
 
+    // Checkpoint restore seam (WI-A1-16): rewinds the host counters and re-seeds the pending
+    // order schedule from a decoded host section.
+    internal void RestoreHostState(uint frame, TimeSpan mapTime, IEnumerable<KeyValuePair<uint, List<Order>>> pendingOrders)
+    {
+        _frame = frame;
+        _mapTime = mapTime;
+        _pendingOrders.Clear();
+        foreach (var (scheduledFrame, orders) in pendingOrders)
+        {
+            _pendingOrders[scheduledFrame] = new List<Order>(orders);
+        }
+    }
+
     public SimulationHost(IGameEngine gameEngine, ISimulationDomainModel domainModel)
     {
         _gameEngine = gameEngine;

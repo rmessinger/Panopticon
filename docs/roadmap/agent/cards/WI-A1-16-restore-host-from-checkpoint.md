@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-16` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6b restore host from checkpoint |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-15` |
@@ -62,3 +62,35 @@ Do not implement the run reconstructor or operational stream. Do not broaden sav
 - Unblock `WI-A1-22`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+Added `EngineCheckpointRestorer.Restore(host, checkpoint)` in
+`src/Panopticon.Simulation/Recording/EngineCheckpointRestorer.cs`, restoring in order: engine
+section via `SaveFile.LoadFromStream` (the booted host is already in-game, so the read-mode
+start-campaign and skirmish-restart paths are bypassed by the WI-A1-13 guards; no
+`StartCampaign` call), SageRandom state words, host frame/map-time/pending order schedule via
+the new internal `SimulationHost.RestoreHostState`, optional domain runtime, and the
+domain-state check: when the checkpoint carries a `domain-state` section, a fresh
+`CaptureState` after the engine restore is hashed with `OperationalStateHasher` and compared
+against the recorded section, throwing `InvalidOperationException` naming the frame on
+mismatch. `EngineCheckpoint` gained internal `DecodeRandomSection`, `DecodeHostSection`, and
+`DecodeDomainStateSection` decoders.
+
+Tests (`test/Panopticon.Simulation.Tests/Recording/EngineCheckpointRestoreTests.cs`): a
+restored RTS host matches an uninterrupted run per-object persisted bytes after 10 frames,
+including a pending injected order schedule carried through the restore; a projected wrapper
+domain restores with its domain-state check passing and rejects a stale domain-state section
+with `InvalidOperationException`.
+
+Finding for WI-A1-24: hosts whose domains create objects from in-memory definitions
+(`TransportGraphDomainModel`'s `TransportNodeController`/`TransportVehicle`) cannot be
+restored yet, because `ObjectDefinitionLookupTable.GetById` resolves names through the scoped
+asset store and those definitions are never registered (each vehicle definition also carries
+its route in module data, which per-name registration would not round-trip). Conformance for
+such domains needs registered definitions plus domain-scoped runtime restore; deferred to the
+reconstruction-conformance card.
+
+Validation: EngineCheckpointRestoreTests 2/2 with the installed game; recording suites 43/43;
+`dotnet format src/Panopticon.sln --verify-no-changes` clean;
+`scripts/check_brace_newline.py` clean; `git diff --check` clean.
