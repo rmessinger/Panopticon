@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-17` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6c run identity |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -65,3 +65,13 @@ Do not implement reconstructor identity refusal yet. Do not make `Full` run-outp
 - Unblock `WI-A1-21`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+- `RunIdentity` (Recording/RunIdentity.cs) captures loaded `Panopticon.*` module version ids (Tests assemblies excluded, ordinal-sorted), runtime description, OS/process architecture, SIMD flags (`Vector512.IsHardwareAccelerated`, `Avx2.IsSupported`, `AdvSimd.IsSupported`), shard layout id, seed, input hashes, and archive hashes. `Capture(seed, shardLayoutId, inputs, archiveFilePaths, cache?)` is the production entry; an internal all-fields constructor serves tests.
+- Inputs (scenario/map, parameters, datasets) hash via `XxHash3.HashToUInt64`; archives hash incrementally through an 80 KiB `Append` loop so multi-hundred-MB `.big` files never load into memory.
+- `ArchiveContentHashCache` persists `name|size|lastWriteTicks -> hash` JSON under `LocalApplicationData/Panopticon/archive-hash-cache.json` (outside every install directory); cache misses recompute and save, corrupt cache files fall back to empty. `ArchiveContentHashCache.Shared` is the default seam; tests inject an explicit path.
+- `Matches`/`Differences` report per-field mismatches including module version, input hash, archive length/hash, and missing-on-one-side entries; `StableHash` returns the XxHash3 hex string of a canonical length-prefixed byte serialization (checkpoint headers and manifests, WI-A1-21).
+- `System.IO.Hashing` 10.0.0 added once to `Directory.Packages.props`; `Panopticon.Simulation.csproj` gained the versionless reference. Not wired into `RunOutput` or any refusal path (A1-21 scope).
+- Tests: `RunIdentityTests` 11/11 (equality + stable hash, seed/shard/runtime/module/archive mismatch details, missing-side reporting, per-field hash sensitivity, `Capture` runtime/module fill, cache reuse + mtime-keyed recompute + persistence reload, `Capture` archive hashing through the cache).
+
