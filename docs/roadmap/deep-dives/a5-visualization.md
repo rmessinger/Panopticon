@@ -111,8 +111,9 @@ batch runs are inspectable rather than opaque.
 - State reconstruction: `Full`-mode runs reconstruct any frame from recorded snapshots/deltas.
   `Operational`-mode runs read operational records directly and obtain granular frames from the
   [A1-6 reconstructor](a1-6-operational-recording.md#6-reconstruction), which re-simulates from
-  the nearest checkpoint and verifies against recorded hashes. Unverified re-execution is a
-  separate run, not analysis of the prior one.
+  the nearest checkpoint. Rebuilt frames are labelled as such: they are plausible and may drift
+  from the original run, whose authoritative record is the operational stream
+  ([A1-6 §3](a1-6-operational-recording.md#3-reconstruction-fidelity)).
 - Timeline scrubbing: step/seek to any logic frame; play/pause/fast-forward.
 - Visualizations, domain-parameterized as the domain model supplies the view:
   - A spatial 2-D overview/heatmap of entity positions/movement for grid domains (RTS), a
@@ -134,9 +135,9 @@ batch runs are inspectable rather than opaque.
 ## 5. Run comparison & divergence localization
 
 Comparing runs by frame, partition, entity, and system helps investigate an experiment without
-making cross-seed agreement a correctness gate. Within one run identity, A1-6 reconstruction
-recovers granular detail; across identities another execution may follow a different path, so
-T2 detail for such comparisons is captured in the original run.
+making cross-run agreement a correctness gate. Exact diagnostic detail must be captured in the
+original run because another execution may follow a different path; A1-6 rebuilt frames give
+approximate detail for `Operational` runs.
 
 ### 5.1 Tiered recording (emitted by [A1-5](a1-headless-host.md), consumed here)
 The recording is tiered so always-on cost stays proportional to the scale this roadmap targets:
@@ -154,8 +155,8 @@ The recording is tiered so always-on cost stays proportional to the scale this r
 - Live triggering (T2). T2 is armed
   before a run and fires when a T1 subtree (or a T0 invariant) breaches tolerance, snapshotting
   recent detailed deltas from a ring buffer. A user can also pre-mark a frame/region window.
-  For `Operational`-mode runs, the same window can be reconstructed after the fact within the
-  run identity.
+  For `Operational`-mode runs, an approximate window can be rebuilt after the fact from the
+  nearest checkpoint.
 - Tolerance-aware comparison. "Divergence" is first place drift exceeds a configured
   tolerance, reported per subtree, not first non-identical bit. Tolerances are per-quantity
   (e.g. position ε, health ε) and surfaced in the comparator.

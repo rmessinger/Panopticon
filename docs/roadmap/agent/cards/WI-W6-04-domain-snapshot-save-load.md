@@ -42,7 +42,7 @@ save and the domain-state snapshot in one file.
 
 - [ ] Frame, theater time, schema, active regions, and object-key mapping mismatches fail load.
 - [ ] Successful load reconstructs domain state and host active objects.
-- [ ] A loaded run stepped to the next operational boundary matches the recorded operational hash.
+- [ ] A loaded run steps to the next operational boundary and satisfies conservation.
 - [ ] Standard validation passes.
 
 ## Validation commands

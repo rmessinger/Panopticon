@@ -80,10 +80,8 @@ The first executable slice uses W1/W2 state:
 - ownership and conservation checks across shard ledgers;
 - A5 visualization of shard strips, halo age, boundary effects, and handoffs.
 
-Each shard applies incoming boundary messages in frame, source shard key, then sequence order, so
-a sharded run reproduces within its run identity; the shard layout is part of that identity
-([A1-6 §3](a1-6-operational-recording.md#3-determinism-contract)). Each shard writes its own
-A1-6 checkpoints at shared campaign boundaries.
+Each shard writes its own [A1-6](a1-6-operational-recording.md) checkpoints at shared checkpoint
+boundaries. Message order is not constrained.
 
 B6-2 is gated on W1 cards because W1 owns command, logistics, aggregate combat, and the operational
 tick systems. W2 is needed before tactical soldier handoff is tested.

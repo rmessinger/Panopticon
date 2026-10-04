@@ -683,8 +683,10 @@ public class Player : IPersistableObject
         reader.PersistUInt32(ref defaultTeamId);
         if (reader.Mode == StatePersistMode.Read)
         {
-            DefaultTeam = reader.Game.TeamFactory.FindTeamById(defaultTeamId);
-            if (DefaultTeam.Template.Owner != this)
+            DefaultTeam = defaultTeamId == 0
+                ? null
+                : reader.Game.TeamFactory.FindTeamById(defaultTeamId);
+            if (DefaultTeam != null && DefaultTeam.Template.Owner != this)
             {
                 throw new InvalidStateException();
             }

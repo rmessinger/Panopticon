@@ -101,6 +101,22 @@ public class SaveFileTests : IClassFixture<GameFixture>
             CheckEquality(value, comparisonValue);
         }
 
+        public override void PersistInt64Value(ref long value)
+        {
+            long comparisonValue = default;
+            _comparisonReader.PersistInt64Value(ref comparisonValue);
+
+            CheckEquality(value, comparisonValue);
+        }
+
+        public override void PersistDoubleValue(ref double value)
+        {
+            double comparisonValue = default;
+            _comparisonReader.PersistDoubleValue(ref comparisonValue);
+
+            CheckEquality(value, comparisonValue);
+        }
+
         public override void PersistByteValue(ref byte value)
         {
             byte comparisonValue = default;

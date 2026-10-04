@@ -6,36 +6,34 @@
 >
 > Audience: human reference for roadmap decisions.
 
-- Determinism priority. Decision (revised): determinism is scoped to one run identity: build,
-  runtime, operating system, architecture, SIMD capability, inputs, and shard layout. Within an
-  identity, one seed reproduces its run at every frame. Determinism across builds, platforms, or
-  shard layouts is not required, and thread count is not part of the identity. Experiments across
-  seeds still validate through per-run invariants, authored bounds, aggregate distributions, and
-  performance statistics. Supersedes the earlier Decision that runs may diverge across executions
-  and thread schedules and that recorded per-frame state, not re-simulation, backs the replayer;
-  per-frame recording does not scale to the Sedan reference run. Consequences:
-  - [A2](track-a-foundations.md) keeps cross-seed statistical validation. Same-seed agreement
-    within an identity is a correctness property; failures follow the repository
-    determinism-test rule (stop, preserve artifacts, report).
-  - [B3](track-b-scale.md) parallel systems compute concurrently but commit intents in a fixed
-    order (system registration order, entity id, intent sequence); floating-point reductions use
-    fixed partitions independent of worker count.
-  - [B6](deep-dives/b6-distributed-simulation.md) and W5 apply cross-shard messages in frame,
-    source shard key, then sequence order; handoff validity still uses invariants such as no
-    unit duplication or loss and conservation.
-  - Physics steps single-threaded; a multithreaded Bepu dispatcher requires
-    `Simulation.Deterministic`.
-  - Rules and verification: [A1-6 §3](deep-dives/a1-6-operational-recording.md#3-determinism-contract).
-- Operational recording. Decision: large runs record in `Operational` mode: operational-level
-  records per operational boundary plus full engine checkpoints at frame zero and every domain
-  campaign boundary (1 h theater for Track W). Granular frames are reconstructed for the whole
-  world by re-simulating from the nearest checkpoint with the same seeds and logged inputs, and
-  every operational boundary is verified against state hashes recorded live. A local cache of
-  derived checkpoints bounds repeat scrubs to one operational interval. `Full` mode (A1-5
-  per-frame recording) stays the RTS default so existing baselines are unchanged.
-  `GameLogic.Random` becomes the persisted `SageRandom`. A reconstructor refuses a mismatched run
-  identity unless overridden. Region-local reconstruction is out of scope. Design and size
-  estimates: [A1-6](deep-dives/a1-6-operational-recording.md).
+- Determinism priority. Decision (revised twice): determinism is not a roadmap requirement or a
+  gate for parallelism, distribution, physics, AI, replay, or experiment tooling. Runs may diverge
+  across executions, platforms, builds, thread schedules, and shard layouts. Validation uses
+  per-run invariants, authored bounds, aggregate distributions, and performance statistics. Seed
+  controls remain an experiment input but do not imply reproducibility. Within a tick,
+  data-parallel systems may run concurrently and write freely; conflicting writes are reconciled
+  through explicit intent/command buffers and authority rules. Supersedes the scoped-determinism
+  revision (one run identity reproduces its run): the identity, hash, and fixed-order constraints
+  it imposed are dropped in favor of the storage-first recording below. Consequences:
+  - [A2](track-a-foundations.md) is statistical validation: distributions and invariants, no
+    same-seed agreement or state-hash parity.
+  - [B3](track-b-scale.md) uses free intra-tick parallelism with intent buffers and merge rules;
+    commit order is not constrained.
+  - [B6](deep-dives/b6-distributed-simulation.md) validates handoff and boundary sync by
+    invariants such as no unit duplication or loss and conservation.
+  - Physics may use a multithreaded dispatcher without `Simulation.Deterministic`.
+  - Re-simulated frames are plausible, not authoritative:
+    [A1-6 §3](deep-dives/a1-6-operational-recording.md#3-reconstruction-fidelity).
+- Operational recording. Decision (revised): disk use takes priority over scrub latency and
+  over exactness between checkpoints. Large runs record in `Operational` mode: operational-level
+  records per operational boundary plus full engine checkpoints at frame zero and every 6 domain
+  campaign hours (648,000 frames by default). Granular frames are rebuilt for the whole world by
+  re-simulating from the nearest checkpoint with logged inputs; rebuilt frames are labelled as
+  such and may drift from the original run. The operational stream is the authoritative record.
+  No run identity or state hashes are recorded. Derived checkpoints are cached in memory only.
+  `Full` mode (A1-5 per-frame recording) stays the RTS default so existing baselines are
+  unchanged. `GameLogic.Random` becomes the persisted `SageRandom`. Region-local reconstruction
+  is out of scope. Design and size estimates: [A1-6](deep-dives/a1-6-operational-recording.md).
 - ECS adoption depth. Decision: incremental data-oriented storage behind the module API
   (no full ECS rewrite). This follows from the Simulation-domain scope & mapping Decision below:
   every domain, RTS and non-RTS alike, is hosted by extending the `GameObject`/module system

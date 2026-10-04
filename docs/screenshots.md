@@ -229,6 +229,37 @@ A capture profile selects the Bepu backend for a whole run via `"PhysicsBackend"
 against the legacy `capture-impulse.json`; actor `"Z"` spawns height above ground for
 falling/stacking scenes).
 
+## Recipe: phase proof captures at PR setup (headless)
+
+End-of-session rule: when a phase or card ships visually verifiable behavior, capture it from
+the exact PR branch tip and put the artifacts in the viewer before opening or updating the PR.
+Run from a detached worktree so the capture reflects the PR state, not the current checkout:
+
+```sh
+git worktree add /tmp/opencode/<phase-proof> <pr-branch-tip> --detach
+cd /tmp/opencode/<phase-proof>
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- \
+  --headless --built-in-scenario <PhaseProofScenario>
+git worktree remove --force /tmp/opencode/<phase-proof>
+```
+
+Verified example (C4h, commit of PR #134): `Ee2ParticleProof` writes nine 512 px PNGs (three
+effects at 0.0/0.5/1.0 s) plus `validation_guide.md` into `ee2-particle-proof/`. Deterministic
+seed scope means reruns reproduce identical frames. Assemble one GIF per effect and share:
+
+```sh
+ffmpeg -y -framerate 1 -pattern_type glob -i 'ee2-particle-proof/fx_explosion_1-particle-*.png' \
+  -vf "split[a][b];[a]palettegen[p];[b][p]paletteuse" out.gif
+cp out.gif "/mnt/pit2/Network Storage/temp/c4h_<effect>.gif"
+```
+
+Verify before sharing: unique-color counts should grow across the 0000/0500/1000 frames, and
+pixel diffs between consecutive frames should be non-trivial for evolving effects. Subtle
+effects can be legitimate: `fx_muzzle_tank` diffs only 97-122 px because its puffs are small
+next to the tank; the validation guide is the authority on expected magnitude.
+
 ## Camera framing contract for close-ups
 
 Unit meshes render at any camera height once they are actually in view. The failure mode that

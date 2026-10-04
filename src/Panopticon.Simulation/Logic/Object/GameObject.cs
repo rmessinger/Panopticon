@@ -1709,7 +1709,7 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
     public void Persist(StatePersister reader)
     {
-        var version = reader.PersistVersion(9);
+        var version = reader.PersistVersion(10);
 
         var id = Id;
         reader.PersistObjectId(ref id, "ObjectId");
@@ -1729,9 +1729,40 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         var teamId = Team?.Id ?? 0u;
         reader.PersistUInt32(ref teamId);
-        Team = _gameEngine.Game.TeamFactory.FindTeamById(teamId);
+        var players = _gameEngine.Game.PlayerManager.Players;
+        var ownerIndex = -1;
+        for (var i = 0; i < players.Count; i++)
+        {
+            if (players[i] == Owner)
+            {
+                ownerIndex = i;
+                break;
+            }
+        }
 
-        Owner = Team.Template.Owner;
+        if (version >= 10)
+        {
+            reader.PersistInt32(ref ownerIndex);
+        }
+
+        if (reader.Mode == StatePersistMode.Read)
+        {
+            // 0 encodes "no team" (write side: Team?.Id ?? 0u). Teamless
+            // objects restore the persisted owner (map neutral structures are
+            // owned by a specific civilian player whose index is not derivable
+            // from the team id).
+            Team = teamId == 0
+                ? null
+                : _gameEngine.Game.TeamFactory.FindTeamById(teamId);
+            if (Team != null)
+            {
+                Owner = Team.Template.Owner;
+            }
+            else if (version >= 10 && ownerIndex >= 0 && ownerIndex < players.Count)
+            {
+                Owner = players[ownerIndex];
+            }
+        }
 
         reader.PersistObjectId(ref CreatedByObjectID);
         reader.PersistObjectId(ref BuiltByObjectID);

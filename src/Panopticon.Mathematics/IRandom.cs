@@ -78,6 +78,8 @@ public sealed class SageRandom : IRandom
     private readonly uint[] _seed;
     private uint _baseSeed;
 
+    public const int StateWordCount = 6;
+
     public uint Seed => _baseSeed;
 
     public SageRandom()
@@ -104,6 +106,36 @@ public sealed class SageRandom : IRandom
         _seed[4] = ax;
         ax += unchecked(0x6fdf3b64 - 0x9e353f7d);
         _seed[5] = ax;
+    }
+
+    /// <summary>
+    /// Copies the six-word generator state so a checkpoint can restore the
+    /// exact draw position (WI-A1-14). <paramref name="destination"/> must be
+    /// <see cref="StateWordCount"/> words long.
+    /// </summary>
+    public void CopyState(Span<uint> destination)
+    {
+        if (destination.Length != StateWordCount)
+        {
+            throw new ArgumentException($"State must be {StateWordCount} words.", nameof(destination));
+        }
+
+        _seed.CopyTo(destination);
+    }
+
+    /// <summary>
+    /// Replaces the generator state with words previously produced by
+    /// <see cref="CopyState"/>. The base seed is left untouched; only the
+    /// draw position is restored.
+    /// </summary>
+    public void RestoreState(ReadOnlySpan<uint> source)
+    {
+        if (source.Length != StateWordCount)
+        {
+            throw new ArgumentException($"State must be {StateWordCount} words.", nameof(source));
+        }
+
+        source.CopyTo(_seed);
     }
 
     public int Next(int lo, int hi)

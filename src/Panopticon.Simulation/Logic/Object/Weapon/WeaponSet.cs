@@ -85,7 +85,10 @@ public sealed class WeaponSet : IPersistableObject
 
         if (reader.Mode == StatePersistMode.Read)
         {
-            _currentWeaponTemplateSet = _gameObject.Definition.WeaponSets[conditions];
+            // Weaponless objects (e.g. code-built domain entities) persist no conditions; the
+            // definition carries no matching weapon set, so leave the template set unset.
+            _gameObject.Definition.WeaponSets.TryGetValue(conditions, out var weaponTemplateSet);
+            _currentWeaponTemplateSet = weaponTemplateSet;
         }
 
         // In Generals there are 3 possible weapons.

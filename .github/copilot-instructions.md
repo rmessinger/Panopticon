@@ -117,14 +117,14 @@ To capture frames for automated visual validation, use `FrameCapturer` in `Panop
 
 ## Roadmap and Agent Task Cards
 
-The long-term plan lives under `docs/roadmap/`. `docs/roadmap/README.md` is the index; per-track docs are `track-p-*.md`, `track-a-*.md`, `track-b-*.md`, and `track-c-*.md`. When changing the plan, follow `docs/roadmap/MAINTAINING.md` to propagate changes across all parallel docs. Documentation generally (including the roadmap) follows the concise style in `CONTRIBUTING.md`.
+The long-term plan lives under `docs/roadmap/`. `docs/roadmap/README.md` is the index; per-track docs are `track-p-*.md`, `track-a-*.md`, `track-b-*.md`, and `track-c-*.md`. When changing the plan, follow `docs/roadmap/agent/MAINTAINING.md` to propagate changes across all parallel docs. Documentation generally (including the roadmap) follows the concise style in `CONTRIBUTING.md`.
 
-For incremental, low-effort implementation work, use the agent task-card system in `docs/roadmap/agent-guide/`:
+For incremental, low-effort implementation work, use the agent task-card system in `docs/roadmap/agent/`:
 
-- Cards live in `docs/roadmap/agent-guide/cards/` named `<PHASE>-<NN>-<slug>.md`.
+- Cards live in `docs/roadmap/agent/cards/` named `<PHASE>-<NN>-<slug>.md`.
 - Each card is self-contained: exact files to read, ordered steps, acceptance criteria, and validation commands.
 - Pick a card with Status `Ready`, execute it, then mark it `Done` or `Blocked` and append a result entry to `.exchange`.
-- The template for new cards is `docs/roadmap/agent-guide/task-card-template.md`.
+- The template for new cards is `docs/roadmap/agent/task-card-template.md`.
 
 If a phase has no ready cards but needs advancing, decompose it into new cards using the template rather than executing the phase open-endedly.
 
@@ -135,6 +135,8 @@ Agents may use the file `.exchange` in the repository root to communicate with e
 ## PR Guidelines
 
 - All changes via PR; each commit must build
+- PR descriptions use atomic bullets, not prose paragraphs: one fact per bullet; one top-level bullet per card or change area; a short Validation list at the end
+- Split semicolon chains and multi-sentence blobs into separate bullets or nested sub-lists (total verbosity stays roughly the same as paragraph text)
 - "Rebase and Merge" is the default merge strategy
 - Do not mix unrelated changes in one PR
 - Address review feedback in new commits; squash only when requested

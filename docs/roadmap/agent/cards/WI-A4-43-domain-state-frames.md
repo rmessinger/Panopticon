@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-43` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): A4-4 domain state projection |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-42` |

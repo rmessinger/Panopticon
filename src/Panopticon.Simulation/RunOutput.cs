@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Panopticon.Logic;
+using Panopticon.Recording;
 
 namespace Panopticon;
 
@@ -84,6 +85,28 @@ public sealed class RunOutput
     public string? SnapshotArtifactPath { get; set; }
     public List<uint> SnapshotFrames { get; set; } = new();
 
+    // A4-4 domain state projection (WI-A4-44): present only when the domain implements
+    // IDomainStateProjection; omitted from JSON otherwise so RTS outputs are unchanged.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? DomainStateSchemaVersion { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DomainStateArtifactPath { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<uint>? DomainStateSnapshotFrames { get; set; }
+
+    // Operational recording (WI-A1-21): manifest fields for operational bundles; omitted from
+    // JSON otherwise so Full-mode outputs are unchanged.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RecordingMode? RecordingMode { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? OperationalStreamPath { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<RunCheckpointRecord>? Checkpoints { get; set; }
+
     internal static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
@@ -156,6 +179,15 @@ public sealed class SignatureTreeSample
 {
     public uint Frame { get; set; }
     public List<SignatureNodeRecord> Nodes { get; set; } = new();
+}
+
+/// <summary>One engine checkpoint in an operational bundle manifest (WI-A1-21).</summary>
+public sealed class RunCheckpointRecord
+{
+    public uint Frame { get; set; }
+    public string Path { get; set; } = "";
+    public long Bytes { get; set; }
+    public string XxHash3 { get; set; } = "";
 }
 
 public sealed class SignatureNodeRecord

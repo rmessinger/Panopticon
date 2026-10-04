@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-21` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6e operational run bundle |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-15`, `WI-A1-17`, `WI-A1-20` |
@@ -67,3 +67,16 @@ Do not implement `RunReconstructor`. Do not make manifest fields non-null in `Fu
 - Unblock `WI-A1-22`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+Implemented `OperationalRecorder` plus the bundle wiring. `RunRecording.Attach` creates the recorder only when the mode is `Operational` and a bundle directory is configured, so `Full` runs (with or without a bundle path) stay byte-identical. Frame-zero checkpoint written at attach, later checkpoints from `TickComplete` of checkpoint-boundary frames with the chunk-before-checkpoint ordering at both-boundary frames. Manifest (`run.json`) written at attach and rewritten on `Complete`, so a crashed run keeps a manifest listing only the attach-time checkpoints (on-disk checkpoints keep going; documented in the dispose test). `SimulationHost.OrdersDispatched` feeds the `Inputs` records. Added `WorldDelta` records for domains without a state projection (`WorldStateSummary` changes per deep dive §5.2). Manifest gains nullable `recordingMode`, `identity`, `operationalStreamPath`, `checkpoints` (frame, relative path, bytes, XxHash3).
+
+Deferred: identity archive list stays empty (needs a `Panopticon.IO` seam exposing the loaded `.big` paths; refusal still covers modules, runtime, seed, and scenario inputs). Projection-path hash buckets key on `layer:<kind layer>` because `DomainStateRecord` carries no topology key; deterministic and state-covering.
+
+Validation: `OperationalRunBundleTests` 4/4 with the installed game (layout, manifest, checkpoint files, second-run shape/hash determinism, dispose-without-complete semantics); recording suites 57/57 with `CNC_GENERALS_PATH` after adding `EngineCheckpointFormatTests` to `SerialGameTests` (its unthrottled boots raced other installed tests and collided on the shared translation manager); `dotnet format` verify, brace check, and `git diff --check` clean.
+
+## Revision: storage-first A1-6 (#147)
+
+- The manifest has no `identity` field; checkpoint entries keep the XxHash3 file hash for corruption detection.
+- The same-seed bundle test compares stream shape only, not hashes.
