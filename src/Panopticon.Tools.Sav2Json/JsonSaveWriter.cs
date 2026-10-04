@@ -125,6 +125,16 @@ internal sealed class JsonSaveWriter : StatePersister
         _writer.WriteNumberValue(value);
     }
 
+    public override void PersistInt64Value(ref long value)
+    {
+        _writer.WriteNumberValue(value);
+    }
+
+    public override void PersistDoubleValue(ref double value)
+    {
+        _writer.WriteNumberValue(value);
+    }
+
     public override void PersistSingleValue(ref float value)
     {
         _writer.WriteNumberValue(value);

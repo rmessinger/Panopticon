@@ -13,9 +13,42 @@ namespace Panopticon.Simulation.Transport;
 /// metrics on the shared <see cref="GameObject"/>/module runtime and the same
 /// <see cref="SimulationHost"/> the RTS adapter uses. Not a transport game (the non-RTS
 /// completeness Decision). Design: docs/roadmap/deep-dives/a4-simulation-domain-model.md.
+/// Also the A4-4 generality proof: projects its state through <see cref="IDomainStateProjection"/>
+/// with vehicle conservation on the node occupancy family. Design:
+/// docs/roadmap/deep-dives/a4-4-domain-state-projection.md.
 /// </summary>
-public sealed class TransportGraphDomainModel : ISimulationDomainModel
+public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainStateProjection
 {
+    private static readonly DomainStateSchema ProjectionSchema = new(
+        "transport-graph",
+        1,
+        new DomainRecordKind[]
+        {
+            new(
+                "node",
+                "graph",
+                new DomainStateField[]
+                {
+                    new("occupancy", "vehicles", DomainQuantityType.Integer, DomainConservationRole.Holding, "vehicle"),
+                },
+                []),
+            new(
+                "edge",
+                "graph",
+                new DomainStateField[]
+                {
+                    new("throughput", "crossings", DomainQuantityType.Integer, DomainConservationRole.None, null),
+                },
+                new[] { "from", "to" }),
+            new(
+                "vehicle",
+                "graph",
+                new DomainStateField[]
+                {
+                    new("edge_progress", "ratio", DomainQuantityType.Real, DomainConservationRole.None, null),
+                },
+                new[] { "edge" }),
+        });
     private readonly IGameEngine _gameEngine;
     private readonly TransportGraphTopology _topology;
 
@@ -32,6 +65,8 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel
     public string DomainId => "transport-graph";
 
     public DomainFidelityPolicy Fidelity => DomainFidelityPolicy.Identity;
+
+    public DomainStateSchema StateSchema => ProjectionSchema;
 
     public TransportGraphTopology Topology => _topology;
 
@@ -170,6 +205,52 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel
     }
 
     public IReadOnlyList<uint> CapturePlayerMoneyVector() => [];
+
+    /// <summary>
+    /// Projects the graph state: node occupancy (the conserved vehicle family), edge throughput
+    /// with endpoint references, and one record per vehicle keyed by entity id referencing its
+    /// current edge (node key once the route completes).
+    /// </summary>
+    public DomainStateFrame CaptureState(uint frame)
+    {
+        var result = new DomainStateFrame { Frame = frame };
+
+        foreach (var node in _topology.Nodes)
+        {
+            result.Records.Add(new DomainStateRecord
+            {
+                Key = node.Key,
+                Kind = "node",
+                Integers = [_nodeOccupancy[node.Index]],
+            });
+        }
+
+        foreach (var edge in _topology.Edges)
+        {
+            result.Records.Add(new DomainStateRecord
+            {
+                Key = edge.Key,
+                Kind = "edge",
+                Integers = [EdgeThroughput(edge.Key)],
+                References = [edge.From.Key, edge.To.Key],
+            });
+        }
+
+        foreach (var vehicle in _vehicles)
+        {
+            var gameObject = vehicle.ParentGameObject;
+            result.Records.Add(new DomainStateRecord
+            {
+                Key = $"vehicle:{gameObject.Id.Index}",
+                Kind = "vehicle",
+                Reals = [vehicle.EdgeProgress],
+                References = [_entityTopologyKeys[gameObject.Id.Index]],
+            });
+        }
+
+        result.Records.Sort((a, b) => string.CompareOrdinal(a.Key, b.Key));
+        return result;
+    }
 
     public string TopologyKey(in DomainEntitySummary entity)
     {
