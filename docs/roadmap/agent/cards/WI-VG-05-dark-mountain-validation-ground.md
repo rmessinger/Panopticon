@@ -77,13 +77,23 @@ python3 scripts/check_brace_newline.py
 
 2026-10-04: Done. Default map switched to `maps/Dark Mountain/Dark Mountain.map` in
 `ScenarioBuilder.BuildValidationGroundRun` (fallback constant), `TestHarness.json`, and
-`TestHarness/AGENTS.md`. Baseline refreshed headless on the real install; two follow-up headless
-runs each measured 26/26 pass with byte-identical report JSONs (determinism check).
-Install-free gates green against the refreshed baseline.
+`TestHarness/AGENTS.md`.
 
-Golden changes from the re-capture: `ChinaJetMIG` 34 -> 48 (the old golden was stale; measured
-48 stably across seven runs in the A1-14 guardrail), `AmericaTankCrusader` 5 -> 4,
-`GLAInfantryTunnelDefender` 47 -> 46. Entries are now sorted by definition name.
+2026-10-05 correction: the first attempt was inert. The validation-ground profile
+`src/Panopticon.Tools.ReplaySketch.Core/Profiles/unit-validation-ground-scenario.json` pins
+`MapPath`, and a non-empty profile path takes precedence over the `ScenarioBuilder` fallback, so
+every run behind the first commit (baseline refresh, golden changes, captures, contact sheet)
+actually executed on Alpine Assault. The effective switch point is the profile's `MapPath`, now
+`maps/Dark Mountain/Dark Mountain.map`; the fallback/doc changes remain correct for
+profile-less configurations.
+
+On genuine Dark Mountain: refresh run measured 26/26 pass; two follow-up comparison runs each
+measured 26/26 pass with byte-identical report JSONs (determinism check); install-free gates
+green (6/6). Captures verify the terrain actually changed (mean RGB 63,61,43 vs Alpine's
+85,88,71). The refreshed goldens are byte-identical to the Alpine re-capture: kill timings are
+weapon-delay driven and independent of the map, so the committed baseline needed no further
+change beyond the earlier re-capture (`ChinaJetMIG` 34 -> 48 stale-golden fix,
+`AmericaTankCrusader` 5 -> 4, `GLAInfantryTunnelDefender` 47 -> 46, entries sorted by name).
 
 The refresh run itself drops units that never complete within the headless frame cap, so the four
 pre-existing timeout units (`AmericaVehicleTomahawk`, `ChinaVehicleNukeLauncher`,
