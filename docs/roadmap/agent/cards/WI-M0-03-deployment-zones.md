@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M0-03` |
 | Roadmap phase | [M0](../track-m-mass-battle.md): battle map close-out |
-| Status | `In progress` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-M0-01` (deepdivide selected) |
@@ -44,14 +44,32 @@ Prove deepdivide can host the mass battle without editing it: a committed deploy
 - `src/Panopticon.Tools.TestHarness/AGENTS.md` (scenario section)
 - `docs/roadmap/agent/cards/WI-M0-03-deployment-proof.json` (proof artifact)
 
+## Result
+
+Run on the staged deepdivide (2026-10-04, headless, exit 0; proof in
+[WI-M0-03-deployment-proof.json](WI-M0-03-deployment-proof.json), byte-identical across two runs):
+
+| Check | Result |
+|---|---|
+| Capacity per side | 1000/1000 units inside the zone rect, 0 impassable placements (41/52 impassable slots skipped by the layout walk) |
+| Airfields | 2/2 per side behind the zones on passable ground |
+| Separation | zone gap 480 vs longest roster weapon range 350 |
+| Grid path | centroid-to-centroid 2 nodes, end passable |
+| Reachability | 3 ground classes arrive: Ground (AircraftCessna, 705 frames), Ground+Water (AmphibiousTransport, 1436), Ground+Rubble (GLAInfantryAngryMobMolotov02, 2820) |
+
+Representative selection is the fastest definition per class (a class's best crossing
+capability); near-zero-speed units (e.g. SpyDrone) would otherwise stretch frame budgets into
+the millions, so budgets are clamped to `maxFrameBudget` (30000). Whole-map framing needs a
+`FarPlaneDistance` bump past the 12000 default or the far deployment clips out of view.
+
 ## Acceptance criteria
 
-- [ ] Profile is scenario data only: no map edit, no map file committed; provenance recorded in the profile.
-- [ ] Headless run spawns 1000 units per side fully inside each zone rect at twice footprint spacing with zero impassable placements, plus two airfields placed behind each zone (between zone and map edge) on passable ground.
-- [ ] Zone edge gap exceeds the longest `AttackRange` among the spawned roster; both values recorded in the report.
-- [ ] A representative unit of every distinct ground locomotor `Surfaces` class used by AIUpdate-bearing object definitions arrives zone A to zone B within its frame budget, and `Navigation.CalculatePath` connects the two zone centroids.
-- [ ] Report JSON committed; run exits 0.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Profile is scenario data only: no map edit, no map file committed; provenance recorded in the profile.
+- [x] Headless run spawns 1000 units per side fully inside each zone rect at twice footprint spacing with zero impassable placements, plus two airfields placed behind each zone (between zone and map edge) on passable ground.
+- [x] Zone edge gap exceeds the longest `AttackRange` among the spawned roster; both values recorded in the report.
+- [x] A representative unit of every distinct ground locomotor `Surfaces` class used by AIUpdate-bearing object definitions arrives zone A to zone B within its frame budget, and `Navigation.CalculatePath` connects the two zone centroids.
+- [x] Report JSON committed; run exits 0.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 

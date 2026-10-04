@@ -1,0 +1,98 @@
+{
+  "map": "deepdivide",
+  "provenance": "community pack (952GeneralsMaps); staged into the install at maps/deepdivide/deepdivide.map; never committed (WI-M0-01 survey)",
+  "profilePath": "/tmp/opencode/m0/src/Panopticon.Tools.TestHarness/bin/Debug/net10.0/mass-battle-deepdivide-deployment.json",
+  "screenshotPath": "/tmp/opencode/m0-deploy-proof.png",
+  "sides": [
+    {
+      "id": "sideA",
+      "zoneX": 1900,
+      "zoneY": 370,
+      "zoneWidth": 2200,
+      "zoneHeight": 1400,
+      "unitsSpawned": 1000,
+      "unitsRequested": 1000,
+      "impassableSpawns": 0,
+      "impassableSlotsSkipped": 41,
+      "airfieldsPlaced": 2,
+      "longestWeaponRange": 350,
+      "airfieldAnchors": [
+        {
+          "x": 2450,
+          "y": 150
+        },
+        {
+          "x": 3450,
+          "y": 150
+        }
+      ],
+      "failureReasons": [],
+      "verdict": "OK"
+    },
+    {
+      "id": "sideB",
+      "zoneX": 1900,
+      "zoneY": 2250,
+      "zoneWidth": 2200,
+      "zoneHeight": 1400,
+      "unitsSpawned": 1000,
+      "unitsRequested": 1000,
+      "impassableSpawns": 0,
+      "impassableSlotsSkipped": 62,
+      "airfieldsPlaced": 2,
+      "longestWeaponRange": 350,
+      "airfieldAnchors": [
+        {
+          "x": 2450,
+          "y": 3830
+        },
+        {
+          "x": 3450,
+          "y": 3830
+        }
+      ],
+      "failureReasons": [],
+      "verdict": "OK"
+    }
+  ],
+  "separation": {
+    "gap": 480,
+    "maxWeaponRange": 350,
+    "verdict": "OK"
+  },
+  "gridPathNodes": 2,
+  "gridEndPassable": true,
+  "reachability": [
+    {
+      "surfaces": "Ground",
+      "representativeDefinition": "AircraftCessna",
+      "maxSpeed": 3,
+      "distance": 1881.7014,
+      "frameBudget": 2154,
+      "frames": 706,
+      "verdict": "OK",
+      "reason": ""
+    },
+    {
+      "surfaces": "Ground, Water",
+      "representativeDefinition": "AmphibiousTransport",
+      "maxSpeed": 1.3333334,
+      "distance": 1880,
+      "frameBudget": 3720,
+      "frames": 1437,
+      "verdict": "OK",
+      "reason": ""
+    },
+    {
+      "surfaces": "Ground, Rubble",
+      "representativeDefinition": "GLAInfantryAngryMobMolotov02",
+      "maxSpeed": 1.0666667,
+      "distance": 1881.7014,
+      "frameBudget": 4428,
+      "frames": 2821,
+      "verdict": "OK",
+      "reason": ""
+    }
+  ],
+  "allPassed": true
+}
