@@ -12,6 +12,8 @@ using Panopticon.Data;
 using Panopticon.Data.Map;
 using Panopticon.Data.Tga;
 using Panopticon.IO;
+using Panopticon.Logic.Map;
+using Panopticon.Mathematics;
 using Panopticon.Scripting;
 using Panopticon.Terrain;
 using Panopticon.Tools.ReplaySketch.Model;
@@ -30,6 +32,7 @@ public sealed class MapMetadataService
     private readonly HeightMap? _heightMap;
     private readonly Vector3[] _playerStarts;
     private readonly MapStructure[] _civilianStructures;
+    private readonly PolygonTrigger[] _waterAreas;
 
     public Vector3 ExtentMin { get; }
     public Vector3 ExtentMax { get; }
@@ -57,11 +60,13 @@ public sealed class MapMetadataService
         byte[]? previewImagePixels = null,
         int previewImageWidth = 0,
         int previewImageHeight = 0,
-        MapStructure[]? civilianStructures = null)
+        MapStructure[]? civilianStructures = null,
+        PolygonTrigger[]? waterAreas = null)
     {
         _heightMap = heightMap;
         _playerStarts = playerStarts;
         _civilianStructures = civilianStructures ?? [];
+        _waterAreas = waterAreas ?? [];
         ExtentMin = extentMin;
         ExtentMax = extentMax;
         PreviewImagePixels = previewImagePixels;
@@ -81,6 +86,10 @@ public sealed class MapMetadataService
     public static MapMetadataService CreateForTesting(
         Vector3 extentMin, Vector3 extentMax, MapStructure[] civilianStructures, params Vector3[] playerStarts)
         => new(null, extentMin, extentMax, playerStarts, civilianStructures: civilianStructures);
+
+    public static MapMetadataService CreateForTesting(
+        Vector3 extentMin, Vector3 extentMax, PolygonTrigger[] waterAreas, params Vector3[] playerStarts)
+        => new(null, extentMin, extentMax, playerStarts, waterAreas: waterAreas);
 
     /// <summary>
     /// Loads the given map file from the installation's virtual file system.
@@ -204,7 +213,8 @@ public sealed class MapMetadataService
             .ToArray() ?? [];
 
         return new MapMetadataService(heightMap, extentMin, extentMax, playerStarts,
-            previewPixels, previewWidth, previewHeight, civilianStructures);
+            previewPixels, previewWidth, previewHeight, civilianStructures,
+            mapFile.PolygonTriggers?.Triggers.Where(t => (t.IsWater || t.IsRiver) && t.Points.Length >= 3).ToArray());
     }
 
     /// <summary>
@@ -224,6 +234,21 @@ public sealed class MapMetadataService
 
     /// <summary>Bilinear height sample at world XY coordinates.</summary>
     public float SampleHeight(float x, float y) => _heightMap?.GetHeight(x, y) ?? 0f;
+
+    /// <summary>Terrain at or below a Generals water or river polygon's rendered surface.</summary>
+    public bool IsUnderwater(float x, float y)
+    {
+        var point = new Point3D((int)x, (int)y, 0);
+        foreach (var area in _waterAreas)
+        {
+            if (SampleHeight(x, y) <= area.Points[0].Z && area.PointInTrigger(point))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     // Cache directory: %LocalAppData%/Panopticon/ReplaySketch/previews, with a /tmp fallback
     // if the primary location is not writable from this process (e.g. macCatalyst runtime).

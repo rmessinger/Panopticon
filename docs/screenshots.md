@@ -92,6 +92,11 @@ ls /tmp/panopticon_captures/
 Exit code 3 from a VG run means "frame cap with no baseline", which is expected when the
 scenario outlives its frame budget; captures remain valid.
 
+Validation-ground map surveys must exclude submerged terrain using polygon `IsWater`/`IsRiver`
+and the polygon's first-point Z. Generals water is represented by polygon triggers, not only
+`StandingWaterAreas`. A flat heightmap region can be a lakebed. Dry placement must be checked
+before treating a timing run or contact sheet as a valid map-switch proof.
+
 ## Recipe: windowed runs and the ImGui overlay (Xvfb + llvmpipe)
 
 Status: does not work. llvmpipe renders (CPU fully busy) but no frame was ever presented to the

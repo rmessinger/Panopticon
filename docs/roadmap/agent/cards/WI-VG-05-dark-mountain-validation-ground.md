@@ -22,12 +22,10 @@ sandbox measures on a larger, flatter map with room for the full roster at spaci
 
 ## Why Dark Mountain
 
-Alpine Assault's playable area constrains the builder to two usable flat discs, crowding roster
-placement. A terrain survey of all 51 Generals maps (largest 4-connected flat region within
-2.5 world z-units, steep-edge fraction at |dz| > 3) ranked Dark Mountain best for the ground:
-400x400 playable cells (520x520 with border 60), a 77,858-cell contiguous flat patch spanning the
-whole map bounding box at z0, and only 3.3% steep edges. Twilight Flame is larger but mountainous;
-Tournament Island is flatter on paper but its z0 plane is water.
+Dark Mountain has 400x400 playable cells (520x520 with border 60). The original flat-region
+survey counted its submerged z0 lakebed as usable ground. Dry cluster selection must exclude
+terrain at or below the map's z7 water polygon. All three corrected roster clusters fit on
+flat z10 land; see the review correction below.
 
 ## Steps
 
@@ -51,6 +49,7 @@ Tournament Island is flatter on paper but its z0 plane is water.
 - [ ] Baseline refreshed on Dark Mountain; two follow-up headless runs byte-identical.
 - [ ] Install-free validation-ground tests pass against the refreshed baseline.
 - [ ] No tolerance widened and no minimum frame floor lowered.
+- [ ] Units, targets, and supply sources are on dry ground; submerged placement overrides fail explicitly.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
@@ -100,4 +99,16 @@ pre-existing timeout units (`AmericaVehicleTomahawk`, `ChinaVehicleNukeLauncher`
 `GLAInfantryTerrorist`, `GLAVehicleSCUDLauncher`) were carried over verbatim from the prior
 baseline to keep `CommittedBaseline_CoversEveryCatalogUnit` intact; they time out identically on
 both maps (unchanged headless condition, also reflected in `.exchange`). No tolerances widened,
-no minimum frame floors lowered, no placement failures on the new map.
+no minimum frame floors lowered. These initial runs did not detect submerged placements.
+
+Review correction: the initial visual proof placed units on the submerged lakebed. Flatness
+alone was not a valid placement criterion. `MapMetadataService` now reads Generals water
+polygons, and cluster selection excludes submerged terrain before scoring flatness. Supply
+placement also avoids water and stays within the map. A final dry-ground check rejects wet
+placement overrides instead of silently spawning them. Synthetic tests cover water avoidance,
+no usable dry cluster, and underwater overrides. The corrected three clusters sample z10
+terrain above the map's z7 water plane; all 31 units, 31 targets, and the supply source are dry.
+ReplaySketch non-interactive tests pass 350/350; validation-ground simulation tests pass 7/7.
+The new headless capture measures 26 units, with the same four timeouts and transport gap.
+The committed baseline is unchanged. Avalonia validation-ground and map-tab screenshots pass
+visual regression checks; the default authoring scene remains Alpine Assault.

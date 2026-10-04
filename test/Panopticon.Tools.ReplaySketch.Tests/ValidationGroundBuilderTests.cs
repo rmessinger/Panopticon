@@ -1,5 +1,6 @@
 using System.IO;
 using System.Numerics;
+using Panopticon.Logic.Map;
 using Panopticon.Tools.ReplaySketch.Model;
 using Panopticon.Tools.ReplaySketch.Services;
 
@@ -7,6 +8,52 @@ namespace Panopticon.Tests.Tools.ReplaySketch;
 
 public class ValidationGroundBuilderTests
 {
+    [Fact]
+    public void Build_Clusters_AvoidFlatWaterAndKeepSupplySourcesDry()
+    {
+        var scenario = SingleFactionScenario();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        scenario.Layout.TargetClusterCenter = new Vector3(100f, 100f, 0f);
+        var map = MapMetadataService.CreateForTesting(Vector3.Zero, new Vector3(2000f, 2000f, 0f),
+            new[] { PolygonTrigger.CreateDefaultWaterArea(1) });
+
+        Assert.True(map.IsUnderwater(100f, 100f));
+        var plan = ValidationGroundBuilder.Build(scenario, map);
+        var positions = plan.UnitPlacements.Select(u => u.Position)
+            .Concat(plan.TargetPlacements.Select(t => t.Position))
+            .Concat(plan.SupplySourcePlacements.Select(s => s.Position));
+        Assert.All(positions, p => Assert.False(map.IsUnderwater(p.X, p.Y)));
+    }
+
+    [Fact]
+    public void Build_Clusters_WithNoDryGround_RejectsPlacement()
+    {
+        var scenario = SingleFactionScenario();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        var map = MapMetadataService.CreateForTesting(new Vector3(-250f, -250f, 0f), new Vector3(250f, 250f, 0f),
+            new[] { PolygonTrigger.CreateDefaultWaterArea(1) });
+
+        Assert.Throws<InvalidOperationException>(() => ValidationGroundBuilder.Build(scenario, map));
+    }
+
+    [Fact]
+    public void Build_WithUnderwaterOverride_RejectsPlacement()
+    {
+        var scenario = SingleFactionScenario();
+        scenario.Layout.Mode = LayoutMode.Clusters;
+        scenario.PlacementOverrides.Add(new PlacementOverride
+        {
+            FactionIndex = 2,
+            RosterIndex = 0,
+            X = 100f,
+            Y = 100f,
+        });
+        var map = MapMetadataService.CreateForTesting(Vector3.Zero, new Vector3(2000f, 2000f, 0f),
+            new[] { PolygonTrigger.CreateDefaultWaterArea(1) });
+
+        Assert.Throws<InvalidOperationException>(() => ValidationGroundBuilder.Build(scenario, map));
+    }
+
     private static ValidationGroundScenario SingleFactionScenario()
     {
         // The formation lives in the standard JSON; clone it and restrict to one faction so per-unit
