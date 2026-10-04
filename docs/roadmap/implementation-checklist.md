@@ -1443,9 +1443,10 @@ depend on the Track A/B/C phases listed in the track doc. Design:
 [deep dive](deep-dives/mass-battle-1k.md).
 
 ### M0: Battle map
-- [ ] M0-1 Community map evaluation against the map requirements.
+- [x] M0-1 Community map evaluation against the map requirements.
   - AC: each operator-supplied candidate has a record of size, slots, waypoints, passability, load
-    result, and provenance; no map file is committed.
+    result, and provenance; no map file is committed. Records: [`WI-M0-01`](agent/cards/WI-M0-01-map-evaluation.md)
+    (official maps.big batch; operator may extend with community candidates).
 - [ ] M0-2 Authored fallback map with B4a, only if no candidate passes.
   - AC: TBD; tighten once M0-1 records whether B4a is needed.
 - [ ] M0-3 Deployment zones and reachability check as scenario data.
