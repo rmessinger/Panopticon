@@ -123,6 +123,12 @@ public sealed class Game : DisposableBase, IGame
     private (string outputPath, ReplayHeader header)? _pendingReplaySave;
     public bool InGame { get; private set; } = false;
 
+    // Set after a successful LoadMap so save-file writing (GameStateMap) can
+    // record the map path and game type of the live run (WI-A1-13).
+    internal string? CurrentMapPath { get; private set; }
+
+    internal GameType CurrentGameType { get; private set; }
+
     public event EventHandler<GameUpdatingEventArgs> Updating;
     public event EventHandler<Logic.Orders.OrderProcessedEventArgs> OrderProcessed;
     public event EventHandler<Logic.GameObjectCreatedEventArgs> ObjectCreated;
@@ -786,6 +792,9 @@ public sealed class Game : DisposableBase, IGame
             throw new Exception($"Failed to load Scene3D \"{mapFileName}\"");
         }
 
+        CurrentMapPath = mapFileName;
+        CurrentGameType = gameType;
+
         // The run seed determines the simulation's random stream (A2, deep dive
         // a2-reproducibility §2.1). Replay loads pass the seed recorded in the replay metadata.
         var runSeed = unchecked((uint)seed);
@@ -916,6 +925,7 @@ public sealed class Game : DisposableBase, IGame
         }
 
         InGame = false;
+        CurrentMapPath = null;
 
         ShowMainMenu();
     }

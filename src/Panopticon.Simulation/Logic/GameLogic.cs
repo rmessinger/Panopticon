@@ -390,9 +390,37 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         reader.PersistUInt32(ref currentFrame);
         _currentFrame = new LogicFrame(currentFrame);
 
+        // Write mode must assign every object definition an id before the
+        // lookup table hits the stream; GetId otherwise appends entries after
+        // the table has already been persisted (WI-A1-13).
+        if (reader.Mode == StatePersistMode.Write)
+        {
+            foreach (var gameObject in _objects)
+            {
+                if (gameObject != null)
+                {
+                    _objectDefinitionLookupTable.GetId(gameObject.Definition);
+                }
+            }
+        }
+
         reader.PersistObject(_objectDefinitionLookupTable, "ObjectDefinitions");
 
+        // _objects keeps null slots for destroyed objects; the write loop
+        // below skips them, so the persisted count must count live objects
+        // only (WI-A1-13).
         var objectsCount = (uint)_objects.Count;
+        if (reader.Mode == StatePersistMode.Write)
+        {
+            foreach (var gameObject in _objects)
+            {
+                if (gameObject == null)
+                {
+                    objectsCount--;
+                }
+            }
+        }
+
         reader.PersistUInt32(ref objectsCount);
 
         reader.BeginArray("Objects");
