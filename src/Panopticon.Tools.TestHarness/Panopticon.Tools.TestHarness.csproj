@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Content Include="TestHarness.json" CopyToOutputDirectory="Always" />
+    <Content Include="mass-battle-deepdivide-deployment.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>

@@ -146,4 +146,18 @@ public sealed class TestHarnessConfig
     /// (a USA Missile Defender firing at a China BattleMaster).
     /// </summary>
     public EngagementCaptureOptions? EngagementCapture { get; set; } = null;
+
+    // ── Mass battle deployment (M0) ─────────────────────────────────────────
+
+    /// <summary>
+    /// Path to a <see cref="MassBattleDeploymentProfile"/> JSON. Empty uses the embedded
+    /// deepdivide profile shipped beside the executable.
+    /// </summary>
+    public string? MassBattleDeploymentProfilePath { get; set; } = null;
+
+    /// <summary>Where to write the deployment proof report JSON. Empty writes beside the executable.</summary>
+    public string? MassBattleDeploymentReportPath { get; set; } = null;
+
+    /// <summary>Optional PNG path for one deployment screenshot captured after the armies spawn.</summary>
+    public string? MassBattleDeploymentScreenshotPath { get; set; } = null;
 }

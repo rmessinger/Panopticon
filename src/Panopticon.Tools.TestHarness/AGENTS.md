@@ -309,6 +309,37 @@ $TMPDIR/panopticon_frames/<test_name>_<timestamp>/
 Look for the `[FrameCaptureSession] Session started:` line in test stdout to get the
 exact path.
 
+## Mass Battle Deployment (M0)
+
+Deployment proof for the mass-battle map (`WI-M0-03`): a committed profile JSON describes the
+map, two deployment zone rectangles, airfield anchors behind each zone, and a proxy roster; the
+runner loads the map through a real skirmish start, moves one representative per distinct ground
+locomotor class between the zone centroids with real pathfinded move orders, then spawns the full
+roster per side (1000 units at twice footprint spacing, skipping impassable slots) plus airfields.
+Zones and anchors are scenario data; the map itself is never edited or committed.
+
+### Running it
+
+```bash
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario MassBattleDeployment
+```
+
+The default profile is `mass-battle-deepdivide-deployment.json` (shipped beside the
+executable); `MassBattleDeploymentProfilePath` overrides it, `MassBattleDeploymentReportPath`
+redirects the proof JSON, and `MassBattleDeploymentScreenshotPath` captures one PNG after the
+armies spawn. A windowed run (no `--headless`) opens on the framed deployment and is the
+operator-run load proof.
+
+Checks and exit codes: 0 all passed; 1 setup error (missing profile, block sum mismatch,
+unknown definitions); 5 unmet acceptance check (capacity, airfield placement, zone separation
+vs the longest roster weapon range, locomotor-class arrival, centroid grid path). Reports are
+deterministic: same profile and map produce byte-identical JSON. The engine grid is
+locomotor-agnostic today, so classes group locomotors by template `Surfaces` flags and the
+fastest definition of each class is its representative; real per-locomotor pathing belongs to
+the pathfinding track.
+
 ## Unit Validation Ground (P9)
 
 A non-skirmish sandbox that stands up the whole unit roster side by side on a real map, orders

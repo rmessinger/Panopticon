@@ -223,6 +223,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.MassBattleDeployment)
+        {
+            Environment.ExitCode = MassBattleDeploymentRunner.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.PhysicsStack)
         {
             Environment.ExitCode = PhysicsStackRunner.Run(installation, config, reporter);

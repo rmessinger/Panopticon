@@ -5,6 +5,7 @@ public enum BuiltInScenario
     AlpineAssaultUSAvGLA,
     AlpineAssaultUSAvGLAFullBuild,
     UnitValidationGround,
+    MassBattleDeployment,
     EngagementCapture,
     ScenarioCapture,
     PhysicsStack,
