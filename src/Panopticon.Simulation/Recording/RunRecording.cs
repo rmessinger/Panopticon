@@ -376,7 +376,7 @@ public sealed class RunRecording : IDisposable
     /// <summary>Recording options (WI-A1-19); null when the caller omitted them (default Full path).</summary>
     public RecordingOptions? Options { get; }
 
-    /// <summary>Effective cadence: the domain's when reconstructable, else the options default, else 1800/108000.</summary>
+    /// <summary>Effective cadence: the domain's when reconstructable, else the options default, else 1800/648000.</summary>
     public RecordingCadence EffectiveCadence { get; }
 
     /// <summary>The host's domain viewed as an operational-recording participant; null when absent.</summary>

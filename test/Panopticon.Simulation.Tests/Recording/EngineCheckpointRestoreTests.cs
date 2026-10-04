@@ -33,7 +33,7 @@ public sealed class EngineCheckpointRestoreTests : IDisposable
         hostA.Run(30);
         hostA.InjectOrders(35, [Order.CreateMoveOrder(1, new System.Numerics.Vector3(100, 0, 100))]);
 
-        var checkpoint = WriteAndReadCheckpoint(hostA, "AB12CD34", "run-restore");
+        var checkpoint = WriteAndReadCheckpoint(hostA, "run-restore");
 
         using var gameB = BootGame();
         var hostB = new SimulationHost(gameB.GameEngine, new RtsSimulationDomainModel(gameB.GameEngine));
@@ -67,7 +67,7 @@ public sealed class EngineCheckpointRestoreTests : IDisposable
         var hostA = new SimulationHost(gameA.GameEngine, domainA);
         hostA.Run(50);
 
-        var checkpoint = WriteAndReadCheckpoint(hostA, "AB12CD34", "run-projection");
+        var checkpoint = WriteAndReadCheckpoint(hostA, "run-projection");
         Assert.True(checkpoint.Sections.ContainsKey(EngineCheckpointData.DomainStateSection));
         Assert.False(checkpoint.Sections.ContainsKey(EngineCheckpointData.DomainRuntimeSection));
 
@@ -97,7 +97,7 @@ public sealed class EngineCheckpointRestoreTests : IDisposable
         var domainC = new ProjectedRtsDomain(new RtsSimulationDomainModel(gameC.GameEngine), gameC);
         var hostC = new SimulationHost(gameC.GameEngine, domainC);
         var ex = Record.Exception(() => EngineCheckpointRestorer.Restore(hostC, staleCheckpoint));
-        Assert.IsType<InvalidOperationException>(ex);
+        Assert.IsType<InvalidDataException>(ex);
         Assert.Contains("domain-state", ex.Message, StringComparison.Ordinal);
     }
 
@@ -176,10 +176,10 @@ public sealed class EngineCheckpointRestoreTests : IDisposable
         public uint ResolveInteractionAuthority(in DomainInteraction interaction) => _inner.ResolveInteractionAuthority(in interaction);
     }
 
-    private static EngineCheckpointData WriteAndReadCheckpoint(SimulationHost host, string identityHash, string runId)
+    private static EngineCheckpointData WriteAndReadCheckpoint(SimulationHost host, string runId)
     {
-        var sections = EngineCheckpoint.CaptureSections(host, identityHash, runId);
-        var header = new EngineCheckpointHeader(host.LogicFrame.Value, 0, identityHash, runId);
+        var sections = EngineCheckpoint.CaptureSections(host);
+        var header = new EngineCheckpointHeader(host.LogicFrame.Value, 0, runId);
         using var stream = new MemoryStream();
         EngineCheckpoint.Write(stream, header, sections);
         stream.Position = 0;

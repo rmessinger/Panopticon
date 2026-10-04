@@ -82,15 +82,13 @@ public static class EngineCheckpointRestorer
             throw new InvalidOperationException("Checkpoint carries a domain-state section but the host domain has no state projection.");
         }
 
-        var recorded = EngineCheckpoint.DecodeDomainStateSection(section, host.Game);
-        var fresh = projection.CaptureState(host.LogicFrame.Value);
-        var recordedHash = OperationalStateHasher.HashPersisted(recorded, host.Game);
-        var freshHash = OperationalStateHasher.HashPersisted(fresh, host.Game);
-        if (recordedHash != freshHash)
+        // A mismatch means the checkpoint misses state the domain projects (a persistence
+        // coverage bug), not simulation drift: restore happens before any frame is stepped.
+        var fresh = EngineCheckpoint.CaptureDomainStateSection(host, projection);
+        if (!fresh.AsSpan().SequenceEqual(section))
         {
-            throw new InvalidOperationException(
-                $"Domain state at frame {checkpoint.Header.Frame} does not match the checkpoint domain-state section " +
-                $"(recorded {recordedHash:X16}, reconstructed {freshHash:X16}).");
+            throw new InvalidDataException(
+                $"Domain state at frame {checkpoint.Header.Frame} does not match the checkpoint domain-state section.");
         }
     }
 }

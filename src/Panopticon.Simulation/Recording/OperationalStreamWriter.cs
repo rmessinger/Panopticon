@@ -251,21 +251,9 @@ internal sealed class OperationalStreamWriter : IDisposable
                 writer.Write(inputs.Orders.Count);
                 foreach (var dispatched in inputs.Orders)
                 {
+                    writer.Write(dispatched.InjectionFrame);
                     writer.Write(dispatched.DispatchFrame);
                     EngineCheckpoint.WriteOrder(writer, dispatched.Order);
-                }
-
-                break;
-
-            case OperationalHashes hashes:
-                writer.Write(hashes.BoundaryFrame);
-                writer.Write(hashes.Hashes.WorldHash);
-                writer.Write(hashes.Hashes.GlobalsHash);
-                writer.Write(hashes.Hashes.Buckets.Count);
-                foreach (var bucket in hashes.Hashes.Buckets.OrderBy(k => k.Key, StringComparer.Ordinal))
-                {
-                    writer.Write(InternString(bucket.Key));
-                    writer.Write(bucket.Value);
                 }
 
                 break;

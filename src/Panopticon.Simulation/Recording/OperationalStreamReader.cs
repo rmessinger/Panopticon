@@ -477,36 +477,12 @@ internal sealed class OperationalStreamReader : IDisposable
                     var orders = new List<OperationalDispatchedOrder>(orderCount);
                     for (var i = 0; i < orderCount; i++)
                     {
+                        var injectionFrame = reader.ReadUInt32();
                         var dispatchFrame = reader.ReadUInt32();
-                        orders.Add(new OperationalDispatchedOrder(dispatchFrame, EngineCheckpoint.ReadOrder(reader)));
+                        orders.Add(new OperationalDispatchedOrder(injectionFrame, dispatchFrame, EngineCheckpoint.ReadOrder(reader)));
                     }
 
                     return new OperationalInputs(orders);
-                }
-
-            case OperationalRecordType.Hashes:
-                {
-                    var boundaryFrame = reader.ReadUInt32();
-                    var worldHash = reader.ReadUInt64();
-                    var globalsHash = reader.ReadUInt64();
-                    var bucketCount = reader.ReadInt32();
-                    if (bucketCount < 0)
-                    {
-                        throw new InvalidDataException("Negative bucket count.");
-                    }
-
-                    var buckets = new Dictionary<string, ulong>(bucketCount);
-                    for (var i = 0; i < bucketCount; i++)
-                    {
-                        buckets[ResolveString(reader.ReadUInt32())] = reader.ReadUInt64();
-                    }
-
-                    return new OperationalHashes(boundaryFrame, new OperationalStateHashes
-                    {
-                        WorldHash = worldHash,
-                        GlobalsHash = globalsHash,
-                        Buckets = buckets,
-                    });
                 }
 
             case OperationalRecordType.T1:

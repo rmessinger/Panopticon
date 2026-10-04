@@ -41,7 +41,6 @@ public class OperationalRunBundleTests : MockedGameTest
             var output = recording.Complete();
             Assert.False(Directory.Exists(bundle));
             Assert.Null(output.RecordingMode);
-            Assert.Null(output.Identity);
             Assert.Null(output.OperationalStreamPath);
             Assert.Null(output.Checkpoints);
             Assert.DoesNotContain("recordingMode", output.ToJson(), StringComparison.OrdinalIgnoreCase);
@@ -55,7 +54,6 @@ public class OperationalRunBundleTests : MockedGameTest
         var bundle = RunOperationalBundle(out var output, injectOrder: true);
 
         Assert.Equal(RecordingMode.Operational, output.RecordingMode);
-        Assert.NotNull(output.Identity);
         Assert.Equal("operational.bin", output.OperationalStreamPath);
         Assert.NotNull(output.Checkpoints);
         Assert.Equal(new uint[] { 0, 15, 30, 45 }, output.Checkpoints.Select(c => c.Frame).ToArray());
@@ -72,7 +70,7 @@ public class OperationalRunBundleTests : MockedGameTest
             Assert.True(File.Exists(fullPath), $"missing {checkpoint.Path}");
             var bytes = File.ReadAllBytes(fullPath);
             Assert.Equal((long)bytes.Length, checkpoint.Bytes);
-            Assert.Equal(OperationalStateHasher.HashBytes(bytes).ToString("X16"), checkpoint.XxHash3);
+            Assert.Equal(EngineCheckpoint.ContentHash(bytes), checkpoint.XxHash3);
         }
 
         using (var stream = File.OpenRead(Path.Combine(bundle, "operational.bin")))
@@ -88,7 +86,6 @@ public class OperationalRunBundleTests : MockedGameTest
                 var (_, records) = reader.ReadChunk(entry);
                 Assert.Contains(records, r => r is OperationalTick);
                 Assert.Contains(records, r => r is OperationalWorldDelta);
-                Assert.Contains(records, r => r is OperationalHashes);
                 Assert.DoesNotContain(records, r => r is OperationalDomainDelta or OperationalDomainSnapshot or OperationalRollups or OperationalEvents);
                 foreach (var record in records)
                 {
@@ -114,14 +111,14 @@ public class OperationalRunBundleTests : MockedGameTest
     }
 
     [GameFact(SageGame.CncGenerals)]
-    public void Operational_SecondRun_ProducesIdenticalStreamShapeAndHashes()
+    public void Operational_SecondRun_ProducesIdenticalStreamShape()
     {
         var firstBundle = RunOperationalBundle(out var first, injectOrder: true);
         var secondBundle = RunOperationalBundle(out var second, injectOrder: true);
 
         Assert.Equal(first.Checkpoints!.Select(c => c.Frame), second.Checkpoints!.Select(c => c.Frame));
         // Checkpoint bytes differ across runs (each header carries its own run id), so equality
-        // is asserted on the stream shape and world hashes instead.
+        // is asserted on the stream shape: boundary frames and record kinds.
         Assert.NotEqual(first.RunId, second.RunId);
 
         var firstShapes = ReadChunkShapes(firstBundle);
@@ -131,7 +128,6 @@ public class OperationalRunBundleTests : MockedGameTest
         {
             Assert.Equal(firstShapes[i].Frame, secondShapes[i].Frame);
             Assert.Equal(firstShapes[i].RecordTypes, secondShapes[i].RecordTypes);
-            Assert.Equal(firstShapes[i].WorldHashes, secondShapes[i].WorldHashes);
         }
     }
 
@@ -220,19 +216,15 @@ public class OperationalRunBundleTests : MockedGameTest
         return bundle;
     }
 
-    private List<(uint Frame, List<OperationalRecordType> RecordTypes, List<ulong> WorldHashes)> ReadChunkShapes(string bundle)
+    private List<(uint Frame, List<OperationalRecordType> RecordTypes)> ReadChunkShapes(string bundle)
     {
         using var stream = File.OpenRead(Path.Combine(bundle, "operational.bin"));
         using var reader = OperationalStreamReader.Open(stream, Generals);
-        var shapes = new List<(uint, List<OperationalRecordType>, List<ulong>)>();
+        var shapes = new List<(uint, List<OperationalRecordType>)>();
         foreach (var entry in reader.BuildScanIndex())
         {
             var (frame, records) = reader.ReadChunk(entry);
-            var worldHashes = records
-                .OfType<OperationalHashes>()
-                .Select(h => h.Hashes.WorldHash)
-                .ToList();
-            shapes.Add((frame, records.Select(r => r.Type).ToList(), worldHashes));
+            shapes.Add((frame, records.Select(r => r.Type).ToList()));
         }
 
         return shapes;

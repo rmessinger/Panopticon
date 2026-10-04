@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.IO.Hashing;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Data.Sav;
@@ -14,9 +15,9 @@ using Panopticon.Simulation;
 namespace Panopticon.Recording;
 
 /// <summary>
-/// Checkpoint file header (WI-A1-15 §5.3): frame, theater time, identity hash, and run id.
+/// Checkpoint file header (WI-A1-15 §5.3): frame, theater time, and run id.
 /// </summary>
-public sealed record EngineCheckpointHeader(uint Frame, long TheaterTimeTicks, string IdentityHash, string RunId);
+public sealed record EngineCheckpointHeader(uint Frame, long TheaterTimeTicks, string RunId);
 
 /// <summary>
 /// A parsed engine checkpoint: the header plus the decompressed payload of every section.
@@ -68,7 +69,6 @@ public static class EngineCheckpoint
         writer.Write(FormatVersion);
         writer.Write(header.Frame);
         writer.Write(header.TheaterTimeTicks);
-        writer.Write(header.IdentityHash);
         writer.Write(header.RunId);
 
         var sectionList = sections.ToList();
@@ -108,9 +108,8 @@ public static class EngineCheckpoint
 
         var frame = reader.ReadUInt32();
         var theaterTimeTicks = reader.ReadInt64();
-        var identityHash = reader.ReadString();
         var runId = reader.ReadString();
-        var header = new EngineCheckpointHeader(frame, theaterTimeTicks, identityHash, runId);
+        var header = new EngineCheckpointHeader(frame, theaterTimeTicks, runId);
 
         var sectionCount = reader.ReadInt32();
         var sections = new Dictionary<string, byte[]>(StringComparer.Ordinal);
@@ -144,12 +143,15 @@ public static class EngineCheckpoint
         return new EngineCheckpointData(header, sections);
     }
 
+    /// <summary>XxHash3 of a checkpoint file, as recorded in the manifest to detect corruption.</summary>
+    public static string ContentHash(ReadOnlySpan<byte> bytes) => XxHash3.HashToUInt64(bytes).ToString("X16");
+
     /// <summary>
     /// Captures every section a host can provide: engine logic chunks, logic random state, host
     /// frame/map-time/pending orders, and domain runtime/state when the domain model implements
     /// the A4-4/A1-6 contracts. Sections whose capability is absent are omitted.
     /// </summary>
-    public static IReadOnlyList<KeyValuePair<string, byte[]>> CaptureSections(SimulationHost host, string identityHash, string runId)
+    public static IReadOnlyList<KeyValuePair<string, byte[]>> CaptureSections(SimulationHost host)
     {
         var sections = new List<KeyValuePair<string, byte[]>>
         {

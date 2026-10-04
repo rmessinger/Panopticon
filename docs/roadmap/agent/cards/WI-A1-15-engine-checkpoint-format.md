@@ -87,3 +87,9 @@ Implemented in `src/Panopticon.Simulation/Recording/EngineCheckpoint.cs` with te
 - Validation: EngineCheckpointFormatTests 12/12 with `CNC_GENERALS_PATH` (11 without env: the
   installed-game test is a GameFact); whole-solution `dotnet format --verify-no-changes` clean;
   `check_brace_newline.py` and `git diff --check` clean.
+
+## Revision: storage-first A1-6 (#147)
+
+- Header drops the identity hash: magic, format version, frame, theater time, run id.
+- `CaptureSections(SimulationHost)` takes no identity or run id.
+- `EngineCheckpoint.ContentHash` computes the manifest XxHash3 for checkpoint files.

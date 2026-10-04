@@ -16,7 +16,6 @@ internal enum OperationalRecordType : byte
     Metrics = 6,
     Events = 7,
     Inputs = 8,
-    Hashes = 9,
     T1 = 10,
     WorldDelta = 11,
 }
@@ -73,18 +72,12 @@ internal sealed record OperationalEvents(uint BoundaryFrame, IReadOnlyList<Domai
 }
 
 /// <summary>One order dispatched since the previous boundary and the frame it dispatched at.</summary>
-internal sealed record OperationalDispatchedOrder(uint DispatchFrame, Order Order);
+internal sealed record OperationalDispatchedOrder(uint InjectionFrame, uint DispatchFrame, Order Order);
 
 /// <summary>Orders dispatched since the previous boundary.</summary>
 internal sealed record OperationalInputs(IReadOnlyList<OperationalDispatchedOrder> Orders) : OperationalRecord
 {
     public override OperationalRecordType Type => OperationalRecordType.Inputs;
-}
-
-/// <summary>Operational state hashes at the boundary (WI-A1-18).</summary>
-internal sealed record OperationalHashes(uint BoundaryFrame, OperationalStateHashes Hashes) : OperationalRecord
-{
-    public override OperationalRecordType Type => OperationalRecordType.Hashes;
 }
 
 /// <summary>Opaque tolerance-quantized signature-tree payload (A5-4).</summary>

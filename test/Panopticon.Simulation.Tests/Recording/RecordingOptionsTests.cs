@@ -9,12 +9,12 @@ namespace Panopticon.Tests.Recording;
 
 // WI-A1-19: recording modes and cadence. Omitting options must follow the existing Full path
 // unchanged; Operational mode samples only at cadence boundaries and has no live T2 capture; the
-// domain cadence wins over the caller default, which wins over the 1800/108000 built-in default.
+// domain cadence wins over the caller default, which wins over the 1800/648000 built-in default.
 
 public class RecordingOptionsTests : MockedGameTest
 {
     [Fact]
-    public void DefaultCadence_Is1800OperationalAnd108000Checkpoint()
+    public void DefaultCadence_Is1800OperationalAnd648000Checkpoint()
     {
         var cadence = RecordingOptions.CreateDefaultCadence();
 
@@ -26,6 +26,8 @@ public class RecordingOptionsTests : MockedGameTest
         Assert.True(cadence.IsCheckpointBoundary(0));
         Assert.True(cadence.IsCheckpointBoundary(RecordingOptions.DefaultCheckpointInterval));
         Assert.False(cadence.IsCheckpointBoundary(RecordingOptions.DefaultOperationalInterval));
+        Assert.False(cadence.IsCheckpointBoundary(108_000));
+        Assert.Equal(648_000u, RecordingOptions.DefaultCheckpointInterval);
     }
 
     [Fact]
