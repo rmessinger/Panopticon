@@ -89,6 +89,15 @@ public sealed class SimulationHost
     /// </summary>
     public ISimulationDomainModel DomainModel { get; }
 
+    internal IGame Game => _game;
+
+    // Checkpoint capture seam (WI-A1-15): the host frame counter, map time, and the pending
+    // order schedule are private, so the checkpoint writer reads them through this snapshot.
+    internal (uint Frame, TimeSpan MapTime, SortedDictionary<uint, List<Order>> PendingOrders) CaptureHostState()
+    {
+        return (_frame, _mapTime, _pendingOrders);
+    }
+
     public SimulationHost(IGameEngine gameEngine, ISimulationDomainModel domainModel)
     {
         _gameEngine = gameEngine;
