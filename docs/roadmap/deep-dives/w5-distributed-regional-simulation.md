@@ -71,9 +71,7 @@ Authority rules:
 
 ## 5. Evidence
 
-W5 compares sharded and single-process runs by distributions and invariants, not byte identity:
-the shard layout is part of the run identity, so the two are different identities. A sharded run
-reproduces within its own identity ([A1-6 §3](a1-6-operational-recording.md#3-determinism-contract)).
+W5 compares sharded and single-process runs by distributions and invariants, not byte identity.
 
 Required evidence:
 

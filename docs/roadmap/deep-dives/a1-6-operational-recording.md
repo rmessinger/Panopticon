@@ -1,4 +1,4 @@
-# Deep Dive: A1-6 Operational Recording and Seeded Reconstruction
+# Deep Dive: A1-6 Operational Recording and Checkpoint Re-simulation
 
 > Expands sub-phase A1-6 of [Track A: Foundations](../track-a-foundations.md); checklist item
 > A1-6. Extends the [A1-5 run outputs](a1-headless-host.md#25-result-outputs) and the
@@ -8,10 +8,11 @@
 > Audience: human design for the contracts `WI-A1-13..24` and `WI-W3a-31` add. Code references
 > are in the agent-context appendix.
 
-Purpose: keep recording cost proportional to operational state, not to soldiers times frames.
-Large runs persist operational records and periodic engine checkpoints. Granular frames are
-reconstructed on demand by re-simulating from the nearest checkpoint with the same seeds, and
-each reconstruction is verified against state hashes recorded live.
+Purpose: keep disk use proportional to operational state and a small number of checkpoints, not
+to soldiers times frames. Large runs persist operational records and sparse engine checkpoints.
+Granular frames are rebuilt on demand by re-simulating from the nearest checkpoint with the logged
+inputs. Rebuilt frames are plausible, not authoritative: storage is traded for scrub latency and
+for exactness between checkpoints.
 
 ---
 
@@ -19,15 +20,16 @@ each reconstruction is verified against state hashes recorded live.
 
 In scope:
 
-- the scoped determinism contract that makes reconstruction valid (§3);
 - a second recording mode, `Operational`, beside the A1-5 `Full` mode (§4);
-- the run bundle: manifest additions, operational stream, engine checkpoints, state hashes (§5);
-- the reconstructor, its verification, and a local reconstruction cache (§6);
+- the run bundle: manifest additions, operational stream, engine checkpoints (§5);
+- the reconstructor and an in-memory reconstruction cache (§6);
+- fidelity rules for rebuilt frames (§3);
 - conformance evidence on the RTS and transport-graph domains (§9).
 
 Out of scope:
 
-- determinism across builds, runtimes, operating systems, architectures, or shard layouts;
+- determinism of any kind ([determinism Decision](../open-questions.md)); no run identity, no
+  state hashes, no same-seed verification;
 - region-local reconstruction (whole-world only; a region-local mode would need a recorded log of
   cross-boundary interactions);
 - save games for players (checkpoints are recording artifacts, not a user save format);
@@ -38,39 +40,34 @@ Out of scope:
 | Choice | Decision | Reason |
 |---|---|---|
 | Recording level | Operational records only; no per-frame state on disk | Sedan all-tactical `Full` recording is about 11 to 110 TB per seed (§7). |
-| Granular frames | Re-simulated from the nearest checkpoint with the same seeds | The [determinism Decision](../open-questions.md) makes a run reproducible within one identity. |
-| Checkpoint cadence | Frame zero plus every domain campaign boundary (1 h theater for Western Front) | Bounded size; scrub latency is paid once per hour window and then cached (§6.3). |
+| Granular frames | Re-simulated from the nearest checkpoint with logged inputs | Disk use over responsiveness. |
+| Rebuilt-frame status | Plausible, not authoritative | Runs are not deterministic; the operational stream is the record of the run. |
+| Checkpoint cadence | Frame zero plus every 6 domain campaign hours (default 648,000 frames) | 11 checkpoints for the 60 h Sedan window (§7). |
 | Reconstruction scope | Whole world | Needs no boundary-interaction log. |
-| Verification | Exact per-bucket hashes at every operational boundary | Detects the first boundary where a reconstruction leaves the recorded path. |
+| Verification | None between checkpoints; restore checks the checkpoint's own domain-state section | Hashes would only report expected drift. |
+| Reconstruction cache | In memory, LRU under a byte budget, never on disk | No local disk growth from scrubbing. |
 | `Full` mode | Kept, and the default for RTS runs | Small runs and existing golden baselines stay byte-identical. |
 | Engine state | `SaveFile.Persist` logic chunks through `StateWriter` | One persistence path for host objects; the A3 seam already separates presentation. |
-| Logic random | `GameLogic.Random` becomes `SageRandom` with persisted state | `System.Random` state cannot be saved; `SageRandom` is the original engine generator. |
+| Logic random | `GameLogic.Random` becomes `SageRandom` with persisted state | A restored host continues with the recorded generator state; `System.Random` state cannot be saved. |
 | Compression | Brotli from `System.IO.Compression` | No new package. |
-| Hashing | XxHash3 from `System.IO.Hashing` | Fast, stable, 64-bit; the same package W1 uses for stream derivation. |
 
-## 3. Determinism contract
+## 3. Reconstruction fidelity
 
-A run identity (§5.4) fixes build, runtime, operating system, architecture, SIMD capability,
-inputs, and shard layout. Within one identity, the same seed and inputs produce the same state at
-every frame. Rules that keep the contract:
+Execution may vary between runs (parallel commit order, physics, shard timing), so a re-simulation
+from a checkpoint can leave the path the original run took.
 
-- Every simulation-affecting random draw comes from `GameLogic.Random` or a keyed stream
-  (`runSeed|key|tick|stream`, W1 §3). Keyed streams are stateless; `GameLogic.Random` state is
-  in every checkpoint.
-- Wall-clock time never reaches the tick. The host steps fixed map time (A1-4).
-- Iteration that affects state is ordered by object id or stable key. The A2 audit found no
-  unordered iteration on the tick path; new systems keep that property.
-- Parallel systems (B3) compute concurrently but commit intents in a fixed order: system
-  registration order, then entity id, then intent sequence. Floating-point reductions use fixed
-  partitions independent of worker count, so thread count is not part of the identity.
-- Physics steps single-threaded today. A multithreaded Bepu dispatcher requires
-  `Simulation.Deterministic = true`.
-- Sharded runs (B6, W5) apply cross-shard messages in frame, source shard key, then sequence
-  order. The shard layout is part of the identity.
-- Injected orders are logged with the frame they dispatched on, not the frame requested.
-
-A reconstruction that misses a recorded hash is a determinism deviation and follows the
-repository determinism-test rule: stop, preserve artifacts, report.
+- Checkpoint frames are exact: restore reproduces the persisted state, and the restore check
+  compares the domain-state section with a fresh `CaptureState`.
+- Frames after a checkpoint are rebuilt and may drift from the original run; drift can grow with
+  distance from the checkpoint.
+- The operational stream (metrics, events, operational domain state, roll-ups) is the authoritative
+  record. Analysis of outcomes, invariants, and conservation reads the stream, not rebuilt frames.
+- Rebuilt frames serve inspection: viewing tactical detail, T2 windows, and slice exports. A5
+  labels every reconstructor frame as rebuilt.
+- Two reconstructions of the same uncached window may differ. Cached derived checkpoints (§6.3)
+  keep repeat views within one session consistent.
+- Logged inputs are re-injected at their dispatch frames, so orders match the original run even
+  where state drifts.
 
 ## 4. Recording modes and cadence
 
@@ -84,7 +81,7 @@ public sealed record RecordingCadence(
 public sealed record RecordingOptions(
     RecordingMode Mode,
     string BundleDirectory,
-    RecordingCadence? DefaultCadence = null,   // 1800 / 108000 frames when null
+    RecordingCadence? DefaultCadence = null,   // 1800 / 648000 frames when null
     bool RecordT1 = true);
 
 public interface IReconstructableDomain
@@ -104,9 +101,13 @@ public interface IReconstructableDomain
   from the operational stream (Western Front: `tactical`), roll-up records that summarize those
   layers, operational events, and runtime state outside its schema (scheduler queues, sequence
   counters). Other domains use `DefaultCadence` and record no roll-ups.
+- Default cadence: operational boundary every 1,800 frames (one minute at 30 Hz), checkpoint every
+  648,000 frames (six hours at 30 Hz).
 - Western Front cadence (`WI-W3a-31`): operational boundary on each 60 s operational tick,
-  checkpoint on each 3600 s campaign tick. Compressed mode makes every host frame an operational
-  boundary; tactical mode makes every 1800th frame one.
+  checkpoint on every sixth 3600 s campaign tick. Compressed mode makes every host frame an
+  operational boundary; tactical mode makes every 1800th frame one.
+- The checkpoint interval is a run option. A run that needs faster scrubbing records more
+  checkpoints and pays the disk cost.
 
 ## 5. Run bundle
 
@@ -116,7 +117,7 @@ public interface IReconstructableDomain
   operational.bin           operational stream (§5.2)
   checkpoints/
     000000000.ckpt          frame zero
-    000108000.ckpt          first campaign boundary in tactical mode
+    000648000.ckpt          first checkpoint boundary in tactical mode (6 h)
     ...
   replay.rep                existing input replay (optional)
 ```
@@ -129,9 +130,11 @@ public interface IReconstructableDomain
 | Property | Content |
 |---|---|
 | `recordingMode` | `full` or `operational` |
-| `identity` | `RunIdentity` (§5.4) |
 | `operationalStreamPath` | relative path to `operational.bin` |
 | `checkpoints` | frame, relative path, byte size, XxHash3 of the file |
+
+The existing `seed` and `scenarioId` fields identify what the bootstrap boots. The per-file
+XxHash3 detects a corrupt or replaced checkpoint, not simulation drift.
 
 In `Operational` mode the T0 samples and T1 trees live in the stream, not in the JSON, and the
 manifest is written at start and rewritten at completion, so a crashed run keeps a manifest.
@@ -153,16 +156,15 @@ missing.
 | `Metrics` | T0 series id, key id, value |
 | `Events` | `DrainOperationalEvents` entries |
 | `Inputs` | orders dispatched since the last boundary: dispatch frame, player, `.rep` order encoding |
-| `Hashes` | world hash, globals hash, and one hash per bucket (§5.5) |
-| `T1` | optional tolerance-quantized signature tree for cross-seed comparison (A5-4) |
+| `T1` | optional tolerance-quantized signature tree for cross-run comparison (A5-4) |
 
 Domains without `IDomainStateProjection` record `WorldStateSummary` changes at the boundary in
 place of `DomainDelta`, with definition names as string ids and positions as `float`.
 
 ### 5.3 Engine checkpoint
 
-Header: magic `PNCK`, format version, frame, theater time, identity hash, run id. Then
-length-prefixed, Brotli-compressed sections:
+Header: magic `PNCK`, format version, frame, theater time, run id. Then length-prefixed,
+Brotli-compressed sections:
 
 | Section | Content |
 |---|---|
@@ -177,29 +179,11 @@ campaign and operational systems ran, so no boundary work is pending. Restore lo
 section into a host booted for the same scenario, then the random, host, and runtime sections,
 then compares the domain-state section with a fresh `CaptureState` (W6 §3 load check).
 
-### 5.4 Run identity
-
-`RunIdentity`: module version ids of the loaded `Panopticon.*` assemblies, runtime description,
-OS and process architecture, SIMD flags (`Vector512.IsHardwareAccelerated`, `Avx2.IsSupported`,
-`AdvSimd.IsSupported`), shard layout id, seed, and XxHash3 of inputs: scenario or map, parameters,
-datasets, and the loaded game archive list (name, size, content hash cached per install outside
-the install directory). The reconstructor refuses a mismatched identity unless the caller passes
-`AllowIdentityMismatch`; hashes are still verified in that case.
-
-### 5.5 State hash
-
-At every operational boundary, `OperationalStateHasher` persists each object through
-`StateWriter` into a hashing stream and folds it into the bucket of its T1 level-1 key (spatial
-cell for RTS, `region:` for Western Front). Non-object chunks, random state, host state, and domain
-runtime state fold into a globals hash. The world hash combines bucket hashes in ordinal key
-order. The same bytes a checkpoint would store are hashed, so any state that survives a
-checkpoint is verified.
-
 ## 6. Reconstruction
 
 ### 6.1 Flow
 
-`RunReconstructor.Open(bundle, bootstrap)` validates the identity and loads the index.
+`RunReconstructor.Open(bundle, bootstrap)` reads the manifest and loads the stream index.
 `Reconstruct(fromFrame, toFrame, sink)`:
 
 1. Pick the latest checkpoint at or before `fromFrame` (cache first, §6.3).
@@ -208,24 +192,25 @@ checkpoint is verified.
 3. Re-inject logged inputs at their dispatch frames.
 4. Step to `toFrame`. From `fromFrame`, hand each frame's `WorldStateSummary` and, when present,
    `DomainStateFrame` to the sink.
-5. At every operational boundary, hash and compare with the recorded `Hashes` record.
+5. At operational boundaries, store a derived checkpoint in the cache.
 
 Sinks cover the A5 needs: a frame callback, a T2 window capture armed for chosen regions, and
 `ExportSlice(from, to, path)`, which writes a standard A1-5 snapshot/delta artifact for the window
-so existing readers work unchanged.
+so existing readers work unchanged. Exported slices are marked rebuilt in their manifest.
 
-### 6.2 Verification failure
+### 6.2 Restore failure
 
-On the first hash mismatch the reconstructor stops and returns `ReconstructionDivergence`: the
-boundary frame, recorded and reconstructed world hashes, and the diverged bucket keys. Frames
-after the last matching boundary are not delivered. Artifacts are preserved for the report.
+A checkpoint whose file hash does not match the manifest, or whose domain-state section differs
+from the restored host's `CaptureState`, fails with `InvalidDataException` naming the checkpoint
+frame. This is a persistence-coverage bug (a field the checkpoint does not save), not drift.
 
 ### 6.3 Reconstruction cache
 
-While re-simulating, the reconstructor writes derived checkpoints at operational boundaries into
-a local cache (outside the bundle, keyed by run id and frame, LRU under a byte budget). Later
-scrubs inside a reconstructed hour re-simulate at most one operational interval. Derived
-checkpoints carry the recorded hash of their boundary and are discarded on identity change.
+While re-simulating, the reconstructor keeps derived checkpoints at operational boundaries in an
+in-memory LRU, keyed by run id and frame, under a byte budget. Nothing is written to disk. Later
+scrubs inside a reconstructed window re-simulate at most one operational interval while the
+covering entry is cached. A derived checkpoint captures the rebuilt path, so repeat views agree
+with the first reconstruction rather than with the original run.
 
 ## 7. Size and latency
 
@@ -237,22 +222,25 @@ Sedan reference arm, one seed, 60 h, about 320,000 soldiers. Object sizes are es
 | Per-frame world deltas | about 11 to 110 TB | none |
 | World snapshots | about 370 GB | none |
 | Operational stream | n/a | about 1 MB per boundary before compression, 3,600 boundaries, about 3.5 GB |
-| Checkpoints | none | 61 at about 0.3 to 0.6 GB before compression, about 20 to 40 GB |
+| Checkpoints | none | 11 at about 0.3 to 0.6 GB, about 3.5 to 7 GB |
+| Bundle total | about 11 to 110 TB | about 7 to 10 GB |
 | In-memory recording state | grows without bound | one chunk and one checkpoint buffer |
-| Scrub to an uncached frame | read | up to 108,000 frames of re-simulation |
-| Scrub inside a cached hour | read | up to 1,800 frames of re-simulation |
+| Local disk for scrubbing | none | none (cache is in memory) |
+| Scrub to an uncached frame | read | up to 648,000 frames of re-simulation |
+| Scrub inside a cached window | read | up to 1,800 frames of re-simulation |
 
-At a measured frame cost `c`, an uncached scrub costs up to `108000 * c` and a cached scrub up to
-`1800 * c` (at `c` = 50 ms: 90 minutes and 90 seconds).
+At a measured frame cost `c`, an uncached scrub costs up to `648000 * c` and a cached scrub up to
+`1800 * c` (at `c` = 50 ms: 9 hours and 90 seconds). A long scrub can run in the background while
+A5 shows operational records from the stream.
 
 ## 8. Consequences for other phases
 
 | Phase | Change |
 |---|---|
-| A5 | The replayer reads the operational stream directly and asks the reconstructor for granular frames; T2 inspection in `Operational` mode arms windows during reconstruction. |
-| B3, B6, F4 | Follow §3. |
-| W3a | `WI-W3a-31` implements `IReconstructableDomain` and a `rollup` record kind on the Western Front domain; reference and comparison arms record in `Operational` mode; evidence includes verified reconstruction. |
-| W5 | Shard layout is in the identity; whole-world reconstruction replays the recorded layout. |
+| A5 | The replayer reads the operational stream directly and asks the reconstructor for granular frames, labelled rebuilt; T2 inspection in `Operational` mode arms windows during reconstruction. |
+| B3, B6, F4 | No ordering constraints from A1-6. Checkpoints must capture all logic state they own. |
+| W3a | `WI-W3a-31` implements `IReconstructableDomain` and a `rollup` record kind on the Western Front domain; reference and comparison arms record in `Operational` mode; evidence uses the operational stream, with rebuilt tactical frames for inspection. |
+| W5 | Each shard writes its own checkpoints at shared checkpoint boundaries; whole-world reconstruction restores all shards. |
 | W6 | Save/load is the A1-6 checkpoint plus the operational stream. |
 
 ## 9. Sub-items and cards
@@ -261,11 +249,11 @@ At a measured frame cost `c`, an uncached scrub costs up to `108000 * c` and a c
 |---|---|---|
 | A1-6a | [`WI-A1-13`](../agent/cards/WI-A1-13-audit-checkpoint-coverage.md), [`WI-A1-14`](../agent/cards/WI-A1-14-persistable-logic-random.md) | Checkpoint coverage audit; persisted `SageRandom` logic random. |
 | A1-6b | [`WI-A1-15`](../agent/cards/WI-A1-15-engine-checkpoint-format.md), [`WI-A1-16`](../agent/cards/WI-A1-16-restore-host-from-checkpoint.md) | Checkpoint write/read; host restore. |
-| A1-6c | [`WI-A1-17`](../agent/cards/WI-A1-17-run-identity.md), [`WI-A1-18`](../agent/cards/WI-A1-18-operational-state-hash.md) | Run identity; bucketed state hash. |
+| A1-6c | [`WI-A1-17`](../agent/cards/WI-A1-17-run-identity.md), [`WI-A1-18`](../agent/cards/WI-A1-18-operational-state-hash.md) | Withdrawn: run identity and state hashes are not part of the design. |
 | A1-6d | [`WI-A1-19`](../agent/cards/WI-A1-19-recording-modes-and-cadence.md), [`WI-A1-20`](../agent/cards/WI-A1-20-operational-stream.md) | Recording modes and cadence; operational stream writer and reader. |
 | A1-6e | [`WI-A1-21`](../agent/cards/WI-A1-21-operational-run-bundle.md) | Checkpoint scheduling and manifest wiring. |
-| A1-6f | [`WI-A1-22`](../agent/cards/WI-A1-22-run-reconstructor.md), [`WI-A1-23`](../agent/cards/WI-A1-23-reconstruction-cache.md) | Reconstructor, verification, sinks; derived-checkpoint cache. |
-| A1-6g | [`WI-A1-24`](../agent/cards/WI-A1-24-reconstruction-conformance.md) | Conformance evidence on RTS and transport-graph runs. |
+| A1-6f | [`WI-A1-22`](../agent/cards/WI-A1-22-run-reconstructor.md), [`WI-A1-23`](../agent/cards/WI-A1-23-reconstruction-cache.md) | Reconstructor and sinks; in-memory derived-checkpoint cache. |
+| A1-6g | [`WI-A1-24`](../agent/cards/WI-A1-24-reconstruction-conformance.md) | Conformance evidence on RTS and transport-graph runs: exact restore at checkpoints, invariants on rebuilt frames. |
 
 Western Front adapter: [`WI-W3a-31`](../agent/cards/WI-W3a-31-operational-recording-adapter.md).
 
@@ -291,7 +279,6 @@ classDiagram
   class RunOutput {
     <<existing>>
     +RecordingMode
-    +Identity
     +OperationalStreamPath
     +Checkpoints
   }
@@ -335,15 +322,6 @@ classDiagram
     +Read(path)
     +RestoreInto(host, game, domain)
   }
-  class OperationalStateHasher {
-    <<A1-6>>
-    +Hash(game, domain, host) StateHashes
-  }
-  class RunIdentity {
-    <<A1-6>>
-    +Capture(inputs)
-    +Matches(other)
-  }
   class RunReconstructor {
     <<A1-6>>
     +Open(bundle, bootstrap)
@@ -359,11 +337,6 @@ classDiagram
     +TryGetNearest(runId, frame)
     +Store(runId, frame, checkpoint)
   }
-  class ReconstructionDivergence {
-    <<A1-6>>
-    +BoundaryFrame
-    +DivergedBuckets
-  }
   class SaveFile {
     <<existing>>
     +Persist(persister)
@@ -378,21 +351,16 @@ classDiagram
   RunRecording --> RunOutput
   OperationalRecorder --> SimulationHost
   OperationalRecorder --> OperationalStreamWriter
-  OperationalRecorder --> OperationalStateHasher
   OperationalRecorder --> EngineCheckpoint
   OperationalRecorder ..> IReconstructableDomain
   OperationalRecorder ..> IDomainStateProjection
   ISimulationDomainModel <.. IReconstructableDomain : optional, same domain class
   EngineCheckpoint --> SaveFile
   EngineCheckpoint --> SageRandom
-  OperationalStateHasher --> SaveFile
-  RunOutput --> RunIdentity
   RunReconstructor --> OperationalStreamReader
   RunReconstructor --> EngineCheckpoint
   RunReconstructor --> IReconstructionBootstrap
   RunReconstructor --> ReconstructionCache
-  RunReconstructor --> OperationalStateHasher
-  RunReconstructor ..> ReconstructionDivergence
 ```
 
 ```mermaid
@@ -400,20 +368,18 @@ sequenceDiagram
   participant Host as SimulationHost
   participant Rec as OperationalRecorder
   participant Dom as Domain model
-  participant Hash as OperationalStateHasher
   participant Stream as OperationalStreamWriter
   participant Ckpt as EngineCheckpoint
 
   Rec->>Ckpt: Write(frame 0)
-  Rec->>Stream: header, Hashes(frame 0), DomainSnapshot
+  Rec->>Stream: header, DomainSnapshot
   loop every host frame
     Host->>Host: dispatch due orders, logic step
     Host-->>Rec: TickComplete(frame)
     Rec->>Rec: log dispatched orders
     alt Cadence.IsOperationalBoundary(frame)
       Rec->>Dom: CaptureState, CaptureRollups, DrainOperationalEvents, SampleMetrics
-      Rec->>Hash: Hash(game, domain, host)
-      Rec->>Stream: chunk(Tick, Strings, DomainDelta, Rollups, Metrics, Events, Inputs, Hashes)
+      Rec->>Stream: chunk(Tick, Strings, DomainDelta, Rollups, Metrics, Events, Inputs)
     end
     alt Cadence.IsCheckpointBoundary(frame)
       Rec->>Ckpt: Write(frame)
@@ -430,7 +396,6 @@ sequenceDiagram
   participant Cache as ReconstructionCache
   participant Boot as IReconstructionBootstrap
   participant Host as SimulationHost
-  participant Hash as OperationalStateHasher
 
   A5->>Rc: Reconstruct(from, to, sink)
   Rc->>Cache: TryGetNearest(runId, from)
@@ -443,16 +408,11 @@ sequenceDiagram
   Rc->>Host: InjectOrders(logged inputs)
   loop frame until to
     Host->>Host: step
-    alt operational boundary
-      Rc->>Hash: Hash
-      alt matches recorded
-        Rc->>Cache: Store(derived checkpoint)
-      else mismatch
-        Rc-->>A5: ReconstructionDivergence
-      end
+    opt operational boundary
+      Rc->>Cache: Store(derived checkpoint)
     end
     opt frame at or after from
-      Rc-->>A5: sink(frame state)
+      Rc-->>A5: sink(rebuilt frame state)
     end
   end
 ```
