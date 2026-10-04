@@ -102,6 +102,25 @@ All provenance `maps.big:maps/<name>/<name>.map`.
 - Whiteout fails separation (its two components are terraces of one plateau, centroids 165 apart). Dark Mountain and Tournament Island are majority-submerged islands after water masking; Lone Eagle, Armored Fury, and the other top playable-area maps lose their second zone once water and the 2.5-unit band are applied.
 - The 4 load failures are pre-existing parser gaps (2x EndOfStream, 2x PolygonTriggers v3), out of scope here.
 
+## Community batch addendum (2026-10-05, operator-directed)
+
+The operator chose community maps over the official candidates. Sourced the `952 Generals Maps` pack from CNCNZ forum topic 10858 (Google Drive mirror `1AU9ZvPmk7QXKidy6XI5QUgqtuV48O5lX`): 948 `.map` files under `/tmp/opencode/m0-maps` (not committed). Same probe, `DiskFileSystem` over loose files, provenance prefix `custom:m0-maps/`; records in `/tmp/opencode/m0-eval/records-m0-maps.json` (not committed).
+
+- Load: 830 of 948 ok; 118 fail (80 EndOfStream, 25 invalid-data, 8 PolygonTriggers, 5 Overflow; pre-existing parser gaps).
+- Screens: 464 pass zone fit; 432 pass zone fit plus separation.
+- Top candidates (dry, both zones far above the 9216-cell floor):
+
+| Map | Size | Slots | Submerged | Zone 1 (cells@z, bbox) | Zone 2 | Gap | Centroid sep |
+|---|---|---|---|---|---|---|---|
+| deepdivide | 600x400 | 6 | 0.0% | 83353@62 (600x177) | 80140@64 (600x175) | 480 | 2308 |
+| devilscrossing | 500x500 | 6 | 0.0% | 59050@66 (157x500) | 54938@66 (145x500) | 1980 | 3551 |
+| operationdesertstorm | 400x400 | 6 | 0.0% | 69082@31 (400x178) | 66687@31 (400x173) | 490 | 2270 |
+| Mountain Forts | 400x400 | 6 | 0.0% | 47884@62 (400x133) | 44958@62 (400x124) | 1430 | 2787 |
+| Snowball Fight2-AI | 400x400 | 6 | 0.0% | 42640@10 (400x117) | 42426@10 (400x116) | 1670 | 2873 |
+| Box Breaker | 300x500 | 6 | 0.0% | 33600@10 (300x128) | 33441@10 (300x128) | 2440 | 3767 |
+
+Reading: deepdivide is the primary candidate (largest dry zone pair, two full-width bands, 6 slots, no water); devilscrossing is the max-separation alternate (gap 1980, centroid 3551, vertical bands). Larger-metric maps (fight win prevail, ageneralsbattlefield, Conflict-by-STOUT, ragingdarkness, battleofjax2) are 8-27% submerged and stay demoted. Official Twilight Flame remains the in-tree fallback. Final selection and load proof land with M0-3.
+
 ## Files likely to change
 
 - None (read-only investigation). No map is committed.
@@ -120,7 +139,7 @@ Read-only; probe invocation documented under Method.
 ## Out of scope / guardrails
 
 - No map edits, no deployment-zone scenario data, no in-engine reachability proof (M0-3).
-- No community-map ingestion: the deep dive's sourcing order prefers operator-supplied community maps; this official batch is the baseline. The operator may supply community candidates to extend this record before M0-3 locks zones.
+- Community ingestion was initially out of scope; the operator later directed the community batch, recorded in the addendum above. No map file is committed either way.
 - Parser fixes for the 4 failing maps belong to a separate card if those maps ever matter.
 
 ## On completion
