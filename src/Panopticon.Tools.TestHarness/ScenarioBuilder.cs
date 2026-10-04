@@ -102,7 +102,7 @@ public static class ScenarioBuilder
         // failing the run inside the engine.
         if (string.IsNullOrEmpty(scenario.MapPath))
         {
-            scenario.MapPath = "maps/alpine assault/alpine assault.map";
+            scenario.MapPath = "maps/Dark Mountain/Dark Mountain.map";
         }
 
         // Terrain data for cluster placement (flatness scoring); null leaves the builder on

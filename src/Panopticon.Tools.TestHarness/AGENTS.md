@@ -354,7 +354,7 @@ All optional with defaults, in `TestHarness.json`:
 | Knob | Purpose |
 |---|---|
 | `ValidationGroundScenarioPath` | Validation-ground scenario JSON (layout + placement overrides) from the ReplaySketch editor; when set, loaded verbatim and `ValidationGroundMapPath`/`SettleFrames`/`Seed` are ignored |
-| `ValidationGroundMapPath` | Map to run on (default: Alpine Assault) |
+| `ValidationGroundMapPath` | Map to run on (default: Dark Mountain) |
 | `ValidationGroundSettleFrames` | Frames to settle after spawn before issuing orders |
 | `ValidationGroundBaselinePath` | Path to the golden baseline JSON (empty skips comparison) |
 | `ValidationGroundRefreshBaseline` | `true` overwrites the baseline from the run instead of comparing |

@@ -19,7 +19,7 @@
   // GamePath     : override the game installation path (null = auto-detect)
   //
   // Unit Validation Ground (Scenario = UnitValidationGround) knobs, all optional with defaults:
-  // ValidationGroundMapPath        : map override (default: Alpine Assault)
+  // ValidationGroundMapPath        : map override (default: Dark Mountain)
   // ValidationGroundSettleFrames   : frames to settle after spawn before ordering units
   // ValidationGroundBaselinePath   : golden baseline JSON (null/empty skips comparison)
   // ValidationGroundRefreshBaseline: true overwrites the baseline instead of comparing
