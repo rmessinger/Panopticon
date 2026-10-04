@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -53,30 +54,18 @@ public sealed class ImportedImageSource
 
     public static ImportedImageSource CreateEmbeddedBytes(byte[] bytes, string mimeType, string diagnosticName)
     {
-        if (bytes is null || bytes.Length == 0)
-        {
-            throw new ArgumentException("Embedded image bytes must not be null or empty.", nameof(bytes));
-        }
+        Ensure.NotEmpty(bytes, "Embedded image bytes must not be null or empty.");
 
-        if (string.IsNullOrEmpty(mimeType))
-        {
-            throw new ArgumentException("MIME type must not be null or empty.", nameof(mimeType));
-        }
+        Ensure.NotNullOrEmpty(mimeType, "MIME type must not be null or empty.");
 
-        if (string.IsNullOrEmpty(diagnosticName))
-        {
-            throw new ArgumentException("Diagnostic name must not be null or empty.", nameof(diagnosticName));
-        }
+        Ensure.NotNullOrEmpty(diagnosticName, "Diagnostic name must not be null or empty.");
 
         return new ImportedImageSource(ImportedImageSourceKind.EmbeddedBytes, null, (byte[])bytes.Clone(), mimeType, diagnosticName);
     }
 
     internal static void ValidateVirtualPath(string virtualPath)
     {
-        if (string.IsNullOrEmpty(virtualPath))
-        {
-            throw new ArgumentException("Virtual path must not be null or empty.", nameof(virtualPath));
-        }
+        Ensure.NotNullOrEmpty(virtualPath, "Virtual path must not be null or empty.");
 
         if (virtualPath.Contains('\\')
             || virtualPath.StartsWith('/')

@@ -28,15 +28,9 @@ internal static class ImportedImageDecoder
         IOFileSystem fileSystem,
         bool generateMipmaps = false)
     {
-        if (source is null)
-        {
-            throw new ArgumentNullException(nameof(source));
-        }
+        ArgumentNullException.ThrowIfNull(source);
 
-        if (fileSystem is null)
-        {
-            throw new ArgumentNullException(nameof(fileSystem));
-        }
+        ArgumentNullException.ThrowIfNull(fileSystem);
 
         Stream stream;
         if (source.Kind == ImportedImageSourceKind.VirtualPath)

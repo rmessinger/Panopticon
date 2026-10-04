@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-AV-01` |
 | Plan | [Single-line argument validation](../../plans/argument-validation.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |

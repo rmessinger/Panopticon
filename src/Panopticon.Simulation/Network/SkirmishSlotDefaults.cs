@@ -9,15 +9,9 @@ public static class SkirmishSlotDefaults
 {
     public static void ApplyDefaults(IGame game, IList<SkirmishSlot> slots, string mapName, int seed)
     {
-        if (game == null)
-        {
-            throw new ArgumentNullException(nameof(game));
-        }
+        ArgumentNullException.ThrowIfNull(game);
 
-        if (slots == null)
-        {
-            throw new ArgumentNullException(nameof(slots));
-        }
+        ArgumentNullException.ThrowIfNull(slots);
 
         var map = string.IsNullOrEmpty(mapName)
             ? null

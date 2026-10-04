@@ -2,6 +2,7 @@
 
 using System;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -57,15 +58,9 @@ public sealed class ImportedBone
         in Matrix4x4 inverseBindMatrix,
         float bindScale)
     {
-        if (name is null)
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
+        ArgumentNullException.ThrowIfNull(name);
 
-        if (parentIndex < -1)
-        {
-            throw new ArgumentException("Parent index must be -1 (root) or a bone index.", nameof(parentIndex));
-        }
+        Ensure.AtLeast(parentIndex, -1, "Parent index must be -1 (root) or a bone index.");
 
         if (!float.IsFinite(bindScale) || bindScale < 0.0f)
         {

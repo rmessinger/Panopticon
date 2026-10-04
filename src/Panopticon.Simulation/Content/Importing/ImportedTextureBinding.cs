@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -42,20 +43,11 @@ public sealed class ImportedTextureBinding
         ImportedSampler sampler,
         ImportedTextureRole role)
     {
-        if (imageSource is null)
-        {
-            throw new ArgumentNullException(nameof(imageSource));
-        }
+        ArgumentNullException.ThrowIfNull(imageSource);
 
-        if (sampler is null)
-        {
-            throw new ArgumentNullException(nameof(sampler));
-        }
+        ArgumentNullException.ThrowIfNull(sampler);
 
-        if (uvSet is < 0 or > 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(uvSet), "UV set must be 0 or 1.");
-        }
+        Ensure.InRange(uvSet, 0, 1, "UV set must be 0 or 1.");
 
         ImageSource = imageSource;
         UvSet = uvSet;

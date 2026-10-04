@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -90,10 +91,7 @@ public sealed class ImportedParticleModifier
 
     public static ImportedParticleModifier CreateColorOverLife(IReadOnlyList<ImportedParticleColorKey> keys)
     {
-        if (keys is null || keys.Count == 0)
-        {
-            throw new ArgumentException("Color-over-life modifiers require at least one key.", nameof(keys));
-        }
+        Ensure.NotEmpty(keys, "Color-over-life modifiers require at least one key.");
 
         ValidateColorKeys(keys);
 
@@ -120,10 +118,7 @@ public sealed class ImportedParticleModifier
 
     public static ImportedParticleModifier CreateUnsupported(string feature)
     {
-        if (string.IsNullOrEmpty(feature))
-        {
-            throw new ArgumentException("Unsupported modifiers must name the feature.", nameof(feature));
-        }
+        Ensure.NotNullOrEmpty(feature, "Unsupported modifiers must name the feature.");
 
         return new ImportedParticleModifier(
             ImportedParticleModifierKind.Unsupported, 0, 0, Array.Empty<ImportedParticleColorKey>(),

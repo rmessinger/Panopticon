@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -29,15 +30,9 @@ public sealed class ImportedParticleEffect
         IReadOnlyList<string> helperSubObjectNames,
         IReadOnlyList<ImportedParticleAttachment>? attachments = null)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException("Effect name must not be empty.", nameof(name));
-        }
+        Ensure.NotNullOrEmpty(name, "Effect name must not be empty.");
 
-        if (systems is null || systems.Count == 0)
-        {
-            throw new ArgumentException("Effects require at least one particle system.", nameof(systems));
-        }
+        Ensure.NotEmpty(systems, "Effects require at least one particle system.");
 
         if (systems.Any(s => s is null))
         {
@@ -52,10 +47,7 @@ public sealed class ImportedParticleEffect
             throw new ArgumentException($"Particle system name '{duplicate.Key}' is not unique.", nameof(systems));
         }
 
-        if (helperSubObjectNames is null)
-        {
-            throw new ArgumentNullException(nameof(helperSubObjectNames));
-        }
+        ArgumentNullException.ThrowIfNull(helperSubObjectNames);
 
         if (helperSubObjectNames.Any(n => string.IsNullOrEmpty(n)))
         {

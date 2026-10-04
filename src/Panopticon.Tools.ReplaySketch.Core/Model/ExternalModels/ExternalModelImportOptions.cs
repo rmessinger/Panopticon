@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Tools.ReplaySketch.Model;
 
@@ -34,25 +35,16 @@ public sealed class ExternalModelImportOptions
         IReadOnlyDictionary<string, bool>? featureGates,
         IReadOnlyDictionary<string, ExternalMorphWeightRange>? morphWeightRanges)
     {
-        if (float.IsNaN(unitsPerMeter) || float.IsInfinity(unitsPerMeter) || unitsPerMeter <= 0)
-        {
-            throw new ArgumentException("Units per meter must be a positive finite value.", nameof(unitsPerMeter));
-        }
+        Ensure.FinitePositive(unitsPerMeter, "Units per meter must be a positive finite value.");
 
         foreach (var (name, enabled) in featureGates ?? new Dictionary<string, bool>())
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException("Feature gate names must not be empty.", nameof(featureGates));
-            }
+            Ensure.NotNullOrWhiteSpace(name, "Feature gate names must not be empty.", nameof(featureGates));
         }
 
         foreach (var (name, range) in morphWeightRanges ?? new Dictionary<string, ExternalMorphWeightRange>())
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException("Morph target names must not be empty.", nameof(morphWeightRanges));
-            }
+            Ensure.NotNullOrWhiteSpace(name, "Morph target names must not be empty.", nameof(morphWeightRanges));
 
             if (!IsFinite(range.Minimum) || !IsFinite(range.Maximum) ||
                 range.Minimum < 0 || range.Maximum > 1 || range.Minimum > range.Maximum)

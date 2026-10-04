@@ -25,10 +25,7 @@ public static class ExternalModelProtocolJson
 
     public static string Serialize(ExternalModelRequest request)
     {
-        if (request is null)
-        {
-            throw new ArgumentNullException(nameof(request));
-        }
+        ArgumentNullException.ThrowIfNull(request);
 
         var payload = new RequestPayload
         {

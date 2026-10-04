@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using ImGuiNET;
+using Panopticon;
 using Panopticon.Content;
 using Panopticon.Logic.Map;
 using Panopticon.Logic.Object;
@@ -347,10 +348,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
         var index = updateModule.IndexInLogic;
         if (_objects.Contains(gameObject))
         {
-            if (index < 0 || index >= _sleepyUpdates.Count)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), "Sleepy update module illegal index");
-            }
+            Ensure.InRange(index, 0, _sleepyUpdates.Count, "Sleepy update module illegal index");
 
             if (_sleepyUpdates[index] != updateModule)
             {

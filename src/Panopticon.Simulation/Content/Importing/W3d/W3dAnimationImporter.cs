@@ -27,10 +27,7 @@ internal sealed class W3dAnimationImporter : IAnimationImporter
 
     public ImportedAnimation? ImportAnimation(string key, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         var splitName = key.Split('.');
 

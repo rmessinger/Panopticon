@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System;
 
 namespace Veldrid.Vk
 {
@@ -14,10 +15,7 @@ namespace Veldrid.Vk
 
         public FixedUtf8String(string s)
         {
-            if (s == null)
-            {
-                throw new ArgumentNullException(nameof(s));
-            }
+            ArgumentNullException.ThrowIfNull(s);
 
             int byteCount = Encoding.UTF8.GetByteCount(s);
             byte[] text = new byte[byteCount + 1];

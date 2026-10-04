@@ -24,10 +24,7 @@ public sealed record PreviewEligibility(
         IEnumerable<ExternalModelDiagnostic> diagnostics,
         IEnumerable<string>? missingCapabilities = null)
     {
-        if (diagnostics is null)
-        {
-            throw new ArgumentNullException(nameof(diagnostics));
-        }
+        ArgumentNullException.ThrowIfNull(diagnostics);
 
         var blockingCodes = diagnostics
             .Where(d => d.Severity == ExternalDiagnosticSeverity.Error)

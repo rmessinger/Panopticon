@@ -67,15 +67,9 @@ internal sealed class PbrMetallicRoughnessShaderResources : ShaderSetBase
         RoleBinding? occlusion = null,
         RoleBinding? emissive = null)
     {
-        if (payload is null)
-        {
-            throw new ArgumentNullException(nameof(payload));
-        }
+        ArgumentNullException.ThrowIfNull(payload);
 
-        if (standardGraphicsResources is null)
-        {
-            throw new ArgumentNullException(nameof(standardGraphicsResources));
-        }
+        ArgumentNullException.ThrowIfNull(standardGraphicsResources);
 
         var blendEnabled = payload.AlphaMode == ImportedAlphaMode.Blend;
         var pipelineKey = new PipelineKey(

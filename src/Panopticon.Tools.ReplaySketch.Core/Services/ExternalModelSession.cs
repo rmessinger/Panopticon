@@ -256,10 +256,7 @@ public sealed class ExternalModelSession : IDisposable
         ExternalModelImportOptions options,
         CancellationToken cancellationToken = default)
     {
-        if (options is null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         lock (_gate)
         {
@@ -290,10 +287,7 @@ public sealed class ExternalModelSession : IDisposable
     /// </summary>
     public ExternalModelSnapshot SetPreviewOptions(ExternalModelPreviewOptions options)
     {
-        if (options is null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         lock (_gate)
         {
@@ -338,10 +332,7 @@ public sealed class ExternalModelSession : IDisposable
     /// </summary>
     public bool AdoptPreviewArtifact(int generation, IExternalModelArtifactLease lease, long byteLength)
     {
-        if (lease is null)
-        {
-            throw new ArgumentNullException(nameof(lease));
-        }
+        ArgumentNullException.ThrowIfNull(lease);
 
         lock (_gate)
         {

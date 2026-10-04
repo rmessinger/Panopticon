@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Panopticon;
 using Panopticon.IO;
 
 namespace Panopticon.Content.Importing.Gltf;
@@ -38,10 +39,7 @@ internal sealed class GltfResourceResolver
 
     public GltfResourceResolver(string rootDocumentPath, FileSystem fileSystem, GltfImportOptions options)
     {
-        if (string.IsNullOrWhiteSpace(rootDocumentPath))
-        {
-            throw new ArgumentException("Root document path must not be null or empty.", nameof(rootDocumentPath));
-        }
+        Ensure.NotNullOrWhiteSpace(rootDocumentPath, "Root document path must not be null or empty.");
 
         ArgumentNullException.ThrowIfNull(fileSystem);
         ArgumentNullException.ThrowIfNull(options);

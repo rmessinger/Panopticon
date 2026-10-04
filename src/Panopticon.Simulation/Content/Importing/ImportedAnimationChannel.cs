@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -77,33 +78,22 @@ public sealed class ImportedAnimationChannel
             throw new ArgumentOutOfRangeException(nameof(interpolation));
         }
 
-        if (target is null)
-        {
-            throw new ArgumentNullException(nameof(target));
-        }
+        ArgumentNullException.ThrowIfNull(target);
 
-        if (keyframes is null)
-        {
-            throw new ArgumentNullException(nameof(keyframes));
-        }
+        ArgumentNullException.ThrowIfNull(keyframes);
 
-        if (keyframes.Count == 0)
-        {
-            throw new ArgumentException("A channel must have at least one keyframe.", nameof(keyframes));
-        }
+        Ensure.NotEmpty(keyframes, "A channel must have at least one keyframe.");
 
         ValidateTargetKind(target, channelType);
 
         var expectedKind = ImportedKeyframe.GetExpectedKind(channelType);
 
         var copiedKeyframes = new ImportedKeyframe[keyframes.Count];
+        Ensure.NoNullElements(keyframes, "Keyframe");
+
         for (var i = 0; i < keyframes.Count; i++)
         {
             var keyframe = keyframes[i];
-            if (keyframe is null)
-            {
-                throw new ArgumentException($"Keyframe at index {i} must not be null.", nameof(keyframes));
-            }
 
             if (keyframe.Kind != expectedKind)
             {

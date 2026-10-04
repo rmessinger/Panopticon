@@ -25,6 +25,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -44,10 +45,7 @@ internal readonly struct SearchPattern
     /// <returns><c>true</c> if the path was matched, <c>false</c> otherwise.</returns>
     public bool Match(string name)
     {
-        if (name is null)
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
+        ArgumentNullException.ThrowIfNull(name);
 
         // if _execMatch is null and _regexMatch is null, we have a * match
         return _exactMatch != null ? _exactMatch == name : _regexMatch is null || _regexMatch.IsMatch(name);
@@ -55,10 +53,7 @@ internal readonly struct SearchPattern
 
     public SearchPattern(string searchPattern)
     {
-        if (searchPattern is null)
-        {
-            throw new ArgumentNullException(nameof(searchPattern));
-        }
+        ArgumentNullException.ThrowIfNull(searchPattern);
 
         _exactMatch = null;
         _regexMatch = null;

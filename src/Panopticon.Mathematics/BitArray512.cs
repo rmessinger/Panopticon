@@ -67,10 +67,8 @@ public struct BitArray512
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Set(int bit, bool value)
     {
-        if (bit < 0 || bit >= Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(bit));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(bit);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(bit, Length);
 
         var offset = bit >> 6; // bit / 64
         var mask = (ulong)1 << bit;
@@ -95,10 +93,8 @@ public struct BitArray512
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Get(int bit)
     {
-        if (bit < 0 || bit >= Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(bit));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(bit);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(bit, Length);
 
         var offset = bit >> 6; // bit / 64
         var mask = (ulong)1 << bit;

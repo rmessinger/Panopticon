@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -37,15 +38,9 @@ public sealed class ImportedMorphTargetSet
         IReadOnlyList<ImportedMorphWeightRange> allowedWeightRanges,
         IReadOnlyList<ImportedMorphTarget> targets)
     {
-        if (string.IsNullOrEmpty(primitiveId))
-        {
-            throw new ArgumentException("Primitive id must not be null or empty.", nameof(primitiveId));
-        }
+        Ensure.NotNullOrEmpty(primitiveId, "Primitive id must not be null or empty.");
 
-        if (targetNames is null)
-        {
-            throw new ArgumentNullException(nameof(targetNames));
-        }
+        ArgumentNullException.ThrowIfNull(targetNames);
 
         if (targetNames.Count == 0)
         {
@@ -79,13 +74,15 @@ public sealed class ImportedMorphTargetSet
                 nameof(targets));
         }
 
+        Ensure.NoNullElements(targets, "Target");
+
         for (var i = 0; i < targetNames.Count; i++)
         {
             var name = targetNames[i];
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentException($"Target name at index {i} must not be null or empty.", nameof(targetNames));
-            }
+            Ensure.NotNullOrEmpty(
+                name,
+                $"Target name at index {i} must not be null or empty.",
+                nameof(targetNames));
 
             for (var j = i + 1; j < targetNames.Count; j++)
             {
@@ -116,11 +113,6 @@ public sealed class ImportedMorphTargetSet
                 throw new ArgumentException(
                     $"Default weight {weight} for target {i} falls outside its allowed range [{range.Minimum}, {range.Maximum}].",
                     nameof(defaultWeights));
-            }
-
-            if (targets[i] is null)
-            {
-                throw new ArgumentException($"Target at index {i} must not be null.", nameof(targets));
             }
         }
 

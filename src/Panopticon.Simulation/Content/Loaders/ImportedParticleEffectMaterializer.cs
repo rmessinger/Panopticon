@@ -32,10 +32,7 @@ internal static class ImportedParticleEffectMaterializer
         Func<string, LazyAssetReference<TextureAsset>>? textureResolver = null,
         float worldScale = 1f)
     {
-        if (effect is null)
-        {
-            throw new ArgumentNullException(nameof(effect));
-        }
+        ArgumentNullException.ThrowIfNull(effect);
 
         if (!float.IsFinite(worldScale) || worldScale <= 0f)
         {

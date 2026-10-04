@@ -1,8 +1,8 @@
 #nullable enable
 
 using System;
-
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -57,25 +57,13 @@ public sealed class ImportedVertex
         float boneWeight2 = 0.0f,
         float boneWeight3 = 0.0f)
     {
-        if (boneWeight0 < 0.0f || boneWeight0 > 1.0f)
-        {
-            throw new ArgumentException("Bone weight 0 must be in [0, 1].", nameof(boneWeight0));
-        }
+        Ensure.InRange(boneWeight0, 0.0f, 1.0f, "Bone weight 0 must be in [0, 1].");
 
-        if (boneWeight1 < 0.0f || boneWeight1 > 1.0f)
-        {
-            throw new ArgumentException("Bone weight 1 must be in [0, 1].", nameof(boneWeight1));
-        }
+        Ensure.InRange(boneWeight1, 0.0f, 1.0f, "Bone weight 1 must be in [0, 1].");
 
-        if (boneWeight2 < 0.0f || boneWeight2 > 1.0f)
-        {
-            throw new ArgumentException("Bone weight 2 must be in [0, 1].", nameof(boneWeight2));
-        }
+        Ensure.InRange(boneWeight2, 0.0f, 1.0f, "Bone weight 2 must be in [0, 1].");
 
-        if (boneWeight3 < 0.0f || boneWeight3 > 1.0f)
-        {
-            throw new ArgumentException("Bone weight 3 must be in [0, 1].", nameof(boneWeight3));
-        }
+        Ensure.InRange(boneWeight3, 0.0f, 1.0f, "Bone weight 3 must be in [0, 1].");
 
         Position = position;
         Normal = normal;

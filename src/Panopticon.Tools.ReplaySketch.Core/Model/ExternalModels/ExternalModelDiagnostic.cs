@@ -2,6 +2,7 @@
 
 using System;
 using System.Text.Json.Serialization;
+using Panopticon;
 
 namespace Panopticon.Tools.ReplaySketch.Model;
 
@@ -77,15 +78,9 @@ public sealed class ExternalModelDiagnostic
         int occurrenceCount = 1,
         Exception? exceptionDetail = null)
     {
-        if (string.IsNullOrWhiteSpace(code))
-        {
-            throw new ArgumentException("Diagnostic code must not be empty.", nameof(code));
-        }
+        Ensure.NotNullOrWhiteSpace(code, "Diagnostic code must not be empty.");
 
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            throw new ArgumentException("Diagnostic message must not be empty.", nameof(message));
-        }
+        Ensure.NotNullOrWhiteSpace(message, "Diagnostic message must not be empty.");
 
         if (occurrenceCount < 1)
         {

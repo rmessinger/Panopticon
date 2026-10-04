@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Panopticon;
 
 namespace Panopticon.Tools.ReplaySketch.Services;
 
@@ -17,10 +18,7 @@ public sealed class SiblingBuildExecutableLocator
     /// </summary>
     public string? Locate(string projectName, string? baseDirectory = null)
     {
-        if (string.IsNullOrWhiteSpace(projectName))
-        {
-            throw new ArgumentException("Project name must not be empty.", nameof(projectName));
-        }
+        Ensure.NotNullOrWhiteSpace(projectName, "Project name must not be empty.");
 
         try
         {

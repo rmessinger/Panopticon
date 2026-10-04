@@ -49,15 +49,9 @@ internal static class StandaloneModelCapture
         Matrix4x4? worldMatrix = null,
         StandaloneCaptureOptions? options = null)
     {
-        if (game is null)
-        {
-            throw new ArgumentNullException(nameof(game));
-        }
+        ArgumentNullException.ThrowIfNull(game);
 
-        if (model is null)
-        {
-            throw new ArgumentNullException(nameof(model));
-        }
+        ArgumentNullException.ThrowIfNull(model);
 
         if (string.IsNullOrEmpty(outputPath))
         {

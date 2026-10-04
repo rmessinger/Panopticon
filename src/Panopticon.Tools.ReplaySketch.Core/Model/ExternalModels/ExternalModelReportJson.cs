@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Panopticon;
 using Panopticon.Content.Importing;
-
 namespace Panopticon.Tools.ReplaySketch.Model;
 
 /// <summary>
@@ -25,10 +25,7 @@ public static class ExternalModelReportJson
 
     public static string Serialize(ExternalModelReport report)
     {
-        if (report is null)
-        {
-            throw new ArgumentNullException(nameof(report));
-        }
+        ArgumentNullException.ThrowIfNull(report);
 
         var payload = new ReportPayload
         {
@@ -54,10 +51,7 @@ public static class ExternalModelReportJson
     /// </summary>
     public static JsonDocument Parse(string json)
     {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            throw new ArgumentException("Report JSON must not be empty.", nameof(json));
-        }
+        Ensure.NotNullOrWhiteSpace(json, "Report JSON must not be empty.");
 
         return JsonDocument.Parse(json);
     }

@@ -27,10 +27,7 @@ internal sealed class NifModelImporter : IModelImporter
 
     public ImportedModel? ImportModel(string name, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         if (string.IsNullOrEmpty(name))
         {
@@ -145,10 +142,7 @@ internal sealed class NifModelImporter : IModelImporter
 
     public ImportedSkeleton? ImportSkeleton(string name, AssetImportContext context)
     {
-        if (context is null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         if (string.IsNullOrEmpty(name))
         {

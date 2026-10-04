@@ -1,8 +1,8 @@
 #nullable enable
 
 using System;
-
 using System.Numerics;
+using Panopticon;
 
 namespace Panopticon.Content.Importing;
 
@@ -46,10 +46,7 @@ public sealed class ImportedMaterialProperty
 
     private ImportedMaterialProperty(string name, ImportedMaterialPropertyKind kind, object value)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            throw new ArgumentException("Property name must not be null or empty.", nameof(name));
-        }
+        Ensure.NotNullOrEmpty(name, "Property name must not be null or empty.");
 
         Name = name;
         Kind = kind;
@@ -88,10 +85,7 @@ public sealed class ImportedMaterialProperty
 
     public static ImportedMaterialProperty FromTextureName(string name, string textureName)
     {
-        if (string.IsNullOrEmpty(textureName))
-        {
-            throw new ArgumentException("Texture name must not be null or empty.", nameof(textureName));
-        }
+        Ensure.NotNullOrEmpty(textureName, "Texture name must not be null or empty.");
 
         return new ImportedMaterialProperty(name, ImportedMaterialPropertyKind.TextureName, textureName);
     }

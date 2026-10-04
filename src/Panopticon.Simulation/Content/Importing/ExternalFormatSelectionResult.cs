@@ -34,10 +34,7 @@ public sealed class ExternalFormatSelectionResult
 
     public static ExternalFormatSelectionResult Success(ExternalFormatSelection selection)
     {
-        if (selection is null)
-        {
-            throw new ArgumentNullException(nameof(selection));
-        }
+        ArgumentNullException.ThrowIfNull(selection);
 
         return new ExternalFormatSelectionResult(true, selection, null, null);
     }
