@@ -108,18 +108,23 @@ The operator chose community maps over the official candidates. Sourced the `952
 
 - Load: 830 of 948 ok; 118 fail (80 EndOfStream, 25 invalid-data, 8 PolygonTriggers, 5 Overflow; pre-existing parser gaps).
 - Screens: 464 pass zone fit; 432 pass zone fit plus separation.
-- Top candidates (dry, both zones far above the 9216-cell floor):
+- Top 10 by map size (area; size ties ordered by zone bottleneck; both 600x500 twins kept for the rank-10 tie):
 
-| Map | Size | Slots | Submerged | Zone 1 (cells@z, bbox) | Zone 2 | Gap | Centroid sep |
-|---|---|---|---|---|---|---|---|
-| deepdivide | 600x400 | 6 | 0.0% | 83353@62 (600x177) | 80140@64 (600x175) | 480 | 2308 |
-| devilscrossing | 500x500 | 6 | 0.0% | 59050@66 (157x500) | 54938@66 (145x500) | 1980 | 3551 |
-| operationdesertstorm | 400x400 | 6 | 0.0% | 69082@31 (400x178) | 66687@31 (400x173) | 490 | 2270 |
-| Mountain Forts | 400x400 | 6 | 0.0% | 47884@62 (400x133) | 44958@62 (400x124) | 1430 | 2787 |
-| Snowball Fight2-AI | 400x400 | 6 | 0.0% | 42640@10 (400x117) | 42426@10 (400x116) | 1670 | 2873 |
-| Box Breaker | 300x500 | 6 | 0.0% | 33600@10 (300x128) | 33441@10 (300x128) | 2440 | 3767 |
+| Map | Size | Slots | Wp/paths | Water | Sub% | Zone 1 | Zone 2 | gap | ctr | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| heavyfire | 800x800 | 8 | 8/0 | 1 | 13.13 | 483932@z31.2 800x800 | 32505@z31.2 291x218 | 0 | 201 | sep |
+| fight win  prevail | 600x600 | 4 | 4/0 | 1 | 8.01 | 159752@z64.4 600x395 | 46897@z61.2 363x246 | 0 | 3360 | cand |
+| Cliffside City | 600x600 | 5 | 87/70 | 1 | 7.35 | 69528@z10 343x600 | 43035@z7.5 259x600 | 0 | 2311 | cand |
+| littletown | 600x600 | 8 | 394/371 | 2 | 0.02 | 42353@z126.2 231x228 | 40206@z122.5 251x242 | 1180 | 3986 | cand |
+| Little Town - icq938 | 600x600 | 8 | 394/371 | 2 | 0.02 | 42353@z126.2 231x228 | 40206@z122.5 251x242 | 1180 | 3986 | cand |
+| littletown_evening | 600x600 | 8 | 393/370 | 2 | 0.02 | 42353@z126.2 231x228 | 40199@z122.5 251x242 | 1180 | 3986 | cand |
+| Little Town(Evening) - icq938 | 600x600 | 8 | 393/370 | 2 | 0.02 | 42353@z126.2 231x228 | 40199@z122.5 251x242 | 1180 | 3986 | cand |
+| CR Supremacy City | 600x600 | 4 | 28/13 | 5 | 8.9 | 61865@z62.5 298x376 | 24638@z65.6 145x308 | 130 | 2435 | cand |
+| Conflict-by-STOUT | 550x550 | 6 | 236/198 | 1 | 27.06 | 94457@z10.6 400x394 | 92430@z7.5 390x399 | 0 | 3357 | cand |
+| europe | 600x500 | 6 | 6/0 | 1 | 47.68 | 120850@z8.8 599x498 | 2479@z7.5 98x106 | 0 | 2563 | fit |
+| europa | 600x500 | 6 | 6/0 | 1 | 47.68 | 120850@z8.8 599x498 | 2479@z7.5 98x106 | 0 | 2563 | fit |
 
-Reading: deepdivide is the primary candidate (largest dry zone pair, two full-width bands, 6 slots, no water); devilscrossing is the max-separation alternate (gap 1980, centroid 3551, vertical bands). Larger-metric maps (fight win prevail, ageneralsbattlefield, Conflict-by-STOUT, ragingdarkness, battleofjax2) are 8-27% submerged and stay demoted. Official Twilight Flame remains the in-tree fallback. Final selection and load proof land with M0-3.
+Reading: deepdivide is the primary candidate (largest dry zone pair, two full-width bands, 6 slots, no water); devilscrossing is the max-separation alternate (gap 1980, centroid 3551, vertical bands). Larger-metric maps (fight win prevail, ageneralsbattlefield, Conflict-by-STOUT, ragingdarkness, battleofjax2) are 8-27% submerged and stay demoted. Size is not the selection metric: heavyfire's two leading components are one plateau plus a terrace with centroids only 201 apart (sep), and the passing 600x600 set tops out at 46897-cell zones (fight win prevail), under three-fifths of deepdivide's 80140. Official Twilight Flame remains the in-tree fallback. Final selection and load proof land with M0-3.
 
 Full per-map record of all 948 community files (same columns and ranking as the official table above): [`WI-M0-01-community-map-records.md`](WI-M0-01-community-map-records.md).
 
