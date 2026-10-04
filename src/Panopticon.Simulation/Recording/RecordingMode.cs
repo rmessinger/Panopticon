@@ -7,6 +7,5 @@ namespace Panopticon.Recording;
 public enum RecordingMode
 {
     Full,
-
     Operational,
 }
