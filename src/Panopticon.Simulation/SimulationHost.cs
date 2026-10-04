@@ -73,6 +73,12 @@ public sealed class SimulationHost
     public event EventHandler<SimulationHostTickEventArgs>? TickComplete;
 
     /// <summary>
+    /// Raised per due frame with the orders actually dispatched into the game (WI-A1-21: the
+    /// operational stream's Inputs records mirror real dispatch, not injection requests).
+    /// </summary>
+    internal event Action<uint, IReadOnlyList<Order>>? OrdersDispatched;
+
+    /// <summary>
     /// Current frame step count since the run started.
     /// </summary>
     public uint Frame => _frame;
@@ -195,11 +201,13 @@ public sealed class SimulationHost
         var dueFrames = _pendingOrders.Keys.Where(f => f <= currentFrame + 1).ToList();
         foreach (var dueFrame in dueFrames)
         {
-            foreach (var order in _pendingOrders[dueFrame])
+            var due = _pendingOrders[dueFrame];
+            foreach (var order in due)
             {
                 _game.InjectOrders(new[] { order });
             }
 
+            OrdersDispatched?.Invoke(dueFrame, due);
             _pendingOrders.Remove(dueFrame);
         }
     }

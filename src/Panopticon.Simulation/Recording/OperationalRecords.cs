@@ -18,6 +18,7 @@ internal enum OperationalRecordType : byte
     Inputs = 8,
     Hashes = 9,
     T1 = 10,
+    WorldDelta = 11,
 }
 
 /// <summary>Base type for every record stored in an operational stream chunk.</summary>
@@ -90,4 +91,13 @@ internal sealed record OperationalHashes(uint BoundaryFrame, OperationalStateHas
 internal sealed record OperationalT1(uint BoundaryFrame, IReadOnlyList<byte> Payload) : OperationalRecord
 {
     public override OperationalRecordType Type => OperationalRecordType.T1;
+}
+
+/// <summary>
+/// World-state summary changes since the previous boundary for domains without an
+/// <see cref="IDomainStateProjection"/> (A1-6 §5.2: the summary is the state of record).
+/// </summary>
+internal sealed record OperationalWorldDelta(uint BoundaryFrame, WorldStateDelta Delta) : OperationalRecord
+{
+    public override OperationalRecordType Type => OperationalRecordType.WorldDelta;
 }

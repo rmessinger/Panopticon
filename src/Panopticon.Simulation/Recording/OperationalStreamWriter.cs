@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using Panopticon;
 using Panopticon.Simulation;
 
 namespace Panopticon.Recording;
@@ -25,17 +26,19 @@ internal sealed class OperationalStreamWriter : IDisposable
 
     private readonly Stream _stream;
     private readonly BinaryWriter _writer;
+    private readonly IGame? _game;
     private readonly Dictionary<string, uint> _stringIds = new(StringComparer.Ordinal);
     private readonly List<string> _pendingStrings = new();
     private readonly List<OperationalChunkEntry> _index = new();
     private uint _nextStringId;
 
-    public OperationalStreamWriter(Stream stream, string runId, string domainId, int domainSchemaVersion)
+    public OperationalStreamWriter(Stream stream, string runId, string domainId, int domainSchemaVersion, IGame? game = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(runId);
         ArgumentNullException.ThrowIfNull(domainId);
 
+        _game = game;
         if (!stream.CanWrite)
         {
             throw new ArgumentException("Stream must be writable.", nameof(stream));
@@ -273,6 +276,26 @@ internal sealed class OperationalStreamWriter : IDisposable
                 foreach (var b in t1.Payload)
                 {
                     writer.Write(b);
+                }
+
+                break;
+
+            case OperationalWorldDelta worldDelta:
+                if (_game is null)
+                {
+                    throw new InvalidDataException("World-delta records require a game reference.");
+                }
+
+                writer.Write(worldDelta.BoundaryFrame);
+                using (var payload = new MemoryStream())
+                {
+                    using (var persister = new StateWriter(payload, _game))
+                    {
+                        persister.PersistObject(worldDelta.Delta, "WorldStateDelta");
+                    }
+
+                    writer.Write((int)payload.Length);
+                    writer.Write(payload.ToArray());
                 }
 
                 break;

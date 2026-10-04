@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using Panopticon;
 using Panopticon.Logic.Orders;
 using Panopticon.Simulation;
 
@@ -33,15 +34,18 @@ internal sealed class OperationalStreamReader : IDisposable
         }
     }
 
-    private OperationalStreamReader(Stream stream, BinaryReader reader, long dataStart, string runId, string domainId, int schemaVersion)
+    private OperationalStreamReader(Stream stream, BinaryReader reader, long dataStart, string runId, string domainId, int schemaVersion, IGame? game)
     {
         _stream = stream;
         _reader = reader;
         _dataStart = dataStart;
+        _game = game;
         RunId = runId;
         DomainId = domainId;
         DomainSchemaVersion = schemaVersion;
     }
+
+    private readonly IGame? _game;
 
     public string RunId { get; }
 
@@ -49,7 +53,7 @@ internal sealed class OperationalStreamReader : IDisposable
 
     public int DomainSchemaVersion { get; }
 
-    public static OperationalStreamReader Open(Stream stream)
+    public static OperationalStreamReader Open(Stream stream, IGame? game = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
@@ -71,7 +75,7 @@ internal sealed class OperationalStreamReader : IDisposable
         var runId = reader.ReadString();
         var domainId = reader.ReadString();
         var schemaVersion = reader.ReadInt32();
-        return new OperationalStreamReader(stream, reader, stream.Position, runId, domainId, schemaVersion);
+        return new OperationalStreamReader(stream, reader, stream.Position, runId, domainId, schemaVersion, game);
     }
 
     private static void ValidateMagic(BinaryReader reader)
@@ -516,6 +520,31 @@ internal sealed class OperationalStreamReader : IDisposable
 
                     var payload = reader.ReadBytes(byteCount);
                     return new OperationalT1(boundaryFrame, payload);
+                }
+
+            case OperationalRecordType.WorldDelta:
+                {
+                    var boundaryFrame = reader.ReadUInt32();
+                    var byteCount = reader.ReadInt32();
+                    if (byteCount < 0)
+                    {
+                        throw new InvalidDataException("Negative world-delta payload length.");
+                    }
+
+                    if (_game is null)
+                    {
+                        throw new InvalidDataException("World-delta records require a game reference.");
+                    }
+
+                    var payload = reader.ReadBytes(byteCount);
+                    var delta = new WorldStateDelta();
+                    using (var payloadStream = new MemoryStream(payload, writable: false))
+                    using (var persister = new StateReader(payloadStream, _game))
+                    {
+                        persister.PersistObject(delta, "WorldStateDelta");
+                    }
+
+                    return new OperationalWorldDelta(boundaryFrame, delta);
                 }
 
             default:
