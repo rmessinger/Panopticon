@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-19` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6d recording modes and cadence |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -66,3 +66,14 @@ Do not write `operational.bin` or checkpoints in this card. Do not change the se
 - Unblock `WI-A1-20` and `WI-W3a-31`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+Implemented 2026-10-04 on `track-a-a1-6a-foundations` (commit follows `24b13a647`).
+
+- Added `RecordingMode` (`Full`, `Operational`), `RecordingCadence` (validated boundary delegates), and `RecordingOptions` (`Mode`, `BundleDirectory`, `DefaultCadence`, `RecordT1`, static `CreateDefaultCadence()` = 1800 operational / 108000 checkpoint frames at 30 Hz).
+- Added `IReconstructableDomain` (`Cadence`, `GranularLayers`, `CaptureRollups`, `DrainOperationalEvents`, `PersistRuntime`) plus a minimal `DomainEvent(Kind, Detail?)` record; no domain implements it yet (W3a-31 later).
+- `WorldStateSampler` gained an optional boundary filter; `RunRecording.Attach` gained an optional `RecordingOptions` parameter. Effective cadence = domain cadence, else options default, else the built-in default. Omitted options leave the `Full` path untouched; `Operational` mode samples only at boundaries and skips live T2 (null).
+- `RunOutput` unchanged (manifest fields are A1-21 scope).
+- Tests (`RecordingOptionsTests`, 4): default cadence values; `Full`-options vs omitted-options JSON byte-identical after normalizing the per-attach `runId` and wall-clock `*Milliseconds` fields; Operational mode samples frames 5/10/15/20 under a %5 cadence with T2 null and no domain cadence; domain cadence wins over the caller default (frames 3/6/9). Host frames start at 1, so frame 0 is never sampled.
+- Validation: 26 recording-suite tests unmodified and green, `dotnet format` verify clean, `check_brace_newline` clean, `git diff --check` clean.
