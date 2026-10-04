@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-23` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6f reconstruction cache |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-22` |
@@ -63,3 +63,25 @@ Do not change bundle file formats. Do not use cache entries without rechecking i
 - Unblock `WI-A1-24`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+`ReconstructionCache` is an in-memory LRU keyed by (run id, frame) under a byte budget; nothing
+is written inside the immutable bundle directory. `RunReconstructor.Open` accepts an optional
+cache, `Reconstruct` prefers the nearest valid cached checkpoint over the nearest bundle
+checkpoint, and the step loop stores a derived checkpoint (via `EngineCheckpoint.CaptureSections`)
+at every boundary whose hash just verified, except the checkpoint it started from. Validation on
+use: a stored entry under a different identity purges that run's entries, and an entry whose
+frame is missing from the bundle's recorded hashes, or whose stored hash differs, is discarded
+before use.
+
+One delivery gap surfaced by the cache-hit test and fixed here: restoring from a checkpoint at
+or after `fromFrame` now delivers that boundary itself (state captured from the restored host,
+verified against the recorded hash) before stepping; previously such a boundary was skipped.
+Bundle-path reconstruction is unchanged (frame zero is not a recorded boundary).
+
+Validation: 6/6 `ReconstructionCacheTests` (nearest selection, LRU eviction within budget,
+run-scoped identity purge, boundary-hash discard incl. missing frames, oversized entry rejected,
+installed cache-hit run that hides the bundle checkpoints and still reconstructs [20..45] from
+the cached frame-20 checkpoint); `RunReconstructorTests` 6/6 unchanged; recording suites 69/69
+with env; format/brace/diff clean.
