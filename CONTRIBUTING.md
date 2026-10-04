@@ -31,6 +31,8 @@ Pull Requests
 
 * **DO** submit all code changes via pull requests (PRs) rather than through a direct commit. PRs will be reviewed and potentially merged by the repo maintainers after a peer review that includes at least one maintainer.
 * **DO** give PRs short-but-descriptive names (e.g. "Improve code coverage for System.Console by 10%", not "Fix #1234")
+* **DO** write PR descriptions as atomic bullets, not prose paragraphs: one fact per bullet; one top-level bullet per card or change area; a short Validation list at the end.
+* **DO** split semicolon chains and multi-sentence blobs into separate bullets or nested sub-lists. Total verbosity stays roughly the same as paragraph text.
 * **DO** refer to any relevant issues, and include [keywords](https://help.github.com/articles/closing-issues-via-commit-messages/) that automatically close issues when the PR is merged.
 * **DO** tag any users that should know about and/or review the change.
 * **DO** ensure each commit successfully builds.  The entire PR must pass all tests in the Continuous Integration (CI) system before it'll be merged.
