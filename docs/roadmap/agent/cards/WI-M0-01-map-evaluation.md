@@ -121,6 +121,10 @@ The operator chose community maps over the official candidates. Sourced the `952
 
 Reading: deepdivide is the primary candidate (largest dry zone pair, two full-width bands, 6 slots, no water); devilscrossing is the max-separation alternate (gap 1980, centroid 3551, vertical bands). Larger-metric maps (fight win prevail, ageneralsbattlefield, Conflict-by-STOUT, ragingdarkness, battleofjax2) are 8-27% submerged and stay demoted. Official Twilight Flame remains the in-tree fallback. Final selection and load proof land with M0-3.
 
+## Provisional map selection
+
+Operator selection: `deepdivide`. M0-3 validates deployment capacity, per-ground-locomotor reachability, and headless/windowed loading before the map is locked for M1. Selection remains provisional until those checks pass. M0-2 authored fallback is deferred.
+
 ## Files likely to change
 
 - None (read-only investigation). No map is committed.
