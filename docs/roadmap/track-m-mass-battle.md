@@ -57,4 +57,4 @@ marked `Ready`. `†` marks conceptual diagrams awaiting grounding.
 Operator note (2026-10-04): after this track completes, map development starts as its own
 effort, creating large maps programmatically (generation and authoring tooling for
 mass-battle-scale battlefields) instead of sourcing community maps. Track M stays on the
-sourced `heavyfire` map; the deferred M0-2 authored fallback folds into that later effort.
+sourced `deepdivide` map; the deferred M0-2 authored fallback folds into that later effort.
