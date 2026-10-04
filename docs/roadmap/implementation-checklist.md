@@ -631,14 +631,14 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     the single documented soldier/order path, matching A2/P2's actuation constraint; fixed-contract
     per-rank neural policies run end to end (A4-3e); three populations advance through the
     documented co-evolution schedule with rank-aware reports (A4-3f).
-- [ ] A4-4 Domain state projection
+- [x] A4-4 Domain state projection
       ([deep dive](deep-dives/a4-4-domain-state-projection.md)): optional
       `IDomainStateProjection` with a versioned schema, keyed multi-field records, a separate
       domain-state artifact, and a schema-driven conservation check.
-  - [ ] A4-4a Contracts and schema validation (`WI-A4-42`).
-  - [ ] A4-4b Frame persistence, diff/apply, reconstruction, conservation residuals (`WI-A4-43`).
-  - [ ] A4-4c Recorder, artifact, `RunRecording`/`RunOutput` wiring (`WI-A4-44`).
-  - [ ] A4-4d Transport-graph reference projection (`WI-A4-45`).
+  - [x] A4-4a Contracts and schema validation (`WI-A4-42`).
+  - [x] A4-4b Frame persistence, diff/apply, reconstruction, conservation residuals (`WI-A4-43`).
+  - [x] A4-4c Recorder, artifact, `RunRecording`/`RunOutput` wiring (`WI-A4-44`).
+  - [x] A4-4d Transport-graph reference projection (`WI-A4-45`).
   - AC: the transport domain records and reconstructs state records at every sampled frame with
     empty conservation residuals; RTS run-output JSON is byte-identical to the pre-A4-4 output.
 - [ ] Stable seams for pathfinding, partitioning, fidelity policy, storage layout, model import (see
