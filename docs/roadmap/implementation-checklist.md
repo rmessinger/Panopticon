@@ -525,16 +525,16 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     headless + P0 `HarnessRunner` onto `SimulationHost`). Replay input recording is the existing
     `.rep` path. Milestone test: headless run to a decided outcome with all tiers written and
     reloadable (`TieredRecordingTests.HeadlessRun_ReachesMatchEnd_AndWritesAllTiers`).
-- [ ] A1-6 Operational recording and seeded reconstruction
+- [x] A1-6 Operational recording and seeded reconstruction
       ([deep dive](deep-dives/a1-6-operational-recording.md)): `Operational` recording mode,
       engine checkpoints, bucketed state hashes, and a verified whole-world reconstructor.
-  - [ ] A1-6a Checkpoint coverage audit (`WI-A1-13`); persisted `SageRandom` logic random (`WI-A1-14`).
-  - [ ] A1-6b Engine checkpoint format (`WI-A1-15`); host restore (`WI-A1-16`).
-  - [ ] A1-6c Run identity (`WI-A1-17`); operational state hash (`WI-A1-18`).
-  - [ ] A1-6d Recording modes and cadence (`WI-A1-19`); operational stream (`WI-A1-20`).
-  - [ ] A1-6e Operational run bundle: checkpoint scheduling and manifest (`WI-A1-21`).
-  - [ ] A1-6f Reconstructor with verification and sinks (`WI-A1-22`); reconstruction cache (`WI-A1-23`).
-  - [ ] A1-6g Conformance evidence (`WI-A1-24`).
+  - [x] A1-6a Checkpoint coverage audit (`WI-A1-13`); persisted `SageRandom` logic random (`WI-A1-14`).
+  - [x] A1-6b Engine checkpoint format (`WI-A1-15`); host restore (`WI-A1-16`).
+  - [x] A1-6c Run identity (`WI-A1-17`); operational state hash (`WI-A1-18`).
+  - [x] A1-6d Recording modes and cadence (`WI-A1-19`); operational stream (`WI-A1-20`).
+  - [x] A1-6e Operational run bundle: checkpoint scheduling and manifest (`WI-A1-21`).
+  - [x] A1-6f Reconstructor with verification and sinks (`WI-A1-22`); reconstruction cache (`WI-A1-23`).
+  - [x] A1-6g Conformance evidence (`WI-A1-24`).
   - AC: RTS and transport-graph `Operational` runs reconstruct randomly chosen frames from their
     checkpoints with every operational hash matching and state equal to a `Full` run of the same
     seed; `Full` mode JSON and artifacts are byte-identical to the pre-A1-6 output.
