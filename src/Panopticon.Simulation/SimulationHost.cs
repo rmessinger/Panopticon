@@ -73,6 +73,19 @@ public sealed class SimulationHost
     public event EventHandler<SimulationHostTickEventArgs>? TickComplete;
 
     /// <summary>
+    /// Raised per due frame with the orders actually dispatched into the game (WI-A1-21: the
+    /// operational stream's Inputs records mirror real dispatch, not injection requests).
+    /// </summary>
+    internal event Action<uint, IReadOnlyList<Order>>? OrdersDispatched;
+
+    /// <summary>
+    /// Raised when <see cref="InjectOrders"/> schedules orders (WI-A1-22): carries the logic
+    /// frame the scheduling happened at, so replay can reproduce the exact moment an order
+    /// entered the pending schedule.
+    /// </summary>
+    internal event Action<uint, uint, IReadOnlyList<Order>>? OrdersInjected;
+
+    /// <summary>
     /// Current frame step count since the run started.
     /// </summary>
     public uint Frame => _frame;
@@ -88,6 +101,28 @@ public sealed class SimulationHost
     /// callers pass one (RTS callers pass the reference adapter from Panopticon.Simulation).
     /// </summary>
     public ISimulationDomainModel DomainModel { get; }
+
+    internal IGame Game => _game;
+
+    // Checkpoint capture seam (WI-A1-15): the host frame counter, map time, and the pending
+    // order schedule are private, so the checkpoint writer reads them through this snapshot.
+    internal (uint Frame, TimeSpan MapTime, SortedDictionary<uint, List<Order>> PendingOrders) CaptureHostState()
+    {
+        return (_frame, _mapTime, _pendingOrders);
+    }
+
+    // Checkpoint restore seam (WI-A1-16): rewinds the host counters and re-seeds the pending
+    // order schedule from a decoded host section.
+    internal void RestoreHostState(uint frame, TimeSpan mapTime, IEnumerable<KeyValuePair<uint, List<Order>>> pendingOrders)
+    {
+        _frame = frame;
+        _mapTime = mapTime;
+        _pendingOrders.Clear();
+        foreach (var (scheduledFrame, orders) in pendingOrders)
+        {
+            _pendingOrders[scheduledFrame] = new List<Order>(orders);
+        }
+    }
 
     public SimulationHost(IGameEngine gameEngine, ISimulationDomainModel domainModel)
     {
@@ -106,13 +141,15 @@ public sealed class SimulationHost
     /// </summary>
     public void InjectOrders(uint frame, IEnumerable<Order> orders)
     {
+        var injected = orders as IReadOnlyList<Order> ?? orders.ToList();
         if (!_pendingOrders.TryGetValue(frame, out var list))
         {
             list = new List<Order>();
             _pendingOrders[frame] = list;
         }
 
-        list.AddRange(orders);
+        list.AddRange(injected);
+        OrdersInjected?.Invoke(LogicFrame.Value, frame, injected);
     }
 
     /// <summary>
@@ -173,11 +210,13 @@ public sealed class SimulationHost
         var dueFrames = _pendingOrders.Keys.Where(f => f <= currentFrame + 1).ToList();
         foreach (var dueFrame in dueFrames)
         {
-            foreach (var order in _pendingOrders[dueFrame])
+            var due = _pendingOrders[dueFrame];
+            foreach (var order in due)
             {
                 _game.InjectOrders(new[] { order });
             }
 
+            OrdersDispatched?.Invoke(dueFrame, due);
             _pendingOrders.Remove(dueFrame);
         }
     }

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-20` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6d operational stream |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-18`, `WI-A1-19`, `WI-A4-44` |
@@ -67,3 +67,25 @@ Do not schedule engine checkpoints or write manifest fields yet. Do not implemen
 - Unblock `WI-A1-21`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+Implemented `OperationalRecords.cs`, `OperationalStreamWriter.cs`, and `OperationalStreamReader.cs`.
+Chunks carry `[uncompressed length][compressed length][boundary frame][Brotli payload]`; the writer
+interns keys/kinds/series/references into an append-only string table and emits new entries as the
+first record of each chunk. Footer index (`PNDF` + count + offset/frame pairs) written only on
+`WriteFooter()`; the reader falls back to scanning chunks, ignores a truncated trailing chunk, and
+rejects unknown versions, unknown record types, and decompression mismatches with
+`InvalidDataException`. `Inputs` reuses the `EngineCheckpoint` order encoding; `Hashes` records
+carry `OperationalStateHashes` and round-trip exactly against `OperationalStateHasher.Build`.
+Tests: 7/7 (round-trip of every record type with interned-string resolution, crash-before-footer
+scan rebuild, truncated final chunk ignored, unknown version, unknown record type, hashes match
+hasher outputs, footer vs scan index equality). Full-suite note: with `CNC_GENERALS_PATH` set, the
+full non-interactive suite shows 8 failures on this branch; 7 of them (Bse/Cur/Scb/Wnd/Map
+round-trips, SteamLocator, P2ScenarioMatrix) reproduce identically on `origin/main` full-suite
+runs and pass focused, and the 8th (ModelAnimationBindingTests) passes 3/3 focused on this branch;
+all are order/context-dependent environmental failures, not regressions from this work.
+
+## Revision: storage-first A1-6 (#147)
+
+- The `Hashes` record type is removed from the stream.

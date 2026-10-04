@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A1-13` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6a checkpoint coverage audit |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -61,8 +61,19 @@ Do not implement the `PNCK` checkpoint format, run identity, or reconstruction c
 
 ## Result
 
-Pending. On completion, replace this line with the missing-persistence list, checkpoint-exclusion
-change summary, RNG source list, and follow-up card list.
+Done 2026-10-04. Findings from `CheckpointCoverageTests` (2/2 passing: chunk partition + full round-trip) and source audit:
+
+- Checkpoint exclusion: `SaveFile.IsLogicChunk` filters writes to 11 logic chunks (`GameState`, `Campaign`, `GameStateMap`, `TerrainLogic`, `TeamFactory`, `Players`, `GameLogic`, `ScriptEngine`, `SidesList`, `Partition`, `GhostObject`); the tested complement is the six presentation chunks (`ParticleSystem`, `Radar`, `TacticalView`, `GameClient`, `InGameUI`, `TerrainVisual`).
+- Missing/incomplete persistence fixed to make the round-trip pass (all in write mode unless noted):
+  - `GameStateMap` was read-oriented: `_mapPath1`/`_mapPath2`/`_gameType` never initialized on live games, embedded-map bytes sourced from a nonexistent user-data extraction, and `SkirmishManager.Settings` NRE. Fixed by seeding from new `Game.CurrentMapPath`/`CurrentGameType`, sourcing map bytes via `ContentManager.GetMapEntry`, and persisting a skirmish-settings record in all modes for stream symmetry (restore side effects guarded on `!InGame`).
+  - `GameObject.Persist` unconditionally rebuilt `Team`/`Owner` on read: teamless objects (`teamId == 0`) NREd in write mode and read mode. Team decode is now read-mode-only and null-safe.
+  - `Player.Persist` read NREd when `DefaultTeam` id 0 (never set in live games); now maps to null.
+  - `GameLogic.Persist` persisted the object-definition lookup table before any ids were assigned (lazy `GetId` during the object loop never reached the stream, restore failed in `GetById`) and counted destroyed null object slots in `objectsCount`, desyncing the stream. Both fixed.
+  - Restore seam: booting the same scenario before `LoadFromStream` leaves `InGame == true`, which bypasses both the `SaveFile` read-mode `StartCampaign` path and the `GameStateMap` skirmish restart path; no production seam exists yet (WI-A1-16 `IReconstructionBootstrap` owns it).
+- RNG sources (all): logic tick path is `GameLogic.Random` alone (OCL draws, locomotor wander, build variations/probability, slaved/hack/minefield/physics updates, weapons). Presentation/UI: `GameClient.Random`, `AudioSystem._random` (NoAudio short-circuits), `ParticleSystemUtility` static (reseeded per `BeginSeedScope`), Apt ActionScript. One-shot non-tick: replay slot re-roll (`Game.ParseReplayMetaToPlayerSettings`), skirmish slot defaults, `SkirmishGameSettings.Seed` UI default, dev diagnostics. Track W keyed streams designed, not implemented. `IGame.CreateRandom` returns `SystemRandom` (non-persistable `System.Random` state); `SageRandom` persists six `uint` words.
+- Key limitation: the round-trip test passes with `SystemRandom` only because the restored host replays identical frames 0..90 from the same seed, so RNG stream positions coincide. Checkpoints restored into hosts without identical replay history still diverge; WI-A1-14 (swap to `SageRandom` + persist six uints) closes that.
+
+Follow-up cards: WI-A1-14 (persistable logic random), WI-A1-15/16 (checkpoint format + restore entry point), already in the phase plan.
 
 ## On completion
 

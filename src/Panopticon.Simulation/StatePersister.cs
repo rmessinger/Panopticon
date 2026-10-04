@@ -130,6 +130,24 @@ public abstract class StatePersister : DisposableBase
 
     public abstract void PersistSingleValue(ref float value);
 
+    public void PersistInt64(ref long value, [CallerArgumentExpression("value")] string name = "")
+    {
+        PersistFieldName(name);
+
+        PersistInt64Value(ref value);
+    }
+
+    public abstract void PersistInt64Value(ref long value);
+
+    public void PersistDouble(ref double value, [CallerArgumentExpression("value")] string name = "")
+    {
+        PersistFieldName(name);
+
+        PersistDoubleValue(ref value);
+    }
+
+    public abstract void PersistDoubleValue(ref double value);
+
     public void PersistEnum<TEnum>(ref TEnum value, [CallerArgumentExpression("value")] string name = "")
         where TEnum : struct
     {
@@ -320,6 +338,10 @@ public sealed class StateReader : StatePersister
 
     public override void PersistSingleValue(ref float value) => value = _binaryReader.ReadSingle();
 
+    public override void PersistInt64Value(ref long value) => value = _binaryReader.ReadInt64();
+
+    public override void PersistDoubleValue(ref double value) => value = _binaryReader.ReadDouble();
+
     public override void PersistEnumValue<TEnum>(ref TEnum value) => value = _binaryReader.ReadUInt32AsEnum<TEnum>();
 
     public override void PersistEnumUInt16Value<TEnum>(ref TEnum value) => value = _binaryReader.ReadUInt16AsEnum<TEnum>();
@@ -429,7 +451,7 @@ public sealed class StateWriter : StatePersister
     public Stream BaseStream => _binaryWriter.BaseStream;
 
     internal StateWriter(Stream stream, IGame game)
-        : base(game, StatePersistMode.Read)
+        : base(game, StatePersistMode.Write)
     {
         _binaryWriter = AddDisposable(new BinaryWriter(stream, Encoding.Unicode, true));
     }
@@ -451,6 +473,10 @@ public sealed class StateWriter : StatePersister
     public override void PersistUnicodeStringValue(ref string value) => _binaryWriter.WriteBytePrefixedUnicodeString(value);
 
     public override void PersistSingleValue(ref float value) => _binaryWriter.Write(value);
+
+    public override void PersistInt64Value(ref long value) => _binaryWriter.Write(value);
+
+    public override void PersistDoubleValue(ref double value) => _binaryWriter.Write(value);
 
     public override void PersistEnumValue<TEnum>(ref TEnum value) => _binaryWriter.WriteEnumAsUInt32(value);
 

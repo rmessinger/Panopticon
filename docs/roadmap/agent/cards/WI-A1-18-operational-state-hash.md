@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-A1-18` |
 | Roadmap phase | [Track A · A1](../../track-a-foundations.md): A1-6c operational state hash |
-| Status | `Ready` |
+| Status | `Done` (withdrawn by the A1-6 storage-first revision; code removed) |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A1-13` |
-| Diagrams | [A1-6 §5.5](../../deep-dives/a1-6-operational-recording.md#55-state-hash) |
+| Diagrams | A1-6 §5.5 (removed) |
 
 ## Goal
 
@@ -65,3 +65,19 @@ Do not write `Hashes` records to `operational.bin` yet. Do not add probabilistic
 - Unblock `WI-A1-20`.
 - List follow-up cards to create here:
   - none
+
+## Result
+
+Implemented `OperationalStateHasher.HashPersisted` (per-object `StateWriter` bytes into XxHash3)
+and `Build(bucketObjectHashes, globalsSections)` producing `OperationalStateHashes`
+(WorldHash/GlobalsHash/Buckets). Bucket folds and the globals fold are commutative
+(object/section order independent, mirroring `SignatureTree`'s Mix/FNV approach); the world hash
+seeds from the globals hash and folds bucket hashes in ordinal bucket-key order. Tests
+(6): equal inputs equal at every level; object order within a bucket irrelevant; bucket supply
+order irrelevant; changed object alters only its bucket plus world; changed random/host section
+alters only globals plus world; `HashPersisted` distinguishes changed checkpoint bytes.
+Hashes are not yet written to the operational stream (WI-A1-20 scope).
+
+## Revision: storage-first A1-6 (#147)
+
+- Withdrawn. `OperationalStateHasher`, `OperationalStateHashes`, and their tests are removed; the stream has no `Hashes` record.
