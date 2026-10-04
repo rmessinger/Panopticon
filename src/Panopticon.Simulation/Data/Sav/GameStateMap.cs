@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Panopticon.Network;
 
@@ -11,6 +12,19 @@ internal sealed class GameStateMap : IPersistableObject
 
     public void Persist(StatePersister reader)
     {
+        // Live games never initialize these fields (only retail-save loads do),
+        // so writing a checkpoint must source them from the running Game
+        // (WI-A1-13).
+        if (reader.Mode == StatePersistMode.Write)
+        {
+            var liveGame = reader.Game as Game
+                ?? throw new InvalidOperationException("Cannot write a GameStateMap chunk without a running game.");
+            _mapPath1 = liveGame.CurrentMapPath
+                ?? throw new InvalidOperationException("Cannot write a GameStateMap chunk before a map is loaded.");
+            _mapPath2 = _mapPath1;
+            _gameType = liveGame.CurrentGameType;
+        }
+
         reader.PersistVersion(2);
 
         reader.PersistAsciiString(ref _mapPath1);
@@ -32,24 +46,39 @@ internal sealed class GameStateMap : IPersistableObject
 
         var game = reader.Game;
 
-        // TODO: Delete this temporary map when ending the game.
-        var mapPathInSaveFolder = Path.Combine(
-            game.ContentManager.UserDataFileSystem.RootDirectory,
-            _mapPath1);
-        var saveFolder = Path.GetDirectoryName(mapPathInSaveFolder);
-        if (!Directory.Exists(saveFolder))
+        byte[] mapBytes;
+        if (reader.Mode == StatePersistMode.Read)
         {
-            Directory.CreateDirectory(saveFolder);
+            mapBytes = new byte[mapSize];
         }
-
-        var mapBytes = (reader.Mode == StatePersistMode.Read)
-            ? new byte[mapSize]
-            : File.ReadAllBytes(mapPathInSaveFolder);
+        else
+        {
+            // Write mode embeds the map archive entry, not a previously
+            // extracted user-data copy (which live runs never create).
+            var mapEntry = game.ContentManager.GetMapEntry(_mapPath1)
+                ?? throw new FileNotFoundException($"Map \"{_mapPath1}\" was not found in the content file system.");
+            using var mapStream = mapEntry.Open();
+            using var buffer = new MemoryStream();
+            mapStream.CopyTo(buffer);
+            mapBytes = buffer.ToArray();
+        }
 
         reader.PersistSpan(mapBytes);
 
-        if (reader.Mode == StatePersistMode.Read)
+        // Retail saves extract the embedded map into the user data folder
+        // before starting the game from it. Checkpoint restores land in an
+        // already-running game and skip that side effect.
+        if (reader.Mode == StatePersistMode.Read && !game.InGame)
         {
+            var mapPathInSaveFolder = Path.Combine(
+                game.ContentManager.UserDataFileSystem.RootDirectory,
+                _mapPath1);
+            var saveFolder = Path.GetDirectoryName(mapPathInSaveFolder);
+            if (!Directory.Exists(saveFolder))
+            {
+                Directory.CreateDirectory(saveFolder);
+            }
+
             File.WriteAllBytes(mapPathInSaveFolder, mapBytes);
         }
 
@@ -64,33 +93,39 @@ internal sealed class GameStateMap : IPersistableObject
             reader.PersistBoolean(ref unknown6);
         }
 
-        if (reader.Mode == StatePersistMode.Read)
+        if (_gameType == GameType.Skirmish)
         {
-            if (_gameType == GameType.Skirmish)
+            // The skirmish settings record is part of the stream in every
+            // mode; only the restart side effects are conditional.
+            if (reader.Mode == StatePersistMode.Read)
             {
-                game.SkirmishManager = new LocalSkirmishManager(game);
+                var manager = new LocalSkirmishManager(game);
+                reader.PersistObject(manager.Settings, "SkirmishGameSettings");
 
-                reader.PersistObject(game.SkirmishManager.Settings, "SkirmishGameSettings");
+                if (!game.InGame)
+                {
+                    game.SkirmishManager = manager;
 
-                game.SkirmishManager.Settings.MapName = _mapPath1;
+                    manager.Settings.MapName = _mapPath1;
 
-                game.SkirmishManager.HandleStartButtonClickAsync().Wait();
+                    manager.HandleStartButtonClickAsync().Wait();
 
-                game.SkirmishManager.StartGame();
+                    manager.StartGame();
+
+                    game.PartitionCellManager.OnNewGame();
+                }
             }
             else
             {
-                game.StartSinglePlayerGame(_mapPath1);
+                var settings = game.SkirmishManager?.Settings ?? new SkirmishGameSettings(isHost: true);
+                reader.PersistObject(settings, "SkirmishGameSettings");
             }
+        }
+        else if (reader.Mode == StatePersistMode.Read && !game.InGame)
+        {
+            game.StartSinglePlayerGame(_mapPath1);
 
             game.PartitionCellManager.OnNewGame();
-        }
-        else
-        {
-            if (_gameType == GameType.Skirmish)
-            {
-                reader.PersistObject(game.SkirmishManager.Settings, "SkirmishGameSettings");
-            }
         }
     }
 }

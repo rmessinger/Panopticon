@@ -202,5 +202,5 @@ public interface IGame
 
     // TODO: Move this somewhere where it could be configured for specific games;
     // e.g. for a replay we might want to use SageRandom.
-    IRandom CreateRandom() => new SystemRandom();
+    IRandom CreateRandom() => new SageRandom();
 }

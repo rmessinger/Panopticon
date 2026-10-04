@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Panopticon.Graphics.Cameras;
 using Panopticon.IO;
 
@@ -48,6 +49,28 @@ public static class SaveFile
         Persist(statePersister);
     }
 
+    // Chunks that carry simulation (logic) state. Operational checkpoints persist
+    // only these; the remaining chunks carry presentation-only state.
+    internal static readonly IReadOnlyList<string> LogicChunkNames = new[]
+    {
+        "CHUNK_GameState",
+        "CHUNK_Campaign",
+        "CHUNK_GameStateMap",
+        "CHUNK_TerrainLogic",
+        "CHUNK_TeamFactory",
+        "CHUNK_Players",
+        "CHUNK_GameLogic",
+        "CHUNK_ScriptEngine",
+        "CHUNK_SidesList",
+        "CHUNK_Partition",
+        "CHUNK_GhostObject",
+    };
+
+    internal static bool IsLogicChunk(string chunkName) => LogicChunkNames.Contains(chunkName);
+
+    // Names of every chunk Persist writes, in write order.
+    internal static readonly IReadOnlyList<string> PersistedChunkNames;
+
     private record struct ChunkDefinition(string ChunkName, Func<IGame, IPersistableObject> GetPersistableObject);
 
     // This correlates to GameState::init in Generals
@@ -76,7 +99,15 @@ public static class SaveFile
 
     };
 
-    public static void Persist(StatePersister persister)
+    static SaveFile()
+    {
+        PersistedChunkNames = ChunkDefinitions.Select(x => x.ChunkName).ToArray();
+    }
+
+    public static void Persist(StatePersister persister) => Persist(persister, chunkFilter: null);
+
+    // chunkFilter applies in write mode only; read mode loads whatever chunks the stream carries.
+    internal static void Persist(StatePersister persister, Func<string, bool>? chunkFilter)
     {
         //using var binaryReader = new BinaryReader(stream, Encoding.Unicode, true);
 
@@ -138,6 +169,11 @@ public static class SaveFile
                 persister.EndObject();
             }
 
+            // The logic random state is staged during the GameLogic chunk read
+            // because object re-creation consumes draws; apply it only after
+            // every chunk has been restored (WI-A1-14).
+            persister.Game.GameLogic?.ApplyPendingRandomState();
+
             // If we haven't started a game yet (which will be the case for
             // "mission start" save files), then start it now.
             if (!persister.Game.InGame)
@@ -151,6 +187,11 @@ public static class SaveFile
         {
             foreach (var chunkDefinition in ChunkDefinitions)
             {
+                if (chunkFilter != null && !chunkFilter(chunkDefinition.ChunkName))
+                {
+                    continue;
+                }
+
                 persister.BeginObject();
 
                 var chunkName = chunkDefinition.ChunkName;

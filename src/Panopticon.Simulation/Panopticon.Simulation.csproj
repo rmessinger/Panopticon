@@ -13,6 +13,7 @@
     <PackageReference Include="OptimizedPriorityQueue" />
     <PackageReference Include="SixLabors.ImageSharp" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" />
+    <PackageReference Include="System.IO.Hashing" />
     <PackageReference Include="SharpAudio" />
     <PackageReference Include="SharpAudio.Codec" />
     <PackageReference Include="SharpGLTF.Core" />

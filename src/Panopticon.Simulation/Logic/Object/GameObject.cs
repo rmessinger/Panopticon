@@ -1729,9 +1729,18 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
 
         var teamId = Team?.Id ?? 0u;
         reader.PersistUInt32(ref teamId);
-        Team = _gameEngine.Game.TeamFactory.FindTeamById(teamId);
-
-        Owner = Team.Template.Owner;
+        if (reader.Mode == StatePersistMode.Read)
+        {
+            // 0 encodes "no team" (write side: Team?.Id ?? 0u); teamless
+            // objects keep the civilian owner their constructor assigned.
+            Team = teamId == 0
+                ? null
+                : _gameEngine.Game.TeamFactory.FindTeamById(teamId);
+            if (Team != null)
+            {
+                Owner = Team.Template.Owner;
+            }
+        }
 
         reader.PersistObjectId(ref CreatedByObjectID);
         reader.PersistObjectId(ref BuiltByObjectID);
