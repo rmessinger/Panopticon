@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-H2a-17` |
 | Roadmap phase | [H2a](../../track-h-storage-formats.md) |
-| Status | `Draft` |
+| Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-H2a-14`, `WI-H2a-16` |
