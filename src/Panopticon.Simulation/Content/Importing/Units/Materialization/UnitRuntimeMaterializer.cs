@@ -57,6 +57,7 @@ public static class UnitRuntimeMaterializer
             case UnitRecord unit:
                 var definition = UnitBodyMovementMaterializer.CreateDefinition(unit, context);
                 UnitCombatMaterializer.AddSets(unit, definition, context);
+                UnitAbilityMaterializer.AddModules(unit, definition, resolution, context);
                 return definition;
             default:
                 // Abilities, projectiles, and visual states shape other assets and have no runtime asset of their own.

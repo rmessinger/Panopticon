@@ -1223,7 +1223,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: health, geometry, locomotor, and movement values produce native modules; invalid numbers fail before registration.
 - [x] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
   - AC: range, reload, damage, targeting, projectile references, and armor resolve from imported values without balancing defaults.
-- [ ] H2a-9 Ability materialization (`WI-H2a-09`).
+- [x] H2a-9 Ability materialization (`WI-H2a-09`).
   - AC: selected supported abilities create native modules and execute; unsupported abilities cannot silently disappear.
 - [ ] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
   - AC: costs, build time, prerequisites, production links, and selected upgrades retain their imported semantics; unsupported economy mechanics block import.
