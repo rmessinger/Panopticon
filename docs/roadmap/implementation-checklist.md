@@ -1211,13 +1211,13 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: file:line evidence covers INI defaults/inheritance, dependency loading, scoped identity, module construction, and P9 entry points.
 - [x] H2a-2 Contract and architecture design (`WI-H2a-02`).
   - AC: reviewed schema, capability matrix, reference roster, and grounded class/sequence diagrams reconcile all Draft cards.
-- [ ] H2a-3 Engine-owned interchange contracts (`WI-H2a-03`).
+- [x] H2a-3 Engine-owned interchange contracts (`WI-H2a-03`).
   - AC: owned values cover gameplay and visual dependencies without source parser or live runtime objects; mutation and identity tests pass.
-- [ ] H2a-4 Inheritance resolution (`WI-H2a-04`).
+- [x] H2a-4 Inheritance resolution (`WI-H2a-04`).
   - AC: omitted versus explicit values and list replacement/merge follow the contract; missing parents and cycles report their source chain.
-- [ ] H2a-5 Dependency resolution (`WI-H2a-05`).
+- [x] H2a-5 Dependency resolution (`WI-H2a-05`).
   - AC: typed cross-file references resolve within declared namespaces; missing/wrong-kind/ambiguous references block publication.
-- [ ] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
+- [x] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
   - AC: unsupported gameplay blocks import; ignorable metadata is reported separately; failures identify source, record, field, and stage.
 - [ ] H2a-7 Body and movement materialization (`WI-H2a-07`).
   - AC: health, geometry, locomotor, and movement values produce native modules; invalid numbers fail before registration.
