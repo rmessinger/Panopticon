@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B1-04` |
 | Roadmap phase | [Track B · B1](../../track-b-scale.md): B1-4 report writers |
-| Status | `Draft` |
+| Status | `In progress` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B1-02` |
@@ -12,7 +12,7 @@
 
 ## Goal
 
-Draft: flip to Ready once the prerequisite cards are Done and the named types are reconciled. Persist B1 run records in an A2-compatible JSON shape and derive a CSV summary.
+Persist B1 run records in an A2-compatible JSON shape and derive a CSV summary.
 
 ## Context to read (and only this)
 
