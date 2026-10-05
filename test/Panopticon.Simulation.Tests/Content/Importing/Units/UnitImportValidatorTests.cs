@@ -108,7 +108,7 @@ public class UnitImportValidatorTests
     [Fact]
     public void LegacyBindingAcceptedOnlyFromLegacySource()
     {
-        var module = new UnitModule("ModuleTag_Squish", "SquishCollide", ModuleKinds.Collide, Legacy: new LegacyModuleBinding(Source, 0));
+        var module = new UnitModule("ModuleTag_Squish", "SquishCollide", ModuleKinds.Collide, Legacy: new LegacyBinding(Source, 0));
         var legacyUnit = Unit("U") with { MaxHealth = Authored.Of(Hp(10)), Modules = [ModuleEdit.Add(module)] };
         var foreignUnit = new UnitRecord(new ContentId(ContentSource.Ee2, ContentKind.Unit, "U"), At(1))
         {

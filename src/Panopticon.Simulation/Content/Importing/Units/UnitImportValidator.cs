@@ -16,6 +16,7 @@ public sealed class UnitImportValidator
     private static readonly QuantityUnit[] DistanceUnits = [QuantityUnit.GameDistance, QuantityUnit.Meters];
     private static readonly QuantityUnit[] TimeUnits = [QuantityUnit.Seconds, QuantityUnit.Milliseconds, QuantityUnit.LogicFrames];
     private static readonly QuantityUnit[] SpeedUnits = [QuantityUnit.DistancePerSecond];
+    private static readonly QuantityUnit[] AccelerationUnits = [QuantityUnit.DistancePerSecondSquared];
     private static readonly QuantityUnit[] TurnUnits = [QuantityUnit.DegreesPerSecond];
     private static readonly QuantityUnit[] CostUnits = [QuantityUnit.Currency];
     private static readonly QuantityUnit[] DamageUnits = [QuantityUnit.HitPoints, QuantityUnit.Scalar];
@@ -38,6 +39,11 @@ public sealed class UnitImportValidator
         {
             context.Record = record;
             ValidateUnclassified(context);
+
+            if (record.Legacy is not null && !(record.Legacy.Owner.Equals(_registry.LegacySource) && record.Id.Source.Equals(_registry.LegacySource)))
+            {
+                context.Error(DiagnosticCodes.LegacyBindingNotAllowed, $"Record uses a legacy template binding outside {_registry.LegacySource}.");
+            }
 
             switch (record)
             {
@@ -182,7 +188,8 @@ public sealed class UnitImportValidator
     {
         context.Required(locomotor.Speed, nameof(locomotor.Speed), SpeedUnits, minimum: 0);
         context.Optional(locomotor.TurnRate, nameof(locomotor.TurnRate), TurnUnits, minimum: 0);
-        context.Optional(locomotor.Acceleration, nameof(locomotor.Acceleration), SpeedUnits, minimum: 0);
+        context.Optional(locomotor.Acceleration, nameof(locomotor.Acceleration), AccelerationUnits, minimum: 0);
+        context.Optional(locomotor.Braking, nameof(locomotor.Braking), AccelerationUnits, minimum: 0);
     }
 
     private void ValidateAbility(Context context, AbilityRecord ability)
