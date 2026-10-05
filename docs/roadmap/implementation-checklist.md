@@ -1213,7 +1213,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: reviewed schema, capability matrix, reference roster, and grounded class/sequence diagrams reconcile all Draft cards.
 - [x] H2a-3 Engine-owned interchange contracts (`WI-H2a-03`).
   - AC: owned values cover gameplay and visual dependencies without source parser or live runtime objects; mutation and identity tests pass.
-- [ ] H2a-4 Inheritance resolution (`WI-H2a-04`).
+- [x] H2a-4 Inheritance resolution (`WI-H2a-04`).
   - AC: omitted versus explicit values and list replacement/merge follow the contract; missing parents and cycles report their source chain.
 - [ ] H2a-5 Dependency resolution (`WI-H2a-05`).
   - AC: typed cross-file references resolve within declared namespaces; missing/wrong-kind/ambiguous references block publication.
