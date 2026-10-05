@@ -118,6 +118,17 @@ public static class BenchmarkReportWriter
             yield return ($"system.{group.Key}.maxMs", Format(group.Max(s => s.SpanMs)));
             yield return ($"system.{group.Key}.count", Format(group.Count()));
         }
+
+        foreach (var stat in record.Statistics)
+        {
+            yield return ($"stat.{stat.Metric}.median", Format(stat.Median));
+            yield return ($"stat.{stat.Metric}.ciLow", Format(stat.ConfidenceLow));
+            yield return ($"stat.{stat.Metric}.ciHigh", Format(stat.ConfidenceHigh));
+            if (stat.IsRegression.HasValue)
+            {
+                yield return ($"stat.{stat.Metric}.regression", stat.IsRegression.Value ? "1" : "0");
+            }
+        }
     }
 
     private static string Format(double value)

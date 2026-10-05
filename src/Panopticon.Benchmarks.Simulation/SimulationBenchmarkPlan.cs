@@ -36,4 +36,7 @@ public sealed class SimulationBenchmarkPlan
 
     /// <summary>Optional CSV summary destination; accepted now, written from B1-4 on.</summary>
     public string? CsvPath { get; init; }
+
+    /// <summary>Optional baseline JSON record for CI-overlap regression comparison.</summary>
+    public string? BaselinePath { get; init; }
 }

@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
 namespace Panopticon.Benchmarks.Simulation;
 
@@ -35,7 +38,13 @@ public sealed class SimulationBenchmarkRunner
             environment.Env["CNC_GENERALS_PATH"] = installPath;
         }
 
-        return new BenchmarkRunRecord(
+        BenchmarkRunRecord? baseline = null;
+        if (plan.BaselinePath is not null)
+        {
+            baseline = BenchmarkReportWriter.FromJson(File.ReadAllText(plan.BaselinePath));
+        }
+
+        var record = new BenchmarkRunRecord(
             plan.ScenarioId,
             plan.Seed,
             plan.WarmupFrames,
@@ -49,5 +58,48 @@ public sealed class SimulationBenchmarkRunner
             SystemSamples = [.. metricRecorder.SystemSamples],
             Environment = environment,
         };
+        record.Statistics.AddRange(BuildStatistics(record, plan.Seed, baseline));
+        return record;
+    }
+
+    private static List<BenchmarkStatistics> BuildStatistics(
+        BenchmarkRunRecord record,
+        uint seed,
+        BenchmarkRunRecord? baseline)
+    {
+        var statistics = new List<BenchmarkStatistics>
+        {
+            BenchmarkStatistics.FromSamples("tick.wallMs", [.. record.TickSamples.Select(t => t.WallMs)], seed),
+            BenchmarkStatistics.FromSamples(
+                "tick.allocBytes",
+                [.. record.TickSamples.Select(t => (double)t.AllocBytes)],
+                seed),
+        };
+
+        foreach (var group in record.SystemSamples.GroupBy(s => s.System).OrderBy(g => g.Key))
+        {
+            statistics.Add(BenchmarkStatistics.FromSamples(
+                $"system.{group.Key}.spanMs",
+                [.. group.Select(s => s.SpanMs)],
+                seed));
+        }
+
+        if (baseline is not null)
+        {
+            var baselineRunId = baseline.Output?.RunId ?? $"{baseline.ScenarioId}:{baseline.Seed}";
+            foreach (var stat in statistics)
+            {
+                var baselineStat = baseline.Statistics.FirstOrDefault(s => s.Metric == stat.Metric);
+                if (baselineStat is null)
+                {
+                    continue;
+                }
+
+                stat.BaselineRunId = baselineRunId;
+                stat.IsRegression = BenchmarkStatistics.IntervalsDiffer(baselineStat, stat);
+            }
+        }
+
+        return statistics;
     }
 }

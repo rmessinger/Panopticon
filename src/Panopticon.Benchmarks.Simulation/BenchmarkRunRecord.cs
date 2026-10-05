@@ -49,5 +49,7 @@ public sealed class BenchmarkRunRecord
 
     public List<SystemMetricSample> SystemSamples { get; init; } = [];
 
+    public List<BenchmarkStatistics> Statistics { get; init; } = [];
+
     public EnvironmentRecord? Environment { get; init; }
 }

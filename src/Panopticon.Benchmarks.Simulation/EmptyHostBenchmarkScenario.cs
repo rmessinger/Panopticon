@@ -1,8 +1,5 @@
 using System;
 using System.Linq;
-using Panopticon.Logic;
-using Panopticon.Network;
-using Panopticon.Simulation;
 
 namespace Panopticon.Benchmarks.Simulation;
 
@@ -22,53 +19,6 @@ public sealed class EmptyHostBenchmarkScenario : SimulationBenchmarkScenario
     {
         ArgumentNullException.ThrowIfNull(plan);
 
-        var installation = BenchmarkInstallationResolver.Resolve()
-            ?? throw new InvalidOperationException(
-                "No Command & Conquer Generals installation found; set CNC_GENERALS_PATH to the install root.");
-
-        var game = new Game(
-            installation,
-            preferredBackend: null,
-            new Configuration { NoAudio = true, SkipStartingBuildings = true },
-            window: null);
-
-        var sides = game.GetPlayableSides().ToArray();
-        var playerSettings = new[]
-        {
-            new PlayerSetting(
-                0,
-                sides[0].Name,
-                game.AssetStore.MultiplayerColors.GetByIndex(0).RgbColor,
-                0,
-                PlayerOwner.None,
-                "bench-a"),
-            new PlayerSetting(
-                1,
-                sides[sides.Length > 1 ? 1 : 0].Name,
-                game.AssetStore.MultiplayerColors.GetByIndex(1).RgbColor,
-                0,
-                PlayerOwner.None,
-                "bench-b"),
-        };
-
-        game.StartSkirmishOrMultiPlayerGame(
-            plan.MapPath ?? DefaultMapPath,
-            new EchoConnection(),
-            playerSettings,
-            (int)plan.Seed,
-            isMultiPlayer: false);
-        game.StartRun();
-
-        // The empty host must neither end early nor run skirmish AI: no units exist to satisfy
-        // a victory rule, and map slots get AI players at boot whose per-tick thinking would
-        // pollute the host-overhead measurement.
-        game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
-        foreach (var player in game.Scene3D.Players)
-        {
-            player.DisableAI();
-        }
-
-        var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
-        return new SimulationBenchmarkRun(host, game);
+        return BootSkirmish(plan, plan.MapPath ?? DefaultMapPath);
     }
 }
