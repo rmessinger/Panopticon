@@ -712,8 +712,11 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     Done: hook table and appendix re-verified against source in
     [`b1-benchmarking.md`](deep-dives/b1-benchmarking.md); tick, system, environment, and statistic
     schema fields fixed; B1-2..B1-5 type names recorded.
-- [ ] B1-2 Macro harness skeleton (`WI-B1-02`).
+- [x] B1-2 Macro harness skeleton (`WI-B1-02`).
   - AC: seeded warmup and measured runs execute through `SimulationHost`.
+    Done: `Panopticon.Benchmarks.Simulation` CLI + `SimulationBenchmarkRunner`; proven on
+    `b1.empty-host` (300/300 frames, ~730 ms, exit 0) with the A1 recorder attached; 15
+    install-free tests.
 - [ ] B1-3 Tick, allocation, GC, memory, and system spans (`WI-B1-03`).
   - AC: each run records per-tick and per-system timings plus allocation and GC counts.
 - [ ] B1-4 JSON run records and CSV summaries (`WI-B1-04`).
