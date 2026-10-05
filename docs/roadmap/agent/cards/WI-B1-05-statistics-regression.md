@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B1-05` |
 | Roadmap phase | [Track B · B1](../../track-b-scale.md): B1-5 statistics |
-| Status | `Draft` |
+| Status | `In progress` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-B1-04` |
@@ -12,7 +12,7 @@
 
 ## Goal
 
-Draft: flip to Ready once the prerequisite cards are Done and the named types are reconciled. Add deterministic bootstrap CIs and CI-overlap regression checks.
+Add deterministic bootstrap CIs and CI-overlap regression checks.
 
 ## Context to read (and only this)
 
