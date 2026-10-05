@@ -26,6 +26,7 @@ Staging branch `staging/track-h-h2a`. Each group is one stacked PR, left open fo
 | G5 | `WI-H2a-13`, `14` | Generals reference adapter, parity evidence |
 | G6 | `WI-H2a-18`, `15`, `16` | EE2 unit selection, DDF reader, EE2 adapter |
 | G7 | `WI-H2a-17` | Mixed-source P9 proof, M2 handoff |
+| Follow-up | `WI-H2a-19` | Staged Generals INI registration |
 
 G2 to G5 do not depend on the EE2 unit selection. D1 to D4 are approved (D2: per-source collection sets).
 

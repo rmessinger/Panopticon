@@ -1231,7 +1231,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: model and idle/move/attack/death references use Track C assets and native draw behavior; required missing bindings fail explicitly.
 - [x] H2a-12 Scoped content publication (`WI-H2a-12`).
   - AC: a validated dependency closure publishes atomically; collision/failure/unload leaves built-in content and cached references intact.
-- [ ] H2a-13 Generals reference adapter (`WI-H2a-13`).
+- [x] H2a-13 Generals reference adapter (`WI-H2a-13`).
   - AC: Generals unit loading uses the shared path with legacy names, defaults, inheritance, module coverage, and override behavior preserved.
 - [ ] H2a-14 Generals behavior parity (`WI-H2a-14`).
   - AC: the audited reference roster passes existing archetype and P9 contracts, including abilities, production, and upgrades where supported today.
@@ -1243,6 +1243,8 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: the real EE2 unit coexists with Generals and spawns/moves/attacks/dies; evidence records source and runtime stats, failures, and M2 expansion boundaries.
 - [ ] H2a-18 EE2 ground-unit selection probe (`WI-H2a-18`).
   - AC: one EE2 ground combat unit with resolvable stats and four importable visual states is selected, or the missing Track C capability is recorded.
+- [ ] H2a-19 Staged Generals INI registration (`WI-H2a-19`).
+  - AC: unit blocks reach the store only through the publisher; Generals and Zero Hour boot with zero import diagnostics and unchanged parity/P9 results.
 
 ### Remaining storage phases
 

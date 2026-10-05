@@ -32,7 +32,7 @@ public class UnitCombatMaterializerTests
 
         Assert.Equal(150f, weapon.AttackRange);
         Assert.Equal(10f, weapon.MinimumAttackRange);
-        Assert.Equal(15u, weapon.CoolDownDelayBetweenShots.Min.Value);
+        Assert.Equal(LogicFrameSpan.FromMilliseconds(500, SageGame.CncGenerals).Value, weapon.CoolDownDelayBetweenShots.Min.Value);
         Assert.Equal(6, weapon.ClipSize);
         Assert.Equal(60u, weapon.ClipReloadTime.Min.Value);
         Assert.Equal(12f, nugget.Damage);

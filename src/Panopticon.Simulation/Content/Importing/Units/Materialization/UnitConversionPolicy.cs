@@ -51,13 +51,25 @@ public sealed class UnitConversionPolicy
         };
     }
 
-    /// <summary>Whole logic frames, rounded up like the INI parser's millisecond conversion.</summary>
-    public uint ToLogicFrames(Quantity quantity) => (uint)Math.Ceiling(ToSeconds(quantity) * LogicFramesPerSecond - 1e-9);
+    /// <summary>
+    /// Whole logic frames using the engine's own conversion, including its single-precision
+    /// rounding, so a typed source and Generals INI yield the same frames for the same time.
+    /// </summary>
+    public uint ToLogicFrames(Quantity quantity)
+    {
+        return quantity.Unit switch
+        {
+            QuantityUnit.Milliseconds => Logic.Object.LogicFrameSpan.FromMilliseconds((float)quantity.Value, Game).Value,
+            QuantityUnit.Seconds => Logic.Object.LogicFrameSpan.FromSeconds((float)quantity.Value, Game).Value,
+            QuantityUnit.LogicFrames => (uint)Math.Ceiling(quantity.Value),
+            _ => throw Unexpected(quantity),
+        };
+    }
 
     public double ToDistancePerFrame(Quantity quantity)
     {
         return quantity.Unit == QuantityUnit.DistancePerSecond
-            ? ToGameDistance(quantity with { Unit = QuantityUnit.GameDistance }) / LogicFramesPerSecond
+            ? quantity.Value / LogicFramesPerSecond
             : throw Unexpected(quantity);
     }
 
