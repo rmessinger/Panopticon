@@ -707,18 +707,36 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     economy})
     runs each cell via the B1 harness; per-cell mean+variance is keyed for side-by-side comparison
     and regression detection.
-- [ ] B1-1 Benchmark hook audit and report schema (`WI-B1-01`).
+- [x] B1-1 Benchmark hook audit and report schema (`WI-B1-01`).
   - AC: the audit cites existing hooks; the JSON record is A2-compatible.
-- [ ] B1-2 Macro harness skeleton (`WI-B1-02`).
+    Done: hook table and appendix re-verified against source in
+    [`b1-benchmarking.md`](deep-dives/b1-benchmarking.md); tick, system, environment, and statistic
+    schema fields fixed; B1-2..B1-5 type names recorded.
+- [x] B1-2 Macro harness skeleton (`WI-B1-02`).
   - AC: seeded warmup and measured runs execute through `SimulationHost`.
-- [ ] B1-3 Tick, allocation, GC, memory, and system spans (`WI-B1-03`).
+    Done: `Panopticon.Benchmarks.Simulation` CLI + `SimulationBenchmarkRunner`; proven on
+    `b1.empty-host` (300/300 frames, ~730 ms, exit 0) with the A1 recorder attached; 15
+    install-free tests.
+- [x] B1-3 Tick, allocation, GC, memory, and system spans (`WI-B1-03`).
   - AC: each run records per-tick and per-system timings plus allocation and GC counts.
-- [ ] B1-4 JSON run records and CSV summaries (`WI-B1-04`).
+    Done: `BenchmarkMetricRecorder` + `LogicStepper.SystemSpan` seam (gameLogic, network,
+    scene3d, partition); proven on `b1.empty-host` with 300 tick samples and 1200 system
+    spans; 7 install-free tests.
+- [x] B1-4 JSON run records and CSV summaries (`WI-B1-04`).
   - AC: records round-trip and carry hardware context.
-- [ ] B1-5 Median bootstrap confidence intervals and regression comparison (`WI-B1-05`).
+    Done: `BenchmarkReportWriter` (camelCase JSON authority + derived CSV with run and
+    environment columns); round-trip stable; CSV proven with 21 metric rows on
+    `b1.empty-host`; 6 install-free tests.
+- [x] B1-5 Median bootstrap confidence intervals and regression comparison (`WI-B1-05`).
   - AC: a seeded bootstrap is reproducible; a stored baseline flags regressions.
-- [ ] B1-6 Seeded reference scenarios including the 10k-unit anchor (`WI-B1-06`).
+    Done: `BootstrapStatistics` (seeded, deterministic) + `BenchmarkStatistics` CI-overlap
+    rule; `--baseline` proven live on `b1.empty-host` (changed metrics flagged, overlapping
+    metric unflagged); 9 install-free tests.
+- [x] B1-6 Seeded reference scenarios including the 10k-unit anchor (`WI-B1-06`).
   - AC: scenarios run repeatably; micro benchmarks use BenchmarkDotNet.
+    Done: `b1.1k-move` (17.7 ms median), `b1.mixed-combat` (churn proven, 10-13 ms median),
+    `b1.path-query` (3.9 ms), `b1.10k-scale-anchor` (150.5 ms median, 4.5x real-time budget);
+    BenchmarkDotNet untouched in `Panopticon.Benchmarks.DataStructures`; 20 install-free tests.
 - [ ] B1-7 B4a, B4b, and Western Front adapters (`WI-B1-07`).
   - AC: each consumer emits B1 records without a separate harness.
 - [ ] B2 Allocation & hot-path cleanup (per-tick allocations, collision-pair lists, cache hot

@@ -49,6 +49,7 @@
     <ProjectReference Include="..\..\src\Panopticon.IO\Panopticon.IO.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Mods.BuiltIn\Panopticon.Mods.BuiltIn.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Tools.ReplaySketch.Core\Panopticon.Tools.ReplaySketch.Core.csproj" />
+    <ProjectReference Include="..\..\src\Panopticon.Benchmarks.Simulation\Panopticon.Benchmarks.Simulation.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Tools.W3dPatcher\Panopticon.Tools.W3dPatcher.csproj" />
   </ItemGroup>
   

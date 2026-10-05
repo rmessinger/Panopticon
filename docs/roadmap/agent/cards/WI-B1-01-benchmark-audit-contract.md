@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B1-01` |
 | Roadmap phase | [Track B · B1](../../track-b-scale.md): B1-1 benchmark audit |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -34,11 +34,23 @@ Ground the benchmark harness contract against landed A1/A2 types and fix the ini
 
 - `docs/roadmap/deep-dives/b1-benchmarking.md`
 
+## Result
+
+Audit complete 2026-10-04 against `c75c6d975`:
+
+- All 8 hooks re-verified against source; 6 stale file:line ranges corrected (run loop, tick
+  callbacks, order injection, run record, recorder, A2 JSON shape).
+- Schema field tables added for tick, system, environment, and statistic records; the run-record
+  table plus the derived-CSV note already cover A2 compatibility and CSV derivation.
+- Type names fixed for B1-2 through B1-5: `SimulationBenchmarkRunner`, `SimulationBenchmarkPlan`,
+  `SimulationBenchmarkScenario`, `BenchmarkRunRecord`, `TickMetricSample`, `SystemMetricSample`,
+  `EnvironmentRecord`, `BenchmarkStatistics`, `BenchmarkReportWriter`, `BootstrapStatistics`.
+
 ## Acceptance criteria
 
-- [ ] Every hook has a file:line reference.
-- [ ] Report fields cover A2 compatibility, CSV derivation, environment capture, and bootstrap CI.
-- [ ] The diagram renders.
+- [x] Every hook has a file:line reference.
+- [x] Report fields cover A2 compatibility, CSV derivation, environment capture, and bootstrap CI.
+- [x] The diagram renders.
 
 ## Validation commands
 

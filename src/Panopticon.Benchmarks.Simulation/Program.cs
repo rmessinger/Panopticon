@@ -1,0 +1,67 @@
+using System;
+using System.Linq;
+
+namespace Panopticon.Benchmarks.Simulation;
+
+public static class Program
+{
+    public static int Main(string[] args)
+    {
+        SimulationBenchmarkPlan? plan;
+        try
+        {
+            plan = SimulationBenchmarkCommandLine.Parse(args);
+        }
+        catch (ArgumentException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            Console.Error.WriteLine(SimulationBenchmarkCommandLine.Usage);
+            return 2;
+        }
+
+        if (plan is null)
+        {
+            Console.Out.WriteLine(SimulationBenchmarkCommandLine.Usage);
+            return 0;
+        }
+
+        var runner = new SimulationBenchmarkRunner();
+        try
+        {
+            var record = runner.Run(plan);
+            WriteReport(record, plan);
+            return 0;
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return 1;
+        }
+    }
+
+    private static void WriteReport(BenchmarkRunRecord record, SimulationBenchmarkPlan plan)
+    {
+        if (plan.JsonPath is not null)
+        {
+            BenchmarkReportWriter.WriteJson(record, plan.JsonPath);
+        }
+
+        if (plan.CsvPath is not null)
+        {
+            BenchmarkReportWriter.WriteCsv(record, plan.CsvPath);
+        }
+
+        Console.WriteLine($"scenario        {record.ScenarioId}");
+        Console.WriteLine($"seed            {record.Seed}");
+        Console.WriteLine($"frames          {record.FramesCompleted}/{record.MeasuredFrames} completed");
+        Console.WriteLine($"measured wall   {record.MeasuredWallMs:F1} ms");
+        var regressions = record.Statistics.Count(s => s.IsRegression == true);
+        if (record.Statistics.Any(s => s.IsRegression.HasValue))
+        {
+            Console.WriteLine($"vs baseline     {regressions} metric(s) changed beyond CI overlap");
+        }
+
+        Console.WriteLine($"json report     {plan.JsonPath ?? "(not written; pass --json)"}");
+        Console.WriteLine($"csv summary     {plan.CsvPath ?? "(not written; pass --csv)"}");
+    }
+}
