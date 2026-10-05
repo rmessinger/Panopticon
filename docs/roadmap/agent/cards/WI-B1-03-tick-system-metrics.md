@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B1-03` |
 | Roadmap phase | [Track B · B1](../../track-b-scale.md): B1-3 tick and system metrics |
-| Status | `Draft` |
+| Status | `In progress` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-B1-02` |
@@ -12,7 +12,7 @@
 
 ## Goal
 
-Draft: flip to Ready once the prerequisite cards are Done and the named types are reconciled. Add bounded metric capture to each measured run.
+Add bounded metric capture to each measured run: per-tick wall time, allocation deltas, GC counts, sampled memory, per-system spans, and the run environment record.
 
 ## Context to read (and only this)
 
