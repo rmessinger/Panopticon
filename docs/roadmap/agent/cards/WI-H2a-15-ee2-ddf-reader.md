@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-H2a-15` |
 | Roadmap phase | [H2a](../../track-h-storage-formats.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-H2a-03`, `WI-H2a-18` |
