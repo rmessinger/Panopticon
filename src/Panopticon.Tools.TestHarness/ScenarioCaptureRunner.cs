@@ -6,6 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Translation;
 using Panopticon.Data;
 using Panopticon.Graphics;
@@ -149,13 +150,22 @@ public static class ScenarioCaptureRunner
             }
         }
 
+        foreach (var import in profile.ContentImports)
+        {
+            if (!UnitContentImportRunner.Import(game, import, reporter))
+            {
+                reporter.Error($"Content import '{import.Source}' failed; no partial content was published.");
+                return new CaptureRunResult(1, outputDirectory, null, 0, 0, [], [], null);
+            }
+        }
+
         var scene = game.Scene3D;
 
         // Actor registry: profile IDs and construct-result IDs resolve to live objects from here on.
         var actors = new Dictionary<string, ActorState>();
         foreach (var actor in profile.Actors)
         {
-            var definition = game.AssetStore.ObjectDefinitions.GetByName(actor.Definition);
+            var definition = ResolveDefinition(game, actor.Definition);
             if (definition == null)
             {
                 reporter.Error($"Actor '{actor.Id}' definition '{actor.Definition}' not found.");
@@ -305,6 +315,11 @@ public static class ScenarioCaptureRunner
             }
 
             var captured = frame % profile.CaptureStride == 0;
+            if (!captured && profile.RenderEveryFrame)
+            {
+                RenderFrame(game);
+            }
+
             if (captured)
             {
                 RenderFrame(game);
@@ -410,6 +425,19 @@ public static class ScenarioCaptureRunner
             new ColorRgb(220, 220, 60),
         };
         return palette[playerIndex % palette.Length];
+    }
+
+    /// <summary>Native names resolve in the built-in store; <c>source:name</c> resolves in that source's published collections.</summary>
+    private static ObjectDefinition? ResolveDefinition(Game game, string definition)
+    {
+        var separator = definition.IndexOf(':');
+        if (separator <= 0)
+        {
+            return game.AssetStore.ObjectDefinitions.GetByName(definition);
+        }
+
+        var source = definition[..separator] == ContentSource.Ee2.Id ? ContentSource.Ee2 : null;
+        return source is null ? null : game.AssetStore.GetSourceContent(source).ObjectDefinitions.GetByName(definition[(separator + 1)..]);
     }
 
     private static Player ResolvePlayerSlot(Game game, int slotIndex)

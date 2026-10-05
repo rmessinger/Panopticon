@@ -72,7 +72,7 @@ internal static class UnitVisualMaterializer
             draw.AnimationStates.Add(state);
         }
 
-        ObjectDefinition.AddModuleData(definition.Draws, new ModuleDataContainer(DrawTag, draw, ModuleInheritanceMode.Default, false));
+        UnitBodyMovementMaterializer.AddResolved(definition.Draws, new ModuleDataContainer(DrawTag, draw, ModuleInheritanceMode.Default, false));
     }
 
     /// <summary>The visual states this materializer binds, in binding order.</summary>

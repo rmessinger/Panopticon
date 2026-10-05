@@ -401,13 +401,13 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | H1 - Format requirements & current-state audit | `░░░░░░░░░░` | 0 / 3 |
 | H2 - Format-agnostic map interchange abstraction | `░░░░░░░░░░` | 0 / 2 |
-| H2a - Unit-content import layer | `░░░░░░░░░░` | 0 / 17 |
+| H2a - Unit-content import layer | `█████████░` | 18 / 19 |
 | H3 - New map storage format | `░░░░░░░░░░` | 0 / 5 |
 | H4 - New object/unit-definition storage format | `░░░░░░░░░░` | 0 / 1 |
 | H5 - Legacy migration & compatibility tooling | `░░░░░░░░░░` | 0 / 1 |
 | H6 - Authoring & pipeline integration | `░░░░░░░░░░` | 0 / 1 |
 | H7 - Validation & round-trip regression | `░░░░░░░░░░` | 0 / 1 |
-| Track H total | `░░░░░░░░░░` | 0 / 31 |
+| Track H total | `█████░░░░░` | 18 / 33 |
 
 ### Track W - Western Front Simulation (gated on A4-1 and A4-4)
 

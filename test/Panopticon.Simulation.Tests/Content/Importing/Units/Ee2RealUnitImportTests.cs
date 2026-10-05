@@ -66,6 +66,7 @@ public sealed class Ee2RealUnitImportTests(ITestOutputHelper output)
         Assert.Equal("lhi1_maceman_we", visual.ModelKey.Value);
         Assert.Equal("lhi1_maceman_we#kf=Graphics/Humans/sh_maceman_attack01.kf", visual.StateAnimations["Attack"].Value);
 
+        output.WriteLine("modules: " + string.Join(", ", unit.ResolvedModules.Select(m => $"{m.Tag}/{m.Family}/{m.Inherited}")));
         foreach (var d in resolution.Diagnostics.Where(d => d.Code == DiagnosticCodes.ExcludedByPolicy))
         {
             output.WriteLine(d.ToString());

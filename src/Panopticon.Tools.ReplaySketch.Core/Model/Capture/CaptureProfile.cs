@@ -29,6 +29,13 @@ public class CaptureProfile
     /// <summary>Capture one PNG every Nth logic frame. 1 captures every frame.</summary>
     public int CaptureStride { get; set; } = 1;
 
+    /// <summary>
+    /// Render every logic frame, saving only every <see cref="CaptureStride"/>th. Draw-module
+    /// animations advance per rendered frame, so strided captures otherwise play clips slower than
+    /// the simulation.
+    /// </summary>
+    public bool RenderEveryFrame { get; set; } = false;
+
     /// <summary>Close every GUI window before capturing so no HUD element intrudes on the crop.</summary>
     public bool HideHud { get; set; } = true;
 
@@ -37,6 +44,9 @@ public class CaptureProfile
 
     /// <summary>Skirmish player slots, in declaration order. Actors reference these by <see cref="CapturePlayerSlot.Id"/>.</summary>
     public List<CapturePlayerSlot> Players { get; set; } = [];
+
+    /// <summary>Unit content published through the shared import layer before actors spawn.</summary>
+    public List<CaptureContentImport> ContentImports { get; set; } = [];
 
     /// <summary>Actors spawned during setup, in declaration order.</summary>
     public List<CaptureActor> Actors { get; set; } = [];
@@ -89,7 +99,10 @@ public class CaptureActor
     /// <summary>Stable ID used by commands, expectations, and manifest records.</summary>
     public string Id { get; set; } = "";
 
-    /// <summary>Object definition name, e.g. <c>AmericaVehicleDozer</c>.</summary>
+    /// <summary>
+    /// Object definition name, e.g. <c>AmericaVehicleDozer</c>, or <c>&lt;source&gt;:&lt;name&gt;</c> for a unit
+    /// published by a <see cref="CaptureProfile.ContentImports"/> entry.
+    /// </summary>
     public string Definition { get; set; } = "";
 
     /// <summary>Owning player slot ID, or <c>civilian</c>.</summary>

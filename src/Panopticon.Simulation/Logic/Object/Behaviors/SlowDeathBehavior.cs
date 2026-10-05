@@ -225,7 +225,7 @@ public class SlowDeathBehaviorModuleData : UpdateModuleData
     public float SinkRate { get; private set; }
     public LogicFrameSpan SinkDelay { get; private set; }
     public LogicFrameSpan SinkDelayVariance { get; private set; }
-    public LogicFrameSpan DestructionDelay { get; private set; }
+    public LogicFrameSpan DestructionDelay { get; internal set; }
     public LogicFrameSpan DestructionDelayVariance { get; private set; }
     public int FlingForce { get; private set; }
     public int FlingForceVariance { get; private set; }

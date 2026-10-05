@@ -1,0 +1,72 @@
+{
+  // H2a mixed-source proof (WI-H2a-17): a real EE2 maceman, published through the shared
+  // unit-content layer, walks to a Generals rebel and strikes it (5 authored damage per hit);
+  // the rebel then returns fire until the maceman dies. Requires
+  // CNC_GENERALS_PATH and EMPIRE_EARTH_II_PATH. Run with:
+  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-mixed-source-ee2.json
+  "Name": "mixed-source-ee2",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 720,
+  "SettleFrames": 10,
+  "CaptureStride": 6,
+  "RenderEveryFrame": true,
+  "HideHud": true,
+  "Players": [
+    { "Id": "ee2", "Side": "FactionAmerica", "Name": "EE2" },
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" }
+  ],
+  "ContentImports": [
+    {
+      "Source": "ee2",
+      "UnitTypes": [ "HeavyInfantry1" ],
+      "Epoch": 1,
+      "Region": "we",
+      "GameUnitsPerSourceDistance": 12,
+      "DdfPaths": [ "db/Units/human.ddf", "db/Units/heavy_infantry1.ddf" ],
+      "ExcludedMechanics": [
+        "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "stance",
+        "Garrisonable", "Convertable", "ConvertAttack", "Cost", "UPGRADEREFS", "Attack.applyDamageTime"
+      ]
+    }
+  ],
+  "Actors": [
+    {
+      "Id": "maceman",
+      "Definition": "ee2:HeavyInfantry1UpgradeEpoch1",
+      "Owner": "ee2",
+      "X": 470,
+      "Y": 700,
+      "FacingDegrees": 0,
+      "Role": "attacker"
+    },
+    {
+      "Id": "rebel",
+      "Definition": "GLAInfantryRebel",
+      "Owner": "gla",
+      "X": 550,
+      "Y": 700,
+      "FacingDegrees": 180,
+      "Role": "target"
+    }
+  ],
+  "Camera": {
+    "Mode": "AutoFit",
+    "SubjectActorIds": [ "maceman", "rebel" ],
+    "DesiredSpanFraction": 0.5,
+    "InitialCameraHeight": 120,
+    "MinCameraHeight": 50,
+    "MaxCameraHeight": 300
+  },
+  "Commands": [
+    { "Type": "Move", "Frame": 12, "ActorId": "maceman", "X": 530, "Y": 700 },
+    { "Type": "Attack", "Frame": 90, "SourceActorId": "maceman", "TargetActorId": "rebel" },
+    { "Type": "Attack", "Frame": 400, "SourceActorId": "rebel", "TargetActorId": "maceman" }
+  ],
+  "Expectations": [
+    { "Type": "MinDisplacement", "ActorId": "maceman", "MinDisplacement": 40 },
+    { "Type": "ActorDamaged", "ActorId": "rebel" },
+    { "Type": "ActorDestroyed", "ActorId": "maceman" }
+  ],
+  "StopWhenActorDestroyed": null
+}
