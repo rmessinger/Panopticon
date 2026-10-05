@@ -1225,7 +1225,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: range, reload, damage, targeting, projectile references, and armor resolve from imported values without balancing defaults.
 - [x] H2a-9 Ability materialization (`WI-H2a-09`).
   - AC: selected supported abilities create native modules and execute; unsupported abilities cannot silently disappear.
-- [ ] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
+- [x] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
   - AC: costs, build time, prerequisites, production links, and selected upgrades retain their imported semantics; unsupported economy mechanics block import.
 - [ ] H2a-11 Visual-state binding (`WI-H2a-11`).
   - AC: model and idle/move/attack/death references use Track C assets and native draw behavior; required missing bindings fail explicitly.

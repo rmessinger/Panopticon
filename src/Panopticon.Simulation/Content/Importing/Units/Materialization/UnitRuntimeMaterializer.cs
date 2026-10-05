@@ -54,10 +54,13 @@ public static class UnitRuntimeMaterializer
                 return UnitCombatMaterializer.Materialize(weapon, resolution, context);
             case ArmorRecord armor:
                 return UnitCombatMaterializer.Materialize(armor, context);
+            case UpgradeRecord upgrade:
+                return UnitProductionMaterializer.Materialize(upgrade, context);
             case UnitRecord unit:
                 var definition = UnitBodyMovementMaterializer.CreateDefinition(unit, context);
                 UnitCombatMaterializer.AddSets(unit, definition, context);
                 UnitAbilityMaterializer.AddModules(unit, definition, resolution, context);
+                UnitProductionMaterializer.Apply(unit, definition, context);
                 return definition;
             default:
                 // Abilities, projectiles, and visual states shape other assets and have no runtime asset of their own.
