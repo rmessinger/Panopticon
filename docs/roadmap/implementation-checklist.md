@@ -1247,7 +1247,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: costs, build time, prerequisites, production links, and selected upgrades retain their imported semantics; unsupported economy mechanics block import.
 - [x] H2a-11 Visual-state binding (`WI-H2a-11`).
   - AC: model and idle/move/attack/death references use Track C assets and native draw behavior; required missing bindings fail explicitly.
-- [ ] H2a-12 Scoped content publication (`WI-H2a-12`).
+- [x] H2a-12 Scoped content publication (`WI-H2a-12`).
   - AC: a validated dependency closure publishes atomically; collision/failure/unload leaves built-in content and cached references intact.
 - [ ] H2a-13 Generals reference adapter (`WI-H2a-13`).
   - AC: Generals unit loading uses the shared path with legacy names, defaults, inheritance, module coverage, and override behavior preserved.

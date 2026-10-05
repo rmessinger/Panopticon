@@ -154,6 +154,8 @@ public sealed class ScopedAssetCollection<TAsset> : IScopedAssetCollection, IEnu
         Add((TAsset)asset);
     }
 
+    BaseAsset IScopedAssetCollection.FindByName(string name) => GetByInstanceId(AssetHash.GetHash(name));
+
     public IEnumerable<BaseAsset> GetAssets()
     {
         return _byInternalId.Values;
