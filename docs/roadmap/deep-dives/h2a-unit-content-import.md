@@ -72,11 +72,12 @@ staging-branch model; leave every PR open for operator merge.
 | [WI-H2a-10](../agent/cards/WI-H2a-10-production-upgrade-materialization.md) | Production and upgrades | 09 | Done |
 | [WI-H2a-11](../agent/cards/WI-H2a-11-visual-state-binding.md) | Track C visual-state binding | 08 | Done |
 | [WI-H2a-12](../agent/cards/WI-H2a-12-scoped-content-publication.md) | Validated scoped publication | 10, 11 | Done |
-| [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Ready |
-| [WI-H2a-14](../agent/cards/WI-H2a-14-generals-behavior-parity.md) | Generals parity evidence | 13 | Draft |
+| [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Done |
+| [WI-H2a-14](../agent/cards/WI-H2a-14-generals-behavior-parity.md) | Generals parity evidence | 13 | Ready |
 | [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Ready |
 | [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Draft |
 | [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Draft |
+| [WI-H2a-19](../agent/cards/WI-H2a-19-staged-generals-registration.md) | Staged Generals INI registration | 13 | Ready |
 | [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Draft |
 
 ## Loading audit
@@ -196,6 +197,18 @@ Result of `WI-H2a-02`. Status: approved by the operator. D1 to D4 were reviewed 
 - Typed projectile weapons materialize as direct-damage weapons whose travel time follows the projectile speed; projectile objects are not created for typed sources.
 - Typed production links, unit upgrade lists, and upgrade prerequisites need a native command-set mapping and fail at materialization rather than being dropped. Generals keeps them through legacy bindings.
 - Native construction seams: selected `private set` accessors on `ObjectDefinition`, `WeaponTemplate`, `LocomotorTemplate`, `UpgradeTemplate`, `WeaponTemplateSet`, and `ArmorTemplateSet` became `internal set`; `BaseAsset.AssignImportedName` names materialized assets.
+
+### Generals reference adapter (G5)
+
+- Entry: `ContentManager` runs `GeneralsUnitImport` after the INI subsystems load, for Generals and Zero Hour; any error throws at boot.
+- The INI parser still registers unit blocks at parse time, because `DefaultThingTemplate`, `ChildObject`, and `ObjectReskin` read their parents during parsing (`ObjectDefinition.cs:18-52`).
+- `GeneralsUnitAdapter` describes every parsed object, weapon, armor, locomotor, and upgrade: typed values read back from native data in declared units, plus legacy bindings to the native template and each native module (D1).
+- The shared pipeline resolves, validates (lenient for legacy-bound records: finite, non-negative, declared units), materializes by reusing the native templates, and `UnitContentPublisher.Adopt` confirms each published id resolves to exactly that instance. Adopted root content cannot be unloaded.
+- Legacy module allowlist: every concrete `ModuleData` family the engine implements.
+- `None` in a weapon slot or armor set is the Generals empty-slot sentinel, not a dependency.
+- Real installs: Generals 1706 and Zero Hour 2795 records, zero diagnostics.
+- Follow-up `WI-H2a-19` moves parse-time registration into staging, so the publisher becomes the only registration path.
+- Conversion parity: typed time conversions use `LogicFrameSpan.FromMilliseconds` and `FromSeconds`, matching the INI parser's single-precision rounding (500 ms is 16 frames).
 
 ### Numeric validation
 

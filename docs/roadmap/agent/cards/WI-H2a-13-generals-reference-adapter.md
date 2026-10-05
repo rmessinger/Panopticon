@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-H2a-13` |
 | Roadmap phase | [H2a](../../track-h-storage-formats.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-H2a-12` |
