@@ -27,8 +27,7 @@ Staging branch `staging/track-h-h2a`. Each group is one stacked PR, left open fo
 | G6 | `WI-H2a-18`, `15`, `16` | EE2 unit selection, DDF reader, EE2 adapter |
 | G7 | `WI-H2a-17` | Mixed-source P9 proof, M2 handoff |
 
-G2 to G5 do not depend on the EE2 unit selection. Cards 03 onward stay Draft until D1 to D4 in the
-deep dive are reviewed.
+G2 to G5 do not depend on the EE2 unit selection. D1 to D4 are approved (D2: per-source collection sets).
 
 ---
 
@@ -36,6 +35,7 @@ deep dive are reviewed.
 
 - Interchange location: `src/Panopticon.Simulation/Content/Importing/Units/`, one type per file.
 - Materialization target: detached `ObjectDefinition`, `WeaponTemplate`, `ArmorTemplate`, `LocomotorTemplate`, and module data; registration only through the publisher.
+- Naming: per-source `AssetStore` collection sets; Generals keeps the existing store; spawn lookups take a source.
 - Publication boundary: one `AssetStore.PushScope` per publication, `PopScope` for rollback and unload.
 - Legacy preservation: Generals module families outside the typed capability matrix use the adapter-owned legacy binding (D1).
 - Tests: synthetic tests need no install; real-install tests declare `CNC_GENERALS_PATH` or `EMPIRE_EARTH_II_PATH` and never count a missing install as success.

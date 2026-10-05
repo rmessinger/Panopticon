@@ -61,8 +61,8 @@ staging-branch model; leave every PR open for operator merge.
 | Card | Deliverable | Prerequisites | Initial status |
 |---|---|---|---|
 | [WI-H2a-01](../agent/cards/WI-H2a-01-unit-loading-audit.md) | Focused loading audit | None | Done |
-| [WI-H2a-02](../agent/cards/WI-H2a-02-unit-import-design.md) | Contract and grounded architecture | 01 | Done (pending review) |
-| [WI-H2a-03](../agent/cards/WI-H2a-03-interchange-contracts.md) | Engine-owned interchange | 02 | Draft |
+| [WI-H2a-02](../agent/cards/WI-H2a-02-unit-import-design.md) | Contract and grounded architecture | 01 | Done |
+| [WI-H2a-03](../agent/cards/WI-H2a-03-interchange-contracts.md) | Engine-owned interchange | 02 | Ready |
 | [WI-H2a-04](../agent/cards/WI-H2a-04-inheritance-resolution.md) | Inheritance resolution | 03 | Draft |
 | [WI-H2a-05](../agent/cards/WI-H2a-05-dependency-resolution.md) | Typed dependency resolution | 04 | Draft |
 | [WI-H2a-06](../agent/cards/WI-H2a-06-capability-validation.md) | Capability validation | 05 | Draft |
@@ -74,7 +74,7 @@ staging-branch model; leave every PR open for operator merge.
 | [WI-H2a-12](../agent/cards/WI-H2a-12-scoped-content-publication.md) | Validated scoped publication | 10, 11 | Draft |
 | [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Draft |
 | [WI-H2a-14](../agent/cards/WI-H2a-14-generals-behavior-parity.md) | Generals parity evidence | 13 | Draft |
-| [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Draft |
+| [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Ready |
 | [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Draft |
 | [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Draft |
 | [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Draft |
@@ -102,7 +102,7 @@ Result of `WI-H2a-01`. Paths are relative to `src/Panopticon.Simulation/` unless
 | Behavior modules | Behavior, Body, Draw, ClientUpdate, and ClientBehavior blocks parse into `ModuleDataContainer` (tag, `ModuleData`, inheritance mode, inherited flag). `ModuleData` has 408 concrete subclasses. | `Logic/Object/ObjectDefinition.cs:283-294`, `Logic/Object/Module.cs:9-64` | Module data is the largest preservation risk; see the unknowns list. |
 | Module inheritance | Default-inherited modules are dropped when the child declares a module of overlapping `ModuleKinds`; `AlwaysInherit` and `OverrideableByLikeKind` modes differ; `RemoveModule`, `ReplaceModule`, and `AddModule` edit by tag. | `Logic/Object/ObjectDefinition.cs:441-486`, `:1340-1375`; `Logic/Object/Module.cs:66-76` | The resolver must reproduce these rules for Generals parity. |
 | Scopes | `AssetStore` pushes and pops scopes across every collection and singleton; `Game` pushes one root scope before content loads. | `Content/AssetStore.cs:350-373`, `Game.cs:588` | Publication scope is `AssetStore` scope. |
-| Identity | Names hash case-insensitively to a `uint` instance id. | `Content/AssetHash.cs:7-9` | Source-qualified identity cannot collide through this hash without a namespace rule; unresolved. |
+| Identity | Names hash case-insensitively to a `uint` instance id. | `Content/AssetHash.cs:7-9` | Resolved by D2: per-source collection sets, so cross-source hash collisions cannot occur. |
 | Add semantics | `Add` ignores a later definition when the instance id already exists in the top scope (first wins); a new asset gets a monotonically increasing internal id. | `Content/ScopedAssetCollection.cs:134-150` | Collision detection is silent today; H2a must report collisions as errors. |
 | Lookup | `GetByName` searches scopes top-down, then calls the on-demand loader if one exists and caches into the top scope. | `Content/ScopedAssetCollection.cs:62-104` | Lookups from a pushed scope see built-ins beneath it. |
 | Pop | `PopScope` disposes every asset in the scope, removes it from the list and id map; references held elsewhere are not invalidated. | `Content/ScopedAssetCollection.cs:47-60`; `Content/LazyAssetReference.cs:187-190` | Unload must not leave dangling lazy references; the lazy reference does not cache by design. |
@@ -140,16 +140,16 @@ EE2 ground-combat candidate: not selected. The install holds `db.zip` with groun
 
 ## Reviewed contract
 
-Result of `WI-H2a-02`. Status: proposed, pending operator review. Items marked D1 to D4 are decisions that need review before cards 03 onward become Ready; the cards below the decisions keep Status `Draft` until then.
+Result of `WI-H2a-02`. Status: approved by the operator. D1 to D4 were reviewed and approved by the operator (D2 amended to per-source collections). Cards that depend only on approved decisions are promoted.
 
 ### Decisions requiring review
 
 | ID | Decision | Proposal | Alternative |
 |---|---|---|---|
-| D1 | Representation of native module data that has no typed interchange record | Closed module-family registry: each family is either a typed interchange record (capability matrix below) or an explicit `Unsupported` diagnostic. The Generals adapter keeps legacy-only families through a Generals-owned `LegacyModuleBinding` (family id, tag, `ModuleKinds`, inheritance mode, reference into an adapter-owned table of already-built native `ModuleData`). The binding is not an opaque payload: it is accepted only for families on the registry's legacy allowlist, and is rejected from any non-Generals source. | Type all 408 families into interchange now (large, blocks M2), or pass any module through (violates the no-opaque rule). |
-| D2 | Runtime name for non-Generals content | Generals keeps legacy names unchanged. Other sources register as `<source>:<name>` (for example `ee2:UniqueUnitEnglish1`). The instance-id hash of the full runtime name is checked for collisions before publication. | A per-source `AssetStore` collection set (heavier, breaks single-store lookups used by P9 spawning). |
-| D3 | Publication boundary | One `AssetStore.PushScope` per publication, registered only after staging succeeds. Rollback is `PopScope`. Scopes unload in reverse push order. | A new per-collection transaction API (new surface in every collection). |
-| D4 | EE2 ground-combat unit | Not selected; see the EE2 feasibility finding. New card `WI-H2a-18` selects and probes the unit before `WI-H2a-15` becomes Ready. | Substitute Generals-derived values (forbidden by the scaffold). |
+| D1 (approved) | Representation of native module data that has no typed interchange record | Closed module-family registry: each family is either a typed interchange record (capability matrix below) or an explicit `Unsupported` diagnostic. The Generals adapter keeps legacy-only families through a Generals-owned `LegacyModuleBinding` (family id, tag, `ModuleKinds`, inheritance mode, reference into an adapter-owned table of already-built native `ModuleData`). The binding is not an opaque payload: it is accepted only for families on the registry's legacy allowlist, and is rejected from any non-Generals source. | Type all 408 families into interchange now (large, blocks M2), or pass any module through (violates the no-opaque rule). |
+| D2 (approved) | Runtime naming and storage for non-Generals content | Per-source collection sets: each non-Generals source publishes into its own `AssetStore` collection set (a source-keyed `SourceContent` view over the same scoped collection types). Names stay unmodified inside a source, so the instance-id hash cannot collide across sources. Generals keeps the existing store. Lookups that must reach any source take a `(Source, Name)` pair; P9 spawning gains a source argument. | `<source>:<name>` prefix in the shared store (rejected by operator: collision checks and shared-hash coupling). |
+| D3 (approved) | Publication boundary | One `AssetStore.PushScope` per publication, registered only after staging succeeds. Rollback is `PopScope`. Scopes unload in reverse push order. | A new per-collection transaction API (new surface in every collection). |
+| D4 (approved) | EE2 ground-combat unit | Not selected; see the EE2 feasibility finding. New card `WI-H2a-18` selects and probes the unit before `WI-H2a-15` becomes Ready. | Substitute Generals-derived values (forbidden by the scaffold). |
 
 ### Adapter contract
 
@@ -173,7 +173,7 @@ Result of `WI-H2a-02`. Status: proposed, pending operator review. Items marked D
 | Dependency kinds | `Parent`, `Weapon`, `Armor`, `Locomotor`, `Projectile`, `Ability`, `Upgrade`, `Production`, `Prerequisite`, `Visual`, `Presentation` (sound and FX). |
 | Cycles | Forbidden for `Parent`. Allowed for `Production` and `Prerequisite` between units (a builder can produce a builder). Any other kind: error. |
 | Required vs optional | `Presentation` dependencies are optional: a missing target yields a warning. All other kinds are required. Visual states `Idle`, `Move`, `Attack`, `Death` are required for any unit published with a visual binding; a unit declared without a visual binding is allowed and flagged. |
-| Missing or ambiguous target | Error before materialization; an ambiguous target (same name, two sources, no namespace) is an error. |
+| Missing or ambiguous target | Error before materialization. Cross-source references must name the source explicitly; an unqualified reference resolves only within the referencing record's own source. |
 
 ### Capability matrix
 
@@ -200,9 +200,9 @@ All numbers must be finite. Health greater than zero. Damage, range, speed, and 
 ### Publication and lifetime
 
 1. Stage: construct every detached runtime definition for the full closure; no registration.
-2. Check built-in collisions and name-hash collisions against the live store.
-3. `PushScope`, register all definitions, record the owned instance ids.
-4. On any failure in steps 1 to 3: pop the pushed scope (if pushed) and drop staged definitions. Built-ins remain untouched because registration only occurs in the new scope.
+2. Check collisions against the target source's collection set (name collisions inside one source, and explicit-override rules). Other sources cannot collide by construction.
+3. `PushScope`, register all definitions into the source's collection set, record the owned ids.
+4. On any failure in steps 1 to 3: pop the pushed scope (if pushed) and drop staged definitions. Other sources' content and Generals built-ins remain untouched because registration occurs only in the new scope of the target source.
 5. Unload: no live `GameObject` of an owned definition may exist (checked, else refuse); `PopScope`. Scopes unload in reverse push order. `LazyAssetReference` does not cache across pops (`LazyAssetReference.cs:187-190`), so retained references fail lookup rather than dangle.
 6. Generals built-ins stay in the root scope loaded by `ContentManager`; the Generals reference adapter publishes into that root scope as the startup load, with the same atomic rules.
 
@@ -223,7 +223,7 @@ All numbers must be finite. Health greater than zero. Damage, range, speed, and 
 
 Generals (P6b archetypes, `p6b-unit-contract-validation.md` section 2.1): Infantry USA Ranger, Vehicle USA Crusader Tank, Aircraft USA Comanche, Builder USA Dozer, Support USA Ambulance, Superweapon USA Particle Cannon. Selected cases: Ranger garrison, Crusader weapon-mode upgrade, Dozer construct and repair, Ambulance heal, Particle Cannon charge and fire, one produce and one apply-upgrade contract, and a child or reskin object plus an inherited default.
 
-Failure fixtures (synthetic): unsupported required ability, unresolved reference, wrong-kind reference, NaN health, parent cycle, name-hash collision with a built-in, duplicate record across sources, mid-publication injected failure.
+Failure fixtures (synthetic): unsupported required ability, unresolved reference, wrong-kind reference, NaN health, parent cycle, name collision within one source, duplicate record across sources, mid-publication injected failure.
 
 ### EE2 feasibility finding
 
