@@ -9,10 +9,8 @@ namespace Panopticon.Content.Importing.Units;
 public enum ModuleSupport
 {
     Unsupported,
-
     /// <summary>Materialized from interchange fields.</summary>
     Typed,
-
     /// <summary>Carried by a <see cref="LegacyModuleBinding"/>; accepted only from <see cref="UnitCapabilityRegistry.LegacySource"/>.</summary>
     Legacy,
 }

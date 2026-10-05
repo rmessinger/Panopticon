@@ -12,7 +12,6 @@ public enum DependencyKind
     Production,
     Prerequisite,
     Visual,
-
     /// <summary>Sound and FX references; optional, so a missing target only warns.</summary>
     Presentation,
 }

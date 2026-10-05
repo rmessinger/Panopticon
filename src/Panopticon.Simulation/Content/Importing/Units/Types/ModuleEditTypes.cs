@@ -6,7 +6,6 @@ public enum ModuleEditOperation
 {
     Add,
     Remove,
-
     /// <summary>Removes the tag, then adds the module.</summary>
     Replace,
 }

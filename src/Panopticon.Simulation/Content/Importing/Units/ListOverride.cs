@@ -10,10 +10,8 @@ public enum ListOverrideMode
 {
     /// <summary>Nothing authored; the parent list carries over unchanged.</summary>
     Inherit,
-
     /// <summary>The authored list replaces the parent list, including an explicit empty list.</summary>
     Replace,
-
     /// <summary>The parent list is kept with explicit additions and removals.</summary>
     Edit,
 }
