@@ -1227,7 +1227,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
 
 - [x] H2a-1 Focused loading audit (`WI-H2a-01`).
   - AC: file:line evidence covers INI defaults/inheritance, dependency loading, scoped identity, module construction, and P9 entry points.
-- [ ] H2a-2 Contract and architecture design (`WI-H2a-02`).
+- [x] H2a-2 Contract and architecture design (`WI-H2a-02`).
   - AC: reviewed schema, capability matrix, reference roster, and grounded class/sequence diagrams reconcile all Draft cards.
 - [ ] H2a-3 Engine-owned interchange contracts (`WI-H2a-03`).
   - AC: owned values cover gameplay and visual dependencies without source parser or live runtime objects; mutation and identity tests pass.
@@ -1259,6 +1259,8 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: one audited ground combat unit and dependencies emit shared interchange with source stats, explicit unit conversion, and DDF visual states.
 - [ ] H2a-17 Multi-source P9 proof and M2 handoff (`WI-H2a-17`).
   - AC: the real EE2 unit coexists with Generals and spawns/moves/attacks/dies; evidence records source and runtime stats, failures, and M2 expansion boundaries.
+- [ ] H2a-18 EE2 ground-unit selection probe (`WI-H2a-18`).
+  - AC: one EE2 ground combat unit with resolvable stats and four importable visual states is selected, or the missing Track C capability is recorded.
 
 ### Remaining storage phases
 

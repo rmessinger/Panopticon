@@ -153,7 +153,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 
 | Deep dive | Expands |
 |---|---|
-| [`deep-dives/h2a-unit-content-import.md`](deep-dives/h2a-unit-content-import.md) | H2a design scaffold and WI-H2a-01..17: shared unit-content importing and the Generals/EE2 proof before M2. |
+| [`deep-dives/h2a-unit-content-import.md`](deep-dives/h2a-unit-content-import.md) | H2a design scaffold and WI-H2a-01..18: shared unit-content importing and the Generals/EE2 proof before M2. |
 | [`deep-dives/p0-playable-baseline-harness.md`](deep-dives/p0-playable-baseline-harness.md) | Track P phase P0 - ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
 | [`deep-dives/p1-skirmish-setup.md`](deep-dives/p1-skirmish-setup.md) | Track P phase P1 - Skirmish setup & player relationships. |
 | [`deep-dives/p2-p5-skirmish-ai.md`](deep-dives/p2-p5-skirmish-ai.md) | Track P phases P2 - Skirmish AI opponent (+ P5 construction/production mechanism). |
