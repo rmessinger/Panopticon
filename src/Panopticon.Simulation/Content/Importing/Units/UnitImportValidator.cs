@@ -13,9 +13,9 @@ namespace Panopticon.Content.Importing.Units;
 public sealed class UnitImportValidator
 {
     private static readonly QuantityUnit[] HealthUnits = [QuantityUnit.HitPoints, QuantityUnit.Scalar];
-    private static readonly QuantityUnit[] DistanceUnits = [QuantityUnit.GameDistance, QuantityUnit.Meters];
+    private static readonly QuantityUnit[] DistanceUnits = [QuantityUnit.GameDistance, QuantityUnit.Meters, QuantityUnit.SourceDistance];
     private static readonly QuantityUnit[] TimeUnits = [QuantityUnit.Seconds, QuantityUnit.Milliseconds, QuantityUnit.LogicFrames];
-    private static readonly QuantityUnit[] SpeedUnits = [QuantityUnit.DistancePerSecond];
+    private static readonly QuantityUnit[] SpeedUnits = [QuantityUnit.DistancePerSecond, QuantityUnit.SourceDistancePerSecond];
     private static readonly QuantityUnit[] AccelerationUnits = [QuantityUnit.DistancePerSecondSquared];
     private static readonly QuantityUnit[] TurnUnits = [QuantityUnit.DegreesPerSecond];
     private static readonly QuantityUnit[] CostUnits = [QuantityUnit.Currency];
@@ -82,7 +82,11 @@ public sealed class UnitImportValidator
     {
         foreach (var field in context.Record.Unclassified)
         {
-            if (field.AffectsGameplay)
+            if (field.AffectsGameplay && field.ExcludedByPolicy)
+            {
+                context.Add(ImportDiagnosticSeverity.Warning, DiagnosticCodes.ExcludedByPolicy, $"Gameplay field '{field.Name}' was excluded by the import policy and is not simulated.", field.Provenance);
+            }
+            else if (field.AffectsGameplay)
             {
                 context.Error(DiagnosticCodes.UnsupportedMechanic, $"Gameplay field '{field.Name}' has no runtime mapping.", field.Provenance);
             }

@@ -1255,7 +1255,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: the audited reference roster passes existing archetype and P9 contracts, including abilities, production, and upgrades where supported today.
 - [x] H2a-15 Bounded EE2 DDF reader (`WI-H2a-15`).
   - AC: selected records and their full inherited dependency closure parse from the operator install; syntax limits and unsupported fields are diagnosed.
-- [ ] H2a-16 EE2 source adapter (`WI-H2a-16`).
+- [x] H2a-16 EE2 source adapter (`WI-H2a-16`).
   - AC: one audited ground combat unit and dependencies emit shared interchange with source stats, explicit unit conversion, and DDF visual states.
 - [ ] H2a-17 Multi-source P9 proof and M2 handoff (`WI-H2a-17`).
   - AC: the real EE2 unit coexists with Generals and spawns/moves/attacks/dies; evidence records source and runtime stats, failures, and M2 expansion boundaries.
