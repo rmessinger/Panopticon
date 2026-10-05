@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Panopticon.Benchmarks.Simulation;
 
 /// <summary>
@@ -41,4 +44,10 @@ public sealed class BenchmarkRunRecord
     public double MeasuredWallMs { get; }
 
     public RunOutput? Output { get; init; }
+
+    public List<TickMetricSample> TickSamples { get; init; } = [];
+
+    public List<SystemMetricSample> SystemSamples { get; init; } = [];
+
+    public EnvironmentRecord? Environment { get; init; }
 }

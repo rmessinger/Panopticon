@@ -167,7 +167,7 @@ Every run records:
 |---|---|---|---|
 | B1-1. Benchmark audit and report contract | Ground hooks, scenario list, schema, and validation fixtures. | [`WI-B1-01`](../agent/cards/WI-B1-01-benchmark-audit-contract.md) | Done |
 | B1-2. Macro harness skeleton | Add the simulation benchmark runner around `SimulationHost`. | [`WI-B1-02`](../agent/cards/WI-B1-02-macro-harness-skeleton.md) | Done |
-| B1-3. Tick and system metrics | Capture per-tick wall time, allocations, GC, peak memory, and per-system spans. | [`WI-B1-03`](../agent/cards/WI-B1-03-tick-system-metrics.md) | Not started |
+| B1-3. Tick and system metrics | Capture per-tick wall time, allocations, GC, peak memory, and per-system spans. | [`WI-B1-03`](../agent/cards/WI-B1-03-tick-system-metrics.md) | Done |
 | B1-4. Report writers | Write compatible JSON records and derived CSV summaries. | [`WI-B1-04`](../agent/cards/WI-B1-04-report-writers.md) | Not started |
 | B1-5. Statistics and regression | Add median bootstrap CI and CI-overlap regression comparison. | [`WI-B1-05`](../agent/cards/WI-B1-05-statistics-regression.md) | Not started |
 | B1-6. Reference scenario suite | Add seeded empty, movement, combat, path, and 10k-unit anchor scenarios. | [`WI-B1-06`](../agent/cards/WI-B1-06-reference-scenarios.md) | Not started |

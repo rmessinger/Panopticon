@@ -91,6 +91,16 @@ public sealed class SimulationHost
     public uint Frame => _frame;
 
     /// <summary>
+    /// Per-subsystem spans from the logic tick (B1-3): forwards <see cref="LogicStepper"/> span
+    /// events to host consumers without exposing the stepper itself.
+    /// </summary>
+    public event Action<string, TimeSpan>? LogicSystemSpan
+    {
+        add => _stepper.SystemSpan += value;
+        remove => _stepper.SystemSpan -= value;
+    }
+
+    /// <summary>
     /// The logic-side frame counter of the hosted world.
     /// </summary>
     public LogicFrame LogicFrame => _gameEngine.GameLogic.CurrentFrame;

@@ -17,7 +17,7 @@ it does not reduce simulation detail.
 |---|---|---|---|
 | [`WI-B1-01`](../agent/cards/WI-B1-01-benchmark-audit-contract.md) | B1-1 | Hook audit and report schema | Done |
 | [`WI-B1-02`](../agent/cards/WI-B1-02-macro-harness-skeleton.md) | B1-2 | Benchmark project, CLI, empty-host scenario | Done |
-| [`WI-B1-03`](../agent/cards/WI-B1-03-tick-system-metrics.md) | B1-3 | Tick, allocation, GC, memory, and system samples | Draft |
+| [`WI-B1-03`](../agent/cards/WI-B1-03-tick-system-metrics.md) | B1-3 | Tick, allocation, GC, memory, and system samples | Done |
 | [`WI-B1-04`](../agent/cards/WI-B1-04-report-writers.md) | B1-4 | JSON records and CSV summary | Draft |
 | [`WI-B1-05`](../agent/cards/WI-B1-05-statistics-regression.md) | B1-5 | Median bootstrap CI and regression comparer | Draft |
 | [`WI-B1-06`](../agent/cards/WI-B1-06-reference-scenarios.md) | B1-6 | Seeded reference scenarios and 10k-unit anchor | Draft |
