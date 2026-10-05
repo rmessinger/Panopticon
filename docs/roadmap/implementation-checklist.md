@@ -1233,7 +1233,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: a validated dependency closure publishes atomically; collision/failure/unload leaves built-in content and cached references intact.
 - [x] H2a-13 Generals reference adapter (`WI-H2a-13`).
   - AC: Generals unit loading uses the shared path with legacy names, defaults, inheritance, module coverage, and override behavior preserved.
-- [ ] H2a-14 Generals behavior parity (`WI-H2a-14`).
+- [x] H2a-14 Generals behavior parity (`WI-H2a-14`).
   - AC: the audited reference roster passes existing archetype and P9 contracts, including abilities, production, and upgrades where supported today.
 - [ ] H2a-15 Bounded EE2 DDF reader (`WI-H2a-15`).
   - AC: selected records and their full inherited dependency closure parse from the operator install; syntax limits and unsupported fields are diagnosed.
