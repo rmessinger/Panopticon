@@ -33,8 +33,22 @@ public static class BenchmarkReportWriter
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
-        return JsonSerializer.Deserialize<BenchmarkRunRecord>(json, JsonOptions)
-            ?? throw new ArgumentException("The JSON does not contain a benchmark run record.");
+        try
+        {
+            // System.Text.Json accepts `{}` by defaulting constructor parameters, so a
+            // scenario id check distinguishes a run record from arbitrary JSON objects.
+            var record = JsonSerializer.Deserialize<BenchmarkRunRecord>(json, JsonOptions);
+            if (record is null || string.IsNullOrWhiteSpace(record.ScenarioId))
+            {
+                throw new ArgumentException("The JSON does not contain a benchmark run record.");
+            }
+
+            return record;
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The JSON does not contain a benchmark run record.", ex);
+        }
     }
 
     public static void WriteJson(BenchmarkRunRecord record, string path)
