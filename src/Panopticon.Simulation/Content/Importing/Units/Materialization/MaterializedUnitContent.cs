@@ -7,10 +7,12 @@ namespace Panopticon.Content.Importing.Units.Materialization;
 
 /// <summary>Detached runtime assets for a closure, not yet registered anywhere.</summary>
 public sealed record MaterializedUnitContent(
+    UnitMaterializationContext Context,
     ContentSource Source,
     IReadOnlyDictionary<ContentId, BaseAsset> Assets,
     IReadOnlyList<AppliedConversion> Conversions,
-    IReadOnlyList<ImportDiagnostic> Diagnostics)
+    IReadOnlyList<ImportDiagnostic> Diagnostics,
+    IReadOnlyList<VisualAssetRequest> VisualAssets)
 {
     public bool Succeeded => !Diagnostics.Any(diagnostic => diagnostic.IsError);
 

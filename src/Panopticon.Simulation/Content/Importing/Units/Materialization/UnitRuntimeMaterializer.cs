@@ -41,7 +41,7 @@ public static class UnitRuntimeMaterializer
             }
         }
 
-        return new MaterializedUnitContent(resolution.Source, context.Staged.ToDictionary(), context.Conversions.ToArray(), context.Diagnostics.ToArray());
+        return new MaterializedUnitContent(context, resolution.Source, context.Staged.ToDictionary(), context.Conversions.ToArray(), context.Diagnostics.ToArray(), context.VisualAssets.ToArray());
     }
 
     private static BaseAsset? MaterializeTyped(SourceRecord record, UnitImportResolution resolution, UnitMaterializationContext context)
@@ -61,6 +61,7 @@ public static class UnitRuntimeMaterializer
                 UnitCombatMaterializer.AddSets(unit, definition, context);
                 UnitAbilityMaterializer.AddModules(unit, definition, resolution, context);
                 UnitProductionMaterializer.Apply(unit, definition, context);
+                UnitVisualMaterializer.AddDraw(unit, definition, resolution, context);
                 return definition;
             default:
                 // Abilities, projectiles, and visual states shape other assets and have no runtime asset of their own.
