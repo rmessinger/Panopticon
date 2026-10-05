@@ -20,7 +20,7 @@ public sealed class ArmorTemplateSet : IConditionState<ArmorSetCondition>
     };
 
     public readonly BitArray<ArmorSetCondition> Conditions = new BitArray<ArmorSetCondition>();
-    public LazyAssetReference<ArmorTemplate> Armor { get; private set; }
+    public LazyAssetReference<ArmorTemplate> Armor { get; internal set; }
     public LazyAssetReference<DamageFX> DamageFX { get; private set; }
 
     public ReadOnlySpan<BitArray<ArmorSetCondition>> ConditionFlags => new(in Conditions);

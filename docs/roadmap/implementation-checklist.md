@@ -1221,7 +1221,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: unsupported gameplay blocks import; ignorable metadata is reported separately; failures identify source, record, field, and stage.
 - [x] H2a-7 Body and movement materialization (`WI-H2a-07`).
   - AC: health, geometry, locomotor, and movement values produce native modules; invalid numbers fail before registration.
-- [ ] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
+- [x] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
   - AC: range, reload, damage, targeting, projectile references, and armor resolve from imported values without balancing defaults.
 - [ ] H2a-9 Ability materialization (`WI-H2a-09`).
   - AC: selected supported abilities create native modules and execute; unsupported abilities cannot silently disappear.
