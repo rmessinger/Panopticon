@@ -1217,7 +1217,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: omitted versus explicit values and list replacement/merge follow the contract; missing parents and cycles report their source chain.
 - [x] H2a-5 Dependency resolution (`WI-H2a-05`).
   - AC: typed cross-file references resolve within declared namespaces; missing/wrong-kind/ambiguous references block publication.
-- [ ] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
+- [x] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
   - AC: unsupported gameplay blocks import; ignorable metadata is reported separately; failures identify source, record, field, and stage.
 - [ ] H2a-7 Body and movement materialization (`WI-H2a-07`).
   - AC: health, geometry, locomotor, and movement values produce native modules; invalid numbers fail before registration.
