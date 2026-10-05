@@ -1259,7 +1259,7 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: one audited ground combat unit and dependencies emit shared interchange with source stats, explicit unit conversion, and DDF visual states.
 - [ ] H2a-17 Multi-source P9 proof and M2 handoff (`WI-H2a-17`).
   - AC: the real EE2 unit coexists with Generals and spawns/moves/attacks/dies; evidence records source and runtime stats, failures, and M2 expansion boundaries.
-- [ ] H2a-18 EE2 ground-unit selection probe (`WI-H2a-18`).
+- [x] H2a-18 EE2 ground-unit selection probe (`WI-H2a-18`).
   - AC: one EE2 ground combat unit with resolvable stats and four importable visual states is selected, or the missing Track C capability is recorded.
 - [ ] H2a-19 Staged Generals INI registration (`WI-H2a-19`).
   - AC: unit blocks reach the store only through the publisher; Generals and Zero Hour boot with zero import diagnostics and unchanged parity/P9 results.

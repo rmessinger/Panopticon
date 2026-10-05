@@ -74,8 +74,8 @@ staging-branch model; leave every PR open for operator merge.
 | [WI-H2a-12](../agent/cards/WI-H2a-12-scoped-content-publication.md) | Validated scoped publication | 10, 11 | Done |
 | [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Done |
 | [WI-H2a-14](../agent/cards/WI-H2a-14-generals-behavior-parity.md) | Generals parity evidence | 13 | Ready |
-| [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Ready |
-| [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Draft |
+| [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Done |
+| [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Ready |
 | [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Draft |
 | [WI-H2a-19](../agent/cards/WI-H2a-19-staged-generals-registration.md) | Staged Generals INI registration | 13 | Ready |
 | [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Draft |
@@ -190,7 +190,7 @@ Result of `WI-H2a-02`. Status: approved by the operator. D1 to D4 were reviewed 
 | Visual states | Draw module data plus Track C `Model` and animation | Legacy binding for W3D draw modules | Typed (NIF/KF through C4a to C4d importers) | 11 |
 | All other native modules | Remaining `ModuleData` families | Legacy allowlist binding (D1) | `Unsupported`, blocks publication | 12, 13 |
 
-### Implementation notes (G3)
+### Implementation notes (group 4)
 
 - D1 extension: `LegacyBinding` also applies to whole records. A Generals weapon, armor, locomotor, upgrade, or object record may carry a binding to the native template the INI parser built; materialization reuses that template and the typed fields remain the validated, inspectable description. Native weapon nuggets, FX, and projectile objects therefore keep full Generals coverage without typed records for every nugget family.
 - Legacy module data and legacy templates are never mutated by materialization; the adapter may share them between definitions.
@@ -198,7 +198,7 @@ Result of `WI-H2a-02`. Status: approved by the operator. D1 to D4 were reviewed 
 - Typed production links, unit upgrade lists, and upgrade prerequisites need a native command-set mapping and fail at materialization rather than being dropped. Generals keeps them through legacy bindings.
 - Native construction seams: selected `private set` accessors on `ObjectDefinition`, `WeaponTemplate`, `LocomotorTemplate`, `UpgradeTemplate`, `WeaponTemplateSet`, and `ArmorTemplateSet` became `internal set`; `BaseAsset.AssignImportedName` names materialized assets.
 
-### Generals reference adapter (G5)
+### Generals reference adapter (group 6)
 
 - Entry: `ContentManager` runs `GeneralsUnitImport` after the INI subsystems load, for Generals and Zero Hour; any error throws at boot.
 - The INI parser still registers unit blocks at parse time, because `DefaultThingTemplate`, `ChildObject`, and `ObjectReskin` read their parents during parsing (`ObjectDefinition.cs:18-52`).
@@ -248,10 +248,45 @@ Failure fixtures (synthetic): unsupported required ability, unresolved reference
 
 ### EE2 feasibility finding
 
-- Source model: `UnitType` and `UnitModel` records in `zips/db.zip` and `zips_ee2x/EE2X_db.zip` share a name (`EE2_UNIT_VISUAL_PIPELINE.md` section 3). Inheritance is by `parent`; example `UniqueUnitEnglish1` has `parent = Priest` and `HitPoints = 0` (value inherited or computed elsewhere).
-- Visual capability: the British Druid (`UniqueUnitEnglish1` model) binds Idle, Walk, Run, Attack1, and Death through C4d ([deep dive](c4d-ee2-skinned-animation.md)), so the Track C visual path covers all four required states for that model.
-- Combat gap: the Druid has `ConvertAttack` (conversion, no damage) and no weapon damage, so it cannot prove health, damage, range, reload, and armor.
-- Verdict: the EE2 slice is feasible for visuals and unproven for combat. No ground combat unit with both resolvable stats and a C4d-importable skinned model is confirmed. Blocker recorded; `WI-H2a-18` probes candidates (for example `heavy_infantry1.ddf` units) against the C4d importer limits (at most four skin influences, weight sums near 1) and the stat closure. Cards 15 to 17 stay Draft until it reports. Cards 03 to 14 do not depend on the result.
+Original finding (card 02): the British Druid binds all four visual states through C4d but has no damaging attack, so the combat slice was unproven.
+
+Selection (`WI-H2a-18`):
+
+| Item | Value | Source |
+|---|---|---|
+| Unit | `HeavyInfantry1` epoch 1 (Maceman), published as `HeavyInfantry1UpgradeEpoch1` | `db/Units/heavy_infantry1.ddf`, `db/TechTree/upgrade_unittypes.csv` |
+| Inheritance | `HeavyInfantry1` to `Human` to `HumanNoConvert` to `LandMammal` | `db/Units/human.ddf` |
+| Stats (epoch row) | HP 75, LOS 5 tiles, damage 5, range 0.8 tiles, reload 1.5 s, build time 37 s | CSV row 10 |
+| Movement | `Move { speed = 1.725; angSpeed = 720 }` tiles/s and deg/s | `heavy_infantry1.ddf` |
+| Visual | `UnitModel HeavyInfantry1_01`, `DefaultModel = lhi1_maceman.nif`, regional variants `_am`, `_fe`, `_me`, `_we` | `heavy_infantry1.ddf:279` |
+| Clips | `sh_maceman_idle01`, `walk01`, `attack01`, `death01` under `Graphics/Humans/` | `graphics.zip` |
+| Importer probe | All four regional models import (28 to 33 bones, one skinned shape); all four clips import with 100 channels | `Ee2GroundUnitProbeTests` |
+| Archive layers | Base `db.zip` only; `db_150`/`db_155` add tech-tree DDFs but do not replace the closure files, so the slice uses unpatched base values | install listing |
+
+Base DDF combat values are placeholders (`damage = 0`); per-epoch stats live in `upgrade_unittypes.csv`, so the adapter reads both.
+
+Track C fix found by the probe: C4i added a guard in `NifAnimationImporter` that rejected every clip on a skinned target, which disabled the C4d skinned clip path on `main` (`Ee2SkinnedImportTests` Druid clips failed there). The guard now applies only to legacy-header (pre-10.1) clips, which is what the C4i rejection test asserts.
+
+### EE2 adapter (group 7)
+
+- Reader location: `Content/Importing/Units/Ee2/` (`DdfReader`, `Ee2CsvTable`), internal to the adapter; no separate format project. Limits: 4 MiB per file, nesting depth 32; truncation and unbalanced brackets fail with file, line, and column.
+- Mapping: `UnitType` records become unit records; `Move`, `LOS`, and `Attack` abilities become locomotor, vision, and weapon plus `Attack` ability records, inheriting along the `UnitType` chain; the epoch CSV row becomes a child unit; `UnitModel` records become visual-state records (`Idle`, `Walk`, `Attack1`, `Death` bind to `Idle`, `Move`, `Attack`, `Death`).
+- Units: distances stay in EE2 tiles (`SourceDistance`); the caller declares game units per tile. `SizeX` is footprint width, so the radius is half of it.
+- Policy (`Ee2ImportPolicy`): epoch, regional model suffix, explicitly excluded mechanics, and the engine damage type for EE2 attacks (`UNRESISTABLE` by default, so authored damage applies one-to-one and Generals armor cannot rescale it).
+- Excluded-by-policy fields are reported as `H2A-EXCLUDED-BY-POLICY` warnings; any unsupported gameplay field not excluded blocks publication.
+- Engine default: a typed locomotor without acceleration reaches full speed in one frame.
+
+Maceman mechanics without a runtime mapping (excluded by the proof profile, owned by M2/M3):
+
+| Field | Meaning |
+|---|---|
+| `rps` | Rock-paper-scissors class driving `dbcombat.csv` damage multipliers |
+| `ConvertAttack`, `Convertable` | Capture and conversion |
+| `Garrisonable` | Garrisoning |
+| `popCount`, `mass`, `stance`, `ownertype`, `attributes`, `FootprintType`, `SizeY` | Population, physics mass, AI stance, ownership, medic healing, footprint shape |
+| `Cost` | Multi-resource cost (food, gold, tin) |
+| `UPGRADEREFS` | Per-epoch ability upgrade records |
+| `Attack.applyDamageTime` | Damage timing within the attack animation |
 
 ### Staging and PR grouping
 
@@ -259,14 +294,14 @@ Staging branch: `staging/track-h-h2a`. Each group is one stacked PR into staging
 
 | Group | Cards | Content |
 |---|---|---|
-| G0 | 01 | Loading audit (docs) |
-| G1 | 02 | Contract and design (docs) |
-| G2 | 03, 04, 05, 06 | Interchange, inheritance, dependency, validation (pure engine code and synthetic tests) |
-| G3 | 07, 08, 09, 10 | Materializers and native construction seams |
-| G4 | 11, 12 | Visual binding and scoped publication |
-| G5 | 13, 14 | Generals reference adapter and parity |
-| G6 | 18, 15, 16 | EE2 unit selection probe, DDF reader, EE2 adapter |
-| G7 | 17 | Mixed-source P9 proof and M2 handoff |
+| 1 | 01 | Loading audit (docs) |
+| 2 | 02 | Contract and design (docs) |
+| 3 | 03, 04, 05, 06 | Interchange, inheritance, dependency, validation (pure engine code and synthetic tests) |
+| 4 | 07, 08, 09, 10 | Materializers and native construction seams |
+| 5 | 11, 12 | Visual binding and scoped publication |
+| 6 | 13, 14 | Generals reference adapter and parity |
+| 7 | 18, 15, 16 | EE2 unit selection probe, DDF reader, EE2 adapter |
+| 8 | 17 | Mixed-source P9 proof and M2 handoff |
 
 Implementation plan: [`implementation/track-h-h2a-unit-content-import.md`](../implementation/track-h-h2a-unit-content-import.md).
 

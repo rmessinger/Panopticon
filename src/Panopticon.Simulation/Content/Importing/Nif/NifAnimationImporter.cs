@@ -34,17 +34,6 @@ internal sealed class NifAnimationImporter : IAnimationImporter
             return null;
         }
 
-        if (modelFile.Blocks.Any(
-                block => block is FileFormats.Nif.NifTriShape shape && shape.SkinInstanceReference >= 0))
-        {
-            // C4i proves rigid clips only; skinned unit animation is the
-            // C4d skinning consumer's domain, so the seam fails loudly
-            // instead of importing channels through the rigid path.
-            throw new NotSupportedException(
-                $"NIF animation '{key}': target model '{animationKey.ModelName}' carries skinned shapes; " +
-                "skinned unit animation binding is C4d work and is not imported by this rigid seam.");
-        }
-
         var kfEntry = context.FileSystem.GetFile(animationKey.KfPath);
         if (kfEntry is null)
         {
@@ -57,6 +46,16 @@ internal sealed class NifAnimationImporter : IAnimationImporter
         stream.CopyTo(buffered);
         buffered.Position = 0;
         var kfFile = FileFormats.Nif.NifFile.Read(buffered);
+
+        if (kfFile.Header.Version != FileFormats.Nif.NifHeader.SupportedVersion &&
+            modelFile.Blocks.Any(block => block is FileFormats.Nif.NifTriShape shape && shape.SkinInstanceReference >= 0))
+        {
+            // C4i proves legacy-header clips on rigid targets only. Current 10.1 clips on skinned
+            // targets are C4d's proven path and import normally.
+            throw new NotSupportedException(
+                $"NIF animation '{key}': legacy clip targets model '{animationKey.ModelName}', which carries skinned shapes; " +
+                "legacy skinned animation is outside the C4d seam and is not imported.");
+        }
 
         if (kfFile.Blocks.Count == 0 ||
             kfFile.Blocks[0] is not FileFormats.Nif.NifControllerSequence sequence)
