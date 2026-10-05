@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B1-02` |
 | Roadmap phase | [Track B · B1](../../track-b-scale.md): B1-2 macro harness |
-| Status | `Ready` |
+| Status | `In progress` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B1-01` |
