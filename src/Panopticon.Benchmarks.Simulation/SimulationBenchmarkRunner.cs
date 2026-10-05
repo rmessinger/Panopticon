@@ -21,10 +21,19 @@ public sealed class SimulationBenchmarkRunner
         run.Host.Run(plan.WarmupFrames);
 
         using var recorder = new RunOutputRecorder(run.Host, run.Game, plan.Seed, plan.ScenarioId);
+        using var metricRecorder = new BenchmarkMetricRecorder(run.Host);
         var stopwatch = Stopwatch.StartNew();
         var measured = run.Host.Run(plan.MeasuredFrames);
         stopwatch.Stop();
         var output = recorder.Complete();
+
+        var environment = EnvironmentRecord.Capture();
+        environment.InstallId = run.Game.Definition.Identifier;
+        var installPath = Environment.GetEnvironmentVariable("CNC_GENERALS_PATH");
+        if (!string.IsNullOrEmpty(installPath))
+        {
+            environment.Env["CNC_GENERALS_PATH"] = installPath;
+        }
 
         return new BenchmarkRunRecord(
             plan.ScenarioId,
@@ -36,6 +45,9 @@ public sealed class SimulationBenchmarkRunner
             stopwatch.Elapsed.TotalMilliseconds)
         {
             Output = output,
+            TickSamples = [.. metricRecorder.TickSamples],
+            SystemSamples = [.. metricRecorder.SystemSamples],
+            Environment = environment,
         };
     }
 }

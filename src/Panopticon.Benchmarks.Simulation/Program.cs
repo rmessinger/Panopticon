@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text.Json;
 
 namespace Panopticon.Benchmarks.Simulation;
 
@@ -44,10 +42,12 @@ public static class Program
     {
         if (plan.JsonPath is not null)
         {
-            var json = JsonSerializer.Serialize(
-                record,
-                new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-            File.WriteAllText(plan.JsonPath, json);
+            BenchmarkReportWriter.WriteJson(record, plan.JsonPath);
+        }
+
+        if (plan.CsvPath is not null)
+        {
+            BenchmarkReportWriter.WriteCsv(record, plan.CsvPath);
         }
 
         Console.WriteLine($"scenario        {record.ScenarioId}");
@@ -56,9 +56,5 @@ public static class Program
         Console.WriteLine($"measured wall   {record.MeasuredWallMs:F1} ms");
         Console.WriteLine($"json report     {plan.JsonPath ?? "(not written; pass --json)"}");
         Console.WriteLine($"csv summary     {plan.CsvPath ?? "(not written; pass --csv)"}");
-        if (plan.CsvPath is not null)
-        {
-            Console.WriteLine("csv writing arrives in B1-4; path accepted and stored");
-        }
     }
 }

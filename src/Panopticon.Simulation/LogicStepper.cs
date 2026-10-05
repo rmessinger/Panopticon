@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Panopticon.Mathematics;
 
 namespace Panopticon;
@@ -27,6 +28,13 @@ public sealed class LogicStepper
     /// <c>Game.LocalLogicTick</c> interpolation fraction; not needed headless.
     /// </summary>
     internal TimeSpan NextLogicUpdate => _nextLogicUpdate;
+
+    /// <summary>
+    /// Raised after each subsystem step inside a logic tick with the system name and its
+    /// wall-clock span (B1-3 per-system timing). The un-instrumented path stays branch-free:
+    /// when no handler is attached, <see cref="LogicTick"/> runs the original sequence.
+    /// </summary>
+    public event Action<string, TimeSpan>? SystemSpan;
 
     /// <summary>
     /// Cancels a pending single step, matching the previous behavior of the
@@ -98,6 +106,34 @@ public sealed class LogicStepper
 
     private void LogicTick(TimeSpan totalMapTime)
     {
+        // The measured path is spelled out separately from the default path so the default
+        // stays allocation-free and branch-free; timestamps use Stopwatch pairs only, since
+        // closure captures here would pollute the allocation deltas B1-3 measures.
+        if (SystemSpan is { } spanSink)
+        {
+            var interval = new TimeInterval(
+                totalMapTime,
+                TimeSpan.FromMilliseconds(_game.GameEngine.MsPerLogicFrame));
+
+            var start = Stopwatch.GetTimestamp();
+            _game.GameLogic.Update();
+            spanSink("gameLogic", Stopwatch.GetElapsedTime(start));
+
+            start = Stopwatch.GetTimestamp();
+            _game.NetworkMessageBuffer?.Tick();
+            spanSink("network", Stopwatch.GetElapsedTime(start));
+
+            start = Stopwatch.GetTimestamp();
+            _game.Scene3D?.LogicTick(interval);
+            spanSink("scene3d", Stopwatch.GetElapsedTime(start));
+
+            start = Stopwatch.GetTimestamp();
+            _game.PartitionCellManager?.Update();
+            spanSink("partition", Stopwatch.GetElapsedTime(start));
+
+            return;
+        }
+
         _game.GameLogic.Update();
 
         _game.NetworkMessageBuffer?.Tick();

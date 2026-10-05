@@ -717,10 +717,16 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     Done: `Panopticon.Benchmarks.Simulation` CLI + `SimulationBenchmarkRunner`; proven on
     `b1.empty-host` (300/300 frames, ~730 ms, exit 0) with the A1 recorder attached; 15
     install-free tests.
-- [ ] B1-3 Tick, allocation, GC, memory, and system spans (`WI-B1-03`).
+- [x] B1-3 Tick, allocation, GC, memory, and system spans (`WI-B1-03`).
   - AC: each run records per-tick and per-system timings plus allocation and GC counts.
-- [ ] B1-4 JSON run records and CSV summaries (`WI-B1-04`).
+    Done: `BenchmarkMetricRecorder` + `LogicStepper.SystemSpan` seam (gameLogic, network,
+    scene3d, partition); proven on `b1.empty-host` with 300 tick samples and 1200 system
+    spans; 7 install-free tests.
+- [x] B1-4 JSON run records and CSV summaries (`WI-B1-04`).
   - AC: records round-trip and carry hardware context.
+    Done: `BenchmarkReportWriter` (camelCase JSON authority + derived CSV with run and
+    environment columns); round-trip stable; CSV proven with 21 metric rows on
+    `b1.empty-host`; 6 install-free tests.
 - [ ] B1-5 Median bootstrap confidence intervals and regression comparison (`WI-B1-05`).
   - AC: a seeded bootstrap is reproducible; a stored baseline flags regressions.
 - [ ] B1-6 Seeded reference scenarios including the 10k-unit anchor (`WI-B1-06`).
