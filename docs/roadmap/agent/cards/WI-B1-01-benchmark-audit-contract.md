@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B1-01` |
 | Roadmap phase | [Track B · B1](../../track-b-scale.md): B1-1 benchmark audit |
-| Status | `Ready` |
+| Status | `In progress` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
