@@ -6,6 +6,7 @@
 >
 > Audience: human reference for roadmap decisions.
 
+- Multi-source unit importing. Decision (2026-10-04): H2a owns shared engine-native unit-content interchange, inheritance/dependency resolution, capability validation, runtime materialization, and scoped publication. It runs next before M2 without waiting for H1/H2/H3. Generals INI proves legacy coverage; a bounded real EE2 slice proves a second source. M2 expands the EE2 adapter, Track C supplies visuals, M3 owns balancing, and H4 serializes the shared representation. Unsupported required gameplay blocks import instead of silently substituting defaults. This avoids source-specific runtime paths. Design and cards: [H2a](deep-dives/h2a-unit-content-import.md).
 - Determinism priority. Decision (revised twice): determinism is not a roadmap requirement or a
   gate for parallelism, distribution, physics, AI, replay, or experiment tooling. Runs may diverge
   across executions, platforms, builds, thread schedules, and shard layouts. Validation uses
