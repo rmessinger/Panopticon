@@ -170,7 +170,7 @@ Every run records:
 | B1-3. Tick and system metrics | Capture per-tick wall time, allocations, GC, peak memory, and per-system spans. | [`WI-B1-03`](../agent/cards/WI-B1-03-tick-system-metrics.md) | Done |
 | B1-4. Report writers | Write compatible JSON records and derived CSV summaries. | [`WI-B1-04`](../agent/cards/WI-B1-04-report-writers.md) | Done |
 | B1-5. Statistics and regression | Add median bootstrap CI and CI-overlap regression comparison. | [`WI-B1-05`](../agent/cards/WI-B1-05-statistics-regression.md) | Done |
-| B1-6. Reference scenario suite | Add seeded empty, movement, combat, path, and 10k-unit anchor scenarios. | [`WI-B1-06`](../agent/cards/WI-B1-06-reference-scenarios.md) | Not started |
+| B1-6. Reference scenario suite | Add seeded empty, movement, combat, path, and 10k-unit anchor scenarios. | [`WI-B1-06`](../agent/cards/WI-B1-06-reference-scenarios.md) | Done |
 | B1-7. Consumer measurements | Add B4a, B4b, and Western Front measurement adapters after their producer seams exist. | [`WI-B1-07`](../agent/cards/WI-B1-07-consumer-measurements.md) | Not started |
 
 ## Architecture Diagrams
