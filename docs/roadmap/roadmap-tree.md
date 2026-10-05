@@ -264,7 +264,8 @@ mindmap
       G10 Realistic proportions
     H. Map and unit storage formats
       H1 Format requirements and current-state audit
-      H2 Format-agnostic interchange abstraction
+      H2 Format-agnostic map interchange abstraction
+      H2a Unit-content import layer ⮕
       H3 New map storage format
       H4 New object and unit-definition storage format
       H5 Legacy migration and compatibility tooling
@@ -359,7 +360,7 @@ flowchart LR
     D2["D2 Era and age progression"]
     E3["E3 Naval production"]
     G3["G3 Visual regression harness"]
-    H2["H2 Format-agnostic interchange abstraction"]
+    H2["H2 Format-agnostic map interchange abstraction"]
   end
 
   subgraph S2["Stage 2 · Harness & core scale"]
@@ -380,7 +381,6 @@ flowchart LR
     G9["G9 Resolution-independent 2D & UI"]
     G10["G10 Realistic proportions"]
     H3["H3 New map storage format"]
-    H4["H4 New object/unit-definition storage format"]
     M0["M0 Battle map"]
   end
 
@@ -397,7 +397,6 @@ flowchart LR
     F3["F3 Weapon-driven terrain deformation"]
     F4A["F4a Game-object physics adoption"]
     G5["G5 Cutout & alpha-test clarity"]
-    H5["H5 Legacy migration & compatibility tooling"]
     M1["M1 Capacity probe"]
   end
 
@@ -408,7 +407,6 @@ flowchart LR
     C4C["C4c EE2 rigid KF animation"]
     E2["E2 Ship combat"]
     F5["F5 Physics-based structural destruction"]
-    H6["H6 Authoring & pipeline integration"]
     W1["W1 Aggregate sector simulation"]
     M4["M4 Army-scale AI"]
   end
@@ -425,7 +423,6 @@ flowchart LR
     E4["E4 Reference naval scenario"]
     F6["F6 Destruction-terrain interaction"]
     F7["F7 Persistence & replay"]
-    H7["H7 Validation & round-trip regression"]
     W2["W2 Fidelity promotion & reconciliation"]
   end
 
@@ -436,19 +433,32 @@ flowchart LR
     W3A["W3a Sedan 1870"]
     W4["W4 Command & logistics experiment"]
     W5["W5 Distributed regional simulation"]
-    M2["M2 EE2 combat units"]
+    H2A["H2a Unit-content import layer"]
   end
 
-  subgraph S7["Stage 7 · Somme sector & mixed rosters"]
+  subgraph S7["Stage 7 · Somme sector & unit-content consumers"]
     direction TB
     W3B["W3b Somme sector"]
-    M3["M3 Mixed roster normalization"]
+    M2["M2 EE2 combat units"]
+    H4["H4 New object/unit-definition storage format"]
   end
 
-  subgraph S8["Stage 8 · Long-run campaign & mass battle"]
+  subgraph S8["Stage 8 · Long-run campaign & mixed rosters"]
     direction TB
     W6["W6 Long-run campaign experiment"]
+    M3["M3 Mixed roster normalization"]
+    H5["H5 Legacy migration & compatibility tooling"]
+  end
+
+  subgraph S9["Stage 9 · Unit-content authoring & mass battle"]
+    direction TB
+    H6["H6 Authoring & pipeline integration"]
     M5["M5 1000 vs 1000 battle"]
+  end
+
+  subgraph S10["Stage 10 · Storage round-trip regression"]
+    direction TB
+    H7["H7 Validation & round-trip regression"]
   end
 
   %% Stage P (internal) -> Stage 0 gating
@@ -524,7 +534,7 @@ flowchart LR
   G1 --> G3
   G2 --> G3
   H2 --> H3
-  H2 --> H4
+  H2A --> H4
   A4S --> A4DS
   A1 --> A4DS
 
@@ -635,6 +645,9 @@ flowchart LR
   M0 --> M1
   B1 --> M1
   C4D --> M2
+  C4D --> H2A
+  P9 --> H2A
+  H2A --> M2
   P9 --> M2
   M2 --> M3
   M1 --> M4
@@ -651,7 +664,7 @@ flowchart LR
   class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
-  class H1,H2,H3,H4,H5,H6,H7 trackH;
+  class H1,H2,H2A,H3,H4,H5,H6,H7 trackH;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;

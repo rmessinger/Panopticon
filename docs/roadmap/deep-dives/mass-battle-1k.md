@@ -109,7 +109,8 @@ EE2 units need gameplay definitions. EE2 stores them as text `.ddf` files in `db
 `db/Units/`), with `parent` inheritance, `properties` (`hitpoints`, `SizeX`, `moveType`, `rps`
 counter class), and `abilities` (`VehicleMove` or `AircraftMove` speed and cruising height, `LOS`
 range, `Attack` range, reload, damage, and missile). Aircraft carry the `GoesOnAirMissions`
-attribute. M2 adds a bounded DDF reader and a translator that emits `ObjectDefinition`s with
+attribute. [H2a](h2a-unit-content-import.md) adds the shared unit-content import layer and a bounded
+EE2 vertical slice. M2 expands that adapter to the reference roster; the shared materializer emits `ObjectDefinition`s with
 locomotor, weapon, armor, body, and draw modules, using a jet or
 helicopter locomotor with return-to-airfield rearm for aircraft, and C4a-C4d models and animations for the draw
 side. The translated definitions register as a scoped content layer, so Generals definitions are

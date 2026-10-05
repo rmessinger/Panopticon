@@ -1181,8 +1181,9 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
 
 ## Track H: Map & Unit Storage Formats
 
-See [`track-h-storage-formats.md`](track-h-storage-formats.md). Gated on Track P (P7) only.
-Persistence/schema-design track: on-disk map and object/unit-definition storage formats, distinct
+See [`track-h-storage-formats.md`](track-h-storage-formats.md). H2a depends on P9 and C4d;
+the storage phases are gated on Track P (P7).
+Shared unit-content importing plus on-disk map and object/unit-definition storage formats, distinct
 from B3 (runtime unit storage) and B4a-5 (chunked terrain runtime storage), which this track
 coordinates with rather than duplicates.
 
@@ -1195,12 +1196,54 @@ coordinates with rather than duplicates.
   - AC: the audit cites each `MapFile` limitation by file and line.
 - [ ] H1-2 Confirm settled H3 format choices (`WI-H1-02`).
   - AC: the audit confirms or revises the directory package with raw little-endian chunks.
-- [ ] H2 Format-agnostic interchange abstraction (`IMapFormat`/`IObjectTemplateFormat`-style seam
-  behind `AssetStore`/`OnDemandAssetLoadStrategy`, mirroring the C1 pattern).
-  - AC: the legacy `.map` reader and INI `ObjectDefinition` parser load entirely as one
-    implementation of the new format seam, with no behavior change.
+- [ ] H2 Format-agnostic map interchange abstraction, mirroring the C1 pattern.
+  - AC: the legacy `.map` reader loads through the map-format seam with no behavior change;
+    placed objects retain references to unit definitions owned by H2a.
 - [ ] H2-1 Map interchange design for the package format (`WI-H2-01`).
   - AC: the design names interchange types without `MapFile` dependencies.
+
+### H2a: Unit-content import layer
+
+Design and card index: [unit-content import](deep-dives/h2a-unit-content-import.md).
+Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
+
+- [ ] H2a-1 Focused loading audit (`WI-H2a-01`).
+  - AC: file:line evidence covers INI defaults/inheritance, dependency loading, scoped identity, module construction, and P9 entry points.
+- [ ] H2a-2 Contract and architecture design (`WI-H2a-02`).
+  - AC: reviewed schema, capability matrix, reference roster, and grounded class/sequence diagrams reconcile all Draft cards.
+- [ ] H2a-3 Engine-owned interchange contracts (`WI-H2a-03`).
+  - AC: owned values cover gameplay and visual dependencies without source parser or live runtime objects; mutation and identity tests pass.
+- [ ] H2a-4 Inheritance resolution (`WI-H2a-04`).
+  - AC: omitted versus explicit values and list replacement/merge follow the contract; missing parents and cycles report their source chain.
+- [ ] H2a-5 Dependency resolution (`WI-H2a-05`).
+  - AC: typed cross-file references resolve within declared namespaces; missing/wrong-kind/ambiguous references block publication.
+- [ ] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
+  - AC: unsupported gameplay blocks import; ignorable metadata is reported separately; failures identify source, record, field, and stage.
+- [ ] H2a-7 Body and movement materialization (`WI-H2a-07`).
+  - AC: health, geometry, locomotor, and movement values produce native modules; invalid numbers fail before registration.
+- [ ] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
+  - AC: range, reload, damage, targeting, projectile references, and armor resolve from imported values without balancing defaults.
+- [ ] H2a-9 Ability materialization (`WI-H2a-09`).
+  - AC: selected supported abilities create native modules and execute; unsupported abilities cannot silently disappear.
+- [ ] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
+  - AC: costs, build time, prerequisites, production links, and selected upgrades retain their imported semantics; unsupported economy mechanics block import.
+- [ ] H2a-11 Visual-state binding (`WI-H2a-11`).
+  - AC: model and idle/move/attack/death references use Track C assets and native draw behavior; required missing bindings fail explicitly.
+- [ ] H2a-12 Scoped content publication (`WI-H2a-12`).
+  - AC: a validated dependency closure publishes atomically; collision/failure/unload leaves built-in content and cached references intact.
+- [ ] H2a-13 Generals reference adapter (`WI-H2a-13`).
+  - AC: Generals unit loading uses the shared path with legacy names, defaults, inheritance, module coverage, and override behavior preserved.
+- [ ] H2a-14 Generals behavior parity (`WI-H2a-14`).
+  - AC: the audited reference roster passes existing archetype and P9 contracts, including abilities, production, and upgrades where supported today.
+- [ ] H2a-15 Bounded EE2 DDF reader (`WI-H2a-15`).
+  - AC: selected records and their full inherited dependency closure parse from the operator install; syntax limits and unsupported fields are diagnosed.
+- [ ] H2a-16 EE2 source adapter (`WI-H2a-16`).
+  - AC: one audited ground combat unit and dependencies emit shared interchange with source stats, explicit unit conversion, and DDF visual states.
+- [ ] H2a-17 Multi-source P9 proof and M2 handoff (`WI-H2a-17`).
+  - AC: the real EE2 unit coexists with Generals and spawns/moves/attacks/dies; evidence records source and runtime stats, failures, and M2 expansion boundaries.
+
+### Remaining storage phases
+
 - [ ] H3 New map storage format (versioned container; terrain section reserved for B4a-5's
   chunked heightmap representation).
   - AC: a map authored in the new format round-trips (write, reload) with terrain, blend, and
@@ -1213,7 +1256,7 @@ coordinates with rather than duplicates.
   - AC: a legacy map imports into a package through H2.
 - [ ] H3-4 Map package round-trip tests (`WI-H3-04`).
   - AC: terrain, blend, and object data survive write and reload.
-- [ ] H4 New object/unit-definition storage format (`ObjectDefinition` plus weapons/upgrades/
+- [ ] H4 New object/unit-definition storage adapter over H2a (weapons/upgrades/
   locomotors and F4a engine-level physics metadata; INI stays a permanent legacy read path).
   - AC: a unit authored in the new format loads with full parity to its INI-authored equivalent,
     including participation/material/filter overrides; no Bepu-specific type or handle is serialized,
@@ -1467,13 +1510,14 @@ depend on the Track A/B/C phases listed in the track doc. Design:
   - AC: the report names the first failing constraint and whether B2/B3 are needed for M5.
 
 ### M2: EE2 combat units
-- [ ] M2-1 DDF reader for `db.zip` unit definitions with `parent` inheritance.
+- [ ] M2-1 Expand H2a's bounded DDF reader to the reference roster and inherited dependencies.
   - AC: resolves `properties` and `abilities` for every file under `db/Units/` against the
-    operator-supplied EE2 install; unknown fields are reported, not fatal.
-- [ ] M2-2 DDF to `ObjectDefinition` translator for ground combat units and aircraft.
+    operator-supplied EE2 install; unknown metadata is reported, and unsupported required gameplay
+    blocks publication of affected units under H2a's capability policy.
+- [ ] M2-2 Expand H2a's EE2 adapter for ground combat units and aircraft; use shared materialization.
   - AC: each reference unit gets locomotor, weapon, armor, body, and draw modules from DDF values;
     aircraft get a jet or helicopter locomotor with return-to-airfield rearm.
-- [ ] M2-3 Scoped content layer for translated EE2 definitions.
+- [ ] M2-3 Reference EE2 roster registration through H2a's scoped content publisher.
   - AC: EE2 definitions load beside Generals definitions without overriding any Generals entry.
 - [ ] M2-4 EE2 units in the P9 validation ground.
   - AC: each reference EE2 unit spawns, moves, attacks, and dies; gaps surface as explicit failures.

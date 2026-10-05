@@ -135,7 +135,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-e-naval-warfare.md`](track-e-naval-warfare.md) | human | Naval warfare: finishes water/ground pathfinding and adds ship combat/production against BFME2 content. E1/E3 depend on Track P; E2 also uses F4a Bepu hull contacts. |
 | [`track-f-terrain-destruction.md`](track-f-terrain-destruction.md) | human | Object physics, deformable terrain & destruction: Bepu seam, explicit physics participation for every game object, runtime terrain deformation, structural destruction, persistence/replay, and authoring/validation tooling. |
 | [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md) | human | Rendering clarity & image quality: high-DPI/resolution correctness, graphics settings & fidelity presets, visual regression harness, MSAA, cutout/alpha-test clarity, gamma-correct rendering, texture filtering & mip quality, shadow quality tier, resolution-independent 2D/UI, optional realistic proportions. Not gated on Track P. |
-| [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Map & unit storage formats: a new on-disk storage system for maps and object/unit template data. Format-agnostic interchange abstraction, a versioned successor to the `.map` format, a versioned successor to per-game INI object-definition storage, legacy migration/compatibility tooling, authoring/pipeline integration, round-trip regression. Persistence/schema concern, distinct from B3/B4a-5's runtime-performance focus. Gated on Track P. |
+| [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Shared unit-content importing (H2a, before M2), map interchange, versioned map/unit storage, migration, authoring integration, and round-trip validation. Distinct from B3/B4a-5 runtime storage. H2a depends on P9/C4d; the storage foundation is gated on Track P. |
 | [`track-w-western-front.md`](track-w-western-front.md) | human | Western Front simulation: charter fixture, aggregate sector model, fidelity promotion and reconciliation, geospatial sector, command and logistics experiments, distributed regions, and a long-run campaign. Built as a domain through the A4-1 seam and A4-4 state projection. |
 | [`track-m-mass-battle.md`](track-m-mass-battle.md) | human | Mixed-roster mass battle: capacity probe, battle map, EE2 combat units, roster normalization, army-scale AI, and the 1000 vs 1000 battle in batch, replay, and live modes. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `Panopticon.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
@@ -153,6 +153,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 
 | Deep dive | Expands |
 |---|---|
+| [`deep-dives/h2a-unit-content-import.md`](deep-dives/h2a-unit-content-import.md) | H2a design scaffold and WI-H2a-01..17: shared unit-content importing and the Generals/EE2 proof before M2. |
 | [`deep-dives/p0-playable-baseline-harness.md`](deep-dives/p0-playable-baseline-harness.md) | Track P phase P0 - ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
 | [`deep-dives/p1-skirmish-setup.md`](deep-dives/p1-skirmish-setup.md) | Track P phase P1 - Skirmish setup & player relationships. |
 | [`deep-dives/p2-p5-skirmish-ai.md`](deep-dives/p2-p5-skirmish-ai.md) | Track P phases P2 - Skirmish AI opponent (+ P5 construction/production mechanism). |
@@ -259,18 +260,18 @@ track document.
   G10 realistic proportions (optional scale-correct aircraft presentation). Not gated
   on Track P.
 - [Track H - Map & Unit Storage Formats](track-h-storage-formats.md): H1 format requirements &
-  current-state audit · H2 format-agnostic interchange abstraction · H3 new map storage format ·
+  current-state audit · H2 map interchange abstraction · H2a shared unit-content import layer · H3 new map storage format ·
   H4 new object/unit-definition storage format · H5 legacy migration & compatibility tooling · H6
   authoring & pipeline integration (WorldBuilder, ModCollector) · H7 validation & round-trip
-  regression. A persistence/schema-design track, distinct from B3/B4a-5's runtime-performance
-  focus. Depends on Track P only.
+  regression. Shared importing and persistence/schema design, distinct from B3/B4a-5's runtime-performance
+  focus. Storage phases depend on Track P; H2a depends on P9 and C4d and runs before M2.
 - [Track W - Western Front Simulation](track-w-western-front.md): W0 charter fixture · W1
   aggregate sector simulation · W2 fidelity promotion and reconciliation · W3a Sedan 1870 · W3b
   Somme sector · W4 command and logistics experiment · W5 distributed regional simulation · W6
   long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
 - [Track M - Mixed-Roster Mass Battle](track-m-mass-battle.md): M0 battle map · M1 capacity
   probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
-  battle. Depends on P9 and A1, then B1, C4d, A4, B4, B5, and A5.
+  battle. Depends on P9 and A1, then B1, H2a, C4d, A4, B4, B5, and A5.
 
 ### Cross-track dependencies
 
@@ -297,13 +298,14 @@ track document.
   behaviour. It coordinates with B5 (rendering at scale) over pipeline-description plumbing and
   with A3 (sim/presentation seam) over the pixel-versus-logical-point split, and its G3 golden
   frames guard Track F's terrain-rendering changes (F2/F8).
-- Track H depends only on Track P. Its H3 (new map storage format) reserves a terrain section for
+- Track H's H2a supplies shared unit-content importing before M2, independently of H1/H2/H3.
+  Track C supplies visuals; H4 stores H2a's representation. Its H3 (new map storage format) reserves a terrain section for
   [B4a-5's chunked heightmap representation](deep-dives/b4a-larger-maps.md) rather than competing
   with it: B4a-5 owns the runtime chunking/streaming model, H3 owns the on-disk container and
   versioning. B4b consumes both through H6's WorldBuilder integration as the output path for
   generated geospatial maps. H2's
   format-agnostic interchange abstraction mirrors [C1](track-c-external-assets.md)'s
-  import-abstraction pattern applied to map/object-definition data instead of models/animations.
+  import-abstraction pattern applied to maps; H2a owns unit-content interchange and materialization.
   H4/H6 feed Track D's D3 external content ingestion and the standalone [ModCollector
   tool](plans/mod-collector.md) once the new object-definition format exists.
 - Track W builds on Track A: W0 needs A4-1 and the A4-4 state projection, W1 needs A2, W2 needs
@@ -393,18 +395,19 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
 | Track G total | `░░░░░░░░░░` | 0 / 16 |
 
-### Track H - Map & Unit Storage Formats (gated on Track P only)
+### Track H - Map & Unit Storage Formats (H2a gated on P9 and C4d)
 
 | Phase | Progress | Items |
 |---|---|---|
 | H1 - Format requirements & current-state audit | `░░░░░░░░░░` | 0 / 3 |
-| H2 - Format-agnostic interchange abstraction | `░░░░░░░░░░` | 0 / 2 |
+| H2 - Format-agnostic map interchange abstraction | `░░░░░░░░░░` | 0 / 2 |
+| H2a - Unit-content import layer | `░░░░░░░░░░` | 0 / 17 |
 | H3 - New map storage format | `░░░░░░░░░░` | 0 / 5 |
 | H4 - New object/unit-definition storage format | `░░░░░░░░░░` | 0 / 1 |
 | H5 - Legacy migration & compatibility tooling | `░░░░░░░░░░` | 0 / 1 |
 | H6 - Authoring & pipeline integration | `░░░░░░░░░░` | 0 / 1 |
 | H7 - Validation & round-trip regression | `░░░░░░░░░░` | 0 / 1 |
-| Track H total | `░░░░░░░░░░` | 0 / 14 |
+| Track H total | `░░░░░░░░░░` | 0 / 31 |
 
 ### Track W - Western Front Simulation (gated on A4-1 and A4-4)
 
