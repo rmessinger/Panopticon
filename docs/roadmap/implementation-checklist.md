@@ -1207,7 +1207,7 @@ coordinates with rather than duplicates.
 Design and card index: [unit-content import](deep-dives/h2a-unit-content-import.md).
 Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
 
-- [ ] H2a-1 Focused loading audit (`WI-H2a-01`).
+- [x] H2a-1 Focused loading audit (`WI-H2a-01`).
   - AC: file:line evidence covers INI defaults/inheritance, dependency loading, scoped identity, module construction, and P9 entry points.
 - [ ] H2a-2 Contract and architecture design (`WI-H2a-02`).
   - AC: reviewed schema, capability matrix, reference roster, and grounded class/sequence diagrams reconcile all Draft cards.
