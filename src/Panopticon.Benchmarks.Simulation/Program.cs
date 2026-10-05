@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Panopticon.Benchmarks.Simulation;
 
@@ -54,6 +55,12 @@ public static class Program
         Console.WriteLine($"seed            {record.Seed}");
         Console.WriteLine($"frames          {record.FramesCompleted}/{record.MeasuredFrames} completed");
         Console.WriteLine($"measured wall   {record.MeasuredWallMs:F1} ms");
+        var regressions = record.Statistics.Count(s => s.IsRegression == true);
+        if (record.Statistics.Any(s => s.IsRegression.HasValue))
+        {
+            Console.WriteLine($"vs baseline     {regressions} metric(s) changed beyond CI overlap");
+        }
+
         Console.WriteLine($"json report     {plan.JsonPath ?? "(not written; pass --json)"}");
         Console.WriteLine($"csv summary     {plan.CsvPath ?? "(not written; pass --csv)"}");
     }

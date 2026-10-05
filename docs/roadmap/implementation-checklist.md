@@ -727,8 +727,11 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     Done: `BenchmarkReportWriter` (camelCase JSON authority + derived CSV with run and
     environment columns); round-trip stable; CSV proven with 21 metric rows on
     `b1.empty-host`; 6 install-free tests.
-- [ ] B1-5 Median bootstrap confidence intervals and regression comparison (`WI-B1-05`).
+- [x] B1-5 Median bootstrap confidence intervals and regression comparison (`WI-B1-05`).
   - AC: a seeded bootstrap is reproducible; a stored baseline flags regressions.
+    Done: `BootstrapStatistics` (seeded, deterministic) + `BenchmarkStatistics` CI-overlap
+    rule; `--baseline` proven live on `b1.empty-host` (changed metrics flagged, overlapping
+    metric unflagged); 9 install-free tests.
 - [ ] B1-6 Seeded reference scenarios including the 10k-unit anchor (`WI-B1-06`).
   - AC: scenarios run repeatably; micro benchmarks use BenchmarkDotNet.
 - [ ] B1-7 B4a, B4b, and Western Front adapters (`WI-B1-07`).

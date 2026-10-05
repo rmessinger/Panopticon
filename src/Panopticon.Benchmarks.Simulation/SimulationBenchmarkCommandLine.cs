@@ -29,6 +29,7 @@ public static class SimulationBenchmarkCommandLine
           --map <path>            Map path override; scenario default otherwise
           --json <path>           JSON run record destination
           --csv <path>            CSV summary destination (written from B1-4 on)
+          --baseline <path>       Baseline JSON record for regression comparison
           --help                  Print this usage
         """;
 
@@ -41,6 +42,7 @@ public static class SimulationBenchmarkCommandLine
         string? mapPath = null;
         string? jsonPath = null;
         string? csvPath = null;
+        string? baselinePath = null;
         uint seed = DefaultSeed;
         int warmupFrames = DefaultWarmupFrames;
         int measuredFrames = DefaultMeasuredFrames;
@@ -78,6 +80,9 @@ public static class SimulationBenchmarkCommandLine
                 case "--csv":
                     csvPath = value;
                     break;
+                case "--baseline":
+                    baselinePath = value;
+                    break;
                 default:
                     throw new ArgumentException($"Unknown option '{option}'.");
             }
@@ -90,6 +95,7 @@ public static class SimulationBenchmarkCommandLine
                 MapPath = mapPath,
                 JsonPath = jsonPath,
                 CsvPath = csvPath,
+                BaselinePath = baselinePath,
             };
         }
         catch (Exception ex) when (ex is ArgumentException or ArgumentOutOfRangeException)

@@ -33,6 +33,8 @@ public class BenchmarkReportWriterTests : IDisposable
         Assert.Equal(record.SystemSamples[0].System, roundTripped.SystemSamples[0].System);
         Assert.Equal(record.SystemSamples[0].SpanMs, roundTripped.SystemSamples[0].SpanMs);
         Assert.Equal(record.Environment!.Cpu, roundTripped.Environment!.Cpu);
+        Assert.Equal(record.Statistics.Count, roundTripped.Statistics.Count);
+        Assert.Equal(record.Statistics[0].Median, roundTripped.Statistics[0].Median);
     }
 
     [Fact]
@@ -55,6 +57,7 @@ public class BenchmarkReportWriterTests : IDisposable
         Assert.Contains("\"tickSamples\"", json);
         Assert.Contains("\"systemSamples\"", json);
         Assert.Contains("\"environment\"", json);
+        Assert.Contains("\"statistics\"", json);
     }
 
     [Fact]
@@ -73,6 +76,7 @@ public class BenchmarkReportWriterTests : IDisposable
         Assert.Equal("9", lines[1].Split(',')[1]);
         Assert.Contains("tick.wallMs.mean", lines.Select(l => l.Split(',')[^2]));
         Assert.Contains("system.gameLogic.meanMs", lines.Select(l => l.Split(',')[^2]));
+        Assert.Contains("stat.tick.wallMs.median", lines.Select(l => l.Split(',')[^2]));
     }
 
     [Fact]
@@ -120,6 +124,19 @@ public class BenchmarkReportWriterTests : IDisposable
             [
                 new SystemMetricSample(11, "gameLogic", 2.1),
                 new SystemMetricSample(11, "scene3d", 0.05),
+            ],
+            Statistics =
+            [
+                new BenchmarkStatistics
+                {
+                    Metric = "tick.wallMs",
+                    Samples = 2,
+                    Median = 3,
+                    ConfidenceLow = 2.5,
+                    ConfidenceHigh = 3.5,
+                    BaselineRunId = "baseline-run",
+                    IsRegression = true,
+                },
             ],
             Environment = new EnvironmentRecord
             {
