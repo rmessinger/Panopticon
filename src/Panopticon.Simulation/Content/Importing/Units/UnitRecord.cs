@@ -27,6 +27,9 @@ public sealed record UnitRecord : SourceRecord
 
     public Authored<Quantity> VisionRange { get; init; }
 
+    /// <summary>How long a dead unit stays in its dying state before removal; drives a typed slow-death module.</summary>
+    public Authored<Quantity> DeathDuration { get; init; }
+
     public ListOverride<string> KindOf { get; init; } = ListOverride<string>.Inherit;
 
     public ListOverride<ContentId> Locomotors { get; init; } = ListOverride<ContentId>.Inherit;
@@ -88,6 +91,7 @@ public sealed record UnitRecord : SourceRecord
             GeometryMajorRadius = Authored<Quantity>.Inherit(GeometryMajorRadius.WithOrigin(Id), p?.GeometryMajorRadius ?? default),
             GeometryHeight = Authored<Quantity>.Inherit(GeometryHeight.WithOrigin(Id), p?.GeometryHeight ?? default),
             VisionRange = Authored<Quantity>.Inherit(VisionRange.WithOrigin(Id), p?.VisionRange ?? default),
+            DeathDuration = Authored<Quantity>.Inherit(DeathDuration.WithOrigin(Id), p?.DeathDuration ?? default),
             KindOf = KindOf.ApplyOver(p?.KindOf ?? ListOverride<string>.Inherit, Id.Source.NameComparer),
             Locomotors = Locomotors.ApplyOver(p?.Locomotors ?? ListOverride<ContentId>.Inherit),
             Weapons = Weapons.ApplyOver(p?.Weapons ?? ListOverride<ContentId>.Inherit),

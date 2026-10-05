@@ -17,7 +17,16 @@ namespace Panopticon.Content.Importing.Units.Ee2;
 /// damage one-to-one, so Generals armor never silently rescales it; EE2's own class modifiers are
 /// a separate, excluded mechanic.
 /// </param>
-public sealed record Ee2ImportPolicy(int Epoch, string Region, IReadOnlyCollection<string> ExcludedMechanics, string DamageType = "UNRESISTABLE")
+/// <param name="CorpseSeconds">
+/// How long a dead unit plays its death state before removal. EE2 sinks corpses through a child
+/// visual the engine does not import, so the caller declares the duration.
+/// </param>
+public sealed record Ee2ImportPolicy(
+    int Epoch,
+    string Region,
+    IReadOnlyCollection<string> ExcludedMechanics,
+    string DamageType = "UNRESISTABLE",
+    double CorpseSeconds = 3)
 {
     public bool Excludes(string mechanic) => ExcludedMechanics.Contains(mechanic, StringComparer.OrdinalIgnoreCase);
 }

@@ -20,6 +20,11 @@ namespace Panopticon.Content.Importing.Units.Ee2;
 public sealed class Ee2UnitAdapter : IUnitSourceAdapter
 {
     private const string AiTag = "ModuleTag_AI";
+    private const string PhysicsTag = "ModuleTag_Physics";
+    private const string DeathTag = "ModuleTag_Death";
+
+    /// <summary>EE2 abilities override by name, so its modules replace only by tag, never by Generals module kind.</summary>
+    private const ModuleInheritanceMode ByTag = ModuleInheritanceMode.AlwaysInherit;
 
     /// <summary>DDF state names bound to the four engine states.</summary>
     private static readonly (string Engine, string Ddf)[] StateNames = [("Idle", "Idle"), ("Move", "Walk"), ("Attack", "Attack1"), ("Death", "Death")];
@@ -214,7 +219,10 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                     Appearance = Authored.Of("TWO_LEGS"),
                 };
                 extra.Add(locomotor);
-                modules.Add(ModuleEdit.Add(new UnitModule(AiTag, "AIUpdateInterface", ModuleKinds.Update)));
+                modules.Add(ModuleEdit.Add(new UnitModule(AiTag, "AIUpdateInterface", ModuleKinds.Update, ByTag)));
+
+                // The engine moves locomotor-driven objects only through a physics behavior.
+                modules.Add(ModuleEdit.Add(new UnitModule(PhysicsTag, "PhysicsBehavior", ModuleKinds.Update, ByTag)));
                 return unit with { Locomotors = ListOverride<ContentId>.Replace([locomotor.Id]) };
 
             case "LOS":
@@ -270,7 +278,12 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
             VisionRange = Number(Cell(row, "LOS"), QuantityUnit.SourceDistance),
             BuildTime = Number(Cell(row, "BUILDTIME"), QuantityUnit.Seconds),
             Visual = visualName is null ? default : Authored.Of(new ContentId(Source, ContentKind.VisualState, visualName)),
-            Modules = [ModuleEdit.Add(AttackModule(attack.Id))],
+            DeathDuration = Authored.Of(new Quantity(_policy.CorpseSeconds, QuantityUnit.Seconds)),
+            Modules =
+            [
+                ModuleEdit.Add(AttackModule(attack.Id)),
+                ModuleEdit.Add(new UnitModule(DeathTag, "SlowDeathBehavior", ModuleKinds.Update | ModuleKinds.Die, ByTag)),
+            ],
             Unclassified = unclassified,
         };
 
@@ -375,7 +388,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         return (weapon, attack);
     }
 
-    private static UnitModule AttackModule(ContentId ability) => new("Attack", "Attack", ModuleKinds.None, ModuleInheritanceMode.AlwaysInherit, Ability: ability);
+    private static UnitModule AttackModule(ContentId ability) => new("Attack", "Attack", ModuleKinds.None, ByTag, Ability: ability);
 
     private string? AncestorWithAbility(DdfRecord type, string ability) => AncestorWithAbility(type.Parent, ability, includeSelf: true);
 

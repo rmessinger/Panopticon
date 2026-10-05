@@ -106,6 +106,7 @@ public sealed class UnitImportValidator
         context.Optional(unit.VisionRange, nameof(unit.VisionRange), DistanceUnits, minimum: 0);
         context.Optional(unit.BuildCost, nameof(unit.BuildCost), CostUnits, minimum: 0);
         context.Optional(unit.BuildTime, nameof(unit.BuildTime), TimeUnits, minimum: 0);
+        context.Optional(unit.DeathDuration, nameof(unit.DeathDuration), TimeUnits, minimum: 0);
 
         if (unit.InitialHealth.IsPresent && unit.MaxHealth.IsPresent && unit.InitialHealth.Value.Value > unit.MaxHealth.Value.Value)
         {

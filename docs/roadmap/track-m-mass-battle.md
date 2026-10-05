@@ -49,7 +49,7 @@ marked `Ready`. `†` marks conceptual diagrams awaiting grounding.
 
 - B4 and B5 are M5 dependencies; M1 decides whether B2/B3 are also needed at 2000 units.
 - B4a is needed only if M0 authors the map; M0 then also depends on B4a.
-- M2 consumes [H2a's unit-content import layer](deep-dives/h2a-unit-content-import.md) and expands its bounded EE2 proof, not a separate DDF-to-runtime translator. Track C supplies visuals; C4h particle effects are optional polish, not a gate.
+- M2 consumes [H2a's unit-content import layer](deep-dives/h2a-unit-content-import.md) and expands its bounded EE2 proof (the epoch-1 Maceman), not a separate DDF-to-runtime translator. Starting gaps are listed in the [H2a M2 handoff](deep-dives/h2a-unit-content-import.md#m2-handoff). Track C supplies visuals; C4h particle effects are optional polish, not a gate.
 - B5 instancing must cover Track C models, as already noted under Track B.
 - The track does not use B6, B7, or any Track W domain code.
 

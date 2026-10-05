@@ -62,8 +62,35 @@ public static class CaptureProfileValidator
             }
         }
 
+        var importedSources = new HashSet<string>(System.StringComparer.Ordinal);
+        foreach (var import in profile.ContentImports)
+        {
+            if (import.Source != "ee2")
+            {
+                errors.Add($"Content import source '{import.Source}' is not supported; only 'ee2' is.");
+            }
+
+            if (import.UnitTypes.Count == 0 || import.DdfPaths.Count == 0)
+            {
+                errors.Add($"Content import '{import.Source}' needs UnitTypes and DdfPaths.");
+            }
+
+            if (!(import.GameUnitsPerSourceDistance > 0) || double.IsInfinity(import.GameUnitsPerSourceDistance))
+            {
+                errors.Add($"Content import '{import.Source}' needs a finite, positive GameUnitsPerSourceDistance.");
+            }
+
+            importedSources.Add(import.Source);
+        }
+
         foreach (var actor in profile.Actors)
         {
+            var separator = actor.Definition.IndexOf(':');
+            if (separator > 0 && !importedSources.Contains(actor.Definition[..separator]))
+            {
+                errors.Add($"Actor '{actor.Id}' references source '{actor.Definition[..separator]}', which no ContentImports entry publishes.");
+            }
+
             if (string.IsNullOrWhiteSpace(actor.Id))
             {
                 errors.Add("Every actor needs a non-empty Id.");

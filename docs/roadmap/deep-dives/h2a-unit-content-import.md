@@ -78,7 +78,7 @@ staging-branch model; leave every PR open for operator merge.
 | [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Done |
 | [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Done |
 | [WI-H2a-19](../agent/cards/WI-H2a-19-staged-generals-registration.md) | Staged Generals INI registration | 13 | Ready |
-| [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Ready |
+| [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Done |
 
 ## Loading audit
 
@@ -287,6 +287,37 @@ Maceman mechanics without a runtime mapping (excluded by the proof profile, owne
 | `Cost` | Multi-resource cost (food, gold, tin) |
 | `UPGRADEREFS` | Per-epoch ability upgrade records |
 | `Attack.applyDamageTime` | Damage timing within the attack animation |
+
+### Mixed-source proof (group 8)
+
+Entry: capture profile `capture-mixed-source-ee2.json` (ReplaySketch.Core profiles) run by the TestHarness `ScenarioCaptureRunner`; `ContentImports` publishes EE2 units through the shared layer (`UnitContentImportRunner`) and actors name them as `ee2:<unit>`. Requires `CNC_GENERALS_PATH` and `EMPIRE_EARTH_II_PATH`; a missing install fails the run as an unmet prerequisite.
+
+| Check | Result |
+|---|---|
+| Publication | 3 assets (unit, weapon, locomotor) in the `ee2` collection set; Generals collections unchanged |
+| Conversions | 12 game units per tile: speed 0.69/frame, range 9.6, vision 60, radius 0.75; reload 45 frames; build 1110 frames |
+| Move | Maceman walks 61 units on the Alpine Assault map |
+| Attack | Every hit on the Generals rebel removes exactly 5 HP (authored damage, `UNRESISTABLE`) |
+| Die | Rebel fire kills the 75 HP maceman; slow death plays for the declared 3 s, then removal |
+| Visual states | Draw module selects Idle, Move, Attack, and Death with the four DDF clips; captured fall on death |
+| Unsupported mechanic | Removing one exclusion (`ConvertAttack`) fails import; nothing spawns |
+| Collision | A second identical import fails before pushing a scope; first publication and Generals definitions unchanged |
+
+Evidence: `UnitContentImportIntegrationTests` (4 tests, installed) and the shared viewer GIF `h2a-mixed-source-ee2-maceman-vs-generals.gif`.
+
+Runtime requirements found by the proof, now typed module families: `PhysicsBehavior` (locomotors need physics) and `SlowDeathBehavior` (a death state needs a dying phase; duration declared by `DeathDuration`). EE2 typed modules inherit by tag only (`AlwaysInherit`), matching EE2 ability-by-name overrides. Materialization inserts resolved modules by tag instead of re-running the native parse-time merge, which evicted inherited modules of overlapping kind.
+
+Capture note: draw-module animations advance per rendered frame, so strided captures set `RenderEveryFrame` to keep clips at simulation speed.
+
+### M2 handoff
+
+- Roster: extend `Ee2UnitAdapter` beyond `Move`, `LOS`, and `Attack`; each further ability needs a typed family or stays an explicit exclusion.
+- Combat classes: map `rps` and `dbcombat.csv` multipliers (M3 owns cross-game balance); until then EE2 damage stays `UNRESISTABLE`.
+- Economy: multi-resource cost and `UPGRADEREFS` epoch upgrades are excluded; production needs a command-set mapping.
+- Aircraft: no typed air locomotion, takeoff, or rearm yet.
+- Scale: 12 game units per tile is the proof's declared value, not a balance decision.
+- Archive layers: the slice reads unpatched `db.zip`; patch tech-tree layers need a precedence rule.
+- Visual: regional model variant is a policy choice; corpse sinking (`SinkCorpse` child visual) is not imported.
 
 ### Staging and PR grouping
 

@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Collections.Generic;
 using System.Linq;
 using Panopticon.Logic.Object;
 
@@ -130,6 +131,8 @@ internal static class UnitBodyMovementMaterializer
                 "HighlanderBody" => new HighlanderBodyModuleData(),
                 "UndeadBody" => new UndeadBodyModuleData(),
                 "AIUpdateInterface" => new AIUpdateModuleData(),
+                "PhysicsBehavior" => new PhysicsBehaviorModuleData(),
+                "SlowDeathBehavior" => SlowDeath(record, context),
                 _ => null,
             };
 
@@ -145,15 +148,28 @@ internal static class UnitBodyMovementMaterializer
                 hasBody = true;
             }
 
-            ObjectDefinition.AddModuleData(definition.Behaviors, new ModuleDataContainer(module.Tag, data, module.InheritanceMode, module.Inherited));
+            AddResolved(definition.Behaviors, new ModuleDataContainer(module.Tag, data, module.InheritanceMode, module.Inherited));
         }
 
         if (!hasBody && record.MaxHealth.IsPresent && !record.ResolvedModules.Any(m => (m.Kinds & ModuleKinds.Body) != 0))
         {
             var body = new ActiveBodyModuleData();
             ApplyHealth(record, body, context);
-            ObjectDefinition.AddModuleData(definition.Behaviors, new ModuleDataContainer(DefaultBodyTag, body, ModuleInheritanceMode.Default, false));
+            AddResolved(definition.Behaviors, new ModuleDataContainer(DefaultBodyTag, body, ModuleInheritanceMode.Default, false));
         }
+    }
+
+    private static SlowDeathBehaviorModuleData SlowDeath(UnitRecord record, UnitMaterializationContext context)
+    {
+        var data = new SlowDeathBehaviorModuleData();
+        if (record.DeathDuration.IsPresent)
+        {
+            var frames = context.Policy.ToLogicFrames(record.DeathDuration.Value);
+            context.Convert(record.Id, nameof(record.DeathDuration), record.DeathDuration.Value, frames, "logic frames");
+            data.DestructionDelay = new LogicFrameSpan(frames);
+        }
+
+        return data;
     }
 
     /// <summary>Overrides health on a body module; also used for legacy bodies so typed values stay authoritative.</summary>
@@ -185,6 +201,16 @@ internal static class UnitBodyMovementMaterializer
             Locomotors = locomotors.Select(context.Reference<LocomotorTemplate>).ToArray(),
             Speed = 100,
         };
+    }
+
+    /// <summary>
+    /// Adds an already-resolved module by tag. Inheritance was applied by the shared resolver, so
+    /// the native parse-time merge (<c>ObjectDefinition.AddModuleData</c>) must not run again: it
+    /// would evict inherited modules of overlapping kind.
+    /// </summary>
+    internal static void AddResolved(Dictionary<string, ModuleDataContainer> modules, ModuleDataContainer module)
+    {
+        modules[module.Tag] = module;
     }
 
     internal static double ConvertDistance(SourceRecord record, string field, Quantity value, UnitMaterializationContext context)
