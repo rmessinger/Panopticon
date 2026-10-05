@@ -707,8 +707,11 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     economy})
     runs each cell via the B1 harness; per-cell mean+variance is keyed for side-by-side comparison
     and regression detection.
-- [ ] B1-1 Benchmark hook audit and report schema (`WI-B1-01`).
+- [x] B1-1 Benchmark hook audit and report schema (`WI-B1-01`).
   - AC: the audit cites existing hooks; the JSON record is A2-compatible.
+    Done: hook table and appendix re-verified against source in
+    [`b1-benchmarking.md`](deep-dives/b1-benchmarking.md); tick, system, environment, and statistic
+    schema fields fixed; B1-2..B1-5 type names recorded.
 - [ ] B1-2 Macro harness skeleton (`WI-B1-02`).
   - AC: seeded warmup and measured runs execute through `SimulationHost`.
 - [ ] B1-3 Tick, allocation, GC, memory, and system spans (`WI-B1-03`).

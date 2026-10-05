@@ -39,14 +39,14 @@ Out of scope:
 
 | Hook | Status | Reference |
 |---|---|---|
-| Headless run loop | Exists. `SimulationHost.Run` steps fixed logic frames with no render or wall-clock sleep. | `src/Panopticon.Simulation/SimulationHost.cs:88-126` |
-| Per-tick callback | Exists. `TickStarting` and `TickComplete` expose frame and map time. | `src/Panopticon.Simulation/SimulationHost.cs:50-59` |
-| Order injection | Exists. Scheduled orders use the normal `IGame.InjectOrders` path. | `src/Panopticon.Simulation/SimulationHost.cs:80-86,128-148` |
-| A1 run record | Exists. `RunOutput` serializes identity, seed, duration, outcome, metrics, T1, T2, and snapshot artifact references. | `src/Panopticon.Simulation/RunOutput.cs:49-95` |
-| T0 recorder | Exists. `RunOutputRecorder` samples metrics on `TickComplete` and completes wall-clock timing. | `src/Panopticon.Simulation/RunOutput.cs:177-276` |
-| A2 report format | Exists. `StatisticalRunReport.ToJson` emits run count, invariant failures, metrics, and confidence intervals. | `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs:39-76` |
-| Existing micro benchmarks | Exists. BenchmarkDotNet runs bit-array, quadtree, and pathfinding micro suites. | `src/Panopticon.Benchmarks.DataStructures/Program.cs:7-18` |
-| Micro benchmark package | Exists. BenchmarkDotNet is referenced by `Panopticon.Benchmarks.DataStructures`. | `src/Panopticon.Benchmarks.DataStructures/Panopticon.Benchmarks.DataStructures.csproj:1-13` |
+| Headless run loop | Exists. `SimulationHost.Run` steps fixed logic frames with no render or wall-clock sleep. | `src/Panopticon.Simulation/SimulationHost.cs:160-189` |
+| Per-tick callback | Exists. `TickStarting` and `TickComplete` expose frame and map time; `OrdersDispatched` exposes due-order batches. | `src/Panopticon.Simulation/SimulationHost.cs:68-79` |
+| Order injection | Exists. Scheduled orders use the normal `IGame.InjectOrders` path. | `src/Panopticon.Simulation/SimulationHost.cs:142-153,201-219` |
+| A1 run record | Exists. `RunOutput` serializes identity, seed, duration, outcome, metrics, T1, T2, and snapshot artifact references. | `src/Panopticon.Simulation/RunOutput.cs:63-132` |
+| T0 recorder | Exists. `RunOutputRecorder` samples metrics on `TickComplete` and completes wall-clock timing. | `src/Panopticon.Simulation/RunOutput.cs:237-342` |
+| A2 report format | Exists. `StatisticalRunReport.ToJson` emits run count, invariant failures, metrics, and confidence intervals. | `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs:57-76` |
+| Existing micro benchmarks | Exists. BenchmarkDotNet runs bit-array, quadtree, and pathfinding micro suites. | `src/Panopticon.Benchmarks.DataStructures/Program.cs:11-18` |
+| Micro benchmark package | Exists. BenchmarkDotNet is referenced by `Panopticon.Benchmarks.DataStructures`. | `src/Panopticon.Benchmarks.DataStructures/Panopticon.Benchmarks.DataStructures.csproj:9` |
 
 ## Measurement model
 
@@ -74,6 +74,52 @@ Required run fields:
 | `systemSamples` | Optional per-system spans grouped by frame and system name. |
 | `outcome` | Terminal outcome copied from `RunOutput` where present. |
 | `statistics` | Median, bootstrap CI, sample count, regression result. |
+
+Tick sample fields:
+
+| Field | Meaning |
+|---|---|
+| `frame` | Logic frame of the sample. |
+| `wallMs` | Wall time of the tick in milliseconds. |
+| `allocBytes` | Managed allocation delta for the tick. |
+| `gc0` / `gc1` / `gc2` | Generation collection counts, cumulative. |
+| `heapBytes` | Sampled managed heap size. |
+| `workingSetBytes` | Sampled process working set. |
+| `objects` | Live object count when available. |
+
+System sample fields:
+
+| Field | Meaning |
+|---|---|
+| `frame` | Logic frame of the span. |
+| `system` | Subsystem name, such as `logic` or `partition`. |
+| `spanMs` | Wall time of the span in milliseconds. |
+
+Environment record fields:
+
+| Field | Meaning |
+|---|---|
+| `os` / `runtime` / `gcMode` / `arch` | OS description, .NET version, GC flavor, process architecture. |
+| `cpu` / `logicalProcessors` / `frequency` | CPU model, logical processor count, available frequency fields. |
+| `totalPhysicalBytes` / `peakWorkingSetBytes` | Total physical memory and peak process working set. |
+| `gpu` / `vramBytes` | GPU adapter and VRAM when a graphics path is active. |
+| `installId` | Resolved game installation id. |
+| `env` | Selected environment variables that affect install and rendering. |
+
+Statistic record fields:
+
+| Field | Meaning |
+|---|---|
+| `metric` | Metric name, such as `tick.wallMs`. |
+| `samples` | Number of samples summarized. |
+| `median` / `ciLow` / `ciHigh` | Median and bootstrap 95 percent confidence interval. |
+| `baselineRunId` / `isRegression` | Baseline comparison result when a baseline is supplied. |
+
+The JSON record is the authority: CSV summaries derive one row per statistic with run,
+scenario, seed, and environment columns. Type names fixed by this audit for B1-2 through B1-5:
+`SimulationBenchmarkRunner`, `SimulationBenchmarkPlan`, `SimulationBenchmarkScenario`,
+`BenchmarkRunRecord`, `TickMetricSample`, `SystemMetricSample`, `EnvironmentRecord`,
+`BenchmarkStatistics`, `BenchmarkReportWriter`, `BootstrapStatistics`.
 
 ## Statistics
 
@@ -119,7 +165,7 @@ Every run records:
 
 | Phase | Goal | Cards | Status |
 |---|---|---|---|
-| B1-1. Benchmark audit and report contract | Ground hooks, scenario list, schema, and validation fixtures. | [`WI-B1-01`](../agent/cards/WI-B1-01-benchmark-audit-contract.md) | Not started |
+| B1-1. Benchmark audit and report contract | Ground hooks, scenario list, schema, and validation fixtures. | [`WI-B1-01`](../agent/cards/WI-B1-01-benchmark-audit-contract.md) | Done |
 | B1-2. Macro harness skeleton | Add the simulation benchmark runner around `SimulationHost`. | [`WI-B1-02`](../agent/cards/WI-B1-02-macro-harness-skeleton.md) | Not started |
 | B1-3. Tick and system metrics | Capture per-tick wall time, allocations, GC, peak memory, and per-system spans. | [`WI-B1-03`](../agent/cards/WI-B1-03-tick-system-metrics.md) | Not started |
 | B1-4. Report writers | Write compatible JSON records and derived CSV summaries. | [`WI-B1-04`](../agent/cards/WI-B1-04-report-writers.md) | Not started |
@@ -228,12 +274,13 @@ sequenceDiagram
 
 ## Appendix: grounded hook references
 
-- `src/Panopticon.Simulation/SimulationHost.cs:43-59`: tick hooks and frame counters.
-- `src/Panopticon.Simulation/SimulationHost.cs:88-126`: tight fixed-frame run loop.
-- `src/Panopticon.Simulation/SimulationHost.cs:128-148`: due-order dispatch through the game order path.
-- `src/Panopticon.Simulation/RunOutput.cs:49-95`: A1/A2-compatible run record fields and JSON options.
-- `src/Panopticon.Simulation/RunOutput.cs:177-276`: `RunOutputRecorder` tick sampling and completion.
-- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs:39-76`: A2 distribution JSON shape.
-- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs:89-131`: existing mean, variance, and Student-t CI implementation.
-- `src/Panopticon.Benchmarks.DataStructures/Program.cs:7-18`: existing BenchmarkDotNet micro benchmark runner.
-- `src/Panopticon.Benchmarks.DataStructures/Panopticon.Benchmarks.DataStructures.csproj:1-13`: BenchmarkDotNet package reference.
+- `src/Panopticon.Simulation/SimulationHost.cs:47-79`: host class, tick hooks, and frame counters.
+- `src/Panopticon.Simulation/SimulationHost.cs:142-153`: `InjectOrders` scheduling entry point.
+- `src/Panopticon.Simulation/SimulationHost.cs:160-189`: tight fixed-frame run loop.
+- `src/Panopticon.Simulation/SimulationHost.cs:201-219`: due-order dispatch through the game order path.
+- `src/Panopticon.Simulation/RunOutput.cs:63-132`: A1/A2-compatible run record fields and JSON options.
+- `src/Panopticon.Simulation/RunOutput.cs:237-342`: `RunOutputRecorder` tick sampling and completion (interval const at `:242`, `Complete` at `:310`).
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs:57-76`: A2 distribution JSON shape.
+- `src/Panopticon.Tools.ReplaySketch.Core/Services/StatisticalRunHarness.cs:123-230`: aggregation plus existing mean, variance, and Student-t CI implementation.
+- `src/Panopticon.Benchmarks.DataStructures/Program.cs:11-18`: existing BenchmarkDotNet micro benchmark runner.
+- `src/Panopticon.Benchmarks.DataStructures/Panopticon.Benchmarks.DataStructures.csproj:9`: BenchmarkDotNet package reference.
