@@ -38,7 +38,7 @@ H2a has a design scaffold; its audit card supplies the evidence for the architec
 |---|---|---|---|
 | H1 | Written by `WI-H1-01` | — | [`WI-H1-01`](agent/cards/WI-H1-01-map-format-audit.md), [`WI-H1-02`](agent/cards/WI-H1-02-format-decision-options.md) |
 | H2 | Extended by `WI-H2-01` | — | [`WI-H2-01`](agent/cards/WI-H2-01-map-interchange-design.md) |
-| H2a | [Unit-content import](deep-dives/h2a-unit-content-import.md) | [Architecture gate](deep-dives/h2a-unit-content-import.md#architecture-diagrams) `†` | [WI-H2a-01..17](deep-dives/h2a-unit-content-import.md#card-sequence) |
+| H2a | [Unit-content import](deep-dives/h2a-unit-content-import.md) | [Architecture gate](deep-dives/h2a-unit-content-import.md#architecture-diagrams) `†` | [WI-H2a-01..18](deep-dives/h2a-unit-content-import.md#card-sequence) |
 | H3 | [Plan](implementation/track-h-h1-h3-map-storage.md) | — | `WI-H3-01..04` |
 | H4 | — | — | — |
 | H5 | — | — | — |

@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-H2a-02` |
 | Roadmap phase | [H2a](../../track-h-storage-formats.md): unit-content import layer |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-H2a-01` |

@@ -268,6 +268,15 @@ Source of truth: [track-h-storage-formats.md](../track-h-storage-formats.md).
 |---|---|---|
 | [track-h-h1-h3-map-storage.md](track-h-h1-h3-map-storage.md) | H1-1…H3-4 | Map storage audit, interchange, package format (WI-H1-01..02, WI-H2-01, WI-H3-01..04) |
 
+## Track H · H2a : Unit-content import layer
+
+Source of truth: [deep-dives/h2a-unit-content-import.md](../deep-dives/h2a-unit-content-import.md) :
+[Architecture diagrams](../deep-dives/h2a-unit-content-import.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-h-h2a-unit-content-import.md](track-h-h2a-unit-content-import.md) | H2a-1…H2a-18 | Unit-content import layer |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :

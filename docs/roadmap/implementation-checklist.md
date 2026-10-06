@@ -1225,25 +1225,25 @@ coordinates with rather than duplicates.
 Design and card index: [unit-content import](deep-dives/h2a-unit-content-import.md).
 Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
 
-- [ ] H2a-1 Focused loading audit (`WI-H2a-01`).
+- [x] H2a-1 Focused loading audit (`WI-H2a-01`).
   - AC: file:line evidence covers INI defaults/inheritance, dependency loading, scoped identity, module construction, and P9 entry points.
-- [ ] H2a-2 Contract and architecture design (`WI-H2a-02`).
+- [x] H2a-2 Contract and architecture design (`WI-H2a-02`).
   - AC: reviewed schema, capability matrix, reference roster, and grounded class/sequence diagrams reconcile all Draft cards.
-- [ ] H2a-3 Engine-owned interchange contracts (`WI-H2a-03`).
+- [x] H2a-3 Engine-owned interchange contracts (`WI-H2a-03`).
   - AC: owned values cover gameplay and visual dependencies without source parser or live runtime objects; mutation and identity tests pass.
-- [ ] H2a-4 Inheritance resolution (`WI-H2a-04`).
+- [x] H2a-4 Inheritance resolution (`WI-H2a-04`).
   - AC: omitted versus explicit values and list replacement/merge follow the contract; missing parents and cycles report their source chain.
-- [ ] H2a-5 Dependency resolution (`WI-H2a-05`).
+- [x] H2a-5 Dependency resolution (`WI-H2a-05`).
   - AC: typed cross-file references resolve within declared namespaces; missing/wrong-kind/ambiguous references block publication.
-- [ ] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
+- [x] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
   - AC: unsupported gameplay blocks import; ignorable metadata is reported separately; failures identify source, record, field, and stage.
-- [ ] H2a-7 Body and movement materialization (`WI-H2a-07`).
+- [x] H2a-7 Body and movement materialization (`WI-H2a-07`).
   - AC: health, geometry, locomotor, and movement values produce native modules; invalid numbers fail before registration.
-- [ ] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
+- [x] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
   - AC: range, reload, damage, targeting, projectile references, and armor resolve from imported values without balancing defaults.
-- [ ] H2a-9 Ability materialization (`WI-H2a-09`).
+- [x] H2a-9 Ability materialization (`WI-H2a-09`).
   - AC: selected supported abilities create native modules and execute; unsupported abilities cannot silently disappear.
-- [ ] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
+- [x] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
   - AC: costs, build time, prerequisites, production links, and selected upgrades retain their imported semantics; unsupported economy mechanics block import.
 - [ ] H2a-11 Visual-state binding (`WI-H2a-11`).
   - AC: model and idle/move/attack/death references use Track C assets and native draw behavior; required missing bindings fail explicitly.
@@ -1259,6 +1259,8 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: one audited ground combat unit and dependencies emit shared interchange with source stats, explicit unit conversion, and DDF visual states.
 - [ ] H2a-17 Multi-source P9 proof and M2 handoff (`WI-H2a-17`).
   - AC: the real EE2 unit coexists with Generals and spawns/moves/attacks/dies; evidence records source and runtime stats, failures, and M2 expansion boundaries.
+- [ ] H2a-18 EE2 ground-unit selection probe (`WI-H2a-18`).
+  - AC: one EE2 ground combat unit with resolvable stats and four importable visual states is selected, or the missing Track C capability is recorded.
 
 ### Remaining storage phases
 

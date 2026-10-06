@@ -29,7 +29,7 @@ public sealed class WeaponTemplateSet
 
     public ObjectDefinition ObjectDefinition { get; internal set; }
 
-    public BitArray<WeaponSetConditions> Conditions { get; private set; } = new BitArray<WeaponSetConditions>();
+    public BitArray<WeaponSetConditions> Conditions { get; internal set; } = new BitArray<WeaponSetConditions>();
     public WeaponSetSlot[] Slots { get; } = new WeaponSetSlot[NumWeaponSlots];
     public bool ShareWeaponReloadTime { get; private set; }
     public bool WeaponLockSharedAcrossSets { get; private set; }

@@ -9,7 +9,7 @@
 | Status | `Draft` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-H2a-03` |
+| Prerequisites | `WI-H2a-03`, `WI-H2a-18` |
 | Diagrams | [Architecture gate](../../deep-dives/h2a-unit-content-import.md#architecture-diagrams) |
 
 ## Goal
