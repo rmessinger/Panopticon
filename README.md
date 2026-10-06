@@ -1,10 +1,3 @@
-![Panopticon](/art/panopticon-logo.png)
-============================================================
-
-[![Build Status](https://github.com/Panopticon/Panopticon/workflows/CI/badge.svg)](https://github.com/Panopticon/Panopticon/actions)
-[![Discord Chat](https://img.shields.io/discord/398393968234332161.svg?logo=discord)](https://discord.gg/G2FhZUT)
-[![codecov](https://codecov.io/gh/Panopticon/Panopticon/branch/master/graph/badge.svg)](https://codecov.io/gh/Panopticon/Panopticon)
-
 **Panopticon**: a free, open source simulation framework built on [SAGE](https://en.wikipedia.org/wiki/SAGE_(game_engine)), the 3D 
 real time strategy (RTS) engine used in Command & Conquer™: Generals and other 
 RTS titles from EA Pacific. See [docs/roadmap/README.md](docs/roadmap/README.md) for the project vision and roadmap.
