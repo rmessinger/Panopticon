@@ -10,6 +10,7 @@ public enum QuantityUnit
     Milliseconds,
     LogicFrames,
     DistancePerSecond,
+    DistancePerSecondSquared,
     DegreesPerSecond,
     Degrees,
     Radians,

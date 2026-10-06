@@ -1219,13 +1219,13 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
   - AC: typed cross-file references resolve within declared namespaces; missing/wrong-kind/ambiguous references block publication.
 - [x] H2a-6 Capability validation and diagnostics (`WI-H2a-06`).
   - AC: unsupported gameplay blocks import; ignorable metadata is reported separately; failures identify source, record, field, and stage.
-- [ ] H2a-7 Body and movement materialization (`WI-H2a-07`).
+- [x] H2a-7 Body and movement materialization (`WI-H2a-07`).
   - AC: health, geometry, locomotor, and movement values produce native modules; invalid numbers fail before registration.
-- [ ] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
+- [x] H2a-8 Weapon and armor materialization (`WI-H2a-08`).
   - AC: range, reload, damage, targeting, projectile references, and armor resolve from imported values without balancing defaults.
-- [ ] H2a-9 Ability materialization (`WI-H2a-09`).
+- [x] H2a-9 Ability materialization (`WI-H2a-09`).
   - AC: selected supported abilities create native modules and execute; unsupported abilities cannot silently disappear.
-- [ ] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
+- [x] H2a-10 Production and upgrade materialization (`WI-H2a-10`).
   - AC: costs, build time, prerequisites, production links, and selected upgrades retain their imported semantics; unsupported economy mechanics block import.
 - [ ] H2a-11 Visual-state binding (`WI-H2a-11`).
   - AC: model and idle/move/attack/death references use Track C assets and native draw behavior; required missing bindings fail explicitly.

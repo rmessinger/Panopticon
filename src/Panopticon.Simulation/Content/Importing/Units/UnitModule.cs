@@ -20,6 +20,6 @@ public sealed record UnitModule(
     ModuleKinds Kinds,
     ModuleInheritanceMode InheritanceMode = ModuleInheritanceMode.Default,
     ContentId? Ability = null,
-    LegacyModuleBinding? Legacy = null,
+    LegacyBinding? Legacy = null,
     string? ExclusiveGroup = null,
     bool Inherited = false);

@@ -58,14 +58,14 @@ public sealed class UpgradeTemplate : BaseAsset
         return result;
     }
 
-    public UpgradeType Type { get; private set; } = UpgradeType.Player;
-    public string DisplayName { get; private set; }
+    public UpgradeType Type { get; internal set; } = UpgradeType.Player;
+    public string DisplayName { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
     public string Tooltip { get; private set; }
 
-    public LogicFrameSpan BuildTime { get; private set; }
-    public float BuildCost { get; private set; }
+    public LogicFrameSpan BuildTime { get; internal set; }
+    public float BuildCost { get; internal set; }
     public LazyAssetReference<MappedImage> ButtonImage { get; private set; }
     public LazyAssetReference<BaseAudioEventInfo> ResearchSound { get; private set; }
     public string UnitSpecificSound { get; private set; }

@@ -138,17 +138,17 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// Flags indicating the kinds of surfaces we can use.
     /// </summary>
-    public Surfaces Surfaces { get; private set; } = Surfaces.None;
+    public Surfaces Surfaces { get; internal set; } = Surfaces.None;
 
     /// <summary>
     /// Max speed.
     /// </summary>
-    public float MaxSpeed { get; private set; } = 0.0f;
+    public float MaxSpeed { get; internal set; } = 0.0f;
 
     /// <summary>
     /// Max speed when "damaged".
     /// </summary>
-    public float MaxSpeedDamaged { get; private set; } = -1.0f;
+    public float MaxSpeedDamaged { get; internal set; } = -1.0f;
 
     /// <summary>
     /// We should never brake past this.
@@ -158,22 +158,22 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// Max rate at which we can turn, in radians per logic frame.
     /// </summary>
-    public float MaxTurnRate { get; private set; } = 0.0f;
+    public float MaxTurnRate { get; internal set; } = 0.0f;
 
     /// <summary>
     /// Max turn rate when "damaged", in radians per logic frame.
     /// </summary>
-    public float MaxTurnRateDamaged { get; private set; } = -1.0f;
+    public float MaxTurnRateDamaged { get; internal set; } = -1.0f;
 
     /// <summary>
     /// Max acceleration.
     /// </summary>
-    public float Acceleration { get; private set; } = 0.0f;
+    public float Acceleration { get; internal set; } = 0.0f;
 
     /// <summary>
     /// Max acceleration when damaged.
     /// </summary>
-    public float AccelerationDamaged { get; private set; } = -1.0f;
+    public float AccelerationDamaged { get; internal set; } = -1.0f;
 
     /// <summary>
     /// Max lifting acceleration (flying objects only).
@@ -188,7 +188,7 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// Max braking (deceleration).
     /// </summary>
-    public float Braking { get; private set; } = BigNumber;
+    public float Braking { get; internal set; } = BigNumber;
 
     /// <summary>
     /// We must be doing >= this speed in order to turn.
@@ -234,7 +234,7 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// How we should diddle the Drawable to imitate this motion.
     /// </summary>
-    public LocomotorAppearance Appearance { get; private set; } = LocomotorAppearance.Other;
+    public LocomotorAppearance Appearance { get; internal set; } = LocomotorAppearance.Other;
 
     /// <summary>
     /// Where to move - front, middle, back.

@@ -28,17 +28,16 @@ public sealed class UnitCapabilityRegistry
         "ImmortalBody",
         "HighlanderBody",
         "UndeadBody",
+        "AIUpdateInterface",
     ];
 
+    /// <summary>
+    /// Ability families with a typed materializer. Generals abilities (garrison, heal, construct,
+    /// special powers) arrive as legacy module bindings instead.
+    /// </summary>
     public static readonly IReadOnlyCollection<string> DefaultAbilityFamilies =
     [
         "Attack",
-        "SpecialPower",
-        "Heal",
-        "Garrison",
-        "Construct",
-        "Repair",
-        "WeaponModeUpgrade",
     ];
 
     private readonly HashSet<string> _typedModules;

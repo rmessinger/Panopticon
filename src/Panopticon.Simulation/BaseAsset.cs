@@ -15,6 +15,9 @@ public abstract class BaseAsset : DisposableBase
         InstanceId = AssetHash.GetHash(name);
     }
 
+    /// <summary>Names an asset built by unit-content materialization instead of a parser.</summary>
+    internal void AssignImportedName(string typeName, string name) => SetNameAndInstanceId(typeName, name);
+
     public int InternalId { get; internal set; }
 
     internal BaseAsset DeepClone()
