@@ -196,8 +196,10 @@ public sealed class EngineCheckpointRestoreTests : IDisposable
             {
                 writer.PersistObject(gameObject, "Object");
             }
+
             result[gameObject.Id.Index] = stream.ToArray();
         }
+
         return result;
     }
 

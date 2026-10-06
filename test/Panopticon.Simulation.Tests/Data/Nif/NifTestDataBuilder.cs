@@ -57,6 +57,7 @@ public sealed class NifTestDataBuilder
         {
             writer.WriteUInt32(UserVersion);
         }
+
         writer.WriteUInt32((uint)_blockBodies.Count);
         writer.WriteUInt16((ushort)_blockTypes.Count);
         foreach (var typeName in _blockTypes)
@@ -458,6 +459,7 @@ public static class NifTestGeometry
                 body.WriteSingle(1.0f);
             }
         }
+
         var numUvSets = dataFlags & 0x3F;
         for (var set = 0; set < numUvSets; set++)
         {

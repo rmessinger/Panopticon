@@ -211,6 +211,7 @@ public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
         {
             writer.PersistObject(summary, "Summary");
         }
+
         return stream.ToArray();
     }
 
@@ -221,6 +222,7 @@ public sealed class ReconstructionConformanceTests : MockedGameTest, IDisposable
         {
             writer.PersistObject(frame, "DomainStateFrame");
         }
+
         return stream.ToArray();
     }
 
