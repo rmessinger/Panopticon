@@ -1264,6 +1264,48 @@ Runs before M2 without waiting for H1/H2/H3. Each item corresponds to one card.
 - [ ] H2a-19 Staged Generals INI registration (`WI-H2a-19`).
   - AC: unit blocks reach the store only through the publisher; Generals and Zero Hour boot with zero import diagnostics and unchanged parity/P9 results.
 
+### H2b: Metric core units
+
+Design and card index: [metric core units](deep-dives/h2b-metric-core.md). Starts after the
+complete H2a group merges. Each item corresponds to one card.
+
+- [ ] H2b-1 Merged H2a dimensional audit (`WI-H2b-01`).
+  - AC: file:line inventory of every length boundary in the merged H2a code, with conversion owner, inverse writer, and test per field.
+- [ ] H2b-2 Cutover design and grounded diagrams (`WI-H2b-02`).
+  - AC: every field has one normalization owner; compatibility matrix and grounded diagrams exist; source cards have exact scopes.
+- [ ] H2b-3 Conversion helpers (`WI-H2b-03`).
+  - AC: one helper owns `0.3048` and every dimensional variant, with round-trip tests.
+- [ ] H2b-4 H2a quantities and materializers (`WI-H2b-04`).
+  - AC: materialized distances and rates are metric; H2a and native INI paths agree; no double conversion.
+- [ ] H2b-5 Gameplay INI lengths and rates (`WI-H2b-05`).
+  - AC: inventoried gameplay fields convert once at parse time with converted-expectation tests.
+- [ ] H2b-6 Presentation INI and globals (`WI-H2b-06`).
+  - AC: `GameData` globals and presentation lengths convert once; gravity equals the legacy value times `0.3048`.
+- [ ] H2b-7 Terrain spacing and elevation (`WI-H2b-07`).
+  - AC: a 10-unit cell is 3.048 m; raw heightmap data round-trips unchanged.
+- [ ] H2b-8 Map placement and WorldBuilder (`WI-H2b-08`).
+  - AC: placed objects, waypoints, and triggers convert on load and invert on save byte-identically.
+- [ ] H2b-9 W3D geometry and animation (`WI-H2b-09`).
+  - AC: W3D bounds equal legacy bounds times `0.3048`; bind pose and animation stay aligned.
+- [ ] H2b-10 Metric-native importers (`WI-H2b-10`).
+  - AC: glTF and NIF meters import as meters; no importer contains `3.28084`.
+- [ ] H2b-11 Physics and locomotion (`WI-H2b-11`).
+  - AC: audited length literals derive from the helper; trajectories match scaled legacy expectations.
+- [ ] H2b-12 Navigation, partitioning, scripts (`WI-H2b-12`).
+  - AC: pathfind and terrain grids stay aligned; script distances convert at load.
+- [ ] H2b-13 Cameras, rendering, audio (`WI-H2b-13`).
+  - AC: camera framing, render cutoffs, and attenuation match pre-cutover captures.
+- [ ] H2b-14 Orders, network, replays (`WI-H2b-14`).
+  - AC: original `.rep` files play back; legacy replay writes round-trip byte-identically.
+- [ ] H2b-15 Saves, checkpoints, recordings (`WI-H2b-15`).
+  - AC: formats carry a unit version; no old file is silently read as meters.
+- [ ] H2b-16 Tools, scenarios, docs (`WI-H2b-16`).
+  - AC: tools label meters; ReplaySketch map and model panels match pre-cutover framing; developer guide has a units section.
+- [ ] H2b-17 Boundary conformance suite (`WI-H2b-17`).
+  - AC: every inventory row has a conformance case or exemption; stray scale literals fail a scan test.
+- [ ] H2b-18 Real-content release proof (`WI-H2b-18`).
+  - AC: Generals and EE2 P9 proofs match final-H2a behavior scaled by `0.3048`; staging-to-main PR open.
+
 ### Remaining storage phases
 
 - [ ] H3 New map storage format (versioned container; terrain section reserved for B4a-5's

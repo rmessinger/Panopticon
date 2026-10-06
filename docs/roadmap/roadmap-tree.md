@@ -266,6 +266,7 @@ mindmap
       H1 Format requirements and current-state audit
       H2 Format-agnostic map interchange abstraction
       H2a Unit-content import layer ⮕
+      H2b Metric core units ⮕
       H3 New map storage format
       H4 New object and unit-definition storage format
       H5 Legacy migration and compatibility tooling
@@ -441,6 +442,7 @@ flowchart LR
     W3B["W3b Somme sector"]
     M2["M2 EE2 combat units"]
     H4["H4 New object/unit-definition storage format"]
+    H2B["H2b Metric core units"]
   end
 
   subgraph S8["Stage 8 · Long-run campaign & mixed rosters"]
@@ -535,6 +537,7 @@ flowchart LR
   G2 --> G3
   H2 --> H3
   H2A --> H4
+  H2A --> H2B
   A4S --> A4DS
   A1 --> A4DS
 
@@ -664,7 +667,7 @@ flowchart LR
   class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
-  class H1,H2,H2A,H3,H4,H5,H6,H7 trackH;
+  class H1,H2,H2A,H2B,H3,H4,H5,H6,H7 trackH;
   class P0,P1,P2,P3,P4,P5,P6,P6B,P7,P8,P9 trackP;
   class D1,D2,D3,D4 trackD;
   class E1,E2,E3,E4 trackE;

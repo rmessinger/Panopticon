@@ -154,6 +154,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | Deep dive | Expands |
 |---|---|
 | [`deep-dives/h2a-unit-content-import.md`](deep-dives/h2a-unit-content-import.md) | H2a design scaffold and WI-H2a-01..19: shared unit-content importing and the Generals/EE2 proof before M2. |
+| [`deep-dives/h2b-metric-core.md`](deep-dives/h2b-metric-core.md) | H2b design scaffold and WI-H2b-01..18: post-H2a conversion of the engine's internal length unit to meters. |
 | [`deep-dives/p0-playable-baseline-harness.md`](deep-dives/p0-playable-baseline-harness.md) | Track P phase P0 - ReplaySketch arbitrary-command harness (open command model + headless assertion layer) and the agent validation playbook (MAUI testability seams + `ReplaySketch.Maui/AGENTS.md`). |
 | [`deep-dives/p1-skirmish-setup.md`](deep-dives/p1-skirmish-setup.md) | Track P phase P1 - Skirmish setup & player relationships. |
 | [`deep-dives/p2-p5-skirmish-ai.md`](deep-dives/p2-p5-skirmish-ai.md) | Track P phases P2 - Skirmish AI opponent (+ P5 construction/production mechanism). |
@@ -260,7 +261,7 @@ track document.
   G10 realistic proportions (optional scale-correct aircraft presentation). Not gated
   on Track P.
 - [Track H - Map & Unit Storage Formats](track-h-storage-formats.md): H1 format requirements &
-  current-state audit · H2 map interchange abstraction · H2a shared unit-content import layer · H3 new map storage format ·
+  current-state audit · H2 map interchange abstraction · H2a shared unit-content import layer · H2b metric core units · H3 new map storage format ·
   H4 new object/unit-definition storage format · H5 legacy migration & compatibility tooling · H6
   authoring & pipeline integration (WorldBuilder, ModCollector) · H7 validation & round-trip
   regression. Shared importing and persistence/schema design, distinct from B3/B4a-5's runtime-performance
@@ -402,12 +403,13 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | H1 - Format requirements & current-state audit | `░░░░░░░░░░` | 0 / 3 |
 | H2 - Format-agnostic map interchange abstraction | `░░░░░░░░░░` | 0 / 2 |
 | H2a - Unit-content import layer | `█████████░` | 18 / 19 |
+| H2b - Metric core units | `░░░░░░░░░░` | 0 / 18 |
 | H3 - New map storage format | `░░░░░░░░░░` | 0 / 5 |
 | H4 - New object/unit-definition storage format | `░░░░░░░░░░` | 0 / 1 |
 | H5 - Legacy migration & compatibility tooling | `░░░░░░░░░░` | 0 / 1 |
 | H6 - Authoring & pipeline integration | `░░░░░░░░░░` | 0 / 1 |
 | H7 - Validation & round-trip regression | `░░░░░░░░░░` | 0 / 1 |
-| Track H total | `█████░░░░░` | 18 / 33 |
+| Track H total | `███░░░░░░░` | 18 / 51 |
 
 ### Track W - Western Front Simulation (gated on A4-1 and A4-4)
 

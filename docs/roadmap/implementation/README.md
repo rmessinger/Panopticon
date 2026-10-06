@@ -277,6 +277,15 @@ Source of truth: [deep-dives/h2a-unit-content-import.md](../deep-dives/h2a-unit-
 |---|---|---|
 | [track-h-h2a-unit-content-import.md](track-h-h2a-unit-content-import.md) | H2a-1…H2a-19 | Unit-content import layer |
 
+## Track H · H2b : Metric core units
+
+Source of truth: [deep-dives/h2b-metric-core.md](../deep-dives/h2b-metric-core.md) :
+[Architecture diagrams](../deep-dives/h2b-metric-core.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-h-h2b-metric-core.md](track-h-h2b-metric-core.md) | H2b-1…H2b-18 | Metric core units |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :
