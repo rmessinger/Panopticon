@@ -532,16 +532,9 @@ public sealed class LocomotorTemplate : BaseAsset
     [AddedIn(SageGame.Bfme2)]
     public Percentage RiverModifier { get; private set; }
 
-    private void Validate(SageGame sageGame)
+    /// <summary>For "damaged" stuff that was omitted, set them to be the same as "undamaged".</summary>
+    internal void ApplyDamagedDefaults()
     {
-        // Generals didn't have DecelerationPitchLimit; that was added in Zero Hour.
-        // In Generals there was just a single AccelerationPitchLimit value.
-        if (sageGame == SageGame.CncGenerals)
-        {
-            DecelerationPitchLimit = AccelerationPitchLimit;
-        }
-
-        // For "damaged" stuff that was omitted, set them to be the same as "undamaged".
         if (MaxSpeedDamaged < 0.0f)
         {
             MaxSpeedDamaged = MaxSpeed;
@@ -561,6 +554,18 @@ public sealed class LocomotorTemplate : BaseAsset
         {
             LiftDamaged = Lift;
         }
+    }
+
+    private void Validate(SageGame sageGame)
+    {
+        // Generals didn't have DecelerationPitchLimit; that was added in Zero Hour.
+        // In Generals there was just a single AccelerationPitchLimit value.
+        if (sageGame == SageGame.CncGenerals)
+        {
+            DecelerationPitchLimit = AccelerationPitchLimit;
+        }
+
+        ApplyDamagedDefaults();
 
         if (Appearance == LocomotorAppearance.Wings)
         {

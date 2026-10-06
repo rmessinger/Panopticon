@@ -69,6 +69,18 @@ public class UnitBodyMovementMaterializerTests
     }
 
     [Fact]
+    public void DamagedLocomotionDefaultsToUndamaged()
+    {
+        var content = Materialize(Set(Walker(), Legs()));
+        var locomotor = content.Get<LocomotorTemplate>(Id(ContentKind.Locomotor, "Legs"));
+
+        Assert.Equal(locomotor.MaxSpeed, locomotor.MaxSpeedDamaged);
+        Assert.Equal(locomotor.MaxTurnRate, locomotor.MaxTurnRateDamaged);
+        Assert.Equal(locomotor.Acceleration, locomotor.AccelerationDamaged);
+        Assert.Equal(locomotor.Lift, locomotor.LiftDamaged);
+    }
+
+    [Fact]
     public void LocomotorSetReferencesStagedTemplate()
     {
         var content = Materialize(Set(Walker(), Legs()));

@@ -69,6 +69,10 @@ internal static class UnitBodyMovementMaterializer
             }
         }
 
+        // Records carry no damaged-condition values; left at -1 they reverse movement and turning
+        // once the unit reaches the movement-penalty damage state.
+        locomotor.ApplyDamagedDefaults();
+
         return locomotor;
     }
 
