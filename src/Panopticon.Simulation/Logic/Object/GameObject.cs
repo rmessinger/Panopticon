@@ -1382,6 +1382,12 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
         // later Destroy path, which removes again as a no-op.
         Owner?.RemoveOwnedObject(this);
 
+        // A slow death keeps the object ticking; without this its weapons keep firing until removal.
+        foreach (var weapon in ActiveWeaponSet.Weapons)
+        {
+            weapon?.SetTarget(null);
+        }
+
         if (!construction)
         {
             ExecuteRandomSlowDeathBehavior(damageInput);

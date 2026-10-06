@@ -62,8 +62,15 @@ public class UnitContentImportIntegrationTests
         // Authored EE2 damage reaches the Generals target unscaled: every hit removes exactly 5.
         var rebelHealth = frames.Select(f => f.Actors.FirstOrDefault(a => a.Id == "rebel")?.Health).OfType<float>().ToArray();
         var drops = rebelHealth.Zip(rebelHealth.Skip(1), (a, b) => a - b).Where(d => d > 0).ToArray();
-        Assert.NotEmpty(drops);
         Assert.All(drops, d => Assert.Equal(5f, d, 3));
+
+        // The maceman keeps swinging in melee contact (inside the rebel's footprint) for the whole
+        // engagement, and stops once dead: ~450 frames at a 45-frame reload is well over five hits.
+        Assert.True(drops.Length >= 5, $"Expected sustained melee hits, got {drops.Length}.");
+        var deathIndex = Array.FindIndex(frames.ToArray(), f => f.Actors.All(a => a.Id != "maceman"));
+        Assert.True(deathIndex > 0);
+        var rebelAtDeath = frames[deathIndex].Actors.First(a => a.Id == "rebel").Health;
+        Assert.Equal(rebelAtDeath, frames[^1].Actors.First(a => a.Id == "rebel").Health);
     }
 
     [Fact]

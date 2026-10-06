@@ -297,15 +297,17 @@ Entry: capture profile `capture-mixed-source-ee2.json` (ReplaySketch.Core profil
 | Publication | 3 assets (unit, weapon, locomotor) in the `ee2` collection set; Generals collections unchanged |
 | Conversions | 12 game units per tile: speed 0.69/frame, range 9.6, vision 60, radius 0.75; reload 45 frames; build 1110 frames |
 | Move | Maceman walks 61 units on the Alpine Assault map |
-| Attack | Every hit on the Generals rebel removes exactly 5 HP (authored damage, `UNRESISTABLE`) |
-| Die | Rebel fire kills the 75 HP maceman; slow death plays for the declared 3 s, then removal |
-| Visual states | Draw module selects Idle, Move, Attack, and Death with the four DDF clips; captured fall on death |
+| Attack | The maceman strikes the Generals rebel every reload (8 hits); each removes exactly 5 HP (authored damage, `UNRESISTABLE`) |
+| Die | Rebel fire kills the 75 HP maceman; it stops attacking, slow death plays for the declared 3 s, then removal |
+| Visual states | Draw module selects Idle, Move, Attack, and Death with the four DDF clips; the attack clip loops through each reload; captured fall on death |
 | Unsupported mechanic | Removing one exclusion (`ConvertAttack`) fails import; nothing spawns |
 | Collision | A second identical import fails before pushing a scope; first publication and Generals definitions unchanged |
 
 Evidence: `UnitContentImportIntegrationTests` (4 tests, installed) and the shared viewer GIF `h2a-mixed-source-ee2-maceman-vs-generals.gif`.
 
 Runtime requirements found by the proof, now typed module families: `PhysicsBehavior` (locomotors need physics) and `SlowDeathBehavior` (a death state needs a dying phase; duration declared by `DeathDuration`). EE2 typed modules inherit by tag only (`AlwaysInherit`), matching EE2 ability-by-name overrides. Materialization inserts resolved modules by tag instead of re-running the native parse-time merge, which evicted inherited modules of overlapping kind.
+
+Engine fixes found by the proof: weapon range clamps the footprint-adjusted distance at zero, so an attacker in melee contact inside the target's collider radius stays in range instead of failing the minimum-range check and dropping to Inactive after one hit. Death clears the weapon set's targets, so a slow-dying unit stops firing. Typed weapons carry no `FiringDuration`, so `FIRING_A` lasts one frame per shot; the imported Attack state also matches `BETWEEN_FIRING_SHOTS_A` to keep its clip playing through the reload.
 
 Capture note: draw-module animations advance per rendered frame, so strided captures set `RenderEveryFrame` to keep clips at simulation speed.
 

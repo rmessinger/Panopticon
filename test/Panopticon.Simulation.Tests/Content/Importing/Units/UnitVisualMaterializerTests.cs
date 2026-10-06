@@ -57,6 +57,7 @@ public class UnitVisualMaterializerTests
         Assert.True(draw.AnimationStates[0].IsIdleAnimation);
         Assert.True(draw.AnimationStates[1].ConditionFlags[0].Get(ModelConditionFlag.Moving));
         Assert.True(draw.AnimationStates[2].ConditionFlags[0].Get(ModelConditionFlag.FiringA));
+        Assert.True(draw.AnimationStates[2].ConditionFlags[1].Get(ModelConditionFlag.BetweenShotsFiringA));
         Assert.True(draw.AnimationStates[3].ConditionFlags[0].Get(ModelConditionFlag.Dying));
         Assert.Equal(AnimationMode.Once, draw.AnimationStates[3].Animations[0].AnimationMode);
     }

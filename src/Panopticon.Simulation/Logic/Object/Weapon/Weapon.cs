@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using ImGuiNET;
 
@@ -65,7 +66,9 @@ public sealed class Weapon : IPersistableObject
                 ? CurrentTarget.GetTargetObject()?.RoughCollider?.WorldBounds.Radius ?? 0f
                 : 0f;
 
-            var effectiveDistance = distance - targetRadius;
+            // Clamped so an attacker inside the target's footprint (melee contact) stays in range
+            // instead of failing the minimum-range check with a negative distance.
+            var effectiveDistance = MathF.Max(0f, distance - targetRadius);
             return effectiveDistance <= Template.AttackRange
                 // Artillery-style launchers cannot depress onto nearby targets: inside the
                 // minimum attack range the weapon holds fire (the fire cycle stalls in Inactive,

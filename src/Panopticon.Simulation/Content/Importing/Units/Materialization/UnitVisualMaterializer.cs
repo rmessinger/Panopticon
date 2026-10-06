@@ -17,12 +17,15 @@ internal static class UnitVisualMaterializer
 {
     public const string DrawTag = "ModuleTag_ImportedDraw";
 
-    private static readonly (string State, ModelConditionFlag? Flag, AnimationMode Mode)[] StateBindings =
+    // Each flag is an alternative match for the state. Typed weapons carry no firing duration, so
+    // FiringA lasts one frame per shot; BetweenShotsFiringA keeps the attack clip looping through
+    // the reload instead of dropping back to Idle.
+    private static readonly (string State, ModelConditionFlag[] Flags, AnimationMode Mode)[] StateBindings =
     [
-        ("Idle", null, AnimationMode.Loop),
-        ("Move", ModelConditionFlag.Moving, AnimationMode.Loop),
-        ("Attack", ModelConditionFlag.FiringA, AnimationMode.Loop),
-        ("Death", ModelConditionFlag.Dying, AnimationMode.Once),
+        ("Idle", [], AnimationMode.Loop),
+        ("Move", [ModelConditionFlag.Moving], AnimationMode.Loop),
+        ("Attack", [ModelConditionFlag.FiringA, ModelConditionFlag.BetweenShotsFiringA], AnimationMode.Loop),
+        ("Death", [ModelConditionFlag.Dying], AnimationMode.Once),
     ];
 
     public static string RuntimeName(ContentSource source, string sourceKey) => $"{source.Id}:{sourceKey}";
@@ -50,20 +53,25 @@ internal static class UnitVisualMaterializer
         defaultState.ConditionFlags.Add(new BitArray<ModelConditionFlag>());
         draw.ConditionStates.Add(defaultState);
 
-        foreach (var (stateName, flag, mode) in StateBindings)
+        foreach (var (stateName, conditionFlags, mode) in StateBindings)
         {
             var animationKey = visual.StateAnimations[stateName].Value;
             var animationName = RuntimeName(source, animationKey);
             context.VisualAssets.Add(new VisualAssetRequest(visual.Id, VisualAssetKind.Animation, animationKey, animationName));
 
-            var state = new AnimationState { StateName = stateName.ToUpperInvariant(), IsIdleAnimation = flag is null };
-            var flags = new BitArray<ModelConditionFlag>();
-            if (flag is { } conditionFlag)
+            var state = new AnimationState { StateName = stateName.ToUpperInvariant(), IsIdleAnimation = conditionFlags.Length == 0 };
+            if (conditionFlags.Length == 0)
             {
-                flags.Set(conditionFlag, true);
+                state.ConditionFlags.Add(new BitArray<ModelConditionFlag>());
             }
 
-            state.ConditionFlags.Add(flags);
+            foreach (var conditionFlag in conditionFlags)
+            {
+                var flags = new BitArray<ModelConditionFlag>();
+                flags.Set(conditionFlag, true);
+                state.ConditionFlags.Add(flags);
+            }
+
             state.Animations.Add(new AnimationStateAnimation
             {
                 Animation = context.AnimationReference(animationName),
