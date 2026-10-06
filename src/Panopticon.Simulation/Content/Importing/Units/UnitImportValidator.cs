@@ -13,9 +13,9 @@ namespace Panopticon.Content.Importing.Units;
 public sealed class UnitImportValidator
 {
     private static readonly QuantityUnit[] HealthUnits = [QuantityUnit.HitPoints, QuantityUnit.Scalar];
-    private static readonly QuantityUnit[] DistanceUnits = [QuantityUnit.GameDistance, QuantityUnit.Meters];
+    private static readonly QuantityUnit[] DistanceUnits = [QuantityUnit.GameDistance, QuantityUnit.Meters, QuantityUnit.SourceDistance];
     private static readonly QuantityUnit[] TimeUnits = [QuantityUnit.Seconds, QuantityUnit.Milliseconds, QuantityUnit.LogicFrames];
-    private static readonly QuantityUnit[] SpeedUnits = [QuantityUnit.DistancePerSecond];
+    private static readonly QuantityUnit[] SpeedUnits = [QuantityUnit.DistancePerSecond, QuantityUnit.SourceDistancePerSecond];
     private static readonly QuantityUnit[] AccelerationUnits = [QuantityUnit.DistancePerSecondSquared];
     private static readonly QuantityUnit[] TurnUnits = [QuantityUnit.DegreesPerSecond];
     private static readonly QuantityUnit[] CostUnits = [QuantityUnit.Currency];
@@ -38,6 +38,7 @@ public sealed class UnitImportValidator
         foreach (var record in closure)
         {
             context.Record = record;
+            context.Lenient = record.Legacy is not null;
             ValidateUnclassified(context);
 
             if (record.Legacy is not null && !(record.Legacy.Owner.Equals(_registry.LegacySource) && record.Id.Source.Equals(_registry.LegacySource)))
@@ -81,7 +82,11 @@ public sealed class UnitImportValidator
     {
         foreach (var field in context.Record.Unclassified)
         {
-            if (field.AffectsGameplay)
+            if (field.AffectsGameplay && field.ExcludedByPolicy)
+            {
+                context.Add(ImportDiagnosticSeverity.Warning, DiagnosticCodes.ExcludedByPolicy, $"Gameplay field '{field.Name}' was excluded by the import policy and is not simulated.", field.Provenance);
+            }
+            else if (field.AffectsGameplay)
             {
                 context.Error(DiagnosticCodes.UnsupportedMechanic, $"Gameplay field '{field.Name}' has no runtime mapping.", field.Provenance);
             }
@@ -101,13 +106,14 @@ public sealed class UnitImportValidator
         context.Optional(unit.VisionRange, nameof(unit.VisionRange), DistanceUnits, minimum: 0);
         context.Optional(unit.BuildCost, nameof(unit.BuildCost), CostUnits, minimum: 0);
         context.Optional(unit.BuildTime, nameof(unit.BuildTime), TimeUnits, minimum: 0);
+        context.Optional(unit.DeathDuration, nameof(unit.DeathDuration), TimeUnits, minimum: 0);
 
         if (unit.InitialHealth.IsPresent && unit.MaxHealth.IsPresent && unit.InitialHealth.Value.Value > unit.MaxHealth.Value.Value)
         {
             context.Error(DiagnosticCodes.InvalidNumber, "InitialHealth exceeds MaxHealth.");
         }
 
-        if (!unit.Visual.IsPresent)
+        if (!unit.Visual.IsPresent && !context.Lenient)
         {
             context.Add(ImportDiagnosticSeverity.Info, DiagnosticCodes.NoVisualBinding, "Unit has no visual binding.");
         }
@@ -240,6 +246,13 @@ public sealed class UnitImportValidator
 
         public SourceRecord Record { get; set; } = null!;
 
+        /// <summary>
+        /// Legacy-bound records describe templates the native parser already accepted: values must
+        /// still be finite, non-negative, and in a declared unit, but presence and strict positivity
+        /// are not required, because native defaults (for example a zero-range death weapon) are valid.
+        /// </summary>
+        public bool Lenient { get; set; }
+
         public void Add(ImportDiagnosticSeverity severity, string code, string message, Provenance? provenance = null)
         {
             Diagnostics.Add(new ImportDiagnostic(severity, ImportStage.Validate, code, $"{Record.Id}: {message}", Record.Id, provenance ?? Record.Provenance));
@@ -251,7 +264,11 @@ public sealed class UnitImportValidator
         {
             if (!value.IsPresent)
             {
-                Error(DiagnosticCodes.MissingRequiredValue, $"{name} is required.");
+                if (!Lenient)
+                {
+                    Error(DiagnosticCodes.MissingRequiredValue, $"{name} is required.");
+                }
+
                 return;
             }
 
@@ -276,7 +293,7 @@ public sealed class UnitImportValidator
             {
                 Error(DiagnosticCodes.InvalidNumber, $"{name} must be finite.");
             }
-            else if (exclusive ? quantity.Value <= minimum : quantity.Value < minimum)
+            else if (exclusive && !Lenient ? quantity.Value <= minimum : quantity.Value < minimum)
             {
                 Error(DiagnosticCodes.InvalidNumber, $"{name} must be {(exclusive ? "greater than" : "at least")} {minimum}; got {quantity.Value}.");
             }

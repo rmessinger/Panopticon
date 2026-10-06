@@ -1,6 +1,7 @@
 #nullable enable annotations
 using System;
 using System.Text;
+using Panopticon.Content.Importing.Units.Generals;
 using Panopticon.Content.Translation;
 using Panopticon.Data.Ini;
 using Panopticon.Diagnostics;
@@ -35,6 +36,9 @@ public sealed class ContentManager : DisposableBase
     public Encoding LocaleSpecificEncoding { get; private set; }
 
     public FontManager FontManager { get; }
+
+    /// <summary>Shared-pipeline result for Generals unit content; null for other games.</summary>
+    public GeneralsUnitImportReport? UnitImport { get; }
 
     public string Language { get; }
 
@@ -112,6 +116,14 @@ public sealed class ContentManager : DisposableBase
                     SubsystemLoader.Load(Subsystem.ExperienceLevels);
                     SubsystemLoader.Load(Subsystem.AttributeModifiers);
                     break;
+            }
+
+            // Unit content flows through the shared import seam (H2a): the adapter describes what the
+            // INI parser registered, and the pipeline validates and adopts it before anything uses it.
+            if (sageGame is SageGame.CncGenerals or SageGame.CncGeneralsZeroHour)
+            {
+                UnitImport = GeneralsUnitImport.Run(_game.AssetStore, sageGame);
+                UnitImport.ThrowIfFailed();
             }
 
             UpgradeManager.Initialize(_game.AssetStore);

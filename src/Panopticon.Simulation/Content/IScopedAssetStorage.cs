@@ -18,4 +18,7 @@ internal interface IScopedSingleAssetStorage : IScopedAssetStorage
 internal interface IScopedAssetCollection : IScopedAssetStorage
 {
     void Add(object asset);
+
+    /// <summary>Lookup by name without invoking an on-demand loader.</summary>
+    BaseAsset? FindByName(string name);
 }

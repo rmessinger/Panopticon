@@ -15,6 +15,7 @@ public static class DiagnosticCodes
     public const string DependencyCycle = "H2A-DEPENDENCY-CYCLE";
     public const string UnsupportedMechanic = "H2A-UNSUPPORTED-MECHANIC";
     public const string NonGameplayMetadata = "H2A-NON-GAMEPLAY-METADATA";
+    public const string ExcludedByPolicy = "H2A-EXCLUDED-BY-POLICY";
     public const string UnsupportedModule = "H2A-UNSUPPORTED-MODULE";
     public const string LegacyBindingNotAllowed = "H2A-LEGACY-BINDING";
     public const string UnsupportedAbility = "H2A-UNSUPPORTED-ABILITY";

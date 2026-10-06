@@ -347,8 +347,37 @@ public sealed class AssetStore
         AddAssetCollection(WindowTransitions = new ScopedAssetCollection<WindowTransition>(this));
     }
 
+    private readonly Dictionary<Importing.Units.ContentSource, SourceContentCollections> _sourceContent = new();
+
+    /// <summary>Number of pushed scopes; publication records it so unload can enforce reverse order.</summary>
+    internal int ScopeDepth { get; private set; }
+
+    /// <summary>Per-source unit content collections (decision D2), created on first use at the current scope depth.</summary>
+    public SourceContentCollections GetSourceContent(Importing.Units.ContentSource source)
+    {
+        if (!_sourceContent.TryGetValue(source, out var content))
+        {
+            content = new SourceContentCollections(source, this);
+            foreach (var collection in content.All)
+            {
+                for (var i = 0; i < ScopeDepth; i++)
+                {
+                    collection.PushScope();
+                }
+
+                _scopedAssetCollections.Add(collection);
+            }
+
+            _sourceContent[source] = content;
+        }
+
+        return content;
+    }
+
     internal void PushScope()
     {
+        ScopeDepth++;
+
         foreach (var scopedAssetCollection in _scopedAssetCollections)
         {
             scopedAssetCollection.PushScope();
@@ -362,6 +391,8 @@ public sealed class AssetStore
 
     internal void PopScope()
     {
+        ScopeDepth--;
+
         foreach (var scopedAssetCollection in _scopedAssetCollections)
         {
             scopedAssetCollection.PopScope();

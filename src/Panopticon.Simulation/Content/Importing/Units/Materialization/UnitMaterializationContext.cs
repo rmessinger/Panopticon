@@ -13,7 +13,9 @@ namespace Panopticon.Content.Importing.Units.Materialization;
 public sealed class UnitMaterializationContext
 {
     private readonly Dictionary<ContentId, BaseAsset> _staged = new();
-    private readonly Func<ContentId, BaseAsset?> _published;
+    private Func<ContentId, BaseAsset?> _published;
+    private bool _boundToStore;
+    private readonly AssetStore? _visualStore;
 
     public UnitConversionPolicy Policy { get; }
 
@@ -23,16 +25,25 @@ public sealed class UnitMaterializationContext
 
     public List<ImportDiagnostic> Diagnostics { get; } = [];
 
+    /// <summary>Track C models and animations the staged draw modules need installed before use.</summary>
+    public List<VisualAssetRequest> VisualAssets { get; } = [];
+
     public IReadOnlyDictionary<ContentId, BaseAsset> Staged => _staged;
 
     /// <param name="published">Lookup for content outside this import; returns null when absent.</param>
-    public UnitMaterializationContext(UnitConversionPolicy policy, Func<ContentId, BaseAsset?>? published = null, ILegacyNativeTable? legacyNatives = null)
+    /// <param name="visualStore">Store whose model and animation collections receive installed visual assets.</param>
+    public UnitMaterializationContext(
+        UnitConversionPolicy policy,
+        Func<ContentId, BaseAsset?>? published = null,
+        ILegacyNativeTable? legacyNatives = null,
+        AssetStore? visualStore = null)
     {
         ArgumentNullException.ThrowIfNull(policy);
 
         Policy = policy;
         _published = published ?? (_ => null);
         LegacyNatives = legacyNatives;
+        _visualStore = visualStore;
     }
 
     internal void Stage(ContentId id, BaseAsset asset) => _staged[id] = asset;
@@ -40,13 +51,39 @@ public sealed class UnitMaterializationContext
     internal T? Find<T>(ContentId id)
         where T : BaseAsset
     {
-        return (_staged.TryGetValue(id, out var staged) ? staged : _published(id)) as T;
+        if (!_boundToStore && _staged.TryGetValue(id, out var staged))
+        {
+            return staged as T;
+        }
+
+        return _published(id) as T;
+    }
+
+    /// <summary>
+    /// After publication, references resolve through the store, so a reference held past unload
+    /// fails lookup instead of returning a disposed asset.
+    /// </summary>
+    internal void BindToStore(Func<ContentId, BaseAsset?> lookup)
+    {
+        _published = lookup;
+        _boundToStore = true;
     }
 
     internal LazyAssetReference<T> Reference<T>(ContentId id)
         where T : BaseAsset
     {
         return new LazyAssetReference<T>(id.Name, () => Find<T>(id)!);
+    }
+
+    /// <summary>Models and animations live in the store's shared collections, so they bind by runtime name rather than content id.</summary>
+    internal LazyAssetReference<Graphics.Model> ModelReference(string runtimeName)
+    {
+        return new LazyAssetReference<Graphics.Model>(runtimeName, () => _visualStore?.Models.GetByInstanceId(AssetHash.GetHash(runtimeName))!);
+    }
+
+    internal LazyAssetReference<Graphics.Animation.ModelAnimation> AnimationReference(string runtimeName)
+    {
+        return new LazyAssetReference<Graphics.Animation.ModelAnimation>(runtimeName, () => _visualStore?.ModelAnimations.GetByInstanceId(AssetHash.GetHash(runtimeName))!);
     }
 
     internal T? GetLegacy<T>(ContentId subject, LegacyBinding binding)

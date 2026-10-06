@@ -131,4 +131,23 @@ public class UnitBodyMovementMaterializerTests
 
         Assert.All(content.Assets.Values, asset => Assert.Equal(0, asset.InternalId));
     }
+
+    [Fact]
+    public void InheritedModulesOfSameKindAllSurviveMaterialization()
+    {
+        var parent = Walker() with
+        {
+            Modules =
+            [
+                ModuleEdit.Add(new UnitModule("ModuleTag_AI", "AIUpdateInterface", ModuleKinds.Update)),
+                ModuleEdit.Add(new UnitModule("ModuleTag_Physics", "PhysicsBehavior", ModuleKinds.Update)),
+            ],
+        };
+        var child = Unit("Child", "Walker") with { MaxHealth = Authored.Of(Hp(100)) };
+
+        var definition = Materialize(Set(child, parent, Legs())).Get<ObjectDefinition>(child.Id);
+
+        Assert.IsType<AIUpdateModuleData>(definition.Behaviors["ModuleTag_AI"].Data);
+        Assert.IsType<PhysicsBehaviorModuleData>(definition.Behaviors["ModuleTag_Physics"].Data);
+    }
 }

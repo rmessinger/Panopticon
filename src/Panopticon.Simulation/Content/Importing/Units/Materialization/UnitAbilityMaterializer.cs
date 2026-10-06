@@ -42,7 +42,7 @@ internal static class UnitAbilityMaterializer
                 ? definition.ClientUpdates
                 : definition.Behaviors;
 
-        ObjectDefinition.AddModuleData(modules, new ModuleDataContainer(module.Tag, data, module.InheritanceMode, module.Inherited));
+        UnitBodyMovementMaterializer.AddResolved(modules, new ModuleDataContainer(module.Tag, data, module.InheritanceMode, module.Inherited));
     }
 
     private static void AddAbility(UnitRecord record, ObjectDefinition definition, AbilityRecord ability, UnitMaterializationContext context)

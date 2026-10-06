@@ -4,6 +4,7 @@ namespace Panopticon.Content.Importing.Units;
 
 /// <summary>
 /// A source field the adapter could not map. Non-gameplay fields only warn; a gameplay field is an
-/// unsupported mechanic and blocks publication.
+/// unsupported mechanic and blocks publication unless the caller's import policy explicitly
+/// excluded it, which is reported as a warning naming the exclusion.
 /// </summary>
-public sealed record UnclassifiedField(string Name, bool AffectsGameplay, Provenance? Provenance = null);
+public sealed record UnclassifiedField(string Name, bool AffectsGameplay, Provenance? Provenance = null, bool ExcludedByPolicy = false);

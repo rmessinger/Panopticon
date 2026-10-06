@@ -25,6 +25,7 @@ Each artifact owns one view. A plan change usually touches several. Know which o
 | [`seams.md`](../seams.md) | The seam registry (structural + A4 experiment seams). |
 | [`deep-dives/`](../deep-dives/) | Per-phase detailed designs. |
 | [`deep-dives/h2a-unit-content-import.md`](../deep-dives/h2a-unit-content-import.md) | H2a unit-content import scope, design gate, and card sequence before M2. |
+| [`deep-dives/h2b-metric-core.md`](../deep-dives/h2b-metric-core.md) | H2b metric conversion contract, design gate, and card sequence after H2a. |
 | [`current-state.md`](current-state.md) | Snapshot of the code the roadmap assumes. |
 | [`agent/`](./) | Task cards + the execution-agent workflow. |
 | [`README.md`](../README.md) | Index: doc map, deep-dive table, at-a-glance, guiding principles. |

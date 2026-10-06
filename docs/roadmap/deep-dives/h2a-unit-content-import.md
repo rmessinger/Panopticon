@@ -70,14 +70,15 @@ staging-branch model; leave every PR open for operator merge.
 | [WI-H2a-08](../agent/cards/WI-H2a-08-weapon-armor-materialization.md) | Weapons and armor | 07 | Done |
 | [WI-H2a-09](../agent/cards/WI-H2a-09-ability-materialization.md) | Selected native abilities | 08 | Done |
 | [WI-H2a-10](../agent/cards/WI-H2a-10-production-upgrade-materialization.md) | Production and upgrades | 09 | Done |
-| [WI-H2a-11](../agent/cards/WI-H2a-11-visual-state-binding.md) | Track C visual-state binding | 08 | Draft |
-| [WI-H2a-12](../agent/cards/WI-H2a-12-scoped-content-publication.md) | Validated scoped publication | 10, 11 | Draft |
-| [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Draft |
-| [WI-H2a-14](../agent/cards/WI-H2a-14-generals-behavior-parity.md) | Generals parity evidence | 13 | Draft |
-| [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Ready |
-| [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Draft |
-| [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Draft |
-| [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Draft |
+| [WI-H2a-11](../agent/cards/WI-H2a-11-visual-state-binding.md) | Track C visual-state binding | 08 | Done |
+| [WI-H2a-12](../agent/cards/WI-H2a-12-scoped-content-publication.md) | Validated scoped publication | 10, 11 | Done |
+| [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Done |
+| [WI-H2a-14](../agent/cards/WI-H2a-14-generals-behavior-parity.md) | Generals parity evidence | 13 | Ready |
+| [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Done |
+| [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Done |
+| [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Done |
+| [WI-H2a-19](../agent/cards/WI-H2a-19-staged-generals-registration.md) | Staged Generals INI registration | 13 | Ready |
+| [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Done |
 
 ## Loading audit
 
@@ -189,13 +190,25 @@ Result of `WI-H2a-02`. Status: approved by the operator. D1 to D4 were reviewed 
 | Visual states | Draw module data plus Track C `Model` and animation | Legacy binding for W3D draw modules | Typed (NIF/KF through C4a to C4d importers) | 11 |
 | All other native modules | Remaining `ModuleData` families | Legacy allowlist binding (D1) | `Unsupported`, blocks publication | 12, 13 |
 
-### Implementation notes (G3)
+### Implementation notes (group 4)
 
 - D1 extension: `LegacyBinding` also applies to whole records. A Generals weapon, armor, locomotor, upgrade, or object record may carry a binding to the native template the INI parser built; materialization reuses that template and the typed fields remain the validated, inspectable description. Native weapon nuggets, FX, and projectile objects therefore keep full Generals coverage without typed records for every nugget family.
 - Legacy module data and legacy templates are never mutated by materialization; the adapter may share them between definitions.
 - Typed projectile weapons materialize as direct-damage weapons whose travel time follows the projectile speed; projectile objects are not created for typed sources.
 - Typed production links, unit upgrade lists, and upgrade prerequisites need a native command-set mapping and fail at materialization rather than being dropped. Generals keeps them through legacy bindings.
 - Native construction seams: selected `private set` accessors on `ObjectDefinition`, `WeaponTemplate`, `LocomotorTemplate`, `UpgradeTemplate`, `WeaponTemplateSet`, and `ArmorTemplateSet` became `internal set`; `BaseAsset.AssignImportedName` names materialized assets.
+
+### Generals reference adapter (group 6)
+
+- Entry: `ContentManager` runs `GeneralsUnitImport` after the INI subsystems load, for Generals and Zero Hour; any error throws at boot.
+- The INI parser still registers unit blocks at parse time, because `DefaultThingTemplate`, `ChildObject`, and `ObjectReskin` read their parents during parsing (`ObjectDefinition.cs:18-52`).
+- `GeneralsUnitAdapter` describes every parsed object, weapon, armor, locomotor, and upgrade: typed values read back from native data in declared units, plus legacy bindings to the native template and each native module (D1).
+- The shared pipeline resolves, validates (lenient for legacy-bound records: finite, non-negative, declared units), materializes by reusing the native templates, and `UnitContentPublisher.Adopt` confirms each published id resolves to exactly that instance. Adopted root content cannot be unloaded.
+- Legacy module allowlist: every concrete `ModuleData` family the engine implements.
+- `None` in a weapon slot or armor set is the Generals empty-slot sentinel, not a dependency.
+- Real installs: Generals 1706 and Zero Hour 2795 records, zero diagnostics.
+- Follow-up `WI-H2a-19` moves parse-time registration into staging, so the publisher becomes the only registration path.
+- Conversion parity: typed time conversions use `LogicFrameSpan.FromMilliseconds` and `FromSeconds`, matching the INI parser's single-precision rounding (500 ms is 16 frames).
 
 ### Numeric validation
 
@@ -235,10 +248,76 @@ Failure fixtures (synthetic): unsupported required ability, unresolved reference
 
 ### EE2 feasibility finding
 
-- Source model: `UnitType` and `UnitModel` records in `zips/db.zip` and `zips_ee2x/EE2X_db.zip` share a name (`EE2_UNIT_VISUAL_PIPELINE.md` section 3). Inheritance is by `parent`; example `UniqueUnitEnglish1` has `parent = Priest` and `HitPoints = 0` (value inherited or computed elsewhere).
-- Visual capability: the British Druid (`UniqueUnitEnglish1` model) binds Idle, Walk, Run, Attack1, and Death through C4d ([deep dive](c4d-ee2-skinned-animation.md)), so the Track C visual path covers all four required states for that model.
-- Combat gap: the Druid has `ConvertAttack` (conversion, no damage) and no weapon damage, so it cannot prove health, damage, range, reload, and armor.
-- Verdict: the EE2 slice is feasible for visuals and unproven for combat. No ground combat unit with both resolvable stats and a C4d-importable skinned model is confirmed. Blocker recorded; `WI-H2a-18` probes candidates (for example `heavy_infantry1.ddf` units) against the C4d importer limits (at most four skin influences, weight sums near 1) and the stat closure. Cards 15 to 17 stay Draft until it reports. Cards 03 to 14 do not depend on the result.
+Original finding (card 02): the British Druid binds all four visual states through C4d but has no damaging attack, so the combat slice was unproven.
+
+Selection (`WI-H2a-18`):
+
+| Item | Value | Source |
+|---|---|---|
+| Unit | `HeavyInfantry1` epoch 1 (Maceman), published as `HeavyInfantry1UpgradeEpoch1` | `db/Units/heavy_infantry1.ddf`, `db/TechTree/upgrade_unittypes.csv` |
+| Inheritance | `HeavyInfantry1` to `Human` to `HumanNoConvert` to `LandMammal` | `db/Units/human.ddf` |
+| Stats (epoch row) | HP 75, LOS 5 tiles, damage 5, range 0.8 tiles, reload 1.5 s, build time 37 s | CSV row 10 |
+| Movement | `Move { speed = 1.725; angSpeed = 720 }` tiles/s and deg/s | `heavy_infantry1.ddf` |
+| Visual | `UnitModel HeavyInfantry1_01`, `DefaultModel = lhi1_maceman.nif`, regional variants `_am`, `_fe`, `_me`, `_we` | `heavy_infantry1.ddf:279` |
+| Clips | `sh_maceman_idle01`, `walk01`, `attack01`, `death01` under `Graphics/Humans/` | `graphics.zip` |
+| Importer probe | All four regional models import (28 to 33 bones, one skinned shape); all four clips import with 100 channels | `Ee2GroundUnitProbeTests` |
+| Archive layers | Base `db.zip` only; `db_150`/`db_155` add tech-tree DDFs but do not replace the closure files, so the slice uses unpatched base values | install listing |
+
+Base DDF combat values are placeholders (`damage = 0`); per-epoch stats live in `upgrade_unittypes.csv`, so the adapter reads both.
+
+Track C fix found by the probe: C4i added a guard in `NifAnimationImporter` that rejected every clip on a skinned target, which disabled the C4d skinned clip path on `main` (`Ee2SkinnedImportTests` Druid clips failed there). The guard now applies only to legacy-header (pre-10.1) clips, which is what the C4i rejection test asserts.
+
+### EE2 adapter (group 7)
+
+- Reader location: `Content/Importing/Units/Ee2/` (`DdfReader`, `Ee2CsvTable`), internal to the adapter; no separate format project. Limits: 4 MiB per file, nesting depth 32; truncation and unbalanced brackets fail with file, line, and column.
+- Mapping: `UnitType` records become unit records; `Move`, `LOS`, and `Attack` abilities become locomotor, vision, and weapon plus `Attack` ability records, inheriting along the `UnitType` chain; the epoch CSV row becomes a child unit; `UnitModel` records become visual-state records (`Idle`, `Walk`, `Attack1`, `Death` bind to `Idle`, `Move`, `Attack`, `Death`).
+- Units: distances stay in EE2 tiles (`SourceDistance`); the caller declares game units per tile. `SizeX` is footprint width, so the radius is half of it.
+- Policy (`Ee2ImportPolicy`): epoch, regional model suffix, explicitly excluded mechanics, and the engine damage type for EE2 attacks (`UNRESISTABLE` by default, so authored damage applies one-to-one and Generals armor cannot rescale it).
+- Excluded-by-policy fields are reported as `H2A-EXCLUDED-BY-POLICY` warnings; any unsupported gameplay field not excluded blocks publication.
+- Engine default: a typed locomotor without acceleration reaches full speed in one frame.
+
+Maceman mechanics without a runtime mapping (excluded by the proof profile, owned by M2/M3):
+
+| Field | Meaning |
+|---|---|
+| `rps` | Rock-paper-scissors class driving `dbcombat.csv` damage multipliers |
+| `ConvertAttack`, `Convertable` | Capture and conversion |
+| `Garrisonable` | Garrisoning |
+| `popCount`, `mass`, `stance`, `ownertype`, `attributes`, `FootprintType`, `SizeY` | Population, physics mass, AI stance, ownership, medic healing, footprint shape |
+| `Cost` | Multi-resource cost (food, gold, tin) |
+| `UPGRADEREFS` | Per-epoch ability upgrade records |
+| `Attack.applyDamageTime` | Damage timing within the attack animation |
+
+### Mixed-source proof (group 8)
+
+Entry: capture profile `capture-mixed-source-ee2.json` (ReplaySketch.Core profiles) run by the TestHarness `ScenarioCaptureRunner`; `ContentImports` publishes EE2 units through the shared layer (`UnitContentImportRunner`) and actors name them as `ee2:<unit>`. Requires `CNC_GENERALS_PATH` and `EMPIRE_EARTH_II_PATH`; a missing install fails the run as an unmet prerequisite.
+
+| Check | Result |
+|---|---|
+| Publication | 3 assets (unit, weapon, locomotor) in the `ee2` collection set; Generals collections unchanged |
+| Conversions | 12 game units per tile: speed 0.69/frame, range 9.6, vision 60, radius 0.75; reload 45 frames; build 1110 frames |
+| Move | Maceman walks 61 units on the Alpine Assault map |
+| Attack | Every hit on the Generals rebel removes exactly 5 HP (authored damage, `UNRESISTABLE`) |
+| Die | Rebel fire kills the 75 HP maceman; slow death plays for the declared 3 s, then removal |
+| Visual states | Draw module selects Idle, Move, Attack, and Death with the four DDF clips; captured fall on death |
+| Unsupported mechanic | Removing one exclusion (`ConvertAttack`) fails import; nothing spawns |
+| Collision | A second identical import fails before pushing a scope; first publication and Generals definitions unchanged |
+
+Evidence: `UnitContentImportIntegrationTests` (4 tests, installed) and the shared viewer GIF `h2a-mixed-source-ee2-maceman-vs-generals.gif`.
+
+Runtime requirements found by the proof, now typed module families: `PhysicsBehavior` (locomotors need physics) and `SlowDeathBehavior` (a death state needs a dying phase; duration declared by `DeathDuration`). EE2 typed modules inherit by tag only (`AlwaysInherit`), matching EE2 ability-by-name overrides. Materialization inserts resolved modules by tag instead of re-running the native parse-time merge, which evicted inherited modules of overlapping kind.
+
+Capture note: draw-module animations advance per rendered frame, so strided captures set `RenderEveryFrame` to keep clips at simulation speed.
+
+### M2 handoff
+
+- Roster: extend `Ee2UnitAdapter` beyond `Move`, `LOS`, and `Attack`; each further ability needs a typed family or stays an explicit exclusion.
+- Combat classes: map `rps` and `dbcombat.csv` multipliers (M3 owns cross-game balance); until then EE2 damage stays `UNRESISTABLE`.
+- Economy: multi-resource cost and `UPGRADEREFS` epoch upgrades are excluded; production needs a command-set mapping.
+- Aircraft: no typed air locomotion, takeoff, or rearm yet.
+- Scale: 12 game units per tile is the proof's declared value, not a balance decision.
+- Archive layers: the slice reads unpatched `db.zip`; patch tech-tree layers need a precedence rule.
+- Visual: regional model variant is a policy choice; corpse sinking (`SinkCorpse` child visual) is not imported.
 
 ### Staging and PR grouping
 
@@ -246,14 +325,14 @@ Staging branch: `staging/track-h-h2a`. Each group is one stacked PR into staging
 
 | Group | Cards | Content |
 |---|---|---|
-| G0 | 01 | Loading audit (docs) |
-| G1 | 02 | Contract and design (docs) |
-| G2 | 03, 04, 05, 06 | Interchange, inheritance, dependency, validation (pure engine code and synthetic tests) |
-| G3 | 07, 08, 09, 10 | Materializers and native construction seams |
-| G4 | 11, 12 | Visual binding and scoped publication |
-| G5 | 13, 14 | Generals reference adapter and parity |
-| G6 | 18, 15, 16 | EE2 unit selection probe, DDF reader, EE2 adapter |
-| G7 | 17 | Mixed-source P9 proof and M2 handoff |
+| 1 | 01 | Loading audit (docs) |
+| 2 | 02 | Contract and design (docs) |
+| 3 | 03, 04, 05, 06 | Interchange, inheritance, dependency, validation (pure engine code and synthetic tests) |
+| 4 | 07, 08, 09, 10 | Materializers and native construction seams |
+| 5 | 11, 12 | Visual binding and scoped publication |
+| 6 | 13, 14 | Generals reference adapter and parity |
+| 7 | 18, 15, 16 | EE2 unit selection probe, DDF reader, EE2 adapter |
+| 8 | 17 | Mixed-source P9 proof and M2 handoff |
 
 Implementation plan: [`implementation/track-h-h2a-unit-content-import.md`](../implementation/track-h-h2a-unit-content-import.md).
 
