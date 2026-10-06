@@ -14,8 +14,18 @@ public sealed class UnitConversionPolicy
 
     public double? GameUnitsPerMeter { get; }
 
-    public UnitConversionPolicy(SageGame game, double? gameUnitsPerMeter = null)
+    /// <summary>Game units per source distance unit (for example per EE2 tile); declared by the caller, never inferred.</summary>
+    public double? GameUnitsPerSourceDistance { get; }
+
+    public UnitConversionPolicy(SageGame game, double? gameUnitsPerMeter = null, double? gameUnitsPerSourceDistance = null)
     {
+        if (gameUnitsPerSourceDistance is { } sourceScale && (!double.IsFinite(sourceScale) || sourceScale <= 0))
+        {
+            throw new ArgumentOutOfRangeException(nameof(gameUnitsPerSourceDistance), sourceScale, "Game units per source distance must be finite and positive.");
+        }
+
+        GameUnitsPerSourceDistance = gameUnitsPerSourceDistance;
+
         if (gameUnitsPerMeter is { } scale)
         {
             if (!double.IsFinite(scale) || scale <= 0)
@@ -36,6 +46,7 @@ public sealed class UnitConversionPolicy
         {
             QuantityUnit.GameDistance => quantity.Value,
             QuantityUnit.Meters => quantity.Value * (GameUnitsPerMeter ?? throw new InvalidOperationException("Meters need a declared game-units-per-meter scale.")),
+            QuantityUnit.SourceDistance => quantity.Value * (GameUnitsPerSourceDistance ?? throw new InvalidOperationException("Source distances need a declared game-units-per-source-distance scale.")),
             _ => throw Unexpected(quantity),
         };
     }
@@ -68,9 +79,12 @@ public sealed class UnitConversionPolicy
 
     public double ToDistancePerFrame(Quantity quantity)
     {
-        return quantity.Unit == QuantityUnit.DistancePerSecond
-            ? quantity.Value / LogicFramesPerSecond
-            : throw Unexpected(quantity);
+        return quantity.Unit switch
+        {
+            QuantityUnit.DistancePerSecond => quantity.Value / LogicFramesPerSecond,
+            QuantityUnit.SourceDistancePerSecond => ToGameDistance(quantity with { Unit = QuantityUnit.SourceDistance }) / LogicFramesPerSecond,
+            _ => throw Unexpected(quantity),
+        };
     }
 
     public double ToDistancePerFrameSquared(Quantity quantity)

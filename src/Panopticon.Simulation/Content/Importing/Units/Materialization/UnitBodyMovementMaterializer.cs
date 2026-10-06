@@ -32,6 +32,12 @@ internal static class UnitBodyMovementMaterializer
         {
             locomotor.Acceleration = (float)context.Convert(record.Id, nameof(record.Acceleration), record.Acceleration.Value, context.Policy.ToDistancePerFrameSquared(record.Acceleration.Value), "distance/frame^2");
         }
+        else if (record.Speed.IsPresent)
+        {
+            // Sources without an acceleration (EE2) reach full speed in one frame; a zero native
+            // acceleration would leave the unit unable to move.
+            locomotor.Acceleration = locomotor.MaxSpeed;
+        }
 
         if (record.Braking.IsPresent)
         {
