@@ -66,10 +66,10 @@ staging-branch model; leave every PR open for operator merge.
 | [WI-H2a-04](../agent/cards/WI-H2a-04-inheritance-resolution.md) | Inheritance resolution | 03 | Done |
 | [WI-H2a-05](../agent/cards/WI-H2a-05-dependency-resolution.md) | Typed dependency resolution | 04 | Done |
 | [WI-H2a-06](../agent/cards/WI-H2a-06-capability-validation.md) | Capability validation | 05 | Done |
-| [WI-H2a-07](../agent/cards/WI-H2a-07-body-movement-materialization.md) | Body and movement | 06 | Ready |
-| [WI-H2a-08](../agent/cards/WI-H2a-08-weapon-armor-materialization.md) | Weapons and armor | 07 | Draft |
-| [WI-H2a-09](../agent/cards/WI-H2a-09-ability-materialization.md) | Selected native abilities | 08 | Draft |
-| [WI-H2a-10](../agent/cards/WI-H2a-10-production-upgrade-materialization.md) | Production and upgrades | 09 | Draft |
+| [WI-H2a-07](../agent/cards/WI-H2a-07-body-movement-materialization.md) | Body and movement | 06 | Done |
+| [WI-H2a-08](../agent/cards/WI-H2a-08-weapon-armor-materialization.md) | Weapons and armor | 07 | Done |
+| [WI-H2a-09](../agent/cards/WI-H2a-09-ability-materialization.md) | Selected native abilities | 08 | Done |
+| [WI-H2a-10](../agent/cards/WI-H2a-10-production-upgrade-materialization.md) | Production and upgrades | 09 | Done |
 | [WI-H2a-11](../agent/cards/WI-H2a-11-visual-state-binding.md) | Track C visual-state binding | 08 | Draft |
 | [WI-H2a-12](../agent/cards/WI-H2a-12-scoped-content-publication.md) | Validated scoped publication | 10, 11 | Draft |
 | [WI-H2a-13](../agent/cards/WI-H2a-13-generals-reference-adapter.md) | Generals reference adapter | 12 | Draft |
@@ -184,10 +184,18 @@ Result of `WI-H2a-02`. Status: approved by the operator. D1 to D4 were reviewed 
 | Locomotor and movement | `LocomotorTemplate`, `LocomotorSetTemplate` | Typed | Typed (ground only) | 07 |
 | Weapon (direct, projectile) | `WeaponTemplate`, weapon sets by condition | Typed | Typed | 08 |
 | Armor and damage types | `ArmorTemplate` | Typed | Typed | 08 |
-| Selected abilities | Native behavior modules and special powers named by the six archetype cases | Typed for the matrix, legacy binding otherwise (D1) | Unsupported unless mapped | 09 |
+| Selected abilities | Native behavior modules and special powers named by the six archetype cases | Legacy module binding (D1) | Typed `Attack` only (binds the ability weapon into the default weapon set); other families `Unsupported` | 09 |
 | Production, cost, prerequisites | `ObjectDefinition` build fields, `ProductionUpdate`, `UpgradeTemplate` | Typed | Single-resource cost only; era and multi-resource are `Unsupported` | 10 |
 | Visual states | Draw module data plus Track C `Model` and animation | Legacy binding for W3D draw modules | Typed (NIF/KF through C4a to C4d importers) | 11 |
 | All other native modules | Remaining `ModuleData` families | Legacy allowlist binding (D1) | `Unsupported`, blocks publication | 12, 13 |
+
+### Implementation notes (G3)
+
+- D1 extension: `LegacyBinding` also applies to whole records. A Generals weapon, armor, locomotor, upgrade, or object record may carry a binding to the native template the INI parser built; materialization reuses that template and the typed fields remain the validated, inspectable description. Native weapon nuggets, FX, and projectile objects therefore keep full Generals coverage without typed records for every nugget family.
+- Legacy module data and legacy templates are never mutated by materialization; the adapter may share them between definitions.
+- Typed projectile weapons materialize as direct-damage weapons whose travel time follows the projectile speed; projectile objects are not created for typed sources.
+- Typed production links, unit upgrade lists, and upgrade prerequisites need a native command-set mapping and fail at materialization rather than being dropped. Generals keeps them through legacy bindings.
+- Native construction seams: selected `private set` accessors on `ObjectDefinition`, `WeaponTemplate`, `LocomotorTemplate`, `UpgradeTemplate`, `WeaponTemplateSet`, and `ArmorTemplateSet` became `internal set`; `BaseAsset.AssignImportedName` names materialized assets.
 
 ### Numeric validation
 

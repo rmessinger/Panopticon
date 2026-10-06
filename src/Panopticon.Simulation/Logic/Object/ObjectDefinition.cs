@@ -496,24 +496,24 @@ public class ObjectDefinition : BaseAsset
     public LazyAssetReference<UpgradeTemplate> UpgradeCameo5 { get; private set; }
 
     // Design
-    public ObjectBuildableType Buildable { get; private set; }
-    public string Side { get; private set; }
-    public string DisplayName { get; private set; }
+    public ObjectBuildableType Buildable { get; internal set; }
+    public string Side { get; internal set; }
+    public string DisplayName { get; internal set; }
     public ObjectEditorSortingFlags EditorSorting { get; private set; }
     public float StructureRubbleHeight { get; private set; }
     public ObjectBrowserFlags Browser { get; private set; }
     public int TransportSlotCount { get; private set; }
-    public float VisionRange { get; private set; }
+    public float VisionRange { get; internal set; }
 
     [AddedIn(SageGame.CncGeneralsZeroHour)]
     public float ShroudRevealToAllRange { get; private set; }
 
-    public float ShroudClearingRange { get; private set; }
+    public float ShroudClearingRange { get; internal set; }
     public int CrusherLevel { get; private set; }
     public int CrushableLevel { get; private set; }
-    public float BuildCost { get; private set; } //TODO: should this really be a float?
+    public float BuildCost { get; internal set; } //TODO: should this really be a float?
 
-    public LogicFrameSpan BuildTime { get; private set; }
+    public LogicFrameSpan BuildTime { get; internal set; }
     public int RefundValue { get; private set; }
     public int EnergyProduction { get; private set; }
     public int EnergyBonus { get; private set; }
@@ -523,7 +523,7 @@ public class ObjectDefinition : BaseAsset
     public Dictionary<BitArray<WeaponSetConditions>, WeaponTemplateSet> WeaponSets { get; internal set; } = new Dictionary<BitArray<WeaponSetConditions>, WeaponTemplateSet>();
     public List<ArmorTemplateSet> ArmorSets { get; internal set; } = [];
     public LazyAssetReference<CommandSet> CommandSet { get; set; }
-    public ObjectPrerequisites Prerequisites { get; private set; }
+    public ObjectPrerequisites Prerequisites { get; internal set; }
     public bool IsTrainable { get; private set; }
 
     /// <summary>
@@ -911,7 +911,7 @@ public class ObjectDefinition : BaseAsset
         LocomotorSets[locomotorSetTemplate.Condition] = locomotorSetTemplate;
     }
 
-    public BitArray<ObjectKinds> KindOf { get; private set; } = new();
+    public BitArray<ObjectKinds> KindOf { get; internal set; } = new();
     public RadarPriority RadarPriority { get; internal set; }
 
     [AddedIn(SageGame.CncGeneralsZeroHour)]
@@ -925,7 +925,7 @@ public class ObjectDefinition : BaseAsset
 
     public Vector2 RotationAnchorOffset { get; set; }
 
-    public Geometry Geometry { get; private set; } = new Geometry();
+    public Geometry Geometry { get; internal set; } = new Geometry();
 
     /// <summary>
     /// For crushing / squishing detection.

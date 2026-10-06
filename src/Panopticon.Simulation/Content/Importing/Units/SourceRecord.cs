@@ -21,6 +21,12 @@ public abstract record SourceRecord
     /// <summary>Parent record of the same kind; null after inheritance resolution.</summary>
     public ContentId? Parent { get; init; }
 
+    /// <summary>
+    /// Native template the Generals adapter already built for this record. When present, typed
+    /// fields describe it for validation and evidence while materialization reuses the template.
+    /// </summary>
+    public LegacyBinding? Legacy { get; init; }
+
     public IReadOnlyList<UnclassifiedField> Unclassified
     {
         get => _unclassified;

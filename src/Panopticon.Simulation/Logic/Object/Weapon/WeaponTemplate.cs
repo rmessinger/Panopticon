@@ -279,12 +279,12 @@ public sealed class WeaponTemplate : BaseAsset
     public float ScatterTargetScalar { get; private set; }
     public List<Vector2> ScatterTargets { get; } = new List<Vector2>();
     public bool LeechRangeWeapon { get; private set; }
-    public float AttackRange { get; private set; }
-    public float MinimumAttackRange { get; private set; }
+    public float AttackRange { get; internal set; }
+    public float MinimumAttackRange { get; internal set; }
     public int MinTargetPitch { get; private set; }
     public int MaxTargetPitch { get; private set; }
 
-    public float WeaponSpeed { get; private set; }
+    public float WeaponSpeed { get; internal set; }
     public float MinWeaponSpeed { get; private set; }
     public bool ScaleWeaponSpeed { get; private set; }
     public int WeaponRecoil { get; private set; }
@@ -301,10 +301,10 @@ public sealed class WeaponTemplate : BaseAsset
     public int FireSoundLoopTime { get; private set; }
     public int SuspendFXDelay { get; private set; }
     public ObjectFilter RadiusDamageAffects { get; private set; }
-    public RangeDuration CoolDownDelayBetweenShots { get; private set; }
+    public RangeDuration CoolDownDelayBetweenShots { get; internal set; }
     public int ShotsPerBarrel { get; private set; }
-    public int ClipSize { get; private set; }
-    public RangeDuration ClipReloadTime { get; private set; }
+    public int ClipSize { get; internal set; }
+    public RangeDuration ClipReloadTime { get; internal set; }
     public RangeDuration AutoReloadWhenIdle { get; private set; }
     public WeaponReloadType AutoReloadsClip { get; private set; } = WeaponReloadType.Auto;
     public int ContinuousFireOne { get; private set; }
@@ -472,7 +472,7 @@ public sealed class WeaponTemplate : BaseAsset
     [AddedIn(SageGame.Bfme2)]
     public bool UseInnateAttributes { get; private set; }
 
-    public WeaponAntiFlags AntiMask { get; private set; } = WeaponAntiFlags.AntiGround;
+    public WeaponAntiFlags AntiMask { get; internal set; } = WeaponAntiFlags.AntiGround;
 
     private void SetAntiMaskFlag(WeaponAntiFlags flag, bool set)
     {
