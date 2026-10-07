@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-NUL-01` |
 | Roadmap phase | None (cross-track code hygiene; see [roadmap index](../README.md)) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none |
