@@ -8,15 +8,15 @@ using Panopticon.Content.Importing.Units.Materialization;
 namespace Panopticon.Content.Importing.Units.Generals;
 
 /// <summary>
-/// Runs parsed Generals unit content through the shared pipeline: adapter, inheritance, dependency
-/// resolution, capability validation, materialization (reusing native templates), and adoption by
-/// the publisher. Called by <see cref="ContentManager"/> once INI subsystems are loaded.
+/// Runs staged Generals unit content through the shared pipeline: adapter, inheritance, dependency
+/// resolution, capability validation, materialization (reusing native templates), and publication
+/// by the publisher. Called by <see cref="ContentManager"/> once INI subsystems are loaded.
 /// </summary>
 public static class GeneralsUnitImport
 {
-    public static GeneralsUnitImportReport Run(AssetStore store, SageGame game)
+    public static GeneralsUnitImportReport Run(AssetStore store, SageGame game, UnitContentStaging staging)
     {
-        var adapter = new GeneralsUnitAdapter(store, game);
+        var adapter = new GeneralsUnitAdapter(staging, game);
         var set = adapter.Read([]);
         var publisher = new UnitContentPublisher(store);
         var resolution = UnitImportResolution.Resolve(set, GeneralsUnitAdapter.CreateRegistry());
@@ -33,7 +33,7 @@ public static class GeneralsUnitImport
             return new GeneralsUnitImportReport(set, resolution.Diagnostics.Concat(content.Diagnostics).ToArray(), null);
         }
 
-        var publication = publisher.Adopt(content);
+        var publication = publisher.Publish(content);
         return new GeneralsUnitImportReport(set, resolution.Diagnostics.Concat(content.Diagnostics).Concat(publication.Diagnostics).ToArray(), publication.Published);
     }
 }

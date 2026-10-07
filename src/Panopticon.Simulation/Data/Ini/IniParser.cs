@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Text;
 using Panopticon.Audio;
 using Panopticon.Content;
+using Panopticon.Content.Importing.Units;
 using Panopticon.FileFormats;
 using Panopticon.FX;
 using Panopticon.Graphics;
@@ -49,6 +50,9 @@ internal sealed partial class IniParser
 
     private readonly AssetStore _assetStore;
 
+    // Card WI-H2a-19: when set, unit blocks stage here instead of registering in the store.
+    private readonly UnitContentStaging? _unitStaging;
+
     // Used for some things that need temporary storage, like AliasConditionState.
     public object? Temp { get; set; }
     public Stack<object> BlockStack { get; set; } = new Stack<object>();
@@ -62,7 +66,7 @@ internal sealed partial class IniParser
     // Ini files with file name that ends with 9x use locale specific encoding.
     private readonly Encoding _encoding;
 
-    public IniParser(FileSystemEntry entry, AssetStore assetStore, SageGame sageGame, IniDataContext dataContext, Encoding localeSpecificEncoding)
+    public IniParser(FileSystemEntry entry, AssetStore assetStore, SageGame sageGame, IniDataContext dataContext, Encoding localeSpecificEncoding, UnitContentStaging? unitStaging = null)
     {
         var iniEncoding = Encoding.ASCII;
         {
@@ -82,6 +86,7 @@ internal sealed partial class IniParser
         _dataContext = dataContext;
         _fileSystem = entry.FileSystem;
         _assetStore = assetStore;
+        _unitStaging = unitStaging;
         SageGame = sageGame;
         _encoding = iniEncoding;
 
@@ -673,9 +678,79 @@ internal sealed partial class IniParser
         return result.ToArray();
     }
 
-    public ObjectDefinition GetDefaultThingTemplate()
+    public ObjectDefinition? GetDefaultThingTemplate()
     {
-        return _assetStore.ObjectDefinitions.GetByName("DefaultThingTemplate");
+        return FindObjectForClone("DefaultThingTemplate");
+    }
+
+    /// <summary>
+    /// Card WI-H2a-19: eager parent lookup for child objects, reskins, and DefaultThingTemplate.
+    /// Checks the staging side channel first, so parents that have not reached the store yet
+    /// still resolve; falls back to the store for non-staged parents.
+    /// </summary>
+    public ObjectDefinition? FindObjectForClone(string name)
+    {
+        return _unitStaging?.FindObject(name) ?? _assetStore.ObjectDefinitions.GetByName(name);
+    }
+
+    internal void AddObjectBlock(ObjectDefinition definition)
+    {
+        if (_unitStaging is not null)
+        {
+            _unitStaging.AddObject(definition);
+        }
+        else
+        {
+            _assetStore.ObjectDefinitions.Add(definition);
+        }
+    }
+
+    internal void AddWeaponBlock(WeaponTemplate weapon)
+    {
+        if (_unitStaging is not null)
+        {
+            _unitStaging.AddWeapon(weapon);
+        }
+        else
+        {
+            _assetStore.WeaponTemplates.Add(weapon);
+        }
+    }
+
+    internal void AddArmorBlock(ArmorTemplate armor)
+    {
+        if (_unitStaging is not null)
+        {
+            _unitStaging.AddArmor(armor);
+        }
+        else
+        {
+            _assetStore.ArmorTemplates.Add(armor);
+        }
+    }
+
+    internal void AddLocomotorBlock(LocomotorTemplate locomotor)
+    {
+        if (_unitStaging is not null)
+        {
+            _unitStaging.AddLocomotor(locomotor);
+        }
+        else
+        {
+            _assetStore.LocomotorTemplates.Add(locomotor);
+        }
+    }
+
+    internal void AddUpgradeBlock(UpgradeTemplate upgrade)
+    {
+        if (_unitStaging is not null)
+        {
+            _unitStaging.AddUpgrade(upgrade);
+        }
+        else
+        {
+            _assetStore.Upgrades.Add(upgrade);
+        }
     }
 
     public LazyAssetReference<ObjectDefinition>? ParseObjectReference(string? label = null)
@@ -1122,7 +1197,7 @@ internal sealed partial class IniParser
                 var includeEntry = _fileSystem.GetFile(includePath) ?? throw new InvalidOperationException();
                 // I doubt locale-specific-encoded files will ever include other files.
                 // But if they do, it's reasonable to assume included files use the same encoding as the includer.
-                var includeParser = new IniParser(includeEntry, _assetStore, SageGame, _dataContext, _encoding);
+                var includeParser = new IniParser(includeEntry, _assetStore, SageGame, _dataContext, _encoding, _unitStaging);
                 includeParser.ParseFile();
             }
             else if (BlockParsers.TryGetValue(fieldName, out var blockParser))

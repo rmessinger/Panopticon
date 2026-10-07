@@ -77,7 +77,7 @@ staging-branch model; leave every PR open for operator merge.
 | [WI-H2a-18](../agent/cards/WI-H2a-18-ee2-ground-unit-selection.md) | EE2 ground-unit selection probe | 02 | Done |
 | [WI-H2a-15](../agent/cards/WI-H2a-15-ee2-ddf-reader.md) | Bounded EE2 reader | 03, 18 | Done |
 | [WI-H2a-16](../agent/cards/WI-H2a-16-ee2-source-adapter.md) | EE2 interchange adapter | 12, 15 | Done |
-| [WI-H2a-19](../agent/cards/WI-H2a-19-staged-generals-registration.md) | Staged Generals INI registration | 13 | Ready |
+| [WI-H2a-19](../agent/cards/WI-H2a-19-staged-generals-registration.md) | Staged Generals INI registration | 13 | Done |
 | [WI-H2a-17](../agent/cards/WI-H2a-17-multi-source-validation.md) | Mixed-source P9 proof and handoff | 14, 16 | Done |
 
 ## Loading audit
@@ -207,7 +207,7 @@ Result of `WI-H2a-02`. Status: approved by the operator. D1 to D4 were reviewed 
 - Legacy module allowlist: every concrete `ModuleData` family the engine implements.
 - `None` in a weapon slot or armor set is the Generals empty-slot sentinel, not a dependency.
 - Real installs: Generals 1706 and Zero Hour 2795 records, zero diagnostics.
-- Follow-up `WI-H2a-19` moves parse-time registration into staging, so the publisher becomes the only registration path.
+- `WI-H2a-19` moved parse-time registration into staging, so the publisher is the only registration path.
 - Conversion parity: typed time conversions use `LogicFrameSpan.FromMilliseconds` and `FromSeconds`, matching the INI parser's single-precision rounding (500 ms is 16 frames).
 
 ### Numeric validation
