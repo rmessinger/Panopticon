@@ -65,6 +65,7 @@ public abstract class MockedGameTest : IDisposable
         public LobbyManager LobbyManager { get; }
         public List<GameSystem> GameSystems { get; }
         public GraphicsSystem Graphics { get; }
+        public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Faithful();
         public ScriptingSystem Scripting { get; }
         public LuaScriptEngine Lua { get; set; }
         public GameState GameState { get; }
