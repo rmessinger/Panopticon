@@ -342,7 +342,7 @@ public static class Program
                 {
                     game.Update(window.MessageQueue);
 
-                    game.Panel.EnsureFrame(window.ClientBounds);
+                    game.Panel.EnsureFrame(window.DrawableBounds);
 
                     game.Render();
 

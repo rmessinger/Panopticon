@@ -685,7 +685,7 @@ public static class MassBattleDeploymentRunner
         }
 
         game.Update(window.MessageQueue);
-        game.Panel.EnsureFrame(window.ClientBounds);
+        game.Panel.EnsureFrame(window.DrawableBounds);
         game.Render();
         textureCopier.Execute(
             game.Panel.Framebuffer.ColorTargets[0].Target,

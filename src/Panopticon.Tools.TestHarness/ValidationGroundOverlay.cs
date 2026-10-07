@@ -75,14 +75,15 @@ public sealed class ValidationGroundOverlay : IDisposable
         _imgui = new ImGuiRenderer(
             game.GraphicsDevice,
             window.Swapchain.Framebuffer.OutputDescription,
-            window.ClientBounds.Width,
-            window.ClientBounds.Height);
+            window.DrawableBounds.Width,
+            window.DrawableBounds.Height);
 
         void OnWindowSizeChanged(object? sender, EventArgs e)
         {
-            _imgui.WindowResized(window.ClientBounds.Width, window.ClientBounds.Height);
+            _imgui.WindowResized(window.DrawableBounds.Width, window.DrawableBounds.Height, window.DpiScale);
         }
 
+        OnWindowSizeChanged(this, EventArgs.Empty);
         window.ClientSizeChanged += OnWindowSizeChanged;
         _unsubscribeResize = () => window.ClientSizeChanged -= OnWindowSizeChanged;
 
