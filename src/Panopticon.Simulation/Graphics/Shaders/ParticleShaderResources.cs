@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Graphics.Mathematics;
 using Panopticon.Graphics.ParticleSystems;
-using Panopticon.Graphics.Rendering;
 using Panopticon.Rendering;
 using Veldrid;
 
@@ -34,7 +33,7 @@ internal sealed class ParticleShaderResources : ShaderSetBase
                         PrimitiveTopology.TriangleList,
                         Description,
                         ResourceLayouts,
-                        RenderPipeline.GameOutputDescription)));
+                        store.OutputDescription)));
         }
 
         _alphaPipeline = CreatePipeline(BlendStateDescription.SingleAlphaBlend);

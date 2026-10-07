@@ -1,5 +1,4 @@
 using System.Numerics;
-using Panopticon.Graphics.Rendering;
 using Panopticon.Rendering;
 using Veldrid;
 
@@ -24,7 +23,7 @@ internal sealed class WaterShaderResources : ShaderSetBase
                 PrimitiveTopology.TriangleList,
                 Description,
                 ResourceLayouts,
-                RenderPipeline.GameOutputDescription)));
+                store.OutputDescription)));
     }
 
     public struct WaterVertex

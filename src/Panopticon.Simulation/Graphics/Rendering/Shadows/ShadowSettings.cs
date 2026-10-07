@@ -69,6 +69,27 @@ public sealed class ShadowSettings
     public float Bias { get; set; } = 0.002f;
 
     /// <summary>
+    /// Applies the tier-owned members of a G2 fidelity preset. Members the tier does not
+    /// own, such as bias and cascade split depths, keep their current values.
+    /// </summary>
+    public void ApplyTier(ShadowTier tier)
+    {
+        switch (tier)
+        {
+            case ShadowTier.Original:
+                ShadowMapCascades = ShadowMapCascades.OneCascade;
+                ShadowMapSize = 1024;
+                break;
+            case ShadowTier.High:
+                ShadowMapCascades = ShadowMapCascades.FourCascades;
+                ShadowMapSize = 2048;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(tier));
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the normal offset to use when rendering shadows.
     /// </summary>
     /// <remarks>

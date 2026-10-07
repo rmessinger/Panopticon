@@ -21,9 +21,16 @@ internal sealed class RenderPipeline : DisposableBase
     /// <summary>Render-target clear color; overridable for diagnostic captures.</summary>
     public RgbaFloat ClearColor { get; set; } = new RgbaFloat(105 / 255f, 105 / 255f, 105 / 255f, 1f);
 
-    public static readonly OutputDescription GameOutputDescription = new OutputDescription(
+    public static readonly OutputDescription GameOutputDescription = CreateGameOutputDescription(GraphicsSettings.Faithful());
+
+    /// <summary>
+    /// Builds the output description pipelines render into. The colour format stays fixed
+    /// until G6 owns the colour-space mapping; the sample count follows the settings.
+    /// </summary>
+    public static OutputDescription CreateGameOutputDescription(GraphicsSettings settings) => new(
         new OutputAttachmentDescription(PixelFormat.D32_Float_S8_UInt),
-        new OutputAttachmentDescription(PixelFormat.B8_G8_R8_A8_UNorm));
+        new[] { new OutputAttachmentDescription(PixelFormat.B8_G8_R8_A8_UNorm) },
+        GraphicsSettingsController.ToTextureSampleCount(settings.SampleCount));
 
     private readonly RenderList _renderList;
 
@@ -52,8 +59,12 @@ internal sealed class RenderPipeline : DisposableBase
     public int RenderedObjectsOpaque { get; private set; }
     public int RenderedObjectsTransparent { get; private set; }
 
+    private readonly IGame _game;
+
     public RenderPipeline(IGame game)
     {
+        _game = game;
+
         _renderList = new RenderList();
 
         var graphicsDevice = game.GraphicsDevice;
@@ -70,7 +81,7 @@ internal sealed class RenderPipeline : DisposableBase
             game.ContentManager,
             game.GraphicsLoadContext,
             BlendStateDescription.SingleAlphaBlend,
-            GameOutputDescription));
+            CreateGameOutputDescription(game.GraphicsSettings)));
 
         _shadowMapRenderer = AddDisposable(new ShadowMapRenderer(game.GraphicsDevice));
         _waterMapRenderer = AddDisposable(new WaterMapRenderer(game.AssetStore, _loadContext, game.GraphicsDevice, game.GraphicsLoadContext.ShaderResources.Global));
@@ -82,7 +93,12 @@ internal sealed class RenderPipeline : DisposableBase
 
     private void EnsureIntermediateFramebuffer(GraphicsDevice graphicsDevice, Framebuffer target)
     {
-        if (_intermediateDepthBuffer != null && _intermediateDepthBuffer.Width == target.Width && _intermediateDepthBuffer.Height == target.Height)
+        var sampleCount = GraphicsSettingsController.ToTextureSampleCount(_game.GraphicsSettings.SampleCount);
+
+        if (_intermediateDepthBuffer != null
+            && _intermediateDepthBuffer.Width == target.Width
+            && _intermediateDepthBuffer.Height == target.Height
+            && _intermediateDepthBuffer.SampleCount == sampleCount)
         {
             return;
         }
@@ -92,10 +108,10 @@ internal sealed class RenderPipeline : DisposableBase
         RemoveAndDispose(ref _intermediateFramebuffer);
 
         _intermediateDepthBuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
-            TextureDescription.Texture2D(target.Width, target.Height, 1, 1, PixelFormat.D32_Float_S8_UInt, TextureUsage.DepthStencil)));
+            TextureDescription.Texture2D(target.Width, target.Height, 1, 1, PixelFormat.D32_Float_S8_UInt, TextureUsage.DepthStencil, sampleCount)));
 
         _intermediateTexture = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
-            TextureDescription.Texture2D(target.Width, target.Height, 1, 1, target.ColorTargets[0].Target.Format, TextureUsage.RenderTarget | TextureUsage.Sampled)));
+            TextureDescription.Texture2D(target.Width, target.Height, 1, 1, target.ColorTargets[0].Target.Format, TextureUsage.RenderTarget | TextureUsage.Sampled, sampleCount)));
 
         _intermediateFramebuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateFramebuffer(
             new FramebufferDescription(_intermediateDepthBuffer, _intermediateTexture)));

@@ -44,6 +44,12 @@ public interface IGame
     GraphicsSettings GraphicsSettings { get; set; }
 
     /// <summary>
+    /// Gets the settings snapshot after device-capability validation; may differ from
+    /// <see cref="GraphicsSettings"/> when the requested values exceed device limits.
+    /// </summary>
+    internal GraphicsSettings EffectiveGraphicsSettings { get; }
+
+    /// <summary>
     /// Gets the scripting system.
     /// </summary>
     ScriptingSystem Scripting { get; }
