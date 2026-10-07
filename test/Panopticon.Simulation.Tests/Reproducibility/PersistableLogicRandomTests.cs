@@ -58,6 +58,7 @@ public sealed class PersistableLogicRandomTests : IDisposable
                 differsFromFresh = true;
             }
         }
+
         Assert.True(differsFromFresh);
     }
 
@@ -85,8 +86,10 @@ public sealed class PersistableLogicRandomTests : IDisposable
             {
                 SaveFile.Persist(writer, SaveFile.IsLogicChunk);
             }
+
             checkpoint = stream.ToArray();
         }
+
         _output.WriteLine($"logic checkpoint: {checkpoint.Length} bytes");
 
         using var gameB = BootGame(seed: 12345);
@@ -117,6 +120,7 @@ public sealed class PersistableLogicRandomTests : IDisposable
                 overlapsFreshStart = false;
             }
         }
+
         Assert.False(overlapsFreshStart);
 
         var postRestoreWords = new uint[SageRandom.StateWordCount];

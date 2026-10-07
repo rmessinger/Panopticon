@@ -63,8 +63,10 @@ public sealed class CheckpointCoverageTests : IDisposable
             {
                 SaveFile.Persist(writer, SaveFile.IsLogicChunk);
             }
+
             checkpoint = stream.ToArray();
         }
+
         _output.WriteLine($"logic checkpoint: {checkpoint.Length} bytes");
 
         using var gameB = BootGame(seed: 12345);
@@ -72,6 +74,7 @@ public sealed class CheckpointCoverageTests : IDisposable
         {
             SaveFile.LoadFromStream(stream, gameB);
         }
+
         _output.WriteLine($"restored at frame {gameB.GameLogic.CurrentFrame.Value}");
 
         Step(gameA, 30);
@@ -144,8 +147,10 @@ public sealed class CheckpointCoverageTests : IDisposable
             {
                 writer.PersistObject(gameObject, "Object");
             }
+
             result[gameObject.Id.Index] = stream.ToArray();
         }
+
         return result;
     }
 

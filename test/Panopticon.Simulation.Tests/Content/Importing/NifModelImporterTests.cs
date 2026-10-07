@@ -788,6 +788,7 @@ public sealed class NifModelImporterTests
             builder.AddBlock(skinInstanceType, NifTestBlocks.SkinInstance(
                 data: 5, skeletonRoot: 0, bones: [0]));
         }
+
         builder.AddTrailing(NifTestBlocks.Footer());
         return builder.Build();
     }

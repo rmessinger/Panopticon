@@ -275,6 +275,7 @@ public sealed class Ee2ParticleEffectInventoryTests
             {
                 Assert.All(effect.Systems, system => Assert.Equal(ImportedParticleBlendMode.Alpha, system.BlendMode));
             }
+
             if (name == "fx_muzzle_tank")
             {
                 Assert.Contains(effect.Systems, system => system.BlendMode == ImportedParticleBlendMode.Alpha);
@@ -316,6 +317,7 @@ public sealed class Ee2ParticleEffectInventoryTests
                 * System.Numerics.Matrix4x4.CreateFromQuaternion(bone.BindRotation)
                 * System.Numerics.Matrix4x4.CreateTranslation(bone.BindTranslation);
         }
+
         var forward = System.Numerics.Vector3.TransformNormal(System.Numerics.Vector3.UnitX, transform);
         Assert.True(System.Numerics.Vector3.Distance(forward, System.Numerics.Vector3.UnitX) < 0.001f);
 

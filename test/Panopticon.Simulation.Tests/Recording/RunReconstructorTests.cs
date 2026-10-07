@@ -88,6 +88,7 @@ public sealed class RunReconstructorTests : MockedGameTest, IDisposable
 
         Assert.Equal(new uint[] { 5, 10, 15, 20, 25, 30 }, sink.Frames);
     }
+
     [GameFact(SageGame.CncGenerals)]
     public void ExportSlice_WritesArtifactLoadableByA1Readers()
     {

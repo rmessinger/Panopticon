@@ -45,7 +45,8 @@ public sealed class Ee2GroundUnitProbeTests(ITestOutputHelper output)
         try
         {
             var model = new NifModelImporter().ImportModel(key, context);
-            output.WriteLine($"{key}: {(model is null ? "null" : $"{model.Skeleton.Bones.Count} bones, {model.SubObjects.Count} sub-objects")}");
+            var description = model is null ? "null" : $"{model.Skeleton.Bones.Count} bones, {model.SubObjects.Count} sub-objects";
+            output.WriteLine($"{key}: {description}");
         }
         catch (Exception exception) when (exception is InvalidDataException or NotSupportedException)
         {
