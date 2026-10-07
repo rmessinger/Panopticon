@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G3-01` |
 | Roadmap phase | [Track G · G3](../../track-g-rendering-clarity.md): Visual regression harness |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -51,10 +51,10 @@ needs, so G3 extends the current paths rather than adding a tool. Read-only: no 
 
 ## Acceptance criteria
 
-- [ ] Both capture paths are described with their entry points and outputs.
-- [ ] The question of whether ReplaySketch screenshots use `FrameCapturer` is answered definitively.
-- [ ] The gap list names each missing capability with the component that would own it.
-- [ ] No `.cs` file is modified by this card.
+- [x] Both capture paths are described with their entry points and outputs.
+- [x] The question of whether ReplaySketch screenshots use `FrameCapturer` is answered definitively.
+- [x] The gap list names each missing capability with the component that would own it.
+- [x] No `.cs` file is modified by this card.
 
 ## Validation commands
 
