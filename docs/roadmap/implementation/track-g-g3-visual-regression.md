@@ -25,14 +25,64 @@ the deep dive §1 corrections.
 `WI-G3-01` and `WI-G3-02` can run in parallel. Later Track G phases validate against goldens only
 once `WI-G3-04` is `Done`.
 
-## Audit deliverables (`WI-G3-01`, to complete)
+## Audit (`WI-G3-01`, complete)
 
-- Capture path table: entry point, texture captured, includes HUD or not, output location,
-  persistence.
-- Scene repeatability table, one row per candidate scene: profile, camera, settle frames, capture
-  frame, result of two consecutive captures (byte-identical or not), and the effect responsible
-  for any difference.
-- Reference host record: backend, device name, driver version, as reported by the graphics device.
+### Capture paths
+
+| Path | Entry point | Texture captured | Output | Window |
+|---|---|---|---|---|
+| Engine capture | `FrameCapturer.Capture(GraphicsDevice, Texture)` + `CaptureToPng`; scheduled through `FrameCaptureService.ScheduleCapture`/`FlushPending`/`Capture` | Any GPU texture; engine loop passes `game.Panel.Framebuffer.ColorTargets[0].Target`, the `TextureCopier` final-blit destination in `RenderPipeline` | `$TMPDIR/panopticon_captures/capture_NNNN.png` plus a `[CAPTURE]` stdout line; counter-based naming, per-instance cleanup | No (offscreen device) |
+| ScenarioCapture | `ScenarioCaptureRunner.Run` via `--built-in-scenario ScenarioCapture --scenario <profile.json>`; captures `frame % CaptureStride == 0` after `SettleFrames` | Same panel target via `FrameCapturer.CaptureToPng` | `<dir>/frame_NNNN.png` + `manifest.json` per profile; default `$TMPDIR/panopticon_capture_<name>`, overridable via profile `OutputDirectory` or `CaptureRunSettings.FallbackOutputDirectory` | No (`--headless`) |
+| ReplaySketch screenshot | `REPLAYSKETCH_SCREENSHOT_PATH` activates `MainWindow.TakeScreenshotAsync` | None from the engine; `RenderTargetBitmap.Render(this)` rasterizes the Avalonia window visual tree | The configured PNG path | Yes (Avalonia window) |
+
+ReplaySketch screenshots are definitively not `FrameCapturer` output: they rasterize the
+tool UI through Avalonia Skia, never read a GPU texture, and cannot capture an engine frame.
+G3 extends only the engine path, per the C5 Decision.
+
+### Existing headless capture evidence
+
+- The validation-grounds run (`TESTHARNESS_VG_CAPTURE=1 ... --headless`) is the existing
+  full-world capture test: 280 PNGs at 1024x768 through `FrameCaptureService`, summary
+  "26 measured (0 pass, 0 regressed, 0 new), 4 timed out, 1 gaps". Its per-run directory
+  layout is counter-based and instance-scoped, so it cannot serve as the golden store
+  unchanged; `ScenarioCaptureRunner`'s profile-keyed `frame_NNNN.png` + `manifest.json`
+  layout is the closer model for `visual-regression/<preset>/<scene>.png`.
+- `PbrMaterialProof` and `GltfRuntimeProof` already assert byte-identical repeat captures
+  at model level, using discarded warm-up frames to absorb first-execution uploads. The
+  capture machinery itself is deterministic; repeatability failures below are scene content,
+  not readback.
+
+### Scene repeatability (two consecutive runs, same commit)
+
+| Scene approximation | Machinery | Result | Cause |
+|---|---|---|---|
+| Validation grounds, full animated world, HUD on | `TESTHARNESS_VG_CAPTURE` | 0 of 280 PNGs byte-identical | Free-running render clock; presentation-time animation (water, foliage, particles) advances by wall-clock between runs. Sampled frame: 424314 of 786432 pixels differ, mean delta 1.19, max 142 |
+| `capture-car-flipped.json` (Follow camera, settled physics subject, `HideHud`) | `ScenarioCapture` | 0 of 70 PNGs byte-identical | Same render-clock cause in a nearly static scene: sampled frame has 231240 of 786432 pixels differing but max channel delta 3, mean 1.0, so the drift is low-order-bit presentation noise, not structured motion |
+
+Full-world scenes are not byte-identical today. The fixed logic timestep already makes
+simulation deterministic; the remaining variance is render-time-driven presentation.
+`WI-G3-03`'s `EnableFixedRenderTimestep` is the remediation, after which per-scene identity
+is re-measured (its acceptance criteria). `terrain-grazing` additionally needs the G3-03
+camera pitch override before it can be measured at all. No candidate scene is dropped on
+current evidence; the drop-or-fix decision moves to G3-03 with the fixed clock available.
+
+### Reference host record
+
+Vulkan 1.4.341 instance, device `AMD Radeon RX 7600 (RADV NAVI33)`, driver Mesa radv
+26.0.8-1ubuntu0.3, discrete GPU. The goldens manifest (`WI-G3-04`) pins these values from
+`GraphicsDevice` at capture time.
+
+### Gap list (owner)
+
+| Missing capability | Owner |
+|---|---|
+| Fixed render clock for presentation determinism | `Game.EnableFixedRenderTimestep` (`WI-G3-03`) |
+| Stable scene set and per-scene capture frame | `visual-regression-scenes.json` + `vr-<scene>.json` profiles (`WI-G3-03`) |
+| Camera pitch and angle override | `CaptureCamera.PitchDegrees`/`AngleDegrees` (`WI-G3-03`) |
+| Per-preset and per-scale capture dimension | `CaptureRunSettings` preset + `ViewportScale` (`WI-G3-03`) |
+| Golden store, manifest and comparer | `visual-regression/`, `GoldenFrameComparer` (`WI-G3-04`) |
+| Pass/fail gate exit codes and update mode | `VisualRegressionRunner` (`WI-G3-03`, `WI-G3-04`) |
+| Sharpness and edge-aliasing metrics | `ImageQualityMetrics` (`WI-G3-02`, done) |
 
 ## Golden store
 
