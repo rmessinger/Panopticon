@@ -1,5 +1,7 @@
 # Task Card `WI-G7-01`: Audit sampler creation, consumers, and the terrain mip path
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G7-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G7 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G7 architecture](../../deep-dives/g7-texture-filtering.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -37,12 +39,12 @@ any sampler is touched. Read-only: no code changes.
    levels are generated versus copied, and the resampler used at each step.
 5. Record what would have to change for anisotropy to be configurable: whether samplers can be
    recreated at runtime, and which resource sets would need rebuilding.
-6. Write the findings into a new `docs/roadmap/implementation/track-g-g7-texture-filtering.md`,
+6. Fill the audit section in `docs/roadmap/implementation/track-g-g7-texture-filtering.md`,
    following the format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md).
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g7-texture-filtering.md` (new)
+- `docs/roadmap/implementation/track-g-g7-texture-filtering.md`
 
 ## Acceptance criteria
 

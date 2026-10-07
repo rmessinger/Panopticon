@@ -1,4 +1,6 @@
-# Task Card `WI-G9-02`: Draw the 2D layer at native resolution with point-anchored layout
+# Task Card `WI-G9-02`: Improve native-pixel 2D quality with proportional layout
+
+> Audience: agent. Phase implementation task.
 
 | Field | Value |
 |---|---|
@@ -7,14 +9,14 @@
 | Status | `Blocked` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
-| Prerequisites | `WI-G9-01`, `WI-G1-04`, `WI-G3-03`, plus a G9 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the G9 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Prerequisites | `WI-G9-01`, `WI-G1-04`, `WI-G2-03`, `WI-G3-04` |
+| Diagrams | [G9 architecture](../../deep-dives/g9-resolution-independent-2d.md#5-architecture-diagrams) |
 
 ## Goal
 
 Keep the control bar and HUD sharp on a scaled display by drawing the 2D layer at the framebuffer's
-native pixel resolution with higher-quality upscaling, while layout and hit regions stay anchored in
-the logical points G1 established.
+native pixel resolution with higher-quality upscaling, while layout and hit regions retain
+G1's proportional pixel-space convention.
 
 ## Context to read (and only this)
 
@@ -28,14 +30,13 @@ the logical points G1 established.
 
 ## Steps
 
-1. Pass the pixel-space output size to the 2D pass, so the draw resolution follows the framebuffer
-   rather than the logical window size.
-2. Keep every window manager's layout input in logical points, per the G1 classification, and apply
-   the scale at draw time rather than at layout time.
-3. Replace the 2D sampler with a higher-quality upscaling filter for the paths the audit identified
-   as scaled art. Leave paths that already draw at native size on the existing sampler.
-4. Leave every hit-region computation the audit listed in logical points, so input behaviour is
-   unchanged.
+1. Preserve G1's pixel-sized 2D pass and proportional WND/APT layout; add no DPI conversion.
+2. Rasterize live text at effective pixel size and snap borders in final pixel space. Cache fonts
+   by family, style and pixel size, following the audit's exact draw sites.
+3. Add Enhanced-only role-aware upscaling for identified legacy art, validated against fixed
+   crops. Faithful and already-native images retain their existing sampling.
+4. Keep hit regions in the same pixel space as converted mouse input. Retain original client
+   rectangles and test equivalent control targeting at scales 1 and 2.
 5. Validate with the G3 harness at a unity scale and at a non-unity scale, comparing the sharpness
    metric on the control bar region, and confirming the HUD occupies the same fraction of the frame
    at both scales.
@@ -68,15 +69,13 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not change the WND or APT art assets or their authored resolution.
-- Do not re-author layout definitions; the change is where the scale is applied, not the layout data.
-- Do not move any hit region into pixel space; that would undo G1.
-- If the 2D pass targets a surface whose size cannot be decoupled from the layout size, stop and mark
-  `Blocked`.
+- Do not re-author layout definitions or convert layout/input back to logical points.
+- Do not add a second DpiScale transform; G1 already established pixel-space input and layout.
+- If a draw callback mixes spaces, stop and record it in the audit before changing it.
 
 ## On completion
 
 - Set Status above to `Done` (or `Blocked` + reason).
-- Update the G9 phase Status in [`track-g-rendering-clarity.md`](../../track-g-rendering-clarity.md).
-- Tick the G9 clause in [`implementation-checklist.md`](../../implementation-checklist.md).
+- G9 remains incomplete until `WI-G9-03` finishes; update only this card's status.
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards: none new.

@@ -1,5 +1,7 @@
 # Task Card `WI-G2-02`: Introduce the graphics settings type and the two presets
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G2-02` |
@@ -7,8 +9,8 @@
 | Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-G2-01`, plus a G2 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the G2 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Prerequisites | `WI-G2-01` |
+| Diagrams | [G2 architecture](../../deep-dives/g2-graphics-settings-presets.md#5-architecture-diagrams) |
 
 ## Goal
 

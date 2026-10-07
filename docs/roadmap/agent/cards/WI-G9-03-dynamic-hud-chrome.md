@@ -1,5 +1,7 @@
 # Task Card `WI-G9-03`: Replace the pre-rendered HUD with dynamic drawing
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G9-03` |
@@ -7,8 +9,8 @@
 | Status | `Blocked` |
 | Type | `implementation` |
 | Effort | `L` |
-| Prerequisites | `WI-G9-02`, `WI-G2-02` (preset layer), `WI-G3-03` (golden frames); plus the G9 deep dive with populated architecture diagrams |
-| Diagrams | Blocked on the G9 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Prerequisites | `WI-G9-02`, `WI-G2-03`, `WI-G3-04` |
+| Diagrams | [G9 architecture](../../deep-dives/g9-resolution-independent-2d.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -31,18 +33,18 @@ unchanged.
 1. Inventory the control bar's bitmap dependencies (panels, button up/over/down states, frames,
    pips) from the loaded WND data; record which are pre-rendered bitmaps versus already-drawn
    elements.
-2. Define a dynamic-drawing equivalent per element: nine-slice or vector panels, procedural
+2. Define a dynamic-drawing equivalent per chrome element: procedural or vector panels, procedural
    button states (fill, border, hover/press), live text where bitmaps embed glyphs.
 3. Gate the switch on the G2 preset: `Enhanced` draws dynamic chrome, `Faithful` draws the
    original bitmaps. One switch point, no per-element conditionals scattered through the UI code.
-4. Match hit regions and layout to `WI-G9-02`'s logical-point anchors exactly; the rework must
+4. Match hit regions and layout to `WI-G9-02`'s proportional pixel-space anchors exactly; the rework must
    not move or resize controls.
 5. Add golden-frame captures under both presets at 1x and 4x native to the G3 set.
 
 ## Acceptance criteria
 
-- [ ] Under `Enhanced`, a captured frame's control-bar region contains no HUD bitmap draws
-      (verify via a draw-list audit or texture-use log).
+- [ ] Under `Enhanced`, the control-bar chrome contains no legacy panel/button/frame bitmap
+      draws (verify via a draw-list audit or texture-use log). Portraits, icons and minimap remain textures.
 - [ ] Captured frames are sharp at 4x native with no upscaled-art blur on HUD chrome.
 - [ ] `Faithful` output is pixel-identical to the pre-rework capture.
 - [ ] Hit regions and layout are unchanged from `WI-G9-02` anchors (input tests pass unchanged).
