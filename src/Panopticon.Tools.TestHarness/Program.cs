@@ -216,6 +216,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.VisualRegression)
+        {
+            Environment.ExitCode = VisualRegressionRunner.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.UnitValidationGround)
         {
             var groundPlan = ScenarioBuilder.BuildValidationGroundRun(config, installation, reporter);

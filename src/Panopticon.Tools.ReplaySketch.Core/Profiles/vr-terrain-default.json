@@ -1,0 +1,24 @@
+{
+  // Visual regression baseline scene: default tactical view over open terrain. Guards the
+  // global look for G6 (colour pipeline) and G7 (texture filtering).
+
+  "Name": "vr-terrain-default",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 600, "Y": 650, "Z": 0 },
+    "Height": 320
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

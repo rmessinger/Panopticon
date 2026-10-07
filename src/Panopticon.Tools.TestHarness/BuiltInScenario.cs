@@ -8,6 +8,7 @@ public enum BuiltInScenario
     MassBattleDeployment,
     EngagementCapture,
     ScenarioCapture,
+    VisualRegression,
     PhysicsStack,
     PbrMaterialProof,
     GltfRuntimeProof,

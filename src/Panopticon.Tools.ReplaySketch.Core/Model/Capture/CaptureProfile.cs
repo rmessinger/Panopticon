@@ -205,6 +205,15 @@ public class CaptureCamera
 
     /// <summary>Camera height above ground. Must be set in explicit mode.</summary>
     public float Height { get; set; } = 0f;
+
+    /// <summary>
+    /// Optional camera pitch override in degrees, applied after the default orientation.
+    /// Positive values tilt toward the horizon (grazing terrain views); null keeps the default.
+    /// </summary>
+    public float? PitchDegrees { get; set; } = null;
+
+    /// <summary>Optional camera yaw override in degrees; null keeps the default orientation.</summary>
+    public float? AngleDegrees { get; set; } = null;
 }
 
 public class CapturePoint

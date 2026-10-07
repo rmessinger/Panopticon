@@ -1,0 +1,24 @@
+{
+  // Foliage at distance for G5: cutout vegetation is where alpha-test clarity and coverage
+  // handling are most visible; wide high view keeps individual plants small on screen.
+
+  "Name": "vr-foliage-distance",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 480, "Y": 720, "Z": 0 },
+    "Height": 400
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

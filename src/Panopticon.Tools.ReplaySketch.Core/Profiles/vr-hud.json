@@ -1,0 +1,24 @@
+{
+  // HUD scene for G9: identical world view to vr-terrain-default with the HUD present, so
+  // UI-space changes (fonts, control bar chrome) are captured alongside the unchanged 3D scene.
+
+  "Name": "vr-hud",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": false,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 600, "Y": 650, "Z": 0 },
+    "Height": 320
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}
