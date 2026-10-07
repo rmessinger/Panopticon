@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G2-03` |
 | Roadmap phase | [Track G · G2](../../track-g-rendering-clarity.md): Graphics settings & fidelity presets |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-G2-02` |

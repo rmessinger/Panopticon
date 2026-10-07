@@ -70,6 +70,8 @@ public sealed class Game : DisposableBase, IGame
     /// </summary>
     public GraphicsSystem Graphics { get; }
 
+    public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Faithful();
+
     /// <summary>
     /// Gets the scripting system.
     /// </summary>

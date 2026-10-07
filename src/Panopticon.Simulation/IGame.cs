@@ -38,6 +38,12 @@ public interface IGame
     GraphicsSystem Graphics { get; }
 
     /// <summary>
+    /// Gets or sets the requested graphics fidelity settings. Application is frame-boundary
+    /// work owned by WI-G2-03; assigning a value alone does not rebuild render resources.
+    /// </summary>
+    GraphicsSettings GraphicsSettings { get; set; }
+
+    /// <summary>
     /// Gets the scripting system.
     /// </summary>
     ScriptingSystem Scripting { get; }
