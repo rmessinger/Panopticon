@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Panopticon.Tests.Content.Importing;
 
+[Collection("GraphicsTests")]
 public sealed class ImportedTextureMaterializerTests
 {
     [GraphicsFact]

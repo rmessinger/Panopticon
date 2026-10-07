@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Panopticon.Tests.Content.Importing;
 
+[Collection("GraphicsTests")]
 public sealed class ImportedModelMaterializerTests
 {
     private static ImportedTextureMapping CreateDefaultTextureMapping()

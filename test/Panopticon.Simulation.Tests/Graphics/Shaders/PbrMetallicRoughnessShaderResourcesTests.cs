@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Panopticon.Tests.Graphics.Shaders;
 
+[Collection("GraphicsTests")]
 public sealed class PbrMetallicRoughnessShaderResourcesTests
 {
     [GraphicsFact]
