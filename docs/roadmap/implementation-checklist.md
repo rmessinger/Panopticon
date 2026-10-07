@@ -686,7 +686,7 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
 
 See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 
-- [ ] B1 Profiling & robust benchmarking utilities (reusable harness, statistical rigor,
+- [x] B1 Profiling & robust benchmarking utilities (reusable harness, statistical rigor,
       regression detection, machine-readable output, hardware characterization, and Bepu
       step/contact/sync counters).
   - AC: a reusable harness runs repeatable seeded scenarios (incl. the 10k-unit interactive
@@ -694,12 +694,19 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     discarded, detects regressions vs. stored baselines, emits machine-readable output including
     Bepu step/contact/transform-sync counters for physics scenarios, and is reused by ≥1 other
     track.
+  - Done: `WI-B1-01..06`; `SimulationBenchmarkRunner` + four seeded reference scenarios incl.
+    `b1.10k-scale-anchor`, median bootstrap CIs with warmup excluded, `--baseline` regression
+    verdicts, JSON/CSV records. The Bepu counter clause applies once physics scenarios exist
+    (F4a); the first cross-track consumer is M1 (M5 closeout stage 2, `WI-B1-07` adapters).
 - [ ] B1 hardware characterization: probe host machine and include context in benchmark report.
   - AC: each benchmark run emits a `hardware` section in the machine-readable output containing CPU
     model/core count/frequency, system memory and measured bandwidth, and GPU device/VRAM; a
     `capacity_estimate` field derives the sustainable unit count at the target frame rate for that
     machine from the per-subsystem timing results; reports from different machines are unambiguously
     tagged so results can be compared across hardware.
+  - Partial: every record carries an environment record (OS, CPU model, core count, install id);
+    measured bandwidth, GPU/VRAM probe, and `capacity_estimate` land with the M1 probe
+    (stage 2) and the `WI-B1-07` adapters.
 - [ ] B1 benchmark matrix: sweep unitCount × scenario × subsystem; produce keyed benchmark results
       for regression comparison.
   - AC: a `ScenarioMatrix`-style benchmark matrix (axes: `unitCount` ∈ {1000, 5000, 10000},
@@ -707,6 +714,8 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     economy})
     runs each cell via the B1 harness; per-cell mean+variance is keyed for side-by-side comparison
     and regression detection.
+  - Deferred: the sweep's consumers (M1 probe, B4a/B4b payloads) follow in stage 2+; cells run
+    through the B1 harness unchanged.
 - [x] B1-1 Benchmark hook audit and report schema (`WI-B1-01`).
   - AC: the audit cites existing hooks; the JSON record is A2-compatible.
     Done: hook table and appendix re-verified against source in
@@ -739,6 +748,8 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
     BenchmarkDotNet untouched in `Panopticon.Benchmarks.DataStructures`; 20 install-free tests.
 - [ ] B1-7 B4a, B4b, and Western Front adapters (`WI-B1-07`).
   - AC: each consumer emits B1 records without a separate harness.
+  - Blocked: card flips Ready only once the B4a baseline, B4b payload, and Track W scenario cards
+    are Done (all outside M5 closeout scope).
 - [ ] B2 Allocation & hot-path cleanup (per-tick allocations, collision-pair lists, cache hot
       queries, and data layout).
   - AC: per-tick allocations in the named hot paths are eliminated (allocation profiler shows ~0
