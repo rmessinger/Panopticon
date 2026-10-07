@@ -21,11 +21,24 @@ public class GraphicsSettingsApplicationTests
     }
 
     [Fact]
-    public void TestEnhancedPresetKeepsSingleSampleOutput()
+    public void TestEnhancedPresetSelectsFourSamples()
     {
         var description = RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Enhanced());
 
-        Assert.Equal(RenderPipeline.GameOutputDescription.SampleCount, description.SampleCount);
+        Assert.Equal(TextureSampleCount.Count4, description.SampleCount);
+        Assert.Equal(RenderPipeline.GameOutputDescription.DepthAttachment.Value.Format, description.DepthAttachment.Value.Format);
+        Assert.Equal(RenderPipeline.GameOutputDescription.ColorAttachments[0].Format, description.ColorAttachments[0].Format);
+    }
+
+    [Fact]
+    public void TestExplicitSampleCountOverridesSettings()
+    {
+        // The 2D/UI path shares the settings formats but stays single-sample under MSAA.
+        var description = RenderPipeline.CreateGameOutputDescription(
+            GraphicsSettings.Enhanced(),
+            TextureSampleCount.Count1);
+
+        Assert.Equal(TextureSampleCount.Count1, description.SampleCount);
     }
 
     [Fact]
@@ -106,6 +119,20 @@ public class GraphicsSettingsApplicationTests
     }
 
     [GraphicsFact]
+    public void TestControllerSessionClampReportsPinnedSampleCount()
+    {
+        using var graphicsDevice = GraphicsDeviceUtility.CreateGraphicsDevice(null, null);
+        var controller = new GraphicsSettingsController(graphicsDevice);
+
+        // A session constructed at 1x must never report a higher effective count, even when
+        // the device and the preset both support 4x.
+        controller.Apply(GraphicsSettings.Enhanced(), sessionSampleCount: 1);
+
+        Assert.Equal(1, controller.Effective.SampleCount);
+        Assert.Contains(controller.Fallbacks, f => f.Contains("session"));
+    }
+
+    [GraphicsFact]
     public void TestControllerRoundTripRestoresFaithfulValues()
     {
         using var graphicsDevice = GraphicsDeviceUtility.CreateGraphicsDevice(null, null);
@@ -117,8 +144,8 @@ public class GraphicsSettingsApplicationTests
         controller.Apply(GraphicsSettings.Faithful());
         var faithful = controller.Effective;
 
+        Assert.Equal(1, faithful.SampleCount);
         Assert.Equal(ShadowTier.Original, faithful.ShadowTier);
-        Assert.Equal(enhanced.SampleCount, faithful.SampleCount);
         Assert.Equal(enhanced.Anisotropy, faithful.Anisotropy);
         Assert.Equal(enhanced.MipLodBias, faithful.MipLodBias);
     }

@@ -1140,7 +1140,7 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
     exits 2 against the committed goldens; goldens change only through
     `TESTHARNESS_VR_UPDATE_GOLDENS=1`; and in every scene's designated silhouette regions the 2x
     supersampled reference scores lower on edge aliasing than the native capture.
-- [ ] G4 Multisample antialiasing (sample count through `GameOutputDescription`, intermediate
+- [x] G4 Multisample antialiasing (sample count through `GameOutputDescription`, intermediate
       colour/depth targets and every pipeline description, plus a resolve before single-sample 2D)
       ([`WI-G4-01`](agent/cards/WI-G4-01-inventory-sample-count-sites.md),
       [`WI-G4-02`](agent/cards/WI-G4-02-thread-sample-count-and-resolve.md)).

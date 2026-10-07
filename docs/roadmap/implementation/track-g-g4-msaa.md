@@ -90,8 +90,55 @@ maps and ImGui are already separate. `FrameCapturer` captures the swapchain targ
 blit, so capture is unaffected. The one resolve site is `TextureCopier`'s source texture
 (`RenderPipeline.cs:183`), which becomes the resolved/composition texture.
 
+## Implementation (`WI-G4-02`, complete)
+
+Authoritative sample count: `ShaderSetStore.OutputDescription.SampleCount`. Pipelines are built
+once with it, so `EnsureIntermediateFramebuffer` sizes the intermediate attachments from the store
+description rather than the live settings; a mid-session preset swap can never desynchronize
+framebuffer from pipelines. `GraphicsSettingsController.Apply` takes the session sample count
+(after device clamp) and clamps later requests back to it with the fallback note
+"SampleCount N -> M (session was constructed at N; restart to change)"; `Game` passes the store
+count as that ceiling, so requested/effective reporting stays honest.
+
+Composition and resolve: at counts above 1 `EnsureIntermediateFramebuffer` also creates a
+single-sample composition colour texture plus an inert `D32_Float_S8_UInt` depth attachment. The
+depth attachment is never written by 2D, but the composition framebuffer must declare it: 2D
+pipelines' output description carries the depth format, and a colour-only framebuffer fails
+Veldrid's pipeline/framebuffer compatibility check (found on the Enhanced HUD scene during
+bring-up). `Execute` resolves `_intermediateTexture` into the composition texture immediately
+after the 3D pass (`CommandList.ResolveTexture`), binds the composition framebuffer for the 2D
+block, and `TextureCopier` blits the composition texture. At count 1 the composition objects are
+null: the intermediate is used directly, no resolve is recorded, and the command stream is
+byte-for-byte the pre-G4 shape.
+
+2D description split: `RenderPipeline.CreateGameOutputDescription` gained a
+`(GraphicsSettings, TextureSampleCount)` overload; `DrawingContext2D` is constructed with an
+explicit `Count1` while the 3D pass keeps the settings-derived count.
+
+Preset selection: `GraphicsSettings.Enhanced()` sets `SampleCount` 4 (plus the existing shadow
+tier). The preset reaches construction through a new optional `Game` constructor parameter
+`graphicsSettings`, applied before graphics-resource construction; `ScenarioCaptureRunner` passes
+`CaptureRunSettings.GraphicsSettings` there (the post-construction assignment was removed).
+Mid-session count changes report the session fallback instead of applying.
+
 ## Validation and risks
 
 Capability tests; supported 1/2/4/8 captures; repeated switches/resizes. Resolve precedes 2D and
 the final sampled blit. Faithful 1x is exact; 4x reduces aliasing in G3 silhouette regions.
 Target reuse checks count and format as well as dimensions. G5 owns cutout coverage state.
+
+### Evidence (`WI-G4-02`)
+
+- Gate run before golden update: all six `faithful` scenes golden Passed with zero differing
+  pixels (Faithful is byte-identical to pre-G4); all six `enhanced` scenes regressed
+  (fractions 0.008-0.028), confirming 4x reached every pass.
+- Silhouette metric (`unit-silhouettes`): EdgeAliasing 0.0725 at 1x vs 0.0707 at 4x;
+  supersampled references score 0.0641/0.0627; `SilhouetteImproved` true for both presets.
+- Enhanced goldens regenerated on the reference host via `TESTHARNESS_VR_UPDATE_GOLDENS=1`;
+  only the six enhanced manifest entries changed (hash/scores), faithful hashes unchanged.
+  Post-update gate exits 0 with 12 goldens passing.
+- 2x and 8x exercised by temporarily editing the preset sample count and running the full
+  harness each time: all scenes captured, no `VeldridException`, no pipeline/framebuffer
+  compatibility errors.
+- Session clamp: requesting a higher count than construction reports the session fallback rather
+  than applying it.

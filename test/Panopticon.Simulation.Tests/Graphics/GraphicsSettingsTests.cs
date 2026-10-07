@@ -21,12 +21,13 @@ public class GraphicsSettingsTests : MockedGameTest
     }
 
     [Fact]
-    public void EnhancedPresetDiffersOnlyOnShadowTier()
+    public void EnhancedPresetDiffersOnlyOnSampleCountAndShadowTier()
     {
         var faithful = GraphicsSettings.Faithful();
         var enhanced = GraphicsSettings.Enhanced();
 
-        Assert.Equal(faithful.SampleCount, enhanced.SampleCount);
+        // 4x MSAA landed with G4; every other knob stays Faithful until its owning phase.
+        Assert.Equal(4, enhanced.SampleCount);
         Assert.Equal(faithful.AlphaTestMode, enhanced.AlphaTestMode);
         Assert.Equal(faithful.ColourSpaceMode, enhanced.ColourSpaceMode);
         Assert.Equal(faithful.Anisotropy, enhanced.Anisotropy);

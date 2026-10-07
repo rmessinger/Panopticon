@@ -29,7 +29,12 @@ internal sealed class GraphicsSettingsController
         _graphicsDevice = graphicsDevice;
     }
 
-    public void Apply(GraphicsSettings requested)
+    /// <summary>
+    /// Validates <paramref name="requested"/> and produces <see cref="Effective"/>. The optional
+    /// <paramref name="sessionSampleCount"/> ceiling reports the count the session's pipelines
+    /// were built with: sample-count changes need a new session, later requests clamp back.
+    /// </summary>
+    public void Apply(GraphicsSettings requested, int sessionSampleCount = 0)
     {
         ArgumentNullException.ThrowIfNull(requested);
 
@@ -45,6 +50,12 @@ internal sealed class GraphicsSettingsController
         {
             _fallbacks.Add($"SampleCount {effectiveSampleCount} -> {sampleCountLimit} (device format limit).");
             effectiveSampleCount = sampleCountLimit;
+        }
+
+        if (sessionSampleCount > 0 && effectiveSampleCount > sessionSampleCount)
+        {
+            _fallbacks.Add($"SampleCount {effectiveSampleCount} -> {sessionSampleCount} (session was constructed at {sessionSampleCount}; restart to change).");
+            effectiveSampleCount = sessionSampleCount;
         }
 
         Effective = GraphicsSettings.Create(

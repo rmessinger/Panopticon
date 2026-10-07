@@ -43,12 +43,12 @@ public sealed class GraphicsSettings
         realisticProportions: false);
 
     /// <summary>
-    /// Differs from <see cref="Faithful"/> only on the shadow tier, the one knob with an
-    /// existing safe runtime path in G2 itself; other members stay Faithful until their
+    /// Differs from <see cref="Faithful"/> on the shadow tier and the sample count: 4x MSAA
+    /// (G4) plus the four-cascade 2048 shadow tier. Other members stay Faithful until their
     /// owning phase lands.
     /// </summary>
     public static GraphicsSettings Enhanced() => new(
-        1,
+        4,
         AlphaTestMode.LegacyCutoff,
         ColourSpaceMode.LegacyGamma,
         4,
