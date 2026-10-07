@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G2-02` |
 | Roadmap phase | [Track G · G2](../../track-g-rendering-clarity.md): Graphics settings & fidelity presets |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-G2-01` |
@@ -50,10 +50,10 @@ yet.
 
 ## Acceptance criteria
 
-- [ ] Every knob in the `WI-G2-01` table has a corresponding member.
-- [ ] A test asserts the `Faithful` preset reproduces the pre-card hardcoded values member by member.
-- [ ] No render path behaviour changes: the settings object is constructed but not yet consumed.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Every knob in the `WI-G2-01` table has a corresponding member.
+- [x] A test asserts the `Faithful` preset reproduces the pre-card hardcoded values member by member.
+- [x] No render path behaviour changes: the settings object is constructed but not yet consumed.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
