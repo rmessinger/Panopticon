@@ -1,14 +1,16 @@
 # Task Card `WI-G7-02`: Configurable anisotropy, mip LOD bias, and terrain mip quality
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G7-02` |
 | Roadmap phase | [Track G · G7](../../track-g-rendering-clarity.md): Texture filtering & mip quality |
 | Status | `Blocked` |
 | Type | `mechanical-refactor` |
-| Effort | `S` |
-| Prerequisites | `WI-G7-01`, `WI-G3-03`, `WI-G2-03`, plus a G7 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the G7 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Effort | `M` |
+| Prerequisites | `WI-G7-01`, `WI-G3-04`, `WI-G2-03` |
+| Diagrams | [G7 architecture](../../deep-dives/g7-texture-filtering.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -34,9 +36,9 @@ shimmer under camera motion.
    in the shader sample call instead, and only on the paths the audit listed.
 3. Rebuild the resource sets the audit named when the samplers are recreated, so a settings change
    takes effect without a restart.
-4. Raise the terrain texture-array mip quality per the audit's route description: generate the levels
-   the current path merely copies, using the higher-quality resampler already used elsewhere in that
-   file rather than introducing a new one.
+4. Keep the existing Lanczos3 terrain resample and generated mip chain unless the audit proves a
+   defect. Copying pre-generated levels through staging is not missing mip generation. Test array
+   dimensions, seams and mip provenance; keep G5 alpha/G6 colour policy compatible.
 5. Validate with the G3 harness on a grazing-angle terrain scene, comparing the sharpness metric at
    4x and 16x, and checking a short camera-motion capture for shimmer.
 

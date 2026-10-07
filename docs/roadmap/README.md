@@ -204,6 +204,15 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
 | [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
 | [`deep-dives/g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | Track G phase G1 - High-DPI drawable & resolution correctness (logical points versus physical pixels across window, panel, viewport and GUI). |
+| [`deep-dives/g2-graphics-settings-presets.md`](deep-dives/g2-graphics-settings-presets.md) | Track G phase G2 - Graphics settings layer and `Faithful`/`Enhanced` fidelity presets. |
+| [`deep-dives/g3-visual-regression-harness.md`](deep-dives/g3-visual-regression-harness.md) | Track G phase G3 - Headless golden-frame gate per preset with sharpness and edge-aliasing metrics. |
+| [`deep-dives/g4-msaa.md`](deep-dives/g4-msaa.md) | Track G phase G4 - Multisample antialiasing: sample count through the main pass and a resolve before 2D. |
+| [`deep-dives/g5-alpha-test-clarity.md`](deep-dives/g5-alpha-test-clarity.md) | Track G phase G5 - Cutout and alpha-test clarity: alpha-to-coverage and coverage-preserving cutout mips. |
+| [`deep-dives/g6-gamma-correct-rendering.md`](deep-dives/g6-gamma-correct-rendering.md) | Track G phase G6 - Gamma-correct rendering: sRGB colour views, linear shading and mips, dithered output. |
+| [`deep-dives/g7-texture-filtering.md`](deep-dives/g7-texture-filtering.md) | Track G phase G7 - Configurable anisotropy, mip LOD bias, and terrain texture-array mip quality. |
+| [`deep-dives/g8-shadow-quality.md`](deep-dives/g8-shadow-quality.md) | Track G phase G8 - Shadow quality tier: four 2048 cascades and a receiver-side slope-scaled bias. |
+| [`deep-dives/g9-resolution-independent-2d.md`](deep-dives/g9-resolution-independent-2d.md) | Track G phase G9 - Resolution-independent 2D and UI, and the dynamically drawn HUD. |
+| [`deep-dives/g10-realistic-proportions.md`](deep-dives/g10-realistic-proportions.md) | Track G phase G10 - Realistic proportions: reference scale audit and presentation-only aircraft scale overrides. |
 
 ---
 

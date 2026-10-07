@@ -1,5 +1,7 @@
 # Task Card `WI-G2-03`: Wire the graphics settings into render resource construction
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G2-03` |
@@ -8,7 +10,7 @@
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-G2-02` |
-| Diagrams | Blocked on the G2 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Diagrams | [G2 architecture](../../deep-dives/g2-graphics-settings-presets.md#5-architecture-diagrams) |
 
 ## Goal
 

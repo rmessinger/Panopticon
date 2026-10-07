@@ -253,15 +253,38 @@ mindmap
         G1-2 AllowHighDpi and drawable size
         G1-3 Render surfaces and GUI in pixels
         G1-4 Mouse input to pixels
-      G2 Graphics settings and fidelity presets
-      G3 Visual regression harness
-      G4 Multisample antialiasing
-      G5 Cutout and alpha-test clarity
-      G6 Gamma-correct rendering
-      G7 Texture filtering and mip quality
-      G8 Shadow quality tier
-      G9 Resolution-independent 2D and UI
-      G10 Realistic proportions
+      G2 Graphics settings and fidelity presets ⮕
+        G2-1 Render-state audit
+        G2-2 Settings type and presets
+        G2-3 Applied settings and resource lifecycle
+      G3 Visual regression harness ⮕
+        G3-1 Capture-path audit
+        G3-2 Image-quality metrics
+        G3-3 Fixed-scene capture pass
+        G3-4 Golden store and regression gate
+      G4 Multisample antialiasing ⮕
+        G4-1 Sample-count inventory
+        G4-2 Multisample targets and resolve
+      G5 Cutout and alpha-test clarity ⮕
+        G5-1 Material and mip audit
+        G5-2 Coverage-preserving mips and alpha-to-coverage
+      G6 Gamma-correct rendering ⮕
+        G6-1 Colour-space audit
+        G6-2 Linear shading and output dither
+      G7 Texture filtering and mip quality ⮕
+        G7-1 Sampler and mip audit
+        G7-2 Anisotropy and mip bias
+      G8 Shadow quality tier ⮕
+        G8-1 Shadow-settings audit
+        G8-2 Four-cascade tier and receiver slope bias
+      G9 Resolution-independent 2D and UI ⮕
+        G9-1 UI resolution audit
+        G9-2 Native 2D and role-aware sampling
+        G9-3 Dynamic HUD chrome
+      G10 Realistic proportions ⮕
+        G10-1 Reference-scale audit
+        G10-2 Render-only scale overrides
+        G10-3 Explicit opt-in and golden frames
     H. Map and unit storage formats
       H1 Format requirements and current-state audit
       H2 Format-agnostic map interchange abstraction

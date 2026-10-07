@@ -1,5 +1,7 @@
 # Task Card `WI-G9-01`: Audit the 2D and UI resolution and sampling path
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G9-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G9 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G9 architecture](../../deep-dives/g9-resolution-independent-2d.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -25,9 +27,9 @@ stage before any change is made. Read-only: no code changes.
 - `src/Panopticon.Simulation/Gui/Apt/AptWindowManager.cs`: the same, plus its size-dependent resource
   creation.
 - `src/Panopticon.Simulation/GamePanel.cs` and `src/Panopticon.Simulation/GameWindow.cs:37-58`: `ClientBounds`,
-  `WindowScale`, and `CursorScale`, which are the sizes those managers consume.
+  `DrawableBounds` and `DpiScale`, distinguishing the OS boundary from pixel-space managers.
 - `docs/roadmap/implementation/track-g-g1-high-dpi.md`: the G1 consumer classification, since G9's
-  layout must stay in logical points while its drawing moves to pixels.
+  layout and input stay in proportional physical-pixel space without a second DPI transform.
 
 ## Steps
 
@@ -38,15 +40,15 @@ stage before any change is made. Read-only: no code changes.
 3. Record the native authored resolution of the WND and APT art and how it is scaled to the
    framebuffer: whether by a layout transform, a sampler-level scale, or an intermediate target.
 4. Record every place a hit region or input coordinate is computed for the 2D layer, since those must
-   stay in logical points when drawing moves to native resolution.
+   stay aligned with the proportional pixel-space layout at native resolution.
 5. Record whether the 2D pass draws into the intermediate target or directly into the swapchain
    target, since that decides whether 2D would be affected by G4's MSAA and G6's output encode.
-6. Write the findings into a new `docs/roadmap/implementation/track-g-g9-resolution-independent-2d.md`,
+6. Fill the audit section in `docs/roadmap/implementation/track-g-g9-resolution-independent-2d.md`,
    following the format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md).
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g9-resolution-independent-2d.md` (new)
+- `docs/roadmap/implementation/track-g-g9-resolution-independent-2d.md`
 
 ## Acceptance criteria
 

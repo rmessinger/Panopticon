@@ -1,5 +1,7 @@
 # Task Card `WI-G3-02`: Add sharpness and edge-aliasing image metrics with unit tests
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G3-02` |
@@ -8,7 +10,7 @@
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | Not required: this card adds pure image-analysis functions over a pixel buffer and touches no render path, so the [diagram gate](../README.md#how-to-maintain-this-guide) on executable render work does not apply. |
+| Diagrams | [G3 architecture](../../deep-dives/g3-visual-regression-harness.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -65,7 +67,7 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not add golden images, capture code, or a comparison runner. That is `WI-G3-03`.
+- Do not add capture code or golden comparisons. Those are `WI-G3-03` and `WI-G3-04`.
 - Do not change `FrameCapturer` or `FrameCaptureService`.
 - Do not add a perceptual or learned metric. Both metrics must be simple, formula-defined, and
   explainable from the code.
