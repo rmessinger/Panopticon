@@ -33,7 +33,7 @@ public class ObjectDefinition : BaseAsset
     {
         var name = parser.ParseIdentifier();
 
-        var reskinClone = parser.ParseObjectReference().Value.Clone();
+        var reskinClone = parser.FindObjectForClone(parser.ParseAssetReference()).Clone();
 
         var result = parser.ParseBlock(FieldParseTable, resultObject: reskinClone);
 
@@ -46,7 +46,7 @@ public class ObjectDefinition : BaseAsset
     {
         var name = parser.ParseIdentifier();
 
-        var parentClone = parser.ParseObjectReference().Value.Clone();
+        var parentClone = parser.FindObjectForClone(parser.ParseAssetReference()).Clone();
 
         var result = parser.ParseBlock(FieldParseTable, resultObject: parentClone);
 

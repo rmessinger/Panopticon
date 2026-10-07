@@ -90,39 +90,6 @@ public sealed class UnitContentPublisher
     }
 
     /// <summary>
-    /// Publishes Generals content the INI parser already registered in the root scope: succeeds only
-    /// when every validated asset is exactly the instance the store resolves for its id. Adopted
-    /// content belongs to the root scope and cannot be unloaded.
-    /// </summary>
-    public PublicationResult Adopt(MaterializedUnitContent content)
-    {
-        ArgumentNullException.ThrowIfNull(content);
-
-        if (!content.Source.Equals(ContentSource.Generals))
-        {
-            throw new InvalidOperationException("Only Generals content registered by the INI loader can be adopted.");
-        }
-
-        if (!content.Succeeded)
-        {
-            throw new InvalidOperationException("Only content that materialized without errors can be adopted.");
-        }
-
-        var diagnostics = content.Assets
-            .Where(pair => !ReferenceEquals(Lookup(pair.Key), pair.Value))
-            .Select(pair => Error(DiagnosticCodes.PublicationFailed, $"'{pair.Key}' is not the instance registered in the store.", pair.Key))
-            .ToList();
-
-        if (diagnostics.Count > 0)
-        {
-            return new PublicationResult(null, diagnostics);
-        }
-
-        content.Context.BindToStore(Lookup);
-        return new PublicationResult(new PublishedUnitContent(content.Source, content.Assets.Keys.ToArray(), scopeDepth: 0), diagnostics);
-    }
-
-    /// <summary>
     /// Removes a publication. It must be the most recent scope, and no live object may still use one
     /// of its definitions.
     /// </summary>
@@ -133,11 +100,6 @@ public sealed class UnitContentPublisher
         if (published.IsUnloaded)
         {
             throw new InvalidOperationException("This publication was already unloaded.");
-        }
-
-        if (published.ScopeDepth == 0)
-        {
-            throw new InvalidOperationException("Adopted root content cannot be unloaded.");
         }
 
         if (_store.ScopeDepth != published.ScopeDepth)

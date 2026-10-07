@@ -1,6 +1,7 @@
 #nullable enable annotations
 using System;
 using System.Text;
+using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Generals;
 using Panopticon.Content.Translation;
 using Panopticon.Data.Ini;
@@ -30,6 +31,8 @@ public sealed class ContentManager : DisposableBase
     public DiskFileSystem UserDataFileSystem { get; internal set; }
 
     public IniDataContext IniDataContext { get; }
+
+    private UnitContentStaging? _unitStaging;
 
     public ITranslationManager TranslationManager { get; }
     // LocaleSpecificEncoding is mainaly used by "9x" ini files
@@ -73,6 +76,12 @@ public sealed class ContentManager : DisposableBase
             AddDisposeAction(() => TranslationManager.LanguageChanged -= OnLanguageChanged);
 
             IniDataContext = new IniDataContext();
+
+            // Card WI-H2a-19: Generals/ZH unit blocks parse into staging and reach the store only
+            // through publication below; other games keep direct parse-time registration.
+            _unitStaging = sageGame is SageGame.CncGenerals or SageGame.CncGeneralsZeroHour
+                ? new UnitContentStaging()
+                : null;
 
             SubsystemLoader = new SubsystemLoader(game.Definition, FileSystem, game, this);
 
@@ -119,11 +128,12 @@ public sealed class ContentManager : DisposableBase
             }
 
             // Unit content flows through the shared import seam (H2a): the adapter describes what the
-            // INI parser registered, and the pipeline validates and adopts it before anything uses it.
+            // INI parser staged, and the pipeline validates and publishes it before anything uses it.
             if (sageGame is SageGame.CncGenerals or SageGame.CncGeneralsZeroHour)
             {
-                UnitImport = GeneralsUnitImport.Run(_game.AssetStore, sageGame);
+                UnitImport = GeneralsUnitImport.Run(_game.AssetStore, sageGame, _unitStaging!);
                 UnitImport.ThrowIfFailed();
+                _unitStaging = null;
             }
 
             UpgradeManager.Initialize(_game.AssetStore);
@@ -150,7 +160,7 @@ public sealed class ContentManager : DisposableBase
     {
         using (GameTrace.TraceDurationEvent($"LoadIniFile('{entry.FilePath}'"))
         {
-            var parser = new IniParser(entry, _game.AssetStore, _game.SageGame, IniDataContext, LocaleSpecificEncoding);
+            var parser = new IniParser(entry, _game.AssetStore, _game.SageGame, IniDataContext, LocaleSpecificEncoding, _unitStaging);
             parser.ParseFile();
         }
     }

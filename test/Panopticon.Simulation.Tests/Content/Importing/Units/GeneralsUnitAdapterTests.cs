@@ -79,15 +79,16 @@ public class GeneralsUnitAdapterTests
         End
         """;
 
-    private static AssetStore Parse(string ini)
+    private static (AssetStore Store, UnitContentStaging Staging) Parse(string ini)
     {
         using var fileSystem = new MemoryFileSystem();
         fileSystem.AddFile(@"Data\INI\Test.ini", ini);
 
         var store = new AssetStore(SageGame.CncGenerals, fileSystem, null, null, null, null, null, OnDemandAssetLoadStrategy.None);
         store.PushScope();
-        new IniParser(fileSystem.GetFile(@"Data\INI\Test.ini")!, store, SageGame.CncGenerals, new IniDataContext(), Encoding.UTF8).ParseFile();
-        return store;
+        var staging = new UnitContentStaging();
+        new IniParser(fileSystem.GetFile(@"Data\INI\Test.ini")!, store, SageGame.CncGenerals, new IniDataContext(), Encoding.UTF8, staging).ParseFile();
+        return (store, staging);
     }
 
     private static ContentId Unit(string name) => new(ContentSource.Generals, ContentKind.Unit, name);
@@ -98,20 +99,33 @@ public class GeneralsUnitAdapterTests
     }
 
     [Fact]
-    public void ParsedContentPassesSharedPipelineAndIsAdopted()
+    public void StagedContentReachesTheStoreOnlyThroughPublication()
     {
-        var store = Parse(Ini);
-        var report = GeneralsUnitImport.Run(store, SageGame.CncGenerals);
+        var (store, staging) = Parse(Ini);
+
+        // Card WI-H2a-19: no unit block registers at parse time.
+        Assert.NotEqual(0, staging.Count);
+        Assert.Equal(0, store.ObjectDefinitions.Count);
+        Assert.Equal(0, store.WeaponTemplates.Count);
+        Assert.Equal(0, store.ArmorTemplates.Count);
+        Assert.Equal(0, store.LocomotorTemplates.Count);
+        Assert.Equal(0, store.Upgrades.Count);
+
+        var report = GeneralsUnitImport.Run(store, SageGame.CncGenerals, staging);
 
         Assert.True(report.Succeeded, string.Join("\n", report.Diagnostics));
         Assert.Contains(Unit("Ranger"), report.Published!.Ids);
-        Assert.Throws<System.InvalidOperationException>(() => new Panopticon.Content.Importing.Units.Materialization.UnitContentPublisher(store).Unload(report.Published));
+        Assert.NotNull(store.ObjectDefinitions.GetByName("Ranger"));
+
+        new Panopticon.Content.Importing.Units.Materialization.UnitContentPublisher(store).Unload(report.Published);
+        Assert.Null(store.ObjectDefinitions.GetByName("Ranger"));
     }
 
     [Fact]
     public void TypedValuesDescribeNativeDefinitions()
     {
-        var report = GeneralsUnitImport.Run(Parse(Ini), SageGame.CncGenerals);
+        var (store, staging) = Parse(Ini);
+        var report = GeneralsUnitImport.Run(store, SageGame.CncGenerals, staging);
         var ranger = Record(report, "Ranger");
 
         Assert.Equal(180, ranger.MaxHealth.Value.Value);
@@ -136,8 +150,8 @@ public class GeneralsUnitAdapterTests
     [Fact]
     public void ChildAndReskinKeepNativeInheritance()
     {
-        var store = Parse(Ini);
-        var report = GeneralsUnitImport.Run(store, SageGame.CncGenerals);
+        var (store, staging) = Parse(Ini);
+        var report = GeneralsUnitImport.Run(store, SageGame.CncGenerals, staging);
 
         Assert.Equal(240, Record(report, "VeteranRanger").MaxHealth.Value.Value);
         Assert.Equal(300, Record(report, "RangerDesert").BuildCost.Value.Value);
@@ -149,11 +163,11 @@ public class GeneralsUnitAdapterTests
     [Fact]
     public void ModulesCarryLegacyBindingsToNativeData()
     {
-        var store = Parse(Ini);
-        var adapter = new GeneralsUnitAdapter(store, SageGame.CncGenerals);
+        var (_, staging) = Parse(Ini);
+        var adapter = new GeneralsUnitAdapter(staging, SageGame.CncGenerals);
         var set = adapter.Read([]);
         var ranger = set.Records.OfType<UnitRecord>().Single(r => r.Id.Equals(Unit("Ranger")));
-        var native = store.ObjectDefinitions.GetByName("Ranger");
+        var native = staging.Objects.Single(o => o.Name == "Ranger");
 
         var body = ranger.ResolvedModules.Single(m => m.Tag == "ModuleTag_Body");
         Assert.Equal("ActiveBody", body.Family);
@@ -164,8 +178,8 @@ public class GeneralsUnitAdapterTests
     [Fact]
     public void LazyReferencesStillResolveToNativeTemplates()
     {
-        var store = Parse(Ini);
-        GeneralsUnitImport.Run(store, SageGame.CncGenerals).ThrowIfFailed();
+        var (store, staging) = Parse(Ini);
+        GeneralsUnitImport.Run(store, SageGame.CncGenerals, staging).ThrowIfFailed();
 
         var native = store.ObjectDefinitions.GetByName("Ranger");
         Assert.Same(store.WeaponTemplates.GetByName("RangerRifle"), native.WeaponSets.Values.Single().Slots[0].Weapon.Value);
@@ -174,7 +188,8 @@ public class GeneralsUnitAdapterTests
     [Fact]
     public void DanglingReferenceFailsTheImport()
     {
-        var report = GeneralsUnitImport.Run(Parse(Ini.Replace("Weapon = PRIMARY RangerRifle", "Weapon = PRIMARY MissingRifle")), SageGame.CncGenerals);
+        var (store, staging) = Parse(Ini.Replace("Weapon = PRIMARY RangerRifle", "Weapon = PRIMARY MissingRifle"));
+        var report = GeneralsUnitImport.Run(store, SageGame.CncGenerals, staging);
 
         Assert.False(report.Succeeded);
         Assert.Contains(report.Errors, d => d.Code == DiagnosticCodes.MissingDependency && d.Message.Contains("MissingRifle"));
