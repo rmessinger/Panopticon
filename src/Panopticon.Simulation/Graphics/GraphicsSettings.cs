@@ -57,6 +57,28 @@ public sealed class GraphicsSettings
         UiMode.LegacyArt,
         realisticProportions: false);
 
+    /// <summary>
+    /// Builds a settings value from explicit members. Used by the capability-clamping
+    /// controller and tests; presets remain the public entry points.
+    /// </summary>
+    internal static GraphicsSettings Create(
+        int sampleCount,
+        AlphaTestMode alphaTestMode,
+        ColourSpaceMode colourSpaceMode,
+        int anisotropy,
+        float mipLodBias,
+        ShadowTier shadowTier,
+        UiMode uiMode,
+        bool realisticProportions) => new(
+        sampleCount,
+        alphaTestMode,
+        colourSpaceMode,
+        anisotropy,
+        mipLodBias,
+        shadowTier,
+        uiMode,
+        realisticProportions);
+
     /// <summary>Multisample count for 3D render targets; 1 is single-sample.</summary>
     public int SampleCount { get; }
 

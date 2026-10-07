@@ -104,6 +104,36 @@ Even where schema fields exist, they are boolean or level-based, not the tier/va
 needs, and no collection has a runtime consumer. G2 settings are engine-owned; the LOD assets
 stay parsed-but-unconsumed data and must not become the settings source.
 
+## Application and recreation triggers (WI-G2-03)
+
+Settings flow into construction through two carriers. `RenderPipeline.CreateGameOutputDescription(GraphicsSettings)`
+derives the shared output description (sample count; colour format fixed until G6), and `StandardGraphicsResources`
+reads anisotropy and mip bias in its constructor. `Game.Render` applies a changed settings instance at the frame
+boundary: `GraphicsSettingsController` validates requested values against device capability and produces the
+effective snapshot, and `Scene3D.Shadows.ApplyTier` maps the shadow tier onto the existing mutable
+`ShadowSettings`, whose `ShadowMapRenderer` recreation path already handles size and cascade changes safely.
+
+| Knob | Reads settings at | Runtime switch path | Recreation trigger |
+|---|---|---|---|
+| SampleCount | `Game` construction (`ShaderSetStore`, via `CreateGameOutputDescription`); `RenderPipeline` intermediate targets each `EnsureIntermediateFramebuffer` | None in G2; G4 owns | Pipelines via new `ShaderSetStore`; intermediates rebuild on size or sample-count change |
+| Anisotropy | `StandardGraphicsResources` constructor | None in G2; G7 owns | Sampler plus dependent resource sets (`GlobalShaderResourceData`, `RadiusCursor`); partial rebuild unsafe |
+| MipLodBias | `StandardGraphicsResources` constructor | None in G2; G7 owns | Same as anisotropy; vendored Veldrid stores `LodBias` as `int`, G7 must extend it if sub-integer bias is needed |
+| ShadowTier | `Scene3D` construction and `Game.Render` frame boundary | Live: `ShadowSettings.ApplyTier` | Existing `ShadowData` recreation; bias/offset stay live constants |
+| AlphaTestMode | Carried only | None; G5 owns the shader path | G5 records it |
+| ColourSpaceMode | Carried only | None; G6 owns the format path | G6 records it |
+
+Requested-versus-effective reporting: `GraphicsSettingsController` clamps `SampleCount` to
+`GetSampleCountLimit(D32_Float_S8_UInt)` and records fallback reasons; `RenderSettingsView` shows the requested
+values with effective sample count where they differ.
+
+Two consumer sites read the description through the load context instead of constructor injection
+(`CameraFadeOverlay`, `RenderPipeline.DrawingContext`); the remaining pipeline sites read
+`store.OutputDescription`, which is the injected description carrier for shader resource types.
+
+Two audit literals stay intentionally, both owned by later phases: the shader-side alpha-test threshold (G5) and
+the colour format literals in `CreateGameOutputDescription` plus swapchain, water and font surfaces (G6). Both
+presets carry identical values for those knobs in G2, so no behaviour can differ.
+
 ## Validation and risks
 
 Pure default/capability tests; repeat preset switches and resizes; post-G1 Faithful capture.

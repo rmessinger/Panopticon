@@ -72,6 +72,16 @@ public sealed class Game : DisposableBase, IGame
 
     public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Faithful();
 
+    internal GraphicsSettingsController GraphicsSettingsController { get; private set; }
+
+    /// <summary>
+    /// Gets the settings snapshot after device-capability validation; may differ from
+    /// <see cref="GraphicsSettings"/> when the requested values exceed device limits.
+    /// </summary>
+    public GraphicsSettings EffectiveGraphicsSettings => GraphicsSettingsController.Effective;
+
+    private GraphicsSettings _appliedGraphicsSettings;
+
     /// <summary>
     /// Gets the scripting system.
     /// </summary>
@@ -571,10 +581,11 @@ public sealed class Game : DisposableBase, IGame
 
             _wndCallbackResolver = new WndCallbackResolver();
 
-            var standardGraphicsResources = AddDisposable(new StandardGraphicsResources(GraphicsDevice));
-            var shaderSetStore = AddDisposable(new ShaderSetStore(GraphicsDevice, RenderPipeline.GameOutputDescription));
+            var standardGraphicsResources = AddDisposable(new StandardGraphicsResources(GraphicsDevice, GraphicsSettings));
+            var shaderSetStore = AddDisposable(new ShaderSetStore(GraphicsDevice, RenderPipeline.CreateGameOutputDescription(GraphicsSettings)));
             var shaderResources = AddDisposable(new ShaderResourceManager(GraphicsDevice, standardGraphicsResources, shaderSetStore));
             GraphicsLoadContext = new GraphicsLoadContext(GraphicsDevice, standardGraphicsResources, shaderResources, shaderSetStore);
+            GraphicsSettingsController = new GraphicsSettingsController(GraphicsDevice);
 
             AssetStore = new AssetStore(
                 SageGame,
@@ -1008,8 +1019,23 @@ public sealed class Game : DisposableBase, IGame
 
     public void Render()
     {
+        ApplyGraphicsSettingsIfChanged();
+
         Graphics.Draw(RenderTime);
         RenderCompleted?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ApplyGraphicsSettingsIfChanged()
+    {
+        if (ReferenceEquals(_appliedGraphicsSettings, GraphicsSettings))
+        {
+            return;
+        }
+
+        _appliedGraphicsSettings = GraphicsSettings;
+
+        GraphicsSettingsController.Apply(GraphicsSettings);
+        Scene3D?.Shadows.ApplyTier(GraphicsSettings.ShadowTier);
     }
 
     protected override void Dispose(bool disposeManagedResources)

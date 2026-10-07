@@ -31,7 +31,7 @@ internal sealed class CameraFadeOverlay : DisposableBase, IPersistableObject
             game.ContentManager,
             game.GraphicsLoadContext,
             BlendStateDescription.SingleAdditiveBlend,
-            RenderPipeline.GameOutputDescription));
+            game.GraphicsLoadContext.ShaderSetStore.OutputDescription));
     }
 
     public void Persist(StatePersister reader)

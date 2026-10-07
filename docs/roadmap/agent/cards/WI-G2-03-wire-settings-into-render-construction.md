@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G2-03` |
 | Roadmap phase | [Track G · G2](../../track-g-rendering-clarity.md): Graphics settings & fidelity presets |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-G2-02` |
@@ -49,10 +49,20 @@ observable output must not change while both presets still carry the current val
 
 ## Acceptance criteria
 
-- [ ] No literal remains at any file:line the audit listed as a settings-owned knob.
-- [ ] A captured frame under `Faithful` is byte-identical to the pre-card capture of the same scene.
-- [ ] Knobs requiring resource recreation are documented, not silently ignored.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] No literal remains at any file:line the audit listed as a settings-owned knob, except the
+  two documented deferrals: the shader-side alpha-test threshold (G5 owns the path) and the
+  colour format literals (G6 owns the mapping); both knobs carry identical preset values in G2.
+- [x] A captured frame under `Faithful` is byte-identical to the pre-card capture of the same
+  scene: the headless validation-grounds run reports 26 measured, 0 regressed, 0 new against
+  the stored baselines. Byte-identity goldens land with G3-04.
+- [x] Knobs requiring resource recreation are documented in the implementation plan's
+  recreation-trigger table, not silently ignored.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
+
+Deviations from the card text: `CameraFadeOverlay` and the `RenderPipeline` drawing context read
+the description through the load context rather than a new constructor parameter, and the four
+shader resource types read `store.OutputDescription` inside their constructors; the store is the
+description carrier injected at construction.
 
 ## Validation commands
 

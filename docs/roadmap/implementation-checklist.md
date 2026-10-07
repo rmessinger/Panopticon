@@ -1131,7 +1131,7 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
         ([`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md)).
     - AC: a centre mouse position keeps its normalised position and maps to the same WND client
       point at `DpiScale` 1 and 2, and `Camera` holds no `DpiScale` reference.
-- [ ] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`; settings layer, not an
+- [x] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`; settings layer, not an
       experiment seam). The parsed `StaticGameLod` assets name several knobs but have no runtime
       consumer, so G2 builds the application layer
       ([`WI-G2-01`](agent/cards/WI-G2-01-audit-render-state-knobs.md),

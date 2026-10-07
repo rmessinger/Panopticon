@@ -66,6 +66,7 @@ public abstract class MockedGameTest : IDisposable
         public List<GameSystem> GameSystems { get; }
         public GraphicsSystem Graphics { get; }
         public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Faithful();
+        public GraphicsSettings EffectiveGraphicsSettings => GraphicsSettings;
         public ScriptingSystem Scripting { get; }
         public LuaScriptEngine Lua { get; set; }
         public GameState GameState { get; }
