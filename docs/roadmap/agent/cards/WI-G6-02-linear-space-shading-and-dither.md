@@ -1,14 +1,16 @@
 # Task Card `WI-G6-02`: Move shading to linear space with a dithered 8-bit output
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G6-02` |
 | Roadmap phase | [Track G · G6](../../track-g-rendering-clarity.md): Gamma-correct rendering |
 | Status | `Blocked` |
 | Type | `mechanical-refactor` |
-| Effort | `S` |
-| Prerequisites | `WI-G6-01`, `WI-G3-03`, `WI-G2-03`, plus a G6 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the G6 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Effort | `L` |
+| Prerequisites | `WI-G6-01`, `WI-G3-04`, `WI-G2-03` |
+| Diagrams | [G6 architecture](../../deep-dives/g6-gamma-correct-rendering.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -35,8 +37,9 @@ shading unchanged.
    colour-space mode from the G2 settings so `Faithful` skips the conversion entirely.
 4. Add an ordered dither immediately before the 8-bit quantization, sized so it is invisible on flat
    areas but breaks up gradient banding.
-5. Confirm the intermediate target's precision is sufficient for linear shading. If it is not,
-   record the required format change in the implementation plan rather than changing it silently.
+5. Select a supported linear intermediate format with adequate precision as specified by the
+   design. Record capabilities and fallback; keep auxiliary water passes and UI composition in
+   the same linear contract. Decode UI colour art before composition without changing its layout/art.
 6. Validate with the G3 harness on a fog and sky gradient scene and on a scene with strong mip
    minification, under both presets.
 
@@ -67,10 +70,10 @@ dotnet format src --verify-no-changes
 ## Out of scope / guardrails
 
 - Do not add HDR, exposure control, or a filmic tonemap beyond what the deep dive specifies.
-- Do not change the 2D and UI path's colour handling; G9 owns it.
+- Change UI colour transfer only as required for correct linear composition; G9 owns UI quality/art.
 - Do not change anisotropy, LOD bias, or shadow settings while here.
-- If linear shading requires a higher-precision intermediate target, stop and mark `Blocked` rather
-  than changing the format as a side effect.
+- If the backend cannot support the documented intermediate/output contract, record the
+  limitation and block rather than silently applying double encoding or premature quantization.
 
 ## On completion
 

@@ -1,5 +1,7 @@
 # Task Card `WI-G6-01`: Audit colour-space handling across textures, shading, mips and output
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G6-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G6 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G6 architecture](../../deep-dives/g6-gamma-correct-rendering.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -42,12 +44,12 @@ without breaking the assets that are already linear. Read-only: no code changes.
 5. Record the final output path: the intermediate format, the blit, and the swapchain format, and
    whether any conversion or tonemap exists.
 6. Record whether any dither exists before the 8-bit output.
-7. Write the findings into a new `docs/roadmap/implementation/track-g-g6-gamma-correct.md`, following
+7. Fill the audit section in `docs/roadmap/implementation/track-g-g6-gamma-correct.md`, following
    the format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md).
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g6-gamma-correct.md` (new)
+- `docs/roadmap/implementation/track-g-g6-gamma-correct.md`
 
 ## Acceptance criteria
 

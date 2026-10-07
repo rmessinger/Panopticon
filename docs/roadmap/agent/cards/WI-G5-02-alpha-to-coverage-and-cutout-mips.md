@@ -1,14 +1,16 @@
 # Task Card `WI-G5-02`: Alpha-to-coverage and coverage-preserving cutout mips
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G5-02` |
 | Roadmap phase | [Track G · G5](../../track-g-rendering-clarity.md): Cutout & alpha-test clarity |
 | Status | `Blocked` |
 | Type | `mechanical-refactor` |
-| Effort | `S` |
-| Prerequisites | `WI-G5-01`, `WI-G4-02`, plus a G5 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the G5 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Effort | `M` |
+| Prerequisites | `WI-G5-01`, `WI-G4-02` |
+| Diagrams | [G5 architecture](../../deep-dives/g5-alpha-test-clarity.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -35,8 +37,10 @@ the original hard cutoff.
 3. Add coverage-preserving mip generation for textures the audit identified as alpha-tested: after
    each downsample, rescale the alpha so the fraction of texels passing the threshold matches the
    source level. Leave non-alpha-tested textures on the existing path.
-4. Apply the per-mip threshold rescale where the audit said the cutoff is reachable. If the audit
-   found no such place, add one rather than baking a second constant into the shader.
+4. Bake coverage correction into mip alpha once, keeping the hard cutoff unchanged; do not also
+   rescale a runtime threshold. Separate cutout/blended/opaque roles in texture cache keys.
+   Rebuild authored DDS cutout mips only through a tested decode path and regenerate JPG mips
+   after applying any alpha sidecar.
 5. Validate with the G3 harness on a scene containing minified foliage and fencing, at 1x and 4x, and
    under both presets.
 

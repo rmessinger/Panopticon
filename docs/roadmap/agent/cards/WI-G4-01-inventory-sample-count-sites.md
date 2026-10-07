@@ -1,5 +1,7 @@
 # Task Card `WI-G4-01`: Inventory every sample-count-bearing description
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G4-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G4 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G4 architecture](../../deep-dives/g4-msaa.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -40,12 +42,12 @@ code changes.
    target.
 5. Record whether `GameOutputDescription` is shared between passes with different sample-count needs.
    Its consumers are listed by a search for the symbol.
-6. Write the inventory into a new `docs/roadmap/implementation/track-g-g4-msaa.md`, following the
+6. Fill the audit section in `docs/roadmap/implementation/track-g-g4-msaa.md`, following the
    format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md).
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g4-msaa.md` (new)
+- `docs/roadmap/implementation/track-g-g4-msaa.md`
 
 ## Acceptance criteria
 
