@@ -48,6 +48,9 @@ The general rule we follow is "use Visual Studio defaults".
     do not drop braces without converting to one of the one-line forms.
     CA1510/CA1511/CA1512 warnings (`.editorconfig`) guard the first two forms.
 
+20. Do not add `#nullable enable` in projects whose `.csproj` sets `<Nullable>enable</Nullable>`;
+    use it only in projects without the project-wide setting.
+
 An [EditorConfig](https://editorconfig.org "EditorConfig homepage") file (`.editorconfig`) has been provided at the root of the Panopticon repository, enabling C# auto-formatting conforming to the above guidelines.
 
 
