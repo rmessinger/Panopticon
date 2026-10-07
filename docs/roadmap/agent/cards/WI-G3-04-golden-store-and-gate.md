@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G3-04` |
 | Roadmap phase | [Track G · G3](../../track-g-rendering-clarity.md): Visual regression harness |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-G3-03` |
@@ -55,12 +55,30 @@ goldens only through an opt-in mode. This completes the G3 milestone.
 
 ## Acceptance criteria
 
-- [ ] An unmodified run passes with exit 0 under both presets.
-- [ ] A deliberate perturbation (for example a changed `RenderPipeline.ClearColor` in a scratch
-      build) fails the affected scenes with exit 2; reverting passes.
-- [ ] Goldens change only through `TESTHARNESS_VR_UPDATE_GOLDENS=1`.
-- [ ] Comparer unit tests run under `Category!=Interactive` without a GPU or install.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] An unmodified run passes with exit 0 under both presets (verified twice: after the
+      initial update run and again after the perturbation revert; 12/12 goldens Passed).
+- [x] A deliberate perturbation (`RenderPipeline.ClearColor` 105 -> 110 in a scratch build)
+      fails the affected scenes with exit 2 (terrain-grazing failed both presets at differing
+      fraction 0.255; the sky region exposes the clear color while covered scenes stayed green,
+      so the gate discriminates); reverting restored exit 0.
+- [x] Goldens change only through `TESTHARNESS_VR_UPDATE_GOLDENS=1` (compare mode never writes
+      into the store; the manifest records a SHA-256 per golden and the gate fails with
+      `StoreMismatch` when the store drifts from the committed manifest).
+- [x] Comparer unit tests run under `Category!=Interactive` without a GPU or install (6 tests
+      over synthetic pairs).
+- [x] Standard validation passes (build 0 errors; 2087 + 355 + 53 tests passed, 7 skipped;
+      format and brace checks clean).
+
+## Completion notes
+
+- Goldens are NOT committed: the licensing and storage review (step 5) followed the repo
+  precedent that renders of operator install content stay out of Git (see `.gitignore`
+  `ee2-*-proof/`). The store lives outside the repo at
+  `~/.panopticon/visual-regression-goldens` (override: `TESTHARNESS_VR_GOLDEN_STORE`); only
+  `visual-regression/golden-manifest.json` is committed, pinning backend, device, host,
+  resolution, per-golden SHA-256, scores and tolerances. Card step 3's `visual-regression/`
+  image layout is therefore realized as store-root layout; this is the deep dive's
+  reviewed-store fallback, recorded in the implementation plan.
 
 ## Validation commands
 

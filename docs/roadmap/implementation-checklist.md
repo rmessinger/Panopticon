@@ -1129,7 +1129,7 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
   - AC: preset round trips preserve validated settings; runtime switching rebuilds affected
     resources safely; requested and effective capability-fallback values are reported; and
     `Faithful` reproduces the pre-track captured frame on the reference host.
-- [ ] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
+- [x] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
       with sharpness/edge-aliasing metrics; extends `FrameCapturer` + the TestHarness `ScenarioCapture` runner)
       ([`WI-G3-01`](agent/cards/WI-G3-01-audit-frame-capture-paths.md),
       [`WI-G3-02`](agent/cards/WI-G3-02-image-quality-metrics.md),
