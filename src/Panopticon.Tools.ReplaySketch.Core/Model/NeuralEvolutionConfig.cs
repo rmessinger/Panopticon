@@ -1,5 +1,3 @@
-#nullable enable
-
 using System;
 
 namespace Panopticon.Tools.ReplaySketch.Model;

@@ -1,5 +1,3 @@
-#nullable enable
-
 namespace Panopticon.Tools.ReplaySketch.Model;
 
 /// <summary>Deterministic capture viewport; both dimensions positive.</summary>

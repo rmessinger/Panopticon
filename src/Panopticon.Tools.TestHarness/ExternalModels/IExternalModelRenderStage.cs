@@ -1,5 +1,3 @@
-#nullable enable
-
 using System.Collections.Generic;
 using Panopticon;
 using Panopticon.Content.Loaders;

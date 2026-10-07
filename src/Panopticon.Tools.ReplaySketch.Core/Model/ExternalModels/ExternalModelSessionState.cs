@@ -1,5 +1,3 @@
-#nullable enable
-
 namespace Panopticon.Tools.ReplaySketch.Model;
 
 public enum ExternalModelSessionState
