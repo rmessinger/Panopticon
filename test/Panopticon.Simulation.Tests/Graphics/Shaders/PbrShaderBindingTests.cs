@@ -11,6 +11,7 @@ namespace Panopticon.Tests.Graphics.Shaders;
 // buffer, five role textures, five per-role samplers, across both UV-set selections. Visual
 // lighting behavior is locked by C3-10/C3-11; this suite locks layout and binding validity.
 
+[Collection("GraphicsTests")]
 public sealed class PbrShaderBindingTests
 {
     [GraphicsFact]
@@ -75,6 +76,7 @@ public sealed class PbrShaderBindingTests
 
         Assert.NotNull(resourceSet);
 
+        graphics.Device.WaitForIdle();
         resourceSet.Dispose();
         sampler.Dispose();
         constantsBuffer.Dispose();

@@ -42,6 +42,8 @@ public sealed class EnvironmentRecord
     /// </summary>
     public static EnvironmentRecord Capture()
     {
+        using var process = Process.GetCurrentProcess();
+
         return new EnvironmentRecord
         {
             Os = RuntimeInformation.OSDescription,
@@ -51,7 +53,7 @@ public sealed class EnvironmentRecord
             Cpu = ReadCpuModel(),
             LogicalProcessors = Environment.ProcessorCount,
             TotalPhysicalBytes = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes,
-            PeakWorkingSetBytes = Process.GetCurrentProcess().PeakWorkingSet64,
+            PeakWorkingSetBytes = Math.Max(process.PeakWorkingSet64, process.WorkingSet64),
             Env = new Dictionary<string, string>(StringComparer.Ordinal),
         };
     }
