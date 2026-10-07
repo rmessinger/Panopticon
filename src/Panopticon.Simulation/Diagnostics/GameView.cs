@@ -30,12 +30,15 @@ internal sealed class GameView : DiagnosticView
             return;
         }
 
+        // ImGui lays out in points; the panel and input messages are in pixels.
         Game.Panel.EnsureFrame(
-            new Mathematics.Rectangle(
-                (int)windowPos.X,
-                (int)windowPos.Y,
-                (int)availableSize.X,
-                (int)availableSize.Y));
+            DpiScaling.ToPixels(
+                new Mathematics.Rectangle(
+                    (int)windowPos.X,
+                    (int)windowPos.Y,
+                    (int)availableSize.X,
+                    (int)availableSize.Y),
+                Window.DpiScale));
 
         var inputMessages = isGameViewFocused
             ? ImGuiUtility.TranslateInputMessages(Game.Panel.Frame, Window.MessageQueue)

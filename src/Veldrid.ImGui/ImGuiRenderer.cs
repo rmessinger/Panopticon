@@ -93,6 +93,16 @@ public class ImGuiRenderer : IDisposable
         _windowHeight = height;
     }
 
+    /// <summary>
+    /// Sets the framebuffer size in pixels and the pixels-per-point scale. ImGui lays out in
+    /// points (<paramref name="width"/> / <paramref name="scale"/>) and clip rects are scaled to pixels.
+    /// </summary>
+    public void WindowResized(int width, int height, float scale)
+    {
+        WindowResized(width, height);
+        _scaleFactor = new Vector2(scale);
+    }
+
     public void DestroyDeviceObjects()
     {
         Dispose();

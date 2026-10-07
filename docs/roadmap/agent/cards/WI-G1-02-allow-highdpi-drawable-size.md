@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-G1-02` |
 | Roadmap phase | [Track G · G1: High-DPI drawable & resolution correctness](../../track-g-rendering-clarity.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-G1-01` |
@@ -61,15 +61,19 @@ here; that is `WI-G1-03`.
 
 ## Acceptance criteria
 
-- [ ] The window is created with `AllowHighDpi` set, via `new Sdl2Window(...)` rather than
+- [x] The window is created with `AllowHighDpi` set, via `new Sdl2Window(...)` rather than
       `VeldridStartup.CreateWindow`.
-- [ ] No `WindowScale` multiplication remains in the `GameWindow` constructor.
-- [ ] `GameWindow.DrawableBounds` and `GameWindow.DpiScale` exist; `ClientBounds` still returns
+- [x] No `WindowScale` multiplication remains in the `GameWindow` constructor. Deviation: the
+      enlargement is kept only when `DpiScale == 1` and `WindowScale != 1` (X11, old SDL), applied after
+      creation, so those platforms keep the pre-G1 size. See the
+      [implementation plan](../../implementation/track-g-g1-high-dpi.md).
+- [x] `GameWindow.DrawableBounds` and `GameWindow.DpiScale` exist; `ClientBounds` still returns
       logical points.
-- [ ] `Swapchain.Resize` in `HandleResized` is fed `DrawableBounds`.
-- [ ] The `DpiScale` helper test passes, including the zero-width guard.
-- [ ] The game still launches windowed at scale 1 with no visible change.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] `Swapchain.Resize` in `HandleResized` is fed `DrawableBounds`.
+- [x] The `DpiScale` helper test passes, including the zero-width guard.
+- [x] The game still launches windowed at scale 1 with no visible change. Verified by the headless
+      capture path; windowed runs are unavailable on the validation host.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

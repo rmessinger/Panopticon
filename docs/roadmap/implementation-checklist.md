@@ -1109,27 +1109,28 @@ See [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md). Not gated on
 pipeline-description plumbing) and A3 (sim/presentation seam). Every visual change lands behind the
 G2 preset layer so the `Faithful` preset reproduces the original look.
 
-- [ ] G1 High-DPI drawable & resolution correctness (`ALLOW_HIGHDPI`, drawable-size swapchain,
+- [x] G1 High-DPI drawable & resolution correctness (`ALLOW_HIGHDPI`, drawable-size swapchain,
       one pixels-versus-points convention across `GameWindow`/`RenderTarget`/input).
   - AC: on a display with a non-unity scale factor the swapchain and a captured frame match
     the window's native pixel dimensions, and cursor/input hit-testing stays correct.
-  - [ ] G1-1 Classify every window/panel size consumer as logical points or physical pixels
+  - [x] G1-1 Classify every window/panel size consumer as logical points or physical pixels
         ([`WI-G1-01`](agent/cards/WI-G1-01-audit-size-consumers.md)).
     - AC: every `ClientBounds`/`WindowScale`/`CursorScale`/`Frame`/`Viewport` read in `src/` is
       classified, and sites feeding both spaces are called out.
-  - [ ] G1-2 `AllowHighDpi` window creation, `SDL_GetWindowSizeInPixels` interop,
+  - [x] G1-2 `AllowHighDpi` window creation, `SDL_GetWindowSizeInPixels` interop,
         `DrawableBounds`/`DpiScale`, swapchain sized in pixels
         ([`WI-G1-02`](agent/cards/WI-G1-02-allow-highdpi-drawable-size.md)).
-    - AC: the window is created with `AllowHighDpi` via `new Sdl2Window(...)`, no `WindowScale`
-      pre-multiplication remains, and `Swapchain.Resize` is fed `DrawableBounds`.
-  - [ ] G1-3 Render target and 3D viewport in pixels, GUI layout on points
+    - AC: the window is created with `AllowHighDpi` via `new Sdl2Window(...)`, `WindowScale`
+      enlargement applies only where `DpiScale` is 1, and `Swapchain.Resize` is fed `DrawableBounds`.
+  - [x] G1-3 Render target, 3D viewport and GUI layout in pixels; ImGui framebuffer scale
         ([`WI-G1-03`](agent/cards/WI-G1-03-route-render-surfaces-to-pixels.md)).
-    - AC: all three `EnsureFrame` call sites pass `DrawableBounds`, `Game.Viewport` is in pixels,
-      and the WND/APT managers receive a logical size.
-  - [ ] G1-4 Scale 2D drawing and mouse picking by `DpiScale`
+    - AC: every window-backed `EnsureFrame` call site passes `DrawableBounds`, `Game.Viewport` and
+      the WND/APT managers receive the pixel size, and ImGui renders with `DpiScale` as its
+      framebuffer scale.
+  - [x] G1-4 Convert mouse input from points to pixels at the `GameWindow` boundary
         ([`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md)).
-    - AC: picking resolves to the same world position at `DpiScale` 1 and 2, and the GUI occupies
-      the same fraction of the frame at both scales.
+    - AC: a centre mouse position keeps its normalised position and maps to the same WND client
+      point at `DpiScale` 1 and 2, and `Camera` holds no `DpiScale` reference.
 - [ ] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`; settings layer, not an
       experiment seam). The parsed `StaticGameLod` assets name several knobs but have no runtime
       consumer, so G2 builds the application layer

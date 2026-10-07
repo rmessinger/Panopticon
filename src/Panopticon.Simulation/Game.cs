@@ -643,7 +643,7 @@ public sealed class Game : DisposableBase, IGame
             VictorySystem.OutcomeDecided += (_, _) => MatchOutcomeDecided?.Invoke(this, EventArgs.Empty);
 
             Panel.ClientSizeChanged += OnPanelSizeChanged;
-            Panel.EnsureFrame(window?.ClientBounds ?? new Mathematics.Rectangle(0, 0, 1, 1)); // fallback set for sav2json tool
+            Panel.EnsureFrame(window?.DrawableBounds ?? new Mathematics.Rectangle(0, 0, 1, 1)); // fallback set for sav2json tool
 
             GameSystems.ForEach(gs => gs.Initialize());
 

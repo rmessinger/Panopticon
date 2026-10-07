@@ -15,8 +15,14 @@ public sealed class GamePanel : DisposableBase
 
     public event EventHandler ClientSizeChanged;
 
+    /// <summary>
+    /// Panel rectangle in physical pixels (the window's drawable size, not its logical points).
+    /// </summary>
     public Rectangle Frame { get; private set; }
 
+    /// <summary>
+    /// Panel size in physical pixels, at the origin.
+    /// </summary>
     public Rectangle ClientBounds => new Rectangle(0, 0, Frame.Width, Frame.Height);
 
     internal GamePanel(GraphicsDevice graphicsDevice)
