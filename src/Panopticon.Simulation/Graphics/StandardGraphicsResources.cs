@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Panopticon.Utilities;
 using Panopticon.Utilities.Extensions;
@@ -19,7 +20,7 @@ internal sealed class StandardGraphicsResources : DisposableBase
     public Texture SolidBlackTexture { get; }
     public Texture PlaceholderTexture { get; }
 
-    public StandardGraphicsResources(GraphicsDevice graphicsDevice)
+    public StandardGraphicsResources(GraphicsDevice graphicsDevice, GraphicsSettings settings)
     {
         _graphicsDevice = graphicsDevice;
 
@@ -27,6 +28,10 @@ internal sealed class StandardGraphicsResources : DisposableBase
         aniso4xClampSamplerDescription.AddressModeU = SamplerAddressMode.Clamp;
         aniso4xClampSamplerDescription.AddressModeV = SamplerAddressMode.Clamp;
         aniso4xClampSamplerDescription.AddressModeW = SamplerAddressMode.Clamp;
+        aniso4xClampSamplerDescription.MaximumAnisotropy = (uint)settings.Anisotropy;
+
+        // The vendored Veldrid stores the bias as an integer; G7 owns bounded sub-integer bias.
+        aniso4xClampSamplerDescription.LodBias = (int)MathF.Round(settings.MipLodBias);
         Aniso4xClampSampler = AddDisposable(
             graphicsDevice.ResourceFactory.CreateSampler(ref aniso4xClampSamplerDescription));
         Aniso4xClampSampler.Name = "Aniso4xClamp Sampler";

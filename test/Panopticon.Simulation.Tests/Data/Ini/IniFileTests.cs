@@ -48,8 +48,8 @@ public class IniFileTests
 
         using var graphicsDevice = GraphicsDeviceUtility.CreateGraphicsDevice(null, null);
 
-        using var standardGraphicsResources = new StandardGraphicsResources(graphicsDevice);
-        using var shaderSetStore = new ShaderSetStore(graphicsDevice, RenderPipeline.GameOutputDescription);
+        using var standardGraphicsResources = new StandardGraphicsResources(graphicsDevice, GraphicsSettings.Faithful());
+        using var shaderSetStore = new ShaderSetStore(graphicsDevice, RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Faithful()));
         using var shaderResources = new ShaderResourceManager(graphicsDevice, standardGraphicsResources, shaderSetStore);
         var graphicsLoadContext = new GraphicsLoadContext(graphicsDevice, standardGraphicsResources, shaderResources, shaderSetStore);
 

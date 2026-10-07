@@ -1,4 +1,3 @@
-using Panopticon.Graphics.Rendering;
 using Panopticon.Rendering;
 using Veldrid;
 
@@ -28,7 +27,7 @@ internal sealed class TracerShaderResources : ShaderSetBase
                     PrimitiveTopology.TriangleList,
                     Description,
                     ResourceLayouts,
-                    RenderPipeline.GameOutputDescription)));
+                    store.OutputDescription)));
 
         Material = AddDisposable(
             new Material(

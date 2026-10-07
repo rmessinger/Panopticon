@@ -394,7 +394,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | Phase | Progress | Items |
 |---|---|---|
 | G1 - High-DPI & resolution correctness | `██████████` | 4 / 4 |
-| G2 - Graphics settings & fidelity presets | `░░░░░░░░░░` | 0 / 1 |
+| G2 - Graphics settings & fidelity presets | `██████████` | 1 / 1 |
 | G3 - Visual regression harness | `░░░░░░░░░░` | 0 / 1 |
 | G4 - Multisample antialiasing | `░░░░░░░░░░` | 0 / 1 |
 | G5 - Cutout & alpha-test clarity | `░░░░░░░░░░` | 0 / 1 |
@@ -403,7 +403,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
 | G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 2 |
 | G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
-| Track G total | `██▌░░░░░░░` | 4 / 16 |
+| Track G total | `███▏░░░░░░░` | 5 / 16 |
 
 ### Track H - Map & Unit Storage Formats (H2a gated on P9 and C4d)
 

@@ -295,6 +295,8 @@ public sealed class Scene3D : DisposableBase, IScene3D
     {
         Game = game;
 
+        Shadows.ApplyTier(game.GraphicsSettings.ShadowTier);
+
         Camera = new Camera(getViewport);
 
         SelectionGui = new SelectionGui();

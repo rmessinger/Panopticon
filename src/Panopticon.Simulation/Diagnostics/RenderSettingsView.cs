@@ -37,6 +37,23 @@ internal sealed class RenderSettingsView : DiagnosticView
 
     protected override void DrawOverride(ref bool isGameViewFocused)
     {
+        var requestedSettings = Game.GraphicsSettings;
+        var effectiveSettings = Game.EffectiveGraphicsSettings;
+
+        ImGui.Text("Graphics preset");
+        {
+            ImGui.Text($"Shadow tier: {requestedSettings.ShadowTier}");
+
+            var sampleCountSuffix = requestedSettings.SampleCount == effectiveSettings.SampleCount
+                ? string.Empty
+                : $" (effective {effectiveSettings.SampleCount})";
+            ImGui.Text($"Sample count: {requestedSettings.SampleCount}{sampleCountSuffix}");
+
+            ImGui.Text($"Anisotropy: {requestedSettings.Anisotropy}");
+        }
+
+        ImGui.Separator();
+
         if (Game.Scene3D == null)
         {
             ImGui.Text("Render settings are only available when a map has been loaded.");

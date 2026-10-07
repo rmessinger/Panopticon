@@ -1,7 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Panopticon.Graphics.Mathematics;
-using Panopticon.Graphics.Rendering;
 using Panopticon.Rendering;
 using Veldrid;
 
@@ -22,7 +21,7 @@ internal sealed class TerrainShaderResources : ShaderSetBase
                 PrimitiveTopology.TriangleList, // TODO: Use triangle strip
                 Description,
                 ResourceLayouts,
-                RenderPipeline.GameOutputDescription)));
+                store.OutputDescription)));
     }
 
     public ResourceSet CreateMaterialResourceSet(
