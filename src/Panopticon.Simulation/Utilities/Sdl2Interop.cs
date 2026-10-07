@@ -79,6 +79,45 @@ internal static class Sdl2Interop
         return hdpi / defaultDpi;
     }
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private unsafe delegate void SDL_GetWindowSizeInPixels_Delegate(SDL_Window window, int* w, int* h);
+
+    // SDL 2.26+. Older SDL builds (the Windows binaries bundled with Veldrid.SDL2 4.9) lack it,
+    // in which case LoadFunction returns null and the GL drawable size is used instead.
+    private static readonly SDL_GetWindowSizeInPixels_Delegate GetWindowSizeInPixelsImpl = Sdl2Native.LoadFunction<SDL_GetWindowSizeInPixels_Delegate>("SDL_GetWindowSizeInPixels");
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private unsafe delegate void SDL_GL_GetDrawableSize_Delegate(SDL_Window window, int* w, int* h);
+
+    private static readonly SDL_GL_GetDrawableSize_Delegate GLGetDrawableSizeImpl = Sdl2Native.LoadFunction<SDL_GL_GetDrawableSize_Delegate>("SDL_GL_GetDrawableSize");
+
+    public static unsafe void SDL_GetWindowSizeInPixels(SDL_Window window, int* w, int* h)
+    {
+        if (GetWindowSizeInPixelsImpl != null)
+        {
+            GetWindowSizeInPixelsImpl(window, w, h);
+        }
+        else if (GLGetDrawableSizeImpl != null)
+        {
+            GLGetDrawableSizeImpl(window, w, h);
+        }
+    }
+
+    /// <summary>
+    /// Returns the window's drawable size in physical pixels, or <paramref name="logicalSize"/>
+    /// when SDL cannot report one.
+    /// </summary>
+    public static unsafe Mathematics.Size GetWindowSizeInPixels(SDL_Window window, in Mathematics.Size logicalSize)
+    {
+        int width = 0;
+        int height = 0;
+        SDL_GetWindowSizeInPixels(window, &width, &height);
+
+        return width > 0 && height > 0
+            ? new Mathematics.Size(width, height)
+            : logicalSize;
+    }
+
     public struct SDL_Cursor
     {
         public readonly IntPtr NativePointer;

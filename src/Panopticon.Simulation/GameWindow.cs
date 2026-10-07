@@ -34,6 +34,7 @@ public sealed class GameWindow : DisposableBase
 
     public Swapchain Swapchain { get; private set; }
 
+    /// <summary>Window client area in logical points (OS window and mouse coordinates).</summary>
     public Rectangle ClientBounds
     {
         get
@@ -42,6 +43,20 @@ public sealed class GameWindow : DisposableBase
             return new Rectangle(0, 0, result.Width, result.Height);
         }
     }
+
+    /// <summary>Window drawable area in physical pixels, the size render surfaces use.</summary>
+    public Rectangle DrawableBounds
+    {
+        get
+        {
+            var logical = ClientBounds.Size;
+            var pixels = Sdl2Interop.GetWindowSizeInPixels(_window.SdlWindowHandle, logical);
+            return new Rectangle(0, 0, pixels.Width, pixels.Height);
+        }
+    }
+
+    /// <summary>Physical pixels per logical point.</summary>
+    public float DpiScale => DpiScaling.GetScale(DrawableBounds.Width, ClientBounds.Width);
 
     public bool IsCursorVisible
     {
@@ -82,17 +97,21 @@ public sealed class GameWindow : DisposableBase
         // which may change the scale.
         WindowScale = Sdl2Interop.GetDisplayScale(0);
 
-        var windowCreateInfo = new WindowCreateInfo(
-            (int)(WindowScale * x),
-            (int)(WindowScale * y),
-            (int)(WindowScale * width),
-            (int)(WindowScale * height),
-            windowState,
-            title);
+        // VeldridStartup.CreateWindow cannot pass AllowHighDpi, so replicate its flags here.
+        _window = new Sdl2Window(title, x, y, width, height, GetWindowFlags(windowState), threadedProcessing: false);
 
-        _window = VeldridStartup.CreateWindow(ref windowCreateInfo);
+        // Where the platform scales the drawable (AllowHighDpi honoured), the requested size is
+        // already in logical points. Where it does not (X11, SDL builds without high-DPI
+        // support), keep enlarging the window by the display scale as before.
+        if (DpiScale == 1.0f && WindowScale != 1.0f)
+        {
+            _window.X = (int)(WindowScale * x);
+            _window.Y = (int)(WindowScale * y);
+            _window.Width = (int)(WindowScale * width);
+            _window.Height = (int)(WindowScale * height);
+        }
 
-        Logger.Debug($"[GameWindow] WindowScale={WindowScale}, requested={width}x{height}, actual Bounds={_window.Bounds.Width}x{_window.Bounds.Height}");
+        Logger.Debug($"[GameWindow] WindowScale={WindowScale}, DpiScale={DpiScale}, requested={width}x{height}, Bounds={_window.Bounds.Width}x{_window.Bounds.Height}, DrawableBounds={DrawableBounds.Width}x{DrawableBounds.Height}");
 
         _window.KeyDown += HandleKeyDown;
         _window.KeyUp += HandleKeyUp;
@@ -111,7 +130,34 @@ public sealed class GameWindow : DisposableBase
     {
         var graphicsDevice = VeldridStartup.CreateGraphicsDevice(_window, options, backend);
         Swapchain = graphicsDevice.MainSwapchain;
+
+        // VeldridStartup sizes the swapchain from the logical window size.
+        ResizeSwapchainToDrawable();
+
         return graphicsDevice;
+    }
+
+    private static SDL_WindowFlags GetWindowFlags(WindowState state)
+    {
+        var flags = SDL_WindowFlags.OpenGL | SDL_WindowFlags.Resizable | SDL_WindowFlags.AllowHighDpi;
+
+        flags |= state switch
+        {
+            WindowState.Normal => 0,
+            WindowState.FullScreen => SDL_WindowFlags.Fullscreen,
+            WindowState.Maximized => SDL_WindowFlags.Maximized,
+            WindowState.Minimized => SDL_WindowFlags.Minimized,
+            WindowState.BorderlessFullScreen => SDL_WindowFlags.FullScreenDesktop,
+            WindowState.Hidden => SDL_WindowFlags.Hidden,
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+        };
+
+        if (state != WindowState.Hidden)
+        {
+            flags |= SDL_WindowFlags.Shown;
+        }
+
+        return flags;
     }
 
     private void HandleClosing()
@@ -121,12 +167,17 @@ public sealed class GameWindow : DisposableBase
 
     private void HandleResized()
     {
-        var bounds = _window.Bounds;
+        ResizeSwapchainToDrawable();
+
+        RaiseClientSizeChanged();
+    }
+
+    private void ResizeSwapchainToDrawable()
+    {
+        var bounds = DrawableBounds;
         Swapchain.Resize(
             (uint)bounds.Width,
             (uint)bounds.Height);
-
-        RaiseClientSizeChanged();
     }
 
     private void HandleKeyDown(KeyEvent evt)
