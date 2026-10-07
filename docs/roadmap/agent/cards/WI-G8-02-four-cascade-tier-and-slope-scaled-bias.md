@@ -1,4 +1,6 @@
-# Task Card `WI-G8-02`: Four-cascade shadow tier with slope-scaled and normal-offset bias
+# Task Card `WI-G8-02`: Four-cascade shadow tier with slope-scaled bias
+
+> Audience: agent. Phase implementation task.
 
 | Field | Value |
 |---|---|
@@ -7,39 +9,42 @@
 | Status | `Blocked` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
-| Prerequisites | `WI-G8-01`, `WI-G3-03`, `WI-G2-03`, plus a G8 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the G8 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Prerequisites | `WI-G8-01`, `WI-G2-03`, `WI-G3-04` |
+| Diagrams | [G8 architecture](../../deep-dives/g8-shadow-quality.md#5-architecture-diagrams) |
 
 ## Goal
 
-Remove shadow acne speckle and cascade blockiness under `Enhanced` by defaulting to four cascades at
-a higher map resolution and replacing the constant depth bias with a slope-scaled and normal-offset
-bias, while `Faithful` keeps the current single-cascade result.
+Remove shadow acne speckle and cascade blockiness under `Enhanced` by mapping the G2 shadow tier to
+four cascades at 2048x2048 and adding a receiver-side slope-scaled term to the constant depth bias,
+while `Faithful` keeps the current single-cascade result bit for bit.
 
 ## Context to read (and only this)
 
-- `docs/roadmap/implementation/track-g-g8-shadow-quality.md`: the `WI-G8-01` findings, which fix the
-  exact plumbing endpoints and single-cascade assumptions to change.
-- The G8 deep dive and its architecture diagrams.
-- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs:9-83`.
-- `src/Panopticon.Simulation/Assets/Shaders/Shadows.h:55-70`.
-- The G2 settings shadow-tier member.
+- `docs/roadmap/deep-dives/g8-shadow-quality.md` §3 and the architecture diagrams.
+- `docs/roadmap/implementation/track-g-g8-shadow-quality.md`: the `WI-G8-01` findings.
+- `src/Panopticon.Simulation/Graphics/Rendering/Shadows/ShadowSettings.cs:9-78`.
+- `src/Panopticon.Simulation/Graphics/Shaders/GlobalShaderResources.cs:122-196`: `ShadowConstantsPS`.
+- `src/Panopticon.Simulation/Assets/Shaders/Shadows.h:11-25,52-70,200-308`.
+- The G2 `GraphicsSettings.ShadowTier` member and its application point from `WI-G2-03`.
 
 ## Steps
 
-1. Source the cascade count and map size from the G2 shadow tier rather than the `ShadowSettings`
-   defaults, keeping `Faithful` on one cascade at the current size and `Enhanced` on four cascades at
-   the higher size.
-2. Fix the single-cascade assumptions the audit listed, so the four-cascade path is exercised rather
-   than silently falling back.
-3. Replace the constant bias subtraction with a slope-scaled bias computed at the shader stage the
-   audit named, scaled by the angle between the surface normal and the light direction.
-4. Apply the normal offset if the audit found it is carried but unused, offsetting the sample
-   position along the surface normal before the depth comparison.
-5. Keep the cascade split depths from the existing settings rather than retuning them, so a visible
-   transition is attributable to the bias change and not to a split change.
-6. Validate with the G3 harness at the default camera zoom on a scene with both flat ground and
-   sloped terrain, under both presets.
+1. Add `ShadowSettings.SlopeScaledBias` (default 0) and `ShadowSettings.ApplyTier(ShadowQualityTier)`:
+   `Original` sets `OneCascade`, 1024, 0; `High` sets `FourCascades`, 2048 and the tuned slope value.
+   No other member changes.
+2. Replace the trailing `_padding` float in `ShadowConstantsPS` and `_Padding` in
+   `ShadowConstantsPSType` with `SlopeScaledBias`, copied in `Set`. The struct stays 240 bytes.
+3. In `ShadowVisibility`, set `cosTheta = clamp(nDotL, 0, 1)` and compute
+   `slopeFactor = min(sqrt(1 - cosTheta * cosTheta) / max(cosTheta, 1e-4),
+   MAX_SLOPE_TANGENT)` and thread it through `SampleShadowCascade` into
+   `SampleShadowMapOptimizedPCF`, where `bias = Bias + SlopeScaledBias * slopeFactor *
+   shadowMapSizeInv.x`. No branch on the tier.
+4. Call `ApplyTier` from the G2 wiring on scene creation and on preset switch; reallocation is
+   handled by the existing `ShadowMapRenderer` size and cascade check.
+5. Tune `SlopeScaledBias` (start 2, range 0.5 to 4) and `MAX_SLOPE_TANGENT` (start 4) against the
+   `shadow-casters` scene; record the chosen values in the implementation plan.
+6. Add unit tests: `Marshal.SizeOf<ShadowConstantsPS>() == 240`; `ApplyTier(Original)` leaves a
+   default `ShadowSettings` unchanged member by member; `ApplyTier(High)` yields the tier values.
 
 ## Files likely to change
 
@@ -55,7 +60,8 @@ bias, while `Faithful` keeps the current single-cascade result.
       milestone.
 - [ ] A `Faithful` capture is unchanged against its golden.
 - [ ] The four-cascade path renders all four cascades rather than falling back to one.
-- [ ] Sloped surfaces show no peter-panning introduced by the normal offset.
+- [ ] Sloped surfaces show no detached (peter-panned) contact shadows.
+- [ ] An `Enhanced` capture with `VisualizeCascades` on shows four cascade colours.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
@@ -71,6 +77,7 @@ dotnet format src --verify-no-changes
 - Do not retune the cascade split depths or the shadow distance.
 - Do not replace the shadow filtering technique.
 - Do not change lighting or colour space while here.
+- Do not change the normal offset, the depth format, or add caster alpha testing.
 - If the shadow map texture cannot be reallocated at the higher size and layer count without
   restructuring its ownership, stop and mark `Blocked`.
 

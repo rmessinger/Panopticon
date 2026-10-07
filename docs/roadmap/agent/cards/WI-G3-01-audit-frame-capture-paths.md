@@ -1,5 +1,7 @@
 # Task Card `WI-G3-01`: Audit the frame capture paths and the golden-comparison gap
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G3-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G3 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G3 architecture](../../deep-dives/g3-visual-regression-harness.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -21,8 +23,8 @@ needs, so G3 extends the current paths rather than adding a tool. Read-only: no 
   `CapturedFrame` result type.
 - `src/Panopticon.Simulation/Graphics/FrameCaptureService.cs`: `ScheduleCapture`, `FlushPending`, `Capture`,
   `DeleteCaptures`, `ClearCaptureDirectory`, and the capture directory convention.
-- `src/Panopticon.Tools.ReplaySketch.Maui/MainPage.xaml.cs`: the `REPLAYSKETCH_SCREENSHOT_PATH`
-  screenshot path.
+- `src/Panopticon.Tools.ReplaySketch.Avalonia/`: the `REPLAYSKETCH_SCREENSHOT_PATH` screenshot path.
+- `src/Panopticon.Tools.TestHarness/ScenarioCaptureRunner.cs`: the engine-frame scenario path.
 - `src/Panopticon.Tools.TestHarness/AGENTS.md`: the existing frame-validation workflow and the
   `validation_guide.md` convention.
 - `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:160-168`: the final blit, which fixes what
@@ -33,19 +35,19 @@ needs, so G3 extends the current paths rather than adding a tool. Read-only: no 
 1. Record the two capture paths separately: the engine path through `FrameCapturer` and
    `FrameCaptureService`, and the ReplaySketch screenshot path. For each, record what it captures,
    what it writes, where, and whether it needs a window.
-2. State explicitly whether the ReplaySketch screenshot path goes through `FrameCapturer` or through
-   a different capture mechanism, since G3's phase row assumes it can extend both.
+2. Confirm ReplaySketch screenshots use a different capture mechanism; G3 extends only engine
+   capture through TestHarness. Record two-run repeatability and the measured reference host.
 3. List what a golden comparison needs that neither path provides today: stable scene selection,
    explicit frame indices, a golden store location, a per-preset dimension, and a pass or fail
    exit code.
 4. Record which existing headless test already captures frames, and whether its output layout can
    serve as the golden store without change.
-5. Write the findings into a new `docs/roadmap/implementation/track-g-g3-visual-regression.md`
+5. Fill the audit section in `docs/roadmap/implementation/track-g-g3-visual-regression.md`
    following the format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md).
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g3-visual-regression.md` (new)
+- `docs/roadmap/implementation/track-g-g3-visual-regression.md`
 
 ## Acceptance criteria
 
@@ -63,7 +65,7 @@ git status --short -- 'src/*'
 
 ## Out of scope / guardrails
 
-- Do not build a comparison harness or write metric code. That is `WI-G3-02` and `WI-G3-03`.
+- Do not implement metrics, capture or comparison. Those are `WI-G3-02` through `WI-G3-04`.
 - Do not propose a new tool. The [C5 Decision](../../open-questions.md) rules one out.
 - Do not capture or commit any golden images.
 
@@ -72,4 +74,4 @@ git status --short -- 'src/*'
 - Set Status above to `Done` (or `Blocked` + reason).
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards to create:
-  - None; `WI-G3-02` and `WI-G3-03` already exist.
+  - None; `WI-G3-02` through `WI-G3-04` already exist.

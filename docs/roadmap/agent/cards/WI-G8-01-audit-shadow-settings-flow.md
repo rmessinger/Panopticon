@@ -1,5 +1,7 @@
 # Task Card `WI-G8-01`: Audit the shadow settings flow and bias application
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G8-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G8 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G8 architecture](../../deep-dives/g8-shadow-quality.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -39,12 +41,12 @@ Read-only: no code changes.
    branch on cascade count and which assume a single cascade.
 5. Record where a slope-scaled bias would have to be computed, naming the shader stage that has both
    the surface normal and the light direction available.
-6. Write the findings into a new `docs/roadmap/implementation/track-g-g8-shadow-quality.md`,
+6. Fill the audit section in `docs/roadmap/implementation/track-g-g8-shadow-quality.md`,
    following the format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md).
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g8-shadow-quality.md` (new)
+- `docs/roadmap/implementation/track-g-g8-shadow-quality.md`
 
 ## Acceptance criteria
 

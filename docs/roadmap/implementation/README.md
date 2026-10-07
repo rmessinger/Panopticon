@@ -260,6 +260,87 @@ Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dp
 |---|---|---|
 | [track-g-g1-high-dpi.md](track-g-g1-high-dpi.md) | G1-1…G1-4 | High-DPI drawable & resolution correctness |
 
+## Track G · G2 : Graphics settings & fidelity presets
+
+Source of truth: [deep-dives/g2-graphics-settings-presets.md](../deep-dives/g2-graphics-settings-presets.md) :
+[Architecture diagrams §5](../deep-dives/g2-graphics-settings-presets.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g2-graphics-settings.md](track-g-g2-graphics-settings.md) | G2-1…G2-3 | Graphics settings & fidelity presets |
+
+## Track G · G3 : Visual regression harness
+
+Source of truth: [deep-dives/g3-visual-regression-harness.md](../deep-dives/g3-visual-regression-harness.md) :
+[Architecture diagrams §5](../deep-dives/g3-visual-regression-harness.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g3-visual-regression.md](track-g-g3-visual-regression.md) | G3-1…G3-4 | Visual regression harness |
+
+## Track G · G4 : Multisample antialiasing
+
+Source of truth: [deep-dives/g4-msaa.md](../deep-dives/g4-msaa.md) :
+[Architecture diagrams §5](../deep-dives/g4-msaa.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g4-msaa.md](track-g-g4-msaa.md) | G4-1…G4-2 | Multisample antialiasing |
+
+## Track G · G5 : Cutout & alpha-test clarity
+
+Source of truth: [deep-dives/g5-alpha-test-clarity.md](../deep-dives/g5-alpha-test-clarity.md) :
+[Architecture diagrams §5](../deep-dives/g5-alpha-test-clarity.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g5-alpha-test-clarity.md](track-g-g5-alpha-test-clarity.md) | G5-1…G5-2 | Cutout & alpha-test clarity |
+
+## Track G · G6 : Gamma-correct rendering
+
+Source of truth: [deep-dives/g6-gamma-correct-rendering.md](../deep-dives/g6-gamma-correct-rendering.md) :
+[Architecture diagrams §5](../deep-dives/g6-gamma-correct-rendering.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g6-gamma-correct.md](track-g-g6-gamma-correct.md) | G6-1…G6-2 | Gamma-correct rendering |
+
+## Track G · G7 : Texture filtering & mip quality
+
+Source of truth: [deep-dives/g7-texture-filtering.md](../deep-dives/g7-texture-filtering.md) :
+[Architecture diagrams §5](../deep-dives/g7-texture-filtering.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g7-texture-filtering.md](track-g-g7-texture-filtering.md) | G7-1…G7-2 | Texture filtering & mip quality |
+
+## Track G · G8 : Shadow quality tier
+
+Source of truth: [deep-dives/g8-shadow-quality.md](../deep-dives/g8-shadow-quality.md) :
+[Architecture diagrams §5](../deep-dives/g8-shadow-quality.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g8-shadow-quality.md](track-g-g8-shadow-quality.md) | G8-1…G8-2 | Shadow quality tier |
+
+## Track G · G9 : Resolution-independent 2D & UI
+
+Source of truth: [deep-dives/g9-resolution-independent-2d.md](../deep-dives/g9-resolution-independent-2d.md) :
+[Architecture diagrams §5](../deep-dives/g9-resolution-independent-2d.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g9-resolution-independent-2d.md](track-g-g9-resolution-independent-2d.md) | G9-1…G9-3 | Resolution-independent 2D & UI |
+
+## Track G · G10 : Realistic proportions
+
+Source of truth: [deep-dives/g10-realistic-proportions.md](../deep-dives/g10-realistic-proportions.md) :
+[Architecture diagrams §5](../deep-dives/g10-realistic-proportions.md#5-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-g-g10-realistic-proportions.md](track-g-g10-realistic-proportions.md) | G10-1…G10-3 | Realistic proportions |
+
 ## Track H · H1-H3 : Map storage
 
 Source of truth: [track-h-storage-formats.md](../track-h-storage-formats.md).

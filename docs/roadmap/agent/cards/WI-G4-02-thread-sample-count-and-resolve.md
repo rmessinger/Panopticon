@@ -1,14 +1,16 @@
 # Task Card `WI-G4-02`: Thread the sample count through the scene pass and add the MSAA resolve
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G4-02` |
 | Roadmap phase | [Track G · G4](../../track-g-rendering-clarity.md): Multisample antialiasing |
 | Status | `Blocked` |
 | Type | `mechanical-refactor` |
-| Effort | `S` |
-| Prerequisites | `WI-G4-01`, `WI-G3-03`, `WI-G2-03`, plus a G4 deep dive with populated architecture diagrams (the [agent guide](../README.md#how-to-maintain-this-guide) gate) |
-| Diagrams | Blocked on the G4 deep dive. Do not mark this card `Ready` until its Architecture Diagrams section exists and is not a placeholder. |
+| Effort | `M` |
+| Prerequisites | `WI-G4-01`, `WI-G3-04`, `WI-G2-03` |
+| Diagrams | [G4 architecture](../../deep-dives/g4-msaa.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -33,10 +35,11 @@ while the `Faithful` preset stays at one sample and unchanged.
    needs, split it as the deep dive specifies rather than raising the sample count everywhere.
 3. Pass the sample count into every game-owned `GraphicsPipelineDescription` listed by the inventory,
    through the shader resource classes that construct them.
-4. Add the resolve before the final `TextureCopier` blit, and at every other resolve site the
-   inventory identified. Resolve into a single-sampled texture and blit from that.
-5. Support off, 2x, 4x, and 8x, defaulting to off under `Faithful` and clamping to the device's
-   reported maximum rather than failing when a sample count is unsupported.
+4. Resolve 3D colour into the single-sample composition target before `DrawingContext2D` draws
+   UI, then blit that target. Keep 2D single-sample; classify auxiliary water/shadow passes
+   separately and add only the resolves identified by the inventory.
+5. Support off, 2x, 4x, and 8x, defaulting to off under `Faithful`. Select the highest supported
+   count not exceeding the request for both colour and depth formats; report requested/effective counts.
 6. Validate against the G3 harness at one sample and at four.
 
 ## Files likely to change
@@ -76,6 +79,6 @@ dotnet format src --verify-no-changes
 - Set Status above to `Done` (or `Blocked` + reason).
 - Update the G4 phase Status in [`track-g-rendering-clarity.md`](../../track-g-rendering-clarity.md).
 - Tick the G4 clause in [`implementation-checklist.md`](../../implementation-checklist.md).
-- Change `WI-G5-02` from `Blocked` to `Ready` once G5's diagram gate is also satisfied.
+- Change `WI-G5-02` from `Blocked` to `Ready` only after all its prerequisites are satisfied.
 - Append a result line to repo-root `.exchange`.
 - Follow-up cards: none new.

@@ -1,5 +1,7 @@
 # Task Card `WI-G5-01`: Audit alpha-tested materials and the cutout mip path
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G5-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G5 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G5 architecture](../../deep-dives/g5-alpha-test-clarity.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -39,12 +41,12 @@ Read-only: no code changes.
    per-mip threshold rescale needs a place to put the rescaled value.
 5. Record whether the terrain texture-array path and the general texture path would both need the
    fix, or only one.
-6. Write the findings into a new `docs/roadmap/implementation/track-g-g5-alpha-test-clarity.md`,
+6. Fill the audit section in `docs/roadmap/implementation/track-g-g5-alpha-test-clarity.md`,
    following the format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md).
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g5-alpha-test-clarity.md` (new)
+- `docs/roadmap/implementation/track-g-g5-alpha-test-clarity.md`
 
 ## Acceptance criteria
 

@@ -1,5 +1,7 @@
 # Task Card `WI-G2-01`: Audit fixed render-state knobs and the unused LOD asset data
 
+> Audience: agent. Phase implementation task.
+
 | Field | Value |
 |---|---|
 | Card ID | `WI-G2-01` |
@@ -8,7 +10,7 @@
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
-| Diagrams | None: G2 has no deep dive yet. This card is one of the investigations that produces the material for one. |
+| Diagrams | [G2 architecture](../../deep-dives/g2-graphics-settings-presets.md#5-architecture-diagrams) |
 
 ## Goal
 
@@ -42,13 +44,13 @@ for each one where it is currently hardcoded and who consumes it. Read-only: no 
 4. Record which knobs are already expressible in the parsed LOD assets and which have no INI
    representation at all, since that decides whether the settings layer can be seeded from game
    data or must be engine-only.
-5. Write the tables into a new `docs/roadmap/implementation/track-g-g2-graphics-settings.md`,
+5. Fill the audit section in `docs/roadmap/implementation/track-g-g2-graphics-settings.md`,
    following the format of [`track-g-g1-high-dpi.md`](../../implementation/track-g-g1-high-dpi.md):
    a short human summary above the `---` divider, the tables below it.
 
 ## Files likely to change
 
-- `docs/roadmap/implementation/track-g-g2-graphics-settings.md` (new)
+- `docs/roadmap/implementation/track-g-g2-graphics-settings.md`
 
 ## Acceptance criteria
 

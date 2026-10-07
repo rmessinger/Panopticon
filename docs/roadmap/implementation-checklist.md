@@ -1126,55 +1126,69 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       ([`WI-G2-01`](agent/cards/WI-G2-01-audit-render-state-knobs.md),
       [`WI-G2-02`](agent/cards/WI-G2-02-graphics-settings-type-and-presets.md),
       [`WI-G2-03`](agent/cards/WI-G2-03-wire-settings-into-render-construction.md)).
-  - AC: TBD, switching presets at runtime changes active pipeline state, and `Faithful`
-    reproduces the pre-track captured frame.
+  - AC: preset round trips preserve validated settings; runtime switching rebuilds affected
+    resources safely; requested and effective capability-fallback values are reported; and
+    `Faithful` reproduces the pre-track captured frame on the reference host.
 - [ ] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
-      with sharpness/edge-aliasing metrics; extends `FrameCapturer` + ReplaySketch screenshot mode)
+      with sharpness/edge-aliasing metrics; extends `FrameCapturer` + the TestHarness `ScenarioCapture` runner)
       ([`WI-G3-01`](agent/cards/WI-G3-01-audit-frame-capture-paths.md),
       [`WI-G3-02`](agent/cards/WI-G3-02-image-quality-metrics.md),
-      [`WI-G3-03`](agent/cards/WI-G3-03-golden-frame-comparison.md)).
-  - AC: TBD, a headless run compares the fixed scene set against stored goldens per preset and
-    fails on regression; the metrics separate an aliased frame from an antialiased one.
+      [`WI-G3-03`](agent/cards/WI-G3-03-golden-frame-comparison.md),
+      [`WI-G3-04`](agent/cards/WI-G3-04-golden-store-and-gate.md)).
+  - AC: the TestHarness `VisualRegression` built-in scenario captures the fixed scene set headlessly
+    under both presets, byte-identically across two runs on the reference host; a perturbed build
+    exits 2 against the committed goldens; goldens change only through
+    `TESTHARNESS_VR_UPDATE_GOLDENS=1`; and in every scene's designated silhouette regions the 2x
+    supersampled reference scores lower on edge aliasing than the native capture.
 - [ ] G4 Multisample antialiasing (sample count through `GameOutputDescription`, intermediate
-      colour/depth targets and every pipeline description, plus a resolve before the final blit)
+      colour/depth targets and every pipeline description, plus a resolve before single-sample 2D)
       ([`WI-G4-01`](agent/cards/WI-G4-01-inventory-sample-count-sites.md),
       [`WI-G4-02`](agent/cards/WI-G4-02-thread-sample-count-and-resolve.md)).
-  - AC: TBD, 4x MSAA renders and resolves across the 3D, terrain, water, road and particle
-    pipelines, and the G3 edge-aliasing metric improves against the same frame at 1x.
+  - AC: supported 1x/2x/4x/8x modes render without attachment mismatch across 3D, terrain, water,
+    roads and particles; 4x improves G3 silhouette aliasing against 1x; 2D stays single-sample;
+    resize/preset switches release obsolete resources; unsupported requests report their fallback.
 - [ ] G5 Cutout & alpha-test clarity (alpha-to-coverage under MSAA, coverage-preserving mips for
-      alpha-tested textures, per-mip threshold rescale, replacing the fixed `0x60` cutoff in
+      alpha-tested textures, baked per-mip alpha rescale, retaining the fixed `0x60` cutoff in
       `Common.h`) ([`WI-G5-01`](agent/cards/WI-G5-01-audit-alpha-test-materials.md),
       [`WI-G5-02`](agent/cards/WI-G5-02-alpha-to-coverage-and-cutout-mips.md)).
-  - AC: TBD, minified alpha-tested foliage and fencing show no dissolve-to-dots at distance under
-    `Enhanced`, while `Faithful` still produces the original hard-cutoff result.
-- [ ] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, sRGB/tonemapped output,
+  - AC: synthetic cutout mips preserve threshold coverage within the G5 tolerance; foliage/fence
+    silhouette captures improve against the supersampled reference; alpha-to-coverage requires
+    effective MSAA greater than 1; blended/opaque textures remain unchanged; `Faithful` matches its golden.
+- [ ] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, one sRGB output transfer,
       linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output)
       ([`WI-G6-01`](agent/cards/WI-G6-01-audit-colour-space-handling.md),
       [`WI-G6-02`](agent/cards/WI-G6-02-linear-space-shading-and-dither.md)).
-  - AC: TBD, a fog/sky gradient shows no visible banding under `Enhanced` and mip chains no longer
-    darken with distance; `Faithful` retains gamma-space shading.
+  - AC: black/white colour mips encode approximately 188 while data mips remain 128; role tests
+    keep normals/masks/alpha linear; output has exactly one transfer; ordered dither is deterministic
+    and zero-mean; gradient captures meet the G6 banding check; `Faithful` matches its golden.
 - [ ] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
       quality terrain texture-array resample/mip path in `Terrain.cs`)
       ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
       [`WI-G7-02`](agent/cards/WI-G7-02-configurable-anisotropy-and-mip-bias.md)).
-  - AC: TBD, terrain stays legible at grazing angles at 16x with no shimmer under camera motion,
-    measured by the G3 metrics.
-- [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, slope-scaled/
-      normal-offset bias replacing the constant bias in `ShadowSettings`)
+  - AC: requested anisotropy 1/2/4/8/16 and finite bias in [-1,1] validate and report effective
+    values; resource sets observe sampler changes; grazing-angle and fixed-motion captures
+    meet the G7 sharpness/temporal checks; terrain seams stay absent and `Faithful` matches its golden.
+- [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
+      slope-scaled term added to the constant bias; the existing normal offset is kept)
       ([`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md),
       [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md)).
-  - AC: TBD, shadow edges show no acne speckle or cascade blockiness at the default camera zoom,
-    with cascade transitions not visible in the captured frame.
-- [ ] G9 Resolution-independent 2D & UI (native-resolution 2D, resolution-independent layout
-      anchored in logical points, higher-quality WND/APT upscaling)
+  - AC: an `Enhanced` capture of the G3 `shadow-casters` scene at the default zoom shows no acne,
+    no visible cascade seam and no detached contact shadows, with `VisualizeCascades` showing four
+    cascades; the `Faithful` capture matches its golden byte for byte; `ShadowConstantsPS` stays
+    240 bytes.
+- [ ] G9 Resolution-independent 2D & UI (native-resolution 2D, proportional pixel-space layout
+      from G1, role-aware WND/APT upscaling)
       ([`WI-G9-01`](agent/cards/WI-G9-01-audit-2d-ui-resolution-path.md),
       [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
-  - AC: TBD, the control bar and HUD text stay sharp at native resolution on a scaled display with
-    layout and hit regions unchanged relative to the pre-track build.
+  - AC: native 1x/2x captures use pixel-sized fonts with no duplicate DPI transform; proportional
+    layout and hit rectangles remain unchanged; `Enhanced` role-aware sampling avoids atlas
+    bleed and preserves pixel-art roles; `Faithful` matches its golden.
   - [ ] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
         dynamically drawn equivalents (vector/procedural panels, buttons, and frames; live text)
-        behind the `Enhanced` preset, `Faithful` keeps the original art.
-    - AC: under `Enhanced` the control bar contains no HUD bitmap draws; captured frames are sharp
+        behind the `Enhanced` preset, `Faithful` keeps the original art
+        ([`WI-G9-03`](agent/cards/WI-G9-03-dynamic-hud-chrome.md)).
+    - AC: under `Enhanced` the control-bar chrome contains no legacy panel/button/frame bitmap
+      draws (portraits, icons and minimap remain textures); captured frames are sharp
       at 4x native with no upscaled-art blur, and `Faithful` is pixel-identical to the pre-rework
       capture.
 - [ ] G10 Realistic proportions (optional scale-correct presentation: reference-scale
@@ -1184,19 +1198,22 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
   - [ ] G10-1 Proportion audit and reference scale: measure per-class model bounds (W3D mesh
         bounds, FX meshes excluded) against INI `Geometry` and real-world counterparts; check in
         the deviation table and pin the world-units-per-meter reference (measured basis: ≈ 5
-        units/m; aircraft undersized ≈ 2-2.5x, e.g. MiG ≈ 6.6 m in-game vs ≈ 17.3 m real).
+        units/m; aircraft undersized ≈ 2-2.5x, e.g. MiG ≈ 6.6 m in-game vs ≈ 17.3 m real)
+        ([`WI-G10-01`](agent/cards/WI-G10-01-audit-proportions-and-reference-scale.md)).
     - AC: a checked-in table covers a representative set spanning infantry, ground vehicles,
       buildings, and aircraft, and a data test re-derives its numbers from the installed
       INI/W3D assets so a changed asset fails the test.
   - [ ] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
-        the proportions option, correcting the aircraft class.
+        the proportions option, correcting the aircraft class
+        ([`WI-G10-02`](agent/cards/WI-G10-02-presentation-scale-overrides.md)).
     - AC: with the option enabled only aircraft visuals change size; existing P0/P9 scenario
-      assertions pass identically with the option on and off, and selection rings still match the
-      visible models.
+      assertions pass identically with the option on and off; presentation rings/culling match
+      visuals while shared world/bone transforms and selection-query bounds remain unchanged.
   - [ ] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
-        layer and add proportion-mode captures to the G3 golden set.
+        layer and add proportion-mode captures to the G3 golden set
+        ([`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md)).
     - AC: golden frames captured under the proportions mode catch an injected rescale regression,
-      and `Faithful` output is identical to the pre-phase capture.
+      both presets default the option off, and disabled `Faithful` output matches the pre-phase capture.
 
 ## Track H: Map & Unit Storage Formats
 
