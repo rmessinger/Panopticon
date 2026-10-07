@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-G1-01` |
 | Roadmap phase | [Track G · G1: High-DPI drawable & resolution correctness](../../track-g-rendering-clarity.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -48,10 +48,10 @@ must be complete before they run. Read-only: no code changes.
 
 ## Acceptance criteria
 
-- [ ] Every `ClientBounds` / `WindowScale` / `CursorScale` / `Frame` / `Viewport` read in `src/` appears
+- [x] Every `ClientBounds` / `WindowScale` / `CursorScale` / `Frame` / `Viewport` read in `src/` appears
       in the table with a classification.
-- [ ] Sites feeding both classifications are called out explicitly.
-- [ ] No `.cs` file is modified by this card.
+- [x] Sites feeding both classifications are called out explicitly.
+- [x] No `.cs` file is modified by this card.
 
 ## Validation commands
 
