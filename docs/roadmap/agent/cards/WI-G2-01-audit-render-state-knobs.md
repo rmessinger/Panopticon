@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G2-01` |
 | Roadmap phase | [Track G · G2](../../track-g-rendering-clarity.md): Graphics settings & fidelity presets |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -54,12 +54,12 @@ for each one where it is currently hardcoded and who consumes it. Read-only: no 
 
 ## Acceptance criteria
 
-- [ ] Every knob named in the G2 phase row has a row with its current hardcoded value and file:line.
-- [ ] The number of runtime consumers of `StaticGameLods` is stated explicitly, including if it is
+- [x] Every knob named in the G2 phase row has a row with its current hardcoded value and file:line.
+- [x] The number of runtime consumers of `StaticGameLods` is stated explicitly, including if it is
       zero.
-- [ ] The list of pipeline and texture descriptions needing a sample count is complete and counted.
-- [ ] Knobs with no INI representation are distinguished from those with one.
-- [ ] No `.cs` file is modified by this card.
+- [x] The list of pipeline and texture descriptions needing a sample count is complete and counted.
+- [x] Knobs with no INI representation are distinguished from those with one.
+- [x] No `.cs` file is modified by this card.
 
 ## Validation commands
 
