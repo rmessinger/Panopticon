@@ -1,10 +1,10 @@
-# Task Card `WI-G1-03`: Route render surfaces to pixels, keep GUI layout on points
+# Task Card `WI-G1-03`: Route render surfaces and GUI layout to pixels
 
 | Field | Value |
 |---|---|
 | Card ID | `WI-G1-03` |
 | Roadmap phase | [Track G · G1: High-DPI drawable & resolution correctness](../../track-g-rendering-clarity.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-G1-01`, `WI-G1-02` |
@@ -12,9 +12,11 @@
 
 ## Goal
 
-Size the `GamePanel` render target and the 3D `Viewport` in physical pixels while the WND/APT GUI
-layout keeps receiving logical points, splitting the single size value that
-`Game.OnPanelSizeChanged` currently feeds to both.
+Size the `GamePanel` render target, the 3D `Viewport` and the WND/APT GUI layout in physical
+pixels, and give ImGui the window's framebuffer scale. The `WI-G1-01` audit replaced the original
+points/pixels split for the GUI: WND layout is already proportional to the size it is given, so one
+pixel size serves both (see the
+[design adjustment](../../implementation/track-g-g1-high-dpi.md)).
 
 ## Context to read (and only this)
 
@@ -24,44 +26,43 @@ layout keeps receiving logical points, splitting the single size value that
 - `docs/roadmap/deep-dives/g1-high-dpi-resolution.md` §3: the design and its two consequences.
 - `src/Panopticon.Simulation/GamePanel.cs`: `Frame`, `ClientBounds`, `EnsureFrame`.
 - `src/Panopticon.Simulation/Game.cs:630-645,666-683`: the `EnsureFrame` call and `OnPanelSizeChanged`.
-- `src/Panopticon.Launcher/Program.cs:340-350` and
-  `src/Panopticon.Tools.TestHarness/Program.cs:395-410,450-460`: the other `EnsureFrame` call sites.
+- `src/Panopticon.Launcher/Program.cs:340-350`, `src/Panopticon.Tools.TestHarness/ReplayScenarioRunner.cs`,
+  `ValidationGroundRunner.cs` and `MassBattleDeploymentRunner.cs`: the other `EnsureFrame` call sites.
+- `src/Veldrid.ImGui/ImGuiRenderer.cs`, `src/Panopticon.Simulation/Diagnostics/DeveloperModeView.cs`,
+  `GameView.cs` and `src/Panopticon.Tools.TestHarness/ValidationGroundOverlay.cs`: ImGui sizing.
 
 ## Steps
 
-1. Change every `Panel.EnsureFrame(window.ClientBounds)` call site to pass
-   `window.DrawableBounds`. There are three: `Game.cs`, `Panopticon.Launcher/Program.cs`, and
-   `Panopticon.Tools.TestHarness/Program.cs` (two calls). Keep the existing null-window fallback in
-   `Game.cs` unchanged.
+1. Change every window-backed `Panel.EnsureFrame(window.ClientBounds)` call site to pass
+   `window.DrawableBounds`: `Game.cs`, `Panopticon.Launcher/Program.cs`, and the three TestHarness
+   runners. Keep the existing null-window fallback in `Game.cs` unchanged.
 2. Add an XML doc comment on `GamePanel.Frame` and `GamePanel.ClientBounds` stating that both are
-   now in physical pixels. Do not rename them.
-3. In `Game.OnPanelSizeChanged`, keep `Viewport` built from `Panel.ClientBounds.Size` (now pixels),
-   and feed the GUI managers a logical size instead: divide the pixel size by the window's
-   `DpiScale`, rounding to the nearest integer. `Scene3D?.Camera.OnViewportSizeChanged()` stays as-is.
-4. `Game` needs access to `DpiScale` to do step 3. If it does not already hold the `GameWindow`,
-   add a settable `float DpiScale` property on `Game` defaulting to `1.0f`, set by the same code
-   that calls `EnsureFrame`. Do not add a new `GameWindow` dependency to `Game`.
-5. Add a unit test over the size-splitting logic: given a pixel size and a `DpiScale` of 2, assert
-   the viewport size equals the pixel size and the GUI size equals half of it; at `DpiScale` 1
-   assert both are equal. Extract the split into an internal static helper if that is needed to
-   test it without a window.
+   in physical pixels. Do not rename them.
+3. Leave `Game.OnPanelSizeChanged` feeding `Panel.ClientBounds.Size` (now pixels) to both the
+   `Viewport` and the GUI managers.
+4. Add `ImGuiRenderer.WindowResized(int width, int height, float scale)` and feed it
+   `DrawableBounds` plus `DpiScale` from `DeveloperModeView` and `ValidationGroundOverlay`, so ImGui
+   lays out in points and scales its clip rects to the pixel framebuffer.
+5. In `GameView`, convert the ImGui-space panel rectangle to pixels with `DpiScale` before
+   `EnsureFrame`, so it matches the pixel-space input messages.
 
 ## Files likely to change
 
 - `src/Panopticon.Simulation/Game.cs`
 - `src/Panopticon.Simulation/GamePanel.cs`
 - `src/Panopticon.Launcher/Program.cs`
-- `src/Panopticon.Tools.TestHarness/Program.cs`
-- `test/Panopticon.Simulation.Tests/`: new unit test.
+- `src/Panopticon.Tools.TestHarness/*Runner.cs`, `ValidationGroundOverlay.cs`
+- `src/Panopticon.Simulation/Diagnostics/DeveloperModeView.cs`, `GameView.cs`
+- `src/Veldrid.ImGui/ImGuiRenderer.cs`
 
 ## Acceptance criteria
 
-- [ ] All three `EnsureFrame` call sites pass `DrawableBounds`.
-- [ ] `Game.Viewport` is in pixels; `WndWindowManager.OnViewportSizeChanged` and
-      `AptWindowManager.OnViewportSizeChanged` receive a logical size.
-- [ ] The size-split unit test passes at `DpiScale` 1 and 2.
-- [ ] The game still launches and renders correctly at scale 1 with no visible change.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Every window-backed `EnsureFrame` call site passes `DrawableBounds`.
+- [x] `Game.Viewport` and the WND/APT managers receive the pixel size.
+- [x] ImGui renders with `DpiScale` as its framebuffer scale.
+- [x] The game still launches and renders correctly at scale 1 with no visible change. Verified by
+      the headless capture path; windowed runs are unavailable on the validation host.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
@@ -73,9 +74,8 @@ dotnet format src --verify-no-changes
 
 ## Out of scope / guardrails
 
-- Do not fix 2D drawing scale or mouse picking here. After this card, on a display with scale != 1
-  the HUD will draw at the wrong size and picking will be offset. That is expected and is exactly
-  what `WI-G1-04` closes. Do not partially work around it.
+- Do not convert mouse input here. After this card, on a display with scale != 1, picking and GUI
+  hit testing are offset until `WI-G1-04` lands.
 - Do not change WND/APT layout logic itself; only the size value handed to it.
 - Do not rename `GamePanel.ClientBounds` or `Frame`, which would ripple beyond this card.
 - If the classification table from `WI-G1-01` lists a consumer not covered by these steps, mark

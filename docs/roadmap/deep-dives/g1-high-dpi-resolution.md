@@ -7,9 +7,9 @@
 >
 > The agent-context section at the bottom ([Current code appendix](#appendix-current-code-agent-context)) contains file:line code references. Skip it if reading for design intent.
 
-Purpose: render at the display's native pixel resolution. Today one size value drives both the
-render surfaces and the UI layout, and that value is in logical points, so on a scaled display the
-whole frame is rendered below native resolution and resampled by the compositor.
+Purpose: render at the display's native pixel resolution. Before G1 one size value drove both the
+render surfaces and the UI layout, and that value was in logical points, so on a scaled display the
+whole frame was rendered below native resolution and resampled by the compositor.
 
 ---
 
@@ -43,43 +43,52 @@ These were verified against the pinned packages and are the reason the fix is no
 
 ## 3. Design
 
-Make the two spaces explicit and give each consumer the one it needs.
+Make the two spaces explicit, then run the whole engine in one of them.
 
 `GameWindow` exposes both, and no caller infers one from the other:
 
-- `ClientBounds` keeps its current meaning: logical points. Input, cursor and GUI layout use it.
-- `DrawableBounds` is new: physical pixels, from `SDL_GetWindowSizeInPixels`. The swapchain,
-  `GamePanel`'s render target and the 3D `Viewport` use it.
-- `DpiScale` is the ratio between them, replacing the display-DPI guess `WindowScale` currently
-  derives from `SDL_GetDisplayDPI` on display 0.
+- `ClientBounds` keeps its current meaning: logical points. Window creation, the OS cursor and
+  ImGui layout use it.
+- `DrawableBounds` is new: physical pixels, from `SDL_GetWindowSizeInPixels` (falling back to
+  `SDL_GL_GetDrawableSize` on SDL builds older than 2.26). The swapchain, `GamePanel`'s render
+  target, the 3D `Viewport` and the WND/APT GUI use it.
+- `DpiScale` is the ratio between them. `WindowScale` stays for `CursorScale` and for enlarging the
+  window on platforms that never scale the drawable (X11), where `DpiScale` is 1.
 
-Two consequences have to be handled together with the split, or the change trades a soft image for
-a broken one:
+The original design kept the GUI on points and scaled 2D drawing and mouse picking separately. The
+`WI-G1-01` audit changed that:
 
-- The 3D camera unprojects mouse positions through `Viewport`. Once the viewport is in pixels,
-  mouse positions (points) must be scaled by `DpiScale` at the picking boundary, or selection and
-  terrain picking drift by the scale factor.
-- `DrawingContext2D` draws the GUI into the now larger pixel framebuffer while WND/APT layout stays
-  in points. The 2D layer therefore needs a `DpiScale` transform, otherwise the HUD renders at
-  `1/scale` size in the corner of the frame. Making the GUI genuinely resolution-independent is
-  [G9](../track-g-rendering-clarity.md); G1 only preserves its current physical size.
+- WND layout is already resolution-proportional. A WND window fits its 800x600 creation resolution
+  to whatever size it is given, and `DrawingContext2D` rasterises fonts at the scaled size. Handing
+  the GUI the pixel size keeps every element at the same fraction of the screen, drawn at native
+  resolution, with no extra 2D transform.
+- Mouse positions are consumed in about fifteen places next to pixel-space values (selection
+  frustum, tactical view, order generators, WND/APT hit testing). There is no single picking
+  boundary to scale at.
+
+So `GameWindow` converts SDL mouse positions from points to pixels once, as input messages are
+created. Everything downstream of `InputMessage` is pixel space, `Camera` stays a pure pixel type,
+and the GUI and 3D view agree on one coordinate space. ImGui is the one in-engine exception: it
+lays out in points and renders into the pixel framebuffer through its framebuffer scale. Making the
+GUI genuinely resolution-independent (higher-resolution art, a virtual layout space) is
+[G9](../track-g-rendering-clarity.md).
 
 Sub-phases, matching the card decomposition:
 
 | Sub-phase | Scope |
 |---|---|
 | G1-1 | Audit and classify every window/panel size consumer as points or pixels. |
-| G1-2 | `AllowHighDpi` window creation, `SDL_GetWindowSizeInPixels` interop, `DrawableBounds`/`DpiScale`, swapchain in pixels. |
-| G1-3 | Route the render target and 3D viewport to pixels, keeping GUI layout on points. |
-| G1-4 | Scale 2D drawing and mouse picking by `DpiScale` so UI size and selection stay correct. |
+| G1-2 | `AllowHighDpi` window creation, pixel-size interop, `DrawableBounds`/`DpiScale`, swapchain in pixels. |
+| G1-3 | Route the render target, 3D viewport and GUI layout to pixels; ImGui gets its framebuffer scale. |
+| G1-4 | Convert mouse input from points to pixels at the `GameWindow` boundary so picking and GUI hit testing stay correct. |
 
 ## 4. Validation
 
 The scale factor is the whole point, so a test at scale 1 proves nothing. Validation is a
-`DpiScale`-parameterised check that `DrawableBounds == ClientBounds * DpiScale`, that the panel
-render target matches `DrawableBounds`, and that a mouse position at the centre of the window
-unprojects to the same world ray at scale 1 and scale 2. The captured-frame dimension check
-belongs to the phase milestone and runs through `FrameCapturer`.
+`DpiScale`-parameterised check that the points-to-pixels conversion preserves normalised position,
+that a centre mouse position maps through the WND root transform to the same client point at scale
+1 and 2, and that `DpiScale` guards zero sizes. The captured-frame dimension check belongs to the
+phase milestone and runs through `FrameCapturer`.
 
 ---
 
@@ -128,11 +137,15 @@ classDiagram
   }
 
   class WndWindowManager {
-    +OnViewportSizeChanged(Size) «points»
+    +OnViewportSizeChanged(Size) «pixels after G1»
   }
 
-  class DrawingContext2D {
-    +Begin(cl, sampler, SizeF, time)
+  class InputMessage {
+    +Point2D MousePosition «pixels after G1»
+  }
+
+  class ImGuiRenderer {
+    +WindowResized(int, int, float) «G1»
   }
 
   GameWindow ..> Sdl2Interop : queries pixel size
@@ -140,8 +153,9 @@ classDiagram
   GamePanel --> RenderTarget : EnsureSize
   GamePanel --> Game : ClientSizeChanged
   Game --> Camera : pixel Viewport
-  Game --> WndWindowManager : logical size
-  Game --> DrawingContext2D : DpiScale transform
+  Game --> WndWindowManager : pixel size
+  GameWindow --> InputMessage : mouse points * DpiScale
+  GameWindow --> ImGuiRenderer : DrawableBounds, DpiScale
 ```
 
 Startup and resize flow, showing where the two spaces separate.
@@ -167,7 +181,7 @@ sequenceDiagram
   P->>P: RenderTarget.EnsureSize(pixels)
   P-->>G: ClientSizeChanged
   G->>C: Viewport = pixels
-  G->>U: OnViewportSizeChanged(points)
+  G->>U: OnViewportSizeChanged(pixels)
 
   Note over W,U: on resize the same split repeats
   W->>W: HandleResized
@@ -175,8 +189,10 @@ sequenceDiagram
   W->>W: Swapchain.Resize(pixels)
   W-->>App: ClientSizeChanged
 
-  Note over G,C: input stays in points
-  G->>C: Unproject(mousePoints * DpiScale)
+  Note over W,C: input converted once at the window
+  SDL-->>W: mouse move (points)
+  W->>G: InputMessage(points * DpiScale)
+  G->>C: Unproject(pixels)
 ```
 
 ---
@@ -204,8 +220,13 @@ sequenceDiagram
 - `src/Panopticon.Simulation/Gui/Wnd/WndWindowManager.cs:36` and
   `src/Panopticon.Simulation/Gui/Apt/AptWindowManager.cs:30`: GUI layout sizing from `Panel.ClientBounds`.
 - `src/Panopticon.Simulation/Graphics/Rendering/RenderPipeline.cs:136-141`: `DrawingContext2D.Begin`, which
-  takes the render-target size, where the G1-4 scale transform belongs.
-- `src/Panopticon.Launcher/Program.cs:345`, `src/Panopticon.Tools.TestHarness/Program.cs:402,457`:
-  the `Panel.EnsureFrame(window.ClientBounds)` call sites.
+  takes the render-target size (pixels after G1).
+- `src/Panopticon.Simulation/Gui/Wnd/Controls/Window.cs:61-69`: `OnSizeChanged`, the proportional
+  fit from creation resolution to panel size.
+- `src/Panopticon.Simulation/GameWindow.cs`: `HandleMouseMove`, the points-to-pixels input boundary.
+- `src/Veldrid.ImGui/ImGuiRenderer.cs`: `WindowResized(int, int, float)`, the ImGui framebuffer scale.
+- `src/Panopticon.Launcher/Program.cs:345`, `src/Panopticon.Tools.TestHarness/ReplayScenarioRunner.cs:82`,
+  `ValidationGroundRunner.cs:398` and `MassBattleDeploymentRunner.cs:688`: the
+  `Panel.EnsureFrame(window.DrawableBounds)` call sites.
 - `src/Panopticon.Simulation/Input/Cursors/CursorManager.cs:70`: `CursorScale` consumer, which stays on the
   logical/DPI-scale value.

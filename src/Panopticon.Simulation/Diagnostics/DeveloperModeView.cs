@@ -27,14 +27,15 @@ public sealed class DeveloperModeView : DisposableBase
         _imGuiRenderer = AddDisposable(new ImGuiRenderer(
             game.GraphicsDevice,
             game.GraphicsDevice.MainSwapchain.Framebuffer.OutputDescription,
-            window.ClientBounds.Width,
-            window.ClientBounds.Height));
+            window.DrawableBounds.Width,
+            window.DrawableBounds.Height));
 
         void OnWindowSizeChanged(object sender, EventArgs e)
         {
-            _imGuiRenderer.WindowResized(window.ClientBounds.Width, window.ClientBounds.Height);
+            _imGuiRenderer.WindowResized(window.DrawableBounds.Width, window.DrawableBounds.Height, window.DpiScale);
         }
 
+        OnWindowSizeChanged(this, EventArgs.Empty);
         window.ClientSizeChanged += OnWindowSizeChanged;
 
         AddDisposeAction(() => window.ClientSizeChanged -= OnWindowSizeChanged);
