@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G3-02` |
 | Roadmap phase | [Track G · G3](../../track-g-rendering-clarity.md): Visual regression harness |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -51,11 +51,11 @@ correct before any capture plumbing exists.
 
 ## Acceptance criteria
 
-- [ ] Both metrics accept the `CapturedFrame` field shapes without a conversion step.
-- [ ] Tests cover the step edge, ramped edge, uniform field, and sharp versus blurred checkerboard.
-- [ ] Tests assert ordering relations, not hardcoded score constants.
-- [ ] No test requires a graphics device or a game installation.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Both metrics accept the `CapturedFrame` field shapes without a conversion step.
+- [x] Tests cover the step edge, ramped edge, uniform field, and sharp versus blurred checkerboard.
+- [x] Tests assert ordering relations, not hardcoded score constants.
+- [x] No test requires a graphics device or a game installation.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
