@@ -251,8 +251,8 @@ mindmap
       G1 High-DPI drawable and resolution correctness ⮕
         G1-1 Consumer classification audit
         G1-2 AllowHighDpi and drawable size
-        G1-3 Render surfaces in pixels
-        G1-4 2D and picking scale
+        G1-3 Render surfaces and GUI in pixels
+        G1-4 Mouse input to pixels
       G2 Graphics settings and fidelity presets
       G3 Visual regression harness
       G4 Multisample antialiasing

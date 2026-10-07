@@ -248,10 +248,12 @@ public sealed class GameWindow : DisposableBase
 
     private void HandleMouseMove(MouseMoveEventArgs args)
     {
-        _lastMouseX = args.State.X;
-        _lastMouseY = args.State.Y;
+        // SDL reports the mouse in logical points; the engine works in drawable pixels.
+        var position = DpiScaling.ToPixels(new Point2D(args.State.X, args.State.Y), DpiScale);
+        _lastMouseX = position.X;
+        _lastMouseY = position.Y;
 
-        var message = InputMessage.CreateMouseMove(new Point2D(args.State.X, args.State.Y));
+        var message = InputMessage.CreateMouseMove(position);
         MessageQueue.Enqueue(message);
     }
 
