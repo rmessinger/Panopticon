@@ -112,12 +112,48 @@ Vulkan 1.4.341 instance, device `AMD Radeon RX 7600 (RADV NAVI33)`, driver Mesa 
   `WI-G3-04`.
 - Metrics are reported as scene-specific heuristics; the fixed thresholds live in the comparer.
 
-## Golden store
+## Golden store (`WI-G3-04`, complete)
 
-- Location: `visual-regression/<preset>/<scene>.png` plus `visual-regression/golden-manifest.json`,
-  following the repo-root layout of `pbr-material-proof/` and `gltf-runtime-proof/`.
-- Update: `TESTHARNESS_VR_UPDATE_GOLDENS=1` with the `VisualRegression` scenario. The only route.
-- Invocation and exit codes: recorded here by `WI-G3-04` when implemented.
+- Licensing and storage review outcome: renders of operator install content stay out of Git
+  (repo precedent: `.gitignore` `ee2-*-proof/`, "operator install content; never committed";
+  `pbr-material-proof/` is committed because it renders repo-own synthetic materials). The
+  goldens are therefore NOT committed. The store lives outside the repo at
+  `~/.panopticon/visual-regression-goldens/<preset>/<scene>.png`; override with
+  `TESTHARNESS_VR_GOLDEN_STORE`. Asset provenance: each golden is a 1024x768 PNG rendered by
+  the engine from the operator's Generals install on the reference host.
+- `visual-regression/golden-manifest.json` is the committed interface to the external store:
+  schema version, store kind `external`, backend, device name, host, width, height, update
+  timestamp, and one entry per golden (preset, scene, file, SHA-256, Sharpness, EdgeAliasing,
+  tolerance triple). Override path with `TESTHARNESS_VR_MANIFEST`. A store hash that differs
+  from the manifest fails setup (`StoreMismatch`, exit 1), so silent store drift is detected.
+- Reference host values recorded in the initial manifest: backend `Vulkan`, device
+  `AMD Radeon RX 7600 (RADV NAVI33)` (Veldrid `DeviceName`), host `duchessa`, 1024x768.
+- Comparer: `GoldenFrameComparer` with defaults `MaxChannelDelta` 2,
+  `MaxDifferingPixelFraction` 0.001, `MaxMetricDelta` 0.02; per-scene overrides via the scene
+  set's nullable tolerance fields. Pass requires the differing-pixel fraction within limit and
+  both metric deltas within `MaxMetricDelta`. Size or format mismatch fails with a reason.
+- Update procedure: run the `VisualRegression` scenario with `TESTHARNESS_VR_UPDATE_GOLDENS=1`
+  on the reference host; captures and manifest are written only when the run otherwise passes
+  (a silhouette failure writes nothing, exit 5). Compare mode never writes into the store.
+  Regenerating goldens after an intentional rendering change is an operator decision; the
+  manifest update ships as a reviewed diff.
+- Invocation:
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+  dotnet run --project src/Panopticon.Tools.TestHarness -- --built-in-scenario VisualRegression --headless
+```
+
+- Exit codes, highest precedence first: 1 setup failure (missing or unparseable manifest,
+  missing golden entry or file, store hash mismatch; short-circuits remaining scenes), 2
+  regression (comparison failed), 6 host mismatch (backend, device or host differs from the
+  manifest; captures and scores still written, comparisons skipped), 5 silhouette-check
+  failure, 0 pass. Artifacts (`report.json`, captures) always land in the output directory
+  outside the store.
+- Verified on the reference host: unmodified run exits 0 (12/12 goldens Passed both presets);
+  a `RenderPipeline.ClearColor` 105 -> 110 perturbation exits 2 with terrain-grazing failing
+  both presets (differing fraction 0.255; the sky region exposes the clear color while covered
+  scenes pass, so the gate discriminates); the reverted build exits 0 again.
 
 ## Risks and platform notes
 

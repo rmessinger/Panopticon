@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Panopticon.Data;
@@ -15,11 +16,16 @@ using Veldrid;
 namespace Panopticon.Tools.TestHarness;
 
 /// <summary>
-/// WI-G3-03: runs the embedded visual regression scene set for both presets, captures every
-/// scene at scale 1 with the fixed render clock, builds supersampled references (scale 2,
-/// box-downsampled) for scenes with silhouette regions, scores the image metrics, and runs the
-/// silhouette aliasing check. Capture-only: golden comparison and host gating land with
-/// WI-G3-04. Exit codes: 0 pass, 1 setup failure, 5 silhouette check failure.
+/// Runs the embedded visual regression scene set for both presets, captures every scene at
+/// scale 1 with the fixed render clock, builds supersampled references (scale 2,
+/// box-downsampled) for scenes with silhouette regions, scores the image metrics, runs the
+/// silhouette aliasing check, and gates each capture against the golden store. Goldens are
+/// pinned to the reference host. They live outside the repository (renders of install content,
+/// see the licensing note in the G3 implementation plan) and are described by a checked-in
+/// manifest carrying a SHA-256 per golden. Exit codes: 0 pass, 1 setup error (missing manifest
+/// or golden, store drift), 2 regression, 5 silhouette check failure, 6 golden host mismatch.
+/// TESTHARNESS_VR_UPDATE_GOLDENS=1 writes the store and a new manifest instead of comparing;
+/// the manifest is written only when the whole run passed.
 /// </summary>
 public static class VisualRegressionRunner
 {
@@ -54,12 +60,70 @@ public static class VisualRegressionRunner
             return 1;
         }
 
+        var updateMode = Environment.GetEnvironmentVariable("TESTHARNESS_VR_UPDATE_GOLDENS") == "1";
+
+        string backend;
+        string deviceName;
+        try
+        {
+            using var probe = GraphicsDeviceUtility.CreateGraphicsDevice(config.Renderer, null);
+            backend = probe.BackendType.ToString();
+            deviceName = probe.DeviceName;
+        }
+        catch (Exception ex)
+        {
+            reporter.Error($"Could not resolve the graphics backend and device: {ex.Message}");
+            return 1;
+        }
+
+        var host = Environment.MachineName;
+
         var baseDirectory = Environment.GetEnvironmentVariable("TESTHARNESS_VR_OUTPUT_DIR")
             ?? Path.Combine(Path.GetTempPath(), "panopticon_visual_regression");
         Directory.CreateDirectory(baseDirectory);
 
+        var storeRoot = Environment.GetEnvironmentVariable("TESTHARNESS_VR_GOLDEN_STORE")
+            ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".panopticon",
+                "visual-regression-goldens");
+        var manifestPath = Environment.GetEnvironmentVariable("TESTHARNESS_VR_MANIFEST")
+            ?? Path.Combine("visual-regression", "golden-manifest.json");
+
+        GoldenManifest? manifest = null;
+        if (!updateMode)
+        {
+            if (!File.Exists(manifestPath))
+            {
+                reporter.Error(
+                    $"Golden manifest '{manifestPath}' not found; capture goldens once on the reference host with TESTHARNESS_VR_UPDATE_GOLDENS=1.");
+                return 1;
+            }
+
+            try
+            {
+                manifest = JsonSerializer.Deserialize<GoldenManifest>(File.ReadAllText(manifestPath), ReportJsonOptions);
+            }
+            catch (Exception ex)
+            {
+                reporter.Error($"Could not read the golden manifest '{manifestPath}': {ex.Message}");
+                return 1;
+            }
+
+            if (manifest == null || manifest.Goldens.Count == 0)
+            {
+                reporter.Error($"Golden manifest '{manifestPath}' contains no goldens.");
+                return 1;
+            }
+        }
+
         var records = new List<SceneReportRecord>();
+        var goldenEntries = new List<GoldenManifestEntry>();
         var silhouetteFailure = false;
+        var regression = false;
+        var hostMismatch = false;
+        var manifestWidth = 0;
+        var manifestHeight = 0;
 
         foreach (var (presetName, preset) in Presets)
         {
@@ -101,6 +165,19 @@ public static class VisualRegressionRunner
                 var capture = LoadPngAsFrame(capturePath);
                 var scores = ScoreRegions(capture, scene, capture.Width, capture.Height);
 
+                if (manifestWidth == 0)
+                {
+                    manifestWidth = capture.Width;
+                    manifestHeight = capture.Height;
+                }
+                else if (!updateMode && (capture.Width != manifest!.Width || capture.Height != manifest.Height))
+                {
+                    reporter.Error(
+                        $"Capture is {capture.Width}x{capture.Height} but the goldens are {manifest.Width}x{manifest.Height}; " +
+                        "the harness viewport changed, recapture goldens through update mode.");
+                    return 1;
+                }
+
                 double? referenceEdgeAliasing = null;
                 var silhouetteImproved = (bool?)null;
                 if (scene.SilhouetteRegions.Count > 0)
@@ -127,16 +204,38 @@ public static class VisualRegressionRunner
                     }
                 }
 
+                var setupFailure = false;
+                var goldenOutcome = ProcessGolden(
+                    updateMode, manifest, storeRoot, manifestPath, presetName, scene,
+                    capturePath, capture, scores, backend, deviceName, host,
+                    goldenEntries, reporter,
+                    ref hostMismatch,
+                    ref regression,
+                    ref setupFailure);
+
                 records.Add(new SceneReportRecord(presetName, scene.Name, capturePath)
                 {
                     Sharpness = scores.Sharpness,
                     EdgeAliasing = scores.EdgeAliasing,
                     ReferenceEdgeAliasing = referenceEdgeAliasing,
                     SilhouetteImproved = silhouetteImproved,
+                    GoldenStatus = goldenOutcome.Status,
+                    Golden = goldenOutcome.GoldenPath,
+                    DifferingPixels = goldenOutcome.DifferingPixels,
+                    DifferingPixelFraction = goldenOutcome.DifferingPixelFraction,
+                    MaxChannelDeltaObserved = goldenOutcome.MaxChannelDeltaObserved,
+                    SharpnessDelta = goldenOutcome.SharpnessDelta,
+                    EdgeAliasingDelta = goldenOutcome.EdgeAliasingDelta,
+                    FailureReason = goldenOutcome.FailureReason,
                 });
 
+                if (setupFailure)
+                {
+                    return 1;
+                }
+
                 reporter.Info(
-                    $"Scene '{scene.Name}' ({presetName}): sharpness {scores.Sharpness:0.000}, edge aliasing {scores.EdgeAliasing:0.000}.");
+                    $"Scene '{scene.Name}' ({presetName}): sharpness {scores.Sharpness:0.000}, edge aliasing {scores.EdgeAliasing:0.000}, golden {goldenOutcome.Status}.");
             }
         }
 
@@ -144,13 +243,169 @@ public static class VisualRegressionRunner
             SchemaVersion: 1,
             Renderer: config.Renderer?.ToString() ?? "Default",
             Presets: [.. Presets.Select(p => p.Name)],
-            Records: records);
+            Records: records)
+        {
+            GoldenManifestPath = Path.GetFullPath(manifestPath),
+            GoldenStore = storeRoot,
+            Backend = backend,
+            DeviceName = deviceName,
+            Host = host,
+        };
         var reportPath = Path.Combine(baseDirectory, "report.json");
         File.WriteAllText(reportPath, JsonSerializer.Serialize(report, ReportJsonOptions));
         reporter.Info($"Visual regression report written to {reportPath}.");
 
+        if (updateMode)
+        {
+            if (silhouetteFailure)
+            {
+                reporter.Error("Golden manifest not written: the update run reported a silhouette check failure.");
+                return 5;
+            }
+
+            var manifestRecord = new GoldenManifest(
+                SchemaVersion: 1,
+                StoreKind: "external",
+                Backend: backend,
+                DeviceName: deviceName,
+                Host: host,
+                Width: manifestWidth,
+                Height: manifestHeight,
+                UpdatedUtc: DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                Goldens: goldenEntries);
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!);
+            File.WriteAllText(manifestPath, JsonSerializer.Serialize(manifestRecord, ReportJsonOptions));
+            reporter.Info($"Golden manifest written to {Path.GetFullPath(manifestPath)} ({goldenEntries.Count} goldens).");
+            return 0;
+        }
+
+        if (regression)
+        {
+            return 2;
+        }
+
+        if (hostMismatch)
+        {
+            return 6;
+        }
+
         return silhouetteFailure ? 5 : 0;
     }
+
+    private sealed record GoldenOutcome(
+        string Status,
+        string? GoldenPath = null,
+        long? DifferingPixels = null,
+        double? DifferingPixelFraction = null,
+        int? MaxChannelDeltaObserved = null,
+        double? SharpnessDelta = null,
+        double? EdgeAliasingDelta = null,
+        string? FailureReason = null);
+
+    private static GoldenOutcome ProcessGolden(
+        bool updateMode,
+        GoldenManifest? manifest,
+        string storeRoot,
+        string manifestPath,
+        string presetName,
+        VisualRegressionScene scene,
+        string capturePath,
+        CapturedFrame capture,
+        ImageQualityScores scores,
+        string backend,
+        string deviceName,
+        string host,
+        List<GoldenManifestEntry> goldenEntries,
+        ITestHarnessReporter reporter,
+        ref bool hostMismatch,
+        ref bool regression,
+        ref bool setupFailure)
+    {
+        var defaults = new GoldenTolerance();
+        var tolerance = new GoldenTolerance
+        {
+            MaxChannelDelta = scene.MaxChannelDelta ?? defaults.MaxChannelDelta,
+            MaxDifferingPixelFraction = scene.MaxDifferingPixelFraction ?? defaults.MaxDifferingPixelFraction,
+            MaxMetricDelta = scene.MaxMetricDelta ?? defaults.MaxMetricDelta,
+        };
+
+        var goldenPath = Path.Combine(storeRoot, presetName, $"{scene.Name}.png");
+
+        if (updateMode)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(goldenPath)!);
+            File.Copy(capturePath, goldenPath, overwrite: true);
+            goldenEntries.Add(new GoldenManifestEntry(
+                presetName,
+                scene.Name,
+                $"{presetName}/{scene.Name}.png",
+                Sha256File(goldenPath),
+                scores.Sharpness,
+                scores.EdgeAliasing,
+                tolerance.MaxChannelDelta,
+                tolerance.MaxDifferingPixelFraction,
+                tolerance.MaxMetricDelta));
+            return new GoldenOutcome("Updated", goldenPath);
+        }
+
+        if (manifest!.Backend != backend || manifest.DeviceName != deviceName || manifest.Host != host)
+        {
+            hostMismatch = true;
+            reporter.Error(
+                $"Golden host mismatch: goldens were captured on {manifest.Backend}/{manifest.DeviceName}/{manifest.Host}, " +
+                $"this run is {backend}/{deviceName}/{host}. Captures and scores are still written; pixel comparison is skipped.");
+            return new GoldenOutcome("HostMismatch");
+        }
+
+        var entry = manifest.Goldens.FirstOrDefault(g => g.Preset == presetName && g.Scene == scene.Name);
+        if (entry == null)
+        {
+            reporter.Error(
+                $"Golden manifest '{manifestPath}' has no entry for scene '{scene.Name}' preset '{presetName}'; " +
+                "recapture through update mode.");
+            setupFailure = true;
+            return new GoldenOutcome("MissingGolden");
+        }
+
+        if (!File.Exists(goldenPath))
+        {
+            reporter.Error($"Golden '{goldenPath}' is missing; recapture the store through update mode.");
+            setupFailure = true;
+            return new GoldenOutcome("MissingGolden");
+        }
+
+        if (Sha256File(goldenPath) != entry.Sha256)
+        {
+            reporter.Error($"Golden '{goldenPath}' does not match the SHA-256 recorded in the manifest; the store drifted.");
+            setupFailure = true;
+            return new GoldenOutcome("StoreMismatch");
+        }
+
+        var goldenFrame = LoadPngAsFrame(goldenPath);
+        var goldenScores = new ImageQualityScores
+        {
+            Sharpness = entry.Sharpness,
+            EdgeAliasing = entry.EdgeAliasing,
+        };
+        var comparison = GoldenFrameComparer.Compare(capture, goldenFrame, scores, goldenScores, tolerance);
+        if (!comparison.Passed)
+        {
+            regression = true;
+            reporter.Error($"Scene '{scene.Name}' ({presetName}) golden regression: {comparison.FailureReason}");
+        }
+
+        return new GoldenOutcome(
+            comparison.Passed ? "Passed" : "Failed",
+            goldenPath,
+            comparison.DifferingPixels,
+            comparison.DifferingPixelFraction,
+            comparison.MaxChannelDeltaObserved,
+            comparison.SharpnessDelta,
+            comparison.EdgeAliasingDelta,
+            comparison.FailureReason);
+    }
+
+    private static string Sha256File(string path) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
 
     private static ImageQualityScores? CaptureAndScoreReference(
         GameInstallation installation,
@@ -254,7 +509,18 @@ public sealed record VisualRegressionReport(
     int SchemaVersion,
     string Renderer,
     IReadOnlyList<string> Presets,
-    IReadOnlyList<SceneReportRecord> Records);
+    IReadOnlyList<SceneReportRecord> Records)
+{
+    public string? GoldenManifestPath { get; init; }
+
+    public string? GoldenStore { get; init; }
+
+    public string? Backend { get; init; }
+
+    public string? DeviceName { get; init; }
+
+    public string? Host { get; init; }
+}
 
 public sealed record SceneReportRecord(
     string Preset,
@@ -268,4 +534,47 @@ public sealed record SceneReportRecord(
     public double? ReferenceEdgeAliasing { get; init; }
 
     public bool? SilhouetteImproved { get; init; }
+
+    public string? GoldenStatus { get; init; }
+
+    public string? Golden { get; init; }
+
+    public long? DifferingPixels { get; init; }
+
+    public double? DifferingPixelFraction { get; init; }
+
+    public int? MaxChannelDeltaObserved { get; init; }
+
+    public double? SharpnessDelta { get; init; }
+
+    public double? EdgeAliasingDelta { get; init; }
+
+    public string? FailureReason { get; init; }
 }
+
+/// <summary>
+/// Checked-in description of the external golden store: one entry per preset and scene, the
+/// reference host the goldens were captured on, and a SHA-256 per golden so a drifted store is
+/// detected instead of silently compared.
+/// </summary>
+public sealed record GoldenManifest(
+    int SchemaVersion,
+    string StoreKind,
+    string Backend,
+    string DeviceName,
+    string Host,
+    int Width,
+    int Height,
+    string UpdatedUtc,
+    IReadOnlyList<GoldenManifestEntry> Goldens);
+
+public sealed record GoldenManifestEntry(
+    string Preset,
+    string Scene,
+    string File,
+    string Sha256,
+    double Sharpness,
+    double EdgeAliasing,
+    int MaxChannelDelta,
+    double MaxDifferingPixelFraction,
+    double MaxMetricDelta);
