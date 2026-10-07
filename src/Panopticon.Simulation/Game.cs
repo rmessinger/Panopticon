@@ -1017,6 +1017,17 @@ public sealed class Game : DisposableBase, IGame
         _mapTimer.FixedDelta = TimeSpan.FromMilliseconds(GameEngine.MsPerLogicFrame);
     }
 
+    /// <summary>
+    /// Switches the render timer to fixed-timestep mode, advancing exactly one render frame per
+    /// <see cref="Update"/> call regardless of wall-clock time. Used by the visual regression
+    /// harness so presentation-side animation (water, shaders, cursors) advances identically
+    /// across runs on the same host.
+    /// </summary>
+    internal void EnableFixedRenderTimestep()
+    {
+        _renderTimer.FixedDelta = TimeSpan.FromSeconds(GameEngine.MsPerLogicFrame / 1000.0);
+    }
+
     public void Render()
     {
         ApplyGraphicsSettingsIfChanged();

@@ -1,0 +1,55 @@
+{
+  // Unit silhouettes for G4 (MSAA edge quality) and G10 (proportions): three vehicles of
+  // different shapes on open ground, framed close so their outlines dominate the region.
+
+  "Name": "vr-unit-silhouettes",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "humvee",
+      "Definition": "AmericaVehicleHumvee",
+      "Owner": "usa",
+      "X": 580,
+      "Y": 640,
+      "FacingDegrees": 40,
+      "Label": "humvee",
+      "Role": "subject"
+    },
+    {
+      "Id": "battlemaster",
+      "Definition": "ChinaTankBattleMaster",
+      "Owner": "china",
+      "X": 630,
+      "Y": 670,
+      "FacingDegrees": 200,
+      "Label": "battle master",
+      "Role": "subject"
+    },
+    {
+      "Id": "car",
+      "Definition": "CarSwatchEuro",
+      "Owner": "civilian",
+      "X": 560,
+      "Y": 690,
+      "FacingDegrees": 310,
+      "Label": "sedan",
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 600, "Y": 660, "Z": 0 },
+    "Height": 130
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G3-04` |
 | Roadmap phase | [Track G · G3](../../track-g-rendering-clarity.md): Visual regression harness |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-G3-03` |

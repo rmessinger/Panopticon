@@ -81,8 +81,36 @@ Vulkan 1.4.341 instance, device `AMD Radeon RX 7600 (RADV NAVI33)`, driver Mesa 
 | Camera pitch and angle override | `CaptureCamera.PitchDegrees`/`AngleDegrees` (`WI-G3-03`) |
 | Per-preset and per-scale capture dimension | `CaptureRunSettings` preset + `ViewportScale` (`WI-G3-03`) |
 | Golden store, manifest and comparer | `visual-regression/`, `GoldenFrameComparer` (`WI-G3-04`) |
-| Pass/fail gate exit codes and update mode | `VisualRegressionRunner` (`WI-G3-03`, `WI-G3-04`) |
+| Pass/fail gate exit codes and update mode | `VisualRegressionRunner` (`WI-G3-03` capture pass done; `WI-G3-04` gate) |
 | Sharpness and edge-aliasing metrics | `ImageQualityMetrics` (`WI-G3-02`, done) |
+
+## Capture pass (`WI-G3-03`, complete)
+
+- Determinism: `Game.EnableFixedRenderTimestep` pins the render `DeltaTimer` to one fixed step
+  per `Update`, matching `EnableFixedLogicTimestep`. With logic already fixed-step, two
+  consecutive runs write byte-identical captures for all scenes and presets (verified 28/28 frame
+  files on the reference host).
+- Camera overrides: `CaptureCamera.PitchDegrees`/`AngleDegrees` apply right after
+  `SetAngleAndPitchToDefault`, before height and look-at. `TacticalView.Pitch` composes over the
+  INI `CameraPitch` offset; positive degrees rotate toward the horizon (`vr-terrain-grazing` at
+  +30 gives the near-horizon view the deep dive requires).
+- Scene set: six `vr-*.json` profiles plus `visual-regression-scenes.json`, all embedded through
+  the existing `Profiles` glob and loaded via `VisualRegressionSceneSetLoader`. The audit's gap
+  table drove the knob list; no scene was dropped for repeatability.
+- Capture scheme: `frame_0000` is the warm-up discard, `frame_0001` (`CaptureFrame`) is the
+  scoring frame. `DurationFrames` 2, `SettleFrames` 15, fixed render clock on.
+- Preset and scale dimensions: `CaptureRunSettings.GraphicsSettings` applies before the scene is
+  created (the `Scene3D` constructor reads the shadow tier); `ViewportScale` sizes
+  `EnsureFrame`, the camera fit, the safe area and the manifest.
+- Supersampled reference: scenes with `SilhouetteRegions` (currently `unit-silhouettes`) also
+  capture at scale 2; `FrameDownsampler.Downsample2x2` box-filters the reference back to native,
+  and the run fails (exit 5) when the reference does not score lower on edge aliasing over the
+  regions. HUD/texture scenes are exempt per the deep dive.
+- Output: `<base>/<preset>/<scene>/scale<N>/frame_NNNN.png` plus `report.json`, where `<base>` is
+  `TESTHARNESS_VR_OUTPUT_DIR` or `$TMPDIR/panopticon_visual_regression`. Outside the golden store.
+- Exit codes: 0 pass, 1 setup failure, 5 silhouette-check failure. Golden gate codes land with
+  `WI-G3-04`.
+- Metrics are reported as scene-specific heuristics; the fixed thresholds live in the comparer.
 
 ## Golden store
 

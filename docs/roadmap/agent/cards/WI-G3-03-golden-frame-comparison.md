@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G3-03` |
 | Roadmap phase | [Track G · G3](../../track-g-rendering-clarity.md): Visual regression harness |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-G3-01`, `WI-G3-02`, `WI-G2-03`, `WI-G1-04` |
@@ -63,12 +63,31 @@ comparison and the gate are `WI-G3-04`.
 
 ## Acceptance criteria
 
-- [ ] Two consecutive `VisualRegression` runs on the reference host write byte-identical captures
-      for every scene and preset.
-- [ ] The designated silhouette regions score lower on edge aliasing in the supersampled
-      reference than in the native capture, under both presets.
-- [ ] Profiles without `PitchDegrees`/`AngleDegrees` capture identically to the pre-card build.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Two consecutive `VisualRegression` runs on the reference host write byte-identical captures
+      for every scene and preset. Verified 28/28 frame files identical across two consecutive
+      runs (both exit 0).
+- [x] The designated silhouette regions score lower on edge aliasing in the supersampled
+      reference than in the native capture, under both presets. `unit-silhouettes` passes under
+      both presets (`SilhouetteImproved: true` twice in `report.json`).
+- [x] Profiles without `PitchDegrees`/`AngleDegrees` capture identically to the pre-card build.
+      Structurally verified: the override block only writes `view.Angle`/`view.Pitch` when the
+      nullable fields are set, and no other code path changed for unset profiles.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)). Full solution
+      tests, format and brace checks green.
+
+## Deviations from the card text
+
+- Step 5 wording says every scene captures at both scales; the runner captures scale 2 only for
+  scenes with designated `SilhouetteRegions` (currently `unit-silhouettes`), following the deep
+  dive's exemption of HUD/texture scenes from the supersampled check. Other scenes gain a scale-2
+  pass when a later phase adds a metric that needs one.
+- Step 2 says overrides apply "in `Explicit` mode"; the implementation applies them for every
+  camera mode right after `SetAngleAndPitchToDefault`, before height/look-at. All VR profiles
+  use `Explicit`, and fit-based modes that re-derive orientation are not affected because the
+  overrides are declared per profile.
+- `TacticalView.Pitch` is an additional tilt composed over the INI `CameraPitch` offset;
+  positive degrees rotate toward the horizon (verified live: `vr-terrain-grazing` at +30 shows a
+  near-horizon view with sky in the top third).
 
 ## Validation commands
 
