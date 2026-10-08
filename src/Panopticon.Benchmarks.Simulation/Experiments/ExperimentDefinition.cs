@@ -27,11 +27,7 @@ public sealed class ExperimentDefinition
         ArgumentException.ThrowIfNullOrWhiteSpace(scenarioId);
         ArgumentOutOfRangeException.ThrowIfNegative(warmupFrames);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(measuredFrames);
-        ArgumentNullException.ThrowIfNull(axes);
-        if (axes.Count == 0)
-        {
-            throw new ArgumentException("At least one axis is required.", nameof(axes));
-        }
+        Ensure.NotEmpty(axes, "At least one axis is required.");
 
         Name = name;
         ScenarioId = scenarioId;
