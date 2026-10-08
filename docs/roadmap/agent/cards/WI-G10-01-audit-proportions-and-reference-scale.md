@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G10-01` |
 | Roadmap phase | [Track G · G10](../../track-g-rendering-clarity.md): Realistic proportions |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `audit` |
 | Effort | `M` |
 | Prerequisites | none |

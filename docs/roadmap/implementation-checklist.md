@@ -1201,7 +1201,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
       documentation plus per-definition visual model-scale overrides for the undersized aircraft
       class, behind the G2 settings layer; `Geometry` collision and `AttackRange` gameplay data
       untouched).
-  - [ ] G10-1 Proportion audit and reference scale: measure per-class model bounds (W3D mesh
+  - [x] G10-1 Proportion audit and reference scale: measure per-class model bounds (W3D mesh
         bounds, FX meshes excluded) against INI `Geometry` and real-world counterparts; check in
         the deviation table and pin the world-units-per-meter reference (measured basis: ≈ 5
         units/m; aircraft undersized ≈ 2-2.5x, e.g. MiG ≈ 6.6 m in-game vs ≈ 17.3 m real)
