@@ -164,5 +164,40 @@ normalizes the mixed roster; M5 runs the full battle in all three viewing modes.
 
 ## 9. Architecture Diagrams
 
+The M1 sequence below is grounded in the implemented code (`src/Panopticon.Tools.TestHarness/MassBattleDeploymentRunner.cs`,
+`MassBattleCapacityProbeRunner.cs`, `MassBattleDeploymentProfile.cs`; `src/Panopticon.Simulation/Navigation/Navigation.cs`;
+`src/Panopticon.Benchmarks.Simulation/BenchmarkMetricRecorder.cs`). Diagrams for the M2 DDF translator,
+the M4 army hierarchy, and the M5 batch and live run flows remain placeholders; they are required
+before those phases' first source-edit cards are marked `Ready`.
+
+Sequence: the M1 capacity probe (WI-M1-01..03):
+
+```mermaid
+sequenceDiagram
+    participant P as MassBattleDeploymentProfile
+    participant R as MassBattleCapacityProbeRunner
+    participant G as Game / Scene3D
+    participant J as JetAIUpdate + ParkingPlaceBehavior
+    participant N as Navigation
+    participant M as BenchmarkMetricRecorder
+
+    R->>P: Load(json profile)
+    R->>G: boot skirmish, hostile teams 0/1
+    loop each side
+        R->>G: spawn ground blocks in zone (skip impassable)
+        R->>G: place airfields at anchors
+        R->>J: park aircraft (slot, taxi locomotor, Base, Parked)
+    end
+    R->>M: attach recorder (setup unmeasured)
+    R->>G: general attack: SetTargetPoint enemy centroid (ground + jets)
+    loop measured frames
+        G->>N: CalculatePath (request counter++)
+        N-->>G: path
+        G-->>M: tick + system span samples
+        R->>J: re-issue order when a jet parks again
+    end
+    R->>R: engagement report + BenchmarkRunRecord (JSON/CSV)
+```
+
 Placeholder. Class and sequence diagrams for the M2 DDF translator, the M4 army hierarchy, and the
 M5 batch and live run flows are required before the first source-edit card is marked `Ready`.

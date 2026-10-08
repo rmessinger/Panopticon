@@ -39,7 +39,7 @@ marked `Ready`. `†` marks conceptual diagrams awaiting grounding.
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
 | M0 | [Map](deep-dives/mass-battle-1k.md#4-map) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
-| M1 | [Capacity probe](deep-dives/mass-battle-1k.md#7-scale-dependencies) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
+| M1 | [Capacity probe](deep-dives/mass-battle-1k.md#7-scale-dependencies) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) | [`WI-M1-01..03`](agent/cards/) |
 | M2 | [Rosters](deep-dives/mass-battle-1k.md#5-rosters) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
 | M3 | [Rosters](deep-dives/mass-battle-1k.md#5-rosters) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
 | M4 | [AI](deep-dives/mass-battle-1k.md#6-ai) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
