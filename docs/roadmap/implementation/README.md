@@ -84,7 +84,7 @@ Source of truth: [seam registry](../seams.md) and
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-a-a4-experiment-seams.md](track-a-a4-experiment-seams.md) | WI-A4-31..36 | Seam extraction audit and registrations |
-| [track-a-a4-experiment-harness.md](track-a-a4-experiment-harness.md) | WI-A4-37..41 | Experiment harness, registry, runs, and comparison (planned) |
+| [track-a-a4-experiment-harness.md](track-a-a4-experiment-harness.md) | WI-A4-37..41 | Experiment harness, registry, runs, and comparison |
 
 ## Track B · B1 : Benchmarking
 
