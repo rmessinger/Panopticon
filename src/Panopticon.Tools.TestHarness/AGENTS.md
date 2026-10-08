@@ -340,6 +340,29 @@ locomotor-agnostic today, so classes group locomotors by template `Surfaces` fla
 fastest definition of each class is its representative; real per-locomotor pathing belongs to
 the pathfinding track.
 
+## Mass Battle Capacity Probe (M1)
+
+Engagement scenario for the M1 capacity probe (`WI-M1-01`): spawns the same two deployment-zone
+armies as the M0 proof but on hostile teams, parks the profile's aircraft at the pre-placed
+airfields, settles, then issues one general attack (every ground unit moves on the enemy zone
+center with a weapon target on the nearest enemy; jets unpark, taxi, take off, strike, land, and
+re-sortie while enemies remain). One profile drives both modes.
+
+```bash
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario MassBattleCapacityProbe
+```
+
+The default profile is `mass-battle-deepdivide-capacity-probe.json` (600 Rangers + 280 Paladins
++ 112 Tomahawks + 8 Auroras per side); `MassBattleCapacityProbeProfilePath` overrides it,
+`MassBattleCapacityProbeReportPath` redirects the engagement JSON (per-side spawned/alive/
+destroyed plus per-jet sortie cycles), `MassBattleCapacityProbeScreenshotPath` captures one PNG
+after the armies spawn, and `MassBattleCapacityProbeFrameBudget` caps the measured frames
+(default 9000). A windowed run (no `--headless`) opens the same engagement on the framed
+battlefield and is the operator-run load proof. Exit codes: 0 all passed; 1 setup error;
+5 unmet engagement check (aircraft never launched, no second sortie, one side took no losses).
+
 ## Unit Validation Ground (P9)
 
 A non-skirmish sandbox that stands up the whole unit roster side by side on a real map, orders

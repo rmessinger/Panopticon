@@ -1,0 +1,53 @@
+{
+  "map": {
+    "name": "deepdivide",
+    "path": "maps/deepdivide/deepdivide.map",
+    "provenance": "community pack (952GeneralsMaps); staged into the install at maps/deepdivide/deepdivide.map; never committed (WI-M0-01 survey)"
+  },
+  "sides": [
+    {
+      "id": "sideA",
+      "side": "FactionAmerica",
+      "color": "409FFF",
+      "zone": { "x": 1900, "y": 370, "width": 2200, "height": 1400 },
+      "facingDegrees": 90,
+      "airfieldDefinition": "AmericaAirfield",
+      "airfieldAnchors": [
+        { "x": 2450, "y": 150 },
+        { "x": 3450, "y": 150 }
+      ]
+    },
+    {
+      "id": "sideB",
+      "side": "FactionAmerica",
+      "color": "FF5040",
+      "zone": { "x": 1900, "y": 2250, "width": 2200, "height": 1400 },
+      "facingDegrees": -90,
+      "airfieldDefinition": "AmericaAirfield",
+      "airfieldAnchors": [
+        { "x": 2450, "y": 3830 },
+        { "x": 3450, "y": 3830 }
+      ]
+    }
+  ],
+  "capacity": {
+    "unitsPerSide": 1000,
+    "spacingFactor": 2.0,
+    "minPitch": 25,
+    "blocks": [
+      { "definition": "AmericaInfantryRanger", "count": 600 },
+      { "definition": "AmericaTankPaladin", "count": 280 },
+      { "definition": "AmericaVehicleTomahawk", "count": 112 }
+    ],
+    "aircraft": {
+      "definition": "AmericaJetAurora",
+      "count": 8
+    }
+  },
+  "reachability": {
+    "arrivalRadius": 60,
+    "maxSpeedSafetyFactor": 2.0,
+    "minTimeoutFrames": 900,
+    "maxFrameBudget": 30000
+  }
+}

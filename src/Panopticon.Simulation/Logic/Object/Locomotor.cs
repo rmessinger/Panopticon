@@ -2181,6 +2181,16 @@ public sealed class Locomotor : IPersistableObject
         SetFlag(LocomotorFlags.PreciseZPosition, value);
     }
 
+    /// <summary>
+    /// When set, the locomotor moves over terrain the pathfinder considers impassable.
+    /// Aircraft taxiing on an airfield need this: the runway and parking bones sit inside
+    /// the structure footprint, which is blocked for ground movement.
+    /// </summary>
+    public void SetAllowInvalidPosition(bool value)
+    {
+        SetFlag(LocomotorFlags.AllowInvalidPosition, value);
+    }
+
     private bool GetFlag(LocomotorFlags flag) => (_flags & flag) != 0;
 
     internal void DrawInspector()

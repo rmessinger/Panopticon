@@ -25,7 +25,7 @@ start before H2a. M3 needs EE2 units from M2; M4 needs the M1 probe. M5 integrat
 | Phase | Goal | Milestone | Status | Depends on |
 |---|---|---|---|---|
 | M0. Battle map | Source a large community Generals map, or author one with B4a if none passes, against the [map requirements](deep-dives/mass-battle-1k.md#4-map). | The map loads headless and windowed; both deployment zones hold 1000 units with airfields behind them; a reachability check connects the zones for every ground locomotor; provenance is recorded. | Done ([WI-M0-01](agent/cards/WI-M0-01-map-evaluation.md), [WI-M0-03](agent/cards/WI-M0-03-deployment-zones.md); deepdivide, no fallback needed) | P9, A1 |
-| M1. Capacity probe | Direct-spawn 1000 Generals ground units and aircraft per side, with pre-placed airfields, on the M0 map and order a general attack, headless and windowed. | A B1 report records tick cost, frame rate, memory, and path-request load over the engagement and names the first failing constraint. | Not started | M0, B1 |
+| M1. Capacity probe | Direct-spawn 1000 Generals ground units and aircraft per side, with pre-placed airfields, on the M0 map and order a general attack, headless and windowed. | A B1 report records tick cost, frame rate, memory, and path-request load over the engagement and names the first failing constraint. | Done ([WI-M1-01..03](agent/cards/); first failing constraint: partition span; B2 and B3 required, density scaling to B4; [report](implementation/track-m-m1-capacity-probe.md)) | M0, B1 |
 | M2. EE2 combat units | Expand H2a's EE2 adapter to the reference ground combat roster and aircraft through shared unit-content resolution and runtime materialization, using Track C models and animations. | Each reference EE2 unit spawns, moves, attacks, and dies in the P9 validation ground beside Generals units; EE2 aircraft rearm at an airfield. | Not started | H2a, C4d, P9 |
 | M3. Mixed roster normalization | Normalize EE2 model scale, distances, and damage classes to Generals conventions, add a cross-game points budget, and author two asymmetric roster manifests. | Two different 1000-unit armies build within the points tolerance; a cross-game duel matrix stays within authored bounds. | Not started | M2 |
 | M4. Army-scale AI | Run the A4-3 hierarchy over 1000 units per side with squad-level group orders and an air commander for aircraft missions and rearm. | Every unit stays assigned to a squad through casualties; per-tick AI cost stays within budget; no idle-unit stalls in an M1-scale run. | Not started | M1, A4 |
@@ -39,7 +39,7 @@ marked `Ready`. `†` marks conceptual diagrams awaiting grounding.
 | Phase | Deep dive | Diagrams | Agent cards |
 |---|---|---|---|
 | M0 | [Map](deep-dives/mass-battle-1k.md#4-map) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
-| M1 | [Capacity probe](deep-dives/mass-battle-1k.md#7-scale-dependencies) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
+| M1 | [Capacity probe](deep-dives/mass-battle-1k.md#7-scale-dependencies) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) | [`WI-M1-01..03`](agent/cards/) |
 | M2 | [Rosters](deep-dives/mass-battle-1k.md#5-rosters) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
 | M3 | [Rosters](deep-dives/mass-battle-1k.md#5-rosters) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
 | M4 | [AI](deep-dives/mass-battle-1k.md#6-ai) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |

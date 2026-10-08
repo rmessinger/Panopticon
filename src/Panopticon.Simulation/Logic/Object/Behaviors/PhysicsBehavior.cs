@@ -1736,6 +1736,31 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         Body.ScrubVelocity2D(desiredVelocity);
     }
 
+    public void ScrubVelocityLateral2D(Vector3 forwardDirection)
+    {
+        var direction = new Vector2(forwardDirection.X, forwardDirection.Y);
+        if (direction.LengthSquared() < 0.001f)
+        {
+            return;
+        }
+
+        direction = Vector2.Normalize(direction);
+        if (BepuBody is { } bepu)
+        {
+            var velocity = bepu.LinearVelocity / GameEngine.LogicFramesPerSecond;
+            bepu.LinearVelocity = ScrubVelocityLateral2DPerFrame(velocity, direction) * GameEngine.LogicFramesPerSecond;
+            return;
+        }
+
+        Body.LinearVelocity = ScrubVelocityLateral2DPerFrame(Body.LinearVelocity, direction);
+    }
+
+    private static Vector3 ScrubVelocityLateral2DPerFrame(Vector3 velocity, Vector2 direction)
+    {
+        var forward = velocity.X * direction.X + velocity.Y * direction.Y;
+        return new Vector3(direction.X * forward, direction.Y * forward, velocity.Z);
+    }
+
     private static void ScrubVelocity2DPerFrame(ref Vector3 velocity, float desiredVelocity)
     {
         if (desiredVelocity < 0.001f)

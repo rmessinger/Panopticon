@@ -377,6 +377,15 @@ Source of truth: [deep-dives/h2b-metric-core.md](../deep-dives/h2b-metric-core.m
 |---|---|---|
 | [track-h-h2b-metric-core.md](track-h-h2b-metric-core.md) | H2b-1…H2b-18 | Metric core units |
 
+## Track M · M1 : Capacity probe
+
+Source of truth: [deep-dives/mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
+[Architecture diagrams §9](../deep-dives/mass-battle-1k.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-m-m1-capacity-probe.md](track-m-m1-capacity-probe.md) | M1-1…M1-3 | Generals-only 1000 vs 1000 capacity probe (WI-M1-01..03) |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :

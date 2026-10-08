@@ -266,6 +266,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.MassBattleCapacityProbe)
+        {
+            Environment.ExitCode = MassBattleCapacityProbeRunner.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.PhysicsStack)
         {
             Environment.ExitCode = PhysicsStackRunner.Run(installation, config, reporter);

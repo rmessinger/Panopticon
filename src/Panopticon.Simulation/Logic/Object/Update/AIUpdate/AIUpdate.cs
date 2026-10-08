@@ -176,6 +176,10 @@ public class AIUpdate : UpdateModule
         // TODO: Use actual surface type.
         CurrentLocomotor = _locomotorSet.GetLocomotorForSurfaces(Surfaces.Ground)
             ?? _locomotorSet.GetLocomotorForSurfaces(Surfaces.Air);
+
+        // Taxiing aircraft drive over the airfield structure footprint, which is
+        // impassable ground for the pathfinder (runway and parking bones included).
+        CurrentLocomotor?.SetAllowInvalidPosition(type == LocomotorSetType.Taxiing);
     }
 
     public bool HasLocomotorForSurface(Surfaces surfaceType)

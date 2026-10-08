@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading;
 using Panopticon.Data.Map;
 using Panopticon.Graphics.Cameras;
 using Panopticon.Gui;
@@ -15,6 +16,12 @@ public class Navigation
     private readonly HeightMap _heightMap;
 
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+    // Monotonic process-wide count of CalculatePath entries (WI-M1-02): polled by callers
+    // that measure path-request load per tick; never reset.
+    private static long TotalPathRequests;
+
+    public static long PathRequestCount => Interlocked.Read(ref TotalPathRequests);
 
     public Navigation(BlendTileData tileData, HeightMap heightMap)
     {
@@ -75,6 +82,7 @@ public class Navigation
 
     public IList<Vector3> CalculatePath(Vector3 start, Vector3 end, out bool endIsPassable)
     {
+        Interlocked.Increment(ref TotalPathRequests);
         var result = new List<Vector3>();
         endIsPassable = true;
         var startNode = GetClosestNode(start);

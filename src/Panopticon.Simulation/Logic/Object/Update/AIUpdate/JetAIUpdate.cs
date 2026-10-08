@@ -15,6 +15,7 @@ public sealed class JetAIUpdate : AIUpdate
 
     private Vector3 _currentTargetPoint;
     private bool _unparkingRequested;
+    private bool _dyingCleanupReported;
 
     private Queue<string> _pathToStart;
     private Queue<string> _pathToParking;
@@ -184,6 +185,24 @@ public sealed class JetAIUpdate : AIUpdate
 
         var parkingPlaceBehavior = Base.FindBehavior<ParkingPlaceBehaviour>();
 
+        if (GameObject.ModelConditionFlags.Get(ModelConditionFlag.Dying))
+        {
+            // A dying aircraft must not keep flying the parking state machine: the slot
+            // cleanup below would race the landing flow (ReportInbound re-assigns a slot
+            // that the cleanup then clears again, so ReportLanded finds no hangar).
+            if (!_dyingCleanupReported)
+            {
+                _dyingCleanupReported = true;
+                var clearedSlot = parkingPlaceBehavior.ClearObjectFromSlot(GameObject.Id);
+                if (clearedSlot >= 0)
+                {
+                    Base.ProductionUpdate?.CloseDoor(clearedSlot);
+                }
+            }
+
+            return sleepTime;
+        }
+
         var isMoving = GameObject.ModelConditionFlags.Get(ModelConditionFlag.Moving);
 
         var trans = GameObject.Translation;
@@ -201,6 +220,7 @@ public sealed class JetAIUpdate : AIUpdate
                 break;
 
             case JetAIState.MovingToParkingPlace:
+                ScrubLateralDrift();
                 if (isMoving)
                 {
                     break;
@@ -242,6 +262,7 @@ public sealed class JetAIUpdate : AIUpdate
                 break;
 
             case JetAIState.MovingTowardsStart:
+                ScrubLateralDrift();
                 if (isMoving || ProcessWaypointPath(parkingPlaceBehavior, _pathToStart))
                 {
                     break;
@@ -271,7 +292,9 @@ public sealed class JetAIUpdate : AIUpdate
                 break;
 
             case JetAIState.Starting:
-                var speedPercentage = GameObject.Speed / CurrentLocomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState);
+                ScrubLateralDrift();
+                var speed = GameObject.Physics?.Velocity.Length() ?? 0.0f;
+                var speedPercentage = speed / CurrentLocomotor.GetMaxSpeedForCondition(GameObject.BodyModule.DamageState);
                 CurrentLocomotor.LiftFactor = speedPercentage;
 
                 if (speedPercentage < ModuleData.TakeoffSpeedForMaxLift)
@@ -318,6 +341,7 @@ public sealed class JetAIUpdate : AIUpdate
                 break;
 
             case JetAIState.ReturningToBase:
+                ScrubLateralDrift();
                 if (isMoving)
                 {
                     break;
@@ -331,6 +355,7 @@ public sealed class JetAIUpdate : AIUpdate
                 break;
 
             case JetAIState.MovingBackToHangar:
+                ScrubLateralDrift();
                 if (isMoving || ProcessWaypointPath(parkingPlaceBehavior, _pathToParking))
                 {
                     break;
@@ -347,12 +372,50 @@ public sealed class JetAIUpdate : AIUpdate
             GameObject.SetTranslation(trans);
         }
 
-        if (GameObject.ModelConditionFlags.Get(ModelConditionFlag.Dying))
+        return sleepTime;
+    }
+
+    /// <summary>
+    /// Ground taxi waypoints end inside the airfield footprint, and the taxi locomotor's
+    /// turn radius at speed exceeds the arrival distance (<c>CloseEnoughDist</c>), so an
+    /// aircraft that overshoots a bone keeps circling it without ever arriving. Neither
+    /// the ground nor the airborne friction model constrains velocity to the heading, so
+    /// leftover lateral velocity makes the body sideslip around the waypoint while the
+    /// heading already points at it. Remove the lateral component every update, and stop
+    /// outright when the waypoint is close and the heading is far off, letting the
+    /// locomotor turn in place before creeping the remaining distance.
+    /// </summary>
+    private void ScrubLateralDrift()
+    {
+        GameObject.Physics?.ScrubVelocityLateral2D(GameObject.UnitDirectionVector2D);
+
+        if (TargetPoints.Count == 0)
         {
-            Base.ProductionUpdate?.CloseDoor(parkingPlaceBehavior.ClearObjectFromSlot(GameObject.Id));
+            return;
         }
 
-        return sleepTime;
+        var toTarget = TargetPoints[0] - GameObject.Translation;
+        var toTarget2D = new Vector2(toTarget.X, toTarget.Y);
+        var distanceSq = toTarget2D.LengthSquared();
+        if (distanceSq > MathUtility.Square(2 * AIPathfind.PathfindCellSizeF))
+        {
+            return;
+        }
+
+        var forward = GameObject.UnitDirectionVector2D;
+        var forward2D = new Vector2(forward.X, forward.Y);
+        var distance = MathF.Sqrt(distanceSq);
+        if (distance < 0.001f || forward2D.LengthSquared() < 0.001f)
+        {
+            return;
+        }
+
+        var alignment = Vector2.Dot(toTarget2D, forward2D) / distance;
+        const float misalignedCosine = 0.866f; // cos(30 degrees)
+        if (alignment < misalignedCosine)
+        {
+            GameObject.Physics?.ScrubVelocity2D(0);
+        }
     }
 
     private bool ProcessWaypointPath(ParkingPlaceBehaviour parkingPlaceBehavior, Queue<string> path)
