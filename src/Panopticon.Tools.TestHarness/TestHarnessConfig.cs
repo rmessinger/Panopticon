@@ -45,6 +45,9 @@ public sealed class TestHarnessConfig
     /// </summary>
     public bool FullHud { get; set; } = false;
 
+    /// <summary>G9 scale validation: multiplier applied to the scenario capture viewport.</summary>
+    public int ViewportScale { get; set; } = 1;
+
     /// <summary>
     /// Keep the exported .rep file on disk after the run instead of deleting it.
     /// </summary>

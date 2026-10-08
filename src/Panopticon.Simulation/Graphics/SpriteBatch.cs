@@ -33,6 +33,9 @@ public sealed class SpriteBatch : DisposableBase
 
     private readonly bool _decodeLinearTints;
 
+    private ResourceSet _beginSamplerResourceSet;
+    private ResourceSet _lastSamplerResourceSet;
+
     internal SpriteBatch(
         GraphicsLoadContext loadContext,
         in BlendStateDescription blendStateDescription,
@@ -107,6 +110,9 @@ public sealed class SpriteBatch : DisposableBase
         var samplerResourceSet = _spriteShaderResources.GetCachedSamplerResourceSet(sampler);
         _commandList.SetGraphicsResourceSet(1, samplerResourceSet);
 
+        _beginSamplerResourceSet = samplerResourceSet;
+        _lastSamplerResourceSet = samplerResourceSet;
+
         _currentBatchIndex = 0;
     }
 
@@ -151,7 +157,8 @@ public sealed class SpriteBatch : DisposableBase
         SpriteFillMethod fillMethod = SpriteFillMethod.Normal,
         float fillAmount = 0.0f,
         bool grayscale = false,
-        Texture alphaMask = null)
+        Texture alphaMask = null,
+        Sampler samplerOverride = null)
     {
         var tint = DecodeTint(color);
 
@@ -159,6 +166,7 @@ public sealed class SpriteBatch : DisposableBase
 
         batchItem.Texture = image;
         batchItem.AlphaMask = alphaMask;
+        batchItem.OverrideSampler = samplerOverride;
 
         var sourceRectangle = sourceRect ?? new Rectangle(0, 0, (int)image.Width, (int)image.Height);
 
@@ -294,6 +302,15 @@ public sealed class SpriteBatch : DisposableBase
             var textureResourceSet = GetTextureResourceSet(batchItem.Texture);
             _commandList.SetGraphicsResourceSet(2, textureResourceSet);
 
+            var samplerResourceSet = batchItem.OverrideSampler != null
+                ? _spriteShaderResources.GetCachedSamplerResourceSet(batchItem.OverrideSampler)
+                : _beginSamplerResourceSet;
+            if (samplerResourceSet != _lastSamplerResourceSet)
+            {
+                _commandList.SetGraphicsResourceSet(1, samplerResourceSet);
+                _lastSamplerResourceSet = samplerResourceSet;
+            }
+
             var alphaMaskResourceSet = GetAlphaMaskResourceSet(batchItem.AlphaMask ?? _solidWhiteTexture);
             _commandList.SetGraphicsResourceSet(3, alphaMaskResourceSet);
 
@@ -332,6 +349,8 @@ public sealed class SpriteBatch : DisposableBase
     {
         public Texture Texture;
         public Texture AlphaMask;
+
+        public Sampler OverrideSampler;
 
         public SpriteBatchItemType ItemType;
 

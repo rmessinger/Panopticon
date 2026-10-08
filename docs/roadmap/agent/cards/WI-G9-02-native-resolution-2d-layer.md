@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G9-02` |
 | Roadmap phase | [Track G · G9](../../track-g-rendering-clarity.md): Resolution-independent 2D & UI |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-G9-01`, `WI-G1-04`, `WI-G2-03`, `WI-G3-04` |

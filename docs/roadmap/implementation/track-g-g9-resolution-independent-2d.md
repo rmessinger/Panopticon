@@ -83,8 +83,55 @@ since G6). The Generals control bar chrome draws from `Panopticon.Mods.Generals/
 (static callback class). The manifest of forbidden-under-`DynamicHud` draws belongs to `WI-G9-02`'s
 inventory work; this audit fixes the pipeline facts it builds on.
 
+## Implementation (WI-G9-02, complete)
+
+The audit found the native-pixel properties already in place: the 2D pass rasterizes into the
+frame-resolution intermediate/composition target, `DrawText` selects fonts at
+`font.Size * currentScale` with `TextCache` keyed by pixel size, and `DrawRectangle` divides
+stroke widths by the current scale after scaling. WI-G9-02 keeps those invariants and adds the
+preset-dependent sampling:
+
+- `UiImageSamplingPolicy` (`Gui/UiImageSamplingPolicy.cs`) selects the sampler for mapped
+  images: `UiMode.DynamicHud` returns `Aniso4xClampSampler` (settings-driven anisotropy,
+  clamp, trilinear), otherwise `null`. Mapped images are the pre-rendered chrome bitmaps
+  (control bar pieces, radar, pips, command bar buttons); magnified painted art keeps the
+  linear magnification filter, minified chrome gains anisotropic filtering. Text atlas runs
+  and non-mapped draws are unaffected.
+- `SpriteBatch` gains per-item sampler overrides: `SpriteBatchItem.OverrideSampler`, a
+  trailing `samplerOverride` parameter on the quad `DrawImage` overload, and conditional
+  resource-set-1 rebinding in `End` tracked against the sampler the pass began with. Null
+  overrides emit no additional commands, so Legacy renders byte-identically.
+- `DrawingContext2D` resolves the override once at construction and threads it through
+  `DrawMappedImage` and both `DrawImage` overloads.
+- `GraphicsSettings.Enhanced()` now selects `UiMode.DynamicHud`; `Legacy()` keeps
+  `LegacyArt`. G9-03 gates the dynamic chrome on the same member.
+- TestHarness: `--viewport-scale N` and `--full-hud` flags on the scenario-capture path
+  (`TestHarnessConfig.ViewportScale` into `CaptureRunSettings`) for the scale validation
+  below.
+
 ## Validation and risks
 
 Scale-1/2 and widescreen bounds tests preserve input and layout. Enhanced draws no legacy chrome
 bitmaps; raster content remains allowed. Legacy is exact. Check all button states and faction
 variants. ReplaySketch UI changes require screenshot-mode verification of map and model tabs.
+
+### Evidence (WI-G9-02)
+
+- Unit tests: `UiImageSamplingPolicyTests` (Enhanced selects the anisotropic clamp sampler,
+  Legacy returns null) and the preset test now asserts the `UiMode` difference. Suite:
+  53 + 355 + 2120 passed, 7 skipped (`Category!=Interactive`); format, brace and diff checks
+  clean. One animation test (`ModelAnimationTests.Bind_OmitsOutOfRangeDirectChannels...`)
+  failed once under parallel load and passes standalone and on the full-suite rerun; it is
+  unrelated to this card's surface.
+- Visual regression gate: exit 0, 14/14 goldens Passed with no regeneration. The anisotropic
+  override changes no scene pixels at 1024x768 (HUD chrome is magnified or 1:1 there), which
+  also proves the Legacy path byte-identical.
+- Scale validation (alpine assault HUD scene, Enhanced, fixed camera): the HUD band starts at
+  row 576 of 768 at both viewport scale 1 (1024x768) and scale 2 (2048x1536), exactly 25.0% of
+  the frame height, so the HUD occupies the same fraction at both scales. A control-bar text
+  crop at native scale 2 measures gradient energy 26.29 against 10.31 for the same crop
+  upscaled from the scale-1 capture (2.5x, text rasterized at effective pixel size).
+  Comparison image: `panopticon-g9-native-sharpness.png` in the screenshot viewer.
+- Hit regions: no layout, transform or hit-testing code changed (the override affects sampling
+  only); the Gui test suites pass unchanged.
+
