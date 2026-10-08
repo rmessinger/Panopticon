@@ -116,7 +116,7 @@ partial class Control
                 var control = new Control();
                 if (wndWindow.Status.HasFlag(WndWindowStatusFlags.Image))
                 {
-                    control.BackgroundImage = imageLoader.CreateFromWndDrawData(wndWindow.EnabledDrawData, 0);
+                    control.BackgroundImage = imageLoader.CreateFromWndDrawData(wndWindow.EnabledDrawData, 0, HudChromeKind.Panel);
                 }
                 else
                 {

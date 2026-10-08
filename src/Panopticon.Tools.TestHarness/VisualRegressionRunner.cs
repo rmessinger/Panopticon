@@ -12,6 +12,7 @@ using Panopticon.Tools.ReplaySketch.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Veldrid;
+using HudChromeAudit = Panopticon.Gui.Wnd.Images.HudChromeAudit;
 
 namespace Panopticon.Tools.TestHarness;
 
@@ -122,6 +123,7 @@ public static class VisualRegressionRunner
         var records = new List<SceneReportRecord>();
         var goldenEntries = new List<GoldenManifestEntry>();
         var silhouetteFailure = false;
+        var chromeAuditFailure = false;
         var regression = false;
         var hostMismatch = false;
         var manifestWidth = 0;
@@ -142,19 +144,40 @@ public static class VisualRegressionRunner
                     return 1;
                 }
 
-                var scale1Directory = Path.Combine(baseDirectory, presetName, scene.Name, "scale1");
+                var scale1Directory = Path.Combine(baseDirectory, presetName, scene.Name, $"scale{scene.ViewportScale}");
                 var settings = new CaptureRunSettings(
                     config.Renderer,
                     scene.FullHud,
                     scale1Directory,
                     preset,
-                    ViewportScale: 1,
+                    ViewportScale: scene.ViewportScale,
                     FixedRenderClock: true);
+                HudChromeAudit.Reset();
                 var result = ScenarioCaptureRunner.Run(installation, profile, settings, reporter);
                 if (result.ExitCode != 0)
                 {
                     reporter.Error($"Scene '{scene.Name}' ({presetName}) capture failed with exit code {result.ExitCode}.");
                     return 1;
+                }
+
+                if (scene.FullHud && preset.UiMode == UiMode.DynamicHud)
+                {
+                    // WI-G9-03 chrome audit: dynamic HUD scenes must not sample legacy chrome
+                    // bitmaps, and the procedural path must have engaged at all.
+                    if (HudChromeAudit.ChromeBitmapDraws > 0)
+                    {
+                        chromeAuditFailure = true;
+                        reporter.Error(
+                            $"Scene '{scene.Name}' ({presetName}): dynamic HUD drew {HudChromeAudit.ChromeBitmapDraws} " +
+                            "chrome-tagged legacy bitmap(s); expected procedural chrome only.");
+                    }
+                    else if (HudChromeAudit.DynamicChromePaints == 0)
+                    {
+                        chromeAuditFailure = true;
+                        reporter.Error(
+                            $"Scene '{scene.Name}' ({presetName}): dynamic HUD engaged zero procedural chrome paints; " +
+                            "the dynamic chrome path did not run.");
+                    }
                 }
 
                 var capturePath = Path.Combine(scale1Directory, $"frame_{scene.CaptureFrame:D4}.png");
@@ -167,12 +190,12 @@ public static class VisualRegressionRunner
                 var capture = LoadPngAsFrame(capturePath);
                 var scores = ScoreRegions(capture, scene, capture.Width, capture.Height);
 
-                if (manifestWidth == 0)
+                if (manifestWidth == 0 && scene.ViewportScale == 1)
                 {
                     manifestWidth = capture.Width;
                     manifestHeight = capture.Height;
                 }
-                else if (!updateMode && (capture.Width != manifest!.Width || capture.Height != manifest.Height))
+                else if (!updateMode && scene.ViewportScale == 1 && (capture.Width != manifest!.Width || capture.Height != manifest.Height))
                 {
                     reporter.Error(
                         $"Capture is {capture.Width}x{capture.Height} but the goldens are {manifest.Width}x{manifest.Height}; " +
@@ -259,9 +282,9 @@ public static class VisualRegressionRunner
 
         if (updateMode)
         {
-            if (silhouetteFailure)
+            if (silhouetteFailure || chromeAuditFailure)
             {
-                reporter.Error("Golden manifest not written: the update run reported a silhouette check failure.");
+                reporter.Error("Golden manifest not written: the update run reported a silhouette or chrome audit failure.");
                 return 5;
             }
 
@@ -281,7 +304,7 @@ public static class VisualRegressionRunner
             return 0;
         }
 
-        if (regression)
+        if (regression || chromeAuditFailure)
         {
             return 2;
         }

@@ -15,9 +15,9 @@ public class RadioButton : Control
 
     public RadioButton(WndWindowDefinition wndWindow, ImageLoader imageLoader)
     {
-        BackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 0, 1, 2);
-        HoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 0, 1, 2);
-        DisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.DisabledDrawData, 0, 1, 2);
+        BackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 0, 1, 2, HudChromeKind.ButtonNormal);
+        HoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 0, 1, 2, HudChromeKind.ButtonHover);
+        DisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.DisabledDrawData, 0, 1, 2, HudChromeKind.ButtonDisabled);
 
         HoverTextColor = wndWindow.TextColor.Hilite.ToColorRgbaF();
         DisabledTextColor = wndWindow.TextColor.Disabled.ToColorRgbaF();

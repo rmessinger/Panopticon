@@ -19,6 +19,13 @@ public sealed class DrawingContext2D : DisposableBase
 
     private readonly Sampler _mappedImageSamplerOverride;
 
+    /// <summary>
+    /// True when the active preset draws HUD chrome procedurally (WI-G9-03); chrome-tagged
+    /// WND images redirect to <see cref="Wnd.Images.HudChromePainter"/> instead of sampling
+    /// their texture.
+    /// </summary>
+    internal bool DynamicHudChrome { get; }
+
     internal readonly TextCache TextCache;
 
     private readonly Stack<Matrix3x2> _transformStack;
@@ -44,6 +51,8 @@ public sealed class DrawingContext2D : DisposableBase
         _solidWhiteTexture = loadContext.StandardGraphicsResources.SolidWhiteTexture;
 
         _mappedImageSamplerOverride = UiImageSamplingPolicy.SelectMappedImageSampler(loadContext.StandardGraphicsResources);
+
+        DynamicHudChrome = loadContext.StandardGraphicsResources.Settings.UiMode == UiMode.DynamicHud;
 
         _spriteBatch = AddDisposable(new SpriteBatch(loadContext, blendStateDescription, outputDescription, decodeLinearTints));
 

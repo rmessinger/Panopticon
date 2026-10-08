@@ -6,7 +6,7 @@
   "Host": "duchessa",
   "Width": 1024,
   "Height": 768,
-  "UpdatedUtc": "2026-10-08T04:38:15Z",
+  "UpdatedUtc": "2026-10-08T05:18:03Z",
   "Goldens": [
     {
       "Preset": "faithful",
@@ -86,6 +86,17 @@
       "MaxMetricDelta": 0.02
     },
     {
+      "Preset": "faithful",
+      "Scene": "hud-4x",
+      "File": "faithful/hud-4x.png",
+      "Sha256": "A05E7462B8E7ED6D82E0DF578799358B1B0D97D023765D276518250D8102161F",
+      "Sharpness": 0.0024258194949775577,
+      "EdgeAliasing": 0.05428115799803729,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
       "Preset": "enhanced",
       "Scene": "terrain-default",
       "File": "enhanced/terrain-default.png",
@@ -155,9 +166,20 @@
       "Preset": "enhanced",
       "Scene": "hud",
       "File": "enhanced/hud.png",
-      "Sha256": "5B25F0911FF9EF0E3842773DAB14B1D6F0D8AB5AC5CAA421E14DCDE937164500",
-      "Sharpness": 0.003030086183942725,
-      "EdgeAliasing": 0.15400003412270524,
+      "Sha256": "E7B88B5B50F3B155CE90B14CEE96221D45CFF30084C9FEA394207E79379A7737",
+      "Sharpness": 0.0015787967650115744,
+      "EdgeAliasing": 0.12669088700896222,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "hud-4x",
+      "File": "enhanced/hud-4x.png",
+      "Sha256": "E2A292746557C94E6BDA8AB69AC11036E92936157E2236074FEEB34A80A922B2",
+      "Sharpness": 0.0015143880632810956,
+      "EdgeAliasing": 0.05239371298050424,
       "MaxChannelDelta": 2,
       "MaxDifferingPixelFraction": 0.001,
       "MaxMetricDelta": 0.02
