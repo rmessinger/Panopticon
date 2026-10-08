@@ -21,14 +21,15 @@ public class GraphicsSettingsTests : MockedGameTest
     }
 
     [Fact]
-    public void EnhancedPresetDiffersOnlyOnSampleCountAndShadowTier()
+    public void EnhancedPresetDiffersOnSampleCountShadowTierAndAlphaTest()
     {
         var legacy = GraphicsSettings.Legacy();
         var enhanced = GraphicsSettings.Enhanced();
 
-        // 4x MSAA landed with G4; every other knob stays Legacy until its owning phase.
+        // 4x MSAA and alpha-to-coverage landed with G4/G5; every other knob stays Legacy
+        // until its owning phase.
         Assert.Equal(4, enhanced.SampleCount);
-        Assert.Equal(legacy.AlphaTestMode, enhanced.AlphaTestMode);
+        Assert.Equal(AlphaTestMode.CoveragePreserving, enhanced.AlphaTestMode);
         Assert.Equal(legacy.ColourSpaceMode, enhanced.ColourSpaceMode);
         Assert.Equal(legacy.Anisotropy, enhanced.Anisotropy);
         Assert.Equal(legacy.MipLodBias, enhanced.MipLodBias);

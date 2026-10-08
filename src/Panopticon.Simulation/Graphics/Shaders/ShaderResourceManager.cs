@@ -9,6 +9,24 @@ internal sealed class ShaderResourceManager : DisposableBase
 {
     private readonly Dictionary<string, ShaderMaterialShaderResources> _shaderMaterialResources;
 
+    /// <summary>
+    /// Effective alpha-to-coverage mode for this session: the coverage preset is
+    /// requested AND the session's pipelines actually render multisampled. At one
+    /// sample the coverage preset falls back to the hard cutoff with coverage
+    /// mips (WI-G5-02).
+    /// </summary>
+    /// <summary>
+    /// Preset-level coverage mode: coverage-preserving mipmaps are selected for alpha-tested
+    /// diffuse textures even at a single sample, where the discard path stays a hard cutoff.
+    /// </summary>
+    public readonly bool AlphaTestCoverageMode;
+
+    /// <summary>
+    /// Effective alpha-to-coverage mode: coverage preset plus a multisampled store. Selects
+    /// the A2C pipeline pair and the cutout discard path.
+    /// </summary>
+    public readonly bool AlphaTestCoverageActive;
+
     public readonly GlobalShaderResources Global;
     public readonly MeshShaderResources Mesh;
 
@@ -30,6 +48,11 @@ internal sealed class ShaderResourceManager : DisposableBase
     {
         using (GameTrace.TraceDurationEvent("ShaderResourceManager()"))
         {
+            AlphaTestCoverageMode = standardGraphicsResources.Settings.AlphaTestMode == AlphaTestMode.CoveragePreserving;
+
+            AlphaTestCoverageActive = AlphaTestCoverageMode
+                && shaderSetStore.OutputDescription.SampleCount != TextureSampleCount.Count1;
+
             Global = AddDisposable(new GlobalShaderResources(graphicsDevice));
             Mesh = AddDisposable(new MeshShaderResources(graphicsDevice));
 

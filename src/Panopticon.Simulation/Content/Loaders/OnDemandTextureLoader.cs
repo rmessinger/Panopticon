@@ -12,8 +12,17 @@ using Veldrid.ImageSharp;
 
 namespace Panopticon.Content.Loaders;
 
-internal sealed class OnDemandTextureLoader : IOnDemandAssetLoader<TextureAsset>
+internal sealed class OnDemandTextureLoader : IVariantAwareAssetLoader<TextureAsset>
 {
+    /// <summary>
+    /// Role key for cutout variants: alpha-tested textures whose mips are
+    /// rebuilt to preserve the cutout coverage fraction (WI-G5-02).
+    /// </summary>
+    public const string CutoutRole = "cutout";
+
+    /// <summary>Mirrors FailsAlphaTest in Assets/Shaders/Common.h.</summary>
+    internal const float CutoutCutoff = 0.37647f;
+
     private static readonly string[] PossibleFileExtensions = new[]
     {
         ".dds",
@@ -33,6 +42,11 @@ internal sealed class OnDemandTextureLoader : IOnDemandAssetLoader<TextureAsset>
     }
 
     public TextureAsset Load(string name, AssetLoadContext context)
+    {
+        return Load(name, string.Empty, context);
+    }
+
+    public TextureAsset Load(string name, string role, AssetLoadContext context)
     {
         // Find it in the file system.
         FileSystemEntry entry = null;
@@ -59,7 +73,11 @@ internal sealed class OnDemandTextureLoader : IOnDemandAssetLoader<TextureAsset>
             return null;
         }
 
-        var texture = LoadImpl(entry, context.FileSystem, context.GraphicsDevice);
+        var texture = role == CutoutRole
+            ? LoadCutoutImpl(entry, context.FileSystem, context.GraphicsDevice)
+            : role.Length == 0
+                ? LoadImpl(entry, context.FileSystem, context.GraphicsDevice)
+                : throw new InvalidOperationException($"Unknown texture role \"{role}\".");
         texture.Name = entry.FilePath;
         return new TextureAsset(texture, name);
     }
@@ -161,5 +179,86 @@ internal sealed class OnDemandTextureLoader : IOnDemandAssetLoader<TextureAsset>
         return imageSharpTexture.CreateDeviceTexture(
             graphicsDevice,
             graphicsDevice.ResourceFactory);
+    }
+
+    /// <summary>
+    /// Cutout variant: decode the base image to RGBA (authoring format's authored
+    /// mips are discarded) and rebuild the chain with coverage-preserving alpha.
+    /// The JPG path merges the PNG alpha sidecar into the base before chaining,
+    /// which the regular path only does for mip 0.
+    /// </summary>
+    private Texture LoadCutoutImpl(FileSystemEntry entry, FileSystem fileSystem, GraphicsDevice graphicsDevice)
+    {
+        switch (Path.GetExtension(entry.FilePath).ToLowerInvariant())
+        {
+            case ".dds":
+                if (!DdsFile.IsDdsFile(entry))
+                {
+                    goto case ".tga";
+                }
+
+                var ddsFile = DdsFile.FromFileSystemEntry(entry);
+                using (var ddsBase = DdsBlockDecoder.DecodeBaseMip(ddsFile))
+                {
+                    return CreateCutoutTexture(ddsBase, graphicsDevice);
+                }
+
+            case ".tga":
+                var tgaFile = TgaFile.FromFileSystemEntry(entry);
+                var rgbaData = TgaFile.ConvertPixelsToRgba8(tgaFile);
+                using (var tgaBase = Image.LoadPixelData<Rgba32>(
+                    rgbaData,
+                    tgaFile.Header.Width,
+                    tgaFile.Header.Height))
+                {
+                    return CreateCutoutTexture(tgaBase, graphicsDevice);
+                }
+
+            case ".jpg":
+                using (var jpgBase = LoadJpgBaseWithSidecarAlpha(entry, fileSystem))
+                {
+                    return CreateCutoutTexture(jpgBase, graphicsDevice);
+                }
+
+            default:
+                throw new InvalidOperationException();
+        }
+    }
+
+    private Image<Rgba32> LoadJpgBaseWithSidecarAlpha(FileSystemEntry entry, FileSystem fileSystem)
+    {
+        Image<Rgba32> colorImage;
+        using (var stream = entry.Open())
+        {
+            colorImage = Image.Load<Rgba32>(stream);
+        }
+
+        var pngFilePath = Path.ChangeExtension(entry.FilePath, ".png");
+        var pngEntry = fileSystem.GetFile(pngFilePath);
+        if (pngEntry == null)
+        {
+            return colorImage;
+        }
+
+        using var alphaImage = Image.Load<Rgba32>(pngEntry.Open());
+        if (!colorImage.DangerousTryGetSinglePixelMemory(out var colorSpan)
+            || !alphaImage.DangerousTryGetSinglePixelMemory(out var alphaSpan))
+        {
+            throw new InvalidOperationException("Unable to get image pixelspan.");
+        }
+
+        for (var i = 0; i < colorSpan.Length; i++)
+        {
+            colorSpan.Span[i].A = alphaSpan.Span[i].A;
+        }
+
+        return colorImage;
+    }
+
+    private Texture CreateCutoutTexture(Image<Rgba32> baseImage, GraphicsDevice graphicsDevice)
+    {
+        var chain = CoverageMipBuilder.GenerateCoverageMipmaps(baseImage, CutoutCutoff);
+        var imageSharpTexture = new ImageSharpTexture(chain);
+        return CreateFromImageSharpTexture(imageSharpTexture, graphicsDevice);
     }
 }

@@ -22,6 +22,11 @@
       "CaptureFrame": 1
     },
     {
+      "Name": "cutout-fences",
+      "Profile": "vr-cutout-fences.json",
+      "CaptureFrame": 1
+    },
+    {
       "Name": "unit-silhouettes",
       "Profile": "vr-unit-silhouettes.json",
       "CaptureFrame": 1,

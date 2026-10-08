@@ -83,8 +83,50 @@ same image can serve cutout and blended materials. Cache keys today carry only
 `ExternalPathKey(path, generateMipmaps)` / `EmbeddedContentKey(bytes, generateMipmaps)` or the
 texture name. G5-02 adds the cutout role to those keys where the material requests it.
 
+## Implementation (WI-G5-02, complete)
+
+Coverage-preserving mips: `CoverageMipBuilder` (`src/Veldrid.ImageSharp/CoverageMipBuilder.cs`)
+resizes each level directly from the base with Lanczos3 (RGB identical to the standard chain),
+then rescales mip alpha so the fraction of texels passing the `0.37647f` cutoff matches the
+previous level's fraction, adjusted for the pixel-count ratio. The rescale is a bounded binary
+search over the alpha scale, applied once into the mip chain; the runtime threshold stays
+untouched. `ImageSharpTexture` gained a constructor that accepts a prebuilt chain.
+
+Cutout texture roles: `ScopedAssetCollection.GetByName(name, role)` keys role-prefixed hashes
+(`AssetHash.GetHashCaseSensitive(role + ':' + name)`), and `IVariantAwareAssetLoader` lets
+`OnDemandTextureLoader` serve a cutout variant: `.dds` decodes through the new
+`DdsBlockDecoder` (BC1 with punchthrough, BC2 explicit alpha, BC3 interpolated alpha;
+`Rg8SNorm`/`Rgba16Float` never cutout and raise `NotSupportedException`), `.tga` chains from
+decoded RGBA, and `.jpg` merges the PNG alpha sidecar into the base before chaining, fixing the
+stale-sidecar-mips bug for cutout variants; the base paths are untouched. `ImportedTextureMaterializer`
+gained a `coveragePreservingAlpha` flag recorded in its cache keys.
+
+Alpha-to-coverage: `FixedFunctionShaderResources.GetCachedMaterial` takes an `alphaTestCoverage`
+flag that sets `Shading.AlphaTestCoverage` in the constants copy and routes the opaque cutout
+pipeline through a `PipelineKey` variant with `AlphaToCoverage` true (`BlendStateDescription`
+alphaToCoverageEnable). `ShaderMaterialShaderResources` lazily builds an A2C pipeline pair and
+appends `/A2C` to the material cache key when selected; the forced-blend transparent pass keeps
+legacy cutoff constants. The shaders (`FixedFunction.frag`, `NormalMapped.frag`) discard only
+fully transparent fragments under the coverage flag; the opaque cutout texture slot routes
+through the cutout role. `ShaderResourceManager` exposes `AlphaTestCoverageMode` (preset-level;
+coverage mips apply at 1x) and `AlphaTestCoverageActive` (mode plus effective sample count > 1,
+which gates A2C). `GraphicsSettings.Enhanced()` now selects `AlphaTestMode.CoveragePreserving`.
+
 ## Validation and risks
 
 Synthetic coverage tests include tiny mips and fractional LOD. Bake alpha rescale once, without
 an additional threshold correction. G6 controls RGB transfer; alpha stays linear. Compare
 foliage/fences at effective 1x and 4x; particles/HUD are unchanged. Legacy retains DDS mips.
+
+### Evidence (WI-G5-02)
+
+Unit: 6 `DdsBlockDecoderTests` (solid, punchthrough, partial edge blocks, BC2/BC3 alpha) and 5
+`CoverageMipBuilderTests` (opaque, transparent, checkerboard and diagonal coverage within one
+texel, chain sizes) pass. Suite: 53 + 355 + 2104 passed, 7 skipped. The pre-regen gate proved
+`Legacy` byte-identical (6/6 faithful goldens Passed before the new scene existed); `Enhanced`
+goldens changed as expected (diffs 0.028-0.076) and foliage coverage stayed preserved (green
+fraction 0.0490 -> 0.0445, slightly tighter cutout). The new `cutout-fences` scene (CHIfinal
+chain-link fences, GLA+China players) ships without `SilhouetteRegions`: the candidate region's
+supersampled reference measured higher aliasing than the capture (0.107 vs 0.094), so the
+region was dropped rather than gating on a non-discriminating measurement. Final gate: 14/14
+goldens Passed (7 scenes x 2 presets), manifest updated.

@@ -1,0 +1,25 @@
+{
+  // Chain-link fences and stone walls for G5: the chain-link texture is the classic
+  // alpha-tested cutout that dissolves under plain minification; the medium height keeps
+  // the fence spans thin on screen.
+
+  "Name": "vr-cutout-fences",
+  "MapPath": "maps/CHIfinal/CHIfinal.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 1655, "Y": 2618, "Z": 0 },
+    "Height": 300
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}
