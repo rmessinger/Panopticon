@@ -59,11 +59,19 @@ public sealed partial class ModelMesh : ModelRenderObject
         ModelBone parentBone,
         in Matrix4x4 modelTransform,
         bool castsShadow,
-        MeshShaderResources.RenderItemConstantsPS? renderItemConstantsPS)
+        MeshShaderResources.RenderItemConstantsPS? renderItemConstantsPS,
+        float visualScale)
     {
         var meshWorldMatrix = Skinned
             ? modelTransform
             : modelInstance.AbsoluteBoneTransforms[parentBone.Index];
+
+        if (visualScale != 1f)
+        {
+            // Presentation-only proportions (WI-G10-02): scale about the model origin
+            // before the world transform. Shared matrices stay untouched.
+            meshWorldMatrix = Matrix4x4.CreateScale(visualScale) * meshWorldMatrix;
+        }
 
         BuildRenderListWithWorldMatrix(
             renderList,

@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G10-02` |
 | Roadmap phase | [Track G · G10](../../track-g-rendering-clarity.md): Realistic proportions |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `M` |
 | Prerequisites | `WI-G10-01`, `WI-G2-03` |

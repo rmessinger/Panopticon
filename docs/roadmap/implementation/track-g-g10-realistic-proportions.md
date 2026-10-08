@@ -78,6 +78,42 @@ Constraints verified:
 - Culling bounds derive separately (transform the visual box by the scaled matrix) so frustum
   and shadow culling stay correct without touching gameplay queries.
 
+## Implementation (WI-G10-02, complete)
+
+Overrides live in `VisualScaleOverrides` (`src/Panopticon.Simulation/Graphics/VisualScaleOverrides.cs`),
+keyed by object-definition name (ordinal-ignore-case, identity for unlisted names). Aircraft only:
+
+| Object | Multiplier | Derivation |
+|---|---|---|
+| `ChinaJetMiG` | 1.9149 | 17.32 m / (33.0134 u / 3.6501 u/m) |
+| `AmericaVehicleComanche` | 1.1828 | 14.28 m / (44.0651 u / 3.6501 u/m) |
+
+Scale threads through the audited render-only path: `W3dModelDraw.BuildRenderList` computes
+`GetPresentationScale()` (identity unless `GraphicsSettings.RealisticProportions` and the definition is
+listed) and passes it through `W3dModelDrawConditionState.BuildRenderList` and
+`ModelInstance.BuildRenderList` into `ModelMesh.BuildRenderList`, which composes
+`Matrix4x4.CreateScale(scale) * meshWorldMatrix` (row-vector, scale before world, about the model
+origin at the audited ground plane). Shared matrices are untouched: `SetWorldMatrix`,
+`AbsoluteBoneTransforms`, and `_worldMatrix` keep their gameplay values, so weapon-launch bones,
+selection, pathing, and collision queries are identical with the option on or off. Presentation culling
+follows automatically because `BuildRenderListWithWorldMatrix` derives the render-item bounds from
+the scaled world matrix. Particle FX align by value: `ParticleSystemManager.Create` accepts an
+optional scale provider and `ParticleSystem.Update` composes the scale into its own world transform
+copy when it is not 1, leaving the shared bone matrix read-only. Both presets default the flag off, so
+every default session and golden runs the identity path.
+
+## Evidence (WI-G10-02)
+
+- `PresentationScaleTests` (5 tests): manifest cross-derivation for both multipliers, identity for
+  ground/null/empty names, case-insensitive keys, bit-equal identity build versus
+  `AbsoluteBoneTransforms`, and a scaled build proving `RenderItem.World == CreateScale(2) * bone`
+  with doubled bounds while shared matrices and a subsequent identity build stay unchanged. The
+  cross-derivation test caught an inverted override formula before commit.
+- Suite: 53 + 355 + 2131 passed, 7 skipped (`Category!=Interactive`); format, brace, and
+  whitespace checks clean.
+- Visual regression gate: 16/16 goldens passed with no regeneration (option off in both presets;
+  the gate doubles as the off-path proof).
+
 ## Validation and risks
 
 Use installation-resolved assets with patch/loose overrides. Pure arithmetic tests need no install;

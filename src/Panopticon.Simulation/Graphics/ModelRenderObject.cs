@@ -23,7 +23,8 @@ public abstract class ModelRenderObject : BaseAsset
         ModelBone parentBone,
         in Matrix4x4 modelTransform,
         bool castsShadow,
-        MeshShaderResources.RenderItemConstantsPS? renderItemConstantsPS);
+        MeshShaderResources.RenderItemConstantsPS? renderItemConstantsPS,
+        float visualScale);
 
     internal abstract void BuildRenderListWithWorldMatrix(
         RenderList renderList,

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Content.Loaders;
@@ -31,7 +32,8 @@ internal sealed class ParticleSystemManager : DisposableBase, IPersistableObject
 
     public ParticleSystem Create(
         FXParticleSystemTemplate template,
-        ParticleSystem.GetMatrixReferenceDelegate getWorldMatrix)
+        ParticleSystem.GetMatrixReferenceDelegate getWorldMatrix,
+        Func<float>? getVisualScale = null)
     {
         ParticleSystem result;
 
@@ -40,7 +42,8 @@ internal sealed class ParticleSystemManager : DisposableBase, IPersistableObject
                 result = new ParticleSystem(
                     template,
                     _loadContext,
-                    getWorldMatrix)));
+                    getWorldMatrix,
+                    getVisualScale)));
 
         _renderBucket.AddObject(result);
 

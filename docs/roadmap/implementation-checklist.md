@@ -1209,7 +1209,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
     - AC: a checked-in table covers a representative set spanning infantry, ground vehicles,
       buildings, and aircraft, and a data test re-derives its numbers from the installed
       INI/W3D assets so a changed asset fails the test.
-  - [ ] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
+  - [x] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
         the proportions option, correcting the aircraft class
         ([`WI-G10-02`](agent/cards/WI-G10-02-presentation-scale-overrides.md)).
     - AC: with the option enabled only aircraft visuals change size; existing P0/P9 scenario
