@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-41` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): experiment harness milestone |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-16`, `WI-A4-40` |
@@ -38,11 +38,11 @@ scenario, and producing one comparison report without caller changes.
 
 ## Acceptance criteria
 
-- [ ] Two implementations are selected only by configuration.
-- [ ] Both run against the same B1 scenario and settings.
-- [ ] One A5-compatible report compares them.
-- [ ] No caller change is required between cells.
-- [ ] Standard validation passes.
+- [x] Two implementations are selected only by configuration.
+- [x] Both run against the same B1 scenario and settings.
+- [x] One A5-compatible report compares them.
+- [x] No caller change is required between cells.
+- [x] Standard validation passes.
 
 ## Validation commands
 

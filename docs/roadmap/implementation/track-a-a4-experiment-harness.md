@@ -15,11 +15,11 @@ B1 owns benchmark mechanics; this chain owns selection and orchestration.
 
 | Card | Output | Status |
 |---|---|---|
-| [`WI-A4-37`](../agent/cards/WI-A4-37-design-experiment-harness.md) | Harness design deep dive | Ready |
-| [`WI-A4-38`](../agent/cards/WI-A4-38-experiment-variant-registry.md) | Definition and registry types | Blocked (WI-A4-37) |
-| [`WI-A4-39`](../agent/cards/WI-A4-39-run-b1-experiments.md) | Per-cell B1 execution | Blocked (WI-A4-38) |
-| [`WI-A4-40`](../agent/cards/WI-A4-40-write-experiment-comparison-report.md) | Report envelope and writers | Blocked (WI-A4-39) |
-| [`WI-A4-41`](../agent/cards/WI-A4-41-compare-two-seam-implementations.md) | Comparison milestone and CLI | Blocked (WI-A4-40) |
+| [`WI-A4-37`](../agent/cards/WI-A4-37-design-experiment-harness.md) | Harness design deep dive | Done |
+| [`WI-A4-38`](../agent/cards/WI-A4-38-experiment-variant-registry.md) | Definition and registry types | Done |
+| [`WI-A4-39`](../agent/cards/WI-A4-39-run-b1-experiments.md) | Per-cell B1 execution | Done |
+| [`WI-A4-40`](../agent/cards/WI-A4-40-write-experiment-comparison-report.md) | Report envelope and writers | Done |
+| [`WI-A4-41`](../agent/cards/WI-A4-41-compare-two-seam-implementations.md) | Comparison milestone and CLI | Done |
 
 ## Acceptance by card
 
@@ -29,6 +29,32 @@ B1 owns benchmark mechanics; this chain owns selection and orchestration.
 | WI-A4-39 | Axis expansion produces stable keyed cells; each cell runs B1 warmup and measurement; failed cells are explicit without erasing successful ones. |
 | WI-A4-40 | Reports carry bindings, identities, samples, aggregates, hardware context, and failures; artifact references are relative; unsupported schema versions fail clearly. |
 | WI-A4-41 | One two-cell experiment differs only in the swept seam binding, produces one A5-compatible report with no caller branching, and the harness checklist item is ticked. |
+
+## Smoke invocation
+
+CLI (exit 0 when every cell succeeds, 1 on run failure, 2 on argument errors):
+
+```sh
+dotnet run --project src/Panopticon.Benchmarks.Simulation -- \
+  --experiment <definition.json> [--out <directory>]
+```
+
+The default output directory is `experiments/<name>/<utc-timestamp>/`. A minimal definition:
+
+```json
+{
+  "schemaVersion": "a4.experiment-definition/1",
+  "name": "ai-policy-milestone",
+  "scenarioId": "b1.ai-policy",
+  "seed": 1,
+  "warmupFrames": 1,
+  "measuredFrames": 20,
+  "axes": [{ "seam": "ai-policy", "implementations": ["rule-based", "neural"] }]
+}
+```
+
+API equivalent: `new ExperimentRunner(ExperimentImplementationRegistry.CreateDefault()).Run(definition)`
+followed by `ExperimentReportWriter.Write(execution, directory)`.
 
 ## Validation
 

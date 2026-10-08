@@ -32,16 +32,40 @@ public abstract class SimulationBenchmarkScenario
             MixedCombatBenchmarkScenario.ScenarioId => new MixedCombatBenchmarkScenario(),
             PathQueryBenchmarkScenario.ScenarioId => new PathQueryBenchmarkScenario(),
             TenThousandScaleAnchorBenchmarkScenario.ScenarioId => new TenThousandScaleAnchorBenchmarkScenario(),
+            AiPolicyBenchmarkScenario.ScenarioId => new AiPolicyBenchmarkScenario(),
             _ => throw new ArgumentException($"Unknown benchmark scenario '{scenarioId}'."),
         };
     }
 
     /// <summary>
-    /// Common boot: skirmish start with passive owners, inert victory rule, and skirmish AI
-    /// nulled, so scenarios only differ in map, teams, spawn layout, and orders. Hostility
-    /// comes from the team parameters, not from AI or victory rules.
+    /// Player settings for the boot. The default yields passive owners on the first two
+    /// playable sides; scenarios override to promote a slot to an AI owner or attach an
+    /// experiment-selected policy (WI-A4-41).
     /// </summary>
-    protected static SimulationBenchmarkRun BootSkirmish(
+    protected virtual PlayerSetting[] CreatePlayerSettings(Game game, int teamA, int teamB)
+    {
+        return BenchmarkPlayerSettings.TwoSides(game, teamA, teamB);
+    }
+
+    /// <summary>
+    /// Player post-boot configuration. The default disables all skirmish AI so per-tick
+    /// thinking never pollutes measurements; scenarios that keep an AI slot override this.
+    /// </summary>
+    protected virtual void ConfigurePlayers(Game game)
+    {
+        foreach (var player in game.Scene3D.Players)
+        {
+            player.DisableAI();
+        }
+    }
+
+    /// <summary>
+    /// Common boot: skirmish start with the scenario's player settings, an inert victory
+    /// rule, and skirmish AI nulled by default, so scenarios only differ in map, teams,
+    /// spawn layout, orders, and player configuration. Hostility comes from the team
+    /// parameters, not from AI or victory rules.
+    /// </summary>
+    protected SimulationBenchmarkRun BootSkirmish(
         SimulationBenchmarkPlan plan,
         string mapPath,
         int teamA = 0,
@@ -63,18 +87,14 @@ public abstract class SimulationBenchmarkScenario
         game.StartSkirmishOrMultiPlayerGame(
             mapPath,
             new EchoConnection(),
-            BenchmarkPlayerSettings.TwoSides(game, teamA, teamB),
+            CreatePlayerSettings(game, teamA, teamB),
             (int)plan.Seed,
             isMultiPlayer: false);
         game.StartRun();
 
-        // Benchmark endings are frame budgets, not victory states, and map slots get skirmish
-        // AI players at boot whose per-tick thinking would pollute measurements.
+        // Benchmark endings are frame budgets, not victory states.
         game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
-        foreach (var player in game.Scene3D.Players)
-        {
-            player.DisableAI();
-        }
+        ConfigurePlayers(game);
 
         var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
         return new SimulationBenchmarkRun(host, game);
