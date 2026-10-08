@@ -1587,15 +1587,19 @@ depend on the Track A/B/C phases listed in the track doc. Design:
   (see the track doc).
 
 ### M1: Capacity probe
-- [ ] M1-1 Generals-only 1000 vs 1000 scenario: direct-spawn two armies of ground units and
+- [x] M1-1 Generals-only 1000 vs 1000 scenario: direct-spawn two armies of ground units and
   aircraft, with pre-placed airfields, on the M0 map through the P9 direct-spawn host
-  and order a general attack.
+  and order a general attack. (`WI-M1-01..03`,
+  [plan](implementation/track-m-m1-capacity-probe.md))
   - AC: the scenario runs headless and windowed from one definition; both sides spawn 1000 units;
     aircraft take off, attack, and rearm.
-- [ ] M1-2 Capacity measurements through B1.
+- [x] M1-2 Capacity measurements through B1.
   - AC: B1 records tick cost, frame rate, memory, and path requests per second over the engagement.
-- [ ] M1-3 First-bottleneck report.
+- [x] M1-3 First-bottleneck report.
   - AC: the report names the first failing constraint and whether B2/B3 are needed for M5.
+    First failing constraint: the partition system span (86-99 percent of every tick at contact,
+    crossing the 30 fps budget from frame ~900); B2 and B3 are both required for M5, and the
+    density-scaling fix belongs to B4, already an M5 dependency.
 
 ### M2: EE2 combat units
 - [ ] M2-1 Expand H2a's bounded DDF reader to the reference roster and inherited dependencies.

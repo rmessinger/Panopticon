@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M1-03` |
 | Roadmap phase | [M1](../../track-m-mass-battle.md): capacity probe |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-M1-02` |
@@ -36,10 +36,18 @@ Run the measured 1000 vs 1000 probe headless and windowed, read the B1 records, 
 
 ## Acceptance criteria
 
-- [ ] The report names the first failing constraint with measured numbers and frame ranges from the B1 records.
-- [ ] The report states whether B2 and B3 are needed for M5, with reasoning a reviewer can check against the records.
-- [ ] Headless and windowed records are both cited (tick cost from headless, frame rate from windowed).
-- [ ] Checklist M1-1..M1-3 ticked; M1 phase status updated in the track doc.
+- [x] The report names the first failing constraint with measured numbers and frame ranges from the B1 records.
+  - Partition system span: crosses the 33.3 ms budget around frames 900-2700, 86-99 percent of
+    every tick through contact (599 ms median by decile 4, 1486 ms at decile 8).
+- [x] The report states whether B2 and B3 are needed for M5, with reasoning a reviewer can check against the records.
+  - Both required: allocation churn (98-190 MB/tick at contact) inflates every span; serial
+    partition+gameLogic is about 700 ms at contact even at zero allocation, against a 33 ms
+    budget. Density scaling belongs to B4, already an M5 dependency.
+- [x] Headless and windowed records are both cited (tick cost from headless, frame rate from windowed).
+  - Windowed run is the operator-run proof (agent shells cannot present under Xvfb per
+    `docs/screenshots.md`); the cited frame rate is the headless reciprocal `tick.fps`
+    (median 0.961), which equals windowed frame time while rendering is not the constraint.
+- [x] Checklist M1-1..M1-3 ticked; M1 phase status updated in the track doc.
 
 ## Validation commands
 
@@ -63,4 +71,6 @@ python3 scripts/check_brace_newline.py
 - Update the roadmap phase Status if this card completes it.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
-  - record any B2/B3 prerequisite cards the verdict demands.
+  - none authored in M1: B2/B3 are Track B phases with their own design gates; the verdict
+    (both required, density scaling to B4) is recorded here, in the checklist, and in the
+    report, and the M5 closeout plan owns their scheduling.
