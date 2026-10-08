@@ -70,7 +70,7 @@ public sealed class Game : DisposableBase, IGame
     /// </summary>
     public GraphicsSystem Graphics { get; }
 
-    public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Faithful();
+    public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Enhanced();
 
     internal GraphicsSettingsController GraphicsSettingsController { get; private set; }
 
@@ -518,11 +518,20 @@ public sealed class Game : DisposableBase, IGame
         GameInstallation installation,
         GraphicsBackend? preferredBackend,
         Configuration config,
-        GameWindow window)
+        GameWindow window,
+        GraphicsSettings? graphicsSettings = null)
     {
         using (GameTrace.TraceDurationEvent("Game()"))
         {
             Configuration = config;
+
+            // Applied before graphics-resource construction: the shader-set store and its
+            // pipelines are built from the settings once, so the initial preset must be known
+            // here. Later swaps change only what the frame-boundary applier supports.
+            if (graphicsSettings != null)
+            {
+                GraphicsSettings = graphicsSettings;
+            }
 
             // TODO: This should probably be done in some dynamic way.
             // We can't change our backend at runtime though. See NeoDemo.cs
@@ -1017,6 +1026,17 @@ public sealed class Game : DisposableBase, IGame
         _mapTimer.FixedDelta = TimeSpan.FromMilliseconds(GameEngine.MsPerLogicFrame);
     }
 
+    /// <summary>
+    /// Switches the render timer to fixed-timestep mode, advancing exactly one render frame per
+    /// <see cref="Update"/> call regardless of wall-clock time. Used by the visual regression
+    /// harness so presentation-side animation (water, shaders, cursors) advances identically
+    /// across runs on the same host.
+    /// </summary>
+    internal void EnableFixedRenderTimestep()
+    {
+        _renderTimer.FixedDelta = TimeSpan.FromSeconds(GameEngine.MsPerLogicFrame / 1000.0);
+    }
+
     public void Render()
     {
         ApplyGraphicsSettingsIfChanged();
@@ -1034,7 +1054,11 @@ public sealed class Game : DisposableBase, IGame
 
         _appliedGraphicsSettings = GraphicsSettings;
 
-        GraphicsSettingsController.Apply(GraphicsSettings);
+        // Pipelines were built once with the construction-time sample count; report it as the
+        // session ceiling so a later preset swap never claims an unsupportable effective count.
+        var sessionSampleCount = GraphicsSettingsController.FromTextureSampleCount(
+            GraphicsLoadContext.ShaderSetStore.OutputDescription.SampleCount);
+        GraphicsSettingsController.Apply(GraphicsSettings, sessionSampleCount);
         Scene3D?.Shadows.ApplyTier(GraphicsSettings.ShadowTier);
     }
 

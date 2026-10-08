@@ -1,0 +1,144 @@
+{
+  "SchemaVersion": 1,
+  "StoreKind": "external",
+  "Backend": "Vulkan",
+  "DeviceName": "AMD Radeon RX 7600 (RADV NAVI33)",
+  "Host": "duchessa",
+  "Width": 1024,
+  "Height": 768,
+  "UpdatedUtc": "2026-10-07T15:58:42Z",
+  "Goldens": [
+    {
+      "Preset": "faithful",
+      "Scene": "terrain-default",
+      "File": "faithful/terrain-default.png",
+      "Sha256": "E3408AF266B3C79D71923B90F705938404445C89547BDADD23A994F19461810C",
+      "Sharpness": 0.0023634896012264196,
+      "EdgeAliasing": 0.1172220067908182,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "faithful",
+      "Scene": "terrain-grazing",
+      "File": "faithful/terrain-grazing.png",
+      "Sha256": "B5C65F0E9F19817F4E538EA8F5AE5CF47771C6B2B81979D7D7B02E618A9073AF",
+      "Sharpness": 0.002032651519822823,
+      "EdgeAliasing": 0.0932890104194592,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "faithful",
+      "Scene": "foliage-distance",
+      "File": "faithful/foliage-distance.png",
+      "Sha256": "6BB24B6D754515F91EF5B86FFB53863F45E8554E0BEAEC68FEEC36D2AB30A1D8",
+      "Sharpness": 0.0022692284249448873,
+      "EdgeAliasing": 0.12298505368939221,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "faithful",
+      "Scene": "unit-silhouettes",
+      "File": "faithful/unit-silhouettes.png",
+      "Sha256": "17399F7ED6AD8271F84EF23BDBD9467772B0489AD25322551C3478A9412D7AE5",
+      "Sharpness": 0.003272753128859418,
+      "EdgeAliasing": 0.07253405553388627,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "faithful",
+      "Scene": "shadow-casters",
+      "File": "faithful/shadow-casters.png",
+      "Sha256": "D710628656CD5B11ED707103D115EC24F07F007BB7199F4CE443E1B7038A9834",
+      "Sharpness": 0.0034325457896808493,
+      "EdgeAliasing": 0.11695805204546766,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "faithful",
+      "Scene": "hud",
+      "File": "faithful/hud.png",
+      "Sha256": "1D850C8F1C9994BCBA477B07110A2231162EF1DFE8DD2253BA1FB19F71B9D6EA",
+      "Sharpness": 0.003126363150562974,
+      "EdgeAliasing": 0.13976990108072218,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "terrain-default",
+      "File": "enhanced/terrain-default.png",
+      "Sha256": "DCE19D69AEB60D31049DA790AD97D7FCD3A0E340E4AE6409F578B8763DC080EC",
+      "Sharpness": 0.0023454809135483143,
+      "EdgeAliasing": 0.11577636226034309,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "terrain-grazing",
+      "File": "enhanced/terrain-grazing.png",
+      "Sha256": "25D634EAB83A528F2FD8A2EB83BC4DA4253E81A26703893EE9C90B84BB4EB4BA",
+      "Sharpness": 0.0019839884488302944,
+      "EdgeAliasing": 0.08828010474032827,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "foliage-distance",
+      "File": "enhanced/foliage-distance.png",
+      "Sha256": "35C2E69644A65F1400B2656416B41BC242AD0AC97516667861D2D64A22FEAF79",
+      "Sharpness": 0.0022390633089755087,
+      "EdgeAliasing": 0.12033844688920912,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "unit-silhouettes",
+      "File": "enhanced/unit-silhouettes.png",
+      "Sha256": "CFEE98CE658ADEA58D0088EC018FBB49809011011399BF66F56796AA60E4BE48",
+      "Sharpness": 0.003181495838990244,
+      "EdgeAliasing": 0.07068146034608931,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "shadow-casters",
+      "File": "enhanced/shadow-casters.png",
+      "Sha256": "766D93993933D0795AF1B607B9BD3DFBB3087358390D8195F4AA4DA9987E7725",
+      "Sharpness": 0.0034087424920507844,
+      "EdgeAliasing": 0.11595782396890633,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "hud",
+      "File": "enhanced/hud.png",
+      "Sha256": "FC90847296D2C4E8DAFCA40170AC3F8B7B32F85A85388B6616279F0648631DFF",
+      "Sharpness": 0.0031106546383861803,
+      "EdgeAliasing": 0.1382626280817472,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    }
+  ]
+}

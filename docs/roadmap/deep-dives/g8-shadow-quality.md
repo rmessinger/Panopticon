@@ -9,7 +9,7 @@
 
 Purpose: remove acne speckle and cascade blockiness from the existing cascaded shadow map under
 `Enhanced`, by selecting four cascades at 2048x2048 and adding a slope-scaled term to the depth
-bias, while `Faithful` keeps the current single-cascade output. The rationale for the track and
+bias, while `Legacy` keeps the current single-cascade output. The rationale for the track and
 the preset split lives in the [track doc](../track-g-rendering-clarity.md).
 
 ---
@@ -64,7 +64,7 @@ depth shader. G8 does not change caster classification or add alpha-tested shado
 - `ShadowConstantsPS` is a `std140` uniform block mirrored by a C# `StructLayout.Sequential`
   struct. Its last 16-byte row ends in an unused padding float, so one new float fits without
   changing the buffer size or any other offset.
-- `Faithful` must reproduce the pre-track capture. The tier change must reduce to the current
+- `Legacy` must reproduce the pre-track capture. The tier change must reduce to the current
   values and current arithmetic when the tier is the original one.
 - The tier is a G2 knob. G2 owns the settings type and the member name; G8 supplies the tier's
   values and its application to `ShadowSettings`.
@@ -80,7 +80,7 @@ depth shader. G8 does not change caster classification or add alpha-tested shado
 
   | Tier | `ShadowMapCascades` | `ShadowMapSize` | `SlopeScaledBias` |
   |---|---|---|---|
-  | Original (`Faithful`) | `OneCascade` | 1024 | 0 |
+  | Original (`Legacy`) | `OneCascade` | 1024 | 0 |
   | High (`Enhanced`) | `FourCascades` | 2048 | tuned, see below |
 
   Every other member (`Bias`, `NormalOffset`, `ShadowDistance`, split depths, `ShadowsType`,
@@ -108,7 +108,7 @@ depth shader. G8 does not change caster classification or add alpha-tested shado
   extent equals width), so one texel in depth is `1 / ShadowMapSize` of the range in every
   cascade. `MAX_SLOPE_TANGENT` is a shader constant that bounds the term at grazing angles and keeps
   it finite at `nDotL = 0`.
-- Bit-identical `Faithful`. `SlopeScaledBias = 0` multiplies a bounded finite value, so the bias is
+- Bit-identical `Legacy`. `SlopeScaledBias = 0` multiplies a bounded finite value, so the bias is
   exactly `Bias` and the comparison arithmetic is unchanged. No shader branch on the tier.
 - Constant-buffer layout. `SlopeScaledBias` replaces the trailing `_Padding` float in both
   `ShadowConstantsPSType` (`Shadows.h`) and `GlobalShaderResources.ShadowConstantsPS`, keeping the
@@ -134,7 +134,7 @@ depth shader. G8 does not change caster classification or add alpha-tested shado
 - Unit tests (non-interactive): `Marshal.SizeOf<GlobalShaderResources.ShadowConstantsPS>()` stays
   240; applying the Original tier leaves a default `ShadowSettings` unchanged member by member;
   applying the High tier yields `FourCascades`, 2048 and the chosen `SlopeScaledBias`.
-- G3 golden frames: a `Faithful` capture matches its golden byte for byte. An `Enhanced` capture of
+- G3 golden frames: a `Legacy` capture matches its golden byte for byte. An `Enhanced` capture of
   a scene with flat ground, sloped terrain and unit casters at the default camera zoom is the new
   golden, reviewed for no acne, no visible cascade seam and no peter-panning.
 - Four-cascade coverage: an `Enhanced` capture with `VisualizeCascades` on shows four cascade

@@ -104,11 +104,16 @@ public static class ScenarioCaptureRunner
 
         QuietenPerFrameLogging();
 
+        var viewportScale = Math.Max(1, settings.ViewportScale);
+        var viewportWidth = ViewportWidth * viewportScale;
+        var viewportHeight = ViewportHeight * viewportScale;
+
         using var game = new Game(
             installation,
             settings.Renderer,
             new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = settings.FullHud },
-            null);
+            null,
+            settings.GraphicsSettings);
 
         var playerSettings = profile.Players.Select((player, index) => new PlayerSetting(
             index,
@@ -127,6 +132,13 @@ public static class ScenarioCaptureRunner
         }
 
         game.EnableFixedLogicTimestep();
+
+        if (settings.FixedRenderClock)
+        {
+            // Presentation-side animation (water, shaders, cursors) advances one fixed step per
+            // Update call, making repeat captures byte-identical on the same host.
+            game.EnableFixedRenderTimestep();
+        }
 
         if (PhysicsBackendPolicy.Current == PhysicsBackendKind.Bepu)
         {
@@ -236,7 +248,7 @@ public static class ScenarioCaptureRunner
             cameraSubjects.Add(new Vector3(point.X, point.Y, z));
         }
 
-        var cameraOutcome = SetupCamera(game, profile.Camera, cameraSubjects, actors.Values.Select(a => a.Object));
+        var cameraOutcome = SetupCamera(game, profile.Camera, cameraSubjects, actors.Values.Select(a => a.Object), viewportWidth, viewportHeight);
         reporter.Info(cameraOutcome.Message);
         if (!cameraOutcome.Success)
         {
@@ -317,12 +329,12 @@ public static class ScenarioCaptureRunner
             var captured = frame % profile.CaptureStride == 0;
             if (!captured && profile.RenderEveryFrame)
             {
-                RenderFrame(game);
+                RenderFrame(game, viewportWidth, viewportHeight);
             }
 
             if (captured)
             {
-                RenderFrame(game);
+                RenderFrame(game, viewportWidth, viewportHeight);
                 var path = Path.Combine(outputDirectory, $"frame_{captureIndex:D4}.png");
                 FrameCapturer.CaptureToPng(game.GraphicsDevice, game.Panel.Framebuffer.ColorTargets[0].Target, path);
 
@@ -365,7 +377,7 @@ public static class ScenarioCaptureRunner
 
         var expectationResults = EvaluateExpectations(profile, actors, projectileObserved, frames);
 
-        var manifest = BuildManifest(profile, frames, commandResults, expectationResults);
+        var manifest = BuildManifest(profile, viewportWidth, viewportHeight, frames, commandResults, expectationResults);
         var manifestPath = Path.Combine(outputDirectory, "manifest.json");
         File.WriteAllText(manifestPath, JsonSerializer.Serialize(manifest, ManifestJsonOptions));
 
@@ -479,12 +491,26 @@ public static class ScenarioCaptureRunner
         Game game,
         CaptureCamera camera,
         IReadOnlyList<Vector3> subjectPoints,
-        IEnumerable<GameObject> trackedActors)
+        IEnumerable<GameObject> trackedActors,
+        int viewportWidth,
+        int viewportHeight)
     {
         var view = game.Scene3D.TacticalView;
 
         view.InitHeightForMap();
         view.SetAngleAndPitchToDefault();
+
+        // Optional orientation overrides: applied after the default orientation and before any
+        // height/look-at call, which pan and zoom but do not re-derive pitch or yaw.
+        if (camera.AngleDegrees.HasValue)
+        {
+            view.Angle = (float)(camera.AngleDegrees.Value * Math.PI / 180.0);
+        }
+
+        if (camera.PitchDegrees.HasValue)
+        {
+            view.Pitch = (float)(camera.PitchDegrees.Value * Math.PI / 180.0);
+        }
 
         // Fitting refreshes the camera through render-time updates only; pausing logic keeps the
         // tick count deterministic no matter how many fit iterations a profile needs.
@@ -500,10 +526,10 @@ public static class ScenarioCaptureRunner
                 // for the CURRENT height, so aiming before zooming lands the camera off the subject.
                 view.SnapHeightAboveGround(explicitHeight);
                 view.LookAt(new Vector3(lookAt.X, lookAt.Y, 0f));
-                RefreshCamera(game);
+                RefreshCamera(game, viewportWidth, viewportHeight);
 
                 var offScreen = trackedActors
-                    .Where(actor => !IsInsideSafeArea(game.Scene3D.Camera.WorldToScreenPoint(actor.Translation)))
+                    .Where(actor => !IsInsideSafeArea(game.Scene3D.Camera.WorldToScreenPoint(actor.Translation), viewportWidth, viewportHeight))
                     .ToList();
                 if (offScreen.Count > 0)
                 {
@@ -525,9 +551,9 @@ public static class ScenarioCaptureRunner
                 var followHeight = Math.Clamp(camera.InitialCameraHeight, camera.MinCameraHeight, camera.MaxCameraHeight);
                 view.SnapHeightAboveGround(followHeight);
                 view.LookAt(subjectPoints[0]);
-                RefreshCamera(game);
+                RefreshCamera(game, viewportWidth, viewportHeight);
 
-                if (!IsInsideSafeArea(game.Scene3D.Camera.WorldToScreenPoint(subjectPoints[0])))
+                if (!IsInsideSafeArea(game.Scene3D.Camera.WorldToScreenPoint(subjectPoints[0]), viewportWidth, viewportHeight))
                 {
                     return (false,
                         $"Follow camera at height {followHeight:0} leaves the subject outside the safe viewport; adjust the height bounds.");
@@ -544,14 +570,14 @@ public static class ScenarioCaptureRunner
                 subjectPoints.Average(p => p.X),
                 subjectPoints.Average(p => p.Y),
                 0f);
-            var desiredSpan = ViewportWidth * Math.Clamp(camera.DesiredSpanFraction, 0.1f, 0.9f);
+            var desiredSpan = viewportWidth * Math.Clamp(camera.DesiredSpanFraction, 0.1f, 0.9f);
             var height = Math.Clamp(camera.InitialCameraHeight, camera.MinCameraHeight, camera.MaxCameraHeight);
 
             for (var attempt = 0; attempt < 12; attempt++)
             {
                 view.SnapHeightAboveGround(height);
                 view.LookAt(center);
-                RefreshCamera(game);
+                RefreshCamera(game, viewportWidth, viewportHeight);
 
                 var screenPoints = subjectPoints
                     .Select(p => game.Scene3D.Camera.WorldToScreenPoint(p))
@@ -567,11 +593,11 @@ public static class ScenarioCaptureRunner
                 }
 
                 var ratio = span / desiredSpan;
-                var onScreen = screenPoints.All(IsInsideSafeArea);
+                var onScreen = screenPoints.All(p => IsInsideSafeArea(p, viewportWidth, viewportHeight));
                 if (onScreen && MathF.Abs(ratio - 1f) < 0.08f)
                 {
                     return (true, FormattableString.Invariant(
-                        $"Camera fitted at height {height:0} (subjects span {span:0}px of {ViewportWidth}px)."));
+                        $"Camera fitted at height {height:0} (subjects span {span:0}px of {viewportWidth}px)."));
                 }
 
                 var next = Math.Clamp(height * ratio, camera.MinCameraHeight, camera.MaxCameraHeight);
@@ -592,17 +618,17 @@ public static class ScenarioCaptureRunner
         }
     }
 
-    private static void RefreshCamera(Game game)
+    private static void RefreshCamera(Game game, int viewportWidth, int viewportHeight)
     {
         // With logic paused, Update runs LocalLogicTick only: the tactical view advances on
         // render time, no logic frame is consumed.
         game.Update(Array.Empty<Input.InputMessage>());
-        RenderFrame(game);
+        RenderFrame(game, viewportWidth, viewportHeight);
     }
 
-    private static bool IsInsideSafeArea(Vector3 screenPoint) =>
-        screenPoint.X > ViewportWidth * 0.08f && screenPoint.X < ViewportWidth * 0.92f
-        && screenPoint.Y > ViewportHeight * 0.08f && screenPoint.Y < ViewportHeight * 0.92f;
+    private static bool IsInsideSafeArea(Vector3 screenPoint, int viewportWidth, int viewportHeight) =>
+        screenPoint.X > viewportWidth * 0.08f && screenPoint.X < viewportWidth * 0.92f
+        && screenPoint.Y > viewportHeight * 0.08f && screenPoint.Y < viewportHeight * 0.92f;
 
     private static (CommandResultRecord Record, int? FailureExitCode) ExecuteCommand(
         Game game,
@@ -928,6 +954,8 @@ public static class ScenarioCaptureRunner
 
     private static CaptureManifest BuildManifest(
         CaptureProfile profile,
+        int viewportWidth,
+        int viewportHeight,
         List<FrameRecord> frames,
         List<CommandResultRecord> commandResults,
         List<ExpectationResultRecord> expectationResults)
@@ -940,8 +968,8 @@ public static class ScenarioCaptureRunner
         return new CaptureManifest(
             SchemaVersion: 2,
             Scenario: profile.Name,
-            ViewportWidth,
-            ViewportHeight,
+            viewportWidth,
+            viewportHeight,
             RoleField("attacker", a => a.Definition),
             RoleField("target", a => a.Definition),
             RoleField("attacker", a => a.Label),
@@ -1172,9 +1200,9 @@ public static class ScenarioCaptureRunner
     private static uint CurrentLogicFrame(Game game) =>
         unchecked((uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame));
 
-    private static void RenderFrame(Game game)
+    private static void RenderFrame(Game game, int viewportWidth, int viewportHeight)
     {
-        game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, ViewportWidth, ViewportHeight));
+        game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, viewportWidth, viewportHeight));
         game.Render();
     }
 
@@ -1211,7 +1239,10 @@ public static class ScenarioCaptureRunner
 public sealed record CaptureRunSettings(
     GraphicsBackend? Renderer,
     bool FullHud,
-    string? FallbackOutputDirectory);
+    string? FallbackOutputDirectory,
+    GraphicsSettings? GraphicsSettings = null,
+    int ViewportScale = 1,
+    bool FixedRenderClock = false);
 
 public sealed record CaptureRunResult(
     int ExitCode,

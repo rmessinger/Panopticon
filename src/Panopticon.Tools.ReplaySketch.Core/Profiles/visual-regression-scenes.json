@@ -1,0 +1,44 @@
+{
+  // The visual regression scene set (WI-G3-03). Each entry names an embedded capture profile,
+  // the capture index (frame_000N.png, counting from the first capture after settle) that is
+  // the scene's comparison frame, and optional normalized silhouette regions for the
+  // supersampled aliasing check. Index 0 is the warm-up discard. Per-scene tolerance overrides
+  // are consumed by the WI-G3-04 golden comparison.
+
+  "Scenes": [
+    {
+      "Name": "terrain-default",
+      "Profile": "vr-terrain-default.json",
+      "CaptureFrame": 1
+    },
+    {
+      "Name": "terrain-grazing",
+      "Profile": "vr-terrain-grazing.json",
+      "CaptureFrame": 1
+    },
+    {
+      "Name": "foliage-distance",
+      "Profile": "vr-foliage-distance.json",
+      "CaptureFrame": 1
+    },
+    {
+      "Name": "unit-silhouettes",
+      "Profile": "vr-unit-silhouettes.json",
+      "CaptureFrame": 1,
+      "SilhouetteRegions": [
+        { "X": 0.2, "Y": 0.25, "Width": 0.6, "Height": 0.55 }
+      ]
+    },
+    {
+      "Name": "shadow-casters",
+      "Profile": "vr-shadow-casters.json",
+      "CaptureFrame": 1
+    },
+    {
+      "Name": "hud",
+      "Profile": "vr-hud.json",
+      "CaptureFrame": 1,
+      "FullHud": true
+    }
+  ]
+}

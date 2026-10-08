@@ -34,7 +34,7 @@ G1's proportional pixel-space convention.
 2. Rasterize live text at effective pixel size and snap borders in final pixel space. Cache fonts
    by family, style and pixel size, following the audit's exact draw sites.
 3. Add Enhanced-only role-aware upscaling for identified legacy art, validated against fixed
-   crops. Faithful and already-native images retain their existing sampling.
+   crops. Legacy and already-native images retain their existing sampling.
 4. Keep hit regions in the same pixel space as converted mouse input. Retain original client
    rectangles and test equivalent control targeting at scales 1 and 2.
 5. Validate with the G3 harness at a unity scale and at a non-unity scale, comparing the sharpness
@@ -55,7 +55,7 @@ G1's proportional pixel-space convention.
 - [ ] Layout and hit regions are unchanged relative to the pre-card build, verified by the G1-04
       picking assertions still passing.
 - [ ] The HUD occupies the same fraction of the frame at scale 1 and scale 2.
-- [ ] A `Faithful` capture at unity scale is unchanged against its golden.
+- [ ] A `Legacy` capture at unity scale is unchanged against its golden.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands

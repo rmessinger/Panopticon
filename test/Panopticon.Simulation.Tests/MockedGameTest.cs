@@ -65,7 +65,9 @@ public abstract class MockedGameTest : IDisposable
         public LobbyManager LobbyManager { get; }
         public List<GameSystem> GameSystems { get; }
         public GraphicsSystem Graphics { get; }
-        public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Faithful();
+        // The test host keeps the Legacy preset: tests assert against the 1x baseline and do
+        // not need the default 4x path.
+        public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Legacy();
         public GraphicsSettings EffectiveGraphicsSettings => GraphicsSettings;
         public ScriptingSystem Scripting { get; }
         public LuaScriptEngine Lua { get; set; }

@@ -1,0 +1,25 @@
+{
+  // Grazing-angle terrain view for G7: near-horizon pitch stresses texture filtering and mip
+  // transitions at shallow viewing angles.
+
+  "Name": "vr-terrain-grazing",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 600, "Y": 650, "Z": 0 },
+    "Height": 260,
+    "PitchDegrees": 30
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

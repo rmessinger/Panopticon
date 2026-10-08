@@ -258,6 +258,38 @@ public class CaptureProfileTests
             e => e.Contains("cannot set both FollowActorId and FollowProjectileSourceActorId"));
     }
 
+    [Fact]
+    public void Camera_OrientationOverrides_RoundTrip()
+    {
+        var overrides = new CaptureProfile
+        {
+            Name = "orientation",
+            Camera = new CaptureCamera
+            {
+                Mode = CaptureCameraMode.Explicit,
+                LookAt = new CapturePoint { X = 1, Y = 2, Z = 3 },
+                Height = 250,
+                PitchDegrees = -30,
+                AngleDegrees = 45,
+            },
+        };
+
+        var loadedOverrides = RoundTrip(overrides);
+        Assert.Equal(CaptureCameraMode.Explicit, loadedOverrides.Camera.Mode);
+        Assert.Equal(-30, loadedOverrides.Camera.PitchDegrees);
+        Assert.Equal(45, loadedOverrides.Camera.AngleDegrees);
+
+        var defaults = new CaptureProfile
+        {
+            Name = "defaults",
+            Camera = new CaptureCamera(),
+        };
+
+        var loadedDefaults = RoundTrip(defaults);
+        Assert.Null(loadedDefaults.Camera.PitchDegrees);
+        Assert.Null(loadedDefaults.Camera.AngleDegrees);
+    }
+
     private static CaptureProfile ValidProfile() => new()
     {
         Name = "follow",

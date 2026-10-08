@@ -1,0 +1,55 @@
+{
+  // Shadow casters for G8: spread vehicles so their cast shadows and contacts are visible at
+  // a mid angle with the default Faithful shadow tier.
+
+  "Name": "vr-shadow-casters",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "humvee",
+      "Definition": "AmericaVehicleHumvee",
+      "Owner": "usa",
+      "X": 560,
+      "Y": 620,
+      "FacingDegrees": 40,
+      "Label": "humvee",
+      "Role": "subject"
+    },
+    {
+      "Id": "battlemaster",
+      "Definition": "ChinaTankBattleMaster",
+      "Owner": "china",
+      "X": 640,
+      "Y": 700,
+      "FacingDegrees": 200,
+      "Label": "battle master",
+      "Role": "subject"
+    },
+    {
+      "Id": "car",
+      "Definition": "CarSwatchEuro",
+      "Owner": "civilian",
+      "X": 520,
+      "Y": 720,
+      "FacingDegrees": 310,
+      "Label": "sedan",
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 590, "Y": 670, "Z": 0 },
+    "Height": 240
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

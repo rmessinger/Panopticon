@@ -24,4 +24,4 @@ encoding explicitly and document precision/capability fallback.
 
 Black/white colour mip is approximately sRGB 188; data mip is 128. Alpha is unchanged. Test
 transfer endpoints and double encoding. Dither is bounded, zero-mean and screen-coordinate
-stable. Faithful uses the unchanged legacy path. Coordinate texture cache policy with G5/G7.
+stable. Legacy uses the unchanged legacy path. Coordinate texture cache policy with G5/G7.

@@ -15,9 +15,9 @@ internal sealed class GraphicsSettingsController
 
     private readonly GraphicsDevice _graphicsDevice;
 
-    public GraphicsSettings Requested { get; private set; } = GraphicsSettings.Faithful();
+    public GraphicsSettings Requested { get; private set; } = GraphicsSettings.Legacy();
 
-    public GraphicsSettings Effective { get; private set; } = GraphicsSettings.Faithful();
+    public GraphicsSettings Effective { get; private set; } = GraphicsSettings.Legacy();
 
     /// <summary>Fallback reasons for members where effective differs from requested.</summary>
     public IReadOnlyList<string> Fallbacks => _fallbacks;
@@ -29,7 +29,12 @@ internal sealed class GraphicsSettingsController
         _graphicsDevice = graphicsDevice;
     }
 
-    public void Apply(GraphicsSettings requested)
+    /// <summary>
+    /// Validates <paramref name="requested"/> and produces <see cref="Effective"/>. The optional
+    /// <paramref name="sessionSampleCount"/> ceiling reports the count the session's pipelines
+    /// were built with: sample-count changes need a new session, later requests clamp back.
+    /// </summary>
+    public void Apply(GraphicsSettings requested, int sessionSampleCount = 0)
     {
         ArgumentNullException.ThrowIfNull(requested);
 
@@ -45,6 +50,12 @@ internal sealed class GraphicsSettingsController
         {
             _fallbacks.Add($"SampleCount {effectiveSampleCount} -> {sampleCountLimit} (device format limit).");
             effectiveSampleCount = sampleCountLimit;
+        }
+
+        if (sessionSampleCount > 0 && effectiveSampleCount > sessionSampleCount)
+        {
+            _fallbacks.Add($"SampleCount {effectiveSampleCount} -> {sessionSampleCount} (session was constructed at {sessionSampleCount}; restart to change).");
+            effectiveSampleCount = sessionSampleCount;
         }
 
         Effective = GraphicsSettings.Create(

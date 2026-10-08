@@ -53,7 +53,7 @@ shimmer under camera motion.
 - [ ] Terrain and ground-plane textures stay legible at grazing angles at 16x with no shimmer under
       camera motion, measured by the G3 metrics, satisfying the G7 milestone.
 - [ ] Anisotropy above the device maximum clamps rather than throwing.
-- [ ] A `Faithful` capture is unchanged against its golden.
+- [ ] A `Legacy` capture is unchanged against its golden.
 - [ ] Changing the anisotropy setting takes effect without restarting the game.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 

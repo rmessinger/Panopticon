@@ -14,7 +14,7 @@ sample an unresolved multisample target as an ordinary 2D texture.
 ## 2. Constraints
 
 - G2 owns requested/effective sample counts; G3 supplies visual comparisons.
-- Faithful remains 1x with the existing path and output.
+- Legacy remains 1x with the existing path and output.
 - Colour and depth attachments and all pipelines bound to their framebuffer must agree.
 - Shadow, reflection and refraction passes have separate output contracts. Do not blindly apply
   the main framebuffer's count to auxiliary passes.
@@ -49,7 +49,7 @@ targets after queued work completes. G5 adds cutout-specific coverage state late
 - Capture 1/2/4/8 where supported, including terrain, roads, water, opaque units and particles.
 - 4x silhouette regions score less aliased than 1x using G3. HUD pixels remain unchanged.
 - Repeated 1x/4x switches and resizes have no validation errors or unresolved texture reads.
-- Faithful 1x matches the pre-G4 reference on the pinned backend.
+- Legacy 1x matches the pre-G4 reference on the pinned backend.
 
 ## 5. Architecture Diagrams
 

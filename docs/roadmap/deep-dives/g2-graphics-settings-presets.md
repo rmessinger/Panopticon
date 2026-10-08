@@ -13,7 +13,7 @@ are created before rendering. Mutating a settings object alone cannot change tho
 
 ## 2. Constraints
 
-- `Faithful` describes existing rendering after G1's resolution correction. G1 correctness is not
+- `Legacy` describes existing rendering after G1's resolution correction. G1 correctness is not
   reverted by a fidelity preset.
 - Settings belong to the game/presentation host, never global state or simulation configuration.
 - Unsupported device features require a reported effective setting, not an unreported fallback.
@@ -26,7 +26,7 @@ are created before rendering. Mutating a settings object alone cannot change tho
 Introduce an immutable `GraphicsSettings` value and a separate effective snapshot. Proposed
 members below are fixed by the G2-1 audit before source-edit work starts.
 
-| Member | Faithful | Enhanced when owning phase is implemented | Owner |
+| Member | Legacy | Enhanced when owning phase is implemented | Owner |
 |---|---|---|---|
 | SampleCount | 1 | 4, bounded by device format support | G4 |
 | AlphaTestMode | LegacyCutoff | CoveragePreserving | G5 |
@@ -37,10 +37,13 @@ members below are fixed by the G2-1 audit before source-edit work starts.
 | UiMode | LegacyArt | DynamicHud | G9 |
 | RealisticProportions | false | false, explicit opt-in | G10 |
 
-Preset factories retain Faithful values for unimplemented members. G2's initial Enhanced preset
+Preset factories retain Legacy values for unimplemented members. G2's initial Enhanced preset
 may select the existing four-cascade shadow path without adding G8's slope term. If the audit
 does not establish a safe switchable knob, G2-3 remains blocked on that decision rather than
 claiming that identical preset objects demonstrate runtime application.
+
+The original `Faithful` preset was renamed `Legacy` after G4, and `Enhanced` (4x MSAA plus the
+four-cascade shadow tier) became the game default at the same time.
 
 ### Application and lifetime
 
@@ -63,10 +66,10 @@ well as runtime switching, including TestHarness and ReplaySketch preview proces
 
 ## 4. Validation
 
-- Member-by-member Faithful defaults match the audit; invalid values fail before resource creation.
+- Member-by-member Legacy defaults match the audit; invalid values fail before resource creation.
 - A supported preset switch changes effective shadow/pipeline state and switching back restores it.
 - Repeated switches and resizes do not leave mismatched output descriptions or stale resource sets.
-- Fixed-scene Faithful captures match the post-G1 reference on the same backend and driver.
+- Fixed-scene Legacy captures match the post-G1 reference on the same backend and driver.
 - Unsupported settings are reported with requested/effective values and fallback reason.
 
 ## 5. Architecture Diagrams
@@ -77,7 +80,7 @@ Target design. Controller and settings are proposed; the other types already exi
 classDiagram
   class Game
   class GraphicsSettings {
-    +Faithful()
+    +Legacy()
     +Enhanced()
     +SampleCount
     +ShadowTier

@@ -204,7 +204,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/d1-d2-tech-tree-era-progression.md`](deep-dives/d1-d2-tech-tree-era-progression.md) | Track D phases D1/D2 - Tech-tree/prerequisite-graph generalization and era/age progression. |
 | [`deep-dives/e1-e2-naval-warfare.md`](deep-dives/e1-e2-naval-warfare.md) | Track E phases E1/E2 - Water/ground terrain passability and ship combat. |
 | [`deep-dives/g1-high-dpi-resolution.md`](deep-dives/g1-high-dpi-resolution.md) | Track G phase G1 - High-DPI drawable & resolution correctness (logical points versus physical pixels across window, panel, viewport and GUI). |
-| [`deep-dives/g2-graphics-settings-presets.md`](deep-dives/g2-graphics-settings-presets.md) | Track G phase G2 - Graphics settings layer and `Faithful`/`Enhanced` fidelity presets. |
+| [`deep-dives/g2-graphics-settings-presets.md`](deep-dives/g2-graphics-settings-presets.md) | Track G phase G2 - Graphics settings layer and `Legacy`/`Enhanced` fidelity presets. |
 | [`deep-dives/g3-visual-regression-harness.md`](deep-dives/g3-visual-regression-harness.md) | Track G phase G3 - Headless golden-frame gate per preset with sharpness and edge-aliasing metrics. |
 | [`deep-dives/g4-msaa.md`](deep-dives/g4-msaa.md) | Track G phase G4 - Multisample antialiasing: sample count through the main pass and a resolve before 2D. |
 | [`deep-dives/g5-alpha-test-clarity.md`](deep-dives/g5-alpha-test-clarity.md) | Track G phase G5 - Cutout and alpha-test clarity: alpha-to-coverage and coverage-preserving cutout mips. |
@@ -264,7 +264,7 @@ track document.
   authoring/validation tooling.
 - [Track G - Rendering Clarity & Image Quality](track-g-rendering-clarity.md): G1 high-DPI
   drawable & resolution correctness · G2 graphics settings & fidelity presets
-  (`Faithful`/`Enhanced`) · G3 visual regression harness · G4 multisample antialiasing · G5
+  (`Legacy`/`Enhanced`) · G3 visual regression harness · G4 multisample antialiasing · G5
   cutout & alpha-test clarity (the screen-door fix) · G6 gamma-correct rendering · G7 texture
   filtering & mip quality · G8 shadow quality tier · G9 resolution-independent 2D & UI ·
   G10 realistic proportions (optional scale-correct aircraft presentation). Not gated
@@ -395,15 +395,15 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 |---|---|---|
 | G1 - High-DPI & resolution correctness | `██████████` | 4 / 4 |
 | G2 - Graphics settings & fidelity presets | `██████████` | 1 / 1 |
-| G3 - Visual regression harness | `░░░░░░░░░░` | 0 / 1 |
-| G4 - Multisample antialiasing | `░░░░░░░░░░` | 0 / 1 |
+| G3 - Visual regression harness | `██████████` | 1 / 1 |
+| G4 - Multisample antialiasing | `██████████` | 1 / 1 |
 | G5 - Cutout & alpha-test clarity | `░░░░░░░░░░` | 0 / 1 |
 | G6 - Gamma-correct rendering | `░░░░░░░░░░` | 0 / 1 |
 | G7 - Texture filtering & mip quality | `░░░░░░░░░░` | 0 / 1 |
 | G8 - Shadow quality tier | `░░░░░░░░░░` | 0 / 1 |
 | G9 - Resolution-independent 2D & UI | `░░░░░░░░░░` | 0 / 2 |
 | G10 - Realistic proportions | `░░░░░░░░░░` | 0 / 3 |
-| Track G total | `███▏░░░░░░░` | 5 / 16 |
+| Track G total | `████▍░░░░░░` | 7 / 16 |
 
 ### Track H - Map & Unit Storage Formats (H2a gated on P9 and C4d)
 

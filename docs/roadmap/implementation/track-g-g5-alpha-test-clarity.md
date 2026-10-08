@@ -23,4 +23,4 @@ alpha source. Verify the minification defect's cause. Existing CPU mips use Lanc
 
 Synthetic coverage tests include tiny mips and fractional LOD. Bake alpha rescale once, without
 an additional threshold correction. G6 controls RGB transfer; alpha stays linear. Compare
-foliage/fences at effective 1x and 4x; particles/HUD are unchanged. Faithful retains DDS mips.
+foliage/fences at effective 1x and 4x; particles/HUD are unchanged. Legacy retains DDS mips.

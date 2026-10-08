@@ -136,6 +136,6 @@ presets carry identical values for those knobs in G2, so no behaviour can differ
 
 ## Validation and risks
 
-Pure default/capability tests; repeat preset switches and resizes; post-G1 Faithful capture.
+Pure default/capability tests; repeat preset switches and resizes; post-G1 Legacy capture.
 Resource sets retain sampler/texture references. Partial rebuilds are not safe. Requested and
 effective settings must both appear in diagnostics. No simulation or experiment-seam changes.

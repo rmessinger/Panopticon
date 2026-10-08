@@ -6,9 +6,9 @@ namespace Panopticon.Tests.Graphics;
 public class GraphicsSettingsTests : MockedGameTest
 {
     [Fact]
-    public void FaithfulPresetMatchesAuditedHardcodedValues()
+    public void LegacyPresetMatchesAuditedHardcodedValues()
     {
-        var settings = GraphicsSettings.Faithful();
+        var settings = GraphicsSettings.Legacy();
 
         Assert.Equal(1, settings.SampleCount);
         Assert.Equal(AlphaTestMode.LegacyCutoff, settings.AlphaTestMode);
@@ -21,31 +21,34 @@ public class GraphicsSettingsTests : MockedGameTest
     }
 
     [Fact]
-    public void EnhancedPresetDiffersOnlyOnShadowTier()
+    public void EnhancedPresetDiffersOnlyOnSampleCountAndShadowTier()
     {
-        var faithful = GraphicsSettings.Faithful();
+        var legacy = GraphicsSettings.Legacy();
         var enhanced = GraphicsSettings.Enhanced();
 
-        Assert.Equal(faithful.SampleCount, enhanced.SampleCount);
-        Assert.Equal(faithful.AlphaTestMode, enhanced.AlphaTestMode);
-        Assert.Equal(faithful.ColourSpaceMode, enhanced.ColourSpaceMode);
-        Assert.Equal(faithful.Anisotropy, enhanced.Anisotropy);
-        Assert.Equal(faithful.MipLodBias, enhanced.MipLodBias);
+        // 4x MSAA landed with G4; every other knob stays Legacy until its owning phase.
+        Assert.Equal(4, enhanced.SampleCount);
+        Assert.Equal(legacy.AlphaTestMode, enhanced.AlphaTestMode);
+        Assert.Equal(legacy.ColourSpaceMode, enhanced.ColourSpaceMode);
+        Assert.Equal(legacy.Anisotropy, enhanced.Anisotropy);
+        Assert.Equal(legacy.MipLodBias, enhanced.MipLodBias);
         Assert.Equal(ShadowTier.High, enhanced.ShadowTier);
-        Assert.Equal(faithful.UiMode, enhanced.UiMode);
-        Assert.Equal(faithful.RealisticProportions, enhanced.RealisticProportions);
+        Assert.Equal(legacy.UiMode, enhanced.UiMode);
+        Assert.Equal(legacy.RealisticProportions, enhanced.RealisticProportions);
     }
 
     [Fact]
     public void PresetFactoriesReturnDistinctInstances()
     {
-        Assert.NotSame(GraphicsSettings.Faithful(), GraphicsSettings.Faithful());
-        Assert.NotSame(GraphicsSettings.Faithful(), GraphicsSettings.Enhanced());
+        Assert.NotSame(GraphicsSettings.Legacy(), GraphicsSettings.Legacy());
+        Assert.NotSame(GraphicsSettings.Legacy(), GraphicsSettings.Enhanced());
     }
 
     [Fact]
-    public void GameDefaultsToFaithfulPreset()
+    public void TestGameHostDefaultsToLegacyPreset()
     {
+        // The test host pins the 1x Legacy baseline; the Game default is Enhanced
+        // (4x MSAA plus the high shadow tier).
         Assert.Equal(ShadowTier.Original, Generals.GraphicsSettings.ShadowTier);
     }
 

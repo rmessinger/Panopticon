@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G4-01` |
 | Roadmap phase | [Track G · G4](../../track-g-rendering-clarity.md): Multisample antialiasing |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -51,12 +51,21 @@ code changes.
 
 ## Acceptance criteria
 
-- [ ] Every `GraphicsPipelineDescription` construction in `src/` appears with its owning class and
-      pass, and the total is stated.
-- [ ] Every sample point of the intermediate colour texture is listed as a required resolve site.
-- [ ] Passes that must stay single-sampled are named with the reason.
-- [ ] Whether `GameOutputDescription` is shared across differing needs is answered definitively.
-- [ ] No `.cs` file is modified by this card.
+- [x] Every `GraphicsPipelineDescription` construction in `src/` appears with its owning class and
+      pass, and the total is stated. 12 total: 11 game-owned (terrain, water surface, road, tracer,
+      particle, projectile stream, shader material, fixed-function cache, PBR cache, sprite,
+      shadow depth) plus the vendored ImGui renderer. The card's "nine, one ImGui" count predates
+      G2's restructuring; the audit records the current tree.
+- [x] Every sample point of the intermediate colour texture is listed as a required resolve site.
+      One sample point exists: the `TextureCopier` source at `RenderPipeline.cs:183`; the
+      composition target that replaces it becomes the resolve site for counts above 1.
+- [x] Passes that must stay single-sampled are named with the reason
+      (shadow depth, water maps, image processing, terrain tile/macro textures, cursor decals,
+      text cache, null texture, capture staging, `RenderTarget`).
+- [x] Whether `GameOutputDescription` is shared across differing needs is answered definitively:
+      shared by all 11 main-pass pipelines including the 2D/UI description; WI-G4-02 splits the
+      2D path to a `Count1` description plus one resolve point before the 2D block.
+- [x] No `.cs` file is modified by this card (`git status --short -- 'src/*'` clean).
 
 ## Validation commands
 

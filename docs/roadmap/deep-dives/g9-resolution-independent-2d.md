@@ -19,7 +19,7 @@ fixed by the [HUD decision](../open-questions.md).
 
 - Preserve pixel-space layout, aspect fitting, WND/APT events, focus, shortcuts and hit testing.
 - No second DpiScale multiplication in drawing or input. Logical points remain only at G1's OS boundary.
-- Faithful preserves the bitmap draw list and output after G1, not pre-G1 low-resolution output.
+- Legacy preserves the bitmap draw list and output after G1, not pre-G1 low-resolution output.
 - Procedural chrome must retain control identity; gameplay callbacks and order generation are unchanged.
 - Unit portraits, minimap and content icons remain raster assets. The no-bitmap rule concerns
   control-bar chrome (panels, frames and button backgrounds), not all HUD content.
@@ -34,7 +34,7 @@ G9-2 keeps the existing proportional layout but improves presentation: rasterize
 the effective pixel size, cache fonts by family/style/pixel size, snap borders in final pixel
 space, and add a proposed role-aware `UiImageSamplingPolicy` for legacy image upscaling.
 Do not change world samplers. Evaluate higher-quality upscaling on fixed crops before choosing
-it; keep Faithful's linear path. G4 draws UI after the 3D resolve, and G6 fixes colour composition.
+it; keep Legacy's linear path. G4 draws UI after the 3D resolve, and G6 fixes colour composition.
 
 G9-3 introduces proposed `HudChromeRenderer`, selected by G2's `UiMode`. Existing WND controls
 remain the layout and input owners; rendering callbacks delegate only chrome drawing to the
@@ -44,7 +44,7 @@ manifest. Excluded raster content is drawn through the existing callbacks.
 
 Preserve original client rectangles at each aspect ratio. Screenshot evidence pairs each state
 with draw-role diagnostics proving no legacy chrome image was submitted under Enhanced.
-Faithful continues calling the original rendering callbacks with no procedural interception.
+Legacy continues calling the original rendering callbacks with no procedural interception.
 
 | Sub-phase | Card | Deliverable |
 |---|---|---|
@@ -57,7 +57,7 @@ Faithful continues calling the original rendering callbacks with no procedural i
 - Scale-1/2 tests map the same normalized mouse point to the same WND control; no double conversion.
 - At 1024x768, 2048x1536 and a widescreen aspect, layout and hit-region bounds match the legacy path.
 - Enhanced draw-role diagnostics contain zero legacy chrome bitmap draws, with portraits/icons exempt.
-- G3 crops cover text and every button state; Faithful is exact on the pinned backend.
+- G3 crops cover text and every button state; Legacy is exact on the pinned backend.
 - Verify both ReplaySketch map and model tabs with screenshot mode when its UI is affected,
   following [`docs/screenshots.md`](../../screenshots.md).
 
@@ -100,7 +100,7 @@ sequenceDiagram
   alt Enhanced UiMode
     C->>H: Draw chrome from client rectangle and state
     H->>D: Geometry and live text
-  else Faithful UiMode
+  else Legacy UiMode
     C->>D: Original bitmap callback
   end
   C->>D: Portraits and content icons

@@ -16,7 +16,7 @@
 
 Remove shadow acne speckle and cascade blockiness under `Enhanced` by mapping the G2 shadow tier to
 four cascades at 2048x2048 and adding a receiver-side slope-scaled term to the constant depth bias,
-while `Faithful` keeps the current single-cascade result bit for bit.
+while `Legacy` keeps the current single-cascade result bit for bit.
 
 ## Context to read (and only this)
 
@@ -58,7 +58,7 @@ while `Faithful` keeps the current single-cascade result bit for bit.
 - [ ] Shadow edges under `Enhanced` show no acne speckle or visible cascade blockiness at the default
       camera zoom, with cascade transitions not visible in the captured frame, satisfying the G8
       milestone.
-- [ ] A `Faithful` capture is unchanged against its golden.
+- [ ] A `Legacy` capture is unchanged against its golden.
 - [ ] The four-cascade path renders all four cascades rather than falling back to one.
 - [ ] Sloped surfaces show no detached (peter-panned) contact shadows.
 - [ ] An `Enhanced` capture with `VisualizeCascades` on shows four cascade colours.

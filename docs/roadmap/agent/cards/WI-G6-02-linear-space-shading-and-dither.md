@@ -15,7 +15,7 @@
 ## Goal
 
 Under `Enhanced`, shade in linear space and convert once on output, removing banding on sky, fog and
-light falloff and stopping mip chains darkening with distance, while `Faithful` retains gamma-space
+light falloff and stopping mip chains darkening with distance, while `Legacy` retains gamma-space
 shading unchanged.
 
 ## Context to read (and only this)
@@ -34,7 +34,7 @@ shading unchanged.
 2. Make the mip resample operate in linear space for colour maps: linearize, resample, re-encode.
    Leave data-map mip generation on the existing path.
 3. Convert on output rather than per-material: encode once at the end of the frame, sourcing the
-   colour-space mode from the G2 settings so `Faithful` skips the conversion entirely.
+   colour-space mode from the G2 settings so `Legacy` skips the conversion entirely.
 4. Add an ordered dither immediately before the 8-bit quantization, sized so it is invisible on flat
    areas but breaks up gradient banding.
 5. Select a supported linear intermediate format with adequate precision as specified by the
@@ -55,7 +55,7 @@ shading unchanged.
 - [ ] A captured `Enhanced` frame shows no visible banding on a fog or sky gradient, satisfying the
       G6 milestone.
 - [ ] Mip chains no longer darken with distance under `Enhanced`.
-- [ ] A `Faithful` capture is unchanged against its golden.
+- [ ] A `Legacy` capture is unchanged against its golden.
 - [ ] No data map is treated as sRGB.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 

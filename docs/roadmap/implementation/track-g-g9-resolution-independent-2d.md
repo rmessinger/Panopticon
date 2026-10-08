@@ -24,5 +24,5 @@ forbidden under DynamicHud. No additional DPI transform is required.
 ## Validation and risks
 
 Scale-1/2 and widescreen bounds tests preserve input and layout. Enhanced draws no legacy chrome
-bitmaps; raster content remains allowed. Faithful is exact. Check all button states and faction
+bitmaps; raster content remains allowed. Legacy is exact. Check all button states and faction
 variants. ReplaySketch UI changes require screenshot-mode verification of map and model tabs.
