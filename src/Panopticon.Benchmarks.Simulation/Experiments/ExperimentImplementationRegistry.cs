@@ -22,6 +22,8 @@ public sealed class ExperimentImplementationRegistry
         var registry = new ExperimentImplementationRegistry();
         registry.Register(AiPolicyExperimentImplementations.RuleBased());
         registry.Register(AiPolicyExperimentImplementations.Neural());
+        registry.Register(ModelImportExperimentImplementations.W3d());
+        registry.Register(ModelImportExperimentImplementations.Gltf());
         return registry;
     }
 
