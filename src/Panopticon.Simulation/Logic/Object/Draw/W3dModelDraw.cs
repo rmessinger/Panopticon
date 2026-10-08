@@ -355,7 +355,8 @@ public class W3dModelDraw : DrawModule
             particleSystems.Add(_gameEngine.ParticleSystems.Create(
                 particleSystemTemplate,
                 () => ref modelInstance.AbsoluteBoneTransforms[bone.Index],
-                GetPresentationScale));
+                GetPresentationScale,
+                () => modelInstance.GetWorldMatrix().Translation));
         }
 
         var drawState = new W3dModelDrawConditionState(modelInstance, particleSystems, _gameEngine);

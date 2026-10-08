@@ -1197,7 +1197,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
       draws (portraits, icons and minimap remain textures); captured frames are sharp
       at 4x native with no upscaled-art blur, and `Legacy` is pixel-identical to the pre-rework
       capture.
-- [ ] G10 Realistic proportions (optional scale-correct presentation: reference-scale
+- [x] G10 Realistic proportions (optional scale-correct presentation: reference-scale
       documentation plus per-definition visual model-scale overrides for the undersized aircraft
       class, behind the G2 settings layer; `Geometry` collision and `AttackRange` gameplay data
       untouched).
@@ -1215,7 +1215,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
     - AC: with the option enabled only aircraft visuals change size; existing P0/P9 scenario
       assertions pass identically with the option on and off; presentation rings/culling match
       visuals while shared world/bone transforms and selection-query bounds remain unchanged.
-  - [ ] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
+  - [x] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
         layer and add proportion-mode captures to the G3 golden set
         ([`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md)).
     - AC: golden frames captured under the proportions mode catch an injected rescale regression,

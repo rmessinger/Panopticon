@@ -68,9 +68,16 @@ public sealed partial class ModelMesh : ModelRenderObject
 
         if (visualScale != 1f)
         {
-            // Presentation-only proportions (WI-G10-02): scale about the model origin
-            // before the world transform. Shared matrices stay untouched.
-            meshWorldMatrix = Matrix4x4.CreateScale(visualScale) * meshWorldMatrix;
+            // Presentation-only proportions (WI-G10-02/03): uniform scale about the model's
+            // world anchor. Bone absolutes already carry the world placement, so a bare
+            // pre-multiplied CreateScale would scale each subobject about its own bone
+            // origin and pull multi-bone models apart; conjugating by the anchor keeps the
+            // whole model coherent. Shared matrices stay untouched.
+            var anchor = modelInstance.GetWorldMatrix().Translation;
+            meshWorldMatrix = meshWorldMatrix *
+                Matrix4x4.CreateTranslation(-anchor) *
+                Matrix4x4.CreateScale(visualScale) *
+                Matrix4x4.CreateTranslation(anchor);
         }
 
         BuildRenderListWithWorldMatrix(

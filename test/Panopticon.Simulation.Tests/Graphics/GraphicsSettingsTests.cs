@@ -43,6 +43,23 @@ public class GraphicsSettingsTests : MockedGameTest
     }
 
     [Fact]
+    public void WithRealisticProportionsCopiesEveryMemberAndFlipsOnlyTheFlag()
+    {
+        var enhanced = GraphicsSettings.Enhanced();
+        var enabled = enhanced.WithRealisticProportions(true);
+
+        Assert.True(enabled.RealisticProportions);
+        Assert.False(enhanced.RealisticProportions);
+        Assert.Equal(enhanced.SampleCount, enabled.SampleCount);
+        Assert.Equal(enhanced.AlphaTestMode, enabled.AlphaTestMode);
+        Assert.Equal(enhanced.ColourSpaceMode, enabled.ColourSpaceMode);
+        Assert.Equal(enhanced.Anisotropy, enabled.Anisotropy);
+        Assert.Equal(enhanced.MipLodBias, enabled.MipLodBias);
+        Assert.Equal(enhanced.ShadowTier, enabled.ShadowTier);
+        Assert.Equal(enhanced.UiMode, enabled.UiMode);
+    }
+
+    [Fact]
     public void PresetFactoriesReturnDistinctInstances()
     {
         Assert.NotSame(GraphicsSettings.Legacy(), GraphicsSettings.Legacy());

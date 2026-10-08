@@ -6,7 +6,7 @@
   "Host": "duchessa",
   "Width": 1024,
   "Height": 768,
-  "UpdatedUtc": "2026-10-08T05:18:03Z",
+  "UpdatedUtc": "2026-10-08T06:41:56Z",
   "Goldens": [
     {
       "Preset": "faithful",
@@ -97,6 +97,28 @@
       "MaxMetricDelta": 0.02
     },
     {
+      "Preset": "faithful",
+      "Scene": "proportions",
+      "File": "faithful/proportions.png",
+      "Sha256": "72F4F6A3AA993CDC373C66B5DAE243DF34F5A00516BB47EBA085E347F9C95B4F",
+      "Sharpness": 0.0034012795167611214,
+      "EdgeAliasing": 0.11564398903848445,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "faithful",
+      "Scene": "proportions-on",
+      "File": "faithful/proportions-on.png",
+      "Sha256": "4B632E4B860ABC7CC77193FA553B722F383C7E564F10F7921C8804B5632D9365",
+      "Sharpness": 0.003415989135584333,
+      "EdgeAliasing": 0.1155608623548922,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
       "Preset": "enhanced",
       "Scene": "terrain-default",
       "File": "enhanced/terrain-default.png",
@@ -180,6 +202,28 @@
       "Sha256": "E2A292746557C94E6BDA8AB69AC11036E92936157E2236074FEEB34A80A922B2",
       "Sharpness": 0.0015143880632810956,
       "EdgeAliasing": 0.05239371298050424,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "proportions",
+      "File": "enhanced/proportions.png",
+      "Sha256": "8A9E921467AFE72A0CD2CA8DF087A44FA83EE00ADF22E2BF384A1E99AC55C814",
+      "Sharpness": 0.0024941308693349823,
+      "EdgeAliasing": 0.1060715671815571,
+      "MaxChannelDelta": 2,
+      "MaxDifferingPixelFraction": 0.001,
+      "MaxMetricDelta": 0.02
+    },
+    {
+      "Preset": "enhanced",
+      "Scene": "proportions-on",
+      "File": "enhanced/proportions-on.png",
+      "Sha256": "766DCA69F98C5A992FA53BF03F277417EF746ACA0EB7B1396B5E54F68649CB35",
+      "Sharpness": 0.0025105450888291566,
+      "EdgeAliasing": 0.10573496192124487,
       "MaxChannelDelta": 2,
       "MaxDifferingPixelFraction": 0.001,
       "MaxMetricDelta": 0.02

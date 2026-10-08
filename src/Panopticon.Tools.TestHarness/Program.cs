@@ -79,6 +79,13 @@ public static class Program
             config.FullHud = true;
         }
 
+        // G10 evidence: pin the render clock so separate scenario captures (with and without
+        // an actor, or with an option toggled) diff pixel-for-pixel except for the variable.
+        if (Array.Exists(args, a => a.Equals("--fixed-render-clock", StringComparison.OrdinalIgnoreCase)))
+        {
+            config.FixedRenderClock = true;
+        }
+
         var builtInScenario = GetArgValue(args, "--built-in-scenario");
         if (!string.IsNullOrEmpty(builtInScenario))
         {
@@ -134,7 +141,12 @@ public static class Program
             return;
         }
 
-        var settings = new CaptureRunSettings(config.Renderer, config.FullHud, null, ViewportScale: config.ViewportScale);
+        var settings = new CaptureRunSettings(
+            config.Renderer,
+            config.FullHud,
+            null,
+            ViewportScale: config.ViewportScale,
+            FixedRenderClock: config.FixedRenderClock);
         var result = ScenarioCaptureRunner.Run(installation, profile, settings, reporter);
         Environment.ExitCode = result.ExitCode;
     }
