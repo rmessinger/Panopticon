@@ -354,7 +354,7 @@ internal sealed class RenderPipeline : DisposableBase
 
                     commandList.SetFullViewports();
 
-                    RenderedObjectsOpaque += DoRenderPass(context, commandList, _renderList.Opaque, camera.BoundingFrustum, forwardPassResourceSet, clippingPlaneTop, clippingPlaneBottom);
+                    RenderedObjectsOpaque += DoRenderPass(context, commandList, _renderList.Opaque, camera.BoundingFrustum, forwardPassResourceSet, clippingPlaneTop, clippingPlaneBottom, useSingleSamplePipelines: true);
                     commandList.PopDebugGroup();
                 }
 
@@ -384,7 +384,7 @@ internal sealed class RenderPipeline : DisposableBase
 
                     commandList.SetFullViewports();
 
-                    RenderedObjectsOpaque += DoRenderPass(context, commandList, _renderList.Opaque, camera.BoundingFrustum, forwardPassResourceSet, clippingPlane);
+                    RenderedObjectsOpaque += DoRenderPass(context, commandList, _renderList.Opaque, camera.BoundingFrustum, forwardPassResourceSet, clippingPlane, useSingleSamplePipelines: true);
 
                     camera.SetMirrorX(pivot);
                     commandList.PopDebugGroup();
@@ -410,7 +410,8 @@ internal sealed class RenderPipeline : DisposableBase
         BoundingFrustum cameraFrustum,
         ResourceSet forwardPassResourceSet,
         in Plane? clippingPlane1 = null,
-        in Plane? clippingPlane2 = null)
+        in Plane? clippingPlane2 = null,
+        bool useSingleSamplePipelines = false)
     {
         // TODO: Make culling batch size configurable at runtime
         bucket.RenderItems.CullAndSort(cameraFrustum, clippingPlane1, clippingPlane2, ParallelCullingBatchSize);
@@ -432,18 +433,31 @@ internal sealed class RenderPipeline : DisposableBase
                 ? null
                 : forwardPassResourceSet;
 
+            // Water reflection/refraction targets stay single-sample even under MSAA, so those
+            // passes swap in the per-material single-sample pipeline variant.
+            var pipeline = renderItem.Material.Pipeline;
+
+            if (useSingleSamplePipelines && renderItem.Material.SingleSamplePipeline != null)
+            {
+                pipeline = renderItem.Material.SingleSamplePipeline;
+            }
+
             var newMaterial = true;
             if (lastRenderItemIndex != null)
             {
                 var lastMaterial = bucket.RenderItems[lastRenderItemIndex.Value].Material;
 
-                newMaterial = lastMaterial.Pipeline != renderItem.Material.Pipeline;
+                var lastPipeline = useSingleSamplePipelines && lastMaterial.SingleSamplePipeline != null
+                    ? lastMaterial.SingleSamplePipeline
+                    : lastMaterial.Pipeline;
+
+                newMaterial = lastPipeline != pipeline;
             }
 
             if (newMaterial)
             {
                 commandList.InsertDebugMarker("Setting pipeline");
-                commandList.SetPipeline(renderItem.Material.Pipeline);
+                commandList.SetPipeline(pipeline);
                 SetGlobalResources(commandList, passResourceSet);
             }
 

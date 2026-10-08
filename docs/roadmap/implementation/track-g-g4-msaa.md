@@ -77,6 +77,20 @@ textures (`Terrain.cs:150/483/556`), radius cursor decals (`RadiusCursorDecals.c
 data textures, auxiliary passes with their own descriptions, or CPU-facing staging. No auxiliary
 output inherits the main count.
 
+The water map pass needed a follow-up fix once Enhanced (4x) became the default: its scene draws
+reuse the cached material pipelines, which are built against `ShaderSetStore.OutputDescription`
+(Count4), so binding them into the single-sample water framebuffers failed Veldrid's
+`PreDrawValidation` on every backend (first seen on macOS; the VR scenes have no water, so the G3
+gate did not catch it). The maps stay single-sample because the sampled refraction depth map has
+no portable multisample resolve: Vulkan forbids resolving depth/stencil images, Metal cannot
+resolve the combined D32FS8 format, a multisample-to-single-sample `CopyTexture` is invalid, and
+sampling combined depth as `texture2DMS` from MSL is not testable here. Instead,
+`ShaderSetStore.SingleSampleOutputDescription` (settings formats, Count1) backs a per-material
+`SingleSamplePipeline` variant built by the three opaque producers (FixedFunction, ShaderMaterial
+family, PBR), reused as the main pipeline at count 1, and `DoRenderPass` selects it via
+`useSingleSamplePipelines` for the two water map scene draws. Water rendering is byte-identical to
+Legacy on every backend.
+
 ### Output-description sharing and the 2D split
 
 `ShaderSetStore.OutputDescription` feeds all 11 main-pass sites including the 2D/UI description

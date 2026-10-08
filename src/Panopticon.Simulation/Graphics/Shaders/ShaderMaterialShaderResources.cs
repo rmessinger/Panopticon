@@ -19,6 +19,12 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
 
     public readonly Pipeline Pipeline;
 
+    /// <summary>
+    /// Pipeline variant for single-sample framebuffers (water maps); equals
+    /// <see cref="Pipeline"/> when the store itself is single-sample.
+    /// </summary>
+    public readonly Pipeline SingleSamplePipeline;
+
     protected ShaderMaterialShaderResources(
         ShaderSetStore store,
         string shaderName,
@@ -29,7 +35,7 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
 
         MaterialResourceBindings = materialResourceBindings.ToDictionary(x => x.Description.Name);
 
-        Pipeline = AddDisposable(
+        Pipeline CreatePipeline(OutputDescription outputs) => AddDisposable(
             GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription(
                     BlendStateDescription.SingleDisabled,
@@ -38,7 +44,13 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
                     PrimitiveTopology.TriangleList,
                     Description,
                     ResourceLayouts,
-                    store.OutputDescription)));
+                    outputs)));
+
+        Pipeline = CreatePipeline(store.OutputDescription);
+
+        SingleSamplePipeline = store.OutputDescription.SampleCount == TextureSampleCount.Count1
+            ? Pipeline
+            : CreatePipeline(store.SingleSampleOutputDescription);
     }
 
 
@@ -58,6 +70,7 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
                 new Material(
                     this,
                     Pipeline,
+                    SingleSamplePipeline,
                     materialResourceSet,
                     SurfaceType.Opaque)); // TODO
 

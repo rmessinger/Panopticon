@@ -11,6 +11,7 @@ namespace Panopticon.Graphics.Shaders;
 internal sealed class FixedFunctionShaderResources : ShaderSetBase
 {
     private readonly Dictionary<PipelineKey, Pipeline> _pipelineCache = new();
+    private readonly Dictionary<PipelineKey, Pipeline> _singleSamplePipelineCache = new();
     private readonly Dictionary<MaterialKey, Material> _materialCache = new();
     private readonly Dictionary<MaterialConstantsType, DeviceBuffer> _materialConstantsBufferCache = new();
     private readonly Dictionary<MaterialConstantsKey, ResourceSet> _materialConstantsCache = new();
@@ -53,7 +54,11 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
 
         if (!_materialCache.TryGetValue(materialKey, out var result))
         {
-            var pipeline = GetCachedPipeline(pipelineKey);
+            var pipeline = GetCachedPipeline(pipelineKey, _pipelineCache, Store.OutputDescription);
+
+            var singleSamplePipeline = Store.OutputDescription.SampleCount == TextureSampleCount.Count1
+                ? pipeline
+                : GetCachedPipeline(pipelineKey, _singleSamplePipelineCache, Store.SingleSampleOutputDescription);
 
             var materialResourceSet = GetCachedMaterialResourceSet(materialConstantsKey);
 
@@ -61,6 +66,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                 new Material(
                     this,
                     pipeline,
+                    singleSamplePipeline,
                     materialResourceSet,
                     blendEnabled ? SurfaceType.Transparent : SurfaceType.Opaque));
 
@@ -70,9 +76,12 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         return result;
     }
 
-    private Pipeline GetCachedPipeline(in PipelineKey pipelineKey)
+    private Pipeline GetCachedPipeline(
+        in PipelineKey pipelineKey,
+        Dictionary<PipelineKey, Pipeline> cache,
+        OutputDescription outputs)
     {
-        if (!_pipelineCache.TryGetValue(pipelineKey, out var result))
+        if (!cache.TryGetValue(pipelineKey, out var result))
         {
             var blendState = new BlendStateDescription(
                 RgbaFloat.White,
@@ -92,7 +101,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
             var rasterizerState = RasterizerStateDescriptionUtility.DefaultFrontIsCounterClockwise;
             rasterizerState.CullMode = pipelineKey.CullMode;
 
-            _pipelineCache.Add(pipelineKey, result = AddDisposable(GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
+            cache.Add(pipelineKey, result = AddDisposable(GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription(
                     blendState,
                     depthState,
@@ -100,7 +109,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                     PrimitiveTopology.TriangleList,
                     Description,
                     ResourceLayouts,
-                    Store.OutputDescription))));
+                    outputs))));
         }
 
         return result;
