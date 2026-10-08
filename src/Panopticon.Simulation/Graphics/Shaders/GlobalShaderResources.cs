@@ -144,9 +144,7 @@ internal sealed class GlobalShaderResources : DisposableBase
         public float ShadowDistance;
         public ShadowsType ShadowsType;
         public uint NumSplits;
-#pragma warning disable IDE1006, CS0169
-        private readonly float _padding;
-#pragma warning restore IDE1006, CS0169
+        public float SlopeScaledBias;
 
         public void Set(uint numCascades, ShadowSettings settings, ShadowData data)
         {
@@ -178,6 +176,7 @@ internal sealed class GlobalShaderResources : DisposableBase
 
             Bias = settings.Bias;
             OffsetScale = settings.NormalOffset;
+            SlopeScaledBias = settings.SlopeScaledBias;
             VisualizeCascades = settings.VisualizeCascades ? 1u : 0u;
             FilterAcrossCascades = 1u;
             ShadowDistance = settings.ShadowDistance;

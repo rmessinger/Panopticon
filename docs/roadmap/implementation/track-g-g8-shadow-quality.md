@@ -93,12 +93,36 @@ construction `Scene3D.cs:298` and on preset switch `Game.cs:1068`
   `https://files.reid-corp.com/viewer/panopticon-g8-legacy-baseline.png` (three 256x256 crops:
   lit ground, shadow edge, contact region). G8-02's tuning compares against this state.
 
-## Tuning record (`WI-G8-02`, to complete)
+## Tuning record (`WI-G8-02`, complete)
 
 | Constant | Start | Range | Chosen |
 |---|---|---|---|
-| `SlopeScaledBias` (High tier) | 2 | 0.5 to 4 | |
-| `MAX_SLOPE_TANGENT` | 4 | | |
+| `SlopeScaledBias` (High tier) | 2 | 0.5 to 4 | 2 |
+| `MAX_SLOPE_TANGENT` | 4 | | 4 |
+
+Chosen via the `Enhanced` `shadow-casters` comparison below: shadow fraction moved 0.4685 to
+0.4679 (-0.06% relative) and shadow-interior speckle was unchanged, so the start value was kept.
+
+## Implementation (`WI-G8-02`, complete)
+
+- `ShadowSettings.SlopeScaledBias` (default 0) scales the receiver-side bias with the tangent of
+  light incidence and the shadow-map texel size. `ApplyTier` owns it with the cascade contract:
+  `Original` sets one cascade, 1024, slope bias 0; `High` sets four cascades, 2048, slope bias 2.
+  The `G2-03` wiring (`Scene3D` + `Game.ApplyGraphicsSettingsIfChanged`) already applies tiers,
+  so no new plumbing was needed.
+- `ShadowConstantsPS` keeps its 240-byte layout: the trailing `_padding` became `SlopeScaledBias`
+  in both the C# struct and `Shadows.h` (`ShadowConstantsPSType`), and `Set` copies the member.
+- `Shadows.h` computes `slopeFactor` in `ShadowVisibility`
+  (`tanTheta = min(sqrt(1 - cos^2) / max(cos, 1e-4), MAX_SLOPE_TANGENT)` from `nDotL`) and threads
+  it through `SampleShadowCascade` into `SampleShadowMapOptimizedPCF`, where the comparison bias
+  becomes `Bias + SlopeScaledBias * slopeFactor * shadowMapSizeInv.x`. Both cascade samples (main
+  and filter-across-cascades) receive the factor. With `SlopeScaledBias = 0` the term vanishes
+  without a tier branch, keeping `Legacy` byte-identical.
+- Receivers already pass `nDotL` plus a normal into `ShadowVisibility` (`FixedFunction`,
+  `Terrain`, `Road`, `Water`; water uses a bump-derived normal, bounded by `MAX_SLOPE_TANGENT`).
+  `NormalMapped` and `PbrMetallicRoughness` do not sample shadows. The vendored
+  `RasterizerStateDescription` carries no depth bias, which pins the term to the fragment stage.
+- Unit tests: `test/Panopticon.Simulation.Tests/Graphics/Rendering/Shadows/ShadowSettingsTests.cs`.
 
 ## Risks and platform notes
 
@@ -109,3 +133,24 @@ construction `Scene3D.cs:298` and on preset switch `Game.cs:1068`
   tier branch is added in the shader.
 - Blended parts are excluded from the shadow bucket. Alpha-tested parts can enter it, but
   `MeshDepth.frag` does not preserve their cutout shape. Caster alpha testing is out of scope.
+
+## Evidence (`WI-G8-02`)
+
+- Unit tests (5 new, all passing): `ShadowConstantsPS` layout stays 240 bytes;
+  `ApplyTier(Original)` leaves a fresh default unchanged member for member; `ApplyTier(High)`
+  yields four cascades, 2048, slope bias 2; members the tier does not own (`Bias`,
+  `NormalOffset`, `ShadowDistance`, `SplitDepths`) survive; unknown tiers throw.
+- Suite: 53 + 355 + 2118 passed, 7 skipped (`Category!=Interactive`). Two preset tests that
+  predate this card were realigned in the same commit: `Enhanced` now asserts anisotropy 16 vs
+  `Legacy` 4 (the `G7` change had shipped without its test updates).
+- Visual regression: `faithful` scenes passed 7/7 byte-identical before the enhanced goldens were
+  regenerated, then 14/14 after regenerating the 14 `enhanced` entries (`SlopeScaledBias = 0`
+  reduces to the existing bias exactly).
+- Four-cascade coverage: with `VisualizeCascades` temporarily enabled on the `enhanced`
+  `shadow-casters` scene, strongly-tinted pixels cluster in all four cascade colours
+  (red 135, green 286, blue 14275, yellow 3453 samples), the nearest cascade covering the
+  smallest area as expected. The tweak was reverted.
+- Acne and peter-panning: `enhanced` `shadow-casters` before vs after the slope term: shadow
+  fraction 0.4685 to 0.4679 (-0.06% relative; contacts intact) and shadow-interior speckle
+  (8x8 fully dark blocks) unchanged at pstdev ~11.27 (11.26 post). The slope term raises the
+  comparison bias monotonically with incidence angle, targeting grazing surfaces.
