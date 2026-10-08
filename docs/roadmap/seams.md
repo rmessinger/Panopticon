@@ -108,6 +108,9 @@ Code references point at the current types the seam is, or will be, carved from.
 
 ### Experiment seams (A4)
 
+Extraction points, callers, and unresolved contracts for the seams not yet extracted are
+audited in [track-a-a4-experiment-seams.md](implementation/track-a-a4-experiment-seams.md).
+
 | Seam | Axis of variation | Interface (current → planned) | Implementations | Introduced / owned by | Docs |
 |---|---|---|---|---|---|
 | Simulation Domain Model | What the simulation is: entity/component schema, topology/space model, interaction model & locality, resolution authority, domain metrics, fidelity hooks | `ISimulationDomainModel` (`src/Panopticon.Simulation/Simulation/`), injected into `SimulationHost` (lifecycle, entity/metric projections, topology keys, interaction authority); optional `IDomainStateProjection` (planned, [A4-4](deep-dives/a4-4-domain-state-projection.md)) for versioned, reconstructable multi-field state with a schema-driven conservation check | Implementations: RTS reference adapter (`RtsSimulationDomainModel`, reproduces pre-seam recording exactly) · transport/graph validation adapter (`TransportGraphDomainModel`, tail-owner authority, edge metrics) · Planned: Western Front ([Track W](track-w-western-front.md), first A4-4 consumer) · Future: city-builder, agent-based ([Decision](open-questions.md)) | [A4-1](track-a-foundations.md), [A4-4](deep-dives/a4-4-domain-state-projection.md) | [domain-model](deep-dives/a4-simulation-domain-model.md), [track-a](track-a-foundations.md), [distributed-sim](deep-dives/b6-distributed-simulation.md) |

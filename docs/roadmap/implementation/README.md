@@ -76,6 +76,16 @@ Source of truth:
 |---|---|---|
 | [track-a-a4-domain-state-projection.md](track-a-a4-domain-state-projection.md) | A4-4a…A4-4d | Domain state projection (WI-A4-42..45) |
 
+## Track A · A4 : Experiment seams and harness
+
+Source of truth: [seam registry](../seams.md) and
+[a4-experiment-harness.md](../deep-dives/a4-experiment-harness.md).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a4-experiment-seams.md](track-a-a4-experiment-seams.md) | WI-A4-31..36 | Seam extraction audit and registrations |
+| [track-a-a4-experiment-harness.md](track-a-a4-experiment-harness.md) | WI-A4-37..41 | Experiment harness, registry, runs, and comparison (planned) |
+
 ## Track B · B1 : Benchmarking
 
 Source of truth: [deep-dives/b1-benchmarking.md](../deep-dives/b1-benchmarking.md) :

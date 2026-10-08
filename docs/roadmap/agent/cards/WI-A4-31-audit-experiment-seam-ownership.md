@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A4-31` |
 | Roadmap phase | [Track A · A4](../../track-a-foundations.md): stable experiment seams |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
