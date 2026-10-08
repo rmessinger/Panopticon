@@ -58,15 +58,70 @@ internal sealed class GraphicsSettingsController
             effectiveSampleCount = sessionSampleCount;
         }
 
+        var effectiveAnisotropy = requested.Anisotropy;
+        var clampedAnisotropy = ClampAnisotropy(_graphicsDevice, effectiveAnisotropy);
+        if (effectiveAnisotropy != clampedAnisotropy)
+        {
+            _fallbacks.Add($"Anisotropy {effectiveAnisotropy} -> {clampedAnisotropy} (accepted set 1/2/4/8/16, device ceiling).");
+            effectiveAnisotropy = clampedAnisotropy;
+        }
+
+        var effectiveMipLodBias = requested.MipLodBias;
+        if (!float.IsFinite(effectiveMipLodBias))
+        {
+            _fallbacks.Add($"MipLodBias {effectiveMipLodBias} -> 0 (not finite).");
+            effectiveMipLodBias = 0f;
+        }
+        else if (effectiveMipLodBias < -1f || effectiveMipLodBias > 1f)
+        {
+            var clampedBias = Math.Clamp(effectiveMipLodBias, -1f, 1f);
+            _fallbacks.Add($"MipLodBias {effectiveMipLodBias} -> {clampedBias} (initial public override range).");
+            effectiveMipLodBias = clampedBias;
+        }
+
         Effective = GraphicsSettings.Create(
             effectiveSampleCount,
             requested.AlphaTestMode,
             requested.ColourSpaceMode,
-            requested.Anisotropy,
-            requested.MipLodBias,
+            effectiveAnisotropy,
+            effectiveMipLodBias,
             requested.ShadowTier,
             requested.UiMode,
             requested.RealisticProportions);
+    }
+
+    /// <summary>
+    /// Clamps an anisotropy request into the accepted set {1, 2, 4, 8, 16}, rounding down and
+    /// honouring the device anisotropic filtering feature: without it only 1x is reportable.
+    /// </summary>
+    internal static int ClampAnisotropy(GraphicsDevice graphicsDevice, int anisotropy)
+    {
+        if (!graphicsDevice.Features.SamplerAnisotropy)
+        {
+            return 1;
+        }
+
+        if (anisotropy < 1)
+        {
+            return 1;
+        }
+
+        if (anisotropy >= 16)
+        {
+            return 16;
+        }
+
+        if (anisotropy >= 8)
+        {
+            return 8;
+        }
+
+        if (anisotropy >= 4)
+        {
+            return 4;
+        }
+
+        return anisotropy >= 2 ? 2 : 1;
     }
 
     internal static TextureSampleCount ToTextureSampleCount(int sampleCount)

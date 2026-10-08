@@ -7,8 +7,9 @@ namespace Panopticon.Graphics.Shaders;
 internal sealed class NormalMappedShaderResources : ShaderMaterialShaderResources
 {
     public NormalMappedShaderResources(
-        ShaderSetStore store)
-        : base(store, "NormalMapped", CreateMaterialResourceBindings)
+        ShaderSetStore store,
+        Sampler worldSampler)
+        : base(store, "NormalMapped", worldSampler, CreateMaterialResourceBindings)
     {
 
     }

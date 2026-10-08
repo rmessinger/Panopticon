@@ -67,19 +67,19 @@ internal sealed class ShaderResourceManager : DisposableBase
 
             RadiusCursor = AddDisposable(new RadiusCursorDecalShaderResources(graphicsDevice, standardGraphicsResources.Aniso4xClampSampler));
 
-            FixedFunction = AddDisposable(new FixedFunctionShaderResources(shaderSetStore));
+            FixedFunction = AddDisposable(new FixedFunctionShaderResources(shaderSetStore, standardGraphicsResources.WorldAnisoSampler));
             PbrMetallicRoughness = AddDisposable(new PbrMetallicRoughnessShaderResources(shaderSetStore));
             MeshDepth = AddDisposable(new MeshDepthShaderResources(shaderSetStore));
             Particle = AddDisposable(new ParticleShaderResources(shaderSetStore));
-            Road = AddDisposable(new RoadShaderResources(shaderSetStore));
+            Road = AddDisposable(new RoadShaderResources(shaderSetStore, standardGraphicsResources.WorldAnisoSampler));
             Sprite = AddDisposable(new SpriteShaderResources(shaderSetStore));
             Terrain = AddDisposable(new TerrainShaderResources(shaderSetStore));
             Water = AddDisposable(new WaterShaderResources(shaderSetStore));
 
             _shaderMaterialResources = new Dictionary<string, ShaderMaterialShaderResources>
             {
-                { "NormalMapped", AddDisposable(new NormalMappedShaderResources(shaderSetStore)) },
-                { "Simple", AddDisposable(new SimpleShaderResources(shaderSetStore)) }
+                { "NormalMapped", AddDisposable(new NormalMappedShaderResources(shaderSetStore, standardGraphicsResources.WorldAnisoSampler)) },
+                { "Simple", AddDisposable(new SimpleShaderResources(shaderSetStore, standardGraphicsResources.WorldAnisoSampler)) }
             };
         }
     }
@@ -87,5 +87,20 @@ internal sealed class ShaderResourceManager : DisposableBase
     public ShaderMaterialShaderResources GetShaderMaterialResources(string name)
     {
         return _shaderMaterialResources[name];
+    }
+
+    /// <summary>
+    /// Rebuilds every cached world-sampler resource set after the sampler changes. The
+    /// terrain and water sets are rebuilt by their owners (RenderPipeline routes).
+    /// </summary>
+    internal void RebuildWorldSamplerSets(Sampler worldSampler)
+    {
+        FixedFunction.RebuildWorldSamplerSets(worldSampler);
+        Road.RebuildWorldSamplerSets(worldSampler);
+
+        foreach (var shaderMaterial in _shaderMaterialResources.Values)
+        {
+            shaderMaterial.RebuildWorldSamplerSets(worldSampler);
+        }
     }
 }

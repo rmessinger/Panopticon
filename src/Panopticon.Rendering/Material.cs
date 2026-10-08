@@ -7,7 +7,8 @@ public sealed class Material : DisposableBase
     public readonly ushort Id;
     public readonly ShaderSet ShaderSet;
     public readonly Pipeline Pipeline;
-    public readonly ResourceSet MaterialResourceSet;
+
+    public ResourceSet MaterialResourceSet { get; private set; }
 
     /// <summary>
     /// Variant of <see cref="Pipeline"/> targeting the single-sample output description, for
@@ -49,6 +50,15 @@ public sealed class Material : DisposableBase
 
         // Bit 15-22: Material
         RenderKey |= (Id) << 15;
+    }
+
+    /// <summary>
+    /// Swaps the bound resource set after a world-sampler rebuild (WI-G7-02). Material identity
+    /// stays stable so mesh parts and render lists keep working across settings changes.
+    /// </summary>
+    public void UpdateMaterialResourceSet(ResourceSet materialResourceSet)
+    {
+        MaterialResourceSet = materialResourceSet;
     }
 }
 

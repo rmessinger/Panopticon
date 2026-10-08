@@ -249,7 +249,7 @@ public sealed class ImportedModelMaterializerTests
     {
         using var graphics = new TestGraphicsContext();
 
-        var shaderResources = new TestShaderMaterialResources(graphics.ShaderSetStore);
+        var shaderResources = new TestShaderMaterialResources(graphics.ShaderSetStore, graphics.Device);
         using var _ = shaderResources;
 
         var material = new ImportedMaterial(
@@ -688,8 +688,8 @@ public sealed class ImportedModelMaterializerTests
     /// </summary>
     private sealed class TestShaderMaterialResources : ShaderMaterialShaderResources
     {
-        public TestShaderMaterialResources(ShaderSetStore store)
-            : base(store, "Simple", CreateMaterialResourceBindings)
+        public TestShaderMaterialResources(ShaderSetStore store, GraphicsDevice graphicsDevice)
+            : base(store, "Simple", graphicsDevice.Aniso4xSampler, CreateMaterialResourceBindings)
         {
         }
 
