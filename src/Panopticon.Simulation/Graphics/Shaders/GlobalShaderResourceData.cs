@@ -99,7 +99,7 @@ internal sealed class GlobalShaderResourceData : DisposableBase
                         _globalLightingBufferVS.Buffer,
                         _globalLightingBufferPS.Buffer,
                         cloudTexture,
-                        _graphicsDevice.Aniso4xSampler,
+                        _standardGraphicsResources.WorldAnisoSampler,
                         shadowConstantsPSBuffer.Buffer,
                         shadowMap,
                         _globalShaderResources.ShadowSampler,
@@ -110,6 +110,17 @@ internal sealed class GlobalShaderResourceData : DisposableBase
         }
 
         return _forwardPassResourceSet;
+    }
+
+    /// <summary>
+    /// Drops the forward-pass set so the next request rebuilds it around the current
+    /// world sampler (WI-G7-02).
+    /// </summary>
+    internal void InvalidateForwardPassResourceSet()
+    {
+        RemoveAndDispose(ref _forwardPassResourceSet);
+        _cachedCloudTexture = null;
+        _cachedShadowMap = null;
     }
 
     private void SetGlobalLightingBufferVS(GraphicsDevice graphicsDevice)

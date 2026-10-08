@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Panopticon.Rendering;
@@ -12,9 +13,13 @@ internal sealed class RoadShaderResources : ShaderSetBase
 
     private readonly Dictionary<Texture, Material> _cachedMaterials = new();
 
-    public RoadShaderResources(ShaderSetStore store)
+    private Sampler _worldSampler;
+
+    public RoadShaderResources(ShaderSetStore store, Sampler worldSampler)
         : base(store, "Road", RoadVertex.VertexDescriptor)
     {
+        _worldSampler = worldSampler;
+
         Pipeline = AddDisposable(
             store.GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription(
@@ -31,18 +36,11 @@ internal sealed class RoadShaderResources : ShaderSetBase
     {
         if (!_cachedMaterials.TryGetValue(texture, out var result))
         {
-            var materialResourceSet = AddDisposable(
-                GraphicsDevice.ResourceFactory.CreateResourceSet(
-                    new ResourceSetDescription(
-                        MaterialResourceLayout,
-                        texture,
-                        GraphicsDevice.Aniso4xSampler)));
-
             result = AddDisposable(
                 new Material(
                     this,
                     Pipeline,
-                    materialResourceSet,
+                    CreateMaterialResourceSet(texture),
                     SurfaceType.Transparent));
 
             _cachedMaterials.Add(texture, result);
@@ -50,6 +48,28 @@ internal sealed class RoadShaderResources : ShaderSetBase
 
         return result;
     }
+
+    /// <summary>Rebinds every cached road material to the new world sampler.</summary>
+    internal void RebuildWorldSamplerSets(Sampler worldSampler)
+    {
+        _worldSampler = worldSampler;
+
+        foreach (var texture in _cachedMaterials.Keys.ToArray())
+        {
+            var material = _cachedMaterials[texture];
+            var oldSet = material.MaterialResourceSet;
+
+            material.UpdateMaterialResourceSet(CreateMaterialResourceSet(texture));
+            RemoveAndDispose(ref oldSet);
+        }
+    }
+
+    private ResourceSet CreateMaterialResourceSet(Texture texture) => AddDisposable(
+        GraphicsDevice.ResourceFactory.CreateResourceSet(
+            new ResourceSetDescription(
+                MaterialResourceLayout,
+                texture,
+                _worldSampler)));
 
     [StructLayout(LayoutKind.Sequential)]
     public struct RoadVertex

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Panopticon.Graphics.Mathematics;
 using Panopticon.Rendering;
@@ -17,10 +18,14 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
     private readonly Dictionary<MaterialConstantsType, DeviceBuffer> _materialConstantsBufferCache = new();
     private readonly Dictionary<MaterialConstantsKey, ResourceSet> _materialConstantsCache = new();
 
+    private Sampler _worldSampler;
+
     public FixedFunctionShaderResources(
-        ShaderSetStore store)
+        ShaderSetStore store,
+        Sampler worldSampler)
         : base(store, "FixedFunction", MeshShaderResources.MeshVertex.VertexDescriptors)
     {
+        _worldSampler = worldSampler;
     }
 
     public Material GetCachedMaterial(
@@ -148,12 +153,42 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                         materialConstantsBuffer,
                         key.Texture0,
                         key.Texture1,
-                        GraphicsDevice.Aniso4xSampler)));
+                        _worldSampler)));
 
             _materialConstantsCache.Add(key, result);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Rebinds every cached material set to <paramref name="worldSampler"/> after a live
+    /// anisotropy or mip bias change (WI-G7-02). Materials keep their identity; only the
+    /// bound resource set is replaced.
+    /// </summary>
+    internal void RebuildWorldSamplerSets(Sampler worldSampler)
+    {
+        _worldSampler = worldSampler;
+
+        foreach (var key in _materialConstantsCache.Keys.ToArray())
+        {
+            var oldSet = _materialConstantsCache[key];
+            var newSet = AddDisposable(
+                GraphicsDevice.ResourceFactory.CreateResourceSet(
+                    new ResourceSetDescription(
+                        MaterialResourceLayout,
+                        GetCachedMaterialConstantsBuffer(key.MaterialConstants),
+                        key.Texture0,
+                        key.Texture1,
+                        worldSampler)));
+            _materialConstantsCache[key] = newSet;
+            RemoveAndDispose(ref oldSet);
+        }
+
+        foreach (var (materialKey, material) in _materialCache)
+        {
+            material.UpdateMaterialResourceSet(_materialConstantsCache[materialKey.MaterialConstantsKey]);
+        }
     }
 
     private DeviceBuffer GetCachedMaterialConstantsBuffer(in MaterialConstantsType key)

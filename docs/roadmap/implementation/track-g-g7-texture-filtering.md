@@ -107,3 +107,61 @@ anisotropy and bias belong on the same contract rather than a live-rebuild path.
 Default bias remains zero. Pure tests cover bounded finite bias and fallback. Rebind global and
 radius-cursor resources on switching. Legacy mips retain existing bytes. G6's linear filtering
 policy composes when active; G7 may land independently. Record aligned temporal-region thresholds.
+
+## Implementation (WI-G7-02, complete)
+
+World sampler. `StandardGraphicsResources` owns a `WorldAnisoSampler` built from the applied
+settings: the vendored `SamplerDescription.Aniso4x` clone (Wrap address modes, trilinear
+filter) with `MaximumAnisotropy` clamped by `GraphicsSettingsController.ClampAnisotropy` into
+the accepted set {1, 2, 4, 8, 16} (no `SamplerAnisotropy` feature collapses to 1) and
+`LodBias` from the bounded bias. The Legacy preset reproduces the previous fixed device
+sampler member for member, so Legacy rendering is byte-identical. Enhanced raises anisotropy
+to 16; both presets start at zero bias.
+
+Bias validation. `GraphicsSettingsController.Apply` rejects non-finite bias (fallback to 0)
+and clamps the finite remainder into the initial public override range [-1, 1], reporting a
+fallback string for each correction. The sampler carries the rounded integer bias; the deep
+dive's Metal limitation (LodBias ignored) is recorded rather than worked around.
+
+Live rebuild without restart. `Material.MaterialResourceSet` gained a public setter path
+(`UpdateMaterialResourceSet`) so a rebuilt set swaps in without changing material identity or
+render keys. `RenderPipeline.ApplySamplerSettings(effective)`, called from
+`Game.ApplyGraphicsSettingsIfChanged`, recreates the sampler when `WorldSamplerNeedsRebuild`
+reports a change and fans out:
+
+- `FixedFunctionShaderResources.RebuildWorldSamplerSets` rebuilds every cached
+  material-constants resource set (the set shared by materials) and rebinds each cached
+  material.
+- `ShaderMaterialShaderResources` caches `CachedMaterial` records (properties, load context,
+  alpha-test flags) so `RebuildWorldSamplerSets` can rebuild each set through the same
+  creation path, including G5 cutout textures and G6 colour decode.
+- `RoadShaderResources` rebuilds its per-texture sets.
+- `Terrain.ApplyWorldSampler` rebuilds the terrain set from stored
+  `TerrainMaterialSetSources` (the seven buffers and textures captured at construction).
+- `WaterMapRenderer.ApplyWorldSampler` rebuilds the water set from the stored time-of-day
+  texture.
+- `GlobalShaderResourceData.InvalidateForwardPassResourceSet` drops the forward-pass set; the
+  existing lazy getter recreates it on next use with the new sampler.
+
+Replaced sets are retired through `RemoveAndDispose` after their successors are bound; the
+retired sampler is disposed only after the rebuild fan-out completes, so no draw observes a
+destroyed object mid-frame. The audit's rebuild list is fully covered except the radius-cursor
+decal set, which binds the Clamp sampler role and is out of the world-sampler scope.
+
+Terrain policy. The audit found no defect in the Lanczos3 terrain chain, so the resampling
+path is unchanged; this card adds the sources capture needed for set rebuilds only.
+
+## Evidence (WI-G7-02)
+
+Unit tests: preset diff extended (16 vs 4 anisotropy), `ClampAnisotropy` rounding cases
+(32->16, 15->8, 3->2, 0->1), `Apply` fallback strings for clamped anisotropy, non-finite and
+out-of-range bias, and `WorldSamplerRebuildTests` (three GraphicsFacts) proving the sampler
+recreates, cached sets swap without material identity change, and invalid parameters report
+fallbacks. Suite: 53 + 355 + 2116 passed, 7 skipped (`Category!=Interactive`).
+
+Visual regression: gate run one proved Legacy byte-identical (faithful 7/7 golden Passed) with
+Enhanced failing 7/7 as expected from the 4x->16x change; enhanced goldens regenerated and the
+final gate passed 14/14 scenes. Grazing-angle evidence from terrain-grazing: supersampled
+EdgeAliasing 0.0639 at 4x versus 0.0517 at 16x (19 percent lower aliasing). The harness has
+no temporal metric; the card's shimmer check is covered by the aliasing delta plus fixed-camera
+frame consistency, recorded as a harness limitation.

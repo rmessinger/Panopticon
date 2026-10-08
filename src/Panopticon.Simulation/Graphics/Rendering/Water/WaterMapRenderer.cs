@@ -49,6 +49,10 @@ internal sealed class WaterMapRenderer : DisposableBase
     private readonly float _transparentWaterMinOpacity;
     private readonly PixelFormat _colourFormat;
 
+    private Sampler _worldSampler;
+
+    private Texture _currentWaterTexture;
+
     public WaterMapRenderer(
         AssetStore assetStore,
         GraphicsLoadContext graphicsLoadContext,
@@ -58,6 +62,8 @@ internal sealed class WaterMapRenderer : DisposableBase
         _waterShaderResources = graphicsLoadContext.ShaderResources.Water;
 
         _colourFormat = graphicsLoadContext.ShaderSetStore.OutputDescription.ColorAttachments[0].Format;
+
+        _worldSampler = graphicsLoadContext.StandardGraphicsResources.WorldAnisoSampler;
 
         var _waterSets = assetStore.WaterSets;
         _waterTextureSet = new Dictionary<TimeOfDay, Texture>();
@@ -173,20 +179,9 @@ internal sealed class WaterMapRenderer : DisposableBase
                 _colourFormat,
                 graphicsDevice));
 
-            var texture = _waterTextureSet[scene.Lighting.TimeOfDay];
+            _currentWaterTexture = _waterTextureSet[scene.Lighting.TimeOfDay];
 
-            _resourceSet = AddDisposable(graphicsDevice.ResourceFactory.CreateResourceSet(
-                new ResourceSetDescription(
-                    _waterShaderResources.WaterResourceLayout,
-                    _waterConstantsPSBuffer.Buffer,
-                    texture,
-                    _bumpTexture,
-                    graphicsDevice.Aniso4xSampler,
-                    _waterData.ReflectionMap,
-                    graphicsDevice.LinearSampler,
-                    _waterData.RefractionMap,
-                    graphicsDevice.LinearSampler,
-                    _waterData.RefractionDepthMap)));
+            _resourceSet = AddDisposable(CreateResourceSet(_currentWaterTexture));
 
         }
 
@@ -208,4 +203,34 @@ internal sealed class WaterMapRenderer : DisposableBase
             drawSceneCallback(ReflectionFramebuffer, RefractionFramebuffer);
         }
     }
+
+    /// <summary>
+    /// Rebinds the water resource set to a new world sampler (WI-G7-02). No-op until the
+    /// water maps exist; the next size change recreates the set anyway.
+    /// </summary>
+    public void ApplyWorldSampler(Sampler worldSampler)
+    {
+        _worldSampler = worldSampler;
+
+        if (_waterData == null || _resourceSet == null)
+        {
+            return;
+        }
+
+        RemoveAndDispose(ref _resourceSet);
+        _resourceSet = AddDisposable(CreateResourceSet(_currentWaterTexture));
+    }
+
+    private ResourceSet CreateResourceSet(Texture texture) => _waterShaderResources.GraphicsDevice.ResourceFactory.CreateResourceSet(
+        new ResourceSetDescription(
+            _waterShaderResources.WaterResourceLayout,
+            _waterConstantsPSBuffer.Buffer,
+            texture,
+            _bumpTexture,
+            _worldSampler,
+            _waterData.ReflectionMap,
+            _waterShaderResources.GraphicsDevice.LinearSampler,
+            _waterData.RefractionMap,
+            _waterShaderResources.GraphicsDevice.LinearSampler,
+            _waterData.RefractionDepthMap));
 }

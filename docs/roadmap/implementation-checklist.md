@@ -1167,7 +1167,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: black/white colour mips encode approximately 188 while data mips remain 128; role tests
     keep normals/masks/alpha linear; output has exactly one transfer; ordered dither is deterministic
     and zero-mean; gradient captures meet the G6 banding check; `Legacy` matches its golden.
-- [ ] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
+- [x] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
       quality terrain texture-array resample/mip path in `Terrain.cs`)
       ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
       [`WI-G7-02`](agent/cards/WI-G7-02-configurable-anisotropy-and-mip-bias.md)).

@@ -31,7 +31,8 @@ internal sealed class TerrainShaderResources : ShaderSetBase
         DeviceBuffer textureDetailsBuffer,
         Texture textureArray,
         Texture macroTexture,
-        Texture casuticsTextures)
+        Texture casuticsTextures,
+        Sampler worldSampler)
     {
         return GraphicsDevice.ResourceFactory.CreateResourceSet(
             new ResourceSetDescription(
@@ -43,7 +44,7 @@ internal sealed class TerrainShaderResources : ShaderSetBase
                 textureArray,
                 macroTexture,
                 casuticsTextures,
-                GraphicsDevice.Aniso4xSampler));
+                worldSampler));
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 32)]

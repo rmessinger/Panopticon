@@ -17,7 +17,8 @@ internal sealed class ShaderMaterialResourceSetBuilder : DisposableBase
 
     public ShaderMaterialResourceSetBuilder(
         GraphicsDevice graphicsDevice,
-        ShaderMaterialShaderResources shaderResources)
+        ShaderMaterialShaderResources shaderResources,
+        Sampler worldSampler)
     {
         _graphicsDevice = graphicsDevice;
         _shaderResources = shaderResources;
@@ -36,8 +37,8 @@ internal sealed class ShaderMaterialResourceSetBuilder : DisposableBase
         _resources = new BindableResource[_resourceBindings.Count];
         _resources[0] = _constantsBuffer;
 
-        // TODO: Don't hardcode this...
-        _resources[_resources.Length - 1] = graphicsDevice.Aniso4xSampler;
+        // Every ShaderMaterial layout closes with the world sampler slot.
+        _resources[_resources.Length - 1] = worldSampler;
     }
 
     public void SetTexture(string name, Texture value)

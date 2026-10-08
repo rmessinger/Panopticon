@@ -44,16 +44,16 @@ public sealed class GraphicsSettings
 
     /// <summary>
     /// The game default. Differs from <see cref="Legacy"/> on the shadow tier, the sample
-    /// count, the alpha test and the colour space: 4x MSAA (G4) plus the four-cascade 2048
-    /// shadow tier (G4), coverage-preserving alpha with alpha-to-coverage (G5), and linear
-    /// shading with a single sRGB output transfer (G6). Other members stay Legacy until
-    /// their owning phase lands.
+    /// count, the alpha test, the colour space and the anisotropy: 4x MSAA (G4) plus the
+    /// four-cascade 2048 shadow tier (G4), coverage-preserving alpha with alpha-to-coverage
+    /// (G5), linear shading with a single sRGB output transfer (G6), and anisotropy raised
+    /// to the 16x ceiling (G7). Other members stay Legacy until their owning phase lands.
     /// </summary>
     public static GraphicsSettings Enhanced() => new(
         4,
         AlphaTestMode.CoveragePreserving,
         ColourSpaceMode.Linear,
-        4,
+        16,
         0f,
         ShadowTier.High,
         UiMode.LegacyArt,
