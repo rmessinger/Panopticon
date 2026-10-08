@@ -14,7 +14,7 @@ Lanczos3, so changing from a claimed box filter is not the phase's deliverable.
 
 ## 2. Constraints
 
-- Faithful keeps 4x, zero bias and the existing resample/mip path.
+- Legacy keeps 4x, zero bias and the existing resample/mip path.
 - G6 owns colour-space-aware filtering. G7 must compose with it without requiring G6 to land first.
 - Shadow comparison samplers, tile-data point sampling and UI samplers are separate roles.
 - Negative bias cannot substitute for antialiasing; image sharpness alone is not a quality gate.
@@ -31,7 +31,7 @@ Sampler keys include address mode, filter, anisotropy and bias. On switching, re
 resource set that captured the old sampler, including the global forward set and radius cursor
 resources; retire the old sampler only after queued commands complete.
 
-Extract a proposed `TerrainMipBuilder` with explicit Faithful/Enhanced policies. Enhanced avoids
+Extract a proposed `TerrainMipBuilder` with explicit Legacy/Enhanced policies. Enhanced avoids
 unnecessary repeated resampling, filters each mip at its target footprint, and applies G6's
 linear-colour policy when active. Preserve texture-array layer order, cell size, wrap semantics
 and cliff/blend metadata. The audit selects a tested kernel and records whether array padding
@@ -45,7 +45,7 @@ or edge handling is actually necessary; no speculative asset rewrite.
 ## 4. Validation
 
 - Pure tests cover anisotropy fallback, finite bias limits and complete sampler cache keys.
-- Faithful generated terrain mips match the existing builder's bytes.
+- Legacy generated terrain mips match the existing builder's bytes.
 - G3 grazing-angle captures compare 4x and effective 16x over identical camera positions.
 - A fixed camera-motion sequence compares aligned terrain regions for temporal shimmer; masks
   exclude water, particles and intentional animation. Enhanced must not worsen the recorded

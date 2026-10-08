@@ -40,7 +40,7 @@ presets. Guard the audited aircraft/vehicle ratios with proportion-mode captures
 - [ ] Both presets leave the option off until explicitly enabled.
 - [ ] Enabled length ratios meet the audit's stated tolerance in the fixed-camera captures.
 - [ ] An injected rescale regression is detected by the proportion-mode gate.
-- [ ] Disabled `Faithful` output matches its pre-phase golden, with identical gameplay queries.
+- [ ] Disabled `Legacy` output matches its pre-phase golden, with identical gameplay queries.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Guardrails

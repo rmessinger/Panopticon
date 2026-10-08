@@ -15,7 +15,7 @@
 ## Goal
 
 Stop minified alpha-tested geometry dissolving into a dotted lattice, by enabling alpha-to-coverage
-when MSAA is active and generating mip chains that preserve cutout coverage, while `Faithful` keeps
+when MSAA is active and generating mip chains that preserve cutout coverage, while `Legacy` keeps
 the original hard cutoff.
 
 ## Context to read (and only this)
@@ -30,7 +30,7 @@ the original hard cutoff.
 ## Steps
 
 1. Add the alpha-test mode to the shader path so the cutoff behaviour is selectable: hard cutoff for
-   `Faithful`, alpha-to-coverage for `Enhanced` when the sample count is above one. Fall back to the
+   `Legacy`, alpha-to-coverage for `Enhanced` when the sample count is above one. Fall back to the
    hard cutoff when MSAA is off, since alpha-to-coverage has no effect at one sample.
 2. Enable alpha-to-coverage in the blend state of the pipelines owning the materials the audit listed,
    and only those.
@@ -55,7 +55,7 @@ the original hard cutoff.
 
 - [ ] Minified alpha-tested foliage and fencing show no dissolve-to-dots at distance under
       `Enhanced`, with cutout silhouettes preserved, satisfying the G5 milestone.
-- [ ] A `Faithful` capture is unchanged against its golden, including the hard cutoff result.
+- [ ] A `Legacy` capture is unchanged against its golden, including the hard cutoff result.
 - [ ] Alpha-to-coverage is enabled only on the pipelines the audit listed.
 - [ ] Non-alpha-tested textures use the unchanged mip path.
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).

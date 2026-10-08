@@ -85,7 +85,7 @@ intermediate while 2D must stay single-sample (card step 4), so the 2D/UI path n
 description and the render loop needs one split point: resolve the multisampled intermediate into
 a single-sample composition target after the 3D block, bind the composition framebuffer for the 2D
 block, and blit the composition texture. At count 1 the composition target is the intermediate
-itself with no resolve, so the Faithful path stays byte-identical. The shadow depth pass, water
+itself with no resolve, so the Legacy path stays byte-identical. The shadow depth pass, water
 maps and ImGui are already separate. `FrameCapturer` captures the swapchain target after the final
 blit, so capture is unaffected. The one resolve site is `TextureCopier`'s source texture
 (`RenderPipeline.cs:183`), which becomes the resolved/composition texture.
@@ -116,21 +116,23 @@ byte-for-byte the pre-G4 shape.
 explicit `Count1` while the 3D pass keeps the settings-derived count.
 
 Preset selection: `GraphicsSettings.Enhanced()` sets `SampleCount` 4 (plus the existing shadow
-tier). The preset reaches construction through a new optional `Game` constructor parameter
-`graphicsSettings`, applied before graphics-resource construction; `ScenarioCaptureRunner` passes
-`CaptureRunSettings.GraphicsSettings` there (the post-construction assignment was removed).
-Mid-session count changes report the session fallback instead of applying.
+tier) and is the game default; `Game` renders Enhanced 4x in sessions that do not pass an
+explicit preset. The preset reaches construction through a new optional `Game` constructor
+parameter `graphicsSettings`, applied before graphics-resource construction; `ScenarioCaptureRunner`
+passes `CaptureRunSettings.GraphicsSettings` there (the post-construction assignment was removed).
+Mid-session count changes report the session fallback instead of applying. The pre-rename
+`Faithful` preset is `Legacy`, unchanged at 1x.
 
 ## Validation and risks
 
 Capability tests; supported 1/2/4/8 captures; repeated switches/resizes. Resolve precedes 2D and
-the final sampled blit. Faithful 1x is exact; 4x reduces aliasing in G3 silhouette regions.
+the final sampled blit. Legacy 1x is exact; 4x reduces aliasing in G3 silhouette regions.
 Target reuse checks count and format as well as dimensions. G5 owns cutout coverage state.
 
 ### Evidence (`WI-G4-02`)
 
 - Gate run before golden update: all six `faithful` scenes golden Passed with zero differing
-  pixels (Faithful is byte-identical to pre-G4); all six `enhanced` scenes regressed
+  pixels (Legacy is byte-identical to pre-G4); all six `enhanced` scenes regressed
   (fractions 0.008-0.028), confirming 4x reached every pass.
 - Silhouette metric (`unit-silhouettes`): EdgeAliasing 0.0725 at 1x vs 0.0707 at 4x;
   supersampled references score 0.0641/0.0627; `SilhouetteImproved` true for both presets.

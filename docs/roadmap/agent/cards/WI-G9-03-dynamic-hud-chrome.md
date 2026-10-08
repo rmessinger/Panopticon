@@ -16,7 +16,7 @@
 
 Under the `Enhanced` preset, draw the control bar and HUD chrome from dynamic geometry and live
 text instead of the pre-rendered 800x600 WND bitmaps, so the HUD is genuinely
-resolution-independent rather than upscaled legacy art. `Faithful` keeps the original bitmaps
+resolution-independent rather than upscaled legacy art. `Legacy` keeps the original bitmaps
 unchanged.
 
 ## Context to read (and only this)
@@ -35,7 +35,7 @@ unchanged.
    elements.
 2. Define a dynamic-drawing equivalent per chrome element: procedural or vector panels, procedural
    button states (fill, border, hover/press), live text where bitmaps embed glyphs.
-3. Gate the switch on the G2 preset: `Enhanced` draws dynamic chrome, `Faithful` draws the
+3. Gate the switch on the G2 preset: `Enhanced` draws dynamic chrome, `Legacy` draws the
    original bitmaps. One switch point, no per-element conditionals scattered through the UI code.
 4. Match hit regions and layout to `WI-G9-02`'s proportional pixel-space anchors exactly; the rework must
    not move or resize controls.
@@ -46,7 +46,7 @@ unchanged.
 - [ ] Under `Enhanced`, the control-bar chrome contains no legacy panel/button/frame bitmap
       draws (verify via a draw-list audit or texture-use log). Portraits, icons and minimap remain textures.
 - [ ] Captured frames are sharp at 4x native with no upscaled-art blur on HUD chrome.
-- [ ] `Faithful` output is pixel-identical to the pre-rework capture.
+- [ ] `Legacy` output is pixel-identical to the pre-rework capture.
 - [ ] Hit regions and layout are unchanged from `WI-G9-02` anchors (input tests pass unchanged).
 - [ ] G3 golden frames exist for both presets at 1x and 4x native and catch an injected chrome
       regression.

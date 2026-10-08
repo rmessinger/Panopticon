@@ -71,7 +71,7 @@ simulation objects.
 - Shared asset instances under different definitions retain independent visual multipliers.
 - Weapon-bone positions, geometry, selection query results and scenario outputs remain identical
   on/off. A determinism assertion failure stops work under the repository's artifact policy.
-- Corrected aircraft lengths match references within the manifest tolerance; Faithful/off matches
+- Corrected aircraft lengths match references within the manifest tolerance; Legacy/off matches
   pre-G10 goldens. Deliberately changed override data triggers the proportion-mode gate.
 
 ## 5. Architecture Diagrams

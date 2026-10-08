@@ -10,14 +10,14 @@ namespace Panopticon.Tests.Graphics;
 public class GraphicsSettingsApplicationTests
 {
     [Fact]
-    public void TestGameOutputDescriptionIsFaithfulDescription()
+    public void TestGameOutputDescriptionIsEnhancedDescription()
     {
-        var expected = RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Faithful());
+        var expected = RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Enhanced());
 
         Assert.Equal(expected.DepthAttachment.Value.Format, RenderPipeline.GameOutputDescription.DepthAttachment.Value.Format);
         Assert.Equal(expected.ColorAttachments[0].Format, RenderPipeline.GameOutputDescription.ColorAttachments[0].Format);
         Assert.Equal(expected.SampleCount, RenderPipeline.GameOutputDescription.SampleCount);
-        Assert.Equal(TextureSampleCount.Count1, RenderPipeline.GameOutputDescription.SampleCount);
+        Assert.Equal(TextureSampleCount.Count4, RenderPipeline.GameOutputDescription.SampleCount);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class GraphicsSettingsApplicationTests
     }
 
     [GraphicsFact]
-    public void TestControllerRoundTripRestoresFaithfulValues()
+    public void TestControllerRoundTripRestoresLegacyValues()
     {
         using var graphicsDevice = GraphicsDeviceUtility.CreateGraphicsDevice(null, null);
         var controller = new GraphicsSettingsController(graphicsDevice);
@@ -141,12 +141,12 @@ public class GraphicsSettingsApplicationTests
         controller.Apply(GraphicsSettings.Enhanced());
         var enhanced = controller.Effective;
 
-        controller.Apply(GraphicsSettings.Faithful());
-        var faithful = controller.Effective;
+        controller.Apply(GraphicsSettings.Legacy());
+        var legacy = controller.Effective;
 
-        Assert.Equal(1, faithful.SampleCount);
-        Assert.Equal(ShadowTier.Original, faithful.ShadowTier);
-        Assert.Equal(enhanced.Anisotropy, faithful.Anisotropy);
-        Assert.Equal(enhanced.MipLodBias, faithful.MipLodBias);
+        Assert.Equal(1, legacy.SampleCount);
+        Assert.Equal(ShadowTier.Original, legacy.ShadowTier);
+        Assert.Equal(enhanced.Anisotropy, legacy.Anisotropy);
+        Assert.Equal(enhanced.MipLodBias, legacy.MipLodBias);
     }
 }

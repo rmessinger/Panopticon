@@ -29,8 +29,8 @@ internal sealed class TestGraphicsContext : IDisposable
         OnDemandAssetLoadStrategy? loadStrategy = null)
     {
         Device = GraphicsDeviceUtility.CreateGraphicsDevice(null, null);
-        StandardResources = new StandardGraphicsResources(Device, GraphicsSettings.Faithful());
-        ShaderSetStore = new ShaderSetStore(Device, RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Faithful()));
+        StandardResources = new StandardGraphicsResources(Device, GraphicsSettings.Legacy());
+        ShaderSetStore = new ShaderSetStore(Device, RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Legacy()));
         ShaderResources = new ShaderResourceManager(Device, StandardResources, ShaderSetStore);
 
         fileSystem ??= new MemoryFileSystem();

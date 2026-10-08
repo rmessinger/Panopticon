@@ -13,7 +13,7 @@ UNorm texture array. Changing only the final output format would not correct tho
 
 ## 2. Constraints
 
-- Faithful retains existing texture formats, mip arithmetic and output encoding.
+- Legacy retains existing texture formats, mip arithmetic and output encoding.
 - Normal maps, masks, alpha, tile indices and other data textures remain linear data.
 - G5 owns cutout alpha coverage; G6 owns RGB colour transfer. Both policies belong in cache keys.
 - G4 resolve operates in linear space in Enhanced. UI composition must not encode output twice.
@@ -43,7 +43,7 @@ Replace the Enhanced final blit with a proposed `OutputColourPass`: clamp SDR li
 apply the exact sRGB transfer, add a zero-mean ordered dither of at most one output code step,
 then write to an UNorm destination. Screen-coordinate ordered dither has no wall-clock phase.
 If hardware sRGB output is chosen instead, use linear output and do not also encode in the
-shader; the audit fixes one path. Faithful retains `TextureCopier` unchanged.
+shader; the audit fixes one path. Legacy retains `TextureCopier` unchanged.
 
 | Sub-phase | Card | Deliverable |
 |---|---|---|
@@ -57,7 +57,7 @@ shader; the audit fixes one path. Faithful retains `TextureCopier` unchanged.
 - Synthetic transfer tests cover endpoints, round trips and no double encoding.
 - Gradient crops show bounded zero-mean dither and lower banding without temporal flicker.
 - G3 terrain/fog captures and auxiliary water passes use the same linear contract.
-- Faithful matches its pre-G6 golden on the reference host.
+- Legacy matches its pre-G6 golden on the reference host.
 
 ## 5. Architecture Diagrams
 

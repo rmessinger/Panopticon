@@ -23,5 +23,5 @@ camera-motion evidence; do not assume a sharper crop proves lower shimmer.
 ## Validation and risks
 
 Default bias remains zero. Pure tests cover bounded finite bias and fallback. Rebind global and
-radius-cursor resources on switching. Faithful mips retain existing bytes. G6's linear filtering
+radius-cursor resources on switching. Legacy mips retain existing bytes. G6's linear filtering
 policy composes when active; G7 may land independently. Record aligned temporal-region thresholds.
