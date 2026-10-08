@@ -21,7 +21,7 @@ internal sealed class RenderPipeline : DisposableBase
     /// <summary>Render-target clear color; overridable for diagnostic captures.</summary>
     public RgbaFloat ClearColor { get; set; } = new RgbaFloat(105 / 255f, 105 / 255f, 105 / 255f, 1f);
 
-    public static readonly OutputDescription GameOutputDescription = CreateGameOutputDescription(GraphicsSettings.Faithful());
+    public static readonly OutputDescription GameOutputDescription = CreateGameOutputDescription(GraphicsSettings.Enhanced());
 
     /// <summary>
     /// Builds the output description pipelines render into. The colour format stays fixed

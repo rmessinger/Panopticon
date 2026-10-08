@@ -28,11 +28,11 @@ public sealed class GraphicsSettings
     }
 
     /// <summary>
-    /// Today's renderer, member for member. Owned by later phases until they land:
+    /// The pre-Track G renderer, member for member. Owned by later phases until they land:
     /// G4 sample count, G5 alpha test, G6 colour space, G7 anisotropy and mip bias,
     /// G8 shadow slope bias, G9 UI, G10 proportions.
     /// </summary>
-    public static GraphicsSettings Faithful() => new(
+    public static GraphicsSettings Legacy() => new(
         1,
         AlphaTestMode.LegacyCutoff,
         ColourSpaceMode.LegacyGamma,
@@ -43,9 +43,9 @@ public sealed class GraphicsSettings
         realisticProportions: false);
 
     /// <summary>
-    /// Differs from <see cref="Faithful"/> on the shadow tier and the sample count: 4x MSAA
-    /// (G4) plus the four-cascade 2048 shadow tier. Other members stay Faithful until their
-    /// owning phase lands.
+    /// The game default. Differs from <see cref="Legacy"/> on the shadow tier and the sample
+    /// count: 4x MSAA (G4) plus the four-cascade 2048 shadow tier. Other members stay Legacy
+    /// until their owning phase lands.
     /// </summary>
     public static GraphicsSettings Enhanced() => new(
         4,

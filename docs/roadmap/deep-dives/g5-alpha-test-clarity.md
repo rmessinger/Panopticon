@@ -14,7 +14,7 @@ and G3 crops before its cause is treated as established.
 
 ## 2. Constraints
 
-- Faithful retains the existing cutoff, authored DDS mips and shader path.
+- Legacy retains the existing cutoff, authored DDS mips and shader path.
 - Only alpha-tested materials receive this treatment. Blended particles, HUD art and opaque
   maps must not acquire coverage remapping.
 - Texture names alone are insufficient cache keys when one image has several material roles.
@@ -30,7 +30,7 @@ For Enhanced, generate cutout mip alpha from decoded source data. At each mip, s
 alpha rescale so the fraction above the base cutoff approximates the source coverage. Record
 achieved coverage; tiny mips have quantised coverage and cannot promise exact equality. RGB
 filtering follows G6's colour-space mode, while alpha remains linear. Authored DDS mip chains
-are retained under Faithful; enhanced compressed cutouts require a tested decode/rebuild path,
+are retained under Legacy; enhanced compressed cutouts require a tested decode/rebuild path,
 not silently skipped correction.
 
 The per-mip rescale is baked into alpha. Do not apply a second threshold correction at sampling
@@ -54,7 +54,7 @@ cutout value rather than unrelated vertex/override opacity.
   masks stay empty/full. Fractional LOD transitions remain bounded.
 - Shared image use creates distinct cutout and blended variants without cache contamination.
 - Foliage/fence crops retain coverage at multiple distances at 1x and 4x Enhanced.
-- Transparent particles and HUD captures remain unchanged; Faithful matches its golden.
+- Transparent particles and HUD captures remain unchanged; Legacy matches its golden.
 - Report exceptions for compressed formats or backend coverage support, never silently pass.
 
 ## 5. Architecture Diagrams

@@ -140,7 +140,7 @@ asserts the same relation between 1x and 4x MSAA in those regions.
   metric deltas. A frame fails when the differing-pixel fraction exceeds
   `MaxDifferingPixelFraction`, or when either metric moves by more than `MaxMetricDelta`.
 - Initial tolerance: `MaxChannelDelta` 2, `MaxDifferingPixelFraction` 0.001, `MaxMetricDelta`
-  0.02. Overridable per scene in the scene set. `Faithful` goldens for G9 scenes use 0 and 0,
+  0.02. Overridable per scene in the scene set. `Legacy` goldens for G9 scenes use 0 and 0,
   since G9 requires pixel identity.
 - Goldens are pinned to the measured host/backend/driver recorded by G3-1, not a hardware identity
   assumed by this design. When the
@@ -287,7 +287,7 @@ classDiagram
 
   class GraphicsSettings {
     <<G2>>
-    +Faithful
+    +Legacy
     +Enhanced
   }
 
@@ -324,7 +324,7 @@ sequenceDiagram
   TH->>VR: Run (BuiltInScenario.VisualRegression)
   VR->>S: read golden-manifest.json
   VR->>VR: check backend and device against manifest
-  loop each preset (Faithful, Enhanced)
+  loop each preset (Legacy, Enhanced)
     loop each scene
       VR->>SC: Run(profile, settings with preset, scale 1)
       SC->>G: new Game(preset), EnableFixedLogicTimestep, EnableFixedRenderTimestep

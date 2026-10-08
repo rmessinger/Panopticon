@@ -15,7 +15,7 @@
 ## Goal
 
 Add the engine-level graphics settings type carrying the knobs catalogued by `WI-G2-01`, with
-`Faithful` and `Enhanced` presets, and expose it on the game so later Track G phases read it rather
+`Legacy` and `Enhanced` presets, and expose it on the game so later Track G phases read it rather
 than hardcoding state. This card adds the type and its defaults only; no render path consumes it
 yet.
 
@@ -34,12 +34,12 @@ yet.
 1. Add the settings type with one member per knob from the audit table, using the property names the
    deep dive fixes. Default every member to the current hardcoded value recorded in the audit, so
    constructing it with defaults describes today's renderer exactly.
-2. Add the two presets as static factory members. `Faithful` returns the current-behaviour defaults
+2. Add the two presets as static factory members. `Legacy` returns the current-behaviour defaults
    unchanged. `Enhanced` differs only on knobs the deep dive marks as safe to change in G2 itself;
-   knobs owned by later phases stay at their `Faithful` value until that phase lands.
+   knobs owned by later phases stay at their `Legacy` value until that phase lands.
 3. Expose the active settings on the game so render construction can reach it, following the
    `ShadowSettings` ownership pattern rather than adding a static or a singleton.
-4. Add unit tests asserting that the `Faithful` preset's every member equals the audit's recorded
+4. Add unit tests asserting that the `Legacy` preset's every member equals the audit's recorded
    current value, and that switching presets changes the active instance.
 
 ## Files likely to change
@@ -51,7 +51,7 @@ yet.
 ## Acceptance criteria
 
 - [x] Every knob in the `WI-G2-01` table has a corresponding member.
-- [x] A test asserts the `Faithful` preset reproduces the pre-card hardcoded values member by member.
+- [x] A test asserts the `Legacy` preset reproduces the pre-card hardcoded values member by member.
 - [x] No render path behaviour changes: the settings object is constructed but not yet consumed.
 - [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 

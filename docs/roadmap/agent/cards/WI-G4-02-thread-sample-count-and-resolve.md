@@ -16,7 +16,7 @@
 
 Make the scene pass render at the sample count carried by the G2 settings, resolving before the
 final blit, so 4x MSAA renders correctly across the 3D, terrain, water, road, and particle pipelines
-while the `Faithful` preset stays at one sample and unchanged.
+while the `Legacy` preset stays at one sample and unchanged.
 
 ## Context to read (and only this)
 
@@ -38,7 +38,7 @@ while the `Faithful` preset stays at one sample and unchanged.
 4. Resolve 3D colour into the single-sample composition target before `DrawingContext2D` draws
    UI, then blit that target. Keep 2D single-sample; classify auxiliary water/shadow passes
    separately and add only the resolves identified by the inventory.
-5. Support off, 2x, 4x, and 8x, defaulting to off under `Faithful`. Select the highest supported
+5. Support off, 2x, 4x, and 8x, defaulting to off under `Legacy`. Select the highest supported
    count not exceeding the request for both colour and depth formats; report requested/effective counts.
 6. Validate against the G3 harness at one sample and at four.
 
@@ -58,7 +58,7 @@ while the `Faithful` preset stays at one sample and unchanged.
 - [x] The G3 edge-aliasing metric improves measurably at 4x against the same frame at 1x:
       `unit-silhouettes` EdgeAliasing 0.0725 (1x) vs 0.0707 (4x), supersampled reference 0.0641
       vs 0.0627, `SilhouetteImproved` true for both presets.
-- [x] A `Faithful` capture is unchanged against its golden: all six faithful scenes Passed with
+- [x] A `Legacy` capture is unchanged against its golden: all six faithful scenes Passed with
       zero differing pixels on the pre-update gate run; faithful manifest hashes unchanged after
       the enhanced golden regeneration.
 - [x] An unsupported sample count clamps rather than throwing: the G2 device clamp applies

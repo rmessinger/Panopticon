@@ -632,8 +632,8 @@
   ([Track D](track-d-gameplay-expansion.md), [Track E](track-e-naval-warfare.md),
   [Track F](track-f-terrain-destruction.md)). Affects
   [Track G](track-g-rendering-clarity.md).
-- Original-look compatibility under Track G, Decision: two presets, `Faithful` and `Enhanced`,
-  with `Enhanced` as the default and the target of future work. `Faithful` pins sample count 1,
+- Original-look compatibility under Track G, Decision: two presets, `Legacy` and `Enhanced`,
+  with `Enhanced` as the default and the target of future work. `Legacy` pins sample count 1,
   the hard `0x60` alpha-test cutoff, gamma-space shading, 4x anisotropy, and a single 1024²
   shadow cascade, reproducing the pre-track output exactly; the G1 high-DPI fix applies to both
   because it is a correctness bug rather than a look change. Presets are a settings layer rather
@@ -687,7 +687,7 @@
   because the work shares G9's whole substrate (the 2D layer, logical-point layout, the G2 preset
   switch, and the G3 golden frames that gate it) and has no scope beyond rendering clarity; a
   UI-framework or UX redesign stays out of scope and would be new roadmap material if ever
-  wanted. Gated behind the `Enhanced` preset with `Faithful` pixel-identical to the pre-rework
+  wanted. Gated behind the `Enhanced` preset with `Legacy` pixel-identical to the pre-rework
   capture, consistent with the rendering-clarity scope Decision. Affects
   [Track G](track-g-rendering-clarity.md) (G9).
 - Neural-network AI policy v1 action and feature scope. Decision: v1 ships a 9-feature

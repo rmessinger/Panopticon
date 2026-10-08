@@ -70,7 +70,7 @@ public sealed class Game : DisposableBase, IGame
     /// </summary>
     public GraphicsSystem Graphics { get; }
 
-    public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Faithful();
+    public GraphicsSettings GraphicsSettings { get; set; } = GraphicsSettings.Enhanced();
 
     internal GraphicsSettingsController GraphicsSettingsController { get; private set; }
 

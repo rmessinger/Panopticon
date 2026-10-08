@@ -15,9 +15,9 @@ internal sealed class GraphicsSettingsController
 
     private readonly GraphicsDevice _graphicsDevice;
 
-    public GraphicsSettings Requested { get; private set; } = GraphicsSettings.Faithful();
+    public GraphicsSettings Requested { get; private set; } = GraphicsSettings.Legacy();
 
-    public GraphicsSettings Effective { get; private set; } = GraphicsSettings.Faithful();
+    public GraphicsSettings Effective { get; private set; } = GraphicsSettings.Legacy();
 
     /// <summary>Fallback reasons for members where effective differs from requested.</summary>
     public IReadOnlyList<string> Fallbacks => _fallbacks;

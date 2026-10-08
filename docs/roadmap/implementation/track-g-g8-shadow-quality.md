@@ -27,7 +27,7 @@ offset already exist; G8 adds no cascade code and does not change the normal off
 - Confirmation that `ShadowConstantsPS` is 240 bytes with the trailing padding float free.
 - Confirmation that every receiver shader (`FixedFunction`, `Terrain`, `Road`, `Water`) passes
   `nDotL` and a normal to `ShadowVisibility`, noting `Water.frag`'s bump-derived normal.
-- Baseline crops from a `Faithful` capture showing acne, cascade blockiness, and contact shadows.
+- Baseline crops from a `Legacy` capture showing acne, cascade blockiness, and contact shadows.
 
 ## Tuning record (`WI-G8-02`, to complete)
 
@@ -41,7 +41,7 @@ offset already exist; G8 adds no cascade code and does not change the normal off
 - Veldrid 4.9 has no rasterizer depth bias, so the slope term is receiver-side only.
 - Four `D32_Float_S8_UInt` layers at 2048x2048 cost up to 128 MiB on drivers storing 8 bytes per
   texel; accepted for `Enhanced`.
-- `Faithful` must stay byte-identical: `SlopeScaledBias = 0` must reduce to the existing bias, so no
+- `Legacy` must stay byte-identical: `SlopeScaledBias = 0` must reduce to the existing bias, so no
   tier branch is added in the shader.
 - Blended parts are excluded from the shadow bucket. Alpha-tested parts can enter it, but
   `MeshDepth.frag` does not preserve their cutout shape. Caster alpha testing is out of scope.

@@ -31,7 +31,9 @@ public static class VisualRegressionRunner
 {
     private static readonly (string Name, GraphicsSettings Settings)[] Presets =
     [
-        ("faithful", GraphicsSettings.Faithful()),
+        // The label stays "faithful": it keys the golden store, manifest and reports, which
+        // predate the Faithful -> Legacy rename.
+        ("faithful", GraphicsSettings.Legacy()),
         ("enhanced", GraphicsSettings.Enhanced()),
     ];
 

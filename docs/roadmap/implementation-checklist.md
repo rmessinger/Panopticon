@@ -1096,7 +1096,7 @@ non-physical objects do not receive bodies.
 See [`track-g-rendering-clarity.md`](track-g-rendering-clarity.md). Not gated on Track P
 (presentation only, no simulation behaviour change). Coordinates with B5 (rendering at scale, same
 pipeline-description plumbing) and A3 (sim/presentation seam). Every visual change lands behind the
-G2 preset layer so the `Faithful` preset reproduces the original look.
+G2 preset layer so the `Legacy` preset reproduces the original look.
 
 - [x] G1 High-DPI drawable & resolution correctness (`ALLOW_HIGHDPI`, drawable-size swapchain,
       one pixels-versus-points convention across `GameWindow`/`RenderTarget`/input).
@@ -1120,7 +1120,7 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
         ([`WI-G1-04`](agent/cards/WI-G1-04-scale-2d-and-picking.md)).
     - AC: a centre mouse position keeps its normalised position and maps to the same WND client
       point at `DpiScale` 1 and 2, and `Camera` holds no `DpiScale` reference.
-- [x] G2 Graphics settings & fidelity presets (`Faithful`/`Enhanced`; settings layer, not an
+- [x] G2 Graphics settings & fidelity presets (`Legacy`/`Enhanced`; settings layer, not an
       experiment seam). The parsed `StaticGameLod` assets name several knobs but have no runtime
       consumer, so G2 builds the application layer
       ([`WI-G2-01`](agent/cards/WI-G2-01-audit-render-state-knobs.md),
@@ -1128,7 +1128,7 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       [`WI-G2-03`](agent/cards/WI-G2-03-wire-settings-into-render-construction.md)).
   - AC: preset round trips preserve validated settings; runtime switching rebuilds affected
     resources safely; requested and effective capability-fallback values are reported; and
-    `Faithful` reproduces the pre-track captured frame on the reference host.
+    `Legacy` reproduces the pre-track captured frame on the reference host.
 - [x] G3 Visual regression harness (golden-frame comparison per preset over a fixed scene set,
       with sharpness/edge-aliasing metrics; extends `FrameCapturer` + the TestHarness `ScenarioCapture` runner)
       ([`WI-G3-01`](agent/cards/WI-G3-01-audit-frame-capture-paths.md),
@@ -1153,28 +1153,28 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       [`WI-G5-02`](agent/cards/WI-G5-02-alpha-to-coverage-and-cutout-mips.md)).
   - AC: synthetic cutout mips preserve threshold coverage within the G5 tolerance; foliage/fence
     silhouette captures improve against the supersampled reference; alpha-to-coverage requires
-    effective MSAA greater than 1; blended/opaque textures remain unchanged; `Faithful` matches its golden.
+    effective MSAA greater than 1; blended/opaque textures remain unchanged; `Legacy` matches its golden.
 - [ ] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, one sRGB output transfer,
       linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output)
       ([`WI-G6-01`](agent/cards/WI-G6-01-audit-colour-space-handling.md),
       [`WI-G6-02`](agent/cards/WI-G6-02-linear-space-shading-and-dither.md)).
   - AC: black/white colour mips encode approximately 188 while data mips remain 128; role tests
     keep normals/masks/alpha linear; output has exactly one transfer; ordered dither is deterministic
-    and zero-mean; gradient captures meet the G6 banding check; `Faithful` matches its golden.
+    and zero-mean; gradient captures meet the G6 banding check; `Legacy` matches its golden.
 - [ ] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
       quality terrain texture-array resample/mip path in `Terrain.cs`)
       ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
       [`WI-G7-02`](agent/cards/WI-G7-02-configurable-anisotropy-and-mip-bias.md)).
   - AC: requested anisotropy 1/2/4/8/16 and finite bias in [-1,1] validate and report effective
     values; resource sets observe sampler changes; grazing-angle and fixed-motion captures
-    meet the G7 sharpness/temporal checks; terrain seams stay absent and `Faithful` matches its golden.
+    meet the G7 sharpness/temporal checks; terrain seams stay absent and `Legacy` matches its golden.
 - [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
       slope-scaled term added to the constant bias; the existing normal offset is kept)
       ([`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md),
       [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md)).
   - AC: an `Enhanced` capture of the G3 `shadow-casters` scene at the default zoom shows no acne,
     no visible cascade seam and no detached contact shadows, with `VisualizeCascades` showing four
-    cascades; the `Faithful` capture matches its golden byte for byte; `ShadowConstantsPS` stays
+    cascades; the `Legacy` capture matches its golden byte for byte; `ShadowConstantsPS` stays
     240 bytes.
 - [ ] G9 Resolution-independent 2D & UI (native-resolution 2D, proportional pixel-space layout
       from G1, role-aware WND/APT upscaling)
@@ -1182,14 +1182,14 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
       [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md)).
   - AC: native 1x/2x captures use pixel-sized fonts with no duplicate DPI transform; proportional
     layout and hit rectangles remain unchanged; `Enhanced` role-aware sampling avoids atlas
-    bleed and preserves pixel-art roles; `Faithful` matches its golden.
+    bleed and preserves pixel-art roles; `Legacy` matches its golden.
   - [ ] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
         dynamically drawn equivalents (vector/procedural panels, buttons, and frames; live text)
-        behind the `Enhanced` preset, `Faithful` keeps the original art
+        behind the `Enhanced` preset, `Legacy` keeps the original art
         ([`WI-G9-03`](agent/cards/WI-G9-03-dynamic-hud-chrome.md)).
     - AC: under `Enhanced` the control-bar chrome contains no legacy panel/button/frame bitmap
       draws (portraits, icons and minimap remain textures); captured frames are sharp
-      at 4x native with no upscaled-art blur, and `Faithful` is pixel-identical to the pre-rework
+      at 4x native with no upscaled-art blur, and `Legacy` is pixel-identical to the pre-rework
       capture.
 - [ ] G10 Realistic proportions (optional scale-correct presentation: reference-scale
       documentation plus per-definition visual model-scale overrides for the undersized aircraft
@@ -1213,7 +1213,7 @@ G2 preset layer so the `Faithful` preset reproduces the original look.
         layer and add proportion-mode captures to the G3 golden set
         ([`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md)).
     - AC: golden frames captured under the proportions mode catch an injected rescale regression,
-      both presets default the option off, and disabled `Faithful` output matches the pre-phase capture.
+      both presets default the option off, and disabled `Legacy` output matches the pre-phase capture.
 
 ## Track H: Map & Unit Storage Formats
 
