@@ -27,10 +27,17 @@ internal sealed class RenderPipeline : DisposableBase
     /// Builds the output description pipelines render into. The colour format stays fixed
     /// until G6 owns the colour-space mapping; the sample count follows the settings.
     /// </summary>
-    public static OutputDescription CreateGameOutputDescription(GraphicsSettings settings) => new(
+    public static OutputDescription CreateGameOutputDescription(GraphicsSettings settings) =>
+        CreateGameOutputDescription(settings, GraphicsSettingsController.ToTextureSampleCount(settings.SampleCount));
+
+    /// <summary>
+    /// Builds the output description with an explicit sample count. Used by passes that share
+    /// the settings formats but must stay single-sample regardless of the 3D scene pass (2D/UI).
+    /// </summary>
+    public static OutputDescription CreateGameOutputDescription(GraphicsSettings settings, TextureSampleCount sampleCount) => new(
         new OutputAttachmentDescription(PixelFormat.D32_Float_S8_UInt),
         new[] { new OutputAttachmentDescription(PixelFormat.B8_G8_R8_A8_UNorm) },
-        GraphicsSettingsController.ToTextureSampleCount(settings.SampleCount));
+        sampleCount);
 
     private readonly RenderList _renderList;
 
@@ -49,6 +56,14 @@ internal sealed class RenderPipeline : DisposableBase
     private Texture _intermediateDepthBuffer;
     private Texture _intermediateTexture;
     private Framebuffer _intermediateFramebuffer;
+
+    /// <summary>
+    /// Single-sample colour target the multisampled 3D pass resolves into before 2D/UI draws.
+    /// Null at sample count 1, where the intermediate texture is used directly.
+    /// </summary>
+    private Texture _compositionTexture;
+    private Texture _compositionDepthBuffer;
+    private Framebuffer _compositionFramebuffer;
 
     private readonly TextureCopier _textureCopier;
 
@@ -81,7 +96,7 @@ internal sealed class RenderPipeline : DisposableBase
             game.ContentManager,
             game.GraphicsLoadContext,
             BlendStateDescription.SingleAlphaBlend,
-            CreateGameOutputDescription(game.GraphicsSettings)));
+            CreateGameOutputDescription(game.GraphicsSettings, TextureSampleCount.Count1)));
 
         _shadowMapRenderer = AddDisposable(new ShadowMapRenderer(game.GraphicsDevice));
         _waterMapRenderer = AddDisposable(new WaterMapRenderer(game.AssetStore, _loadContext, game.GraphicsDevice, game.GraphicsLoadContext.ShaderResources.Global));
@@ -93,7 +108,10 @@ internal sealed class RenderPipeline : DisposableBase
 
     private void EnsureIntermediateFramebuffer(GraphicsDevice graphicsDevice, Framebuffer target)
     {
-        var sampleCount = GraphicsSettingsController.ToTextureSampleCount(_game.GraphicsSettings.SampleCount);
+        // The shader-set store description is authoritative: pipelines are built once with it,
+        // so the intermediate attachments must always match it, even if the settings instance
+        // is swapped later in the session (a count change requires a new session).
+        var sampleCount = _loadContext.ShaderSetStore.OutputDescription.SampleCount;
 
         if (_intermediateDepthBuffer != null
             && _intermediateDepthBuffer.Width == target.Width
@@ -106,6 +124,9 @@ internal sealed class RenderPipeline : DisposableBase
         RemoveAndDispose(ref _intermediateDepthBuffer);
         RemoveAndDispose(ref _intermediateTexture);
         RemoveAndDispose(ref _intermediateFramebuffer);
+        RemoveAndDispose(ref _compositionTexture);
+        RemoveAndDispose(ref _compositionDepthBuffer);
+        RemoveAndDispose(ref _compositionFramebuffer);
 
         _intermediateDepthBuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
             TextureDescription.Texture2D(target.Width, target.Height, 1, 1, PixelFormat.D32_Float_S8_UInt, TextureUsage.DepthStencil, sampleCount)));
@@ -115,6 +136,21 @@ internal sealed class RenderPipeline : DisposableBase
 
         _intermediateFramebuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateFramebuffer(
             new FramebufferDescription(_intermediateDepthBuffer, _intermediateTexture)));
+
+        if (sampleCount != TextureSampleCount.Count1)
+        {
+            // 2D/UI composites on a single-sample target; the multisampled 3D colour is
+            // resolved into it before any 2D drawing each frame. The depth attachment is
+            // never written by 2D pipelines but must exist for framebuffer compatibility.
+            _compositionDepthBuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
+                TextureDescription.Texture2D(target.Width, target.Height, 1, 1, PixelFormat.D32_Float_S8_UInt, TextureUsage.DepthStencil)));
+
+            _compositionTexture = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
+                TextureDescription.Texture2D(target.Width, target.Height, 1, 1, target.ColorTargets[0].Target.Format, TextureUsage.RenderTarget | TextureUsage.Sampled)));
+
+            _compositionFramebuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateFramebuffer(
+                new FramebufferDescription(_compositionDepthBuffer, _compositionTexture)));
+        }
     }
 
     public void Execute(RenderContext context)
@@ -144,10 +180,29 @@ internal sealed class RenderPipeline : DisposableBase
             _commandList.PushDebugGroup("3D Scene");
             Render3DScene(_commandList, context.Scene3D, context);
             _commandList.PopDebugGroup();
+
+            if (_compositionFramebuffer != null)
+            {
+                // Multisampled frame: resolve the 3D colour before 2D draws, which composite
+                // on the single-sample target and would otherwise sample an unresolved texture.
+                _commandList.PushDebugGroup("MSAA Resolve");
+                _commandList.ResolveTexture(_intermediateTexture, _compositionTexture);
+                _commandList.SetFramebuffer(_compositionFramebuffer);
+                _commandList.PopDebugGroup();
+            }
         }
         else
         {
-            _commandList.SetFramebuffer(_intermediateFramebuffer);
+            if (_compositionFramebuffer != null)
+            {
+                // Nothing 3D is drawn; clear the composition target directly.
+                _commandList.SetFramebuffer(_compositionFramebuffer);
+            }
+            else
+            {
+                _commandList.SetFramebuffer(_intermediateFramebuffer);
+            }
+
             _commandList.ClearColorTarget(0, ClearColor);
         }
 
@@ -180,7 +235,7 @@ internal sealed class RenderPipeline : DisposableBase
         context.GraphicsDevice.SubmitCommands(_commandList);
 
         _textureCopier.Execute(
-            _intermediateTexture,
+            _compositionTexture ?? _intermediateTexture,
             context.RenderTarget);
     }
 

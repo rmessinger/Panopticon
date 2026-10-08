@@ -518,11 +518,20 @@ public sealed class Game : DisposableBase, IGame
         GameInstallation installation,
         GraphicsBackend? preferredBackend,
         Configuration config,
-        GameWindow window)
+        GameWindow window,
+        GraphicsSettings? graphicsSettings = null)
     {
         using (GameTrace.TraceDurationEvent("Game()"))
         {
             Configuration = config;
+
+            // Applied before graphics-resource construction: the shader-set store and its
+            // pipelines are built from the settings once, so the initial preset must be known
+            // here. Later swaps change only what the frame-boundary applier supports.
+            if (graphicsSettings != null)
+            {
+                GraphicsSettings = graphicsSettings;
+            }
 
             // TODO: This should probably be done in some dynamic way.
             // We can't change our backend at runtime though. See NeoDemo.cs
@@ -1045,7 +1054,11 @@ public sealed class Game : DisposableBase, IGame
 
         _appliedGraphicsSettings = GraphicsSettings;
 
-        GraphicsSettingsController.Apply(GraphicsSettings);
+        // Pipelines were built once with the construction-time sample count; report it as the
+        // session ceiling so a later preset swap never claims an unsupportable effective count.
+        var sessionSampleCount = GraphicsSettingsController.FromTextureSampleCount(
+            GraphicsLoadContext.ShaderSetStore.OutputDescription.SampleCount);
+        GraphicsSettingsController.Apply(GraphicsSettings, sessionSampleCount);
         Scene3D?.Shadows.ApplyTier(GraphicsSettings.ShadowTier);
     }
 

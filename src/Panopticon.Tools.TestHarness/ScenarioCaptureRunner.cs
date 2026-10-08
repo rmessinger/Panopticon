@@ -112,14 +112,8 @@ public static class ScenarioCaptureRunner
             installation,
             settings.Renderer,
             new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = settings.FullHud },
-            null);
-
-        if (settings.GraphicsSettings != null)
-        {
-            // Applied before the scene exists: the Scene3D constructor reads the shadow tier,
-            // so later assignment would leave the initial cascades at the previous preset.
-            game.GraphicsSettings = settings.GraphicsSettings;
-        }
+            null,
+            settings.GraphicsSettings);
 
         var playerSettings = profile.Players.Select((player, index) => new PlayerSetting(
             index,

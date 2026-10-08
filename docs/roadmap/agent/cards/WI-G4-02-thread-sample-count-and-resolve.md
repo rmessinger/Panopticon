@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G4-02` |
 | Roadmap phase | [Track G · G4](../../track-g-rendering-clarity.md): Multisample antialiasing |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `M` |
 | Prerequisites | `WI-G4-01`, `WI-G3-04`, `WI-G2-03` |
@@ -50,13 +50,34 @@ while the `Faithful` preset stays at one sample and unchanged.
 
 ## Acceptance criteria
 
-- [ ] A frame renders and resolves correctly at 2x, 4x, and 8x across the 3D, terrain, water, road,
-      and particle pipelines, with no validation-layer errors.
-- [ ] The G3 edge-aliasing metric improves measurably at 4x against the same frame at 1x, satisfying
-      the G4 milestone.
-- [ ] A `Faithful` capture is unchanged against its golden.
-- [ ] An unsupported sample count clamps rather than throwing.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A frame renders and resolves correctly at 2x, 4x, and 8x across the 3D, terrain, water, road,
+      and particle pipelines, with no validation-layer errors. 4x runs as the Enhanced preset in
+      the full G3 harness; 2x and 8x were exercised by temporarily setting the preset count and
+      running the same harness (all scenes captured, no `VeldridException`, no compatibility
+      errors), then reverting to 4.
+- [x] The G3 edge-aliasing metric improves measurably at 4x against the same frame at 1x:
+      `unit-silhouettes` EdgeAliasing 0.0725 (1x) vs 0.0707 (4x), supersampled reference 0.0641
+      vs 0.0627, `SilhouetteImproved` true for both presets.
+- [x] A `Faithful` capture is unchanged against its golden: all six faithful scenes Passed with
+      zero differing pixels on the pre-update gate run; faithful manifest hashes unchanged after
+      the enhanced golden regeneration.
+- [x] An unsupported sample count clamps rather than throwing: the G2 device clamp applies
+      (request 64 clamps to the format limit, unit-tested), and counts above the session's
+      construction count clamp back with a reported fallback string.
+- [x] Standard validation passes: build 0 errors; tests 53 + 355 + 2089 passed, 7 skipped;
+      `dotnet format --verify-no-changes` clean; brace check rc 0; `git diff --check` clean.
+
+## Completion notes
+
+- Enhanced goldens were regenerated on the reference host through the reviewed
+  `TESTHARNESS_VR_UPDATE_GOLDENS=1` route; the committed manifest diff contains only the six
+  enhanced hash/score triples plus `UpdatedUtc`.
+- The composition framebuffer carries an inert depth attachment: 2D pipelines declare the depth
+  format in their output description, and a colour-only framebuffer fails Veldrid's
+  pipeline/framebuffer compatibility check (found on the Enhanced HUD scene).
+- Sample-count changes take effect at construction (new `Game` constructor parameter); a
+  mid-session swap reports a session fallback instead of rebuilding pipelines, per the recreation
+  trigger table in the G2 plan.
 
 ## Validation commands
 
