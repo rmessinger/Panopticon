@@ -1174,7 +1174,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: requested anisotropy 1/2/4/8/16 and finite bias in [-1,1] validate and report effective
     values; resource sets observe sampler changes; grazing-angle and fixed-motion captures
     meet the G7 sharpness/temporal checks; terrain seams stay absent and `Legacy` matches its golden.
-- [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
+- [x] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
       slope-scaled term added to the constant bias; the existing normal offset is kept)
       ([`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md),
       [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md)).

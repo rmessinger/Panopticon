@@ -152,7 +152,8 @@ public class GraphicsSettingsApplicationTests
 
         Assert.Equal(1, legacy.SampleCount);
         Assert.Equal(ShadowTier.Original, legacy.ShadowTier);
-        Assert.Equal(enhanced.Anisotropy, legacy.Anisotropy);
+        Assert.Equal(16, enhanced.Anisotropy);
+        Assert.Equal(4, legacy.Anisotropy);
         Assert.Equal(enhanced.MipLodBias, legacy.MipLodBias);
     }
 }

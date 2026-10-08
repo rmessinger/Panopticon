@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G8-02` |
 | Roadmap phase | [Track G · G8](../../track-g-rendering-clarity.md): Shadow quality tier |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-G8-01`, `WI-G2-03`, `WI-G3-04` |

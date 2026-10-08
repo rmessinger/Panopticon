@@ -69,6 +69,13 @@ public sealed class ShadowSettings
     public float Bias { get; set; } = 0.002f;
 
     /// <summary>
+    /// Gets or sets the slope-scaled receiver bias multiplier. Scales with the tangent of
+    /// the light incidence angle and the shadow map texel size, so grazing surfaces get a
+    /// larger depth offset without detaching contact shadows on flat ones (G8).
+    /// </summary>
+    public float SlopeScaledBias { get; set; }
+
+    /// <summary>
     /// Applies the tier-owned members of a G2 fidelity preset. Members the tier does not
     /// own, such as bias and cascade split depths, keep their current values.
     /// </summary>
@@ -79,10 +86,12 @@ public sealed class ShadowSettings
             case ShadowTier.Original:
                 ShadowMapCascades = ShadowMapCascades.OneCascade;
                 ShadowMapSize = 1024;
+                SlopeScaledBias = 0f;
                 break;
             case ShadowTier.High:
                 ShadowMapCascades = ShadowMapCascades.FourCascades;
                 ShadowMapSize = 2048;
+                SlopeScaledBias = 2f;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(tier));

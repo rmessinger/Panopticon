@@ -4,6 +4,8 @@
 
 #define NUM_CASCADES 4
 
+#define MAX_SLOPE_TANGENT 4.0
+
 #define SHADOWS_NONE 0
 #define SHADOWS_HARD 1
 #define SHADOWS_SOFT 2
@@ -21,7 +23,7 @@ struct ShadowConstantsPSType
     float ShadowDistance;
     int ShadowsType;
     int NumSplits;
-    float _Padding;
+    float SlopeScaledBias;
 };
 
 layout(set = PASS_CONSTANTS_RESOURCE_SET, binding = 4) uniform ShadowConstantsPS
@@ -52,19 +54,20 @@ float SampleShadowMap(
 float SampleShadowMapOptimizedPCF(
     vec3 shadowPos,
     vec3 shadowPosDX, vec3 shadowPosDY,
-    int cascadeIdx)
+    int cascadeIdx, float slopeFactor)
 {
     vec3 shadowMapSize = textureSize(sampler2DArrayShadow(Global_ShadowMap, Global_ShadowSampler), 0);
 
     float lightDepth = shadowPos.z;
 
-    float bias = _ShadowConstantsPS.Bias;
+    vec2 shadowMapSizeInv = 1.0 / shadowMapSize.xy;
+
+    float bias = _ShadowConstantsPS.Bias
+        + _ShadowConstantsPS.SlopeScaledBias * slopeFactor * shadowMapSizeInv.x;
 
     lightDepth -= bias;
 
     vec2 uv = shadowPos.xy * shadowMapSize.xy; // 1 unit - 1 texel
-
-    vec2 shadowMapSizeInv = 1.0 / shadowMapSize.xy;
 
     vec2 baseUv;
     baseUv.x = floor(uv.x + 0.5);
@@ -200,7 +203,7 @@ float SampleShadowMapOptimizedPCF(
 vec3 SampleShadowCascade(
     vec3 shadowPosition,
     vec3 shadowPosDX, vec3 shadowPosDY,
-    int cascadeIdx, ivec2 screenPos)
+    int cascadeIdx, ivec2 screenPos, float slopeFactor)
 {
     shadowPosition += _ShadowConstantsPS.CascadeOffsets[cascadeIdx].xyz;
     shadowPosition *= _ShadowConstantsPS.CascadeScales[cascadeIdx].xyz;
@@ -227,7 +230,7 @@ vec3 SampleShadowCascade(
         shadowPosition, 
         shadowPosDX, 
         shadowPosDY, 
-        cascadeIdx);
+        cascadeIdx, slopeFactor);
 
     return shadow * cascadeColor;
 }
@@ -265,6 +268,13 @@ vec3 ShadowVisibility(
         }
     }
 
+    // Slope-scaled receiver bias factor: the tangent of the light incidence angle,
+    // clamped so extreme grazing stays bounded (G8).
+    float cosTheta = clamp(nDotL, 0.0, 1.0);
+    float slopeFactor = min(
+        sqrt(max(0.0, 1.0 - cosTheta * cosTheta)) / max(cosTheta, 1e-4),
+        MAX_SLOPE_TANGENT);
+
     // Apply offset
     vec3 offset = GetShadowPosOffset(nDotL, normal) / abs(_ShadowConstantsPS.CascadeScales[cascadeIdx].z);
 
@@ -277,7 +287,7 @@ vec3 ShadowVisibility(
     shadowVisibility = SampleShadowCascade(
         shadowPosition,
         shadowPosDX, shadowPosDY, 
-        cascadeIdx, screenPos);
+        cascadeIdx, screenPos, slopeFactor);
 
     if (_ShadowConstantsPS.FilterAcrossCascades)
     {
@@ -293,7 +303,7 @@ vec3 ShadowVisibility(
             vec3 nextSplitVisibility = SampleShadowCascade(
                 shadowPosition,
                 shadowPosDX, shadowPosDY, 
-                cascadeIdx + 1, screenPos);
+                cascadeIdx + 1, screenPos, slopeFactor);
             float lerpAmt = smoothstep(0.0f, blendThreshold, splitDist);
             shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
         }
