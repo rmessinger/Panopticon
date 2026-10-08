@@ -646,9 +646,15 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
       [seams.md](seams.md)).
   - AC: TBD, each seam has an interface + ≥1 swappable implementation selectable at runtime; all are
     listed in [seams.md](seams.md).
-- [ ] Experiment harness: select/configure an implementation, run vs. B1 benchmarks, report to A5.
+  - Partial (WI-A4-31, WI-A4-36): the audit grounds all five seams and model import is registered
+    with two config-selected implementations; pathfinding, partitioning, fidelity, and storage stay
+    gated on B4/B3/B6/B7 contracts (WI-A4-32..35).
+- [x] Experiment harness: select/configure an implementation, run vs. B1 benchmarks, report to A5.
   - AC: TBD, the harness selects/configures an impl, runs it against B1 benchmarks, and reports to
     A5; demonstrated by swapping one seam impl and comparing results.
+  - Done (WI-A4-37..41): the ai-policy seam swaps rule-based and neural implementations per cell
+    through one B1 scenario (`b1.ai-policy`) and one comparison report (`a4.experiment/1`); CLI:
+    `--experiment <definition.json>`.
 
 ### A5: Scenario authoring & visualization ([deep dive](deep-dives/a5-visualization.md))
 - [ ] A5-1 Scenario authoring & setup (declarative + visual + capture-from-run; built on the P0 harness).

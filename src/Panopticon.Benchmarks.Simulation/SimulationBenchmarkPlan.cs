@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Panopticon.Benchmarks.Simulation.Experiments;
 
 namespace Panopticon.Benchmarks.Simulation;
 
@@ -39,4 +41,10 @@ public sealed class SimulationBenchmarkPlan
 
     /// <summary>Optional baseline JSON record for CI-overlap regression comparison.</summary>
     public string? BaselinePath { get; init; }
+
+    /// <summary>
+    /// Resolved experiment cell bindings (A4-39); scenarios that support experiment selection
+    /// read them. Null for plain B1 runs, which never see a difference.
+    /// </summary>
+    public IReadOnlyList<ResolvedExperimentBinding>? ExperimentBindings { get; init; }
 }
