@@ -62,7 +62,9 @@ public sealed class SimulationBenchmarkRunner
         return record;
     }
 
-    private static List<BenchmarkStatistics> BuildStatistics(
+    // Internal for the M1 capacity probe (WI-M1-02): the TestHarness probe builds the same
+    // B1 statistics from its manually driven measured window, then appends probe metrics.
+    internal static List<BenchmarkStatistics> BuildStatistics(
         BenchmarkRunRecord record,
         uint seed,
         BenchmarkRunRecord? baseline)

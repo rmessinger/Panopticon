@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Panopticon.Simulation\Panopticon.Simulation.csproj" />
+    <ProjectReference Include="..\Panopticon.Benchmarks.Simulation\Panopticon.Benchmarks.Simulation.csproj" />
     <ProjectReference Include="..\Panopticon.Mods.BuiltIn\Panopticon.Mods.BuiltIn.csproj" />
     <ProjectReference Include="..\Panopticon.Tools.ReplaySketch.Core\Panopticon.Tools.ReplaySketch.Core.csproj" />
     <ProjectReference Include="..\Veldrid.ImGui\Veldrid.ImGui.csproj" />

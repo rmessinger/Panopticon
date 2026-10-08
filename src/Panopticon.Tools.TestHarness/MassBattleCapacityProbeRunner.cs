@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Panopticon.Benchmarks.Simulation;
 using Panopticon.Data;
 using Panopticon.Graphics;
 using Panopticon.Input;
@@ -30,6 +31,10 @@ public static class MassBattleCapacityProbeRunner
     public const string DefaultProfileFileName = "mass-battle-deepdivide-capacity-probe.json";
 
     private const string DefaultReportFileName = "mass-battle-capacity-probe-report.json";
+
+    // B1 record identity for the measured engagement (WI-M1-02).
+    private const string BenchmarkScenarioId = "m1.capacity-probe";
+    private const uint ProbeSeed = 1;
 
     internal const int DefaultFrameBudget = 9000;
 
@@ -117,7 +122,7 @@ public static class MassBattleCapacityProbeRunner
                 index,
                 PlayerOwner.EasyAi,
                 side.Id)).ToArray();
-            game.StartSkirmishOrMultiPlayerGame(profile.Map.Path, new EchoConnection(), playerSettings, 1, isMultiPlayer: false);
+            game.StartSkirmishOrMultiPlayerGame(profile.Map.Path, new EchoConnection(), playerSettings, (int)ProbeSeed, isMultiPlayer: false);
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
             game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
@@ -154,7 +159,7 @@ public static class MassBattleCapacityProbeRunner
 
             IssueGeneralAttack(game, armies);
 
-            var framesRun = RunEngagement(game, armies, step, frameBudget);
+            var (framesRun, benchmarkRecord) = RunEngagement(game, armies, step, frameBudget, config.Headless);
             var stopReason = DescribeStopReason(armies, framesRun, frameBudget);
 
             string? screenshotPath = null;
@@ -172,6 +177,17 @@ public static class MassBattleCapacityProbeRunner
                 : config.MassBattleCapacityProbeReportPath!;
             MassBattleCapacityProbeReport.WriteJson(report, reportPath);
             reporter.Info($"Report JSON saved to: {reportPath}");
+
+            // B1 record beside the engagement report (WI-M1-02): same writers and schema as
+            // every other benchmark run, so A2/A5 tooling consumes it unchanged.
+            var reportDirectory = System.IO.Path.GetDirectoryName(reportPath) ?? AppContext.BaseDirectory;
+            var benchmarkJsonPath = System.IO.Path.Combine(
+                reportDirectory, System.IO.Path.GetFileNameWithoutExtension(reportPath) + "-benchmark.json");
+            var benchmarkCsvPath = System.IO.Path.ChangeExtension(benchmarkJsonPath, ".csv");
+            BenchmarkReportWriter.WriteJson(benchmarkRecord, benchmarkJsonPath);
+            BenchmarkReportWriter.WriteCsv(benchmarkRecord, benchmarkCsvPath);
+            reporter.Info($"B1 benchmark JSON saved to: {benchmarkJsonPath}");
+            reporter.Info($"B1 benchmark CSV saved to: {benchmarkCsvPath}");
 
             return report.AllPassed ? 0 : ExitCheckFailed;
         }
@@ -399,26 +415,110 @@ public static class MassBattleCapacityProbeRunner
     /// sortie transitions every frame and re-issuing orders on the refresh cadence while enemies
     /// remain (re-parked jets launch again: the rearm observation).
     /// </summary>
-    private static int RunEngagement(Game game, List<SideArmy> armies, Action step, int frameBudget)
+    /// <summary>
+    /// Runs the measured engagement window (WI-M1-02): setup, spawn, and settle are unmeasured
+    /// (mirroring B1 warmup); measurement spans the general attack to the frame budget or army
+    /// destruction. The step bracket captures tick cost, allocations, GC, memory, system spans,
+    /// and the delta of the engine path-request counter per tick. In windowed mode the step
+    /// includes render and present, so tick.wallMs is the frame time and tick.fps the frame rate.
+    /// </summary>
+    private static (int FramesRun, BenchmarkRunRecord Record) RunEngagement(
+        Game game,
+        List<SideArmy> armies,
+        Action step,
+        int frameBudget,
+        bool headless)
     {
         var allJets = armies.SelectMany(army => army.Jets).ToList();
-        for (var frame = 0; frame < frameBudget; frame++)
+        var framesRun = frameBudget;
+        var stopPredicateTriggered = false;
+
+        using var recorder = new BenchmarkMetricRecorder();
+        game.LogicStepper.SystemSpan += recorder.RecordSystemSpan;
+        var pathDeltas = new List<double>(frameBudget);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        try
         {
-            step();
-            TrackJetTransitions(allJets, frame);
-
-            if (armies.Any(army => army.AliveUnits == 0))
+            for (var frame = 0; frame < frameBudget; frame++)
             {
-                return frame + 1;
-            }
+                var pathRequestsBefore = NavigationGrid.PathRequestCount;
+                recorder.BeginTick((uint)frame + 1);
+                step();
+                recorder.EndTick((uint)frame + 1);
+                pathDeltas.Add(NavigationGrid.PathRequestCount - pathRequestsBefore);
 
-            if ((frame + 1) % OrderRefreshFrames == 0)
-            {
-                RefreshOrders(game, armies);
+                TrackJetTransitions(allJets, frame);
+
+                if (armies.Any(army => army.AliveUnits == 0))
+                {
+                    framesRun = frame + 1;
+                    stopPredicateTriggered = true;
+                    break;
+                }
+
+                if ((frame + 1) % OrderRefreshFrames == 0)
+                {
+                    RefreshOrders(game, armies);
+                }
             }
         }
+        finally
+        {
+            stopwatch.Stop();
+            game.LogicStepper.SystemSpan -= recorder.RecordSystemSpan;
+        }
 
-        return frameBudget;
+        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
+    }
+
+    private static BenchmarkRunRecord BuildBenchmarkRecord(
+        Game game,
+        BenchmarkMetricRecorder recorder,
+        List<double> pathDeltas,
+        System.Diagnostics.Stopwatch stopwatch,
+        int framesRun,
+        int frameBudget,
+        bool stopPredicateTriggered,
+        bool headless)
+    {
+        var environment = EnvironmentRecord.Capture();
+        environment.InstallId = game.Definition.Identifier;
+        environment.Env["PANOPTICON_PROBE_MODE"] = headless ? "headless" : "windowed";
+        var installPath = Environment.GetEnvironmentVariable("CNC_GENERALS_PATH");
+        if (!string.IsNullOrEmpty(installPath))
+        {
+            environment.Env["CNC_GENERALS_PATH"] = installPath;
+        }
+
+        var record = new BenchmarkRunRecord(
+            BenchmarkScenarioId,
+            ProbeSeed,
+            SettleFrames,
+            frameBudget,
+            framesRun,
+            stopPredicateTriggered,
+            stopwatch.Elapsed.TotalMilliseconds)
+        {
+            TickSamples = [.. recorder.TickSamples],
+            SystemSamples = [.. recorder.SystemSamples],
+            Environment = environment,
+        };
+
+        record.Statistics.AddRange(SimulationBenchmarkRunner.BuildStatistics(record, ProbeSeed, baseline: null));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            "tick.fps",
+            [.. record.TickSamples.Select(t => t.WallMs > 0 ? 1000.0 / t.WallMs : 0.0)],
+            ProbeSeed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            "path.requestsPerTick",
+            [.. pathDeltas],
+            ProbeSeed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            "path.requestsPerSecond",
+            [.. pathDeltas.Select(d => d * game.GameEngine.LogicFramesPerSecond)],
+            ProbeSeed));
+        return record;
     }
 
     private static void TrackJetTransitions(List<JetSortie> jets, int frame)

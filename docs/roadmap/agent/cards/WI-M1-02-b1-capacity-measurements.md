@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M1-02` |
 | Roadmap phase | [M1](../../track-m-mass-battle.md): capacity probe |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-M1-01` |
@@ -38,11 +38,13 @@ Record the WI-M1-01 engagement with the B1 measurement stack: tick cost, frame r
 
 ## Acceptance criteria
 
-- [ ] The B1 record for a probe run contains tick samples (wall ms, allocations, GC, memory), system span samples, and path-request samples over the measured engagement.
-- [ ] `tick.wallMs`, derived frame rate, memory, and `path.requestsPerSecond` statistics appear in the record's statistics list.
-- [ ] JSON is written by `BenchmarkReportWriter` (schema `b1.run/1`) and CSV derives from the same record.
-- [ ] Path counter counts only `CalculatePath` entries; no per-call allocation on the hot path.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] The B1 record for a probe run contains tick samples (wall ms, allocations, GC, memory), system span samples, and path-request samples over the measured engagement.
+  - Full-scale headless run: 9000 tick samples, 36000 system span samples, per-tick path-request deltas summarized as `path.requestsPerTick` / `path.requestsPerSecond`.
+- [x] `tick.wallMs`, derived frame rate, memory, and `path.requestsPerSecond` statistics appear in the record's statistics list.
+- [x] JSON is written by `BenchmarkReportWriter` (schema `b1.run/1`) and CSV derives from the same record.
+- [x] Path counter counts only `CalculatePath` entries; no per-call allocation on the hot path.
+  - `Interlocked.Increment` on a static long; covered by install-free `NavigationPathRequestCounterTests`.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 

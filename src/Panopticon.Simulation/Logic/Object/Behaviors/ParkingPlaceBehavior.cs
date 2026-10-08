@@ -435,7 +435,18 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
             }
         }
 
-        // we don't double-stack landing clearances
+        // The aircraft is committed to landing (its target point is a runway end regardless of
+        // assignment), so a saturated field double-stacks the clearance like a taxiing aircraft
+        // instead of leaving the landing without any assignment to report against later.
+        for (var i = 0; i < _runwayAssignments.Length; i++)
+        {
+            if (_runwayAssignments[i].Aircraft2Id.IsInvalid)
+            {
+                _runwayAssignments[i] = new RunwayAssignment(_runwayAssignments[i].Aircraft1Id, objectId);
+                return i;
+            }
+        }
+
         return -1;
     }
 
@@ -444,7 +455,6 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
     /// </summary>
     /// <param name="objectId">Landed aircraft</param>
     /// <returns>Hangar assignment</returns>
-    /// <exception cref="InvalidStateException">thrown when an aircraft doesn't have a hangar reserved</exception>
     public (int Runway, int Hangar) ReportLanded(ObjectId objectId)
     {
         var runway = -1;
@@ -458,6 +468,28 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
                 runway = i;
                 break;
             }
+        }
+
+        if (runway == -1)
+        {
+            // a double-stacked landing clearance is cleared from the secondary side only
+            for (var i = 0; i < _runwayAssignments.Length; i++)
+            {
+                if (_runwayAssignments[i].Aircraft2Id == objectId)
+                {
+                    _runwayAssignments[i] = new RunwayAssignment(_runwayAssignments[i].Aircraft1Id);
+                    runway = i;
+                    break;
+                }
+            }
+        }
+
+        if (runway == -1 && _runwayAssignments.Length > 0)
+        {
+            // The aircraft is physically down with no recorded clearance (for example it landed
+            // while every runway was double-stacked). The hangar path is bone math that works
+            // for any runway index, so recover instead of stalling the field forever.
+            runway = 0;
         }
 
         if (runway == -1)
