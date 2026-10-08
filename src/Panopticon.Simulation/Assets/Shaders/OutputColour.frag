@@ -4,8 +4,6 @@ layout(set = 0, binding = 0) uniform sampler SourceSampler;
 
 layout(set = 0, binding = 1) uniform texture2D SourceTexture;
 
-layout(location = 0) in vec2 in_Uv;
-
 layout(location = 0) out vec4 out_Color;
 
 // Zero-mean ordered dither, at most one 8-bit code step, indexed by screen coordinates
@@ -28,7 +26,10 @@ float LinearToSrgb(float channel)
 
 void main()
 {
-    vec3 linearColor = clamp(texture(sampler2D(SourceTexture, SourceSampler), in_Uv).rgb, 0.0, 1.0);
+    // Framebuffer coordinates share the render texture's origin on each backend;
+    // clip-space Y does not. This pass presents a same-sized composition texture.
+    vec2 uv = gl_FragCoord.xy / vec2(textureSize(sampler2D(SourceTexture, SourceSampler), 0));
+    vec3 linearColor = clamp(texture(sampler2D(SourceTexture, SourceSampler), uv).rgb, 0.0, 1.0);
 
     vec3 encoded = vec3(
         LinearToSrgb(linearColor.r),
