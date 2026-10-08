@@ -187,15 +187,46 @@ public sealed class ParkingPlaceBehaviour : UpdateModule, IHasRallyPoint, IProdu
     }
 
     // todo: track multiple aircraft assigned to a single runway
-    public bool IsTaxiingPointBlocked(string boneName) =>
-        _runwayAssignments[IndexForRunwayBone(boneName)].Aircraft1Id.IsValid;
+    public bool IsTaxiingPointBlocked(string boneName)
+    {
+        var aircraft = _runwayAssignments[IndexForRunwayBone(boneName)].Aircraft1Id;
+        if (!aircraft.IsValid)
+        {
+            return false;
+        }
+
+        // A mere runway assignment must not block the crossing aircraft: paths to either
+        // runway start with a prep bone on the opposite runway, so two aircraft that both
+        // hold an assignment would wait for each other forever while still parked. Only
+        // an aircraft holding an issued taxi waypoint or rolling on the runway occupies it.
+        var aircraftObject = GameEngine.GameLogic.GetObjectById(aircraft);
+        if (aircraftObject?.AIUpdate is not JetAIUpdate jetAI)
+        {
+            return false;
+        }
+
+        return jetAI.CurrentJetAIState is JetAIUpdate.JetAIState.PreparingStart
+            or JetAIUpdate.JetAIState.Starting
+            || (jetAI.TargetPoints.Count > 0
+                && jetAI.CurrentJetAIState is JetAIUpdate.JetAIState.MovingTowardsStart
+                    or JetAIUpdate.JetAIState.MovingBackToHangar);
+    }
 
     public void ReserveRunway(ObjectId objectId)
     {
+        // already holding an assignment (ReportReadyToTaxi / ReportLanding / a promotion)
+        for (var i = 0; i < _runwayAssignments.Length; i++)
+        {
+            if (_runwayAssignments[i].Aircraft1Id == objectId)
+            {
+                return;
+            }
+        }
+
         // check if there are any free runways
         for (var i = 0; i < _runwayAssignments.Length; i++)
         {
-            if (!_runwayAssignments[i].AircraftOccupyingRunway)
+            if (_runwayAssignments[i].Aircraft1Id.IsInvalid)
             {
                 _runwayAssignments[i] = new RunwayAssignment(objectId);
                 return;

@@ -115,6 +115,24 @@ public sealed record MassBattleCapacityProfile
     public float MinPitch { get; init; } = 25f;
 
     public List<MassBattleUnitBlock> Blocks { get; init; } = new();
+
+    /// <summary>
+    /// Optional aircraft per side, spawned parked at the side's airfields instead of inside the
+    /// zone (WI-M1-01). Null means the ground blocks alone must sum to <see cref="UnitsPerSide"/>
+    /// (the M0 deployment proof contract).
+    /// </summary>
+    public MassBattleAircraftProfile? Aircraft { get; init; }
+
+    public int GroundUnitsPerSide => Blocks.Sum(block => block.Count);
+
+    public int TotalUnitsPerSide => GroundUnitsPerSide + (Aircraft?.Count ?? 0);
+}
+
+public sealed record MassBattleAircraftProfile
+{
+    public string Definition { get; init; } = "AmericaJetAurora";
+
+    public int Count { get; init; }
 }
 
 public sealed record MassBattleReachabilityProfile

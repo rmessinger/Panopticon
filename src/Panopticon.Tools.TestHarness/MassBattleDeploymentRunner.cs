@@ -66,7 +66,7 @@ public static class MassBattleDeploymentRunner
             return ExitSetupError;
         }
 
-        var blockSum = profile.Capacity.Blocks.Sum(block => block.Count);
+        var blockSum = profile.Capacity.GroundUnitsPerSide;
         if (blockSum != profile.Capacity.UnitsPerSide)
         {
             reporter.Error(
@@ -115,7 +115,7 @@ public static class MassBattleDeploymentRunner
             var playerSettings = profile.Sides.Select((side, index) => new PlayerSetting(
                 index,
                 side.Side,
-                ParseColor(side.Color, index),
+                MassBattlePlacement.ParseColor(side.Color, index),
                 0,
                 PlayerOwner.EasyAi,
                 side.Id)).ToArray();
@@ -143,7 +143,7 @@ public static class MassBattleDeploymentRunner
             var zoneA = profile.Sides[0].Zone;
             var zoneB = profile.Sides[1].Zone;
             var view = game.Scene3D.TacticalView;
-            var bounds = PlacementBounds(profile);
+            var bounds = MassBattlePlacement.PlacementBounds(profile);
             var framingHeight = MathF.Max(
                 4000f,
                 1.25f * MathF.Sqrt(bounds.Width * bounds.Width + bounds.Height * bounds.Height));
@@ -166,7 +166,7 @@ public static class MassBattleDeploymentRunner
 
             Action step = config.Headless
                 ? () => game.Update(Array.Empty<InputMessage>())
-                : () => StepWindowed(game, window!, textureCopier!);
+                : () => MassBattlePlacement.StepWindowed(game, window!, textureCopier!);
 
             var navigation = game.Scene3D.Navigation;
 
@@ -180,7 +180,7 @@ public static class MassBattleDeploymentRunner
             var maxWeaponRange = sideResults.Max(side => side.LongestWeaponRange);
 
             var (gridPathNodes, gridEndPassable) = GridPathBetweenCentroids(navigation, profile);
-            var separationGap = RectGap(zoneA, zoneB);
+            var separationGap = MassBattlePlacement.RectGap(zoneA, zoneB);
 
             string? screenshotPath = null;
             if (!string.IsNullOrEmpty(config.MassBattleDeploymentScreenshotPath))
@@ -246,7 +246,7 @@ public static class MassBattleDeploymentRunner
         var zoneA = profile.Sides[0].Zone;
         var zoneB = profile.Sides[1].Zone;
         var owner = game.Scene3D.Players[2];
-        var target = GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
+        var target = MassBattlePlacement.GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
         var classes = EnumerateGroundLocomotorClasses(game).ToList();
         var probes = new List<ReachabilityProbe>();
 
@@ -257,9 +257,9 @@ public static class MassBattleDeploymentRunner
                 ?? throw new InvalidOperationException(
                     $"Representative '{representative.DefinitionName}' for surfaces {surfaces} disappeared from the asset store.");
             var lateral = (i - (classes.Count - 1) / 2f) * 80f;
-            var spawn = GroundPosition(game, zoneA.CenterX + lateral, zoneA.CenterY);
-            var yaw = YawToward(spawn, target);
-            var unit = SpawnAt(game, definition, owner, spawn.X, spawn.Y, yaw);
+            var spawn = MassBattlePlacement.GroundPosition(game, zoneA.CenterX + lateral, zoneA.CenterY);
+            var yaw = MassBattlePlacement.YawToward(spawn, target);
+            var unit = MassBattlePlacement.SpawnAt(game, definition, owner, spawn.X, spawn.Y, yaw);
             var distance = Vector3.Distance(unit.Translation, target);
             var computedBudget = (int)(distance / MathF.Max(representative.MaxSpeed, 0.001f) * profile.Reachability.MaxSpeedSafetyFactor)
                 + profile.Reachability.MinTimeoutFrames;
@@ -274,18 +274,18 @@ public static class MassBattleDeploymentRunner
                 Target = target,
                 FrameBudget = budget,
                 Distance = distance,
-                StartFrame = CurrentLogicFrame(game),
+                StartFrame = MassBattlePlacement.CurrentLogicFrame(game),
             });
             reporter.Info(
                 $"Reachability probe {surfaces} via {representative.DefinitionName}: {distance.ToString("F0", CultureInfo.InvariantCulture)} world units, budget {budget} frames.");
         }
 
         var maxElapsed = probes.Count == 0 ? 0 : probes.Max(probe => probe.FrameBudget);
-        var finishFrame = CurrentLogicFrame(game);
+        var finishFrame = MassBattlePlacement.CurrentLogicFrame(game);
         for (var elapsed = 0; elapsed < maxElapsed; elapsed++)
         {
             step();
-            finishFrame = CurrentLogicFrame(game);
+            finishFrame = MassBattlePlacement.CurrentLogicFrame(game);
             foreach (var probe in probes.Where(probe => !probe.Finished))
             {
                 if (probe.Unit.AIUpdate?.TargetPoints.Count > 0)
@@ -419,137 +419,14 @@ public static class MassBattleDeploymentRunner
     {
         var side = profile.Sides[sideIndex];
         var zone = side.Zone;
-        var opposing = profile.Sides[1 - sideIndex].Zone;
-        var owner = game.Scene3D.Players[2 + sideIndex];
-        var yaw = MathF.PI * side.FacingDegrees / 180f;
-        var reasons = new List<string>();
-        var spawned = 0;
-        var impassable = 0;
-        var skippedSlots = 0;
-        var longestWeaponRange = 0f;
-        var cursorY = zone.Y;
-        var column = 0;
 
-        foreach (var block in profile.Capacity.Blocks)
-        {
-            var definition = game.AssetStore.ObjectDefinitions.GetByName(block.Definition);
-            if (definition == null)
-            {
-                reporter.Error($"Unknown object definition '{block.Definition}' in capacity block.");
-                reasons.Add($"unknown definition '{block.Definition}'");
-                continue;
-            }
-
-            var pitch = MathF.Max(profile.Capacity.SpacingFactor * 2f * definition.Geometry.MajorRadius, profile.Capacity.MinPitch);
-            var columns = Math.Max(1, (int)(zone.Width / pitch));
-
-            // Start every block on a fresh row; the roster fits several times over, so the blank
-            // strip is cheaper than mixing per-block pitches on one row.
-            if (column != 0)
-            {
-                column = 0;
-                cursorY += pitch;
-            }
-
-            var placed = 0;
-            while (placed < block.Count)
-            {
-                if (cursorY + pitch > zone.Y + zone.Height)
-                {
-                    reasons.Add(
-                        $"block '{block.Definition}' exhausted the zone: {placed.ToString(CultureInfo.InvariantCulture)} of {block.Count.ToString(CultureInfo.InvariantCulture)} placed before running out of passable ground");
-                    break;
-                }
-
-                var x = zone.X + pitch / 2f + column * pitch;
-                var y = cursorY + pitch / 2f;
-                column++;
-                if (column >= columns)
-                {
-                    column = 0;
-                    cursorY += pitch;
-                }
-
-                if (!navigation.IsPassable(GroundPosition(game, x, y)))
-                {
-                    skippedSlots++;
-                    continue;
-                }
-
-                var unit = SpawnAt(game, definition, owner, x, y, yaw);
-                if (!navigation.IsPassable(unit.Translation))
-                {
-                    impassable++;
-                }
-
-                if (placed == 0)
-                {
-                    longestWeaponRange = MathF.Max(longestWeaponRange, unit.CurrentWeapon?.Template.AttackRange ?? 0f);
-                }
-
-                placed++;
-                spawned++;
-            }
-        }
-
-        if (spawned != profile.Capacity.UnitsPerSide)
-        {
-            reasons.Add($"spawned {spawned} of {profile.Capacity.UnitsPerSide} requested units");
-        }
-
-        if (impassable > 0)
-        {
-            reasons.Add($"{impassable} spawn points are on impassable grid cells");
-        }
-
-        // Behind = on the far side of the own zone from the opposing zone (between the zone and
-        // the map edge), never inside the deployment rectangle itself.
-        var retreatX = zone.CenterX - opposing.CenterX;
-        var retreatY = zone.CenterY - opposing.CenterY;
-        var airfieldsPlaced = 0;
-        foreach (var anchor in side.AirfieldAnchors)
-        {
-            var definition = game.AssetStore.ObjectDefinitions.GetByName(side.AirfieldDefinition);
-            if (definition == null)
-            {
-                reporter.Error($"Unknown airfield definition '{side.AirfieldDefinition}'.");
-                reasons.Add($"unknown airfield definition '{side.AirfieldDefinition}'");
-                continue;
-            }
-
-            var position = GroundPosition(game, anchor.X, anchor.Y);
-            if (position.Z <= 0f && game.Scene3D.Terrain.GetGroundHeight(new Vector2(anchor.X, anchor.Y)) == null)
-            {
-                reasons.Add($"airfield anchor {anchor.X.ToString("F0", CultureInfo.InvariantCulture)},{anchor.Y.ToString("F0", CultureInfo.InvariantCulture)} is outside the map");
-                continue;
-            }
-
-            if (zone.Contains(anchor.X, anchor.Y))
-            {
-                reasons.Add($"airfield anchor {anchor.X.ToString("F0", CultureInfo.InvariantCulture)},{anchor.Y.ToString("F0", CultureInfo.InvariantCulture)} is inside the deployment zone");
-                continue;
-            }
-
-            if ((anchor.X - zone.CenterX) * retreatX + (anchor.Y - zone.CenterY) * retreatY <= 0f)
-            {
-                reasons.Add($"airfield anchor {anchor.X.ToString("F0", CultureInfo.InvariantCulture)},{anchor.Y.ToString("F0", CultureInfo.InvariantCulture)} is not behind the zone");
-                continue;
-            }
-
-            if (!navigation.IsPassable(position))
-            {
-                reasons.Add($"airfield anchor {anchor.X.ToString("F0", CultureInfo.InvariantCulture)},{anchor.Y.ToString("F0", CultureInfo.InvariantCulture)} is on impassable ground");
-                continue;
-            }
-
-            SpawnAt(game, definition, owner, anchor.X, anchor.Y, yaw);
-            airfieldsPlaced++;
-        }
-
-        if (airfieldsPlaced != side.AirfieldAnchors.Count)
-        {
-            reasons.Add($"placed {airfieldsPlaced} of {side.AirfieldAnchors.Count} airfields");
-        }
+        // The deployment proof places the full roster on the ground inside the zone; aircraft
+        // parking is the capacity probe's contract (WI-M1-01), not this one's.
+        var ground = MassBattlePlacement.SpawnGroundArmy(
+            game, profile, sideIndex, navigation, reporter, profile.Capacity.UnitsPerSide);
+        var (airfields, airfieldReasons) = MassBattlePlacement.PlaceAirfields(
+            game, profile, sideIndex, navigation, reporter);
+        var reasons = ground.FailureReasons.Concat(airfieldReasons).ToList();
 
         return new SideCapacityResult
         {
@@ -558,13 +435,13 @@ public static class MassBattleDeploymentRunner
             ZoneY = zone.Y,
             ZoneWidth = zone.Width,
             ZoneHeight = zone.Height,
-            UnitsSpawned = spawned,
+            UnitsSpawned = ground.Spawned,
             UnitsRequested = profile.Capacity.UnitsPerSide,
-            ImpassableSpawns = impassable,
-            ImpassableSlotsSkipped = skippedSlots,
-            AirfieldsPlaced = airfieldsPlaced,
+            ImpassableSpawns = ground.Impassable,
+            ImpassableSlotsSkipped = ground.ImpassableSlotsSkipped,
+            AirfieldsPlaced = airfields.Count,
             AirfieldAnchors = side.AirfieldAnchors,
-            LongestWeaponRange = longestWeaponRange,
+            LongestWeaponRange = ground.LongestWeaponRange,
             FailureReasons = reasons,
         };
     }
@@ -577,59 +454,6 @@ public static class MassBattleDeploymentRunner
         var end = new Vector3(zoneB.CenterX, zoneB.CenterY, 0f);
         var path = navigation.CalculatePath(start, end, out var endPassable);
         return (path.Count, endPassable);
-    }
-
-    /// <summary>World-space bounding box over all zone rectangles and airfield anchors.</summary>
-    private static (float X, float Y, float Width, float Height) PlacementBounds(MassBattleDeploymentProfile profile)
-    {
-        var minX = float.MaxValue;
-        var minY = float.MaxValue;
-        var maxX = float.MinValue;
-        var maxY = float.MinValue;
-        foreach (var side in profile.Sides)
-        {
-            minX = MathF.Min(minX, side.Zone.X);
-            minY = MathF.Min(minY, side.Zone.Y);
-            maxX = MathF.Max(maxX, side.Zone.X + side.Zone.Width);
-            maxY = MathF.Max(maxY, side.Zone.Y + side.Zone.Height);
-            foreach (var anchor in side.AirfieldAnchors)
-            {
-                minX = MathF.Min(minX, anchor.X);
-                minY = MathF.Min(minY, anchor.Y);
-                maxX = MathF.Max(maxX, anchor.X);
-                maxY = MathF.Max(maxY, anchor.Y);
-            }
-        }
-
-        return (minX, minY, maxX - minX, maxY - minY);
-    }
-
-    private static float RectGap(MassBattleRect a, MassBattleRect b)
-    {
-        var dx = MathF.Max(0f, MathF.Max(b.X - (a.X + a.Width), a.X - (b.X + b.Width)));
-        var dy = MathF.Max(0f, MathF.Max(b.Y - (a.Y + a.Height), a.Y - (b.Y + b.Height)));
-        return dx == 0f && dy == 0f ? 0f : MathF.Sqrt(dx * dx + dy * dy);
-    }
-
-    private static Vector3 GroundPosition(Game game, float x, float y)
-    {
-        var height = game.Scene3D.Terrain.GetGroundHeight(new Vector2(x, y)) ?? 0f;
-        return new Vector3(x, y, height);
-    }
-
-    private static float YawToward(Vector3 from, Vector3 to) =>
-        MathF.Atan2(to.Y - from.Y, to.X - from.X);
-
-    private static GameObject SpawnAt(Game game, ObjectDefinition definition, Player owner, float x, float y, float yawRadians)
-    {
-        var position = GroundPosition(game, x, y);
-        var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
-        var rotation = System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, yawRadians);
-        gameObject.UpdateTransform(position, rotation);
-        // Colliders only refresh on the next logic tick; refresh immediately so culling and any
-        // pre-tick inspection see the object at its spawn point.
-        gameObject.UpdateColliders();
-        return gameObject;
     }
 
     private static string ResolveProfilePath(TestHarnessConfig config, ITestHarnessReporter reporter)
@@ -675,43 +499,4 @@ public static class MassBattleDeploymentRunner
             return null;
         }
     }
-
-    private static void StepWindowed(Game game, GameWindow window, TextureCopier textureCopier)
-    {
-        if (!window.PumpEvents())
-        {
-            game.Exit();
-            return;
-        }
-
-        game.Update(window.MessageQueue);
-        game.Panel.EnsureFrame(window.DrawableBounds);
-        game.Render();
-        textureCopier.Execute(
-            game.Panel.Framebuffer.ColorTargets[0].Target,
-            window.Swapchain.Framebuffer);
-        game.GraphicsDevice.SwapBuffers(window.Swapchain);
-        window.MessageQueue.Clear();
-    }
-
-    private static ColorRgb ParseColor(string? hex, int playerIndex)
-    {
-        if (!string.IsNullOrWhiteSpace(hex))
-        {
-            var trimmed = hex.TrimStart('#');
-            if (uint.TryParse(trimmed, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var packed)
-                && trimmed.Length == 6)
-            {
-                return new ColorRgb(
-                    (byte)((packed >> 16) & 0xFF),
-                    (byte)((packed >> 8) & 0xFF),
-                    (byte)(packed & 0xFF));
-            }
-        }
-
-        return playerIndex == 0 ? new ColorRgb(0x40, 0x9F, 0xFF) : new ColorRgb(0xFF, 0x50, 0x40);
-    }
-
-    private static uint CurrentLogicFrame(Game game) =>
-        unchecked((uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame));
 }

@@ -160,4 +160,24 @@ public sealed class TestHarnessConfig
 
     /// <summary>Optional PNG path for one deployment screenshot captured after the armies spawn.</summary>
     public string? MassBattleDeploymentScreenshotPath { get; set; } = null;
+
+    // ── Mass battle capacity probe (M1) ────────────────────────────────────
+
+    /// <summary>
+    /// Path to a <see cref="MassBattleDeploymentProfile"/> JSON for the capacity probe. Empty
+    /// uses the embedded deepdivide capacity-probe profile shipped beside the executable.
+    /// </summary>
+    public string? MassBattleCapacityProbeProfilePath { get; set; } = null;
+
+    /// <summary>Where to write the engagement report JSON. Empty writes beside the executable.</summary>
+    public string? MassBattleCapacityProbeReportPath { get; set; } = null;
+
+    /// <summary>Optional PNG path for one engagement screenshot captured after the run.</summary>
+    public string? MassBattleCapacityProbeScreenshotPath { get; set; } = null;
+
+    /// <summary>
+    /// Frame budget for the measured engagement. Null uses the runner default (9000 frames);
+    /// setup, spawn, and settle frames are not counted against it.
+    /// </summary>
+    public int? MassBattleCapacityProbeFrameBudget { get; set; } = null;
 }
