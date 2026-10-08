@@ -45,6 +45,15 @@ public sealed class TestHarnessConfig
     /// </summary>
     public bool FullHud { get; set; } = false;
 
+    /// <summary>G9 scale validation: multiplier applied to the scenario capture viewport.</summary>
+    public int ViewportScale { get; set; } = 1;
+
+    /// <summary>
+    /// G10 evidence: pins the render clock so scenario captures are deterministic and can be
+    /// diffed against each other (the visual regression harness always pins it).
+    /// </summary>
+    public bool FixedRenderClock { get; set; } = false;
+
     /// <summary>
     /// Keep the exported .rep file on disk after the run instead of deleting it.
     /// </summary>

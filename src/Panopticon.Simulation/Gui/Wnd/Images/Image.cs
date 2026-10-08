@@ -16,6 +16,13 @@ public sealed class Image
 
     public Size NaturalSize => _source.NaturalSize;
 
+    /// <summary>
+    /// Chrome classification for dynamic HUD drawing (WI-G9-03). Anything other than
+    /// <see cref="HudChromeKind.None"/> draws procedurally instead of sampling the texture
+    /// while the active preset selects dynamic HUD chrome.
+    /// </summary>
+    public HudChromeKind ChromeKind { get; set; } = HudChromeKind.None;
+
     internal Image(string name, ImageSource source, bool grayscale = false)
     {
         Name = name;
@@ -50,16 +57,28 @@ public sealed class Image
 
     public Image WithGrayscale(bool grayscale)
     {
-        return new Image(Name, _source, grayscale);
+        return new Image(Name, _source, grayscale) { ChromeKind = ChromeKind };
     }
 
     internal void Draw(DrawingContext2D drawingContext, in Rectangle destinationRect)
     {
+        if (ChromeKind != HudChromeKind.None && drawingContext.DynamicHudChrome)
+        {
+            HudChromeAudit.DynamicChromePaints++;
+            HudChromePainter.DrawChrome(drawingContext, destinationRect, ChromeKind);
+            return;
+        }
+
         if (_texture == null)
         {
             // TODO: crashes in multiplayer mode
             return;
             // throw new InvalidOperationException();
+        }
+
+        if (ChromeKind != HudChromeKind.None)
+        {
+            HudChromeAudit.ChromeBitmapDraws++;
         }
 
         drawingContext.DrawImage(_texture, null, destinationRect, grayscale: _grayscale);

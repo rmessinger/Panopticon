@@ -173,6 +173,30 @@ internal sealed class RenderPipeline : DisposableBase
         }
     }
 
+    /// <summary>
+    /// Applies effective anisotropy and mip bias without a restart: recreates the world
+    /// sampler, rebuilds every set that binds it, then retires the old sampler once no
+    /// live set references it (WI-G7-02).
+    /// </summary>
+    internal void ApplySamplerSettings(GraphicsSettings effective)
+    {
+        var standardGraphicsResources = _loadContext.StandardGraphicsResources;
+
+        if (!standardGraphicsResources.WorldSamplerNeedsRebuild(effective))
+        {
+            return;
+        }
+
+        var worldSampler = standardGraphicsResources.RecreateWorldSampler(effective);
+
+        _loadContext.ShaderResources.RebuildWorldSamplerSets(worldSampler);
+        _globalShaderResourceData.InvalidateForwardPassResourceSet();
+        _waterMapRenderer.ApplyWorldSampler(worldSampler);
+        _game.Scene3D?.Terrain?.ApplyWorldSampler(worldSampler);
+
+        standardGraphicsResources.DisposeRetiredWorldSampler();
+    }
+
     public void Execute(RenderContext context)
     {
         RenderedObjectsOpaque = 0;

@@ -21,14 +21,14 @@ public class CheckBox : Control
 
     public CheckBox(WndWindowDefinition wndWindow, ImageLoader imageLoader)
     {
-        UncheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.EnabledDrawData, 1);
-        CheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.EnabledDrawData, 2);
+        UncheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.EnabledDrawData, 1, HudChromeKind.CheckboxUnchecked);
+        CheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.EnabledDrawData, 2, HudChromeKind.CheckboxChecked);
 
-        HoverUncheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.HiliteDrawData, 1);
-        HoverCheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.HiliteDrawData, 2);
+        HoverUncheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.HiliteDrawData, 1, HudChromeKind.CheckboxUnchecked);
+        HoverCheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.HiliteDrawData, 2, HudChromeKind.CheckboxChecked);
 
-        DisabledUncheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 1);
-        DisabledCheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 2);
+        DisabledUncheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 1, HudChromeKind.CheckboxUnchecked);
+        DisabledCheckedImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 2, HudChromeKind.CheckboxChecked);
     }
 
     protected override void LayoutOverride()

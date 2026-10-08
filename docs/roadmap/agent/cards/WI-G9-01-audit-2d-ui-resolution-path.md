@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G9-01` |
 | Roadmap phase | [Track G · G9](../../track-g-rendering-clarity.md): Resolution-independent 2D & UI |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |

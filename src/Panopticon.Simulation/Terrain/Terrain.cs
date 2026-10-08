@@ -34,6 +34,18 @@ public sealed class Terrain : DisposableBase
 
     private readonly ConstantBuffer<TerrainShaderResources.TerrainMaterialConstants> _materialConstantsBuffer;
 
+    /// <summary>Inputs captured from material-set creation, for world-sampler rebuilds.</summary>
+    private readonly record struct TerrainMaterialSetSources(
+        DeviceBuffer MaterialConstantsBuffer,
+        Texture TileDataTexture,
+        DeviceBuffer CliffDetailsBuffer,
+        DeviceBuffer TextureDetailsBuffer,
+        Texture TextureArray,
+        Texture MacroTexture,
+        Texture CausticsTextures);
+
+    private readonly TerrainMaterialSetSources? _materialSetSources;
+
     private readonly Material _material;
     private readonly TerrainPatchIndexBufferCache _indexBufferCache;
 
@@ -100,14 +112,27 @@ public sealed class Terrain : DisposableBase
 
         var casuticsTextures = BuildCausticsTextureArray(loadContext.AssetStore);
 
+        var cliffDetailsSetBuffer = cliffDetailsBuffer
+            ?? loadContext.StandardGraphicsResources.GetNullStructuredBuffer(TerrainShaderResources.CliffInfo.Size);
+
         var materialResourceSet = AddDisposable(loadContext.ShaderResources.Terrain.CreateMaterialResourceSet(
             _materialConstantsBuffer.Buffer,
             tileDataTexture,
-            cliffDetailsBuffer ?? loadContext.StandardGraphicsResources.GetNullStructuredBuffer(TerrainShaderResources.CliffInfo.Size),
+            cliffDetailsSetBuffer,
             textureDetailsBuffer,
             textureArray,
             macroTexture,
-            casuticsTextures));
+            casuticsTextures,
+            loadContext.StandardGraphicsResources.WorldAnisoSampler));
+
+        _materialSetSources = new TerrainMaterialSetSources(
+            _materialConstantsBuffer.Buffer,
+            tileDataTexture,
+            cliffDetailsSetBuffer,
+            textureDetailsBuffer,
+            textureArray,
+            macroTexture,
+            casuticsTextures);
 
         _material = AddDisposable(
             new Material(
@@ -121,6 +146,34 @@ public sealed class Terrain : DisposableBase
             OnDemandTextureLoader.DataRole);
 
         OnHeightMapChanged();
+    }
+
+    /// <summary>
+    /// Rebinds the terrain material to a new world sampler without recreating the terrain
+    /// (WI-G7-02). The material identity stays stable for render lists.
+    /// </summary>
+    public void ApplyWorldSampler(Sampler worldSampler)
+    {
+        if (_materialSetSources == null)
+        {
+            return;
+        }
+
+        var sources = _materialSetSources.Value;
+        var oldSet = _material.MaterialResourceSet;
+
+        _material.UpdateMaterialResourceSet(
+            AddDisposable(_loadContext.ShaderResources.Terrain.CreateMaterialResourceSet(
+                sources.MaterialConstantsBuffer,
+                sources.TileDataTexture,
+                sources.CliffDetailsBuffer,
+                sources.TextureDetailsBuffer,
+                sources.TextureArray,
+                sources.MacroTexture,
+                sources.CausticsTextures,
+                worldSampler)));
+
+        RemoveAndDispose(ref oldSet);
     }
 
     private int GetCausticsTextureIndex(in TimeInterval time)

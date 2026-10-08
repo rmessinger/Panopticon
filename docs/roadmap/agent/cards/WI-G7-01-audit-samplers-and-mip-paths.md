@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G7-01` |
 | Roadmap phase | [Track G · G7](../../track-g-rendering-clarity.md): Texture filtering & mip quality |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |

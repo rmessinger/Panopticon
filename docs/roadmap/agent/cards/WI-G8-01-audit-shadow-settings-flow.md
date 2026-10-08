@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G8-01` |
 | Roadmap phase | [Track G · G8](../../track-g-rendering-clarity.md): Shadow quality tier |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |

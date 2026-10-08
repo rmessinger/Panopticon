@@ -184,16 +184,16 @@ public sealed class GeneralsControlBar : IControlBar
 
         _resize = (Button)FindControl("ButtonLarge");
 
-        _resizeDownBackground = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonDownOn);
-        _resizeDownHover = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonDownIn);
-        _resizeDownPushed = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonDownPushed);
+        _resizeDownBackground = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonDownOn, HudChromeKind.ButtonNormal);
+        _resizeDownHover = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonDownIn, HudChromeKind.ButtonHover);
+        _resizeDownPushed = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonDownPushed, HudChromeKind.ButtonPressed);
 
-        _resizeUpBackground = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonUpOn);
-        _resizeUpHover = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonUpIn);
-        _resizeUpPushed = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonUpPushed);
+        _resizeUpBackground = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonUpOn, HudChromeKind.ButtonNormal);
+        _resizeUpHover = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonUpIn, HudChromeKind.ButtonHover);
+        _resizeUpPushed = window.ImageLoader.CreateFromMappedImageReference(_scheme.ToggleButtonUpPushed, HudChromeKind.ButtonPressed);
 
-        _commandButtonHover = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("Cameo_hilited"));
-        _commandButtonPushed = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("Cameo_push"));
+        _commandButtonHover = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("Cameo_hilited"), HudChromeKind.ButtonOverlayHover);
+        _commandButtonPushed = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("Cameo_push"), HudChromeKind.ButtonOverlayPushed);
 
         Rank1OverlayLarge = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SSChevron1L"));
         Rank2OverlayLarge = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SSChevron2L"));
@@ -203,9 +203,9 @@ public sealed class GeneralsControlBar : IControlBar
         Rank2OverlaySmall = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SSChevron2S"));
         Rank3OverlaySmall = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SSChevron3S"));
 
-        ChinaEmptyContainer = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SNEmptyFrame"));
-        UsaEmptyContainer = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SAEmptyFrame"));
-        GlaEmptyContainer = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SUEmptyFrame"));
+        ChinaEmptyContainer = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SNEmptyFrame"), HudChromeKind.Frame);
+        UsaEmptyContainer = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SAEmptyFrame"), HudChromeKind.Frame);
+        GlaEmptyContainer = window.ImageLoader.CreateFromMappedImageReference(assetStore.MappedImages.GetLazyAssetReferenceByName("SUEmptyFrame"), HudChromeKind.Frame);
 
         StructureExit = assetStore.CommandButtons.GetLazyAssetReferenceByName("Command_StructureExit");
         Stop = assetStore.CommandButtons.GetLazyAssetReferenceByName("Command_Stop");
@@ -834,7 +834,9 @@ public sealed class GeneralsControlBarSource : IControlBarSource
         var controlBarWindow = game.LoadWindow("ControlBar.wnd");
         var controlBarDescriptionWindow = game.LoadWindow("ControlBarPopupDescription.wnd");
 
-        background.BackgroundImage = backgroundWindow.ImageLoader.CreateFromMappedImageReference(imagePart.ImageName);
+        // The scheme's pre-rendered full-width bar image is chrome (WI-G9-03): under dynamic
+        // HUD it draws as a procedural panel instead of an upscaled legacy bitmap.
+        background.BackgroundImage = backgroundWindow.ImageLoader.CreateFromMappedImageReference(imagePart.ImageName, HudChromeKind.Panel);
 
         Control FindControl(string name) => controlBarWindow.Controls.FindControl($"ControlBar.wnd:{name}");
 

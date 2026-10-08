@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G9-03` |
 | Roadmap phase | [Track G · G9](../../track-g-rendering-clarity.md): Resolution-independent 2D & UI, per the [hud-rework scope Decision](../../open-questions.md) |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `implementation` |
 | Effort | `L` |
 | Prerequisites | `WI-G9-02`, `WI-G2-03`, `WI-G3-04` |

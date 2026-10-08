@@ -6,8 +6,8 @@ namespace Panopticon.Graphics.Shaders;
 
 internal sealed class SimpleShaderResources : ShaderMaterialShaderResources
 {
-    public SimpleShaderResources(ShaderSetStore store)
-        : base(store, "Simple", CreateMaterialResourceBindings)
+    public SimpleShaderResources(ShaderSetStore store, Sampler worldSampler)
+        : base(store, "Simple", worldSampler, CreateMaterialResourceBindings)
     {
 
     }

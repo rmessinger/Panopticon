@@ -21,22 +21,42 @@ public class GraphicsSettingsTests : MockedGameTest
     }
 
     [Fact]
-    public void EnhancedPresetDiffersOnSampleCountShadowTierAlphaTestAndColourSpace()
+    public void EnhancedPresetDiffersOnSampleCountShadowTierAlphaTestColourSpaceAnisotropyAndUiMode()
     {
         var legacy = GraphicsSettings.Legacy();
         var enhanced = GraphicsSettings.Enhanced();
 
-        // 4x MSAA, alpha-to-coverage and linear shading landed with G4/G5/G6; every other
-        // knob stays Legacy until its owning phase.
+        // 4x MSAA, alpha-to-coverage, linear shading, 16x anisotropy and role-aware UI
+        // sampling landed with G4/G5/G6/G7/G9; every other knob stays Legacy until its
+        // owning phase.
         Assert.Equal(4, enhanced.SampleCount);
         Assert.Equal(AlphaTestMode.CoveragePreserving, enhanced.AlphaTestMode);
         Assert.Equal(ColourSpaceMode.Linear, enhanced.ColourSpaceMode);
         Assert.Equal(ColourSpaceMode.LegacyGamma, legacy.ColourSpaceMode);
-        Assert.Equal(legacy.Anisotropy, enhanced.Anisotropy);
+        Assert.Equal(16, enhanced.Anisotropy);
+        Assert.Equal(4, legacy.Anisotropy);
         Assert.Equal(legacy.MipLodBias, enhanced.MipLodBias);
         Assert.Equal(ShadowTier.High, enhanced.ShadowTier);
-        Assert.Equal(legacy.UiMode, enhanced.UiMode);
+        Assert.Equal(UiMode.DynamicHud, enhanced.UiMode);
+        Assert.Equal(UiMode.LegacyArt, legacy.UiMode);
         Assert.Equal(legacy.RealisticProportions, enhanced.RealisticProportions);
+    }
+
+    [Fact]
+    public void WithRealisticProportionsCopiesEveryMemberAndFlipsOnlyTheFlag()
+    {
+        var enhanced = GraphicsSettings.Enhanced();
+        var enabled = enhanced.WithRealisticProportions(true);
+
+        Assert.True(enabled.RealisticProportions);
+        Assert.False(enhanced.RealisticProportions);
+        Assert.Equal(enhanced.SampleCount, enabled.SampleCount);
+        Assert.Equal(enhanced.AlphaTestMode, enabled.AlphaTestMode);
+        Assert.Equal(enhanced.ColourSpaceMode, enabled.ColourSpaceMode);
+        Assert.Equal(enhanced.Anisotropy, enabled.Anisotropy);
+        Assert.Equal(enhanced.MipLodBias, enabled.MipLodBias);
+        Assert.Equal(enhanced.ShadowTier, enabled.ShadowTier);
+        Assert.Equal(enhanced.UiMode, enabled.UiMode);
     }
 
     [Fact]

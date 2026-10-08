@@ -21,6 +21,15 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
     public delegate ref readonly Matrix4x4 GetMatrixReferenceDelegate();
 
     private readonly GetMatrixReferenceDelegate _getWorldMatrix;
+
+    /// <summary>
+    /// Optional presentation-only visual scale (WI-G10-02). When it returns a value other
+    /// than 1 the world matrix is scaled by value, keeping engine FX aligned with resized
+    /// aircraft without mutating the shared bone transform the delegate exposes.
+    /// </summary>
+    private readonly Func<float>? _getVisualScale;
+
+    private readonly Func<Vector3>? _getPresentationAnchor;
     private readonly Matrix4x4 _worldMatrix;
 
     private readonly FXParticleEmissionVelocityBase _velocityType;
@@ -94,10 +103,14 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
     internal ParticleSystem(
         FXParticleSystemTemplate template,
         AssetLoadContext loadContext,
-        GetMatrixReferenceDelegate getWorldMatrix)
+        GetMatrixReferenceDelegate getWorldMatrix,
+        Func<float>? getVisualScale = null,
+        Func<Vector3>? getPresentationAnchor = null)
         : this(template, loadContext)
     {
         _getWorldMatrix = getWorldMatrix;
+        _getVisualScale = getVisualScale;
+        _getPresentationAnchor = getPresentationAnchor;
     }
 
     internal ParticleSystem(
@@ -256,8 +269,24 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
 
         ref readonly var worldMatrix = ref GetWorldMatrix();
 
-        // TODO: Use _localTransform too.
-        worldMatrix.ToMatrix4x3(out _worldTransform);
+        var visualScale = _getVisualScale?.Invoke() ?? 1f;
+
+        if (visualScale != 1f)
+        {
+            // WI-G10-03: bone absolutes carry unscaled world placement, so the uniform
+            // scale is conjugated about the model's world anchor to match ModelMesh.
+            var anchor = _getPresentationAnchor?.Invoke() ?? Vector3.Zero;
+
+            (worldMatrix
+                * Matrix4x4.CreateTranslation(-anchor)
+                * Matrix4x4.CreateScale(visualScale)
+                * Matrix4x4.CreateTranslation(anchor)).ToMatrix4x3(out _worldTransform);
+        }
+        else
+        {
+            // TODO: Use _localTransform too.
+            worldMatrix.ToMatrix4x3(out _worldTransform);
+        }
 
         if (Template.SystemLifetime != 0 && _timer > Template.SystemLifetime)
         {

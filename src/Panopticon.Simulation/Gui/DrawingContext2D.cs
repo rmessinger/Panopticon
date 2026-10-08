@@ -17,6 +17,15 @@ public sealed class DrawingContext2D : DisposableBase
 
     private readonly SpriteBatch _spriteBatch;
 
+    private readonly Sampler _mappedImageSamplerOverride;
+
+    /// <summary>
+    /// True when the active preset draws HUD chrome procedurally (WI-G9-03); chrome-tagged
+    /// WND images redirect to <see cref="Wnd.Images.HudChromePainter"/> instead of sampling
+    /// their texture.
+    /// </summary>
+    internal bool DynamicHudChrome { get; }
+
     internal readonly TextCache TextCache;
 
     private readonly Stack<Matrix3x2> _transformStack;
@@ -40,6 +49,10 @@ public sealed class DrawingContext2D : DisposableBase
         _contentManager = contentManager;
 
         _solidWhiteTexture = loadContext.StandardGraphicsResources.SolidWhiteTexture;
+
+        _mappedImageSamplerOverride = UiImageSamplingPolicy.SelectMappedImageSampler(loadContext.StandardGraphicsResources);
+
+        DynamicHudChrome = loadContext.StandardGraphicsResources.Settings.UiMode == UiMode.DynamicHud;
 
         _spriteBatch = AddDisposable(new SpriteBatch(loadContext, blendStateDescription, outputDescription, decodeLinearTints));
 
@@ -133,7 +146,7 @@ public sealed class DrawingContext2D : DisposableBase
         bool flipped = false,
         bool grayscaled = false)
     {
-        DrawImage(mappedImage.Texture.Value, mappedImage.Coords, destinationRect, sourceColor, flipped, grayscaled);
+        DrawImage(mappedImage.Texture.Value, mappedImage.Coords, destinationRect, sourceColor, flipped, grayscaled, _mappedImageSamplerOverride);
     }
 
 
@@ -143,7 +156,7 @@ public sealed class DrawingContext2D : DisposableBase
         bool flipped = false,
         bool grayscaled = false)
     {
-        DrawImage(mappedImage.Texture.Value, mappedImage.Coords, destinationRect, flipped, grayscaled);
+        DrawImage(mappedImage.Texture.Value, mappedImage.Coords, destinationRect, flipped, grayscaled, _mappedImageSamplerOverride);
     }
 
     public void DrawImage(
@@ -152,7 +165,8 @@ public sealed class DrawingContext2D : DisposableBase
         in RectangleF destinationRect,
         in ColorRgbaF sourceColor,
         bool flipped = false,
-        bool grayscale = false)
+        bool grayscale = false,
+        Sampler samplerOverride = null)
     {
         var color = sourceColor.WithA(_currentOpacity);
 
@@ -162,7 +176,8 @@ public sealed class DrawingContext2D : DisposableBase
             RectangleF.Transform(destinationRect, _currentTransform),
             color,
             flipped,
-            grayscale: grayscale);
+            grayscale: grayscale,
+            samplerOverride: samplerOverride);
     }
 
     public void DrawImage(
@@ -170,7 +185,8 @@ public sealed class DrawingContext2D : DisposableBase
         in Rectangle? sourceRect,
         in RectangleF destinationRect,
         bool flipped = false,
-        bool grayscale = false)
+        bool grayscale = false,
+        Sampler samplerOverride = null)
     {
         var color = ColorRgbaF.White.WithA(_currentOpacity);
 
@@ -180,7 +196,8 @@ public sealed class DrawingContext2D : DisposableBase
             RectangleF.Transform(destinationRect, _currentTransform),
             color,
             flipped,
-            grayscale: grayscale);
+            grayscale: grayscale,
+            samplerOverride: samplerOverride);
     }
 
     public static SizeF MeasureText(string text, Font font, TextAlignment textAlignment, float width)

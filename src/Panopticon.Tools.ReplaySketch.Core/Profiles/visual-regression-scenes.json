@@ -44,6 +44,30 @@
       "Profile": "vr-hud.json",
       "CaptureFrame": 1,
       "FullHud": true
+    },
+    {
+      // WI-G9-03: the same HUD scene captured at 4x native size, where upscaled legacy
+      // chrome would blur and procedural chrome stays sharp.
+      "Name": "hud-4x",
+      "Profile": "vr-hud.json",
+      "CaptureFrame": 1,
+      "FullHud": true,
+      "ViewportScale": 4
+    },
+    {
+      // WI-G10-03: fixed-camera Crusader/Comanche/MiG row with the proportions option off
+      // (both presets default it off).
+      "Name": "proportions",
+      "Profile": "vr-proportions.json",
+      "CaptureFrame": 1
+    },
+    {
+      // WI-G10-03: the same capture with the proportions option enabled through the
+      // per-scene flag; the preset itself is untouched.
+      "Name": "proportions-on",
+      "Profile": "vr-proportions.json",
+      "CaptureFrame": 1,
+      "RealisticProportions": true
     }
   ]
 }

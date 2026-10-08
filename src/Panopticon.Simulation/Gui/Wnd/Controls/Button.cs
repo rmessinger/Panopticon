@@ -15,10 +15,10 @@ public class Button : Control
 
     public Button(WndWindowDefinition wndWindow, ImageLoader imageLoader)
     {
-        BackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 0, 5, 6);
-        HoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 0, 5, 6);
-        DisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.DisabledDrawData, 0, 5, 6);
-        PushedBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 1, 3, 4);
+        BackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 0, 5, 6, HudChromeKind.ButtonNormal);
+        HoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 0, 5, 6, HudChromeKind.ButtonHover);
+        DisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.DisabledDrawData, 0, 5, 6, HudChromeKind.ButtonDisabled);
+        PushedBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 1, 3, 4, HudChromeKind.ButtonPressed);
 
         HoverTextColor = wndWindow.TextColor.Hilite.ToColorRgbaF();
         DisabledTextColor = wndWindow.TextColor.Disabled.ToColorRgbaF();

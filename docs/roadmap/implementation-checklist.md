@@ -1167,14 +1167,14 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: black/white colour mips encode approximately 188 while data mips remain 128; role tests
     keep normals/masks/alpha linear; output has exactly one transfer; ordered dither is deterministic
     and zero-mean; gradient captures meet the G6 banding check; `Legacy` matches its golden.
-- [ ] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
+- [x] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
       quality terrain texture-array resample/mip path in `Terrain.cs`)
       ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
       [`WI-G7-02`](agent/cards/WI-G7-02-configurable-anisotropy-and-mip-bias.md)).
   - AC: requested anisotropy 1/2/4/8/16 and finite bias in [-1,1] validate and report effective
     values; resource sets observe sampler changes; grazing-angle and fixed-motion captures
     meet the G7 sharpness/temporal checks; terrain seams stay absent and `Legacy` matches its golden.
-- [ ] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
+- [x] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
       slope-scaled term added to the constant bias; the existing normal offset is kept)
       ([`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md),
       [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md)).
@@ -1189,7 +1189,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: native 1x/2x captures use pixel-sized fonts with no duplicate DPI transform; proportional
     layout and hit rectangles remain unchanged; `Enhanced` role-aware sampling avoids atlas
     bleed and preserves pixel-art roles; `Legacy` matches its golden.
-  - [ ] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
+  - [x] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
         dynamically drawn equivalents (vector/procedural panels, buttons, and frames; live text)
         behind the `Enhanced` preset, `Legacy` keeps the original art
         ([`WI-G9-03`](agent/cards/WI-G9-03-dynamic-hud-chrome.md)).
@@ -1197,11 +1197,11 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
       draws (portraits, icons and minimap remain textures); captured frames are sharp
       at 4x native with no upscaled-art blur, and `Legacy` is pixel-identical to the pre-rework
       capture.
-- [ ] G10 Realistic proportions (optional scale-correct presentation: reference-scale
+- [x] G10 Realistic proportions (optional scale-correct presentation: reference-scale
       documentation plus per-definition visual model-scale overrides for the undersized aircraft
       class, behind the G2 settings layer; `Geometry` collision and `AttackRange` gameplay data
       untouched).
-  - [ ] G10-1 Proportion audit and reference scale: measure per-class model bounds (W3D mesh
+  - [x] G10-1 Proportion audit and reference scale: measure per-class model bounds (W3D mesh
         bounds, FX meshes excluded) against INI `Geometry` and real-world counterparts; check in
         the deviation table and pin the world-units-per-meter reference (measured basis: ≈ 5
         units/m; aircraft undersized ≈ 2-2.5x, e.g. MiG ≈ 6.6 m in-game vs ≈ 17.3 m real)
@@ -1209,13 +1209,13 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
     - AC: a checked-in table covers a representative set spanning infantry, ground vehicles,
       buildings, and aircraft, and a data test re-derives its numbers from the installed
       INI/W3D assets so a changed asset fails the test.
-  - [ ] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
+  - [x] G10-2 Presentation-only scale overrides: per-definition visual scale multiplier keyed to
         the proportions option, correcting the aircraft class
         ([`WI-G10-02`](agent/cards/WI-G10-02-presentation-scale-overrides.md)).
     - AC: with the option enabled only aircraft visuals change size; existing P0/P9 scenario
       assertions pass identically with the option on and off; presentation rings/culling match
       visuals while shared world/bone transforms and selection-query bounds remain unchanged.
-  - [ ] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
+  - [x] G10-3 Preset wiring and golden frames: register the proportions option in the G2 settings
         layer and add proportion-mode captures to the G3 golden set
         ([`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md)).
     - AC: golden frames captured under the proportions mode catch an injected rescale regression,

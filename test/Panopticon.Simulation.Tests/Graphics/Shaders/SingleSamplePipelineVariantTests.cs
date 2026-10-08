@@ -42,7 +42,7 @@ public sealed class SingleSamplePipelineVariantTests
             graphics.Device,
             RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Enhanced()));
 
-        using var fixedFunction = new FixedFunctionShaderResources(enhancedStore);
+        using var fixedFunction = new FixedFunctionShaderResources(enhancedStore, graphics.Device.Aniso4xSampler);
 
         var fixedFunctionMaterial = fixedFunction.GetCachedMaterial(
             FaceCullMode.Back,
@@ -76,7 +76,7 @@ public sealed class SingleSamplePipelineVariantTests
             graphics.Device,
             RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Enhanced()));
 
-        using var normalMapped = new NormalMappedShaderResources(enhancedStore);
+        using var normalMapped = new NormalMappedShaderResources(enhancedStore, graphics.Device.Aniso4xSampler);
 
         Assert.NotSame(normalMapped.Pipeline, normalMapped.SingleSamplePipeline);
     }

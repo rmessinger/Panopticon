@@ -1,0 +1,56 @@
+{
+  // WI-G10-03 proportions evidence: Crusader (ground anchor), Comanche and MiG parked in a
+  // row along world X, camera side-on so model lengths project horizontally. The same profile
+  // backs the 'proportions' (option off) and 'proportions-on' (option on) scenes.
+
+  "Name": "vr-proportions",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 2,
+  "SettleFrames": 15,
+  "CaptureStride": 1,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    {
+      "Id": "crusader",
+      "Definition": "AmericaTankCrusader",
+      "Owner": "usa",
+      "X": 540,
+      "Y": 660,
+      "FacingDegrees": 0,
+      "Label": "crusader",
+      "Role": "subject"
+    },
+    {
+      "Id": "comanche",
+      "Definition": "AmericaVehicleComanche",
+      "Owner": "usa",
+      "X": 615,
+      "Y": 660,
+      "FacingDegrees": 0,
+      "Label": "comanche",
+      "Role": "subject"
+    },
+    {
+      "Id": "mig",
+      "Definition": "ChinaJetMiG",
+      "Owner": "china",
+      "X": 705,
+      "Y": 660,
+      "FacingDegrees": 0,
+      "Label": "mig",
+      "Role": "subject"
+    }
+  ],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 675, "Y": 660, "Z": 0 },
+    "Height": 220
+  },
+  "Commands": [],
+  "Expectations": [],
+  "StopWhenActorDestroyed": null
+}

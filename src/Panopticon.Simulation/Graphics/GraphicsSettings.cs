@@ -44,19 +44,20 @@ public sealed class GraphicsSettings
 
     /// <summary>
     /// The game default. Differs from <see cref="Legacy"/> on the shadow tier, the sample
-    /// count, the alpha test and the colour space: 4x MSAA (G4) plus the four-cascade 2048
-    /// shadow tier (G4), coverage-preserving alpha with alpha-to-coverage (G5), and linear
-    /// shading with a single sRGB output transfer (G6). Other members stay Legacy until
-    /// their owning phase lands.
+    /// count, the alpha test, the colour space, the anisotropy and the UI mode: 4x MSAA (G4)
+    /// plus the four-cascade 2048 shadow tier (G4), coverage-preserving alpha with
+    /// alpha-to-coverage (G5), linear shading with a single sRGB output transfer (G6),
+    /// anisotropy raised to the 16x ceiling (G7), and role-aware UI art sampling (G9).
+    /// Other members stay Legacy until their owning phase lands.
     /// </summary>
     public static GraphicsSettings Enhanced() => new(
         4,
         AlphaTestMode.CoveragePreserving,
         ColourSpaceMode.Linear,
-        4,
+        16,
         0f,
         ShadowTier.High,
-        UiMode.LegacyArt,
+        UiMode.DynamicHud,
         realisticProportions: false);
 
     /// <summary>
@@ -100,6 +101,20 @@ public sealed class GraphicsSettings
 
     /// <summary>Render-only proportion scaling; explicit opt-in, never a default.</summary>
     public bool RealisticProportions { get; }
+
+    /// <summary>
+    /// Returns a copy with the proportions option replaced (WI-G10-03). Every other member is
+    /// carried over unchanged; the flag is an explicit opt-in, never implied by a preset.
+    /// </summary>
+    public GraphicsSettings WithRealisticProportions(bool realisticProportions) => new(
+        SampleCount,
+        AlphaTestMode,
+        ColourSpaceMode,
+        Anisotropy,
+        MipLodBias,
+        ShadowTier,
+        UiMode,
+        realisticProportions);
 }
 
 public enum AlphaTestMode

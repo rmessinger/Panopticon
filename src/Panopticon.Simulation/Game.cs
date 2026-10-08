@@ -1066,6 +1066,7 @@ public sealed class Game : DisposableBase, IGame
             GraphicsLoadContext.ShaderSetStore.OutputDescription.SampleCount);
         GraphicsSettingsController.Apply(GraphicsSettings, sessionSampleCount);
         Scene3D?.Shadows.ApplyTier(GraphicsSettings.ShadowTier);
+        Graphics?.RenderPipeline?.ApplySamplerSettings(GraphicsSettingsController.Effective);
     }
 
     protected override void Dispose(bool disposeManagedResources)

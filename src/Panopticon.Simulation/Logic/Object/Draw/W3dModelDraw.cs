@@ -354,7 +354,9 @@ public class W3dModelDraw : DrawModule
 
             particleSystems.Add(_gameEngine.ParticleSystems.Create(
                 particleSystemTemplate,
-                () => ref modelInstance.AbsoluteBoneTransforms[bone.Index]));
+                () => ref modelInstance.AbsoluteBoneTransforms[bone.Index],
+                GetPresentationScale,
+                () => modelInstance.GetWorldMatrix().Translation));
         }
 
         var drawState = new W3dModelDrawConditionState(modelInstance, particleSystems, _gameEngine);
@@ -516,6 +518,13 @@ public class W3dModelDraw : DrawModule
         }
     }
 
+    internal float GetPresentationScale()
+    {
+        return GameObject != null && _gameEngine.Game.GraphicsSettings.RealisticProportions
+            ? VisualScaleOverrides.GetScale(GameObject.Definition.Name)
+            : 1f;
+    }
+
     internal override void BuildRenderList(
         RenderList renderList,
         Camera camera,
@@ -524,13 +533,18 @@ public class W3dModelDraw : DrawModule
         Dictionary<string, bool> shownSubObjects = null,
         Dictionary<string, bool> hiddenSubObjects = null)
     {
+        // Drawable-level callers never pass a scale; the presentation override is
+        // injected here, at the audited render-only entry point.
+        var effectiveScale = GetPresentationScale();
+
         _activeModelDrawConditionState?.BuildRenderList(
             renderList,
             camera,
             castsShadow,
             renderItemConstantsPS,
             shownSubObjects,
-            hiddenSubObjects);
+            hiddenSubObjects,
+            effectiveScale);
     }
 
     internal override void DrawInspector()
@@ -638,7 +652,8 @@ internal sealed class W3dModelDrawConditionState : DisposableBase
         bool castsShadow,
         MeshShaderResources.RenderItemConstantsPS renderItemConstantsPS,
         Dictionary<string, bool> shownSubObjects = null,
-        Dictionary<string, bool> hiddenSubObjects = null)
+        Dictionary<string, bool> hiddenSubObjects = null,
+        float visualScale = 1f)
     {
         Model.BuildRenderList(
             renderList,
@@ -646,7 +661,8 @@ internal sealed class W3dModelDrawConditionState : DisposableBase
             castsShadow,
             renderItemConstantsPS,
             shownSubObjects,
-            hiddenSubObjects);
+            hiddenSubObjects,
+            visualScale);
     }
 }
 

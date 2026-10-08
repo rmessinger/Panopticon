@@ -59,11 +59,26 @@ public sealed partial class ModelMesh : ModelRenderObject
         ModelBone parentBone,
         in Matrix4x4 modelTransform,
         bool castsShadow,
-        MeshShaderResources.RenderItemConstantsPS? renderItemConstantsPS)
+        MeshShaderResources.RenderItemConstantsPS? renderItemConstantsPS,
+        float visualScale)
     {
         var meshWorldMatrix = Skinned
             ? modelTransform
             : modelInstance.AbsoluteBoneTransforms[parentBone.Index];
+
+        if (visualScale != 1f)
+        {
+            // Presentation-only proportions (WI-G10-02/03): uniform scale about the model's
+            // world anchor. Bone absolutes already carry the world placement, so a bare
+            // pre-multiplied CreateScale would scale each subobject about its own bone
+            // origin and pull multi-bone models apart; conjugating by the anchor keeps the
+            // whole model coherent. Shared matrices stay untouched.
+            var anchor = modelInstance.GetWorldMatrix().Translation;
+            meshWorldMatrix = meshWorldMatrix *
+                Matrix4x4.CreateTranslation(-anchor) *
+                Matrix4x4.CreateScale(visualScale) *
+                Matrix4x4.CreateTranslation(anchor);
+        }
 
         BuildRenderListWithWorldMatrix(
             renderList,

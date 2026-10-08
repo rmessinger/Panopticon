@@ -14,7 +14,20 @@ namespace Panopticon.Graphics.Shaders;
 
 internal abstract class ShaderMaterialShaderResources : ShaderSetBase
 {
-    private readonly Dictionary<string, Material> _materialCache = new();
+    private readonly Dictionary<string, CachedMaterial> _materialCache = new();
+
+    /// <summary>Sampler bound to the trailing world-texture slot of every material set.</summary>
+    private Sampler _worldSampler;
+
+    /// <summary>
+    /// Inputs needed to rebuild a material's resource set when the world sampler changes.
+    /// </summary>
+    private sealed record CachedMaterial(
+        Material Material,
+        IReadOnlyList<ImportedMaterialProperty> Properties,
+        AssetLoadContext Context,
+        bool AlphaTestMaterial,
+        bool AlphaTestCoverage);
 
     public readonly Dictionary<string, ResourceBinding> MaterialResourceBindings;
 
@@ -32,9 +45,12 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
     protected ShaderMaterialShaderResources(
         ShaderSetStore store,
         string shaderName,
+        Sampler worldSampler,
         Func<IEnumerable<ResourceBinding>> createMaterialResourceBindings)
         : base(store, shaderName, MeshShaderResources.MeshVertex.VertexDescriptors)
     {
+        _worldSampler = worldSampler;
+
         var materialResourceBindings = createMaterialResourceBindings().ToArray();
 
         MaterialResourceBindings = materialResourceBindings.ToDictionary(x => x.Description.Name);
@@ -93,7 +109,7 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
                 ? GetAlphaToCoverageSingleSamplePipeline()
                 : SingleSamplePipeline;
 
-            result = AddDisposable(
+            var cachedMaterial = AddDisposable(
                 new Material(
                     this,
                     pipeline,
@@ -101,10 +117,37 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
                     materialResourceSet,
                     SurfaceType.Opaque)); // TODO
 
+            result = new CachedMaterial(
+                cachedMaterial,
+                material.Properties,
+                context,
+                alphaTestMaterial,
+                alphaTestCoverage);
+
             _materialCache.Add(key, result);
         }
 
-        return result;
+        return result.Material;
+    }
+
+    /// <summary>
+    /// Rebinds every cached material to a fresh resource set built around the new world
+    /// sampler. Material identity stays stable so render lists survive the swap. Replaced
+    /// sets stay owned by their builders until disposal; they are never bound again.
+    /// </summary>
+    internal void RebuildWorldSamplerSets(Sampler worldSampler)
+    {
+        _worldSampler = worldSampler;
+
+        foreach (var entry in _materialCache.Values)
+        {
+            entry.Material.UpdateMaterialResourceSet(
+                CreateMaterialResourceSet(
+                    entry.Properties,
+                    entry.Context,
+                    entry.AlphaTestMaterial,
+                    entry.AlphaTestCoverage));
+        }
     }
 
     /// <summary>
@@ -215,7 +258,8 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
     {
         var materialResourceSetBuilder = AddDisposable(new ShaderMaterialResourceSetBuilder(
             GraphicsDevice,
-            this));
+            this,
+            _worldSampler));
 
         foreach (var property in properties)
         {
