@@ -20,6 +20,12 @@ internal sealed class OnDemandTextureLoader : IVariantAwareAssetLoader<TextureAs
     /// </summary>
     public const string CutoutRole = "cutout";
 
+    /// <summary>
+    /// Role key for data variants: attenuation and lookup maps sampled as authored
+    /// encoded data (WI-G6-02); keeps authored mips and UNorm formats under every preset.
+    /// </summary>
+    public const string DataRole = "data";
+
     /// <summary>Mirrors FailsAlphaTest in Assets/Shaders/Common.h.</summary>
     internal const float CutoutCutoff = 0.37647f;
 
@@ -31,13 +37,16 @@ internal sealed class OnDemandTextureLoader : IVariantAwareAssetLoader<TextureAs
     };
 
     private readonly bool _generateMipMaps;
+    private readonly bool _srgbColour;
     private readonly IPathResolver _pathResolver;
 
     public OnDemandTextureLoader(
         bool generateMipMaps,
-        IPathResolver pathResolver)
+        IPathResolver pathResolver,
+        ColourSpaceMode colourSpace = ColourSpaceMode.LegacyGamma)
     {
         _generateMipMaps = generateMipMaps;
+        _srgbColour = colourSpace == ColourSpaceMode.Linear;
         _pathResolver = pathResolver;
     }
 
@@ -73,11 +82,24 @@ internal sealed class OnDemandTextureLoader : IVariantAwareAssetLoader<TextureAs
             return null;
         }
 
-        var texture = role == CutoutRole
-            ? LoadCutoutImpl(entry, context.FileSystem, context.GraphicsDevice)
-            : role.Length == 0
-                ? LoadImpl(entry, context.FileSystem, context.GraphicsDevice)
-                : throw new InvalidOperationException($"Unknown texture role \"{role}\".");
+        Texture texture;
+        if (role == CutoutRole)
+        {
+            texture = LoadCutoutImpl(entry, context.FileSystem, context.GraphicsDevice);
+        }
+        else if (role == DataRole || !_srgbColour)
+        {
+            texture = LoadImpl(entry, context.FileSystem, context.GraphicsDevice);
+        }
+        else if (role.Length == 0)
+        {
+            texture = LoadColourImpl(entry, context.FileSystem, context.GraphicsDevice);
+        }
+        else
+        {
+            throw new InvalidOperationException($"Unknown texture role \"{role}\".");
+        }
+
         texture.Name = entry.FilePath;
         return new TextureAsset(texture, name);
     }
@@ -255,10 +277,99 @@ internal sealed class OnDemandTextureLoader : IVariantAwareAssetLoader<TextureAs
         return colorImage;
     }
 
+    /// <summary>
+    /// Colour variant for linear shading (WI-G6-02): mips are rebuilt in linear light and the
+    /// upload is sRGB so sampling decodes to linear. Authored DDS block data is decoded and
+    /// re-filtered; data-ish DDS formats (DuDv, float) stay authored and UNorm.
+    /// </summary>
+    private Texture LoadColourImpl(FileSystemEntry entry, FileSystem fileSystem, GraphicsDevice graphicsDevice)
+    {
+        switch (Path.GetExtension(entry.FilePath).ToLowerInvariant())
+        {
+            case ".dds":
+                if (!DdsFile.IsDdsFile(entry))
+                {
+                    goto case ".tga";
+                }
+
+                var ddsFile = DdsFile.FromFileSystemEntry(entry);
+                return CreateColourTextureFromDds(ddsFile, _generateMipMaps, graphicsDevice);
+
+            case ".tga":
+                var tgaFile = TgaFile.FromFileSystemEntry(entry);
+                var rgbaData = TgaFile.ConvertPixelsToRgba8(tgaFile);
+                using (var tgaBase = Image.LoadPixelData<Rgba32>(
+                    rgbaData,
+                    tgaFile.Header.Width,
+                    tgaFile.Header.Height))
+                {
+                    return CreateLinearColourTexture(tgaBase, _generateMipMaps, graphicsDevice);
+                }
+
+            case ".jpg":
+                using (var jpgBase = LoadJpgBaseWithSidecarAlpha(entry, fileSystem))
+                {
+                    return CreateLinearColourTexture(jpgBase, _generateMipMaps, graphicsDevice);
+                }
+
+            default:
+                throw new InvalidOperationException();
+        }
+    }
+
+    /// <summary>
+    /// Decodes block-compressed DDS base mips for the linear colour path; uncompressed Rgba8
+    /// repacks directly; DuDv and float formats are data and keep the authored upload.
+    /// </summary>
+    internal static Texture CreateColourTextureFromDds(DdsFile ddsFile, bool generateMipmaps, GraphicsDevice graphicsDevice)
+    {
+        var baseMip = ddsFile.MipMaps[0];
+        switch (ddsFile.ImageFormat)
+        {
+            case DdsImageFormat.Bc1:
+            case DdsImageFormat.Bc2:
+            case DdsImageFormat.Bc3:
+                using (var ddsBase = DdsBlockDecoder.DecodeBaseMip(baseMip, ddsFile.ImageFormat))
+                {
+                    return CreateLinearColourTexture(ddsBase, generateMipmaps, graphicsDevice);
+                }
+
+            case DdsImageFormat.Rgba8:
+                using (var rgbaBase = Image.LoadPixelData<Rgba32>(
+                    baseMip.Data,
+                    (int)baseMip.Width,
+                    (int)baseMip.Height))
+                {
+                    return CreateLinearColourTexture(rgbaBase, generateMipmaps, graphicsDevice);
+                }
+
+            default:
+                return graphicsDevice.CreateStaticTexture2D(
+                    ddsFile.Header.Width,
+                    ddsFile.Header.Height,
+                    1,
+                    ddsFile.MipMaps,
+                    ddsFile.PixelFormat,
+                    false);
+        }
+    }
+
+    /// <summary>
+    /// Uploads an sRGB colour texture with a linear-light CPU mip chain, so sampling decodes
+    /// to linear and minification no longer darkens (WI-G6-02). Alpha is never rescaled.
+    /// </summary>
+    internal static Texture CreateLinearColourTexture(Image<Rgba32> baseImage, bool generateMipmaps, GraphicsDevice graphicsDevice)
+    {
+        var imageSharpTexture = generateMipmaps
+            ? new ImageSharpTexture(LinearMipBuilder.GenerateLinearMipmaps(baseImage), srgb: true)
+            : new ImageSharpTexture(baseImage, mipmap: false, srgb: true);
+        return imageSharpTexture.CreateDeviceTexture(graphicsDevice, graphicsDevice.ResourceFactory);
+    }
+
     private Texture CreateCutoutTexture(Image<Rgba32> baseImage, GraphicsDevice graphicsDevice)
     {
-        var chain = CoverageMipBuilder.GenerateCoverageMipmaps(baseImage, CutoutCutoff);
-        var imageSharpTexture = new ImageSharpTexture(chain);
+        var chain = CoverageMipBuilder.GenerateCoverageMipmaps(baseImage, CutoutCutoff, linearRgb: _srgbColour);
+        var imageSharpTexture = new ImageSharpTexture(chain, srgb: _srgbColour);
         return CreateFromImageSharpTexture(imageSharpTexture, graphicsDevice);
     }
 }

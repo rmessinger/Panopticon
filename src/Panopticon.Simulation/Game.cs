@@ -591,10 +591,16 @@ public sealed class Game : DisposableBase, IGame
             _wndCallbackResolver = new WndCallbackResolver();
 
             var standardGraphicsResources = AddDisposable(new StandardGraphicsResources(GraphicsDevice, GraphicsSettings));
-            var shaderSetStore = AddDisposable(new ShaderSetStore(GraphicsDevice, RenderPipeline.CreateGameOutputDescription(GraphicsSettings)));
+            var shaderSetStore = AddDisposable(new ShaderSetStore(
+                GraphicsDevice,
+                RenderPipeline.CreateGameOutputDescription(GraphicsSettings),
+                linearColourSpace: GraphicsSettings.ColourSpaceMode == ColourSpaceMode.Linear));
             var shaderResources = AddDisposable(new ShaderResourceManager(GraphicsDevice, standardGraphicsResources, shaderSetStore));
             GraphicsLoadContext = new GraphicsLoadContext(GraphicsDevice, standardGraphicsResources, shaderResources, shaderSetStore);
             GraphicsSettingsController = new GraphicsSettingsController(GraphicsDevice);
+
+            var assetLoadStrategy = Definition.CreateAssetLoadStrategy();
+            assetLoadStrategy.ColourSpace = GraphicsSettings.ColourSpaceMode;
 
             AssetStore = new AssetStore(
                 SageGame,
@@ -604,7 +610,7 @@ public sealed class Game : DisposableBase, IGame
                 GraphicsLoadContext.StandardGraphicsResources,
                 GraphicsLoadContext.ShaderResources,
                 shaderSetStore,
-                Definition.CreateAssetLoadStrategy());
+                assetLoadStrategy);
 
             // TODO
             AssetStore.PushScope();

@@ -2,6 +2,7 @@ using System;
 using Panopticon.Content.Importing;
 using Panopticon.Content.Importing.W3d;
 using Panopticon.Content.Loaders;
+using Panopticon.Graphics;
 
 namespace Panopticon.Content;
 
@@ -42,6 +43,12 @@ public sealed class OnDemandAssetLoadStrategy
         _allowOnDemandLoading = allowOnDemandLoading;
     }
 
+    /// <summary>
+    /// Colour space the on-demand loaders upload colour textures in (WI-G6-02). Set before the
+    /// strategy reaches an AssetStore; the None instance never creates loaders.
+    /// </summary>
+    public ColourSpaceMode ColourSpace { get; set; } = ColourSpaceMode.LegacyGamma;
+
     internal IModelImporter ModelImporter => _modelImporter;
 
     internal IAnimationImporter AnimationImporter => _animationImporter;
@@ -70,14 +77,14 @@ public sealed class OnDemandAssetLoadStrategy
     internal OnDemandGuiTextureLoader CreateGuiTextureLoader()
     {
         return _allowOnDemandLoading
-            ? new OnDemandGuiTextureLoader(false, _texturePathResolver)
+            ? new OnDemandGuiTextureLoader(false, _texturePathResolver, ColourSpace)
             : null;
     }
 
     internal OnDemandTextureLoader CreateTextureLoader()
     {
         return _allowOnDemandLoading
-            ? new OnDemandTextureLoader(true, _texturePathResolver)
+            ? new OnDemandTextureLoader(true, _texturePathResolver, ColourSpace)
             : null;
     }
 

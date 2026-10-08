@@ -13,11 +13,12 @@ using Veldrid.ImageSharp;
 namespace Panopticon.Content.Loaders;
 
 /// <summary>
-/// Uploads decoded imported images as ordinary RGBA8 UNorm textures and creates Veldrid
+/// Uploads decoded imported images as ordinary RGBA8 textures and creates Veldrid
 /// samplers, caching both by complete identity: embedded images by immutable content bytes,
 /// external images by scoped virtual path, samplers by every field. Owned by the model
 /// materialization lifetime; nothing survives disposal and no process-global state exists.
-/// Color-space roles never duplicate texture data: all uploads are UNorm.
+/// Colour roles upload sRGB with a linear-light mip chain under the linear preset; data
+/// roles stay UNorm (WI-G6-02).
 /// </summary>
 internal sealed class ImportedTextureMaterializer : DisposableBase
 {
@@ -40,7 +41,11 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public Texture GetTexture(ImportedImageSource source, bool generateMipmaps = false, bool coveragePreservingAlpha = false)
+    public Texture GetTexture(
+        ImportedImageSource source,
+        bool generateMipmaps = false,
+        bool coveragePreservingAlpha = false,
+        bool srgbColour = false)
     {
         if (IsDisposed)
         {
@@ -51,10 +56,10 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
 
         if (source.Kind == ImportedImageSourceKind.VirtualPath)
         {
-            var pathKey = new ExternalPathKey(source.VirtualPath, generateMipmaps, coveragePreservingAlpha);
+            var pathKey = new ExternalPathKey(source.VirtualPath, generateMipmaps, coveragePreservingAlpha, srgbColour);
             if (!_externalTextures.TryGetValue(pathKey, out var texture))
             {
-                texture = CreateTexture(source, generateMipmaps, coveragePreservingAlpha);
+                texture = CreateTexture(source, generateMipmaps, coveragePreservingAlpha, srgbColour);
                 _externalTextures.Add(pathKey, texture);
             }
 
@@ -62,10 +67,10 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         }
         else
         {
-            var contentKey = new EmbeddedContentKey(source.EmbeddedBytes.ToArray(), generateMipmaps, coveragePreservingAlpha);
+            var contentKey = new EmbeddedContentKey(source.EmbeddedBytes.ToArray(), generateMipmaps, coveragePreservingAlpha, srgbColour);
             if (!_embeddedTextures.TryGetValue(contentKey, out var texture))
             {
-                texture = CreateTexture(source, generateMipmaps, coveragePreservingAlpha);
+                texture = CreateTexture(source, generateMipmaps, coveragePreservingAlpha, srgbColour);
                 _embeddedTextures.Add(contentKey, texture);
             }
 
@@ -105,7 +110,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         return veldridSampler;
     }
 
-    private Texture CreateTexture(ImportedImageSource source, bool generateMipmaps, bool coveragePreservingAlpha)
+    private Texture CreateTexture(ImportedImageSource source, bool generateMipmaps, bool coveragePreservingAlpha, bool srgbColour)
     {
         var decoded = ImportedImageDecoder.Decode(
             source,
@@ -114,22 +119,37 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
 
         // CPU mip generation through the existing ImageSharp path keeps uploads deterministic
         // and device-independent. The coverage variant rebuilds the chain so the cutout
-        // passing fraction survives minification (WI-G5-02); the base image is unchanged.
+        // passing fraction survives minification (WI-G5-02); the sRGB variant rebuilds in
+        // linear light so minification stops darkening colour (WI-G6-02).
         using var image = Image.LoadPixelData<Rgba32>(
             decoded.RgbaPixels.ToArray(),
             decoded.Width,
             decoded.Height);
-        var imageSharpTexture = coveragePreservingAlpha
-            ? new ImageSharpTexture(CoverageMipBuilder.GenerateCoverageMipmaps(
-                image.Clone(),
-                OnDemandTextureLoader.CutoutCutoff))
-            : new ImageSharpTexture(image, generateMipmaps);
+        ImageSharpTexture imageSharpTexture;
+        if (coveragePreservingAlpha)
+        {
+            // Coverage and colour policies compose: coverage-scaled alpha plus linear-light RGB.
+            var coverageChain = CoverageMipBuilder.GenerateCoverageMipmaps(
+                image,
+                OnDemandTextureLoader.CutoutCutoff,
+                linearRgb: srgbColour);
+            imageSharpTexture = new ImageSharpTexture(coverageChain, srgb: srgbColour);
+        }
+        else if (srgbColour)
+        {
+            var colourChain = generateMipmaps
+                ? LinearMipBuilder.GenerateLinearMipmaps(image)
+                : new[] { image };
+            imageSharpTexture = new ImageSharpTexture(colourChain, srgb: true);
+        }
+        else
+        {
+            imageSharpTexture = new ImageSharpTexture(image, generateMipmaps);
+        }
 
-        var texture = imageSharpTexture.CreateDeviceTexture(
+        return imageSharpTexture.CreateDeviceTexture(
             _context.GraphicsDevice!,
             _context.GraphicsDevice!.ResourceFactory);
-
-        return texture;
     }
 
     private static SamplerFilter ToVeldridFilter(
@@ -184,7 +204,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         base.Dispose(disposeManagedResources);
     }
 
-    private readonly record struct ExternalPathKey(string Path, bool GenerateMipmaps, bool CoverageAlpha);
+    private readonly record struct ExternalPathKey(string Path, bool GenerateMipmaps, bool CoverageAlpha, bool SrgbColour);
 
     private readonly record struct SamplerKey(
         ImportedAddressMode AddressModeU,
@@ -202,18 +222,21 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         private readonly byte[] _bytes;
         private readonly bool _generateMipmaps;
         private readonly bool _coverageAlpha;
+        private readonly bool _srgbColour;
 
-        public EmbeddedContentKey(byte[] bytes, bool generateMipmaps, bool coverageAlpha)
+        public EmbeddedContentKey(byte[] bytes, bool generateMipmaps, bool coverageAlpha, bool srgbColour)
         {
             _bytes = bytes;
             _generateMipmaps = generateMipmaps;
             _coverageAlpha = coverageAlpha;
+            _srgbColour = srgbColour;
         }
 
         public bool Equals(EmbeddedContentKey other)
         {
             return _generateMipmaps == other._generateMipmaps
                 && _coverageAlpha == other._coverageAlpha
+                && _srgbColour == other._srgbColour
                 && _bytes.Length == other._bytes.Length
                 && _bytes.AsSpan().SequenceEqual(other._bytes);
         }
@@ -225,6 +248,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
             var hash = new HashCode();
             hash.Add(_generateMipmaps);
             hash.Add(_coverageAlpha);
+            hash.Add(_srgbColour);
             hash.AddBytes(_bytes);
             return hash.ToHashCode();
         }

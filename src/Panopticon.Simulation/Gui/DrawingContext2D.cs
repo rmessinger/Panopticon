@@ -34,13 +34,14 @@ public sealed class DrawingContext2D : DisposableBase
         ContentManager contentManager,
         GraphicsLoadContext loadContext,
         in BlendStateDescription blendStateDescription,
-        in OutputDescription outputDescription)
+        in OutputDescription outputDescription,
+        bool decodeLinearTints = false)
     {
         _contentManager = contentManager;
 
         _solidWhiteTexture = loadContext.StandardGraphicsResources.SolidWhiteTexture;
 
-        _spriteBatch = AddDisposable(new SpriteBatch(loadContext, blendStateDescription, outputDescription));
+        _spriteBatch = AddDisposable(new SpriteBatch(loadContext, blendStateDescription, outputDescription, decodeLinearTints));
 
         TextCache = AddDisposable(new TextCache(loadContext.GraphicsDevice));
 

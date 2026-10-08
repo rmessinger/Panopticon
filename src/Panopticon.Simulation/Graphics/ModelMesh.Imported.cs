@@ -93,20 +93,23 @@ partial class ModelMesh
     {
         var textureMaterializer = ImportedTextureMaterializer.GetShared(context);
         var shaderResources = context.ShaderResources.PbrMetallicRoughness;
+        var linearColourSpace = context.ShaderResources.LinearColourSpace;
 
         return shaderResources.GetCachedMaterial(
             payload,
             context.StandardGraphicsResources!,
-            ResolveRole(payload.BaseColorTexture, textureMaterializer),
-            ResolveRole(payload.MetallicRoughnessTexture, textureMaterializer),
-            ResolveRole(payload.NormalTexture, textureMaterializer),
-            ResolveRole(payload.OcclusionTexture, textureMaterializer),
-            ResolveRole(payload.EmissiveTexture, textureMaterializer));
+            ResolveRole(payload.BaseColorTexture, textureMaterializer, linearColourSpace, isColour: true),
+            ResolveRole(payload.MetallicRoughnessTexture, textureMaterializer, linearColourSpace, isColour: false),
+            ResolveRole(payload.NormalTexture, textureMaterializer, linearColourSpace, isColour: false),
+            ResolveRole(payload.OcclusionTexture, textureMaterializer, linearColourSpace, isColour: false),
+            ResolveRole(payload.EmissiveTexture, textureMaterializer, linearColourSpace, isColour: true));
     }
 
     private static PbrMetallicRoughnessShaderResources.RoleBinding? ResolveRole(
         ImportedTextureBinding? binding,
-        ImportedTextureMaterializer textureMaterializer)
+        ImportedTextureMaterializer textureMaterializer,
+        bool linearColourSpace,
+        bool isColour)
     {
         if (binding is null)
         {
@@ -116,7 +119,8 @@ partial class ModelMesh
         return new PbrMetallicRoughnessShaderResources.RoleBinding(
             textureMaterializer.GetTexture(
                 binding.ImageSource,
-                generateMipmaps: binding.Sampler.MipFilter != ImportedFilterMode.Nearest),
+                generateMipmaps: binding.Sampler.MipFilter != ImportedFilterMode.Nearest,
+                srgbColour: linearColourSpace && isColour),
             textureMaterializer.GetSampler(binding.Sampler));
     }
 

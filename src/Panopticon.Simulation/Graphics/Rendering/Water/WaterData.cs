@@ -6,10 +6,8 @@ namespace Panopticon.Graphics.Rendering.Water;
 
 internal sealed class WaterData : DisposableBase
 {
-    public const PixelFormat ReflectionMapPixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
     public const PixelFormat ReflectionDepthMapPixelFormat = PixelFormat.D32_Float_S8_UInt;
 
-    public const PixelFormat RefractionMapPixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
     public const PixelFormat RefractionDepthMapPixelFormat = PixelFormat.D32_Float_S8_UInt;
 
     public uint ReflectionMapSize { get; }
@@ -26,6 +24,7 @@ internal sealed class WaterData : DisposableBase
     public WaterData(
         uint reflectionMapSize,
         uint refractionMapSize,
+        PixelFormat colourFormat,
         GraphicsDevice graphicsDevice)
     {
         ReflectionMapSize = reflectionMapSize;
@@ -37,7 +36,7 @@ internal sealed class WaterData : DisposableBase
                 reflectionMapSize,
                 1,
                 1,
-                ReflectionMapPixelFormat,
+                colourFormat,
                 TextureUsage.RenderTarget | TextureUsage.Sampled)));
         ReflectionDepthMap = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
             TextureDescription.Texture2D(
@@ -58,7 +57,7 @@ internal sealed class WaterData : DisposableBase
                 refractionMapSize,
                 1,
                 1,
-                RefractionMapPixelFormat,
+                colourFormat,
                 TextureUsage.RenderTarget | TextureUsage.Sampled)));
         RefractionDepthMap = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
             TextureDescription.Texture2D(

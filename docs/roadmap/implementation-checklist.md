@@ -1160,7 +1160,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: synthetic cutout mips preserve threshold coverage within the G5 tolerance; foliage/fence
     silhouette captures improve against the supersampled reference; alpha-to-coverage requires
     effective MSAA greater than 1; blended/opaque textures remain unchanged; `Legacy` matches its golden.
-- [ ] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, one sRGB output transfer,
+- [x] G6 Gamma-correct rendering (sRGB colour-map views, linear lighting, one sRGB output transfer,
       linear-space mip filtering in `MipmapHelper`, ordered dither on the 8-bit output)
       ([`WI-G6-01`](agent/cards/WI-G6-01-audit-colour-space-handling.md),
       [`WI-G6-02`](agent/cards/WI-G6-02-linear-space-shading-and-dither.md)).

@@ -27,6 +27,13 @@ internal sealed class ShaderResourceManager : DisposableBase
     /// </summary>
     public readonly bool AlphaTestCoverageActive;
 
+    /// <summary>
+    /// Linear colour space (G6): colour textures sample through sRGB formats, authored
+    /// colour constants decode at their upload boundary, and the single sRGB transfer
+    /// lives in the output pass.
+    /// </summary>
+    public readonly bool LinearColourSpace;
+
     public readonly GlobalShaderResources Global;
     public readonly MeshShaderResources Mesh;
 
@@ -52,6 +59,8 @@ internal sealed class ShaderResourceManager : DisposableBase
 
             AlphaTestCoverageActive = AlphaTestCoverageMode
                 && shaderSetStore.OutputDescription.SampleCount != TextureSampleCount.Count1;
+
+            LinearColourSpace = standardGraphicsResources.Settings.ColourSpaceMode == ColourSpaceMode.Linear;
 
             Global = AddDisposable(new GlobalShaderResources(graphicsDevice));
             Mesh = AddDisposable(new MeshShaderResources(graphicsDevice));

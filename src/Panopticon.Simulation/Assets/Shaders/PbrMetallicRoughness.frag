@@ -156,7 +156,11 @@ void main()
         vec4 texel = texture(
             sampler2D(BaseColorTexture, BaseColorSampler),
             SelectUV(_MaterialConstants.BaseColorUvSet));
-        baseColor *= vec4(SrgbToLinear(texel.rgb), texel.a);
+        // Under the linear preset the upload is sRGB, so sampling already decoded the
+        // texel; the local transfer only applies to the Legacy gamma pipeline.
+        baseColor *= _GlobalLightingConstantsPS.LinearColourSpace
+            ? texel
+            : vec4(SrgbToLinear(texel.rgb), texel.a);
     }
 
     if (_MaterialConstants.AlphaMode == PBR_ALPHA_MODE_MASK
@@ -242,9 +246,12 @@ void main()
         vec3 texel = texture(
             sampler2D(EmissiveTexture, EmissiveSampler),
             SelectUV(_MaterialConstants.EmissiveUvSet)).rgb;
-        emissive *= SrgbToLinear(texel);
+        emissive *= _GlobalLightingConstantsPS.LinearColourSpace ? texel : SrgbToLinear(texel);
     }
     color += emissive;
 
-    out_Color = vec4(LinearToSrgb(color), baseColor.a);
+    // The linear preset defers the sRGB transfer to the output pass.
+    out_Color = _GlobalLightingConstantsPS.LinearColourSpace
+        ? vec4(color, baseColor.a)
+        : vec4(LinearToSrgb(color), baseColor.a);
 }

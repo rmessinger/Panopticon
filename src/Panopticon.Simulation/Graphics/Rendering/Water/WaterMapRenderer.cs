@@ -47,6 +47,7 @@ internal sealed class WaterMapRenderer : DisposableBase
 
     private readonly float _transparentWaterDepth;
     private readonly float _transparentWaterMinOpacity;
+    private readonly PixelFormat _colourFormat;
 
     public WaterMapRenderer(
         AssetStore assetStore,
@@ -55,6 +56,8 @@ internal sealed class WaterMapRenderer : DisposableBase
         GlobalShaderResources globalShaderResources)
     {
         _waterShaderResources = graphicsLoadContext.ShaderResources.Water;
+
+        _colourFormat = graphicsLoadContext.ShaderSetStore.OutputDescription.ColorAttachments[0].Format;
 
         var _waterSets = assetStore.WaterSets;
         _waterTextureSet = new Dictionary<TimeOfDay, Texture>();
@@ -167,6 +170,7 @@ internal sealed class WaterMapRenderer : DisposableBase
             _waterData = AddDisposable(new WaterData(
                 reflectionMapSize,
                 refractionMapSize,
+                _colourFormat,
                 graphicsDevice));
 
             var texture = _waterTextureSet[scene.Lighting.TimeOfDay];
