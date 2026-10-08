@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G5-02` |
 | Roadmap phase | [Track G · G5](../../track-g-rendering-clarity.md): Cutout & alpha-test clarity |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `M` |
 | Prerequisites | `WI-G5-01`, `WI-G4-02` |

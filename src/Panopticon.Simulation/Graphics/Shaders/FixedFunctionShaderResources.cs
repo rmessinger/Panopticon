@@ -32,8 +32,16 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         BlendFactor destinationAlphaFactor,
         in MaterialConstantsType materialConstants,
         Texture texture0,
-        Texture texture1)
+        Texture texture1,
+        bool alphaTestCoverage = false)
     {
+        var constants = materialConstants;
+
+        if (alphaTestCoverage)
+        {
+            constants.Shading.AlphaTestCoverage = true;
+        }
+
         var pipelineKey = new PipelineKey(
             cullMode,
             depthWriteEnabled,
@@ -41,10 +49,11 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
             blendEnabled,
             sourceFactor,
             destinationColorFactor,
-            destinationAlphaFactor);
+            destinationAlphaFactor,
+            alphaTestCoverage);
 
         var materialConstantsKey = new MaterialConstantsKey(
-            materialConstants,
+            constants,
             texture0,
             texture1);
 
@@ -85,6 +94,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         {
             var blendState = new BlendStateDescription(
                 RgbaFloat.White,
+                pipelineKey.AlphaToCoverage,
                 new BlendAttachmentDescription(
                     pipelineKey.BlendEnabled,
                     pipelineKey.SourceFactor,
@@ -159,7 +169,8 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         bool BlendEnabled,
         BlendFactor SourceFactor,
         BlendFactor DestinationColorFactor,
-        BlendFactor DestinationAlphaFactor);
+        BlendFactor DestinationAlphaFactor,
+        bool AlphaToCoverage);
 
     private readonly record struct MaterialConstantsKey(
         MaterialConstantsType MaterialConstants,
@@ -325,6 +336,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         public SecondaryTextureBlend SecondaryTextureColorBlend;
         public SecondaryTextureBlend SecondaryTextureAlphaBlend;
         public Bool32 AlphaTest;
+        public Bool32 AlphaTestCoverage;
 
 #pragma warning disable CS0169
         private readonly Vector2 _padding;
@@ -343,7 +355,8 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                 TexturingEnabled.Equals(other.TexturingEnabled) &&
                 SecondaryTextureColorBlend == other.SecondaryTextureColorBlend &&
                 SecondaryTextureAlphaBlend == other.SecondaryTextureAlphaBlend &&
-                AlphaTest.Equals(other.AlphaTest);
+                AlphaTest.Equals(other.AlphaTest) &&
+                AlphaTestCoverage.Equals(other.AlphaTestCoverage);
         }
 
         public override int GetHashCode()
@@ -354,7 +367,8 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                 TexturingEnabled,
                 SecondaryTextureColorBlend,
                 SecondaryTextureAlphaBlend,
-                AlphaTest);
+                AlphaTest,
+                AlphaTestCoverage);
         }
     }
 

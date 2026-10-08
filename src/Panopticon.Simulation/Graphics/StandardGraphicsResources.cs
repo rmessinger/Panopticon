@@ -20,9 +20,16 @@ internal sealed class StandardGraphicsResources : DisposableBase
     public Texture SolidBlackTexture { get; }
     public Texture PlaceholderTexture { get; }
 
+    /// <summary>
+    /// Retained copy of the constructor settings: shader managers and material builders
+    /// consult the alpha-test mode and other members when selecting variants (WI-G5-02).
+    /// </summary>
+    public GraphicsSettings Settings { get; }
+
     public StandardGraphicsResources(GraphicsDevice graphicsDevice, GraphicsSettings settings)
     {
         _graphicsDevice = graphicsDevice;
+        Settings = settings;
 
         var aniso4xClampSamplerDescription = SamplerDescription.Aniso4x;
         aniso4xClampSamplerDescription.AddressModeU = SamplerAddressMode.Clamp;

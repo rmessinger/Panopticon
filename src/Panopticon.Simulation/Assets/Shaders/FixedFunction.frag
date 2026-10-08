@@ -78,6 +78,7 @@ struct ShadingConfiguration
     int SecondaryTextureColorBlend;
     int SecondaryTextureAlphaBlend;
     bool AlphaTest;
+    bool AlphaTestCoverage;
 
     vec2 _Padding;
 };
@@ -379,7 +380,17 @@ void main()
 
         if (_MaterialConstants.Shading.AlphaTest)
         {
-            if (FailsAlphaTest(diffuseTextureColor.w))
+            // Coverage mode (WI-G5-02): the cutout is baked into the mip alpha and
+            // alpha-to-coverage drives MSAA sample masking, so only fully
+            // transparent samples are rejected outright.
+            if (_MaterialConstants.Shading.AlphaTestCoverage)
+            {
+                if (diffuseTextureColor.w <= 0.0)
+                {
+                    discard;
+                }
+            }
+            else if (FailsAlphaTest(diffuseTextureColor.w))
             {
                 discard;
             }
