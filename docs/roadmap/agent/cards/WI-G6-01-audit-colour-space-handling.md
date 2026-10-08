@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G6-01` |
 | Roadmap phase | [Track G · G6](../../track-g-rendering-clarity.md): Gamma-correct rendering |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
