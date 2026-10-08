@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G5-01` |
 | Roadmap phase | [Track G · G5](../../track-g-rendering-clarity.md): Cutout & alpha-test clarity |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
