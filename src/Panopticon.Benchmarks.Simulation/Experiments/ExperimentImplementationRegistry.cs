@@ -79,10 +79,7 @@ public sealed class ExperimentImplementationRegistry
         var seenSeams = new HashSet<string>(StringComparer.Ordinal);
         foreach (var axis in definition.Axes)
         {
-            if (string.IsNullOrWhiteSpace(axis.Seam))
-            {
-                throw new ArgumentException("Experiment axes must name a seam.");
-            }
+            Ensure.NotNullOrWhiteSpace(axis.Seam, "Experiment axes must name a seam.");
 
             if (!seenSeams.Add(axis.Seam))
             {
@@ -90,11 +87,7 @@ public sealed class ExperimentImplementationRegistry
             }
 
             var known = _descriptors.Values.Where(d => d.Seam == axis.Seam).ToList();
-            if (known.Count == 0)
-            {
-                throw new ArgumentException(
-                    $"No implementation is registered for seam '{axis.Seam}'; known seams: {DescribeSeams()}.");
-            }
+            Ensure.NotEmpty(known, $"No implementation is registered for seam '{axis.Seam}'; known seams: {DescribeSeams()}.");
 
             var seenImplementations = new HashSet<string>(StringComparer.Ordinal);
             foreach (var id in axis.Implementations)
