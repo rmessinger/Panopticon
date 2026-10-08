@@ -9,25 +9,26 @@ using Panopticon.Logic.Object;
 namespace Panopticon.Content.Importing.Units.Generals;
 
 /// <summary>
-/// Card WI-H2a-13: the Generals reference adapter. The INI parser still builds native definitions,
-/// because child objects, reskins, and <c>DefaultThingTemplate</c> resolve their parents while
-/// parsing. This adapter then describes every parsed object and dependency in engine-owned records:
-/// typed fields for the capability matrix, plus legacy bindings to the native template and every
-/// native module (decision D1). Typed values are read back from native data in declared source
-/// units, so they are evidence of what the runtime holds rather than a second parse.
+/// Card WI-H2a-13: the Generals reference adapter. The INI parser builds native definitions into
+/// staging (WI-H2a-19), resolving child objects, reskins, and DefaultThingTemplate parents through
+/// the staging lookup. This adapter then describes every staged object and dependency in
+/// engine-owned records: typed fields for the capability matrix, plus legacy bindings to the
+/// native template and every native module (decision D1). Typed values are read back from native
+/// data in declared source units, so they are evidence of what the runtime holds rather than a
+/// second parse.
 /// </summary>
 public sealed class GeneralsUnitAdapter : IUnitSourceAdapter
 {
     private static readonly Provenance NativeProvenance = new(ContentSource.Generals.Id, "INI");
 
-    private readonly AssetStore _store;
+    private readonly UnitContentStaging _staging;
     private readonly SageGame _game;
     private readonly GeneralsNativeTable _natives = new();
 
-    public GeneralsUnitAdapter(AssetStore store, SageGame game)
+    public GeneralsUnitAdapter(UnitContentStaging staging, SageGame game)
     {
-        ArgumentNullException.ThrowIfNull(store);
-        _store = store;
+        ArgumentNullException.ThrowIfNull(staging);
+        _staging = staging;
         _game = game;
     }
 
@@ -43,22 +44,24 @@ public sealed class GeneralsUnitAdapter : IUnitSourceAdapter
 
     public static UnitCapabilityRegistry CreateRegistry() => UnitCapabilityRegistry.CreateDefault(NativeModuleFamilies);
 
-    /// <param name="rootNames">Object names to publish; empty means every parsed object.</param>
+    /// <param name="rootNames">Object names to publish; empty means every staged record, so publication covers the full staged set.</param>
     public UnitContentSet Read(IReadOnlyCollection<string> rootNames)
     {
         ArgumentNullException.ThrowIfNull(rootNames);
 
-        var records = new List<SourceRecord>();
-        records.AddRange(((IEnumerable<WeaponTemplate>)_store.WeaponTemplates).Select(ReadWeapon));
-        records.AddRange(((IEnumerable<ArmorTemplate>)_store.ArmorTemplates).Select(ReadArmor));
-        records.AddRange(((IEnumerable<LocomotorTemplate>)_store.LocomotorTemplates).Select(ReadLocomotor));
-        records.AddRange(((IEnumerable<UpgradeTemplate>)_store.Upgrades).Select(ReadUpgrade));
+        var moduleRecords = new List<SourceRecord>();
+        moduleRecords.AddRange(_staging.Weapons.Select(ReadWeapon));
+        moduleRecords.AddRange(_staging.Armors.Select(ReadArmor));
+        moduleRecords.AddRange(_staging.Locomotors.Select(ReadLocomotor));
+        moduleRecords.AddRange(_staging.Upgrades.Select(ReadUpgrade));
 
-        var objects = ((IEnumerable<ObjectDefinition>)_store.ObjectDefinitions).ToList();
-        records.AddRange(objects.Select(ReadObject));
+        var objectRecords = _staging.Objects.Select(ReadObject).ToList();
+        var records = moduleRecords.Concat(objectRecords).ToList();
 
+        // Every record is a root (WI-H2a-19): module-held references such as CollideWeapon are not
+        // typed capability dependencies, so object roots alone do not reach every staged asset.
         var roots = rootNames.Count == 0
-            ? objects.Select(o => Id(ContentKind.Unit, o.Name))
+            ? objectRecords.Select(record => record.Id).Concat(moduleRecords.Select(record => record.Id))
             : rootNames.Select(name => Id(ContentKind.Unit, name));
 
         return new UnitContentSet(Source, records, roots);

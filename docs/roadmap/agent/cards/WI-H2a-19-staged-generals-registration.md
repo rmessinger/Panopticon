@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-H2a-19` |
 | Roadmap phase | [H2a](../../track-h-storage-formats.md): unit-content import layer |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `M` |
 | Prerequisites | `WI-H2a-13` |
@@ -37,8 +37,8 @@ Register Generals unit content only through the publisher, removing parse-time r
 
 ## Acceptance criteria
 
-- [ ] No unit block reaches an `AssetStore` collection except through the publisher.
-- [ ] Generals and Zero Hour boot with zero import diagnostics; parity tests and P9 suites pass unchanged.
+- [x] No unit block reaches an `AssetStore` collection except through the publisher.
+- [x] Generals and Zero Hour boot with zero import diagnostics; parity tests and P9 suites pass unchanged.
 
 ## Validation commands
 
