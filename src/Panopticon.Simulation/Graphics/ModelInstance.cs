@@ -307,7 +307,8 @@ public sealed class ModelInstance : DisposableBase
         bool castsShadow,
         MeshShaderResources.RenderItemConstantsPS renderItemConstantsPS,
         Dictionary<string, bool> shownSubObjects = null,
-        Dictionary<string, bool> hiddenSubObjects = null)
+        Dictionary<string, bool> hiddenSubObjects = null,
+        float visualScale = 1f)
     {
         if (RenderItemConstantsBufferPS.Value != renderItemConstantsPS)
         {
@@ -341,7 +342,8 @@ public sealed class ModelInstance : DisposableBase
                 subObject.Bone,
                 _worldMatrix,
                 castsShadow,
-                renderItemConstantsPS);
+                renderItemConstantsPS,
+                visualScale);
         }
     }
 

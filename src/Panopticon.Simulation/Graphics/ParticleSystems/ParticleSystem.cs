@@ -21,6 +21,13 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
     public delegate ref readonly Matrix4x4 GetMatrixReferenceDelegate();
 
     private readonly GetMatrixReferenceDelegate _getWorldMatrix;
+
+    /// <summary>
+    /// Optional presentation-only visual scale (WI-G10-02). When it returns a value other
+    /// than 1 the world matrix is scaled by value, keeping engine FX aligned with resized
+    /// aircraft without mutating the shared bone transform the delegate exposes.
+    /// </summary>
+    private readonly Func<float>? _getVisualScale;
     private readonly Matrix4x4 _worldMatrix;
 
     private readonly FXParticleEmissionVelocityBase _velocityType;
@@ -94,10 +101,12 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
     internal ParticleSystem(
         FXParticleSystemTemplate template,
         AssetLoadContext loadContext,
-        GetMatrixReferenceDelegate getWorldMatrix)
+        GetMatrixReferenceDelegate getWorldMatrix,
+        Func<float>? getVisualScale = null)
         : this(template, loadContext)
     {
         _getWorldMatrix = getWorldMatrix;
+        _getVisualScale = getVisualScale;
     }
 
     internal ParticleSystem(
@@ -256,8 +265,16 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
 
         ref readonly var worldMatrix = ref GetWorldMatrix();
 
-        // TODO: Use _localTransform too.
-        worldMatrix.ToMatrix4x3(out _worldTransform);
+        var visualScale = _getVisualScale?.Invoke() ?? 1f;
+        if (visualScale != 1f)
+        {
+            (Matrix4x4.CreateScale(visualScale) * worldMatrix).ToMatrix4x3(out _worldTransform);
+        }
+        else
+        {
+            // TODO: Use _localTransform too.
+            worldMatrix.ToMatrix4x3(out _worldTransform);
+        }
 
         if (Template.SystemLifetime != 0 && _timer > Template.SystemLifetime)
         {
