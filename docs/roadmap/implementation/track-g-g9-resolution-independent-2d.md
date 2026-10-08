@@ -109,6 +109,57 @@ preset-dependent sampling:
   (`TestHarnessConfig.ViewportScale` into `CaptureRunSettings`) for the scale validation
   below.
 
+## Implementation (WI-G9-03, complete)
+
+Chrome classification happens at image creation, drawing at one switch point:
+
+- `Image.ChromeKind` (`HudChromeKind`: `Panel`, `ButtonNormal/Hover/Pressed/Disabled`,
+  `ButtonOverlayHover/Pressed`, `Frame`, `Thumb`, `CheckboxUnchecked/Checked`) tags an image as
+  chrome. `ImageLoader` factory methods take the kind as a trailing optional parameter. The WND
+  control constructors tag their authored draw data (Button/TextBox/ComboBox/ListBox/Slider/
+  CheckBox/RadioButton, and the generic `Control.Wnd` background branch tags `Panel`).
+  `GeneralsControlBar` tags mapped-image chrome: scheme toggle-button states
+  (`ButtonNormal/Hover/Pressed`), `Cameo_hilited`/`Cameo_push` (`ButtonOverlayHover/Pressed`),
+  the `SN/SA/SUEmptyFrame` empty-slot frames (`Frame`), and the scheme's full-width pre-rendered
+  bar image (`Panel`). Content stays `None`: cameos, portraits, rank chevrons, and the minimap
+  (radar draws through its own path) keep sampling textures under every preset.
+- `Image.Draw` is the single switch: when `ChromeKind != None` and
+  `DrawingContext2D.DynamicHudChrome` (resolved once from `UiMode.DynamicHud`), the draw
+  redirects to `HudChromePainter` instead of sampling. `Legacy` takes the exact prior path, so
+  its output is byte-identical.
+- `HudChromePainter` draws fills through `FillRectangle` (stretched solid white) and one-pixel
+  `DrawPixelSnappedRectangle` borders, so the chrome is vector-crisp at any viewport scale.
+  Colours are authored sRGB values; the linear preset decodes them at the sprite level like any
+  other 2D tint. Layout and hit regions are untouched: the painter receives the same
+  destination rect the bitmap would have occupied.
+- `HudChromeAudit` counts chrome-tagged texture draws (`ChromeBitmapDraws`) and procedural
+  paints (`DynamicChromePaints`). The visual regression harness resets it before every capture
+  and, on full-HUD scenes under the dynamic-HUD preset, fails when chrome bitmaps were sampled
+  or when zero procedural paints happened. Compare mode exits 2 on the audit; update mode
+  refuses to write the manifest.
+- Harness: `VisualRegressionScene.ViewportScale` (default 1) feeds `CaptureRunSettings`; the
+  new `hud-4x` scene captures the HUD profile at 4x native (4096x3072) under both presets.
+  Captures land in per-scene `scale{N}` directories and the nominal-size drift check applies to
+  scale-1 scenes only. Menus share the same WND chrome kinds, so Enhanced menus also draw
+  dynamic chrome; APT UI is out of scope and unchanged.
+
+### Evidence (WI-G9-03)
+
+- Legacy proof: pre-regeneration gate passed all seven faithful goldens (including `hud`) and
+  stopped at the missing `hud-4x` entry, so `Legacy` output is pixel-identical to pre-card.
+- Golden update: 16 goldens regenerated (two new `hud-4x` entries), final gate exit 0 with
+  16/16 Passed.
+- Injected regression: forcing `DynamicHudChrome` off made the enhanced `hud` and `hud-4x`
+  scenes draw 6 chrome-tagged legacy bitmaps (audit failure) and differ on 25.3% / 25.2% of
+  pixels against their goldens (exit 2); both the audit and the goldens catch the regression.
+- Sharpness at 4x native: control-bar band gradient energy 10.367 (procedural) vs 4.047
+  (legacy art upscaled 4x), 2.6x. Comparison image: `panopticon-g9-dynamic-chrome.png` in the
+  screenshot viewer.
+- Suite: 53 + 355 + 2120 passed, 7 skipped (`Category!=Interactive`); `dotnet format
+  --verify-no-changes`, brace check and `git diff --check` clean.
+- Known cosmetic: chrome textures are still cached by `Image.SetSize` under dynamic mode but
+  never drawn; skipping that fetch is future cleanup.
+
 ## Validation and risks
 
 Scale-1/2 and widescreen bounds tests preserve input and layout. Enhanced draws no legacy chrome

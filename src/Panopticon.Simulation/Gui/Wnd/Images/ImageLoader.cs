@@ -14,12 +14,12 @@ public sealed class ImageLoader
         _textureCache = textureCache;
     }
 
-    public Image? CreateFromMappedImageReference(LazyAssetReference<MappedImage>? mappedImageReference)
+    public Image? CreateFromMappedImageReference(LazyAssetReference<MappedImage>? mappedImageReference, HudChromeKind chromeKind = HudChromeKind.None)
     {
         var mappedImage = mappedImageReference?.Value;
         if (mappedImage != null)
         {
-            return new Image(mappedImage.Name, new MappedImageSource(mappedImage, _textureCache));
+            return new Image(mappedImage.Name, new MappedImageSource(mappedImage, _textureCache)) { ChromeKind = chromeKind };
         }
         else
         {
@@ -27,12 +27,12 @@ public sealed class ImageLoader
         }
     }
 
-    public Image? CreateFromWndDrawData(WndDrawData wndDrawData, int index)
+    public Image? CreateFromWndDrawData(WndDrawData wndDrawData, int index, HudChromeKind chromeKind = HudChromeKind.None)
     {
-        return CreateFromMappedImageReference(wndDrawData.Items[index].Image);
+        return CreateFromMappedImageReference(wndDrawData.Items[index].Image, chromeKind);
     }
 
-    public Image? CreateFromStretchableWndDrawData(WndDrawData wndDrawData, int leftIndex, int middleIndex, int rightIndex)
+    public Image? CreateFromStretchableWndDrawData(WndDrawData wndDrawData, int leftIndex, int middleIndex, int rightIndex, HudChromeKind chromeKind = HudChromeKind.None)
     {
         var leftImage = wndDrawData.Items[leftIndex].Image?.Value;
         var middleImage = wndDrawData.Items[middleIndex].Image?.Value;
@@ -44,11 +44,14 @@ public sealed class ImageLoader
         {
             return new Image(
                 $"{leftImage.Name}:{middleImage.Name}:{rightImage.Name}",
-                new StretchableMappedImageSource(leftImage, middleImage, rightImage, _textureCache));
+                new StretchableMappedImageSource(leftImage, middleImage, rightImage, _textureCache))
+            {
+                ChromeKind = chromeKind,
+            };
         }
         else if (leftImage != null)
         {
-            return CreateFromMappedImageReference(wndDrawData.Items[leftIndex].Image);
+            return CreateFromMappedImageReference(wndDrawData.Items[leftIndex].Image, chromeKind);
         }
         else
         {

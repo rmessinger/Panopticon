@@ -25,6 +25,12 @@ public class VisualRegressionScene
     public bool FullHud { get; set; }
 
     /// <summary>
+    /// Capture viewport scale (WI-G9-03): 1 is the nominal harness viewport; larger values
+    /// capture at N times native size to verify resolution independence of the HUD.
+    /// </summary>
+    public int ViewportScale { get; set; } = 1;
+
+    /// <summary>
     /// Normalized [0, 1] screen rectangles over which the supersampled silhouette check runs
     /// (WI-G3-03) and metrics are scored. Empty means the whole frame; texture and HUD scenes
     /// leave it empty.

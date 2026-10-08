@@ -128,21 +128,21 @@ public class ListBox : Control
         BorderColor = wndWindow.EnabledDrawData.Items[0].BorderColor.ToColorRgbaF();
         BorderWidth = 1;
 
-        SelectedItemBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 1, 3, 2);
-        SelectedItemHoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 1, 3, 2);
+        SelectedItemBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 1, 3, 2, HudChromeKind.ButtonHover);
+        SelectedItemHoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 1, 3, 2, HudChromeKind.ButtonHover);
 
         IsScrollBarVisible = wndWindow.ListBoxData.ScrollBar;
 
         if (wndWindow.ListBoxData.ScrollBar)
         {
-            UpButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledUpButtonDrawData, 0);
-            UpButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteUpButtonDrawData, 0);
+            UpButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledUpButtonDrawData, 0, HudChromeKind.Thumb);
+            UpButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteUpButtonDrawData, 0, HudChromeKind.Thumb);
 
-            DownButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledDownButtonDrawData, 0);
-            DownButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteDownButtonDrawData, 0);
+            DownButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledDownButtonDrawData, 0, HudChromeKind.Thumb);
+            DownButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteDownButtonDrawData, 0, HudChromeKind.Thumb);
 
-            ThumbImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbEnabledDrawData, 0);
-            ThumbHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbHiliteDrawData, 0);
+            ThumbImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbEnabledDrawData, 0, HudChromeKind.Thumb);
+            ThumbHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbHiliteDrawData, 0, HudChromeKind.Thumb);
         }
 
         if (wndWindow.ListBoxData.ForceSelect)

@@ -16,9 +16,9 @@ public class TextBox : Control
 
     public TextBox(WndWindowDefinition wndWindow, ImageLoader imageLoader)
     {
-        BackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 0, 2, 1);
-        HoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 0, 2, 1);
-        DisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.DisabledDrawData, 0, 2, 1);
+        BackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.EnabledDrawData, 0, 2, 1, HudChromeKind.ButtonNormal);
+        HoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.HiliteDrawData, 0, 2, 1, HudChromeKind.ButtonHover);
+        DisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.DisabledDrawData, 0, 2, 1, HudChromeKind.ButtonDisabled);
 
         HoverTextColor = wndWindow.TextColor.Hilite.ToColorRgbaF();
         DisabledTextColor = wndWindow.TextColor.Disabled.ToColorRgbaF();

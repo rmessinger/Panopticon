@@ -164,24 +164,24 @@ public class ComboBox : Control
         IsEditable = wndWindow.ComboBoxData.IsEditable;
         MaxDisplay = wndWindow.ComboBoxData.MaxDisplay;
 
-        TextBoxBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxEditBoxEnabledDrawData, 0, 2, 1);
-        TextBoxHoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxEditBoxHiliteDrawData, 0, 2, 1);
-        TextBoxDisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxEditBoxDisabledDrawData, 0, 2, 1);
+        TextBoxBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxEditBoxEnabledDrawData, 0, 2, 1, HudChromeKind.ButtonNormal);
+        TextBoxHoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxEditBoxHiliteDrawData, 0, 2, 1, HudChromeKind.ButtonHover);
+        TextBoxDisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxEditBoxDisabledDrawData, 0, 2, 1, HudChromeKind.ButtonDisabled);
 
-        DropDownSelectedItemBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxListBoxEnabledDrawData, 1, 3, 2);
-        DropDownSelectedItemHoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxListBoxHiliteDrawData, 1, 3, 2);
-        ListBoxDisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxListBoxDisabledDrawData, 1, 3, 2);
+        DropDownSelectedItemBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxListBoxEnabledDrawData, 1, 3, 2, HudChromeKind.ButtonHover);
+        DropDownSelectedItemHoverBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxListBoxHiliteDrawData, 1, 3, 2, HudChromeKind.ButtonHover);
+        ListBoxDisabledBackgroundImage = imageLoader.CreateFromStretchableWndDrawData(wndWindow.ComboBoxListBoxDisabledDrawData, 1, 3, 2, HudChromeKind.ButtonDisabled);
 
-        DropDownButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ComboBoxDropDownButtonEnabledDrawData, 0);
+        DropDownButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ComboBoxDropDownButtonEnabledDrawData, 0, HudChromeKind.Thumb);
 
-        DropDownUpButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledUpButtonDrawData, 0);
-        DropDownUpButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteUpButtonDrawData, 0);
+        DropDownUpButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledUpButtonDrawData, 0, HudChromeKind.Thumb);
+        DropDownUpButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteUpButtonDrawData, 0, HudChromeKind.Thumb);
 
-        DropDownDownButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledDownButtonDrawData, 0);
-        DropDownDownButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteDownButtonDrawData, 0);
+        DropDownDownButtonImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxEnabledDownButtonDrawData, 0, HudChromeKind.Thumb);
+        DropDownDownButtonHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.ListBoxHiliteDownButtonDrawData, 0, HudChromeKind.Thumb);
 
-        DropDownThumbImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbEnabledDrawData, 0);
-        DropDownThumbHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbHiliteDrawData, 0);
+        DropDownThumbImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbEnabledDrawData, 0, HudChromeKind.Thumb);
+        DropDownThumbHoverImage = imageLoader.CreateFromWndDrawData(wndWindow.SliderThumbHiliteDrawData, 0, HudChromeKind.Thumb);
 
         if (wndWindow.ComboBoxListBoxEnabledDrawData.Items != null && wndWindow.ComboBoxListBoxEnabledDrawData.Items.Length > 0)
         {

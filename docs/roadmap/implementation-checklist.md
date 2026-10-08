@@ -1189,7 +1189,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: native 1x/2x captures use pixel-sized fonts with no duplicate DPI transform; proportional
     layout and hit rectangles remain unchanged; `Enhanced` role-aware sampling avoids atlas
     bleed and preserves pixel-art roles; `Legacy` matches its golden.
-  - [ ] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
+  - [x] G9-3 Pre-rendered HUD replacement: replace the control bar's 800x600 bitmaps with
         dynamically drawn equivalents (vector/procedural panels, buttons, and frames; live text)
         behind the `Enhanced` preset, `Legacy` keeps the original art
         ([`WI-G9-03`](agent/cards/WI-G9-03-dynamic-hud-chrome.md)).

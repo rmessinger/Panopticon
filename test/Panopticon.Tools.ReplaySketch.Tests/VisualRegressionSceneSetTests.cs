@@ -13,7 +13,7 @@ public class VisualRegressionSceneSetTests
 
         var names = sceneSet.Scenes.Select(scene => scene.Name).ToArray();
         Assert.Equal(
-            ["terrain-default", "terrain-grazing", "foliage-distance", "cutout-fences", "unit-silhouettes", "shadow-casters", "hud"],
+            ["terrain-default", "terrain-grazing", "foliage-distance", "cutout-fences", "unit-silhouettes", "shadow-casters", "hud", "hud-4x"],
             names);
     }
 
@@ -35,7 +35,13 @@ public class VisualRegressionSceneSetTests
 
         var hud = sceneSet.Scenes.Single(scene => scene.Name == "hud");
         Assert.True(hud.FullHud);
+
+        var hud4x = sceneSet.Scenes.Single(scene => scene.Name == "hud-4x");
+        Assert.True(hud4x.FullHud);
+        Assert.Equal(4, hud4x.ViewportScale);
+
         Assert.False(sceneSet.Scenes.Single(scene => scene.Name == "terrain-default").FullHud);
+        Assert.Equal(1, sceneSet.Scenes.Single(scene => scene.Name == "terrain-default").ViewportScale);
     }
 
     [Fact]
@@ -46,7 +52,10 @@ public class VisualRegressionSceneSetTests
         foreach (var scene in sceneSet.Scenes)
         {
             var profile = CaptureProfileLoader.LoadEmbeddedCapture(scene.Profile);
-            Assert.Equal($"vr-{scene.Name}", profile.Name);
+
+            // Scaled variants reuse their base scene's profile (hud-4x -> vr-hud).
+            var baseName = scene.ViewportScale == 1 ? scene.Name : scene.Name.Split('-')[0];
+            Assert.Equal($"vr-{baseName}", profile.Name);
             Assert.True(scene.CaptureFrame >= 1);
         }
     }

@@ -19,8 +19,8 @@ public class Slider : Control
 
     public Slider(WndWindowDefinition wndWindow, ImageLoader imageLoader)
     {
-        HighlightedBoxImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 0);
-        UnhighlightedBoxImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 1);
+        HighlightedBoxImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 0, HudChromeKind.Thumb);
+        UnhighlightedBoxImage = imageLoader.CreateFromWndDrawData(wndWindow.DisabledDrawData, 1, HudChromeKind.Thumb);
 
         MinimumValue = wndWindow.SliderData.MinValue;
         MaximumValue = wndWindow.SliderData.MaxValue;
