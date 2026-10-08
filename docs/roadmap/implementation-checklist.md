@@ -1153,7 +1153,7 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: supported 1x/2x/4x/8x modes render without attachment mismatch across 3D, terrain, water,
     roads and particles; 4x improves G3 silhouette aliasing against 1x; 2D stays single-sample;
     resize/preset switches release obsolete resources; unsupported requests report their fallback.
-- [ ] G5 Cutout & alpha-test clarity (alpha-to-coverage under MSAA, coverage-preserving mips for
+- [x] G5 Cutout & alpha-test clarity (alpha-to-coverage under MSAA, coverage-preserving mips for
       alpha-tested textures, baked per-mip alpha rescale, retaining the fixed `0x60` cutoff in
       `Common.h`) ([`WI-G5-01`](agent/cards/WI-G5-01-audit-alpha-test-materials.md),
       [`WI-G5-02`](agent/cards/WI-G5-02-alpha-to-coverage-and-cutout-mips.md)).

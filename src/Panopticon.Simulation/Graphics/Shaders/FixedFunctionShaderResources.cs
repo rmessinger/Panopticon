@@ -11,6 +11,7 @@ namespace Panopticon.Graphics.Shaders;
 internal sealed class FixedFunctionShaderResources : ShaderSetBase
 {
     private readonly Dictionary<PipelineKey, Pipeline> _pipelineCache = new();
+    private readonly Dictionary<PipelineKey, Pipeline> _singleSamplePipelineCache = new();
     private readonly Dictionary<MaterialKey, Material> _materialCache = new();
     private readonly Dictionary<MaterialConstantsType, DeviceBuffer> _materialConstantsBufferCache = new();
     private readonly Dictionary<MaterialConstantsKey, ResourceSet> _materialConstantsCache = new();
@@ -31,8 +32,16 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         BlendFactor destinationAlphaFactor,
         in MaterialConstantsType materialConstants,
         Texture texture0,
-        Texture texture1)
+        Texture texture1,
+        bool alphaTestCoverage = false)
     {
+        var constants = materialConstants;
+
+        if (alphaTestCoverage)
+        {
+            constants.Shading.AlphaTestCoverage = true;
+        }
+
         var pipelineKey = new PipelineKey(
             cullMode,
             depthWriteEnabled,
@@ -40,10 +49,11 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
             blendEnabled,
             sourceFactor,
             destinationColorFactor,
-            destinationAlphaFactor);
+            destinationAlphaFactor,
+            alphaTestCoverage);
 
         var materialConstantsKey = new MaterialConstantsKey(
-            materialConstants,
+            constants,
             texture0,
             texture1);
 
@@ -53,7 +63,11 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
 
         if (!_materialCache.TryGetValue(materialKey, out var result))
         {
-            var pipeline = GetCachedPipeline(pipelineKey);
+            var pipeline = GetCachedPipeline(pipelineKey, _pipelineCache, Store.OutputDescription);
+
+            var singleSamplePipeline = Store.OutputDescription.SampleCount == TextureSampleCount.Count1
+                ? pipeline
+                : GetCachedPipeline(pipelineKey, _singleSamplePipelineCache, Store.SingleSampleOutputDescription);
 
             var materialResourceSet = GetCachedMaterialResourceSet(materialConstantsKey);
 
@@ -61,6 +75,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                 new Material(
                     this,
                     pipeline,
+                    singleSamplePipeline,
                     materialResourceSet,
                     blendEnabled ? SurfaceType.Transparent : SurfaceType.Opaque));
 
@@ -70,12 +85,16 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         return result;
     }
 
-    private Pipeline GetCachedPipeline(in PipelineKey pipelineKey)
+    private Pipeline GetCachedPipeline(
+        in PipelineKey pipelineKey,
+        Dictionary<PipelineKey, Pipeline> cache,
+        OutputDescription outputs)
     {
-        if (!_pipelineCache.TryGetValue(pipelineKey, out var result))
+        if (!cache.TryGetValue(pipelineKey, out var result))
         {
             var blendState = new BlendStateDescription(
                 RgbaFloat.White,
+                pipelineKey.AlphaToCoverage,
                 new BlendAttachmentDescription(
                     pipelineKey.BlendEnabled,
                     pipelineKey.SourceFactor,
@@ -92,7 +111,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
             var rasterizerState = RasterizerStateDescriptionUtility.DefaultFrontIsCounterClockwise;
             rasterizerState.CullMode = pipelineKey.CullMode;
 
-            _pipelineCache.Add(pipelineKey, result = AddDisposable(GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
+            cache.Add(pipelineKey, result = AddDisposable(GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription(
                     blendState,
                     depthState,
@@ -100,7 +119,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                     PrimitiveTopology.TriangleList,
                     Description,
                     ResourceLayouts,
-                    Store.OutputDescription))));
+                    outputs))));
         }
 
         return result;
@@ -150,7 +169,8 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         bool BlendEnabled,
         BlendFactor SourceFactor,
         BlendFactor DestinationColorFactor,
-        BlendFactor DestinationAlphaFactor);
+        BlendFactor DestinationAlphaFactor,
+        bool AlphaToCoverage);
 
     private readonly record struct MaterialConstantsKey(
         MaterialConstantsType MaterialConstants,
@@ -316,6 +336,7 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         public SecondaryTextureBlend SecondaryTextureColorBlend;
         public SecondaryTextureBlend SecondaryTextureAlphaBlend;
         public Bool32 AlphaTest;
+        public Bool32 AlphaTestCoverage;
 
 #pragma warning disable CS0169
         private readonly Vector2 _padding;
@@ -334,7 +355,8 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                 TexturingEnabled.Equals(other.TexturingEnabled) &&
                 SecondaryTextureColorBlend == other.SecondaryTextureColorBlend &&
                 SecondaryTextureAlphaBlend == other.SecondaryTextureAlphaBlend &&
-                AlphaTest.Equals(other.AlphaTest);
+                AlphaTest.Equals(other.AlphaTest) &&
+                AlphaTestCoverage.Equals(other.AlphaTestCoverage);
         }
 
         public override int GetHashCode()
@@ -345,7 +367,8 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
                 TexturingEnabled,
                 SecondaryTextureColorBlend,
                 SecondaryTextureAlphaBlend,
-                AlphaTest);
+                AlphaTest,
+                AlphaTestCoverage);
         }
     }
 

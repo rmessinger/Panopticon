@@ -61,7 +61,16 @@ public sealed class ScopedAssetCollection<TAsset> : IScopedAssetCollection, IEnu
 
     public TAsset GetByName(string name)
     {
-        var instanceId = AssetHash.GetHash(name);
+        return GetByName(name, string.Empty);
+    }
+
+    public TAsset GetByName(string name, string role)
+    {
+        // Role variants share the source name but must not collide with the base
+        // asset's identity, so the role prefixes the hash case-sensitively.
+        var instanceId = role.Length == 0
+            ? AssetHash.GetHash(name)
+            : AssetHash.GetHashCaseSensitive(role + ':' + name.ToLowerInvariant());
 
         // Find existing cached item.
         foreach (var assetScope in _assetScopes)
@@ -75,20 +84,16 @@ public sealed class ScopedAssetCollection<TAsset> : IScopedAssetCollection, IEnu
         // If we can, create new item and cache it.
         if (_loader != null)
         {
-            var newValue = _loader.Load(name, _assetStore.LoadContext);
-            //TODO: should this happen?
+            var newValue = _loader is IVariantAwareAssetLoader<TAsset> variantLoader
+                ? variantLoader.Load(name, role, _assetStore.LoadContext)
+                : _loader.Load(name, _assetStore.LoadContext);
+
             if (newValue == null)
             {
                 return null;
             }
 
             _assetScopes.Peek().Assets.Add(instanceId, newValue);
-
-            if (newValue == null)
-            {
-                Logger.Warn($"Failed to load asset \"{name}\"");
-                return null;
-            }
 
             newValue.InternalId = _nextId;
             _byInternalId.Add(_nextId, newValue);

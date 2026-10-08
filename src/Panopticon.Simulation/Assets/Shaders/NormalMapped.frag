@@ -10,8 +10,7 @@ layout(set = MATERIAL_CONSTANTS_RESOURCE_SET, binding = 0) uniform MaterialConst
     float BumpScale;
     float SpecularExponent;
     bool AlphaTestEnable;
-
-    float _Padding;
+    bool AlphaTestCoverage;
 
     vec4 AmbientColor;
     vec4 DiffuseColor;
@@ -68,7 +67,17 @@ void main()
 
     if (_MaterialConstants.AlphaTestEnable)
     {
-        if (FailsAlphaTest(diffuseTextureColor.w))
+        // Coverage mode (WI-G5-02): the cutout is baked into the mip alpha and
+        // alpha-to-coverage drives MSAA sample masking, so only fully
+        // transparent samples are rejected outright.
+        if (_MaterialConstants.AlphaTestCoverage)
+        {
+            if (diffuseTextureColor.w <= 0.0)
+            {
+                discard;
+            }
+        }
+        else if (FailsAlphaTest(diffuseTextureColor.w))
         {
             discard;
         }

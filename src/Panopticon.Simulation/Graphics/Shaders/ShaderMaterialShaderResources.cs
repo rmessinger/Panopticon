@@ -19,6 +19,15 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
 
     public readonly Pipeline Pipeline;
 
+    /// <summary>
+    /// Pipeline variant for single-sample framebuffers (water maps); equals
+    /// <see cref="Pipeline"/> when the store itself is single-sample.
+    /// </summary>
+    public readonly Pipeline SingleSamplePipeline;
+
+    private Pipeline? _alphaToCoveragePipeline;
+    private Pipeline? _alphaToCoverageSingleSamplePipeline;
+
     protected ShaderMaterialShaderResources(
         ShaderSetStore store,
         string shaderName,
@@ -29,7 +38,7 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
 
         MaterialResourceBindings = materialResourceBindings.ToDictionary(x => x.Description.Name);
 
-        Pipeline = AddDisposable(
+        Pipeline CreatePipeline(OutputDescription outputs) => AddDisposable(
             GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription(
                     BlendStateDescription.SingleDisabled,
@@ -38,7 +47,13 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
                     PrimitiveTopology.TriangleList,
                     Description,
                     ResourceLayouts,
-                    store.OutputDescription)));
+                    outputs)));
+
+        Pipeline = CreatePipeline(store.OutputDescription);
+
+        SingleSamplePipeline = store.OutputDescription.SampleCount == TextureSampleCount.Count1
+            ? Pipeline
+            : CreatePipeline(store.SingleSampleOutputDescription);
     }
 
 
@@ -46,18 +61,42 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
     /// Format-neutral materialization entry: applies every imported property to the matching
     /// resource-set setter, resolving texture names through the asset store.
     /// </summary>
-    public Material GetCachedMaterial(ImportedMaterial material, AssetLoadContext context)
+    /// <param name="alphaTestCoverage">
+    /// Selects the alpha-to-coverage pipeline pair and the cutout discard path for
+    /// alpha-tested materials; callers pass the effective (multisampled) coverage mode.
+    /// </param>
+    public Material GetCachedMaterial(ImportedMaterial material, AssetLoadContext context, bool alphaTestCoverage = false)
     {
         var key = GetCacheKey(material);
 
+        if (alphaTestCoverage)
+        {
+            key += "/A2C";
+        }
+
         if (!_materialCache.TryGetValue(key, out var result))
         {
-            var materialResourceSet = CreateMaterialResourceSet(material.Properties, context);
+            var alphaTestMaterial = material.Properties.Any(p =>
+                p.Name == "AlphaTestEnable"
+                && p.Kind == ImportedMaterialPropertyKind.Bool
+                && p.BoolValue);
+
+            var materialResourceSet = CreateMaterialResourceSet(
+                material.Properties,
+                context,
+                alphaTestMaterial,
+                alphaTestCoverage);
+
+            var pipeline = alphaTestCoverage ? GetAlphaToCoveragePipeline() : Pipeline;
+            var singleSamplePipeline = alphaTestCoverage
+                ? GetAlphaToCoverageSingleSamplePipeline()
+                : SingleSamplePipeline;
 
             result = AddDisposable(
                 new Material(
                     this,
-                    Pipeline,
+                    pipeline,
+                    singleSamplePipeline,
                     materialResourceSet,
                     SurfaceType.Opaque)); // TODO
 
@@ -66,6 +105,40 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
 
         return result;
     }
+
+    /// <summary>
+    /// Alpha-to-coverage variants are built lazily: Legacy sessions never request them, and
+    /// single-sample Enhanced sessions keep the hard cutoff.
+    /// </summary>
+    private Pipeline GetAlphaToCoveragePipeline()
+    {
+        return _alphaToCoveragePipeline ??= CreateAlphaToCoveragePipeline(Store.OutputDescription);
+    }
+
+    private Pipeline GetAlphaToCoverageSingleSamplePipeline()
+    {
+        if (Store.OutputDescription.SampleCount == TextureSampleCount.Count1)
+        {
+            return GetAlphaToCoveragePipeline();
+        }
+
+        return _alphaToCoverageSingleSamplePipeline ??= CreateAlphaToCoveragePipeline(
+            Store.SingleSampleOutputDescription);
+    }
+
+    private Pipeline CreateAlphaToCoveragePipeline(OutputDescription outputs) => AddDisposable(
+        GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
+            new GraphicsPipelineDescription(
+                new BlendStateDescription(
+                    RgbaFloat.White,
+                    true,
+                    BlendStateDescription.SingleDisabled.AttachmentStates[0]),
+                DepthStencilStateDescription.DepthOnlyLessEqual,
+                RasterizerStateDescriptionUtility.DefaultFrontIsCounterClockwise,
+                PrimitiveTopology.TriangleList,
+                Description,
+                ResourceLayouts,
+                outputs)));
 
 
 
@@ -135,7 +208,9 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
 
     private ResourceSet CreateMaterialResourceSet(
         IReadOnlyList<ImportedMaterialProperty> properties,
-        AssetLoadContext context)
+        AssetLoadContext context,
+        bool alphaTestMaterial,
+        bool alphaTestCoverage)
     {
         var materialResourceSetBuilder = AddDisposable(new ShaderMaterialResourceSetBuilder(
             GraphicsDevice,
@@ -146,7 +221,14 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
             switch (property.Kind)
             {
                 case ImportedMaterialPropertyKind.TextureName:
-                    var texture = context.AssetStore.Textures.GetByName(property.TextureName)
+                    // The diffuse slot carries the cutout alpha; coverage-preserving mips
+                    // follow the preset mode, which also applies at a single sample.
+                    var cutout = alphaTestMaterial
+                        && property.Name == "DiffuseTexture"
+                        && context.ShaderResources.AlphaTestCoverageMode;
+                    var texture = context.AssetStore.Textures.GetByName(
+                        property.TextureName,
+                        cutout ? OnDemandTextureLoader.CutoutRole : string.Empty)
                         ?? context.StandardGraphicsResources.PlaceholderTexture;
                     materialResourceSetBuilder.SetTexture(property.Name, texture);
                     break;
@@ -179,6 +261,12 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
                     throw new NotSupportedException(
                         $"Unsupported material property kind '{property.Kind}'.");
             }
+        }
+
+        if (alphaTestCoverage)
+        {
+            // Integer 1: matches the four-byte GLSL bool the member table declares.
+            materialResourceSetBuilder.SetConstant("AlphaTestCoverage", 1);
         }
 
         return materialResourceSetBuilder.CreateResourceSet();

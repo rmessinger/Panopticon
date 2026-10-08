@@ -43,13 +43,14 @@ public sealed class GraphicsSettings
         realisticProportions: false);
 
     /// <summary>
-    /// The game default. Differs from <see cref="Legacy"/> on the shadow tier and the sample
-    /// count: 4x MSAA (G4) plus the four-cascade 2048 shadow tier. Other members stay Legacy
+    /// The game default. Differs from <see cref="Legacy"/> on the shadow tier, the sample
+    /// count and the alpha test: 4x MSAA (G4) plus the four-cascade 2048 shadow tier (G4)
+    /// and coverage-preserving alpha with alpha-to-coverage (G5). Other members stay Legacy
     /// until their owning phase lands.
     /// </summary>
     public static GraphicsSettings Enhanced() => new(
         4,
-        AlphaTestMode.LegacyCutoff,
+        AlphaTestMode.CoveragePreserving,
         ColourSpaceMode.LegacyGamma,
         4,
         0f,

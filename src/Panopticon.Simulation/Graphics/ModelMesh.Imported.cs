@@ -143,13 +143,19 @@ partial class ModelMesh
 
             var materialConstants = CreateFixedFunctionMaterialConstants(material);
 
-            var texture0 = GetFixedFunctionTexture(material, "Texture0", context)
+            var alphaTest = material.FixedFunctionShading.AlphaTest;
+            var cutoutTextures = alphaTest && context.ShaderResources.AlphaTestCoverageMode;
+            var alphaTestCoverage = alphaTest && context.ShaderResources.AlphaTestCoverageActive;
+
+            var texture0 = GetFixedFunctionTexture(material, "Texture0", context, cutoutTextures)
                 ?? context.StandardGraphicsResources.NullTexture;
-            var texture1 = GetFixedFunctionTexture(material, "Texture1", context)
+            var texture1 = GetFixedFunctionTexture(material, "Texture1", context, false)
                 ?? context.StandardGraphicsResources.NullTexture;
 
             var fixedFunction = context.ShaderResources.FixedFunction;
 
+            // A2C belongs to the opaque cutout pass only; the forced-blend transparent pass
+            // keeps the legacy cutoff constants.
             var cachedMaterial = fixedFunction.GetCachedMaterial(
                 MapCullMode(material.CullMode),
                 material.DepthWriteEnabled,
@@ -160,7 +166,8 @@ partial class ModelMesh
                 MapBlendFactor(material.DestinationAlphaBlendFactor),
                 materialConstants,
                 texture0,
-                texture1);
+                texture1,
+                alphaTestCoverage);
 
             var cachedMaterialBlend = fixedFunction.GetCachedMaterial(
                 MapCullMode(material.CullMode),
@@ -199,7 +206,13 @@ partial class ModelMesh
             var shaderResources = (ShaderMaterialShaderResources)context.ShaderResources.GetShaderMaterialResources(
                 material.ShaderFamily);
 
-            var cachedMaterial = shaderResources.GetCachedMaterial(material, context);
+            var alphaTestCoverage = material.Properties.Any(p =>
+                p.Name == "AlphaTestEnable"
+                && p.Kind == ImportedMaterialPropertyKind.Bool
+                && p.BoolValue)
+                && context.ShaderResources.AlphaTestCoverageActive;
+
+            var cachedMaterial = shaderResources.GetCachedMaterial(material, context, alphaTestCoverage);
 
             materialPass = new MaterialPass(cachedMaterial, context.ShaderResources.MeshDepth.Material);
             materialPassBlend = materialPass; // TODO
@@ -286,7 +299,8 @@ partial class ModelMesh
     private static Texture GetFixedFunctionTexture(
         ImportedMaterial material,
         string propertyName,
-        AssetLoadContext context)
+        AssetLoadContext context,
+        bool cutoutVariant)
     {
         foreach (var property in material.Properties)
         {
@@ -298,7 +312,9 @@ partial class ModelMesh
                         $"Material property '{propertyName}' must hold a texture name.");
                 }
 
-                return context.AssetStore.Textures.GetByName(property.TextureName);
+                return context.AssetStore.Textures.GetByName(
+                    property.TextureName,
+                    cutoutVariant ? OnDemandTextureLoader.CutoutRole : string.Empty);
             }
         }
 

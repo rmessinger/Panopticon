@@ -13,10 +13,20 @@ public sealed class ShaderSetStore : DisposableBase
     public readonly GraphicsDevice GraphicsDevice;
     public readonly OutputDescription OutputDescription;
 
+    /// <summary>
+    /// The output description with the sample count forced to one, for passes that share the
+    /// settings formats but must stay single-sample (water maps, 2D layer).
+    /// </summary>
+    public readonly OutputDescription SingleSampleOutputDescription;
+
     public ShaderSetStore(GraphicsDevice graphicsDevice, OutputDescription outputDescription)
     {
         GraphicsDevice = graphicsDevice;
         OutputDescription = outputDescription;
+
+        SingleSampleOutputDescription = new OutputDescription(
+            outputDescription.DepthAttachment,
+            outputDescription.ColorAttachments);
     }
 
     public T GetShaderSet<T>(Func<T> createShaderSet)

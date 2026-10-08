@@ -9,6 +9,13 @@ public sealed class Material : DisposableBase
     public readonly Pipeline Pipeline;
     public readonly ResourceSet MaterialResourceSet;
 
+    /// <summary>
+    /// Variant of <see cref="Pipeline"/> targeting the single-sample output description, for
+    /// passes that render into Count1 framebuffers while the store runs multisampled (water
+    /// reflection/refraction maps). Null when the owner provides no such variant.
+    /// </summary>
+    public readonly Pipeline? SingleSamplePipeline;
+
     public readonly int RenderKey;
 
     public Material(
@@ -16,11 +23,22 @@ public sealed class Material : DisposableBase
         Pipeline pipeline,
         ResourceSet materialResourceSet,
         SurfaceType surfaceType)
+        : this(shaderSet, pipeline, null, materialResourceSet, surfaceType)
+    {
+    }
+
+    public Material(
+        ShaderSet shaderSet,
+        Pipeline pipeline,
+        Pipeline? singleSamplePipeline,
+        ResourceSet materialResourceSet,
+        SurfaceType surfaceType)
     {
         Id = shaderSet.GetNextMaterialId();
 
         ShaderSet = shaderSet;
         Pipeline = pipeline;
+        SingleSamplePipeline = singleSamplePipeline;
         MaterialResourceSet = materialResourceSet;
 
         // Bit 31: SurfaceType

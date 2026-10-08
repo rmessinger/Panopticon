@@ -40,7 +40,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public Texture GetTexture(ImportedImageSource source, bool generateMipmaps = false)
+    public Texture GetTexture(ImportedImageSource source, bool generateMipmaps = false, bool coveragePreservingAlpha = false)
     {
         if (IsDisposed)
         {
@@ -51,10 +51,10 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
 
         if (source.Kind == ImportedImageSourceKind.VirtualPath)
         {
-            var pathKey = new ExternalPathKey(source.VirtualPath, generateMipmaps);
+            var pathKey = new ExternalPathKey(source.VirtualPath, generateMipmaps, coveragePreservingAlpha);
             if (!_externalTextures.TryGetValue(pathKey, out var texture))
             {
-                texture = CreateTexture(source, generateMipmaps);
+                texture = CreateTexture(source, generateMipmaps, coveragePreservingAlpha);
                 _externalTextures.Add(pathKey, texture);
             }
 
@@ -62,10 +62,10 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         }
         else
         {
-            var contentKey = new EmbeddedContentKey(source.EmbeddedBytes.ToArray(), generateMipmaps);
+            var contentKey = new EmbeddedContentKey(source.EmbeddedBytes.ToArray(), generateMipmaps, coveragePreservingAlpha);
             if (!_embeddedTextures.TryGetValue(contentKey, out var texture))
             {
-                texture = CreateTexture(source, generateMipmaps);
+                texture = CreateTexture(source, generateMipmaps, coveragePreservingAlpha);
                 _embeddedTextures.Add(contentKey, texture);
             }
 
@@ -105,20 +105,25 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         return veldridSampler;
     }
 
-    private Texture CreateTexture(ImportedImageSource source, bool generateMipmaps)
+    private Texture CreateTexture(ImportedImageSource source, bool generateMipmaps, bool coveragePreservingAlpha)
     {
         var decoded = ImportedImageDecoder.Decode(
             source,
             _context.FileSystem,
-            generateMipmaps);
+            generateMipmaps: false);
 
         // CPU mip generation through the existing ImageSharp path keeps uploads deterministic
-        // and device-independent.
+        // and device-independent. The coverage variant rebuilds the chain so the cutout
+        // passing fraction survives minification (WI-G5-02); the base image is unchanged.
         using var image = Image.LoadPixelData<Rgba32>(
             decoded.RgbaPixels.ToArray(),
             decoded.Width,
             decoded.Height);
-        var imageSharpTexture = new ImageSharpTexture(image, generateMipmaps);
+        var imageSharpTexture = coveragePreservingAlpha
+            ? new ImageSharpTexture(CoverageMipBuilder.GenerateCoverageMipmaps(
+                image.Clone(),
+                OnDemandTextureLoader.CutoutCutoff))
+            : new ImageSharpTexture(image, generateMipmaps);
 
         var texture = imageSharpTexture.CreateDeviceTexture(
             _context.GraphicsDevice!,
@@ -179,7 +184,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         base.Dispose(disposeManagedResources);
     }
 
-    private readonly record struct ExternalPathKey(string Path, bool GenerateMipmaps);
+    private readonly record struct ExternalPathKey(string Path, bool GenerateMipmaps, bool CoverageAlpha);
 
     private readonly record struct SamplerKey(
         ImportedAddressMode AddressModeU,
@@ -196,16 +201,19 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
     {
         private readonly byte[] _bytes;
         private readonly bool _generateMipmaps;
+        private readonly bool _coverageAlpha;
 
-        public EmbeddedContentKey(byte[] bytes, bool generateMipmaps)
+        public EmbeddedContentKey(byte[] bytes, bool generateMipmaps, bool coverageAlpha)
         {
             _bytes = bytes;
             _generateMipmaps = generateMipmaps;
+            _coverageAlpha = coverageAlpha;
         }
 
         public bool Equals(EmbeddedContentKey other)
         {
             return _generateMipmaps == other._generateMipmaps
+                && _coverageAlpha == other._coverageAlpha
                 && _bytes.Length == other._bytes.Length
                 && _bytes.AsSpan().SequenceEqual(other._bytes);
         }
@@ -216,6 +224,7 @@ internal sealed class ImportedTextureMaterializer : DisposableBase
         {
             var hash = new HashCode();
             hash.Add(_generateMipmaps);
+            hash.Add(_coverageAlpha);
             hash.AddBytes(_bytes);
             return hash.ToHashCode();
         }
