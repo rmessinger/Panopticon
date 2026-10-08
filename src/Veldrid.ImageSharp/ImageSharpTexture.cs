@@ -66,10 +66,12 @@ public class ImageSharpTexture
     /// Wraps a prebuilt mip chain (e.g. one whose alpha was coverage-rescaled by
     /// <see cref="CoverageMipBuilder"/>) without regenerating any level.
     /// </summary>
-    public ImageSharpTexture(Image<Rgba32>[] images)
+    public ImageSharpTexture(Image<Rgba32>[] images) : this(images, false) { }
+
+    public ImageSharpTexture(Image<Rgba32>[] images, bool srgb)
     {
         Images = images;
-        Format = PixelFormat.R8_G8_B8_A8_UNorm;
+        Format = srgb ? PixelFormat.R8_G8_B8_A8_UNorm_SRgb : PixelFormat.R8_G8_B8_A8_UNorm;
     }
 
     public unsafe Texture CreateDeviceTexture(GraphicsDevice gd, ResourceFactory factory)

@@ -18,6 +18,12 @@ public class GraphicsSettingsApplicationTests
         Assert.Equal(expected.ColorAttachments[0].Format, RenderPipeline.GameOutputDescription.ColorAttachments[0].Format);
         Assert.Equal(expected.SampleCount, RenderPipeline.GameOutputDescription.SampleCount);
         Assert.Equal(TextureSampleCount.Count4, RenderPipeline.GameOutputDescription.SampleCount);
+
+        // G6: the linear preset renders into a float intermediate; Legacy keeps 8-bit UNorm.
+        Assert.Equal(PixelFormat.R16_G16_B16_A16_Float, RenderPipeline.GameOutputDescription.ColorAttachments[0].Format);
+        Assert.Equal(
+            PixelFormat.B8_G8_R8_A8_UNorm,
+            RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Legacy()).ColorAttachments[0].Format);
     }
 
     [Fact]
@@ -58,7 +64,7 @@ public class GraphicsSettingsApplicationTests
 
         Assert.Equal(TextureSampleCount.Count4, description.SampleCount);
         Assert.Equal(RenderPipeline.GameOutputDescription.DepthAttachment.Value.Format, description.DepthAttachment.Value.Format);
-        Assert.Equal(RenderPipeline.GameOutputDescription.ColorAttachments[0].Format, description.ColorAttachments[0].Format);
+        Assert.Equal(PixelFormat.B8_G8_R8_A8_UNorm, description.ColorAttachments[0].Format);
     }
 
     [Fact]

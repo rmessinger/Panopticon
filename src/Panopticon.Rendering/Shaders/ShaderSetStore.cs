@@ -19,10 +19,21 @@ public sealed class ShaderSetStore : DisposableBase
     /// </summary>
     public readonly OutputDescription SingleSampleOutputDescription;
 
-    public ShaderSetStore(GraphicsDevice graphicsDevice, OutputDescription outputDescription)
+    /// <summary>
+    /// Whether shaders sampling this store render into the linear colour space (G6): colour
+    /// inputs decode at the sampling or upload boundary and the single sRGB transfer happens
+    /// in the output pass, not in material shaders.
+    /// </summary>
+    public readonly bool LinearColourSpace;
+
+    public ShaderSetStore(
+        GraphicsDevice graphicsDevice,
+        OutputDescription outputDescription,
+        bool linearColourSpace = false)
     {
         GraphicsDevice = graphicsDevice;
         OutputDescription = outputDescription;
+        LinearColourSpace = linearColourSpace;
 
         SingleSampleOutputDescription = new OutputDescription(
             outputDescription.DepthAttachment,

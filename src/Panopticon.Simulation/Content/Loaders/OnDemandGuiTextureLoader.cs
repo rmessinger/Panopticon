@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Panopticon.Data.Dds;
 using Panopticon.Data.Tga;
+using Panopticon.Graphics;
 using Panopticon.Gui;
 using Panopticon.IO;
 using Panopticon.Utilities.Extensions;
@@ -23,13 +24,16 @@ internal sealed class OnDemandGuiTextureLoader : IOnDemandAssetLoader<GuiTexture
     };
 
     private readonly bool _generateMipMaps;
+    private readonly bool _srgbColour;
     private readonly IPathResolver _pathResolver;
 
     public OnDemandGuiTextureLoader(
         bool generateMipMaps,
-        IPathResolver pathResolver)
+        IPathResolver pathResolver,
+        ColourSpaceMode colourSpace = ColourSpaceMode.LegacyGamma)
     {
         _generateMipMaps = generateMipMaps;
+        _srgbColour = colourSpace == ColourSpaceMode.Linear;
         _pathResolver = pathResolver;
     }
 
@@ -71,9 +75,52 @@ internal sealed class OnDemandGuiTextureLoader : IOnDemandAssetLoader<GuiTexture
             return null;
         }
 
-        var texture = LoadImpl(entry, context.GraphicsDevice);
+        var texture = _srgbColour
+            ? LoadColourImpl(entry, context.GraphicsDevice)
+            : LoadImpl(entry, context.GraphicsDevice);
         texture.Name = entry.FilePath;
         return new GuiTextureAsset(texture, name);
+    }
+
+    /// <summary>
+    /// Colour variant for linear shading (WI-G6-02): sRGB uploads decode UI art to linear so
+    /// the composition blends in the same space as the 3D scene. Shares the texture loader's
+    /// colour helpers; data-ish DDS formats stay authored.
+    /// </summary>
+    private Texture LoadColourImpl(FileSystemEntry entry, GraphicsDevice graphicsDevice)
+    {
+        switch (Path.GetExtension(entry.FilePath).ToLowerInvariant())
+        {
+            case ".dds":
+                if (!DdsFile.IsDdsFile(entry))
+                {
+                    goto case ".tga";
+                }
+
+                var ddsFile = DdsFile.FromFileSystemEntry(entry);
+                return OnDemandTextureLoader.CreateColourTextureFromDds(ddsFile, _generateMipMaps, graphicsDevice);
+
+            case ".tga":
+                var tgaFile = TgaFile.FromFileSystemEntry(entry);
+                var rgbaData = TgaFile.ConvertPixelsToRgba8(tgaFile);
+                using (var tgaBase = Image.LoadPixelData<Rgba32>(
+                    rgbaData,
+                    tgaFile.Header.Width,
+                    tgaFile.Header.Height))
+                {
+                    return OnDemandTextureLoader.CreateLinearColourTexture(tgaBase, _generateMipMaps, graphicsDevice);
+                }
+
+            case ".jpg":
+                using (var stream = entry.Open())
+                using (var jpgBase = Image.Load<Rgba32>(stream))
+                {
+                    return OnDemandTextureLoader.CreateLinearColourTexture(jpgBase, _generateMipMaps, graphicsDevice);
+                }
+
+            default:
+                throw new InvalidOperationException();
+        }
     }
 
     private Texture LoadImpl(FileSystemEntry entry, GraphicsDevice graphicsDevice)

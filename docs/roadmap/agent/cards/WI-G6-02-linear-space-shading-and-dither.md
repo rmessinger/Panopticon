@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-G6-02` |
 | Roadmap phase | [Track G · G6](../../track-g-rendering-clarity.md): Gamma-correct rendering |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `L` |
 | Prerequisites | `WI-G6-01`, `WI-G3-04`, `WI-G2-03` |

@@ -24,8 +24,10 @@ internal sealed class RenderPipeline : DisposableBase
     public static readonly OutputDescription GameOutputDescription = CreateGameOutputDescription(GraphicsSettings.Enhanced());
 
     /// <summary>
-    /// Builds the output description pipelines render into. The colour format stays fixed
-    /// until G6 owns the colour-space mapping; the sample count follows the settings.
+    /// Builds the output description pipelines render into. The colour format follows the
+    /// colour space (G6): linear shading renders into a float intermediate and the single
+    /// sRGB transfer happens in the output pass; Legacy keeps the UNorm swapchain format.
+    /// The sample count follows the settings.
     /// </summary>
     public static OutputDescription CreateGameOutputDescription(GraphicsSettings settings) =>
         CreateGameOutputDescription(settings, GraphicsSettingsController.ToTextureSampleCount(settings.SampleCount));
@@ -36,7 +38,9 @@ internal sealed class RenderPipeline : DisposableBase
     /// </summary>
     public static OutputDescription CreateGameOutputDescription(GraphicsSettings settings, TextureSampleCount sampleCount) => new(
         new OutputAttachmentDescription(PixelFormat.D32_Float_S8_UInt),
-        new[] { new OutputAttachmentDescription(PixelFormat.B8_G8_R8_A8_UNorm) },
+        new[] { new OutputAttachmentDescription(settings.ColourSpaceMode == ColourSpaceMode.Linear
+            ? PixelFormat.R16_G16_B16_A16_Float
+            : PixelFormat.B8_G8_R8_A8_UNorm) },
         sampleCount);
 
     private readonly RenderList _renderList;
@@ -65,7 +69,8 @@ internal sealed class RenderPipeline : DisposableBase
     private Texture _compositionDepthBuffer;
     private Framebuffer _compositionFramebuffer;
 
-    private readonly TextureCopier _textureCopier;
+    private readonly TextureCopier? _textureCopier;
+    private readonly OutputColourPass? _outputColourPass;
 
     public Texture ShadowMap => _shadowMapRenderer.ShadowMap;
     public Texture ReflectionMap => _waterMapRenderer.ReflectionMap;
@@ -96,22 +101,37 @@ internal sealed class RenderPipeline : DisposableBase
             game.ContentManager,
             game.GraphicsLoadContext,
             BlendStateDescription.SingleAlphaBlend,
-            CreateGameOutputDescription(game.GraphicsSettings, TextureSampleCount.Count1)));
+            CreateGameOutputDescription(game.GraphicsSettings, TextureSampleCount.Count1),
+            decodeLinearTints: game.GraphicsSettings.ColourSpaceMode == ColourSpaceMode.Linear));
 
         _shadowMapRenderer = AddDisposable(new ShadowMapRenderer(game.GraphicsDevice));
         _waterMapRenderer = AddDisposable(new WaterMapRenderer(game.AssetStore, _loadContext, game.GraphicsDevice, game.GraphicsLoadContext.ShaderResources.Global));
 
-        _textureCopier = AddDisposable(new TextureCopier(
-            game,
-            game.Panel.OutputDescription));
+        if (game.GraphicsSettings.ColourSpaceMode == ColourSpaceMode.Linear)
+        {
+            // Linear mode defers the sRGB transfer to a dedicated output pass; Legacy keeps
+            // the straight copier blit.
+            _outputColourPass = AddDisposable(new OutputColourPass(
+                game,
+                game.Panel.OutputDescription));
+        }
+        else
+        {
+            _textureCopier = AddDisposable(new TextureCopier(
+                game,
+                game.Panel.OutputDescription));
+        }
     }
 
     private void EnsureIntermediateFramebuffer(GraphicsDevice graphicsDevice, Framebuffer target)
     {
         // The shader-set store description is authoritative: pipelines are built once with it,
         // so the intermediate attachments must always match it, even if the settings instance
-        // is swapped later in the session (a count change requires a new session).
+        // is swapped later in the session (a count change requires a new session). The colour
+        // format follows the store too: the linear colour space (G6) renders 3D into a float
+        // intermediate and defers the sRGB transfer to the output pass.
         var sampleCount = _loadContext.ShaderSetStore.OutputDescription.SampleCount;
+        var colourFormat = _loadContext.ShaderSetStore.OutputDescription.ColorAttachments[0].Format;
 
         if (_intermediateDepthBuffer != null
             && _intermediateDepthBuffer.Width == target.Width
@@ -132,7 +152,7 @@ internal sealed class RenderPipeline : DisposableBase
             TextureDescription.Texture2D(target.Width, target.Height, 1, 1, PixelFormat.D32_Float_S8_UInt, TextureUsage.DepthStencil, sampleCount)));
 
         _intermediateTexture = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
-            TextureDescription.Texture2D(target.Width, target.Height, 1, 1, target.ColorTargets[0].Target.Format, TextureUsage.RenderTarget | TextureUsage.Sampled, sampleCount)));
+            TextureDescription.Texture2D(target.Width, target.Height, 1, 1, colourFormat, TextureUsage.RenderTarget | TextureUsage.Sampled, sampleCount)));
 
         _intermediateFramebuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateFramebuffer(
             new FramebufferDescription(_intermediateDepthBuffer, _intermediateTexture)));
@@ -146,7 +166,7 @@ internal sealed class RenderPipeline : DisposableBase
                 TextureDescription.Texture2D(target.Width, target.Height, 1, 1, PixelFormat.D32_Float_S8_UInt, TextureUsage.DepthStencil)));
 
             _compositionTexture = AddDisposable(graphicsDevice.ResourceFactory.CreateTexture(
-                TextureDescription.Texture2D(target.Width, target.Height, 1, 1, target.ColorTargets[0].Target.Format, TextureUsage.RenderTarget | TextureUsage.Sampled)));
+                TextureDescription.Texture2D(target.Width, target.Height, 1, 1, colourFormat, TextureUsage.RenderTarget | TextureUsage.Sampled)));
 
             _compositionFramebuffer = AddDisposable(graphicsDevice.ResourceFactory.CreateFramebuffer(
                 new FramebufferDescription(_compositionDepthBuffer, _compositionTexture)));
@@ -234,9 +254,18 @@ internal sealed class RenderPipeline : DisposableBase
 
         context.GraphicsDevice.SubmitCommands(_commandList);
 
-        _textureCopier.Execute(
-            _compositionTexture ?? _intermediateTexture,
-            context.RenderTarget);
+        if (_outputColourPass != null)
+        {
+            _outputColourPass.Execute(
+                _compositionTexture ?? _intermediateTexture,
+                context.RenderTarget);
+        }
+        else
+        {
+            _textureCopier!.Execute(
+                _compositionTexture ?? _intermediateTexture,
+                context.RenderTarget);
+        }
     }
 
     private void Render3DScene(

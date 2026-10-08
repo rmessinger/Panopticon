@@ -6,6 +6,7 @@ using Panopticon.Graphics.Shaders;
 using Panopticon.Mathematics;
 using Panopticon.Utilities.Extensions;
 using Veldrid;
+using Veldrid.ImageSharp;
 using Rectangle = Panopticon.Mathematics.Rectangle;
 
 namespace Panopticon.Graphics;
@@ -30,11 +31,15 @@ public sealed class SpriteBatch : DisposableBase
 
     private CommandList _commandList;
 
+    private readonly bool _decodeLinearTints;
+
     internal SpriteBatch(
         GraphicsLoadContext loadContext,
         in BlendStateDescription blendStateDescription,
-        in OutputDescription outputDescription)
+        in OutputDescription outputDescription,
+        bool decodeLinearTints = false)
     {
+        _decodeLinearTints = decodeLinearTints;
         _spriteShaderResources = loadContext.ShaderResources.Sprite;
         _solidWhiteTexture = loadContext.StandardGraphicsResources.SolidWhiteTexture;
         _graphicsDevice = loadContext.GraphicsDevice;
@@ -148,6 +153,8 @@ public sealed class SpriteBatch : DisposableBase
         bool grayscale = false,
         Texture alphaMask = null)
     {
+        var tint = DecodeTint(color);
+
         ref var batchItem = ref CreateBatchItem();
 
         batchItem.Texture = image;
@@ -163,7 +170,7 @@ public sealed class SpriteBatch : DisposableBase
             destinationRect.Y,
             destinationRect.Width,
             destinationRect.Height,
-            color,
+            tint,
             texCoordTL,
             texCoordBR,
             0,
@@ -183,6 +190,8 @@ public sealed class SpriteBatch : DisposableBase
         in bool flipped = false,
         Texture alphaMask = null)
     {
+        var tint = DecodeTint(color);
+
         ref var batchItem = ref CreateBatchItem();
 
         batchItem.Texture = image;
@@ -207,7 +216,7 @@ public sealed class SpriteBatch : DisposableBase
             height,
             MathF.Sin(rotation),
             MathF.Cos(rotation),
-            color,
+            tint,
             texCoordTL,
             texCoordBR,
             0);
@@ -221,6 +230,8 @@ public sealed class SpriteBatch : DisposableBase
         in bool flipped = false,
         Texture alphaMask = null)
     {
+        var tint = DecodeTint(tintColor);
+
         ref var batchItem = ref CreateBatchItem();
 
         batchItem.Texture = texture;
@@ -231,8 +242,21 @@ public sealed class SpriteBatch : DisposableBase
         batchItem.Set(
             destinationTriangle,
             textureCoordinates,
-            tintColor,
+            tint,
             0);
+    }
+
+    private ColorRgbaF DecodeTint(in ColorRgbaF color)
+    {
+        if (!_decodeLinearTints)
+        {
+            return color;
+        }
+
+        // Authored tints are sRGB encoded; the linear composition target takes light values.
+        var linear = SrgbTransfer.ToLinearRgb(new Vector4(color.R, color.G, color.B, color.A));
+
+        return new ColorRgbaF(linear.X, linear.Y, linear.Z, linear.W);
     }
 
     public void End()

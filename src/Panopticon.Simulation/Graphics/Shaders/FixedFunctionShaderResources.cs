@@ -5,6 +5,7 @@ using Panopticon.Graphics.Mathematics;
 using Panopticon.Rendering;
 using Panopticon.Utilities.Extensions;
 using Veldrid;
+using Veldrid.ImageSharp;
 
 namespace Panopticon.Graphics.Shaders;
 
@@ -40,6 +41,15 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         if (alphaTestCoverage)
         {
             constants.Shading.AlphaTestCoverage = true;
+        }
+
+        if (Store.LinearColourSpace)
+        {
+            // Authored colours are sRGB-encoded; decode once at this upload boundary (WI-G6-02).
+            constants.Material.Ambient = SrgbTransfer.ToLinear(constants.Material.Ambient);
+            constants.Material.Diffuse = SrgbTransfer.ToLinear(constants.Material.Diffuse);
+            constants.Material.Specular = SrgbTransfer.ToLinear(constants.Material.Specular);
+            constants.Material.Emissive = SrgbTransfer.ToLinear(constants.Material.Emissive);
         }
 
         var pipelineKey = new PipelineKey(

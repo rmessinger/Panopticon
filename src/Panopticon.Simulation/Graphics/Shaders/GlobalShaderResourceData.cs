@@ -4,6 +4,7 @@ using Panopticon.Data.Map;
 using Panopticon.Graphics.Rendering;
 using Panopticon.Mathematics;
 using Veldrid;
+using Veldrid.ImageSharp;
 
 namespace Panopticon.Graphics.Shaders;
 
@@ -12,6 +13,7 @@ internal sealed class GlobalShaderResourceData : DisposableBase
     private readonly GraphicsDevice _graphicsDevice;
     private readonly GlobalShaderResources _globalShaderResources;
     private readonly StandardGraphicsResources _standardGraphicsResources;
+    private readonly bool _linearColourSpace;
 
     // One constants buffer per pass per frame rather than one rewritten between passes: on Vulkan a
     // second write to a uniform buffer is not guaranteed to be visible to draws recorded after it in
@@ -45,6 +47,7 @@ internal sealed class GlobalShaderResourceData : DisposableBase
         _graphicsDevice = graphicsDevice;
         _globalShaderResources = globalShaderResources;
         _standardGraphicsResources = standardGraphicsResources;
+        _linearColourSpace = standardGraphicsResources.Settings.ColourSpaceMode == ColourSpaceMode.Linear;
 
         _globalLightingBufferVS = AddDisposable(new ConstantBuffer<GlobalShaderResources.LightingConstantsVS>(graphicsDevice, "GlobalLightingConstantsVS"));
         SetGlobalLightingBufferVS(graphicsDevice);
@@ -155,11 +158,34 @@ internal sealed class GlobalShaderResourceData : DisposableBase
 
         if (_cachedTimeOfDay != context.Scene3D.Lighting.TimeOfDay)
         {
-            _globalLightingBufferPS.Value = context.Scene3D.Lighting.CurrentLightingConfiguration.LightsPS;
+            var lights = context.Scene3D.Lighting.CurrentLightingConfiguration.LightsPS;
+            if (_linearColourSpace)
+            {
+                // Authored light colours are sRGB-encoded; decode RGB once at this
+                // boundary so shading runs in linear (WI-G6-02).
+                DecodeLightColour(ref lights.Terrain);
+                DecodeLightColour(ref lights.Object);
+                lights.LinearColourSpace = true;
+            }
+
+            _globalLightingBufferPS.Value = lights;
             _globalLightingBufferPS.Update(commandList);
 
             _cachedTimeOfDay = context.Scene3D.Lighting.TimeOfDay;
         }
+    }
+
+    private static void DecodeLightColour(ref GlobalShaderResources.LightingConfiguration configuration)
+    {
+        DecodeLightColour(ref configuration.Light0);
+        DecodeLightColour(ref configuration.Light1);
+        DecodeLightColour(ref configuration.Light2);
+    }
+
+    private static void DecodeLightColour(ref GlobalShaderResources.Light light)
+    {
+        light.Ambient = SrgbTransfer.ToLinear(light.Ambient);
+        light.Color = SrgbTransfer.ToLinear(light.Color);
     }
 
     private readonly record struct GlobalConstantsSlot(

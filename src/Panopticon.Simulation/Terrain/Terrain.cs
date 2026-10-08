@@ -116,7 +116,9 @@ public sealed class Terrain : DisposableBase
                 materialResourceSet,
                 SurfaceType.Opaque));
 
-        CloudTexture = loadContext.AssetStore.Textures.GetByName(mapFile.EnvironmentData?.CloudTexture ?? "tscloudmed.dds");
+        CloudTexture = loadContext.AssetStore.Textures.GetByName(
+            mapFile.EnvironmentData?.CloudTexture ?? "tscloudmed.dds",
+            OnDemandTextureLoader.DataRole);
 
         OnHeightMapChanged();
     }
@@ -447,6 +449,7 @@ public sealed class Terrain : DisposableBase
         out TerrainShaderResources.TextureInfo[] textureDetails)
     {
         var graphicsDevice = loadContext.GraphicsDevice;
+        var linearColourSpace = loadContext.ShaderResources.LinearColourSpace;
 
         var numTextures = (uint)blendTileData.Textures.Length;
 
@@ -485,7 +488,7 @@ public sealed class Terrain : DisposableBase
                 largestTextureSize,
                 TextureMipMapData.CalculateMipMapCount(largestTextureSize, largestTextureSize),
                 numTextures,
-                PixelFormat.R8_G8_B8_A8_UNorm,
+                linearColourSpace ? PixelFormat.R8_G8_B8_A8_UNorm_SRgb : PixelFormat.R8_G8_B8_A8_UNorm,
                 TextureUsage.Sampled)));
 
         var commandList = graphicsDevice.ResourceFactory.CreateCommandList();
@@ -503,12 +506,27 @@ public sealed class Terrain : DisposableBase
                 tgaFile.Header.Width,
                 tgaFile.Header.Height))
             {
-                if (tgaFile.Header.Width != largestTextureSize)
+                ImageSharpTexture imageSharpTexture;
+                if (linearColourSpace)
                 {
-                    tgaImage.Mutate(x => x.Resize((int)largestTextureSize, (int)largestTextureSize, LanczosResampler.Lanczos3));
+                    // Square-resize and mip in linear light; the sRGB array decodes on
+                    // sample so terrain shading stays linear (WI-G6-02).
+                    var colourBase = tgaFile.Header.Width != largestTextureSize
+                        ? LinearMipBuilder.ResizeLinear(tgaImage, (int)largestTextureSize, (int)largestTextureSize)
+                        : tgaImage;
+                    imageSharpTexture = new ImageSharpTexture(
+                        LinearMipBuilder.GenerateLinearMipmaps(colourBase),
+                        srgb: true);
                 }
+                else
+                {
+                    if (tgaFile.Header.Width != largestTextureSize)
+                    {
+                        tgaImage.Mutate(x => x.Resize((int)largestTextureSize, (int)largestTextureSize, LanczosResampler.Lanczos3));
+                    }
 
-                var imageSharpTexture = new ImageSharpTexture(tgaImage);
+                    imageSharpTexture = new ImageSharpTexture(tgaImage);
+                }
 
                 var sourceTexture = CreateTextureViaStaging(
                     imageSharpTexture,

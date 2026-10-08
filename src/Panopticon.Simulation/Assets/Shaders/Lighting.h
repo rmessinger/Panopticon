@@ -28,6 +28,13 @@ struct GlobalLightingConstantsPSType
 {
     LightingConfiguration Terrain;
     LightingConfiguration Object;
+
+    // True when authored colours were decoded to linear on the CPU and the target
+    // expects linear output (WI-G6-02); PBR gates its local transfers on it.
+    bool LinearColourSpace;
+    bool _Padding0;
+    bool _Padding1;
+    bool _Padding2;
 };
 
 layout(set = PASS_CONSTANTS_RESOURCE_SET, binding = 0) uniform GlobalLightingConstantsVS

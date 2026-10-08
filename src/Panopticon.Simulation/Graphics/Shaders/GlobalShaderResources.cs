@@ -94,13 +94,16 @@ internal sealed class GlobalShaderResources : DisposableBase
     [StructLayout(LayoutKind.Explicit, Size = SizeInBytes)]
     public struct LightingConstantsPS
     {
-        public const int SizeInBytes = LightingConfiguration.SizeInBytes * 2;
+        public const int SizeInBytes = LightingConfiguration.SizeInBytes * 2 + 16;
 
         [FieldOffset(0)]
         public LightingConfiguration Terrain;
 
         [FieldOffset(LightingConfiguration.SizeInBytes)]
         public LightingConfiguration Object;
+
+        [FieldOffset(LightingConfiguration.SizeInBytes * 2)]
+        public Bool32 LinearColourSpace;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = SizeInBytes)]

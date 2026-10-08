@@ -8,6 +8,7 @@ using Panopticon.Content.Importing;
 using Panopticon.Content.Loaders;
 using Panopticon.Rendering;
 using Veldrid;
+using Veldrid.ImageSharp;
 
 namespace Panopticon.Graphics.Shaders;
 
@@ -250,7 +251,18 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
                     break;
 
                 case ImportedMaterialPropertyKind.Vector4:
-                    materialResourceSetBuilder.SetConstant(property.Name, property.Vector4Value);
+                    // NIF colour members are authored sRGB; decode RGB at the boundary under
+                    // linear shading, keeping alpha (WI-G6-02).
+                    var colour = property.Vector4Value;
+                    if (Store.LinearColourSpace
+                        && (property.Name == "AmbientColor"
+                            || property.Name == "DiffuseColor"
+                            || property.Name == "SpecularColor"))
+                    {
+                        colour = SrgbTransfer.ToLinearRgb(colour);
+                    }
+
+                    materialResourceSetBuilder.SetConstant(property.Name, colour);
                     break;
 
                 case ImportedMaterialPropertyKind.Int32:
