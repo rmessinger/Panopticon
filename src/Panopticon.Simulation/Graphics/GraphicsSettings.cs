@@ -101,6 +101,20 @@ public sealed class GraphicsSettings
 
     /// <summary>Render-only proportion scaling; explicit opt-in, never a default.</summary>
     public bool RealisticProportions { get; }
+
+    /// <summary>
+    /// Returns a copy with the proportions option replaced (WI-G10-03). Every other member is
+    /// carried over unchanged; the flag is an explicit opt-in, never implied by a preset.
+    /// </summary>
+    public GraphicsSettings WithRealisticProportions(bool realisticProportions) => new(
+        SampleCount,
+        AlphaTestMode,
+        ColourSpaceMode,
+        Anisotropy,
+        MipLodBias,
+        ShadowTier,
+        UiMode,
+        realisticProportions);
 }
 
 public enum AlphaTestMode

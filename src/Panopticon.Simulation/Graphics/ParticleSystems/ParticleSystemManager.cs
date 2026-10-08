@@ -33,7 +33,8 @@ internal sealed class ParticleSystemManager : DisposableBase, IPersistableObject
     public ParticleSystem Create(
         FXParticleSystemTemplate template,
         ParticleSystem.GetMatrixReferenceDelegate getWorldMatrix,
-        Func<float>? getVisualScale = null)
+        Func<float>? getVisualScale = null,
+        Func<Vector3>? getPresentationAnchor = null)
     {
         ParticleSystem result;
 
@@ -43,7 +44,8 @@ internal sealed class ParticleSystemManager : DisposableBase, IPersistableObject
                     template,
                     _loadContext,
                     getWorldMatrix,
-                    getVisualScale)));
+                    getVisualScale,
+                    getPresentationAnchor)));
 
         _renderBucket.AddObject(result);
 

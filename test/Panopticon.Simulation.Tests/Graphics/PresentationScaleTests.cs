@@ -72,6 +72,10 @@ public class PresentationScaleTests
     {
         using var context = new TestGraphicsContext();
         using var instance = CreateModelInstance(context);
+
+        // A non-zero anchor pins the WI-G10-03 conjugate: scale composes about the model's
+        // world position, not each subobject's own bone origin.
+        instance.SetWorldMatrix(Matrix4x4.CreateTranslation(10f, 0f, 5f));
         instance.Update(new TimeInterval(TimeSpan.Zero, TimeSpan.Zero));
 
         var boneAbsolute = instance.AbsoluteBoneTransforms[0];
@@ -88,8 +92,13 @@ public class PresentationScaleTests
         Assert.Equal(1, renderList.Opaque.RenderItems.Length);
         var item = renderList.Opaque.RenderItems[0];
 
-        // Presentation scale composes about the model origin before the world matrix.
-        Assert.Equal(Matrix4x4.CreateScale(2f) * boneAbsolute, item.World);
+        var anchor = instance.GetWorldMatrix().Translation;
+        var expected =
+            boneAbsolute
+            * Matrix4x4.CreateTranslation(-anchor)
+            * Matrix4x4.CreateScale(2f)
+            * Matrix4x4.CreateTranslation(anchor);
+        Assert.Equal(expected, item.World);
 
         // Culling bounds follow the scaled world, so enlarged aircraft stay visible.
         Assert.Equal(unscaledBounds.Max.X - unscaledBounds.Min.X, (item.BoundingBox.Max.X - item.BoundingBox.Min.X) / 2f, 5);

@@ -145,11 +145,12 @@ public static class VisualRegressionRunner
                 }
 
                 var scale1Directory = Path.Combine(baseDirectory, presetName, scene.Name, $"scale{scene.ViewportScale}");
+                var effectivePreset = scene.RealisticProportions ? preset.WithRealisticProportions(true) : preset;
                 var settings = new CaptureRunSettings(
                     config.Renderer,
                     scene.FullHud,
                     scale1Directory,
-                    preset,
+                    effectivePreset,
                     ViewportScale: scene.ViewportScale,
                     FixedRenderClock: true);
                 HudChromeAudit.Reset();

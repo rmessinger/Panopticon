@@ -91,9 +91,11 @@ keyed by object-definition name (ordinal-ignore-case, identity for unlisted name
 Scale threads through the audited render-only path: `W3dModelDraw.BuildRenderList` computes
 `GetPresentationScale()` (identity unless `GraphicsSettings.RealisticProportions` and the definition is
 listed) and passes it through `W3dModelDrawConditionState.BuildRenderList` and
-`ModelInstance.BuildRenderList` into `ModelMesh.BuildRenderList`, which composes
-`Matrix4x4.CreateScale(scale) * meshWorldMatrix` (row-vector, scale before world, about the model
-origin at the audited ground plane). Shared matrices are untouched: `SetWorldMatrix`,
+`ModelInstance.BuildRenderList` into `ModelMesh.BuildRenderList`, which conjugates the uniform scale
+about the model world anchor: `meshWorldMatrix * CreateTranslation(-anchor) * CreateScale(scale) *
+CreateTranslation(anchor)` with `anchor = modelInstance.GetWorldMatrix().Translation` (row-vector).
+Scaling about the shared anchor keeps multi-bone models coherent; scaling each subobject about its own
+bone origin (the first shipped form) grows pieces in place. Shared matrices are untouched: `SetWorldMatrix`,
 `AbsoluteBoneTransforms`, and `_worldMatrix` keep their gameplay values, so weapon-launch bones,
 selection, pathing, and collision queries are identical with the option on or off. Presentation culling
 follows automatically because `BuildRenderListWithWorldMatrix` derives the render-item bounds from
@@ -106,13 +108,57 @@ every default session and golden runs the identity path.
 
 - `PresentationScaleTests` (5 tests): manifest cross-derivation for both multipliers, identity for
   ground/null/empty names, case-insensitive keys, bit-equal identity build versus
-  `AbsoluteBoneTransforms`, and a scaled build proving `RenderItem.World == CreateScale(2) * bone`
-  with doubled bounds while shared matrices and a subsequent identity build stay unchanged. The
+  `AbsoluteBoneTransforms`, and a scaled build proving the anchor-conjugated world matrix (updated in
+  WI-G10-03 to pin the conjugate form with a non-zero world anchor) with proportionally scaled bounds
+  while shared matrices and a subsequent identity build stay unchanged. The
   cross-derivation test caught an inverted override formula before commit.
 - Suite: 53 + 355 + 2131 passed, 7 skipped (`Category!=Interactive`); format, brace, and
   whitespace checks clean.
 - Visual regression gate: 16/16 goldens passed with no regeneration (option off in both presets;
   the gate doubles as the off-path proof).
+
+## Implementation (WI-G10-03, complete)
+
+Option wiring: `GraphicsSettings.WithRealisticProportions(bool)` returns an immutable copy that flips
+only the flag; both `Legacy()` and `Enhanced()` keep it false, so no preset implicitly enables
+proportions (guardrail). `VisualRegressionScene` gains a `RealisticProportions` flag and
+`VisualRegressionRunner` derives the effective preset with `WithRealisticProportions(true)` for
+flagged scenes, giving the gate an on/off pair over one profile. The TestHarness gains
+`--fixed-render-clock`, which pins the render clock in `CaptureRunSettings` so separate captures are
+pixel-comparable.
+
+Correction carried by this card: WI-G10-02 shipped the scale as `CreateScale(scale) *
+meshWorldMatrix`, which scales each subobject about its own bone origin; multi-bone models (pieces
+already carrying world placement) grow incoherently. The capture ratio evidence below caught it
+(Comanche measured 1.02x instead of 1.18x). The fix conjugates the uniform scale about the model
+world anchor in `ModelMesh.BuildRenderList` and mirrors it for FX in `ParticleSystem.Update` via a
+`getPresentationAnchor` delegate (`modelInstance.GetWorldMatrix().Translation`), so exhaust plumes
+and other bone-following effects stay attached. `PresentationScaleTests` now pins the conjugate form
+with a non-zero anchor.
+
+Scenes `proportions` (off) and `proportions-on` (profile `vr-proportions.json`: Crusader, Comanche
+and MiG in a row on Alpine Assault, explicit camera) extend the gate to 10 scenes x 2 presets = 20
+goldens; only the on-scene goldens differ between presets.
+
+## Evidence (WI-G10-03)
+
+- Screen-space corroboration (enhanced preset, background-subtracted captures, static artifact
+  columns excluded): Crusader is byte-identical on/off (same component span and pixel count), the
+  no-override sanity check. Comanche fuselage width 146 -> 173 px, growth 1.1849 versus the audited
+  multiplier 1.1828 (0.18% error; the fuselage is nearly flat around its anchor, so the world factor
+  projects almost directly).
+- MiG screen ratios are perspective-variant by geometry, not defect: the fuselage spans depth toward
+  the camera, so a world-uniform scale about the ground anchor projects to part-dependent screen
+  growth (measured: wing-block growth 1.687 with a stable center, nose edge +40 px, tail fin +67 px).
+  The card's requirement to use audited projection and reference ratios rather than raw screen
+  widths anticipates exactly this. World-space compliance is exact by construction and pinned by
+  `ReferenceScaleArithmeticTests` + `PresentationScaleTests` (63.22 scaled units = 17.32 m at the
+  audited 3.6501 units/m anchor).
+- Injected-error gate proof: temporarily overriding the MiG multiplier to 1.5 made the gate exit 2
+  with `proportions-on` failing under both presets while `proportions` stayed green; reverted.
+- Comparison image: `panopticon-g10-proportions.png` (off/on bands) via the screenshot viewer.
+- Suite: 53 + 356 + 2131 passed, 7 skipped (`Category!=Interactive`); format, brace, and whitespace
+  checks clean. Gate: 20/20 goldens passed after explicit regeneration of the proportions-on pair.
 
 ## Validation and risks
 

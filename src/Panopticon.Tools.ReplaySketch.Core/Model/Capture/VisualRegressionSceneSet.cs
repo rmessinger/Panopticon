@@ -31,6 +31,12 @@ public class VisualRegressionScene
     public int ViewportScale { get; set; } = 1;
 
     /// <summary>
+    /// Captures the scene with the realistic-proportions presentation option enabled
+    /// (WI-G10-03). The preset itself is left untouched; the option never defaults on.
+    /// </summary>
+    public bool RealisticProportions { get; set; }
+
+    /// <summary>
     /// Normalized [0, 1] screen rectangles over which the supersampled silhouette check runs
     /// (WI-G3-03) and metrics are scored. Empty means the whole frame; texture and HUD scenes
     /// leave it empty.
