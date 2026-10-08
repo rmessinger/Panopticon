@@ -60,6 +60,25 @@ public static class Program
             config.GltfFixtureRoot = gltfFixtureRoot;
         }
 
+        // G9 scale validation: non-unity viewport scale for scenario captures.
+        var viewportScale = GetArgValue(args, "--viewport-scale");
+        if (!string.IsNullOrEmpty(viewportScale))
+        {
+            if (!int.TryParse(viewportScale, out var parsedScale) || parsedScale < 1)
+            {
+                reporter.Error($"--viewport-scale must be a positive integer, got '{viewportScale}'.");
+                Environment.Exit(1);
+                return;
+            }
+
+            config.ViewportScale = parsedScale;
+        }
+
+        if (Array.Exists(args, a => a.Equals("--full-hud", StringComparison.OrdinalIgnoreCase)))
+        {
+            config.FullHud = true;
+        }
+
         var builtInScenario = GetArgValue(args, "--built-in-scenario");
         if (!string.IsNullOrEmpty(builtInScenario))
         {
@@ -115,7 +134,7 @@ public static class Program
             return;
         }
 
-        var settings = new CaptureRunSettings(config.Renderer, config.FullHud, null);
+        var settings = new CaptureRunSettings(config.Renderer, config.FullHud, null, ViewportScale: config.ViewportScale);
         var result = ScenarioCaptureRunner.Run(installation, profile, settings, reporter);
         Environment.ExitCode = result.ExitCode;
     }
