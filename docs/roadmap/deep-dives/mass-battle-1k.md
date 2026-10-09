@@ -166,8 +166,8 @@ normalizes the mixed roster; M5 runs the full battle in all three viewing modes.
 
 The M1 sequence below is grounded in the implemented code (`src/Panopticon.Tools.TestHarness/MassBattleDeploymentRunner.cs`,
 `MassBattleCapacityProbeRunner.cs`, `MassBattleDeploymentProfile.cs`; `src/Panopticon.Simulation/Navigation/Navigation.cs`;
-`src/Panopticon.Benchmarks.Simulation/BenchmarkMetricRecorder.cs`). Diagrams for the M2 DDF translator,
-the M4 army hierarchy, and the M5 batch and live run flows remain placeholders; they are required
+`src/Panopticon.Benchmarks.Simulation/BenchmarkMetricRecorder.cs`). The M2 diagrams below use H2a's existing types and import orchestration. Diagrams for
+the M4 army hierarchy and the M5 batch and live run flows remain placeholders; they are required
 before those phases' first source-edit cards are marked `Ready`.
 
 Sequence: the M1 capacity probe (WI-M1-01..03):
@@ -199,5 +199,66 @@ sequenceDiagram
     R->>R: engagement report + BenchmarkRunRecord (JSON/CSV)
 ```
 
-Placeholder. Class and sequence diagrams for the M2 DDF translator, the M4 army hierarchy, and the
-M5 batch and live run flows are required before the first source-edit card is marked `Ready`.
+### M2 import pipeline
+
+Grounding: `Content/Importing/Units/Ee2/`, `UnitImportResolution`, shared `Materialization/`, and
+`Panopticon.Tools.TestHarness/UnitContentImportRunner.cs`. Aircraft typed construction is the planned
+WI-M2-02 extension; helicopter rearm is not yet an established runtime capability.
+
+```mermaid
+classDiagram
+    class Ee2SourceFiles
+    class Ee2ImportPolicy
+    class DdfReader
+    class Ee2UnitAdapter
+    class UnitContentSet
+    class UnitImportResolution
+    class UnitCapabilityRegistry
+    class UnitRuntimeMaterializer
+    class UnitMaterializationContext
+    class UnitContentPublisher
+    class ImportedVisualInstaller
+    class UnitContentImportRunner
+    Ee2UnitAdapter --> Ee2SourceFiles
+    Ee2UnitAdapter --> Ee2ImportPolicy
+    Ee2UnitAdapter --> DdfReader
+    Ee2UnitAdapter --> UnitContentSet : emits shared records
+    UnitImportResolution --> UnitContentSet
+    UnitImportResolution --> UnitCapabilityRegistry
+    UnitRuntimeMaterializer --> UnitImportResolution
+    UnitRuntimeMaterializer --> UnitMaterializationContext
+    UnitContentPublisher --> ImportedVisualInstaller
+    UnitContentImportRunner --> Ee2UnitAdapter
+    UnitContentImportRunner --> UnitImportResolution
+    UnitContentImportRunner --> UnitRuntimeMaterializer
+    UnitContentImportRunner --> UnitContentPublisher
+```
+
+```mermaid
+sequenceDiagram
+    participant R as UnitContentImportRunner
+    participant A as Ee2UnitAdapter
+    participant D as DdfReader
+    participant V as UnitImportResolution
+    participant M as UnitRuntimeMaterializer
+    participant P as UnitContentPublisher
+    participant I as ImportedVisualInstaller
+    R->>A: source files, policy, requested roots
+    A->>D: parse selected DDF files and inherited dependencies
+    D-->>A: source records with provenance
+    A-->>R: UnitContentSet (unit, locomotor, weapon, visual records)
+    R->>V: Resolve(records, capability registry)
+    V-->>R: requested closure and diagnostics
+    alt unsupported required gameplay or unresolved dependency
+        R-->>R: fail without publication
+    else supported requested closure
+        R->>M: Materialize(resolution, conversion context)
+        M-->>R: detached definitions and visual assets
+        R->>P: Publish(content, installer)
+        P->>I: install source-qualified Track C visuals
+        P-->>R: scoped published IDs or failure diagnostics
+    end
+```
+
+Card sequence and evidence: [M2 implementation plan](../implementation/track-m-m2-ee2-combat-units.md).
+The M4 and M5 diagram placeholders remain closed gates for those phases.

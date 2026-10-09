@@ -386,6 +386,15 @@ Source of truth: [deep-dives/mass-battle-1k.md](../deep-dives/mass-battle-1k.md)
 |---|---|---|
 | [track-m-m1-capacity-probe.md](track-m-m1-capacity-probe.md) | M1-1…M1-3 | Generals-only 1000 vs 1000 capacity probe (WI-M1-01..03) |
 
+## Track M · M2 : EE2 combat units
+
+Source of truth: [mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
+[Architecture diagrams §9](../deep-dives/mass-battle-1k.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-m-m2-ee2-combat-units.md](track-m-m2-ee2-combat-units.md) | M2-1…M2-4 | EE2 reference roster (WI-M2-01..04) |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :
