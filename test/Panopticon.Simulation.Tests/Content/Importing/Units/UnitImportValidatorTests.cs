@@ -146,9 +146,13 @@ public class UnitImportValidatorTests
             StateAnimations = new Dictionary<string, Authored<string>> { ["Idle"] = Authored.Of("idle.kf"), ["move"] = Authored.Of("walk.kf") },
         };
 
-        var codes = ErrorCodes(Resolve(Single(visual)));
+        var diagnostics = Resolve(Single(visual)).Diagnostics;
 
-        Assert.Equal(2, codes.Count(code => code == DiagnosticCodes.MissingVisualState));
+        // Idle, Move, Death, Attack are all validated. A missing Attack clip is a reported
+        // warning (WI-M2-02: sources may author none; the draw module binds no condition for
+        // it); the other states stay errors.
+        Assert.Equal(1, diagnostics.Count(d => d.IsError && d.Code == DiagnosticCodes.MissingVisualState && d.Message.Contains("Death")));
+        Assert.Equal(1, diagnostics.Count(d => !d.IsError && d.Code == DiagnosticCodes.MissingVisualState && d.Message.Contains("Attack")));
     }
 
     [Fact]

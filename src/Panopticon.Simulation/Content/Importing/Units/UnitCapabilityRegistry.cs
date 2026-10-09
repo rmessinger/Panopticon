@@ -29,6 +29,7 @@ public sealed class UnitCapabilityRegistry
         "HighlanderBody",
         "UndeadBody",
         "AIUpdateInterface",
+        "JetAIUpdate",
         "PhysicsBehavior",
         "SlowDeathBehavior",
     ];

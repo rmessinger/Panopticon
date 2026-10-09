@@ -98,6 +98,12 @@ internal sealed class DdfReader
 
     private DdfValue ReadValue(int depth)
     {
+        // `key = }` authors an absent value; the bracket still closes the enclosing block.
+        if (Peek() is { } empty && IsEmptyValue(empty))
+        {
+            return new DdfScalar(string.Empty, empty.Position);
+        }
+
         var token = Next() ?? throw new InvalidDataException($"{_file}: value expected before end of file.");
 
         switch (token.Kind)
@@ -106,11 +112,47 @@ internal sealed class DdfReader
                 return ReadBlockBody(null, token.Position, depth + 1);
             case TokenKind.OpenBracket:
                 return ReadArray(token.Position, depth + 1);
+            case TokenKind.Word when token.Text == "(":
+                return ReadFlags(token.Position);
             case TokenKind.Word:
             case TokenKind.Quoted:
                 return new DdfScalar(token.Text, token.Position);
             default:
                 throw Error(token, $"expected a value, found '{token.Text}'");
+        }
+    }
+
+    /// <summary>
+    /// An empty value (<c>key = }</c>, evidenced by <c>AnimName = }</c> in tankbarrier.ddf): the
+    /// closing bracket still belongs to the enclosing block, so it is peeked, not consumed.
+    /// </summary>
+    private static bool IsEmptyValue(Token token) => token.Kind is TokenKind.CloseBrace or TokenKind.CloseBracket;
+
+    /// <summary>
+    /// A parenthesized, <c>|</c>-separated flag list (<c>RallyPlacementFlags = ( Fortress | Terrain )</c>).
+    /// Read as a scalar array so callers keep each flag name with its position.
+    /// </summary>
+    private DdfArray ReadFlags(DdfPosition position)
+    {
+        var flags = new List<DdfValue>();
+        while (true)
+        {
+            var token = Next() ?? throw new InvalidDataException($"{position}: flag list is not closed before end of file.");
+
+            switch (token.Kind)
+            {
+                case TokenKind.Word when token.Text == ")":
+                    return new DdfArray(flags, position);
+                case TokenKind.Word when token.Text == "|":
+                case TokenKind.Separator:
+                    continue;
+                case TokenKind.Word:
+                case TokenKind.Quoted:
+                    flags.Add(new DdfScalar(token.Text, token.Position));
+                    continue;
+                default:
+                    throw Error(token, $"unexpected '{token.Text}' in flag list");
+            }
         }
     }
 

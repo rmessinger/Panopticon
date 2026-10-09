@@ -52,7 +52,15 @@ internal static class UnitVisualMaterializer
 
         foreach (var (stateName, flag, mode) in StateBindings)
         {
-            var animationKey = visual.StateAnimations[stateName].Value;
+            if (!visual.StateAnimations.TryGetValue(stateName, out var animation) || !animation.IsPresent)
+            {
+                // A source may author no clip for a state (the heavy-tank Attack1 clip is
+                // commented out in the install). The validator reports the gap; the draw module
+                // simply has no condition state for it. Never fabricate a binding.
+                continue;
+            }
+
+            var animationKey = animation.Value;
             var animationName = RuntimeName(source, animationKey);
             context.VisualAssets.Add(new VisualAssetRequest(visual.Id, VisualAssetKind.Animation, animationKey, animationName));
 

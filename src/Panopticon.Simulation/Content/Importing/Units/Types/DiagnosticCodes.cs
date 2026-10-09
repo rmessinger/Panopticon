@@ -28,4 +28,7 @@ public static class DiagnosticCodes
     public const string MaterializationFailed = "H2A-MATERIALIZE";
     public const string NameCollision = "H2A-NAME-COLLISION";
     public const string PublicationFailed = "H2A-PUBLISH";
+    public const string ArchiveLayer = "M2-ARCHIVE-LAYER";
+    public const string AbilityOverride = "M2-ABILITY-OVERRIDE";
+    public const string InventoryOnly = "M2-INVENTORY-ONLY";
 }

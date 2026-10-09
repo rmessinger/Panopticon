@@ -12,12 +12,12 @@ using Panopticon.Tools.ReplaySketch.Model.Capture;
 namespace Panopticon.Tools.TestHarness;
 
 /// <summary>
-/// Card WI-H2a-17: publishes a capture profile's content imports into a running game through the
-/// shared H2a layer (adapter, resolution, validation, materialization, scoped publication), so
-/// imported units spawn beside native ones. Every diagnostic is reported; any error leaves the
-/// game without partial content and fails the run.
+/// Card WI-H2a-17 (extended by WI-M2-03): publishes a capture profile's content imports into a
+/// running game through the shared H2a layer (adapter, resolution, validation, materialization,
+/// scoped publication), so imported units spawn beside native ones. Every diagnostic is reported;
+/// any error leaves the game without partial content and fails the run.
 /// </summary>
-internal static class UnitContentImportRunner
+public static class UnitContentImportRunner
 {
     public const string Ee2PathVariable = "EMPIRE_EARTH_II_PATH";
 
@@ -35,10 +35,18 @@ internal static class UnitContentImportRunner
         using var textures = new ZipFileSystem(Path.Combine(root, "zips/textures.zip"));
         var visualFiles = new CompositeFileSystem(graphics, textures);
 
-        var adapter = new Ee2UnitAdapter(
-            new Ee2SourceFiles(database, graphics, import.DdfPaths, Ee2SourceFiles.DefaultUnitTablePath),
-            new Ee2ImportPolicy(import.Epoch, import.Region, import.ExcludedMechanics));
-        var resolution = UnitImportResolution.Resolve(adapter.Read(import.UnitTypes), UnitCapabilityRegistry.CreateDefault());
+        // Explicit row keys publish through the full db/Units inventory; bounded profiles keep
+        // their explicit DDF paths. Patch archives beside db.zip are reported, never composed.
+        var sourceFiles = import.RowKeys.Count > 0
+            ? Ee2SourceFiles.FromDatabase(
+                database,
+                graphics,
+                Directory.EnumerateFiles(Path.Combine(root, "zips"), "db_*.zip").Select(Path.GetFileName).ToArray())
+            : new Ee2SourceFiles(database, graphics, import.DdfPaths, Ee2SourceFiles.DefaultUnitTablePath);
+
+        var adapter = new Ee2UnitAdapter(sourceFiles, new Ee2ImportPolicy(import.Epoch, import.Region, import.ExcludedMechanics));
+        var set = import.RowKeys.Count > 0 ? adapter.ReadRows(import.RowKeys) : adapter.Read(import.UnitTypes);
+        var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
         Report(resolution.Diagnostics, reporter);
         if (!resolution.Succeeded)
         {

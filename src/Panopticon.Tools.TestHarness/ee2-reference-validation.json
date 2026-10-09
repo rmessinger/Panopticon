@@ -1,0 +1,54 @@
+{
+  // WI-M2-04 EE2 reference contracts, run as an extension of the Unit Validation Ground (P9)
+  // on the same map and game session. Set ValidationGroundEe2ProfilePath to this file to run
+  // them; without the knob the validation ground is unchanged.
+  // Attack targets are the validation ground's neutral civilian cars (CarAsian1): armed
+  // targets shoot the aircraft down at point-blank range before the sortie cycle completes,
+  // which measures the target's gun, not the EE2 unit's own contract. Death contracts use
+  // dedicated Generals killers. Six publishable rows (the infantry row is blocked on Track C animation import; see
+  // docs/roadmap/implementation/track-m-m2-ee2-combat-units.md). Ground units prove movement,
+  // weapon-caused damage, and death beside Generals units; fixed-wing aircraft prove the full
+  // sortie cycle through the M1 parking path: departure, ammunition consumption, return,
+  // refill, and a second damaging sortie; the helicopter proves hover attack, scripted return,
+  // and a second damaging sortie (no EE2 helicopter authors ordnance, so clip consumption is
+  // reported absent-in-source rather than fabricated).
+  "Name": "ee2-reference-validation",
+  "ContentImport": {
+    "Source": "ee2",
+    "RowKeys": [
+      "LightMounted1UpgradeEpoch15",
+      "HeavyMounted1UpgradeEpoch15",
+      "HeavyArtilleryUpgradeEpoch14",
+      "FighterUpgradeEpoch15",
+      "BomberUpgradeEpoch15",
+      "LightMounted2UpgradeEpoch13"
+    ],
+    "Region": "we",
+    "GameUnitsPerSourceDistance": 12,
+    "ExcludedMechanics": [
+      "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
+      "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",
+      "Attack.areaDamageFriendlyRatio", "Attack.angularRange", "Attack.turretControllerName", "Attack.ignoreBlocking",
+      "Attack.attackOnTheMove", "Attack.WeaponType", "Attack.packTime", "Attack.unpackTime", "Attack.minRangeImmobile",
+      "Attack.capture", "Attack.startWithNoOrdnance",
+      "VehicleMove.followTerrainSlope", "VehicleMove.mustMoveToTurn", "VehicleMove.bounce",
+      "AircraftMove.followTerrainSlope", "AircraftMove.mustMoveToTurn", "AircraftMove.ElevChangeRate",
+      "AircraftMove.OnGroundScale", "AircraftMove.CargoHeight", "AircraftMove.accel",
+      "Move.angAccel", "Move.bounce",
+      "ProjectileMissileMove.type", "ProjectileMissileMove.accel", "ProjectileMissileMove.angSpeed",
+      "Missile.PayloadAttack"
+    ]
+  },
+  "AirfieldDefinition": "AmericaAirfield",
+  "TargetDefinition": "CarAsian1",
+  "KillerDefinition": "AmericaTankCrusader",
+  "FrameBudget": 12000,
+  "Contracts": [
+    { "Definition": "ee2:LightMounted1UpgradeEpoch15", "Kind": "Ground" },
+    { "Definition": "ee2:HeavyMounted1UpgradeEpoch15", "Kind": "Ground" },
+    { "Definition": "ee2:HeavyArtilleryUpgradeEpoch14", "Kind": "Ground" },
+    { "Definition": "ee2:FighterUpgradeEpoch15", "Kind": "FixedWing" },
+    { "Definition": "ee2:BomberUpgradeEpoch15", "Kind": "FixedWing" },
+    { "Definition": "ee2:LightMounted2UpgradeEpoch13", "Kind": "Helicopter" }
+  ]
+}

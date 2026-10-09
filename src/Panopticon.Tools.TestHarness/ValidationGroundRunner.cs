@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Panopticon.Data;
 using Panopticon.Graphics;
@@ -65,6 +66,27 @@ public static class ValidationGroundRunner
             game.StartSkirmishOrMultiPlayerGame(scenario.MapPath, new Network.EchoConnection(), runPlan.PlayerSettings, scenario.Seed, isMultiPlayer: false);
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
+
+            // Card WI-M2-04: the EE2 reference roster publishes before any spawn when the
+            // profile knob is set; a failed import aborts before the standard roster acts.
+            Ee2ValidationProfile? ee2Profile = null;
+            if (!string.IsNullOrWhiteSpace(config.ValidationGroundEe2ProfilePath))
+            {
+                if (!File.Exists(config.ValidationGroundEe2ProfilePath))
+                {
+                    reporter.Error($"ValidationGroundEe2ProfilePath '{config.ValidationGroundEe2ProfilePath}' does not exist.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+
+                ee2Profile = Ee2ValidationProfile.Load(config.ValidationGroundEe2ProfilePath);
+                if (!UnitContentImportRunner.Import(game, ee2Profile.ContentImport, reporter))
+                {
+                    reporter.Error("EE2 reference import failed; the validation ground will not run the EE2 contracts.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+            }
 
             // The validation ground's ending criteria are foreign to the skirmish victory system
             // (every unit resolved, frame cap, or window close), so make it inert rather than
@@ -223,6 +245,17 @@ public static class ValidationGroundRunner
                             break;
                         }
                     }
+                }
+            }
+
+            if (ee2Profile != null && config.Headless)
+            {
+                // The EE2 reference contracts run in the same session after the Generals roster
+                // resolves; their exit code is distinct from the baseline regression codes.
+                var ee2Exit = Ee2ContractPhase.Run(game, ee2Profile, reporter);
+                if (ee2Exit != 0)
+                {
+                    Environment.ExitCode = ee2Exit;
                 }
             }
 

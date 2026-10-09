@@ -306,11 +306,14 @@ public sealed class WeaponTemplate : BaseAsset
     public int ClipSize { get; internal set; }
     public RangeDuration ClipReloadTime { get; internal set; }
     public RangeDuration AutoReloadWhenIdle { get; private set; }
-    public WeaponReloadType AutoReloadsClip { get; private set; } = WeaponReloadType.Auto;
+
+    /// <summary>Settable for the import seam (WI-M2-02): aircraft rearm at base.</summary>
+    public WeaponReloadType AutoReloadsClip { get; internal set; } = WeaponReloadType.Auto;
     public int ContinuousFireOne { get; private set; }
     public int ContinuousFireTwo { get; private set; }
     public int ContinuousFireCoast { get; private set; }
-    public RangeDuration PreAttackDelay { get; private set; }
+    /// <summary>Settable for the import seam (WI-M2-02): EE2 applyDamageTime maps here.</summary>
+    public RangeDuration PreAttackDelay { get; internal set; }
     public WeaponPrefireType PreAttackType { get; private set; }
     public int ContinueAttackRange { get; private set; }
     public float AcceptableAimDelta { get; private set; }

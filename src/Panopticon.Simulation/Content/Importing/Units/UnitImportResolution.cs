@@ -27,12 +27,23 @@ public sealed record UnitImportResolution(
         var dependencies = new UnitDependencyResolver().Resolve(inheritance, set.Roots, published);
         var validation = new UnitImportValidator(registry).Validate(dependencies.Closure);
 
+        // Card WI-M2-01: a full inventory parses records the caller never asked to publish. Their
+        // inheritance findings stay visible but must not reject the requested closure, so findings
+        // whose subject sits outside the closure are downgraded to inventory warnings.
+        var closure = dependencies.Closure.Select(record => record.Id).ToHashSet();
         var diagnostics = set.Diagnostics
-            .Concat(inheritance.Diagnostics)
+            .Concat(inheritance.Diagnostics.Select(diagnostic => AsInventoryWarning(diagnostic, closure)))
             .Concat(dependencies.Diagnostics)
             .Concat(validation)
             .ToArray();
 
         return new UnitImportResolution(set.Source, set.Roots, dependencies.Closure, diagnostics);
+    }
+
+    private static ImportDiagnostic AsInventoryWarning(ImportDiagnostic diagnostic, ISet<ContentId> closure)
+    {
+        return diagnostic.Subject is { } subject && !closure.Contains(subject)
+            ? diagnostic with { Severity = ImportDiagnosticSeverity.Warning, Message = $"[inventory only] {diagnostic.Message}" }
+            : diagnostic;
     }
 }

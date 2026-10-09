@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Panopticon.Logic.Object;
@@ -13,6 +14,13 @@ namespace Panopticon.Content.Importing.Units.Materialization;
 internal static class UnitBodyMovementMaterializer
 {
     public const string DefaultBodyTag = "ModuleTag_ImportedBody";
+
+    /// <summary>
+    /// Declared fixed-wing speed ramp: one second at the engine's 30 logic frames per second.
+    /// EE2 authors no air acceleration or braking; the engine's wings model needs both plus a
+    /// positive minimum speed. This is a recorded conversion decision, not a balance value.
+    /// </summary>
+    public const float AircraftSpeedRampFrames = 30;
 
     public static LocomotorTemplate Materialize(LocomotorRecord record, UnitMaterializationContext context)
     {
@@ -44,6 +52,18 @@ internal static class UnitBodyMovementMaterializer
         {
             locomotor.Braking = (float)context.Convert(record.Id, nameof(record.Braking), record.Braking.Value, context.Policy.ToDistancePerFrameSquared(record.Braking.Value), "distance/frame^2");
         }
+        else if (record.Speed.IsPresent)
+        {
+            // EE2 authors no braking either; the one-frame policy already used for its missing
+            // acceleration applies symmetrically, so aircraft can stop and turn for waypoints.
+            locomotor.Braking = locomotor.MaxSpeed;
+        }
+
+        if (record.PreferredHeight.IsPresent)
+        {
+            // The import conversion policy owns the scale; the value stays authored, never rebalanced.
+            locomotor.PreferredHeight = (float)UnitBodyMovementMaterializer.ConvertDistance(record, nameof(record.PreferredHeight), record.PreferredHeight.Value, context);
+        }
 
         if (record.Appearance.IsPresent)
         {
@@ -54,6 +74,18 @@ internal static class UnitBodyMovementMaterializer
             else
             {
                 context.Error(record.Id, $"Unknown locomotor appearance '{record.Appearance.Value}'.");
+            }
+
+            if (appearance == LocomotorAppearance.Wings)
+            {
+                // Fixed-wing flight: EE2 authors one air speed and no acceleration, braking, or
+                // minimum. The engine's wings model requires a positive minimum (its own landing
+                // warning) and destabilizes without a speed ramp, so the declared conversion
+                // flies at the authored speed (minimum = maximum) ramping over one second.
+                // Recorded as a conversion, never a balance value.
+                locomotor.MinSpeed = locomotor.MaxSpeed;
+                locomotor.Acceleration = locomotor.MaxSpeed / AircraftSpeedRampFrames;
+                locomotor.Braking = locomotor.MaxSpeed / AircraftSpeedRampFrames;
             }
         }
 
@@ -69,10 +101,26 @@ internal static class UnitBodyMovementMaterializer
             }
         }
 
+        // Every Generals airborne locomotor sets this engine mode; air-surface imports need it
+        // too, or the motive force is withheld while airborne (the aircraft hangs motionless).
+        // EE2 holds its authored cruising height kinematically (no authored lift), which maps to
+        // the engine's ground-relative Z mode rather than an invented lift value.
+        if ((locomotor.Surfaces & Surfaces.Air) != 0)
+        {
+            locomotor.AllowAirborneMotiveForce = true;
+
+            // Fixed-wing flight holds its authored cruising height kinematically (EE2 authors no
+            // lift); hover locomotors keep the engine's physics-based Z handling.
+            if (locomotor.Appearance == LocomotorAppearance.Wings)
+            {
+                locomotor.BehaviorZ = LocomotorBehaviorZ.RelativeToGroundAndBuildings;
+            }
+        }
+
         return locomotor;
     }
 
-    public static ObjectDefinition CreateDefinition(UnitRecord record, UnitMaterializationContext context)
+    public static ObjectDefinition CreateDefinition(UnitRecord record, UnitImportResolution resolution, UnitMaterializationContext context)
     {
         var definition = new ObjectDefinition(record.Id.Name);
 
@@ -111,15 +159,19 @@ internal static class UnitBodyMovementMaterializer
             definition.ShroudClearingRange = definition.VisionRange;
         }
 
-        AddTypedModules(record, definition, context);
+        AddTypedModules(record, definition, resolution, context);
         AddLocomotors(record, definition, context);
 
         return definition;
     }
 
-    private static void AddTypedModules(UnitRecord record, ObjectDefinition definition, UnitMaterializationContext context)
+    private static void AddTypedModules(UnitRecord record, ObjectDefinition definition, UnitImportResolution resolution, UnitMaterializationContext context)
     {
         var hasBody = false;
+        var locomotors = record.Locomotors.Resolved
+            .Select(id => resolution.Closure.FirstOrDefault(source => source.Id.Equals(id)))
+            .OfType<LocomotorRecord>()
+            .ToArray();
 
         foreach (var module in record.ResolvedModules.Where(m => m.Ability is null && m.Legacy is null))
         {
@@ -131,6 +183,7 @@ internal static class UnitBodyMovementMaterializer
                 "HighlanderBody" => new HighlanderBodyModuleData(),
                 "UndeadBody" => new UndeadBodyModuleData(),
                 "AIUpdateInterface" => new AIUpdateModuleData(),
+                "JetAIUpdate" => JetAI(locomotors, record, context),
                 "PhysicsBehavior" => new PhysicsBehaviorModuleData(),
                 "SlowDeathBehavior" => SlowDeath(record, context),
                 _ => null,
@@ -172,6 +225,34 @@ internal static class UnitBodyMovementMaterializer
         return data;
     }
 
+    /// <summary>
+    /// Card WI-M2-02: typed aircraft AI from validated interchange fields. Authored hover
+    /// capability (EE2 <c>canHover</c>, helicopters) selects the no-runway, no-parking-space
+    /// configuration; fixed-wing aircraft keep runway takeoff and airfield parking. The authored
+    /// cruising height becomes the minimum flight height floor. No legacy binding is involved.
+    /// </summary>
+    private static JetAIUpdateModuleData JetAI(IReadOnlyList<LocomotorRecord> locomotors, UnitRecord record, UnitMaterializationContext context)
+    {
+        var data = new JetAIUpdateModuleData();
+        var movement = locomotors.FirstOrDefault();
+        if (movement is null)
+        {
+            context.Error(record.Id, "Aircraft module requires a locomotor.");
+            return data;
+        }
+
+        var helicopter = movement.CanHover.IsPresent && movement.CanHover.Value;
+        data.ImportedNeedsRunway = !helicopter;
+        data.ImportedKeepsParkingSpaceWhenAirborne = !helicopter;
+
+        if (movement.PreferredHeight.IsPresent)
+        {
+            data.ImportedMinHeight = (int)Math.Round(UnitBodyMovementMaterializer.ConvertDistance(movement, nameof(movement.PreferredHeight), movement.PreferredHeight.Value, context));
+        }
+
+        return data;
+    }
+
     /// <summary>Overrides health on a body module; also used for legacy bodies so typed values stay authoritative.</summary>
     internal static void ApplyHealth(UnitRecord record, ActiveBodyModuleData body, UnitMaterializationContext context)
     {
@@ -201,6 +282,19 @@ internal static class UnitBodyMovementMaterializer
             Locomotors = locomotors.Select(context.Reference<LocomotorTemplate>).ToArray(),
             Speed = 100,
         };
+
+        // Aircraft taxi through the parking flow (parking init and the runway return both select
+        // the taxiing set). EE2 authors no separate taxi speed; the air locomotor serves both
+        // sets, and the parking initialization drives the ground-phase waypoints.
+        if (record.KindOf.Resolved.Contains("AIRCRAFT", StringComparer.Ordinal))
+        {
+            definition.LocomotorSets[LocomotorSetType.Taxiing] = new LocomotorSetTemplate
+            {
+                Condition = LocomotorSetType.Taxiing,
+                Locomotors = locomotors.Select(context.Reference<LocomotorTemplate>).ToArray(),
+                Speed = 100,
+            };
+        }
     }
 
     /// <summary>

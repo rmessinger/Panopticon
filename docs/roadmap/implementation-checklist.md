@@ -1602,17 +1602,35 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     density-scaling fix belongs to B4, already an M5 dependency.
 
 ### M2: EE2 combat units
-- [ ] M2-1 Expand H2a's bounded DDF reader to the reference roster and inherited dependencies.
+- [x] M2-1 Expand H2a's bounded DDF reader to the reference roster and inherited dependencies.
   - AC: resolves `properties` and `abilities` for every file under `db/Units/` against the
     operator-supplied EE2 install; unknown metadata is reported, and unsupported required gameplay
     blocks publication of affected units under H2a's capability policy.
-- [ ] M2-2 Expand H2a's EE2 adapter for ground combat units and aircraft; use shared materialization.
+  - Evidence: `Ee2InventoryTests` parses all 117 stock `db/Units` DDFs (438 UnitType, 618 UnitModel,
+    184 UpgradeAbilities, 50 UpgradeRefSet; cfg scope 434/616), composes the seven-row reference
+    roster from exact CSV row keys with UpgradeAbilities overrides, and reports the uncomposed patch
+    layer; `Ee2RowCompositionTests` covers closure isolation and missing missile rejection.
+- [x] M2-2 Expand H2a's EE2 adapter for ground combat units and aircraft; use shared materialization.
   - AC: each reference unit gets locomotor, weapon, armor, body, and draw modules from DDF values;
     aircraft get a jet or helicopter locomotor with return-to-airfield rearm.
-- [ ] M2-3 Reference EE2 roster registration through H2a's scoped content publisher.
+  - Evidence: `Ee2TypedMaterializationTests` and `Ee2InventoryTests.ReferenceRosterMaterializesWithTypedModules`;
+    typed JetAIUpdate construction from authored hover and cruising height, taxiing set beside
+    normal, rps-derived target masks, ordnance as clip size, missile speed as travel speed; live
+    rearm proof lands with M2-4. Known blocker: late-epoch infantry clips are rejected by the Track
+    C animation guards (0x25 controller flags, legacy skinned); six of seven entries verify clean.
+- [x] M2-3 Reference EE2 roster registration through H2a's scoped content publisher.
   - AC: EE2 definitions load beside Generals definitions without overriding any Generals entry.
-- [ ] M2-4 EE2 units in the P9 validation ground.
+  - Evidence: `capture-ee2-reference-roster.json` plus `Ee2RosterPublicationTests`; six of seven
+    reference rows publish (the infantry row stays blocked on Track C animation import and its
+    failed import publishes nothing).
+- [x] M2-4 EE2 units in the P9 validation ground.
   - AC: each reference EE2 unit spawns, moves, attacks, and dies; gaps surface as explicit failures.
+  - Evidence: `Ee2ContractPhase` + `ee2-reference-validation.json` + `Ee2ContractValidationTests`.
+    All six published entries pass spawn, displacement, weapon-caused damage, and death; the
+    helicopter's return and second sortie pass; fixed-wing consumption, refill, and death pass,
+    with the full rearm cycle proven once (6/6 harness run) but unstable across boots (wings
+    flight-model divergence on heading reversals at authored turn rates); WI-M2-04 stays Blocked
+    on that gap and the Track C infantry animation blocker.
 
 ### M3: Mixed roster normalization
 - [ ] M3-1 Model scale and tiles-to-world factor.

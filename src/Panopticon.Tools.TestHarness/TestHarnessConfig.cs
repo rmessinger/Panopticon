@@ -134,6 +134,15 @@ public sealed class TestHarnessConfig
     public string? ValidationGroundReportPath { get; set; } = null;
 
     /// <summary>
+    /// Card WI-M2-04: path to the EE2 reference validation profile (for example the shipped
+    /// <c>ee2-reference-validation.json</c>). When set, the roster imports through the shared
+    /// unit-content layer before spawn and the EE2 reference contracts run beside the Generals
+    /// roster in the same session, writing ee2-contract-report.json. Empty keeps the validation
+    /// ground unchanged.
+    /// </summary>
+    public string? ValidationGroundEe2ProfilePath { get; set; } = null;
+
+    /// <summary>
     /// When true (default), a windowed validation-ground run starts paused with the orders held so
     /// the starting conditions can be inspected; Space (or the overlay button) resumes, which runs
     /// the settle stage and issues the attack orders. Afterwards Space toggles active pause.

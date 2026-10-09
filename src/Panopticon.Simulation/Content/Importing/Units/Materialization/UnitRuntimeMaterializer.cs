@@ -44,6 +44,36 @@ public static class UnitRuntimeMaterializer
         return new MaterializedUnitContent(context, resolution.Source, context.Staged.ToDictionary(), context.Conversions.ToArray(), context.Diagnostics.ToArray(), context.VisualAssets.ToArray());
     }
 
+    /// <summary>
+    /// Card WI-M2-02: aircraft with an authored clip rearm at their base (Generals aircraft
+    /// configure RETURN_TO_BASE), so a sortie ends with the return flight instead of a mid-air
+    /// reload. Ground units keep the default auto reload.
+    /// </summary>
+    private static void ArmAircraftWeaponsAtBase(UnitRecord unit, ObjectDefinition definition, UnitImportResolution resolution, UnitMaterializationContext context)
+    {
+        if (!unit.KindOf.Resolved.Contains("AIRCRAFT", StringComparer.Ordinal))
+        {
+            return;
+        }
+
+        // Weapons bind through the unit's Attack ability modules; an authored clip means the
+        // aircraft rearms at its base.
+        var weaponIds = unit.ResolvedModules
+            .Where(module => module.Ability is not null)
+            .Select(module => resolution.Closure.FirstOrDefault(record => record.Id.Equals(module.Ability!.Value)))
+            .OfType<AbilityRecord>()
+            .Where(ability => ability.Weapon.IsPresent)
+            .Select(ability => ability.Weapon.Value);
+
+        foreach (var weaponId in weaponIds)
+        {
+            if (context.Staged.TryGetValue(weaponId, out var asset) && asset is WeaponTemplate weapon && weapon.ClipSize > 0)
+            {
+                weapon.AutoReloadsClip = WeaponReloadType.ReturnToBase;
+            }
+        }
+    }
+
     private static BaseAsset? MaterializeTyped(SourceRecord record, UnitImportResolution resolution, UnitMaterializationContext context)
     {
         switch (record)
@@ -57,8 +87,9 @@ public static class UnitRuntimeMaterializer
             case UpgradeRecord upgrade:
                 return UnitProductionMaterializer.Materialize(upgrade, context);
             case UnitRecord unit:
-                var definition = UnitBodyMovementMaterializer.CreateDefinition(unit, context);
+                var definition = UnitBodyMovementMaterializer.CreateDefinition(unit, resolution, context);
                 UnitCombatMaterializer.AddSets(unit, definition, context);
+                ArmAircraftWeaponsAtBase(unit, definition, resolution, context);
                 UnitAbilityMaterializer.AddModules(unit, definition, resolution, context);
                 UnitProductionMaterializer.Apply(unit, definition, context);
                 UnitVisualMaterializer.AddDraw(unit, definition, resolution, context);

@@ -34,8 +34,7 @@ public sealed class LocomotorTemplate : BaseAsset
         { "Braking", (parser, x) => x.Braking = parser.ParseAccelerationToLogicFrames() },
         { "MinTurnSpeed", (parser, x) => x.MinTurnSpeed = parser.ParseVelocityToLogicFrames() },
         { "TurnPivotOffset", (parser, x) => x.TurnPivotOffset = parser.ParseFloat() },
-        { "AllowAirborneMotiveForce", (parser, x) => x.AllowAirborneMotiveForce = parser.ParseBoolean() },
-        { "PreferredHeight", (parser, x) => x.PreferredHeight = parser.ParseFloat() },
+        { "AllowAirborneMotiveForce", (parser, x) => x.AllowAirborneMotiveForce = parser.ParseBoolean() },        { "PreferredHeight", (parser, x) => x.PreferredHeight = parser.ParseFloat() },
         { "PreferredHeightDamping", (parser, x) => x.PreferredHeightDamping = parser.ParseFloat() },
         { "SpeedLimitZ", (parser, x) => x.SpeedLimitZ = parser.ParseVelocityToLogicFrames() },
         { "ZAxisBehavior", (parser, x) => x.BehaviorZ = parser.ParseEnum<LocomotorBehaviorZ>() },
@@ -153,7 +152,11 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// We should never brake past this.
     /// </summary>
-    public float MinSpeed { get; private set; } = 0.0f;
+    /// <summary>
+    /// Settable for the import seam (WI-M2-02): the engine's wings flight model requires a
+    /// positive minimum speed (see the Generals MinSpeed landing warning).
+    /// </summary>
+    public float MinSpeed { get; internal set; } = 0.0f;
 
     /// <summary>
     /// Max rate at which we can turn, in radians per logic frame.
@@ -196,9 +199,9 @@ public sealed class LocomotorTemplate : BaseAsset
     public float MinTurnSpeed { get; private set; } = BigNumber;
 
     /// <summary>
-    /// Our preferred height (if flying).
+    /// Cruise altitude; air locomotors settle toward it. Settable for the import seam (WI-M2-02).
     /// </summary>
-    public float PreferredHeight { get; private set; } = 0.0f;
+    public float PreferredHeight { get; internal set; } = 0.0f;
 
     /// <summary>
     /// How aggressively to adjust to preferred height. 1.0 = very much, 0.1 = gradually, etc.
@@ -229,7 +232,7 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// Z-axis behavior.
     /// </summary>
-    public LocomotorBehaviorZ BehaviorZ { get; private set; } = LocomotorBehaviorZ.NoZMotiveForce;
+    public LocomotorBehaviorZ BehaviorZ { get; internal set; } = LocomotorBehaviorZ.NoZMotiveForce;
 
     /// <summary>
     /// How we should diddle the Drawable to imitate this motion.
@@ -365,7 +368,7 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// Can we apply motive force when airborne?
     /// </summary>
-    public bool AllowAirborneMotiveForce { get; private set; }
+    public bool AllowAirborneMotiveForce { get; internal set; }
 
     /// <summary>
     /// Apply "2D friction" even when airborne... useful for realistic-looking movement.

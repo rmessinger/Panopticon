@@ -70,9 +70,9 @@ public static class CaptureProfileValidator
                 errors.Add($"Content import source '{import.Source}' is not supported; only 'ee2' is.");
             }
 
-            if (import.UnitTypes.Count == 0 || import.DdfPaths.Count == 0)
+            if (import.RowKeys.Count == 0 && (import.UnitTypes.Count == 0 || import.DdfPaths.Count == 0))
             {
-                errors.Add($"Content import '{import.Source}' needs UnitTypes and DdfPaths.");
+                errors.Add($"Content import '{import.Source}' needs RowKeys or UnitTypes with DdfPaths.");
             }
 
             if (!(import.GameUnitsPerSourceDistance > 0) || double.IsInfinity(import.GameUnitsPerSourceDistance))

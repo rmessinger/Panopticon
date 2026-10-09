@@ -21,6 +21,9 @@ public sealed class Ee2RealUnitImportTests(ITestOutputHelper output)
     [
         "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "stance",
         "Garrisonable", "Convertable", "ConvertAttack", "Cost", "UPGRADEREFS", "Attack.applyDamageTime",
+        // Surfaced by WI-M2-01: the epoch-1 UpgradeAbilities override composes WeaponType, and the
+        // census now covers every movement-family member, including Human's Move angAccel.
+        "Attack.WeaponType", "Move.angAccel",
     ];
 
     internal static Ee2SourceFiles OpenInstall()

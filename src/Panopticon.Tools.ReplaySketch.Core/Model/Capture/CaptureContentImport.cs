@@ -13,6 +13,14 @@ public class CaptureContentImport
     /// <summary>Content source id; only <c>ee2</c> is supported.</summary>
     public string Source { get; set; } = "ee2";
 
+    /// <summary>
+    /// Exact tech-tree row keys published (WI-M2-03), for example
+    /// <c>LightMounted1UpgradeEpoch15</c>. The row's UNIT cell names the UnitType. When set, the
+    /// full <c>db/Units</c> inventory is discovered and <see cref="UnitTypes"/>,
+    /// <see cref="Epoch"/>, and <see cref="DdfPaths"/> are ignored.
+    /// </summary>
+    public List<string> RowKeys { get; set; } = [];
+
     /// <summary>Source unit type names to publish.</summary>
     public List<string> UnitTypes { get; set; } = [];
 
