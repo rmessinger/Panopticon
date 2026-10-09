@@ -247,6 +247,60 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
         Assert.Equal(new Quantity(2, QuantityUnit.SourceDistancePerSecond), missiles["Bomb"]);
     }
 
+    [Fact]
+    public void ReferenceRosterMaterializesWithTypedModules()
+    {
+        var set = new Ee2UnitAdapter(OpenInstall(), new Ee2ImportPolicy(15, "we", ReferenceExclusions)).ReadRows(ReferenceRowKeys);
+        var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
+        Assert.True(resolution.Succeeded, string.Join("\n", resolution.Diagnostics.Where(d => d.IsError)));
+
+        var content = Panopticon.Content.Importing.Units.Materialization.UnitRuntimeMaterializer.Materialize(
+            resolution,
+            new Panopticon.Content.Importing.Units.Materialization.UnitMaterializationContext(
+                new Panopticon.Content.Importing.Units.Materialization.UnitConversionPolicy(SageGame.CncGenerals, gameUnitsPerSourceDistance: 12)));
+        Assert.True(content.Succeeded, string.Join("\n", content.Diagnostics));
+
+        var installer = new Panopticon.Content.Importing.Units.Materialization.ImportedVisualInstaller(
+            new Panopticon.Content.Importing.Nif.NifModelImporter(),
+            new Panopticon.Content.Importing.Nif.NifAnimationImporter(),
+            new Panopticon.Content.Importing.AssetImportContext(OpenInstall().Graphics, language: null));
+
+        // Six of the seven reference entries install cleanly. The infantry entry is blocked on
+        // Track C animation support and its evidence is preserved below; the model itself imports.
+        var verify = installer.Verify(content.VisualAssets);
+        Assert.All(verify, d => Assert.Contains("HeavyInfantry1_15", d.Message));
+        Assert.Contains(verify, d => d.Message.Contains("controller flags 0x0025"));
+        output.WriteLine($"{verify.Count} blocked infantry clips: {verify[0].Message}");
+
+        foreach (var rowKey in ReferenceRowKeys)
+        {
+            var definition = content.Get<Panopticon.Logic.Object.ObjectDefinition>(new ContentId(ContentSource.Ee2, ContentKind.Unit, rowKey));
+            output.WriteLine($"{rowKey}: behaviors [{string.Join(",", definition.Behaviors.Values.Select(m => m.Data.GetType().Name))}] weapons [{definition.WeaponSets.Count}]");
+            Assert.NotNull(definition.Behaviors.Values.Single(m => m.Data is Panopticon.Logic.Object.ActiveBodyModuleData).Data);
+            Assert.NotEmpty(definition.LocomotorSets[Panopticon.Logic.Object.LocomotorSetType.Normal].Locomotors);
+            Assert.Contains(definition.WeaponSets.Values.Single().Slots, slot => slot.Weapon is not null);
+            Assert.NotNull(definition.Draws.Values.Single(m => m.Data is Panopticon.Logic.Object.W3dModelDrawModuleData).Data);
+
+            var weapon = definition.WeaponSets.Values.Single().Slots.Select(slot => slot.Weapon.Value).First(w => w is not null);
+            Assert.Equal(Panopticon.Logic.Object.DamageType.Unresistable, weapon.Nuggets.OfType<Panopticon.Logic.Object.DamageNugget>().Single().DamageType);
+            output.WriteLine($"{rowKey}: kinds [{string.Join(",", definition.KindOf.ToString().Split(", "))}]");
+        }
+
+        // Aircraft get the typed jet module and both locomotor sets; ground units do not.
+        var fighter = content.Get<Panopticon.Logic.Object.ObjectDefinition>(new ContentId(ContentSource.Ee2, ContentKind.Unit, "FighterUpgradeEpoch15"));
+        Assert.Contains(fighter.Behaviors.Values, m => m.Data.GetType() == typeof(Panopticon.Logic.Object.JetAIUpdateModuleData));
+        Assert.True(fighter.LocomotorSets.ContainsKey(Panopticon.Logic.Object.LocomotorSetType.Taxiing));
+
+        var helicopter = content.Get<Panopticon.Logic.Object.ObjectDefinition>(new ContentId(ContentSource.Ee2, ContentKind.Unit, "LightMounted2UpgradeEpoch13"));
+        var jet = (Panopticon.Logic.Object.JetAIUpdateModuleData)helicopter.Behaviors.Values.Single(m => m.Data is Panopticon.Logic.Object.JetAIUpdateModuleData).Data;
+        Assert.False(jet.NeedsRunway);
+        Assert.False(jet.KeepsParkingSpaceWhenAirborne);
+
+        var tank = content.Get<Panopticon.Logic.Object.ObjectDefinition>(new ContentId(ContentSource.Ee2, ContentKind.Unit, "LightMounted1UpgradeEpoch15"));
+        Assert.DoesNotContain(tank.Behaviors.Values, m => m.Data is Panopticon.Logic.Object.JetAIUpdateModuleData);
+        Assert.False(tank.LocomotorSets.ContainsKey(Panopticon.Logic.Object.LocomotorSetType.Taxiing));
+    }
+
     /// <summary>
     /// The census of gameplay fields M2 does not simulate for the reference roster. Each is a real
     /// authored mechanic reported as excluded, never silently dropped; M3 owns the balance ones.

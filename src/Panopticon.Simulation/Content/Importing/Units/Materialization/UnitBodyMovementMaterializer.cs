@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Panopticon.Logic.Object;
@@ -45,6 +46,12 @@ internal static class UnitBodyMovementMaterializer
             locomotor.Braking = (float)context.Convert(record.Id, nameof(record.Braking), record.Braking.Value, context.Policy.ToDistancePerFrameSquared(record.Braking.Value), "distance/frame^2");
         }
 
+        if (record.PreferredHeight.IsPresent)
+        {
+            // The import conversion policy owns the scale; the value stays authored, never rebalanced.
+            locomotor.PreferredHeight = (float)UnitBodyMovementMaterializer.ConvertDistance(record, nameof(record.PreferredHeight), record.PreferredHeight.Value, context);
+        }
+
         if (record.Appearance.IsPresent)
         {
             if (EngineEnumNames.TryParse<LocomotorAppearance>(record.Appearance.Value, out var appearance))
@@ -72,7 +79,7 @@ internal static class UnitBodyMovementMaterializer
         return locomotor;
     }
 
-    public static ObjectDefinition CreateDefinition(UnitRecord record, UnitMaterializationContext context)
+    public static ObjectDefinition CreateDefinition(UnitRecord record, UnitImportResolution resolution, UnitMaterializationContext context)
     {
         var definition = new ObjectDefinition(record.Id.Name);
 
@@ -111,15 +118,19 @@ internal static class UnitBodyMovementMaterializer
             definition.ShroudClearingRange = definition.VisionRange;
         }
 
-        AddTypedModules(record, definition, context);
+        AddTypedModules(record, definition, resolution, context);
         AddLocomotors(record, definition, context);
 
         return definition;
     }
 
-    private static void AddTypedModules(UnitRecord record, ObjectDefinition definition, UnitMaterializationContext context)
+    private static void AddTypedModules(UnitRecord record, ObjectDefinition definition, UnitImportResolution resolution, UnitMaterializationContext context)
     {
         var hasBody = false;
+        var locomotors = record.Locomotors.Resolved
+            .Select(id => resolution.Closure.FirstOrDefault(source => source.Id.Equals(id)))
+            .OfType<LocomotorRecord>()
+            .ToArray();
 
         foreach (var module in record.ResolvedModules.Where(m => m.Ability is null && m.Legacy is null))
         {
@@ -131,6 +142,7 @@ internal static class UnitBodyMovementMaterializer
                 "HighlanderBody" => new HighlanderBodyModuleData(),
                 "UndeadBody" => new UndeadBodyModuleData(),
                 "AIUpdateInterface" => new AIUpdateModuleData(),
+                "JetAIUpdate" => JetAI(locomotors, record, context),
                 "PhysicsBehavior" => new PhysicsBehaviorModuleData(),
                 "SlowDeathBehavior" => SlowDeath(record, context),
                 _ => null,
@@ -172,6 +184,34 @@ internal static class UnitBodyMovementMaterializer
         return data;
     }
 
+    /// <summary>
+    /// Card WI-M2-02: typed aircraft AI from validated interchange fields. Authored hover
+    /// capability (EE2 <c>canHover</c>, helicopters) selects the no-runway, no-parking-space
+    /// configuration; fixed-wing aircraft keep runway takeoff and airfield parking. The authored
+    /// cruising height becomes the minimum flight height floor. No legacy binding is involved.
+    /// </summary>
+    private static JetAIUpdateModuleData JetAI(IReadOnlyList<LocomotorRecord> locomotors, UnitRecord record, UnitMaterializationContext context)
+    {
+        var data = new JetAIUpdateModuleData();
+        var movement = locomotors.FirstOrDefault();
+        if (movement is null)
+        {
+            context.Error(record.Id, "Aircraft module requires a locomotor.");
+            return data;
+        }
+
+        var helicopter = movement.CanHover.IsPresent && movement.CanHover.Value;
+        data.ImportedNeedsRunway = !helicopter;
+        data.ImportedKeepsParkingSpaceWhenAirborne = !helicopter;
+
+        if (movement.PreferredHeight.IsPresent)
+        {
+            data.ImportedMinHeight = (int)Math.Round(UnitBodyMovementMaterializer.ConvertDistance(movement, nameof(movement.PreferredHeight), movement.PreferredHeight.Value, context));
+        }
+
+        return data;
+    }
+
     /// <summary>Overrides health on a body module; also used for legacy bodies so typed values stay authoritative.</summary>
     internal static void ApplyHealth(UnitRecord record, ActiveBodyModuleData body, UnitMaterializationContext context)
     {
@@ -201,6 +241,19 @@ internal static class UnitBodyMovementMaterializer
             Locomotors = locomotors.Select(context.Reference<LocomotorTemplate>).ToArray(),
             Speed = 100,
         };
+
+        // Aircraft taxi through the parking flow (parking init and the runway return both select
+        // the taxiing set). EE2 authors no separate taxi speed; the air locomotor serves both
+        // sets, and the parking initialization drives the ground-phase waypoints.
+        if (record.KindOf.Resolved.Contains("AIRCRAFT", StringComparer.Ordinal))
+        {
+            definition.LocomotorSets[LocomotorSetType.Taxiing] = new LocomotorSetTemplate
+            {
+                Condition = LocomotorSetType.Taxiing,
+                Locomotors = locomotors.Select(context.Reference<LocomotorTemplate>).ToArray(),
+                Speed = 100,
+            };
+        }
     }
 
     /// <summary>

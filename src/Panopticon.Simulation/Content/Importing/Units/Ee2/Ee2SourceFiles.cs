@@ -21,6 +21,9 @@ public sealed record Ee2SourceFiles(FileSystem Database, FileSystem Graphics, IR
     /// <summary>Missile table referenced by attack <c>missileName</c> values; outside <c>db/Units/</c>.</summary>
     public const string MissileTablePath = "db/Visuals/ammo.ddf";
 
+    /// <summary>rps combat matrix used to derive weapon target categories; outside <c>db/Units/</c>.</summary>
+    public const string CombatTablePath = "db/Simulation/dbcombat.csv";
+
     /// <summary>
     /// Patch archives present beside the database but not composed into these inputs. Reported by
     /// the adapter so stock-layer results are never mistaken for as-patched values.

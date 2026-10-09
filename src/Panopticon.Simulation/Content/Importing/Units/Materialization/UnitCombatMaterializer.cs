@@ -28,6 +28,11 @@ internal static class UnitCombatMaterializer
 
         weapon.CoolDownDelayBetweenShots = new RangeDuration(ConvertFrames(record, nameof(record.ReloadTime), record.ReloadTime.Value, context));
 
+        if (record.PreAttackDelay.IsPresent)
+        {
+            weapon.PreAttackDelay = new RangeDuration(ConvertFrames(record, nameof(record.PreAttackDelay), record.PreAttackDelay.Value, context));
+        }
+
         if (record.ClipSize.IsPresent)
         {
             weapon.ClipSize = record.ClipSize.Value;

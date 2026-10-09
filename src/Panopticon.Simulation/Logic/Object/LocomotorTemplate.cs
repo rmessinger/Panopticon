@@ -196,9 +196,9 @@ public sealed class LocomotorTemplate : BaseAsset
     public float MinTurnSpeed { get; private set; } = BigNumber;
 
     /// <summary>
-    /// Our preferred height (if flying).
+    /// Cruise altitude; air locomotors settle toward it. Settable for the import seam (WI-M2-02).
     /// </summary>
-    public float PreferredHeight { get; private set; } = 0.0f;
+    public float PreferredHeight { get; internal set; } = 0.0f;
 
     /// <summary>
     /// How aggressively to adjust to preferred height. 1.0 = very much, 0.1 = gradually, etc.

@@ -57,7 +57,7 @@ public static class UnitRuntimeMaterializer
             case UpgradeRecord upgrade:
                 return UnitProductionMaterializer.Materialize(upgrade, context);
             case UnitRecord unit:
-                var definition = UnitBodyMovementMaterializer.CreateDefinition(unit, context);
+                var definition = UnitBodyMovementMaterializer.CreateDefinition(unit, resolution, context);
                 UnitCombatMaterializer.AddSets(unit, definition, context);
                 UnitAbilityMaterializer.AddModules(unit, definition, resolution, context);
                 UnitProductionMaterializer.Apply(unit, definition, context);

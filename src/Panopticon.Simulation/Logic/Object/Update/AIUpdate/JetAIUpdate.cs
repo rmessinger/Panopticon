@@ -505,6 +505,29 @@ public sealed class JetAIUpdateModuleData : AIUpdateModuleData
     /// </summary>
     public Percentage TakeoffSpeedForMaxLift { get; private set; }
     public LogicFrameSpan TakeoffPause { get; private set; }
+
+    /// <summary>
+    /// Import seam (WI-M2-02): the typed aircraft materializer constructs this module from
+    /// validated interchange fields; runtime behavior is unchanged for parsed definitions.
+    /// </summary>
+    internal bool ImportedNeedsRunway
+    {
+        get => NeedsRunway;
+        set => NeedsRunway = value;
+    }
+
+    internal bool ImportedKeepsParkingSpaceWhenAirborne
+    {
+        get => KeepsParkingSpaceWhenAirborne;
+        set => KeepsParkingSpaceWhenAirborne = value;
+    }
+
+    internal int ImportedMinHeight
+    {
+        get => MinHeight;
+        set => MinHeight = value;
+    }
+
     public int MinHeight { get; private set; }
 
     /// <summary>

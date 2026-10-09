@@ -70,6 +70,16 @@ public class Ee2UnitAdapterTests
         HeavyInfantry1UpgradeEpoch1,HeavyInfantry1,"""Unit""",1,75,5,5,0.8,1.5,37,35,0,0,15,10,Maceman,HeavyInfantry1_01,All
         """";
 
+    /// <summary>rps matrix fragment: Heavy_Infantry hits ground and helicopters per the real table.</summary>
+    private const string CombatCsv =
+        """"
+        // ROWS ARE DEFENDERS,,COLUMNS ARE ATTACKERS,,,,,,
+        //,Null,Heavy_Infantry
+        Null,0,0
+        Light_Infantry,0,100
+        Helicopter,0,100
+        """";
+
     public static readonly string[] MacemanExclusions = ["rps", "Garrisonable", "Attack.applyDamageTime", "Cost"];
 
     private static Ee2SourceFiles Files()
@@ -77,6 +87,7 @@ public class Ee2UnitAdapterTests
         var db = new MemoryFileSystem();
         db.AddFile("db/Units/human.ddf", HumanDdf);
         db.AddFile("db/Units/heavy_infantry1.ddf", MacemanDdf);
+        db.AddFile(Ee2SourceFiles.CombatTablePath, CombatCsv);
         db.AddFile(Ee2SourceFiles.DefaultUnitTablePath, UnitTable);
 
         var graphics = new MemoryFileSystem();

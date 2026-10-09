@@ -1610,9 +1610,14 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     184 UpgradeAbilities, 50 UpgradeRefSet; cfg scope 434/616), composes the seven-row reference
     roster from exact CSV row keys with UpgradeAbilities overrides, and reports the uncomposed patch
     layer; `Ee2RowCompositionTests` covers closure isolation and missing missile rejection.
-- [ ] M2-2 Expand H2a's EE2 adapter for ground combat units and aircraft; use shared materialization.
+- [x] M2-2 Expand H2a's EE2 adapter for ground combat units and aircraft; use shared materialization.
   - AC: each reference unit gets locomotor, weapon, armor, body, and draw modules from DDF values;
     aircraft get a jet or helicopter locomotor with return-to-airfield rearm.
+  - Evidence: `Ee2TypedMaterializationTests` and `Ee2InventoryTests.ReferenceRosterMaterializesWithTypedModules`;
+    typed JetAIUpdate construction from authored hover and cruising height, taxiing set beside
+    normal, rps-derived target masks, ordnance as clip size, missile speed as travel speed; live
+    rearm proof lands with M2-4. Known blocker: late-epoch infantry clips are rejected by the Track
+    C animation guards (0x25 controller flags, legacy skinned); six of seven entries verify clean.
 - [ ] M2-3 Reference EE2 roster registration through H2a's scoped content publisher.
   - AC: EE2 definitions load beside Generals definitions without overriding any Generals entry.
 - [ ] M2-4 EE2 units in the P9 validation ground.

@@ -235,7 +235,17 @@ public sealed class UnitImportValidator
         {
             if (!visual.StateAnimations.TryGetValue(state, out var animation) || !animation.IsPresent)
             {
-                context.Error(DiagnosticCodes.MissingVisualState, $"Visual is missing required state '{state}'.");
+                // Card WI-M2-02: simulation-critical states stay errors. A missing Attack clip is
+                // a reported visual gap (the condition state is simply absent) because attack
+                // behavior does not depend on the animation.
+                if (state == "Attack")
+                {
+                    context.Add(ImportDiagnosticSeverity.Warning, DiagnosticCodes.MissingVisualState, $"Visual is missing state '{state}' (no clip authored); the draw module binds no condition for it.");
+                }
+                else
+                {
+                    context.Error(DiagnosticCodes.MissingVisualState, $"Visual is missing required state '{state}'.");
+                }
             }
         }
     }

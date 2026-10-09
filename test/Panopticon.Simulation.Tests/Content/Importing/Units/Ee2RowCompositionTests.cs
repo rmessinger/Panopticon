@@ -127,6 +127,17 @@ public class Ee2RowCompositionTests
         LightMounted2UpgradeEpoch13,Helicopter,Unit,13,150,10,60,9,2,30,Heli,LightMounted1_15,[LightMounted_Improve_Reset LightMounted2Epoch13Attack]
         """";
 
+    /// <summary>rps matrix fragment: Light_Mounted and Heavy_Mounted hit ground only, Helicopter both.</summary>
+    private const string CombatCsv =
+        """"
+        // ROWS ARE DEFENDERS,,COLUMNS ARE ATTACKERS,,,,,,
+        //,Null,Light_Mounted,Heavy_Mounted,Helicopter
+        Null,0,0,0,0
+        Light_Infantry,0,100,250,100
+        Heavy_Mounted,0,100,100,100
+        Helicopter,0,0,0,100
+        """";
+
     /// <summary>Tank e15 uses only the Attack override; movement stays the UnitType's own VehicleMove.</summary>
     private static readonly string[] TankExclusions =
     [
@@ -142,6 +153,7 @@ public class Ee2RowCompositionTests
         db.AddFile("db/Units/helicopter.ddf", AircraftDdf);
         db.AddFile("db/Units/light_mounted1.ddf", ModelDdf);
         db.AddFile(Ee2SourceFiles.MissileTablePath, AmmoDdf);
+        db.AddFile(Ee2SourceFiles.CombatTablePath, CombatCsv);
         db.AddFile(Ee2SourceFiles.DefaultUnitTablePath, UnitTable);
 
         var graphics = new MemoryFileSystem();
@@ -253,6 +265,7 @@ public class Ee2RowCompositionTests
         db.AddFile("db/Units/mounted.ddf", MountedDdf);
         db.AddFile("db/Units/tank.ddf", TankDdf);
         db.AddFile(Ee2SourceFiles.MissileTablePath, AmmoWithoutTankShellDdf);
+        db.AddFile(Ee2SourceFiles.CombatTablePath, CombatCsv);
         db.AddFile(Ee2SourceFiles.DefaultUnitTablePath, UnitTable);
         var files = Ee2SourceFiles.FromDatabase(db, new MemoryFileSystem());
 
@@ -318,6 +331,12 @@ public class Ee2RowCompositionTests
         // mounted.ddf is absent, so Tank's own parent is missing: the root must fail explicitly.
         var set = new Ee2UnitAdapter(files, new Ee2ImportPolicy(15, "we", TankExclusions)).ReadRows(["LightMounted1UpgradeEpoch15"]);
 
-        Assert.False(UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault()).Succeeded);
+        var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
+        Assert.False(resolution.Succeeded);
+
+        // The root fails explicitly, and the downgraded inventory warning still names the missing
+        // parent precisely (the root itself never entered the closure).
+        Assert.Contains(resolution.Diagnostics, d => d.IsError && d.Code == DiagnosticCodes.MissingRoot);
+        Assert.Contains(resolution.Diagnostics, d => d.Code == DiagnosticCodes.MissingParent && d.Message.Contains("HeavyMounted") && !d.IsError);
     }
 }

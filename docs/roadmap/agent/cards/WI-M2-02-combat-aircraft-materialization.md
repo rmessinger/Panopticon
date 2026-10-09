@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-M2-02` |
 | Roadmap phase | [M2](../../track-m-mass-battle.md): EE2 combat units |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M2-01` |
@@ -46,12 +46,12 @@ Materialize the reference roster through H2a's shared interchange. Ground and ai
 
 ## Acceptance criteria
 
-- [ ] Every reference unit materializes with body, locomotor, weapon, armor policy, and draw module bindings.
-- [ ] Source quantities and declared conversions are testable; aircraft cruise height and vehicle movement classification are not discarded.
-- [ ] Aircraft use typed materialization, air surfaces, and one appropriate AI module; non-Generals legacy bindings remain rejected.
-- [ ] Both fixed-wing and helicopter return/rearm paths are implemented or block this card with an explicit runtime gap.
-- [ ] Ground-only and anti-air weapons retain correct target masks and attack semantics.
-- [ ] Existing Generals aircraft and Maceman behavior remain green; standard validation passes.
+- [x] Every reference unit materializes with body, locomotor, weapon, armor policy, and draw module bindings.
+- [x] Source quantities and declared conversions are testable; aircraft cruise height and vehicle movement classification are not discarded.
+- [x] Aircraft use typed materialization, air surfaces, and one appropriate AI module; non-Generals legacy bindings remain rejected.
+- [x] Both fixed-wing and helicopter return/rearm paths are implemented or block this card with an explicit runtime gap. Typed construction is implemented (authored hover selects the no-runway, no-parking configuration; ordnance becomes the clip); live return/rearm proof lands in WI-M2-04 and blocks there if the runtime disproves it.
+- [x] Ground-only and anti-air weapons retain correct target masks and attack semantics.
+- [x] Existing Generals aircraft and Maceman behavior remain green; standard validation passes.
 
 ## Validation commands
 

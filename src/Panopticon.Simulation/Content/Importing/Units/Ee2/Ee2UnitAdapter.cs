@@ -34,6 +34,17 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
     /// <summary>The three EE2 movement ability families, all mapped to one locomotor per unit chain.</summary>
     private static readonly string[] MovementFamilies = ["Move", "VehicleMove", "AircraftMove"];
 
+    /// <summary>Engine state surfaces per movement family; vehicles stay off rubble-climb surfaces.</summary>
+    private static readonly IReadOnlyDictionary<string, string[]> FamilySurfaces = new Dictionary<string, string[]>
+    {
+        ["Move"] = ["GROUND", "RUBBLE"],
+        ["VehicleMove"] = ["GROUND"],
+        ["AircraftMove"] = ["AIR"],
+    };
+
+    /// <summary>db/Simulation/dbcombat.csv defender rows that count as air targets.</summary>
+    private static readonly string[] AirCombatRows = ["Close_Air_Support", "Air_Superiority", "Bomber", "Atomic_Bomber", "Helicopter", "Air_Non_Combat"];
+
     /// <summary>Attack members consumed into typed weapon fields; everything else stays visible as unclassified.</summary>
     private static readonly HashSet<string> AttackKeys = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -253,7 +264,9 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                     unit = unit with { KindOf = ListOverride<string>.Replace(["VEHICLE", "SELECTABLE"]) };
                     break;
                 case "movetype" when text is "kUnitMoveType_Air" or "Air":
-                    unit = unit with { KindOf = ListOverride<string>.Replace(["AIRCRAFT", "SELECTABLE"]) };
+                    // Generals air targeting matches AIRCRAFT + VEHICLE kinds, so EE2 aircraft
+                    // carry both; AIRCRAFT alone would make them untargetable by anti-air weapons.
+                    unit = unit with { KindOf = ListOverride<string>.Replace(["AIRCRAFT", "VEHICLE", "SELECTABLE"]) };
                     break;
                 default:
                     unclassified.Add(Field(member.Key, member.Position));
@@ -277,15 +290,19 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                     TurnRate = Number(ability.GetText("angSpeed"), QuantityUnit.DegreesPerSecond),
                     PreferredHeight = Number(ability.GetText("CruisingHeight"), QuantityUnit.SourceDistance),
                     CanHover = Flag(ability, "canHover"),
-                    Surfaces = name == "Move" ? ListOverride<string>.Replace(["GROUND", "RUBBLE"]) : ListOverride<string>.Inherit,
-                    Appearance = name == "Move" ? Authored.Of("TWO_LEGS") : default,
+                    Surfaces = ListOverride<string>.Replace(FamilySurfaces[name]),
+                    Appearance = Authored.Of(FamilyAppearance(name, ChainProperty(type.Name, "movetype"), Flag(ability, "canHover"))),
                     Unclassified = ability.Members
                         .Where(m => !MovementKeys.Contains(m.Key))
                         .Select(m => Field($"{name}.{m.Key}", m.Position))
                         .ToArray(),
                 };
                 extra.Add(locomotor);
-                modules.Add(ModuleEdit.Add(new UnitModule(AiTag, "AIUpdateInterface", ModuleKinds.Update, ByTag)));
+
+                // Aircraft use the engine's typed JetAI update instead of the ground AI module;
+                // the shared tag means an inherited ground AI module is replaced, never duplicated.
+                var aiFamily = name == "AircraftMove" ? "JetAIUpdate" : "AIUpdateInterface";
+                modules.Add(ModuleEdit.Add(new UnitModule(AiTag, aiFamily, ModuleKinds.Update, ByTag)));
 
                 // The engine moves locomotor-driven objects only through a physics behavior.
                 modules.Add(ModuleEdit.Add(new UnitModule(PhysicsTag, "PhysicsBehavior", ModuleKinds.Update, ByTag)));
@@ -295,7 +312,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                 return unit with { VisionRange = Number(ability.GetText("range"), QuantityUnit.SourceDistance) };
 
             case "Attack":
-                var (weapon, attack) = AttackRecords(type.Name, AncestorWithAbility(type, "Attack"), ability.Position);
+                var (weapon, attack) = AttackRecords(type, AncestorWithAbility(type, "Attack"), ability.Position);
                 extra.Add(ApplyAttackSemantics(weapon with
                 {
                     PrimaryDamage = Number(ability.GetText("damage"), QuantityUnit.HitPoints),
@@ -304,12 +321,23 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                 }, ability));
                 extra.Add(attack);
                 modules.Add(ModuleEdit.Add(AttackModule(attack.Id)));
-                return unit with { KindOf = ListOverride<string>.Edit(["CAN_ATTACK"], []) };
+                return unit with { KindOf = WithCanAttack(unit) };
 
             default:
                 unclassified.Add(Field(name, ability.Position));
                 return unit;
         }
+    }
+
+    /// <summary>
+    /// Adds CAN_ATTACK without discarding a classification authored on the same UnitType: a unit
+    /// that classifies itself (vehicles, aircraft) must keep those kinds alongside CAN_ATTACK.
+    /// </summary>
+    private static ListOverride<string> WithCanAttack(UnitRecord unit)
+    {
+        return unit.KindOf.Mode == ListOverrideMode.Replace
+            ? ListOverride<string>.Replace(unit.KindOf.Items.Append("CAN_ATTACK").Distinct(StringComparer.Ordinal))
+            : ListOverride<string>.Edit(["CAN_ATTACK"], []);
     }
 
     /// <summary>
@@ -321,7 +349,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
     private IEnumerable<SourceRecord> ReadEpochRow(string unitType, string rowKey, IReadOnlyDictionary<string, string> row, Provenance provenance)
     {
         var unclassified = new List<UnclassifiedField>();
-        var (weapon, attack) = AttackRecords(rowKey, AncestorWithAbility(unitType, "Attack", includeSelf: true), null, provenance);
+        var (weapon, attack) = AttackRecords(rowKey, AncestorWithAbility(unitType, "Attack", includeSelf: true), null, provenance, ChainProperty(unitType, "rps"));
 
         foreach (var (column, value) in row)
         {
@@ -353,6 +381,8 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                 TurnRate = Number(movement.GetText("angSpeed"), QuantityUnit.DegreesPerSecond),
                 PreferredHeight = Number(movement.GetText("CruisingHeight"), QuantityUnit.SourceDistance),
                 CanHover = Flag(movement, "canHover"),
+                Surfaces = ListOverride<string>.Replace(FamilySurfaces[family]),
+                Appearance = Authored.Of(FamilyAppearance(family, ChainProperty(unitType, "movetype"), Flag(movement, "canHover"))),
                 Unclassified = movement.Members
                     .Where(m => !MovementKeys.Contains(m.Key))
                     .Select(m => Field($"{family}.{m.Key}", null, overrideProvenance))
@@ -631,13 +661,18 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         return index;
     }
 
-    private (WeaponRecord Weapon, AbilityRecord Attack) AttackRecords(string owner, string? parentOwner, DdfPosition? position, Provenance? provenance = null)
+    private (WeaponRecord Weapon, AbilityRecord Attack) AttackRecords(DdfRecord type, string? parentOwner, DdfPosition? position, Provenance? provenance = null)
+    {
+        return AttackRecords(type.Name, parentOwner, position, provenance, ChainProperty(type.Name, "rps"));
+    }
+
+    private (WeaponRecord Weapon, AbilityRecord Attack) AttackRecords(string owner, string? parentOwner, DdfPosition? position, Provenance? provenance = null, string? rps = null)
     {
         var at = provenance ?? At(position!.Value);
         var weapon = new WeaponRecord(new ContentId(Source, ContentKind.Weapon, $"{owner}.Attack"), at)
         {
             Parent = parentOwner is null ? null : new ContentId(Source, ContentKind.Weapon, $"{parentOwner}.Attack"),
-            TargetCategories = ListOverride<string>.Replace(["AntiGround"]),
+            TargetCategories = ListOverride<string>.Replace(TargetCategories(rps, owner)),
             DamageType = Authored.Of(_policy.DamageType),
         };
         var attack = new AbilityRecord(new ContentId(Source, ContentKind.Ability, $"{owner}.Attack"), at)
@@ -648,9 +683,132 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         return (weapon, attack);
     }
 
+    /// <summary>
+    /// Card WI-M2-02: target categories derived from the authored rps matrix
+    /// (<c>db/Simulation/dbcombat.csv</c>): a nonzero attacker column against any air defender
+    /// row adds the airborne category, against any other row the ground category. The multipliers
+    /// themselves stay excluded (M3 owns balance); only the zero/nonzero engagement mask is read.
+    /// </summary>
+    private IReadOnlyList<string> TargetCategories(string? rps, string owner)
+    {
+        if (rps is null || !CombatMasks().TryGetValue(NormalizeRps(rps), out var mask))
+        {
+            Read(
+                ImportDiagnosticSeverity.Info,
+                DiagnosticCodes.NonGameplayMetadata,
+                $"'{owner}' has no rps combat column; its weapon defaults to ground targets only.");
+            return ["AntiGround"];
+        }
+
+        var categories = new List<string>();
+        if ((mask & CombatMask.Air) != 0)
+        {
+            categories.Add("AntiAirborneVehicle");
+        }
+
+        if ((mask & CombatMask.Ground) != 0)
+        {
+            categories.Add("AntiGround");
+        }
+
+        return categories;
+    }
+
+    [Flags]
+    private enum CombatMask
+    {
+        None = 0,
+        Ground = 1 << 0,
+        Air = 1 << 1,
+    }
+
+    private Dictionary<string, CombatMask>? _combatMasks;
+
+    private Dictionary<string, CombatMask> CombatMasks()
+    {
+        if (_combatMasks is not null)
+        {
+            return _combatMasks;
+        }
+
+        _combatMasks = new Dictionary<string, CombatMask>(StringComparer.OrdinalIgnoreCase);
+        var entry = _files.Database.GetFile(Ee2SourceFiles.CombatTablePath);
+        if (entry is null)
+        {
+            Read(ImportDiagnosticSeverity.Error, DiagnosticCodes.MissingDependency, $"Combat table '{Ee2SourceFiles.CombatTablePath}' was not found.");
+            return _combatMasks;
+        }
+
+        using var reader = new StreamReader(entry.Open());
+        var lines = reader.ReadToEnd().Split('\n').Select(line => line.TrimEnd('\r')).Where(line => line.Length > 0).ToArray();
+
+        // The column header is the last comment line before the first data row (Ee2CsvTable's
+        // rule); earlier comment lines also contain commas and must not be mistaken for it.
+        var header = lines
+            .TakeWhile(line => line.StartsWith("//", StringComparison.Ordinal))
+            .LastOrDefault(line => line.Contains(','))?[2..];
+        var columns = (header?.Split(',').Skip(1).Select(c => c.Trim()) ?? []).ToArray();
+
+        foreach (var line in lines.Where(line => !line.StartsWith("//", StringComparison.Ordinal)))
+        {
+            var cells = line.Split(',');
+            var defender = cells[0].Trim();
+            if (defender.Length == 0 || defender == "Null")
+            {
+                continue;
+            }
+
+            var isAir = AirCombatRows.Contains(defender, StringComparer.Ordinal);
+            for (var i = 1; i < columns.Length + 1 && i < cells.Length; i++)
+            {
+                var attacker = columns[i - 1];
+                if (attacker.Length == 0 || !double.TryParse(cells[i], NumberStyles.Float, CultureInfo.InvariantCulture, out var multiplier) || multiplier <= 0)
+                {
+                    continue;
+                }
+
+                var key = NormalizeRps(attacker);
+                _combatMasks.TryGetValue(key, out var mask);
+                _combatMasks[key] = mask | (isAir ? CombatMask.Air : CombatMask.Ground);
+            }
+        }
+
+        return _combatMasks;
+    }
+
+    private static string NormalizeRps(string rps) => rps.Replace("_", string.Empty);
+
     private static UnitModule AttackModule(ContentId ability) => new("Attack", "Attack", ModuleKinds.None, ByTag, Ability: ability);
 
     private string? AncestorWithAbility(DdfRecord type, string ability) => AncestorWithAbility(type.Parent, ability, includeSelf: true);
+    /// <summary>First authored value of a <c>properties</c> member along a UnitType chain, or null when no chain member authors it.</summary>
+    private string? ChainProperty(string unitType, string property)
+    {
+        for (var current = unitType; current is not null && _unitTypes.TryGetValue(current, out var record); current = record.Parent)
+        {
+            if (record.Body.Get("properties") is DdfBlock properties && properties.GetText(property) is { } value)
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Engine appearance per movement family: tracked vehicles use treads, wheeled use wheels,
+    /// fixed-wing aircraft use wings, and authored hover capability (helicopters) uses hover.
+    /// Mounted (horse) lines have no engine counterpart and reuse the wheeled appearance.
+    /// </summary>
+    private static string FamilyAppearance(string family, string? moveType, Authored<bool> canHover)
+    {
+        return family switch
+        {
+            "Move" => "TWO_LEGS",
+            "VehicleMove" => moveType is "kUnitMoveType_Mechanized" or "Mechanized" ? "TREADS" : "FOUR_WHEELS",
+            _ => canHover.IsPresent && canHover.Value ? "HOVER" : "WINGS",
+        };
+    }
 
     private string? AncestorWithAbility(string? name, string ability, bool includeSelf)
     {

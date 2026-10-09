@@ -104,7 +104,9 @@ ProjectileMissileMove.accel, ProjectileMissileMove.angSpeed, Missile.PayloadAtta
 
 Existing path: `Ee2UnitAdapter` emits shared records; `UnitImportResolution` validates them; `UnitRuntimeMaterializer` constructs native module data; `UnitContentPublisher` installs source-qualified definitions and Track C visuals.
 
-Planned extension: typed aircraft construction using `JetAIUpdateModuleData`, not non-Generals legacy module passthrough. Fixed-wing parking is evidenced by M1; helicopter return/rearm remains an explicit proof obligation. Unsupported required runtime behavior blocks affected reference entries.
+Landed with WI-M2-02: movement families map to typed locomotors (foot `TWO_LEGS`, wheeled `FOUR_WHEELS`, tracked `TREADS` by authored `moveType`, fixed wing `WINGS`, authored hover `HOVER`, air surfaces `AIR`); aircraft carry `AIRCRAFT`+`VEHICLE` kinds; the registry accepts a typed `JetAIUpdate` family constructed from validated interchange (authored hover clears `NeedsRunway` and `KeepsParkingSpaceWhenAirborne`; authored cruising height becomes the minimum flight height), and aircraft definitions receive the taxiing locomotor set beside normal (EE2 authors no separate taxi speed; the parking flow drives it). Target categories derive from the authored rps matrix `db/Simulation/dbcombat.csv` (zero/nonzero engagement mask only; multipliers stay excluded). Attack semantics map authored values: `applyDamageTime` to the pre-attack delay, `ordnance` to the clip size, `areaDamageRadius` to the splash radius, `minRangeMobile` to the minimum range, `missileName` speed to weapon travel speed. A missing Attack clip is a reported visual gap (warning), never fabricated.
+
+Known Track C limitation (evidence preserved by `Ee2InventoryTests.ReferenceRosterMaterializesWithTypedModules`): every late-epoch infantry clip is rejected by the animation importers (epoch 15 clips carry controller flags `0x0025`, a pattern the C4c survey measured at 4728 controllers corpus-wide and deferred; epochs 9 through 14 clips are legacy-header files targeting skinned models, which C4i explicitly excludes). The infantry model imports; its four state clips do not. This blocks the infantry entry's visual publication (WI-M2-03) until the Track C follow-up lands; the other six reference entries verify clean.
 
 ## Validation evidence
 
@@ -115,3 +117,14 @@ parse (117 files, zero parse errors), cfg and archive censuses, patch layer repo
 composition with stock values, closure isolation (unrelated inventory failures downgrade to
 `[inventory only]` warnings), and missing missile rejection are asserted by `DdfReaderTests`,
 `Ee2RowCompositionTests` (synthetic, install-free), and `Ee2InventoryTests` (installed).
+
+WI-M2-02 (2026-10-08): `Ee2TypedMaterializationTests` 6/6 synthetic (tracked/wheeled appearance and
+surfaces, cruise height and hover preserved into the engine templates, one typed JetAI module with
+NeedsRunway/KeepsParkingSpaceWhenAirborne/MinHeight, both locomotor sets for aircraft, data-driven
+anti masks with ordnance 32 and GuidedMissile travel speed, missing-clip warning, unknown movement
+family rejected). `Ee2InventoryTests.ReferenceRosterMaterializesWithTypedModules` materializes the
+seven-row roster against the install: body, locomotor, weapon (UNRESISTABLE), and draw bindings for
+every entry, typed jet modules and taxiing sets on aircraft only, and the infantry-clip Track C
+blocker asserted with its guard messages. `dotnet test src --filter "Category!=Interactive"` shows
+only the pre-existing failures (`ParkingPlaceBehavior_ReportLanding` and an intermittent Vulkan
+loader crash, both reproduced on clean main).
