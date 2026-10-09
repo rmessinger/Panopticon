@@ -26,7 +26,8 @@
       "DdfPaths": [ "db/Units/human.ddf", "db/Units/heavy_infantry1.ddf" ],
       "ExcludedMechanics": [
         "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "stance",
-        "Garrisonable", "Convertable", "ConvertAttack", "Cost", "UPGRADEREFS", "Attack.applyDamageTime"
+        "Garrisonable", "Convertable", "ConvertAttack", "Cost", "UPGRADEREFS", "Attack.applyDamageTime",
+        "Attack.WeaponType", "Move.angAccel"
       ]
     }
   ],

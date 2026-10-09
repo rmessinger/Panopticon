@@ -1,0 +1,88 @@
+{
+  // WI-M2-03 reference roster publication (stock db.zip layer; patch archives reported, not
+  // composed). Six installable rows publish beside Generals through the shared unit-content
+  // layer; the seventh reference row, HeavyInfantry1UpgradeEpoch15 (infantry), is blocked on
+  // Track C animation import (0x25 controller flags / legacy skinned clips) and is deliberately
+  // absent: including it would fail visual verification and publish nothing.
+  // Row keys are exact upgrade_unittypes.csv keys; each row's UNIT cell names the UnitType.
+  // Run with:
+  //   CNC_GENERALS_PATH=... EMPIRE_EARTH_II_PATH=... \
+  //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
+  //     --built-in-scenario ScenarioCapture --scenario capture-ee2-reference-roster.json
+  "Name": "ee2-reference-roster",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 540,
+  "SettleFrames": 10,
+  "CaptureStride": 6,
+  "RenderEveryFrame": false,
+  "HideHud": true,
+  "Players": [
+    { "Id": "ee2", "Side": "FactionAmerica", "Name": "EE2" },
+    { "Id": "gla", "Side": "FactionGLA", "Name": "GLA" }
+  ],
+  "ContentImports": [
+    {
+      "Source": "ee2",
+      "RowKeys": [
+        "LightMounted1UpgradeEpoch15",
+        "HeavyMounted1UpgradeEpoch15",
+        "HeavyArtilleryUpgradeEpoch14",
+        "FighterUpgradeEpoch15",
+        "BomberUpgradeEpoch15",
+        "LightMounted2UpgradeEpoch13"
+      ],
+      "Region": "we",
+      "GameUnitsPerSourceDistance": 12,
+      "ExcludedMechanics": [
+        "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
+        "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",
+        "Attack.areaDamageFriendlyRatio", "Attack.angularRange", "Attack.turretControllerName", "Attack.ignoreBlocking",
+        "Attack.attackOnTheMove", "Attack.WeaponType", "Attack.packTime", "Attack.unpackTime", "Attack.minRangeImmobile",
+        "Attack.capture", "Attack.startWithNoOrdnance",
+        "VehicleMove.followTerrainSlope", "VehicleMove.mustMoveToTurn", "VehicleMove.bounce",
+        "AircraftMove.followTerrainSlope", "AircraftMove.mustMoveToTurn", "AircraftMove.ElevChangeRate",
+        "AircraftMove.OnGroundScale", "AircraftMove.CargoHeight", "AircraftMove.accel",
+        "Move.angAccel", "Move.bounce",
+        "ProjectileMissileMove.type", "ProjectileMissileMove.accel", "ProjectileMissileMove.angSpeed",
+        "Missile.PayloadAttack"
+      ]
+    }
+  ],
+  "Actors": [
+    {
+      "Id": "tank",
+      "Definition": "ee2:LightMounted1UpgradeEpoch15",
+      "Owner": "ee2",
+      "X": 470,
+      "Y": 700,
+      "FacingDegrees": 0,
+      "Role": "attacker"
+    },
+    {
+      "Id": "rebel",
+      "Definition": "GLAInfantryRebel",
+      "Owner": "gla",
+      "X": 560,
+      "Y": 700,
+      "FacingDegrees": 180,
+      "Role": "target"
+    }
+  ],
+  "Camera": {
+    "Mode": "AutoFit",
+    "SubjectActorIds": [ "tank", "rebel" ],
+    "DesiredSpanFraction": 0.5,
+    "InitialCameraHeight": 140,
+    "MinCameraHeight": 60,
+    "MaxCameraHeight": 320
+  },
+  "Commands": [
+    { "Type": "Attack", "Frame": 30, "SourceActorId": "tank", "TargetActorId": "rebel" },
+    { "Type": "Attack", "Frame": 200, "SourceActorId": "rebel", "TargetActorId": "tank" }
+  ],
+  "Expectations": [
+    { "Type": "ActorDamaged", "ActorId": "rebel" },
+    { "Type": "ActorDamaged", "ActorId": "tank" }
+  ],
+  "StopWhenActorDestroyed": null
+}

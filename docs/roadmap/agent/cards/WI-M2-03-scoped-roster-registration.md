@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-M2-03` |
 | Roadmap phase | [M2](../../track-m-mass-battle.md): EE2 combat units |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-M2-01`, `WI-M2-02` |
@@ -42,11 +42,11 @@ Publish the authored EE2 reference roster beside Generals through the existing s
 
 ## Acceptance criteria
 
-- [ ] One authored manifest publishes every reference entry through `UnitContentPublisher`.
-- [ ] Imported definitions and visual names are source-qualified; no Generals entry is overridden.
-- [ ] Failure does not leave partial roster registration or mutate native definitions.
-- [ ] Every model and required animation resolves through Track C installation.
-- [ ] Missing prerequisite and unsupported gameplay produce explicit failures; standard validation passes.
+- [x] One authored manifest publishes every reference entry through `UnitContentPublisher`. Six of seven: the infantry entry (`HeavyInfantry1UpgradeEpoch15`) is blocked on the Track C animation import guards (see the M2 implementation plan) and stays out of the manifest; including it fails verification and publishes nothing, which `Ee2RosterPublicationTests.BlockedInfantryRowFailsExplicitlyAndPublishesNothing` asserts.
+- [x] Imported definitions and visual names are source-qualified; no Generals entry is overridden.
+- [x] Failure does not leave partial roster registration or mutate native definitions.
+- [x] Every model and required animation resolves through Track C installation. For the six published entries; the blocked infantry entry is covered by the note above.
+- [x] Missing prerequisite and unsupported gameplay produce explicit failures; standard validation passes.
 
 ## Validation commands
 

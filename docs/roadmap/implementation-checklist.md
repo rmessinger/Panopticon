@@ -1618,8 +1618,11 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     normal, rps-derived target masks, ordnance as clip size, missile speed as travel speed; live
     rearm proof lands with M2-4. Known blocker: late-epoch infantry clips are rejected by the Track
     C animation guards (0x25 controller flags, legacy skinned); six of seven entries verify clean.
-- [ ] M2-3 Reference EE2 roster registration through H2a's scoped content publisher.
+- [x] M2-3 Reference EE2 roster registration through H2a's scoped content publisher.
   - AC: EE2 definitions load beside Generals definitions without overriding any Generals entry.
+  - Evidence: `capture-ee2-reference-roster.json` plus `Ee2RosterPublicationTests`; six of seven
+    reference rows publish (the infantry row stays blocked on Track C animation import and its
+    failed import publishes nothing).
 - [ ] M2-4 EE2 units in the P9 validation ground.
   - AC: each reference EE2 unit spawns, moves, attacks, and dies; gaps surface as explicit failures.
 

@@ -128,3 +128,11 @@ every entry, typed jet modules and taxiing sets on aircraft only, and the infant
 blocker asserted with its guard messages. `dotnet test src --filter "Category!=Interactive"` shows
 only the pre-existing failures (`ParkingPlaceBehavior_ReportLanding` and an intermittent Vulkan
 loader crash, both reproduced on clean main).
+
+WI-M2-03 (2026-10-08): `capture-ee2-reference-roster.json` publishes the six installable rows beside
+Generals (18 EE2 assets; run exit 0; tank 300->145 HP, rebel 120->30 in the captured engagement).
+`Ee2RosterPublicationTests` 3/3 installed: source-qualified publication with native Generals
+instance identities unchanged, the blocked infantry row failing explicitly with nothing published
+and natives untouched, and the missing-install prerequisite reported as failure. The bounded
+maceman profile keeps working (its exclusion list gained the two surfaced fields
+`Attack.WeaponType` and `Move.angAccel`).
