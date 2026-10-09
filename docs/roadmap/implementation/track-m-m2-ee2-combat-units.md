@@ -136,3 +136,42 @@ instance identities unchanged, the blocked infantry row failing explicitly with 
 and natives untouched, and the missing-install prerequisite reported as failure. The bounded
 maceman profile keeps working (its exclusion list gained the two surfaced fields
 `Attack.WeaponType` and `Move.angAccel`).
+
+WI-M2-04 (2026-10-08, Blocked on one runtime gap): `ee2-reference-validation.json` plus
+`Ee2ContractPhase` extend the Unit Validation Ground (config knob `ValidationGroundEe2ProfilePath`;
+import before spawn; contracts after the standard roster on a cleared scene; machine-readable
+`ee2-contract-report.json` keyed by source-qualified id, exit code 5 distinct from the baseline
+codes). Authored command:
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+dotnet run --project src/Panopticon.Tools.TestHarness -- --headless
+```
+
+with `Scenario: UnitValidationGround`, `Headless: true`, and
+`ValidationGroundEe2ProfilePath: ee2-reference-validation.json` (shipped beside the executable).
+Results: the standard Generals ground is identical with and without the EE2 phase (26 measured,
+4 timeouts, 1 gap; the timeouts are the pre-existing baseline-less behavior; exit 3 unchanged).
+EE2 contracts: ground tank, heavy tank, and artillery pass displacement (real MoveTo orders),
+weapon-caused damage (real AttackObject orders), and death (Generals killers); the helicopter
+passes hover attack, scripted return, and a second damaging sortie, with ammunition consumption
+and refill reported absent-in-source (no EE2 helicopter authors ordnance; no fabricated clip).
+Fixed-wing fighter and bomber pass consumption, first-sortie damage, anti-air death, and
+refill-on-re-engagement, and the full cycle (return, refill, second damaging sortie) passed end
+to end in the full harness run (6/6 contracts, report saved 2026-10-08). However, the wings
+flight model diverges on sustained turns and heading reversals at EE2-authored speeds and turn
+rates in most boots (observed excursions from 2.5k to 380k world units with velocity above the
+authored maximum): the runway taxi flow is also infeasible (authored air speed gives a ~58-unit
+turn radius against tighter parking bone spacing, and EE2 authors no taxi locomotion). The
+installed test therefore asserts the deterministic core (displacement, damage, death for every
+entry; the helicopter's full cycle; fixed-wing consumption and refill) and requires the
+fixed-wing return/refill/second-sortie results to be reported. Typed flight mappings landed with
+this evidence: air locomotors set the engine's airborne motive force mode; fixed-wing flight
+flies at authored speed (minimum equals maximum) with a declared one-second ramp and holds its
+authored cruising height through the engine's ground-relative Z mode; authored clips rearm at
+base (RETURN_TO_BASE). The blocked follow-up: a flight-model stability decision for imported
+fixed-wing values (sideslip damping or speed clamping in the wings model), which belongs to the
+physics fidelity work, not the import adapter. `Ee2ContractValidationTests` 2/2 installed
+(repeated twice). ReplaySketch screenshot mode verified against clean main (identical pixel
+distributions; map panel unchanged).

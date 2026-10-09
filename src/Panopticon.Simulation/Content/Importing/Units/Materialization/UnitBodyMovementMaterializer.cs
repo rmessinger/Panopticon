@@ -15,6 +15,13 @@ internal static class UnitBodyMovementMaterializer
 {
     public const string DefaultBodyTag = "ModuleTag_ImportedBody";
 
+    /// <summary>
+    /// Declared fixed-wing speed ramp: one second at the engine's 30 logic frames per second.
+    /// EE2 authors no air acceleration or braking; the engine's wings model needs both plus a
+    /// positive minimum speed. This is a recorded conversion decision, not a balance value.
+    /// </summary>
+    public const float AircraftSpeedRampFrames = 30;
+
     public static LocomotorTemplate Materialize(LocomotorRecord record, UnitMaterializationContext context)
     {
         var locomotor = new LocomotorTemplate();
@@ -45,6 +52,12 @@ internal static class UnitBodyMovementMaterializer
         {
             locomotor.Braking = (float)context.Convert(record.Id, nameof(record.Braking), record.Braking.Value, context.Policy.ToDistancePerFrameSquared(record.Braking.Value), "distance/frame^2");
         }
+        else if (record.Speed.IsPresent)
+        {
+            // EE2 authors no braking either; the one-frame policy already used for its missing
+            // acceleration applies symmetrically, so aircraft can stop and turn for waypoints.
+            locomotor.Braking = locomotor.MaxSpeed;
+        }
 
         if (record.PreferredHeight.IsPresent)
         {
@@ -62,6 +75,18 @@ internal static class UnitBodyMovementMaterializer
             {
                 context.Error(record.Id, $"Unknown locomotor appearance '{record.Appearance.Value}'.");
             }
+
+            if (appearance == LocomotorAppearance.Wings)
+            {
+                // Fixed-wing flight: EE2 authors one air speed and no acceleration, braking, or
+                // minimum. The engine's wings model requires a positive minimum (its own landing
+                // warning) and destabilizes without a speed ramp, so the declared conversion
+                // flies at the authored speed (minimum = maximum) ramping over one second.
+                // Recorded as a conversion, never a balance value.
+                locomotor.MinSpeed = locomotor.MaxSpeed;
+                locomotor.Acceleration = locomotor.MaxSpeed / AircraftSpeedRampFrames;
+                locomotor.Braking = locomotor.MaxSpeed / AircraftSpeedRampFrames;
+            }
         }
 
         foreach (var surfaceName in record.Surfaces.Resolved)
@@ -73,6 +98,22 @@ internal static class UnitBodyMovementMaterializer
             else
             {
                 context.Error(record.Id, $"Unknown surface '{surfaceName}'.");
+            }
+        }
+
+        // Every Generals airborne locomotor sets this engine mode; air-surface imports need it
+        // too, or the motive force is withheld while airborne (the aircraft hangs motionless).
+        // EE2 holds its authored cruising height kinematically (no authored lift), which maps to
+        // the engine's ground-relative Z mode rather than an invented lift value.
+        if ((locomotor.Surfaces & Surfaces.Air) != 0)
+        {
+            locomotor.AllowAirborneMotiveForce = true;
+
+            // Fixed-wing flight holds its authored cruising height kinematically (EE2 authors no
+            // lift); hover locomotors keep the engine's physics-based Z handling.
+            if (locomotor.Appearance == LocomotorAppearance.Wings)
+            {
+                locomotor.BehaviorZ = LocomotorBehaviorZ.RelativeToGroundAndBuildings;
             }
         }
 

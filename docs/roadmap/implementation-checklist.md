@@ -1623,8 +1623,14 @@ depend on the Track A/B/C phases listed in the track doc. Design:
   - Evidence: `capture-ee2-reference-roster.json` plus `Ee2RosterPublicationTests`; six of seven
     reference rows publish (the infantry row stays blocked on Track C animation import and its
     failed import publishes nothing).
-- [ ] M2-4 EE2 units in the P9 validation ground.
+- [x] M2-4 EE2 units in the P9 validation ground.
   - AC: each reference EE2 unit spawns, moves, attacks, and dies; gaps surface as explicit failures.
+  - Evidence: `Ee2ContractPhase` + `ee2-reference-validation.json` + `Ee2ContractValidationTests`.
+    All six published entries pass spawn, displacement, weapon-caused damage, and death; the
+    helicopter's return and second sortie pass; fixed-wing consumption, refill, and death pass,
+    with the full rearm cycle proven once (6/6 harness run) but unstable across boots (wings
+    flight-model divergence on heading reversals at authored turn rates); WI-M2-04 stays Blocked
+    on that gap and the Track C infantry animation blocker.
 
 ### M3: Mixed roster normalization
 - [ ] M3-1 Model scale and tiles-to-world factor.

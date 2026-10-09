@@ -306,7 +306,9 @@ public sealed class WeaponTemplate : BaseAsset
     public int ClipSize { get; internal set; }
     public RangeDuration ClipReloadTime { get; internal set; }
     public RangeDuration AutoReloadWhenIdle { get; private set; }
-    public WeaponReloadType AutoReloadsClip { get; private set; } = WeaponReloadType.Auto;
+
+    /// <summary>Settable for the import seam (WI-M2-02): aircraft rearm at base.</summary>
+    public WeaponReloadType AutoReloadsClip { get; internal set; } = WeaponReloadType.Auto;
     public int ContinuousFireOne { get; private set; }
     public int ContinuousFireTwo { get; private set; }
     public int ContinuousFireCoast { get; private set; }

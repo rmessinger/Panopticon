@@ -260,10 +260,12 @@ public class Ee2TypedMaterializationTests
         Assert.Equal(10 * 12, tank.AttackRange, 3);
         Assert.Equal(0.5 * 30, tank.PreAttackDelay.Min.Value, 1);
 
-        // Fighter (rps Air_Superiority) engages air and ground; ordnance 32 becomes the clip.
+        // Fighter (rps Air_Superiority) engages air and ground; ordnance 32 becomes the clip and
+        // the weapon rearms at base (RETURN_TO_BASE), so a sortie ends with the return flight.
         var fighter = content.Get<WeaponTemplate>(new ContentId(ContentSource.Ee2, ContentKind.Weapon, "FighterUpgradeEpoch15.Attack"));
         Assert.Equal(WeaponAntiFlags.AntiGround | WeaponAntiFlags.AntiAirborneVehicle, fighter.AntiMask);
         Assert.Equal(32, fighter.ClipSize);
+        Assert.Equal(WeaponReloadType.ReturnToBase, fighter.AutoReloadsClip);
         Assert.Equal(11.0 * 12 / 30, fighter.WeaponSpeed, 5);
     }
 
