@@ -19,6 +19,12 @@ public sealed record LocomotorRecord : SourceRecord
 
     public Authored<Quantity> Braking { get; init; }
 
+    /// <summary>Cruise altitude above ground, for sources that author one (EE2 <c>CruisingHeight</c>).</summary>
+    public Authored<Quantity> PreferredHeight { get; init; }
+
+    /// <summary>Authored hover capability (EE2 <c>canHover</c>); distinguishes helicopters from fixed-wing aircraft.</summary>
+    public Authored<bool> CanHover { get; init; }
+
     /// <summary>Engine locomotor appearance name, for example <c>TWO_LEGS</c> or <c>TREADS</c>.</summary>
     public Authored<string> Appearance { get; init; }
 
@@ -39,6 +45,8 @@ public sealed record LocomotorRecord : SourceRecord
             TurnRate = Authored<Quantity>.Inherit(TurnRate.WithOrigin(Id), p?.TurnRate ?? default),
             Acceleration = Authored<Quantity>.Inherit(Acceleration.WithOrigin(Id), p?.Acceleration ?? default),
             Braking = Authored<Quantity>.Inherit(Braking.WithOrigin(Id), p?.Braking ?? default),
+            PreferredHeight = Authored<Quantity>.Inherit(PreferredHeight.WithOrigin(Id), p?.PreferredHeight ?? default),
+            CanHover = Authored<bool>.Inherit(CanHover.WithOrigin(Id), p?.CanHover ?? default),
             Appearance = Authored<string>.Inherit(Appearance.WithOrigin(Id), p?.Appearance ?? default),
             Surfaces = Surfaces.ApplyOver(p?.Surfaces ?? ListOverride<string>.Inherit, Id.Source.NameComparer),
         };

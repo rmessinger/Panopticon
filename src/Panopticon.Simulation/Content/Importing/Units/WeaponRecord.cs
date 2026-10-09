@@ -26,6 +26,9 @@ public sealed record WeaponRecord : SourceRecord
     /// <summary>Time between shots.</summary>
     public Authored<Quantity> ReloadTime { get; init; }
 
+    /// <summary>Delay before the first shot of an attack (EE2 <c>applyDamageTime</c>).</summary>
+    public Authored<Quantity> PreAttackDelay { get; init; }
+
     public Authored<int> ClipSize { get; init; }
 
     public Authored<Quantity> ClipReloadTime { get; init; }
@@ -56,6 +59,7 @@ public sealed record WeaponRecord : SourceRecord
             AttackRange = Authored<Quantity>.Inherit(AttackRange.WithOrigin(Id), p?.AttackRange ?? default),
             MinimumAttackRange = Authored<Quantity>.Inherit(MinimumAttackRange.WithOrigin(Id), p?.MinimumAttackRange ?? default),
             ReloadTime = Authored<Quantity>.Inherit(ReloadTime.WithOrigin(Id), p?.ReloadTime ?? default),
+            PreAttackDelay = Authored<Quantity>.Inherit(PreAttackDelay.WithOrigin(Id), p?.PreAttackDelay ?? default),
             ClipSize = Authored<int>.Inherit(ClipSize.WithOrigin(Id), p?.ClipSize ?? default),
             ClipReloadTime = Authored<Quantity>.Inherit(ClipReloadTime.WithOrigin(Id), p?.ClipReloadTime ?? default),
             TargetCategories = TargetCategories.ApplyOver(p?.TargetCategories ?? ListOverride<string>.Inherit, Id.Source.NameComparer),

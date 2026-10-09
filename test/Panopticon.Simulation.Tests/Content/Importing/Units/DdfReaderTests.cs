@@ -111,6 +111,62 @@ public class DdfReaderTests
         Assert.Equal(2, records.Count(r => r.Name == "A"));
     }
 
+    /// <summary>
+    /// Card WI-M2-01: tankbarrier.ddf and the two test DDFs author empty values
+    /// (<c>AnimName = }</c>); the bracket still closes the enclosing state block.
+    /// </summary>
+    [Fact]
+    public void EmptyValueBeforeAClosingBracketStaysEmpty()
+    {
+        const string Text =
+            """
+            UnitModel tankbarrier
+            {
+                States = [
+                    { StateName = Idle AnimName = }
+                    { StateName = Death ModelName = NULL.nif }
+                ]
+            }
+            """;
+
+        var model = DdfReader.Read(Text, "tankbarrier.ddf")[0];
+        var states = (DdfArray)model.Body.Get("States")!;
+        var idle = (DdfBlock)states.Items[0];
+
+        Assert.Equal(string.Empty, idle.GetText("AnimName"));
+        Assert.Equal(2, states.Items.Count);
+        Assert.Equal("NULL.nif", ((DdfBlock)states.Items[1]).GetText("ModelName"));
+    }
+
+    /// <summary>Card WI-M2-01: thirteen install DDFs author <c>|</c>-separated flag lists.</summary>
+    [Fact]
+    public void ParenthesizedFlagListBecomesAScalarArray()
+    {
+        const string Text =
+            """
+            UnitType Building
+            {
+                properties {
+                    RallyPlacementFlags = ( Fortress | Tower | Terrain )
+                }
+            }
+            """;
+
+        var unit = DdfReader.Read(Text, "building.ddf")[0];
+        var flags = Assert.IsType<DdfArray>(((DdfBlock)unit.Body.Get("properties")!).Get("RallyPlacementFlags"));
+
+        Assert.Equal(["Fortress", "Tower", "Terrain"], flags.Items.OfType<DdfScalar>().Select(f => f.Text));
+        Assert.Single(((DdfBlock)unit.Body.Get("properties")!).Members);
+    }
+
+    [Fact]
+    public void UnclosedFlagListFailsWithPosition()
+    {
+        Assert.Contains(
+            "flag list",
+            Assert.Throws<InvalidDataException>(() => DdfReader.Read("UnitType A { x = ( One | Two }", "bad.ddf")).Message);
+    }
+
     [Fact]
     public void CsvTableReadsHeaderAndQuotedCells()
     {

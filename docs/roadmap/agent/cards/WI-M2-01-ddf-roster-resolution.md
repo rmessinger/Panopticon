@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-M2-01` |
 | Roadmap phase | [M2](../../track-m-mass-battle.md): EE2 combat units |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | H2a, C4d, P9 complete |
@@ -42,12 +42,12 @@ Expand H2a's bounded DDF loading to all `db/Units/` files and inherited dependen
 
 ## Acceptance criteria
 
-- [ ] Every installed `db/Units/` file is parsed and its UnitType inheritance is resolved or reports a precise source-qualified failure.
-- [ ] The manifest covers all seven reference classes with real IDs and available epoch/model rows.
-- [ ] Parent overrides retain provenance; missing parents and cycles fail explicitly.
-- [ ] Unsupported gameplay in an unrelated discovered unit does not reject a supported requested root.
-- [ ] Unsupported gameplay in a requested root does reject publication; no catch-all exclusion is added.
-- [ ] Existing bounded Maceman tests remain green; standard validation passes.
+- [x] Every installed `db/Units/` file is parsed and its UnitType inheritance is resolved or reports a precise source-qualified failure.
+- [x] The manifest covers all seven reference classes with real IDs and available epoch/model rows.
+- [x] Parent overrides retain provenance; missing parents and cycles fail explicitly.
+- [x] Unsupported gameplay in an unrelated discovered unit does not reject a supported requested root.
+- [x] Unsupported gameplay in a requested root does reject publication; no catch-all exclusion is added.
+- [x] Existing bounded Maceman tests remain green; standard validation passes.
 
 ## Validation commands
 

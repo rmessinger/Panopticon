@@ -1602,10 +1602,14 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     density-scaling fix belongs to B4, already an M5 dependency.
 
 ### M2: EE2 combat units
-- [ ] M2-1 Expand H2a's bounded DDF reader to the reference roster and inherited dependencies.
+- [x] M2-1 Expand H2a's bounded DDF reader to the reference roster and inherited dependencies.
   - AC: resolves `properties` and `abilities` for every file under `db/Units/` against the
     operator-supplied EE2 install; unknown metadata is reported, and unsupported required gameplay
     blocks publication of affected units under H2a's capability policy.
+  - Evidence: `Ee2InventoryTests` parses all 117 stock `db/Units` DDFs (438 UnitType, 618 UnitModel,
+    184 UpgradeAbilities, 50 UpgradeRefSet; cfg scope 434/616), composes the seven-row reference
+    roster from exact CSV row keys with UpgradeAbilities overrides, and reports the uncomposed patch
+    layer; `Ee2RowCompositionTests` covers closure isolation and missing missile rejection.
 - [ ] M2-2 Expand H2a's EE2 adapter for ground combat units and aircraft; use shared materialization.
   - AC: each reference unit gets locomotor, weapon, armor, body, and draw modules from DDF values;
     aircraft get a jet or helicopter locomotor with return-to-airfield rearm.

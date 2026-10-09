@@ -11,11 +11,13 @@ using Panopticon.Logic.Object;
 namespace Panopticon.Content.Importing.Units.Ee2;
 
 /// <summary>
-/// Card WI-H2a-16: emits shared interchange for EE2 ground units. <c>UnitType</c> chains become unit
-/// records with their abilities (<c>Move</c>, <c>LOS</c>, <c>Attack</c>) as locomotor, vision, and
-/// weapon records; the tech-tree CSV row for the policy epoch becomes a child unit carrying that
-/// epoch's stats and visual; <c>UnitModel</c> chains become visual-state records. Distances stay in
-/// EE2 tiles (<see cref="QuantityUnit.SourceDistance"/>) for the conversion policy to scale.
+/// Card WI-H2a-16 (extended by WI-M2-01): emits shared interchange for EE2 units. <c>UnitType</c>
+/// chains become unit records with their abilities (<c>Move</c>/<c>VehicleMove</c>/<c>AircraftMove</c>,
+/// <c>LOS</c>, <c>Attack</c>) as locomotor, vision, and weapon records; the tech-tree CSV row named
+/// by an explicit row key becomes a child unit carrying that row's stats and visual, composed with
+/// the epoch <c>UpgradeAbilities</c> overrides the row references; <c>UnitModel</c> chains become
+/// visual-state records. Distances stay in EE2 tiles (<see cref="QuantityUnit.SourceDistance"/>)
+/// for the conversion policy to scale.
 /// </summary>
 public sealed class Ee2UnitAdapter : IUnitSourceAdapter
 {
@@ -29,15 +31,29 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
     /// <summary>DDF state names bound to the four engine states.</summary>
     private static readonly (string Engine, string Ddf)[] StateNames = [("Idle", "Idle"), ("Move", "Walk"), ("Attack", "Attack1"), ("Death", "Death")];
 
+    /// <summary>The three EE2 movement ability families, all mapped to one locomotor per unit chain.</summary>
+    private static readonly string[] MovementFamilies = ["Move", "VehicleMove", "AircraftMove"];
+
+    /// <summary>Attack members consumed into typed weapon fields; everything else stays visible as unclassified.</summary>
+    private static readonly HashSet<string> AttackKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "damage", "range", "reloadTime", "applyDamageTime", "missileName", "ordnance", "areaDamageRadius", "minRangeMobile",
+    };
+
+    private static readonly HashSet<string> MovementKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "speed", "angSpeed", "CruisingHeight", "canHover",
+    };
+
     private static readonly HashSet<string> NonGameplayKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "DisplayName", "DisplayNameScenEdit", "VerboseTooltip", "icon", "sounds", "fullMapOverlay",
+        "DisplayName", "DisplayNameScenEdit", "VerboseTooltip", "icon", "sounds", "fullMapOverlay", "visualName",
     };
 
     private static readonly HashSet<string> NonGameplayColumns = new(StringComparer.OrdinalIgnoreCase)
     {
         "UPGRADE", "UNIT", "TYPE", "EPOCH", "DISPLAYNAME", "VISUAL", "UI VISUAL", "ICON", "MMCOLOR", "FULLMAP", "TOOLTIP",
-        "SNDSEL", "SNDMOVE", "SNDATTACK", "SNDDEATH",
+        "SNDSEL", "SNDMOVE", "SNDATTACK", "SNDDEATH", "UPGRADEREFS",
     };
 
     private static readonly string[] CostColumns = ["FOOD", "WOOD", "STONE", "GOLD", "TIN", "IRON", "SALTPETER", "OIL", "URANIUM"];
@@ -46,7 +62,11 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
     private readonly Ee2ImportPolicy _policy;
     private readonly Dictionary<string, DdfRecord> _unitTypes = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DdfRecord> _unitModels = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<DdfBlock>> _upgradeAbilities = new(StringComparer.Ordinal);
     private readonly List<ImportDiagnostic> _diagnostics = [];
+    private readonly List<ProjectileRecord> _missileRecords = [];
+    private readonly HashSet<string> _emittedMissiles = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, DdfRecord>? _missiles;
     private Dictionary<string, string>? _graphicsIndex;
 
     public Ee2UnitAdapter(Ee2SourceFiles files, Ee2ImportPolicy policy)
@@ -64,8 +84,29 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
     {
         ArgumentNullException.ThrowIfNull(rootNames);
 
+        return ReadRows(rootNames.Select(rootName => $"{rootName}UpgradeEpoch{_policy.Epoch}").ToArray());
+    }
+
+    /// <summary>
+    /// Card WI-M2-01: publishes exact tech-tree row keys. The row's <c>UNIT</c> cell names the
+    /// <c>UnitType</c> (row keys do not always derive from it: epoch 15 tanks publish through
+    /// <c>LightMounted1UpgradeEpoch15</c>), and the row's <c>UPGRADEREFS</c> select the
+    /// <c>UpgradeAbilities</c> overrides composed onto the inherited chain.
+    /// </summary>
+    public UnitContentSet ReadRows(IReadOnlyCollection<string> rowKeys)
+    {
+        ArgumentNullException.ThrowIfNull(rowKeys);
+
         var records = new List<SourceRecord>();
         var documents = ReadDocuments();
+
+        if (_files.UncomposedPatchArchives.Count > 0)
+        {
+            Read(
+                ImportDiagnosticSeverity.Info,
+                DiagnosticCodes.ArchiveLayer,
+                $"Reading the stock database layer only; patch archives present but not composed: {string.Join(", ", _files.UncomposedPatchArchives)}.");
+        }
 
         foreach (var record in documents)
         {
@@ -78,6 +119,9 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                 case "UnitModel":
                     _unitModels.TryAdd(record.Name, record);
                     break;
+                case "UpgradeAbilities":
+                    _upgradeAbilities.TryAdd(record.Name, ((DdfArray?)record.Body.Get("upgradedAbilities"))?.Items.OfType<DdfBlock>().ToList() ?? []);
+                    break;
             }
         }
 
@@ -88,12 +132,18 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
 
         var roots = new List<ContentId>();
         var table = ReadUnitTable();
-        foreach (var unitType in rootNames)
+        foreach (var rowKey in rowKeys)
         {
-            var rowKey = $"{unitType}UpgradeEpoch{_policy.Epoch}";
             if (table is null || !table.TryGetRow(rowKey, out var row, out var line))
             {
                 Read(ImportDiagnosticSeverity.Error, DiagnosticCodes.MissingRoot, $"No '{rowKey}' row in {_files.UnitTablePath}.", new ContentId(Source, ContentKind.Unit, rowKey));
+                continue;
+            }
+
+            var unitType = row.TryGetValue("UNIT", out var unitTypeName) && unitTypeName.Length > 0 ? unitTypeName : null;
+            if (unitType is null || !_unitTypes.ContainsKey(unitType))
+            {
+                Read(ImportDiagnosticSeverity.Error, DiagnosticCodes.MissingRoot, $"Row '{rowKey}' names UNIT '{unitType}', which is not among the discovered UnitTypes.", new ContentId(Source, ContentKind.Unit, rowKey));
                 continue;
             }
 
@@ -101,6 +151,8 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
             records.AddRange(ReadEpochRow(unitType, rowKey, row, provenance));
             roots.Add(UnitId(rowKey));
         }
+
+        records.AddRange(_missileRecords);
 
         return new UnitContentSet(Source, records, roots, _diagnostics);
     }
@@ -192,8 +244,16 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                     // SizeX is the footprint width in tiles; the engine radius is half of it.
                     unit = unit with { GeometryMajorRadius = Number(text, QuantityUnit.SourceDistance, scale: 0.5) };
                     break;
-                case "movetype" when text == "kUnitMoveType_Foot":
+                case "movetype" when text is "kUnitMoveType_Foot" or "Foot":
                     unit = unit with { KindOf = ListOverride<string>.Replace(["INFANTRY", "SELECTABLE"]) };
+                    break;
+                case "movetype" when text is "kUnitMoveType_Mounted" or "Mounted"
+                    or "kUnitMoveType_Wheeled" or "Wheeled"
+                    or "kUnitMoveType_Mechanized" or "Mechanized":
+                    unit = unit with { KindOf = ListOverride<string>.Replace(["VEHICLE", "SELECTABLE"]) };
+                    break;
+                case "movetype" when text is "kUnitMoveType_Air" or "Air":
+                    unit = unit with { KindOf = ListOverride<string>.Replace(["AIRCRAFT", "SELECTABLE"]) };
                     break;
                 default:
                     unclassified.Add(Field(member.Key, member.Position));
@@ -209,14 +269,20 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         var name = ability.Name ?? string.Empty;
         switch (name)
         {
-            case "Move":
+            case "Move" or "VehicleMove" or "AircraftMove":
                 var locomotor = new LocomotorRecord(new ContentId(Source, ContentKind.Locomotor, $"{type.Name}.Move"), At(ability.Position))
                 {
-                    Parent = AncestorWithAbility(type, "Move") is { } moveParent ? new ContentId(Source, ContentKind.Locomotor, $"{moveParent}.Move") : null,
+                    Parent = AncestorWithAbility(type, name) is { } moveParent ? new ContentId(Source, ContentKind.Locomotor, $"{moveParent}.Move") : null,
                     Speed = Number(ability.GetText("speed"), QuantityUnit.SourceDistancePerSecond),
                     TurnRate = Number(ability.GetText("angSpeed"), QuantityUnit.DegreesPerSecond),
-                    Surfaces = ListOverride<string>.Replace(["GROUND", "RUBBLE"]),
-                    Appearance = Authored.Of("TWO_LEGS"),
+                    PreferredHeight = Number(ability.GetText("CruisingHeight"), QuantityUnit.SourceDistance),
+                    CanHover = Flag(ability, "canHover"),
+                    Surfaces = name == "Move" ? ListOverride<string>.Replace(["GROUND", "RUBBLE"]) : ListOverride<string>.Inherit,
+                    Appearance = name == "Move" ? Authored.Of("TWO_LEGS") : default,
+                    Unclassified = ability.Members
+                        .Where(m => !MovementKeys.Contains(m.Key))
+                        .Select(m => Field($"{name}.{m.Key}", m.Position))
+                        .ToArray(),
                 };
                 extra.Add(locomotor);
                 modules.Add(ModuleEdit.Add(new UnitModule(AiTag, "AIUpdateInterface", ModuleKinds.Update, ByTag)));
@@ -230,13 +296,12 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
 
             case "Attack":
                 var (weapon, attack) = AttackRecords(type.Name, AncestorWithAbility(type, "Attack"), ability.Position);
-                extra.Add(weapon with
+                extra.Add(ApplyAttackSemantics(weapon with
                 {
                     PrimaryDamage = Number(ability.GetText("damage"), QuantityUnit.HitPoints),
                     AttackRange = Number(ability.GetText("range"), QuantityUnit.SourceDistance),
                     ReloadTime = Number(ability.GetText("reloadTime"), QuantityUnit.Seconds),
-                    Unclassified = ability.Members.Where(m => m.Key is not ("damage" or "range" or "reloadTime")).Select(m => Field($"Attack.{m.Key}", m.Position)).ToArray(),
-                });
+                }, ability));
                 extra.Add(attack);
                 modules.Add(ModuleEdit.Add(AttackModule(attack.Id)));
                 return unit with { KindOf = ListOverride<string>.Edit(["CAN_ATTACK"], []) };
@@ -247,6 +312,12 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         }
     }
 
+    /// <summary>
+    /// Card WI-M2-01: one epoch row composed over its <c>UnitType</c> chain. CSV cells carry the
+    /// published stats; the row's <c>UPGRADEREFS</c> name <c>UpgradeAbilities</c> records whose
+    /// ability blocks override attack semantics (projectile, ordnance, timing, minimum range) and
+    /// movement values for this epoch.
+    /// </summary>
     private IEnumerable<SourceRecord> ReadEpochRow(string unitType, string rowKey, IReadOnlyDictionary<string, string> row, Provenance provenance)
     {
         var unclassified = new List<UnclassifiedField>();
@@ -255,7 +326,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         foreach (var (column, value) in row)
         {
             var isCost = CostColumns.Contains(column, StringComparer.OrdinalIgnoreCase);
-            var mapped = column.ToUpperInvariant() is "HP" or "LOS" or "DAMAGE" or "RANGE" or "RELOAD" or "BUILDTIME";
+            var mapped = column.ToUpperInvariant() is "HP" or "LOS" or "DAMAGE" or "RANGE" or "RELOAD" or "BUILDTIME" or "UPGRADEREFS";
             var empty = string.IsNullOrWhiteSpace(value) || value is "0" or "[]" or "All";
             if (mapped || NonGameplayColumns.Contains(column) || (empty && !isCost))
             {
@@ -266,6 +337,41 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
             {
                 unclassified.Add(Field(isCost ? "Cost" : column, null, provenance, isCost ? $"{column}={value}" : value));
             }
+        }
+
+        var (attackOverride, moveOverride, overrideProvenance) = ComposeRowOverrides(rowKey, row, provenance, unclassified);
+
+        var locomotorId = (ContentId?)null;
+        if (moveOverride is { } movement)
+        {
+            var family = movement.Name!;
+            var chainOwner = AncestorWithAbility(unitType, family, includeSelf: true);
+            var locomotor = new LocomotorRecord(new ContentId(Source, ContentKind.Locomotor, $"{rowKey}.Move"), overrideProvenance)
+            {
+                Parent = chainOwner is { } owner ? new ContentId(Source, ContentKind.Locomotor, $"{owner}.Move") : null,
+                Speed = Number(movement.GetText("speed"), QuantityUnit.SourceDistancePerSecond),
+                TurnRate = Number(movement.GetText("angSpeed"), QuantityUnit.DegreesPerSecond),
+                PreferredHeight = Number(movement.GetText("CruisingHeight"), QuantityUnit.SourceDistance),
+                CanHover = Flag(movement, "canHover"),
+                Unclassified = movement.Members
+                    .Where(m => !MovementKeys.Contains(m.Key))
+                    .Select(m => Field($"{family}.{m.Key}", null, overrideProvenance))
+                    .ToArray(),
+            };
+            locomotorId = locomotor.Id;
+            yield return locomotor;
+        }
+
+        var composed = weapon with
+        {
+            PrimaryDamage = Number(Cell(row, "DAMAGE"), QuantityUnit.HitPoints),
+            AttackRange = Number(Cell(row, "RANGE"), QuantityUnit.SourceDistance),
+            ReloadTime = Number(Cell(row, "RELOAD"), QuantityUnit.Seconds),
+        };
+
+        if (attackOverride is { } attackBlock)
+        {
+            composed = ApplyAttackSemantics(composed, attackBlock, overrideProvenance);
         }
 
         var visualName = row.TryGetValue("VISUAL", out var visual) && visual.Length > 0 ? visual : null;
@@ -279,6 +385,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
             BuildTime = Number(Cell(row, "BUILDTIME"), QuantityUnit.Seconds),
             Visual = visualName is null ? default : Authored.Of(new ContentId(Source, ContentKind.VisualState, visualName)),
             DeathDuration = Authored.Of(new Quantity(_policy.CorpseSeconds, QuantityUnit.Seconds)),
+            Locomotors = locomotorId is null ? ListOverride<ContentId>.Inherit : ListOverride<ContentId>.Replace([locomotorId.Value]),
             Modules =
             [
                 ModuleEdit.Add(AttackModule(attack.Id)),
@@ -287,14 +394,160 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
             Unclassified = unclassified,
         };
 
-        yield return weapon with
-        {
-            PrimaryDamage = Number(Cell(row, "DAMAGE"), QuantityUnit.HitPoints),
-            AttackRange = Number(Cell(row, "RANGE"), QuantityUnit.SourceDistance),
-            ReloadTime = Number(Cell(row, "RELOAD"), QuantityUnit.Seconds),
-        };
-
+        yield return composed;
         yield return attack;
+    }
+
+    /// <summary>
+    /// Resolves the row's <c>UPGRADEREFS</c> against the parsed <c>UpgradeAbilities</c> records and
+    /// returns the effective attack and movement override blocks (last one wins, matching EE2's
+    /// ordered reference lists). Refs that are not ability upgrades (veteran/elite stat sets) stay
+    /// visible as non-gameplay metadata instead of being silently dropped.
+    /// </summary>
+    private (DdfBlock? Attack, DdfBlock? Move, Provenance Provenance) ComposeRowOverrides(
+        string rowKey,
+        IReadOnlyDictionary<string, string> row,
+        Provenance rowProvenance,
+        List<UnclassifiedField> unclassified)
+    {
+        var refs = row.TryGetValue("UPGRADEREFS", out var refCell) ? ParseRefList(refCell) : [];
+        var blocks = new List<(DdfBlock Block, string Ref)>();
+        var unapplied = new List<string>();
+
+        foreach (var reference in refs)
+        {
+            if (_upgradeAbilities.TryGetValue(reference, out var abilities))
+            {
+                blocks.AddRange(abilities.Select(block => (block, reference)));
+            }
+            else
+            {
+                unapplied.Add(reference);
+            }
+        }
+
+        if (unapplied.Count > 0)
+        {
+            unclassified.Add(new UnclassifiedField($"UPGRADEREFS (stat-set refs not applied: {string.Join(" ", unapplied)})", AffectsGameplay: false, rowProvenance));
+        }
+
+        var attack = blocks.LastOrDefault(pair => pair.Block.Name == "Attack");
+        var move = blocks.LastOrDefault(pair => MovementFamilies.Contains(pair.Block.Name!));
+        var provenance = attack.Block is not null
+            ? At(attack.Block.Position)
+            : move.Block is not null
+                ? At(move.Block.Position)
+                : rowProvenance;
+
+        var applied = new[] { attack.Block is null ? null : attack.Ref, move.Block is null ? null : move.Ref }
+            .Where(name => name is not null)
+            .Distinct()
+            .ToList();
+        if (applied.Count > 0)
+        {
+            Read(
+                ImportDiagnosticSeverity.Info,
+                DiagnosticCodes.AbilityOverride,
+                $"Row '{rowKey}' composes ability overrides from {string.Join(", ", applied.Select(name => $"'{name}'"))}.");
+        }
+
+        return (attack.Block, move.Block, provenance);
+    }
+
+    /// <summary>
+    /// Maps attack semantics that survive into the engine: <c>applyDamageTime</c> becomes the
+    /// pre-attack delay, <c>missileName</c> a projectile record with the missile's authored speed,
+    /// <c>ordnance</c> the clip size, <c>areaDamageRadius</c> the splash radius, and
+    /// <c>minRangeMobile</c> the minimum attack range. Every other member stays unclassified.
+    /// </summary>
+    private WeaponRecord ApplyAttackSemantics(WeaponRecord weapon, DdfBlock attack, Provenance? provenance = null)
+    {
+        var missileName = attack.GetText("missileName") is { } missile ? missile.Trim() : null;
+        if (missileName is { Length: > 0 })
+        {
+            weapon = weapon with { Projectile = Authored.Of(new ContentId(Source, ContentKind.Projectile, missileName)) };
+            EmitMissile(missileName, provenance ?? At(attack.Position));
+        }
+
+        return weapon with
+        {
+            PreAttackDelay = Number(attack.GetText("applyDamageTime"), QuantityUnit.Seconds),
+            ClipSize = Count(attack.GetText("ordnance")),
+            PrimaryDamageRadius = Number(attack.GetText("areaDamageRadius"), QuantityUnit.SourceDistance),
+            MinimumAttackRange = Number(attack.GetText("minRangeMobile"), QuantityUnit.SourceDistance),
+            Unclassified = attack.Members
+                .Where(m => !AttackKeys.Contains(m.Key))
+                .Select(m => Field($"Attack.{m.Key}", m.Position))
+                .ToArray(),
+        };
+    }
+
+    /// <summary>Emits one projectile record per distinct missile, resolved against <c>db/Visuals/ammo.ddf</c>.</summary>
+    private void EmitMissile(string missileName, Provenance provenance)
+    {
+        if (!_emittedMissiles.Add(missileName))
+        {
+            return;
+        }
+
+        if (Missiles().TryGetValue(missileName, out var missile))
+        {
+            var move = missile.Body.Get("abilities") is DdfArray abilities
+                ? abilities.Items.OfType<DdfBlock>().FirstOrDefault(block => block.Name == "ProjectileMissileMove")
+                : null;
+
+            _missileRecords.Add(new ProjectileRecord(new ContentId(Source, ContentKind.Projectile, missileName), At(missile.Position))
+            {
+                Speed = Number(move?.GetText("speed"), QuantityUnit.SourceDistancePerSecond),
+                Unclassified = (move?.Members ?? [])
+                    .Where(m => !m.Key.Equals("speed", StringComparison.OrdinalIgnoreCase))
+                    .Select(m => Field($"ProjectileMissileMove.{m.Key}", m.Position))
+                    .Concat(missile.Body.Get("abilities") is DdfArray allAbilities
+                        ? allAbilities.Items.OfType<DdfBlock>()
+                            .Where(block => block.Name != "ProjectileMissileMove")
+                            .Select(block => Field($"Missile.{block.Name}", block.Position))
+                        : [])
+                    .ToArray(),
+            });
+        }
+        else
+        {
+            Read(
+                ImportDiagnosticSeverity.Error,
+                DiagnosticCodes.UnsupportedMechanic,
+                $"Attack requires missile '{missileName}', which was not found in {Ee2SourceFiles.MissileTablePath}.");
+        }
+    }
+
+    private Dictionary<string, DdfRecord> Missiles()
+    {
+        if (_missiles is not null)
+        {
+            return _missiles;
+        }
+
+        _missiles = new Dictionary<string, DdfRecord>(StringComparer.OrdinalIgnoreCase);
+        var entry = _files.Database.GetFile(Ee2SourceFiles.MissileTablePath);
+        if (entry is null)
+        {
+            Read(ImportDiagnosticSeverity.Error, DiagnosticCodes.MissingDependency, $"Missile table '{Ee2SourceFiles.MissileTablePath}' was not found.");
+            return _missiles;
+        }
+
+        try
+        {
+            using var reader = new StreamReader(entry.Open());
+            foreach (var record in DdfReader.Read(reader.ReadToEnd(), Ee2SourceFiles.MissileTablePath).Where(r => r.Type == "UnitType"))
+            {
+                _missiles.TryAdd(record.Name, record);
+            }
+        }
+        catch (InvalidDataException exception)
+        {
+            Read(ImportDiagnosticSeverity.Error, DiagnosticCodes.UnsupportedMechanic, exception.Message);
+        }
+
+        return _missiles;
     }
 
     private VisualStateRecord ReadUnitModel(DdfRecord model)
@@ -316,6 +569,13 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                 {
                     animations[engine] = Authored.Of($"{modelKey}#kf={GraphicsPath(animName) ?? animName}");
                 }
+            }
+
+            // Extra source states exist but have no engine condition to bind; keep them visible
+            // rather than silently dropping or fabricating clips for them.
+            foreach (var extra in byName.Keys.Where(name => !StateNames.Any(state => string.Equals(state.Ddf, name, StringComparison.OrdinalIgnoreCase))).OrderBy(name => name, StringComparer.Ordinal))
+            {
+                unclassified.Add(new UnclassifiedField($"State.{extra}", AffectsGameplay: false, At(model.Position)));
             }
         }
 
@@ -416,11 +676,26 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
 
     private static string? Cell(IReadOnlyDictionary<string, string> row, string column) => row.TryGetValue(column, out var value) ? value : null;
 
+    private static string[] ParseRefList(string cell) => cell.Trim().Trim('[', ']').Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
     private static Authored<Quantity> Number(string? text, QuantityUnit unit, double scale = 1)
     {
         return text is not null && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
             ? Authored.Of(new Quantity(value * scale, unit))
             : default;
+    }
+
+    private static Authored<int> Count(string? text)
+    {
+        return text is not null && int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+            ? Authored.Of(value)
+            : default;
+    }
+
+    private static Authored<bool> Flag(DdfBlock block, string key)
+    {
+        var text = block.GetText(key);
+        return text is null ? default : Authored.Of(text is "1" or "true" or "yes");
     }
 
     private ContentId UnitId(string name) => new(Source, ContentKind.Unit, name);
