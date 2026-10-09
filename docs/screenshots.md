@@ -75,6 +75,12 @@ with a final-frame pause. Filename order alone does not imply a constant frame r
 
 The TestHarness renders offscreen with Vulkan and captures PNGs; no display is needed.
 
+`MassBattleDeploymentScreenshotPath` captures the armies after deployment in either mode.
+`MassBattleDeployment` runs reachability probes before spawning the armies. Windowed mode
+keeps rendering after the report until the window closes; headless mode exits after the report.
+`MassBattleDeploymentPreview: true` skips the probes and proof report, spawning the armies
+immediately for windowed viewing or profiling. Screenshot capture remains available.
+
 The G6 linear output pass originally inverted the composed framebuffer on top-left-origin
 backends. `OutputColour.frag` samples by framebuffer coordinates instead of clip-space Y.
 Orientation validation: `OutputColourOrientationTests` checks asymmetric texture rows and

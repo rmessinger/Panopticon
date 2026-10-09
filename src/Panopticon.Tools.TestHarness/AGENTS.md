@@ -330,7 +330,13 @@ The default profile is `mass-battle-deepdivide-deployment.json` (shipped beside 
 executable); `MassBattleDeploymentProfilePath` overrides it, `MassBattleDeploymentReportPath`
 redirects the proof JSON, and `MassBattleDeploymentScreenshotPath` captures one PNG after the
 armies spawn. A windowed run (no `--headless`) opens on the framed deployment and is the
-operator-run load proof.
+operator-run load proof. Reachability probes run before the armies spawn; after the report is
+written, windowed mode renders the deployment until the window closes. Headless mode exits
+after the report.
+
+`MassBattleDeploymentPreview: true` spawns the armies immediately without the reachability
+probes or a proof report. This mode supports windowed profiling; the default is `false` for
+full map validation.
 
 Checks and exit codes: 0 all passed; 1 setup error (missing profile, block sum mismatch,
 unknown definitions); 5 unmet acceptance check (capacity, airfield placement, zone separation

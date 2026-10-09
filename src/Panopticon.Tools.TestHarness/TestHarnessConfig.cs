@@ -164,6 +164,9 @@ public sealed class TestHarnessConfig
     /// </summary>
     public string? MassBattleDeploymentProfilePath { get; set; } = null;
 
+    /// <summary>Spawn and display the armies without running the map acceptance probes.</summary>
+    public bool MassBattleDeploymentPreview { get; set; } = false;
+
     /// <summary>Where to write the deployment proof report JSON. Empty writes beside the executable.</summary>
     public string? MassBattleDeploymentReportPath { get; set; } = null;
 

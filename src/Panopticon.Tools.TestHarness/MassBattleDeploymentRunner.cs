@@ -170,6 +170,34 @@ public static class MassBattleDeploymentRunner
 
             var navigation = game.Scene3D.Navigation;
 
+            if (config.MassBattleDeploymentPreview)
+            {
+                reporter.Info("Deployment preview: map acceptance probes and proof report are disabled.");
+                var capacityPassed = true;
+                for (var i = 0; i < profile.Sides.Count; i++)
+                {
+                    var side = RunCapacityStage(game, profile, i, navigation, reporter);
+                    capacityPassed &= side.Verdict == "OK";
+                    reporter.Info($"{side.Id}: {side.UnitsSpawned} units, {side.AirfieldsPlaced} airfields, {side.Verdict}.");
+                }
+
+                if (!string.IsNullOrEmpty(config.MassBattleDeploymentScreenshotPath))
+                {
+                    CaptureScreenshot(game, config.MassBattleDeploymentScreenshotPath!, reporter);
+                }
+
+                if (!config.Headless)
+                {
+                    reporter.Info("Deployment ready. Close the window to exit.");
+                    while (game.IsRunning)
+                    {
+                        step();
+                    }
+                }
+
+                return capacityPassed ? 0 : ExitCheckFailed;
+            }
+
             var reachability = RunReachabilityProbes(game, profile, step, reporter);
             var sideResults = new List<SideCapacityResult>();
             for (var i = 0; i < profile.Sides.Count; i++)
@@ -217,6 +245,15 @@ public static class MassBattleDeploymentRunner
                 : config.MassBattleDeploymentReportPath!;
             MassBattleDeploymentReport.WriteJson(report, reportPath);
             reporter.Info($"Report JSON saved to: {reportPath}");
+
+            if (!config.Headless)
+            {
+                reporter.Info("Deployment ready. Close the window to exit.");
+                while (game.IsRunning)
+                {
+                    step();
+                }
+            }
 
             return report.AllPassed ? 0 : ExitCheckFailed;
         }
