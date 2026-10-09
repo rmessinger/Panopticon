@@ -1664,3 +1664,20 @@ depend on the Track A/B/C phases listed in the track doc. Design:
   - AC: a finished run scrubs from start to outcome with all 2000 units shown.
 - [ ] M5-4 Live windowed spectator view.
   - AC: B1 records a 30 fps median with the full battle in view on the operator's machine.
+
+## Track X: Miscellaneous fixes and tweaks
+
+Open-ended queue: [phase definitions](track-x-fixes-tweaks.md). Entries below cover authored work, not a terminal track milestone.
+
+### X1: Imported-unit hit feedback
+
+Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-03`, independently of full M2 completion. [Design](deep-dives/x1-imported-unit-hit-feedback.md), [cards](implementation/track-x-x1-hit-feedback.md).
+
+- [ ] X1-1 Audit source effects and choose an explicit compatibility policy (`WI-X1-01`).
+  - AC: exact source assets, target-effect path, scope, missing-reference behavior, and implementation seams are recorded.
+- [ ] X1-2 Bind opt-in damage effects for imported vehicles (`WI-X1-02`).
+  - AC: the selected tank binds its requested effect; unconfigured imports and native content remain unchanged; missing effects fail before publication.
+- [ ] X1-3 Add policy and damage-lifecycle regression coverage (`WI-X1-03`).
+  - AC: binding/publication cases pass and presentation does not change health loss or death outcomes; target placement and throttle have explicit evidence.
+- [ ] X1-4 Produce a readable mixed-source duel capture (`WI-X1-04`).
+  - AC: both full units, labels, health reduction, and target-side impacts are visible; real damage assertions, GIF, and reproduction command accompany the evidence.
