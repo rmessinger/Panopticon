@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-01` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md): imported-unit hit feedback |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-M2-03` |

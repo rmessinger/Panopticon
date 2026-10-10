@@ -1674,7 +1674,7 @@ Open-ended queue: [phase definitions](track-x-fixes-tweaks.md). Entries below co
 
 Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-03`, independently of full M2 completion. [Design](deep-dives/x1-imported-unit-hit-feedback.md), [cards](implementation/track-x-x1-hit-feedback.md).
 
-- [ ] X1-1 Audit source effects and choose an explicit compatibility policy (`WI-X1-01`).
+- [x] X1-1 Audit source effects and choose an explicit compatibility policy (`WI-X1-01`).
   - AC: exact source assets, target-effect path, scope, missing-reference behavior, and implementation seams are recorded.
 - [ ] X1-2 Bind opt-in damage effects for imported vehicles (`WI-X1-02`).
   - AC: the selected tank binds its requested effect; unconfigured imports and native content remain unchanged; missing effects fail before publication.

@@ -13,7 +13,7 @@ EE2 ships impact visuals too, but importing its effect sequences is a separate c
 
 ## Design gate
 
-`WI-X1-01` determines the narrow policy and lookup location. The implementation must preserve typed source records, scoped publication, and existing Generals bindings. The diagrams show existing runtime paths, not an already implemented import-policy extension. Reconcile the next card with the landed audit before marking it Ready.
+The [policy audit](../implementation/track-x-x1-hit-feedback.md#policy-audit) specifies the mapping and pre-publication validation. Typed source records, scoped publication, and existing Generals bindings remain unchanged.
 
 Health bars and unit labels supplement, but do not replace, effects at the damaged target. Reuse existing capture/UI or overlay facilities first. Keep both complete model bounds and impact effects inside the frame throughout the duel. The output must be identified as a two-unit duel, not a full-roster or rearm demonstration.
 
@@ -22,6 +22,8 @@ Health bars and unit labels supplement, but do not replace, effects at the damag
 ```mermaid
 classDiagram
   UnitContentImportRunner --> UnitRuntimeMaterializer
+  UnitContentImportRunner --> UnitMaterializationContext : DamageEffects and installed lookup
+  UnitRuntimeMaterializer --> UnitMaterializationContext : validate before staging
   UnitRuntimeMaterializer --> UnitCombatMaterializer
   UnitCombatMaterializer --> ArmorTemplateSet
   ArmorTemplateSet --> DamageFX : optional binding
@@ -37,7 +39,7 @@ sequenceDiagram
   participant Armor as ArmorTemplateSet
   participant Body as ActiveBody
   participant FX as DamageFX
-  Note over Import,Mat: Planned explicit compatibility policy, validated before publication
+  Note over Import,Mat: Explicit DamageEffects mapping, validated before staging
   Import->>Mat: Shared materialization
   Mat->>Armor: Armor and opt-in DamageFX reference
   Body->>Armor: ValidateArmorAndDamageFX

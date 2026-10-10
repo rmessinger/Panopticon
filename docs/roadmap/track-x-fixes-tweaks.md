@@ -9,7 +9,7 @@ Open-ended queue for bounded fixes and presentation tweaks. Each phase has its o
 
 | Phase | Goal | Milestone | Status | Depends on |
 |---|---|---|---|---|
-| X1. Imported-unit hit feedback | Bind explicit target-side damage effects and improve the mixed-source duel capture. | Rebel hits produce visible effects on the imported tank; a labeled, uncropped capture shows both units receiving damage, with unchanged combat results. | Not started | H2a, P9 |
+| X1. Imported-unit hit feedback | Bind explicit target-side damage effects and improve the mixed-source duel capture. | Rebel hits produce visible effects on the imported tank; a labeled, uncropped capture shows both units receiving damage, with unchanged combat results. | In progress | H2a, P9 |
 
 ## Phase resources
 
