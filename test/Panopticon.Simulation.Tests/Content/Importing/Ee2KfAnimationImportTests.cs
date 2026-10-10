@@ -127,13 +127,16 @@ public sealed class Ee2KfAnimationImportTests
     }
 
     [Fact]
-    public void UnreferencedBomberClipFailsNamingMissingTarget()
+    public void UnreferencedBomberClipBindsMatchedTargetsAndSkipsForeignBones()
     {
-        var ex = Record.Exception(() =>
-            Import("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber.kf"));
+        // The stock bomber clip addresses "prop_1", a bone only sibling models
+        // carry (the same EE2 skeleton-superset pattern as the epoch-15 death
+        // clips); the matched targets bind and the foreign ones are skipped.
+        var animation = Import("ab11_TwinEngineBomber", "Graphics/Vehicles/ab11_TwinEngineBomber.kf");
 
-        Assert.IsType<InvalidDataException>(ex);
-        Assert.Contains("prop_1", ex!.Message);
+        Assert.NotNull(animation);
+        Assert.True(animation!.Channels.Count > 0, "expected the matched targets to bind channels.");
+        Assert.DoesNotContain(animation.Channels, c => c.Target.BoneName == "prop_1");
     }
 
     private sealed class PoseContext : IDisposable

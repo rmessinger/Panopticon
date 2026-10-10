@@ -97,15 +97,15 @@ internal static class NifAnimationConverter
                 enforceFlags: !hasPropertyControllers);
 
             int boneIndex;
-            try
+            if (!TryResolveTarget(skeleton, controlledBlock.TargetName, boundTargets, collapsedScaleNodes, assetKey, out boneIndex))
             {
-                boneIndex = ResolveTarget(skeleton, controlledBlock.TargetName, boundTargets, collapsedScaleNodes, assetKey);
-            }
-            catch (InvalidDataException) when (hasPropertyControllers)
-            {
-                // EE2 property clips routinely name rig nodes (for example
-                // "root NonAccum") that the bound model lacks; such blocks
-                // carry no convertible data for this model.
+                // EE2 authors clips against skeleton supersets: property
+                // clips name rig nodes (for example "root NonAccum") that
+                // the bound model lacks, and keyframe clips (for example
+                // the epoch-15 death clips addressing Bone10) drive bones
+                // only sibling models carry. Such blocks carry no data
+                // this model can bind; the remaining blocks animate what
+                // maps.
                 continue;
             }
 
@@ -243,13 +243,16 @@ internal static class NifAnimationConverter
         }
     }
 
-    private static int ResolveTarget(
+    private static bool TryResolveTarget(
         ImportedSkeleton skeleton,
         string targetName,
         Dictionary<string, int> boundTargets,
         IReadOnlyDictionary<string, float> collapsedScaleNodes,
-        string assetKey)
+        string assetKey,
+        out int boneIndex)
     {
+        boneIndex = -1;
+
         if (boundTargets.TryGetValue(targetName, out var existing))
         {
             throw new InvalidDataException(
@@ -261,7 +264,8 @@ internal static class NifAnimationConverter
             if (string.Equals(skeleton.Bones[i].Name, targetName, StringComparison.OrdinalIgnoreCase))
             {
                 boundTargets[targetName] = i;
-                return i;
+                boneIndex = i;
+                return true;
             }
         }
 
@@ -271,8 +275,7 @@ internal static class NifAnimationConverter
                 $"target '{targetName}' resolved to a collapsed node with singular rest scale {restScale.ToString(CultureInfo.InvariantCulture)}; animating singular-rest nodes needs an absolute track");
         }
 
-        throw new InvalidDataException(
-            $"NIF animation '{assetKey}' targets '{targetName}', which has no matching bone in the model skeleton.");
+        return false;
     }
 
     private static bool TryFindCollapsedScale(

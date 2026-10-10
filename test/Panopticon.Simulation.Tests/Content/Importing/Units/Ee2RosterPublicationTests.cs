@@ -31,7 +31,7 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
         "LightMounted2UpgradeEpoch13",
     ];
 
-    public const string BlockedInfantryRowKey = "HeavyInfantry1UpgradeEpoch15";
+    public const string InfantryRowKey = "HeavyInfantry1UpgradeEpoch15";
 
     private static CaptureContentImport RosterImport(params string[] rowKeys)
     {
@@ -85,21 +85,28 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public void BlockedInfantryRowFailsExplicitlyAndPublishesNothing()
+    public void InfantryRowPublishesWithEpoch15Clips()
     {
+        // WI-M2-05: the epoch-15 infantry clips import (flags 0x0025 accepted;
+        // skeleton-superset targets skipped), so the infantry row publishes beside
+        // Generals instead of failing explicitly.
         using var game = Boot();
 
         var nativeBefore = NativeIdentities(game);
         var reporter = new CollectingReporter();
 
-        var published = UnitContentImportRunner.Import(game, RosterImport(BlockedInfantryRowKey), reporter);
+        var published = UnitContentImportRunner.Import(game, RosterImport(InfantryRowKey), reporter);
 
-        Assert.False(published);
-        Assert.Contains(reporter.Errors, e => e.Contains("HeavyInfantry1_15"));
+        foreach (var line in reporter.Lines)
+        {
+            output.WriteLine(line);
+        }
 
-        // The failure path publishes nothing: no EE2 definition resolves afterwards.
+        Assert.True(published, string.Join("\n", reporter.Errors));
+
         var ee2 = game.AssetStore.GetSourceContent(ContentSource.Ee2);
-        Assert.All(PublishedRowKeys.Append(BlockedInfantryRowKey), rowKey => Assert.Null(ee2.ObjectDefinitions.GetByName(rowKey)));
+        Assert.NotNull(ee2.ObjectDefinitions.GetByName(InfantryRowKey));
+        Assert.Null(game.AssetStore.ObjectDefinitions.GetByName(InfantryRowKey));
         Assert.Equal(nativeBefore, NativeIdentities(game));
     }
 

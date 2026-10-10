@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M2-05` |
 | Roadmap phase | [M2](../../track-m-mass-battle.md): EE2 combat units |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `S` |
 | Prerequisites | `WI-M2-04` (blocked follow-up recorded there) |
@@ -52,10 +52,16 @@ M2 blocker.
 
 ## Acceptance criteria
 
-- [ ] `ReferenceRosterMaterializesWithTypedModules` asserts all seven reference rows import with
+- [x] `ReferenceRosterMaterializesWithTypedModules` asserts all seven reference rows import with
       clips; no `0x0025` rejection remains.
-- [ ] The bounded maceman profile stays green.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+  - The death clip also required skipping skeleton-superset targets (it addresses `Bone10`,
+    which the epoch-15 model lacks; idle/walk/attack target only present bones). The skip
+    mirrors the converter's existing property-controller skip; duplicate targets still throw.
+- [x] The bounded maceman profile stays green.
+  - `Ee2RealUnitImportTests` (the maceman closure) passes in the affected-filter run.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
+  - Affected filter 232/233: only the pre-existing `Ee2MorphImportTests` NIF parse-guard
+    failure, identical on clean main.
 
 ## Validation commands
 

@@ -106,7 +106,11 @@ Existing path: `Ee2UnitAdapter` emits shared records; `UnitImportResolution` val
 
 Landed with WI-M2-02: movement families map to typed locomotors (foot `TWO_LEGS`, wheeled `FOUR_WHEELS`, tracked `TREADS` by authored `moveType`, fixed wing `WINGS`, authored hover `HOVER`, air surfaces `AIR`); aircraft carry `AIRCRAFT`+`VEHICLE` kinds; the registry accepts a typed `JetAIUpdate` family constructed from validated interchange (authored hover clears `NeedsRunway` and `KeepsParkingSpaceWhenAirborne`; authored cruising height becomes the minimum flight height), and aircraft definitions receive the taxiing locomotor set beside normal (EE2 authors no separate taxi speed; the parking flow drives it). Target categories derive from the authored rps matrix `db/Simulation/dbcombat.csv` (zero/nonzero engagement mask only; multipliers stay excluded). Attack semantics map authored values: `applyDamageTime` to the pre-attack delay, `ordnance` to the clip size, `areaDamageRadius` to the splash radius, `minRangeMobile` to the minimum range, `missileName` speed to weapon travel speed. A missing Attack clip is a reported visual gap (warning), never fabricated.
 
-Known Track C limitation (evidence preserved by `Ee2InventoryTests.ReferenceRosterMaterializesWithTypedModules`): every late-epoch infantry clip is rejected by the animation importers (epoch 15 clips carry controller flags `0x0025`, a pattern the C4c survey measured at 4728 controllers corpus-wide and deferred; epochs 9 through 14 clips are legacy-header files targeting skinned models, which C4i explicitly excludes). The infantry model imports; its four state clips do not. This blocks the infantry entry's visual publication (WI-M2-03) until the Track C follow-up lands; the other six reference entries verify clean.
+Known Track C limitation resolved by `WI-M2-05`: the epoch-15 infantry clips import (the modern
+flag policy accepts `0x0025`, and clips authored against skeleton supersets skip their unmatched
+targets while binding matched bones; the death clip addresses `Bone10`, which the epoch-15 model
+lacks). All seven reference entries verify clean, and the infantry row publishes beside Generals
+(`Ee2RosterPublicationTests.InfantryRowPublishesWithEpoch15Clips`).
 
 ## Validation evidence
 

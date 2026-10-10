@@ -505,15 +505,33 @@ public sealed class NifAnimationImporterTests
     }
 
     [Fact]
-    public void MissingTargetThrows()
+    public void MissingTargetIsSkippedAndMatchedBonesBind()
     {
         var data = NifTestKeyframe.KeyframeData(quaternionRotationKeys: [(0.0f, 1.0f, 0.0f, 0.0f, 0.0f)]);
 
-        var ex = Assert.Throws<InvalidDataException>(
-            () => Import(SingleChannelKf(data, duration: 2.0f, targetName: "nonexistent")));
+        var builder = new NifTestDataBuilder();
+        var sequenceType = builder.AddBlockType("NiControllerSequence");
+        var textKeyType = builder.AddBlockType("NiTextKeyExtraData");
+        var controllerType = builder.AddBlockType("NiKeyframeController");
+        var dataType = builder.AddBlockType("NiKeyframeData");
 
-        Assert.Contains("no matching bone", ex.Message);
-        Assert.Contains(AnimationKey, ex.Message);
+        builder.AddBlock(sequenceType, NifTestKeyframe.ControllerSequence(
+            "clip", "ROOT", 1, ("child", 2), ("nonexistent", 4)));
+        builder.AddBlock(textKeyType, NifTestKeyframe.TextKeyExtraData(
+            "", (0.0f, "start"), (2.0f, "end")));
+        builder.AddBlock(controllerType, NifTestKeyframe.KeyframeController(
+            data: 3, stopTime: 2.0f));
+        builder.AddBlock(dataType, data);
+        builder.AddBlock(controllerType, NifTestKeyframe.KeyframeController(
+            data: 5, stopTime: 2.0f));
+        builder.AddBlock(dataType, data);
+        builder.AddTrailing(NifTestBlocks.Footer());
+
+        var animation = Import(builder.Build());
+
+        // The unmatched target (an EE2 skeleton-superset authoring pattern) is
+        // skipped; the matched target still binds its channel.
+        Assert.Single(animation!.Channels);
     }
 
     [Fact]
