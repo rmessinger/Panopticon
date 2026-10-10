@@ -85,7 +85,8 @@ The G6 linear output pass originally inverted the composed framebuffer on top-le
 backends. `OutputColour.frag` samples by framebuffer coordinates instead of clip-space Y.
 Orientation validation: `OutputColourOrientationTests` checks asymmetric texture rows and
 columns at even and odd viewport sizes. Captures require direct visual inspection; agreement
-with a golden does not establish orientation. Earlier Enhanced goldens may contain the inversion.
+with a golden does not establish orientation. Enhanced goldens were regenerated after the fix
+(2026-10-09 manifest update); faithful goldens were byte-identical before and after.
 PNG export requires no compensating flip for this defect.
 
 Replay scenarios: set `"CaptureFrames": true` in `TestHarness.json` and run `--headless`; a
