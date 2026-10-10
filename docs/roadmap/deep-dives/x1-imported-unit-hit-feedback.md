@@ -17,7 +17,7 @@ The [policy audit](../implementation/track-x-x1-hit-feedback.md#policy-audit) sp
 
 Health bars and unit labels supplement, but do not replace, effects at the damaged target. Reuse existing capture/UI or overlay facilities first. Keep both complete model bounds and impact effects inside the frame throughout the duel. The output must be identified as a two-unit duel, not a full-roster or rearm demonstration.
 
-The blocked capture's placement/playback extension is gated by [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md). That read-only audit grounds the new diagrams and source-edit cards; the diagrams below describe the existing binding path, not an approved directional-contact implementation. Findings are owned by the [implementation plan](../implementation/track-x-x1-hit-feedback.md#capture-results-blocked-visible-impact-gate).
+[WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) traced the blocked capture and approved two bounded extensions: opt-in impact-effect selection and attacker-facing bounds placement. Decisions and evidence are owned by the [implementation plan](../implementation/track-x-x1-hit-feedback.md#target-impact-design-wi-x1-05). The first two diagrams show the landed binding path; the last two show the approved extension, where `DamageFXPlacement` and `DamageFXContact` do not exist yet.
 
 ## Architecture diagrams
 
@@ -48,6 +48,39 @@ sequenceDiagram
   Note over Body: Existing weapon damage path
   Body->>FX: DoDamageFX after damage processing
   Note over FX: Existing target placement and throttle
+```
+
+Approved extension (WI-X1-06, WI-X1-07):
+
+```mermaid
+classDiagram
+  UnitMaterializationContext --> DamageNugget : ImpactEffectDamageTypes, validated
+  DamageNugget --> WeaponTarget : DamageFXOverride
+  WeaponTarget --> DamageInfoInput : DamageFXOverride
+  ArmorTemplateSet --> DamageFXPlacement : new, set by CreateImported
+  ActiveBody --> DamageFXContact : new, AttackerFacingBounds only
+  DamageFXContact --> IGameObjectClient : TryGetModelSpaceBounds
+  ActiveBody --> DamageFX : DoDamageFX with position
+```
+
+```mermaid
+sequenceDiagram
+  participant Weapon as DamageNugget
+  participant Target as WeaponTarget
+  participant Body as ActiveBody
+  participant Contact as DamageFXContact
+  participant FX as DamageFX
+  Weapon->>Target: DoDamage(type, amount, override)
+  Target->>Body: AttemptDamage(DamageInfoInput)
+  Note over Body: Damage, armor, death unchanged
+  Body->>Body: effect type = override or damage type, then throttle
+  alt AttackerFacingBounds with source and client bounds
+    Body->>Contact: bounds, ModelTransform x Transform, source position
+    Contact-->>Body: facing-side point or bounds center
+  else otherwise
+    Note over Body: victim.Translation
+  end
+  Body->>FX: DoDamageFX(type, amount, source, victim, position)
 ```
 
 ## Evidence

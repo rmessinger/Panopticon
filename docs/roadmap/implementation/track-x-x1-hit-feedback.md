@@ -10,12 +10,14 @@ Phase and dependencies: [Track X](../track-x-fixes-tweaks.md).
 | [WI-X1-01](../agent/cards/WI-X1-01-hit-feedback-policy.md) | Source/runtime audit and bounded compatibility policy | Done |
 | [WI-X1-02](../agent/cards/WI-X1-02-imported-damage-fx-binding.md) | Opt-in imported-vehicle damage-effect binding | Done |
 | [WI-X1-03](../agent/cards/WI-X1-03-hit-feedback-regressions.md) | Policy, lifecycle, and combat regression tests | Done |
-| [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) | Directional tank-impact and Rebel playback audit/design | Ready |
+| [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) | Directional tank-impact and Rebel playback audit/design | Done |
+| [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md) | Opt-in impact-effect selection for imported weapons | Ready |
+| [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md) | Attacker-facing bounds placement for mapped imported targets | Ready |
 | [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Blocked |
 
 One commit per card; leave any PR open for operator merge. Reconcile Draft cards against preceding evidence before execution. Stop and preserve artifacts on determinism/golden-output deviations, pending operator determination.
 
-Unblocking order: X1-05 audit/design, its bounded placement/playback implementation cards, then X1-04 recapture. Audit completion alone does not satisfy the visual gate. Projectile support is separate.
+Unblocking order: X1-05 audit/design (Done), X1-06 and X1-07 (independent), then X1-04 recapture. Audit completion alone does not satisfy the visual gate. Projectile support is separate.
 
 ---
 
@@ -58,6 +60,44 @@ Likely follow-up: inspect source visual scaling and target particle playback. Th
 Operator review correction: tank impacts are visible between the wheels, not on the Rebel-facing surface. The pixel sample above did not establish that effects were absent and is not a placement proof. `DamageFX.DoDamageFX` uses `victim.Translation` and `victim.Rotation`; it does not calculate surface contact from the attack direction. Placement must be distinguished from occlusion and model scale.
 
 The tank's recoil animation is visible without a shell or visible Rebel impact. `UnitCombatMaterializer` creates a direct `DamageNugget`, copies projectile speed, but does not materialize a projectile object. This is the current typed-import contract, not evidence that a rendered shell disappeared. The native infantry effect selection/playback at the Rebel remains a separate investigation from projectile support. No cosmetic shell is added to conceal that gap.
+
+### Target-impact design (WI-X1-05)
+
+#### Hit traces
+
+| Direction | Damage type, amount | Target armor set | DamageFX group | Executed effect | Position |
+|---|---|---|---|---|---|
+| Rebel to tank (capture frames 201, 206, ...) | `SMALL_ARMS`, 5 | X1 effect-only set, `Armor.NoArmor` | `TankDamageFX`, `SMALL_ARMS`, 100 ms throttle | `FX_DamageTankStruckSmallArms`: `TankStruckSparks`, `TankStruckSmallArmsSmoke` (both `Height = 10`), light pulse, sound | `victim.Translation`: terrain-level origin under the hull |
+| Tank to Rebel (capture frames 45, 152, 259) | `UNRESISTABLE`, 30 | native `HumanArmor` + `InfantryDamageFX` (`FactionUnit.ini`) | `InfantryDamageFX`, `UNRESISTABLE` | none: `MajorFX`/`MinorFX = UNRESISTABLE None` | not reached |
+
+Source facts:
+
+- `Ee2ImportPolicy.DamageType` defaults to `UNRESISTABLE`, so authored EE2 damage applies one-to-one. `Ee2UnitAdapter.AttackRecords` stamps it on every imported weapon; `UnitCombatMaterializer` copies it to the `DamageNugget`.
+- `IniParser.ParseFXListReference` returns null for `None`; `DamageFX.GetDamageFXList` therefore yields no list. The missing Rebel impact is fully explained by effect selection. Neither shells, particle lifecycle, nor occlusion are involved.
+- `ActiveBody.DoDamageFX` already supports a presentation-only selector: `DamageInfoInput.DamageFXOverride` replaces the damage type for effect lookup and throttle when it is not the `Unresistable` sentinel. `WeaponTarget.DoDamage` never sets it.
+- `DamageFX.DoDamageFX` executes at `victim.Translation` with `victim.Rotation`. `ParticleSystemFXNugget.Execute` adds `Offset` but never reads the parsed `Height`. The tank's small-arms particles therefore start at terrain height at the hull center, inside the imported model. This matches the operator observation of impacts between the wheels.
+- `IGameObjectClient.TryGetModelSpaceBounds` merges visible mesh bounds in draw-module space. `Drawable` renders with `InstanceMatrix * ModelTransform.Matrix * Transform.Matrix`; `InstanceMatrix` is only changed by `SwayClientUpdate` (trees). `ProjectileNugget` already consumes these bounds from logic for presentation.
+
+Hypothesis, not verified: original Generals adds `Height` to the particle Z. Restoring it would move every native damage effect, so it is not an X1 prerequisite. Directional contact supplies a full 3D point for opted-in targets.
+
+#### Decision: Rebel feedback
+
+Opt-in weapon-side effect selection, not a damage change. `CaptureContentImport.ImpactEffectDamageTypes` maps an imported unit name to a Generals damage type used only for `DamageFXOverride`. The capture maps `LightMounted1UpgradeEpoch15` to `ARMOR_PIERCING`, the Generals tank-gun type; `InfantryDamageFX` resolves it through `DEFAULT` to `FX_DamageInfantryStruck`. This is a recorded compatibility choice, not EE2-authored data. `DamageType` stays `UNRESISTABLE`, so health, armor, and death are unchanged. Validation: the subject must be a typed unit with at least one weapon in the import; the name must parse as a `DamageType` and must not be `UNRESISTABLE` (the "no override" sentinel). `DamageNugget` gains an internal `DamageFXOverride` (default `Unresistable`) threaded through `WeaponTarget.DoDamage`, so native weapons are unchanged. Card: [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md).
+
+#### Decision: attacker-facing placement
+
+Scope: armor sets created by `ArmorTemplateSet.CreateImported` with a DamageEffects mapping carry `DamageFXPlacement.AttackerFacingBounds`; every other set defaults to `VictimOrigin`. Native Generals and unmapped imports keep current placement. No new profile field.
+
+Contact is a presentation approximation from transformed rendered bounds, not mesh collision:
+
+1. Inputs: target-local bounds from `victim.Client.TryGetModelSpaceBounds`, local-to-world `ModelTransform.Matrix * Transform.Matrix`, and the source object's translation from `DamageInfoInput.SourceID` (already fetched by `ActiveBody.DoDamageFX`).
+2. Transform the source into target-local space. Cast from the bounds center toward it and take the slab exit point of the box. Transform back to world. Scale and rotation are handled by the matrix, not a radius.
+3. Rotation stays `victim.Rotation` so `OrientToObject` nuggets behave as today.
+4. Fallbacks: no client or bounds (headless), dead or missing source, non-invertible or non-finite transform, or result: victim origin. Source inside the bounds or degenerate direction: world bounds center.
+
+The gameplay radius and fixed capture offsets are not used. Damage processing and throttle are untouched: `ActiveBody` computes the position only after throttle passes and passes it to a `DamageFX.DoDamageFX` overload. The geometry lives in a pure static helper testable without graphics. Card: [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md).
+
+Projectile materialization stays out of scope. Recoil without a shell is the typed-import contract described above; X1-4 judges impacts only.
 
 Shared artifacts:
 

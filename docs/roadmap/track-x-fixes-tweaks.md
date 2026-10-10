@@ -15,6 +15,6 @@ Open-ended queue for bounded fixes and presentation tweaks. Each phase has its o
 
 | Phase | Design | Diagrams | Cards |
 |---|---|---|---|
-| X1 | [Hit feedback](deep-dives/x1-imported-unit-hit-feedback.md) | [Architecture](deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams) | [WI-X1-01..05](implementation/track-x-x1-hit-feedback.md) |
+| X1 | [Hit feedback](deep-dives/x1-imported-unit-hit-feedback.md) | [Architecture](deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams) | [WI-X1-01..07](implementation/track-x-x1-hit-feedback.md) |
 
 X1 consumes the published M2 tank row, not the unresolved M2 aircraft or infantry contracts. `WI-M2-03` is a card-level prerequisite. X1 does not close M2 or introduce an EE2 effects importer.

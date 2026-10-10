@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-05` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md): unblock rendered duel evidence |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-03` |
@@ -48,11 +48,11 @@ Specify a bounded presentation-only fix for attacker-facing tank impacts and vis
 
 ## Acceptance criteria
 
-- [ ] Both real-hit paths have source-grounded selection/placement traces; absence of Rebel impact is not attributed to missing shells without evidence.
-- [ ] Directional placement specifies transformed visual bounds/contact, explicit approximation and fallback behavior, and a scoped opt-in preserving native defaults.
-- [ ] Rebel playback has an evidenced cause or a concrete unresolved blocker; no unsupported repair is presented as settled design.
-- [ ] Implementation cards identify exact seams and tests for rotated/scaled targets, missing bounds, target rather than muzzle placement, authored throttle, and unchanged health/damage/death outcomes.
-- [ ] Diagrams and X1-4 prerequisites match the proposed implementation sequence. Final acceptance still requires a labeled real-rendered duel showing impacts in both directions.
+- [x] Both real-hit paths have source-grounded selection/placement traces; absence of Rebel impact is not attributed to missing shells without evidence.
+- [x] Directional placement specifies transformed visual bounds/contact, explicit approximation and fallback behavior, and a scoped opt-in preserving native defaults.
+- [x] Rebel playback has an evidenced cause or a concrete unresolved blocker; no unsupported repair is presented as settled design.
+- [x] Implementation cards identify exact seams and tests for rotated/scaled targets, missing bounds, target rather than muzzle placement, authored throttle, and unchanged health/damage/death outcomes.
+- [x] Diagrams and X1-4 prerequisites match the proposed implementation sequence. Final acceptance still requires a labeled real-rendered duel showing impacts in both directions.
 
 ## Validation commands
 
