@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using Panopticon.Content;
 using Panopticon.Data.Ini;
 using Panopticon.FileFormats;
@@ -98,6 +99,11 @@ public sealed class DamageFX : BaseAsset
 
     public void DoDamageFX(DamageType damageType, float damageAmount, GameObject source, GameObject victim, IGameEngine gameEngine)
     {
+        DoDamageFX(damageType, damageAmount, source, victim, victim.Translation, gameEngine);
+    }
+
+    internal void DoDamageFX(DamageType damageType, float damageAmount, GameObject source, GameObject victim, in Vector3 position, IGameEngine gameEngine)
+    {
         var fxList = GetDamageFXList(damageType, damageAmount, source);
 
         // Since the victim is receiving the damage, it's the "primary" object.
@@ -109,7 +115,7 @@ public sealed class DamageFX : BaseAsset
         fxList?.Execute(
             new FXListExecutionContext(
                 victim.Rotation,
-                victim.Translation,
+                position,
                 gameEngine));
     }
 

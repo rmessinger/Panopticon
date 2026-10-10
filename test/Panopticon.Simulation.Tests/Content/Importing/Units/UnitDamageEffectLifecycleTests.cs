@@ -5,6 +5,7 @@ using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.FX;
 using Panopticon.Logic.Object;
+using Panopticon.Mathematics;
 using Xunit;
 using static Panopticon.Tests.Content.Importing.Units.MaterializationFixtures;
 using static Panopticon.Tests.Content.Importing.Units.UnitRecordFixtures;
@@ -21,6 +22,91 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
         {
             Hits.Add((context.GameEngine.GameLogic.CurrentFrame.Value, context.Position, context.Rotation));
         }
+    }
+
+    private sealed class BoundsClient(AxisAlignedBoundingBox bounds) : IGameObjectClient
+    {
+        public uint ClientObjectId { get; set; }
+
+        public bool ShadowsEnabled { get; set; }
+
+        public void LogicTick(in TimeInterval gameTime) { }
+
+        public void Destroy() { }
+
+        public void TriggerSelection() { }
+
+        public void SetAnimationDuration(LogicFrameSpan frames) { }
+
+        public void SetSupplyBoxesRemaining(float boxPercentage) { }
+
+        public void SetTerrainDecal(ObjectDecalType decalType) { }
+
+        public void ShowSubObject(string subObject) { }
+
+        public void HideSubObject(string subObject) { }
+
+        public void StopSway() { }
+
+        public void SetDebrisModel(string modelName) { }
+
+        public bool TryGetBoneTransform(string boneName, out Transform boneTransform)
+        {
+            boneTransform = null!;
+            return false;
+        }
+
+        public bool TryGetBonePose(string boneName, out Matrix4x4 pose)
+        {
+            pose = default;
+            return false;
+        }
+
+        public Matrix4x4? GetWeaponLaunchBoneTransform(WeaponSlot slot, int weaponIndex) => null;
+
+        public Matrix4x4? GetWeaponFireFXBoneTransform(WeaponSlot slot, int weaponIndex) => null;
+
+        public bool TryGetModelSpaceBounds(out AxisAlignedBoundingBox modelBounds)
+        {
+            modelBounds = bounds;
+            return true;
+        }
+
+        public void DrawInspector() { }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void MappedTargetPlaysOnAttackerFacingBounds(bool sourceAlive)
+    {
+        var hull = new AxisAlignedBoundingBox(new Vector3(-20, -5, 0), new Vector3(20, 5, 10));
+        var configured = RunWeapon(true, true, hull, sourceAlive);
+        var origin = RunWeapon(true, true);
+
+        Assert.Equal(origin.Health, configured.Health);
+        Assert.Equal(origin.Dead, configured.Dead);
+        Assert.Equal(origin.Hits.Count, configured.Hits.Count);
+
+        // Victim at (60, 20, 0) with a 0.5 rad yaw; the attacker stands at (10, 20, 0), away from the muzzle-side origin.
+        var expected = new Vector3(60, 20, 0);
+        if (sourceAlive)
+        {
+            var localToWorld = Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 0.5f))
+                * Matrix4x4.CreateTranslation(60, 20, 0);
+            Assert.True(DamageFXContact.TryGetAttackerFacingPoint(hull, localToWorld, new Vector3(10, 20, 0), out expected));
+            Assert.True(expected.X < 60);
+        }
+
+        Assert.All(configured.Hits, hit => Assert.True(Vector3.Distance(expected, hit.Position) < 1e-3f, $"expected {expected}, actual {hit.Position}"));
+    }
+
+    [Fact]
+    public void NativeAndUnmappedArmorSetsKeepOriginPlacement()
+    {
+        Assert.Equal(DamageFXPlacement.VictimOrigin, new ArmorTemplateSet().DamageFXPlacement);
+        var content = Materialize(UnitDamageEffectPolicyTests.TankContent());
+        Assert.Equal(DamageFXPlacement.VictimOrigin, Assert.Single(content.Get<ObjectDefinition>(Id(ContentKind.Unit, "Tank")).ArmorSets).DamageFXPlacement);
     }
 
     [Theory]
@@ -50,7 +136,7 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
         Assert.Empty(unconfigured.Hits);
     }
 
-    private static (List<float> Health, int DamageCount, bool Dead, List<(uint Frame, Vector3 Position, Quaternion Rotation)> Hits) RunWeapon(bool configured, bool hasArmor)
+    private static (List<float> Health, int DamageCount, bool Dead, List<(uint Frame, Vector3 Position, Quaternion Rotation)> Hits) RunWeapon(bool configured, bool hasArmor, AxisAlignedBoundingBox? bounds = null, bool sourceAlive = true)
     {
         var game = new TestGame(SageGame.CncGenerals);
         var recorder = new EffectRecorder();
@@ -73,8 +159,18 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
         Assert.True(content.Succeeded);
         var victim = game.GameLogic.CreateObject(content.Get<ObjectDefinition>(Id(ContentKind.Unit, "Tank")), null!);
         victim.UpdateTransform(new Vector3(60, 20, 0), Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 0.5f));
+        if (bounds is { } modelBounds)
+        {
+            victim.Client = new BoundsClient(modelBounds);
+        }
+
         var attacker = game.GameLogic.CreateObject(new ObjectDefinition("Shooter"), null!);
         attacker.UpdateTransform(new Vector3(10, 20, 0), Quaternion.Identity);
+        if (!sourceAlive)
+        {
+            attacker.IsEffectivelyDead = true;
+        }
+
         var template = new WeaponTemplate { AttackRange = 100, CoolDownDelayBetweenShots = new RangeDuration(LogicFrameSpan.One) };
         template.Nuggets.Add(new DamageNugget { Damage = 10, DamageType = DamageType.SmallArms, DeathType = DeathType.Normal });
         var weapon = new Weapon(attacker, template, WeaponSlot.Primary, game.GameEngine);

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Panopticon.Data.Ini;
 using Panopticon.Mathematics;
@@ -902,7 +903,26 @@ public class ActiveBody : BodyModule
             damageOutput.ActualDamageDealt,
             source,
             GameObject,
+            GetDamageFXPosition(source),
             GameEngine);
+    }
+
+    private Vector3 GetDamageFXPosition(GameObject? source)
+    {
+        var victim = GameObject;
+        if (_currentArmorSet?.DamageFXPlacement == DamageFXPlacement.AttackerFacingBounds
+            && source is { IsEffectivelyDead: false }
+            && victim.Client?.TryGetModelSpaceBounds(out var bounds) == true
+            && DamageFXContact.TryGetAttackerFacingPoint(
+                bounds,
+                victim.ModelTransform.Matrix * victim.Transform.Matrix,
+                source.Translation,
+                out var contact))
+        {
+            return contact;
+        }
+
+        return victim.Translation;
     }
 
     private void InternalAddSubdualDamage(float delta)

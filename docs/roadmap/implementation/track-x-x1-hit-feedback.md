@@ -12,8 +12,8 @@ Phase and dependencies: [Track X](../track-x-fixes-tweaks.md).
 | [WI-X1-03](../agent/cards/WI-X1-03-hit-feedback-regressions.md) | Policy, lifecycle, and combat regression tests | Done |
 | [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) | Directional tank-impact and Rebel playback audit/design | Done |
 | [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md) | Opt-in impact-effect selection for imported weapons | Done |
-| [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md) | Attacker-facing bounds placement for mapped imported targets | Ready |
-| [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Blocked |
+| [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md) | Attacker-facing bounds placement for mapped imported targets | Done |
+| [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Ready |
 
 One commit per card; leave any PR open for operator merge. Reconcile Draft cards against preceding evidence before execution. Stop and preserve artifacts on determinism/golden-output deviations, pending operator determination.
 
@@ -100,6 +100,14 @@ The gameplay radius and fixed capture offsets are not used. Damage processing an
 #### Selection results (WI-X1-06)
 
 Landed as designed. `UnitCombatMaterializer.WeaponIds` collects weapon-set slots and Attack-ability weapons (EE2 binds through the latter). `UnitCombatMaterializer.ApplyImpactEffectDamageType` stamps `DamageNugget.DamageFXOverride` after weapons are staged; `WeaponTarget.DoDamage` forwards it with a `Unresistable` default. `UnitImpactEffectSelectionTests` covers opt-in, absence, `UNRESISTABLE`/unknown names, unknown subject, weaponless subject, shared weapons, and a real-nugget run where the override plays the target effect while health and death match the unmapped run. The capture profile maps the tank to `ARMOR_PIERCING`.
+
+#### Placement results (WI-X1-07)
+
+Landed as designed. `DamageFXPlacement` and `DamageFXContact` live in `Logic/Object/Damage/DamageFXContact.cs`. `ArmorTemplateSet.CreateImported` selects `AttackerFacingBounds` only with a DamageFX reference; parsed sets default to `VictimOrigin`. `ActiveBody.GetDamageFXPosition` runs after the throttle check and falls back to the origin without a live source, client bounds, or an invertible transform. `DamageFXContactTests` covers axis-aligned, yawed, non-uniformly scaled, low-source, inside-source, and singular cases. `UnitDamageEffectLifecycleTests` drives a real nugget against a stub client: effects land at the helper's attacker-side point, a dead source falls back to the origin, and health, death, and effect counts match origin placement.
+
+#### Post-fix capture
+
+Same command and profile as above. Combat results are unchanged: Rebel 120 to 30 HP (hits at 45, 152, 259), tank 300 to 225 HP (15 hits from 201 to 343), both expectations pass. Rebel hits now play `FX_DamageInfantryStruck` dust at the Rebel. Tank hits play small-arms sparks on the Rebel-facing side. The box face sits at the barrel-tip plane, so sparks appear slightly ahead of the hull front; this is the documented bounds approximation. Artifacts overwrite the shared GIF, report, and frame set; `x1-hit-feedback-impacts.png` crops frames 45, 46, 48, 203, 206, and 212. X1-4 is Ready for operator review of this evidence.
 
 Projectile materialization stays out of scope. Recoil without a shell is the typed-import contract described above; X1-4 judges impacts only.
 

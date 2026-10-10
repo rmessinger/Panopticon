@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-07` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-05` |
@@ -41,11 +41,11 @@ Damage effects on X1-mapped imported targets play on the attacker-facing side of
 
 ## Acceptance criteria
 
-- [ ] Helper tests: axis-aligned, yawed, and non-uniformly scaled boxes return the facing-face point; source inside bounds returns the center; singular matrix returns false.
-- [ ] Lifecycle test with a stub client: mapped target's effect position equals the helper result on the attacker side, not the muzzle or origin; no client, or a destroyed source, falls back to origin.
-- [ ] Native and unmapped armor sets keep `VictimOrigin`; existing placement and throttle assertions still pass.
-- [ ] Health/damage/death traces are unchanged with and without placement.
-- [ ] Standard validation passes or pre-existing failures are documented against the base.
+- [x] Helper tests: axis-aligned, yawed, and non-uniformly scaled boxes return the facing-face point; source inside bounds returns the center; singular matrix returns false.
+- [x] Lifecycle test with a stub client: mapped target's effect position equals the helper result on the attacker side, not the muzzle or origin; no client, or a destroyed source, falls back to origin.
+- [x] Native and unmapped armor sets keep `VictimOrigin`; existing placement and throttle assertions still pass.
+- [x] Health/damage/death traces are unchanged with and without placement.
+- [x] Standard validation passes or pre-existing failures are documented against the base.
 
 ## Validation commands
 

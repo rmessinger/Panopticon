@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-04` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-06`, `WI-X1-07` |
@@ -16,9 +16,7 @@
 
 Produce a clearly identified two-unit duel with visible target impacts, actor labels, health feedback, and complete framing.
 
-Blocker: the rendered duel passes both real-weapon damage assertions, but operator review identifies tank impacts between the wheels rather than on the Rebel-facing surface. Tank recoil is visible without a shell or visible Rebel impact. Attacker-facing placement and Rebel effect playback require investigation. Typed imported weapons currently have no projectile objects. Health bars do not close this gate. Evidence and commands are recorded in the implementation plan.
-
-Unblocking design: [WI-X1-05](WI-X1-05-target-impact-design.md) (Done) traced both causes. Implementation: [WI-X1-06](WI-X1-06-imported-impact-effect-selection.md) for Rebel impacts and [WI-X1-07](WI-X1-07-attacker-facing-impact-placement.md) for tank-impact placement. Recapture after both. Shell materialization remains separate from this card's impact gate.
+Prerequisites landed: [WI-X1-06](WI-X1-06-imported-impact-effect-selection.md) and [WI-X1-07](WI-X1-07-attacker-facing-impact-placement.md). The [post-fix capture](../../implementation/track-x-x1-hit-feedback.md#post-fix-capture) shows impacts in both directions and awaits operator review. Shell materialization remains separate from this card's impact gate.
 
 ## Context to read (and only this)
 
