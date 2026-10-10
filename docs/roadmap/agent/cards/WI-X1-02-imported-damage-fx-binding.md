@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-02` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-01` |

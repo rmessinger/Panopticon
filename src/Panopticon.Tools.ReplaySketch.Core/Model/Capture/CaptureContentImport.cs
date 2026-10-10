@@ -38,4 +38,7 @@ public class CaptureContentImport
 
     /// <summary>Unsupported gameplay mechanics the run accepts leaving out; each is reported.</summary>
     public List<string> ExcludedMechanics { get; set; } = [];
+
+    /// <summary>Opt-in Generals presentation compatibility: exact imported vehicle name to installed DamageFX name.</summary>
+    public Dictionary<string, string> DamageEffects { get; set; } = [];
 }

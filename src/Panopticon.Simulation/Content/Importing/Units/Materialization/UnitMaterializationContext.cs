@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Panopticon.Logic.Object;
 
 namespace Panopticon.Content.Importing.Units.Materialization;
 
@@ -16,6 +18,9 @@ public sealed class UnitMaterializationContext
     private Func<ContentId, BaseAsset?> _published;
     private bool _boundToStore;
     private readonly AssetStore? _visualStore;
+    private readonly Dictionary<ContentId, string> _damageEffects;
+    private readonly Func<string, DamageFX?>? _damageEffectLookup;
+    private readonly Dictionary<ContentId, DamageFX> _validatedDamageEffects = new();
 
     public UnitConversionPolicy Policy { get; }
 
@@ -36,7 +41,9 @@ public sealed class UnitMaterializationContext
         UnitConversionPolicy policy,
         Func<ContentId, BaseAsset?>? published = null,
         ILegacyNativeTable? legacyNatives = null,
-        AssetStore? visualStore = null)
+        AssetStore? visualStore = null,
+        IReadOnlyDictionary<ContentId, string>? damageEffects = null,
+        Func<string, DamageFX?>? damageEffectLookup = null)
     {
         ArgumentNullException.ThrowIfNull(policy);
 
@@ -44,6 +51,51 @@ public sealed class UnitMaterializationContext
         _published = published ?? (_ => null);
         LegacyNatives = legacyNatives;
         _visualStore = visualStore;
+        _damageEffects = damageEffects?.ToDictionary() ?? new();
+        _damageEffectLookup = damageEffectLookup;
+    }
+
+    internal bool ValidateDamageEffects(UnitImportResolution resolution)
+    {
+        foreach (var (subject, name) in _damageEffects)
+        {
+            var unit = resolution.Closure.OfType<UnitRecord>().FirstOrDefault(record => record.Id.Equals(subject));
+            if (unit is null || unit.Legacy is not null || !unit.Armor.IsPresent ||
+                !unit.KindOf.Resolved.Contains("VEHICLE", StringComparer.OrdinalIgnoreCase))
+            {
+                Error(subject, $"DamageFX '{name}' requires a typed vehicle with armor in this import.");
+                continue;
+            }
+
+            var effect = string.IsNullOrWhiteSpace(name) ? null : _damageEffectLookup?.Invoke(name);
+            if (effect is null)
+            {
+                Error(subject, $"Requested DamageFX '{name}' was not found.");
+                continue;
+            }
+
+            foreach (var group in effect.Groups)
+            {
+                foreach (var reference in new[] { group.MajorFX, group.MinorFX })
+                {
+                    if (reference is not null && reference.Value is null)
+                    {
+                        Error(subject, $"DamageFX '{name}' references missing FXList '{reference.Name}'.");
+                    }
+                }
+            }
+
+            _validatedDamageEffects[subject] = effect;
+        }
+
+        return !Diagnostics.Any(diagnostic => diagnostic.IsError);
+    }
+
+    internal LazyAssetReference<DamageFX>? DamageEffectReference(ContentId subject)
+    {
+        return _validatedDamageEffects.TryGetValue(subject, out var effect)
+            ? new LazyAssetReference<DamageFX>(_damageEffects[subject], () => effect)
+            : null;
     }
 
     internal void Stage(ContentId id, BaseAsset asset) => _staged[id] = asset;

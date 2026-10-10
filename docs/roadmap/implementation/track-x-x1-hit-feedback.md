@@ -30,4 +30,8 @@ Capture reuse: actor `Label`, manifest health/max-health and screen projections,
 
 Tests: synthetic policy success/absence/missing-subject/missing-effect/missing-FXList, native identity preservation and failed publication; configured/unconfigured real-weapon health/death comparison. Commands: standard build, non-interactive tests, format, brace check, then the card's ScenarioCapture command and generic GIF annotator with labels and health.
 
+### Binding results
+
+`CaptureContentImport.DamageEffects` and context validation are implemented. `ArmorTemplateSet.CreateImported` keeps the native private setter intact. Five synthetic policy cases pass: exact opt-in, absence, missing DamageFX, missing subject, and missing FXList. Build and scoped format pass. Full non-interactive tests found `ParkingPlaceBehavior_ReportLanding` expecting -1 but receiving 0; independent base reproduction is recorded with final validation.
+
 Final capture results pending.

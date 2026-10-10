@@ -22,6 +22,11 @@ public static class UnitRuntimeMaterializer
             throw new InvalidOperationException("Only a resolution without errors can be materialized.");
         }
 
+        if (!context.ValidateDamageEffects(resolution))
+        {
+            return new MaterializedUnitContent(context, resolution.Source, context.Staged.ToDictionary(), [], context.Diagnostics.ToArray(), []);
+        }
+
         foreach (var record in resolution.Closure.OrderBy(r => r is UnitRecord))
         {
             try

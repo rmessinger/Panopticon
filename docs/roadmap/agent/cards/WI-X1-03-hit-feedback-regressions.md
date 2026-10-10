@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-03` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Draft` |
+| Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-02` |
@@ -19,7 +19,7 @@ Prove effects are presentation-only and reuse the existing damage lifecycle, tar
 ## Context to read (and only this)
 
 - [Audit/results](../../implementation/track-x-x1-hit-feedback.md#audit-and-results).
-- Landed policy tests from `WI-X1-02`.
+- `UnitDamageEffectPolicyTests.cs` from `WI-X1-02`; `MockedGameTest` and `FXNugget.Execute` provide a graphics-free effect recorder seam.
 - `src/Panopticon.Simulation/Logic/Object/Body/ActiveBody.cs`: damage processing and `DoDamageFX`.
 - Existing unit-content materialization/publication tests under `test/Panopticon.Simulation.Tests/Content/Importing/Units/`.
 

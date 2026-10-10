@@ -142,7 +142,8 @@ internal static class UnitCombatMaterializer
 
         if (record.Armor.IsPresent)
         {
-            definition.ArmorSets.Add(new ArmorTemplateSet { Armor = context.Reference<ArmorTemplate>(record.Armor.Value) });
+            definition.ArmorSets.Add(ArmorTemplateSet.CreateImported(
+                context.Reference<ArmorTemplate>(record.Armor.Value), context.DamageEffectReference(record.Id)));
         }
     }
 

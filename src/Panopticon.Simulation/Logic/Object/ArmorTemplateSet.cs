@@ -7,6 +7,11 @@ namespace Panopticon.Logic.Object;
 
 public sealed class ArmorTemplateSet : IConditionState<ArmorSetCondition>
 {
+    internal static ArmorTemplateSet CreateImported(LazyAssetReference<ArmorTemplate> armor, LazyAssetReference<DamageFX> damageFX)
+    {
+        return new ArmorTemplateSet { Armor = armor, DamageFX = damageFX };
+    }
+
     internal static ArmorTemplateSet Parse(IniParser parser)
     {
         return parser.ParseBlock(FieldParseTable);
