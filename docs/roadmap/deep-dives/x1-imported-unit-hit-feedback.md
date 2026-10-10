@@ -17,6 +17,8 @@ The [policy audit](../implementation/track-x-x1-hit-feedback.md#policy-audit) sp
 
 Health bars and unit labels supplement, but do not replace, effects at the damaged target. Reuse existing capture/UI or overlay facilities first. Keep both complete model bounds and impact effects inside the frame throughout the duel. The output must be identified as a two-unit duel, not a full-roster or rearm demonstration.
 
+The blocked capture's placement/playback extension is gated by [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md). That read-only audit grounds the new diagrams and source-edit cards; the diagrams below describe the existing binding path, not an approved directional-contact implementation. Findings are owned by the [implementation plan](../implementation/track-x-x1-hit-feedback.md#capture-results-blocked-visible-impact-gate).
+
 ## Architecture diagrams
 
 ```mermaid

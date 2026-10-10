@@ -335,7 +335,7 @@ track document.
 
 | Phase | Progress | Items |
 |---|---|---|
-| X1 - Imported-unit hit feedback | `███████░░░` | 3 / 4 |
+| X1 - Imported-unit hit feedback | `██████░░░░` | 3 / 5 |
 
 Track X has no terminal completion target; this table covers authored phases only.
 

@@ -38,6 +38,7 @@ mindmap
         X1-1 Policy audit
         X1-2 Imported damage FX binding
         X1-3 Regression coverage
+        X1-5 Directional impact and Rebel feedback design
         X1-4 Readable duel capture
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕

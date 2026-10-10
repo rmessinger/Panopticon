@@ -9,7 +9,7 @@
 | Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `S` |
-| Prerequisites | `WI-X1-03` |
+| Prerequisites | `WI-X1-03`, `WI-X1-05`, then the bounded source-edit cards identified by its audit |
 | Diagrams | [Architecture](../../deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams) |
 
 ## Goal
@@ -17,6 +17,8 @@
 Produce a clearly identified two-unit duel with visible target impacts, actor labels, health feedback, and complete framing.
 
 Blocker: the rendered duel passes both real-weapon damage assertions, but operator review identifies tank impacts between the wheels rather than on the Rebel-facing surface. Tank recoil is visible without a shell or visible Rebel impact. Attacker-facing placement and Rebel effect playback require investigation. Typed imported weapons currently have no projectile objects. Health bars do not close this gate. Evidence and commands are recorded in the implementation plan.
+
+Unblocking design: [WI-X1-05](WI-X1-05-target-impact-design.md). Shell materialization remains separate from this card's impact gate.
 
 ## Context to read (and only this)
 

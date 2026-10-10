@@ -1680,5 +1680,7 @@ Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-0
   - AC: the selected tank binds its requested effect; unconfigured imports and native content remain unchanged; missing effects fail before publication.
 - [x] X1-3 Add policy and damage-lifecycle regression coverage (`WI-X1-03`).
   - AC: binding/publication cases pass and presentation does not change health loss or death outcomes; target placement and throttle have explicit evidence.
+- [ ] X1-5 Specify directional tank-impact placement and trace Rebel effect playback (`WI-X1-05`).
+  - AC: both hit paths are traced; scoped placement/fallback behavior and evidenced playback fixes have bounded implementation cards and grounded diagrams; X1-4 prerequisites are updated.
 - [ ] X1-4 Produce a readable mixed-source duel capture (`WI-X1-04`).
-  - AC: both full units, labels, health reduction, and target-side impacts are visible; real damage assertions, GIF, and reproduction command accompany the evidence.
+  - AC: both full units, labels, health reduction, tank impacts on the Rebel-facing surface, and Rebel target impacts are visible; real damage assertions, GIF, and reproduction command accompany the evidence.

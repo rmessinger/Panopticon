@@ -10,9 +10,12 @@ Phase and dependencies: [Track X](../track-x-fixes-tweaks.md).
 | [WI-X1-01](../agent/cards/WI-X1-01-hit-feedback-policy.md) | Source/runtime audit and bounded compatibility policy | Done |
 | [WI-X1-02](../agent/cards/WI-X1-02-imported-damage-fx-binding.md) | Opt-in imported-vehicle damage-effect binding | Done |
 | [WI-X1-03](../agent/cards/WI-X1-03-hit-feedback-regressions.md) | Policy, lifecycle, and combat regression tests | Done |
+| [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) | Directional tank-impact and Rebel playback audit/design | Ready |
 | [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Blocked |
 
 One commit per card; leave any PR open for operator merge. Reconcile Draft cards against preceding evidence before execution. Stop and preserve artifacts on determinism/golden-output deviations, pending operator determination.
+
+Unblocking order: X1-05 audit/design, its bounded placement/playback implementation cards, then X1-04 recapture. Audit completion alone does not satisfy the visual gate. Projectile support is separate.
 
 ---
 
