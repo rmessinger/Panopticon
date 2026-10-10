@@ -1615,22 +1615,23 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     aircraft get a jet or helicopter locomotor with return-to-airfield rearm.
   - Evidence: `Ee2TypedMaterializationTests` and `Ee2InventoryTests.ReferenceRosterMaterializesWithTypedModules`;
     typed JetAIUpdate construction from authored hover and cruising height, taxiing set beside
-    normal, rps-derived target masks, ordnance as clip size, missile speed as travel speed; live
-    rearm proof lands with M2-4. Known blocker: late-epoch infantry clips are rejected by the Track
-    C animation guards (0x25 controller flags, legacy skinned); six of seven entries verify clean.
+    normal (a dedicated source-qualified `.Taxi` locomotor mirroring Generals
+    `BasicJetTaxiLocomotor` since WI-M2-06), rps-derived target masks, ordnance as clip size,
+    missile speed as travel speed; live rearm proof lands with M2-4. Late-epoch infantry clips
+    import since WI-M2-05 (0x25 controller flags accepted; clips targeting absent bones are
+    skipped); all seven entries verify clean.
 - [x] M2-3 Reference EE2 roster registration through H2a's scoped content publisher.
   - AC: EE2 definitions load beside Generals definitions without overriding any Generals entry.
-  - Evidence: `capture-ee2-reference-roster.json` plus `Ee2RosterPublicationTests`; six of seven
-    reference rows publish (the infantry row stays blocked on Track C animation import and its
-    failed import publishes nothing).
+  - Evidence: `capture-ee2-reference-roster.json` plus `Ee2RosterPublicationTests`; all seven
+    reference rows publish beside Generals content with native identities unchanged (the infantry
+    row publishes since WI-M2-05).
 - [x] M2-4 EE2 units in the P9 validation ground.
   - AC: each reference EE2 unit spawns, moves, attacks, and dies; gaps surface as explicit failures.
   - Evidence: `Ee2ContractPhase` + `ee2-reference-validation.json` + `Ee2ContractValidationTests`.
-    All six published entries pass spawn, displacement, weapon-caused damage, and death; the
-    helicopter's return and second sortie pass; fixed-wing consumption, refill, and death pass,
-    with the full rearm cycle proven once (6/6 harness run) but unstable across boots (wings
-    flight-model divergence on heading reversals at authored turn rates); WI-M2-04 stays Blocked
-    on that gap and the Track C infantry animation blocker.
+    All seven published entries pass spawn, displacement, weapon-caused damage, and death (the
+    infantry row publishes since WI-M2-05); the helicopter's return and second sortie pass; the
+    fixed-wing full rearm cycle (return, refill, second damaging sortie) passes deterministically
+    and is asserted after WI-M2-06 (airborne 2D friction plus a dedicated taxi locomotor).
 
 ### M3: Mixed roster normalization
 - [ ] M3-1 Model scale and tiles-to-world factor.

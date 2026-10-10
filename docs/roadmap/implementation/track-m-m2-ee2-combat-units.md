@@ -161,21 +161,17 @@ EE2 contracts: ground tank, heavy tank, and artillery pass displacement (real Mo
 weapon-caused damage (real AttackObject orders), and death (Generals killers); the helicopter
 passes hover attack, scripted return, and a second damaging sortie, with ammunition consumption
 and refill reported absent-in-source (no EE2 helicopter authors ordnance; no fabricated clip).
-Fixed-wing fighter and bomber pass consumption, first-sortie damage, anti-air death, and
-refill-on-re-engagement, and the full cycle (return, refill, second damaging sortie) passed end
-to end in the full harness run (6/6 contracts, report saved 2026-10-08). However, the wings
-flight model diverges on sustained turns and heading reversals at EE2-authored speeds and turn
-rates in most boots (observed excursions from 2.5k to 380k world units with velocity above the
-authored maximum): the runway taxi flow is also infeasible (authored air speed gives a ~58-unit
-turn radius against tighter parking bone spacing, and EE2 authors no taxi locomotion). The
-installed test therefore asserts the deterministic core (displacement, damage, death for every
-entry; the helicopter's full cycle; fixed-wing consumption and refill) and requires the
-fixed-wing return/refill/second-sortie results to be reported. Typed flight mappings landed with
-this evidence: air locomotors set the engine's airborne motive force mode; fixed-wing flight
-flies at authored speed (minimum equals maximum) with a declared one-second ramp and holds its
-authored cruising height through the engine's ground-relative Z mode; authored clips rearm at
-base (RETURN_TO_BASE). The blocked follow-up: a flight-model stability decision for imported
-fixed-wing values (sideslip damping or speed clamping in the wings model), which belongs to the
-physics fidelity work, not the import adapter. `Ee2ContractValidationTests` 2/2 installed
-(repeated twice). ReplaySketch screenshot mode verified against clean main (identical pixel
+Fixed-wing fighter and bomber pass the full cycle deterministically: consumption, first-sortie
+damage, anti-air death, refill, return, and a second damaging sortie (WI-M2-06 removed the two
+runtime gaps behind the earlier reported-only results: air locomotors now set the engine's
+airborne 2D friction (`Apply2DFrictionWhenAirborne`), damping the sideslip that accumulated
+through sustained turns and heading reversals, and aircraft taxi uses a dedicated source-qualified
+`.Taxi` locomotor mirroring Generals `BasicJetTaxiLocomotor` (ground, speed 50, turn 180 deg/s),
+which fits the parking bone spacing the authored air speed could not). The installed test
+asserts the full cycle for every aircraft entry rather than reporting it. Typed flight mappings
+landed with this evidence: air locomotors set the engine's airborne motive force mode; fixed-wing
+flight flies at authored speed (minimum equals maximum) with a declared one-second ramp and holds
+its authored cruising height through the engine's ground-relative Z mode; authored clips rearm at
+base (RETURN_TO_BASE). `Ee2ContractValidationTests` 2/2 installed (repeated twice).
+ReplaySketch screenshot mode verified against clean main (identical pixel
 distributions; map panel unchanged).
