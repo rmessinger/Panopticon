@@ -109,6 +109,11 @@ internal static class UnitBodyMovementMaterializer
         {
             locomotor.AllowAirborneMotiveForce = true;
 
+            // Every Generals airborne locomotor also applies 2D friction while airborne; without
+            // it only weak aerodynamic friction runs, so forward-speed maintenance accumulates
+            // lateral velocity through turns and the aircraft diverges (the WI-M2-04 blocker).
+            locomotor.Apply2DFrictionWhenAirborne = true;
+
             // Fixed-wing flight holds its authored cruising height kinematically (EE2 authors no
             // lift); hover locomotors keep the engine's physics-based Z handling.
             if (locomotor.Appearance == LocomotorAppearance.Wings)
@@ -284,17 +289,54 @@ internal static class UnitBodyMovementMaterializer
         };
 
         // Aircraft taxi through the parking flow (parking init and the runway return both select
-        // the taxiing set). EE2 authors no separate taxi speed; the air locomotor serves both
-        // sets, and the parking initialization drives the ground-phase waypoints.
+        // the taxiing set). Reusing the air locomotor taxis at authored air speed, whose turn
+        // radius dwarfs the parking bone spacing (the WI-M2-04 blocker). Generals authors a
+        // dedicated ground taxi locomotor for every crewed aircraft; BasicJetTaxiLocomotor is
+        // mirrored here as declared engine constants (not source conversions): it can turn in
+        // place on the parking apron.
         if (record.KindOf.Resolved.Contains("AIRCRAFT", StringComparer.Ordinal))
         {
+            var taxiId = new ContentId(record.Id.Source, ContentKind.Locomotor, record.Id.Name + ".Taxi");
+            context.Stage(taxiId, BuildTaxiLocomotor(taxiId));
             definition.LocomotorSets[LocomotorSetType.Taxiing] = new LocomotorSetTemplate
             {
                 Condition = LocomotorSetType.Taxiing,
-                Locomotors = locomotors.Select(context.Reference<LocomotorTemplate>).ToArray(),
+                Locomotors = [context.Reference<LocomotorTemplate>(taxiId)],
                 Speed = 100,
             };
         }
+    }
+
+    /// <summary>
+    /// Declared taxi ramp authored per second, mirroring Generals <c>BasicJetTaxiLocomotor</c>
+    /// (speed 50, turn rate 180, acceleration 100, braking 999999). Recorded engine constants,
+    /// not balance values; converted at the engine's 30 logic frames per second.
+    /// </summary>
+    private const float TaxiSpeedPerSecond = 50;
+
+    private const float TaxiTurnRateDegreesPerSecond = 180;
+
+    private const float TaxiAccelerationPerSecondSquared = 100;
+
+    private const float TaxiBrakingPerSecondSquared = 999999;
+
+    private static LocomotorTemplate BuildTaxiLocomotor(ContentId taxiId)
+    {
+        var framesPerSecond = AircraftSpeedRampFrames;
+
+        var taxi = new LocomotorTemplate();
+        taxi.AssignImportedName("LocomotorTemplate", taxiId.Name);
+        taxi.Surfaces = Surfaces.Ground;
+        taxi.Appearance = LocomotorAppearance.Treads;
+        taxi.MaxSpeed = TaxiSpeedPerSecond / framesPerSecond;
+        taxi.MaxSpeedDamaged = TaxiSpeedPerSecond / framesPerSecond;
+        taxi.MaxTurnRate = TaxiTurnRateDegreesPerSecond * MathF.PI / 180 / framesPerSecond;
+        taxi.MaxTurnRateDamaged = TaxiTurnRateDegreesPerSecond * MathF.PI / 180 / framesPerSecond;
+        taxi.Acceleration = TaxiAccelerationPerSecondSquared / (framesPerSecond * framesPerSecond);
+        taxi.AccelerationDamaged = TaxiAccelerationPerSecondSquared / (framesPerSecond * framesPerSecond);
+        taxi.Braking = TaxiBrakingPerSecondSquared / (framesPerSecond * framesPerSecond);
+
+        return taxi;
     }
 
     /// <summary>

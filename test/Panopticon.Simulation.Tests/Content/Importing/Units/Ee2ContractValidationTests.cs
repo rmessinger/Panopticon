@@ -88,10 +88,9 @@ public sealed class Ee2ContractValidationTests(ITestOutputHelper output)
 
         // The deterministic contracts pass outright: ground displacement, weapon-caused damage,
         // and death for every reference entry, plus the helicopter's return and second sortie.
-        // The fixed-wing rearm cycle (return, refill, second damaging sortie) is implemented and
-        // has passed end to end (see the M2 implementation plan), but the wings flight model
-        // diverges on heading reversals at EE2-authored turn rates in most boots, so it is
-        // asserted as reported rather than green, with the gap documented.
+        // The fixed-wing rearm cycle (return, refill, second damaging sortie) is asserted green
+        // since WI-M2-06: airborne 2D friction and the dedicated taxi locomotor removed the
+        // divergence and the parking-flow deadlocks that made it report-only.
         foreach (var result in report.Contracts)
         {
             Assert.True(result.Moved != false, $"{result.Definition}: displacement not observed");
@@ -108,9 +107,9 @@ public sealed class Ee2ContractValidationTests(ITestOutputHelper output)
         foreach (var fixedWing in report.Contracts.Where(c => c.Definition.Contains("Fighter") || c.Definition.Contains("Bomber")))
         {
             Assert.True(fixedWing.ConsumedAmmunition == true, $"{fixedWing.Definition}: ammunition never consumed");
-            Assert.NotNull(fixedWing.ReturnedToBase);
-            Assert.NotNull(fixedWing.ClipRefilled);
-            Assert.NotNull(fixedWing.DamagedSecondSortie);
+            Assert.True(fixedWing.ReturnedToBase == true, $"{fixedWing.Definition}: return to base not observed");
+            Assert.True(fixedWing.ClipRefilled == true, $"{fixedWing.Definition}: clip did not refill");
+            Assert.True(fixedWing.DamagedSecondSortie == true, $"{fixedWing.Definition}: no damage on the second sortie");
         }
 
     }

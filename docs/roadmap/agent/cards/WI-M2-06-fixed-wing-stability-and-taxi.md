@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M2-06` |
 | Roadmap phase | [M2](../../track-m-mass-battle.md): EE2 combat units |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-M2-04` (blocked follow-up recorded there) |
@@ -70,11 +70,17 @@ gap, not a physics-fidelity question.
 
 ## Acceptance criteria
 
-- [ ] Synthetic tests assert the friction flag and the distinct taxiing locomotor.
-- [ ] Installed contract run, repeated, asserts the full fixed-wing cycle for fighter and bomber
+- [x] Synthetic tests assert the friction flag and the distinct taxiing locomotor.
+  - `Ee2TypedMaterializationTests`: air locomotors assert `Apply2DFrictionWhenAirborne` and
+    `AllowAirborneMotiveForce`; the taxiing set asserts a single ground `Treads` locomotor with
+    the BasicJetTaxiLocomotor constants (50 speed, 180 deg/s turn, 100/999999 accel/braking).
+- [x] Installed contract run, repeated, asserts the full fixed-wing cycle for fighter and bomber
       (return, refill, second damaging sortie).
-- [ ] The helicopter and ground contracts stay green; the maceman profile stays green.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+  - `Ee2ContractValidationTests.ReferenceContractsPassAndTheReportNamesEveryResult` hardened from
+    reported to asserted (`ConsumedAmmunition`, `ReturnedToBase`, `ClipRefilled`,
+    `DamagedSecondSortie`); two consecutive installed runs passed.
+- [x] The helicopter and ground contracts stay green; the maceman profile stays green.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
