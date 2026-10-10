@@ -41,4 +41,10 @@ public class CaptureContentImport
 
     /// <summary>Opt-in Generals presentation compatibility: exact imported vehicle name to installed DamageFX name.</summary>
     public Dictionary<string, string> DamageEffects { get; set; } = [];
+
+    /// <summary>
+    /// Opt-in Generals presentation compatibility: exact imported unit name to the damage type its
+    /// weapons use only for target-effect selection. Damage itself is unchanged.
+    /// </summary>
+    public Dictionary<string, string> ImpactEffectDamageTypes { get; set; } = [];
 }

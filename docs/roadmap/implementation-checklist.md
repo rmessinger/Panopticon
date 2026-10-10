@@ -1682,7 +1682,7 @@ Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-0
   - AC: binding/publication cases pass and presentation does not change health loss or death outcomes; target placement and throttle have explicit evidence.
 - [x] X1-5 Specify directional tank-impact placement and trace Rebel effect playback (`WI-X1-05`).
   - AC: both hit paths are traced; scoped placement/fallback behavior and evidenced playback fixes have bounded implementation cards and grounded diagrams; X1-4 prerequisites are updated.
-- [ ] X1-6 Select native impact effects for opted-in imported weapons (`WI-X1-06`).
+- [x] X1-6 Select native impact effects for opted-in imported weapons (`WI-X1-06`).
   - AC: the mapped tank weapon plays infantry impacts through `DamageFXOverride`; damage/health/death unchanged; invalid mappings fail before staging.
 - [ ] X1-7 Place mapped imported-target effects on the attacker-facing bounds (`WI-X1-07`).
   - AC: helper geometry tests for rotated/scaled bounds and fallbacks pass; native and unmapped targets keep origin placement; combat results unchanged.

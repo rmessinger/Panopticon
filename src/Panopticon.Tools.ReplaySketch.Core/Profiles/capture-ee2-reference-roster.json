@@ -35,6 +35,8 @@
       "GameUnitsPerSourceDistance": 12,
       // Explicit Generals presentation compatibility, not source-authored EE2 effects.
       "DamageEffects": { "LightMounted1UpgradeEpoch15": "TankDamageFX" },
+      // Tank shells select Generals tank-gun target effects; damage stays UNRESISTABLE.
+      "ImpactEffectDamageTypes": { "LightMounted1UpgradeEpoch15": "ARMOR_PIERCING" },
       "ExcludedMechanics": [
         "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
         "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",

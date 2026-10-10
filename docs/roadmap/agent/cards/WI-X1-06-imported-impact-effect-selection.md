@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-06` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-05` |
@@ -42,11 +42,11 @@ Imported weapons opted in by the capture select native target effects through `D
 
 ## Acceptance criteria
 
-- [ ] Mapped weapon executes the infantry effect selected by the override; the same weapon unmapped selects `None` for `InfantryDamageFX`-style groups.
-- [ ] Health traces, damage count, and death are identical with and without the override.
-- [ ] Unknown names, `UNRESISTABLE`, non-weapon subjects, and shared weapons fail before staging with subject and value named.
-- [ ] Native weapons and unmapped imports keep `DamageFXOverride == Unresistable`.
-- [ ] Standard validation passes or pre-existing failures are documented against the base.
+- [x] Mapped weapon executes the infantry effect selected by the override; the same weapon unmapped selects `None` for `InfantryDamageFX`-style groups.
+- [x] Health traces, damage count, and death are identical with and without the override.
+- [x] Unknown names, `UNRESISTABLE`, non-weapon subjects, and shared weapons fail before staging with subject and value named.
+- [x] Native weapons and unmapped imports keep `DamageFXOverride == Unresistable`.
+- [x] Standard validation passes or pre-existing failures are documented against the base.
 
 ## Validation commands
 

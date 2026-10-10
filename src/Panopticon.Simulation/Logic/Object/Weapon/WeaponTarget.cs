@@ -33,7 +33,7 @@ internal sealed class WeaponTarget
 
     public GameObject GetTargetObject() => _gameObjects.GetObjectById(TargetObjectId);
 
-    public void DoDamage(DamageType damageType, Fix64 amount, DeathType deathType, GameObject damageDealer)
+    public void DoDamage(DamageType damageType, Fix64 amount, DeathType deathType, GameObject damageDealer, DamageType damageFXOverride = DamageType.Unresistable)
     {
         // A projectile may detonate after its target object has already been destroyed and removed;
         // in that case there is nothing to damage.
@@ -42,6 +42,7 @@ internal sealed class WeaponTarget
             targetObject.AttemptDamage(new DamageInfoInput(damageDealer)
             {
                 DamageType = damageType,
+                DamageFXOverride = damageFXOverride,
                 DeathType = deathType,
                 Amount = (float)amount,
             });

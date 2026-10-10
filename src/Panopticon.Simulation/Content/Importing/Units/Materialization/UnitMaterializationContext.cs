@@ -21,6 +21,8 @@ public sealed class UnitMaterializationContext
     private readonly Dictionary<ContentId, string> _damageEffects;
     private readonly Func<string, DamageFX?>? _damageEffectLookup;
     private readonly Dictionary<ContentId, DamageFX> _validatedDamageEffects = new();
+    private readonly Dictionary<ContentId, string> _impactEffectDamageTypes;
+    private readonly Dictionary<ContentId, DamageType> _validatedImpactEffectDamageTypes = new();
 
     public UnitConversionPolicy Policy { get; }
 
@@ -43,7 +45,8 @@ public sealed class UnitMaterializationContext
         ILegacyNativeTable? legacyNatives = null,
         AssetStore? visualStore = null,
         IReadOnlyDictionary<ContentId, string>? damageEffects = null,
-        Func<string, DamageFX?>? damageEffectLookup = null)
+        Func<string, DamageFX?>? damageEffectLookup = null,
+        IReadOnlyDictionary<ContentId, string>? impactEffectDamageTypes = null)
     {
         ArgumentNullException.ThrowIfNull(policy);
 
@@ -53,6 +56,7 @@ public sealed class UnitMaterializationContext
         _visualStore = visualStore;
         _damageEffects = damageEffects?.ToDictionary() ?? new();
         _damageEffectLookup = damageEffectLookup;
+        _impactEffectDamageTypes = impactEffectDamageTypes?.ToDictionary() ?? new();
     }
 
     internal bool ValidateDamageEffects(UnitImportResolution resolution)
@@ -88,7 +92,47 @@ public sealed class UnitMaterializationContext
             _validatedDamageEffects[subject] = effect;
         }
 
+        ValidateImpactEffectDamageTypes(resolution);
         return !Diagnostics.Any(diagnostic => diagnostic.IsError);
+    }
+
+    private void ValidateImpactEffectDamageTypes(UnitImportResolution resolution)
+    {
+        foreach (var (subject, name) in _impactEffectDamageTypes)
+        {
+            var unit = resolution.Closure.OfType<UnitRecord>().FirstOrDefault(record => record.Id.Equals(subject));
+            IReadOnlyCollection<ContentId> weapons = unit is null || unit.Legacy is not null ? [] : UnitCombatMaterializer.WeaponIds(unit, resolution);
+            if (weapons.Count == 0)
+            {
+                Error(subject, $"Impact effect damage type '{name}' requires a typed unit with a weapon in this import.");
+                continue;
+            }
+
+            // Unresistable is the engine's "no override" sentinel, so it cannot be requested.
+            if (!EngineEnumNames.TryParse<DamageType>(name, out var damageType) || damageType == DamageType.Unresistable)
+            {
+                Error(subject, $"Impact effect damage type '{name}' is not a selectable damage type.");
+                continue;
+            }
+
+            var shared = resolution.Closure.OfType<UnitRecord>()
+                .Where(other => !other.Id.Equals(subject) && other.Legacy is null)
+                .SelectMany(other => UnitCombatMaterializer.WeaponIds(other, resolution))
+                .Intersect(weapons)
+                .ToArray();
+            if (shared.Length > 0)
+            {
+                Error(subject, $"Impact effect damage type '{name}' cannot apply to weapon(s) shared with other units: {string.Join(", ", shared.Select(id => id.Name))}.");
+                continue;
+            }
+
+            _validatedImpactEffectDamageTypes[subject] = damageType;
+        }
+    }
+
+    internal DamageType? ImpactEffectDamageType(ContentId subject)
+    {
+        return _validatedImpactEffectDamageTypes.TryGetValue(subject, out var damageType) ? damageType : null;
     }
 
     internal LazyAssetReference<DamageFX>? DamageEffectReference(ContentId subject)

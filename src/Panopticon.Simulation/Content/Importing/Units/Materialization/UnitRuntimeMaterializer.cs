@@ -95,6 +95,7 @@ public static class UnitRuntimeMaterializer
                 var definition = UnitBodyMovementMaterializer.CreateDefinition(unit, resolution, context);
                 UnitCombatMaterializer.AddSets(unit, definition, context);
                 ArmAircraftWeaponsAtBase(unit, definition, resolution, context);
+                UnitCombatMaterializer.ApplyImpactEffectDamageType(unit, resolution, context);
                 UnitAbilityMaterializer.AddModules(unit, definition, resolution, context);
                 UnitProductionMaterializer.Apply(unit, definition, context);
                 UnitVisualMaterializer.AddDraw(unit, definition, resolution, context);

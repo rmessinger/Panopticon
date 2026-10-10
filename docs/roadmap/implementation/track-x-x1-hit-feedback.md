@@ -11,7 +11,7 @@ Phase and dependencies: [Track X](../track-x-fixes-tweaks.md).
 | [WI-X1-02](../agent/cards/WI-X1-02-imported-damage-fx-binding.md) | Opt-in imported-vehicle damage-effect binding | Done |
 | [WI-X1-03](../agent/cards/WI-X1-03-hit-feedback-regressions.md) | Policy, lifecycle, and combat regression tests | Done |
 | [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) | Directional tank-impact and Rebel playback audit/design | Done |
-| [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md) | Opt-in impact-effect selection for imported weapons | Ready |
+| [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md) | Opt-in impact-effect selection for imported weapons | Done |
 | [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md) | Attacker-facing bounds placement for mapped imported targets | Ready |
 | [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Blocked |
 
@@ -96,6 +96,10 @@ Contact is a presentation approximation from transformed rendered bounds, not me
 4. Fallbacks: no client or bounds (headless), dead or missing source, non-invertible or non-finite transform, or result: victim origin. Source inside the bounds or degenerate direction: world bounds center.
 
 The gameplay radius and fixed capture offsets are not used. Damage processing and throttle are untouched: `ActiveBody` computes the position only after throttle passes and passes it to a `DamageFX.DoDamageFX` overload. The geometry lives in a pure static helper testable without graphics. Card: [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md).
+
+#### Selection results (WI-X1-06)
+
+Landed as designed. `UnitCombatMaterializer.WeaponIds` collects weapon-set slots and Attack-ability weapons (EE2 binds through the latter). `UnitCombatMaterializer.ApplyImpactEffectDamageType` stamps `DamageNugget.DamageFXOverride` after weapons are staged; `WeaponTarget.DoDamage` forwards it with a `Unresistable` default. `UnitImpactEffectSelectionTests` covers opt-in, absence, `UNRESISTABLE`/unknown names, unknown subject, weaponless subject, shared weapons, and a real-nugget run where the override plays the target effect while health and death match the unmapped run. The capture profile maps the tank to `ARMOR_PIERCING`.
 
 Projectile materialization stays out of scope. Recoil without a shell is the typed-import contract described above; X1-4 judges impacts only.
 

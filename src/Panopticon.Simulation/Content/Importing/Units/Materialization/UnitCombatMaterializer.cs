@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -119,6 +120,39 @@ internal static class UnitCombatMaterializer
         }
 
         return armor;
+    }
+
+    /// <summary>The unit's weapons: weapon-set slots plus weapons bound through Attack ability modules.</summary>
+    public static IReadOnlyCollection<ContentId> WeaponIds(UnitRecord unit, UnitImportResolution resolution)
+    {
+        var abilityWeapons = unit.ResolvedModules
+            .Where(module => module.Ability is not null)
+            .Select(module => resolution.Closure.FirstOrDefault(record => record.Id.Equals(module.Ability!.Value)))
+            .OfType<AbilityRecord>()
+            .Where(ability => ability.Weapon.IsPresent)
+            .Select(ability => ability.Weapon.Value);
+
+        return unit.Weapons.Resolved.Concat(abilityWeapons).ToHashSet();
+    }
+
+    /// <summary>Card WI-X1-06: stamps the validated presentation-only effect damage type on the unit's own weapons.</summary>
+    public static void ApplyImpactEffectDamageType(UnitRecord unit, UnitImportResolution resolution, UnitMaterializationContext context)
+    {
+        if (context.ImpactEffectDamageType(unit.Id) is not { } damageType)
+        {
+            return;
+        }
+
+        foreach (var weaponId in WeaponIds(unit, resolution))
+        {
+            if (context.Staged.TryGetValue(weaponId, out var asset) && asset is WeaponTemplate weapon)
+            {
+                foreach (var nugget in weapon.Nuggets.OfType<DamageNugget>())
+                {
+                    nugget.DamageFXOverride = damageType;
+                }
+            }
+        }
     }
 
     /// <summary>Adds the default (unconditioned) weapon and armor sets; primary, secondary, tertiary slots in order.</summary>

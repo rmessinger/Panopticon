@@ -62,6 +62,12 @@ public class DamageNugget : WeaponEffectNugget
     public DamageStatusType DamageStatusType { get; internal set; }
 
     public DamageFXType DamageFXType { get; private set; }
+
+    /// <summary>
+    /// Damage type used only to select damage effects; <see cref="DamageType.Unresistable"/>
+    /// means no override.
+    /// </summary>
+    public DamageType DamageFXOverride { get; internal set; } = DamageType.Unresistable;
     public DeathType DeathType { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
@@ -122,6 +128,6 @@ public class DamageNugget : WeaponEffectNugget
 
         var target = context.Weapon.CurrentTarget;
 
-        context.Weapon.CurrentTarget.DoDamage(DamageType, (Fix64)Damage, DeathType, context.Weapon.ParentGameObject);
+        context.Weapon.CurrentTarget.DoDamage(DamageType, (Fix64)Damage, DeathType, context.Weapon.ParentGameObject, DamageFXOverride);
     }
 }

@@ -57,9 +57,12 @@ public static class UnitContentImportRunner
         var policy = new UnitConversionPolicy(game.SageGame, gameUnitsPerSourceDistance: import.GameUnitsPerSourceDistance);
         var damageEffects = import.DamageEffects.ToDictionary(
             pair => new ContentId(set.Source, ContentKind.Unit, pair.Key), pair => pair.Value);
+        var impactEffectDamageTypes = import.ImpactEffectDamageTypes.ToDictionary(
+            pair => new ContentId(set.Source, ContentKind.Unit, pair.Key), pair => pair.Value);
         var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(
             policy, publisher.Lookup, visualStore: game.AssetStore, damageEffects: damageEffects,
-            damageEffectLookup: name => game.AssetStore.DamageFXs.GetByName(name)));
+            damageEffectLookup: name => game.AssetStore.DamageFXs.GetByName(name),
+            impactEffectDamageTypes: impactEffectDamageTypes));
         Report(content.Diagnostics, reporter);
         if (!content.Succeeded)
         {
