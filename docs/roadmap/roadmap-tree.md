@@ -6,7 +6,7 @@
 > [C](track-c-external-assets.md) · [D](track-d-gameplay-expansion.md) ·
 > [E](track-e-naval-warfare.md) · [F](track-f-terrain-destruction.md) ·
 > [G](track-g-rendering-clarity.md) · [H](track-h-storage-formats.md) ·
-> [W](track-w-western-front.md) · [M](track-m-mass-battle.md)) and the deep dives as phases,
+> [W](track-w-western-front.md) · [M](track-m-mass-battle.md) · [X](track-x-fixes-tweaks.md)) and the deep dives as phases,
 > sub-phases, or dependencies change; see [Tree maintenance](#tree-maintenance).
 >
 > Audience: human overview of roadmap structure and dependency flow.
@@ -33,6 +33,12 @@ Tracks → phases → sub-phases. Phases with a dedicated design document are ma
 ```mermaid
 mindmap
   root((Panopticon<br/>simulation<br/>roadmap))
+    X. Miscellaneous fixes and tweaks
+      X1 Imported-unit hit feedback ⮕
+        X1-1 Policy audit
+        X1-2 Imported damage FX binding
+        X1-3 Regression coverage
+        X1-4 Readable duel capture
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
         P0-1 Open command model
@@ -464,6 +470,7 @@ flowchart LR
     direction TB
     W3B["W3b Somme sector"]
     M2["M2 EE2 combat units"]
+    X1["X1 Imported-unit hit feedback"]
     H4["H4 New object/unit-definition storage format"]
     H2B["H2b Metric core units"]
   end
@@ -674,6 +681,8 @@ flowchart LR
   C4D --> H2A
   P9 --> H2A
   H2A --> M2
+  H2A --> X1
+  P9 --> X1
   P9 --> M2
   M2 --> M3
   M1 --> M4

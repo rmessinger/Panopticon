@@ -466,3 +466,11 @@ Source of truth: [deep-dives/w6-long-run-campaign.md](../deep-dives/w6-long-run-
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-w-w6-long-run-campaign.md](track-w-w6-long-run-campaign.md) | W6-1…W6-8 | Long-run campaign (WI-W6-01..08) |
+
+## Track X · X1: Imported-unit hit feedback
+
+Design: [hit feedback](../deep-dives/x1-imported-unit-hit-feedback.md), including grounded [architecture diagrams](../deep-dives/x1-imported-unit-hit-feedback.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-x-x1-hit-feedback.md](track-x-x1-hit-feedback.md) | X1-1..X1-4 | Policy audit, explicit damage effects, regressions, readable duel capture |

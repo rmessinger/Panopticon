@@ -138,6 +138,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`track-h-storage-formats.md`](track-h-storage-formats.md) | human | Shared unit-content importing (H2a, before M2), map interchange, versioned map/unit storage, migration, authoring integration, and round-trip validation. Distinct from B3/B4a-5 runtime storage. H2a depends on P9/C4d; the storage foundation is gated on Track P. |
 | [`track-w-western-front.md`](track-w-western-front.md) | human | Western Front simulation: charter fixture, aggregate sector model, fidelity promotion and reconciliation, geospatial sector, command and logistics experiments, distributed regions, and a long-run campaign. Built as a domain through the A4-1 seam and A4-4 state projection. |
 | [`track-m-mass-battle.md`](track-m-mass-battle.md) | human | Mixed-roster mass battle: capacity probe, battle map, EE2 combat units, roster normalization, army-scale AI, and the 1000 vs 1000 battle in batch, replay, and live modes. |
+| [`track-x-fixes-tweaks.md`](track-x-fixes-tweaks.md) | human | Open-ended miscellaneous fixes and tweaks, each with a bounded milestone. |
 | [`plans/mod-collector.md`](plans/mod-collector.md) | human | Design for the standalone `Panopticon.Tools.ModCollector` CLI: downloads/stages community mod archives into `.big` files, a prerequisite for Track D phase D3. |
 | [`plans/validation-ground-gap-closure.md`](plans/validation-ground-gap-closure.md) | human | Plan and `WI-VG-` card index for retiring the Unit Validation Ground's roster gaps (P9 follow-up): stale target-armor verdicts, host-side SpecialPower order construction, game-aware catalog, sandbox mechanics. |
 | [`plans/tracer-rounds.md`](plans/tracer-rounds.md) | human | Plan for rendering bullet tracers through the existing `Tracer` FXList nugget: client-side `TracerManager`, directional additive quads, no projectile or logic-side involvement. |
@@ -186,6 +187,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/w5-distributed-regional-simulation.md`](deep-dives/w5-distributed-regional-simulation.md) | Track W phase W5 - Front-strip shards over B6, lockstep coordination, and cross-boundary handoff. |
 | [`deep-dives/w6-long-run-campaign.md`](deep-dives/w6-long-run-campaign.md) | Track W phase W6 - Long-run campaign file, domain snapshot plus host save, replay indexing, and approximation error reporting. |
 | [`deep-dives/mass-battle-1k.md`](deep-dives/mass-battle-1k.md) | Long-term goal and Track M phases M0-M5 - Viewing model, map requirements and sourcing, EE2 DDF translation and roster normalization, army-scale AI, and scale dependencies. |
+| [`deep-dives/x1-imported-unit-hit-feedback.md`](deep-dives/x1-imported-unit-hit-feedback.md) | X1: explicit imported-vehicle target effects and readable mixed-source duel evidence. |
 | [`deep-dives/c1-import-abstraction.md`](deep-dives/c1-import-abstraction.md) | Track C phase C1 - CPU-only model and animation import contracts, W3D reference adapters, runtime materialization, and parity. |
 | [`deep-dives/c2-skeleton-animation-retargeting.md`](deep-dives/c2-skeleton-animation-retargeting.md) | Track C phase C2 - Direct-index and exact-name animation-channel binding to runtime model hierarchies. |
 | [`deep-dives/c3-material-texture-mapping.md`](deep-dives/c3-material-texture-mapping.md) | Track C phase C3 - Format-neutral core metallic-roughness materials, texture bindings, and engine PBR materialization. |
@@ -284,6 +286,8 @@ track document.
   probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
   battle. Depends on P9 and A1, then B1, H2a, C4d, A4, B4, B5, and A5.
 
+- [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion.
+
 ### Cross-track dependencies
 
 - Track P gates everything. [A1 (headless host)](track-a-foundations.md) depends on
@@ -326,6 +330,14 @@ track document.
 ---
 
 ## Progress
+
+### Track X - Miscellaneous Fixes and Tweaks
+
+| Phase | Progress | Items |
+|---|---|---|
+| X1 - Imported-unit hit feedback | `░░░░░░░░░░` | 0 / 4 |
+
+Track X has no terminal completion target; this table covers authored phases only.
 
 Progress counts follow the [implementation checklist](implementation-checklist.md). Updates occur when checklist items are checked off.
 
