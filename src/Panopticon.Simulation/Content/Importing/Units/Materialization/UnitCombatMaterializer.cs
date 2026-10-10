@@ -140,10 +140,11 @@ internal static class UnitCombatMaterializer
             definition.WeaponSets[set.Conditions] = set;
         }
 
-        if (record.Armor.IsPresent)
+        var damageFX = context.DamageEffectReference(record.Id);
+        if (record.Armor.IsPresent || damageFX is not null)
         {
             definition.ArmorSets.Add(ArmorTemplateSet.CreateImported(
-                context.Reference<ArmorTemplate>(record.Armor.Value), context.DamageEffectReference(record.Id)));
+                record.Armor.IsPresent ? context.Reference<ArmorTemplate>(record.Armor.Value) : null!, damageFX));
         }
     }
 

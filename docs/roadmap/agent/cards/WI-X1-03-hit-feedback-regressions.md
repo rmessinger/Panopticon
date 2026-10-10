@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-03` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-02` |

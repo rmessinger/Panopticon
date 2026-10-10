@@ -1678,7 +1678,7 @@ Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-0
   - AC: exact source assets, target-effect path, scope, missing-reference behavior, and implementation seams are recorded.
 - [x] X1-2 Bind opt-in damage effects for imported vehicles (`WI-X1-02`).
   - AC: the selected tank binds its requested effect; unconfigured imports and native content remain unchanged; missing effects fail before publication.
-- [ ] X1-3 Add policy and damage-lifecycle regression coverage (`WI-X1-03`).
+- [x] X1-3 Add policy and damage-lifecycle regression coverage (`WI-X1-03`).
   - AC: binding/publication cases pass and presentation does not change health loss or death outcomes; target placement and throttle have explicit evidence.
 - [ ] X1-4 Produce a readable mixed-source duel capture (`WI-X1-04`).
   - AC: both full units, labels, health reduction, and target-side impacts are visible; real damage assertions, GIF, and reproduction command accompany the evidence.

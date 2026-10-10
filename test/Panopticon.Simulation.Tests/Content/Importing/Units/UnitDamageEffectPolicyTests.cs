@@ -76,4 +76,36 @@ public class UnitDamageEffectPolicyTests
         Assert.Empty(content.Assets);
         Assert.Contains(content.Diagnostics, d => d.Message.Contains("Tank") && d.Message.Contains("MissingImpact"));
     }
+
+    [Fact]
+    public void NonVehicleCannotOptIn()
+    {
+        var resolution = UnitImportResolution.Resolve(ValidSoldier(), Registry);
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(
+            Policy, damageEffects: new Dictionary<ContentId, string> { [Id(ContentKind.Unit, "Soldier")] = "TankDamageFX" },
+            damageEffectLookup: _ => new DamageFX()));
+
+        Assert.False(content.Succeeded);
+        Assert.Empty(content.Assets);
+        Assert.Contains(content.Diagnostics, d => d.Message.Contains("Soldier") && d.Message.Contains("typed vehicle"));
+    }
+
+    [Fact]
+    public void MappingIsScopedToOneUnitNotItsSharedArmor()
+    {
+        var first = (UnitRecord)TankContent().Records[0];
+        var second = Unit("OtherTank", "Tank");
+        var set = new UnitContentSet(Source, [first, second, Armor("Plate")], [first.Id, second.Id]);
+        var resolution = UnitImportResolution.Resolve(set, Registry);
+        var effect = new DamageFX();
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(
+            Policy, damageEffects: new Dictionary<ContentId, string> { [first.Id] = "TankDamageFX" }, damageEffectLookup: _ => effect));
+
+        Assert.True(content.Succeeded);
+        var mapped = Assert.Single(content.Get<ObjectDefinition>(first.Id).ArmorSets);
+        var unmapped = Assert.Single(content.Get<ObjectDefinition>(second.Id).ArmorSets);
+        Assert.Same(mapped.Armor.Value, unmapped.Armor.Value);
+        Assert.Same(effect, mapped.DamageFX.Value);
+        Assert.Null(unmapped.DamageFX);
+    }
 }

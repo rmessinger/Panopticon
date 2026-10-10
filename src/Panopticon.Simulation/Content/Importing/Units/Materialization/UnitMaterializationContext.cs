@@ -60,10 +60,10 @@ public sealed class UnitMaterializationContext
         foreach (var (subject, name) in _damageEffects)
         {
             var unit = resolution.Closure.OfType<UnitRecord>().FirstOrDefault(record => record.Id.Equals(subject));
-            if (unit is null || unit.Legacy is not null || !unit.Armor.IsPresent ||
+            if (unit is null || unit.Legacy is not null ||
                 !unit.KindOf.Resolved.Contains("VEHICLE", StringComparer.OrdinalIgnoreCase))
             {
-                Error(subject, $"DamageFX '{name}' requires a typed vehicle with armor in this import.");
+                Error(subject, $"DamageFX '{name}' requires a typed vehicle in this import.");
                 continue;
             }
 

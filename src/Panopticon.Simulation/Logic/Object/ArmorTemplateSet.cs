@@ -9,7 +9,8 @@ public sealed class ArmorTemplateSet : IConditionState<ArmorSetCondition>
 {
     internal static ArmorTemplateSet CreateImported(LazyAssetReference<ArmorTemplate> armor, LazyAssetReference<DamageFX> damageFX)
     {
-        return new ArmorTemplateSet { Armor = armor, DamageFX = damageFX };
+        // A null-valued reference preserves Armor.NoArmor for typed sources without authored armor.
+        return new ArmorTemplateSet { Armor = armor ?? new LazyAssetReference<ArmorTemplate>(() => null), DamageFX = damageFX };
     }
 
     internal static ArmorTemplateSet Parse(IniParser parser)

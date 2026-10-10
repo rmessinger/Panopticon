@@ -1,0 +1,138 @@
+using System.Collections.Generic;
+using System.Numerics;
+using Panopticon.Content;
+using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Materialization;
+using Panopticon.FX;
+using Panopticon.Logic.Object;
+using Xunit;
+using static Panopticon.Tests.Content.Importing.Units.MaterializationFixtures;
+using static Panopticon.Tests.Content.Importing.Units.UnitRecordFixtures;
+
+namespace Panopticon.Tests.Content.Importing.Units;
+
+public class UnitDamageEffectLifecycleTests : MockedGameTest
+{
+    private sealed class EffectRecorder : FXNugget
+    {
+        public List<(uint Frame, Vector3 Position, Quaternion Rotation)> Hits { get; } = [];
+
+        internal override void Execute(FXListExecutionContext context)
+        {
+            Hits.Add((context.GameEngine.GameLogic.CurrentFrame.Value, context.Position, context.Rotation));
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void RealWeaponHitsUseVictimPlacementAndThrottleWithoutChangingDamageOrDeath(bool hasArmor)
+    {
+        var configured = RunWeapon(true, hasArmor);
+        var unconfigured = RunWeapon(false, hasArmor);
+
+        Assert.Equal(unconfigured.Health, configured.Health);
+        Assert.Equal(unconfigured.DamageCount, configured.DamageCount);
+        Assert.True(configured.Dead);
+        Assert.Equal(unconfigured.Dead, configured.Dead);
+        Assert.True(configured.Hits.Count > 1);
+        Assert.True(configured.Hits.Count < configured.DamageCount);
+        Assert.All(configured.Hits, hit =>
+        {
+            Assert.Equal(new Vector3(60, 20, 0), hit.Position);
+            Assert.Equal(Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 0.5f), hit.Rotation);
+        });
+        for (var i = 1; i < configured.Hits.Count; i++)
+        {
+            Assert.True(configured.Hits[i].Frame - configured.Hits[i - 1].Frame >= 3);
+        }
+
+        Assert.Empty(unconfigured.Hits);
+    }
+
+    private static (List<float> Health, int DamageCount, bool Dead, List<(uint Frame, Vector3 Position, Quaternion Rotation)> Hits) RunWeapon(bool configured, bool hasArmor)
+    {
+        var game = new TestGame(SageGame.CncGenerals);
+        var recorder = new EffectRecorder();
+        var fxList = new FXList();
+        fxList.Nuggets.Add(recorder);
+        var effect = new DamageFX();
+        var group = effect.Groups[(int)DamageType.SmallArms, (int)VeterancyLevel.Regular];
+        group.ThrottleTime = new LogicFrameSpan(3);
+        group.MajorFX = new LazyAssetReference<FXList>(fxList);
+        group.MinorFX = group.MajorFX;
+        var source = hasArmor ? UnitDamageEffectPolicyTests.TankContent() : Set(Unit("Tank") with
+        {
+            MaxHealth = Authored.Of(Hp(100)),
+            KindOf = ListOverride<string>.Replace(["VEHICLE"]),
+        });
+        var resolution = UnitImportResolution.Resolve(source, Registry);
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(
+            Policy, damageEffects: configured ? new Dictionary<ContentId, string> { [Id(ContentKind.Unit, "Tank")] = "TankDamageFX" } : null,
+            damageEffectLookup: _ => effect));
+        Assert.True(content.Succeeded);
+        var victim = game.GameLogic.CreateObject(content.Get<ObjectDefinition>(Id(ContentKind.Unit, "Tank")), null!);
+        victim.UpdateTransform(new Vector3(60, 20, 0), Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 0.5f));
+        var attacker = game.GameLogic.CreateObject(new ObjectDefinition("Shooter"), null!);
+        attacker.UpdateTransform(new Vector3(10, 20, 0), Quaternion.Identity);
+        var template = new WeaponTemplate { AttackRange = 100, CoolDownDelayBetweenShots = new RangeDuration(LogicFrameSpan.One) };
+        template.Nuggets.Add(new DamageNugget { Damage = 10, DamageType = DamageType.SmallArms, DeathType = DeathType.Normal });
+        var weapon = new Weapon(attacker, template, WeaponSlot.Primary, game.GameEngine);
+        weapon.SetTarget(new WeaponTarget(game.GameLogic, victim.Id));
+        var health = new List<float>();
+        var damageCount = 0;
+        var previous = victim.BodyModule.Health;
+        for (var frame = 0; frame < 300 && victim.BodyModule.Health > 0; frame++)
+        {
+            game.GameLogic.Update();
+            // The mock host has no drawable. Execute the actual weapon damage nugget, not synthetic damage inputs.
+            template.Nuggets[0].Execute(new WeaponEffectExecutionContext(weapon, game.GameEngine));
+            health.Add(victim.BodyModule.Health);
+            if (victim.BodyModule.Health < previous)
+            {
+                damageCount++;
+            }
+
+            previous = victim.BodyModule.Health;
+        }
+
+        Assert.Equal(hasArmor ? 20 : 10, damageCount);
+        return (health, damageCount, victim.IsEffectivelyDead, recorder.Hits);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PublicationNeverReplacesNativeDefinitionsOrEffects(bool valid)
+    {
+        var store = Generals.AssetStore;
+        var native = new ObjectDefinition("Tank");
+        store.ObjectDefinitions.Add(native);
+        var effect = new DamageFX();
+        effect.AssignImportedName("DamageFX", "TankDamageFX");
+        store.DamageFXs.Add(effect);
+        var publisher = new UnitContentPublisher(store);
+        var resolution = UnitImportResolution.Resolve(UnitDamageEffectPolicyTests.TankContent(), Registry);
+        var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(
+            Policy, publisher.Lookup, damageEffects: new Dictionary<ContentId, string> { [Id(ContentKind.Unit, "Tank")] = valid ? "TankDamageFX" : "Missing" },
+            damageEffectLookup: name => store.DamageFXs.GetByName(name)));
+        var depth = store.ScopeDepth;
+        if (valid)
+        {
+            var result = publisher.Publish(content);
+            Assert.True(result.Succeeded);
+            Assert.Same(effect, Assert.Single(((ObjectDefinition)publisher.Lookup(Id(ContentKind.Unit, "Tank"))!).ArmorSets).DamageFX.Value);
+            publisher.Unload(result.Published!);
+        }
+        else
+        {
+            Assert.Throws<System.InvalidOperationException>(() => publisher.Publish(content));
+            Assert.Null(publisher.Lookup(Id(ContentKind.Unit, "Tank")));
+        }
+
+        Assert.Same(native, store.ObjectDefinitions.GetByName("Tank"));
+        Assert.Same(effect, store.DamageFXs.GetByName("TankDamageFX"));
+        Assert.Empty(native.ArmorSets);
+        Assert.Equal(depth, store.ScopeDepth);
+    }
+}
