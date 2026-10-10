@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-04` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Ready` |
+| Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-03` |
@@ -15,6 +15,8 @@
 ## Goal
 
 Produce a clearly identified two-unit duel with visible target impacts, actor labels, health feedback, and complete framing.
+
+Blocker: the rendered duel passes both real-weapon damage assertions but target impacts are not visible. The oversized imported tank covers the target origin; sampled tank-region pixels remain unchanged across small-arms hits. Source visual scaling and particle playback require separate investigation. Health bars do not close this gate. Evidence and commands are recorded in the implementation plan.
 
 ## Context to read (and only this)
 
@@ -41,11 +43,11 @@ Produce a clearly identified two-unit duel with visible target impacts, actor la
 
 ## Acceptance criteria
 
-- [ ] GIF clearly identifies the EE2 tank and Generals Rebel; both complete units remain in frame.
+- [x] GIF clearly identifies the EE2 tank and Generals Rebel; both complete units remain in frame.
 - [ ] Target-side impacts and health reduction are visible in both attack directions, supported by real weapon damage assertions.
-- [ ] GIF cadence shows short-lived impacts; report and reproduction command accompany it.
+- [ ] GIF cadence shows short-lived impacts; report and reproduction command accompany it. One-frame cadence, report, and command are available; impacts are not visually proven.
 - [ ] Existing Generals and ReplaySketch map behavior remain intact; any blocked visual proof leaves this card Blocked.
-- [ ] Output is labeled as a duel, not a full roster, rearm, or mass-battle proof.
+- [x] Output is labeled as a duel, not a full roster, rearm, or mass-battle proof.
 
 ## Validation commands
 

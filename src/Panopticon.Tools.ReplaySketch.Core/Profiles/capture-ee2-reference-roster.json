@@ -9,12 +9,12 @@
   //   CNC_GENERALS_PATH=... EMPIRE_EARTH_II_PATH=... \
   //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
   //     --built-in-scenario ScenarioCapture --scenario capture-ee2-reference-roster.json
-  "Name": "ee2-reference-roster",
+  "Name": "ee2-tank-rebel-duel",
   "MapPath": "maps/alpine assault/alpine assault.map",
-  "DurationFrames": 540,
+  "DurationFrames": 360,
   "SettleFrames": 10,
-  "CaptureStride": 6,
-  "RenderEveryFrame": false,
+  "CaptureStride": 1,
+  "RenderEveryFrame": true,
   "HideHud": true,
   "Players": [
     { "Id": "ee2", "Side": "FactionAmerica", "Name": "EE2" },
@@ -33,6 +33,8 @@
       ],
       "Region": "we",
       "GameUnitsPerSourceDistance": 12,
+      // Explicit Generals presentation compatibility, not source-authored EE2 effects.
+      "DamageEffects": { "LightMounted1UpgradeEpoch15": "TankDamageFX" },
       "ExcludedMechanics": [
         "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
         "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",
@@ -51,6 +53,7 @@
   "Actors": [
     {
       "Id": "tank",
+      "Label": "EE2 tank",
       "Definition": "ee2:LightMounted1UpgradeEpoch15",
       "Owner": "ee2",
       "X": 470,
@@ -60,6 +63,7 @@
     },
     {
       "Id": "rebel",
+      "Label": "Generals Rebel",
       "Definition": "GLAInfantryRebel",
       "Owner": "gla",
       "X": 560,
@@ -71,10 +75,10 @@
   "Camera": {
     "Mode": "AutoFit",
     "SubjectActorIds": [ "tank", "rebel" ],
-    "DesiredSpanFraction": 0.5,
-    "InitialCameraHeight": 140,
-    "MinCameraHeight": 60,
-    "MaxCameraHeight": 320
+    "DesiredSpanFraction": 0.35,
+    "InitialCameraHeight": 220,
+    "MinCameraHeight": 160,
+    "MaxCameraHeight": 450
   },
   "Commands": [
     { "Type": "Attack", "Frame": 30, "SourceActorId": "tank", "TargetActorId": "rebel" },

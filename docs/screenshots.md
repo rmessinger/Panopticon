@@ -73,6 +73,12 @@ with a final-frame pause. Filename order alone does not imply a constant frame r
 
 ## Recipe: 3D scene screenshots (headless, reliable)
 
+The generic GIF annotator supports `--health` for measured per-actor health panels outside the
+rendered scene. `--labels` retains the static legend mode. Imported model bounds can exceed the
+manifest's gameplay-derived `RadiusPixels`; increase `--padding` to retain complete models and
+effects. The X1 duel uses `--health --labels --padding 260` and captures every logic frame.
+Health panels are not proof of target-impact rendering.
+
 The TestHarness renders offscreen with Vulkan and captures PNGs; no display is needed.
 
 `MassBattleDeploymentScreenshotPath` captures the armies after deployment in either mode.

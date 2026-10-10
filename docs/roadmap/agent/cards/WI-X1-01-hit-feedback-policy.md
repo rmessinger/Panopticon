@@ -40,9 +40,9 @@ Specify the smallest explicit presentation policy that binds installed Generals 
 
 ## Acceptance criteria
 
-- [ ] Installed source assets and runtime binding path are cited; muzzle FX and target FX are distinguished.
-- [ ] Policy scope, absence behavior, missing-asset diagnostics, and exact implementation seams are specified.
-- [ ] Capture reuse points are recorded; no general EE2 effects importer or projectile rewrite is required.
+- [x] Installed source assets and runtime binding path are cited; muzzle FX and target FX are distinguished.
+- [x] Policy scope, absence behavior, missing-asset diagnostics, and exact implementation seams are specified.
+- [x] Capture reuse points are recorded; no general EE2 effects importer or projectile rewrite is required.
 
 ## Validation commands
 

@@ -10,7 +10,7 @@ Phase and dependencies: [Track X](../track-x-fixes-tweaks.md).
 | [WI-X1-01](../agent/cards/WI-X1-01-hit-feedback-policy.md) | Source/runtime audit and bounded compatibility policy | Done |
 | [WI-X1-02](../agent/cards/WI-X1-02-imported-damage-fx-binding.md) | Opt-in imported-vehicle damage-effect binding | Done |
 | [WI-X1-03](../agent/cards/WI-X1-03-hit-feedback-regressions.md) | Policy, lifecycle, and combat regression tests | Done |
-| [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Ready |
+| [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Blocked |
 
 One commit per card; leave any PR open for operator merge. Reconcile Draft cards against preceding evidence before execution. Stop and preserve artifacts on determinism/golden-output deviations, pending operator determination.
 
@@ -43,3 +43,31 @@ Eleven focused cases pass. `UnitDamageEffectLifecycleTests` uses the existing `F
 Full non-interactive validation has one pre-existing failure: `ParkingPlaceBehavior_ReportLanding`, expected -1, actual 0. A detached clean worktree at `5bc7eb13f` reproduces the same assertion. No determinism or golden assertion failed.
 
 Final capture results are recorded below; X1 remains In progress until visible-impact evidence passes.
+
+### Capture results: blocked visible-impact gate
+
+The profile is explicitly named `ee2-tank-rebel-duel`. It retains all six publication rows but spawns only the tank and Rebel. Both complete models remain framed; labels and measured health bars occupy a separate GIF panel. The 360-frame duration ends before either actor dies. The camera fits at height 177; GIF crop padding 260 compensates for the tank's gameplay radius being much smaller than its rendered bounds. Capture cadence is one frame per 30 Hz logic tick.
+
+Real-weapon results: Rebel 120 to 30 HP, three hits at capture frames 45, 152, and 259. Tank 300 to 225 HP, fifteen small-arms hits from frame 201 through 343. Both `ActorDamaged` expectations pass. Sampled tank-region pixels (100,150 to 540,390) remain unchanged across hits despite the validated binding. Muzzle flashes on the Rebel are visible, but do not establish target-impact rendering. Target impacts in both directions remain visually unproven.
+
+Likely follow-up: inspect source visual scaling and target particle playback. The imported tank covers its target origin and the manifest radius does not describe its visible model. `ParticleSystemFXNugget.Execute` also currently ignores the parsed `Height` field. Neither issue is repaired by changing damage, adding fake flashes, or importing an unrelated armor. These findings require a bounded follow-up design before X1-4 can be closed.
+
+Shared artifacts:
+
+- `/mnt/pit2/Network Storage/temp/x1-hit-feedback-duel.gif`, labeled health/framing evidence, not a passing impact proof.
+- `/mnt/pit2/Network Storage/temp/x1-hit-feedback-report.json`, damage results and blocked verdict.
+- `/mnt/pit2/Network Storage/temp/frames/x1-hit-feedback/manifest.json` and `frame_0000.png` through `frame_0359.png`.
+- `frames/x1-hit-feedback/replaysketch-map.png` and `replaysketch-model.png` under the shared directory. Map terrain and markers render. Model screenshot mode captures Ready controls but an empty summary/preview; this is not model-rendering evidence. No front-end code changed.
+
+Reproduction:
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+dotnet run --project src/Panopticon.Tools.TestHarness -- \
+  --headless --built-in-scenario ScenarioCapture --scenario capture-ee2-reference-roster.json
+python3 scripts/annotate_capture_gif.py /tmp/panopticon_capture_ee2-tank-rebel-duel \
+  "/mnt/pit2/Network Storage/temp/x1-hit-feedback-duel.gif" --labels --health --padding 260
+```
+
+Final validation: build, full format verification, brace check, eleven policy/lifecycle tests, and two Python overlay tests pass. Full non-interactive repeat: 2198 simulation, 356 ReplaySketch, and 53 mathematics tests pass, seven simulation tests skip, and the independently reproduced landing assertion fails. One earlier run also reported a missing P7 invariant predicate; the full repeat passed that test. No registry or unrelated test fixes are included.

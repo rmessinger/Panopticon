@@ -38,10 +38,10 @@ Apply the audited compatibility policy through shared materialization so the imp
 
 ## Acceptance criteria
 
-- [ ] Explicit tank mapping binds the requested effect; unconfigured imports do not gain effects.
-- [ ] Missing requested assets fail before publication with the subject and asset name.
-- [ ] Generals bindings and damage/armor/weapon values remain unchanged.
-- [ ] Standard validation passes or pre-existing failures are documented against the base.
+- [x] Explicit tank mapping binds the requested effect; unconfigured imports do not gain effects.
+- [x] Missing requested assets fail before publication with the subject and asset name.
+- [x] Generals bindings and damage/armor/weapon values remain unchanged.
+- [x] Standard validation passes or pre-existing failures are documented against the base.
 
 ## Validation commands
 

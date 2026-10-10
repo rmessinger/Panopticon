@@ -37,10 +37,10 @@ Prove effects are presentation-only and reuse the existing damage lifecycle, tar
 
 ## Acceptance criteria
 
-- [ ] Policy and publication cases are covered, including unchanged native definitions.
-- [ ] Health/damage/death results agree with and without presentation mapping.
-- [ ] Target placement and throttle have test evidence, or an explicit visual-evidence handoff without a false test-pass claim.
-- [ ] Standard validation passes or independently reproduced base failures are reported.
+- [x] Policy and publication cases are covered, including unchanged native definitions.
+- [x] Health/damage/death results agree with and without presentation mapping.
+- [x] Target placement and throttle have test evidence, or an explicit visual-evidence handoff without a false test-pass claim.
+- [x] Standard validation passes or independently reproduced base failures are reported.
 
 ## Validation commands
 
