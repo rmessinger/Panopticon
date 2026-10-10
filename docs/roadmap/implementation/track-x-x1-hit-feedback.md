@@ -52,6 +52,10 @@ Real-weapon results: Rebel 120 to 30 HP, three hits at capture frames 45, 152, a
 
 Likely follow-up: inspect source visual scaling and target particle playback. The imported tank covers its target origin and the manifest radius does not describe its visible model. `ParticleSystemFXNugget.Execute` also currently ignores the parsed `Height` field. Neither issue is repaired by changing damage, adding fake flashes, or importing an unrelated armor. These findings require a bounded follow-up design before X1-4 can be closed.
 
+Operator review correction: tank impacts are visible between the wheels, not on the Rebel-facing surface. The pixel sample above did not establish that effects were absent and is not a placement proof. `DamageFX.DoDamageFX` uses `victim.Translation` and `victim.Rotation`; it does not calculate surface contact from the attack direction. Placement must be distinguished from occlusion and model scale.
+
+The tank's recoil animation is visible without a shell or visible Rebel impact. `UnitCombatMaterializer` creates a direct `DamageNugget`, copies projectile speed, but does not materialize a projectile object. This is the current typed-import contract, not evidence that a rendered shell disappeared. The native infantry effect selection/playback at the Rebel remains a separate investigation from projectile support. No cosmetic shell is added to conceal that gap.
+
 Shared artifacts:
 
 - `/mnt/pit2/Network Storage/temp/x1-hit-feedback-duel.gif`, labeled health/framing evidence, not a passing impact proof.

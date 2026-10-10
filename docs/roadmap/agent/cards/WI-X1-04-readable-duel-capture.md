@@ -16,7 +16,7 @@
 
 Produce a clearly identified two-unit duel with visible target impacts, actor labels, health feedback, and complete framing.
 
-Blocker: the rendered duel passes both real-weapon damage assertions but target impacts are not visible. The oversized imported tank covers the target origin; sampled tank-region pixels remain unchanged across small-arms hits. Source visual scaling and particle playback require separate investigation. Health bars do not close this gate. Evidence and commands are recorded in the implementation plan.
+Blocker: the rendered duel passes both real-weapon damage assertions, but operator review identifies tank impacts between the wheels rather than on the Rebel-facing surface. Tank recoil is visible without a shell or visible Rebel impact. Attacker-facing placement and Rebel effect playback require investigation. Typed imported weapons currently have no projectile objects. Health bars do not close this gate. Evidence and commands are recorded in the implementation plan.
 
 ## Context to read (and only this)
 
