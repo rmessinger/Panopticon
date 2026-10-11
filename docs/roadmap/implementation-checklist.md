@@ -1686,5 +1686,5 @@ Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-0
   - AC: the mapped tank weapon plays infantry impacts through `DamageFXOverride`; damage/health/death unchanged; invalid mappings fail before staging.
 - [x] X1-7 Place mapped imported-target effects on the attacker-facing bounds (`WI-X1-07`).
   - AC: helper geometry tests for rotated/scaled bounds and fallbacks pass; native and unmapped targets keep origin placement; combat results unchanged.
-- [ ] X1-4 Produce a readable mixed-source duel capture (`WI-X1-04`).
+- [x] X1-4 Produce a readable mixed-source duel capture (`WI-X1-04`).
   - AC: both full units, labels, health reduction, tank impacts on the Rebel-facing surface, and Rebel target impacts are visible; real damage assertions, GIF, and reproduction command accompany the evidence.

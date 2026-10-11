@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-04` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-06`, `WI-X1-07` |
@@ -44,9 +44,9 @@ Prerequisites landed: [WI-X1-06](WI-X1-06-imported-impact-effect-selection.md) a
 ## Acceptance criteria
 
 - [x] GIF clearly identifies the EE2 tank and Generals Rebel; both complete units remain in frame.
-- [ ] Target-side impacts and health reduction are visible in both attack directions, supported by real weapon damage assertions.
+- [x] Target-side impacts and health reduction are visible in both attack directions, supported by real weapon damage assertions.
 - [ ] GIF cadence shows short-lived impacts; report and reproduction command accompany it. One-frame cadence, report, and command are available; impacts are not visually proven.
-- [ ] Existing Generals and ReplaySketch map behavior remain intact; any blocked visual proof leaves this card Blocked.
+- [x] Existing Generals and ReplaySketch map behavior remain intact; any blocked visual proof leaves this card Blocked.
 - [x] Output is labeled as a duel, not a full roster, rearm, or mass-battle proof.
 
 ## Validation commands
@@ -67,3 +67,7 @@ No M2 aircraft/animation remediation or EE2 particle importer. Health bars alone
 ## On completion
 
 Set Done only with rendered evidence, tick X1-4, set X1 Done when all cards pass, update README progress and `.exchange`, and leave the PR open.
+
+## Result
+
+Done with operator visual confirmation. Three captures share one profile and command (see the [X1 plan](../../implementation/track-x-x1-hit-feedback.md#capture-results-blocked-visible-impact-gate) and its post-fix sections): the blocked run, the merged-bounds fix, and the sub-object-surface refinement. Final evidence: Rebel dust impacts at frames 45/152/259, tank sparks on the Rebel-facing hull surface at frames 201-343, identical combat results in every run (tank 300 to 225 HP over 15 hits, Rebel 120 to 30 HP over 3 hits, both ActorDamaged expectations pass). Artifacts: x1-hit-feedback-duel.gif, x1-hit-feedback-impacts.png, x1-hit-feedback-report.json, and frames under frames/x1-hit-feedback/ in the shared directory. Shell materialization stays out of scope by design.

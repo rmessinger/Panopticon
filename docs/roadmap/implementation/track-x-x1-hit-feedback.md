@@ -13,7 +13,7 @@ Phase and dependencies: [Track X](../track-x-fixes-tweaks.md).
 | [WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) | Directional tank-impact and Rebel playback audit/design | Done |
 | [WI-X1-06](../agent/cards/WI-X1-06-imported-impact-effect-selection.md) | Opt-in impact-effect selection for imported weapons | Done |
 | [WI-X1-07](../agent/cards/WI-X1-07-attacker-facing-impact-placement.md) | Attacker-facing bounds placement for mapped imported targets | Done |
-| [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Ready |
+| [WI-X1-04](../agent/cards/WI-X1-04-readable-duel-capture.md) | Readable labeled duel and rendered impact evidence | Done |
 
 One commit per card; leave any PR open for operator merge. Reconcile Draft cards against preceding evidence before execution. Stop and preserve artifacts on determinism/golden-output deviations, pending operator determination.
 
@@ -134,3 +134,7 @@ python3 scripts/annotate_capture_gif.py /tmp/panopticon_capture_ee2-tank-rebel-d
 ```
 
 Final validation: build, full format verification, brace check, eleven policy/lifecycle tests, and two Python overlay tests pass. Full non-interactive repeat: 2198 simulation, 356 ReplaySketch, and 53 mathematics tests pass, seven simulation tests skip, and the independently reproduced landing assertion fails. One earlier run also reported a missing P7 invariant predicate; the full repeat passed that test. No registry or unrelated test fixes are included.
+
+#### Operator acceptance (2026-10-11)
+
+Operator confirmed the sub-object-surface placement ("looks good") after reviewing the regenerated GIF and crops. X1-4 is Done; X1 is complete at 7/7 cards. PR #233 remains open for merge.
