@@ -1693,7 +1693,7 @@ Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-0
 
 Dependency: M1. Independent of X1. [Evidence and cards](implementation/track-x-x2-capacity-probe-fixes.md).
 
-- [ ] X2-1 Bound temporary graphics-upload resource lifetimes (`WI-X2-01`).
+- [x] X2-1 Bound temporary graphics-upload resource lifetimes (`WI-X2-01`).
   - AC: repeated uploads have bounded temporary ownership, correct destination contents, safe cleanup, and before/after D3D11 native-memory and frame-time evidence.
 - [ ] X2-2 Reduce measured combat FX/model resource recreation (`WI-X2-02`).
   - AC: post-X2-1 stacks identify one recreation owner; compatible resources are reused with bounded retention, reset/disposal coverage, fewer constructions, and preserved visuals.

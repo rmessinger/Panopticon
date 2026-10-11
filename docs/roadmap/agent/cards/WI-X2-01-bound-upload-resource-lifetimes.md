@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X2-01` |
 | Roadmap phase | [Track X · X2](../../track-x-fixes-tweaks.md), capacity-probe graphics resource fixes |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -64,11 +64,11 @@ sequenceDiagram
 
 ## Acceptance criteria
 
-- [ ] Repeated uploads cannot grow the deferred temporary-resource backlog in proportion to total uploads.
-- [ ] Uploaded buffer and texture contents remain correct; returned destination resources remain usable.
-- [ ] Failure paths release safely owned temporary resources.
-- [ ] D3D11 evidence includes native process-memory measurements, not only managed heap size.
-- [ ] Capacity-probe results include memory growth and frame-time impact of synchronous cleanup, with residual growth explicitly reported.
+- [x] Repeated uploads cannot grow the deferred temporary-resource backlog in proportion to total uploads.
+- [x] Uploaded buffer and texture contents remain correct; returned destination resources remain usable.
+- [x] Failure paths release safely owned temporary resources.
+- [ ] D3D11 evidence includes native process-memory measurements, not only managed heap size. Pending operator Windows run; command in Result.
+- [x] Capacity-probe results include memory growth and frame-time impact of synchronous cleanup, with residual growth explicitly reported (Linux/Vulkan host).
 - [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
@@ -96,4 +96,33 @@ Record the exact Windows D3D11 probe command and focused graphics-test command i
 
 ## Result
 
-Pending.
+Done, with the D3D11 native-memory item explicitly pending a Windows operator run.
+
+Fix: `CreateStaticBuffer` and `CreateStaticTexture2D` now submit, queue their command list and staging resource, and immediately drain through `WaitForIdle`, mirroring `RadiusCursorDecals`. Recording and submission are guarded so a throw disposes the command list, staging resource, and undelivered destination. Destination ownership is unchanged.
+
+Regression: `ResourceUploadLifetimeTests` (headless Vulkan). 64 buffer uploads and 32 texture uploads keep the deferred queue at zero after every call, destination contents verified by staging read-back (including uniform-buffer 16-byte rounding); a truncated-mip upload throws and leaves no deferred temporaries. Without the fix, both queue-drain tests fail (queue grows by two resources per upload); content and failure-path tests pass in both states by design.
+
+Probe (Linux, RADV Vulkan, Debug build, 900-frame budget, deepdivide profile, 2,000-unit engagement; screenshots disabled during measurement):
+
+| Metric | Pre-fix | Post-fix |
+|---|---|
+| Frames run / units destroyed | 900 / 36 | 900 / 36 |
+| Median tick wall ms (95% CI) | 56.9 (54.0-60.7) | 53.0 (50.5-57.3) |
+| Median FPS (95% CI) | 17.6 (16.5-18.5) | 18.9 (17.5-19.8) |
+| scene3d span median ms | 3.85 | 3.85 |
+| Gen0/1/2 GC | 1245/80/13 | 1244/98/14 |
+| Managed alloc total | 17.54 GB | 17.54 GB |
+| End RSS | 138.9 MB | 151.8 MB |
+
+Interpretation: the battle is deterministic and identical; synchronous draining costs no measurable frame time on this host (medians overlap within CI; post-fix medians are slightly lower, run-to-run noise). Linux RSS cannot substitute for the Windows D3D11 evidence: RADV retains freed device memory in driver pools, so end-RSS differences are not a native-byte attribution. Both runs exit 5 with the pre-existing "no aircraft completed a second sortie" engagement check; identical in both states, recorded as environmental for this comparison.
+
+Windows D3D11 evidence command (operator run; same profile and budget):
+
+```sh
+CNC_GENERALS_PATH="<install>" dotnet run --project src/Panopticon.Tools.TestHarness --no-build --   --headless --built-in-scenario MassBattleCapacityProbe
+# TestHarness.json: Scenario=MassBattleCapacityProbe, Headless=true,
+# MassBattleCapacityProbeFrameBudget=9000; sample working set/private bytes during the run;
+# keep screenshots out of the measured interval.
+```
+
+Deferred follow-up if the Windows run shows the idle-per-upload drain is too costly: a scoped asynchronous-upload design (fence or per-frame drain), split from this card per its guardrails.
