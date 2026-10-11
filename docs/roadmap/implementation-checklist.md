@@ -1688,3 +1688,12 @@ Dependencies: H2a, P9; cards consume the already published M2 tank from `WI-M2-0
   - AC: helper geometry tests for rotated/scaled bounds and fallbacks pass; native and unmapped targets keep origin placement; combat results unchanged.
 - [x] X1-4 Produce a readable mixed-source duel capture (`WI-X1-04`).
   - AC: both full units, labels, health reduction, tank impacts on the Rebel-facing surface, and Rebel target impacts are visible; real damage assertions, GIF, and reproduction command accompany the evidence.
+
+### X2: Capacity-probe graphics resource fixes
+
+Dependency: M1. Independent of X1. [Evidence and cards](implementation/track-x-x2-capacity-probe-fixes.md).
+
+- [ ] X2-1 Bound temporary graphics-upload resource lifetimes (`WI-X2-01`).
+  - AC: repeated uploads have bounded temporary ownership, correct destination contents, safe cleanup, and before/after D3D11 native-memory and frame-time evidence.
+- [ ] X2-2 Reduce measured combat FX/model resource recreation (`WI-X2-02`).
+  - AC: post-X2-1 stacks identify one recreation owner; compatible resources are reused with bounded retention, reset/disposal coverage, fewer constructions, and preserved visuals.
