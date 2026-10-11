@@ -8,8 +8,10 @@
 
 Copy the PNG into `/mnt/pit2/Network Storage/temp/` (the path contains spaces; quote it). That
 directory is served read-only by the live viewer at `https://files.reid-corp.com/viewer/`, which
-shows the newest image automatically: no refresh, upload, or login. Overwrite the same filename
-for iteration snapshots so the viewer swaps instantly.
+shows the newest image automatically: no refresh, upload, or login. Each iteration uses a unique
+versioned filename and frame directory. Preserve existing entries as progress evidence; no
+overwrite or removal without explicit operator approval. Historical recaptures include
+`reconstructed` in their filenames and record the source commit.
 
 Layout:
 - Top level: meaningful demonstrations of progress only (proof stills, before/after comparisons,
