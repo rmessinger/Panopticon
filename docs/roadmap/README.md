@@ -451,13 +451,13 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Phase | Progress | Items |
 |---|---|---|
-| M0 - Battle map | `░░░░░░░░░░` | 0 / 3 |
-| M1 - Capacity probe | `░░░░░░░░░░` | 0 / 3 |
-| M2 - EE2 combat units | `░░░░░░░░░░` | 0 / 4 |
+| M0 - Battle map | `██████████` | 3 / 3 |
+| M1 - Capacity probe | `██████████` | 3 / 3 |
+| M2 - EE2 combat units | `██████████` | 4 / 4 |
 | M3 - Mixed roster normalization | `░░░░░░░░░░` | 0 / 3 |
 | M4 - Army-scale AI | `░░░░░░░░░░` | 0 / 3 |
 | M5 - 1000 vs 1000 battle | `░░░░░░░░░░` | 0 / 4 |
-| Track M total | `░░░░░░░░░░` | 0 / 20 |
+| Track M total | `█████░░░░░` | 10 / 20 |
 
 ---
 

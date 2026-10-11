@@ -373,7 +373,7 @@ public sealed class LocomotorTemplate : BaseAsset
     /// <summary>
     /// Apply "2D friction" even when airborne... useful for realistic-looking movement.
     /// </summary>
-    public bool Apply2DFrictionWhenAirborne { get; private set; } = false;
+    public bool Apply2DFrictionWhenAirborne { get; internal set; } = false;
 
     /// <summary>
     /// Pinewood derby, moves only by gravity pulling downhill.

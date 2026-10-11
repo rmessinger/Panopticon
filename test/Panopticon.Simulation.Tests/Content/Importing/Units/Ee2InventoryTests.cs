@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Ee2;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.IO;
 using Xunit;
 using Xunit.Abstractions;
@@ -265,12 +266,17 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
             new Panopticon.Content.Importing.Nif.NifAnimationImporter(),
             new Panopticon.Content.Importing.AssetImportContext(OpenInstall().Graphics, language: null));
 
-        // Six of the seven reference entries install cleanly. The infantry entry is blocked on
-        // Track C animation support and its evidence is preserved below; the model itself imports.
+        // All seven reference entries install cleanly, incl. the infantry clips: epoch-15
+        // clips carry controller flags 0x0025 (accepted since WI-M2-05), and clips authored
+        // against skeleton supersets (the death clip targets Bone10) bind their matched bones.
         var verify = installer.Verify(content.VisualAssets);
-        Assert.All(verify, d => Assert.Contains("HeavyInfantry1_15", d.Message));
-        Assert.Contains(verify, d => d.Message.Contains("controller flags 0x0025"));
-        output.WriteLine($"{verify.Count} blocked infantry clips: {verify[0].Message}");
+        Assert.Empty(verify);
+        var infantryClips = content.VisualAssets
+            .Where(r => r.Subject.Name.Contains("HeavyInfantry1_15") && r.Kind == VisualAssetKind.Animation)
+            .Select(r => r.SourceKey)
+            .ToList();
+        Assert.Contains(infantryClips, c => c.Contains("death01"));
+        output.WriteLine($"infantry clips installed: {string.Join(", ", infantryClips)}");
 
         foreach (var rowKey in ReferenceRowKeys)
         {

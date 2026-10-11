@@ -228,8 +228,21 @@ public class Ee2TypedMaterializationTests
         Assert.Equal(4.0 * 12, locomotor.PreferredHeight, 3);
         Assert.Equal(95 * Math.PI / 180.0 / 30, locomotor.MaxTurnRate, 7);
 
-        // The parking flow drives the taxiing set; EE2 authors no separate taxi speed.
+        // Every Generals airborne locomotor applies 2D friction while airborne; without it
+        // forward-speed maintenance accumulates lateral velocity through turns (WI-M2-04).
+        Assert.True(locomotor.Apply2DFrictionWhenAirborne);
+        Assert.True(locomotor.AllowAirborneMotiveForce);
+
+        // The parking flow taxis on a dedicated ground locomotor mirroring Generals
+        // BasicJetTaxiLocomotor, not the authored air speed (whose turn radius dwarfs the
+        // parking bone spacing).
         Assert.True(definition.LocomotorSets.ContainsKey(LocomotorSetType.Taxiing));
+        var taxi = Assert.Single(definition.LocomotorSets[LocomotorSetType.Taxiing].Locomotors).Value;
+        Assert.Equal(Surfaces.Ground, taxi.Surfaces);
+        Assert.Equal(LocomotorAppearance.Treads, taxi.Appearance);
+        Assert.Equal(50 / 30.0, taxi.MaxSpeed, 5);
+        Assert.Equal(180 * Math.PI / 180.0 / 30, taxi.MaxTurnRate, 7);
+        Assert.Equal(100 / (30.0 * 30.0), taxi.Acceleration, 5);
     }
 
     [Fact]
@@ -245,6 +258,7 @@ public class Ee2TypedMaterializationTests
         var locomotor = definition.LocomotorSets[LocomotorSetType.Normal].Locomotors[0].Value;
         Assert.Equal(LocomotorAppearance.Hover, locomotor.Appearance);
         Assert.Equal(Surfaces.Air, locomotor.Surfaces);
+        Assert.True(locomotor.Apply2DFrictionWhenAirborne);
     }
 
     [Fact]

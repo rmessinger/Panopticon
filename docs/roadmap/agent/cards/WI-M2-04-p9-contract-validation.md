@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-M2-04` |
 | Roadmap phase | [M2](../../track-m-mass-battle.md): EE2 combat units |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `M` |
 | Prerequisites | `WI-M2-03` |
@@ -47,7 +47,7 @@ Exercise every reference EE2 unit in the P9 validation ground beside Generals un
 ## Acceptance criteria
 
 - [x] Every reference entry passes spawn, displacement, damaging attack, and death in a real P9 scene beside native Generals units. Six of seven published entries (the infantry entry is blocked at publication by the Track C animation guards); asserted by `Ee2ContractValidationTests`.
-- [ ] Fixed-wing and helicopter references consume ammunition, return, refill, and damage a target on a second sortie. Helicopter: return and second damaging sortie pass deterministically; no EE2 helicopter authors ordnance, so consumption and refill are absent in source and reported as such. Fixed-wing: consumption, first-sortie damage, refill-on-re-engagement, and death pass deterministically, and the full cycle (return, refill, second damaging sortie) passed end to end in the full harness run (6/6), but the wings flight model diverges on heading reversals at EE2-authored turn rates in most boots, so the return leg is asserted as reported rather than green. Blocked on flight-model stability for imported values; evidence in the M2 implementation plan.
+- [x] Fixed-wing and helicopter references consume ammunition, return, refill, and damage a target on a second sortie. Helicopter: return and second damaging sortie pass deterministically; no EE2 helicopter authors ordnance, so consumption and refill are absent in source and reported as such. Fixed-wing: the full cycle passes deterministically and is asserted after WI-M2-06 (airborne 2D friction plus a dedicated taxi locomotor removed the divergence and the parking deadlocks); two consecutive installed runs green.
 - [x] Reports name every contract result and measured frame; unsupported behavior and timeouts fail explicitly.
 - [x] Existing Generals P9 and Maceman tests remain green; no existing golden baseline is rewritten to force a pass.
 - [x] Standard validation passes with no new failures; artifacts and any pending visual evidence are recorded accurately.

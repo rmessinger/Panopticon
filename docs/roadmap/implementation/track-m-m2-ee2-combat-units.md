@@ -106,7 +106,11 @@ Existing path: `Ee2UnitAdapter` emits shared records; `UnitImportResolution` val
 
 Landed with WI-M2-02: movement families map to typed locomotors (foot `TWO_LEGS`, wheeled `FOUR_WHEELS`, tracked `TREADS` by authored `moveType`, fixed wing `WINGS`, authored hover `HOVER`, air surfaces `AIR`); aircraft carry `AIRCRAFT`+`VEHICLE` kinds; the registry accepts a typed `JetAIUpdate` family constructed from validated interchange (authored hover clears `NeedsRunway` and `KeepsParkingSpaceWhenAirborne`; authored cruising height becomes the minimum flight height), and aircraft definitions receive the taxiing locomotor set beside normal (EE2 authors no separate taxi speed; the parking flow drives it). Target categories derive from the authored rps matrix `db/Simulation/dbcombat.csv` (zero/nonzero engagement mask only; multipliers stay excluded). Attack semantics map authored values: `applyDamageTime` to the pre-attack delay, `ordnance` to the clip size, `areaDamageRadius` to the splash radius, `minRangeMobile` to the minimum range, `missileName` speed to weapon travel speed. A missing Attack clip is a reported visual gap (warning), never fabricated.
 
-Known Track C limitation (evidence preserved by `Ee2InventoryTests.ReferenceRosterMaterializesWithTypedModules`): every late-epoch infantry clip is rejected by the animation importers (epoch 15 clips carry controller flags `0x0025`, a pattern the C4c survey measured at 4728 controllers corpus-wide and deferred; epochs 9 through 14 clips are legacy-header files targeting skinned models, which C4i explicitly excludes). The infantry model imports; its four state clips do not. This blocks the infantry entry's visual publication (WI-M2-03) until the Track C follow-up lands; the other six reference entries verify clean.
+Known Track C limitation resolved by `WI-M2-05`: the epoch-15 infantry clips import (the modern
+flag policy accepts `0x0025`, and clips authored against skeleton supersets skip their unmatched
+targets while binding matched bones; the death clip addresses `Bone10`, which the epoch-15 model
+lacks). All seven reference entries verify clean, and the infantry row publishes beside Generals
+(`Ee2RosterPublicationTests.InfantryRowPublishesWithEpoch15Clips`).
 
 ## Validation evidence
 
@@ -157,21 +161,17 @@ EE2 contracts: ground tank, heavy tank, and artillery pass displacement (real Mo
 weapon-caused damage (real AttackObject orders), and death (Generals killers); the helicopter
 passes hover attack, scripted return, and a second damaging sortie, with ammunition consumption
 and refill reported absent-in-source (no EE2 helicopter authors ordnance; no fabricated clip).
-Fixed-wing fighter and bomber pass consumption, first-sortie damage, anti-air death, and
-refill-on-re-engagement, and the full cycle (return, refill, second damaging sortie) passed end
-to end in the full harness run (6/6 contracts, report saved 2026-10-08). However, the wings
-flight model diverges on sustained turns and heading reversals at EE2-authored speeds and turn
-rates in most boots (observed excursions from 2.5k to 380k world units with velocity above the
-authored maximum): the runway taxi flow is also infeasible (authored air speed gives a ~58-unit
-turn radius against tighter parking bone spacing, and EE2 authors no taxi locomotion). The
-installed test therefore asserts the deterministic core (displacement, damage, death for every
-entry; the helicopter's full cycle; fixed-wing consumption and refill) and requires the
-fixed-wing return/refill/second-sortie results to be reported. Typed flight mappings landed with
-this evidence: air locomotors set the engine's airborne motive force mode; fixed-wing flight
-flies at authored speed (minimum equals maximum) with a declared one-second ramp and holds its
-authored cruising height through the engine's ground-relative Z mode; authored clips rearm at
-base (RETURN_TO_BASE). The blocked follow-up: a flight-model stability decision for imported
-fixed-wing values (sideslip damping or speed clamping in the wings model), which belongs to the
-physics fidelity work, not the import adapter. `Ee2ContractValidationTests` 2/2 installed
-(repeated twice). ReplaySketch screenshot mode verified against clean main (identical pixel
+Fixed-wing fighter and bomber pass the full cycle deterministically: consumption, first-sortie
+damage, anti-air death, refill, return, and a second damaging sortie (WI-M2-06 removed the two
+runtime gaps behind the earlier reported-only results: air locomotors now set the engine's
+airborne 2D friction (`Apply2DFrictionWhenAirborne`), damping the sideslip that accumulated
+through sustained turns and heading reversals, and aircraft taxi uses a dedicated source-qualified
+`.Taxi` locomotor mirroring Generals `BasicJetTaxiLocomotor` (ground, speed 50, turn 180 deg/s),
+which fits the parking bone spacing the authored air speed could not). The installed test
+asserts the full cycle for every aircraft entry rather than reporting it. Typed flight mappings
+landed with this evidence: air locomotors set the engine's airborne motive force mode; fixed-wing
+flight flies at authored speed (minimum equals maximum) with a declared one-second ramp and holds
+its authored cruising height through the engine's ground-relative Z mode; authored clips rearm at
+base (RETURN_TO_BASE). `Ee2ContractValidationTests` 2/2 installed (repeated twice).
+ReplaySketch screenshot mode verified against clean main (identical pixel
 distributions; map panel unchanged).
