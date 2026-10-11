@@ -911,15 +911,20 @@ public class ActiveBody : BodyModule
     {
         var victim = GameObject;
         if (_currentArmorSet?.DamageFXPlacement == DamageFXPlacement.AttackerFacingBounds
-            && source is { IsEffectivelyDead: false }
-            && victim.Client?.TryGetModelSpaceBounds(out var bounds) == true
-            && DamageFXContact.TryGetAttackerFacingPoint(
-                bounds,
-                victim.ModelTransform.Matrix * victim.Transform.Matrix,
-                source.Translation,
-                out var contact))
+            && source is { IsEffectivelyDead: false })
         {
-            return contact;
+            var localToWorld = victim.ModelTransform.Matrix * victim.Transform.Matrix;
+            if (victim.Client?.TryGetModelSpacePartBounds(out var parts) == true
+                && DamageFXContact.TryGetAttackerFacingSurfacePoint(parts, localToWorld, source.Translation, out var surface))
+            {
+                return surface;
+            }
+
+            if (victim.Client?.TryGetModelSpaceBounds(out var bounds) == true
+                && DamageFXContact.TryGetAttackerFacingPoint(bounds, localToWorld, source.Translation, out var contact))
+            {
+                return contact;
+            }
         }
 
         return victim.Translation;

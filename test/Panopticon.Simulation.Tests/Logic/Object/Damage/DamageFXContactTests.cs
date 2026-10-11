@@ -68,4 +68,42 @@ public class DamageFXContactTests
     {
         Assert.False(DamageFXContact.TryGetAttackerFacingPoint(Hull, Matrix4x4.CreateScale(1, 0, 1), Vector3.Zero, out _));
     }
+
+    private static readonly AxisAlignedBoundingBox Barrel = new(new Vector3(18, -1, 4), new Vector3(70, 1, 6));
+
+    private static Vector3 SurfaceContact(Matrix4x4 localToWorld, Vector3 source)
+    {
+        Assert.True(DamageFXContact.TryGetAttackerFacingSurfacePoint([Hull, Barrel], localToWorld, source, out var contact));
+        return contact;
+    }
+
+    [Fact]
+    public void SurfaceContactPinsToHullFaceNotBarrelTip()
+    {
+        var contact = SurfaceContact(Matrix4x4.Identity, new Vector3(70, 0, 5));
+
+        // The merged box would place the face at the barrel tip (x 70); the hull face is at x 20.
+        AssertNear(new Vector3(20, 0, 5), contact);
+    }
+
+    [Fact]
+    public void SurfaceContactFollowsYawAndScale()
+    {
+        var world = Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI))
+            * Matrix4x4.CreateScale(2, 1, 1)
+            * Matrix4x4.CreateTranslation(0, 0, 0);
+
+        // Half turn: local +X (hull front and barrel) faces world -X, doubled by scale.
+        var contact = SurfaceContact(world, new Vector3(-70, 0, 5));
+
+        AssertNear(new Vector3(-40, 0, 5), contact);
+    }
+
+    [Fact]
+    public void SurfaceContactPinsToSourcePointWhenInsideAPart()
+    {
+        var world = Matrix4x4.CreateTranslation(100, 0, 0);
+
+        AssertNear(new Vector3(110, 0, 5), SurfaceContact(world, new Vector3(110, 0, 5)));
+    }
 }

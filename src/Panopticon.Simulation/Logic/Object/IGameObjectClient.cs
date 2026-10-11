@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Mathematics;
 
@@ -47,6 +48,10 @@ public interface IGameObjectClient
     Matrix4x4? GetWeaponFireFXBoneTransform(WeaponSlot slot, int weaponIndex);
 
     bool TryGetModelSpaceBounds(out AxisAlignedBoundingBox bounds);
+
+    /// <summary>Bounds of each visible sub-object in model space, for surface-approximate queries
+    /// where the merged box overstates protrusions.</summary>
+    bool TryGetModelSpacePartBounds(out IReadOnlyList<AxisAlignedBoundingBox> partBounds);
 
     /// <summary>Debug-diagnostics only: draw client modules in the inspector.</summary>
     void DrawInspector();

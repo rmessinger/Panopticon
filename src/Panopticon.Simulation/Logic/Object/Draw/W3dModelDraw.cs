@@ -97,6 +97,25 @@ public class W3dModelDraw : DrawModule
     {
         bounds = default;
 
+        var partBounds = new List<AxisAlignedBoundingBox>();
+        if (!TryGetModelSpacePartBounds(partBounds))
+        {
+            return false;
+        }
+
+        bounds = partBounds[0];
+        for (var i = 1; i < partBounds.Count; i++)
+        {
+            bounds = AxisAlignedBoundingBox.CreateMerged(bounds, partBounds[i]);
+        }
+
+        return true;
+    }
+
+    /// <summary>Per visible sub-object bounds in model space; the merged form overstates thin
+    /// protrusions like gun barrels.</summary>
+    internal override bool TryGetModelSpacePartBounds(List<AxisAlignedBoundingBox> partBounds)
+    {
         var modelInstance = _activeModelDrawConditionState?.Model;
         if (modelInstance == null)
         {
@@ -115,10 +134,7 @@ public class W3dModelDraw : DrawModule
             var boneTransform = mesh.Skinned
                 ? Matrix4x4.Identity
                 : modelInstance.RelativeBoneTransforms[subObject.Bone.Index];
-            var transformedBounds = AxisAlignedBoundingBox.Transform(mesh.BoundingBox, boneTransform);
-            bounds = foundBounds
-                ? AxisAlignedBoundingBox.CreateMerged(bounds, transformedBounds)
-                : transformedBounds;
+            partBounds.Add(AxisAlignedBoundingBox.Transform(mesh.BoundingBox, boneTransform));
             foundBounds = true;
         }
 

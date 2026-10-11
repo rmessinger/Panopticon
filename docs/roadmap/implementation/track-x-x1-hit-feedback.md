@@ -105,9 +105,13 @@ Landed as designed. `UnitCombatMaterializer.WeaponIds` collects weapon-set slots
 
 Landed as designed. `DamageFXPlacement` and `DamageFXContact` live in `Logic/Object/Damage/DamageFXContact.cs`. `ArmorTemplateSet.CreateImported` selects `AttackerFacingBounds` only with a DamageFX reference; parsed sets default to `VictimOrigin`. `ActiveBody.GetDamageFXPosition` runs after the throttle check and falls back to the origin without a live source, client bounds, or an invertible transform. `DamageFXContactTests` covers axis-aligned, yawed, non-uniformly scaled, low-source, inside-source, and singular cases. `UnitDamageEffectLifecycleTests` drives a real nugget against a stub client: effects land at the helper's attacker-side point, a dead source falls back to the origin, and health, death, and effect counts match origin placement.
 
+#### Placement refinement after operator review
+
+The first post-fix capture pinned effects to the merged-bounds face; operator review measured that plane about a meter ahead of the tank because the gun barrel extends the merged box. Placement now raycasts from the damage source toward the model and pins the contact to the entry face of the largest crossed sub-object box (`DamageFXContact.TryGetAttackerFacingSurfacePoint` over `IGameObjectClient.TryGetModelSpacePartBounds`, fed by per-visible-sub-object bounds in `W3dModelDraw`). Thin protrusions only receive the contact when they are the sole part crossed. Merged-bounds exit then victim origin remain the fallbacks. The recording GIF, impact crops, frames, and report in the shared directory are regenerated from this capture.
+
 #### Post-fix capture
 
-Same command and profile as above. Combat results are unchanged: Rebel 120 to 30 HP (hits at 45, 152, 259), tank 300 to 225 HP (15 hits from 201 to 343), both expectations pass. Rebel hits now play `FX_DamageInfantryStruck` dust at the Rebel. Tank hits play small-arms sparks on the Rebel-facing side. The box face sits at the barrel-tip plane, so sparks appear slightly ahead of the hull front; this is the documented bounds approximation. Artifacts overwrite the shared GIF, report, and frame set; `x1-hit-feedback-impacts.png` crops frames 45, 46, 48, 203, 206, and 212. X1-4 is Ready for operator review of this evidence.
+Same command and profile as above. Combat results are unchanged: Rebel 120 to 30 HP (hits at 45, 152, 259), tank 300 to 225 HP (15 hits from 201 to 343), both expectations pass. Rebel hits now play `FX_DamageInfantryStruck` dust at the Rebel. Tank hits play small-arms sparks on the Rebel-facing hull surface. Artifacts overwrite the shared GIF, report, and frame set; `x1-hit-feedback-impacts.png` crops frames 45, 46, 48, 203, 206, and 212. X1-4 is Ready for operator review of this evidence.
 
 Projectile materialization stays out of scope. Recoil without a shell is the typed-import contract described above; X1-4 judges impacts only.
 

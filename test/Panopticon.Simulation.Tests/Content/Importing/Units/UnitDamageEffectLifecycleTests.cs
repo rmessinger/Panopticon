@@ -24,7 +24,7 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
         }
     }
 
-    private sealed class BoundsClient(AxisAlignedBoundingBox bounds) : IGameObjectClient
+    private sealed class BoundsClient(AxisAlignedBoundingBox bounds, params AxisAlignedBoundingBox[] extraParts) : IGameObjectClient
     {
         public uint ClientObjectId { get; set; }
 
@@ -72,6 +72,12 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
             return true;
         }
 
+        public bool TryGetModelSpacePartBounds(out System.Collections.Generic.IReadOnlyList<AxisAlignedBoundingBox> partBounds)
+        {
+            partBounds = [bounds, .. extraParts];
+            return true;
+        }
+
         public void DrawInspector() { }
     }
 
@@ -81,21 +87,24 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
     public void MappedTargetPlaysOnAttackerFacingBounds(bool sourceAlive)
     {
         var hull = new AxisAlignedBoundingBox(new Vector3(-20, -5, 0), new Vector3(20, 5, 10));
-        var configured = RunWeapon(true, true, hull, sourceAlive);
+        var barrel = new AxisAlignedBoundingBox(new Vector3(18, -1, 4), new Vector3(70, 1, 6));
+        var configured = RunWeapon(true, true, hull, sourceAlive, barrel);
         var origin = RunWeapon(true, true);
 
         Assert.Equal(origin.Health, configured.Health);
         Assert.Equal(origin.Dead, configured.Dead);
         Assert.Equal(origin.Hits.Count, configured.Hits.Count);
 
-        // Victim at (60, 20, 0) with a 0.5 rad yaw; the attacker stands at (10, 20, 0), away from the muzzle-side origin.
+        // Victim at (60, 20, 0) with a 0.5 rad yaw; the attacker stands at (10, 20, 0). A barrel-like
+        // part sticks out to local +X; the contact must sit on the hull surface, not the barrel tip.
         var expected = new Vector3(60, 20, 0);
         if (sourceAlive)
         {
             var localToWorld = Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 0.5f))
                 * Matrix4x4.CreateTranslation(60, 20, 0);
-            Assert.True(DamageFXContact.TryGetAttackerFacingPoint(hull, localToWorld, new Vector3(10, 20, 0), out expected));
-            Assert.True(expected.X < 60);
+            Assert.True(DamageFXContact.TryGetAttackerFacingSurfacePoint([hull, barrel], localToWorld, new Vector3(10, 20, 0), out expected));
+            Assert.NotEqual(new Vector3(60, 20, 0), expected);
+            Assert.True(Vector3.Distance(new Vector3(60, 20, 0), expected) < 25, $"contact {expected} escapes the hull extent");
         }
 
         Assert.All(configured.Hits, hit => Assert.True(Vector3.Distance(expected, hit.Position) < 1e-3f, $"expected {expected}, actual {hit.Position}"));
@@ -136,7 +145,7 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
         Assert.Empty(unconfigured.Hits);
     }
 
-    private static (List<float> Health, int DamageCount, bool Dead, List<(uint Frame, Vector3 Position, Quaternion Rotation)> Hits) RunWeapon(bool configured, bool hasArmor, AxisAlignedBoundingBox? bounds = null, bool sourceAlive = true)
+    private static (List<float> Health, int DamageCount, bool Dead, List<(uint Frame, Vector3 Position, Quaternion Rotation)> Hits) RunWeapon(bool configured, bool hasArmor, AxisAlignedBoundingBox? bounds = null, bool sourceAlive = true, AxisAlignedBoundingBox? extraPart = null)
     {
         var game = new TestGame(SageGame.CncGenerals);
         var recorder = new EffectRecorder();
@@ -161,7 +170,9 @@ public class UnitDamageEffectLifecycleTests : MockedGameTest
         victim.UpdateTransform(new Vector3(60, 20, 0), Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 0.5f));
         if (bounds is { } modelBounds)
         {
-            victim.Client = new BoundsClient(modelBounds);
+            victim.Client = extraPart is { } part
+                ? new BoundsClient(modelBounds, part)
+                : new BoundsClient(modelBounds);
         }
 
         var attacker = game.GameLogic.CreateObject(new ObjectDefinition("Shooter"), null!);

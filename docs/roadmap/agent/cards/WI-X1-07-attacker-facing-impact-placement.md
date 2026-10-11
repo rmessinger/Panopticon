@@ -63,3 +63,7 @@ No mesh collision, physics change, fixed capture offsets, or gameplay-radius sub
 ## On completion
 
 Set Done, tick X1-7, update progress and `.exchange`. X1-4 becomes Ready once X1-6 and X1-7 are Done.
+
+## Result
+
+Landed, then refined after operator review of the first capture: the merged-bounds face sat about a meter ahead of the tank (the gun barrel extends the box), so placement now pins to the entry face of the largest crossed sub-object box via the part-bounds path. Three contact-geometry tests cover the hull-over-barrel, yawed/scaled, and inside-part cases; the lifecycle test drives a real nugget with hull plus barrel parts and asserts the contact stays inside the hull extent away from the origin. See the placement refinement section of the [X1 plan](../../implementation/track-x-x1-hit-feedback.md#placement-refinement-after-operator-review).
