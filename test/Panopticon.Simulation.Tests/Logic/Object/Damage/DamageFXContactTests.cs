@@ -100,6 +100,14 @@ public class DamageFXContactTests
     }
 
     [Fact]
+    public void SurfaceContactClampsObliqueRaysToTheFaceRectangle()
+    {
+        // Oblique from the front-right: dominant axis is Y, and the hit on that face plane falls
+        // past the hull's X extent, so it clamps onto the face edge.
+        AssertNear(new Vector3(20, 5, 5), SurfaceContact(Matrix4x4.Identity, new Vector3(70, 60, 5)));
+    }
+
+    [Fact]
     public void SurfaceContactPinsToSourcePointWhenInsideAPart()
     {
         var world = Matrix4x4.CreateTranslation(100, 0, 0);

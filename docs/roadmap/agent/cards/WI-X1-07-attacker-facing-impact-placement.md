@@ -67,3 +67,5 @@ Set Done, tick X1-7, update progress and `.exchange`. X1-4 becomes Ready once X1
 ## Result
 
 Landed, then refined after operator review of the first capture: the merged-bounds face sat about a meter ahead of the tank (the gun barrel extends the box), so placement now pins to the entry face of the largest crossed sub-object box via the part-bounds path. Three contact-geometry tests cover the hull-over-barrel, yawed/scaled, and inside-part cases; the lifecycle test drives a real nugget with hull plus barrel parts and asserts the contact stays inside the hull extent away from the origin. See the placement refinement section of the [X1 plan](../../implementation/track-x-x1-hit-feedback.md#placement-refinement-after-operator-review).
+
+Post-completion refinement: part bounds are cached per model condition state and contact selection uses the six-side body-face pick (dominant axis toward the source, clamped to the face rectangle), so a hit costs one matrix invert and scalar arithmetic with no allocations. Cached boxes accept pose drift for this presentation-only path.

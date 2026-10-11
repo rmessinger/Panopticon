@@ -27,6 +27,8 @@ public class W3dModelDraw : DrawModule
     protected AnimationState _activeAnimationState;
 
     private W3dModelDrawConditionState _activeModelDrawConditionState;
+    private List<AxisAlignedBoundingBox>? _partBoundsCache;
+    private W3dModelDrawConditionState? _partBoundsCacheFor;
 
     // Union of every WeaponMuzzleFlash BoneName across all condition states. Static INI data, so it
     // is computed once and reused to build the per-model MuzzleFlashBoneIndices cache at creation.
@@ -113,8 +115,27 @@ public class W3dModelDraw : DrawModule
     }
 
     /// <summary>Per visible sub-object bounds in model space; the merged form overstates thin
-    /// protrusions like gun barrels.</summary>
+    /// protrusions like gun barrels. Cached per model condition state: rebuilding per damage hit
+    /// re-walked and re-transformed every sub-object.</summary>
     internal override bool TryGetModelSpacePartBounds(List<AxisAlignedBoundingBox> partBounds)
+    {
+        if (_partBoundsCache is null || !ReferenceEquals(_partBoundsCacheFor, _activeModelDrawConditionState))
+        {
+            var cached = new List<AxisAlignedBoundingBox>();
+            if (!CollectModelSpacePartBounds(cached))
+            {
+                return false;
+            }
+
+            _partBoundsCache = cached;
+            _partBoundsCacheFor = _activeModelDrawConditionState;
+        }
+
+        partBounds.AddRange(_partBoundsCache);
+        return true;
+    }
+
+    private bool CollectModelSpacePartBounds(List<AxisAlignedBoundingBox> partBounds)
     {
         var modelInstance = _activeModelDrawConditionState?.Model;
         if (modelInstance == null)

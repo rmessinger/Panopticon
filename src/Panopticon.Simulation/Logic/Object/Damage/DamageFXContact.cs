@@ -59,10 +59,11 @@ internal static class DamageFXContact
     }
 
     /// <summary>
-    /// Surface variant for part-wise bounds: casts from the source toward the model and pins the
-    /// contact to the entry face of the largest crossed sub-object box, so thin protrusions like a
-    /// forward gun barrel no longer push the effect out to the merged-box plane. Falls back to the
-    /// merged-box exit when no part is crossed.
+    /// Six-side surface variant for part-wise bounds: picks the body box face whose axis points
+    /// at the source and intersects the source-to-center ray with it, clamping to the face
+    /// rectangle. The body is the largest part box, so thin protrusions like a forward gun barrel
+    /// no longer push the effect out to the merged-box plane. The part list itself is cached by
+    /// the draw module, so a hit costs only this arithmetic.
     /// </summary>
     public static bool TryGetAttackerFacingSurfacePoint(
         IReadOnlyList<AxisAlignedBoundingBox> partBounds,
@@ -76,15 +77,23 @@ internal static class DamageFXContact
             return false;
         }
 
-        var merged = partBounds[0];
-        for (var i = 1; i < partBounds.Count; i++)
-        {
-            merged = AxisAlignedBoundingBox.CreateMerged(merged, partBounds[i]);
-        }
-
         if (!Matrix4x4.Invert(localToWorld, out var worldToLocal))
         {
             return false;
+        }
+
+        var body = partBounds[0];
+        var merged = partBounds[0];
+        var bestVolume = PartVolume(partBounds[0]);
+        for (var i = 1; i < partBounds.Count; i++)
+        {
+            merged = AxisAlignedBoundingBox.CreateMerged(merged, partBounds[i]);
+            var volume = PartVolume(partBounds[i]);
+            if (volume > bestVolume)
+            {
+                bestVolume = volume;
+                body = partBounds[i];
+            }
         }
 
         var center = merged.GetCenter();
@@ -96,68 +105,37 @@ internal static class DamageFXContact
             return float.IsFinite(contact.X) && float.IsFinite(contact.Y) && float.IsFinite(contact.Z);
         }
 
-        var bestVolume = -1.0;
-        var bestEnter = 0f;
-        var found = false;
-        foreach (var part in partBounds)
+        var axis = 0;
+        if (MathF.Abs(direction.Y) > MathF.Abs(direction[axis]))
         {
-            if (!TryRayEnterPartBox(source, direction, part, out var enter))
-            {
-                continue;
-            }
-
-            var size = part.Max - part.Min;
-            var volume = (double)size.X * size.Y * size.Z;
-            if (!found || volume > bestVolume)
-            {
-                bestVolume = volume;
-                bestEnter = enter;
-                found = true;
-            }
+            axis = 1;
         }
 
-        var local = found ? source + direction * bestEnter : center;
+        if (MathF.Abs(direction.Z) > MathF.Abs(direction[axis]))
+        {
+            axis = 2;
+        }
+
+        // The face whose normal points toward the source; interior sources land on themselves.
+        var face = source[axis] >= center[axis] ? body.Max[axis] : body.Min[axis];
+        var local = source;
+        var distance = (face - source[axis]) / direction[axis];
+        if (distance > 0f)
+        {
+            var hit = source + direction * distance;
+            local = new Vector3(
+                axis == 0 ? face : Math.Clamp(hit.X, body.Min.X, body.Max.X),
+                axis == 1 ? face : Math.Clamp(hit.Y, body.Min.Y, body.Max.Y),
+                axis == 2 ? face : Math.Clamp(hit.Z, body.Min.Z, body.Max.Z));
+        }
+
         contact = Vector3.Transform(local, localToWorld);
         return float.IsFinite(contact.X) && float.IsFinite(contact.Y) && float.IsFinite(contact.Z);
     }
 
-    /// <summary>
-    /// Ray-box entry parameter at t &gt;= 0 from outside the box, or 0 when the origin is inside it.
-    /// </summary>
-    private static bool TryRayEnterPartBox(Vector3 origin, Vector3 direction, in AxisAlignedBoundingBox box, out float enter)
+    private static double PartVolume(in AxisAlignedBoundingBox box)
     {
-        enter = 0f;
-        var near = float.NegativeInfinity;
-        var far = float.PositiveInfinity;
-        for (var axis = 0; axis < 3; axis++)
-        {
-            if (MathF.Abs(direction[axis]) < 1e-6f)
-            {
-                if (origin[axis] < box.Min[axis] || origin[axis] > box.Max[axis])
-                {
-                    return false;
-                }
-
-                continue;
-            }
-
-            var nearAxis = (box.Min[axis] - origin[axis]) / direction[axis];
-            var farAxis = (box.Max[axis] - origin[axis]) / direction[axis];
-            if (nearAxis > farAxis)
-            {
-                (nearAxis, farAxis) = (farAxis, nearAxis);
-            }
-
-            near = MathF.Max(near, nearAxis);
-            far = MathF.Min(far, farAxis);
-        }
-
-        if (near > far || far < 0f)
-        {
-            return false;
-        }
-
-        enter = MathF.Max(near, 0f);
-        return true;
+        var size = box.Max - box.Min;
+        return (double)size.X * size.Y * size.Z;
     }
 }

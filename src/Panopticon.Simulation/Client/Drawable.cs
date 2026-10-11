@@ -386,22 +386,24 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
         return (null, null);
     }
 
+    private readonly List<AxisAlignedBoundingBox> _partBoundsScratch = [];
+
     internal bool TryGetModelSpacePartBounds(out IReadOnlyList<AxisAlignedBoundingBox> partBounds)
     {
-        partBounds = [];
-
-        var list = new List<AxisAlignedBoundingBox>();
+        // Scratch reuse: callers consume the list synchronously (damage-effect contact only).
+        _partBoundsScratch.Clear();
         foreach (var drawModule in DrawModules)
         {
-            drawModule.TryGetModelSpacePartBounds(list);
+            drawModule.TryGetModelSpacePartBounds(_partBoundsScratch);
         }
 
-        if (list.Count == 0)
+        if (_partBoundsScratch.Count == 0)
         {
+            partBounds = [];
             return false;
         }
 
-        partBounds = list;
+        partBounds = _partBoundsScratch;
         return true;
     }
 
