@@ -8,12 +8,17 @@ public sealed class HarnessPerformanceMetrics
     private double _elapsed;
     private double _updateMilliseconds;
     private double _renderMilliseconds;
+    private double _gpuMilliseconds;
     private int _frames;
+    private int _gpuSamples;
 
     public double FramesPerSecond { get; private set; }
     public double FrameMilliseconds { get; private set; }
     public double UpdateMilliseconds { get; private set; }
     public double RenderMilliseconds { get; private set; }
+
+    /// <summary>Average GPU frame duration over the last window; null when no GPU sample arrived.</summary>
+    public double? GpuMilliseconds { get; private set; }
     public long WorkingSetBytes { get; private set; }
     public long ManagedBytes { get; private set; }
     public int Gen0Collections { get; private set; }
@@ -40,6 +45,7 @@ public sealed class HarnessPerformanceMetrics
         FrameMilliseconds = 1000 * _elapsed / _frames;
         UpdateMilliseconds = _updateMilliseconds / _frames;
         RenderMilliseconds = _renderMilliseconds / _frames;
+        GpuMilliseconds = _gpuSamples > 0 ? _gpuMilliseconds / _gpuSamples : null;
         using var process = Process.GetCurrentProcess();
         WorkingSetBytes = process.WorkingSet64;
         ManagedBytes = GC.GetTotalMemory(false);
@@ -50,5 +56,22 @@ public sealed class HarnessPerformanceMetrics
         _updateMilliseconds = 0;
         _renderMilliseconds = 0;
         _frames = 0;
+        _gpuMilliseconds = 0;
+        _gpuSamples = 0;
+    }
+
+    /// <summary>
+    /// Feeds one harvested GPU frame duration (see GpuFrameTimer). Sampled independently of
+    /// Record's frame counter: GPU results arrive frames late and may be dropped entirely.
+    /// </summary>
+    public void RecordGpu(double gpuMilliseconds)
+    {
+        if (!double.IsFinite(gpuMilliseconds) || gpuMilliseconds < 0)
+        {
+            return;
+        }
+
+        _gpuMilliseconds += gpuMilliseconds;
+        _gpuSamples++;
     }
 }

@@ -142,8 +142,9 @@ documented way to screenshot overlay visuals.
 
 The shared performance panel appears at the upper-left in overlay captures. Windowed scenarios
 show it by default; `-`/`+` collapses/expands it independently of the validation-ground F1 window.
-FPS and frame time include capture overhead in offscreen captures, so these images verify layout,
-not windowed performance. CPU render submission is not GPU time. On macOS, Metal supports the
+FPS, frame time, CPU, and GPU timings include capture overhead in offscreen captures, so these
+images verify layout, not windowed performance. GPU frame time requires the Vulkan or Direct3D
+11 backend and reports `n/a` on others. On macOS, Metal supports the
 same offscreen recipe; `TMPDIR` selects the capture root and should use a unique directory per run.
 
 ```sh

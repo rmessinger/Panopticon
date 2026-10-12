@@ -384,6 +384,8 @@ public static class ValidationGroundRunner
                     (int)game.Panel.Framebuffer.Height);
             }
 
+            var gpuTimer = overlayShot?.Gpu;
+            gpuTimer?.BeginFrame();
             game.Render();
             if (overlayShot != null)
             {
@@ -396,6 +398,12 @@ public static class ValidationGroundRunner
                     Stopwatch.GetElapsedTime(updateEnd, now).TotalMilliseconds);
                 overlayShot.Update(1 / 30f, new EmptyInputSnapshot());
                 overlayShot.Render(game.GraphicsDevice);
+            }
+
+            gpuTimer?.EndFrame();
+            while (gpuTimer != null && gpuTimer.TryDequeue(out var gpuMilliseconds))
+            {
+                overlayShot?.Performance.RecordGpu(gpuMilliseconds);
             }
 
             VgCapture ??= new FrameCaptureService();

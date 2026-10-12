@@ -42,12 +42,20 @@ internal static class HarnessWindowedFrame
         game.Update(window.MessageQueue);
         var renderStart = Stopwatch.GetTimestamp();
         game.Panel.EnsureFrame(window.DrawableBounds);
+        var gpuTimer = overlay.Gpu;
+        gpuTimer?.BeginFrame();
         game.Render();
         textureCopier.Execute(game.Panel.Framebuffer.ColorTargets[0].Target, window.Swapchain.Framebuffer);
         overlay.Render(game.GraphicsDevice);
+        gpuTimer?.EndFrame();
         var renderEnd = Stopwatch.GetTimestamp();
         game.GraphicsDevice.SwapBuffers(window.Swapchain);
         window.MessageQueue.Clear();
+        while (gpuTimer != null && gpuTimer.TryDequeue(out var gpuMilliseconds))
+        {
+            overlay.Performance.RecordGpu(gpuMilliseconds);
+        }
+
         overlay.Performance.Record(frameSeconds,
             Stopwatch.GetElapsedTime(updateStart, renderStart).TotalMilliseconds,
             Stopwatch.GetElapsedTime(renderStart, renderEnd).TotalMilliseconds);

@@ -11,6 +11,7 @@
   // Game         : SAGE game to run (CncGenerals, CncGeneralsZeroHour, Bfme, Bfme2, Bfme2Rotwk)
   // Renderer     : graphics backend override, or null for platform default
   //                accepted values: Direct3D11, Vulkan, OpenGL, Metal, OpenGLES
+  //                GPU frame timing in the overlay needs Vulkan or Direct3D11
   // Fullscreen   : start in fullscreen mode
   // Headless     : run without a window using an offscreen graphics device
   // CaptureFrames: in headless mode, save a PNG after every completed replay action
@@ -55,6 +56,7 @@
   "ScenarioPath": null,
   "Game": "CncGenerals",
   "Renderer": null,
+  // PANOPTICON_NOVSYNC=true (environment, not this file) disables vsync for profiling runs
   "Fullscreen": false,
   // FullHud: render the full control bar (buttons, money/power, background); false shows only the minimap
   "FullHud": false,

@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
-using System.Numerics;
 using System.Linq;
+using System.Numerics;
 using ImGuiNET;
 using Panopticon.Gui;
 using Veldrid;
@@ -41,6 +41,9 @@ public sealed class HarnessOverlay : IDisposable
     private int _liveObjectCount;
 
     public HarnessPerformanceMetrics Performance { get; } = new();
+
+    internal GpuFrameTimer? Gpu { get; }
+
     internal long PreviousFrameTimestamp { get; set; }
 
     private static readonly Vector2? HoverPosition = ParseHoverPosition(
@@ -77,6 +80,7 @@ public sealed class HarnessOverlay : IDisposable
     {
         _validationControls = validationControls;
         _game = game;
+        Gpu = GpuFrameTimer.TryCreate(game.GraphicsDevice);
         _window = window;
         _imgui = new ImGuiRenderer(
             game.GraphicsDevice,
@@ -107,6 +111,7 @@ public sealed class HarnessOverlay : IDisposable
     {
         _validationControls = true;
         _game = game;
+        Gpu = GpuFrameTimer.TryCreate(game.GraphicsDevice);
         _imgui = new ImGuiRenderer(
             game.GraphicsDevice,
             outputDescription,
@@ -181,13 +186,27 @@ public sealed class HarnessOverlay : IDisposable
             {
                 ImGui.Text($"FPS {metrics.FramesPerSecond:F1} | frame {metrics.FrameMilliseconds:F2} ms");
             }
+
             ImGui.Text($"CPU update {metrics.UpdateMilliseconds:F2} ms");
             ImGui.Text($"CPU render submission {metrics.RenderMilliseconds:F2} ms");
+            if (metrics.GpuMilliseconds is { } gpuMilliseconds)
+            {
+                ImGui.Text($"GPU frame {gpuMilliseconds:F2} ms");
+            }
+            else if (Gpu != null)
+            {
+                ImGui.TextDisabled("GPU frame timing pending...");
+            }
+            else
+            {
+                ImGui.TextDisabled($"GPU frame n/a on {_game.GraphicsDevice.BackendType} backend");
+            }
+
             ImGui.Text($"Process {metrics.WorkingSetBytes / 1048576d:F1} MiB");
             ImGui.Text($"Managed heap {metrics.ManagedBytes / 1048576d:F1} MiB");
             ImGui.Text($"GC collections {metrics.Gen0Collections} / {metrics.Gen1Collections} / {metrics.Gen2Collections}");
             ImGui.Text($"Live objects {_liveObjectCount}");
-            ImGui.TextDisabled("1 s averages | CPU timings, not GPU");
+            ImGui.TextDisabled("1 s averages | GPU frame spans game render, blit, overlay");
         }
 
         _performanceHeight = ImGui.GetWindowSize().Y;
@@ -421,6 +440,7 @@ public sealed class HarnessOverlay : IDisposable
     public void Dispose()
     {
         _unsubscribeResize();
+        Gpu?.Dispose();
         _commandList.Dispose();
         _imgui.Dispose();
     }

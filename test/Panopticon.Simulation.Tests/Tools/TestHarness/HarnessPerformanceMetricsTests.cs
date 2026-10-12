@@ -37,4 +37,42 @@ public class HarnessPerformanceMetricsTests
         Assert.Equal(2, metrics.UpdateMilliseconds);
         Assert.Equal(4, metrics.RenderMilliseconds);
     }
+
+    [Fact]
+    public void RecordGpuPublishesOneSecondAverage()
+    {
+        var metrics = new HarnessPerformanceMetrics();
+        metrics.RecordGpu(4);
+        metrics.RecordGpu(8);
+        Assert.Null(metrics.GpuMilliseconds);
+        metrics.Record(1, 1, 1);
+        Assert.Equal(6, metrics.GpuMilliseconds);
+        metrics.RecordGpu(3);
+        metrics.Record(1, 1, 1);
+        Assert.Equal(3, metrics.GpuMilliseconds);
+    }
+
+    [Fact]
+    public void WindowWithoutGpuSamplesClearsGpuAverage()
+    {
+        var metrics = new HarnessPerformanceMetrics();
+        metrics.RecordGpu(5);
+        metrics.Record(1, 1, 1);
+        Assert.Equal(5, metrics.GpuMilliseconds);
+        metrics.Record(1, 1, 1);
+        Assert.Null(metrics.GpuMilliseconds);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void InvalidGpuDurationDoesNotAffectAverages(double milliseconds)
+    {
+        var metrics = new HarnessPerformanceMetrics();
+        metrics.RecordGpu(milliseconds);
+        metrics.RecordGpu(2);
+        metrics.Record(1, 1, 1);
+        Assert.Equal(2, metrics.GpuMilliseconds);
+    }
 }
