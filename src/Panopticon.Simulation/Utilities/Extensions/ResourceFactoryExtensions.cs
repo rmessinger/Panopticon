@@ -55,25 +55,48 @@ internal static class ResourceFactoryExtensions
             new BufferDescription(bufferSize, usage, structureByteStride, rawBuffer));
 
         var commandList = graphicsDevice.ResourceFactory.CreateCommandList();
-        commandList.Begin();
+        try
+        {
+            commandList.Begin();
 
-        var map = graphicsDevice.Map(staging, MapMode.Write, 0);
+            var map = graphicsDevice.Map(staging, MapMode.Write, 0);
 
-        var destinationSpan = new Span<T>(map.Data.ToPointer(), (int)bufferSize);
-        data.CopyTo(destinationSpan);
+            var destinationSpan = new Span<T>(map.Data.ToPointer(), (int)bufferSize);
+            data.CopyTo(destinationSpan);
 
-        graphicsDevice.Unmap(staging, 0);
+            graphicsDevice.Unmap(staging, 0);
 
-        commandList.CopyBuffer(staging, 0, result, 0, bufferSize);
+            commandList.CopyBuffer(staging, 0, result, 0, bufferSize);
 
-        commandList.End();
+            commandList.End();
 
-        graphicsDevice.SubmitCommands(commandList);
+            graphicsDevice.SubmitCommands(commandList);
 
-        graphicsDevice.DisposeWhenIdle(commandList);
-        graphicsDevice.DisposeWhenIdle(staging);
+            graphicsDevice.DisposeWhenIdle(commandList);
+            graphicsDevice.DisposeWhenIdle(staging);
+        }
+        catch
+        {
+            // Nothing was returned to the caller, so every created resource is still owned here.
+            commandList.Dispose();
+            staging.Dispose();
+            result.Dispose();
+            throw;
+        }
+
+        DrainUpload(graphicsDevice);
 
         return result;
+    }
+
+    /// <summary>
+    /// The device flushes its deferred disposal queue only on <see cref="GraphicsDevice.WaitForIdle"/>.
+    /// Draining right after the submit keeps per-upload temporaries from accumulating for the
+    /// lifetime of a rendered battle (WI-X2-01).
+    /// </summary>
+    private static void DrainUpload(GraphicsDevice graphicsDevice)
+    {
+        graphicsDevice.WaitForIdle();
     }
 
     /// <summary>
@@ -147,48 +170,61 @@ internal static class ResourceFactoryExtensions
                 usage));
 
         var commandList = graphicsDevice.ResourceFactory.CreateCommandList();
-        commandList.Begin();
-
-        for (var arrayLayer = 0u; arrayLayer < arrayLayers; arrayLayer++)
+        try
         {
-            var calculatedMipWidth = width;
-            var calculatedMipHeight = height;
+            commandList.Begin();
 
-            for (var level = 0u; level < mipMapLevels; level++)
+            for (var arrayLayer = 0u; arrayLayer < arrayLayers; arrayLayer++)
             {
-                var mipMap = mipMapData[(arrayLayer * mipMapLevels) + level];
+                var calculatedMipWidth = width;
+                var calculatedMipHeight = height;
 
-                var mipMapWidth = Math.Min(calculatedMipWidth, mipMap.Width);
-                var mipMapHeight = Math.Min(calculatedMipHeight, mipMap.Height);
+                for (var level = 0u; level < mipMapLevels; level++)
+                {
+                    var mipMap = mipMapData[(arrayLayer * mipMapLevels) + level];
 
-                graphicsDevice.UpdateTexture(
-                    staging,
-                    mipMap.Data,
-                    0, 0, 0,
-                    mipMapWidth,
-                    mipMapHeight,
-                    1,
-                    level,
-                    0);
+                    var mipMapWidth = Math.Min(calculatedMipWidth, mipMap.Width);
+                    var mipMapHeight = Math.Min(calculatedMipHeight, mipMap.Height);
 
-                commandList.CopyTexture(
-                    staging, 0, 0, 0, level, 0,
-                    result, 0, 0, 0, level, arrayLayer,
-                    mipMapWidth,
-                    mipMapHeight,
-                    1, 1);
+                    graphicsDevice.UpdateTexture(
+                        staging,
+                        mipMap.Data,
+                        0, 0, 0,
+                        mipMapWidth,
+                        mipMapHeight,
+                        1,
+                        level,
+                        0);
 
-                calculatedMipWidth = Math.Max(calculatedMipWidth / 2, 1);
-                calculatedMipHeight = Math.Max(calculatedMipHeight / 2, 1);
+                    commandList.CopyTexture(
+                        staging, 0, 0, 0, level, 0,
+                        result, 0, 0, 0, level, arrayLayer,
+                        mipMapWidth,
+                        mipMapHeight,
+                        1, 1);
+
+                    calculatedMipWidth = Math.Max(calculatedMipWidth / 2, 1);
+                    calculatedMipHeight = Math.Max(calculatedMipHeight / 2, 1);
+                }
             }
+
+            commandList.End();
+
+            graphicsDevice.SubmitCommands(commandList);
+
+            graphicsDevice.DisposeWhenIdle(commandList);
+            graphicsDevice.DisposeWhenIdle(staging);
+        }
+        catch
+        {
+            // Nothing was returned to the caller, so every created resource is still owned here.
+            commandList.Dispose();
+            staging.Dispose();
+            result.Dispose();
+            throw;
         }
 
-        commandList.End();
-
-        graphicsDevice.SubmitCommands(commandList);
-
-        graphicsDevice.DisposeWhenIdle(commandList);
-        graphicsDevice.DisposeWhenIdle(staging);
+        DrainUpload(graphicsDevice);
 
         return result;
     }

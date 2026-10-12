@@ -474,3 +474,11 @@ Design: [hit feedback](../deep-dives/x1-imported-unit-hit-feedback.md), includin
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-x-x1-hit-feedback.md](track-x-x1-hit-feedback.md) | X1-1..X1-7 | Policy and directional-impact audits, explicit damage effects, regressions, impact selection and placement, readable duel capture |
+
+## Track X · X2: Capacity-probe graphics resource fixes
+
+Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [upload lifecycle](../agent/cards/WI-X2-01-bound-upload-resource-lifetimes.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-x-x2-capacity-probe-fixes.md](track-x-x2-capacity-probe-fixes.md) | X2-1..X2-2 | Upload lifetime cleanup and measured combat FX/model reuse |

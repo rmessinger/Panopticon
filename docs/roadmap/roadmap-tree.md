@@ -42,6 +42,9 @@ mindmap
         X1-6 Imported impact-effect selection
         X1-7 Attacker-facing impact placement
         X1-4 Readable duel capture
+      X2 Capacity-probe graphics resource fixes
+        X2-1 Upload lifetime cleanup
+        X2-2 Combat FX and model reuse
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
         P0-1 Open command model
@@ -435,6 +438,7 @@ flowchart LR
 
   subgraph S4["Stage 4 · Fidelity scaling & physics consumers"]
     direction TB
+    X2["X2 Capacity-probe graphics resource fixes"]
     B6["B6 Distributed simulation"]
     B7["B7 Variable fidelity"]
     C4C["C4c EE2 rigid KF animation"]
@@ -680,6 +684,7 @@ flowchart LR
   A1 --> M0
   M0 --> M1
   B1 --> M1
+  M1 --> X2
   C4D --> M2
   C4D --> H2A
   P9 --> H2A
