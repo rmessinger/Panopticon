@@ -1,0 +1,76 @@
+{
+  // WI-M3-01 authored bounds: ratio of the imported EE2 model's scaled extents (authored
+  // model scale 0.36501, FX sub-objects excluded) to the Generals reference model's extents
+  // (FX excluded, model resolved from the reference object's first draw state). Measured
+  // ratios recorded per entry; bounds leave headroom for importer drift, not for rebalancing.
+  // Ground vehicles land near parity; infantry and fixed-wing land near 0.5 because Generals
+  // authors infantry meshes above real scale and aircraft below it (G10 per-object references
+  // and VisualScaleOverrides). The helicopter reference keeps its rotor disk in the measured
+  // extents, which lowers its ratio; recorded with the entry.
+  "GameUnitsPerSourceModelUnit": 0.36501,
+  "Entries": [
+    {
+      "RowKey": "HeavyInfantry1UpgradeEpoch15",
+      "ModelKey": "lhi15_ObjectiveForceWarrior",
+      "GeneralsReference": "AmericaInfantryRanger",
+      "MeasuredHeightRatio": 0.502,
+      "HeightRatioBounds": [0.40, 0.65],
+      "MeasuredLengthRatio": 0.543,
+      "LengthRatioBounds": [0.40, 0.70]
+    },
+    {
+      "RowKey": "LightMounted1UpgradeEpoch15",
+      "ModelKey": "LLM15_Disruptor",
+      "GeneralsReference": "AmericaTankCrusader",
+      "MeasuredHeightRatio": 1.230,
+      "HeightRatioBounds": [1.05, 1.40],
+      "MeasuredLengthRatio": 0.831,
+      "LengthRatioBounds": [0.70, 0.95]
+    },
+    {
+      "RowKey": "HeavyMounted1UpgradeEpoch15",
+      "ModelKey": "lhm15_myrmidontank",
+      "GeneralsReference": "ChinaTankBattleMaster",
+      "MeasuredHeightRatio": 0.780,
+      "HeightRatioBounds": [0.65, 0.90],
+      "MeasuredLengthRatio": 1.004,
+      "LengthRatioBounds": [0.85, 1.15]
+    },
+    {
+      "RowKey": "HeavyArtilleryUpgradeEpoch14",
+      "ModelKey": "LHA14_NetFireLauncher",
+      "GeneralsReference": "AmericaVehicleTomahawk",
+      "MeasuredHeightRatio": 0.766,
+      "HeightRatioBounds": [0.65, 0.90],
+      "MeasuredLengthRatio": 0.976,
+      "LengthRatioBounds": [0.85, 1.10]
+    },
+    {
+      "RowKey": "FighterUpgradeEpoch15",
+      "ModelKey": "af15_Atmospheric",
+      "GeneralsReference": "AmericaJetRaptor",
+      "MeasuredHeightRatio": 0.494,
+      "HeightRatioBounds": [0.38, 0.60],
+      "MeasuredLengthRatio": 0.429,
+      "LengthRatioBounds": [0.35, 0.55]
+    },
+    {
+      "RowKey": "BomberUpgradeEpoch15",
+      "ModelKey": "ab15_orbital",
+      "GeneralsReference": "AmericaJetAurora",
+      "MeasuredHeightRatio": 0.490,
+      "HeightRatioBounds": [0.38, 0.60],
+      "MeasuredLengthRatio": 0.527,
+      "LengthRatioBounds": [0.45, 0.65]
+    },
+    {
+      "RowKey": "LightMounted2UpgradeEpoch13",
+      "ModelKey": "llm13_missilehelicopter",
+      "GeneralsReference": "AmericaVehicleComanche",
+      "MeasuredHeightRatio": 0.648,
+      "HeightRatioBounds": [0.55, 0.80],
+      "MeasuredLengthRatio": 0.496,
+      "LengthRatioBounds": [0.40, 0.60]
+    }
+  ]
+}

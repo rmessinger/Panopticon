@@ -33,6 +33,12 @@ public class CaptureContentImport
     /// <summary>Declared scale from one source distance unit (an EE2 tile) to game units.</summary>
     public double GameUnitsPerSourceDistance { get; set; }
 
+    /// <summary>
+    /// Card WI-M3-01: declared scale from one source model unit (an EE2 NIF decimeter) to game
+    /// units, applied to the imported draw's world matrix. Null or 0 means no model scaling.
+    /// </summary>
+    public double? GameUnitsPerSourceModelUnit { get; set; }
+
     /// <summary>DDF files read for the closure, in load order.</summary>
     public List<string> DdfPaths { get; set; } = [];
 

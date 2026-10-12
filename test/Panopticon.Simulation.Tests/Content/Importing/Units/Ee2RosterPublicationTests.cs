@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Ee2;
 using Panopticon.Tests.Data;
 using Panopticon.Tools.ReplaySketch.Model;
 using Panopticon.Tools.ReplaySketch.Model.Capture;
@@ -33,6 +34,8 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
 
     public const string InfantryRowKey = "HeavyInfantry1UpgradeEpoch15";
 
+    public static readonly string[] AllRowKeys = [.. PublishedRowKeys, InfantryRowKey];
+
     private static CaptureContentImport RosterImport(params string[] rowKeys)
     {
         return new CaptureContentImport
@@ -40,9 +43,34 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
             Source = "ee2",
             RowKeys = [.. rowKeys],
             Region = "we",
-            GameUnitsPerSourceDistance = 12,
+            GameUnitsPerSourceDistance = Ee2ReferenceScale.GameUnitsPerSourceDistance,
+            GameUnitsPerSourceModelUnit = Ee2ReferenceScale.GameUnitsPerSourceModelUnit,
             ExcludedMechanics = [.. Ee2InventoryTests.ReferenceExclusions],
         };
+    }
+
+    /// <summary>
+    /// Card WI-M3-01: materializes the reference roster from the install without a Game boot, so
+    /// staged module data (for example the draw's model scale) can be asserted directly.
+    /// </summary>
+    public static Panopticon.Content.Importing.Units.Materialization.MaterializedUnitContent MaterializeReferenceRoster(
+        double gameUnitsPerSourceDistance,
+        double? gameUnitsPerSourceModelUnit)
+    {
+        var set = new Ee2UnitAdapter(Ee2InventoryTests.OpenInstall(), new Ee2ImportPolicy(15, "we", Ee2InventoryTests.ReferenceExclusions))
+            .ReadRows(AllRowKeys);
+        var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
+        Assert.True(resolution.Succeeded, string.Join("\n", resolution.Diagnostics.Where(d => d.IsError)));
+
+        var content = Panopticon.Content.Importing.Units.Materialization.UnitRuntimeMaterializer.Materialize(
+            resolution,
+            new Panopticon.Content.Importing.Units.Materialization.UnitMaterializationContext(
+                new Panopticon.Content.Importing.Units.Materialization.UnitConversionPolicy(
+                    SageGame.CncGenerals,
+                    gameUnitsPerSourceDistance: gameUnitsPerSourceDistance),
+                gameUnitsPerSourceModelUnit: gameUnitsPerSourceModelUnit));
+        Assert.True(content.Succeeded, string.Join("\n", content.Diagnostics));
+        return content;
     }
 
     private static Game Boot()

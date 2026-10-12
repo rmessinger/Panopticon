@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-M3-01` |
 | Roadmap phase | [M3](../../track-m-mass-battle.md): Mixed roster normalization |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M2-04` |
@@ -80,14 +80,41 @@ Normalize imported EE2 models and gameplay distances to Generals conventions thr
 
 ## Acceptance criteria
 
-- [ ] Both reference-roster profiles record 18.2505 and 0.36501 with the derivation, and a test
+- [x] Both reference-roster profiles record 18.2505 and 0.36501 with the derivation, and a test
       enforces the 50-unit consistency invariant.
-- [ ] Imported EE2 draw modules scale their world matrix by the authored model scale; a synthetic
+- [x] Imported EE2 draw modules scale their world matrix by the authored model scale; a synthetic
       test proves the folding math; native definitions and the maceman bounded profile are
       unchanged.
-- [ ] `Ee2ModelScaleTests` compares every reference model's scaled height and length against the
+- [x] `Ee2ModelScaleTests` compares every reference model's scaled height and length against the
       Generals reference model within the committed manifest bounds.
-- [ ] Standard validation passes.
+- [x] Standard validation passes.
+
+## Result
+
+Done 2026-10-11. Factor 12 replaced by the derived pair (18.2505 tiles-to-world, 0.36501 per
+model unit) in both reference-roster profiles with the derivation recorded; the maceman bounded
+profile is untouched. Model scale folds into the imported draw's world matrix
+(`W3dModelDraw.ApplyImportedModelScale`), with `W3dModelDrawModuleData.ImportedModelScale` set by
+`UnitVisualMaterializer` through `UnitMaterializationContext.GameUnitsPerSourceModelUnit`.
+
+Two normalization findings landed beyond the constants, both evidenced:
+
+- EE2 authors attack ranges as ground-plane tile distances; imported EE2 weapons set
+  `WeaponTemplate.MeasuresRangeOnGround` so the engine's 3D range check cannot let cruising
+  altitude consume the authored range. At the normalized factor the bomber's 1.5-tile range from
+  a 4-tile cruise never reached the ground target (the M2 factor-12 pass only fit through
+  target-radius subtraction); with the ground-plane check the full fixed-wing rearm cycle is
+  deterministic again.
+- The fixed-wing contract now spawns aircraft at their factor-converted cruising height instead
+  of a fixed 48-unit offset; spawning below it let the JetAI landing flow take over before the
+  wings model reached its authored minimum speed.
+
+Validation: `Ee2ModelScaleTests` 2/2 (no install) and `Ee2ModelScaleInstalledTests` 2/2 (both
+installs; measured ratios inside the committed bounds); `Ee2ContractValidationTests` 2/2 at the
+new factor; `Ee2RosterPublicationTests` 3/3; `Ee2TypedMaterializationTests` 6/6 (gained the
+ground-range assertion); maceman `ScenarioCaptureRunnerTests` and `UnitContentImportIntegrationTests`
+6/6 unchanged; full non-interactive suite shows only the pre-existing
+`ParkingPlaceBehavior_ReportLanding` failure; solution format and brace checks clean.
 
 ## Validation commands
 

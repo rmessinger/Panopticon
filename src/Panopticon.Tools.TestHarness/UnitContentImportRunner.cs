@@ -62,7 +62,8 @@ public static class UnitContentImportRunner
         var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(
             policy, publisher.Lookup, visualStore: game.AssetStore, damageEffects: damageEffects,
             damageEffectLookup: name => game.AssetStore.DamageFXs.GetByName(name),
-            impactEffectDamageTypes: impactEffectDamageTypes));
+            impactEffectDamageTypes: impactEffectDamageTypes,
+            gameUnitsPerSourceModelUnit: import.GameUnitsPerSourceModelUnit));
         Report(content.Diagnostics, reporter);
         if (!content.Succeeded)
         {

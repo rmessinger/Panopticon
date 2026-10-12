@@ -24,7 +24,12 @@
       "LightMounted2UpgradeEpoch13"
     ],
     "Region": "we",
-    "GameUnitsPerSourceDistance": 12,
+    // WI-M3-01 normalization: one EE2 tile is 50 decimeter NIF model units = 5 m = 18.2505
+    // Generals game units (3.6501 units/m, G10 Crusader hull anchor) and one model unit is
+    // 0.1 m = 0.36501 game units (draw world-matrix scale). Replaces the M2-era constant 12;
+    // see Ee2ReferenceScale for the derivation asserted by Ee2ModelScaleTests.
+    "GameUnitsPerSourceDistance": 18.2505,
+    "GameUnitsPerSourceModelUnit": 0.36501,
     "ExcludedMechanics": [
       "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
       "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",

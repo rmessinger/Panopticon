@@ -230,8 +230,13 @@ public static class Ee2ContractPhase
         var launch = home + new Vector3(60f, 60f, 0f);
         var facing = MathF.Atan2(targetAPosition.Y - launch.Y, targetAPosition.X - launch.X);
         var height = game.Scene3D.Terrain.GetGroundHeight(new Vector2(launch.X, launch.Y)) ?? 0f;
+        // Card WI-M3-01: spawn at the authored cruising height (the factor-converted
+        // PreferredHeight), not a fixed offset; spawning below it makes the kinematic height
+        // hold teleport the jet and the landing flow (which watches the Moving flag) takes over
+        // before the wings model accelerates to its authored minimum speed.
+        var cruiseHeight = jet.Definition.LocomotorSets[LocomotorSetType.Normal].Locomotors?[0].Value?.PreferredHeight ?? 48f;
         jet.UpdateTransform(
-            new Vector3(launch.X, launch.Y, height + 48f),
+            new Vector3(launch.X, launch.Y, height + MathF.Max(48f, cruiseHeight)),
             System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, facing));
         jet.UpdateColliders();
 
@@ -258,7 +263,7 @@ public static class Ee2ContractPhase
 
                 if (frame % 600 == 0)
                 {
-                    reporter.Info($"[ee2] {contract.Definition} sortie1 f{frame} rounds={weapon?.CurrentRounds} distA={Vector2.Distance(To2(jet.Translation), To2(targetAPosition)):0} hpA={targetA.BodyModule?.Health:0}");
+                    reporter.Info($"[ee2] {contract.Definition} sortie1 f{frame} rounds={weapon?.CurrentRounds} distA={Vector2.Distance(To2(jet.Translation), To2(targetAPosition)):0} hpA={targetA.BodyModule?.Health:0} jetZ={jet.Translation.Z:0} state={jetAI.CurrentJetAIState}");
                 }
 
                 if (!damagedFirst && (targetA.BodyModule?.Health ?? 0) < healthA)

@@ -46,6 +46,11 @@ internal static class UnitVisualMaterializer
         context.VisualAssets.Add(new VisualAssetRequest(visual.Id, VisualAssetKind.Model, visual.ModelKey.Value, modelName));
 
         var draw = new W3dModelDrawModuleData();
+        if (context.GameUnitsPerSourceModelUnit is { } modelScale)
+        {
+            draw.ImportedModelScale = (float)modelScale;
+        }
+
         var defaultState = new ModelConditionState { Model = context.ModelReference(modelName) };
         defaultState.ConditionFlags.Add(new BitArray<ModelConditionFlag>());
         draw.ConditionStates.Add(defaultState);

@@ -32,7 +32,8 @@ public sealed class Ee2ContractValidationTests(ITestOutputHelper output)
                 Source = "ee2",
                 RowKeys = [.. Ee2RosterPublicationTests.PublishedRowKeys],
                 Region = "we",
-                GameUnitsPerSourceDistance = 12,
+                GameUnitsPerSourceDistance = Ee2ReferenceScale.GameUnitsPerSourceDistance,
+                GameUnitsPerSourceModelUnit = Ee2ReferenceScale.GameUnitsPerSourceModelUnit,
                 ExcludedMechanics = [.. Ee2InventoryTests.ReferenceExclusions],
             },
             Contracts =

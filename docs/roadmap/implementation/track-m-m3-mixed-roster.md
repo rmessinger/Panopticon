@@ -10,8 +10,7 @@ M2 machinery: [M2 implementation plan](track-m-m2-ee2-combat-units.md).
 
 | Card | Deliverable | Initial gate |
 |---|---|---|
-| [WI-M3-01](../agent/cards/WI-M3-01-model-scale-and-factor.md) | Authored tiles-to-world factor and model scale, bounds manifest, height test | Ready |
-| [WI-M3-02](../agent/cards/WI-M3-02-rps-damage-and-armor.md) | rps and dbcombat mapping to Generals damage types and armor sets | Reconcile scale evidence after 01 |
+| [WI-M3-01](../agent/cards/WI-M3-01-model-scale-and-factor.md) | Authored tiles-to-world factor and model scale, bounds manifest, height test | Ready || [WI-M3-02](../agent/cards/WI-M3-02-rps-damage-and-armor.md) | rps and dbcombat mapping to Generals damage types and armor sets | Ready (scale evidence reconciled) |
 | [WI-M3-03](../agent/cards/WI-M3-03-points-rosters-duels.md) | Points budget, two 1000-unit manifests, duel matrix and report | Reconcile damage evidence after 02 |
 
 One card per commit; one M3 phase PR left open for operator merge. Draft cards become Ready only
@@ -39,6 +38,21 @@ Scaled model heights land at 0.77 to 1.23 of the Generals vehicle references; in
 fixed-wing land near 0.50, mirroring Generals' own oversized-infantry and undersized-aircraft
 asset conventions (G10 per-object references and `VisualScaleOverrides`). Bounds are committed
 in `test/Panopticon.Simulation.Tests/Data/Content/Importing/Units/Ee2/ee2-model-scale-bounds.json`.
+
+Runtime seams:
+
+- The model scale folds into the imported draw's world matrix (`W3dModelDraw.ApplyImportedModelScale`,
+  local frame before placement), so bones, attachments, client model bounds, and shadows follow;
+  native draws keep scale 1 and the G10 render-list override stays independent.
+- EE2 attack ranges are authored as ground-plane tile distances, so imported EE2 weapons set
+  `WeaponTemplate.MeasuresRangeOnGround` and the engine's range check uses the horizontal
+  component for them. Without this the 3D check lets a cruising altitude consume the authored
+  range (a 1.5-tile bomb range can never reach the ground from a 4-tile cruise; the M2-era
+  factor-12 bomber contract only passed through target-radius subtraction). Native weapons keep
+  the 3D check.
+- The fixed-wing contract spawns aircraft at their authored cruising height (the factor-converted
+  `PreferredHeight`) instead of a fixed 48-unit offset; spawning below it made the JetAI landing
+  flow take over before the wings model reached its authored minimum speed.
 
 ## Damage class mapping (WI-M3-02)
 
