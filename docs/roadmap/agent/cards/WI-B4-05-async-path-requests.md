@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4-05` |
 | Roadmap phase | [B4](../../track-b-scale.md): spatial and pathfinding scaling |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-B4-01` |

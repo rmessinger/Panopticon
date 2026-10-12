@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4-03` |
 | Roadmap phase | [B4](../../track-b-scale.md): spatial and pathfinding scaling |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `M` |
 | Prerequisites | `WI-B4-02` |
@@ -38,11 +38,19 @@ partition span at or under 10 ms median at contact, counters steady, engagement 
 
 ## Acceptance criteria
 
-- [ ] A full-scale post-fix run exists with `allPassed` true on engagement checks.
-- [ ] `system.partition.spanMs` median at contact deciles is at or under 10 ms, or the miss
+- [x] A full-scale post-fix run exists with `allPassed` true on engagement checks.
+  - 2026-10-12 run, 9000/9000 frames, all checks passed; engagement counts identical to the
+    baseline run (878/877 alive, 122/123 destroyed, 37 launches, 22 recoveries).
+- [x] `system.partition.spanMs` median at contact deciles is at or under 10 ms, or the miss
   and its residual shape are recorded explicitly.
-- [ ] The implementation plan carries the before and after medians table.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+  - Missed and recorded: median 259.4 ms (contact deciles 225-541 ms) against the 10 ms
+    budget; residual shape is ~1040 membership rebuilds plus ~261k genuine overlap tests per
+    contact tick (~1 microsecond per pair). Next levers named in the plan: cheaper exact
+    test, resting-contact throttling, B3 parallelism.
+- [x] The implementation plan carries the before and after medians table.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
+  - Full non-interactive suite green apart from the known set at WI-B4-02 commit time; this
+    card changes no source, only documentation.
 
 ## Validation commands
 
