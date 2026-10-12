@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-X1-02` |
 | Roadmap phase | [X1](../../track-x-fixes-tweaks.md) |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-X1-01` |
@@ -25,7 +25,7 @@ Apply the audited compatibility policy through shared materialization so the imp
 
 ## Steps
 
-1. Add the audit's explicit policy field and narrowly scoped lookup. Reuse asset references and diagnostics; imports without a mapping remain unchanged.
+1. Add `CaptureContentImport.DamageEffects` and context source-qualified mappings plus an installed DamageFX lookup, as specified in the audit. Imports without a mapping remain unchanged.
 2. Bind validated effects on the imported vehicle's armor set. Use a narrow construction seam if needed; do not weaken unrelated native setters or overwrite Generals assets.
 3. Validate requested references before publication. A missing requested effect must not publish partial content.
 4. Add a focused success/absence/missing-reference test. Record exact landed names and reconcile `WI-X1-03`.
@@ -38,10 +38,10 @@ Apply the audited compatibility policy through shared materialization so the imp
 
 ## Acceptance criteria
 
-- [ ] Explicit tank mapping binds the requested effect; unconfigured imports do not gain effects.
-- [ ] Missing requested assets fail before publication with the subject and asset name.
-- [ ] Generals bindings and damage/armor/weapon values remain unchanged.
-- [ ] Standard validation passes or pre-existing failures are documented against the base.
+- [x] Explicit tank mapping binds the requested effect; unconfigured imports do not gain effects.
+- [x] Missing requested assets fail before publication with the subject and asset name.
+- [x] Generals bindings and damage/armor/weapon values remain unchanged.
+- [x] Standard validation passes or pre-existing failures are documented against the base.
 
 ## Validation commands
 

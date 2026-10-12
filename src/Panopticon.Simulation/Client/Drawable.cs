@@ -386,6 +386,27 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
         return (null, null);
     }
 
+    private readonly List<AxisAlignedBoundingBox> _partBoundsScratch = [];
+
+    internal bool TryGetModelSpacePartBounds(out IReadOnlyList<AxisAlignedBoundingBox> partBounds)
+    {
+        // Scratch reuse: callers consume the list synchronously (damage-effect contact only).
+        _partBoundsScratch.Clear();
+        foreach (var drawModule in DrawModules)
+        {
+            drawModule.TryGetModelSpacePartBounds(_partBoundsScratch);
+        }
+
+        if (_partBoundsScratch.Count == 0)
+        {
+            partBounds = [];
+            return false;
+        }
+
+        partBounds = _partBoundsScratch;
+        return true;
+    }
+
     // TODO: Cache this.
     public T? FindClientUpdateModule<T>()
         where T : ClientUpdateModule
@@ -1741,6 +1762,9 @@ public sealed class Drawable : Entity, IPersistableObject, IGameObjectClient
     }
 
     bool IGameObjectClient.TryGetModelSpaceBounds(out AxisAlignedBoundingBox bounds) => TryGetModelSpaceBounds(out bounds);
+
+    bool IGameObjectClient.TryGetModelSpacePartBounds(out IReadOnlyList<AxisAlignedBoundingBox> partBounds) =>
+        TryGetModelSpacePartBounds(out partBounds);
 
     public void StopSway()
     {

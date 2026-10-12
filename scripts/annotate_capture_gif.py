@@ -3,8 +3,9 @@
 TestHarness ScenarioCapture runner) into a cropped GIF.
 
 Generic companion to annotate_engagement_gif.py: same crop/palette machinery, but no
-engagement-specific overlays (no target-health readout, no IMPACT flashes). Optional
---labels draws a static legend of tracked actor labels. --projectile-orientation draws sampled
+engagement-specific overlays (no IMPACT flashes). Optional
+--labels draws a static legend; --health draws actor labels and measured health bars.
+--projectile-orientation draws sampled
 travel and local +X vectors from the manifest.
 
 Playback defaults to real time: each captured frame is held for the number of logic
@@ -101,6 +102,27 @@ def draw_arrow(draw, start, end, color, width):
     )
 
 
+def draw_health_panel(image, record):
+    actors = record["Actors"]
+    if not actors:
+        return
+    draw = ImageDraw.Draw(image)
+    lines = [f"{actor['Label']}: {actor['Health']:.0f}/{actor['MaxHealth']:.0f} HP" for actor in actors]
+    font = fit_font(draw, max(lines, key=len), image.width - 16)
+    row_height = font.size + 12
+    draw.rectangle((0, 0, image.width, 24 + row_height * len(actors)), fill=(0, 0, 0))
+    title = "Two-unit duel" if len(actors) == 2 else "Actor health"
+    draw.text((8, 4), title, fill=RESERVED_COLORS[1], font=font)
+    for i, (actor, line) in enumerate(zip(actors, lines)):
+        y = 24 + i * row_height
+        draw.text((8, y), line, fill=RESERVED_COLORS[1], font=font)
+        ratio = max(0, min(1, actor["Health"] / actor["MaxHealth"])) if actor["MaxHealth"] > 0 else 0
+        bar_y = y + font.size + 2
+        draw.rectangle((8, bar_y, image.width - 8, bar_y + 4), fill=(90, 20, 20))
+        if ratio > 0:
+            draw.rectangle((8, bar_y, 8 + (image.width - 16) * ratio, bar_y + 4), fill=(80, 210, 80))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture_dir")
@@ -110,7 +132,9 @@ def main():
     parser.add_argument("--frame-ms", type=int, default=None,
                         help="explicit per-frame delay in milliseconds, overriding real-time pacing")
     parser.add_argument("--labels", action="store_true",
-                        help="draw a static legend of tracked actor labels")
+                         help="draw a static legend of tracked actor labels")
+    parser.add_argument("--health", action="store_true",
+                         help="draw a duel panel with actor labels and measured HP, without synthetic hit flashes")
     parser.add_argument("--projectile-orientation", action="store_true",
                         help="draw projectile travel (white) and local +X (cyan) vectors")
     parser.add_argument("--padding", type=int, default=PADDING,
@@ -132,6 +156,7 @@ def main():
     out_w = min(900, crop_w)
     out_h = max(1, round(out_w * crop_h / crop_w))
     scale = out_w / crop_w
+    panel_height = 24 + 26 * max(len(frame["Actors"]) for frame in manifest["Frames"]) if args.health else 0
 
     legend = []
     if args.labels:
@@ -147,7 +172,13 @@ def main():
     for path, record in zip(paths, manifest["Frames"]):
         im = Image.open(path).convert("RGB").crop((left, top, right, bottom))
         im = im.resize((out_w, out_h), Image.LANCZOS)
-        if legend:
+        if args.health:
+            # Keep annotations outside the rendered scene so effects and model bounds remain unobscured.
+            annotated = Image.new("RGB", (out_w, out_h + panel_height), (0, 0, 0))
+            annotated.paste(im, (0, panel_height))
+            draw_health_panel(annotated, record)
+            im = annotated
+        elif legend:
             draw = ImageDraw.Draw(im)
             font = fit_font(draw, max(legend, key=len), out_w - 8)
             y = 4
@@ -164,20 +195,20 @@ def main():
 
                 start = (
                     (projectile["X"] - left) * scale,
-                    (projectile["Y"] - top) * scale,
+                    (projectile["Y"] - top) * scale + panel_height,
                 )
                 travel_x = orientation.get("TravelScreenX")
                 travel_y = orientation.get("TravelScreenY")
                 if travel_x is not None and travel_y is not None:
                     travel_end = (
                         (travel_x - left) * scale,
-                        (travel_y - top) * scale,
+                        (travel_y - top) * scale + panel_height,
                     )
                     draw_arrow(draw, start, travel_end, TRAVEL_COLOR, 5)
 
                 forward_end = (
                     (orientation["ForwardScreenX"] - left) * scale,
-                    (orientation["ForwardScreenY"] - top) * scale,
+                    (orientation["ForwardScreenY"] - top) * scale + panel_height,
                 )
                 draw_arrow(draw, start, forward_end, FORWARD_COLOR, 2)
 
@@ -221,7 +252,7 @@ def main():
         duration=per_frame_ms,
         loop=0,
     )
-    print(f"{args.output}: {len(frames)} frames, {out_w}x{out_h}, crop {left},{top},{right},{bottom}, {per_frame_ms} ms/frame")
+    print(f"{args.output}: {len(frames)} frames, {quantized[0].width}x{quantized[0].height}, crop {left},{top},{right},{bottom}, {per_frame_ms} ms/frame")
     return 0
 
 

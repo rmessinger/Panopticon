@@ -27,6 +27,8 @@ public class W3dModelDraw : DrawModule
     protected AnimationState _activeAnimationState;
 
     private W3dModelDrawConditionState _activeModelDrawConditionState;
+    private List<AxisAlignedBoundingBox>? _partBoundsCache;
+    private W3dModelDrawConditionState? _partBoundsCacheFor;
 
     // Union of every WeaponMuzzleFlash BoneName across all condition states. Static INI data, so it
     // is computed once and reused to build the per-model MuzzleFlashBoneIndices cache at creation.
@@ -97,6 +99,44 @@ public class W3dModelDraw : DrawModule
     {
         bounds = default;
 
+        var partBounds = new List<AxisAlignedBoundingBox>();
+        if (!TryGetModelSpacePartBounds(partBounds))
+        {
+            return false;
+        }
+
+        bounds = partBounds[0];
+        for (var i = 1; i < partBounds.Count; i++)
+        {
+            bounds = AxisAlignedBoundingBox.CreateMerged(bounds, partBounds[i]);
+        }
+
+        return true;
+    }
+
+    /// <summary>Per visible sub-object bounds in model space; the merged form overstates thin
+    /// protrusions like gun barrels. Cached per model condition state: rebuilding per damage hit
+    /// re-walked and re-transformed every sub-object.</summary>
+    internal override bool TryGetModelSpacePartBounds(List<AxisAlignedBoundingBox> partBounds)
+    {
+        if (_partBoundsCache is null || !ReferenceEquals(_partBoundsCacheFor, _activeModelDrawConditionState))
+        {
+            var cached = new List<AxisAlignedBoundingBox>();
+            if (!CollectModelSpacePartBounds(cached))
+            {
+                return false;
+            }
+
+            _partBoundsCache = cached;
+            _partBoundsCacheFor = _activeModelDrawConditionState;
+        }
+
+        partBounds.AddRange(_partBoundsCache);
+        return true;
+    }
+
+    private bool CollectModelSpacePartBounds(List<AxisAlignedBoundingBox> partBounds)
+    {
         var modelInstance = _activeModelDrawConditionState?.Model;
         if (modelInstance == null)
         {
@@ -115,10 +155,7 @@ public class W3dModelDraw : DrawModule
             var boneTransform = mesh.Skinned
                 ? Matrix4x4.Identity
                 : modelInstance.RelativeBoneTransforms[subObject.Bone.Index];
-            var transformedBounds = AxisAlignedBoundingBox.Transform(mesh.BoundingBox, boneTransform);
-            bounds = foundBounds
-                ? AxisAlignedBoundingBox.CreateMerged(bounds, transformedBounds)
-                : transformedBounds;
+            partBounds.Add(AxisAlignedBoundingBox.Transform(mesh.BoundingBox, boneTransform));
             foundBounds = true;
         }
 

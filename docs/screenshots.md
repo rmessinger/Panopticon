@@ -8,8 +8,10 @@
 
 Copy the PNG into `/mnt/pit2/Network Storage/temp/` (the path contains spaces; quote it). That
 directory is served read-only by the live viewer at `https://files.reid-corp.com/viewer/`, which
-shows the newest image automatically: no refresh, upload, or login. Overwrite the same filename
-for iteration snapshots so the viewer swaps instantly.
+shows the newest image automatically: no refresh, upload, or login. Each iteration uses a unique
+versioned filename and frame directory. Preserve existing entries as progress evidence; no
+overwrite or removal without explicit operator approval. Historical recaptures include
+`reconstructed` in their filenames and record the source commit.
 
 Layout:
 - Top level: meaningful demonstrations of progress only (proof stills, before/after comparisons,
@@ -72,6 +74,12 @@ Capture timestamps are nonuniform. Reference GIF frame durations follow timestam
 with a final-frame pause. Filename order alone does not imply a constant frame rate.
 
 ## Recipe: 3D scene screenshots (headless, reliable)
+
+The generic GIF annotator supports `--health` for measured per-actor health panels outside the
+rendered scene. `--labels` retains the static legend mode. Imported model bounds can exceed the
+manifest's gameplay-derived `RadiusPixels`; increase `--padding` to retain complete models and
+effects. The X1 duel uses `--health --labels --padding 260` and captures every logic frame.
+Health panels are not proof of target-impact rendering.
 
 The TestHarness renders offscreen with Vulkan and captures PNGs; no display is needed.
 

@@ -473,4 +473,4 @@ Design: [hit feedback](../deep-dives/x1-imported-unit-hit-feedback.md), includin
 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
-| [track-x-x1-hit-feedback.md](track-x-x1-hit-feedback.md) | X1-1..X1-4 | Policy audit, explicit damage effects, regressions, readable duel capture |
+| [track-x-x1-hit-feedback.md](track-x-x1-hit-feedback.md) | X1-1..X1-7 | Policy and directional-impact audits, explicit damage effects, regressions, impact selection and placement, readable duel capture |

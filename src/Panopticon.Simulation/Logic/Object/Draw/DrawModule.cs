@@ -26,6 +26,11 @@ public abstract class DrawModule : ModuleBase
         return false;
     }
 
+    internal virtual bool TryGetModelSpacePartBounds(List<AxisAlignedBoundingBox> partBounds)
+    {
+        return false;
+    }
+
     /// <summary>
     /// For limiting tree sway, etc to visible objects.
     /// TODO(Port): Implement this for W3dModelDraw.

@@ -7,6 +7,17 @@ namespace Panopticon.Logic.Object;
 
 public sealed class ArmorTemplateSet : IConditionState<ArmorSetCondition>
 {
+    internal static ArmorTemplateSet CreateImported(LazyAssetReference<ArmorTemplate> armor, LazyAssetReference<DamageFX> damageFX)
+    {
+        // A null-valued reference preserves Armor.NoArmor for typed sources without authored armor.
+        return new ArmorTemplateSet
+        {
+            Armor = armor ?? new LazyAssetReference<ArmorTemplate>(() => null),
+            DamageFX = damageFX,
+            DamageFXPlacement = damageFX is null ? DamageFXPlacement.VictimOrigin : DamageFXPlacement.AttackerFacingBounds,
+        };
+    }
+
     internal static ArmorTemplateSet Parse(IniParser parser)
     {
         return parser.ParseBlock(FieldParseTable);
@@ -22,6 +33,7 @@ public sealed class ArmorTemplateSet : IConditionState<ArmorSetCondition>
     public readonly BitArray<ArmorSetCondition> Conditions = new BitArray<ArmorSetCondition>();
     public LazyAssetReference<ArmorTemplate> Armor { get; internal set; }
     public LazyAssetReference<DamageFX> DamageFX { get; private set; }
+    internal DamageFXPlacement DamageFXPlacement { get; private set; }
 
     public ReadOnlySpan<BitArray<ArmorSetCondition>> ConditionFlags => new(in Conditions);
 }

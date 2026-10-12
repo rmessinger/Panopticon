@@ -13,15 +13,19 @@ EE2 ships impact visuals too, but importing its effect sequences is a separate c
 
 ## Design gate
 
-`WI-X1-01` determines the narrow policy and lookup location. The implementation must preserve typed source records, scoped publication, and existing Generals bindings. The diagrams show existing runtime paths, not an already implemented import-policy extension. Reconcile the next card with the landed audit before marking it Ready.
+The [policy audit](../implementation/track-x-x1-hit-feedback.md#policy-audit) specifies the mapping and pre-publication validation. Typed source records, scoped publication, and existing Generals bindings remain unchanged.
 
 Health bars and unit labels supplement, but do not replace, effects at the damaged target. Reuse existing capture/UI or overlay facilities first. Keep both complete model bounds and impact effects inside the frame throughout the duel. The output must be identified as a two-unit duel, not a full-roster or rearm demonstration.
+
+[WI-X1-05](../agent/cards/WI-X1-05-target-impact-design.md) traced the blocked capture and approved two bounded extensions: opt-in impact-effect selection and attacker-facing bounds placement. Decisions and evidence are owned by the [implementation plan](../implementation/track-x-x1-hit-feedback.md#target-impact-design-wi-x1-05). The first two diagrams show the landed binding path; the last two show the approved extension, where `DamageFXPlacement` and `DamageFXContact` do not exist yet.
 
 ## Architecture diagrams
 
 ```mermaid
 classDiagram
   UnitContentImportRunner --> UnitRuntimeMaterializer
+  UnitContentImportRunner --> UnitMaterializationContext : DamageEffects and installed lookup
+  UnitRuntimeMaterializer --> UnitMaterializationContext : validate before staging
   UnitRuntimeMaterializer --> UnitCombatMaterializer
   UnitCombatMaterializer --> ArmorTemplateSet
   ArmorTemplateSet --> DamageFX : optional binding
@@ -37,13 +41,46 @@ sequenceDiagram
   participant Armor as ArmorTemplateSet
   participant Body as ActiveBody
   participant FX as DamageFX
-  Note over Import,Mat: Planned explicit compatibility policy, validated before publication
+  Note over Import,Mat: Explicit DamageEffects mapping, validated before staging
   Import->>Mat: Shared materialization
   Mat->>Armor: Armor and opt-in DamageFX reference
   Body->>Armor: ValidateArmorAndDamageFX
   Note over Body: Existing weapon damage path
   Body->>FX: DoDamageFX after damage processing
   Note over FX: Existing target placement and throttle
+```
+
+Approved extension (WI-X1-06, WI-X1-07):
+
+```mermaid
+classDiagram
+  UnitMaterializationContext --> DamageNugget : ImpactEffectDamageTypes, validated
+  DamageNugget --> WeaponTarget : DamageFXOverride
+  WeaponTarget --> DamageInfoInput : DamageFXOverride
+  ArmorTemplateSet --> DamageFXPlacement : new, set by CreateImported
+  ActiveBody --> DamageFXContact : new, AttackerFacingBounds only
+  DamageFXContact --> IGameObjectClient : TryGetModelSpaceBounds
+  ActiveBody --> DamageFX : DoDamageFX with position
+```
+
+```mermaid
+sequenceDiagram
+  participant Weapon as DamageNugget
+  participant Target as WeaponTarget
+  participant Body as ActiveBody
+  participant Contact as DamageFXContact
+  participant FX as DamageFX
+  Weapon->>Target: DoDamage(type, amount, override)
+  Target->>Body: AttemptDamage(DamageInfoInput)
+  Note over Body: Damage, armor, death unchanged
+  Body->>Body: effect type = override or damage type, then throttle
+  alt AttackerFacingBounds with source and client bounds
+    Body->>Contact: bounds, ModelTransform x Transform, source position
+    Contact-->>Body: facing-side point or bounds center
+  else otherwise
+    Note over Body: victim.Translation
+  end
+  Body->>FX: DoDamageFX(type, amount, source, victim, position)
 ```
 
 ## Evidence
