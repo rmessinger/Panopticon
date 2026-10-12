@@ -36,7 +36,7 @@ Diagrams marked `†` are placeholder stubs; replace them before the first card 
 | B1 | [Benchmarking](deep-dives/b1-benchmarking.md) | [§](deep-dives/b1-benchmarking.md#architecture-diagrams) | `WI-B1-01..07` ([plan](implementation/track-b-b1-benchmarking.md)) |
 | B2 | — | — | — |
 | B3 | — | — | — |
-| B4 | — | — | — |
+| B4 | [Spatial and pathfinding scaling](deep-dives/b4-spatial-pathfinding-scaling.md) | [§](deep-dives/b4-spatial-pathfinding-scaling.md#architecture-diagrams) | `WI-B4-01..06` ([plan](implementation/track-b-b4-spatial-scaling.md)) |
 | B4a | [Larger maps](deep-dives/b4a-larger-maps.md) | [§](deep-dives/b4a-larger-maps.md#architecture-diagrams) | `WI-B4a-01..11` ([plan](implementation/track-b-b4a-larger-maps.md)) |
 | B4b | [Geospatial map generation](deep-dives/b4b-geospatial-map-generation.md) | [§10](deep-dives/b4b-geospatial-map-generation.md#10-architecture-diagrams) | `WI-B4b-01..24` ([plan](implementation/track-b-b4b-geospatial.md)) |
 | B5 | — | — | — |
