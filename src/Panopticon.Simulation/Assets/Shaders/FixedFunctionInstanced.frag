@@ -3,12 +3,20 @@
 
 #include "Common.h"
 #include "ForwardPass.h"
-#include "Mesh.h"
 
 // Instanced fixed-function fragment path (B5-2): identical shading to FixedFunction.frag
 // except that house colour, opacity and tint arrive as flat per-instance varyings and the
 // property-animation override paths compile out (instancing eligibility requires every
 // override flag clear, opacity 1 and white tint, so those branches are dead by contract).
+// Set 3 carries only the shared mesh-constants binding; the instance stream is
+// vertex-stage-only.
+#define MESH_DECLARE_ITEM_CONSTANTS 0
+#include "Mesh.h"
+
+layout(set = RENDER_ITEM_CONSTANTS_RESOURCE_SET, binding = 0) uniform MeshConstants
+{
+    MeshConstantsType _MeshConstants;
+};
 
 #define TEXTURE_MAPPING_UV                 0
 #define TEXTURE_MAPPING_ENVIRONMENT        1

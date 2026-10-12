@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Panopticon.Graphics.Rendering.Instancing;
 using Panopticon.Tools.ReplaySketch.Model.Capture;
 using Panopticon.Tools.ReplaySketch.Services;
 
@@ -107,6 +108,16 @@ public static class Program
         ParseOptionalInt(args, "--b5-measured", value => config.RenderingScaleProbeMeasuredFrames = value);
         ParseOptionalString(args, "--b5-report-dir", value => config.RenderingScaleProbeReportDirectory = value);
         ParseOptionalString(args, "--b5-screenshot", value => config.RenderingScaleProbeScreenshotPath = value);
+
+        if (Array.Exists(args, a => a.Equals("--b5-no-instancing", StringComparison.OrdinalIgnoreCase)))
+        {
+            RenderScaleOptions.Instancing = false;
+        }
+
+        if (Array.Exists(args, a => a.Equals("--b5-no-lod", StringComparison.OrdinalIgnoreCase)))
+        {
+            RenderScaleOptions.SmallFeatureCulling = false;
+        }
 
         Run(config, reporter);
     }

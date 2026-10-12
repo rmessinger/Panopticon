@@ -21,6 +21,7 @@ internal sealed class PbrMetallicRoughnessShaderResources : ShaderSetBase
 {
     private readonly Dictionary<PipelineKey, Pipeline> _pipelineCache = new();
     private readonly Dictionary<PipelineKey, Pipeline> _singleSamplePipelineCache = new();
+    private readonly Dictionary<PipelineKey, Pipeline> _instancedPipelineCache = new();
     private readonly Dictionary<PbrMaterialConstantsKey, DeviceBuffer> _materialConstantsBufferCache = new();
     private readonly Dictionary<MaterialResourceSetKey, ResourceSet> _materialResourceSetCache = new();
     private readonly Dictionary<MaterialKey, Material> _materialCache = new();
@@ -45,7 +46,17 @@ internal sealed class PbrMetallicRoughnessShaderResources : ShaderSetBase
     {
         var materialResourceBindings = CreateMaterialResourceBindings().ToArray();
         MaterialResourceBindings = materialResourceBindings.ToDictionary(x => x.Description.Name);
+
+        // B5-2: instanced vertex stage over an identically-shading fragment stage; the
+        // fragment shader reads no per-item constants, so only the world matrix moves into
+        // the instance stream.
+        InstancedSet = AddDisposable(new StandaloneShaderSet(
+            store,
+            "PbrMetallicRoughnessInstanced",
+            MeshShaderResources.MeshVertex.VertexDescriptors));
     }
+
+    public readonly StandaloneShaderSet InstancedSet;
 
     /// <summary>
     /// Resolved GPU binding for one optional texture role: the uploaded texture (neutral
@@ -109,18 +120,61 @@ internal sealed class PbrMetallicRoughnessShaderResources : ShaderSetBase
                 occlusion,
                 emissive);
 
+            var instancedPipeline = blendEnabled
+                ? null
+                : GetCachedInstancedPipeline(pipelineKey);
+
             result = AddDisposable(
                 new Material(
                     this,
                     pipeline,
                     singleSamplePipeline,
                     materialResourceSet,
-                    blendEnabled ? SurfaceType.Transparent : SurfaceType.Opaque));
+                    blendEnabled ? SurfaceType.Transparent : SurfaceType.Opaque,
+                    instancedPipeline,
+                    instancedPipeline is null ? null : InstancedSet.ResourceLayouts[3]));
 
             _materialCache.Add(materialKey, result);
         }
 
         return result;
+    }
+
+    private Pipeline GetCachedInstancedPipeline(in PipelineKey pipelineKey)
+    {
+        if (_instancedPipelineCache.TryGetValue(pipelineKey, out var cached))
+        {
+            return cached;
+        }
+
+        var blendState = new BlendStateDescription(
+            RgbaFloat.White,
+            new BlendAttachmentDescription(
+                pipelineKey.BlendEnabled,
+                pipelineKey.SourceFactor,
+                pipelineKey.DestinationColorFactor,
+                BlendFunction.Add,
+                pipelineKey.SourceFactor,
+                pipelineKey.DestinationAlphaFactor,
+                BlendFunction.Add));
+
+        var depthState = DepthStencilStateDescription.DepthOnlyLessEqual;
+        depthState.DepthWriteEnabled = pipelineKey.DepthWriteEnabled;
+
+        var rasterizerState = RasterizerStateDescriptionUtility.DefaultFrontIsCounterClockwise;
+        rasterizerState.CullMode = pipelineKey.CullMode;
+
+        var pipeline = AddDisposable(GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
+            new GraphicsPipelineDescription(
+                blendState,
+                depthState,
+                rasterizerState,
+                PrimitiveTopology.TriangleList,
+                InstancedSet.Description,
+                InstancedSet.ResourceLayouts,
+                Store.OutputDescription)));
+        _instancedPipelineCache.Add(pipelineKey, pipeline);
+        return pipeline;
     }
 
     private Pipeline GetCachedPipeline(

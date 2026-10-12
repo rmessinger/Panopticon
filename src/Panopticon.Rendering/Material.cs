@@ -17,6 +17,20 @@ public sealed class Material : DisposableBase
     /// </summary>
     public readonly Pipeline? SingleSamplePipeline;
 
+    /// <summary>
+    /// GPU-instanced variant of <see cref="Pipeline"/> (B5-2): per-instance world and colour
+    /// state come from the frame instance stream instead of per-item constant buffers. Null
+    /// when the owning shader family ships no instanced variant; items on such materials
+    /// never enter an instanced batch.
+    /// </summary>
+    public readonly Pipeline? InstancedPipeline;
+
+    /// <summary>
+    /// Set-3 layout of the family's instanced shader set: mesh constants, batch start, and
+    /// the instance stream. Paired with <see cref="InstancedPipeline"/>; null without it.
+    /// </summary>
+    public readonly ResourceLayout? InstancedItemLayout;
+
     public readonly int RenderKey;
 
     public Material(
@@ -34,6 +48,18 @@ public sealed class Material : DisposableBase
         Pipeline? singleSamplePipeline,
         ResourceSet materialResourceSet,
         SurfaceType surfaceType)
+        : this(shaderSet, pipeline, singleSamplePipeline, materialResourceSet, surfaceType, null, null)
+    {
+    }
+
+    public Material(
+        ShaderSet shaderSet,
+        Pipeline pipeline,
+        Pipeline? singleSamplePipeline,
+        ResourceSet materialResourceSet,
+        SurfaceType surfaceType,
+        Pipeline? instancedPipeline,
+        ResourceLayout? instancedItemLayout)
     {
         Id = shaderSet.GetNextMaterialId();
 
@@ -41,6 +67,8 @@ public sealed class Material : DisposableBase
         Pipeline = pipeline;
         SingleSamplePipeline = singleSamplePipeline;
         MaterialResourceSet = materialResourceSet;
+        InstancedPipeline = instancedPipeline;
+        InstancedItemLayout = instancedItemLayout;
 
         // Bit 31: SurfaceType
         RenderKey |= ((int)surfaceType) << 31;

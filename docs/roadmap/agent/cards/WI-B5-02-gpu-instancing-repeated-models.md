@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-02` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-2 instancing |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B5-01` |
@@ -87,19 +87,33 @@ any model source, with pixel-identical output.
 
 ## Acceptance criteria
 
-- [ ] `RenderStatistics` shows one instanced batch per repeated mesh part at 10k units in
+- [x] `RenderStatistics` shows one instanced batch per repeated mesh part at 10k units in
       the probe (instance count near item count for rigid models), with `InstancingEnabled`
       on; turning it off restores single-instance draws and identical statistics shape to
       baseline.
-- [ ] Probe pixel A/B: one captured frame with instancing on vs off is byte-identical for a
+- [x] Probe pixel A/B: one captured frame with instancing on vs off is byte-identical for a
       rigid repeated-model scene (compare PNG bytes or per-pixel via ImageSharp; any diff is
       a deviation, not a tweak target).
-- [ ] Skinned, morph, camera-oriented, and override-carrying items never enter an
+- [x] Skinned, morph, camera-oriented, and override-carrying items never enter an
       instanced run (unit-tested eligibility).
-- [ ] A PBR-material mesh flows through an instanced run (GraphicsFact), proving the seam
+- [x] A PBR-material mesh flows through an instanced run (GraphicsFact), proving the seam
       is not W3D-specific.
-- [ ] Standard validation passes, and shadow, linear-shading, proportions, and
+- [x] Standard validation passes, and shadow, linear-shading, proportions, and
       single-sample pipeline suites stay green.
+
+## Result
+
+Done 2026-10-12. Instance payloads travel through a structured buffer (Instancing.h +
+InstancePool; no vertex-attribute growth past the guaranteed 16-location limit) with the
+batch start in a 16-byte UBO. Instanced shader sets: FixedFunctionInstanced (vert+frag),
+MeshDepthInstanced (vert+frag; stock frag retains unused per-item bindings in SPIR-V so the
+instanced set needs its own), PbrMetallicRoughnessInstanced (vert+guarded frag copy);
+blended materials never instanced. At 10k Crusaders: draws 91433 to 176 (115 batches,
+91372 instances), render submit 232.76 to 116.88 ms, forward pass 125.55 to 20.78 ms, GPU
+drain 43.76 to 7.85 ms; frame 375.92 to 234.00 ms (logic update now dominates at 108.91 ms,
+B2/B3 scope). Pixel A/B identical at 500 units and at 10k (vs the pre-change baseline
+capture). One fix during the card: runs must bind their vertex buffers explicitly (the
+per-item path did it inside BeforeRenderCallback; first run sampled stale buffers).
 
 ## Validation commands
 

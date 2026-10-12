@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using Panopticon.Content;
 using Panopticon.Data.Map;
+using Panopticon.Graphics.Rendering.Instancing;
 using Panopticon.Graphics.Rendering.Shadows;
 using Panopticon.Graphics.Rendering.Water;
 using Panopticon.Graphics.Shaders;
@@ -27,6 +29,12 @@ internal sealed class RenderPipeline : DisposableBase
 
     /// <summary>Per-frame render counters (B5); valid after Execute returns.</summary>
     public RenderStatistics Statistics { get; } = new();
+
+    /// <summary>
+    /// Frame instance stream (B5-2): reset at Execute start, appended by instanced batches
+    /// in every pass, uploaded per batch immediately before its draw.
+    /// </summary>
+    private readonly InstancePool _instancePool;
 
     /// <summary>Render-target clear color; overridable for diagnostic captures.</summary>
     public RgbaFloat ClearColor { get; set; } = new RgbaFloat(105 / 255f, 105 / 255f, 105 / 255f, 1f);
@@ -116,6 +124,7 @@ internal sealed class RenderPipeline : DisposableBase
 
         _shadowMapRenderer = AddDisposable(new ShadowMapRenderer(game.GraphicsDevice));
         _waterMapRenderer = AddDisposable(new WaterMapRenderer(game.AssetStore, _loadContext, game.GraphicsDevice, game.GraphicsLoadContext.ShaderResources.Global));
+        _instancePool = AddDisposable(new InstancePool(game.GraphicsDevice));
 
         if (game.GraphicsSettings.ColourSpaceMode == ColourSpaceMode.Linear)
         {
@@ -214,6 +223,7 @@ internal sealed class RenderPipeline : DisposableBase
         RenderedObjectsOpaque = 0;
         RenderedObjectsTransparent = 0;
         Statistics.Reset();
+        _instancePool.Reset();
 
         EnsureIntermediateFramebuffer(context.GraphicsDevice, context.RenderTarget);
 
@@ -543,10 +553,29 @@ internal sealed class RenderPipeline : DisposableBase
         }
 
         int? lastRenderItemIndex = null;
+        var indices = bucket.RenderItems.CulledItemIndices;
 
-        foreach (var i in bucket.RenderItems.CulledItemIndices)
+        var itemIndex = 0;
+        while (itemIndex < indices.Count)
         {
-            ref var renderItem = ref bucket.RenderItems[i];
+            ref var renderItem = ref bucket.RenderItems[indices[itemIndex]];
+
+            // B5-2: water-map re-passes render into single-sample targets and keep the
+            // per-item path (instanced pipelines target the multisampled store outputs).
+            if (RenderScaleOptions.Instancing
+                && !useSingleSamplePipelines
+                && renderItem.InstancingEligible
+                && renderItem.Material.InstancedPipeline is not null)
+            {
+                itemIndex = DrawInstancedRun(
+                    commandList,
+                    bucket,
+                    indices,
+                    itemIndex,
+                    forwardPassResourceSet,
+                    ref lastRenderItemIndex);
+                continue;
+            }
 
             commandList.PushDebugGroup($"Render item: {renderItem.DebugName}");
 
@@ -606,12 +635,91 @@ internal sealed class RenderPipeline : DisposableBase
                 0,
                 0);
 
-            lastRenderItemIndex = i;
+            lastRenderItemIndex = indices[itemIndex];
+            itemIndex++;
 
             commandList.PopDebugGroup();
         }
 
         return bucket.RenderItems.CulledItemIndices.Count;
+    }
+
+    /// <summary>
+    /// B5-2: draws one maximal run of instancing-eligible items that share pipeline, index
+    /// buffer, and index range, appending their payloads to the frame instance stream and
+    /// issuing a single instanced draw. Returns the item index after the run.
+    /// </summary>
+    private int DrawInstancedRun(
+        CommandList commandList,
+        RenderBucket bucket,
+        IReadOnlyList<int> indices,
+        int itemIndex,
+        ResourceSet forwardPassResourceSet,
+        ref int? lastRenderItemIndex)
+    {
+        ref var first = ref bucket.RenderItems[indices[itemIndex]];
+
+        var startInstance = _instancePool.Append(first.InstancePayload);
+        var runInstances = 1;
+        var scan = itemIndex + 1;
+        while (scan < indices.Count)
+        {
+            ref var next = ref bucket.RenderItems[indices[scan]];
+            if (!next.InstancingEligible
+                || next.Material.InstancedPipeline is null
+                || !first.JoinsInstancedRunWith(next))
+            {
+                break;
+            }
+
+            _instancePool.Append(next.InstancePayload);
+            runInstances++;
+            scan++;
+        }
+
+        var passResourceSet = (bucket.RenderItemName == "Shadow")
+            ? null
+            : forwardPassResourceSet;
+
+        var pipeline = first.Material.InstancedPipeline!;
+
+        commandList.PushDebugGroup($"Instanced run: {first.DebugName} x{runInstances}");
+        commandList.InsertDebugMarker("Setting pipeline");
+        commandList.SetPipeline(pipeline);
+        SetGlobalResources(commandList, passResourceSet);
+
+        if (first.Material.MaterialResourceSet != null)
+        {
+            commandList.SetGraphicsResourceSet(2, first.Material.MaterialResourceSet);
+        }
+
+        _instancePool.UploadRange(commandList, startInstance, runInstances);
+        _instancePool.BindItemSet(commandList, first.Material.InstancedItemLayout!, first.MeshConstantsBuffer!, (uint)startInstance);
+
+        // The per-item path binds these inside BeforeRenderCallback (ModelMeshPart.BeforeRender);
+        // a run skips callbacks, so it binds its own (all instances share the part's buffers).
+        commandList.SetVertexBuffer(0, first.VertexBuffer!);
+        if (first.TexCoordVertexBuffer != null)
+        {
+            commandList.SetVertexBuffer(1, first.TexCoordVertexBuffer);
+        }
+
+        commandList.SetIndexBuffer(first.IndexBuffer, IndexFormat.UInt16);
+        Statistics.DrawCalls++;
+        Statistics.InstancedDrawCalls++;
+        Statistics.InstancedBatches++;
+        Statistics.InstancesDrawn += runInstances;
+        commandList.DrawIndexed(
+            first.IndexCount,
+            (uint)runInstances,
+            first.StartIndex,
+            0,
+            0);
+
+        // The next per-item draw must rebind its pipeline and set 3.
+        lastRenderItemIndex = null;
+        commandList.PopDebugGroup();
+        return scan;
     }
 
     private void SetGlobalResources(CommandList commandList, ResourceSet passResourceSet)

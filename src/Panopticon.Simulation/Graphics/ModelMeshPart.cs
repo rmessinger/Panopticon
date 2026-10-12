@@ -1,3 +1,4 @@
+using System.Threading;
 using Panopticon.Rendering;
 using Veldrid;
 
@@ -5,6 +6,8 @@ namespace Panopticon.Graphics;
 
 public sealed class ModelMeshPart
 {
+    private static int NextInstanceId;
+
     public readonly ModelMesh ModelMesh;
 
     public readonly uint StartIndex;
@@ -18,6 +21,12 @@ public sealed class ModelMeshPart
 
     /// <summary>Index of this part's material within the owning mesh's material list.</summary>
     public readonly int MaterialIndex;
+
+    /// <summary>
+    /// Stable identity for render sorting (B5-2): all instances of one model share the part
+    /// object, so its id groups repeated parts contiguously in the sorted render list.
+    /// </summary>
+    public readonly int InstanceId = Interlocked.Increment(ref NextInstanceId);
 
     internal ModelMeshPart(
         ModelMesh modelMesh,

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-03` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-3 LOD/culling |
-| Status | `Blocked` (flips to `Ready` when `WI-B5-02` is `Done`) |
+| Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-B5-02` |
