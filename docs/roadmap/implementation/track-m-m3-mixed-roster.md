@@ -79,4 +79,27 @@ percent. Committed in `mass-battle-rosters.json` with both manifests and their t
 
 ## Validation evidence
 
-Filled per card as each lands.
+WI-M3-01 (2026-10-11): `Ee2ModelScaleTests` 2/2 no-install (tile invariant, profile mirror,
+world-matrix folding) and `Ee2ModelScaleInstalledTests` 2/2 (height and length ratios inside the
+committed bounds: infantry 0.502, light tank 1.230, heavy tank 0.779, artillery 0.766, fighter
+0.494, bomber 0.490, helicopter 0.648); `Ee2ContractValidationTests` 2/2 at the normalized
+factor (the ground-plane range semantics restored the bomber's full rearm cycle);
+`Ee2TypedMaterializationTests` ground-range assertion; maceman capture 6/6 unchanged.
+
+WI-M3-02 (2026-10-11): `Ee2TypedMaterializationTests` 10/10 (four new mapping facts);
+`Ee2InventoryTests` 6/6 installed with stock dbcombat multipliers asserted (for example
+RpsLightMounted: PIERCE 2.0, URUK 2.0, HERO_RANGED 0.5); `Ee2|DdfReader` filter 119/120 with
+only the pre-existing `Ee2MorphImportTests.MuzzleCannonStillFailsAtTheNiUVControllerParseGuard`.
+
+WI-M3-03 (2026-10-11): `Ee2RosterBudgetTests` 2/2 and `Ee2DuelValidationTests` 2/2 installed;
+authored harness run (headless validation ground with
+`ValidationGroundEe2ProfilePath` set to the shipped profile): standard Generals ground
+unchanged (26 measured, 4 pre-existing timeouts, 1 gap, exit 3), EE2 contracts 6/6, EE2 duels
+7/7 inside the authored bounds with `ee2-duel-report.json` naming seconds, winner, and bounds
+per duel (infantry 13.267s Rebel, light tank 8.733s Crusader, heavy tank 10.833s BattleMaster,
+artillery 10.7s Tomahawk, fighter 2.4s EE2 fighter, bomber 3.967s EE2 bomber, helicopter 6.6s
+EE2 helicopter).
+
+Full non-interactive suite across the phase: only the pre-existing
+`ParkingPlaceBehavior_ReportLanding` failure; solution format and brace checks clean after
+every card.

@@ -29,6 +29,7 @@
     <Content Include="TestHarness.json" CopyToOutputDirectory="Always" />
     <Content Include="mass-battle-deepdivide-deployment.json" CopyToOutputDirectory="Always" />
     <Content Include="mass-battle-deepdivide-capacity-probe.json" CopyToOutputDirectory="Always" />
+    <Content Include="mass-battle-rosters.json" CopyToOutputDirectory="Always" />
     <Content Include="ee2-reference-validation.json" CopyToOutputDirectory="Always" />
   </ItemGroup>
 

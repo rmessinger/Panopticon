@@ -1648,11 +1648,15 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     `Ee2ReferenceRps` and both reference-roster profiles (distinct BFME-family types no native
     armor authors), armor multipliers from the stock dbcombat rows, explicit closure-scoped
     failures ([plan](implementation/track-m-m3-mixed-roster.md#damage-class-mapping-wi-m3-02)).
-- [ ] M3-3 Cross-game points budget, asymmetric roster manifests, and duel matrix.
+- [x] M3-3 Cross-game points budget, asymmetric roster manifests, and duel matrix.
   - AC: Generals `BuildCost` and EE2 tech-tree resource costs convert to points through recorded
     rates; two different 1000-unit manifests, each with anti-air, total equal points within the
     tolerance; each EE2 versus Generals archetype duel, air included, resolves within authored
     time-to-kill bounds.
+  - Evidence: [`WI-M3-03`](agent/cards/WI-M3-03-points-rosters-duels.md); `mass-battle-rosters.json`
+    (rates, tolerance, both manifests, 0.056 percent apart), `RosterBudgetEvaluator`,
+    `Ee2DuelPhase` + `ee2-duel-report.json` with all seven duels inside the authored bounds
+    ([plan](implementation/track-m-m3-mixed-roster.md#points-budget-and-manifests-wi-m3-03)).
 
 ### M4: Army-scale AI
 - [ ] M4-1 Army hierarchy sizing for 1000 units over A4-3, including an air commander.

@@ -68,8 +68,6 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         "SNDSEL", "SNDMOVE", "SNDATTACK", "SNDDEATH", "UPGRADEREFS",
     };
 
-    private static readonly string[] CostColumns = ["FOOD", "WOOD", "STONE", "GOLD", "TIN", "IRON", "SALTPETER", "OIL", "URANIUM"];
-
     private readonly Ee2SourceFiles _files;
     private readonly Ee2ImportPolicy _policy;
     private readonly Dictionary<string, DdfRecord> _unitTypes = new(StringComparer.Ordinal);
@@ -376,7 +374,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
 
         foreach (var (column, value) in row)
         {
-            var isCost = CostColumns.Contains(column, StringComparer.OrdinalIgnoreCase);
+            var isCost = Ee2SourceFiles.CostColumns.Contains(column, StringComparer.OrdinalIgnoreCase);
             var mapped = column.ToUpperInvariant() is "HP" or "LOS" or "DAMAGE" or "RANGE" or "RELOAD" or "BUILDTIME" or "UPGRADEREFS";
             var empty = string.IsNullOrWhiteSpace(value) || value is "0" or "[]" or "All";
             if (mapped || NonGameplayColumns.Contains(column) || (empty && !isCost))

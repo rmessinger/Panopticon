@@ -1,0 +1,45 @@
+{
+  // WI-M3-03 cross-game points budget and the two asymmetric 1000-unit roster manifests.
+  // Rates (authored): Generals BuildCost converts 1:1 to points; EE2 unit resource columns
+  // (db/TechTree/upgrade_unittypes.csv, summed) convert at 5 points per resource unit, the
+  // median of the counterpart anchors (Crusader 900 vs 159, BattleMaster 800 vs 159, Raptor
+  // 1400 vs 280, Aurora 2500 vs 500, Comanche 1500 vs 145, Tomahawk 1200 vs 400). Generals
+  // infantry are premium (Ranger 225 vs 119 resources); recorded as an accepted deviation
+  // rather than a per-class rate. Tolerance 0.5 percent of the larger total.
+  // Both sides carry anti-air (marked entries) and aircraft; aircraft count toward the 1000
+  // and airfields do not (they are not units). Compositions differ deliberately: a
+  // Generals-led armor-heavy army against an EE2-led mass army, each with Generals AA mixed in.
+  "Name": "mass-battle-rosters",
+  "PointsRates": {
+    "GeneralsPointsPerBuildCostDollar": 1.0,
+    "Ee2PointsPerResourceUnit": 5.0
+  },
+  "TolerancePercent": 0.5,
+  "Sides": [
+    {
+      "Id": "generals-led",
+      "Entries": [
+        { "Definition": "AmericaTankCrusader", "Source": "generals", "Count": 455 },
+        { "Definition": "AmericaVehicleHumvee", "Source": "generals", "Count": 130 },
+        { "Definition": "AmericaInfantryRanger", "Source": "generals", "Count": 115 },
+        { "Definition": "AmericaJetRaptor", "Source": "generals", "Count": 100, "AntiAir": true, "Aircraft": true },
+        { "Definition": "GLAVehicleQuadCannon", "Source": "generals", "Count": 120, "AntiAir": true },
+        { "Definition": "AmericaVehicleTomahawk", "Source": "generals", "Count": 80 }
+      ]
+    },
+    {
+      "Id": "ee2-led",
+      "Entries": [
+        { "Definition": "HeavyInfantry1UpgradeEpoch15", "Source": "ee2", "Count": 300 },
+        { "Definition": "LightMounted1UpgradeEpoch15", "Source": "ee2", "Count": 150 },
+        { "Definition": "HeavyMounted1UpgradeEpoch15", "Source": "ee2", "Count": 120 },
+        { "Definition": "HeavyArtilleryUpgradeEpoch14", "Source": "ee2", "Count": 60 },
+        { "Definition": "FighterUpgradeEpoch15", "Source": "ee2", "Count": 80, "AntiAir": true, "Aircraft": true },
+        { "Definition": "BomberUpgradeEpoch15", "Source": "ee2", "Count": 40, "Aircraft": true },
+        { "Definition": "LightMounted2UpgradeEpoch13", "Source": "ee2", "Count": 30, "Aircraft": true },
+        { "Definition": "GLAVehicleQuadCannon", "Source": "generals", "Count": 120, "AntiAir": true },
+        { "Definition": "GLAInfantryRebel", "Source": "generals", "Count": 100 }
+      ]
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-M3-03` |
 | Roadmap phase | [M3](../../track-m-mass-battle.md): Mixed roster normalization |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M3-02` |
@@ -81,13 +81,42 @@ Author the cross-game points budget (recorded rates and tolerance), two differen
 
 ## Acceptance criteria
 
-- [ ] Generals `BuildCost` and EE2 resource costs convert to points through rates recorded in
+- [x] Generals `BuildCost` and EE2 resource costs convert to points through rates recorded in
       the committed manifest; the evaluator reports per-entry and total points.
-- [ ] Two different 1000-unit manifests, each with anti-air, total equal points within the
+- [x] Two different 1000-unit manifests, each with anti-air, total equal points within the
       recorded tolerance.
-- [ ] Every EE2-versus-Generals archetype duel, air included, resolves within its authored
+- [x] Every EE2-versus-Generals archetype duel, air included, resolves within its authored
       time-to-kill bounds; the JSON report names each duel, its seconds, winner, and verdict.
-- [ ] Standard validation passes.
+- [x] Standard validation passes.
+
+## Result
+
+Done 2026-10-11. `mass-battle-rosters.json` (shipped beside the harness executable) records the
+rates (Generals 1 point per BuildCost dollar, EE2 5 points per summed resource unit, the
+counterpart-anchor median), the 0.5 percent tolerance, and both mixed manifests: generals-led
+846,375 points (455 Crusader, 130 Humvee, 115 Ranger, 100 Raptor, 120 QuadCannon, 80 Tomahawk)
+and ee2-led 845,900 points (300 EE2 infantry, 150 light tanks, 120 heavy tanks, 60 artillery,
+80 fighters, 40 bombers, 30 helicopters, 120 QuadCannon, 100 Rebels); 1000 units each, both
+with anti-air and aircraft, 0.056 percent apart. `RosterBudgetEvaluator` prices them against
+the booted game's BuildCosts and the install's tech-tree resource columns
+(`db/TechTree/upgrade_unittypes.csv`; `dbtechtreenode.csv` carries zeros for these rows).
+`Ee2DuelPhase` runs the seven archetype duels after the contracts and writes
+`ee2-duel-report.json`; the shipped validation profile carries the duel matrix with bounds
+authored from measured runs (infantry 13.2s Rebel, light tank 8.7s Crusader, heavy tank 10.8s
+BattleMaster, artillery 10.7s Tomahawk, fighter 2.4s EE2 fighter, bomber 4.0s EE2 bomber,
+helicopter 6.6s EE2 helicopter; Generals units win the ground duels, matching their 5-6x point
+cost, and EE2 aircraft win the air duels). The profile also gained the infantry row key (it
+publishes since WI-M2-05), so the duel roster matches the manifest. Engagement uses the
+contract phase's killer pattern (per-frame weapon targets); frame-zero AttackObject orders on
+mutually hostile combatants stall both fire cycles.
+
+Validation: `Ee2RosterBudgetTests` 2/2 installed; `Ee2DuelValidationTests` 2/2 installed (plus
+the synthetic report-shape fact); authored harness run
+(`ValidationGroundEe2ProfilePath` set to the shipped profile, headless): standard Generals
+ground unchanged (26 measured, 4 pre-existing timeouts, 1 gap, exit 3), EE2 contracts 6/6,
+EE2 duels 7/7 with the report naming seconds, winner, and bounds for every duel; full
+non-interactive suite only the pre-existing `ParkingPlaceBehavior_ReportLanding`; format and
+brace checks clean.
 
 ## Validation commands
 
