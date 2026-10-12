@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-01` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-1 baseline |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` (counters + probe runner, modeled on existing harness code) |
 | Effort | `S` |
 | Prerequisites | none |
@@ -71,13 +71,24 @@ has a measured before/after contract. Record the baseline numbers in the deep di
 
 ## Acceptance criteria
 
-- [ ] `RenderingScaleProbe` runs headlessly to completion on this host and writes a JSON
+- [x] `RenderingScaleProbe` runs headlessly to completion on this host and writes a JSON
       report, a CSV, and a PNG screenshot.
-- [ ] Report contains median/mean/p95 for frame wall ms, render span, and gpu drain, plus
+- [x] Report contains median/mean/p95 for frame wall ms, render span, and gpu drain, plus
       `RenderStatistics` (items per bucket, draws) in the summary.
-- [ ] Baseline numbers recorded in deep dive §7 with host/backend line (RADV offscreen,
+- [x] Baseline numbers recorded in deep dive §7 with host/backend line (RADV offscreen,
       resolution, preset).
-- [ ] Standard validation passes.
+- [x] Standard validation passes.
+
+## Result
+
+Done 2026-10-12. Baseline at 10k `AmericaTankCrusader`: frame 375.92 ms median (2.66 fps),
+render submit 232.76 ms, buildRenderList 77.35 ms, forwardPass 125.55 ms, 91433 draws,
+91515 opaque items. Deviation from the card text: the default map moved to
+`maps/deepdivide/deepdivide.map` because Twilight Flame fails terrain materialization under
+the Enhanced preset with the pre-existing `LinearMipBuilder.ResizeLinear` "Linear mip source
+is not contiguous" failure; recorded in deep dive §7, not worked around here. Validation:
+build/format/brace green; `dotnet test src --filter Category!=Interactive` shows only the
+eight known main failures.
 
 ## Validation commands
 

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-02` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-2 instancing |
-| Status | `Blocked` (flips to `Ready` when `WI-B5-01` is `Done`) |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-B5-01` |

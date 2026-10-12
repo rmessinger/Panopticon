@@ -201,4 +201,27 @@ public sealed class TestHarnessConfig
     /// setup, spawn, and settle frames are not counted against it.
     /// </summary>
     public int? MassBattleCapacityProbeFrameBudget { get; set; } = null;
+
+    // ── Rendering-scale probe (B5) ─────────────────────────────────────────
+
+    /// <summary>Repeated-model unit count for the render-scale probe. Null uses 10000.</summary>
+    public int? RenderingScaleProbeUnitCount { get; set; } = null;
+
+    /// <summary>Unit definition to repeat in the field. Null uses AmericaTankCrusader.</summary>
+    public string? RenderingScaleProbeDefinition { get; set; } = null;
+
+    /// <summary>Map path for the probe. Null uses deepdivide (the M1 capacity-probe map).</summary>
+    public string? RenderingScaleProbeMapPath { get; set; } = null;
+
+    /// <summary>Warmup frames before measurement. Null uses 30.</summary>
+    public int? RenderingScaleProbeWarmupFrames { get; set; } = null;
+
+    /// <summary>Measured frames. Null uses 120.</summary>
+    public int? RenderingScaleProbeMeasuredFrames { get; set; } = null;
+
+    /// <summary>Report directory for the probe JSON/CSV. Empty writes beside the executable.</summary>
+    public string? RenderingScaleProbeReportDirectory { get; set; } = null;
+
+    /// <summary>Optional PNG path for one probe screenshot captured after the run.</summary>
+    public string? RenderingScaleProbeScreenshotPath { get; set; } = null;
 }

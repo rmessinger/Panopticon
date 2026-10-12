@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using Panopticon.Content;
 using Panopticon.Data.Map;
@@ -16,7 +17,16 @@ internal sealed class RenderPipeline : DisposableBase
     public event EventHandler<Rendering2DEventArgs> Rendering2D;
     public event EventHandler<BuildingRenderListEventArgs> BuildingRenderList;
 
+    /// <summary>
+    /// Render-path spans per frame (B5): buildRenderList, shadowPass, forwardPass, and the
+    /// render total, in that order. Mirrors LogicStepper.SystemSpan for the presentation side.
+    /// </summary>
+    public event Action<string, TimeSpan>? RenderSpan;
+
     private const int ParallelCullingBatchSize = 128;
+
+    /// <summary>Per-frame render counters (B5); valid after Execute returns.</summary>
+    public RenderStatistics Statistics { get; } = new();
 
     /// <summary>Render-target clear color; overridable for diagnostic captures.</summary>
     public RgbaFloat ClearColor { get; set; } = new RgbaFloat(105 / 255f, 105 / 255f, 105 / 255f, 1f);
@@ -199,13 +209,18 @@ internal sealed class RenderPipeline : DisposableBase
 
     public void Execute(RenderContext context)
     {
+        var renderStartTimestamp = Stopwatch.GetTimestamp();
+
         RenderedObjectsOpaque = 0;
         RenderedObjectsTransparent = 0;
+        Statistics.Reset();
 
         EnsureIntermediateFramebuffer(context.GraphicsDevice, context.RenderTarget);
 
         _renderList.Clear();
         _globalShaderResourceData.BeginFrame();
+
+        var buildListStartTimestamp = Stopwatch.GetTimestamp();
 
         context.Scene3D?.BuildRenderList(
             _renderList,
@@ -216,6 +231,13 @@ internal sealed class RenderPipeline : DisposableBase
             _renderList,
             context.Scene3D?.Camera,
             context.GameTime));
+
+        Statistics.ItemsOpaque = _renderList.Opaque.RenderItems.Length;
+        Statistics.ItemsTransparent = _renderList.Transparent.RenderItems.Length;
+        Statistics.ItemsShadow = _renderList.Shadow.RenderItems.Length;
+        Statistics.ItemsWater = _renderList.Water.RenderItems.Length;
+
+        RaiseSpan(RenderSpanNames.BuildRenderList, buildListStartTimestamp);
 
         _commandList.Begin();
 
@@ -290,6 +312,25 @@ internal sealed class RenderPipeline : DisposableBase
                 _compositionTexture ?? _intermediateTexture,
                 context.RenderTarget);
         }
+
+        RaiseSpan(RenderSpanNames.Render, renderStartTimestamp);
+    }
+
+    private static class RenderSpanNames
+    {
+        public const string BuildRenderList = "buildRenderList";
+        public const string ShadowPass = "shadowPass";
+        public const string ForwardPass = "forwardPass";
+        public const string Render = "render";
+    }
+
+    private void RaiseSpan(string name, long startTimestamp)
+    {
+        if (RenderSpan is { } sink)
+        {
+            sink(name, TimeSpan.FromTicks((Stopwatch.GetTimestamp() - startTimestamp)
+                * TimeSpan.TicksPerSecond / Stopwatch.Frequency));
+        }
     }
 
     private void Render3DScene(
@@ -313,6 +354,8 @@ internal sealed class RenderPipeline : DisposableBase
 
         commandList.PushDebugGroup("Shadow pass");
 
+        var shadowStartTimestamp = Stopwatch.GetTimestamp();
+
         _shadowMapRenderer.RenderShadowMap(
             scene,
             context.GraphicsDevice,
@@ -333,9 +376,13 @@ internal sealed class RenderPipeline : DisposableBase
 
         commandList.PopDebugGroup();
 
+        RaiseSpan(RenderSpanNames.ShadowPass, shadowStartTimestamp);
+
         // Standard pass.
 
         commandList.PushDebugGroup("Forward pass");
+
+        var forwardStartTimestamp = Stopwatch.GetTimestamp();
 
         var forwardPassResourceSet = _globalShaderResourceData.GetForwardPassResourceSet(
             cloudTexture,
@@ -372,6 +419,8 @@ internal sealed class RenderPipeline : DisposableBase
         scene.Game.Scripting.CameraFadeOverlay.Render(
             commandList,
             new SizeF(context.RenderTarget.Width, context.RenderTarget.Height));
+
+        RaiseSpan(RenderSpanNames.ForwardPass, forwardStartTimestamp);
     }
 
     private void CalculateWaterShaderMap(IScene3D scene, RenderContext context, CommandList commandList, RenderItem renderItem, ResourceSet forwardPassResourceSet)
@@ -474,6 +523,25 @@ internal sealed class RenderPipeline : DisposableBase
             return 0;
         }
 
+        switch (bucket.RenderItemName)
+        {
+            case "Shadow":
+                Statistics.VisibleShadow += bucket.RenderItems.CulledItemIndices.Count;
+                break;
+            case "Opaque":
+                // Water-map re-passes (single-sample) re-cull this bucket with extra clipping
+                // planes and short far planes; the main pass is the meaningful visible count.
+                if (!useSingleSamplePipelines)
+                {
+                    Statistics.VisibleOpaque = bucket.RenderItems.CulledItemIndices.Count;
+                }
+
+                break;
+            case "Transparent":
+                Statistics.VisibleTransparent = bucket.RenderItems.CulledItemIndices.Count;
+                break;
+        }
+
         int? lastRenderItemIndex = null;
 
         foreach (var i in bucket.RenderItems.CulledItemIndices)
@@ -530,6 +598,7 @@ internal sealed class RenderPipeline : DisposableBase
             }
 
             commandList.SetIndexBuffer(renderItem.IndexBuffer, IndexFormat.UInt16);
+            Statistics.DrawCalls++;
             commandList.DrawIndexed(
                 renderItem.IndexCount,
                 1,

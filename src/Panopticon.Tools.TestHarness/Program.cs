@@ -99,6 +99,15 @@ public static class Program
             config.Scenario = parsed;
         }
 
+        // B5 render-scale probe overrides (see RenderingScaleProbeRunner).
+        ParseOptionalInt(args, "--b5-unit-count", value => config.RenderingScaleProbeUnitCount = value);
+        ParseOptionalString(args, "--b5-definition", value => config.RenderingScaleProbeDefinition = value);
+        ParseOptionalString(args, "--b5-map", value => config.RenderingScaleProbeMapPath = value);
+        ParseOptionalInt(args, "--b5-warmup", value => config.RenderingScaleProbeWarmupFrames = value);
+        ParseOptionalInt(args, "--b5-measured", value => config.RenderingScaleProbeMeasuredFrames = value);
+        ParseOptionalString(args, "--b5-report-dir", value => config.RenderingScaleProbeReportDirectory = value);
+        ParseOptionalString(args, "--b5-screenshot", value => config.RenderingScaleProbeScreenshotPath = value);
+
         Run(config, reporter);
     }
 
@@ -204,6 +213,31 @@ public static class Program
         return null;
     }
 
+    private static void ParseOptionalInt(string[] args, string name, Action<int> apply)
+    {
+        var value = GetArgValue(args, name);
+        if (string.IsNullOrEmpty(value))
+        {
+            return;
+        }
+
+        if (!int.TryParse(value, out var parsed) || parsed < 1)
+        {
+            throw new InvalidOperationException($"'{name}' expects a positive integer, got '{value}'.");
+        }
+
+        apply(parsed);
+    }
+
+    private static void ParseOptionalString(string[] args, string name, Action<string> apply)
+    {
+        var value = GetArgValue(args, name);
+        if (!string.IsNullOrEmpty(value))
+        {
+            apply(value!);
+        }
+    }
+
     private static TestHarnessConfig LoadConfig(ITestHarnessReporter reporter)
     {
         var path = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
@@ -269,6 +303,12 @@ public static class Program
         if (config.Scenario == BuiltInScenario.MassBattleCapacityProbe)
         {
             Environment.ExitCode = MassBattleCapacityProbeRunner.Run(installation, config, reporter);
+            return;
+        }
+
+        if (config.Scenario == BuiltInScenario.RenderingScaleProbe)
+        {
+            Environment.ExitCode = RenderingScaleProbeRunner.Run(installation, config, reporter);
             return;
         }
 

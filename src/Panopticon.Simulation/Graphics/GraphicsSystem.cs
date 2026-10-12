@@ -1,3 +1,4 @@
+using System;
 using Panopticon.Graphics.Rendering;
 using Veldrid;
 
@@ -8,6 +9,16 @@ public sealed class GraphicsSystem : GameSystem
     private readonly RenderContext _renderContext;
 
     internal RenderPipeline RenderPipeline { get; private set; }
+
+    /// <summary>Per-frame render counters (B5); valid after the last Render call.</summary>
+    public RenderStatistics RenderStatistics => RenderPipeline.Statistics;
+
+    /// <summary>Render-path span sink (B5): buildRenderList, shadowPass, forwardPass, render.</summary>
+    public event Action<string, TimeSpan>? RenderSpan
+    {
+        add => RenderPipeline.RenderSpan += value;
+        remove => RenderPipeline.RenderSpan -= value;
+    }
 
     public Texture ShadowMap => RenderPipeline.ShadowMap;
     public Texture ReflectionMap => RenderPipeline.ReflectionMap;

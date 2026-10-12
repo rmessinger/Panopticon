@@ -309,20 +309,34 @@ sequenceDiagram
 
 ## 7. Measured baseline
 
-Filled by `WI-B5-01` (before any B5 rendering change) and updated by `WI-B5-05` (after).
-Host: offscreen Vulkan (RADV, Radeon RX 7600) headless probe, 1024x768, Enhanced preset
-unless noted. Scene: 10k repeated rigid models, idle, fixed camera.
+Recorded by `WI-B5-01` (before any B5 rendering change) on the dev host: offscreen Vulkan
+(RADV, Radeon RX 7600), headless probe, 1024x768, Enhanced preset, fixed camera framing the
+whole field. Scene: 10k `AmericaTankCrusader`, idle, spacing 24, map `deepdivide` (the M1
+capacity-probe map). The card's intended default map, Twilight Flame, fails during terrain
+texture materialization under the Enhanced preset with `LinearMipBuilder`'s "Linear mip
+source is not contiguous" (`ResizeLinear` path); that is a pre-existing latent defect
+unrelated to B5, recorded here rather than worked around, and the probe default moved to
+`deepdivide`. 30 warmup frames, 120 measured.
 
 | Metric | Baseline (per-item path) | After B5-2..B5-4 |
 |---|---|---|
-| Frame (update + render + GPU drain), median ms | TBD | TBD |
-| Render span only, median ms | TBD | TBD |
-| Opaque + Shadow items per frame | TBD | TBD |
-| Draw calls per frame | TBD | TBD |
+| Frame (update + render + GPU drain), median ms | 375.92 (CI 374.55..376.77) | TBD |
+| Render span, median ms | 232.76 | TBD |
+| buildRenderList span, median ms | 77.35 | TBD |
+| shadowPass span, median ms | 10.66 | TBD |
+| forwardPass span, median ms | 125.55 | TBD |
+| GPU drain (WaitForIdle), median ms | 43.76 | TBD |
+| FPS vs 33.3 ms budget | 2.66 (miss by ~11x) | TBD |
+| Items per frame (opaque / shadow) | 91515 / 91166 | TBD |
+| Visible opaque / draw calls per frame | 91372 / 91433 | TBD |
 | Instanced batches / instances per frame | 0 / 0 | TBD |
-| FPS vs 33.3 ms budget | TBD | TBD |
 
-Anchor-composition gap (10k skinned Rangers, no instancing possible): TBD by `WI-B5-05`.
+Notes: each tank contributes about 9 opaque items (mesh parts); terrain and props make up
+the rest. The shadow pass is empty at this framing (visible shadow items 0): the fixed
+camera sits far above the field, beyond the last cascade's extent, so the shadow spans
+measure culling of 91k items rather than shadow draws. The update span (98.98 ms median)
+is logic-side cost out of B5 scope. Skinned-model gap (b1 anchor composition): `WI-B5-05`.
+
 
 ## 8. Validation
 
