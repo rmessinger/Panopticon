@@ -814,9 +814,22 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
   - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
     plays; B1 records import time and peak memory.
-- [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
-  - AC: TBD, instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
-    the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.
+- [ ] B5 Rendering at scale
+      ([deep dive](deep-dives/b5-rendering-at-scale.md)): GPU instancing for repeated unit
+      models through the source-agnostic `RenderItem` seam (W3D, glTF/PBR, and any C1
+      importer), a distance LOD gate (small-feature culling; impostors recorded as a
+      follow-up gap), sort-once-per-frame bucket filtering, and submit-overhead removals
+      (index-buffer bind hoist, per-item debug-group gating), all behind render-path
+      toggles; a `RenderingScaleProbe` TestHarness scenario measures render spans, draw
+      counts, and instanced batches headlessly.
+  - AC: at the near-term anchor of 10k repeated rigid models, the probe reports the scene
+    rendering with GPU instancing (one batch per repeated mesh part, instance count near
+    item count) plus the LOD gate within the ~30 fps frame budget on the dev-host GPU, or
+    the miss is recorded with its measurement; instanced vs per-item output is
+    pixel-identical for eligible items; skinned meshes (the b1 anchor Rangers) and the
+    NormalMapped/Simple families are recorded as explicit non-instanced gaps; the tool
+    viewports (B4a-7/A5-5) reuse it by rendering through the same `RenderPipeline` (no
+    source-specific path).
 - [ ] B6 Distributed simulation via spatial sharding after F4a
       ([deep dive](deep-dives/b6-distributed-simulation.md)): one Bepu world per RTS shard,
       kinematic halo proxies, and handle-free body handoff.

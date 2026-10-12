@@ -139,7 +139,7 @@ mindmap
         B4b-7 H3 package output
         B4b-8 WorldBuilder workflow
         B4b-9 Validation and scale proof
-      B5 Rendering at scale
+      B5 Rendering at scale ⮕
       B6 Distributed simulation ⮕
         B6-1 Partition and boundary spec
         B6-2 Single-process multi-shard
