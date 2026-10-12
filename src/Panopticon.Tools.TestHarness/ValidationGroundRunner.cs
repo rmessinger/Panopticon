@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Panopticon.Data;
@@ -48,7 +49,7 @@ public static class ValidationGroundRunner
         Game? game = null;
         GameWindow? window = null;
         TextureCopier? textureCopier = null;
-        ValidationGroundOverlay? overlay = null;
+        HarnessOverlay? overlay = null;
         try
         {
             if (config.Headless)
@@ -172,8 +173,8 @@ public static class ValidationGroundRunner
             }
             else
             {
-                overlay = new ValidationGroundOverlay(game, window!);
-                step = () => StepOnce(game, window!, textureCopier!, overlay!);
+                overlay = new HarnessOverlay(game, window!, validationControls: true);
+                step = () => HarnessWindowedFrame.Step(game, window!, textureCopier!, overlay!, validationControls: true);
             }
 
             if (holdOrders)
@@ -359,9 +360,11 @@ public static class ValidationGroundRunner
     /// and adds nothing to the timing. MapTime still advances via the game's delta timer, so logic
     /// frames tick as Update is called.
     /// </summary>
-    private static void StepLogicOnly(Game game, ref ValidationGroundOverlay? overlayShot)
+    private static void StepLogicOnly(Game game, ref HarnessOverlay? overlayShot)
     {
+        var updateStart = Stopwatch.GetTimestamp();
         game.Update(Array.Empty<Input.InputMessage>());
+        var updateEnd = Stopwatch.GetTimestamp();
 
         // Env-gated offscreen capture for visual validation (docs/screenshots.md): renders every
         // logic step and writes a PNG, capped so a frame-capped run cannot fill the disk. The
@@ -374,7 +377,7 @@ public static class ValidationGroundRunner
             game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, 1024, 768));
             if (overlayShot == null && Environment.GetEnvironmentVariable("TESTHARNESS_VG_OVERLAY_SHOT") is not null)
             {
-                overlayShot = new ValidationGroundOverlay(
+                overlayShot = new HarnessOverlay(
                     game,
                     game.Panel.Framebuffer.OutputDescription,
                     (int)game.Panel.Framebuffer.Width,
@@ -384,6 +387,13 @@ public static class ValidationGroundRunner
             game.Render();
             if (overlayShot != null)
             {
+                var now = Stopwatch.GetTimestamp();
+                var frameSeconds = overlayShot.PreviousFrameTimestamp == 0
+                    ? 0 : Stopwatch.GetElapsedTime(overlayShot.PreviousFrameTimestamp, updateStart).TotalSeconds;
+                overlayShot.PreviousFrameTimestamp = updateStart;
+                overlayShot.Performance.Record(frameSeconds,
+                    Stopwatch.GetElapsedTime(updateStart, updateEnd).TotalMilliseconds,
+                    Stopwatch.GetElapsedTime(updateEnd, now).TotalMilliseconds);
                 overlayShot.Update(1 / 30f, new EmptyInputSnapshot());
                 overlayShot.Render(game.GraphicsDevice);
             }
@@ -415,65 +425,6 @@ public static class ValidationGroundRunner
     private const int MaxVgCaptures = 500;
     private static FrameCaptureService? VgCapture;
     private static int VgCaptureCount;
-
-    private static void StepOnce(Game game, GameWindow window, TextureCopier textureCopier, ValidationGroundOverlay overlay)
-    {
-        if (!window.PumpEvents())
-        {
-            game.Exit();
-            return;
-        }
-
-        overlay.Update((float)game.RenderTime.DeltaTime.TotalSeconds, window.CurrentInputSnapshot);
-        FilterOverlayInput(window, overlay);
-
-        game.Update(window.MessageQueue);
-        game.Panel.EnsureFrame(window.DrawableBounds);
-        game.Render();
-        textureCopier.Execute(
-            game.Panel.Framebuffer.ColorTargets[0].Target,
-            window.Swapchain.Framebuffer);
-        overlay.Render(game.GraphicsDevice);
-        game.GraphicsDevice.SwapBuffers(window.Swapchain);
-        window.MessageQueue.Clear();
-    }
-
-    /// <summary>
-    /// Space is the overlay's hotkey and never reaches the game; mouse input is dropped on frames
-    /// where ImGui captures the mouse, so clicking the overlay does not select units or issue
-    /// orders in the world.
-    /// </summary>
-    private static void FilterOverlayInput(GameWindow window, ValidationGroundOverlay overlay)
-    {
-        if (window.MessageQueue.Count == 0)
-        {
-            return;
-        }
-
-        var kept = new List<InputMessage>(window.MessageQueue.Count);
-        while (window.MessageQueue.TryDequeue(out var message))
-        {
-            var isSpaceKey = message.MessageType is InputMessageType.KeyDown or InputMessageType.KeyUp
-                && message.Value.Key == Key.Space;
-            var isMouse = message.MessageType
-                is InputMessageType.MouseMove or InputMessageType.MouseWheel
-                or InputMessageType.MouseLeftButtonDown or InputMessageType.MouseLeftButtonUp
-                or InputMessageType.MouseRightButtonDown or InputMessageType.MouseRightButtonUp
-                or InputMessageType.MouseMiddleButtonDown or InputMessageType.MouseMiddleButtonUp;
-
-            if (isSpaceKey || (isMouse && overlay.WantCaptureMouse))
-            {
-                continue;
-            }
-
-            kept.Add(message);
-        }
-
-        foreach (var message in kept)
-        {
-            window.MessageQueue.Enqueue(message);
-        }
-    }
 
     private static uint CurrentLogicFrame(Game game) =>
         unchecked((uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame));

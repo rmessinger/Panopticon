@@ -90,6 +90,7 @@ public static class MassBattleDeploymentRunner
         Game? game = null;
         GameWindow? window = null;
         TextureCopier? textureCopier = null;
+        HarnessOverlay? overlay = null;
         try
         {
             if (config.Headless)
@@ -110,6 +111,7 @@ public static class MassBattleDeploymentRunner
                     new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud },
                     window);
                 textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
+                overlay = new HarnessOverlay(game, window);
             }
 
             var playerSettings = profile.Sides.Select((side, index) => new PlayerSetting(
@@ -166,7 +168,7 @@ public static class MassBattleDeploymentRunner
 
             Action step = config.Headless
                 ? () => game.Update(Array.Empty<InputMessage>())
-                : () => MassBattlePlacement.StepWindowed(game, window!, textureCopier!);
+                : () => HarnessWindowedFrame.Step(game, window!, textureCopier!, overlay!);
 
             var navigation = game.Scene3D.Navigation;
 
@@ -259,6 +261,7 @@ public static class MassBattleDeploymentRunner
         }
         finally
         {
+            overlay?.Dispose();
             textureCopier?.Dispose();
             game?.Dispose();
             window?.Dispose();

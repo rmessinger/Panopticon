@@ -140,6 +140,12 @@ The validation-ground ImGui overlay can be rendered offscreen into the same fram
 scene, so tooltips and the status window are capturable without any display. This is the
 documented way to screenshot overlay visuals.
 
+The shared performance panel appears at the upper-left in overlay captures. Windowed scenarios
+show it by default; `-`/`+` collapses/expands it independently of the validation-ground F1 window.
+FPS and frame time include capture overhead in offscreen captures, so these images verify layout,
+not windowed performance. CPU render submission is not GPU time. On macOS, Metal supports the
+same offscreen recipe; `TMPDIR` selects the capture root and should use a unique directory per run.
+
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
 TESTHARNESS_VG_OVERLAY_SHOT=1 \

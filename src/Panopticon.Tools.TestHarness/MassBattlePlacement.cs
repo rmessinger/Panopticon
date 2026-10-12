@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Panopticon.Data;
-using Panopticon.Graphics;
-using Panopticon.Input;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -17,7 +15,7 @@ namespace Panopticon.Tools.TestHarness;
 /// <summary>
 /// Placement helpers shared by the mass-battle scenarios (WI-M0-03 deployment proof, WI-M1-01
 /// capacity probe): ground positions, spawns, airfield placement with anchor validation, the
-/// zone layout walk for ground blocks, and the windowed step loop. Placement data comes from the
+/// zone layout walk for ground blocks. Placement data comes from the
 /// profile; the map itself is never edited.
 /// </summary>
 internal static class MassBattlePlacement
@@ -277,21 +275,4 @@ internal static class MassBattlePlacement
         return (airfields, reasons);
     }
 
-    public static void StepWindowed(Game game, GameWindow window, TextureCopier textureCopier)
-    {
-        if (!window.PumpEvents())
-        {
-            game.Exit();
-            return;
-        }
-
-        game.Update(window.MessageQueue);
-        game.Panel.EnsureFrame(window.DrawableBounds);
-        game.Render();
-        textureCopier.Execute(
-            game.Panel.Framebuffer.ColorTargets[0].Target,
-            window.Swapchain.Framebuffer);
-        game.GraphicsDevice.SwapBuffers(window.Swapchain);
-        window.MessageQueue.Clear();
-    }
 }

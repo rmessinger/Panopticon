@@ -46,6 +46,7 @@ public static class ReplayScenarioRunner
         using var window = new GameWindow("Panopticon - TestHarness", 100, 100, 1024, 768, config.Fullscreen);
         using var game = new Game(installation, config.Renderer, new Configuration { NoAudio = true, CameraControlScheme = config.CameraControlScheme, MouseClickMode = config.MouseClickMode }, window);
         using var textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
+        using var overlay = new HarnessOverlay(game, window);
 
         using var repFileSystem = new DiskFileSystem(Path.GetDirectoryName(replayPath)!);
         var repEntry = repFileSystem.GetFile(Path.GetFileName(replayPath));
@@ -72,20 +73,8 @@ public static class ReplayScenarioRunner
 
         while (game.IsRunning)
         {
-            if (!window.PumpEvents())
-            {
-                break;
-            }
-
             DrainPendingInjections(game, pendingInjections);
-            game.Update(window.MessageQueue);
-            game.Panel.EnsureFrame(window.DrawableBounds);
-            game.Render();
-            textureCopier.Execute(
-                game.Panel.Framebuffer.ColorTargets[0].Target,
-                window.Swapchain.Framebuffer);
-            window.MessageQueue.Clear();
-            game.GraphicsDevice.SwapBuffers(window.Swapchain);
+            HarnessWindowedFrame.Step(game, window, textureCopier, overlay);
 
             recorder.PollPendingMoves();
             recorder.PollHealthChanges();

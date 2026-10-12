@@ -42,8 +42,16 @@
   // scripts/annotate_capture_gif.py renders a generic cropped GIF. Checked-in example
   // profiles: capture-construction.json, capture-impulse.json. Exit codes: 1 profile/setup
   // error, 4 camera fit failed or attack source has no weapon, 5 expectation not met.
+  //
+  // Mass battle capacity probe (Scenario = MassBattleCapacityProbe) knobs, all optional:
+  // MassBattleCapacityProbeProfilePath   : profile override (default:
+  //                                        mass-battle-deepdivide-capacity-probe.json beside the exe)
+  // MassBattleCapacityProbeReportPath    : engagement report JSON path (default: beside the exe)
+  // MassBattleCapacityProbeScreenshotPath: one PNG captured after the engagement
+  // MassBattleCapacityProbeFrameBudget   : measured-frame cap (default 9000; setup, spawn, and
+  //                                        settle frames are not counted)
 
-  "Scenario": "UnitValidationGround",
+  "Scenario": "MassBattleCapacityProbe",
   "ScenarioPath": null,
   "Game": "CncGenerals",
   "Renderer": null,
