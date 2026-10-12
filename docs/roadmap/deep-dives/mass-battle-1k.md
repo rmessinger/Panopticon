@@ -261,4 +261,30 @@ sequenceDiagram
 ```
 
 Card sequence and evidence: [M2 implementation plan](../implementation/track-m-m2-ee2-combat-units.md).
+
+### M3 normalization flow
+
+Grounding: `Ee2ImportPolicy` (authored factor, model scale, rps damage types),
+`UnitConversionPolicy` and `UnitMaterializationContext` (declared conversions), the M3 seams in
+`UnitVisualMaterializer` and `W3dModelDraw` (world-matrix model scale), and the TestHarness
+phases (`Ee2ContractPhase`, duel phase, roster budget evaluator) documented in the
+[M3 implementation plan](../implementation/track-m-m3-mixed-roster.md).
+
+```mermaid
+sequenceDiagram
+    participant P as CaptureContentImport
+    participant A as Ee2UnitAdapter
+    participant M as UnitRuntimeMaterializer
+    participant W as UnitVisualMaterializer / W3dModelDraw
+    participant D as Ee2ContractPhase + duel phase
+    P->>A: row keys, factor 18.2505, model scale 0.36501, RpsDamageTypes
+    A->>A: distances in tiles, rps class per unit
+    A->>A: weapon damage type from RpsDamageTypes, armor from dbcombat row
+    A-->>M: shared records (unmapped class = explicit failure)
+    M->>M: tiles to game units through the factor
+    M->>W: draw module with ImportedModelScale
+    W->>W: world matrix x CreateScale(model scale)
+    D->>D: points budget, manifests, duels, JSON reports
+```
+
 The M4 and M5 diagram placeholders remain closed gates for those phases.
