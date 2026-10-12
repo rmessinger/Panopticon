@@ -439,6 +439,9 @@ public static class MassBattleCapacityProbeRunner
         using var recorder = new BenchmarkMetricRecorder();
         game.LogicStepper.SystemSpan += recorder.RecordSystemSpan;
         var pathDeltas = new List<double>(frameBudget);
+        var partitionDirtyDeltas = new List<double>(frameBudget);
+        var partitionCandidateDeltas = new List<double>(frameBudget);
+        var partitionHitDeltas = new List<double>(frameBudget);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         try
@@ -446,10 +449,16 @@ public static class MassBattleCapacityProbeRunner
             for (var frame = 0; frame < frameBudget; frame++)
             {
                 var pathRequestsBefore = NavigationGrid.PathRequestCount;
+                var dirtyBefore = PartitionCellManager.DirtyObjectsProcessed;
+                var candidatesBefore = PartitionCellManager.CandidatePairs;
+                var hitsBefore = PartitionCellManager.ExactHits;
                 recorder.BeginTick((uint)frame + 1);
                 step();
                 recorder.EndTick((uint)frame + 1);
                 pathDeltas.Add(NavigationGrid.PathRequestCount - pathRequestsBefore);
+                partitionDirtyDeltas.Add(PartitionCellManager.DirtyObjectsProcessed - dirtyBefore);
+                partitionCandidateDeltas.Add(PartitionCellManager.CandidatePairs - candidatesBefore);
+                partitionHitDeltas.Add(PartitionCellManager.ExactHits - hitsBefore);
 
                 TrackJetTransitions(allJets, frame);
 
@@ -472,13 +481,16 @@ public static class MassBattleCapacityProbeRunner
             game.LogicStepper.SystemSpan -= recorder.RecordSystemSpan;
         }
 
-        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
+        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
     }
 
     private static BenchmarkRunRecord BuildBenchmarkRecord(
         Game game,
         BenchmarkMetricRecorder recorder,
         List<double> pathDeltas,
+        List<double> partitionDirtyDeltas,
+        List<double> partitionCandidateDeltas,
+        List<double> partitionHitDeltas,
         System.Diagnostics.Stopwatch stopwatch,
         int framesRun,
         int frameBudget,
@@ -521,7 +533,26 @@ public static class MassBattleCapacityProbeRunner
             "path.requestsPerSecond",
             [.. pathDeltas.Select(d => d * game.GameEngine.LogicFramesPerSecond)],
             ProbeSeed));
+        AddPerTickAndPerSecondStatistics(record, "partition.dirtyObjects", partitionDirtyDeltas, game);
+        AddPerTickAndPerSecondStatistics(record, "partition.candidatePairs", partitionCandidateDeltas, game);
+        AddPerTickAndPerSecondStatistics(record, "partition.exactHits", partitionHitDeltas, game);
         return record;
+    }
+
+    private static void AddPerTickAndPerSecondStatistics(
+        BenchmarkRunRecord record,
+        string metricBaseName,
+        List<double> deltas,
+        Game game)
+    {
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            $"{metricBaseName}PerTick",
+            [.. deltas],
+            ProbeSeed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            $"{metricBaseName}PerSecond",
+            [.. deltas.Select(d => d * game.GameEngine.LogicFramesPerSecond)],
+            ProbeSeed));
     }
 
     private static void TrackJetTransitions(List<JetSortie> jets, int frame)

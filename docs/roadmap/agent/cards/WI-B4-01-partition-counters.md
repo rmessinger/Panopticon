@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4-01` |
 | Roadmap phase | [B4](../../track-b-scale.md): spatial and pathfinding scaling |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `S` |
 | Prerequisites | none (B1 landed) |
@@ -43,12 +43,16 @@ at full scale. The counters are the yardstick for `WI-B4-02`.
 
 ## Acceptance criteria
 
-- [ ] The B1 record for the probe contains `partition.dirtyObjectsPerTick`,
+- [x] The B1 record for the probe contains `partition.dirtyObjectsPerTick`,
   `partition.candidatePairsPerTick`, and `partition.exactHitsPerTick` statistics.
-- [ ] An install-free test pins counter semantics.
-- [ ] A pre-fix full-scale baseline run is recorded in the implementation plan with the
+- [x] An install-free test pins counter semantics.
+  - `PartitionCounterTests` (3 tests) pins the pre-fix duplicate-candidate shape for WI-B4-02
+    to update.
+- [x] A pre-fix full-scale baseline run is recorded in the implementation plan with the
   same profile and seed as M1.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+  - Medians: 1040 dirty objects/tick, 850475 candidate pairs/tick, 714747 exact hits/tick;
+    partition span 783.9 ms. See the WI-B4-01 baseline section of the implementation plan.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 

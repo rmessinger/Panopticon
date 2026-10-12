@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading;
 using ImGuiNET;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -9,6 +10,21 @@ namespace Panopticon.Logic;
 
 public sealed class PartitionCellManager : IPersistableObject
 {
+    // Cumulative counters for B1 sampling (WI-B4-01), Navigation.PathRequestCount style.
+    private static long TotalDirtyObjectsProcessed;
+    private static long TotalCandidatePairs;
+    private static long TotalExactHits;
+
+    /// <summary>Dirty objects whose cell membership was rebuilt, across all updates.</summary>
+    public static long DirtyObjectsProcessed => Interlocked.Read(ref TotalDirtyObjectsProcessed);
+
+    /// <summary>Coarse-check candidate pairs examined, across all updates. Duplicates from
+    /// shared cells are counted per emission until WI-B4-02 makes pair delivery unique.</summary>
+    public static long CandidatePairs => Interlocked.Read(ref TotalCandidatePairs);
+
+    /// <summary>Candidate pairs that passed the exact intersection check, across all updates.</summary>
+    public static long ExactHits => Interlocked.Read(ref TotalExactHits);
+
     private readonly IGame _game;
     private readonly float _partitionCellSize;
     private readonly List<ShroudReveal> _shroudReveals = new();
@@ -32,6 +48,27 @@ public sealed class PartitionCellManager : IPersistableObject
     {
         _game = game;
         _partitionCellSize = game.AssetStore.GameData.Current.PartitionCellSize;
+    }
+
+    // Game-free construction for install-free tests and headless benchmarks: the same cell grid
+    // OnNewGame builds, anchored at the origin, without an IGame (Update never dereferences it).
+    internal PartitionCellManager(float partitionCellSize, int numCellsX, int numCellsY)
+    {
+        _partitionCellSize = partitionCellSize;
+        _numCellsX = numCellsX;
+        _numCellsY = numCellsY;
+        _terrainBoundary = Rectangle.FromCorners(new Point2D(0, 0), new Point2D(0, 0));
+        _cells = new PartitionCell[_numCellsX * _numCellsY];
+
+        for (var y = 0; y < _numCellsY; y++)
+        {
+            for (var x = 0; x < _numCellsX; x++)
+            {
+                var worldSpaceMin = new Vector2(x, y) * _partitionCellSize;
+                var worldSpaceBounds = new RectangleF(worldSpaceMin, _partitionCellSize, _partitionCellSize);
+                _cells[(y * _numCellsX) + x] = new PartitionCell(worldSpaceBounds);
+            }
+        }
     }
 
     internal void OnNewGame()
@@ -88,11 +125,15 @@ public sealed class PartitionCellManager : IPersistableObject
 
     public void Update()
     {
+        var dirtyObjectCount = _dirtyObjects.Count;
+
         // First update overlapping cells of dirty objects.
         foreach (var dirtyObject in _dirtyObjects)
         {
             dirtyObject.UpdateOverlappingCells();
         }
+
+        Interlocked.Add(ref TotalDirtyObjectsProcessed, dirtyObjectCount);
 
         // Then check for possible collision pairs using coarse check.
         // TODO: Don't allocate this every time.
@@ -116,11 +157,14 @@ public sealed class PartitionCellManager : IPersistableObject
             }
         }
 
+        Interlocked.Add(ref TotalCandidatePairs, possibleCollisionPairs.Count);
+
         // Finally, check for actual collisions using exact checks.
         foreach (var possibleCollisionPair in possibleCollisionPairs)
         {
             if (possibleCollisionPair.Item1.CollidesWith(possibleCollisionPair.Item2))
             {
+                Interlocked.Increment(ref TotalExactHits);
                 possibleCollisionPair.Item1.GameObject.OnCollide(possibleCollisionPair.Item2.GameObject);
                 possibleCollisionPair.Item2.GameObject.OnCollide(possibleCollisionPair.Item1.GameObject);
             }
