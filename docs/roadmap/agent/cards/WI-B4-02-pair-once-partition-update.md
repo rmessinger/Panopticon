@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4-02` |
 | Roadmap phase | [B4](../../track-b-scale.md): spatial and pathfinding scaling |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-B4-01` |
@@ -42,13 +42,25 @@ pair-once delivery.
 
 ## Acceptance criteria
 
-- [ ] `Update` performs no per-tick list, set, or iterator allocations on the steady path.
-- [ ] An install-free test proves pair-once delivery: two objects sharing multiple cells, and
+- [x] `Update` performs no per-tick list, set, or iterator allocations on the steady path.
+  - `_collisionPairs` and `_cellScratch` persist across ticks (clear, not reallocate);
+    membership lists are per-object persistent; `CollectCells` writes into caller-owned
+    scratch; the `GetCells` iterator survives only on public query paths.
+- [x] An install-free test proves pair-once delivery: two objects sharing multiple cells, and
   two dirty objects sharing a cell, each produce one `OnCollide` exchange per tick.
-- [ ] `Persist` roundtrip and existing partition query tests stay green.
-- [ ] Seeded determinism and golden baseline suites stay green; any failure is a suspected
+  - `PartitionCounterTests.UpdateCountsDirtyObjectsCandidatesAndExactHits`: two mobile dirty
+    spheres spanning cells (0,0) and (1,0) yield one candidate pair and one exact hit; counter
+    deltas are cumulative `Interlocked` reads, so one hit equals one `OnCollide` exchange.
+- [x] `Persist` roundtrip and existing partition query tests stay green.
+  - Partition filter 9/9; full non-interactive suite green except the eight known failures
+    (repo-standard seven plus `ParkingPlaceBehavior_ReportLanding`).
+- [x] Seeded determinism and golden baseline suites stay green; any failure is a suspected
   deviation: preserve artifacts, report, and wait for the operator before changing baselines.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+  - `SeededRunTests` and `BaselineGoldenFrames_*` 3/3; `RunOutputTests` 2/2: no deviation to
+    report, so the golden baselines were not touched.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
+  - `dotnet build src` clean; `dotnet format src --verify-no-changes` clean;
+    `scripts/check_brace_newline.py` exit 0.
 
 ## Validation commands
 
@@ -72,3 +84,6 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Reconcile `WI-B4-03` from `Blocked` to `Ready`.
 - Append a result line to repo-root `.exchange`.
+
+Done: no gameplay module depended on duplicate `OnCollide` calls (determinism, golden, run
+output, and the full suite stayed green without baseline changes).

@@ -18,8 +18,8 @@ public sealed class PartitionCellManager : IPersistableObject
     /// <summary>Dirty objects whose cell membership was rebuilt, across all updates.</summary>
     public static long DirtyObjectsProcessed => Interlocked.Read(ref TotalDirtyObjectsProcessed);
 
-    /// <summary>Coarse-check candidate pairs examined, across all updates. Duplicates from
-    /// shared cells are counted per emission until WI-B4-02 makes pair delivery unique.</summary>
+    /// <summary>Coarse-check candidate pairs examined, across all updates. Pairs are unique
+    /// since WI-B4-02; before that, duplicates from shared cells were counted per emission.</summary>
     public static long CandidatePairs => Interlocked.Read(ref TotalCandidatePairs);
 
     /// <summary>Candidate pairs that passed the exact intersection check, across all updates.</summary>
@@ -30,6 +30,16 @@ public sealed class PartitionCellManager : IPersistableObject
     private readonly List<ShroudReveal> _shroudReveals = new();
     private readonly List<PartitionObject> _objects = new();
     private readonly HashSet<PartitionObject> _dirtyObjects = new();
+
+    // WI-B4-02: reused across ticks so the steady path allocates nothing. The pair pass
+    // counter and generation stamp implement pair-once delivery (see Update).
+    private readonly List<(PartitionObject First, PartitionObject Second)> _collisionPairs = new();
+    private readonly List<PartitionCell> _cellScratch = new();
+    // WI-B4-02 bookkeeping. Pass and generation counters start at one so freshly constructed
+    // objects (whose long fields default to zero) never match a current pass or generation.
+    private long _generation = 1;
+    private long _pairPassCounter = 1;
+    private long _nextObjectSequence;
 
     private Rectangle _terrainBoundary;
     private int _numCellsX;
@@ -108,6 +118,7 @@ public sealed class PartitionCellManager : IPersistableObject
 
         _objects.Add(partitionObject);
         _dirtyObjects.Add(partitionObject);
+        partitionObject.SequenceNumber = _nextObjectSequence++;
 
         gameObject.PartitionObject = partitionObject;
     }
@@ -126,18 +137,22 @@ public sealed class PartitionCellManager : IPersistableObject
     public void Update()
     {
         var dirtyObjectCount = _dirtyObjects.Count;
+        var generation = _generation++;
 
         // First update overlapping cells of dirty objects.
         foreach (var dirtyObject in _dirtyObjects)
         {
-            dirtyObject.UpdateOverlappingCells();
+            dirtyObject.Generation = generation;
+            dirtyObject.UpdateOverlappingCells(_cellScratch);
         }
 
         Interlocked.Add(ref TotalDirtyObjectsProcessed, dirtyObjectCount);
 
-        // Then check for possible collision pairs using coarse check.
-        // TODO: Don't allocate this every time.
-        var possibleCollisionPairs = new List<(PartitionObject, PartitionObject)>();
+        // Then check for possible collision pairs using coarse check. Each pair is emitted
+        // once per tick: a mate reached through several shared cells is stamped with this
+        // pass, and a pair whose members are both mobile and dirty is owned by the
+        // lower-sequence side only.
+        _collisionPairs.Clear();
         foreach (var dirtyObject in _dirtyObjects)
         {
             if (dirtyObject.GameObject.IsKindOf(ObjectKinds.Immobile))
@@ -145,28 +160,42 @@ public sealed class PartitionCellManager : IPersistableObject
                 continue;
             }
 
-            foreach (var cell in dirtyObject.OverlappingCells)
+            var pairPass = _pairPassCounter++;
+            foreach (var membership in dirtyObject.OverlappingCells)
             {
-                foreach (var overlappingObject in cell.Objects)
+                var cellObjects = membership.Cell.Objects;
+                for (var i = 0; i < cellObjects.Count; i++)
                 {
-                    if (overlappingObject != dirtyObject)
+                    var mate = cellObjects[i];
+                    if (mate == dirtyObject || mate.LastPairPass == pairPass)
                     {
-                        possibleCollisionPairs.Add((dirtyObject, overlappingObject));
+                        continue;
                     }
+
+                    mate.LastPairPass = pairPass;
+
+                    if (mate.Generation == generation &&
+                        !mate.GameObject.IsKindOf(ObjectKinds.Immobile) &&
+                        mate.SequenceNumber < dirtyObject.SequenceNumber)
+                    {
+                        continue;
+                    }
+
+                    _collisionPairs.Add((dirtyObject, mate));
                 }
             }
         }
 
-        Interlocked.Add(ref TotalCandidatePairs, possibleCollisionPairs.Count);
+        Interlocked.Add(ref TotalCandidatePairs, _collisionPairs.Count);
 
         // Finally, check for actual collisions using exact checks.
-        foreach (var possibleCollisionPair in possibleCollisionPairs)
+        foreach (var possibleCollisionPair in _collisionPairs)
         {
-            if (possibleCollisionPair.Item1.CollidesWith(possibleCollisionPair.Item2))
+            if (possibleCollisionPair.First.CollidesWith(possibleCollisionPair.Second))
             {
                 Interlocked.Increment(ref TotalExactHits);
-                possibleCollisionPair.Item1.GameObject.OnCollide(possibleCollisionPair.Item2.GameObject);
-                possibleCollisionPair.Item2.GameObject.OnCollide(possibleCollisionPair.Item1.GameObject);
+                possibleCollisionPair.First.GameObject.OnCollide(possibleCollisionPair.Second.GameObject);
+                possibleCollisionPair.Second.GameObject.OnCollide(possibleCollisionPair.First.GameObject);
             }
         }
 
@@ -197,6 +226,38 @@ public sealed class PartitionCellManager : IPersistableObject
                 if (cell.WorldSpaceBounds.Intersects(worldPosition, worldRadius))
                 {
                     yield return cell;
+                }
+            }
+        }
+    }
+
+    // Non-allocating variant of GetCells for the per-tick membership rebuild (WI-B4-02). The
+    // caller owns the scratch list; it must not be shared across re-entrant calls.
+    internal void CollectCells(Vector2 worldPosition, float worldRadius, List<PartitionCell> results)
+    {
+        results.Clear();
+
+        var partitionSpaceBounds = GetPartitionSpaceBounds(worldPosition, worldRadius);
+
+        for (var y = partitionSpaceBounds.TopLeft.Y; y < partitionSpaceBounds.BottomRight.Y; y++)
+        {
+            if (y < 0 || y >= NumCellsY)
+            {
+                continue;
+            }
+
+            for (var x = partitionSpaceBounds.TopLeft.X; x < partitionSpaceBounds.BottomRight.X; x++)
+            {
+                if (x < 0 || x >= NumCellsX)
+                {
+                    continue;
+                }
+
+                var cell = this[x, y];
+
+                if (cell.WorldSpaceBounds.Intersects(worldPosition, worldRadius))
+                {
+                    results.Add(cell);
                 }
             }
         }
@@ -432,9 +493,15 @@ public sealed class PartitionObject
     public readonly GameObject GameObject;
 
     /// <summary>
-    /// Stores all the cells that this object overlaps (or potentially overlaps).
+    /// Stores all the cells that this object overlaps (or potentially overlaps), with this
+    /// object's slot in each cell's list so removal is a swap-remove instead of a scan.
     /// </summary>
-    public readonly HashSet<PartitionCell> OverlappingCells = new();
+    internal readonly List<PartitionCellMembership> OverlappingCells = new();
+
+    // WI-B4-02 bookkeeping for pair-once delivery; see PartitionCellManager.Update.
+    internal long Generation;
+    internal long LastPairPass;
+    internal long SequenceNumber;
 
     public PartitionObject(PartitionCellManager manager, GameObject gameObject)
     {
@@ -452,21 +519,50 @@ public sealed class PartitionObject
         _manager.SetDirty(this);
     }
 
-    internal void UpdateOverlappingCells()
+    internal void UpdateOverlappingCells(List<PartitionCell> cellScratch)
     {
-        // Clear previous overlapping cells, and remove this object from those cells.
-        foreach (var cell in OverlappingCells)
+        for (var i = 0; i < OverlappingCells.Count; i++)
         {
-            cell.Objects.Remove(this);
+            RemoveFromCell(OverlappingCells[i]);
         }
 
         OverlappingCells.Clear();
 
         // Compute which cells are overlapped by this object.
-        foreach (var overlappingCell in _manager.GetCells(GameObject.Translation.Vector2XY(), GameObject.Geometry.BoundingCircleRadius))
+        _manager.CollectCells(GameObject.Translation.Vector2XY(), GameObject.Geometry.BoundingCircleRadius, cellScratch);
+        foreach (var cell in cellScratch)
         {
-            OverlappingCells.Add(overlappingCell);
-            overlappingCell.Objects.Add(this);
+            cell.Objects.Add(this);
+            OverlappingCells.Add(new PartitionCellMembership { Cell = cell, Index = cell.Objects.Count - 1 });
+        }
+    }
+
+    private void RemoveFromCell(PartitionCellMembership membership)
+    {
+        var cellObjects = membership.Cell.Objects;
+        var index = membership.Index;
+        var lastIndex = cellObjects.Count - 1;
+        var moved = cellObjects[lastIndex];
+        if (moved != this)
+        {
+            cellObjects[index] = moved;
+            moved.UpdateMembershipIndex(membership.Cell, index);
+        }
+
+        cellObjects.RemoveAt(lastIndex);
+    }
+
+    internal void UpdateMembershipIndex(PartitionCell cell, int index)
+    {
+        for (var i = 0; i < OverlappingCells.Count; i++)
+        {
+            if (OverlappingCells[i].Cell == cell)
+            {
+                var membership = OverlappingCells[i];
+                membership.Index = index;
+                OverlappingCells[i] = membership;
+                return;
+            }
         }
     }
 
@@ -481,6 +577,13 @@ public sealed class PartitionObject
             GeometryCollisionDetectionUtility.CreateCollideInfo(GameObject),
             GeometryCollisionDetectionUtility.CreateCollideInfo(otherObject.GameObject));
     }
+}
+
+internal struct PartitionCellMembership
+{
+    public PartitionCell Cell;
+
+    public int Index;
 }
 
 public interface IPartitionQuery

@@ -1,8 +1,7 @@
 // WI-B4-01: partition update counters.
 // Pins the semantics of PartitionCellManager's cumulative counters (dirty objects rebuilt,
-// coarse candidate pairs, exact hits) on a game-free manager grid, including the duplicate
-// candidate emissions the pre-WI-B4-02 update produces for pairs sharing more than one cell.
-// WI-B4-02 updates the duplicate expectations when pair delivery becomes unique.
+// coarse candidate pairs, exact hits) on a game-free manager grid, including the pair-once
+// delivery the WI-B4-02 update guarantees for pairs sharing more than one cell.
 //
 // Run with: dotnet test src --filter "FullyQualifiedName~PartitionCounterTests"
 
@@ -21,8 +20,8 @@ public class PartitionCounterTests : MockedGameTest
     public void UpdateCountsDirtyObjectsCandidatesAndExactHits()
     {
         var manager = NewManager();
-        // Two spheres spanning cells (0,0) and (1,0): each dirty object pairs with the other
-        // once per shared cell, so the pre-pair-once update emits the pair twice per direction.
+        // Two spheres spanning cells (0,0) and (1,0): the pair overlaps two cells, but the
+        // pair-once update emits it exactly once regardless of how many cells it shares.
         var first = NewObject(ObjectKinds.Infantry, new Vector3(10, 5, 0), radius: 4);
         var second = NewObject(ObjectKinds.Infantry, new Vector3(11, 5, 0), radius: 4);
 
@@ -35,8 +34,8 @@ public class PartitionCounterTests : MockedGameTest
         manager.Update();
 
         Assert.Equal(2, PartitionCellManager.DirtyObjectsProcessed - dirtyBefore);
-        Assert.Equal(4, PartitionCellManager.CandidatePairs - candidatesBefore);
-        Assert.Equal(4, PartitionCellManager.ExactHits - hitsBefore);
+        Assert.Equal(1, PartitionCellManager.CandidatePairs - candidatesBefore);
+        Assert.Equal(1, PartitionCellManager.ExactHits - hitsBefore);
     }
 
     [Fact, Trait("Category", "Roadmap")]
