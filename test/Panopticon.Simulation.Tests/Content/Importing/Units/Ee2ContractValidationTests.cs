@@ -35,6 +35,7 @@ public sealed class Ee2ContractValidationTests(ITestOutputHelper output)
                 GameUnitsPerSourceDistance = Ee2ReferenceScale.GameUnitsPerSourceDistance,
                 GameUnitsPerSourceModelUnit = Ee2ReferenceScale.GameUnitsPerSourceModelUnit,
                 ExcludedMechanics = [.. Ee2InventoryTests.ReferenceExclusions],
+                RpsDamageTypes = new Dictionary<string, string>(Ee2ReferenceRps.DamageTypes),
             },
             Contracts =
             [

@@ -53,4 +53,11 @@ public class CaptureContentImport
     /// weapons use only for target-effect selection. Damage itself is unchanged.
     /// </summary>
     public Dictionary<string, string> ImpactEffectDamageTypes { get; set; } = [];
+
+    /// <summary>
+    /// Card WI-M3-02: authored EE2 rps class to Generals damage type mapping. While non-empty,
+    /// every published unit's rps class needs an entry (unmapped classes fail load), weapons
+    /// carry the mapped type, and each class materializes an armor set from dbcombat.
+    /// </summary>
+    public Dictionary<string, string> RpsDamageTypes { get; set; } = [];
 }

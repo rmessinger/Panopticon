@@ -30,8 +30,20 @@
     // see Ee2ReferenceScale for the derivation asserted by Ee2ModelScaleTests.
     "GameUnitsPerSourceDistance": 18.2505,
     "GameUnitsPerSourceModelUnit": 0.36501,
+    // WI-M3-02 rps -> Generals damage types: distinct engine-known types no native
+    // Generals armor authors, so EE2 damage stays one-to-one against natives while
+    // EE2-versus-EE2 resolves through the stock dbcombat matrix (see Ee2ReferenceRps).
+    "RpsDamageTypes": {
+      "Heavy_Infantry": "PIERCE",
+      "Light_Mounted": "SLASH",
+      "Heavy_Mounted": "SIEGE",
+      "Heavy_Artillery": "BIG_ROCK",
+      "Air_Superiority": "HERO_RANGED",
+      "Bomber": "URUK",
+      "Helicopter": "HERO"
+    },
     "ExcludedMechanics": [
-      "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
+      "ownertype", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
       "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",
       "Attack.areaDamageFriendlyRatio", "Attack.angularRange", "Attack.turretControllerName", "Attack.ignoreBlocking",
       "Attack.attackOnTheMove", "Attack.WeaponType", "Attack.packTime", "Attack.unpackTime", "Attack.minRangeImmobile",

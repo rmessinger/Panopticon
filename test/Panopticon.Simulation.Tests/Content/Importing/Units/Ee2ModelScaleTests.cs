@@ -58,6 +58,7 @@ public sealed class Ee2ModelScaleTests
         var validationProfile = Ee2ValidationProfile.Load(FindShippedProfile("ee2-reference-validation.json"));
         Assert.Equal(Ee2ReferenceScale.GameUnitsPerSourceDistance, validationProfile.ContentImport.GameUnitsPerSourceDistance);
         Assert.Equal(Ee2ReferenceScale.GameUnitsPerSourceModelUnit, validationProfile.ContentImport.GameUnitsPerSourceModelUnit);
+        Assert.Equivalent(Ee2ReferenceRps.DamageTypes, validationProfile.ContentImport.RpsDamageTypes);
     }
 
     [Fact]

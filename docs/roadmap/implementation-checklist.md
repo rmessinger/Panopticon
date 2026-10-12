@@ -1642,8 +1642,12 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     and asserted with committed per-class bounds
     ([plan](implementation/track-m-m3-mixed-roster.md#authored-conversion-derivation-wi-m3-01));
     EE2 ground-plane weapon-range semantics normalized (`MeasuresRangeOnGround`).
-- [ ] M3-2 `rps` counter class and `dbcombat.csv` matrix to Generals armor and damage type table.
+- [x] M3-2 `rps` counter class and `dbcombat.csv` matrix to Generals armor and damage type table.
   - AC: every reference EE2 unit maps to an armor set and damage type; unmapped classes fail load.
+  - Evidence: [`WI-M3-02`](agent/cards/WI-M3-02-rps-damage-and-armor.md); authored table in
+    `Ee2ReferenceRps` and both reference-roster profiles (distinct BFME-family types no native
+    armor authors), armor multipliers from the stock dbcombat rows, explicit closure-scoped
+    failures ([plan](implementation/track-m-m3-mixed-roster.md#damage-class-mapping-wi-m3-02)).
 - [ ] M3-3 Cross-game points budget, asymmetric roster manifests, and duel matrix.
   - AC: Generals `BuildCost` and EE2 tech-tree resource costs convert to points through recorded
     rates; two different 1000-unit manifests, each with anti-air, total equal points within the

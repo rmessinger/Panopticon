@@ -42,8 +42,9 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         ["AircraftMove"] = ["AIR"],
     };
 
-    /// <summary>db/Simulation/dbcombat.csv defender rows that count as air targets.</summary>
-    private static readonly string[] AirCombatRows = ["Close_Air_Support", "Air_Superiority", "Bomber", "Atomic_Bomber", "Helicopter", "Air_Non_Combat"];
+    /// <summary>db/Simulation/dbcombat.csv defender rows that count as air targets (normalized keys).</summary>
+    private static readonly string[] AirCombatRows =
+        ["CloseAirSupport", "AirSuperiority", "Bomber", "AtomicBomber", "Helicopter", "AirNonCombat"];
 
     /// <summary>Attack members consumed into typed weapon fields; everything else stays visible as unclassified.</summary>
     private static readonly HashSet<string> AttackKeys = new(StringComparer.OrdinalIgnoreCase)
@@ -255,6 +256,9 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
                     // SizeX is the footprint width in tiles; the engine radius is half of it.
                     unit = unit with { GeometryMajorRadius = Number(text, QuantityUnit.SourceDistance, scale: 0.5) };
                     break;
+                case "rps" when _policy.MapsRps:
+                    // Card WI-M3-02: consumed into the weapon damage type and the armor set.
+                    break;
                 case "movetype" when text is "kUnitMoveType_Foot" or "Foot":
                     unit = unit with { KindOf = ListOverride<string>.Replace(["INFANTRY", "SELECTABLE"]) };
                     break;
@@ -346,10 +350,29 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
     /// ability blocks override attack semantics (projectile, ordnance, timing, minimum range) and
     /// movement values for this epoch.
     /// </summary>
+    /// <summary>Classes already emitted as armor records in this read (WI-M3-02).</summary>
+    private readonly HashSet<string> _emittedRpsArmors = new(StringComparer.OrdinalIgnoreCase);
+
     private IEnumerable<SourceRecord> ReadEpochRow(string unitType, string rowKey, IReadOnlyDictionary<string, string> row, Provenance provenance)
     {
         var unclassified = new List<UnclassifiedField>();
-        var (weapon, attack) = AttackRecords(rowKey, AncestorWithAbility(unitType, "Attack", includeSelf: true), null, provenance, ChainProperty(unitType, "rps"));
+        var rps = ChainProperty(unitType, "rps");
+        var (weapon, attack) = AttackRecords(rowKey, AncestorWithAbility(unitType, "Attack", includeSelf: true), null, provenance, rps);
+
+        // Card WI-M3-02: while the rps mapping is active, the row's class carries an armor set
+        // derived from dbcombat; one record is shared by every row of the same class. A requested
+        // row whose class is neither mapped nor excluded fails load explicitly.
+        if (rps is not null && !_policy.Excludes("rps") && !_policy.MappedDamageTypes.ContainsKey(NormalizeRps(rps)))
+        {
+            Read(
+                ImportDiagnosticSeverity.Error,
+                DiagnosticCodes.UnsupportedMechanic,
+                $"'{rowKey}' has rps class '{rps}', which has no authored Generals damage type; add it to RpsDamageTypes or exclude rps.",
+                UnitId(rowKey));
+        }
+
+        var armor = RpsArmor(rps, rowKey, provenance);
+        var emitArmor = armor is not null && _emittedRpsArmors.Add(armor.Id.Name);
 
         foreach (var (column, value) in row)
         {
@@ -416,6 +439,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
             Visual = visualName is null ? default : Authored.Of(new ContentId(Source, ContentKind.VisualState, visualName)),
             DeathDuration = Authored.Of(new Quantity(_policy.CorpseSeconds, QuantityUnit.Seconds)),
             Locomotors = locomotorId is null ? ListOverride<ContentId>.Inherit : ListOverride<ContentId>.Replace([locomotorId.Value]),
+            Armor = armor is null ? default : Authored.Of(armor.Id),
             Modules =
             [
                 ModuleEdit.Add(AttackModule(attack.Id)),
@@ -423,6 +447,11 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
             ],
             Unclassified = unclassified,
         };
+
+        if (emitArmor)
+        {
+            yield return armor!;
+        }
 
         yield return composed;
         yield return attack;
@@ -673,7 +702,7 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         {
             Parent = parentOwner is null ? null : new ContentId(Source, ContentKind.Weapon, $"{parentOwner}.Attack"),
             TargetCategories = ListOverride<string>.Replace(TargetCategories(rps, owner)),
-            DamageType = Authored.Of(_policy.DamageType),
+            DamageType = Authored.Of(DamageTypeFor(rps)),
         };
         var attack = new AbilityRecord(new ContentId(Source, ContentKind.Ability, $"{owner}.Attack"), at)
         {
@@ -684,6 +713,58 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
     }
 
     /// <summary>
+    /// Card WI-M3-02: the weapon's engine damage type comes from the authored rps mapping; the
+    /// policy default (UNRESISTABLE one-to-one) applies while rps is an excluded mechanic.
+    /// Chain records outside the requested closure keep the default; the row-level check in
+    /// <see cref="ReadEpochRow"/> fails unmapped requested rows explicitly.
+    /// </summary>
+    private string DamageTypeFor(string? rps)
+    {
+        return rps is not null && !_policy.Excludes("rps") && _policy.MappedDamageTypes.TryGetValue(NormalizeRps(rps), out var damageType)
+            ? damageType
+            : _policy.DamageType;
+    }
+
+    /// <summary>
+    /// Card WI-M3-02: one armor record per rps class, multipliers straight from the stock
+    /// dbcombat defender row over the mapped attacker types (percent divided by 100, zeros
+    /// included). A mapped class with no defender row fails load explicitly.
+    /// </summary>
+    private ArmorRecord? RpsArmor(string? rps, string owner, Provenance provenance)
+    {
+        if (rps is null || _policy.Excludes("rps"))
+        {
+            return null;
+        }
+
+        var key = NormalizeRps(rps);
+        if (!_policy.MappedDamageTypes.TryGetValue(key, out _))
+        {
+            return null;
+        }
+
+        if (!CombatMatrix().TryGetValue(key, out var row))
+        {
+            Read(
+                ImportDiagnosticSeverity.Error,
+                DiagnosticCodes.UnsupportedMechanic,
+                $"rps class '{rps}' has no defender row in {Ee2SourceFiles.CombatTablePath}, so no armor set can be derived.",
+                new ContentId(Source, ContentKind.Unit, owner));
+            return null;
+        }
+
+        var multipliers = new Dictionary<string, Authored<double>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (attacker, multiplier) in row.Where(pair => _policy.MappedDamageTypes.TryGetValue(pair.Key, out _)))
+        {
+            multipliers[_policy.MappedDamageTypes[attacker]] = Authored.Of(multiplier / 100.0);
+        }
+
+        return new ArmorRecord(new ContentId(Source, ContentKind.Armor, $"Rps{key}"), provenance)
+        {
+            Multipliers = multipliers,
+        };
+    }
+
     /// Card WI-M2-02: target categories derived from the authored rps matrix
     /// (<c>db/Simulation/dbcombat.csv</c>): a nonzero attacker column against any air defender
     /// row adds the airborne category, against any other row the ground category. The multipliers
@@ -732,11 +813,42 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         }
 
         _combatMasks = new Dictionary<string, CombatMask>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (defender, row) in CombatMatrix())
+        {
+            var isAir = AirCombatRows.Contains(defender, StringComparer.Ordinal);
+            foreach (var (attacker, multiplier) in row)
+            {
+                if (multiplier > 0)
+                {
+                    _combatMasks.TryGetValue(attacker, out var existing);
+                    _combatMasks[attacker] = existing | (isAir ? CombatMask.Air : CombatMask.Ground);
+                }
+            }
+        }
+
+        return _combatMasks;
+    }
+
+    private Dictionary<string, Dictionary<string, double>>? _combatMatrix;
+
+    /// <summary>
+    /// Card WI-M3-02: the full dbcombat interaction matrix, defender class to attacker class
+    /// multiplier (percent). The target-category masks derive from its zero/nonzero pattern;
+    /// WI-M3-02's armor sets read the authored multipliers directly.
+    /// </summary>
+    private Dictionary<string, Dictionary<string, double>> CombatMatrix()
+    {
+        if (_combatMatrix is not null)
+        {
+            return _combatMatrix;
+        }
+
+        _combatMatrix = new Dictionary<string, Dictionary<string, double>>(StringComparer.OrdinalIgnoreCase);
         var entry = _files.Database.GetFile(Ee2SourceFiles.CombatTablePath);
         if (entry is null)
         {
             Read(ImportDiagnosticSeverity.Error, DiagnosticCodes.MissingDependency, $"Combat table '{Ee2SourceFiles.CombatTablePath}' was not found.");
-            return _combatMasks;
+            return _combatMatrix;
         }
 
         using var reader = new StreamReader(entry.Open());
@@ -752,31 +864,30 @@ public sealed class Ee2UnitAdapter : IUnitSourceAdapter
         foreach (var line in lines.Where(line => !line.StartsWith("//", StringComparison.Ordinal)))
         {
             var cells = line.Split(',');
-            var defender = cells[0].Trim();
+            var defender = NormalizeRps(cells[0].Trim());
             if (defender.Length == 0 || defender == "Null")
             {
                 continue;
             }
 
-            var isAir = AirCombatRows.Contains(defender, StringComparer.Ordinal);
+            var row = _combatMatrix.TryGetValue(defender, out var existing) ? existing : [];
+            _combatMatrix[defender] = row;
             for (var i = 1; i < columns.Length + 1 && i < cells.Length; i++)
             {
-                var attacker = columns[i - 1];
-                if (attacker.Length == 0 || !double.TryParse(cells[i], NumberStyles.Float, CultureInfo.InvariantCulture, out var multiplier) || multiplier <= 0)
+                var attacker = NormalizeRps(columns[i - 1]);
+                if (attacker.Length == 0 || !double.TryParse(cells[i], NumberStyles.Float, CultureInfo.InvariantCulture, out var multiplier))
                 {
                     continue;
                 }
 
-                var key = NormalizeRps(attacker);
-                _combatMasks.TryGetValue(key, out var mask);
-                _combatMasks[key] = mask | (isAir ? CombatMask.Air : CombatMask.Ground);
+                row[attacker] = multiplier;
             }
         }
 
-        return _combatMasks;
+        return _combatMatrix;
     }
 
-    private static string NormalizeRps(string rps) => rps.Replace("_", string.Empty);
+    private static string NormalizeRps(string rps) => Ee2ImportPolicy.NormalizeRps(rps);
 
     private static UnitModule AttackModule(ContentId ability) => new("Attack", "Attack", ModuleKinds.None, ByTag, Ability: ability);
 

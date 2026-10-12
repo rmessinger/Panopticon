@@ -6,6 +6,7 @@ using Panopticon.Content.Importing.Units;
 using Panopticon.Content.Importing.Units.Ee2;
 using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.IO;
+using Panopticon.Tools.TestHarness;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -188,7 +189,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
     public void ReferenceRosterRowsComposeWithStockValuesAndOverrides()
     {
         var exclusions = ReferenceExclusions;
-        var set = new Ee2UnitAdapter(OpenInstall(), new Ee2ImportPolicy(15, "we", exclusions)).ReadRows(ReferenceRowKeys);
+        var set = new Ee2UnitAdapter(OpenInstall(), new Ee2ImportPolicy(15, "we", exclusions, RpsDamageTypes: Ee2ReferenceRps.DamageTypes)).ReadRows(ReferenceRowKeys);
 
         foreach (var rowKey in ReferenceRowKeys)
         {
@@ -246,12 +247,45 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
         Assert.Equal(new Quantity(20, QuantityUnit.SourceDistancePerSecond), missiles["TankShell"]);
         Assert.Equal(new Quantity(11, QuantityUnit.SourceDistancePerSecond), missiles["GuidedMissile"]);
         Assert.Equal(new Quantity(2, QuantityUnit.SourceDistancePerSecond), missiles["Bomb"]);
+
+        // Card WI-M3-02: weapons carry the mapped damage types and every row references its
+        // class armor; multipliers come straight from the stock dbcombat defender rows.
+        Assert.Equal("SLASH", tank.DamageType.Value);
+        Assert.Equal("HERO_RANGED", fighter.DamageType.Value);
+        Assert.Equal("URUK", bomber.DamageType.Value);
+        Assert.Equal("PIERCE", Weapon(set, "HeavyInfantry1UpgradeEpoch15").DamageType.Value);
+        Assert.Equal("SIEGE", Weapon(set, "HeavyMounted1UpgradeEpoch15").DamageType.Value);
+        Assert.Equal("BIG_ROCK", artillery.DamageType.Value);
+        Assert.Equal("HERO", Weapon(set, "LightMounted2UpgradeEpoch13").DamageType.Value);
+
+        foreach (var rowKey in ReferenceRowKeys)
+        {
+            var unit = set.Records.OfType<UnitRecord>().Single(r => r.Id.Name == rowKey);
+            Assert.True(unit.Armor.IsPresent, $"{rowKey} has no rps armor set");
+        }
+
+        var tankArmor = set.Records.OfType<ArmorRecord>().Single(a => a.Id.Name == "RpsLightMounted");
+        Assert.Equal(2.0, tankArmor.Multipliers["PIERCE"].Value);
+        Assert.Equal(1.0, tankArmor.Multipliers["SLASH"].Value);
+        Assert.Equal(1.0, tankArmor.Multipliers["SIEGE"].Value);
+        Assert.Equal(1.05, tankArmor.Multipliers["BIG_ROCK"].Value);
+        Assert.Equal(0.5, tankArmor.Multipliers["HERO_RANGED"].Value);
+        Assert.Equal(2.0, tankArmor.Multipliers["URUK"].Value);
+        Assert.Equal(1.0, tankArmor.Multipliers["HERO"].Value);
+
+        var fighterArmor = set.Records.OfType<ArmorRecord>().Single(a => a.Id.Name == "RpsAirSuperiority");
+        Assert.Equal(1.0, fighterArmor.Multipliers["HERO_RANGED"].Value);
+        Assert.Equal(0.0, fighterArmor.Multipliers["PIERCE"].Value);
+
+        var heliArmor = set.Records.OfType<ArmorRecord>().Single(a => a.Id.Name == "RpsHelicopter");
+        Assert.Equal(2.0, heliArmor.Multipliers["HERO_RANGED"].Value);
+        Assert.Equal(1.0, heliArmor.Multipliers["HERO"].Value);
     }
 
     [Fact]
     public void ReferenceRosterMaterializesWithTypedModules()
     {
-        var set = new Ee2UnitAdapter(OpenInstall(), new Ee2ImportPolicy(15, "we", ReferenceExclusions)).ReadRows(ReferenceRowKeys);
+        var set = new Ee2UnitAdapter(OpenInstall(), new Ee2ImportPolicy(15, "we", ReferenceExclusions, RpsDamageTypes: Ee2ReferenceRps.DamageTypes)).ReadRows(ReferenceRowKeys);
         var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
         Assert.True(resolution.Succeeded, string.Join("\n", resolution.Diagnostics.Where(d => d.IsError)));
 
@@ -288,7 +322,9 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
             Assert.NotNull(definition.Draws.Values.Single(m => m.Data is Panopticon.Logic.Object.W3dModelDrawModuleData).Data);
 
             var weapon = definition.WeaponSets.Values.Single().Slots.Select(slot => slot.Weapon.Value).First(w => w is not null);
-            Assert.Equal(Panopticon.Logic.Object.DamageType.Unresistable, weapon.Nuggets.OfType<Panopticon.Logic.Object.DamageNugget>().Single().DamageType);
+            // WI-M3-02: the mapped rps type replaces the M2-era UNRESISTABLE one-to-one policy;
+            // the class table lives in Ee2ReferenceRps and the profiles.
+            Assert.Equal(ExpectedDamageType(rowKey), weapon.Nuggets.OfType<Panopticon.Logic.Object.DamageNugget>().Single().DamageType);
             output.WriteLine($"{rowKey}: kinds [{string.Join(",", definition.KindOf.ToString().Split(", "))}]");
         }
 
@@ -313,7 +349,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
     /// </summary>
     public static readonly string[] ReferenceExclusions =
     [
-        "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
+        "ownertype", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
         "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",
         "Attack.areaDamageFriendlyRatio", "Attack.angularRange", "Attack.turretControllerName", "Attack.ignoreBlocking",
         "Attack.attackOnTheMove", "Attack.WeaponType", "Attack.packTime", "Attack.unpackTime", "Attack.minRangeImmobile",
@@ -325,6 +361,22 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
         "ProjectileMissileMove.type", "ProjectileMissileMove.accel", "ProjectileMissileMove.angSpeed",
         "Missile.PayloadAttack",
     ];
+
+    /// <summary>WI-M3-02: the engine damage type each reference row's weapon carries.</summary>
+    private static Panopticon.Logic.Object.DamageType ExpectedDamageType(string rowKey)
+    {
+        return rowKey switch
+        {
+            "HeavyInfantry1UpgradeEpoch15" => Panopticon.Logic.Object.DamageType.Pierce,
+            "LightMounted1UpgradeEpoch15" => Panopticon.Logic.Object.DamageType.Slash,
+            "HeavyMounted1UpgradeEpoch15" => Panopticon.Logic.Object.DamageType.Siege,
+            "HeavyArtilleryUpgradeEpoch14" => Panopticon.Logic.Object.DamageType.BigRock,
+            "FighterUpgradeEpoch15" => Panopticon.Logic.Object.DamageType.HeroRanged,
+            "BomberUpgradeEpoch15" => Panopticon.Logic.Object.DamageType.Uruk,
+            "LightMounted2UpgradeEpoch13" => Panopticon.Logic.Object.DamageType.Hero,
+            _ => throw new ArgumentException($"Unknown reference row '{rowKey}'.", nameof(rowKey)),
+        };
+    }
 
     private static void AssertRow(UnitContentSet set, string rowKey, string unitType, double hp, double los, double damage, double range, double reload)
     {

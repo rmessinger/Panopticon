@@ -6,7 +6,7 @@
 |---|---|
 | Card ID | `WI-M3-02` |
 | Roadmap phase | [M3](../../track-m-mass-battle.md): Mixed roster normalization |
-| Status | `Draft` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M3-01` |
@@ -66,12 +66,38 @@ Replace the authored one-to-one UNRESISTABLE damage policy for the reference ros
 
 ## Acceptance criteria
 
-- [ ] Every reference EE2 unit maps to an armor set and a damage type through the authored table.
-- [ ] EE2-versus-EE2 armor multipliers reproduce the dbcombat matrix; EE2-versus-native and
+- [x] Every reference EE2 unit maps to an armor set and a damage type through the authored table.
+- [x] EE2-versus-EE2 armor multipliers reproduce the dbcombat matrix; EE2-versus-native and
       native-versus-EE2 damage apply one-to-one.
-- [ ] Unmapped, unmapped-and-unexcluded, and matrix-missing classes fail load explicitly.
-- [ ] The maceman bounded profile and its tests stay green unchanged.
-- [ ] Standard validation passes.
+- [x] Unmapped, unmapped-and-unexcluded, and matrix-missing classes fail load explicitly.
+- [x] The maceman bounded profile and its tests stay green unchanged.
+- [x] Standard validation passes.
+
+## Result
+
+Done 2026-10-11. `Ee2ImportPolicy.RpsDamageTypes` carries the authored mapping
+(`Ee2ReferenceRps`, mirrored in both reference-roster profiles and asserted equal to them):
+Heavy_Infantry PIERCE, Light_Mounted SLASH, Heavy_Mounted SIEGE, Heavy_Artillery BIG_ROCK,
+Air_Superiority HERO_RANGED, Bomber URUK, Helicopter HERO. The adapter consumes the rps
+property while mapping is active, weapons carry the mapped types, and each class emits one
+shared `Rps<class>` armor record whose multipliers come straight from the stock dbcombat
+defender row over the mapped attacker columns (percent divided by 100, zeros included). The
+target-category masks now derive from the full matrix. Failure modes are explicit and scoped to
+the requested closure (out-of-closure inventory UnitTypes keep the policy default): an unmapped
+requested row, a mapped class without a matrix defender row. The M2 expectation that reference
+weapons deal UNRESISTABLE damage changed intentionally (the roster now deals the mapped types);
+`Ee2InventoryTests` asserts the mapped types and `ReferenceExclusions` no longer excludes rps,
+while the maceman bounded profile (rps still excluded, no mapping) is untouched and its tests
+stay green.
+
+Validation: Ee2TypedMaterializationTests 10/10 (four new mapping facts: mapped types and armor
+from the matrix, unmapped class, rps-without-mapping-or-exclusion, matrix row missing);
+Ee2InventoryTests 6/6 installed (stock matrix multipliers asserted, for example RpsLightMounted
+PIERCE 2.0 / URUK 2.0 / HERO_RANGED 0.5); full `Ee2|DdfReader` filter 119/120 with only the
+pre-existing `Ee2MorphImportTests.MuzzleCannonStillFailsAtTheNiUVControllerParseGuard`;
+publication and contract tests green at the mapped policy; maceman capture 6/6; full
+non-interactive suite only the pre-existing `ParkingPlaceBehavior_ReportLanding`; format and
+brace checks clean.
 
 ## Validation commands
 

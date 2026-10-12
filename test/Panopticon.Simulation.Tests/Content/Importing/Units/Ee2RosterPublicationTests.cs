@@ -46,6 +46,7 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
             GameUnitsPerSourceDistance = Ee2ReferenceScale.GameUnitsPerSourceDistance,
             GameUnitsPerSourceModelUnit = Ee2ReferenceScale.GameUnitsPerSourceModelUnit,
             ExcludedMechanics = [.. Ee2InventoryTests.ReferenceExclusions],
+            RpsDamageTypes = new Dictionary<string, string>(Ee2ReferenceRps.DamageTypes),
         };
     }
 
@@ -57,7 +58,7 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
         double gameUnitsPerSourceDistance,
         double? gameUnitsPerSourceModelUnit)
     {
-        var set = new Ee2UnitAdapter(Ee2InventoryTests.OpenInstall(), new Ee2ImportPolicy(15, "we", Ee2InventoryTests.ReferenceExclusions))
+        var set = new Ee2UnitAdapter(Ee2InventoryTests.OpenInstall(), new Ee2ImportPolicy(15, "we", Ee2InventoryTests.ReferenceExclusions, RpsDamageTypes: Ee2ReferenceRps.DamageTypes))
             .ReadRows(AllRowKeys);
         var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
         Assert.True(resolution.Succeeded, string.Join("\n", resolution.Diagnostics.Where(d => d.IsError)));
