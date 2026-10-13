@@ -66,8 +66,7 @@ public static class UnitContentImportRunner
         var content = UnitRuntimeMaterializer.Materialize(resolution, new UnitMaterializationContext(
             policy, publisher.Lookup, visualStore: game.AssetStore, damageEffects: damageEffects,
             damageEffectLookup: name => game.AssetStore.DamageFXs.GetByName(name),
-            impactEffectDamageTypes: impactEffectDamageTypes,
-            gameUnitsPerSourceModelUnit: import.GameUnitsPerSourceModelUnit));
+            impactEffectDamageTypes: impactEffectDamageTypes));
         Report(content.Diagnostics, reporter);
         if (!content.Succeeded)
         {
@@ -88,7 +87,11 @@ public static class UnitContentImportRunner
             }
         }
 
-        var installer = new ImportedVisualInstaller(new NifModelImporter(), new NifAnimationImporter(), sourceContext, game.AssetStore.LoadContext);
+        // The model scale is applied once, at install: the imported model's root bone binds carry
+        // game units, so the runtime world matrix stays unscaled.
+        var modelScale = import.GameUnitsPerSourceModelUnit is { } scale ? (float)scale : 1f;
+        var installer = new ImportedVisualInstaller(
+            new NifModelImporter(), new NifAnimationImporter(), sourceContext, game.AssetStore.LoadContext, modelScale);
         var publication = publisher.Publish(content, installer);
         Report(publication.Diagnostics, reporter);
         if (!publication.Succeeded)

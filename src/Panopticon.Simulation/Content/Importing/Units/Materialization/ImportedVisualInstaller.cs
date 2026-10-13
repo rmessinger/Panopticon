@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Panopticon;
 using Panopticon.Content.Loaders;
 
 namespace Panopticon.Content.Importing.Units.Materialization;
@@ -17,23 +18,31 @@ internal sealed class ImportedVisualInstaller : IUnitVisualInstaller
     private readonly IAnimationImporter _animationImporter;
     private readonly AssetImportContext _sourceContext;
     private readonly AssetLoadContext? _graphicsContext;
+    private readonly float _modelScale;
     private readonly Dictionary<string, ImportedModel> _models = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ImportedAnimation> _animations = new(StringComparer.Ordinal);
 
+    /// <param name="modelScale">
+    /// Card WI-M3-01: game units per source model unit, baked once into each installed model's
+    /// root bone binds. 1 leaves source units as-is.
+    /// </param>
     public ImportedVisualInstaller(
         IModelImporter modelImporter,
         IAnimationImporter animationImporter,
         AssetImportContext sourceContext,
-        AssetLoadContext? graphicsContext = null)
+        AssetLoadContext? graphicsContext = null,
+        float modelScale = 1f)
     {
         ArgumentNullException.ThrowIfNull(modelImporter);
         ArgumentNullException.ThrowIfNull(animationImporter);
         ArgumentNullException.ThrowIfNull(sourceContext);
+        Ensure.FinitePositive(modelScale, "Model scale must be finite and positive.");
 
         _modelImporter = modelImporter;
         _animationImporter = animationImporter;
         _sourceContext = sourceContext;
         _graphicsContext = graphicsContext;
+        _modelScale = modelScale;
     }
 
     public IReadOnlyList<ImportDiagnostic> Verify(IReadOnlyList<VisualAssetRequest> requests)
@@ -76,7 +85,7 @@ internal sealed class ImportedVisualInstaller : IUnitVisualInstaller
             }
             else if (_graphicsContext is not null)
             {
-                var model = ImportedModelMaterializer.MaterializeModel(ImportModel(request.SourceKey)!, _graphicsContext);
+                var model = ImportedModelMaterializer.MaterializeModel(ImportModel(request.SourceKey)!, _graphicsContext, _modelScale);
                 model.AssignImportedName("W3DContainer", request.RuntimeName);
                 store.Models.Add(model);
             }

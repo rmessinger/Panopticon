@@ -21,8 +21,9 @@ Normalize imported EE2 models and gameplay distances to Generals conventions thr
 - `docs/roadmap/deep-dives/mass-battle-1k.md` section 5 (Rosters, normalization bullets).
 - `docs/roadmap/track-g-rendering-clarity.md` G10 row and `test/Panopticon.Simulation.Tests/Graphics/Proportions/ReferenceScaleManifest.cs` (Generals units-per-meter anchor and the FX-exclusion measurement pattern).
 - `src/Panopticon.Simulation/Content/Importing/Units/Materialization/UnitConversionPolicy.cs` (declared distance conversion).
-- `src/Panopticon.Simulation/Content/Importing/Units/Materialization/UnitVisualMaterializer.cs` and `UnitMaterializationContext.cs`.
-- `src/Panopticon.Simulation/Logic/Object/Draw/W3dModelDraw.cs` (`SetWorldMatrix`, G10 `GetPresentationScale`).
+- `src/Panopticon.Simulation/Content/Importing/Units/Materialization/UnitVisualMaterializer.cs` and `ImportedVisualInstaller.cs`.
+- `src/Panopticon.Simulation/Graphics/ModelBoneHierarchy.cs` and `src/Panopticon.Simulation/Content/Loaders/ImportedModelMaterializer.cs` (install-time root-bind bake).
+- `src/Panopticon.Simulation/Logic/Object/Draw/W3dModelDraw.cs` (G10 `GetPresentationScale`).
 - `src/Panopticon.Tools.ReplaySketch.Core/Model/Capture/CaptureContentImport.cs`, `CaptureProfileValidator.cs`.
 - `src/Panopticon.Tools.TestHarness/UnitContentImportRunner.cs`, profiles `capture-ee2-reference-roster.json`, `ee2-reference-validation.json`.
 - `test/Panopticon.Simulation.Tests/Content/Importing/Units/Ee2RosterPublicationTests.cs`, `Ee2ContractValidationTests.cs`.
@@ -42,15 +43,17 @@ Normalize imported EE2 models and gameplay distances to Generals conventions thr
    18.2505 = 50 x 0.36501.
 2. Add `GameUnitsPerSourceModelUnit` (nullable, default null = no scaling) to
    `CaptureContentImport` with validation in `CaptureProfileValidator`, thread it through
-   `UnitContentImportRunner` into a new `UnitMaterializationContext` conversion, and stamp it on
-   the `W3dModelDrawModuleData` built by `UnitVisualMaterializer` through a narrow internal
-   setter.
-3. Apply the model scale in `W3dModelDraw.SetWorldMatrix` by folding `Matrix4x4.CreateScale`
-   into the world matrix before it reaches the model instance (local-frame scale, translation
-   unaffected), so bones, attachments, client model bounds, shadows, and the render list all
-   follow. Keep the G10 `GetPresentationScale` render-list override independent (it is
-   name-keyed for native objects only). The maceman bounded profile
-   `capture-mixed-source-ee2.json` keeps its recorded M2 values and no model scale.
+   `UnitContentImportRunner` into `ImportedVisualInstaller`, which applies it when installing
+   models.
+3. Apply the model scale once, on import: `ImportedModelMaterializer.MaterializeModel` bakes it
+   into the skeleton's root bone binds (`ModelBoneHierarchy` scales each root's bind translation
+   and bind scale), which appends a trailing uniform scale to every bone's absolute chain. That is
+   identical to the former per-frame `CreateScale * worldMatrix` premultiply, so bones,
+   attachments, client model bounds, shadows, and the render list all follow, while vertices,
+   child binds, inverse binds, and rest-relative animation offsets stay authored. Keep the G10
+   `GetPresentationScale` render-list override independent (it is name-keyed for native objects
+   only). The maceman bounded profile `capture-mixed-source-ee2.json` keeps its recorded M2 values
+   and no model scale.
 4. Commit the authored bounds manifest as test data
    (`Data/Content/Importing/Units/Ee2/ee2-model-scale-bounds.json`, copied to output): one entry
    per reference row naming the EE2 model key, the Generals reference object, and authored
@@ -63,9 +66,9 @@ Normalize imported EE2 models and gameplay distances to Generals conventions thr
    FX-excluded merged extents through `NifModelImporter` (M3-1 measured bounds above), apply the
    authored model scale, measure the Generals reference model extents through `W3dModelImporter`,
    and assert height and length ratios within the manifest bounds. Also assert the two reference
-   profiles record the consistent factor pair (18.2505 = 50 x 0.36501) and that a materialized
-   reference definition's draw module carries the scale. Add a synthetic no-install test for the
-   world-matrix scale folding.
+   profiles record the consistent factor pair (18.2505 = 50 x 0.36501) and that an installed
+   reference model bakes the scale into its root binds. Add a synthetic no-install test for the
+   root-bind bake.
 
 ## Files likely to change
 
@@ -82,9 +85,9 @@ Normalize imported EE2 models and gameplay distances to Generals conventions thr
 
 - [x] Both reference-roster profiles record 18.2505 and 0.36501 with the derivation, and a test
       enforces the 50-unit consistency invariant.
-- [x] Imported EE2 draw modules scale their world matrix by the authored model scale; a synthetic
-      test proves the folding math; native definitions and the maceman bounded profile are
-      unchanged.
+- [x] Imported EE2 models bake the authored model scale into their root bone binds once, at
+      install; a synthetic test proves the bake equals the world-matrix premultiply; native
+      definitions and the maceman bounded profile are unchanged.
 - [x] `Ee2ModelScaleTests` compares every reference model's scaled height and length against the
       Generals reference model within the committed manifest bounds.
 - [x] Standard validation passes.
@@ -93,9 +96,11 @@ Normalize imported EE2 models and gameplay distances to Generals conventions thr
 
 Done 2026-10-11. Factor 12 replaced by the derived pair (18.2505 tiles-to-world, 0.36501 per
 model unit) in both reference-roster profiles with the derivation recorded; the maceman bounded
-profile is untouched. Model scale folds into the imported draw's world matrix
-(`W3dModelDraw.ApplyImportedModelScale`), with `W3dModelDrawModuleData.ImportedModelScale` set by
-`UnitVisualMaterializer` through `UnitMaterializationContext.GameUnitsPerSourceModelUnit`.
+profile is untouched. Model scale is applied once, on import: `UnitContentImportRunner` passes the
+authored factor to `ImportedVisualInstaller`, and `ImportedModelMaterializer.MaterializeModel`
+bakes it into the skeleton's root bone binds via `ModelBoneHierarchy` (root bind translation and
+scale), so no runtime world-matrix multiply remains. Reworked 2026-10-13 after PR review: the
+first implementation folded the scale into `W3dModelDraw.SetWorldMatrix` per frame.
 
 Two normalization findings landed beyond the constants, both evidenced:
 

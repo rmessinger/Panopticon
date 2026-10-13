@@ -8,8 +8,10 @@ using Panopticon.Content;
 using Panopticon.Content.Importing;
 using Panopticon.Content.Importing.Nif;
 using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Materialization;
 using Panopticon.Content.Importing.W3d;
 using Panopticon.Data;
+using Panopticon.Graphics;
 using Panopticon.IO;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
@@ -22,9 +24,9 @@ namespace Panopticon.Tests.Content.Importing.Units;
 
 /// <summary>
 /// Card WI-M3-01 (no install required): the authored tiles-to-world factor and model-unit scale
-/// stay consistent, the reference-roster profiles record them, and the runtime folds the model
-/// scale into the imported draw's world matrix. Install-dependent bounds checks live in
-/// <see cref="Ee2ModelScaleInstalledTests"/>.
+/// stay consistent, the reference-roster profiles record them, and materialization bakes the
+/// model scale into the imported skeleton's root binds once, at install. Install-dependent
+/// bounds checks live in <see cref="Ee2ModelScaleInstalledTests"/>.
 /// </summary>
 public sealed class Ee2ModelScaleTests
 {
@@ -62,18 +64,49 @@ public sealed class Ee2ModelScaleTests
     }
 
     [Fact]
-    public void WorldMatrixFoldsTheModelScaleWithoutTouchingPlacement()
+    public void RootBindScaleBakesTheModelScaleIntoEveryBoneChain()
     {
-        // The scale multiplies before placement (local frame): the object's position is
-        // unchanged, a local offset scales about it, and a unit scale keeps the matrix identical.
-        var placement = Matrix4x4.CreateTranslation(100f, -20f, 5f) * Matrix4x4.CreateRotationZ(MathF.PI / 2f);
-        var scaled = W3dModelDraw.ApplyImportedModelScale(placement, 2f);
+        // The bake appends a trailing uniform scale to each bone's absolute chain (row-vector:
+        // local points scale about the model origin before placement). That is exactly what the
+        // former per-frame CreateScale * worldMatrix premultiply produced, so bones, skinned
+        // meshes through unchanged inverse binds, bounds, and attachments all follow.
+        var root = new ImportedBone("Root", -1, new Vector3(4f, -2f, 1f), Quaternion.CreateFromYawPitchRoll(0.3f, 0.1f, -0.2f), bindScale: 1.5f);
+        var child = new ImportedBone("Turret", 0, new Vector3(10f, 0f, 3f), Quaternion.CreateFromYawPitchRoll(-0.5f, 0f, 0.4f));
+        var skeleton = new ImportedSkeleton("WI-M3-01", [root, child]);
 
-        Assert.Equal(placement, W3dModelDraw.ApplyImportedModelScale(placement, 1f));
-        Assert.Equal(Vector3.Transform(Vector3.Zero, placement), Vector3.Transform(Vector3.Zero, scaled));
+        var unscaled = new ModelBoneHierarchy(skeleton);
+        var scaled = new ModelBoneHierarchy(skeleton, rootScale: 2f);
 
-        var local = new Vector3(10f, 0f, 0f);
-        Assert.Equal(Vector3.Transform(local * 2f, placement), Vector3.Transform(local, scaled));
+        Assert.Equal(2f * root.BindTranslation, scaled.Bones[0].Transform.Translation);
+        Assert.Equal(2f * root.BindScale, scaled.Bones[0].Transform.Scale);
+        Assert.Equal(root.InverseBindMatrix, scaled.Bones[0].InverseBindMatrix);
+        Assert.Equal(child.BindTranslation, scaled.Bones[1].Transform.Translation);
+        Assert.Equal(child.BindScale, scaled.Bones[1].Transform.Scale);
+        Assert.Equal(child.InverseBindMatrix, scaled.Bones[1].InverseBindMatrix);
+
+        var bake = Matrix4x4.CreateScale(2f);
+        for (var i = 0; i < scaled.Bones.Length; i++)
+        {
+            var expected = CumulativeBind(unscaled, i) * bake;
+            var actual = CumulativeBind(scaled, i);
+            Assert.True(NearlyEqual(expected, actual), $"bone {i}: expected {expected}, actual {actual}");
+        }
+
+        return;
+
+        static Matrix4x4 CumulativeBind(ModelBoneHierarchy hierarchy, int index)
+        {
+            var bone = hierarchy.Bones[index];
+            return bone.Transform.Matrix * (bone.Parent is null ? Matrix4x4.Identity : CumulativeBind(hierarchy, bone.Parent.Index));
+        }
+
+        static bool NearlyEqual(in Matrix4x4 expected, in Matrix4x4 actual)
+        {
+            return Vector4.DistanceSquared(new(expected.M11, expected.M12, expected.M13, expected.M14), new(actual.M11, actual.M12, actual.M13, actual.M14)) < 1e-8f
+                && Vector4.DistanceSquared(new(expected.M21, expected.M22, expected.M23, expected.M24), new(actual.M21, actual.M22, actual.M23, actual.M24)) < 1e-8f
+                && Vector4.DistanceSquared(new(expected.M31, expected.M32, expected.M33, expected.M34), new(actual.M31, actual.M32, actual.M33, actual.M34)) < 1e-8f
+                && Vector4.DistanceSquared(new(expected.M41, expected.M42, expected.M43, expected.M44), new(actual.M41, actual.M42, actual.M43, actual.M44)) < 1e-8f;
+        }
     }
 
     internal static string FindShippedProfile(string fileName)
@@ -86,11 +119,12 @@ public sealed class Ee2ModelScaleTests
 
 /// <summary>
 /// Card WI-M3-01 against the installs: imported EE2 model heights and lengths land within the
-/// committed bounds against Generals reference models, and materialized reference draws carry
-/// the authored model scale. Requires CNC_GENERALS_PATH and EMPIRE_EARTH_II_PATH; no EE2 asset
-/// is committed.
+/// committed bounds against Generals reference models, and the import bakes the authored model
+/// scale into installed models' root binds once. Requires CNC_GENERALS_PATH and
+/// EMPIRE_EARTH_II_PATH; no EE2 asset is committed.
 /// </summary>
 [Trait("Category", "Interactive")]
+[Collection("SerialGameTests")]
 public sealed class Ee2ModelScaleInstalledTests(ITestOutputHelper output)
 {
     [Fact]
@@ -138,22 +172,48 @@ public sealed class Ee2ModelScaleInstalledTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public void MaterializedDrawModulesCarryTheAuthoredModelScale()
+    public void InstalledModelsBakeTheAuthoredModelScaleIntoRootBinds()
     {
         var root = Environment.GetEnvironmentVariable(UnitContentImportRunner.Ee2PathVariable);
         Assert.False(
             string.IsNullOrEmpty(root),
             $"Unmet prerequisite: {UnitContentImportRunner.Ee2PathVariable} must point at an Empire Earth II install.");
 
-        var content = Ee2RosterPublicationTests.MaterializeReferenceRoster(
-            Ee2ReferenceScale.GameUnitsPerSourceDistance,
-            Ee2ReferenceScale.GameUnitsPerSourceModelUnit);
+        var entry = Ee2ModelScaleTests.LoadManifest().Entries[0];
 
-        foreach (var rowKey in Ee2RosterPublicationTests.AllRowKeys)
+        using var graphics = new ZipFileSystem(Path.Combine(root, "zips/graphics.zip"));
+        using var textures = new ZipFileSystem(Path.Combine(root, "zips/textures.zip"));
+        var sourceContext = new AssetImportContext(new CompositeFileSystem(graphics, textures), language: null);
+        var importer = new NifModelImporter();
+        var interchange = importer.ImportModel(entry.ModelKey, sourceContext)
+            ?? throw new InvalidOperationException($"Model '{entry.ModelKey}' was not found in the EE2 install.");
+
+        using var game = new Game(InstalledFilesTestData.GetInstallation(SageGame.CncGenerals));
+        var runtimeName = UnitVisualMaterializer.RuntimeName(ContentSource.Ee2, entry.ModelKey);
+        var installer = new ImportedVisualInstaller(
+            importer,
+            new NifAnimationImporter(),
+            sourceContext,
+            game.AssetStore.LoadContext,
+            (float)Ee2ReferenceScale.GameUnitsPerSourceModelUnit);
+        installer.Install(
+            [new VisualAssetRequest(new ContentId(ContentSource.Ee2, ContentKind.Unit, entry.RowKey), VisualAssetKind.Model, entry.ModelKey, runtimeName)],
+            game.AssetStore);
+
+        var installed = game.AssetStore.Models.GetByName(runtimeName);
+        var scale = (float)Ee2ReferenceScale.GameUnitsPerSourceModelUnit;
+
+        // Applied once, on import: root binds carry game units; child binds, vertices, and
+        // inverse binds stay authored because the trailing root scale flows down every chain.
+        var installedRoot = installed.BoneHierarchy.Bones[0];
+        Assert.Equal(interchange.Skeleton.Bones[0].BindTranslation * scale, installedRoot.Transform.Translation);
+        Assert.Equal(interchange.Skeleton.Bones[0].BindScale * scale, installedRoot.Transform.Scale);
+
+        var childIndex = Array.FindIndex(interchange.Skeleton.Bones.ToArray(), bone => bone.ParentIndex != -1);
+        if (childIndex > 0)
         {
-            var definition = content.Get<ObjectDefinition>(new ContentId(ContentSource.Ee2, ContentKind.Unit, rowKey));
-            var draw = definition.Draws.Values.Select(c => c.Data).OfType<W3dModelDrawModuleData>().Single();
-            Assert.Equal((float)Ee2ReferenceScale.GameUnitsPerSourceModelUnit, draw.ImportedModelScale);
+            Assert.Equal(interchange.Skeleton.Bones[childIndex].BindTranslation, installed.BoneHierarchy.Bones[childIndex].Transform.Translation);
+            Assert.Equal(interchange.Skeleton.Bones[childIndex].BindScale, installed.BoneHierarchy.Bones[childIndex].Transform.Scale);
         }
     }
 

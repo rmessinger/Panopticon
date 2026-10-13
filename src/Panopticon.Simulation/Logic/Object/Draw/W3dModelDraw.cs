@@ -544,28 +544,15 @@ public class W3dModelDraw : DrawModule
 
     internal override void SetWorldMatrix(in Matrix4x4 worldMatrix)
     {
-        // Card WI-M3-01: imported models authored in foreign units scale in their local frame
-        // (after placement, before the vertical offset), so bones, bounds, and attachments follow.
-        var scaled = ApplyImportedModelScale(worldMatrix, _data.ImportedModelScale);
         if (GameObject != null && GameObject.VerticalOffset != 0)
         {
-            var mat = scaled * Matrix4x4.CreateTranslation(Vector3.UnitZ * GameObject.VerticalOffset);
+            var mat = worldMatrix * Matrix4x4.CreateTranslation(Vector3.UnitZ * GameObject.VerticalOffset);
             _activeModelDrawConditionState?.SetWorldMatrix(mat);
         }
         else
         {
-            _activeModelDrawConditionState?.SetWorldMatrix(scaled);
+            _activeModelDrawConditionState?.SetWorldMatrix(worldMatrix);
         }
-    }
-
-    /// <summary>
-    /// Card WI-M3-01: multiplies a local-frame scale before placement (row-vector convention:
-    /// local points scale first, then the world matrix places them), so the object's position is
-    /// unchanged and local offsets scale about it. A unit scale returns the input unchanged.
-    /// </summary>
-    internal static Matrix4x4 ApplyImportedModelScale(in Matrix4x4 worldMatrix, float scale)
-    {
-        return scale == 1f ? worldMatrix : Matrix4x4.CreateScale(scale) * worldMatrix;
     }
 
     internal float GetPresentationScale()
@@ -788,13 +775,6 @@ public class W3dModelDrawModuleData : DrawModuleData, IParseCallbacks
     public float InitialRecoilSpeed { get; private set; } = 2.0f;
     public float MaxRecoilDistance { get; private set; } = 3.0f;
     public float RecoilSettleSpeed { get; private set; } = 0.065f;
-
-    /// <summary>
-    /// Card WI-M3-01: uniform scale applied to the world matrix of imported (non-native) models
-    /// whose source units are not game units, for example EE2 decimeter-authored NIF models.
-    /// Default 1 leaves native behavior untouched; there is no INI field for it.
-    /// </summary>
-    public float ImportedModelScale { get; internal set; } = 1f;
 
     public List<AnimationState> AnimationStates { get; } = new List<AnimationState>();
 

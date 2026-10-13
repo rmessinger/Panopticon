@@ -41,9 +41,12 @@ in `test/Panopticon.Simulation.Tests/Data/Content/Importing/Units/Ee2/ee2-model-
 
 Runtime seams:
 
-- The model scale folds into the imported draw's world matrix (`W3dModelDraw.ApplyImportedModelScale`,
-  local frame before placement), so bones, attachments, client model bounds, and shadows follow;
-  native draws keep scale 1 and the G10 render-list override stays independent.
+- The model scale is applied once, on install: `ImportedVisualInstaller` passes it to
+  `ImportedModelMaterializer.MaterializeModel`, which bakes it into the skeleton's root bone binds
+  (`ModelBoneHierarchy`; root bind translation and scale). The trailing root scale flows down
+  every bone chain, so bones, attachments, client model bounds, and shadows follow while the
+  runtime world matrix stays unscaled; native models materialize at scale 1 and the G10
+  render-list override stays independent.
 - EE2 attack ranges are authored as ground-plane tile distances, so imported EE2 weapons set
   `WeaponTemplate.MeasuresRangeOnGround` and the engine's range check uses the horizontal
   component for them. Without this the 3D check lets a cruising altitude consume the authored

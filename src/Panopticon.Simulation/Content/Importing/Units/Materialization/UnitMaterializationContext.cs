@@ -26,13 +26,6 @@ public sealed class UnitMaterializationContext
 
     public UnitConversionPolicy Policy { get; }
 
-    /// <summary>
-    /// Card WI-M3-01: declared game units per source model unit (EE2 decimeters), applied to the
-    /// imported draw's world matrix so model extents, bones, and bounds follow. Null means the
-    /// source's model units already are game units (no scaling).
-    /// </summary>
-    public double? GameUnitsPerSourceModelUnit { get; }
-
     public ILegacyNativeTable? LegacyNatives { get; }
 
     public List<AppliedConversion> Conversions { get; } = [];
@@ -53,18 +46,11 @@ public sealed class UnitMaterializationContext
         AssetStore? visualStore = null,
         IReadOnlyDictionary<ContentId, string>? damageEffects = null,
         Func<string, DamageFX?>? damageEffectLookup = null,
-        IReadOnlyDictionary<ContentId, string>? impactEffectDamageTypes = null,
-        double? gameUnitsPerSourceModelUnit = null)
+        IReadOnlyDictionary<ContentId, string>? impactEffectDamageTypes = null)
     {
         ArgumentNullException.ThrowIfNull(policy);
 
-        if (gameUnitsPerSourceModelUnit is { } modelScale && (!double.IsFinite(modelScale) || modelScale <= 0))
-        {
-            throw new ArgumentOutOfRangeException(nameof(gameUnitsPerSourceModelUnit), modelScale, "Game units per source model unit must be finite and positive.");
-        }
-
         Policy = policy;
-        GameUnitsPerSourceModelUnit = gameUnitsPerSourceModelUnit;
         _published = published ?? (_ => null);
         LegacyNatives = legacyNatives;
         _visualStore = visualStore;

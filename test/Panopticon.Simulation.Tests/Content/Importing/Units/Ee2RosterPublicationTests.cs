@@ -50,30 +50,6 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
         };
     }
 
-    /// <summary>
-    /// Card WI-M3-01: materializes the reference roster from the install without a Game boot, so
-    /// staged module data (for example the draw's model scale) can be asserted directly.
-    /// </summary>
-    public static Panopticon.Content.Importing.Units.Materialization.MaterializedUnitContent MaterializeReferenceRoster(
-        double gameUnitsPerSourceDistance,
-        double? gameUnitsPerSourceModelUnit)
-    {
-        var set = new Ee2UnitAdapter(Ee2InventoryTests.OpenInstall(), new Ee2ImportPolicy(15, "we", Ee2InventoryTests.ReferenceExclusions, RpsDamageTypes: Ee2ReferenceRps.DamageTypes))
-            .ReadRows(AllRowKeys);
-        var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
-        Assert.True(resolution.Succeeded, string.Join("\n", resolution.Diagnostics.Where(d => d.IsError)));
-
-        var content = Panopticon.Content.Importing.Units.Materialization.UnitRuntimeMaterializer.Materialize(
-            resolution,
-            new Panopticon.Content.Importing.Units.Materialization.UnitMaterializationContext(
-                new Panopticon.Content.Importing.Units.Materialization.UnitConversionPolicy(
-                    SageGame.CncGenerals,
-                    gameUnitsPerSourceDistance: gameUnitsPerSourceDistance),
-                gameUnitsPerSourceModelUnit: gameUnitsPerSourceModelUnit));
-        Assert.True(content.Succeeded, string.Join("\n", content.Diagnostics));
-        return content;
-    }
-
     private static Game Boot()
     {
         var ee2Path = Environment.GetEnvironmentVariable(UnitContentImportRunner.Ee2PathVariable);
