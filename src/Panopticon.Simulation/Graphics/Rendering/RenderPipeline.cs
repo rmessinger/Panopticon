@@ -562,6 +562,7 @@ internal sealed class RenderPipeline : DisposableBase
         }
 
         int? lastRenderItemIndex = null;
+        DeviceBuffer? lastIndexBuffer = null;
         var indices = bucket.RenderItems.CulledItemIndices;
 
         var itemIndex = 0;
@@ -582,11 +583,15 @@ internal sealed class RenderPipeline : DisposableBase
                     indices,
                     itemIndex,
                     forwardPassResourceSet,
-                    ref lastRenderItemIndex);
+                    ref lastRenderItemIndex,
+                    ref lastIndexBuffer);
                 continue;
             }
 
-            commandList.PushDebugGroup($"Render item: {renderItem.DebugName}");
+            if (RenderScaleOptions.DebugItemGroups)
+            {
+                commandList.PushDebugGroup($"Render item: {renderItem.DebugName}");
+            }
 
             var passResourceSet = (bucket.RenderItemName == "Shadow")
                 ? null
@@ -635,7 +640,7 @@ internal sealed class RenderPipeline : DisposableBase
                 commandList.SetGraphicsResourceSet(2, renderItem.Material.MaterialResourceSet);
             }
 
-            commandList.SetIndexBuffer(renderItem.IndexBuffer, IndexFormat.UInt16);
+            SetIndexBufferIfChanged(commandList, renderItem.IndexBuffer, ref lastIndexBuffer);
             Statistics.DrawCalls++;
             commandList.DrawIndexed(
                 renderItem.IndexCount,
@@ -647,7 +652,10 @@ internal sealed class RenderPipeline : DisposableBase
             lastRenderItemIndex = indices[itemIndex];
             itemIndex++;
 
-            commandList.PopDebugGroup();
+            if (RenderScaleOptions.DebugItemGroups)
+            {
+                commandList.PopDebugGroup();
+            }
         }
 
         return bucket.RenderItems.CulledItemIndices.Count;
@@ -664,7 +672,8 @@ internal sealed class RenderPipeline : DisposableBase
         IReadOnlyList<int> indices,
         int itemIndex,
         ResourceSet forwardPassResourceSet,
-        ref int? lastRenderItemIndex)
+        ref int? lastRenderItemIndex,
+        ref DeviceBuffer? lastIndexBuffer)
     {
         ref var first = ref bucket.RenderItems[indices[itemIndex]];
 
@@ -692,7 +701,11 @@ internal sealed class RenderPipeline : DisposableBase
 
         var pipeline = first.Material.InstancedPipeline!;
 
-        commandList.PushDebugGroup($"Instanced run: {first.DebugName} x{runInstances}");
+        if (RenderScaleOptions.DebugItemGroups)
+        {
+            commandList.PushDebugGroup($"Instanced run: {first.DebugName} x{runInstances}");
+        }
+
         commandList.InsertDebugMarker("Setting pipeline");
         commandList.SetPipeline(pipeline);
         SetGlobalResources(commandList, passResourceSet);
@@ -713,7 +726,7 @@ internal sealed class RenderPipeline : DisposableBase
             commandList.SetVertexBuffer(1, first.TexCoordVertexBuffer);
         }
 
-        commandList.SetIndexBuffer(first.IndexBuffer, IndexFormat.UInt16);
+        SetIndexBufferIfChanged(commandList, first.IndexBuffer, ref lastIndexBuffer);
         Statistics.DrawCalls++;
         Statistics.InstancedDrawCalls++;
         Statistics.InstancedBatches++;
@@ -727,8 +740,29 @@ internal sealed class RenderPipeline : DisposableBase
 
         // The next per-item draw must rebind its pipeline and set 3.
         lastRenderItemIndex = null;
-        commandList.PopDebugGroup();
+
+        if (RenderScaleOptions.DebugItemGroups)
+        {
+            commandList.PopDebugGroup();
+        }
+
         return scan;
+    }
+
+    /// <summary>
+    /// B5-4: the index buffer is pass state, not item state (binding persists across
+    /// pipeline changes on Vulkan, D3D11, and Metal), so it is only bound when it changes.
+    /// </summary>
+    private void SetIndexBufferIfChanged(CommandList commandList, DeviceBuffer indexBuffer, ref DeviceBuffer? lastIndexBuffer)
+    {
+        if (indexBuffer == lastIndexBuffer)
+        {
+            return;
+        }
+
+        commandList.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
+        Statistics.IndexBufferBinds++;
+        lastIndexBuffer = indexBuffer;
     }
 
     private void SetGlobalResources(CommandList commandList, ResourceSet passResourceSet)

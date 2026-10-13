@@ -32,6 +32,9 @@ public sealed class RenderStatistics
     /// <summary>Every indexed draw issued this frame, all buckets and passes.</summary>
     public int DrawCalls { get; internal set; }
 
+    /// <summary>Index-buffer binds issued this frame (B5-4 hoists them to changes only).</summary>
+    public int IndexBufferBinds { get; internal set; }
+
     /// <summary>Draws issued as instanced runs (B5-2; zero until instancing lands).</summary>
     public int InstancedDrawCalls { get; internal set; }
 
@@ -52,6 +55,7 @@ public sealed class RenderStatistics
         VisibleShadow = 0;
         MeshesSkippedByLod = 0;
         DrawCalls = 0;
+        IndexBufferBinds = 0;
         InstancedDrawCalls = 0;
         InstancedBatches = 0;
         InstancesDrawn = 0;
@@ -61,6 +65,6 @@ public sealed class RenderStatistics
     public override string ToString() =>
         $"items opaque={ItemsOpaque} transparent={ItemsTransparent} shadow={ItemsShadow} " +
         $"visible opaque={VisibleOpaque} shadow={VisibleShadow} lodSkipped={MeshesSkippedByLod} " +
-        $"draws={DrawCalls} " +
+        $"draws={DrawCalls} indexBinds={IndexBufferBinds} " +
         $"instanced: draws={InstancedDrawCalls} batches={InstancedBatches} instances={InstancesDrawn}";
 }

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-04` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-4 submit/shadow |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-B5-03` |
@@ -53,13 +53,26 @@ keeps its output and tests green.
 
 ## Acceptance criteria
 
-- [ ] Index-buffer bind count per frame is at most distinct-index-buffer count per pass,
+- [x] Index-buffer bind count per frame is at most distinct-index-buffer count per pass,
       not item count (statistics assertion on a probe run).
-- [ ] With `DebugItemGroups` off (default), no per-item string allocation occurs in
+- [x] With `DebugItemGroups` off (default), no per-item string allocation occurs in
       `DoRenderPass` and output pixels are byte-identical to before this card.
-- [ ] Shadow-tier A/B (Original vs High) probe runs complete; shadow pixels byte-identical
+- [x] Shadow-tier A/B (Original vs High) probe runs complete; shadow pixels byte-identical
       before/after this card.
-- [ ] Standard validation passes.
+- [x] Standard validation passes.
+
+## Result
+
+Done 2026-10-13. Index buffers bind on change only (`SetIndexBufferIfChanged`, tracked per
+pass for items and runs; `RenderStatistics.IndexBufferBinds`), and per-item debug groups are
+gated behind `RenderScaleOptions.DebugItemGroups` (default off, no interpolated-string
+allocation). Probe gains `--b5-legacy-shadows` (Original single-cascade tier via the
+frame-boundary settings applier). Evidence at 500 units, matched frames: capture
+byte-identical to the WI-B5-03 build; both shadow tiers run to completion (Enhanced
+visible-shadow 4569 across cascades, Original 4542); render submit 24.83 to 14.22 ms with
+debug groups off. Note: `DirectionalLightFrustumCalculatorTests` fails in isolation on this
+host (SDL swapchain, no display) both on this branch and on unmodified origin/main; it
+passes in the full suite. Validation otherwise green (8 known failures only).
 
 ## Validation commands
 

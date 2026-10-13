@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-05` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-5 budget proof |
-| Status | `Blocked` (flips to `Ready` when `WI-B5-04` is `Done`) |
+| Status | `Ready` |
 | Type | `investigation` (measurement runs + documentation) |
 | Effort | `S` |
 | Prerequisites | `WI-B5-04` |

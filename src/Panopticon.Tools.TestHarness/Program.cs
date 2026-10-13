@@ -119,6 +119,11 @@ public static class Program
             RenderScaleOptions.SmallFeatureCulling = false;
         }
 
+        if (Array.Exists(args, a => a.Equals("--b5-legacy-shadows", StringComparison.OrdinalIgnoreCase)))
+        {
+            config.RenderingScaleProbeLegacyShadows = true;
+        }
+
         Run(config, reporter);
     }
 

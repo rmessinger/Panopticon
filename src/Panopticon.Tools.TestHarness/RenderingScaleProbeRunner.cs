@@ -76,6 +76,21 @@ public static class RenderingScaleProbeRunner
             game.EnableFixedLogicTimestep();
             game.EnableFixedRenderTimestep();
 
+            if (config.RenderingScaleProbeLegacyShadows)
+            {
+                // B5-4 A/B: single-cascade 1024 Original tier instead of Enhanced's
+                // four-cascade 2048, applied at the frame boundary like a preset swap.
+                game.GraphicsSettings = GraphicsSettings.Create(
+                    4,
+                    AlphaTestMode.CoveragePreserving,
+                    ColourSpaceMode.Linear,
+                    16,
+                    0f,
+                    ShadowTier.Original,
+                    UiMode.DynamicHud,
+                    realisticProportions: false);
+            }
+
             var spawned = SpawnField(game, definition, unitCount, reporter);
             if (spawned == 0)
             {

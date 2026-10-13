@@ -224,4 +224,7 @@ public sealed class TestHarnessConfig
 
     /// <summary>Optional PNG path for one probe screenshot captured after the run.</summary>
     public string? RenderingScaleProbeScreenshotPath { get; set; } = null;
+
+    /// <summary>Run with the Original single-cascade shadow tier instead of Enhanced (B5-4).</summary>
+    public bool RenderingScaleProbeLegacyShadows { get; set; } = false;
 }
