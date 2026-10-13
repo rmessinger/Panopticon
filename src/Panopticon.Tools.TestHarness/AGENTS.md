@@ -24,6 +24,16 @@ Set `GamePath` to your game installation if auto-detection fails.
 `BuiltInScenario` in the config selects what runs; `--built-in-scenario <name>` overrides it
 for a single run.
 
+All windowed scenarios show a performance overlay in the upper-left corner. The `-`/`+`
+button collapses/expands it independently of F1. Values are one-second averages: FPS, frame
+time, CPU update and render-submission time, GPU frame time, process working set, managed
+heap, GC counts, and live scene objects. CPU render submission excludes presentation and is
+not GPU time. GPU frame time is measured with timestamp queries (Vulkan and Direct3D 11
+only) bracketing the render submissions; results arrive frames late and read `n/a` on other
+backends. `PANOPTICON_NOVSYNC=true` (environment) disables vsync so profiling reads uncapped
+frame cost. Overlay mouse input is consumed instead of reaching the game. Headless runs have
+no overlay except explicit validation-ground overlay captures.
+
 ### `PbrMaterialProof` scenario
 
 Headless capture of the complete C3 PBR feature matrix: synthetic static/skinned quads with

@@ -92,6 +92,7 @@ public static class MassBattleCapacityProbeRunner
         Game? game = null;
         GameWindow? window = null;
         TextureCopier? textureCopier = null;
+        HarnessOverlay? overlay = null;
         try
         {
             if (config.Headless)
@@ -112,6 +113,7 @@ public static class MassBattleCapacityProbeRunner
                     new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud },
                     window);
                 textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
+                overlay = new HarnessOverlay(game, window);
             }
 
             // Hostile teams: the side index is the team index, so the armies fight on contact.
@@ -140,7 +142,7 @@ public static class MassBattleCapacityProbeRunner
 
             Action step = config.Headless
                 ? () => game.Update(Array.Empty<InputMessage>())
-                : () => MassBattlePlacement.StepWindowed(game, window!, textureCopier!);
+                : () => HarnessWindowedFrame.Step(game, window!, textureCopier!, overlay!);
 
             var navigation = game.Scene3D.Navigation;
             var aircraft = profile.Capacity.Aircraft!;
@@ -193,6 +195,7 @@ public static class MassBattleCapacityProbeRunner
         }
         finally
         {
+            overlay?.Dispose();
             textureCopier?.Dispose();
             game?.Dispose();
             window?.Dispose();

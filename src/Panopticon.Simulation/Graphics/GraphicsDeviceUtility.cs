@@ -17,6 +17,10 @@ internal static class GraphicsDeviceUtility
         GraphicsBackend.Metal,
     };
 
+    /// <summary>PANOPTICON_NOVSYNC=true removes present pacing so profiling reads true frame cost.</summary>
+    internal static bool VerticalSyncDisabled =>
+        bool.TryParse(Environment.GetEnvironmentVariable("PANOPTICON_NOVSYNC"), out var disabled) && disabled;
+
     public static GraphicsDevice CreateGraphicsDevice(GraphicsBackend? preferredBackend, GameWindow window)
     {
 #if DEBUG
@@ -28,7 +32,7 @@ internal static class GraphicsDeviceUtility
         var options = new GraphicsDeviceOptions
         {
             Debug = debug,
-            SyncToVerticalBlank = true,
+            SyncToVerticalBlank = !VerticalSyncDisabled,
             ResourceBindingModel = ResourceBindingModel.Improved,
             PreferStandardClipSpaceYDirection = true,
             PreferDepthRangeZeroToOne = true
