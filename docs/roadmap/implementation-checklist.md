@@ -814,7 +814,7 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
   - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
     plays; B1 records import time and peak memory.
-- [ ] B5 Rendering at scale
+- [x] B5 Rendering at scale
       ([deep dive](deep-dives/b5-rendering-at-scale.md)): GPU instancing for repeated unit
       models through the source-agnostic `RenderItem` seam (W3D, glTF/PBR, and any C1
       importer), a distance LOD gate (small-feature culling; impostors recorded as a

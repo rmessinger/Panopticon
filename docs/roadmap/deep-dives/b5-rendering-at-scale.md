@@ -174,13 +174,22 @@ any difference is a deviation, not a tuning knob.
 
 Anchor: 10k units at ~30 fps (33.3 ms frame budget) per the
 [scale-anchor Decision](../open-questions.md). B5 budgets presentation only; the logic-side
-budget belongs to B2/B3.
+budget belongs to B2/B3. Verdicts from the `WI-B5-05` matrix (dev host, offscreen
+Vulkan/RADV, 1280x800, Enhanced preset, 30 warmup / 60 measured frames, idle units).
 
-| Budget | Target at 10k rigid repeated models | Measured |
-|---|---|---|
-| Render submit + GPU (update excluded), median | within 33.3 ms frame budget on the dev-host GPU (RADV offscreen) | filled by WI-B5-01/05 |
-| Draw calls per frame, opaque + shadow | two orders of magnitude below item count (instances batched per mesh part) | filled by WI-B5-01/05 |
-| Skinned meshes (b1 anchor composition) | not instanced; recorded gap with its measured frame cost | filled by WI-B5-05 |
+| Budget | Target | Measured | Verdict |
+|---|---|---|---|
+| Frame incl. logic at 1k rigid repeated models | within 33.3 ms | 28.85 ms (34.7 fps) | met |
+| Presentation span (render submit + GPU drain) at 10k rigid | within 33.3 ms | 132.07 ms (121.48 + 10.59) | missed |
+| GPU drain alone at 10k rigid | within 33.3 ms | 10.59 ms | met |
+| Draw calls at 10k rigid | orders below item count | 155 draws for 61167 visible instances (91447 per-item) | met |
+| Logic update at 10k (B2/B3 scope, context) | within 33.3 ms | 100.7 ms | out of B5 scope |
+
+The 10k presentation miss is dominated by CPU render-list construction: of the 121.48 ms
+render submit, buildRenderList is 102.1 ms (61k surviving items after the LOD gate; 91k
+without it). Draw submission after B5 is 155 calls and the GPU finishes in 10.59 ms, so the
+next presentation lever is per-mesh item-build cost (bounding-box transforms, per-part item
+construction), not draws. Recorded as the follow-up this phase does not attempt.
 
 If a budget cannot be met on the available render path, the gap is recorded here with its
 measurement; numbers are never tuned to flatter the result.
@@ -307,35 +316,48 @@ sequenceDiagram
   RP-->>RP: Statistics (batches, instances, draws), RenderSpan spans
 ```
 
-## 7. Measured baseline
+## 7. Measured results
 
-Recorded by `WI-B5-01` (before any B5 rendering change) on the dev host: offscreen Vulkan
-(RADV, Radeon RX 7600), headless probe, 1024x768, Enhanced preset, fixed camera framing the
-whole field. Scene: 10k `AmericaTankCrusader`, idle, spacing 24, map `deepdivide` (the M1
-capacity-probe map). The card's intended default map, Twilight Flame, fails during terrain
-texture materialization under the Enhanced preset with `LinearMipBuilder`'s "Linear mip
-source is not contiguous" (`ResizeLinear` path); that is a pre-existing latent defect
-unrelated to B5, recorded here rather than worked around, and the probe default moved to
-`deepdivide`. 30 warmup frames, 120 measured.
+Baseline by `WI-B5-01` (before any B5 rendering change), final matrix by `WI-B5-05`. Host:
+offscreen Vulkan (RADV, Radeon RX 7600), headless probe, 1280x800 panel, Enhanced preset,
+30 warmup / 60 measured frames, idle units, fixed camera framing the whole field. Map
+`deepdivide`; the original default map, Twilight Flame, fails terrain materialization under
+the Enhanced preset with a pre-existing `LinearMipBuilder.ResizeLinear` contiguity defect
+(recorded in the WI-B5-01 card; the probe default moved to `deepdivide`). The
+`WI-B5-01` baseline row was measured before the probe sized its panel (1x1 fallback
+viewport), so the per-item recheck below is the authoritative sized-panel baseline.
 
-| Metric | Baseline (per-item path) | After B5-2..B5-4 |
-|---|---|---|
-| Frame (update + render + GPU drain), median ms | 375.92 (CI 374.55..376.77) | TBD |
-| Render span, median ms | 232.76 | TBD |
-| buildRenderList span, median ms | 77.35 | TBD |
-| shadowPass span, median ms | 10.66 | TBD |
-| forwardPass span, median ms | 125.55 | TBD |
-| GPU drain (WaitForIdle), median ms | 43.76 | TBD |
-| FPS vs 33.3 ms budget | 2.66 (miss by ~11x) | TBD |
-| Items per frame (opaque / shadow) | 91515 / 91166 | TBD |
-| Visible opaque / draw calls per frame | 91372 / 91433 | TBD |
-| Instanced batches / instances per frame | 0 / 0 | TBD |
+Scene: `AmericaTankCrusader` grid (about 9 items per tank), unless noted.
 
-Notes: each tank contributes about 9 opaque items (mesh parts); terrain and props make up
-the rest. The shadow pass is empty at this framing (visible shadow items 0): the fixed
-camera sits far above the field, beyond the last cascade's extent, so the shadow spans
-measure culling of 91k items rather than shadow draws. The update span (98.98 ms median)
-is logic-side cost out of B5 scope. Skinned-model gap (b1 anchor composition): `WI-B5-05`.
+| Cell | Instancing | LOD gate | Frame ms (median) | Render submit ms | GPU drain ms | FPS | Items opaque | LOD-skipped | Draws | Instanced batches / instances |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Per-item baseline (WI-B5-01, 1x1 panel) | off | none | 375.92 | 232.76 | 43.76 | 2.7 | 91515 | n/a | 91433 | 0 / 0 |
+| (a) Per-item recheck | off | off | 418.49 | 287.86 | 29.72 | 2.4 | 91517 | 0 | 91447 | 0 / 0 |
+| (b) + instancing | on | off | 245.90 | 129.57 | 11.81 | 4.1 | 91517 | 0 | 180 | 118 / 91385 |
+| (c) + instancing + LOD (default) | on | on | 230.38 | 121.48 | 10.59 | 4.3 | 61282 | 30257 | 155 | 111 / 61167 |
+| (d) as (c), Original shadow tier | on | on | 232.29 | 121.44 | 10.57 | 4.3 | 61282 | 30257 | 155 | 111 / 61167 |
+| (e1) 1k tanks, defaults | on | on | 28.85 | 16.74 | 4.08 | 34.7 | 9893 | 0 | 108 | 95 / 10879 |
+| (e30) 30k tanks, defaults | on | on | 626.52 | 283.90 | 12.22 | 1.6 | 124669 | 99307 | 133 | 84 / 124321 |
+| (f) 10k skinned Rangers (anchor composition) | on | on | 270.09 | 106.37 | 12.43 | 3.7 | 11282 | 224 | 10149 | 105 / 1167 |
+
+Reading the table:
+
+- Instancing is the dominant win: draws 91447 to 180 at 10k with pixel-identical output;
+  render submit 287.86 to 129.57 ms. The LOD gate trims a further 30257 sub-pixel meshes
+  at this framing (items 91517 to 61282).
+- (d) shows the shadow tier is not the presentation bottleneck at this camera: the
+  cascades cover none of the field (visible shadow 0), so the tier switch is noise.
+- (e1) meets the 30 fps anchor frame budget outright at 1k rigid models.
+- (f) records the skinned-mesh gap: the anchor composition (10k Rangers) cannot batch its
+  skinned bodies (per-instance skinning buffer); only rigid accessories instance (1167 of
+  11282 opaque items). Presentation still lands at 106.37 ms submit, but draws stay at
+  10149. Closing this needs per-instance skinning data in the instance stream (recorded
+  follow-up, out of B5 scope).
+- The remaining 10k rigid presentation cost is buildRenderList (102.1 of 121.48 ms
+  submit): CPU item construction, not draw submission. Follow-up recorded in section 4.
+- Logic update at 10k is 100.7 ms (tanks) / 151.9 ms (Rangers): B2/B3 scope, included in
+  the frame column for context only.
+
 
 
 ## 8. Validation

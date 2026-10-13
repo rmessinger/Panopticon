@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-05` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-5 budget proof |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` (measurement runs + documentation) |
 | Effort | `S` |
 | Prerequisites | `WI-B5-04` |
@@ -28,7 +28,7 @@ the deep dive, and produce the milestone evidence screenshot. This card complete
    run varies it): 10k rigid repeated models with (a) instancing off + LOD off (baseline
    recheck), (b) instancing on + LOD off, (c) instancing on + LOD on, (d) Legacy shadow
    tier, (e) 1k and 30k rigid for scaling shape; plus the anchor composition (10k skinned
-   Rangers) to record the non-instanced gap.
+   Rangers) to record the non-instanced gap. Executed 2026-10-13 with the sized panel.
 2. Fill deep dive §7 after-B5 columns: frame median/p95, render span, draw calls, batches,
    instances, fps vs 33.3 ms budget, and the skinned gap paragraph.
 3. Compare against the budget table in §4: mark each budget met or missed with the number;
@@ -46,12 +46,28 @@ the deep dive, and produce the milestone evidence screenshot. This card complete
 
 ## Acceptance criteria
 
-- [ ] Every matrix cell has a recorded number in §7 (median + p95 frame ms, draws,
+- [x] Every matrix cell has a recorded number in §7 (median + p95 frame ms, draws,
       batches/instances).
-- [ ] Budget verdicts stated explicitly: met or missed with the measurement.
-- [ ] Skinned-mesh gap recorded with its measured frame cost at 10k.
-- [ ] Milestone screenshot in the shared temp directory.
-- [ ] Standard validation passes (no source change expected; run to confirm).
+- [x] Budget verdicts stated explicitly: met or missed with the measurement.
+- [x] Skinned-mesh gap recorded with its measured frame cost at 10k.
+- [x] Milestone screenshot in the shared temp directory.
+- [x] Standard validation passes (no source change expected; run to confirm).
+
+## Result
+
+Done 2026-10-13. Matrix (30 warmup / 60 measured, 1280x800, Enhanced, deepdivide): per-item
+recheck 418.49 ms frame / 91447 draws; +instancing 245.90 / 180 draws (118 batches, 91385
+instances); +LOD 230.38 / 155 draws (30257 sub-pixel meshes skipped); legacy shadow tier
+within noise (cascades cover none of the field at this camera); 1k 28.85 ms (34.7 fps, met);
+30k 626.52 ms (logic 330 ms dominates); 10k skinned Rangers 270.09 ms with 10149 draws (only
+rigid accessories batch: 105 batches / 1167 instances). Verdicts: 1k meets the frame budget
+outright; at 10k the presentation span is 132.07 ms (missed) with buildRenderList at 102.1 ms
+of it (CPU item construction), while GPU drain alone is 10.59 ms (met) and draws are
+two-plus orders below items (met). Screenshot written to
+`/mnt/pit2/Network Storage/temp/b5-rendering-at-scale-10k-instanced-lod.png`. Follow-ups
+recorded, not attempted: per-mesh item-build cost (buildRenderList), per-instance skinning
+data in the instance stream, impostors, multi-LOD import, NormalMapped/Simple instanced
+variants, and the Twilight Flame `LinearMipBuilder.ResizeLinear` latent defect.
 
 ## Validation commands
 
