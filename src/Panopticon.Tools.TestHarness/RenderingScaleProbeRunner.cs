@@ -83,6 +83,10 @@ public static class RenderingScaleProbeRunner
                 return 1;
             }
 
+            // Size the panel before any frame: the constructor's 1x1 fallback would make
+            // every mesh sub-pixel for the LOD gate and mis-shape the camera frustum.
+            game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, 1280, 800));
+
             FrameCamera(game, unitCount);
 
             var record = Measure(game, definition, unitCount, warmupFrames, measuredFrames);

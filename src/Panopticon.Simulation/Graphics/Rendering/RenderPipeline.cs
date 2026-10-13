@@ -224,6 +224,7 @@ internal sealed class RenderPipeline : DisposableBase
         RenderedObjectsTransparent = 0;
         Statistics.Reset();
         _instancePool.Reset();
+        RenderScaleOptions.LodSkippedMeshes = 0;
 
         EnsureIntermediateFramebuffer(context.GraphicsDevice, context.RenderTarget);
 
@@ -246,6 +247,14 @@ internal sealed class RenderPipeline : DisposableBase
         Statistics.ItemsTransparent = _renderList.Transparent.RenderItems.Length;
         Statistics.ItemsShadow = _renderList.Shadow.RenderItems.Length;
         Statistics.ItemsWater = _renderList.Water.RenderItems.Length;
+        Statistics.MeshesSkippedByLod = RenderScaleOptions.LodSkippedMeshes;
+
+        // B5-3: item keys do not depend on the frustum; sort once per frame per bucket and
+        // let every pass (shadow cascades, forward, water maps) filter the sorted order.
+        _renderList.Opaque.RenderItems.SortAll();
+        _renderList.Transparent.RenderItems.SortAll();
+        _renderList.Shadow.RenderItems.SortAll();
+        _renderList.Water.RenderItems.SortAll();
 
         RaiseSpan(RenderSpanNames.BuildRenderList, buildListStartTimestamp);
 
@@ -526,7 +535,7 @@ internal sealed class RenderPipeline : DisposableBase
         bool useSingleSamplePipelines = false)
     {
         // TODO: Make culling batch size configurable at runtime
-        bucket.RenderItems.CullAndSort(cameraFrustum, clippingPlane1, clippingPlane2, ParallelCullingBatchSize);
+        bucket.RenderItems.FilterVisible(cameraFrustum, clippingPlane1, clippingPlane2, ParallelCullingBatchSize);
 
         if (bucket.RenderItems.CulledItemIndices.Count == 0)
         {

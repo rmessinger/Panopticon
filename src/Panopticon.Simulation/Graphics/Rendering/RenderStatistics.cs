@@ -26,6 +26,9 @@ public sealed class RenderStatistics
     /// <summary>Visible shadow items summed across every cascade pass of the frame.</summary>
     public int VisibleShadow { get; internal set; }
 
+    /// <summary>Meshes skipped by the distance LOD gate during list build (B5-3).</summary>
+    public int MeshesSkippedByLod { get; internal set; }
+
     /// <summary>Every indexed draw issued this frame, all buckets and passes.</summary>
     public int DrawCalls { get; internal set; }
 
@@ -47,6 +50,7 @@ public sealed class RenderStatistics
         VisibleOpaque = 0;
         VisibleTransparent = 0;
         VisibleShadow = 0;
+        MeshesSkippedByLod = 0;
         DrawCalls = 0;
         InstancedDrawCalls = 0;
         InstancedBatches = 0;
@@ -56,6 +60,7 @@ public sealed class RenderStatistics
     /// <summary>One-line summary for logs and probe reports.</summary>
     public override string ToString() =>
         $"items opaque={ItemsOpaque} transparent={ItemsTransparent} shadow={ItemsShadow} " +
-        $"visible opaque={VisibleOpaque} shadow={VisibleShadow} draws={DrawCalls} " +
+        $"visible opaque={VisibleOpaque} shadow={VisibleShadow} lodSkipped={MeshesSkippedByLod} " +
+        $"draws={DrawCalls} " +
         $"instanced: draws={InstancedDrawCalls} batches={InstancedBatches} instances={InstancesDrawn}";
 }

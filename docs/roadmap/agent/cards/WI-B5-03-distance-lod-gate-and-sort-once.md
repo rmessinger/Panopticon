@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B5-03` |
 | Roadmap phase | [Track B · B5](../../track-b-scale.md): B5-3 LOD/culling |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-B5-02` |
@@ -56,13 +56,31 @@ floor), and per-bucket sorting happens once per frame instead of once per pass.
 
 ## Acceptance criteria
 
-- [ ] With the gate on, a far-away model produces zero items in all buckets; a near model
+- [x] With the gate on, a far-away model produces zero items in all buckets; a near model
       is unchanged (unit test with a synthetic camera).
-- [ ] Visible set and order after the split equal the old `CullAndSort` output for a
+- [x] Visible set and order after the split equal the old `CullAndSort` output for a
       synthetic bucket (order-sensitive assertion).
-- [ ] Per-frame sort count per bucket is 1 regardless of pass count (assert via statistics
+- [x] Per-frame sort count per bucket is 1 regardless of pass count (assert via statistics
       or by construction).
-- [ ] Standard validation passes.
+- [x] Standard validation passes.
+
+## Result
+
+Done 2026-10-13. `ModelLod.ProjectedRadiusPx` (world-scale-aware sphere projection,
+`Camera.VerticalFieldOfView` now public) gates whole meshes below 1 px in
+`ModelMesh.BuildRenderListWithWorldMatrix`; a degenerate viewport (the headless panel's 1x1
+fallback before `EnsureFrame`) disables the gate, which also keeps headless GPU tests
+(muzzle-flash visibility) rendering. `RenderItemCollection` splits `CullAndSort` into
+`SortAll` (once per frame, from `RenderPipeline.Execute`) plus order-preserving
+`FilterVisible` per pass; four-cascade shadows no longer re-sort per cascade. Evidence:
+500-unit matched-frame captures byte-identical with the gate on and off (gate skipped
+nothing at near framing) and, with the gate disabled, identical to the pre-card build
+(sort-once is pixel-neutral in isolation); at the 10k framing the gate skips 30257
+sub-pixel meshes (intended visible change), items 91515 to 61282, draws 176 to 155. The
+probe now sizes its panel (1280x800) before warmup: measurements before this card ran with
+the 1x1 fallback viewport, so WI-B5-05 re-runs the baseline-vs-after matrix with the sized
+panel. Probe fix note: `FrameCamera` unchanged; `RenderScaleOptions.LodSkippedMeshes`
+surfaces in `RenderStatistics.MeshesSkippedByLod`.
 
 ## Validation commands
 

@@ -19,4 +19,10 @@ public static class RenderScaleOptions
 
     /// <summary>Record per-item debug groups in render passes (B5-4); off by default.</summary>
     public static bool DebugItemGroups { get; set; }
+
+    /// <summary>
+    /// Meshes skipped by the LOD gate in the frame being built; reset by the render
+    /// pipeline at frame start, read by statistics and the probe.
+    /// </summary>
+    public static int LodSkippedMeshes { get; internal set; }
 }

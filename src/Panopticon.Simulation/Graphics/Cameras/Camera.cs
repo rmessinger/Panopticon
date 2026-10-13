@@ -132,6 +132,9 @@ public sealed class Camera
 
     private float GetVerticalFieldOfView() => _fieldOfView / (Viewport.Width / Viewport.Height);
 
+    /// <summary>Vertical field of view in radians; shared with render-side LOD projection.</summary>
+    public float VerticalFieldOfView => GetVerticalFieldOfView();
+
     private void CreateProjection(out Matrix4x4 projection)
     {
         projection = Matrix4x4.CreatePerspectiveFieldOfView(

@@ -135,6 +135,15 @@ public sealed partial class ModelMesh : ModelRenderObject
             world = meshWorldMatrix;
         }
 
+        // B5-3: whole-mesh distance LOD. A mesh below the screen-size threshold never
+        // enters any bucket (opaque, shadow, transparent); the counter is read per frame by
+        // the render statistics.
+        if (ModelLod.IsNegligible(camera, in BoundingSphere, in world))
+        {
+            RenderScaleOptions.LodSkippedMeshes++;
+            return;
+        }
+
         var meshBoundingBox = AxisAlignedBoundingBox.Transform(BoundingBox, world); // TODO: Not right for skinned meshes
 
         // B5-2: per-item constants at defaults (only house colour varies per instance) plus
