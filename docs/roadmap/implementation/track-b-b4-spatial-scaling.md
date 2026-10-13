@@ -18,7 +18,8 @@ One commit per card, one PR for the phase, left open for the operator. Cards lan
 04..06 may interleave with the M4 preparation once 01..03 hold the partition budget.
 
 Pending at authoring time: counter names as they land in the B1 record, measured medians
-from the verification re-run, the squad probe numbers, and the hierarchical gate decision.
+from the verification re-run, and the squad probe numbers. The hierarchical gate decision
+landed in the WI-B4-06 section below.
 
 ## WI-B4-01 baseline (pre-fix, full scale)
 
@@ -83,3 +84,44 @@ report). Per the card, this is recorded and stopped; further partition work is a
 the operator to schedule, not a quiet retry.
 
 Artifacts: `/tmp/opencode/b4-03-after/` (engagement report, B1 record, CSV, run log).
+
+## WI-B4-06 hierarchical gate
+
+Anchor measurement on the same probe (deepdivide, 992 ground + 8 parked jets per side, seed 1),
+frame budget 4500, async path bursts of 1000 requests every 300 frames (14 bursts, 14000
+requests, requesters round-robin over alive ground units), `AsyncPathFrameBound` 30. The
+anchor rides the real engagement: requests are real path computations over the live graph,
+applied on the logic thread by the ordinary per-tick drain.
+
+Results:
+
+| Measurement | Value |
+|---|---|
+| Submitted / applied / cancelled | 14000 / 14000 / 0 |
+| Deadline misses (waited more than 30 frames) | 208, all in the first burst (frame 300, worker warm-up); max wait 42 frames |
+| Wait in frames (median / p90 / p99 / max) | 2 / 5 / 35 / 42 |
+| Submit-to-apply wall (median / p99 / max) | 334.6 / 1660.3 / 2049.3 ms (dominated by one contact-phase tick) |
+| Per-burst backlog | 984-1000 right after each burst, zero between bursts (no accumulation) |
+| Steady-state drain | 1000 completions applied in 1-2 ticks per burst |
+
+Drain overhead against the WI-B4-03 after-run, partition span medians by absolute frame
+window: 10.3/29.1/53.5/74.5/225.7 ms versus 4.2/23.1/51.5/68.2/186.6 ms baseline. Early
+windows carry the first-burst warm-up and burst allocations; the contact window stays within
+21 percent of baseline while absorbing a 1000-request burst every 300 frames. Engagement
+checks all passed (121/116 destroyed, `allPassed` true).
+
+Verdict: the gate holds, no hierarchical layer. The flat queue meets the 30-frame soft
+deadline for 13800 of 14000 requests (98.5 percent) at a burst rate far above any projected
+consumer (M4 plans at most one request per unit per several seconds); the tail is first-burst
+warm-up, not steady state. A hierarchical overlay would add cache and complexity for no
+measured need. Revisit only if a future consumer sustains burst rates that push the median
+wait past the bound.
+
+Engine surface the anchor needed (not a hierarchical layer):
+`Navigation.AsyncPathFrameBound` / `AsyncPathOutstanding` / `AsyncPathDeadlineMisses`,
+`PathRequestQueue.Outstanding`, TestHarness knobs
+`MassBattleCapacityProbeAsyncAnchorBurstEveryFrames` / `...RequestsPerBurst`, and the
+`MassBattleAsyncPathAnchor` report riding the engagement report.
+
+Artifacts: `/tmp/opencode/b4-06-anchor/` (engagement report with anchor section, B1 record,
+CSV, run log).

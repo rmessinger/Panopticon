@@ -201,4 +201,15 @@ public sealed class TestHarnessConfig
     /// setup, spawn, and settle frames are not counted against it.
     /// </summary>
     public int? MassBattleCapacityProbeFrameBudget { get; set; } = null;
+
+    /// <summary>
+    /// Enables the WI-B4-06 async-path scale anchor inside the capacity probe: on this frame
+    /// cadence the runner submits squad-shaped asynchronous path requests and records their
+    /// latency, queue backlog, and deadline misses for the hierarchical-pathfinding gate. Null
+    /// disables the anchor.
+    /// </summary>
+    public int? MassBattleCapacityProbeAsyncAnchorBurstEveryFrames { get; set; } = null;
+
+    /// <summary>Requests per anchor burst; defaults to 8 when only the cadence is set.</summary>
+    public int? MassBattleCapacityProbeAsyncAnchorRequestsPerBurst { get; set; } = null;
 }

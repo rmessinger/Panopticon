@@ -61,6 +61,50 @@ public class MassBattleCapacityProbeScenarioTests
         Assert.Equal(0, exitCode);
     }
 
+    [GameFact(SageGame.CncGenerals)]
+    public void ScaledProbe_AsyncAnchorRecordsLatencies()
+    {
+        // WI-B4-06: the async-path scale anchor wiring, proven at scaled size. The full
+        // M1-scale anchor run is the TestHarness scenario, not a test.
+        var directory = Path.Combine(Path.GetTempPath(), "mass-battle-capacity-probe-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var profilePath = Path.Combine(directory, "profile.json");
+        var reportPath = Path.Combine(directory, "report.json");
+        File.WriteAllText(profilePath, ScaledProfileJson);
+
+        var config = new TestHarnessConfig
+        {
+            Headless = true,
+            MassBattleCapacityProbeProfilePath = profilePath,
+            MassBattleCapacityProbeReportPath = reportPath,
+            MassBattleCapacityProbeFrameBudget = 5400,
+            MassBattleCapacityProbeAsyncAnchorBurstEveryFrames = 300,
+            MassBattleCapacityProbeAsyncAnchorRequestsPerBurst = 4,
+        };
+
+        int exitCode;
+        JsonDocument report;
+        try
+        {
+            exitCode = MassBattleCapacityProbeRunner.Run(
+                InstalledFilesTestData.GetInstallation(SageGame.CncGenerals),
+                config,
+                new OutputReporter(_output));
+            report = JsonDocument.Parse(File.ReadAllText(reportPath));
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+
+        Assert.Equal(0, exitCode);
+
+        var anchor = report.RootElement.GetProperty("asyncPathAnchor");
+        Assert.Equal(68, anchor.GetProperty("submitted").GetInt32());
+        Assert.True(anchor.GetProperty("applied").GetInt32() > 0, "at least one anchor request should apply");
+        Assert.True(anchor.GetProperty("medianWallMs").GetDouble() > 0);
+    }
+
     /// <summary>Forwards runner messages to the test output so failures show their reasons.</summary>
     private sealed class OutputReporter(ITestOutputHelper output) : ITestHarnessReporter
     {

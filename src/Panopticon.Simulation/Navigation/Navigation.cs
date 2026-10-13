@@ -204,6 +204,9 @@ public class Navigation
     /// </summary>
     public long AsyncPathDeadlineMisses => _pathRequestQueue?.DeadlineMisses ?? 0;
 
+    /// <summary>Async path requests submitted but not yet terminal; zero before the first submission.</summary>
+    public long AsyncPathOutstanding => _pathRequestQueue?.Outstanding ?? 0;
+
     internal Graph CloneGraphForWorker() => _graph.ClonePassability();
 
     public void DebugDraw(DrawingContext2D context, Camera camera)

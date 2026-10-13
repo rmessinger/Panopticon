@@ -211,6 +211,18 @@ public sealed class PathRequestQueue
         }
     }
 
+    /// <summary>Requests submitted but not yet terminal (completed or cancelled): the backlog a producer can observe.</summary>
+    public long Outstanding
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _submittedCount - _completedCount - _cancelledCount;
+            }
+        }
+    }
+
     internal PathRequestHandle Submit(Vector3 start, Vector3 end, GameObject? requester, Action<PathRequestHandle>? onCompleted)
     {
         lock (_gate)

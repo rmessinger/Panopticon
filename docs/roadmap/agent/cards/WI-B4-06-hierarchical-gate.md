@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-B4-06` |
 | Roadmap phase | [B4](../../track-b-scale.md): spatial and pathfinding scaling |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `M` |
 | Prerequisites | `WI-B4-04`, `WI-B4-05` |
@@ -39,11 +39,20 @@ the no-op decision with numbers.
 
 ## Acceptance criteria
 
-- [ ] The scale anchor runs and its measurements are recorded.
-- [ ] The gate decision is explicit with numbers either way.
-- [ ] If implemented: seeded determinism suites stay green and the re-measurement shows the
+- [x] The scale anchor runs and its measurements are recorded.
+  - Full-scale anchor run: 14 bursts of 1000 async requests over a 4500-frame engagement,
+    14000/14000 applied, 0 cancelled; recorded in
+    `docs/roadmap/implementation/track-b-b4-spatial-scaling.md` (WI-B4-06 section) with
+    artifacts in `/tmp/opencode/b4-06-anchor/`.
+- [x] The gate decision is explicit with numbers either way.
+  - No hierarchical layer: median wait 2 frames, p99 35, max 42; 208 of 14000 (1.5 percent)
+    missed the 30-frame bound, all first-burst warm-up; backlog returns to zero between
+    bursts; contact-window partition span within 21 percent of the WI-B4-03 baseline while
+    absorbing the bursts.
+- [x] If implemented: seeded determinism suites stay green and the re-measurement shows the
   budget met.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+  - N/A: the gate held, no layer implemented.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
