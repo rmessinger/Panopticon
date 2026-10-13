@@ -12,6 +12,9 @@ namespace Panopticon.Tests.Navigation;
 /// WI-M1-02: the engine path-request counter. It must count every CalculatePath entry
 /// monotonically (pollers derive per-tick deltas from it) and must not perturb pathfinding.
 /// </summary>
+// Serialized with the other Navigation classes: these tests assert deltas of the
+// process-global Navigation.PathRequestCount, which parallel test classes would race.
+[Collection("Navigation")]
 public class NavigationPathRequestCounterTests
 {
     [Fact]

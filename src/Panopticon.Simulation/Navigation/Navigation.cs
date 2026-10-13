@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
@@ -47,7 +48,7 @@ public class Navigation
         return new Vector2(xyz.X, xyz.Y);
     }
 
-    private Node GetClosestNode(Vector3 pos)
+    private Node GetClosestNode(Graph graph, Vector3 pos)
     {
         var coords = _heightMap.GetTilePosition(pos);
 
@@ -57,23 +58,23 @@ public class Navigation
         }
 
         var (x, y) = coords.Value;
-        return _graph.GetNode(x, y);
+        return graph.GetNode(x, y);
     }
 
-    public bool IsPassable(Vector3 position) => GetClosestNode(position).IsPassable;
+    public bool IsPassable(Vector3 position) => GetClosestNode(_graph, position).IsPassable;
 
-    private Node GetNextPassablePosition(Vector3 start, Vector3 end)
+    private Node GetNextPassablePosition(Graph graph, Vector3 start, Vector3 end)
     {
         var offset = end - start;
         var direction = Vector3.Normalize(offset);
-        var currentNode = GetClosestNode(start);
+        var currentNode = GetClosestNode(graph, start);
 
         var maxSteps = (int)offset.Vector2XY().Length() + 1;
 
         while (!currentNode.IsPassable && maxSteps > 0)
         {
             start += direction;
-            currentNode = GetClosestNode(start);
+            currentNode = GetClosestNode(graph, start);
             maxSteps--;
         }
 
@@ -83,19 +84,27 @@ public class Navigation
     public IList<Vector3> CalculatePath(Vector3 start, Vector3 end, out bool endIsPassable)
     {
         Interlocked.Increment(ref TotalPathRequests);
+        return ComputePath(_graph, start, end, out endIsPassable);
+    }
+
+    // Shared search core (WI-B4-05): the synchronous CalculatePath and the async path worker
+    // both run this against a graph. Workers pass a submission-time snapshot because
+    // UpdateAreaPassability mutates the live graph on the logic thread.
+    internal IList<Vector3> ComputePath(Graph graph, Vector3 start, Vector3 end, out bool endIsPassable)
+    {
         var result = new List<Vector3>();
         endIsPassable = true;
-        var startNode = GetClosestNode(start);
-        var endNode = GetClosestNode(end);
+        var startNode = GetClosestNode(graph, start);
+        var endNode = GetClosestNode(graph, end);
 
         if (!startNode.IsPassable)
         {
-            startNode = GetNextPassablePosition(start, end);
+            startNode = GetNextPassablePosition(graph, start, end);
         }
 
         if (!endNode.IsPassable)
         {
-            endNode = GetNextPassablePosition(end, start);
+            endNode = GetNextPassablePosition(graph, end, start);
             endIsPassable = false;
         }
 
@@ -105,7 +114,7 @@ public class Navigation
             return result;
         }
 
-        var route = _graph.Search(startNode, endNode);
+        var route = graph.Search(startNode, endNode);
 
         if (route == null)
         {
@@ -114,7 +123,7 @@ public class Navigation
         }
 
         PathOptimizer.RemoveRedundantNodes(route);
-        PathOptimizer.SmoothPath(route, _graph);
+        PathOptimizer.SmoothPath(route, graph);
 
         foreach (var node in route)
         {
@@ -138,9 +147,9 @@ public class Navigation
         var axisAlignedBoundingArea = collider.AxisAlignedBoundingArea;
 
         var bottomLeft = new Vector3(axisAlignedBoundingArea.X, axisAlignedBoundingArea.Y, 0);
-        var bottomLeftNode = GetClosestNode(bottomLeft);
+        var bottomLeftNode = GetClosestNode(_graph, bottomLeft);
         var topRight = new Vector3(axisAlignedBoundingArea.X + axisAlignedBoundingArea.Width, axisAlignedBoundingArea.Y + axisAlignedBoundingArea.Height, 0);
-        var topRightNode = GetClosestNode(topRight);
+        var topRightNode = GetClosestNode(_graph, topRight);
 
         //sometimes map objects are places outside the actual map....
         if (bottomLeftNode == null || topRightNode == null)
@@ -164,6 +173,38 @@ public class Navigation
             }
         }
     }
+
+    private PathRequestQueue? _pathRequestQueue;
+
+    /// <summary>
+    /// Frames an async path request may remain unresolved before counting as a deadline miss
+    /// (WI-B4-05). Consulted when the queue is first created; set before the first submit.
+    /// </summary>
+    public int AsyncPathFrameBound { get; set; } = PathRequestQueue.DefaultFrameBound;
+
+    /// <summary>
+    /// Queues a path search computed off the logic thread against a submission-time passability
+    /// snapshot (WI-B4-05). Completion applies on the logic thread via
+    /// <see cref="DrainPathCompletions"/> in submission order. Does not increment
+    /// <see cref="PathRequestCount"/>; that counter stays synchronous-request-only.
+    /// </summary>
+    public PathRequestHandle SubmitPathRequest(Vector3 start, Vector3 end, GameObject requester = null, Action<PathRequestHandle> onCompleted = null)
+    {
+        _pathRequestQueue ??= new PathRequestQueue(this, AsyncPathFrameBound);
+        return _pathRequestQueue.Submit(start, end, requester, onCompleted);
+    }
+
+    /// <summary>Applies completed async path requests; called once per logic tick by the stepper.</summary>
+    public void DrainPathCompletions() => _pathRequestQueue?.Drain();
+
+    /// <summary>
+    /// Deadline misses across async path requests (WI-B4-05): completions that applied with a
+    /// wait longer than <see cref="AsyncPathFrameBound"/> frames. Zero before the first
+    /// submission.
+    /// </summary>
+    public long AsyncPathDeadlineMisses => _pathRequestQueue?.DeadlineMisses ?? 0;
+
+    internal Graph CloneGraphForWorker() => _graph.ClonePassability();
 
     public void DebugDraw(DrawingContext2D context, Camera camera)
     {

@@ -20,6 +20,9 @@ using NavigationClass = Panopticon.Navigation.Navigation;
 
 namespace Panopticon.Tests.Navigation;
 
+// Serialized with the other Navigation classes: these tests assert deltas of the
+// process-global Navigation.PathRequestCount, which parallel test classes would race.
+[Collection("Navigation")]
 public class GroupMovementTests : MockedGameTest
 {
     [Fact, Trait("Category", "Roadmap")]
