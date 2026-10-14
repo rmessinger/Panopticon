@@ -109,6 +109,11 @@ public sealed class LogicStepper
         // The measured path is spelled out separately from the default path so the default
         // stays allocation-free and branch-free; timestamps use Stopwatch pairs only, since
         // closure captures here would pollute the allocation deltas B1-3 measures.
+
+        // WI-B4-05: apply async path completions before game logic so consumers observe fresh
+        // results; a no-op unless requests were submitted.
+        _game.GameEngine.Navigation?.DrainPathCompletions();
+
         if (SystemSpan is { } spanSink)
         {
             var interval = new TimeInterval(

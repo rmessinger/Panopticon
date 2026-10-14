@@ -41,6 +41,8 @@ public sealed record MassBattleCapacityProbeReport
 
     public bool AllPassed { get; init; }
 
+    public MassBattleAsyncPathAnchorReport? AsyncPathAnchor { get; init; }
+
     public static void WriteJson(MassBattleCapacityProbeReport report, string path)
     {
         var options = new JsonSerializerOptions
@@ -89,6 +91,11 @@ public sealed record MassBattleCapacityProbeReport
         }
 
         b.AppendLine();
+        if (report.AsyncPathAnchor is not null)
+        {
+            b.AppendLine(MassBattleAsyncPathAnchorReport.WriteText(report.AsyncPathAnchor));
+        }
+
         if (report.FailureReasons.Count > 0)
         {
             foreach (var reason in report.FailureReasons)

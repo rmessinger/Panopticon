@@ -753,9 +753,20 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
       SoA storage behind the module API).
   - AC: TBD, intent/command buffers + conflict resolution land behind the module API with no
     behavior change vs. baseline (verification harness within tolerance); SoA storage is swappable.
-- [ ] B4 Spatial & pathfinding scaling (hierarchical/flow-field, group movement, async path requests).
-  - AC: TBD, hierarchical/flow-field pathing + group movement + async requests scale to a target
-    unit count within a path-latency budget in B1; no pathing regressions on baseline maps.
+- [x] B4 Spatial & pathfinding scaling (partition hot path, hierarchical/flow-field, group
+  movement, async path requests) (`WI-B4-01..06`,
+  [plan](implementation/track-b-b4-spatial-scaling.md)).
+  - AC: partition maintenance holds a 10 ms median `system.partition.spanMs` at contact in
+    the M1 full-scale re-run, with pair-once `OnCollide` delivery and no per-tick update
+    allocations; group movement scales path requests with squads; async completions are
+    frame-bounded and deterministic; hierarchical/flow-field lands only on a failed
+    measured latency gate; no pathing regressions on baseline maps.
+  - Outcome: pair-once delivery and a 71 percent allocation cut landed (WI-B4-02); the
+    10 ms contact budget is still missed at a 259 ms median and the residual is the genuine
+    workload, recorded as the stop point with follow-ups (cheaper exact test, resting-contact
+    throttling, B3 parallelism) left to a new card. Group movement, async frame-bounded
+    completions with queue-level determinism, and the no-op hierarchical gate decision all
+    hold with recorded numbers.
 - [ ] B4a Larger maps via WorldBuilder ([deep dive](deep-dives/b4a-larger-maps.md)): region editing,
       large-map wizard, terrain streaming/LOD, chunked storage, round-trip at scale,
       large-population scenario authoring (B4a-7: bulk/procedural object placement, region-based
@@ -1647,16 +1658,29 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     and is asserted after WI-M2-06 (airborne 2D friction plus a dedicated taxi locomotor).
 
 ### M3: Mixed roster normalization
-- [ ] M3-1 Model scale and tiles-to-world factor.
+- [x] M3-1 Model scale and tiles-to-world factor.
   - AC: EE2 model heights match Generals references within authored bounds; the factor is
     recorded with the manifest.
-- [ ] M3-2 `rps` counter class and `dbcombat.csv` matrix to Generals armor and damage type table.
+  - Evidence: [`WI-M3-01`](agent/cards/WI-M3-01-model-scale-and-factor.md); derived pair
+    18.2505 units per tile and 0.36501 per model unit recorded in both reference-roster profiles
+    and asserted with committed per-class bounds
+    ([plan](implementation/track-m-m3-mixed-roster.md#authored-conversion-derivation-wi-m3-01));
+    EE2 ground-plane weapon-range semantics normalized (`MeasuresRangeOnGround`).
+- [x] M3-2 `rps` counter class and `dbcombat.csv` matrix to Generals armor and damage type table.
   - AC: every reference EE2 unit maps to an armor set and damage type; unmapped classes fail load.
-- [ ] M3-3 Cross-game points budget, asymmetric roster manifests, and duel matrix.
+  - Evidence: [`WI-M3-02`](agent/cards/WI-M3-02-rps-damage-and-armor.md); authored table in
+    `Ee2ReferenceRps` and both reference-roster profiles (distinct BFME-family types no native
+    armor authors), armor multipliers from the stock dbcombat rows, explicit closure-scoped
+    failures ([plan](implementation/track-m-m3-mixed-roster.md#damage-class-mapping-wi-m3-02)).
+- [x] M3-3 Cross-game points budget, asymmetric roster manifests, and duel matrix.
   - AC: Generals `BuildCost` and EE2 tech-tree resource costs convert to points through recorded
     rates; two different 1000-unit manifests, each with anti-air, total equal points within the
     tolerance; each EE2 versus Generals archetype duel, air included, resolves within authored
     time-to-kill bounds.
+  - Evidence: [`WI-M3-03`](agent/cards/WI-M3-03-points-rosters-duels.md); `mass-battle-rosters.json`
+    (rates, tolerance, both manifests, 0.056 percent apart), `RosterBudgetEvaluator`,
+    `Ee2DuelPhase` + `ee2-duel-report.json` with all seven duels inside the authored bounds
+    ([plan](implementation/track-m-m3-mixed-roster.md#points-budget-and-manifests-wi-m3-03)).
 
 ### M4: Army-scale AI
 - [ ] M4-1 Army hierarchy sizing for 1000 units over A4-3, including an air commander.

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Panopticon.Content.Importing.Units;
+using Panopticon.Content.Importing.Units.Ee2;
 using Panopticon.Tests.Data;
 using Panopticon.Tools.ReplaySketch.Model;
 using Panopticon.Tools.ReplaySketch.Model.Capture;
@@ -33,6 +34,8 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
 
     public const string InfantryRowKey = "HeavyInfantry1UpgradeEpoch15";
 
+    public static readonly string[] AllRowKeys = [.. PublishedRowKeys, InfantryRowKey];
+
     private static CaptureContentImport RosterImport(params string[] rowKeys)
     {
         return new CaptureContentImport
@@ -40,8 +43,10 @@ public sealed class Ee2RosterPublicationTests(ITestOutputHelper output)
             Source = "ee2",
             RowKeys = [.. rowKeys],
             Region = "we",
-            GameUnitsPerSourceDistance = 12,
+            GameUnitsPerSourceDistance = Ee2ReferenceScale.GameUnitsPerSourceDistance,
+            GameUnitsPerSourceModelUnit = Ee2ReferenceScale.GameUnitsPerSourceModelUnit,
             ExcludedMechanics = [.. Ee2InventoryTests.ReferenceExclusions],
+            RpsDamageTypes = new Dictionary<string, string>(Ee2ReferenceRps.DamageTypes),
         };
     }
 

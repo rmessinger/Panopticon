@@ -20,6 +20,14 @@ internal static class UnitCombatMaterializer
         var weapon = new WeaponTemplate();
         weapon.AssignImportedName("Weapon", record.Id.Name);
 
+        // Card WI-M3-01: EE2 authors attack ranges as ground-plane tile distances; without this
+        // the engine's 3D check lets the aircraft's cruising altitude consume the whole range
+        // (a 1.5-tile bomb range can never reach the ground from a 4-tile cruise).
+        if (record.Id.Source.Equals(ContentSource.Ee2))
+        {
+            weapon.MeasuresRangeOnGround = true;
+        }
+
         weapon.AttackRange = (float)UnitBodyMovementMaterializer.ConvertDistance(record, nameof(record.AttackRange), record.AttackRange.Value, context);
 
         if (record.MinimumAttackRange.IsPresent)

@@ -57,6 +57,15 @@ public sealed class Weapon : IPersistableObject
                 currentTargetPosition.Value,
                 ParentGameObject.Translation);
 
+            // Imported weapons whose source authors ranges on the ground plane (WI-M3-01)
+            // measure the horizontal component: altitude must not consume the authored range.
+            if (Template.MeasuresRangeOnGround)
+            {
+                distance = Vector2.Distance(
+                    new Vector2(currentTargetPosition.Value.X, currentTargetPosition.Value.Y),
+                    new Vector2(ParentGameObject.Translation.X, ParentGameObject.Translation.Y));
+            }
+
             // Attack range is measured from the target's center, but large objects (e.g. buildings)
             // have their own footprint radius. Without subtracting it, a vehicle can be blocked by
             // the target's collision at its edge while still being reported "out of range" because

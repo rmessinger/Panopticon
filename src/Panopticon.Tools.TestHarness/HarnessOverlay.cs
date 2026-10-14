@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using ImGuiNET;
 using Panopticon.Gui;
@@ -18,15 +20,10 @@ public sealed record ValidationGroundOverlayState(
     int Gaps);
 
 /// <summary>
-/// ImGui overlay for the windowed validation ground: the scenario starts paused so the starting
-/// conditions can be inspected; Space (or the button) resumes, and once running, toggles active
-/// pause. Renders on top of the copied game frame (same pattern as the engine's
-/// DeveloperModeView). Space is owned by the overlay and filtered out of the game's input queue.
-/// The status window starts hidden (F1 toggles it); a mouse-over tooltip always shows the
-/// hovered object's details. Both Space and F1 are read from the raw input snapshot, so they work
-/// while the status window is hidden.
+/// Shared windowed performance overlay, with optional validation-ground status and hover details.
+/// Validation controls own Space and F1 regardless of status-window visibility.
 /// </summary>
-public sealed class ValidationGroundOverlay : IDisposable
+public sealed class HarnessOverlay : IDisposable
 {
     private readonly ImGuiRenderer _imgui;
     private readonly CommandList _commandList;
@@ -37,6 +34,17 @@ public sealed class ValidationGroundOverlay : IDisposable
     private bool _spaceDown;
     private bool _f1Down;
     private bool _statusWindowVisible;
+    private bool _performanceExpanded = true;
+    private readonly bool _validationControls;
+    private float _performanceHeight;
+    private long _objectSampleTimestamp;
+    private int _liveObjectCount;
+
+    public HarnessPerformanceMetrics Performance { get; } = new();
+
+    internal GpuFrameTimer? Gpu { get; }
+
+    internal long PreviousFrameTimestamp { get; set; }
 
     private static readonly Vector2? HoverPosition = ParseHoverPosition(
         Environment.GetEnvironmentVariable("TESTHARNESS_VG_HOVER"));
@@ -68,9 +76,11 @@ public sealed class ValidationGroundOverlay : IDisposable
     /// <summary>True when ImGui wants the mouse this frame; the runner drops mouse messages then.</summary>
     public bool WantCaptureMouse { get; private set; }
 
-    public ValidationGroundOverlay(Game game, GameWindow window)
+    public HarnessOverlay(Game game, GameWindow window, bool validationControls = false)
     {
+        _validationControls = validationControls;
         _game = game;
+        Gpu = GpuFrameTimer.TryCreate(game.GraphicsDevice);
         _window = window;
         _imgui = new ImGuiRenderer(
             game.GraphicsDevice,
@@ -97,9 +107,11 @@ public sealed class ValidationGroundOverlay : IDisposable
     /// <see cref="Graphics.Rendering.RenderPipeline.GameOutputDescription"/>, or the ImGui
     /// pipeline mismatches the framebuffer at draw time.
     /// </summary>
-    internal ValidationGroundOverlay(Game game, Veldrid.OutputDescription outputDescription, int width, int height)
+    internal HarnessOverlay(Game game, Veldrid.OutputDescription outputDescription, int width, int height)
     {
+        _validationControls = true;
         _game = game;
+        Gpu = GpuFrameTimer.TryCreate(game.GraphicsDevice);
         _imgui = new ImGuiRenderer(
             game.GraphicsDevice,
             outputDescription,
@@ -113,24 +125,92 @@ public sealed class ValidationGroundOverlay : IDisposable
 
     public void Update(float deltaSeconds, InputSnapshot snapshot)
     {
-        PrimaryActionRequested = DetectSpace(snapshot);
-        if (DetectKeyToggle(snapshot, Key.F1, ref _f1Down))
+        PrimaryActionRequested = _validationControls && DetectSpace(snapshot);
+        if (_validationControls && DetectKeyToggle(snapshot, Key.F1, ref _f1Down))
         {
             _statusWindowVisible = !_statusWindowVisible;
         }
 
         _imgui.Update(deltaSeconds, snapshot);
 
-        InjectSyntheticHover();
+        if (_validationControls)
+        {
+            InjectSyntheticHover();
+        }
+
+        DrawPerformanceWindow();
 
         if (_statusWindowVisible)
         {
             DrawStatusWindow();
         }
 
-        DrawObjectTooltip();
+        if (_validationControls)
+        {
+            DrawObjectTooltip();
+        }
 
-        WantCaptureMouse = _statusWindowVisible && ImGui.GetIO().WantCaptureMouse;
+        WantCaptureMouse = ImGui.GetIO().WantCaptureMouse;
+    }
+
+    private void DrawPerformanceWindow()
+    {
+        if (_objectSampleTimestamp == 0 || Stopwatch.GetElapsedTime(_objectSampleTimestamp).TotalSeconds >= 1)
+        {
+            _liveObjectCount = _game.Scene3D?.GameObjects.Objects.Count() ?? 0;
+            _objectSampleTimestamp = Stopwatch.GetTimestamp();
+        }
+
+        ImGui.SetNextWindowPos(new Vector2(16, 16), ImGuiCond.Always);
+        ImGui.SetNextWindowBgAlpha(0.85f);
+        ImGui.Begin("##harness-performance", ImGuiWindowFlags.NoTitleBar
+            | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoMove
+            | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse
+            | ImGuiWindowFlags.NoFocusOnAppearing);
+        if (ImGui.SmallButton(_performanceExpanded ? "-" : "+"))
+        {
+            _performanceExpanded = !_performanceExpanded;
+        }
+
+        ImGui.SameLine();
+        ImGui.Text("Performance");
+        if (_performanceExpanded)
+        {
+            var metrics = Performance;
+            ImGui.Text(_game.IsLogicRunning ? "Running" : "Paused");
+            if (metrics.FramesPerSecond == 0)
+            {
+                ImGui.TextDisabled("Collecting first timing sample...");
+            }
+            else
+            {
+                ImGui.Text($"FPS {metrics.FramesPerSecond:F1} | frame {metrics.FrameMilliseconds:F2} ms");
+            }
+
+            ImGui.Text($"CPU update {metrics.UpdateMilliseconds:F2} ms");
+            ImGui.Text($"CPU render submission {metrics.RenderMilliseconds:F2} ms");
+            if (metrics.GpuMilliseconds is { } gpuMilliseconds)
+            {
+                ImGui.Text($"GPU frame {gpuMilliseconds:F2} ms");
+            }
+            else if (Gpu != null)
+            {
+                ImGui.TextDisabled("GPU frame timing pending...");
+            }
+            else
+            {
+                ImGui.TextDisabled($"GPU frame n/a on {_game.GraphicsDevice.BackendType} backend");
+            }
+
+            ImGui.Text($"Process {metrics.WorkingSetBytes / 1048576d:F1} MiB");
+            ImGui.Text($"Managed heap {metrics.ManagedBytes / 1048576d:F1} MiB");
+            ImGui.Text($"GC collections {metrics.Gen0Collections} / {metrics.Gen1Collections} / {metrics.Gen2Collections}");
+            ImGui.Text($"Live objects {_liveObjectCount}");
+            ImGui.TextDisabled("1 s averages | GPU frame spans game render, blit, overlay");
+        }
+
+        _performanceHeight = ImGui.GetWindowSize().Y;
+        ImGui.End();
     }
 
     /// <summary>
@@ -182,7 +262,7 @@ public sealed class ValidationGroundOverlay : IDisposable
     private void DrawStatusWindow()
     {
         var state = State;
-        ImGui.SetNextWindowPos(new Vector2(16, 16), ImGuiCond.Appearing, Vector2.Zero);
+        ImGui.SetNextWindowPos(new Vector2(16, 24 + _performanceHeight), ImGuiCond.Always, Vector2.Zero);
         ImGui.Begin("Validation Ground", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoCollapse);
 
         if (state.HoldingOrders)
@@ -360,6 +440,7 @@ public sealed class ValidationGroundOverlay : IDisposable
     public void Dispose()
     {
         _unsubscribeResize();
+        Gpu?.Dispose();
         _commandList.Dispose();
         _imgui.Dispose();
     }

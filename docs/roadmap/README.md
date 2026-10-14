@@ -172,6 +172,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/a4-experiment-harness.md`](deep-dives/a4-experiment-harness.md) | Track A phase A4 - Experiment harness: typed experiment definitions, implementation registry, per-cell B1 execution, and the A5-consumable comparison report (WI-A4-37..41). |
 | [`deep-dives/a5-visualization.md`](deep-dives/a5-visualization.md) | Track A phase A5 - Scenario authoring & visualization (scenario setup, sweeps, result replayer/visualizer, divergence localization, authoring/visualization at scale). |
 | [`deep-dives/b1-benchmarking.md`](deep-dives/b1-benchmarking.md) | Track B phase B1 - Macro benchmark harness, BenchmarkDotNet micro benchmarks, A2-compatible JSON records, bootstrap confidence intervals, and regression comparison. |
+| [`deep-dives/b4-spatial-pathfinding-scaling.md`](deep-dives/b4-spatial-pathfinding-scaling.md) | Track B phase B4 - Spatial and pathfinding scaling (partition hot-path budget, group movement, async path requests, gated hierarchical pathfinding). |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/b4b-geospatial-map-generation.md`](deep-dives/b4b-geospatial-map-generation.md) | Track B phase B4b - Offline generation of editable maps from operator-supplied Google Earth or Google Earth Engine geospatial exports. |
 | [`deep-dives/b5-rendering-at-scale.md`](deep-dives/b5-rendering-at-scale.md) | Track B phase B5 - Rendering at scale: source-agnostic GPU instancing, distance LOD/culling, render-bucket/shadow submit improvements, and the render-scale probe. |
@@ -456,10 +457,10 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | M0 - Battle map | `██████████` | 3 / 3 |
 | M1 - Capacity probe | `██████████` | 3 / 3 |
 | M2 - EE2 combat units | `██████████` | 4 / 4 |
-| M3 - Mixed roster normalization | `░░░░░░░░░░` | 0 / 3 |
+| M3 - Mixed roster normalization | `██████████` | 3 / 3 |
 | M4 - Army-scale AI | `░░░░░░░░░░` | 0 / 3 |
 | M5 - 1000 vs 1000 battle | `░░░░░░░░░░` | 0 / 4 |
-| Track M total | `█████░░░░░` | 10 / 20 |
+| Track M total | `██████░░░░` | 13 / 20 |
 
 ---
 
