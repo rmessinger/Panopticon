@@ -175,6 +175,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`deep-dives/b4-spatial-pathfinding-scaling.md`](deep-dives/b4-spatial-pathfinding-scaling.md) | Track B phase B4 - Spatial and pathfinding scaling (partition hot-path budget, group movement, async path requests, gated hierarchical pathfinding). |
 | [`deep-dives/b4a-larger-maps.md`](deep-dives/b4a-larger-maps.md) | Track B phase B4a - Larger maps (via WorldBuilder) (terrain scaling + large-population scenario authoring). |
 | [`deep-dives/b4b-geospatial-map-generation.md`](deep-dives/b4b-geospatial-map-generation.md) | Track B phase B4b - Offline generation of editable maps from operator-supplied Google Earth or Google Earth Engine geospatial exports. |
+| [`deep-dives/b5-rendering-at-scale.md`](deep-dives/b5-rendering-at-scale.md) | Track B phase B5 - Rendering at scale: source-agnostic GPU instancing, distance LOD/culling, render-bucket/shadow submit improvements, and the render-scale probe. |
 | [`deep-dives/b6-distributed-simulation.md`](deep-dives/b6-distributed-simulation.md) | Track B phase B6 - Distributed simulation (spatial sharding). |
 | [`deep-dives/b7-variable-fidelity.md`](deep-dives/b7-variable-fidelity.md) | Track B phase B7 - Variable simulation fidelity (fidelity registry, group aggregation contract, visualization and error reporting). |
 | [`deep-dives/western-front-scale-simulation.md`](deep-dives/western-front-scale-simulation.md) | Long-term goal - experiment charter and dependency map for a Western Front-scale First World War simulation; source of Track W. |
@@ -366,7 +367,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | Track | Progress | Items |
 |---|---|---|
 | Track A - Foundations | `██████▌░░░` | 14 / 22 |
-| Track B - Scale | `░░░░░░░░░░` | 0 / 44 |
+| Track B - Scale | `█░░░░░░░░░` | 1 / 44 |
 | Track C - External Assets | `█████░░░░░` | 9 / 18 |
 
 ### Track D - Gameplay Content Expansion (gated on Track P; D3/D4 also on Track C/ModCollector)

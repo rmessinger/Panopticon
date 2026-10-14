@@ -123,6 +123,15 @@ Source of truth:
 |---|---|---|
 | [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | B4b-1…B4b-6b | Geospatial map generation (WI-B4b-01..24) |
 
+## Track B · B5 : Rendering at scale
+
+Source of truth: [deep-dives/b5-rendering-at-scale.md](../deep-dives/b5-rendering-at-scale.md) :
+[Architecture diagrams §6](../deep-dives/b5-rendering-at-scale.md#6-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b5-rendering-scale.md](track-b-b5-rendering-scale.md) | B5-1…B5-5 | Rendering at scale (WI-B5-01..05) |
+
 ## Track B · B6 : Distributed simulation
 
 Source of truth: [deep-dives/b6-distributed-simulation.md](../deep-dives/b6-distributed-simulation.md) :

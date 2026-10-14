@@ -14,11 +14,15 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
 {
     private readonly Dictionary<PipelineKey, Pipeline> _pipelineCache = new();
     private readonly Dictionary<PipelineKey, Pipeline> _singleSamplePipelineCache = new();
+    private readonly Dictionary<PipelineKey, Pipeline> _instancedPipelineCache = new();
     private readonly Dictionary<MaterialKey, Material> _materialCache = new();
     private readonly Dictionary<MaterialConstantsType, DeviceBuffer> _materialConstantsBufferCache = new();
     private readonly Dictionary<MaterialConstantsKey, ResourceSet> _materialConstantsCache = new();
 
     private Sampler _worldSampler;
+
+    /// <summary>Instanced shader set (B5-2); shares this family's material (set 2) layout.</summary>
+    public readonly StandaloneShaderSet InstancedSet;
 
     public FixedFunctionShaderResources(
         ShaderSetStore store,
@@ -26,6 +30,11 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         : base(store, "FixedFunction", MeshShaderResources.MeshVertex.VertexDescriptors)
     {
         _worldSampler = worldSampler;
+
+        InstancedSet = AddDisposable(new StandaloneShaderSet(
+            store,
+            "FixedFunctionInstanced",
+            MeshShaderResources.MeshVertex.VertexDescriptors));
     }
 
     public Material GetCachedMaterial(
@@ -86,15 +95,45 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
 
             var materialResourceSet = GetCachedMaterialResourceSet(materialConstantsKey);
 
+            // B5-2: opaque materials get an instanced pipeline variant; blended materials
+            // render order-dependent and stay per-item.
+            var instancedPipeline = blendEnabled
+                ? null
+                : GetCachedInstancedPipeline(pipelineKey);
+
             result = AddDisposable(
                 new Material(
                     this,
                     pipeline,
                     singleSamplePipeline,
                     materialResourceSet,
-                    blendEnabled ? SurfaceType.Transparent : SurfaceType.Opaque));
+                    blendEnabled ? SurfaceType.Transparent : SurfaceType.Opaque,
+                    instancedPipeline,
+                    instancedPipeline is null ? null : InstancedSet.ResourceLayouts[3]));
 
             _materialCache.Add(materialKey, result);
+        }
+
+        return result;
+    }
+
+    private Pipeline GetCachedInstancedPipeline(in PipelineKey pipelineKey)
+    {
+        if (!_instancedPipelineCache.TryGetValue(pipelineKey, out var result))
+        {
+            var blendState = CreateBlendState(pipelineKey);
+            var depthState = CreateDepthState(pipelineKey);
+            var rasterizerState = CreateRasterizerState(pipelineKey);
+
+            _instancedPipelineCache.Add(pipelineKey, result = AddDisposable(GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
+                new GraphicsPipelineDescription(
+                    blendState,
+                    depthState,
+                    rasterizerState,
+                    PrimitiveTopology.TriangleList,
+                    InstancedSet.Description,
+                    InstancedSet.ResourceLayouts,
+                    Store.OutputDescription))));
         }
 
         return result;
@@ -107,30 +146,11 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
     {
         if (!cache.TryGetValue(pipelineKey, out var result))
         {
-            var blendState = new BlendStateDescription(
-                RgbaFloat.White,
-                pipelineKey.AlphaToCoverage,
-                new BlendAttachmentDescription(
-                    pipelineKey.BlendEnabled,
-                    pipelineKey.SourceFactor,
-                    pipelineKey.DestinationColorFactor,
-                    BlendFunction.Add,
-                    pipelineKey.SourceFactor,
-                    pipelineKey.DestinationAlphaFactor,
-                    BlendFunction.Add));
-
-            var depthState = DepthStencilStateDescription.DepthOnlyLessEqual;
-            depthState.DepthWriteEnabled = pipelineKey.DepthWriteEnabled;
-            depthState.DepthComparison = pipelineKey.DepthComparison;
-
-            var rasterizerState = RasterizerStateDescriptionUtility.DefaultFrontIsCounterClockwise;
-            rasterizerState.CullMode = pipelineKey.CullMode;
-
             cache.Add(pipelineKey, result = AddDisposable(GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription(
-                    blendState,
-                    depthState,
-                    rasterizerState,
+                    CreateBlendState(pipelineKey),
+                    CreateDepthState(pipelineKey),
+                    CreateRasterizerState(pipelineKey),
                     PrimitiveTopology.TriangleList,
                     Description,
                     ResourceLayouts,
@@ -138,6 +158,36 @@ internal sealed class FixedFunctionShaderResources : ShaderSetBase
         }
 
         return result;
+    }
+
+    private static BlendStateDescription CreateBlendState(in PipelineKey pipelineKey)
+    {
+        return new BlendStateDescription(
+            RgbaFloat.White,
+            pipelineKey.AlphaToCoverage,
+            new BlendAttachmentDescription(
+                pipelineKey.BlendEnabled,
+                pipelineKey.SourceFactor,
+                pipelineKey.DestinationColorFactor,
+                BlendFunction.Add,
+                pipelineKey.SourceFactor,
+                pipelineKey.DestinationAlphaFactor,
+                BlendFunction.Add));
+    }
+
+    private static DepthStencilStateDescription CreateDepthState(in PipelineKey pipelineKey)
+    {
+        var depthState = DepthStencilStateDescription.DepthOnlyLessEqual;
+        depthState.DepthWriteEnabled = pipelineKey.DepthWriteEnabled;
+        depthState.DepthComparison = pipelineKey.DepthComparison;
+        return depthState;
+    }
+
+    private static RasterizerStateDescription CreateRasterizerState(in PipelineKey pipelineKey)
+    {
+        var rasterizerState = RasterizerStateDescriptionUtility.DefaultFrontIsCounterClockwise;
+        rasterizerState.CullMode = pipelineKey.CullMode;
+        return rasterizerState;
     }
 
     private ResourceSet GetCachedMaterialResourceSet(in MaterialConstantsKey key)
