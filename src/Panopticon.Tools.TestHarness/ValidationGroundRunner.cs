@@ -258,6 +258,17 @@ public static class ValidationGroundRunner
                 {
                     Environment.ExitCode = ee2Exit;
                 }
+
+                // Card WI-M3-03: the cross-game duel matrix runs after the contracts on the same
+                // imported roster; the exit code stays distinct from the baseline codes.
+                if (ee2Profile.Duels.Count > 0)
+                {
+                    var duelExit = Ee2DuelPhase.Run(game, ee2Profile, reporter);
+                    if (duelExit != 0)
+                    {
+                        Environment.ExitCode = duelExit;
+                    }
+                }
             }
 
             Finish(timer, config, reporter);

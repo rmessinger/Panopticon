@@ -57,7 +57,7 @@ public class Ee2TypedMaterializationTests
         }
         UnitType Helicopter
         {
-            properties { moveType = Air hitpoints = 666 }
+            properties { moveType = Air hitpoints = 666 rps = Helicopter }
             abilities [
                 AircraftMove {speed = 3.45; angSpeed = 90; CruisingHeight = 3.0; canHover = 1}
                 Attack { range = 7; reloadTime = 2; applyDamageTime = 0; damage = 50; missileName = GuidedMissile }
@@ -125,6 +125,7 @@ public class Ee2TypedMaterializationTests
         //,Null,Light_Mounted,Heavy_Mounted,Air_Superiority,Helicopter
         Null,0,0,0,0,0
         Light_Infantry,0,100,100,50,100
+        Light_Mounted,0,100,100,50,100
         Heavy_Mounted,0,100,100,50,100
         Close_Air_Support,0,0,0,200,0
         Helicopter,0,0,0,200,100
@@ -274,6 +275,10 @@ public class Ee2TypedMaterializationTests
         Assert.Equal(10 * 12, tank.AttackRange, 3);
         Assert.Equal(0.5 * 30, tank.PreAttackDelay.Min.Value, 1);
 
+        // Card WI-M3-01: EE2 authors ranges on the ground plane, so the engine's 3D check must
+        // not let a cruising altitude consume the authored range.
+        Assert.True(tank.MeasuresRangeOnGround);
+
         // Fighter (rps Air_Superiority) engages air and ground; ordnance 32 becomes the clip and
         // the weapon rearms at base (RETURN_TO_BASE), so a sortie ends with the return flight.
         var fighter = content.Get<WeaponTemplate>(new ContentId(ContentSource.Ee2, ContentKind.Weapon, "FighterUpgradeEpoch15.Attack"));
@@ -281,6 +286,98 @@ public class Ee2TypedMaterializationTests
         Assert.Equal(32, fighter.ClipSize);
         Assert.Equal(WeaponReloadType.ReturnToBase, fighter.AutoReloadsClip);
         Assert.Equal(11.0 * 12 / 30, fighter.WeaponSpeed, 5);
+    }
+
+    /// <summary>Card WI-M3-02: the fixture rps classes to engine damage types.</summary>
+    private static readonly IReadOnlyDictionary<string, string> MappedTypes = new Dictionary<string, string>
+    {
+        ["Light_Mounted"] = "SLASH",
+        ["Heavy_Mounted"] = "SIEGE",
+        ["Air_Superiority"] = "HERO_RANGED",
+        ["Helicopter"] = "HERO",
+    };
+
+    private static string[] MappedExclusions => Exclusions.Where(e => e != "rps").ToArray();
+
+    private static UnitContentSet ReadRowsWithMapping(IReadOnlyDictionary<string, string> mapping, params string[] rowKeys)
+    {
+        return new Ee2UnitAdapter(Files(), new Ee2ImportPolicy(15, "we", MappedExclusions, RpsDamageTypes: mapping)).ReadRows(rowKeys);
+    }
+
+    [Fact]
+    public void MappedRpsClassesCarryDamageTypesAndArmorFromTheMatrix()
+    {
+        var set = ReadRowsWithMapping(MappedTypes, "LightMounted1UpgradeEpoch15", "HeavyMounted2UpgradeEpoch13");
+        var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
+        Assert.True(resolution.Succeeded, string.Join("\n", resolution.Diagnostics.Where(d => d.IsError)));
+
+        var content = UnitRuntimeMaterializer.Materialize(
+            resolution,
+            new UnitMaterializationContext(new UnitConversionPolicy(SageGame.CncGenerals, gameUnitsPerSourceDistance: 12)));
+        Assert.True(content.Succeeded, string.Join("\n", content.Diagnostics));
+
+        // Weapons carry the mapped types; the excluded-policy UNRESISTABLE default is gone.
+        var tankWeapon = content.Get<WeaponTemplate>(new ContentId(ContentSource.Ee2, ContentKind.Weapon, "LightMounted1UpgradeEpoch15.Attack"));
+        Assert.Equal(DamageType.Slash, tankWeapon.Nuggets.OfType<DamageNugget>().Single().DamageType);
+        var heliWeapon = content.Get<WeaponTemplate>(new ContentId(ContentSource.Ee2, ContentKind.Weapon, "HeavyMounted2UpgradeEpoch13.Attack"));
+        Assert.Equal(DamageType.Hero, heliWeapon.Nuggets.OfType<DamageNugget>().Single().DamageType);
+
+        // Armor multipliers come straight from the fixture matrix rows (Light_Mounted defender:
+        // Light_Mounted 100, Heavy_Mounted 100, Air_Superiority 50, Helicopter 100; Helicopter
+        // defender: Air_Superiority 200, Helicopter 100, ground columns zero) and the units
+        // reference their class armor set.
+        var tankArmor = content.Get<ArmorTemplate>(new ContentId(ContentSource.Ee2, ContentKind.Armor, "RpsLightMounted"));
+        Assert.Equal(1.0f, (float)tankArmor.Values[(int)DamageType.Slash]);
+        Assert.Equal(1.0f, (float)tankArmor.Values[(int)DamageType.Siege]);
+        Assert.Equal(0.5f, (float)tankArmor.Values[(int)DamageType.HeroRanged]);
+        Assert.Equal(1.0f, (float)tankArmor.Values[(int)DamageType.Hero]);
+
+        var heliArmor = content.Get<ArmorTemplate>(new ContentId(ContentSource.Ee2, ContentKind.Armor, "RpsHelicopter"));
+        Assert.Equal(2.0f, (float)heliArmor.Values[(int)DamageType.HeroRanged]);
+        Assert.Equal(1.0f, (float)heliArmor.Values[(int)DamageType.Hero]);
+        Assert.Equal(0.0f, (float)heliArmor.Values[(int)DamageType.Slash]);
+
+        var tankDefinition = content.Get<ObjectDefinition>(new ContentId(ContentSource.Ee2, ContentKind.Unit, "LightMounted1UpgradeEpoch15"));
+        Assert.Contains(tankDefinition.ArmorSets, s => s.Armor?.Name == "RpsLightMounted");
+
+        // While the mapping is active the rps property is consumed, not an excluded mechanic.
+        Assert.DoesNotContain(set.Diagnostics, d => d.Code == DiagnosticCodes.ExcludedByPolicy && d.Message.Contains("rps"));
+    }
+
+    [Fact]
+    public void UnmappedRpsClassFailsLoadExplicitly()
+    {
+        // The mapping omits Helicopter, so the helicopter row's class has no authored type.
+        var mapping = MappedTypes.Where(pair => pair.Key != "Helicopter").ToDictionary();
+        var resolution = UnitImportResolution.Resolve(ReadRowsWithMapping(mapping, "HeavyMounted2UpgradeEpoch13"), UnitCapabilityRegistry.CreateDefault());
+
+        Assert.False(resolution.Succeeded);
+        Assert.Contains(
+            resolution.Diagnostics,
+            d => d.IsError && d.Code == DiagnosticCodes.UnsupportedMechanic && d.Message.Contains("Helicopter") && d.Message.Contains("RpsDamageTypes"));
+    }
+
+    [Fact]
+    public void RpsWithoutMappingOrExclusionFailsLoadExplicitly()
+    {
+        var resolution = UnitImportResolution.Resolve(ReadRowsWithMapping(new Dictionary<string, string>(), "LightMounted1UpgradeEpoch15"), UnitCapabilityRegistry.CreateDefault());
+
+        Assert.False(resolution.Succeeded);
+        Assert.Contains(
+            resolution.Diagnostics,
+            d => d.IsError && d.Code == DiagnosticCodes.UnsupportedMechanic && d.Message.Contains("no authored Generals damage type"));
+    }
+
+    [Fact]
+    public void MappedClassMissingFromTheCombatMatrixFailsLoadExplicitly()
+    {
+        // The fixture matrix has no Air_Superiority defender row, so its armor cannot be derived.
+        var resolution = UnitImportResolution.Resolve(ReadRowsWithMapping(MappedTypes, "FighterUpgradeEpoch15"), UnitCapabilityRegistry.CreateDefault());
+
+        Assert.False(resolution.Succeeded);
+        Assert.Contains(
+            resolution.Diagnostics,
+            d => d.IsError && d.Code == DiagnosticCodes.UnsupportedMechanic && d.Message.Contains("no defender row"));
     }
 
     [Fact]

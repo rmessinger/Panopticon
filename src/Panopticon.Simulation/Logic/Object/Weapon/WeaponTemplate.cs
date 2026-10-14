@@ -281,6 +281,13 @@ public sealed class WeaponTemplate : BaseAsset
     public bool LeechRangeWeapon { get; private set; }
     public float AttackRange { get; internal set; }
     public float MinimumAttackRange { get; internal set; }
+
+    /// <summary>
+    /// Card WI-M3-01: the source authors this weapon's range as a ground-plane distance (EE2's
+    /// tile ranges), so altitude never consumes it. Native weapons keep the engine's 3D check.
+    /// </summary>
+    public bool MeasuresRangeOnGround { get; internal set; }
+
     public int MinTargetPitch { get; private set; }
     public int MaxTargetPitch { get; private set; }
 

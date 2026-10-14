@@ -33,6 +33,12 @@ public class CaptureContentImport
     /// <summary>Declared scale from one source distance unit (an EE2 tile) to game units.</summary>
     public double GameUnitsPerSourceDistance { get; set; }
 
+    /// <summary>
+    /// Card WI-M3-01: declared scale from one source model unit (an EE2 NIF decimeter) to game
+    /// units, applied to the imported draw's world matrix. Null or 0 means no model scaling.
+    /// </summary>
+    public double? GameUnitsPerSourceModelUnit { get; set; }
+
     /// <summary>DDF files read for the closure, in load order.</summary>
     public List<string> DdfPaths { get; set; } = [];
 
@@ -47,4 +53,11 @@ public class CaptureContentImport
     /// weapons use only for target-effect selection. Damage itself is unchanged.
     /// </summary>
     public Dictionary<string, string> ImpactEffectDamageTypes { get; set; } = [];
+
+    /// <summary>
+    /// Card WI-M3-02: authored EE2 rps class to Generals damage type mapping. While non-empty,
+    /// every published unit's rps class needs an entry (unmapped classes fail load), weapons
+    /// carry the mapped type, and each class materializes an armor set from dbcombat.
+    /// </summary>
+    public Dictionary<string, string> RpsDamageTypes { get; set; } = [];
 }

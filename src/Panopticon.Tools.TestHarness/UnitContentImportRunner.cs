@@ -44,7 +44,11 @@ public static class UnitContentImportRunner
                 Directory.EnumerateFiles(Path.Combine(root, "zips"), "db_*.zip").Select(Path.GetFileName).ToArray())
             : new Ee2SourceFiles(database, graphics, import.DdfPaths, Ee2SourceFiles.DefaultUnitTablePath);
 
-        var adapter = new Ee2UnitAdapter(sourceFiles, new Ee2ImportPolicy(import.Epoch, import.Region, import.ExcludedMechanics));
+        var adapter = new Ee2UnitAdapter(sourceFiles, new Ee2ImportPolicy(
+            import.Epoch,
+            import.Region,
+            import.ExcludedMechanics,
+            RpsDamageTypes: import.RpsDamageTypes));
         var set = import.RowKeys.Count > 0 ? adapter.ReadRows(import.RowKeys) : adapter.Read(import.UnitTypes);
         var resolution = UnitImportResolution.Resolve(set, UnitCapabilityRegistry.CreateDefault());
         Report(resolution.Diagnostics, reporter);
@@ -83,7 +87,11 @@ public static class UnitContentImportRunner
             }
         }
 
-        var installer = new ImportedVisualInstaller(new NifModelImporter(), new NifAnimationImporter(), sourceContext, game.AssetStore.LoadContext);
+        // The model scale is applied once, at install: the imported model's root bone binds carry
+        // game units, so the runtime world matrix stays unscaled.
+        var modelScale = import.GameUnitsPerSourceModelUnit is { } scale ? (float)scale : 1f;
+        var installer = new ImportedVisualInstaller(
+            new NifModelImporter(), new NifAnimationImporter(), sourceContext, game.AssetStore.LoadContext, modelScale);
         var publication = publisher.Publish(content, installer);
         Report(publication.Diagnostics, reporter);
         if (!publication.Succeeded)

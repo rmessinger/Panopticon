@@ -25,6 +25,13 @@ public sealed record Ee2SourceFiles(FileSystem Database, FileSystem Graphics, IR
     public const string CombatTablePath = "db/Simulation/dbcombat.csv";
 
     /// <summary>
+    /// Card WI-M3-03: the per-epoch unit cost columns in the tech-tree table (the adapter
+    /// surfaces them as unclassified Cost fields; the points budget prices them directly).
+    /// </summary>
+    public static readonly string[] CostColumns =
+        ["FOOD", "WOOD", "STONE", "GOLD", "TIN", "IRON", "SALTPETER", "OIL", "URANIUM"];
+
+    /// <summary>
     /// Patch archives present beside the database but not composed into these inputs. Reported by
     /// the adapter so stock-layer results are never mistaken for as-patched values.
     /// </summary>

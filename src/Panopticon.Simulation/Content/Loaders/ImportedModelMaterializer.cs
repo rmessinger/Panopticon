@@ -20,11 +20,15 @@ internal static class ImportedModelMaterializer
         return new ModelBoneHierarchy(importedSkeleton);
     }
 
-    public static Model MaterializeModel(ImportedModel importedModel, AssetLoadContext context)
+    /// <param name="rootScale">
+    /// Uniform model scale baked into the root bone binds at materialization (default 1). Applied
+    /// once here so the runtime world matrix stays unscaled.
+    /// </param>
+    public static Model MaterializeModel(ImportedModel importedModel, AssetLoadContext context, float rootScale = 1f)
     {
         return MaterializeModel(
             importedModel,
-            new ModelBoneHierarchy(importedModel.Skeleton),
+            new ModelBoneHierarchy(importedModel.Skeleton, rootScale),
             context);
     }
 

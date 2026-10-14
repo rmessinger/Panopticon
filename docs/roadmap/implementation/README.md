@@ -395,6 +395,15 @@ Source of truth: [mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
 |---|---|---|
 | [track-m-m2-ee2-combat-units.md](track-m-m2-ee2-combat-units.md) | M2-1…M2-4 | EE2 reference roster (WI-M2-01..04) |
 
+## Track M · M3 : Mixed roster normalization
+
+Source of truth: [mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
+[Architecture diagrams §9](../deep-dives/mass-battle-1k.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-m-m3-mixed-roster.md](track-m-m3-mixed-roster.md) | M3-1…M3-3 | Model scale, damage classes, points budget and duels (WI-M3-01..03) |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :

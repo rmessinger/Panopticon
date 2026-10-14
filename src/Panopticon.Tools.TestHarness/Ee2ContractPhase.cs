@@ -89,7 +89,7 @@ public static class Ee2ContractPhase
     }
 
     /// <summary>Native names resolve in the built-in store; <c>source:name</c> in that source's published collections.</summary>
-    private static ObjectDefinition? ResolveDefinition(Game game, string definition)
+    internal static ObjectDefinition? ResolveDefinition(Game game, string definition)
     {
         var separator = definition.IndexOf(':');
         if (separator <= 0)
@@ -230,8 +230,13 @@ public static class Ee2ContractPhase
         var launch = home + new Vector3(60f, 60f, 0f);
         var facing = MathF.Atan2(targetAPosition.Y - launch.Y, targetAPosition.X - launch.X);
         var height = game.Scene3D.Terrain.GetGroundHeight(new Vector2(launch.X, launch.Y)) ?? 0f;
+        // Card WI-M3-01: spawn at the authored cruising height (the factor-converted
+        // PreferredHeight), not a fixed offset; spawning below it makes the kinematic height
+        // hold teleport the jet and the landing flow (which watches the Moving flag) takes over
+        // before the wings model accelerates to its authored minimum speed.
+        var cruiseHeight = jet.Definition.LocomotorSets[LocomotorSetType.Normal].Locomotors?[0].Value?.PreferredHeight ?? 48f;
         jet.UpdateTransform(
-            new Vector3(launch.X, launch.Y, height + 48f),
+            new Vector3(launch.X, launch.Y, height + MathF.Max(48f, cruiseHeight)),
             System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, facing));
         jet.UpdateColliders();
 
@@ -258,7 +263,7 @@ public static class Ee2ContractPhase
 
                 if (frame % 600 == 0)
                 {
-                    reporter.Info($"[ee2] {contract.Definition} sortie1 f{frame} rounds={weapon?.CurrentRounds} distA={Vector2.Distance(To2(jet.Translation), To2(targetAPosition)):0} hpA={targetA.BodyModule?.Health:0}");
+                    reporter.Info($"[ee2] {contract.Definition} sortie1 f{frame} rounds={weapon?.CurrentRounds} distA={Vector2.Distance(To2(jet.Translation), To2(targetAPosition)):0} hpA={targetA.BodyModule?.Health:0} jetZ={jet.Translation.Z:0} state={jetAI.CurrentJetAIState}");
                 }
 
                 if (!damagedFirst && (targetA.BodyModule?.Health ?? 0) < healthA)
@@ -528,7 +533,7 @@ public static class Ee2ContractPhase
 
     private static readonly List<GameObject> Spawned = [];
 
-    private static GameObject SpawnAt(Game game, ObjectDefinition definition, Player owner, Vector3 position)
+    internal static GameObject SpawnAt(Game game, ObjectDefinition definition, Player owner, Vector3 position)
     {
         var height = game.Scene3D.Terrain.GetGroundHeight(new Vector2(position.X, position.Y)) ?? 0f;
         var gameObject = game.Scene3D.GameObjects.CreateObject(definition, owner);
@@ -542,7 +547,7 @@ public static class Ee2ContractPhase
     /// Removes every object this phase spawned (kill, then destroy once dead) so leftover
     /// hostiles from one contract cannot fire into the next.
     /// </summary>
-    private static void ClearSpawned(Game game)
+    internal static void ClearSpawned(Game game)
     {
         foreach (var gameObject in Spawned.Where(obj => !obj.IsEffectivelyDead))
         {
@@ -557,7 +562,7 @@ public static class Ee2ContractPhase
         Spawned.Clear();
     }
 
-    private static int Wait(Game game, Func<int, bool> until, int budget)
+    internal static int Wait(Game game, Func<int, bool> until, int budget)
     {
         var start = CurrentFrame(game);
         var frame = start;
@@ -577,7 +582,7 @@ public static class Ee2ContractPhase
 
     private static Vector2 To2(Vector3 position) => new(position.X, position.Y);
 
-    private static uint CurrentFrame(Game game) => unchecked((uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame));
+    internal static uint CurrentFrame(Game game) => unchecked((uint)(game.MapTime.TotalTime.TotalMilliseconds / game.GameEngine.MsPerLogicFrame));
 
     private static void WriteReport(Ee2ContractReport report, ITestHarnessReporter reporter)
     {
@@ -612,6 +617,9 @@ public sealed class Ee2ValidationProfile
     public int FrameBudget { get; set; } = 12000;
 
     public List<Ee2ContractEntry> Contracts { get; set; } = [];
+
+    /// <summary>Card WI-M3-03: EE2-versus-Generals archetype duels run after the contracts.</summary>
+    public List<Ee2DuelEntry> Duels { get; set; } = [];
 
     public static Ee2ValidationProfile Load(string path)
     {

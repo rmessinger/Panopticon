@@ -5,6 +5,10 @@
   // Track C animation import (0x25 controller flags / legacy skinned clips) and is deliberately
   // absent: including it would fail visual verification and publish nothing.
   // Row keys are exact upgrade_unittypes.csv keys; each row's UNIT cell names the UnitType.
+  // WI-M3-01 normalization (same derivation as ee2-reference-validation.json): EE2 NIF models
+  // are authored in decimeters and one tile spans 50 model units; against Generals' audited
+  // 3.6501 game units per meter (G10 Crusader hull anchor) one tile is 5 m = 18.2505 game
+  // units and one model unit is 0.1 m = 0.36501 game units. Replaces the M2-era constant 12.
   // Run with:
   //   CNC_GENERALS_PATH=... EMPIRE_EARTH_II_PATH=... \
   //   dotnet run --project src/Panopticon.Tools.TestHarness -- --headless \
@@ -32,13 +36,30 @@
         "LightMounted2UpgradeEpoch13"
       ],
       "Region": "we",
-      "GameUnitsPerSourceDistance": 12,
+      // WI-M3-01: one EE2 tile is 50 decimeter model units = 5 m = 18.2505 Generals game units
+      // (3.6501 units/m G10 anchor); see Ee2ReferenceScale for the full derivation.
+      "GameUnitsPerSourceDistance": 18.2505,
+      // WI-M3-01: one EE2 NIF model unit is 0.1 m = 0.36501 game units, folded into the draw's
+      // world matrix so model extents, bones, and bounds match the converted gameplay scale.
+      "GameUnitsPerSourceModelUnit": 0.36501,
       // Explicit Generals presentation compatibility, not source-authored EE2 effects.
       "DamageEffects": { "LightMounted1UpgradeEpoch15": "TankDamageFX" },
       // Tank shells select Generals tank-gun target effects; damage stays UNRESISTABLE.
       "ImpactEffectDamageTypes": { "LightMounted1UpgradeEpoch15": "ARMOR_PIERCING" },
+      // WI-M3-02 rps -> Generals damage types: distinct engine-known types no native
+      // Generals armor authors, so EE2 damage stays one-to-one against natives while
+      // EE2-versus-EE2 resolves through the stock dbcombat matrix (see Ee2ReferenceRps).
+      "RpsDamageTypes": {
+        "Heavy_Infantry": "PIERCE",
+        "Light_Mounted": "SLASH",
+        "Heavy_Mounted": "SIEGE",
+        "Heavy_Artillery": "BIG_ROCK",
+        "Air_Superiority": "HERO_RANGED",
+        "Bomber": "URUK",
+        "Helicopter": "HERO"
+      },
       "ExcludedMechanics": [
-        "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
+        "ownertype", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
         "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",
         "Attack.areaDamageFriendlyRatio", "Attack.angularRange", "Attack.turretControllerName", "Attack.ignoreBlocking",
         "Attack.attackOnTheMove", "Attack.WeaponType", "Attack.packTime", "Attack.unpackTime", "Attack.minRangeImmobile",
