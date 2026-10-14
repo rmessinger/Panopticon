@@ -5,17 +5,19 @@
   // Attack targets are the validation ground's neutral civilian cars (CarAsian1): armed
   // targets shoot the aircraft down at point-blank range before the sortie cycle completes,
   // which measures the target's gun, not the EE2 unit's own contract. Death contracts use
-  // dedicated Generals killers. Six publishable rows (the infantry row is blocked on Track C animation import; see
-  // docs/roadmap/implementation/track-m-m2-ee2-combat-units.md). Ground units prove movement,
-  // weapon-caused damage, and death beside Generals units; fixed-wing aircraft prove the full
-  // sortie cycle through the M1 parking path: departure, ammunition consumption, return,
-  // refill, and a second damaging sortie; the helicopter proves hover attack, scripted return,
-  // and a second damaging sortie (no EE2 helicopter authors ordnance, so clip consumption is
-  // reported absent-in-source rather than fabricated).
+  // dedicated Generals killers. All seven reference rows publish (the infantry row's epoch-15
+  // clips import since WI-M2-05); WI-M3-03 added the infantry row for the duel matrix and the
+  // roster manifests. Ground units prove movement, weapon-caused damage, and death beside
+  // Generals units; fixed-wing aircraft prove the full sortie cycle through the M1 parking
+  // path: departure, ammunition consumption, return, refill, and a second damaging sortie; the
+  // helicopter proves hover attack, scripted return, and a second damaging sortie (no EE2
+  // helicopter authors ordnance, so clip consumption is reported absent-in-source rather than
+  // fabricated).
   "Name": "ee2-reference-validation",
   "ContentImport": {
     "Source": "ee2",
     "RowKeys": [
+      "HeavyInfantry1UpgradeEpoch15",
       "LightMounted1UpgradeEpoch15",
       "HeavyMounted1UpgradeEpoch15",
       "HeavyArtilleryUpgradeEpoch14",
@@ -24,9 +26,26 @@
       "LightMounted2UpgradeEpoch13"
     ],
     "Region": "we",
-    "GameUnitsPerSourceDistance": 12,
+    // WI-M3-01 normalization: one EE2 tile is 50 decimeter NIF model units = 5 m = 18.2505
+    // Generals game units (3.6501 units/m, G10 Crusader hull anchor) and one model unit is
+    // 0.1 m = 0.36501 game units (draw world-matrix scale). Replaces the M2-era constant 12;
+    // see Ee2ReferenceScale for the derivation asserted by Ee2ModelScaleTests.
+    "GameUnitsPerSourceDistance": 18.2505,
+    "GameUnitsPerSourceModelUnit": 0.36501,
+    // WI-M3-02 rps -> Generals damage types: distinct engine-known types no native
+    // Generals armor authors, so EE2 damage stays one-to-one against natives while
+    // EE2-versus-EE2 resolves through the stock dbcombat matrix (see Ee2ReferenceRps).
+    "RpsDamageTypes": {
+      "Heavy_Infantry": "PIERCE",
+      "Light_Mounted": "SLASH",
+      "Heavy_Mounted": "SIEGE",
+      "Heavy_Artillery": "BIG_ROCK",
+      "Air_Superiority": "HERO_RANGED",
+      "Bomber": "URUK",
+      "Helicopter": "HERO"
+    },
     "ExcludedMechanics": [
-      "ownertype", "rps", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
+      "ownertype", "FootprintType", "SizeY", "mass", "popCount", "attributes", "nonAttributes", "stance",
       "Garrisonable", "Convertable", "ConvertAttack", "Cost", "GoesOnAirMissions", "visualName",
       "Attack.areaDamageFriendlyRatio", "Attack.angularRange", "Attack.turretControllerName", "Attack.ignoreBlocking",
       "Attack.attackOnTheMove", "Attack.WeaponType", "Attack.packTime", "Attack.unpackTime", "Attack.minRangeImmobile",
@@ -43,6 +62,25 @@
   "TargetDefinition": "CarAsian1",
   "KillerDefinition": "AmericaTankCrusader",
   "FrameBudget": 12000,
+  // WI-M3-03 cross-game archetype duels: each EE2 reference unit engages its Generals
+  // counterpart (the bomber engages the Generals anti-air vehicle: Generals fields no stock
+  // level bomber, and its Aurora cannot target air). Air duels spawn both aircraft airborne.
+  // Time-to-kill bounds are authored from measured runs with headroom; measured values are
+  // recorded in docs/roadmap/implementation/track-m-m3-mixed-roster.md.
+  "Duels": [
+    // Bounds authored from the measured runs (2026-10-11, Dark Mountain, both installs):
+    // infantry 13.2s (Rebel wins), light tank 8.7s (Crusader), heavy tank 10.8s (BattleMaster),
+    // artillery 10.7s (Tomahawk), fighter 2.4s (EE2 fighter), bomber 4.0s (EE2 bomber),
+    // helicopter 6.6s (EE2 helicopter). Bounds hold roughly 3x headroom above the measured
+    // times and a floor against instant-death anomalies; tightening needs fresh evidence.
+    { "Name": "infantry", "Ee2Definition": "ee2:HeavyInfantry1UpgradeEpoch15", "GeneralsDefinition": "GLAInfantryRebel", "Kind": "Ground", "Distance": 100, "MinSeconds": 4, "MaxSeconds": 40 },
+    { "Name": "light-tank", "Ee2Definition": "ee2:LightMounted1UpgradeEpoch15", "GeneralsDefinition": "AmericaTankCrusader", "Kind": "Ground", "Distance": 150, "MinSeconds": 3, "MaxSeconds": 30 },
+    { "Name": "heavy-tank", "Ee2Definition": "ee2:HeavyMounted1UpgradeEpoch15", "GeneralsDefinition": "ChinaTankBattleMaster", "Kind": "Ground", "Distance": 150, "MinSeconds": 3, "MaxSeconds": 40 },
+    { "Name": "artillery", "Ee2Definition": "ee2:HeavyArtilleryUpgradeEpoch14", "GeneralsDefinition": "AmericaVehicleTomahawk", "Kind": "Ground", "Distance": 300, "MinSeconds": 3, "MaxSeconds": 40 },
+    { "Name": "fighter", "Ee2Definition": "ee2:FighterUpgradeEpoch15", "GeneralsDefinition": "AmericaJetRaptor", "Kind": "Air", "Distance": 400, "MinSeconds": 1, "MaxSeconds": 20 },
+    { "Name": "bomber", "Ee2Definition": "ee2:BomberUpgradeEpoch15", "GeneralsDefinition": "GLAVehicleQuadCannon", "Kind": "Air", "Distance": 400, "MinSeconds": 1, "MaxSeconds": 25 },
+    { "Name": "helicopter", "Ee2Definition": "ee2:LightMounted2UpgradeEpoch13", "GeneralsDefinition": "AmericaVehicleComanche", "Kind": "Air", "Distance": 200, "MinSeconds": 2, "MaxSeconds": 30 }
+  ],
   "Contracts": [
     { "Definition": "ee2:LightMounted1UpgradeEpoch15", "Kind": "Ground" },
     { "Definition": "ee2:HeavyMounted1UpgradeEpoch15", "Kind": "Ground" },

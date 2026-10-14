@@ -80,6 +80,11 @@ public static class CaptureProfileValidator
                 errors.Add($"Content import '{import.Source}' needs a finite, positive GameUnitsPerSourceDistance.");
             }
 
+            if (import.GameUnitsPerSourceModelUnit is { } modelScale && (!(modelScale > 0) || double.IsInfinity(modelScale)))
+            {
+                errors.Add($"Content import '{import.Source}' needs a finite, positive GameUnitsPerSourceModelUnit.");
+            }
+
             importedSources.Add(import.Source);
         }
 

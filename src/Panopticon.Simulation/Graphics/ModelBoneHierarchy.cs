@@ -21,6 +21,19 @@ public sealed class ModelBoneHierarchy : BaseAsset
     }
 
     internal ModelBoneHierarchy(ImportedSkeleton importedSkeleton)
+        : this(importedSkeleton, rootScale: 1f)
+    {
+    }
+
+    /// <summary>
+    /// Card WI-M3-01: materialization at a uniform model scale. Scaling only the root binds
+    /// (translation and scale) appends the scale to every bone's absolute chain, which is
+    /// identical to premultiplying the world matrix with CreateScale (matrix multiplication is
+    /// associative), so rigid meshes, skinned meshes through the unchanged inverse binds, shadows,
+    /// and attachments all follow. Rest-relative animation offsets need no scaling: they reproduce
+    /// the scaled rest exactly.
+    /// </summary>
+    internal ModelBoneHierarchy(ImportedSkeleton importedSkeleton, float rootScale)
     {
         SetNameAndInstanceId("W3DHierarchy", importedSkeleton.Name);
 
@@ -30,7 +43,8 @@ public sealed class ModelBoneHierarchy : BaseAsset
         {
             var importedBone = importedSkeleton.Bones[i];
 
-            var parent = importedBone.ParentIndex == -1
+            var isRoot = importedBone.ParentIndex == -1;
+            var parent = isRoot
                 ? null
                 : Bones[importedBone.ParentIndex];
 
@@ -38,10 +52,10 @@ public sealed class ModelBoneHierarchy : BaseAsset
                 i,
                 importedBone.Name,
                 parent,
-                importedBone.BindTranslation,
+                isRoot ? importedBone.BindTranslation * rootScale : importedBone.BindTranslation,
                 importedBone.BindRotation,
                 importedBone.InverseBindMatrix,
-                importedBone.BindScale);
+                isRoot ? importedBone.BindScale * rootScale : importedBone.BindScale);
         }
     }
 }
