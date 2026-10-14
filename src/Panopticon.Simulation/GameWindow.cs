@@ -27,6 +27,10 @@ public sealed class GameWindow : DisposableBase
     private float _scrollAccumulator;
     private int _lastScrollDirection;
 
+    private static readonly NLog.Logger ZoomLogger = Graphics.Cameras.TacticalView.ZoomLogger;
+    private int _wheelEventsThisPump;
+    private int _wheelTicksThisPump;
+
     private void RaiseClientSizeChanged()
     {
         ClientSizeChanged?.Invoke(this, EventArgs.Empty);
@@ -275,6 +279,7 @@ public sealed class GameWindow : DisposableBase
         // deliberate mouse-wheel direction change isn't dropped.
         if (_lastScrollDirection != 0 && deltaSign != _lastScrollDirection && _scrollAccumulator != 0)
         {
+            ZoomLogger.Debug("Wheel delta={0:F3} dropped as reversal (accumulator={1:F3})", delta, _scrollAccumulator);
             _scrollAccumulator = 0;
             _lastScrollDirection = 0;
             return;
@@ -282,13 +287,17 @@ public sealed class GameWindow : DisposableBase
 
         _lastScrollDirection = deltaSign;
         _scrollAccumulator += delta;
+        _wheelEventsThisPump++;
 
         var discreteAmount = (int)_scrollAccumulator;
         if (discreteAmount != 0)
         {
             _scrollAccumulator -= discreteAmount;
+            _wheelTicksThisPump += discreteAmount;
             MessageQueue.Enqueue(InputMessage.CreateMouseWheel(discreteAmount));
         }
+
+        ZoomLogger.Debug("Wheel delta={0:F3} emitted={1} accumulator={2:F3}", delta, discreteAmount, _scrollAccumulator);
     }
 
     public void Close()
@@ -298,7 +307,14 @@ public sealed class GameWindow : DisposableBase
 
     public bool PumpEvents()
     {
+        _wheelEventsThisPump = 0;
+        _wheelTicksThisPump = 0;
         CurrentInputSnapshot = _window.PumpEvents();
+
+        if (_wheelEventsThisPump > 0)
+        {
+            ZoomLogger.Debug("Pump: {0} wheel events -> {1} zoom ticks", _wheelEventsThisPump, _wheelTicksThisPump);
+        }
 
         if (_closing)
         {
