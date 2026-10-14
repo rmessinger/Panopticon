@@ -45,6 +45,8 @@ mindmap
       X2 Capacity-probe graphics resource fixes
         X2-1 Upload lifetime cleanup
         X2-2 Combat FX and model reuse
+      X3 Cursor modernization
+        X3-1 Cursor theme evaluation and examples
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
         P0-1 Open command model
@@ -386,6 +388,7 @@ flowchart LR
   subgraph S1["Stage 1 · Core host & cleanup"]
     direction TB
     A1["A1 Headless host"]
+    X3["X3 Cursor modernization"]
     B2["B2 Allocation cleanup"]
     B4["B4 Spatial & pathfinding"]
     B4A["B4a Larger maps"]

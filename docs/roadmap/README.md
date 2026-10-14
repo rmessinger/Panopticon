@@ -286,7 +286,7 @@ track document.
   probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
   battle. Depends on P9 and A1, then B1, H2a, C4d, A4, B4, B5, and A5.
 
-- [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion.
+- [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies.
 
 ### Cross-track dependencies
 
@@ -337,6 +337,7 @@ track document.
 |---|---|---|
 | X1 - Imported-unit hit feedback | `██████████` | 7 / 7 |
 | X2 - Capacity-probe graphics resource fixes | `█████░░░░░` | 1 / 2 |
+| X3 - Cursor modernization | `░░░░░░░░░░` | 0 / 1 |
 
 Track X has no terminal completion target; this table covers authored phases only.
 
