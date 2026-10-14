@@ -52,6 +52,23 @@ public class Graph
         _visited = new HashSet<Node>();
     }
 
+    // Submission-time snapshot for async path workers (WI-B4-05): copies passability only.
+    // Search scratch is per-instance, so each clone searches independently of the live graph.
+    internal Graph ClonePassability()
+    {
+        var clone = new Graph(Width, Height);
+
+        for (var x = 0; x < Width; x++)
+        {
+            for (var y = 0; y < Height; y++)
+            {
+                clone.GetNode(x, y).Passability = GetNode(x, y).Passability;
+            }
+        }
+
+        return clone;
+    }
+
     private List<Node> GetPath(Node start, Node end)
     {
         var result = new List<Node> { end };

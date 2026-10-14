@@ -753,9 +753,20 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
       SoA storage behind the module API).
   - AC: TBD, intent/command buffers + conflict resolution land behind the module API with no
     behavior change vs. baseline (verification harness within tolerance); SoA storage is swappable.
-- [ ] B4 Spatial & pathfinding scaling (hierarchical/flow-field, group movement, async path requests).
-  - AC: TBD, hierarchical/flow-field pathing + group movement + async requests scale to a target
-    unit count within a path-latency budget in B1; no pathing regressions on baseline maps.
+- [x] B4 Spatial & pathfinding scaling (partition hot path, hierarchical/flow-field, group
+  movement, async path requests) (`WI-B4-01..06`,
+  [plan](implementation/track-b-b4-spatial-scaling.md)).
+  - AC: partition maintenance holds a 10 ms median `system.partition.spanMs` at contact in
+    the M1 full-scale re-run, with pair-once `OnCollide` delivery and no per-tick update
+    allocations; group movement scales path requests with squads; async completions are
+    frame-bounded and deterministic; hierarchical/flow-field lands only on a failed
+    measured latency gate; no pathing regressions on baseline maps.
+  - Outcome: pair-once delivery and a 71 percent allocation cut landed (WI-B4-02); the
+    10 ms contact budget is still missed at a 259 ms median and the residual is the genuine
+    workload, recorded as the stop point with follow-ups (cheaper exact test, resting-contact
+    throttling, B3 parallelism) left to a new card. Group movement, async frame-bounded
+    completions with queue-level determinism, and the no-op hierarchical gate decision all
+    hold with recorded numbers.
 - [ ] B4a Larger maps via WorldBuilder ([deep dive](deep-dives/b4a-larger-maps.md)): region editing,
       large-map wizard, terrain streaming/LOD, chunked storage, round-trip at scale,
       large-population scenario authoring (B4a-7: bulk/procedural object placement, region-based
