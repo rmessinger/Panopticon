@@ -168,7 +168,7 @@ public class DomainStateRecorderTests : MockedGameTest
             Assert.Equal(4, snapshots.Count); // frames 10, 20, 30, 40
             Assert.Equal(45, deltas.Count);
             Assert.Equal(
-                recording.DomainState.Snapshots.Select(ProjectionOf),
+                recording.DomainState!.Snapshots.Select(ProjectionOf),
                 snapshots.Select(ProjectionOf));
             Assert.Equal(
                 recording.DomainState.Deltas.Select(ProjectionOf),

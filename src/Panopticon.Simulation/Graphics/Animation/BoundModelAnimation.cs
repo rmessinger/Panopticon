@@ -20,7 +20,7 @@ public sealed class BoundModelAnimation
         string name,
         TimeSpan duration,
         AnimationClip[] clips,
-        MorphWeightTrack[]? morphTracks = null)
+        MorphWeightTrack[] morphTracks = null)
     {
         Name = name;
         Duration = duration;

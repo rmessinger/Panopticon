@@ -1081,7 +1081,7 @@ public sealed class ImportedAssetTests
             "Idle",
             TimeSpan.FromSeconds(1),
             Array.Empty<ImportedAnimationChannel>(),
-            new ImportedMorphAnimationChannel?[] { null }));
+            new ImportedMorphAnimationChannel?[] { null }!));
     }
 
     [Fact]

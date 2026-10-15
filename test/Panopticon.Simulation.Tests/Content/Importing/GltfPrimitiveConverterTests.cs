@@ -5,7 +5,10 @@ using System.Numerics;
 using System.Text;
 using Panopticon.Content.Importing;
 using Panopticon.Content.Importing.Gltf;
+using SharpGLTF.Memory;
 using Xunit;
+using DimensionType = SharpGLTF.Schema2.DimensionType;
+using EncodingType = SharpGLTF.Schema2.EncodingType;
 
 namespace Panopticon.Tests.Content.Importing;
 
@@ -61,12 +64,12 @@ public class GltfPrimitiveConverterTests
 
         var positionView = model.UseBufferView(positionData);
         var positionAccessor = model.CreateAccessor("POSITION");
-        positionAccessor.SetVertexData(positionView, 0, vertexCount, SharpGLTF.Schema2.DimensionType.VEC3, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        positionAccessor.SetVertexData(positionView, 0, vertexCount, new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT));
         primitive.SetVertexAccessor("POSITION", positionAccessor);
 
         var normalView = model.UseBufferView(normalData);
         var normalAccessor = model.CreateAccessor("NORMAL");
-        normalAccessor.SetVertexData(normalView, 0, vertexCount, SharpGLTF.Schema2.DimensionType.VEC3, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        normalAccessor.SetVertexData(normalView, 0, vertexCount, new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT));
         primitive.SetVertexAccessor("NORMAL", normalAccessor);
 
         if (indexData != null)
@@ -157,12 +160,12 @@ public class GltfPrimitiveConverterTests
 
         var positionView = model.UseBufferView(EncodeFloats(TrianglePositions));
         var positionAccessor = model.CreateAccessor("POSITION");
-        positionAccessor.SetVertexData(positionView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC3, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        positionAccessor.SetVertexData(positionView, 0, 3, new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT));
         primitive.SetVertexAccessor("POSITION", positionAccessor);
 
         var normalView = model.UseBufferView(EncodeFloats(TriangleNormals));
         var normalAccessor = model.CreateAccessor("NORMAL");
-        normalAccessor.SetVertexData(normalView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC3, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        normalAccessor.SetVertexData(normalView, 0, 3, new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT));
         primitive.SetVertexAccessor("NORMAL", normalAccessor);
 
         var tangentData = EncodeFloats(
@@ -171,7 +174,7 @@ public class GltfPrimitiveConverterTests
             1, 0, 0, 1);
         var tangentView = model.UseBufferView(tangentData);
         var tangentAccessor = model.CreateAccessor("TANGENT");
-        tangentAccessor.SetVertexData(tangentView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC4, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        tangentAccessor.SetVertexData(tangentView, 0, 3, new AttributeFormat(DimensionType.VEC4, EncodingType.FLOAT));
         primitive.SetVertexAccessor("TANGENT", tangentAccessor);
 
         var result = GltfPrimitiveConverter.Convert(primitive, IdentityAttachment(), Options, _ => PlaceholderMaterial());
@@ -194,18 +197,18 @@ public class GltfPrimitiveConverterTests
 
         var positionView = model.UseBufferView(EncodeFloats(TrianglePositions));
         var positionAccessor = model.CreateAccessor("POSITION");
-        positionAccessor.SetVertexData(positionView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC3, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        positionAccessor.SetVertexData(positionView, 0, 3, new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT));
         primitive.SetVertexAccessor("POSITION", positionAccessor);
 
         var normalView = model.UseBufferView(EncodeFloats(TriangleNormals));
         var normalAccessor = model.CreateAccessor("NORMAL");
-        normalAccessor.SetVertexData(normalView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC3, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        normalAccessor.SetVertexData(normalView, 0, 3, new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT));
         primitive.SetVertexAccessor("NORMAL", normalAccessor);
 
         var uvData = EncodeFloats(0.25f, 0.5f, 0.75f, 0.125f, 0.5f, 0.5f);
         var uvView = model.UseBufferView(uvData);
         var uvAccessor = model.CreateAccessor("TEXCOORD_0");
-        uvAccessor.SetVertexData(uvView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC2, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        uvAccessor.SetVertexData(uvView, 0, 3, new AttributeFormat(DimensionType.VEC2, EncodingType.FLOAT));
         primitive.SetVertexAccessor("TEXCOORD_0", uvAccessor);
 
         var result = GltfPrimitiveConverter.Convert(primitive, IdentityAttachment(), Options, _ => PlaceholderMaterial());
@@ -223,7 +226,7 @@ public class GltfPrimitiveConverterTests
         var model = primitive.LogicalParent.LogicalParent;
         var colorView = model.UseBufferView(EncodeFloats(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1));
         var colorAccessor = model.CreateAccessor("COLOR_0");
-        colorAccessor.SetVertexData(colorView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC4, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        colorAccessor.SetVertexData(colorView, 0, 3, new AttributeFormat(DimensionType.VEC4, EncodingType.FLOAT));
         primitive.SetVertexAccessor("COLOR_0", colorAccessor);
 
         Assert.Throws<NotSupportedException>(() =>
@@ -260,7 +263,7 @@ public class GltfPrimitiveConverterTests
         var primitive = mesh.CreatePrimitive();
         var positionView = model.UseBufferView(EncodeFloats(TrianglePositions));
         var positionAccessor = model.CreateAccessor("POSITION");
-        positionAccessor.SetVertexData(positionView, 0, 3, SharpGLTF.Schema2.DimensionType.VEC3, SharpGLTF.Schema2.EncodingType.FLOAT, false);
+        positionAccessor.SetVertexData(positionView, 0, 3, new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT));
         primitive.SetVertexAccessor("POSITION", positionAccessor);
 
         Assert.Throws<InvalidDataException>(() =>

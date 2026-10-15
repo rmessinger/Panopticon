@@ -51,7 +51,7 @@ public sealed class AnimationInstance
 
     internal AnimationInstance(ModelBoneInstance[] modelBoneInstances, BoundModelAnimation animation,
         AnimationMode mode, AnimationFlags flags, GameObject gameObject, IRandom random,
-        ModelPropertyAnimationState propertyState, ModelMeshInstance[]? meshInstances = null)
+        ModelPropertyAnimationState propertyState, ModelMeshInstance[] meshInstances = null)
     {
         if (animation.MorphTracks.Length > 0 &&
             (meshInstances is null || meshInstances.Length == 0))

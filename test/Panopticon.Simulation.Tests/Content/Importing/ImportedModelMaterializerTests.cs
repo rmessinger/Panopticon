@@ -514,7 +514,7 @@ public sealed class ImportedModelMaterializerTests
         var meshPart = Assert.Single(modelMesh.MeshParts);
         Assert.True(meshPart.BlendEnabled);
         Assert.Same(
-            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            graphics.Context.ShaderResources!.PbrMetallicRoughness,
             meshPart.Material.ForwardPass!.ShaderSet);
 
         // Equivalent second materialization reuses the cached material.
@@ -549,10 +549,10 @@ public sealed class ImportedModelMaterializerTests
         Assert.Single(skinnedMesh.MeshParts);
 
         Assert.Same(
-            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            graphics.Context.ShaderResources!.PbrMetallicRoughness,
             staticMesh.MeshParts[0].Material.ForwardPass!.ShaderSet);
         Assert.Same(
-            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            graphics.Context.ShaderResources!.PbrMetallicRoughness,
             skinnedMesh.MeshParts[0].Material.ForwardPass!.ShaderSet);
 
         // Same payload values and equivalent embedded content: one cached material for both.
@@ -579,7 +579,7 @@ public sealed class ImportedModelMaterializerTests
 
         var mesh = Assert.IsType<ModelMesh>(model.SubObjects[0].RenderObject);
         Assert.Same(
-            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            graphics.Context.ShaderResources!.PbrMetallicRoughness,
             Assert.Single(mesh.MeshParts).Material.ForwardPass!.ShaderSet);
     }
 
@@ -597,7 +597,7 @@ public sealed class ImportedModelMaterializerTests
 
         var modelMesh = Assert.IsType<ModelMesh>(model.SubObjects[0].RenderObject);
         Assert.Same(
-            graphics.Context.ShaderResources.PbrMetallicRoughness,
+            graphics.Context.ShaderResources!.PbrMetallicRoughness,
             Assert.Single(modelMesh.MeshParts).Material.ForwardPass!.ShaderSet);
     }
 

@@ -149,7 +149,7 @@ public static class ExternalModelProtocolJson
             Lighting = options.Lighting,
             SelectedAnimationKey = options.SelectedAnimationKey,
             AnimationSampleTime = options.AnimationSampleTime,
-            MorphWeights = new Dictionary<string, float>(options.MorphWeights, StringComparer.Ordinal),
+            MorphWeights = new Dictionary<string, float>(options.MorphWeights ?? new Dictionary<string, float>(), StringComparer.Ordinal),
         };
     }
 

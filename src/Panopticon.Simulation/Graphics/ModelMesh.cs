@@ -42,10 +42,10 @@ public sealed partial class ModelMesh : ModelRenderObject
     /// feature-disabled path. Morph-enabled instances deform a dynamic copy; the static
     /// vertex buffer stays intact.
     /// </summary>
-    internal readonly ModelMorphTargetSet? MorphTargetSet;
+    internal readonly ModelMorphTargetSet MorphTargetSet;
 
     /// <summary>Base vertices for CPU morph application; null when the mesh has no morph targets.</summary>
-    internal readonly MeshShaderResources.MeshVertex.Basic[]? MorphBaseVertices;
+    internal readonly MeshShaderResources.MeshVertex.Basic[] MorphBaseVertices;
 
     public readonly bool Skinned;
 

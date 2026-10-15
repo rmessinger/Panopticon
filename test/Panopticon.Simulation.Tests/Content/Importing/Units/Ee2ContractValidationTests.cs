@@ -124,7 +124,7 @@ public sealed class Ee2ContractValidationTests(ITestOutputHelper output)
         var absentAmmo = new Ee2ContractResult("ee2:LightMounted2UpgradeEpoch13") { AmmunitionAbsentInSource = true };
 
         Assert.False(failed.Passed);
-        Assert.Equal(2, failed.FailureReason.Split("; ").Length);
+        Assert.Equal(2, failed.FailureReason!.Split("; ").Length);
         Assert.True(absentAmmo.Passed);
         Assert.True(absentAmmo.AmmunitionAbsentInSource);
     }

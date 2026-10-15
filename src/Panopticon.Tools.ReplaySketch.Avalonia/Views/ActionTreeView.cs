@@ -393,7 +393,7 @@ public sealed class ActionTreeView : UserControl
         var labelEntry = new TextBox
         {
             Text = _controller!.FlyoutDraft!.Label,
-            Watermark = "Label",
+            PlaceholderText = "Label",
             Foreground = FieldBrush,
             Background = FieldBackground,
         };

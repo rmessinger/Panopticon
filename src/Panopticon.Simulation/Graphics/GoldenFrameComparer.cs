@@ -40,7 +40,7 @@ public sealed record GoldenComparison
 
     public bool Passed { get; init; }
 
-    public string? FailureReason { get; init; }
+    public string FailureReason { get; init; }
 }
 
 /// <summary>
@@ -54,7 +54,7 @@ public static class GoldenFrameComparer
         CapturedFrame golden,
         ImageQualityScores actualScores,
         ImageQualityScores goldenScores,
-        GoldenTolerance? tolerance = null)
+        GoldenTolerance tolerance = null)
     {
         ArgumentNullException.ThrowIfNull(actual);
         ArgumentNullException.ThrowIfNull(golden);
@@ -104,7 +104,7 @@ public static class GoldenFrameComparer
         var sharpnessDelta = Math.Abs(actualScores.Sharpness - goldenScores.Sharpness);
         var edgeAliasingDelta = Math.Abs(actualScores.EdgeAliasing - goldenScores.EdgeAliasing);
 
-        string? reason = null;
+        string reason = null;
         if (differingFraction > limits.MaxDifferingPixelFraction)
         {
             reason = $"Differing pixel fraction {differingFraction:0.000000} exceeds {limits.MaxDifferingPixelFraction:0.000000}.";

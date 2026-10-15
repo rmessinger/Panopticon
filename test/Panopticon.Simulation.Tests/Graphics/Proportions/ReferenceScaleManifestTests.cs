@@ -53,7 +53,7 @@ public class ReferenceScaleManifestTests
 
             var entry = fileSystem.GetFile($"art/w3d/{model}.w3d");
             string hash;
-            using (var stream = entry.Open())
+            using (var stream = entry!.Open())
             {
                 hash = Convert.ToHexString(SHA256.HashData(stream));
             }

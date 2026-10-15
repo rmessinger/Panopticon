@@ -8,7 +8,7 @@ namespace Panopticon.Simulation;
 /// A domain event drained into the operational stream (WI-A1-19): the kind identifies the event
 /// family and the optional detail carries a compact payload.
 /// </summary>
-public sealed record DomainEvent(string Kind, string? Detail = null);
+public sealed record DomainEvent(string Kind, string Detail = null);
 
 /// <summary>
 /// Reconstructable domain contract (WI-A1-19): a domain model that can drive operational

@@ -59,7 +59,7 @@ public sealed class AsyncCommand : ICommand
     void ICommand.Execute(object? parameter)
     {
         ExecuteAsync(parameter).ContinueWith(
-            task => UnhandledException?.Invoke(this, task.Exception.GetBaseException()),
+            task => UnhandledException?.Invoke(this, task.Exception!.GetBaseException()),
             TaskContinuationOptions.OnlyOnFaulted);
     }
 
