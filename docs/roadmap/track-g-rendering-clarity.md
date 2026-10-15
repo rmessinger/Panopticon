@@ -47,8 +47,11 @@ Diagrams are required before any phase's first source-edit task card is marked `
 | G8 | [`g8-shadow-quality.md`](deep-dives/g8-shadow-quality.md) | [Architecture Diagrams](deep-dives/g8-shadow-quality.md#5-architecture-diagrams) | [`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md), [`WI-G8-02`](agent/cards/WI-G8-02-four-cascade-tier-and-slope-scaled-bias.md) |
 | G9 | [`g9-resolution-independent-2d.md`](deep-dives/g9-resolution-independent-2d.md) | [Architecture Diagrams](deep-dives/g9-resolution-independent-2d.md#5-architecture-diagrams) | [`WI-G9-01`](agent/cards/WI-G9-01-audit-2d-ui-resolution-path.md), [`WI-G9-02`](agent/cards/WI-G9-02-native-resolution-2d-layer.md), [`WI-G9-03`](agent/cards/WI-G9-03-dynamic-hud-chrome.md) |
 | G10 | [`g10-realistic-proportions.md`](deep-dives/g10-realistic-proportions.md) | [Architecture Diagrams](deep-dives/g10-realistic-proportions.md#5-architecture-diagrams) | [`WI-G10-01`](agent/cards/WI-G10-01-audit-proportions-and-reference-scale.md), [`WI-G10-02`](agent/cards/WI-G10-02-presentation-scale-overrides.md), [`WI-G10-03`](agent/cards/WI-G10-03-preset-wiring-and-golden-frames.md) |
+| G6 corrective | [macOS battle artifacts](plans/macos-battle-artifacts.md) | [Particle boundary](plans/macos-battle-artifacts.md#particle-presentation-boundary) | [WI-G6-03](agent/cards/WI-G6-03-clamp-particle-opacity.md) |
 
 ## Cross-track dependencies
+
+The shipped G6 milestone remains `Done`; corrective work is tracked separately.
 
 Hard dependencies are in the phase table above; these are the coordination notes:
 
