@@ -452,7 +452,7 @@ internal static class Ee2ParticleProofScenario
             }
         }
 
-        void OnBuildingRenderList(object sender, BuildingRenderListEventArgs e)
+        void OnBuildingRenderList(object? sender, BuildingRenderListEventArgs e)
         {
             if (muzzleInstance is null || Environment.GetEnvironmentVariable("EE2_PARTICLE_PROOF_HIDE_MODEL") == "1")
             {

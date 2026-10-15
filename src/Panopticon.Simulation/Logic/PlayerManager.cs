@@ -89,10 +89,10 @@ public sealed class PlayerManager : IPersistableObject
 
     // Skirmish slot i drives map player i + 2 (neutral and civilian come first); slots map 1:1
     // onto AI players, matching how Team is threaded below.
-    private static AI.AIDecisionPolicyPayload?[] BuildAIDecisionPolicies(
+    private static AI.AIDecisionPolicyPayload[] BuildAIDecisionPolicies(
         Data.Map.Player[] mapPlayers, PlayerSetting[] playerSettings)
     {
-        var policies = new AI.AIDecisionPolicyPayload?[mapPlayers.Length];
+        var policies = new AI.AIDecisionPolicyPayload[mapPlayers.Length];
 
         if (playerSettings == null)
         {
@@ -110,7 +110,7 @@ public sealed class PlayerManager : IPersistableObject
     // This needs to operate on the entire player list, because players have references to each other
     // (allies and enemies).
     private IEnumerable<Player> CreatePlayers(
-        Data.Map.Player[] mapPlayers, GameType gameType, AI.AIDecisionPolicyPayload?[]? aiDecisionPolicies = null)
+        Data.Map.Player[] mapPlayers, GameType gameType, AI.AIDecisionPolicyPayload[] aiDecisionPolicies = null)
     {
         var players = new Dictionary<string, Player>();
         var allies = new Dictionary<string, string[]>();

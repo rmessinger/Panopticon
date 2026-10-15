@@ -169,13 +169,13 @@ internal sealed class ModelMeshInstance : DisposableBase
     public readonly List<ModelMeshPartInstance> MeshPartInstances = new();
 
     /// <summary>Per-instance dynamic vertex buffer for morph-enabled meshes; null otherwise.</summary>
-    internal readonly DeviceBuffer? MorphVertexBuffer;
+    internal readonly DeviceBuffer MorphVertexBuffer;
 
     /// <summary>Current CPU morph result; only valid when MorphVertexBuffer is present.</summary>
-    internal readonly MeshShaderResources.MeshVertex.Basic[]? MorphedVertices;
+    internal readonly MeshShaderResources.MeshVertex.Basic[] MorphedVertices;
 
-    private readonly ModelMorphTargetSet? _morphTargetSet;
-    private readonly MeshShaderResources.MeshVertex.Basic[]? _morphBaseVertices;
+    private readonly ModelMorphTargetSet _morphTargetSet;
+    private readonly MeshShaderResources.MeshVertex.Basic[] _morphBaseVertices;
     private readonly float[] _morphWeights;
     private bool _morphDirty;
 
@@ -281,7 +281,7 @@ internal sealed class ModelMeshInstance : DisposableBase
     internal int MorphWeightCount => _morphWeights.Length;
 
     /// <summary>Live weight vector snapshot; null when the mesh has no morph targets.</summary>
-    internal float[]? MorphWeights => _morphTargetSet == null ? null : _morphWeights;
+    internal float[] MorphWeights => _morphTargetSet == null ? null : _morphWeights;
 
     /// <summary>Copies the morph set's default weights into the given span.</summary>
     internal void CopyMorphDefaultWeights(Span<float> destination)

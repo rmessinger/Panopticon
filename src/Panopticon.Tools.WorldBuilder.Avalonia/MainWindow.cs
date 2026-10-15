@@ -237,7 +237,7 @@ public sealed class MainWindow : Window
         edit.Menu!.Items.Add(Item("Select All", null, (_, _) => _viewModel.ActiveTool = _viewModel.SelectTool));
         edit.Menu!.Items.Add(Item("Delete Selected", null, (_, _) => _viewModel.DeleteSelected()));
         edit.Menu!.Items.Add(new NativeMenuItemSeparator());
-        edit.Menu!.Items.Add(Item("Map Settings…", null, (_, _) => ShowDialog(new MapSettingsWindow(_viewModel.CurrentMap))));
+        edit.Menu!.Items.Add(Item("Map Settings…", null, (_, _) => ShowOwnedDialog(new MapSettingsWindow(_viewModel.CurrentMap))));
         menu.Items.Add(edit);
 
         var view = HeaderMenu("View");
@@ -255,15 +255,15 @@ public sealed class MainWindow : Window
         var windows = HeaderMenu("Windows");
         windows.Menu!.Items.Add(Item("Scripts…", null, async (_, _) =>
             await AppMessageBox.ShowAsync(this, "Scripts", "Scripts Editor not yet implemented.")));
-        windows.Menu!.Items.Add(Item("Teams…", null, (_, _) => ShowDialog(new TeamsWindow(_viewModel.CurrentMap))));
-        windows.Menu!.Items.Add(Item("Player List…", null, (_, _) => ShowDialog(new PlayerListWindow(_viewModel.CurrentMap))));
+        windows.Menu!.Items.Add(Item("Teams…", null, (_, _) => ShowOwnedDialog(new TeamsWindow(_viewModel.CurrentMap))));
+        windows.Menu!.Items.Add(Item("Player List…", null, (_, _) => ShowOwnedDialog(new PlayerListWindow(_viewModel.CurrentMap))));
         windows.Menu!.Items.Add(new NativeMenuItemSeparator());
-        windows.Menu!.Items.Add(Item("Map INI Editor…", null, (_, _) => ShowDialog(new MapIniWindow(_viewModel.CurrentMap))));
-        windows.Menu!.Items.Add(Item("Map String Table…", null, (_, _) => ShowDialog(new MapStrEditorWindow(_viewModel.CurrentMap))));
+        windows.Menu!.Items.Add(Item("Map INI Editor…", null, (_, _) => ShowOwnedDialog(new MapIniWindow(_viewModel.CurrentMap))));
+        windows.Menu!.Items.Add(Item("Map String Table…", null, (_, _) => ShowOwnedDialog(new MapStrEditorWindow(_viewModel.CurrentMap))));
         menu.Items.Add(windows);
 
         var help = HeaderMenu("Help");
-        help.Menu!.Items.Add(Item("Settings…", null, (_, _) => ShowDialog(new SettingsWindow())));
+        help.Menu!.Items.Add(Item("Settings…", null, (_, _) => ShowOwnedDialog(new SettingsWindow())));
         help.Menu!.Items.Add(new NativeMenuItemSeparator());
         help.Menu!.Items.Add(Item("About…", null, async (_, _) =>
             await AppMessageBox.ShowAsync(
@@ -319,7 +319,7 @@ public sealed class MainWindow : Window
         return item;
     }
 
-    private async void ShowDialog(Window dialog)
+    private async void ShowOwnedDialog(Window dialog)
     {
         await dialog.ShowDialog(this);
     }

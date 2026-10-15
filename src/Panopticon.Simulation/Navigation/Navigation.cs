@@ -174,7 +174,7 @@ public class Navigation
         }
     }
 
-    private PathRequestQueue? _pathRequestQueue;
+    private PathRequestQueue _pathRequestQueue;
 
     /// <summary>
     /// Frames an async path request may remain unresolved before counting as a deadline miss

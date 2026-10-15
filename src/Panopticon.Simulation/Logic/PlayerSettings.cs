@@ -27,7 +27,7 @@ public struct PlayerSetting
 
     /// <summary>Which AI decision policy this slot's AI player runs; null is the default
     /// rule-based behavior.</summary>
-    public AIDecisionPolicyPayload? AIPolicy { get; set; }
+    public AIDecisionPolicyPayload AIPolicy { get; set; }
 
     public PlayerSetting(int? startPosition, string sideName, ColorRgb color, int team, PlayerOwner owner = PlayerOwner.None, string name = "", bool isLocalForMultiplayer = false)
     {

@@ -27,9 +27,9 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
     /// than 1 the world matrix is scaled by value, keeping engine FX aligned with resized
     /// aircraft without mutating the shared bone transform the delegate exposes.
     /// </summary>
-    private readonly Func<float>? _getVisualScale;
+    private readonly Func<float> _getVisualScale;
 
-    private readonly Func<Vector3>? _getPresentationAnchor;
+    private readonly Func<Vector3> _getPresentationAnchor;
     private readonly Matrix4x4 _worldMatrix;
 
     private readonly FXParticleEmissionVelocityBase _velocityType;
@@ -104,8 +104,8 @@ public sealed class ParticleSystem : RenderObject, IPersistableObject
         FXParticleSystemTemplate template,
         AssetLoadContext loadContext,
         GetMatrixReferenceDelegate getWorldMatrix,
-        Func<float>? getVisualScale = null,
-        Func<Vector3>? getPresentationAnchor = null)
+        Func<float> getVisualScale = null,
+        Func<Vector3> getPresentationAnchor = null)
         : this(template, loadContext)
     {
         _getWorldMatrix = getWorldMatrix;

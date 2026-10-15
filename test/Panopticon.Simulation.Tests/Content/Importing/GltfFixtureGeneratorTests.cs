@@ -34,7 +34,7 @@ public class GltfFixtureGeneratorTests
             GenerateAll(first);
             GenerateAll(second);
 
-            foreach (var file in Directory.GetFiles(first).Select(Path.GetFileName).Order())
+            foreach (var file in Directory.GetFiles(first).Select(f => Path.GetFileName(f) ?? string.Empty).Order())
             {
                 Assert.True(File.Exists(Path.Combine(second, file)), $"Missing in second run: {file}");
 
@@ -68,7 +68,7 @@ public class GltfFixtureGeneratorTests
             GenerateAll(generated);
 
             var root = FixtureRoot;
-            foreach (var file in Directory.GetFiles(generated).Select(Path.GetFileName).Order())
+            foreach (var file in Directory.GetFiles(generated).Select(f => Path.GetFileName(f) ?? string.Empty).Order())
             {
                 var committedPath = Path.Combine(root, file);
                 Assert.True(File.Exists(committedPath), $"Committed fixture missing: {file}");

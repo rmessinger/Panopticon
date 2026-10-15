@@ -641,7 +641,7 @@ public static class ScenarioCaptureRunner
                 {
                     var source = actors[attack.SourceActorId].Object;
                     var target = actors[attack.TargetActorId].Object;
-                    Weapon weapon = null;
+                    Weapon? weapon = null;
                     if (!string.IsNullOrWhiteSpace(attack.WeaponName))
                     {
                         weapon = source.ActiveWeaponSet.Weapons

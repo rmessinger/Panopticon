@@ -8,6 +8,7 @@ using Panopticon.Gui.Wnd.Controls;
 using Panopticon.Mathematics;
 using SixLabors.Fonts;
 using Veldrid;
+using FontWeight = Panopticon.Gui.FontWeight;
 
 namespace Panopticon.Mods.Generals.Gui;
 

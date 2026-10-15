@@ -64,9 +64,9 @@ public sealed class MissileAIUpdate : AIUpdate
     // Rocket-motor exhaust (the weapon's ProjectileExhaust system): starts at ignition,
     // follows the model's tail, finishes on fuel-out or death. SystemLifetime is 0 for these
     // templates, so the system never stops emitting on its own.
-    private FXParticleSystemTemplate? _exhaustTemplate;
+    private FXParticleSystemTemplate _exhaustTemplate;
     private Vector3 _exhaustTailOffset;
-    private ParticleSystem? _exhaustSystem;
+    private ParticleSystem _exhaustSystem;
     private Matrix4x4 _exhaustMatrix;
 
     internal void AttachExhaust(FXParticleSystemTemplate template, Vector3 tailOffset)

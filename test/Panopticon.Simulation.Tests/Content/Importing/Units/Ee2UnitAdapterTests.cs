@@ -182,7 +182,7 @@ public class Ee2UnitAdapterTests
     [Fact]
     public void MaterializesAndPublishesIntoEe2Collections()
     {
-        var store = new AssetStore(SageGame.CncGenerals, null, null, null, null, null, null, OnDemandAssetLoadStrategy.None);
+        var store = new AssetStore(SageGame.CncGenerals, null!, null!, null!, null!, null!, null!, OnDemandAssetLoadStrategy.None);
         store.PushScope();
         var publisher = new UnitContentPublisher(store);
         var policy = new UnitConversionPolicy(SageGame.CncGenerals, gameUnitsPerSourceDistance: 12);

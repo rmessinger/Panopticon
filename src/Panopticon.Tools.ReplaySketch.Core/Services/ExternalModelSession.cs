@@ -228,7 +228,7 @@ public sealed class ExternalModelSession : IDisposable
                 ? _snapshot.SourceDisplayName
                 : _animationCatalog?.SourceDisplayName;
 
-            _pairing = new ExternalAnimationPairing(document, sourceName, descriptor);
+            _pairing = new ExternalAnimationPairing(document, sourceName ?? string.Empty, descriptor);
             _previewOptions = _previewOptions with
             {
                 SelectedAnimationKey = selectedKey,
@@ -356,7 +356,7 @@ public sealed class ExternalModelSession : IDisposable
 
     public void Dispose()
     {
-        List<IDisposable> pending;
+        List<IDisposable?> pending;
 
         lock (_gate)
         {

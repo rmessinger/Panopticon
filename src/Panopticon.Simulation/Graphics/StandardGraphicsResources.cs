@@ -33,7 +33,7 @@ internal sealed class StandardGraphicsResources : DisposableBase
     /// </summary>
     public Sampler WorldAnisoSampler { get; private set; }
 
-    private Sampler? _retiredWorldAnisoSampler;
+    private Sampler _retiredWorldAnisoSampler;
     private int _appliedWorldAnisotropy;
     private float _appliedWorldLodBias;
 

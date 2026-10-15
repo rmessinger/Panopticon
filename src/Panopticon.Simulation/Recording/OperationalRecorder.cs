@@ -23,23 +23,23 @@ internal sealed class OperationalRecorder : IDisposable
     private readonly string _bundleDirectory;
     private readonly string _runId;
     private readonly OperationalStreamWriter _stream;
-    private readonly IDomainStateProjection? _projection;
-    private readonly IReconstructableDomain? _reconstructable;
+    private readonly IDomainStateProjection _projection;
+    private readonly IReconstructableDomain _reconstructable;
     private readonly ISimulationDomainModel _domain;
     private readonly SignatureTolerances _tolerances;
     private readonly bool _recordT1;
     private readonly uint _seed;
-    private readonly string? _scenarioId;
+    private readonly string _scenarioId;
     private readonly List<RunCheckpointRecord> _checkpoints = new();
     private readonly List<OperationalDispatchedOrder> _dispatched = new();
-    private DomainStateFrame? _previousDomainState;
+    private DomainStateFrame _previousDomainState;
 
     internal OperationalRecorder(
         SimulationHost host,
         IGame game,
         WorldStateSampler sampler,
         uint seed,
-        string? scenarioId,
+        string scenarioId,
         RecordingOptions options,
         RecordingCadence cadence,
         SignatureTolerances tolerances)
@@ -157,7 +157,7 @@ internal sealed class OperationalRecorder : IDisposable
         _stream.WriteChunk(frame, records);
     }
 
-    private void OnTickComplete(object? sender, SimulationHostTickEventArgs e)
+    private void OnTickComplete(object sender, SimulationHostTickEventArgs e)
     {
         if (_cadence.IsCheckpointBoundary(e.LogicFrame.Value))
         {
