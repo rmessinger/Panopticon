@@ -34,7 +34,7 @@ internal sealed class OperationalStreamReader : IDisposable
         }
     }
 
-    private OperationalStreamReader(Stream stream, BinaryReader reader, long dataStart, string runId, string domainId, int schemaVersion, IGame? game)
+    private OperationalStreamReader(Stream stream, BinaryReader reader, long dataStart, string runId, string domainId, int schemaVersion, IGame game)
     {
         _stream = stream;
         _reader = reader;
@@ -45,7 +45,7 @@ internal sealed class OperationalStreamReader : IDisposable
         DomainSchemaVersion = schemaVersion;
     }
 
-    private readonly IGame? _game;
+    private readonly IGame _game;
 
     public string RunId { get; }
 
@@ -53,7 +53,7 @@ internal sealed class OperationalStreamReader : IDisposable
 
     public int DomainSchemaVersion { get; }
 
-    public static OperationalStreamReader Open(Stream stream, IGame? game = null)
+    public static OperationalStreamReader Open(Stream stream, IGame game = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
@@ -88,7 +88,7 @@ internal sealed class OperationalStreamReader : IDisposable
     }
 
     /// <summary>Returns the footer index, or null when the footer is absent or truncated.</summary>
-    public IReadOnlyList<OperationalChunkEntry>? TryReadFooterIndex()
+    public IReadOnlyList<OperationalChunkEntry> TryReadFooterIndex()
     {
         _stream.Position = _dataStart;
         while (_stream.Position < _stream.Length)

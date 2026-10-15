@@ -42,7 +42,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
     {
         var root = InstallRoot();
         var patches = Directory.EnumerateFiles(Path.Combine(root, "zips"), "db_*.zip")
-            .Select(Path.GetFileName)
+            .Select(path => Path.GetFileName(path)!)
             .OrderBy(name => name, StringComparer.Ordinal)
             .ToArray();
 
@@ -58,7 +58,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
         foreach (var path in files.DdfPaths.Where(path => filter?.Invoke(path) != false))
         {
             var entry = files.Database.GetFile(path);
-            using var reader = new StreamReader(entry.Open());
+            using var reader = new StreamReader(entry!.Open());
             foreach (var record in DdfReader.Read(reader.ReadToEnd(), path))
             {
                 switch (record.Type)
@@ -115,7 +115,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
     private static HashSet<string> ReadUnitFileConfig(Ee2SourceFiles files)
     {
         var entry = files.Database.GetFile("db/dbunitfiles.cfg");
-        using var reader = new StreamReader(entry.Open());
+        using var reader = new StreamReader(entry!.Open());
         return reader.ReadToEnd()
             .Split('\n')
             .Select(line => line.Trim().Trim('"'))
@@ -164,7 +164,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
     {
         var files = OpenInstall();
         var entry = files.Database.GetFile(files.UnitTablePath);
-        using var reader = new StreamReader(entry.Open());
+        using var reader = new StreamReader(entry!.Open());
         var table = Ee2CsvTable.Read(reader.ReadToEnd(), files.UnitTablePath);
 
         Assert.Equal(396, RowCount(files));
@@ -180,7 +180,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
     private static int RowCount(Ee2SourceFiles files)
     {
         var entry = files.Database.GetFile(files.UnitTablePath);
-        using var reader = new StreamReader(entry.Open());
+        using var reader = new StreamReader(entry!.Open());
         var text = reader.ReadToEnd();
         return text.Split('\n').Count(line => line.Length > 0 && !line.StartsWith("//", StringComparison.Ordinal));
     }
@@ -325,7 +325,7 @@ public sealed class Ee2InventoryTests(ITestOutputHelper output)
             // WI-M3-02: the mapped rps type replaces the M2-era UNRESISTABLE one-to-one policy;
             // the class table lives in Ee2ReferenceRps and the profiles.
             Assert.Equal(ExpectedDamageType(rowKey), weapon.Nuggets.OfType<Panopticon.Logic.Object.DamageNugget>().Single().DamageType);
-            output.WriteLine($"{rowKey}: kinds [{string.Join(",", definition.KindOf.ToString().Split(", "))}]");
+            output.WriteLine($"{rowKey}: kinds [{string.Join(",", definition.KindOf.ToString()!.Split(", "))}]");
         }
 
         // Aircraft get the typed jet module and both locomotor sets; ground units do not.

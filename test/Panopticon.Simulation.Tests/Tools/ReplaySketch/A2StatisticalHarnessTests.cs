@@ -57,6 +57,7 @@ public class A2StatisticalHarnessTests : MockedGameTest
         ]);
 
         var frames = report.Metric("totalLogicFrames");
+        Assert.NotNull(frames);
         var outlier = Assert.Single(frames.Outliers);
         Assert.Equal(4, outlier.RunIndex);
         Assert.Equal(900d, outlier.Value, 6);
@@ -105,6 +106,7 @@ public class A2StatisticalHarnessTests : MockedGameTest
         Assert.True(report.AllInvariantsPassed);
         Assert.Empty(report.InvariantFailures);
         var frames = report.Metric("totalLogicFrames");
+        Assert.NotNull(frames);
         Assert.Equal(3, frames.SampleCount);
     }
 
@@ -145,6 +147,7 @@ public class A2StatisticalHarnessTests : MockedGameTest
         Assert.Equal(runCount, report.RunCount);
 
         var frames = report.Metric("totalLogicFrames");
+        Assert.NotNull(frames);
         Assert.Equal(runCount, frames.SampleCount);
         Assert.True(frames.ConfidenceHigh >= frames.ConfidenceLow);
 
@@ -259,6 +262,7 @@ public class A2StatisticalHarnessTests : MockedGameTest
         }
 
         var frames = aggregate.Metric("totalLogicFrames");
+        Assert.NotNull(frames);
         Assert.Equal(runCount, frames.SampleCount);
         Assert.All(aggregate.Samples, s => Assert.NotNull(s.Output));
         // The seed is recorded with each run for investigation; it is not compared across runs.

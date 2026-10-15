@@ -43,7 +43,7 @@ public sealed class ZipFileSystemTests : IDisposable
 
         using var fs = Create();
         var entry = fs.GetFile("A/B.TXT");
-        using var stream1 = entry.Open();
+        using var stream1 = entry!.Open();
         using var reader1 = new StreamReader(stream1);
         Assert.Equal("hello", reader1.ReadToEnd());
         using var stream2 = entry.Open();

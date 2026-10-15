@@ -19,7 +19,7 @@ public sealed class ModelAnimation : BaseAsset
 
     private readonly ConditionalWeakTable<Model, BoundModelAnimation> _modelBoundCache = new();
 
-    private readonly IReadOnlyList<ImportedMorphAnimationChannel>? _morphChannels;
+    private readonly IReadOnlyList<ImportedMorphAnimationChannel> _morphChannels;
 
     public TimeSpan Duration { get; }
 
@@ -29,7 +29,7 @@ public sealed class ModelAnimation : BaseAsset
         string name,
         TimeSpan duration,
         ModelAnimationChannel[] channels,
-        IReadOnlyList<ImportedMorphAnimationChannel>? morphChannels = null)
+        IReadOnlyList<ImportedMorphAnimationChannel> morphChannels = null)
     {
         SetNameAndInstanceId("ModelAnimation", name);
 
@@ -65,7 +65,7 @@ public sealed class ModelAnimation : BaseAsset
 
     private BoundModelAnimation ComputeModelBinding(Model model)
     {
-        Dictionary<string, int>? boneNameIndex = null;
+        Dictionary<string, int> boneNameIndex = null;
         var clips = new List<AnimationClip>(Channels.Length);
         for (var i = 0; i < Channels.Length; i++)
         {
@@ -261,7 +261,7 @@ public sealed class ModelAnimation : BaseAsset
                 $"Animation '{Name}' carries morph weight channels; morph animations must bind against a model.");
         }
 
-        Dictionary<string, int>? boneNameIndex = null;
+        Dictionary<string, int> boneNameIndex = null;
         var clips = new List<AnimationClip>(Channels.Length);
         for (var i = 0; i < Channels.Length; i++)
         {

@@ -137,7 +137,7 @@ public sealed class Game : DisposableBase, IGame
 
     // Set after a successful LoadMap so save-file writing (GameStateMap) can
     // record the map path and game type of the live run (WI-A1-13).
-    internal string? CurrentMapPath { get; private set; }
+    internal string CurrentMapPath { get; private set; }
 
     internal GameType CurrentGameType { get; private set; }
 
@@ -519,7 +519,7 @@ public sealed class Game : DisposableBase, IGame
         GraphicsBackend? preferredBackend,
         Configuration config,
         GameWindow window,
-        GraphicsSettings? graphicsSettings = null)
+        GraphicsSettings graphicsSettings = null)
     {
         using (GameTrace.TraceDurationEvent("Game()"))
         {

@@ -86,7 +86,7 @@ public sealed class RtsSimulationDomainModel : ISimulationDomainModel
         foreach (var player in _gameEngine.Game.PlayerManager.Players)
         {
             snapshot.Players.Add(new DomainPlayerMetrics(
-                player.DisplayName,
+                player.DisplayName ?? player.Name ?? string.Empty,
                 player.BankAccount.Money,
                 player.OwnedObjects.Count));
         }

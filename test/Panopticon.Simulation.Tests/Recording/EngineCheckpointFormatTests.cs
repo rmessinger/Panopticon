@@ -20,17 +20,13 @@ using Xunit.Abstractions;
 namespace Panopticon.Tests.Recording;
 
 [Collection("SerialGameTests")]
-public class EngineCheckpointFormatTests : StatePersisterTest, IDisposable
+public class EngineCheckpointFormatTests : StatePersisterTest
 {
     private readonly ITestOutputHelper _output;
 
     public EngineCheckpointFormatTests(ITestOutputHelper output)
     {
         _output = output;
-    }
-
-    public void Dispose()
-    {
     }
 
     [Fact]

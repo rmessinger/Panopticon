@@ -83,7 +83,9 @@ internal static class NifPropertyAnimationConverter
         else
         {
             var boolData = (NifBoolData)file.Blocks[controller.DataReference];
-            keys = boolData.Keys.Keys.Select(key => (key.Time, key.Value != 0)).ToList();
+            keys = (boolData.Keys?.Keys ?? [])
+                .Select(key => (key.Time, key.Value != 0))
+                .ToList();
         }
 
         if (keys.Count == 0)

@@ -74,7 +74,7 @@ public sealed class MapPreviewView : UserControl
         _noMapErrorLabel.TextWrapping = TextWrapping.Wrap;
         _noMapErrorLabel.Foreground = new SolidColorBrush(Color.Parse("#CCC"));
 
-        _installPathEntry.Watermark = "e.g. /path/to/Generals";
+        _installPathEntry.PlaceholderText = "e.g. /path/to/Generals";
         _installPathEntry.Foreground = new SolidColorBrush(Color.Parse("#CCC"));
         _installPathEntry.Background = new SolidColorBrush(Color.Parse("#333"));
         _installPathEntry.MinWidth = 240;

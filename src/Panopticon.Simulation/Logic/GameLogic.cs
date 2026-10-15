@@ -65,7 +65,7 @@ internal sealed class GameLogic : DisposableBase, IGameObjectCollection, IPersis
 
     public readonly IRandom Random;
 
-    internal uint[]? PendingRandomStateWords { get; set; }
+    internal uint[] PendingRandomStateWords { get; set; }
 
     internal void ApplyPendingRandomState()
     {

@@ -7,6 +7,7 @@ using System.Text;
 using Panopticon.Gui;
 using Panopticon.IO;
 using SixLabors.Fonts;
+using FontWeight = Panopticon.Gui.FontWeight;
 
 namespace Panopticon.Content;
 
