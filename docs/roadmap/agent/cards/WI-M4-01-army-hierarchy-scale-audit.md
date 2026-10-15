@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M4-01` |
 | Roadmap phase | [M4](../../track-m-mass-battle.md): army-scale AI |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none (A4-3, B4, M1 merged) |
@@ -42,9 +42,11 @@ Record how the A4-3 hierarchy behaves when sized for 1000 units per side, and fi
 
 ## Acceptance criteria
 
-- [ ] The actuation finding from step 1 is recorded with file and line evidence.
-- [ ] Each decision in step 5 is stated with its reason and the card that implements it.
-- [ ] The implementation plan lists WI-M4-01..06 in dependency order.
+- [x] The actuation finding from step 1 is recorded with file and line evidence.
+  - `OrderProcessor.cs` `MoveTo` (line 98) and `AttackObject`/`ForceAttackObject` (line 350) loop `player.SelectedUnits`; the soldier policy emits no `SetSelection`. Install-free evidence: `SoldierOrderActuationTests` (orders emitted, none selects).
+- [x] Each decision in step 5 is stated with its reason and the card that implements it.
+  - Squad size stays 8; no squad-group layer; no staggering; `Synchronize` stays as audited (front-loaded cost, per-sync allocations recorded for B2); aircraft split into air squads (WI-M4-05); actuation is per-squad `SetSelection` (WI-M4-03) collapsed to one `MoveTo` through `GroupMovement` (WI-M4-04).
+- [x] The implementation plan lists WI-M4-01..06 in dependency order.
 
 ## Validation commands
 

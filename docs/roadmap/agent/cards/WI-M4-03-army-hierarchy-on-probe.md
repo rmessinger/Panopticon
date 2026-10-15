@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M4-03` |
 | Roadmap phase | [M4](../../track-m-mass-battle.md): army-scale AI |
-| Status | `Draft` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M4-01`, `WI-M4-02` |
@@ -24,9 +24,9 @@ Both M1 armies run the hierarchical policy instead of scripted orders, sized per
 
 ## Steps
 
-1. Apply the WI-M4-01 sizing decisions in `SquadHierarchy` (squad size, linear assignment, aircraft excluded from ground squads); keep assignment and promotion deterministic.
+1. Apply the WI-M4-01 sizing decisions in `SquadHierarchy` (squad size stays 8, no squad-group layer or staggering, `Synchronize` stays as audited, aircraft excluded from ground squads); keep assignment and promotion deterministic.
 2. Apply the WI-M4-01 actuation decision so each soldier order reaches its own unit (per-squad selection before the squad's orders).
-3. Add an army-AI mode to the capacity probe (config knob or new built-in scenario per WI-M4-01): players get `AIPolicy` `Hierarchical`, AI stays enabled, scripted ground orders are skipped. Aircraft keep the M1 scripted sortie loop until WI-M4-05.
+3. Add an army-AI mode to the capacity probe (TestHarness knob `MassBattleCapacityProbeArmyAi`, default off): players get `AIPolicy` `Hierarchical`, AI stays enabled, scripted ground orders are skipped. Aircraft keep the M1 scripted sortie loop until WI-M4-05.
 4. Record per decision tick: squads, members, unassigned eligible units, squads without a live commander; write them to the engagement report.
 5. Add install-free tests for assignment and promotion at 1000 units (synthetic objects), and a scaled Interactive test of the army-AI mode.
 
