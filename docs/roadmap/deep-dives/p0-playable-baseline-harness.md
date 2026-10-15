@@ -171,6 +171,47 @@ screenshot, and format loop and marks the P0-4/P0-5 run-and-assert flow as forth
 tightening as those phases land. It is the documented answer to how a ReplaySketch change is
 validated.
 
+### 2.8 TestHarness launcher UI (P0-8)
+Today a TestHarness run is configured by hand-editing `TestHarness.json` beside the executable
+plus a few CLI overrides (`--headless`, `--built-in-scenario`, `--scenario`). The 15
+`BuiltInScenario` values, their embedded capture profiles, and the ~30 `TestHarnessConfig` knobs
+(most of which apply to one scenario only) are discoverable only from source and `AGENTS.md`.
+P0-8 adds a `Harness` tab to ReplaySketch to browse, filter, and parameterize scenarios, then
+launch the TestHarness with that configuration.
+
+Design:
+
+- Catalog contract. The TestHarness owns the scenario list and its knobs, so it publishes them:
+  `--list-scenarios` writes a versioned `HarnessCatalog` JSON (scenarios + parameters) to stdout
+  and exits 0 without resolving a game install. ReplaySketch reads the catalog by running the
+  sibling TestHarness build; it never mirrors `BuiltInScenario` or `TestHarnessConfig` in its own
+  code. The contract records live in `ReplaySketch.Core` (`Model/HarnessLauncher/`) because the
+  TestHarness already references Core; the TestHarness fills them, Core deserializes them.
+- Scenario descriptors. One `HarnessScenarioDescriptor` per `BuiltInScenario`: id, category
+  (`Replay`, `ValidationGround`, `Capture`, `Proof`, `MassBattle`, `Physics`), one-line summary,
+  supported modes (`Headless`, `Windowed`), profile input (none, file, or embedded name list), and
+  the exit-code table. A test fails when an enum value has no descriptor.
+- Parameter descriptors. `[HarnessParameter]` on each public `TestHarnessConfig` property supplies
+  group, description, and the scenarios it applies to (empty = all). A reflection builder turns
+  them into `HarnessParameterDescriptor` (name, kind, enum values, default, description,
+  applies-to). Kinds: `Bool`, `Int`, `Float`, `String`, `Path`, `Enum`, `Json` (nested option
+  objects such as `EngagementCapture`, edited as raw JSON). A test fails when a public property
+  lacks the attribute or names an unknown scenario.
+- Launch. The UI writes a complete config (catalog defaults overlaid with edits) to a temp file
+  and runs `TestHarness --config <path>`; the executable's own `TestHarness.json` is never
+  modified. Output streams line by line into the tab; Stop kills the owned process; the exit code
+  maps to the selected scenario's exit-code table.
+- Presets. Named launch configurations (scenario + overrides only) persist as JSON under the
+  ReplaySketch app-data directory; an existing `TestHarness.json` can be imported as a preset.
+- Layering. All state and behavior live in `ReplaySketch.Core` view models behind the existing
+  seams (`SiblingBuildExecutableLocator`, `IMainThreadDispatcher`, a process seam), unit-tested in
+  `Panopticon.Tools.ReplaySketch.Tests`; the Avalonia view is a thin shell verified with screenshot
+  mode (`REPLAYSKETCH_SCREENSHOT_TAB=harness`).
+
+Out of scope: editing scenario content (capture profiles, validation-ground layouts, replay
+commands; owned by A5-1 and the existing editors), matrix sweeps (P0-5b, A5-2), and remote or
+parallel runs.
+
 ---
 
 ## 3. Integration surface (what P0 plugs into)
@@ -199,6 +240,7 @@ validated.
 | P0-5b. Scenario matrix runner | Accept a `ScenarioMatrix` file with named sweep axes; expand to one run per cartesian-product cell; emit a per-cell result keyed by axis combination and an aggregate JSON report. Wraps P0-5; provides the expansion primitive that A5-2 (tooling/visualizer) builds on. | Not started |
 | P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
 | P0-7. Agent validation playbook | Check in `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, screenshot mode for visual verification, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Done |
+| P0-8. TestHarness launcher UI | ReplaySketch `Harness` tab: browse and filter TestHarness scenarios from a TestHarness-published catalog, edit the applicable config parameters, save presets, and launch runs with streamed output and exit-code reporting (§2.8). Cards `WI-P0-20` to `WI-P0-29`. | Not started |
 
 ## 5. Sequencing and dependencies
 - P0-1a (screenshot mode) is complete, standalone agent tooling, and independent of the
@@ -212,6 +254,8 @@ validated.
 - P0-5b depends on and wraps P0-5, and is the final P0 sub-phase before P0-6.
 - A5-2 builds on P0-5b and does not re-implement expansion or execution.
 - P0-7 is done and documents the screenshot mode plus the test and format loop.
+- P0-8 depends only on existing TestHarness and ReplaySketch seams (`SiblingBuildExecutableLocator`,
+  `IMainThreadDispatcher`) and can land independently of P0-1c through P0-6.
 - P0 unblocks P3, P6, and P7 and is later extended by [A5-3](a5-visualization.md) and
   [A5-5](a5-visualization.md).
 
@@ -531,6 +575,151 @@ sequenceDiagram
 
   Expander-->>Author: aggregate JSON report (totalCells, passed, failed, cells[])
   note over Author: exit 0 iff all cells pass
+```
+
+### 8.4 Class diagram: TestHarness launcher UI (P0-8)
+
+All types are `<<pending>>` (P0-8) unless marked `<<existing>>`. Contract records live in
+`Panopticon.Tools.ReplaySketch.Core/Model/HarnessLauncher/`; launcher services and view models in
+`Services/` and `ViewModels/` of the same project.
+
+```mermaid
+classDiagram
+  class HarnessCatalog {
+    <<pending>>
+    +int SchemaVersion
+    +IReadOnlyList~HarnessScenarioDescriptor~ Scenarios
+    +IReadOnlyList~HarnessParameterDescriptor~ Parameters
+  }
+  class HarnessScenarioDescriptor {
+    <<pending>>
+    +string Id
+    +HarnessScenarioCategory Category
+    +string Summary
+    +HarnessRunModes Modes
+    +HarnessProfileInput ProfileInput
+    +IReadOnlyList~string~ EmbeddedProfiles
+    +IReadOnlyDictionary~int,string~ ExitCodes
+  }
+  class HarnessParameterDescriptor {
+    <<pending>>
+    +string Name
+    +string Group
+    +HarnessParameterKind Kind
+    +IReadOnlyList~string~ EnumValues
+    +JsonNode Default
+    +string Description
+    +IReadOnlyList~string~ AppliesTo
+  }
+  class HarnessParameterAttribute {
+    <<pending>>
+    +string Group
+    +string Description
+    +string[] Scenarios
+  }
+  class TestHarnessConfig {
+    <<existing>>
+  }
+  class HarnessScenarioCatalog {
+    <<pending>>
+    +Build() HarnessCatalog
+  }
+  class HarnessCatalogClient {
+    <<pending>>
+    +LoadAsync(CancellationToken) HarnessCatalogResult
+  }
+  class HarnessRunClient {
+    <<pending>>
+    +RunAsync(HarnessLaunchRequest, IProgress~string~, CancellationToken) HarnessRunResult
+  }
+  class HarnessLaunchRequest {
+    <<pending>>
+    +string ScenarioId
+    +IReadOnlyDictionary~string,JsonNode~ Overrides
+    +ToConfigJson(HarnessCatalog) string
+  }
+  class HarnessPresetStore {
+    <<pending>>
+    +List() IReadOnlyList~string~
+    +Save(string, HarnessLaunchRequest)
+    +Load(string) HarnessLaunchRequest
+    +ImportConfig(string) HarnessLaunchRequest
+  }
+  class HarnessLauncherViewModel {
+    <<pending>>
+    +string FilterText
+    +ISet~HarnessScenarioCategory~ CategoryFilter
+    +HarnessRunModes ModeFilter
+    +IReadOnlyList~HarnessScenarioDescriptor~ VisibleScenarios
+    +HarnessScenarioDescriptor SelectedScenario
+    +HarnessParameterEditorViewModel Parameters
+    +AsyncCommand RunCommand
+    +ICommand StopCommand
+  }
+  class HarnessParameterEditorViewModel {
+    <<pending>>
+    +IReadOnlyList~HarnessParameterRow~ Rows
+    +bool HasErrors
+    +BuildRequest(string) HarnessLaunchRequest
+  }
+  class SiblingBuildExecutableLocator {
+    <<existing>>
+  }
+  class HarnessView {
+    <<pending>>
+  }
+
+  HarnessCatalog *-- HarnessScenarioDescriptor
+  HarnessCatalog *-- HarnessParameterDescriptor
+  HarnessScenarioCatalog ..> HarnessCatalog : builds (TestHarness)
+  HarnessScenarioCatalog ..> HarnessParameterAttribute : reflects
+  TestHarnessConfig ..> HarnessParameterAttribute : annotated with
+  HarnessCatalogClient ..> SiblingBuildExecutableLocator
+  HarnessRunClient ..> SiblingBuildExecutableLocator
+  HarnessCatalogClient ..> HarnessCatalog : deserializes
+  HarnessLauncherViewModel --> HarnessCatalogClient
+  HarnessLauncherViewModel --> HarnessRunClient
+  HarnessLauncherViewModel --> HarnessPresetStore
+  HarnessLauncherViewModel *-- HarnessParameterEditorViewModel
+  HarnessParameterEditorViewModel ..> HarnessLaunchRequest : builds
+  HarnessView --> HarnessLauncherViewModel : binds (Avalonia)
+```
+
+### 8.5 Sequence diagram: browse, configure, and launch (P0-8)
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant View as HarnessView (Avalonia)
+  participant VM as HarnessLauncherViewModel
+  participant Cat as HarnessCatalogClient
+  participant Run as HarnessRunClient
+  participant TH as TestHarness process
+
+  View->>VM: tab opened
+  VM->>Cat: LoadAsync()
+  Cat->>TH: TestHarness --list-scenarios
+  TH-->>Cat: HarnessCatalog JSON on stdout, exit 0
+  Cat-->>VM: HarnessCatalog
+  User->>View: filter text / category / mode
+  View->>VM: FilterText, CategoryFilter, ModeFilter
+  VM-->>View: VisibleScenarios
+  User->>View: select scenario, edit parameters
+  VM->>VM: Parameters.Rows = descriptors where AppliesTo is empty or contains Id
+  User->>View: Run
+  VM->>VM: Parameters.BuildRequest(Id).ToConfigJson(catalog) to temp file
+  VM->>Run: RunAsync(request, progress, token)
+  Run->>TH: TestHarness --config temp.json
+  loop each stdout/stderr line
+    TH-->>Run: line
+    Run-->>VM: progress.Report(line) via IMainThreadDispatcher
+  end
+  alt User presses Stop
+    VM->>Run: cancel token
+    Run->>TH: kill owned process tree
+  end
+  TH-->>Run: exit code
+  Run-->>VM: HarnessRunResult(exit code, ExitCodes[code] meaning)
 ```
 
 ---

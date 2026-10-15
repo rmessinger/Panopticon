@@ -348,7 +348,7 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 
 | Phase | Progress | Items |
 |---|---|---|
-| P0 - ReplaySketch harness | `███░░░░░░░` | 4 / 15 |
+| P0 - ReplaySketch harness | `██░░░░░░░░` | 4 / 18 |
 | P1 - Skirmish setup | `██████░░░░` | 5 / 8 |
 | P2 - Skirmish AI | `██████████` | 7 / 7 |
 | P3 - Victory & defeat | `██████████` | 9 / 9 |

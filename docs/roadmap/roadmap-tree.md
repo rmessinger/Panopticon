@@ -57,6 +57,7 @@ mindmap
         P0-5 Run-and-assert entry point
         P0-6 Large/procedural authoring
         P0-7 Agent validation playbook
+        P0-8 TestHarness launcher UI
       P1 Skirmish setup and relationships ⮕
       P2 Skirmish AI opponent ⮕
       P3 Victory and defeat ⮕
