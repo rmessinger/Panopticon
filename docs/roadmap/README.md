@@ -144,6 +144,7 @@ human-readable problem/design/approach sections and agent-context file and test 
 | [`plans/tracer-rounds.md`](plans/tracer-rounds.md) | human | Plan for rendering bullet tracers through the existing `Tracer` FXList nugget: client-side `TracerManager`, directional additive quads, no projectile or logic-side involvement. |
 | [`plans/physics-seam.md`](plans/physics-seam.md) | human + agent | Object physics adoption plan: BepuPhysics 2.4 seam, participation/lifecycle/contact policy, category matrix for all applicable game objects, default-backend cutover, and WI-PS card index. |
 | [`plans/argument-validation.md`](plans/argument-validation.md) | human + agent | Solution-wide refactor to single-line argument validation: BCL throw helpers plus a shared `Ensure` class, `ArgumentOutOfRangeException` for range checks, domain messages kept; `WI-AV-` card index. |
+| [`plans/macos-battle-artifacts.md`](plans/macos-battle-artifacts.md) | human + agent | G6/P6 corrective follow-ups: global particle-opacity clamping and jet crash lifecycle, with evidence, capture contracts, and card dependencies. |
 | [`open-questions.md`](open-questions.md) | human | Decision log: every item is now a settled Decision (rationale + affected phase). No questions currently open; add new ones here and convert to a Decision once settled. |
 | [`implementation-checklist.md`](implementation-checklist.md) | human | Single granular change list: every concrete implementation change across the roadmap, ordered by dependency, checked off as it lands. |
 | [`agent/`](agent/) | agent | Agent-focused companion: how a low-effort automated agent picks up small, bounded slices of the roadmap (task cards + workflow) without re-reasoning the whole design. |
@@ -288,7 +289,7 @@ track document.
   probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
   battle. Depends on P9 and A1, then B1, H2a, C4d, A4, B4, B5, and A5.
 
-- [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion.
+- [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies.
 
 ### Cross-track dependencies
 
@@ -339,6 +340,7 @@ track document.
 |---|---|---|
 | X1 - Imported-unit hit feedback | `██████████` | 7 / 7 |
 | X2 - Capacity-probe graphics resource fixes | `█████░░░░░` | 1 / 2 |
+| X3 - Cursor modernization | `░░░░░░░░░░` | 0 / 1 |
 
 Track X has no terminal completion target; this table covers authored phases only.
 

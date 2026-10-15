@@ -27,8 +27,8 @@ public class W3dModelDraw : DrawModule
     protected AnimationState _activeAnimationState;
 
     private W3dModelDrawConditionState _activeModelDrawConditionState;
-    private List<AxisAlignedBoundingBox>? _partBoundsCache;
-    private W3dModelDrawConditionState? _partBoundsCacheFor;
+    private List<AxisAlignedBoundingBox> _partBoundsCache;
+    private W3dModelDrawConditionState _partBoundsCacheFor;
 
     // Union of every WeaponMuzzleFlash BoneName across all condition states. Static INI data, so it
     // is computed once and reused to build the per-model MuzzleFlashBoneIndices cache at creation.

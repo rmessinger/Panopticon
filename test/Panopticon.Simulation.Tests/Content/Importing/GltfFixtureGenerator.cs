@@ -91,9 +91,7 @@ internal static class GltfFixtureGenerator
             bufferView,
             0,
             itemCount,
-            floatData.Length / itemCount == 3 ? DimensionType.VEC3 : DimensionType.VEC2,
-            EncodingType.FLOAT,
-            false);
+            new AttributeFormat(floatData.Length / itemCount == 3 ? DimensionType.VEC3 : DimensionType.VEC2, EncodingType.FLOAT));
         return accessor;
     }
 
@@ -262,7 +260,7 @@ internal static class GltfFixtureGenerator
         System.Buffer.BlockCopy(shorts, 0, bytes, 0, bytes.Length);
         var bufferView = model.UseBufferView(bytes);
         var accessor = model.CreateAccessor("JOINTS_0");
-        accessor.SetVertexData(bufferView, 0, joints.Length, DimensionType.VEC4, EncodingType.UNSIGNED_SHORT, false);
+        accessor.SetVertexData(bufferView, 0, joints.Length, new AttributeFormat(DimensionType.VEC4, EncodingType.UNSIGNED_SHORT));
         return accessor;
     }
 
@@ -279,7 +277,7 @@ internal static class GltfFixtureGenerator
         System.Buffer.BlockCopy(floats, 0, bytes, 0, bytes.Length);
         var bufferView = model.UseBufferView(bytes);
         var accessor = model.CreateAccessor("WEIGHTS_0");
-        accessor.SetVertexData(bufferView, 0, weights.Length, DimensionType.VEC4, EncodingType.FLOAT, false);
+        accessor.SetVertexData(bufferView, 0, weights.Length, new AttributeFormat(DimensionType.VEC4, EncodingType.FLOAT));
         return accessor;
     }
 

@@ -192,7 +192,7 @@ public sealed class MainWindow : Window
                 Math.Max((int)Bounds.Height, 1));
             using var bitmap = new RenderTargetBitmap(pixelSize);
             bitmap.Render(this);
-            bitmap.Save(ScreenshotPath!);
+            bitmap.Save(ScreenshotPath!, PngBitmapEncoderOptions.Default);
         }
         catch (Exception ex)
         {

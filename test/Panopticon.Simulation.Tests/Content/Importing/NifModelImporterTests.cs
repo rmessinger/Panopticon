@@ -116,7 +116,7 @@ public sealed class NifModelImporterTests
 
         var model = Import(builder.Build(), "normalless")!;
 
-        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
         Assert.All(mesh.Vertices, vertex =>
             Assert.True(
                 MathF.Abs(vertex.Normal.Length() - 1f) < 1e-4f,
@@ -160,7 +160,7 @@ public sealed class NifModelImporterTests
     {
         var model = Import(HierarchyModelBytes());
 
-        Assert.Equal(2, model.Skeleton.Bones.Count);
+        Assert.Equal(2, model!.Skeleton.Bones.Count);
         Assert.Equal("root", model.Skeleton.Bones[0].Name);
         Assert.Equal(-1, model.Skeleton.Bones[0].ParentIndex);
         Assert.Equal("child", model.Skeleton.Bones[1].Name);
@@ -180,7 +180,7 @@ public sealed class NifModelImporterTests
 
         // Baked bone-local vertices, transformed by the bone chain, land on
         // the C4a world bake: v * (L_child * L_root) * E.
-        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
         var bake = childLocal * rootLocal * SourceToEngineMatrix();
         for (var i = 0; i < mesh.Vertices.Count; i++)
         {
@@ -195,7 +195,7 @@ public sealed class NifModelImporterTests
     {
         var model = Import(ScaledSubtreeModelBytes());
 
-        Assert.Equal(2, model.Skeleton.Bones.Count);
+        Assert.Equal(2, model!.Skeleton.Bones.Count);
         Assert.Equal("root", model.Skeleton.Bones[0].Name);
         var scaled = model.Skeleton.Bones[1];
         Assert.Equal("scaled", scaled.Name);
@@ -230,7 +230,7 @@ public sealed class NifModelImporterTests
     {
         var model = Import(ScaledSubtreeModelBytes(rootScale: 2.0f));
 
-        Assert.Equal(2, model.Skeleton.Bones.Count);
+        Assert.Equal(2, model!.Skeleton.Bones.Count);
         Assert.Equal(2f, model.Skeleton.Bones[0].BindScale, 5);
         Assert.Equal(2f, model.Skeleton.Bones[1].BindScale, 5);
         var subObject = Assert.Single(model.SubObjects);
@@ -466,7 +466,7 @@ public sealed class NifModelImporterTests
         // One meter along source -Y (the forward axis) must land on +X at
         // 3.28084 world units; source +Z (up) stays up.
         var model = Import(StaticModelBytes());
-        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
         // Vertices were (0,0,0), (1,0,0), (0,1,0), (0,0,1):
         // engine = (-y, x, z) * feet.
@@ -483,7 +483,7 @@ public sealed class NifModelImporterTests
         // Shape translated (0, -2, 0) in source space: forward by 2 meters
         // becomes +X by 2 * 3.28084.
         var model = Import(StaticModelBytes(shapeTranslation: (0, -2, 0)));
-        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
         const float f = 3.280839895f;
         AssertEqual(new Vector3(2 * f, 0, 0), mesh.Vertices[0].Position);
@@ -496,7 +496,7 @@ public sealed class NifModelImporterTests
     public void BoundsAreRecomputedFromBakedPositions()
     {
         var model = Import(StaticModelBytes());
-        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
         const float f = 3.280839895f;
         Assert.Equal(new Vector3(-f, 0, 0), mesh.BoundingBox.Min);
@@ -508,7 +508,7 @@ public sealed class NifModelImporterTests
     public void MaterialMapsFixedFunctionStateAndTextureName()
     {
         var model = Import(StaticModelBytes());
-        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
         Assert.False(mesh.IsSkinned);
         var material = Assert.Single(mesh.Materials);
@@ -536,7 +536,7 @@ public sealed class NifModelImporterTests
         // A negative scale on the shape mirrors handedness; winding must be
         // reversed to keep front faces correct.
         var model = Import(StaticModelBytes(shapeScale: -1.0f));
-        var mesh = (ImportedMesh)model.SubObjects[0].RenderObject;
+        var mesh = (ImportedMesh)model!.SubObjects[0].RenderObject;
 
         // Original first triangle (0, 1, 2) becomes (0, 2, 1).
         Assert.Equal(0, mesh.Indices[0]);

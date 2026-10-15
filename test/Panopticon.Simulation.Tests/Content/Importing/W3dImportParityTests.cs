@@ -229,11 +229,11 @@ public sealed class W3dImportParityTests
         // here shader selection and pipeline identity must agree. A named shader-material
         // shader set owns a single shared pipeline, so equality is instance identity.
         Assert.Same(
-            loaderMesh.MeshParts[0].Material.ForwardPass.ShaderSet,
-            directMesh.MeshParts[0].Material.ForwardPass.ShaderSet);
+            loaderMesh.MeshParts[0].Material.ForwardPass!.ShaderSet,
+            directMesh.MeshParts[0].Material.ForwardPass!.ShaderSet);
         Assert.Same(
-            loaderMesh.MeshParts[0].Material.ForwardPass.Pipeline,
-            directMesh.MeshParts[0].Material.ForwardPass.Pipeline);
+            loaderMesh.MeshParts[0].Material.ForwardPass!.Pipeline,
+            directMesh.MeshParts[0].Material.ForwardPass!.Pipeline);
     }
 
     private static AssetLoadContext CreateImportingDataOnlyContext(FileSystem fileSystem)
@@ -277,8 +277,8 @@ public sealed class W3dImportParityTests
 
                 // Shader selection parity for every part.
                 Assert.Same(
-                    legacyPart.Material.ForwardPass.ShaderSet,
-                    importedPart.Material.ForwardPass.ShaderSet);
+                    legacyPart.Material.ForwardPass!.ShaderSet,
+                    importedPart.Material.ForwardPass!.ShaderSet);
 
                 // Fixed-function materials share one cache, so identical inputs must reuse the
                 // same Material instance. This proves render state, shading constants, texture
@@ -508,7 +508,7 @@ public sealed class W3dImportParityTests
 
     private static MeshPartDescriptor DescribeMeshPart(ModelMeshPart part)
     {
-        var material = part.Material.ForwardPass;
+        var material = part.Material.ForwardPass!;
         return new MeshPartDescriptor(
             part.StartIndex,
             part.IndexCount,

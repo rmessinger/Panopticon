@@ -92,7 +92,6 @@ public static class PhysicsStackRunner
             // A 2-chunk margin keeps stacks that topple sideways on the collision field.
             var chunksPerSide = Math.Max(1, (int)Math.Ceiling(footprintCells * StackSpacing / (chunkCells * HeightMap.HorizontalScale))) + 4;
             CreateFlatChunks(world, chunksPerSide, chunkCells);
-            var fieldMin = 0.0f;
             var fieldMax = chunksPerSide * chunkCells * HeightMap.HorizontalScale;
             fieldSize = fieldMax;
 

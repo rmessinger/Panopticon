@@ -157,10 +157,10 @@ public sealed class Ee2NifImportTests
         // Wheels/body carry alpha blending and specular per the inventory.
         Assert.True(MeshAt(model, 2).Materials[0].BlendEnabled);
         Assert.True(MeshAt(model, 3).Materials[0].BlendEnabled);
-        Assert.True(MeshAt(model, 3).Materials[0].FixedFunctionShading.SpecularEnabled);
+        Assert.True(MeshAt(model, 3).Materials[0].FixedFunctionShading!.SpecularEnabled);
         Assert.Equal(
             new Vector3(0.15294118f, 0.15294118f, 0.15294118f),
-            MeshAt(model, 3).Materials[0].FixedFunctionShading.Specular);
+            MeshAt(model, 3).Materials[0].FixedFunctionShading!.Specular);
 
         // World AABB re-derived after the 2026-09-23 NIF rotation-convention
         // fix (the root pitch sign flipped with the transpose, so the nose
@@ -214,7 +214,7 @@ public sealed class Ee2NifImportTests
         var material = MeshAt(model, i).Materials[0];
         var textureProperty = material.Properties.Single(p => p.Name == "Texture0");
         Assert.Equal(expected, textureProperty.TextureName);
-        Assert.Equal(expectedStageCount, material.FixedFunctionShading.TextureStageCount);
+        Assert.Equal(expectedStageCount, material.FixedFunctionShading!.TextureStageCount);
     }
 
     private static void AssertBounds(
