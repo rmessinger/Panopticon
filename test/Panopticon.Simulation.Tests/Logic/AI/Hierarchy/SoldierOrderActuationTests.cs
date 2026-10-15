@@ -1,10 +1,7 @@
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Panopticon.Logic;
 using Panopticon.Logic.AI;
 using Panopticon.Logic.AI.Hierarchy;
-using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
 using Xunit;
 
@@ -22,9 +19,9 @@ public sealed class SoldierOrderActuationTests : MockedGameTest
     public void DecideNextOrders_EmitsSoldierOrders_ButNoSelectionOrder()
     {
         var game = new TestGame(SageGame.CncGenerals);
-        var player = CreateAiPlayer(game);
-        SpawnUnit(game, player, "M4ActuationUnitA", buildCost: 100f);
-        SpawnUnit(game, player, "M4ActuationUnitB", buildCost: 200f);
+        var player = HierarchyTestPlayers.CreateAiPlayer(game);
+        HierarchyTestPlayers.SpawnUnit(game, player, "M4ActuationUnitA", buildCost: 100f);
+        HierarchyTestPlayers.SpawnUnit(game, player, "M4ActuationUnitB", buildCost: 200f);
 
         var policy = new HierarchicalAIDecisionPolicy(
             new RuleBasedGeneralPolicy(),
@@ -39,40 +36,5 @@ public sealed class SoldierOrderActuationTests : MockedGameTest
         // ...but nothing selects the squads those orders belong to, so OrderProcessor would
         // apply them to whatever is currently selected (nothing, headless).
         Assert.DoesNotContain(orders, o => o.OrderType == OrderType.SetSelection);
-    }
-
-    private static GameObject SpawnUnit(TestGame game, Player owner, string name, float buildCost)
-    {
-        var definition = new ObjectDefinition(name);
-        definition.KindOf.Set(ObjectKinds.Vehicle, true);
-        definition.KindOf.Set(ObjectKinds.CanAttack, true);
-        SetProperty(definition, nameof(ObjectDefinition.BuildCost), buildCost);
-        return game.GameLogic.CreateObject(definition, owner);
-    }
-
-    private static void SetProperty(object instance, string propertyName, object value)
-    {
-        var property = instance.GetType().GetProperty(
-            propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        Assert.NotNull(property);
-        property!.SetValue(instance, value);
-    }
-
-    private static Player CreateAiPlayer(TestGame game)
-    {
-        var mapPlayers = new[]
-        {
-            Panopticon.Data.Map.Player.CreateNeutralPlayer(),
-            Panopticon.Data.Map.Player.CreateCivilianPlayer(),
-            new Panopticon.Data.Map.Player
-            {
-                Name = "ai",
-                Faction = "FactionAmerica",
-                DisplayName = "AI",
-                IsHuman = false,
-            },
-        };
-        game.PlayerManager.OnNewGame(mapPlayers, GameType.Skirmish);
-        return game.PlayerManager.Players[2];
     }
 }

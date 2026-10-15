@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M4-02` |
 | Roadmap phase | [M4](../../track-m-mass-battle.md): army-scale AI |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -39,10 +39,16 @@ B1 records per-tick AI decision cost as an `ai` system span, so M4-3's budget ca
 
 ## Acceptance criteria
 
-- [ ] A measured run emits an `ai` span every tick; it is zero on non-decision ticks.
-- [ ] The B1 record carries `system.ai.spanMs` statistics.
-- [ ] The default stepping path allocates nothing new (existing B1 allocation tests pass).
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] A measured run emits an `ai` span every tick; it is zero on non-decision ticks.
+  - `AiDecisionSpanTests`: span follows `gameLogic` with the accumulated value, and is zero the
+    next tick; `AIPlayer.Update` accumulates on decision ticks (60 updates).
+- [x] The B1 record carries `system.ai.spanMs` statistics.
+  - Statistics group generically over span names (`SimulationBenchmarkRunner` groups by system
+    name); `BenchmarkMetricRecorderTests` expected set updated to include `ai`.
+- [x] The default stepping path allocates nothing new (existing B1 allocation tests pass).
+  - Unmeasured path gains one interface call (`ConsumeAiDecisionSpan`), no allocation; recorder
+    tests pass.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
