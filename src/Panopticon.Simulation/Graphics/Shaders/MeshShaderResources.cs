@@ -82,7 +82,9 @@ internal sealed class MeshShaderResources : DisposableBase
         public Vector3 HouseColor;
         public float Opacity;
         public Vector3 TintColor;
+#pragma warning disable IDE1006, CS0169
         private readonly float _padding;
+#pragma warning restore IDE1006, CS0169
 
         // Property-animation overrides (C4e). Color vectors use xyz as the value and w as an
         // enabled flag (1 replaces the material color). OverrideFlags is

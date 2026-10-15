@@ -14,7 +14,7 @@ public class UnitContentPublicationTests
 {
     private static AssetStore CreateStore()
     {
-        var store = new AssetStore(SageGame.CncGenerals, null, null, null, null, null, null, OnDemandAssetLoadStrategy.None);
+        var store = new AssetStore(SageGame.CncGenerals, null!, null!, null!, null!, null!, null!, OnDemandAssetLoadStrategy.None);
         store.PushScope();
         return store;
     }

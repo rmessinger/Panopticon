@@ -15,7 +15,7 @@ public sealed record NifLodNode : NifSwitchNode
         LodDataReference = reader.ReadBlockReference("LODLevelData");
     }
 
-    internal static NifLodNode Read(NifBinaryReader reader)
+    internal static new NifLodNode Read(NifBinaryReader reader)
     {
         return new NifLodNode(reader);
     }

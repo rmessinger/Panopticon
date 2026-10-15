@@ -202,7 +202,7 @@ public sealed class DrawingContext2D : DisposableBase
 
     public static SizeF MeasureText(string text, Font font, TextAlignment textAlignment, float width)
     {
-        var textSize = TextMeasurer.MeasureSize(
+        var textSize = TextMeasurer.Measure(
             text,
             new TextOptions(font)
             {
@@ -213,7 +213,7 @@ public sealed class DrawingContext2D : DisposableBase
                 VerticalAlignment = VerticalAlignment.Center
             });
 
-        return new SizeF(textSize.Width, textSize.Height);
+        return new SizeF(textSize.Advance.Width, textSize.Advance.Height);
     }
 
     public unsafe void DrawText(string text, Font font, TextAlignment textAlignment, in ColorRgbaF color, in Rectangle rect)

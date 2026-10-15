@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using Panopticon.FileFormats.W3d;
@@ -41,6 +42,12 @@ internal static class W3dMaterialConverter
         {
             throw new NotSupportedException(
                 $"Mesh '{w3dMesh.Header.MeshName}' has more than one shader material.");
+        }
+
+        if (w3dMesh.ShaderMaterials is null)
+        {
+            throw new InvalidDataException(
+                $"Mesh '{w3dMesh.Header.MeshName}' references shader materials but has no shader materials chunk.");
         }
 
         var shaderMaterialID = w3dMaterialPass.ShaderMaterialIds.Items[0];
@@ -126,6 +133,12 @@ internal static class W3dMaterialConverter
 
             foreach (var run in GetMaterialRuns(w3dMesh, w3dMaterialPass))
             {
+                if (w3dMesh.Shaders is null || w3dMesh.VertexMaterials is null)
+                {
+                    throw new InvalidDataException(
+                        $"Mesh '{w3dMesh.Header.MeshName}' has material runs but lacks shader or vertex material chunks.");
+                }
+
                 var w3dShader = w3dMesh.Shaders.Items[(int)run.ShaderID];
                 var w3dVertexMaterial = w3dMesh.VertexMaterials.Items[(int)run.VertexMaterialID];
                 var w3dMaterial = w3dVertexMaterial.Info;
@@ -383,6 +396,12 @@ internal static class W3dMaterialConverter
 
     private static string GetTextureName(W3dMesh w3dMesh, uint? textureIndex)
     {
+        if (w3dMesh.Textures is null)
+        {
+            throw new InvalidDataException(
+                $"Mesh '{w3dMesh.Header.MeshName}' references textures but has no textures chunk.");
+        }
+
         var w3dTexture = w3dMesh.Textures.Items[(int)textureIndex!.Value];
 
         if (w3dTexture.TextureInfo != null && w3dTexture.TextureInfo.FrameCount != 1)

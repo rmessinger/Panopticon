@@ -510,3 +510,11 @@ Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [upload li
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-x-x2-capacity-probe-fixes.md](track-x-x2-capacity-probe-fixes.md) | X2-1..X2-2 | Upload lifetime cleanup and measured combat FX/model reuse |
+
+## Track X · X3: Cursor modernization
+
+Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: none yet; loader diagrams gated on `WI-X3-01`.
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-x-x3-cursor-modernization.md](track-x-x3-cursor-modernization.md) | X3-1 | Open-source cursor evaluation, comparison examples, loader assessment |

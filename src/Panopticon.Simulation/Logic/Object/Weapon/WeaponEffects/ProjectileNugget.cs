@@ -128,7 +128,7 @@ public sealed class ProjectileNugget : WeaponEffectNugget
     /// </summary>
     private static void AttachMissileExhaust(
         WeaponEffectExecutionContext context,
-        MissileAIUpdate? missileAIUpdate,
+        MissileAIUpdate missileAIUpdate,
         GameObject projectileObject)
     {
         var exhaustName = context.Weapon.Template.ProjectileExhaust;

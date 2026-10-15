@@ -61,7 +61,7 @@ public abstract class WbDialog : Window
         return new TextBox
         {
             Text = text,
-            Watermark = "",
+            PlaceholderText = "",
             Foreground = new SolidColorBrush(WbTheme.Text),
             Background = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)),
         };

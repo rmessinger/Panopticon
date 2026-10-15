@@ -113,7 +113,7 @@ internal static class StandaloneModelCapture
         using var renderTarget = new RenderTarget(game.GraphicsDevice);
         renderTarget.EnsureSize(viewportSize);
 
-        void OnBuildingRenderList(object sender, BuildingRenderListEventArgs e)
+        void OnBuildingRenderList(object? sender, BuildingRenderListEventArgs e)
         {
             modelInstance.SetWorldMatrix(worldMatrix ?? Matrix4x4.Identity);
             modelInstance.BuildRenderList(
