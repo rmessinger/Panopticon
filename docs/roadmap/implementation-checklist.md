@@ -753,9 +753,20 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
       SoA storage behind the module API).
   - AC: TBD, intent/command buffers + conflict resolution land behind the module API with no
     behavior change vs. baseline (verification harness within tolerance); SoA storage is swappable.
-- [ ] B4 Spatial & pathfinding scaling (hierarchical/flow-field, group movement, async path requests).
-  - AC: TBD, hierarchical/flow-field pathing + group movement + async requests scale to a target
-    unit count within a path-latency budget in B1; no pathing regressions on baseline maps.
+- [x] B4 Spatial & pathfinding scaling (partition hot path, hierarchical/flow-field, group
+  movement, async path requests) (`WI-B4-01..06`,
+  [plan](implementation/track-b-b4-spatial-scaling.md)).
+  - AC: partition maintenance holds a 10 ms median `system.partition.spanMs` at contact in
+    the M1 full-scale re-run, with pair-once `OnCollide` delivery and no per-tick update
+    allocations; group movement scales path requests with squads; async completions are
+    frame-bounded and deterministic; hierarchical/flow-field lands only on a failed
+    measured latency gate; no pathing regressions on baseline maps.
+  - Outcome: pair-once delivery and a 71 percent allocation cut landed (WI-B4-02); the
+    10 ms contact budget is still missed at a 259 ms median and the residual is the genuine
+    workload, recorded as the stop point with follow-ups (cheaper exact test, resting-contact
+    throttling, B3 parallelism) left to a new card. Group movement, async frame-bounded
+    completions with queue-level determinism, and the no-op hierarchical gate decision all
+    hold with recorded numbers.
 - [ ] B4a Larger maps via WorldBuilder ([deep dive](deep-dives/b4a-larger-maps.md)): region editing,
       large-map wizard, terrain streaming/LOD, chunked storage, round-trip at scale,
       large-population scenario authoring (B4a-7: bulk/procedural object placement, region-based
@@ -814,9 +825,22 @@ See [`track-b-scale.md`](track-b-scale.md). Gated on Track P (P7).
 - [ ] B4b-9 Validation and scale proof (blocked on B4b-7/8).
   - AC: one operator-supplied area passes control points, round-trips through WorldBuilder, and
     plays; B1 records import time and peak memory.
-- [ ] B5 Rendering at scale (GPU instancing, LOD/impostors, culling, render-bucket/shadow).
-  - AC: TBD, instancing/LOD/culling render the near-term anchor of 10k units at ~30 fps in B1 (see
-    the [scale-anchor Decision](open-questions.md)); the tool viewports (B4a-7/A5-5) reuse it.
+- [x] B5 Rendering at scale
+      ([deep dive](deep-dives/b5-rendering-at-scale.md)): GPU instancing for repeated unit
+      models through the source-agnostic `RenderItem` seam (W3D, glTF/PBR, and any C1
+      importer), a distance LOD gate (small-feature culling; impostors recorded as a
+      follow-up gap), sort-once-per-frame bucket filtering, and submit-overhead removals
+      (index-buffer bind hoist, per-item debug-group gating), all behind render-path
+      toggles; a `RenderingScaleProbe` TestHarness scenario measures render spans, draw
+      counts, and instanced batches headlessly.
+  - AC: at the near-term anchor of 10k repeated rigid models, the probe reports the scene
+    rendering with GPU instancing (one batch per repeated mesh part, instance count near
+    item count) plus the LOD gate within the ~30 fps frame budget on the dev-host GPU, or
+    the miss is recorded with its measurement; instanced vs per-item output is
+    pixel-identical for eligible items; skinned meshes (the b1 anchor Rangers) and the
+    NormalMapped/Simple families are recorded as explicit non-instanced gaps; the tool
+    viewports (B4a-7/A5-5) reuse it by rendering through the same `RenderPipeline` (no
+    source-specific path).
 - [ ] B6 Distributed simulation via spatial sharding after F4a
       ([deep dive](deep-dives/b6-distributed-simulation.md)): one Bepu world per RTS shard,
       kinematic halo proxies, and handle-free body handoff.

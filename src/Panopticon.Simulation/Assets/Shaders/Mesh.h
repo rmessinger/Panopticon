@@ -2,6 +2,13 @@
 
 #define MESH_H
 
+// B5 instancing: instanced shader variants must not declare these per-item blocks (glslang
+// retains unused interface blocks, which would clash with the instance-stream bindings in
+// Instancing.h). They opt out with `#define MESH_DECLARE_ITEM_CONSTANTS 0` before including.
+#ifndef MESH_DECLARE_ITEM_CONSTANTS
+#define MESH_DECLARE_ITEM_CONSTANTS 1
+#endif
+
 #define MESH_VERTEX_INPUTS \
     layout(location = 0) in vec3 in_Position0; \
     layout(location = 1) in vec3 in_Position1; \
@@ -51,6 +58,7 @@ struct RenderItemConstantsPSType
     vec2 _Padding2;
 };
 
+#if MESH_DECLARE_ITEM_CONSTANTS
 layout(set = RENDER_ITEM_CONSTANTS_RESOURCE_SET, binding = 0) uniform MeshConstants
 {
     MeshConstantsType _MeshConstants;
@@ -70,6 +78,7 @@ layout(set = RENDER_ITEM_CONSTANTS_RESOURCE_SET, binding = 3) uniform RenderItem
 {
     RenderItemConstantsPSType _RenderItemConstantsPS;
 };
+#endif
 
 void GetSkinnedVertexData(
     vec3 inputPosition0,

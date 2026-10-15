@@ -161,7 +161,15 @@ public static class MassBattleCapacityProbeRunner
 
             IssueGeneralAttack(game, armies);
 
-            var (framesRun, benchmarkRecord) = RunEngagement(game, armies, step, frameBudget, config.Headless);
+            var anchorCadence = config.MassBattleCapacityProbeAsyncAnchorBurstEveryFrames;
+            MassBattleAsyncPathAnchor? anchor = anchorCadence is > 0
+                ? new MassBattleAsyncPathAnchor(
+                    navigation,
+                    anchorCadence.Value,
+                    config.MassBattleCapacityProbeAsyncAnchorRequestsPerBurst ?? 8)
+                : null;
+
+            var (framesRun, benchmarkRecord) = RunEngagement(game, armies, step, frameBudget, config.Headless, anchor);
             var stopReason = DescribeStopReason(armies, framesRun, frameBudget);
 
             string? screenshotPath = null;
@@ -171,7 +179,8 @@ public static class MassBattleCapacityProbeRunner
             }
 
             var report = BuildReport(
-                profile, profilePath, config.Headless, armies, reasons, frameBudget, framesRun, stopReason, screenshotPath);
+                profile, profilePath, config.Headless, armies, reasons, frameBudget, framesRun, stopReason, screenshotPath,
+                anchor?.Build());
             reporter.Info(MassBattleCapacityProbeReport.WriteText(report));
 
             var reportPath = string.IsNullOrEmpty(config.MassBattleCapacityProbeReportPath)
@@ -430,7 +439,8 @@ public static class MassBattleCapacityProbeRunner
         List<SideArmy> armies,
         Action step,
         int frameBudget,
-        bool headless)
+        bool headless,
+        MassBattleAsyncPathAnchor? anchor = null)
     {
         var allJets = armies.SelectMany(army => army.Jets).ToList();
         var framesRun = frameBudget;
@@ -439,17 +449,37 @@ public static class MassBattleCapacityProbeRunner
         using var recorder = new BenchmarkMetricRecorder();
         game.LogicStepper.SystemSpan += recorder.RecordSystemSpan;
         var pathDeltas = new List<double>(frameBudget);
+        var partitionDirtyDeltas = new List<double>(frameBudget);
+        var partitionCandidateDeltas = new List<double>(frameBudget);
+        var partitionHitDeltas = new List<double>(frameBudget);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
             for (var frame = 0; frame < frameBudget; frame++)
             {
+                if (anchor is not null && anchor.ShouldSubmit(frame))
+                {
+                    anchor.SubmitBurst(frame, BuildAnchorRequests(armies, frame, anchor.RequestsPerBurst));
+                }
+
                 var pathRequestsBefore = NavigationGrid.PathRequestCount;
+                var dirtyBefore = PartitionCellManager.DirtyObjectsProcessed;
+                var candidatesBefore = PartitionCellManager.CandidatePairs;
+                var hitsBefore = PartitionCellManager.ExactHits;
                 recorder.BeginTick((uint)frame + 1);
+                if (anchor is not null)
+                {
+                    anchor.CurrentSteppingFrame = frame + 1;
+                }
+
                 step();
                 recorder.EndTick((uint)frame + 1);
                 pathDeltas.Add(NavigationGrid.PathRequestCount - pathRequestsBefore);
+                partitionDirtyDeltas.Add(PartitionCellManager.DirtyObjectsProcessed - dirtyBefore);
+                partitionCandidateDeltas.Add(PartitionCellManager.CandidatePairs - candidatesBefore);
+                partitionHitDeltas.Add(PartitionCellManager.ExactHits - hitsBefore);
+                anchor?.AfterStep();
 
                 TrackJetTransitions(allJets, frame);
 
@@ -472,13 +502,54 @@ public static class MassBattleCapacityProbeRunner
             game.LogicStepper.SystemSpan -= recorder.RecordSystemSpan;
         }
 
-        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
+        return (framesRun, BuildBenchmarkRecord(game, recorder, pathDeltas, partitionDirtyDeltas, partitionCandidateDeltas, partitionHitDeltas, stopwatch, framesRun, frameBudget, stopPredicateTriggered, headless));
+    }
+
+    /// <summary>
+    /// Squad-shaped anchor requests (WI-B4-06): deterministic spread of alive ground units on
+    /// side A requesting paths toward side B unit positions. Strides across both armies so
+    /// successive bursts cover the field instead of the same leaders.
+    /// </summary>
+    private static List<(GameObject Requester, Vector3 Start, Vector3 End)> BuildAnchorRequests(
+        List<SideArmy> armies,
+        int frame,
+        int count)
+    {
+        var requests = new List<(GameObject Requester, Vector3 Start, Vector3 End)>(count);
+
+        if (armies.Count < 2)
+        {
+            return requests;
+        }
+
+        var attackers = armies[0].Units.Where(unit => !unit.IsEffectivelyDead).OrderBy(unit => unit.Id.Index).ToList();
+        var defenders = armies[1].Units.Where(unit => !unit.IsEffectivelyDead).OrderBy(unit => unit.Id.Index).ToList();
+
+        if (attackers.Count == 0 || defenders.Count == 0)
+        {
+            return requests;
+        }
+
+        var attackerStride = Math.Max(1, attackers.Count / count);
+        var defenderStride = Math.Max(1, defenders.Count / count);
+
+        for (var i = 0; i < count; i++)
+        {
+            var attacker = attackers[(frame + i * attackerStride) % attackers.Count];
+            var defender = defenders[(frame + i * defenderStride) % defenders.Count];
+            requests.Add((attacker, attacker.Translation, defender.Translation));
+        }
+
+        return requests;
     }
 
     private static BenchmarkRunRecord BuildBenchmarkRecord(
         Game game,
         BenchmarkMetricRecorder recorder,
         List<double> pathDeltas,
+        List<double> partitionDirtyDeltas,
+        List<double> partitionCandidateDeltas,
+        List<double> partitionHitDeltas,
         System.Diagnostics.Stopwatch stopwatch,
         int framesRun,
         int frameBudget,
@@ -521,7 +592,26 @@ public static class MassBattleCapacityProbeRunner
             "path.requestsPerSecond",
             [.. pathDeltas.Select(d => d * game.GameEngine.LogicFramesPerSecond)],
             ProbeSeed));
+        AddPerTickAndPerSecondStatistics(record, "partition.dirtyObjects", partitionDirtyDeltas, game);
+        AddPerTickAndPerSecondStatistics(record, "partition.candidatePairs", partitionCandidateDeltas, game);
+        AddPerTickAndPerSecondStatistics(record, "partition.exactHits", partitionHitDeltas, game);
         return record;
+    }
+
+    private static void AddPerTickAndPerSecondStatistics(
+        BenchmarkRunRecord record,
+        string metricBaseName,
+        List<double> deltas,
+        Game game)
+    {
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            $"{metricBaseName}PerTick",
+            [.. deltas],
+            ProbeSeed));
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            $"{metricBaseName}PerSecond",
+            [.. deltas.Select(d => d * game.GameEngine.LogicFramesPerSecond)],
+            ProbeSeed));
     }
 
     private static void TrackJetTransitions(List<JetSortie> jets, int frame)
@@ -627,7 +717,8 @@ public static class MassBattleCapacityProbeRunner
         int frameBudget,
         int framesRun,
         string stopReason,
-        string? screenshotPath)
+        string? screenshotPath,
+        MassBattleAsyncPathAnchorReport? asyncPathAnchor = null)
     {
         var sides = armies.Select(army => new SideEngagementResult
         {
@@ -693,6 +784,7 @@ public static class MassBattleCapacityProbeRunner
             Sides = sides,
             Sorties = sorties,
             FailureReasons = reasons.Distinct().ToList(),
+            AsyncPathAnchor = asyncPathAnchor,
         };
         return report with { AllPassed = report.FailureReasons.Count == 0 };
     }

@@ -34,6 +34,19 @@ internal static class ShaderCrossCompiler
         Assembly shaderAssembly,
         string shaderName)
     {
+        return GetOrCreateCachedShaders(factory, shaderAssembly, shaderName, shaderName);
+    }
+
+    /// <summary>
+    /// Variant with separate vertex and fragment shader names (B5-2): instanced shader sets
+    /// pair a new vertex stage with the family's unchanged fragment stage.
+    /// </summary>
+    public static ShaderCacheFile GetOrCreateCachedShaders(
+        ResourceFactory factory,
+        Assembly shaderAssembly,
+        string vertexShaderName,
+        string fragmentShaderName)
+    {
         const string shaderCacheFolder = "ShaderCache";
         var backendType = factory.BackendType;
         var targetExtension = backendType.ToString().ToLowerInvariant();
@@ -43,13 +56,17 @@ internal static class ShaderCrossCompiler
             Directory.CreateDirectory(shaderCacheFolder);
         }
 
-        var vsSpvBytes = ReadShaderSpv(shaderAssembly, shaderName, "vert");
-        var fsSpvBytes = ReadShaderSpv(shaderAssembly, shaderName, "frag");
+        var cacheId = vertexShaderName == fragmentShaderName
+            ? vertexShaderName
+            : vertexShaderName + "+" + fragmentShaderName;
+
+        var vsSpvBytes = ReadShaderSpv(shaderAssembly, vertexShaderName, "vert");
+        var fsSpvBytes = ReadShaderSpv(shaderAssembly, fragmentShaderName, "frag");
 
         var spvHash = GetShaderHash(vsSpvBytes, fsSpvBytes);
 
         // Look for cached shader file on disk match the input SPIR-V shaders.
-        var cacheFilePath = Path.Combine(shaderCacheFolder, $"Panopticon.Assets.Shaders.{shaderName}.{spvHash}.{targetExtension}");
+        var cacheFilePath = Path.Combine(shaderCacheFolder, $"Panopticon.Assets.Shaders.{cacheId}.{spvHash}.{targetExtension}");
 
         lock (CacheFileLocks.GetOrAdd(cacheFilePath, _ => new object()))
         {
@@ -79,7 +96,7 @@ internal static class ShaderCrossCompiler
             catch (SpirvCompilationException ex) when (IsGlslEmitterNativeBug(ex, compilationTarget))
             {
                 throw new SpirvCompilationException(
-                    $"Cross-compiling shader '{shaderName}' to {compilationTarget} failed because the " +
+                    $"Cross-compiling shader '{vertexShaderName}+{fragmentShaderName}' to {compilationTarget} failed because the " +
                     $"bundled Veldrid.SPIRV 1.0.15 native has a bug in its GLSL/ESSL emitter " +
                     $"(it throws basic_string::replace with npos on shaders that use storage buffers). " +
                     $"The {backendType} backend requires {compilationTarget} output and cannot be used for this shader. " +

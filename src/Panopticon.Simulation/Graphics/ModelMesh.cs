@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Panopticon.Graphics.Cameras;
 using Panopticon.Graphics.Rendering;
+using Panopticon.Graphics.Rendering.Instancing;
 using Panopticon.Graphics.Shaders;
 using Panopticon.Mathematics;
 using Veldrid;
@@ -134,7 +135,43 @@ public sealed partial class ModelMesh : ModelRenderObject
             world = meshWorldMatrix;
         }
 
+        // B5-3: whole-mesh distance LOD. A mesh below the screen-size threshold never
+        // enters any bucket (opaque, shadow, transparent); the counter is read per frame by
+        // the render statistics.
+        if (ModelLod.IsNegligible(camera, in BoundingSphere, in world))
+        {
+            RenderScaleOptions.LodSkippedMeshes++;
+            return;
+        }
+
         var meshBoundingBox = AxisAlignedBoundingBox.Transform(BoundingBox, world); // TODO: Not right for skinned meshes
+
+        // B5-2: per-item constants at defaults (only house colour varies per instance) plus
+        // a rigid, non-morphing, non-camera-oriented mesh make this item instancing-eligible.
+        var psConstants = renderItemConstantsPS ?? default;
+        var itemConstantsDefault = psConstants.OverrideFlags == 0
+            && psConstants.Opacity >= 1.0f
+            && psConstants.TintColor == Vector3.One
+            && psConstants.AmbientOverride.W <= 0.0f
+            && psConstants.DiffuseOverride.W <= 0.0f
+            && psConstants.SpecularOverride.W <= 0.0f
+            && psConstants.EmissiveOverride.W <= 0.0f;
+        var meshInstancingEligible = !Skinned
+            && modelMeshInstance.MorphVertexBuffer is null
+            && !CameraOriented
+            && itemConstantsDefault;
+
+        InstanceData instancePayload = default;
+        if (meshInstancingEligible)
+        {
+            instancePayload = new InstanceData
+            {
+                World = world,
+                UVOffset = modelMeshInstance.RenderItemConstantsBufferVS.Value.UVOffset,
+                HouseColorOpacity = new Vector4(psConstants.HouseColor, psConstants.Opacity),
+                Tint = new Vector4(psConstants.TintColor, 1.0f),
+            };
+        }
 
         for (var i = 0; i < MeshParts.Count; i++)
         {
@@ -150,6 +187,11 @@ public sealed partial class ModelMesh : ModelRenderObject
 
             var blendEnabled = meshPart.BlendEnabled || forceBlendEnabled;
 
+            var partInstancingEligible = meshInstancingEligible
+                && !blendEnabled
+                && meshPart.Material.ForwardPass is { InstancedPipeline: not null }
+                && meshPart.Material.ShadowPass is { InstancedPipeline: not null };
+
             // Depth pass
 
             // TODO: With more work, we could draw shadows for translucent and alpha-tested materials.
@@ -163,7 +205,13 @@ public sealed partial class ModelMesh : ModelRenderObject
                     meshPart.StartIndex,
                     meshPart.IndexCount,
                     _indexBuffer,
-                    modelMeshInstance.MeshPartInstances[i].BeforeRenderCallbackDepth));
+                    modelMeshInstance.MeshPartInstances[i].BeforeRenderCallbackDepth,
+                    partInstancingEligible,
+                    instancePayload,
+                    MeshConstantsBuffer.Buffer,
+                    meshPart.InstanceId,
+                    VertexBuffer,
+                    meshPart.TexCoordVertexBuffer));
             }
 
             // Standard pass
@@ -182,7 +230,13 @@ public sealed partial class ModelMesh : ModelRenderObject
                 meshPart.StartIndex,
                 meshPart.IndexCount,
                 _indexBuffer,
-                modelMeshInstance.MeshPartInstances[i].BeforeRenderCallback));
+                modelMeshInstance.MeshPartInstances[i].BeforeRenderCallback,
+                partInstancingEligible,
+                instancePayload,
+                MeshConstantsBuffer.Buffer,
+                meshPart.InstanceId,
+                VertexBuffer,
+                meshPart.TexCoordVertexBuffer));
         }
     }
 }

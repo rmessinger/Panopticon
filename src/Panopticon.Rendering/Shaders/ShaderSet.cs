@@ -23,6 +23,16 @@ public abstract class ShaderSet : DisposableBase
         Assembly shaderAssembly,
         string shaderName,
         params VertexLayoutDescription[] vertexDescriptors)
+        : this(store, shaderAssembly, shaderName, shaderName, vertexDescriptors)
+    {
+    }
+
+    public ShaderSet(
+        ShaderSetStore store,
+        Assembly shaderAssembly,
+        string vertexShaderName,
+        string fragmentShaderName,
+        params VertexLayoutDescription[] vertexDescriptors)
     {
         Store = store;
 
@@ -30,13 +40,13 @@ public abstract class ShaderSet : DisposableBase
 
         var factory = store.GraphicsDevice.ResourceFactory;
 
-        var cacheFile = ShaderCrossCompiler.GetOrCreateCachedShaders(factory, shaderAssembly, shaderName);
+        var cacheFile = ShaderCrossCompiler.GetOrCreateCachedShaders(factory, shaderAssembly, vertexShaderName, fragmentShaderName);
 
         var vertexShader = AddDisposable(factory.CreateShader(cacheFile.VertexShaderDescription));
-        vertexShader.Name = $"{shaderName}.vert";
+        vertexShader.Name = $"{vertexShaderName}.vert";
 
         var fragmentShader = AddDisposable(factory.CreateShader(cacheFile.FragmentShaderDescription));
-        fragmentShader.Name = $"{shaderName}.frag";
+        fragmentShader.Name = $"{fragmentShaderName}.frag";
 
         Description = new ShaderSetDescription(
             vertexDescriptors,

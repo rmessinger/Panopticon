@@ -95,6 +95,15 @@ Source of truth: [deep-dives/b1-benchmarking.md](../deep-dives/b1-benchmarking.m
 |---|---|---|
 | [track-b-b1-benchmarking.md](track-b-b1-benchmarking.md) | B1-1…B1-7 | Benchmarking utilities (WI-B1-01..07) |
 
+## Track B · B4 : Spatial and pathfinding scaling
+
+Source of truth: [deep-dives/b4-spatial-pathfinding-scaling.md](../deep-dives/b4-spatial-pathfinding-scaling.md) :
+[Architecture diagrams](../deep-dives/b4-spatial-pathfinding-scaling.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b4-spatial-scaling.md](track-b-b4-spatial-scaling.md) | B4-1…B4-6 | Partition hot path, group movement, async requests, gated hierarchy (WI-B4-01..06) |
+
 ## Track B · B4a : Larger maps
 
 Source of truth: [deep-dives/b4a-larger-maps.md](../deep-dives/b4a-larger-maps.md) :
@@ -113,6 +122,15 @@ Source of truth:
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-b-b4b-geospatial.md](track-b-b4b-geospatial.md) | B4b-1…B4b-6b | Geospatial map generation (WI-B4b-01..24) |
+
+## Track B · B5 : Rendering at scale
+
+Source of truth: [deep-dives/b5-rendering-at-scale.md](../deep-dives/b5-rendering-at-scale.md) :
+[Architecture diagrams §6](../deep-dives/b5-rendering-at-scale.md#6-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-b-b5-rendering-scale.md](track-b-b5-rendering-scale.md) | B5-1…B5-5 | Rendering at scale (WI-B5-01..05) |
 
 ## Track B · B6 : Distributed simulation
 
