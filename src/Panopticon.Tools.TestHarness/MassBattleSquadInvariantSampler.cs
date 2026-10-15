@@ -6,6 +6,8 @@ using System.Linq;
 using Panopticon.Logic;
 using Panopticon.Logic.AI;
 using Panopticon.Logic.AI.Hierarchy;
+using Panopticon.Navigation;
+using NavigationGrid = Panopticon.Navigation.Navigation;
 
 namespace Panopticon.Tools.TestHarness;
 
@@ -52,6 +54,17 @@ internal sealed class MassBattleSquadInvariantSampler
 
     private readonly List<Side> _sides;
 
+    // WI-M4-04: path requests are counted over the frame after each decision tick, because the
+    // policies dispatch through NetworkMessageBuffer.AddLocalOrder during the decision frame and
+    // the buffer processes those orders at the start of the next frame. Blocked followers pay
+    // their own request (WI-B4-04), so the per-tick bound is squads plus blocked followers.
+    private long _lastPathRequestCount;
+    private long _lastBlockedFollowerCount;
+    private int _lastDecisionTicks;
+    private bool _burstWindowOpen;
+    private int _burstSquads;
+    private int _burstMembers;
+
     private MassBattleSquadInvariantSampler(List<Side> sides)
     {
         _sides = sides;
@@ -75,6 +88,16 @@ internal sealed class MassBattleSquadInvariantSampler
 
         return new MassBattleSquadInvariantSampler(sides);
     }
+
+    public int DecisionTicksObserved { get; private set; }
+
+    public long MaxPathRequestsPerDecisionTick { get; private set; }
+
+    public int SquadsAtWorstDecisionTick { get; private set; }
+
+    public int MembersAtWorstDecisionTick { get; private set; }
+
+    public long MaxBlockedFollowersPerDecisionTick { get; private set; }
 
     public void Sample()
     {
@@ -113,6 +136,49 @@ internal sealed class MassBattleSquadInvariantSampler
             side.MaxUnassigned = Math.Max(side.MaxUnassigned, unassigned);
             side.MaxCommanderless = Math.Max(side.MaxCommanderless, commanderless);
         }
+
+        SamplePathRequests();
+    }
+
+    private void SamplePathRequests()
+    {
+        var pathRequestCount = NavigationGrid.PathRequestCount;
+        var blockedFollowerCount = GroupMovement.BlockedFollowerCount;
+
+        var decisionTicks = 0;
+        foreach (var side in _sides)
+        {
+            decisionTicks = Math.Max(decisionTicks, side.Ai.DecisionTickCount);
+        }
+
+        if (decisionTicks > _lastDecisionTicks)
+        {
+            // A decision tick fired this frame; its orders reach the OrderProcessor next frame.
+            _burstWindowOpen = true;
+            _burstSquads = _sides.Sum(side => side.GroundSquads);
+            _burstMembers = _sides.Sum(side => side.GroundMembers);
+        }
+        else if (_burstWindowOpen)
+        {
+            var burst = pathRequestCount - _lastPathRequestCount;
+            DecisionTicksObserved++;
+            if (burst > MaxPathRequestsPerDecisionTick)
+            {
+                MaxPathRequestsPerDecisionTick = burst;
+                SquadsAtWorstDecisionTick = _burstSquads;
+                MembersAtWorstDecisionTick = _burstMembers;
+            }
+
+            MaxBlockedFollowersPerDecisionTick = Math.Max(
+                MaxBlockedFollowersPerDecisionTick,
+                blockedFollowerCount - _lastBlockedFollowerCount);
+
+            _burstWindowOpen = false;
+        }
+
+        _lastDecisionTicks = decisionTicks;
+        _lastPathRequestCount = pathRequestCount;
+        _lastBlockedFollowerCount = blockedFollowerCount;
     }
 
     public MassBattleSquadInvariantReport Build() =>
@@ -128,5 +194,10 @@ internal sealed class MassBattleSquadInvariantSampler
                 CommanderlessSquads = side.CurrentCommanderless,
                 MaxCommanderlessSquads = side.MaxCommanderless,
             }).ToList(),
+            DecisionTicksObserved = DecisionTicksObserved,
+            MaxPathRequestsPerDecisionTick = MaxPathRequestsPerDecisionTick,
+            SquadsAtWorstDecisionTick = SquadsAtWorstDecisionTick,
+            MembersAtWorstDecisionTick = MembersAtWorstDecisionTick,
+            MaxBlockedFollowersPerDecisionTick = MaxBlockedFollowersPerDecisionTick,
         };
 }

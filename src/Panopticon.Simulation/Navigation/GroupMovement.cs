@@ -15,6 +15,11 @@ namespace Panopticon.Navigation;
 /// </summary>
 public static class GroupMovement
 {
+    /// <summary>WI-M4-04 diagnostics: total followers whose formation landing was impassable and
+    /// therefore paid for their own path request. Read as a delta alongside
+    /// <see cref="Navigation.PathRequestCount"/>.</summary>
+    public static long BlockedFollowerCount { get; private set; }
+
     /// <summary>
     /// Orders every member toward <paramref name="destination"/>, issuing exactly one
     /// <see cref="Navigation.CalculatePath"/> per squad plus one per blocked follower. Aircraft
@@ -96,6 +101,7 @@ public static class GroupMovement
             else
             {
                 // Blocked follower: retrace is impossible, so this member pays for its own path.
+                BlockedFollowerCount++;
                 var fallback = navigation.CalculatePath(member.Translation, destination, out var fallbackEndIsPassable);
                 if (fallback.Count > 0)
                 {

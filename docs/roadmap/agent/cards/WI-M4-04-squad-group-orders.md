@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M4-04` |
 | Roadmap phase | [M4](../../track-m-mass-battle.md): army-scale AI |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M4-03` |
@@ -40,9 +40,14 @@ A squad's move orders issue one shared path request per squad through B4's `Grou
 
 ## Acceptance criteria
 
-- [ ] Path requests per decision tick scale with squad count: the report shows requests at most squads plus blocked followers, not units.
-- [ ] Player-issued multi-unit moves keep working (existing order and ReplaySketch tests pass).
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Path requests per decision tick scale with squad count: the report shows requests at most squads plus blocked followers, not units.
+  - Scaled army-AI run: max 29 requests per decision tick against 10 squads plus 19 blocked
+    followers at contact; the Interactive test asserts the bound.
+- [x] Player-issued multi-unit moves keep working (existing order and ReplaySketch tests pass).
+  - Squad-less and single-unit selections keep the exact per-unit `SetTargetPoint` path;
+    `GroupMoveOrderTests.SquadlessSelection_KeepsPerUnitOrders` pins it; full suite shows no
+    new failures.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 

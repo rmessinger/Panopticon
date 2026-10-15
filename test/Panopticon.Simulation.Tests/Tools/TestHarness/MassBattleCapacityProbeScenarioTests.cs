@@ -144,7 +144,8 @@ public class MassBattleCapacityProbeScenarioTests
 
         Assert.Equal(0, exitCode);
 
-        var sides = report.RootElement.GetProperty("squadInvariant").GetProperty("sides");
+        var squadInvariant = report.RootElement.GetProperty("squadInvariant");
+        var sides = squadInvariant.GetProperty("sides");
         Assert.Equal(2, sides.GetArrayLength());
         foreach (var side in sides.EnumerateArray())
         {
@@ -154,6 +155,20 @@ public class MassBattleCapacityProbeScenarioTests
             Assert.Equal(0, side.GetProperty("commanderlessSquads").GetInt32());
             Assert.Equal(0, side.GetProperty("maxCommanderlessSquads").GetInt32());
         }
+
+        // WI-M4-04: path requests per decision tick are bounded by squads plus blocked followers
+        // (WI-B4-04), not by units.
+        Assert.True(
+            squadInvariant.GetProperty("decisionTicksObserved").GetInt32() > 0,
+            "army-AI mode should observe decision ticks");
+        var maxRequests = squadInvariant.GetProperty("maxPathRequestsPerDecisionTick").GetInt64();
+        var squadsAtWorst = squadInvariant.GetProperty("squadsAtWorstDecisionTick").GetInt32();
+        var membersAtWorst = squadInvariant.GetProperty("membersAtWorstDecisionTick").GetInt32();
+        var blockedAtWorst = squadInvariant.GetProperty("maxBlockedFollowersPerDecisionTick").GetInt64();
+        Assert.True(membersAtWorst > squadsAtWorst, "the armies should outnumber their squads");
+        Assert.True(
+            maxRequests <= squadsAtWorst + blockedAtWorst,
+            $"path requests per decision tick ({maxRequests}) should be bounded by squads plus blocked followers ({squadsAtWorst} squads, {blockedAtWorst} blocked)");
     }
 
     /// <summary>Forwards runner messages to the test output so failures show their reasons.</summary>

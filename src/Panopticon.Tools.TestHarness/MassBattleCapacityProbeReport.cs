@@ -118,6 +118,17 @@ public sealed record MassBattleCapacityProbeReport
                     side.CommanderlessSquads,
                     side.MaxCommanderlessSquads));
             }
+
+            var invariant = report.SquadInvariant;
+            b.AppendLine(string.Format(
+                culture,
+                "Group orders (WI-M4-04): decision ticks {0}, max path requests per decision tick {1} " +
+                "(squads {2}, members {3}, blocked followers {4}); bound is squads plus blocked followers.",
+                invariant.DecisionTicksObserved,
+                invariant.MaxPathRequestsPerDecisionTick,
+                invariant.SquadsAtWorstDecisionTick,
+                invariant.MembersAtWorstDecisionTick,
+                invariant.MaxBlockedFollowersPerDecisionTick));
         }
 
         if (report.FailureReasons.Count > 0)
@@ -177,10 +188,23 @@ public sealed record SortieResult
 /// final snapshot; Max columns are the worst observed after any decision tick, so zero Max
 /// columns prove no eligible ground unit was ever left unassigned and no non-empty squad was
 /// ever left without a live commander.
+/// WI-M4-04: the group-order counters record, per decision tick, how many path requests the
+/// dispatched squad orders cost. The bound is squads plus blocked followers (WI-B4-04), not
+/// units; the worst tick carries the squad and member counts it was issued against.
 /// </summary>
 public sealed record MassBattleSquadInvariantReport
 {
     public List<SquadInvariantSideResult> Sides { get; init; } = new();
+
+    public int DecisionTicksObserved { get; init; }
+
+    public long MaxPathRequestsPerDecisionTick { get; init; }
+
+    public int SquadsAtWorstDecisionTick { get; init; }
+
+    public int MembersAtWorstDecisionTick { get; init; }
+
+    public long MaxBlockedFollowersPerDecisionTick { get; init; }
 }
 
 public sealed record SquadInvariantSideResult
