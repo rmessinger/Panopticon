@@ -240,7 +240,7 @@ parallel runs.
 | P0-5b. Scenario matrix runner | Accept a `ScenarioMatrix` file with named sweep axes; expand to one run per cartesian-product cell; emit a per-cell result keyed by axis combination and an aggregate JSON report. Wraps P0-5; provides the expansion primitive that A5-2 (tooling/visualizer) builds on. | Not started |
 | P0-6. Large/procedural authoring | Programmatic generation of large command sets + efficient `.rep` emission (model-level scale; full tooling scale = A5-5). | Not started |
 | P0-7. Agent validation playbook | Check in `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: a documented, repeatable checklist + exact commands agents run to validate a ReplaySketch change (Core test suite, screenshot mode for visual verification, `dotnet format`, the P0-5 run-and-assert flow, and the MAUI testability seams), with a common-failure-mode table. Authored now against current capability; forward-references P0-4/P0-5. | Done |
-| P0-8. TestHarness launcher UI | ReplaySketch `Harness` tab: browse and filter TestHarness scenarios from a TestHarness-published catalog, edit the applicable config parameters, save presets, and launch runs with streamed output and exit-code reporting (§2.8). Cards `WI-P0-20` to `WI-P0-29`. | Not started |
+| P0-8. TestHarness launcher UI | ReplaySketch `Harness` tab: browse and filter TestHarness scenarios from a TestHarness-published catalog, edit the applicable config parameters, save presets, and launch runs with streamed output and exit-code reporting (§2.8). Cards `WI-P0-20` to `WI-P0-29`. | Done |
 
 ## 5. Sequencing and dependencies
 - P0-1a (screenshot mode) is complete, standalone agent tooling, and independent of the

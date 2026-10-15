@@ -40,7 +40,7 @@ Environment variables before launching (mirrors the previous MAUI contract):
 | Variable | Default | Effect |
 |---|---|---|
 | `REPLAYSKETCH_SCREENSHOT_PATH` | (none; mode inactive) | Absolute path to write the output PNG. Activates screenshot-and-exit mode. |
-| `REPLAYSKETCH_SCREENSHOT_TAB` | `tree` | Which tab to capture: `tree`, `map`, `validationground`, or `model`. |
+| `REPLAYSKETCH_SCREENSHOT_TAB` | `tree` | Which tab to capture: `tree`, `map`, `validationground`, `model`, or `harness`. |
 | `REPLAYSKETCH_SCREENSHOT_DELAY` | `3` | Seconds to wait after open before capturing. Increase for map loads. |
 
 On headless Linux hosts, run under Xvfb with software GL (see

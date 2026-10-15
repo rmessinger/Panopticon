@@ -17,7 +17,7 @@ namespace Panopticon.Tools.ReplaySketch.Avalonia;
 /// with Tree / Map / Validation Ground / Model tabs and the export strip. Screenshot-and-exit
 /// mode mirrors the previous MAUI front-end's environment variables:
 /// REPLAYSKETCH_SCREENSHOT_PATH (activates), REPLAYSKETCH_SCREENSHOT_TAB
-/// (tree|map|validationground|model), REPLAYSKETCH_SCREENSHOT_DELAY (seconds, default 3).
+/// (tree|map|validationground|model|harness), REPLAYSKETCH_SCREENSHOT_DELAY (seconds, default 3).
 /// </summary>
 public sealed class MainWindow : Window
 {
@@ -26,10 +26,12 @@ public sealed class MainWindow : Window
     private readonly Button _mapTabBtn = TabButton("Map");
     private readonly Button _validationGroundTabBtn = TabButton("Validation Ground");
     private readonly Button _modelTabBtn = TabButton("Model");
+    private readonly Button _harnessTabBtn = TabButton("Harness");
     private readonly Border _treeFrame = new();
     private readonly Border _mapFrame = new() { IsVisible = false };
     private readonly Border _validationGroundFrame = new() { IsVisible = false };
     private readonly Border _modelFrame = new() { IsVisible = false };
+    private readonly Border _harnessFrame = new() { IsVisible = false };
 
     private readonly ScenarioView _scenarioView = new();
     private readonly ActionTreeView _actionTreeView = new();
@@ -39,6 +41,8 @@ public sealed class MainWindow : Window
     private readonly ExportView _exportView = new();
     private readonly ExternalModelView _externalModelView = new();
     private bool _productionModelViewModelBound;
+    private bool _harnessLoaded;
+    private readonly HarnessView _harnessView = new(new global::Panopticon.Tools.ReplaySketch.ViewModels.HarnessLauncherViewModel(new HarnessCatalogClient(), new HarnessRunClient(), new AvaloniaMainThreadDispatcher()));
 
     private static readonly string? ScreenshotPath =
         Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_PATH");
@@ -59,6 +63,7 @@ public sealed class MainWindow : Window
         _mapTabBtn.Click += (_, _) => SwitchToMap();
         _validationGroundTabBtn.Click += (_, _) => SwitchToValidationGround();
         _modelTabBtn.Click += (_, _) => SwitchToModel();
+        _harnessTabBtn.Click += (_, _) => SwitchToHarness();
 
         _scenarioView.BindViewModel(_vm);
         _actionTreeView.BindViewModel(_vm);
@@ -82,6 +87,7 @@ public sealed class MainWindow : Window
         _mapFrame.Child = _mapPreviewView;
         _validationGroundFrame.Child = _validationGroundEditorView;
         _modelFrame.Child = _externalModelView;
+        _harnessFrame.Child = _harnessView;
 
         var tabContent = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
         var tabBar = new StackPanel
@@ -93,12 +99,14 @@ public sealed class MainWindow : Window
         tabBar.Children.Add(_mapTabBtn);
         tabBar.Children.Add(_validationGroundTabBtn);
         tabBar.Children.Add(_modelTabBtn);
+        tabBar.Children.Add(_harnessTabBtn);
 
         var frames = new Grid();
         frames.Children.Add(_treeFrame);
         frames.Children.Add(_mapFrame);
         frames.Children.Add(_validationGroundFrame);
         frames.Children.Add(_modelFrame);
+        frames.Children.Add(_harnessFrame);
 
         tabContent.Children.Add(tabBar);
         Grid.SetRow(frames, 1);
@@ -161,6 +169,8 @@ public sealed class MainWindow : Window
                 SwitchToValidationGround();
             else if (tab == "model")
                 SwitchToModel(useScreenshotFixture: true);
+            else if (tab == "harness")
+                SwitchToHarness();
             DispatcherTimer.RunOnce(() => _ = TakeScreenshotAsync(), TimeSpan.FromSeconds(ScreenshotDelaySec));
         }
     }
@@ -205,6 +215,8 @@ public sealed class MainWindow : Window
         _mapFrame.IsVisible = false;
         _validationGroundFrame.IsVisible = false;
         _modelFrame.IsVisible = false;
+        _harnessFrame.IsVisible = false;
+        SetTabActive(_harnessTabBtn, false);
         SetTabActive(_treeTabBtn, true);
         SetTabActive(_mapTabBtn, false);
         SetTabActive(_validationGroundTabBtn, false);
@@ -217,6 +229,8 @@ public sealed class MainWindow : Window
         _mapFrame.IsVisible = true;
         _validationGroundFrame.IsVisible = false;
         _modelFrame.IsVisible = false;
+        _harnessFrame.IsVisible = false;
+        SetTabActive(_harnessTabBtn, false);
         SetTabActive(_treeTabBtn, false);
         SetTabActive(_mapTabBtn, true);
         SetTabActive(_validationGroundTabBtn, false);
@@ -230,6 +244,8 @@ public sealed class MainWindow : Window
         _mapFrame.IsVisible = false;
         _validationGroundFrame.IsVisible = true;
         _modelFrame.IsVisible = false;
+        _harnessFrame.IsVisible = false;
+        SetTabActive(_harnessTabBtn, false);
         SetTabActive(_treeTabBtn, false);
         SetTabActive(_mapTabBtn, false);
         SetTabActive(_validationGroundTabBtn, true);
@@ -266,6 +282,21 @@ public sealed class MainWindow : Window
                 new AvaloniaMainThreadDispatcher(),
                 new TestHarnessPreviewClient()));
         }
+    }
+
+    private void SwitchToHarness()
+    {
+        _treeFrame.IsVisible = false;
+        _mapFrame.IsVisible = false;
+        _validationGroundFrame.IsVisible = false;
+        _modelFrame.IsVisible = false;
+        _harnessFrame.IsVisible = true;
+        SetTabActive(_treeTabBtn, false);
+        SetTabActive(_mapTabBtn, false);
+        SetTabActive(_validationGroundTabBtn, false);
+        SetTabActive(_modelTabBtn, false);
+        SetTabActive(_harnessTabBtn, true);
+        if (!_harnessLoaded) { _harnessLoaded = true; _ = _harnessView.LoadAsync(); }
     }
 
     private static void SetTabActive(Button btn, bool active)

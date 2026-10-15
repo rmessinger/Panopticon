@@ -193,3 +193,4 @@ WI-P0-20..23: added the versioned harness catalog contract, TestHarness scenario
 WI-P0-24..25: added ReplaySketch catalog and run clients with owned-process cancellation and temporary launch configs.
 
 - WI-P0-26..28: Added the harness launcher view model, typed parameter editor, launch presets, filtering, and focused tests.
+- WI-P0-29: Added the Avalonia Harness tab and screenshot-mode selection.
