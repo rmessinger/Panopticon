@@ -107,7 +107,7 @@ public static class SaveFile
     public static void Persist(StatePersister persister) => Persist(persister, chunkFilter: null);
 
     // chunkFilter applies in write mode only; read mode loads whatever chunks the stream carries.
-    internal static void Persist(StatePersister persister, Func<string, bool>? chunkFilter)
+    internal static void Persist(StatePersister persister, Func<string, bool> chunkFilter)
     {
         //using var binaryReader = new BinaryReader(stream, Encoding.Unicode, true);
 

@@ -9,7 +9,7 @@ namespace Panopticon.Tests.Simulation;
 
 public sealed class DomainStateFrameTests : StatePersisterTest
 {
-    private static DomainStateField Int(string name, string family = "vehicles", DomainConservationRole role = DomainConservationRole.Holding)
+    private static DomainStateField Int(string name, string? family = "vehicles", DomainConservationRole role = DomainConservationRole.Holding)
         => new(name, "persons", DomainQuantityType.Integer, role, family);
 
     private static DomainStateSchema Schema() => new(

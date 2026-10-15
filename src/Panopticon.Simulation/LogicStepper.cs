@@ -34,7 +34,7 @@ public sealed class LogicStepper
     /// wall-clock span (B1-3 per-system timing). The un-instrumented path stays branch-free:
     /// when no handler is attached, <see cref="LogicTick"/> runs the original sequence.
     /// </summary>
-    public event Action<string, TimeSpan>? SystemSpan;
+    public event Action<string, TimeSpan> SystemSpan;
 
     /// <summary>
     /// Cancels a pending single step, matching the previous behavior of the

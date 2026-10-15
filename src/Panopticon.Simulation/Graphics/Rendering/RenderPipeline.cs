@@ -23,7 +23,7 @@ internal sealed class RenderPipeline : DisposableBase
     /// Render-path spans per frame (B5): buildRenderList, shadowPass, forwardPass, and the
     /// render total, in that order. Mirrors LogicStepper.SystemSpan for the presentation side.
     /// </summary>
-    public event Action<string, TimeSpan>? RenderSpan;
+    public event Action<string, TimeSpan> RenderSpan;
 
     private const int ParallelCullingBatchSize = 128;
 
@@ -87,8 +87,8 @@ internal sealed class RenderPipeline : DisposableBase
     private Texture _compositionDepthBuffer;
     private Framebuffer _compositionFramebuffer;
 
-    private readonly TextureCopier? _textureCopier;
-    private readonly OutputColourPass? _outputColourPass;
+    private readonly TextureCopier _textureCopier;
+    private readonly OutputColourPass _outputColourPass;
 
     public Texture ShadowMap => _shadowMapRenderer.ShadowMap;
     public Texture ReflectionMap => _waterMapRenderer.ReflectionMap;
@@ -562,7 +562,7 @@ internal sealed class RenderPipeline : DisposableBase
         }
 
         int? lastRenderItemIndex = null;
-        DeviceBuffer? lastIndexBuffer = null;
+        DeviceBuffer lastIndexBuffer = null;
         var indices = bucket.RenderItems.CulledItemIndices;
 
         var itemIndex = 0;
@@ -673,7 +673,7 @@ internal sealed class RenderPipeline : DisposableBase
         int itemIndex,
         ResourceSet forwardPassResourceSet,
         ref int? lastRenderItemIndex,
-        ref DeviceBuffer? lastIndexBuffer)
+        ref DeviceBuffer lastIndexBuffer)
     {
         ref var first = ref bucket.RenderItems[indices[itemIndex]];
 
@@ -753,7 +753,7 @@ internal sealed class RenderPipeline : DisposableBase
     /// B5-4: the index buffer is pass state, not item state (binding persists across
     /// pipeline changes on Vulkan, D3D11, and Metal), so it is only bound when it changes.
     /// </summary>
-    private void SetIndexBufferIfChanged(CommandList commandList, DeviceBuffer indexBuffer, ref DeviceBuffer? lastIndexBuffer)
+    private void SetIndexBufferIfChanged(CommandList commandList, DeviceBuffer indexBuffer, ref DeviceBuffer lastIndexBuffer)
     {
         if (indexBuffer == lastIndexBuffer)
         {

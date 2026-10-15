@@ -43,7 +43,7 @@ public sealed record RecordingOptions
     public string BundleDirectory { get; init; } = "";
 
     /// <summary>Cadence to use when the domain does not supply one; the 1800/648000 default when null.</summary>
-    public RecordingCadence? DefaultCadence { get; init; }
+    public RecordingCadence DefaultCadence { get; init; }
 
     /// <summary>Whether to record T1 signature trees into the operational stream (A5-4 tolerance plan).</summary>
     public bool RecordT1 { get; init; } = true;

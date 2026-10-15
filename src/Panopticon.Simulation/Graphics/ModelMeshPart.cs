@@ -51,7 +51,7 @@ public sealed class ModelMeshPart
         MaterialIndex = materialIndex;
     }
 
-    internal void BeforeRender(CommandList commandList, DeviceBuffer? vertexBufferOverride = null)
+    internal void BeforeRender(CommandList commandList, DeviceBuffer vertexBufferOverride = null)
     {
         commandList.SetVertexBuffer(0, vertexBufferOverride ?? ModelMesh.VertexBuffer);
 

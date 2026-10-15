@@ -106,7 +106,7 @@ partial class ModelMesh
     }
 
     private static PbrMetallicRoughnessShaderResources.RoleBinding? ResolveRole(
-        ImportedTextureBinding? binding,
+        ImportedTextureBinding binding,
         ImportedTextureMaterializer textureMaterializer,
         bool linearColourSpace,
         bool isColour)

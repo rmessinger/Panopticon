@@ -39,8 +39,8 @@ internal abstract class ShaderMaterialShaderResources : ShaderSetBase
     /// </summary>
     public readonly Pipeline SingleSamplePipeline;
 
-    private Pipeline? _alphaToCoveragePipeline;
-    private Pipeline? _alphaToCoverageSingleSamplePipeline;
+    private Pipeline _alphaToCoveragePipeline;
+    private Pipeline _alphaToCoverageSingleSamplePipeline;
 
     protected ShaderMaterialShaderResources(
         ShaderSetStore store,

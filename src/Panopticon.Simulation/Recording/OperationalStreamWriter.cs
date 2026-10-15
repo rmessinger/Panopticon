@@ -26,13 +26,13 @@ internal sealed class OperationalStreamWriter : IDisposable
 
     private readonly Stream _stream;
     private readonly BinaryWriter _writer;
-    private readonly IGame? _game;
+    private readonly IGame _game;
     private readonly Dictionary<string, uint> _stringIds = new(StringComparer.Ordinal);
     private readonly List<string> _pendingStrings = new();
     private readonly List<OperationalChunkEntry> _index = new();
     private uint _nextStringId;
 
-    public OperationalStreamWriter(Stream stream, string runId, string domainId, int domainSchemaVersion, IGame? game = null)
+    public OperationalStreamWriter(Stream stream, string runId, string domainId, int domainSchemaVersion, IGame game = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(runId);

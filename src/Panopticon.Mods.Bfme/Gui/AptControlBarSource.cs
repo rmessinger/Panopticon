@@ -13,6 +13,7 @@ using Panopticon.Mathematics;
 using Panopticon.Mods.Bfme.Gui;
 using SixLabors.Fonts;
 using Veldrid;
+using FontWeight = Panopticon.Gui.FontWeight;
 using Geometry = Panopticon.Data.Apt.Geometry;
 using Rectangle = Panopticon.Mathematics.Rectangle;
 using ValueType = Panopticon.Gui.Apt.ActionScript.ValueType;

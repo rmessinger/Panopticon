@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using Panopticon.Logic;
 using Panopticon.Tools.ReplaySketch.Model;
-using Panopticon.Tools.ReplaySketch.Model;
 
 namespace Panopticon.Tools.ReplaySketch.Services;
 
