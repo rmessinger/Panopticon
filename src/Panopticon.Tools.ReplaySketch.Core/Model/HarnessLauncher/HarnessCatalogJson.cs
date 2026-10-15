@@ -29,6 +29,8 @@ public static class HarnessCatalogJson
             ?? throw new JsonException("Harness catalog JSON is not an object.");
         if (catalog.SchemaVersion != CurrentSchemaVersion)
             throw new InvalidDataException($"Harness catalog schema version {catalog.SchemaVersion} is not supported; expected {CurrentSchemaVersion}.");
+        if (catalog.Scenarios is null || catalog.Parameters is null)
+            throw new JsonException("Harness catalog requires scenarios and parameters arrays.");
         return catalog;
     }
 }
