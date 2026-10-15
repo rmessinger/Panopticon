@@ -17,7 +17,7 @@ namespace Panopticon.Tools.ReplaySketch.Avalonia.Views;
 public sealed class HarnessView : UserControl
 {
     private readonly HarnessLauncherViewModel _viewModel;
-    private readonly TextBox _filter = new() { Watermark = "Filter scenarios", MinWidth = 180 };
+    private readonly TextBox _filter = new() { PlaceholderText = "Filter scenarios", MinWidth = 180 };
     private readonly ComboBox _mode = new();
     private readonly ComboBox _category = new();
     private readonly ListBox _scenarios = new();
@@ -25,7 +25,7 @@ public sealed class HarnessView : UserControl
     private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
     private readonly TextBox _output = new() { IsReadOnly = true, AcceptsReturn = true, FontFamily = new FontFamily("monospace") };
     private readonly ComboBox _presets = new() { MinWidth = 140, PlaceholderText = "Presets" };
-    private readonly TextBox _presetName = new() { Watermark = "Preset name", Width = 140 };
+    private readonly TextBox _presetName = new() { PlaceholderText = "Preset name", Width = 140 };
     private IReadOnlyList<HarnessParameterRow>? _renderedRows;
     private bool _refreshing;
 
