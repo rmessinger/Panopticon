@@ -1754,3 +1754,10 @@ Dependency: M1. Independent of X1. [Evidence and cards](implementation/track-x-x
   - AC: repeated uploads have bounded temporary ownership, correct destination contents, safe cleanup, and before/after D3D11 native-memory and frame-time evidence.
 - [ ] X2-2 Reduce measured combat FX/model resource recreation (`WI-X2-02`).
   - AC: post-X2-1 stacks identify one recreation owner; compatible resources are reused with bounded retention, reset/disposal coverage, fewer constructions, and preserved visuals.
+
+### X3: Cursor modernization
+
+Dependency: none. [Plan and cards](implementation/track-x-x3-cursor-modernization.md).
+
+- [ ] X3-1 Evaluate open-source cursor replacements and produce comparison examples (`WI-X3-01`).
+  - AC: full inventory of the 52 originals; pinned sources with license verdicts; contact sheet and animated GIF in the shared directory; `CursorFile` load-check per candidate; loader assessment naming the smallest high-DPI change; follow-up cards `Draft` with the original set as default.

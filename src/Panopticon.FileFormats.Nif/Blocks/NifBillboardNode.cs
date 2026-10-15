@@ -15,7 +15,7 @@ public sealed record NifBillboardNode : NifNode
         Mode = reader.ReadUInt16("BillboardMode");
     }
 
-    internal static NifBillboardNode Read(NifBinaryReader reader)
+    internal static new NifBillboardNode Read(NifBinaryReader reader)
     {
         return new NifBillboardNode(reader);
     }
