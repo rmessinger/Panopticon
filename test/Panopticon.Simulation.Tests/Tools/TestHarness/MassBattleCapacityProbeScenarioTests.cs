@@ -169,6 +169,29 @@ public class MassBattleCapacityProbeScenarioTests
         Assert.True(
             maxRequests <= squadsAtWorst + blockedAtWorst,
             $"path requests per decision tick ({maxRequests}) should be bounded by squads plus blocked followers ({squadsAtWorst} squads, {blockedAtWorst} blocked)");
+
+        // WI-M4-05: the air commander owns the jets (the M1 scripted sortie loop is off in
+        // army-AI mode). All three missions recur across the run, and at least one jet
+        // accepted a mission again after recovering, which under AI means it rearmed and
+        // re-sortied.
+        var airMissions = report.RootElement.GetProperty("airMissions");
+        Assert.Equal(2, airMissions.GetArrayLength());
+        var strike = 0;
+        var patrol = 0;
+        var escort = 0;
+        foreach (var side in airMissions.EnumerateArray())
+        {
+            strike += side.GetProperty("strike").GetInt32();
+            patrol += side.GetProperty("patrol").GetInt32();
+            escort += side.GetProperty("escort").GetInt32();
+        }
+
+        Assert.True(strike > 0, "the air commander should assign strike missions");
+        Assert.True(patrol > 0, "the air commander should assign patrol missions");
+        Assert.True(escort > 0, "the air commander should assign escort missions");
+        var multiMissionJets = report.RootElement.GetProperty("airMissions").EnumerateArray()
+            .Sum(side => side.GetProperty("jetsWithMultipleMissions").GetInt32());
+        Assert.True(multiMissionJets > 0, "at least one jet should accept a second mission after recovery");
     }
 
     /// <summary>Forwards runner messages to the test output so failures show their reasons.</summary>

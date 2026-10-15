@@ -7,6 +7,7 @@ using Panopticon.Data;
 using Panopticon.Graphics;
 using Panopticon.Input;
 using Panopticon.Logic;
+using Panopticon.Logic.AI.Hierarchy;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using Panopticon.Network;
@@ -180,7 +181,11 @@ public static class MassBattleCapacityProbeRunner
                 step();
             }
 
-            IssueGeneralAttack(game, armies, includeGround: !armyAi);
+            if (!armyAi)
+            {
+                IssueGeneralAttack(game, armies);
+            }
+
             var invariantSampler = armyAi ? MassBattleSquadInvariantSampler.Create(profile, game) : null;
 
             var anchorCadence = config.MassBattleCapacityProbeAsyncAnchorBurstEveryFrames;
@@ -192,7 +197,7 @@ public static class MassBattleCapacityProbeRunner
                 : null;
 
             var (framesRun, benchmarkRecord) = RunEngagement(
-                game, armies, step, frameBudget, config.Headless, anchor, !armyAi, invariantSampler);
+                game, armies, step, frameBudget, config.Headless, anchor, invariantSampler, scriptedOrders: !armyAi);
             var stopReason = DescribeStopReason(armies, framesRun, frameBudget);
 
             string? screenshotPath = null;
@@ -203,7 +208,7 @@ public static class MassBattleCapacityProbeRunner
 
             var report = BuildReport(
                 profile, profilePath, config.Headless, armies, reasons, frameBudget, framesRun, stopReason, screenshotPath,
-                anchor?.Build(), invariantSampler?.Build());
+                anchor?.Build(), invariantSampler?.Build(), armyAi ? sidePlayers : null);
             reporter.Info(MassBattleCapacityProbeReport.WriteText(report));
 
             var reportPath = string.IsNullOrEmpty(config.MassBattleCapacityProbeReportPath)
@@ -406,16 +411,15 @@ public static class MassBattleCapacityProbeRunner
     /// the real taxi and takeoff flow. Army-AI mode (WI-M4-03) passes includeGround: false, so
     /// only the jet sortie orders are issued and the ground hierarchy decides for itself.
     /// </summary>
-    private static void IssueGeneralAttack(Game game, List<SideArmy> armies, bool includeGround = true)
+    // WI-M4-01 scripted behavior for the plain probe. Army-AI mode (WI-M4-05) never calls
+    // this: the hierarchy owns both ground and air from the first decision tick.
+    private static void IssueGeneralAttack(Game game, List<SideArmy> armies)
     {
         for (var i = 0; i < armies.Count; i++)
         {
             var army = armies[i];
             var enemies = armies[1 - i].Units.Where(unit => !unit.IsEffectivelyDead).ToList();
-            var units = includeGround
-                ? army.Units
-                : army.Jets.Select(jet => jet.Unit).ToList();
-            foreach (var unit in units)
+            foreach (var unit in army.Units)
             {
                 if (unit.IsEffectivelyDead)
                 {
@@ -468,8 +472,8 @@ public static class MassBattleCapacityProbeRunner
         int frameBudget,
         bool headless,
         MassBattleAsyncPathAnchor? anchor = null,
-        bool includeGroundOrders = true,
-        MassBattleSquadInvariantSampler? invariantSampler = null)
+        MassBattleSquadInvariantSampler? invariantSampler = null,
+        bool scriptedOrders = true)
     {
         var allJets = armies.SelectMany(army => army.Jets).ToList();
         var framesRun = frameBudget;
@@ -520,9 +524,9 @@ public static class MassBattleCapacityProbeRunner
                     break;
                 }
 
-                if ((frame + 1) % OrderRefreshFrames == 0)
+                if (scriptedOrders && (frame + 1) % OrderRefreshFrames == 0)
                 {
-                    RefreshOrders(game, armies, includeGroundOrders);
+                    RefreshOrders(game, armies);
                 }
             }
         }
@@ -683,10 +687,10 @@ public static class MassBattleCapacityProbeRunner
     /// <summary>
     /// Re-issues the general attack for idle units (move completed) and for jets recovered into
     /// parking, while any enemy remains. This is the scripted steady state of the engagement,
-    /// not AI. Army-AI mode (WI-M4-03) passes includeGround: false, so only parked jets are
-    /// re-launched and the ground hierarchy keeps its own orders.
+    /// not AI. Army-AI mode (WI-M4-05) never calls this; the ground hierarchy and the air
+    /// commander own every re-order.
     /// </summary>
-    private static void RefreshOrders(Game game, List<SideArmy> armies, bool includeGround = true)
+    private static void RefreshOrders(Game game, List<SideArmy> armies)
     {
         for (var i = 0; i < armies.Count; i++)
         {
@@ -705,16 +709,10 @@ public static class MassBattleCapacityProbeRunner
                     continue;
                 }
 
-                var isJet = jetsByUnit.TryGetValue(unit, out var jet);
-                if (!includeGround && !isJet)
-                {
-                    continue;
-                }
-
-                if (isJet)
+                if (jetsByUnit.ContainsKey(unit))
                 {
                     // Only re-issue for a jet settled back into parking: mid-sortie states own it.
-                    if (jet!.Airborne || ((JetAIUpdate)unit.AIUpdate!).CurrentJetAIState != JetAIUpdate.JetAIState.Parked)
+                    if (((JetAIUpdate)unit.AIUpdate!).CurrentJetAIState != JetAIUpdate.JetAIState.Parked)
                     {
                         continue;
                     }
@@ -756,7 +754,8 @@ public static class MassBattleCapacityProbeRunner
         string stopReason,
         string? screenshotPath,
         MassBattleAsyncPathAnchorReport? asyncPathAnchor = null,
-        MassBattleSquadInvariantReport? squadInvariant = null)
+        MassBattleSquadInvariantReport? squadInvariant = null,
+        List<Player>? sideAiPlayers = null)
     {
         var sides = armies.Select(army => new SideEngagementResult
         {
@@ -770,6 +769,39 @@ public static class MassBattleCapacityProbeRunner
         }).ToList();
 
         var allJets = armies.SelectMany(army => army.Jets).ToList();
+
+        // WI-M4-05: per-side air mission totals and per-jet assignment counts from the live
+        // policies. Null keeps the scripted M1 report shape unchanged.
+        List<AirMissionSideResult>? airMissions = null;
+        Dictionary<uint, int>? missionsByJet = null;
+        if (sideAiPlayers is not null)
+        {
+            airMissions = [];
+            missionsByJet = [];
+            for (var i = 0; i < sideAiPlayers.Count && i < armies.Count; i++)
+            {
+                var policy = sideAiPlayers[i].AIPlayer?.DecisionPolicy as HierarchicalAIDecisionPolicy;
+                if (policy is null)
+                {
+                    continue;
+                }
+
+                airMissions.Add(new AirMissionSideResult
+                {
+                    SideId = armies[i].Id,
+                    Strike = policy.AirMissionAssignmentCount(AirMission.Strike),
+                    Patrol = policy.AirMissionAssignmentCount(AirMission.Patrol),
+                    Escort = policy.AirMissionAssignmentCount(AirMission.Escort),
+                    JetsWithMultipleMissions = armies[i].Jets.Count(
+                        jet => policy.AirMissionAssignmentCountForUnit(jet.Unit.Id) >= 2),
+                });
+                foreach (var jet in armies[i].Jets)
+                {
+                    missionsByJet[jet.Unit.Id.Index] = policy.AirMissionAssignmentCountForUnit(jet.Unit.Id);
+                }
+            }
+        }
+
         var sorties = allJets.Select(jet => new SortieResult
         {
             SideId = jet.SideId,
@@ -781,6 +813,10 @@ public static class MassBattleCapacityProbeRunner
             FinalStateName = jet.Unit.IsEffectivelyDead
                 ? "Destroyed"
                 : ((JetAIUpdate)jet.Unit.AIUpdate).CurrentJetAIState.ToString(),
+            MissionsAssigned = missionsByJet is not null
+                && missionsByJet.TryGetValue(jet.Unit.Id.Index, out var missions)
+                    ? missions
+                    : null,
         }).ToList();
 
         var parkedShortfall = sides
@@ -842,6 +878,7 @@ public static class MassBattleCapacityProbeRunner
             FailureReasons = reasons.Distinct().ToList(),
             AsyncPathAnchor = asyncPathAnchor,
             SquadInvariant = squadInvariant,
+            AirMissions = airMissions,
         };
         return report with { AllPassed = report.FailureReasons.Count == 0 };
     }

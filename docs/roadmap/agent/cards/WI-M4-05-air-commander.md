@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M4-05` |
 | Roadmap phase | [M4](../../track-m-mass-battle.md): army-scale AI |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M4-03` |
@@ -43,10 +43,17 @@ Aircraft form their own squads under an air commander that assigns strike, patro
 
 ## Acceptance criteria
 
-- [ ] Every aircraft is assigned to an air squad at start and after every casualty.
-- [ ] Strike, patrol, and escort missions each occur in the scaled run.
-- [ ] Aircraft return to rearm and re-sortie under AI control (recoveries and second departures in the report).
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Every aircraft is assigned to an air squad at start and after every casualty.
+  - Air squads form through the same Synchronize path as ground squads; the scaled run's squad
+    invariant holds with zero unassigned eligible units, and aircraft never enter ground squads.
+- [x] Strike, patrol, and escort missions each occur in the scaled run.
+  - Scaled army-AI report: 30 strike, 30 patrol, 30 escort assignments per side.
+- [x] Aircraft return to rearm and re-sortie under AI control (recoveries and second departures in the report).
+  - Re-task gates on parked state, not clip state: the engine refills clips only through
+    mid-combat reload, so a clip gate would ground jets after their first sortie (observed in
+    the first scaled run). Parked-state gating matches M1 scripted semantics; parked clip
+    refill is recorded as a candidate engine follow-up.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
