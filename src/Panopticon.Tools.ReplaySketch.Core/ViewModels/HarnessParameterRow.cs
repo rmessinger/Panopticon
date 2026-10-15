@@ -16,7 +16,7 @@ public sealed class HarnessParameterRow : INotifyPropertyChanged
     {
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
         IsLocked = locked;
-        _text = ToText(descriptor.Default);
+        _text = locked && descriptor.Kind == HarnessParameterKind.Bool ? "true" : ToText(descriptor.Default);
         Validate();
     }
 
@@ -44,6 +44,7 @@ public sealed class HarnessParameterRow : INotifyPropertyChanged
         Validate();
         value = null;
         if (Error is not null) return false;
+        if (Text.Length == 0 && Descriptor.Default is null) return true;
         value = Descriptor.Kind switch
         {
             HarnessParameterKind.Bool => JsonValue.Create(bool.Parse(Text)),
@@ -57,12 +58,18 @@ public sealed class HarnessParameterRow : INotifyPropertyChanged
 
     private void Validate()
     {
+        if (Text.Length == 0 && Descriptor.Default is null)
+        {
+            Error = null;
+            return;
+        }
+
         Error = Descriptor.Kind switch
         {
             HarnessParameterKind.Bool when !bool.TryParse(Text, out _) => "Enter true or false.",
             HarnessParameterKind.Int when !int.TryParse(Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out _) => "Enter an integer.",
-            HarnessParameterKind.Float when !float.TryParse(Text, NumberStyles.Float, CultureInfo.InvariantCulture, out _) => "Enter a number.",
-            HarnessParameterKind.Enum when Text.Length > 0 && !Descriptor.EnumValues.Contains(Text, StringComparer.Ordinal) => "Choose a listed value.",
+            HarnessParameterKind.Float when !float.TryParse(Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) || !float.IsFinite(number) => "Enter a finite number.",
+            HarnessParameterKind.Enum when !Descriptor.EnumValues.Contains(Text, StringComparer.Ordinal) => "Choose a listed value.",
             HarnessParameterKind.Json when !IsJson(Text) => "Enter valid JSON.",
             _ => null,
         };
@@ -74,6 +81,7 @@ public sealed class HarnessParameterRow : INotifyPropertyChanged
         catch { return false; }
     }
 
-    private static string ToText(JsonNode? value) => value is null ? string.Empty : value.ToJsonString().Trim('"');
+    public static string ToText(JsonNode? value) => value is null ? string.Empty
+        : value is JsonValue scalar && scalar.TryGetValue<string>(out var text) ? text : value.ToJsonString();
     private void OnChanged(string? propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

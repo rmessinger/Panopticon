@@ -25,7 +25,7 @@ public sealed class HarnessParameterEditorViewModel : INotifyPropertyChanged
             .Select(parameter => new HarnessParameterRow(parameter, scenario.Modes == HarnessRunModes.Headless && parameter.Name == "Headless"))
             .ToArray();
         foreach (var row in Rows)
-            if (!row.IsLocked && previous.TryGetValue(row.Descriptor.Name, out var value)) row.Text = value?.ToJsonString().Trim('"') ?? string.Empty;
+            if (!row.IsLocked && previous.TryGetValue(row.Descriptor.Name, out var value)) row.Text = HarnessParameterRow.ToText(value);
         foreach (var row in Rows) row.PropertyChanged += (_, _) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
     }
@@ -40,7 +40,10 @@ public sealed class HarnessParameterEditorViewModel : INotifyPropertyChanged
     public void ApplyOverrides(IReadOnlyDictionary<string, JsonNode?> overrides)
     {
         foreach (var row in Rows)
-            if (!row.IsLocked && overrides.TryGetValue(row.Descriptor.Name, out var value)) row.Text = value?.ToJsonString().Trim('"') ?? string.Empty;
+        {
+            row.Reset();
+            if (!row.IsLocked && overrides.TryGetValue(row.Descriptor.Name, out var value)) row.Text = HarnessParameterRow.ToText(value);
+        }
     }
 
     private static JsonNode? ValueOf(HarnessParameterRow row) { row.TryGetValue(out var value); return value; }
