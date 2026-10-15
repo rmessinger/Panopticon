@@ -1,6 +1,8 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Linq;
+using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
 
 namespace Panopticon.Logic.AI.Hierarchy;
@@ -57,6 +59,14 @@ public sealed class HierarchicalAIDecisionPolicy : IAIDecisionPolicy
             var goals = _commander.DecideGoals(
                 new CommanderDecisionContext(directive, squad, context.OwnerPlayerIndex));
 
+            // WI-M4-03: orders act on the player's current selection, so each decided group is
+            // preceded by its own SetSelection. The reference commander emits squad-uniform
+            // goals, which collapses to one selection and one order per squad; a soldier rank
+            // that decides per member falls back to one selection per member.
+            var decidedMembers = new List<GameObject>(squad.Members.Count);
+            var decidedOrders = new List<Order>(squad.Members.Count);
+            Order? uniformOrder = null;
+            var uniform = true;
             foreach (var member in squad.Members)
             {
                 var goal = goals.TryGetValue(member.Id.Index, out var g) ? g : null;
@@ -64,13 +74,76 @@ public sealed class HierarchicalAIDecisionPolicy : IAIDecisionPolicy
                         new SoldierDecisionContext(member, context.OwnerPlayerIndex, goal))
                     is { } order)
                 {
-                    orders.Add(order);
+                    decidedMembers.Add(member);
+                    decidedOrders.Add(order);
+                    if (uniformOrder is null)
+                    {
+                        uniformOrder = order;
+                    }
+                    else if (uniform && !OrdersEqual(uniformOrder, order))
+                    {
+                        uniform = false;
+                    }
+                }
+            }
+
+            if (decidedMembers.Count == 0)
+            {
+                continue;
+            }
+
+            if (uniform)
+            {
+                orders.Add(Order.CreateSetSelection(
+                    context.OwnerPlayerIndex, decidedMembers.Select(member => member.Id)));
+                orders.Add(uniformOrder!);
+            }
+            else
+            {
+                for (var i = 0; i < decidedMembers.Count; i++)
+                {
+                    orders.Add(Order.CreateSetSelection(context.OwnerPlayerIndex, decidedMembers[i].Id));
+                    orders.Add(decidedOrders[i]);
                 }
             }
         }
 
         return orders;
     }
+
+    private static bool OrdersEqual(Order left, Order right)
+    {
+        if (left.OrderType != right.OrderType || left.Arguments.Count != right.Arguments.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < left.Arguments.Count; i++)
+        {
+            var leftArgument = left.Arguments[i];
+            var rightArgument = right.Arguments[i];
+            if (leftArgument.ArgumentType != rightArgument.ArgumentType
+                || !ArgumentsEqual(leftArgument.Value, rightArgument.Value, leftArgument.ArgumentType))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ArgumentsEqual(OrderArgumentValue left, OrderArgumentValue right, OrderArgumentType type) =>
+        type switch
+        {
+            OrderArgumentType.Integer => left.Integer == right.Integer,
+            OrderArgumentType.Float => left.Float == right.Float,
+            OrderArgumentType.Boolean => left.Boolean == right.Boolean,
+            OrderArgumentType.ObjectId => left.ObjectId == right.ObjectId,
+            OrderArgumentType.Position => left.Position == right.Position,
+            OrderArgumentType.ScreenPosition => left.ScreenPosition.Equals(right.ScreenPosition),
+            OrderArgumentType.ScreenRectangle => left.ScreenRectangle.Equals(right.ScreenRectangle),
+            _ => false,
+        };
 
     private IReadOnlyList<SquadSummary> SummarizeSquads()
     {

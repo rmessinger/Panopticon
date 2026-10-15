@@ -117,19 +117,40 @@ public static class MassBattleCapacityProbeRunner
             }
 
             // Hostile teams: the side index is the team index, so the armies fight on contact.
+            // Army-AI mode (WI-M4-03): both sides run the hierarchical decision policy.
+            var armyAi = config.MassBattleCapacityProbeArmyAi == true;
+            var hierarchicalPolicy = new Panopticon.Logic.AI.AIDecisionPolicyPayload
+            {
+                Type = Panopticon.Logic.AI.AIDecisionPolicyType.Hierarchical,
+            };
+
             var playerSettings = profile.Sides.Select((side, index) => new PlayerSetting(
                 index,
                 side.Side,
                 MassBattlePlacement.ParseColor(side.Color, index),
                 index,
                 PlayerOwner.EasyAi,
-                side.Id)).ToArray();
+                side.Id)
+            {
+                AIPolicy = armyAi ? hierarchicalPolicy : null,
+            }).ToArray();
             game.StartSkirmishOrMultiPlayerGame(profile.Map.Path, new EchoConnection(), playerSettings, (int)ProbeSeed, isMultiPlayer: false);
             game.StartRun();
             CameraZoomInitializer.ApplyOnce(game, config.MaxCameraZoomMultiplier);
             game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
+            var sidePlayers = new List<Player>();
+            for (var i = 0; i < profile.Sides.Count; i++)
+            {
+                sidePlayers.Add(game.Scene3D.Players[2 + i]);
+            }
+
             foreach (var player in game.Scene3D.Players)
             {
+                if (armyAi && sidePlayers.Contains(player))
+                {
+                    continue;
+                }
+
                 player.DisableAI();
             }
 
@@ -159,7 +180,8 @@ public static class MassBattleCapacityProbeRunner
                 step();
             }
 
-            IssueGeneralAttack(game, armies);
+            IssueGeneralAttack(game, armies, includeGround: !armyAi);
+            var invariantSampler = armyAi ? MassBattleSquadInvariantSampler.Create(profile, game) : null;
 
             var anchorCadence = config.MassBattleCapacityProbeAsyncAnchorBurstEveryFrames;
             MassBattleAsyncPathAnchor? anchor = anchorCadence is > 0
@@ -169,7 +191,8 @@ public static class MassBattleCapacityProbeRunner
                     config.MassBattleCapacityProbeAsyncAnchorRequestsPerBurst ?? 8)
                 : null;
 
-            var (framesRun, benchmarkRecord) = RunEngagement(game, armies, step, frameBudget, config.Headless, anchor);
+            var (framesRun, benchmarkRecord) = RunEngagement(
+                game, armies, step, frameBudget, config.Headless, anchor, !armyAi, invariantSampler);
             var stopReason = DescribeStopReason(armies, framesRun, frameBudget);
 
             string? screenshotPath = null;
@@ -180,7 +203,7 @@ public static class MassBattleCapacityProbeRunner
 
             var report = BuildReport(
                 profile, profilePath, config.Headless, armies, reasons, frameBudget, framesRun, stopReason, screenshotPath,
-                anchor?.Build());
+                anchor?.Build(), invariantSampler?.Build());
             reporter.Info(MassBattleCapacityProbeReport.WriteText(report));
 
             var reportPath = string.IsNullOrEmpty(config.MassBattleCapacityProbeReportPath)
@@ -380,15 +403,19 @@ public static class MassBattleCapacityProbeRunner
     /// <summary>
     /// The general attack: every unit of every side moves on the opposing zone centroid and
     /// engages its nearest living enemy. Jets get a move target too, which unparks them through
-    /// the real taxi and takeoff flow.
+    /// the real taxi and takeoff flow. Army-AI mode (WI-M4-03) passes includeGround: false, so
+    /// only the jet sortie orders are issued and the ground hierarchy decides for itself.
     /// </summary>
-    private static void IssueGeneralAttack(Game game, List<SideArmy> armies)
+    private static void IssueGeneralAttack(Game game, List<SideArmy> armies, bool includeGround = true)
     {
         for (var i = 0; i < armies.Count; i++)
         {
             var army = armies[i];
             var enemies = armies[1 - i].Units.Where(unit => !unit.IsEffectivelyDead).ToList();
-            foreach (var unit in army.Units)
+            var units = includeGround
+                ? army.Units
+                : army.Jets.Select(jet => jet.Unit).ToList();
+            foreach (var unit in units)
             {
                 if (unit.IsEffectivelyDead)
                 {
@@ -440,7 +467,9 @@ public static class MassBattleCapacityProbeRunner
         Action step,
         int frameBudget,
         bool headless,
-        MassBattleAsyncPathAnchor? anchor = null)
+        MassBattleAsyncPathAnchor? anchor = null,
+        bool includeGroundOrders = true,
+        MassBattleSquadInvariantSampler? invariantSampler = null)
     {
         var allJets = armies.SelectMany(army => army.Jets).ToList();
         var framesRun = frameBudget;
@@ -482,6 +511,7 @@ public static class MassBattleCapacityProbeRunner
                 anchor?.AfterStep();
 
                 TrackJetTransitions(allJets, frame);
+                invariantSampler?.Sample();
 
                 if (armies.Any(army => army.AliveUnits == 0))
                 {
@@ -492,7 +522,7 @@ public static class MassBattleCapacityProbeRunner
 
                 if ((frame + 1) % OrderRefreshFrames == 0)
                 {
-                    RefreshOrders(game, armies);
+                    RefreshOrders(game, armies, includeGroundOrders);
                 }
             }
         }
@@ -653,9 +683,10 @@ public static class MassBattleCapacityProbeRunner
     /// <summary>
     /// Re-issues the general attack for idle units (move completed) and for jets recovered into
     /// parking, while any enemy remains. This is the scripted steady state of the engagement,
-    /// not AI.
+    /// not AI. Army-AI mode (WI-M4-03) passes includeGround: false, so only parked jets are
+    /// re-launched and the ground hierarchy keeps its own orders.
     /// </summary>
-    private static void RefreshOrders(Game game, List<SideArmy> armies)
+    private static void RefreshOrders(Game game, List<SideArmy> armies, bool includeGround = true)
     {
         for (var i = 0; i < armies.Count; i++)
         {
@@ -674,10 +705,16 @@ public static class MassBattleCapacityProbeRunner
                     continue;
                 }
 
-                if (jetsByUnit.TryGetValue(unit, out var jet))
+                var isJet = jetsByUnit.TryGetValue(unit, out var jet);
+                if (!includeGround && !isJet)
+                {
+                    continue;
+                }
+
+                if (isJet)
                 {
                     // Only re-issue for a jet settled back into parking: mid-sortie states own it.
-                    if (jet.Airborne || ((JetAIUpdate)unit.AIUpdate!).CurrentJetAIState != JetAIUpdate.JetAIState.Parked)
+                    if (jet!.Airborne || ((JetAIUpdate)unit.AIUpdate!).CurrentJetAIState != JetAIUpdate.JetAIState.Parked)
                     {
                         continue;
                     }
@@ -718,7 +755,8 @@ public static class MassBattleCapacityProbeRunner
         int framesRun,
         string stopReason,
         string? screenshotPath,
-        MassBattleAsyncPathAnchorReport? asyncPathAnchor = null)
+        MassBattleAsyncPathAnchorReport? asyncPathAnchor = null,
+        MassBattleSquadInvariantReport? squadInvariant = null)
     {
         var sides = armies.Select(army => new SideEngagementResult
         {
@@ -769,6 +807,24 @@ public static class MassBattleCapacityProbeRunner
             }
         }
 
+        if (squadInvariant is not null)
+        {
+            foreach (var side in squadInvariant.Sides)
+            {
+                if (side.MaxUnassignedEligibleGround > 0)
+                {
+                    reasons.Add(
+                        $"{side.SideId}: {side.MaxUnassignedEligibleGround} eligible ground units left unassigned (max observed)");
+                }
+
+                if (side.MaxCommanderlessSquads > 0)
+                {
+                    reasons.Add(
+                        $"{side.SideId}: {side.MaxCommanderlessSquads} non-empty squads left without a live commander (max observed)");
+                }
+            }
+        }
+
         var report = new MassBattleCapacityProbeReport
         {
             Map = profile.Map.Name,
@@ -785,6 +841,7 @@ public static class MassBattleCapacityProbeRunner
             Sorties = sorties,
             FailureReasons = reasons.Distinct().ToList(),
             AsyncPathAnchor = asyncPathAnchor,
+            SquadInvariant = squadInvariant,
         };
         return report with { AllPassed = report.FailureReasons.Count == 0 };
     }
