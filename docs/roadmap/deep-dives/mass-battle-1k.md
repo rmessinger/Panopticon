@@ -166,9 +166,10 @@ normalizes the mixed roster; M5 runs the full battle in all three viewing modes.
 
 The M1 sequence below is grounded in the implemented code (`src/Panopticon.Tools.TestHarness/MassBattleDeploymentRunner.cs`,
 `MassBattleCapacityProbeRunner.cs`, `MassBattleDeploymentProfile.cs`; `src/Panopticon.Simulation/Navigation/Navigation.cs`;
-`src/Panopticon.Benchmarks.Simulation/BenchmarkMetricRecorder.cs`). The M2 diagrams below use H2a's existing types and import orchestration. Diagrams for
-the M4 army hierarchy and the M5 batch and live run flows remain placeholders; they are required
-before those phases' first source-edit cards are marked `Ready`.
+`src/Panopticon.Benchmarks.Simulation/BenchmarkMetricRecorder.cs`). The M2 diagrams below use H2a's existing types and import orchestration. The M4 diagrams
+are grounded in the A4-3 hierarchy and mark M4's planned additions. Diagrams for the M5 batch and
+live run flows remain placeholders; they are required before M5's first source-edit card is
+marked `Ready`.
 
 Sequence: the M1 capacity probe (WI-M1-01..03):
 
@@ -288,4 +289,70 @@ sequenceDiagram
     D->>D: points budget, manifests, duels, JSON reports
 ```
 
-The M4 and M5 diagram placeholders remain closed gates for those phases.
+### M4 army hierarchy
+
+Grounding: `Logic/AI/AIPlayer.cs` (60-frame decision cadence, `DispatchOrders`),
+`Logic/AI/Hierarchy/` (`HierarchicalAIDecisionPolicy`, `SquadHierarchy` with `MaxSquadSize` 8,
+`Squad`, rule-based general/commander/soldier ranks), `Logic/Orders/OrderProcessor.cs`
+(`MoveTo`/`AttackObject` act on `Player.SelectedUnits`), `Navigation/GroupMovement.cs`
+(`MoveSquad`, no engine consumer yet), `LogicStepper.SystemSpan`, and the M1 probe runner.
+Elements marked `planned` are the WI-M4 cards' additions; their final names follow the
+WI-M4-01 audit.
+
+```mermaid
+classDiagram
+    class AIPlayer
+    class HierarchicalAIDecisionPolicy
+    class SquadHierarchy
+    class Squad
+    class IGeneralDecisionPolicy
+    class ICommanderDecisionPolicy
+    class ISoldierDecisionPolicy
+    class AirCommander["air commander (planned, WI-M4-05)"]
+    class SquadOrderBatcher["squad order batching (planned, WI-M4-04)"]
+    class OrderProcessor
+    class GroupMovement
+    class JetAIUpdate
+    class AiCostSpan["ai span (planned, WI-M4-02)"]
+    class BenchmarkMetricRecorder
+    AIPlayer --> HierarchicalAIDecisionPolicy : every 60 frames
+    HierarchicalAIDecisionPolicy --> SquadHierarchy : Synchronize(owner)
+    SquadHierarchy --> Squad : ground squads
+    HierarchicalAIDecisionPolicy --> IGeneralDecisionPolicy : directives
+    HierarchicalAIDecisionPolicy --> ICommanderDecisionPolicy : goals
+    HierarchicalAIDecisionPolicy --> ISoldierDecisionPolicy : orders
+    HierarchicalAIDecisionPolicy --> AirCommander : aircraft squads
+    AirCommander --> JetAIUpdate : missions, rearm on park
+    HierarchicalAIDecisionPolicy --> SquadOrderBatcher : soldier orders
+    SquadOrderBatcher --> OrderProcessor : SetSelection + one order per squad
+    OrderProcessor --> GroupMovement : multi-unit MoveTo
+    AIPlayer --> AiCostSpan : decision time
+    AiCostSpan --> BenchmarkMetricRecorder
+```
+
+```mermaid
+sequenceDiagram
+    participant R as M4 army scenario (M1 probe profile)
+    participant A as AIPlayer (per side)
+    participant H as HierarchicalAIDecisionPolicy
+    participant S as SquadHierarchy
+    participant X as air commander
+    participant O as OrderProcessor
+    participant G as GroupMovement / Navigation
+    participant M as BenchmarkMetricRecorder
+    R->>A: spawn armies, hierarchical policy on both sides (AI enabled)
+    loop every 60 logic frames
+        A->>H: DecideNextOrders(context)
+        H->>S: Synchronize (assign, remove dead, promote)
+        H->>H: general directives, commander goals, soldier orders
+        H->>X: aircraft squads: strike, patrol, escort
+        X-->>H: mission orders; parked aircraft re-tasked after rearm
+        H-->>A: SetSelection(squad) + one order per squad
+        A->>O: DispatchOrders
+        O->>G: MoveSquad: one leader path per ground squad
+        A-->>M: ai span (decision cost)
+    end
+    R->>R: assignment invariant, idle-stall check, B1 record
+```
+
+The M5 diagram placeholder remains a closed gate for that phase.

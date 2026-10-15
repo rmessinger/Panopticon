@@ -42,7 +42,7 @@ marked `Ready`. `†` marks conceptual diagrams awaiting grounding.
 | M1 | [Capacity probe](deep-dives/mass-battle-1k.md#7-scale-dependencies) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) | [`WI-M1-01..03`](agent/cards/) |
 | M2 | [Rosters](deep-dives/mass-battle-1k.md#5-rosters) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) | [WI-M2-01..04](implementation/track-m-m2-ee2-combat-units.md#card-sequence) |
 | M3 | [Rosters](deep-dives/mass-battle-1k.md#5-rosters) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) | [WI-M3-01..03](implementation/track-m-m3-mixed-roster.md#card-sequence) |
-| M4 | [AI](deep-dives/mass-battle-1k.md#6-ai) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
+| M4 | [AI](deep-dives/mass-battle-1k.md#6-ai) | [§9](deep-dives/mass-battle-1k.md#m4-army-hierarchy) | [`WI-M4-01..06`](agent/cards/) |
 | M5 | [Viewing model](deep-dives/mass-battle-1k.md#3-viewing-model) | [§9](deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` | — |
 
 ## Cross-track dependencies
