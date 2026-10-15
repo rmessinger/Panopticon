@@ -1,0 +1,59 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Panopticon.Tools.ReplaySketch.Model.Capture;
+using Panopticon.Tools.ReplaySketch.Model.HarnessLauncher;
+using Panopticon.Tools.ReplaySketch.Services;
+
+namespace Panopticon.Tools.TestHarness;
+
+internal static class HarnessScenarioCatalog
+{
+    public static HarnessCatalog Build() => new(HarnessCatalogJson.CurrentSchemaVersion, Scenarios(), Parameters());
+
+    public static IReadOnlyList<HarnessScenarioDescriptor> Scenarios() => Enum.GetValues<BuiltInScenario>().Select(Scenario).ToArray();
+
+    public static IReadOnlyList<HarnessParameterDescriptor> Parameters()
+    {
+        var defaults = JsonSerializer.SerializeToNode(new TestHarnessConfig(), Program.JsonOptions)!;
+        return typeof(TestHarnessConfig).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Select(property =>
+            {
+                var attribute = property.GetCustomAttribute<HarnessParameterAttribute>()
+                    ?? throw new InvalidOperationException($"TestHarnessConfig.{property.Name} is missing HarnessParameterAttribute.");
+                var type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+                var kind = type == typeof(bool) ? HarnessParameterKind.Bool
+                    : type == typeof(int) ? HarnessParameterKind.Int
+                    : type == typeof(float) ? HarnessParameterKind.Float
+                    : type == typeof(string) ? (property.Name.EndsWith("Path", StringComparison.Ordinal) || property.Name.EndsWith("Root", StringComparison.Ordinal) ? HarnessParameterKind.Path : HarnessParameterKind.String)
+                    : type.IsEnum ? HarnessParameterKind.Enum : HarnessParameterKind.Json;
+                var enumValues = type.IsEnum ? Enum.GetNames(type) : [];
+                return new HarnessParameterDescriptor(property.Name, attribute.Group, kind, enumValues,
+                    defaults[property.Name]?.DeepClone(), attribute.Description, attribute.Scenarios);
+            }).ToArray();
+    }
+
+    private static HarnessScenarioDescriptor Scenario(BuiltInScenario scenario)
+    {
+        var id = scenario.ToString();
+        var category = id.StartsWith("Alpine", StringComparison.Ordinal) ? HarnessScenarioCategory.Replay
+            : id.StartsWith("MassBattle", StringComparison.Ordinal) || id == nameof(BuiltInScenario.RenderingScaleProbe) ? HarnessScenarioCategory.MassBattle
+            : id == nameof(BuiltInScenario.UnitValidationGround) ? HarnessScenarioCategory.ValidationGround
+            : id is nameof(BuiltInScenario.EngagementCapture) or nameof(BuiltInScenario.ScenarioCapture) ? HarnessScenarioCategory.Capture
+            : id == nameof(BuiltInScenario.PhysicsStack) ? HarnessScenarioCategory.Physics : HarnessScenarioCategory.Proof;
+        var headlessOnly = scenario is BuiltInScenario.EngagementCapture or BuiltInScenario.ScenarioCapture or BuiltInScenario.PhysicsStack
+            or BuiltInScenario.PbrMaterialProof or BuiltInScenario.GltfRuntimeProof or BuiltInScenario.Ee2NifProof
+            or BuiltInScenario.Ee2PropertyProof or BuiltInScenario.Ee2ScaleProof or BuiltInScenario.Ee2MorphProof
+            or BuiltInScenario.Ee2ParticleProof or BuiltInScenario.Ee2LegacyKfProof;
+        var profiles = scenario == BuiltInScenario.ScenarioCapture ? CaptureProfileLoader.EmbeddedCaptureProfileNames().ToArray() : [];
+        var input = scenario == BuiltInScenario.ScenarioCapture ? HarnessProfileInput.FileOrEmbedded
+            : scenario is BuiltInScenario.AlpineAssaultUSAvGLA or BuiltInScenario.AlpineAssaultUSAvGLAFullBuild ? HarnessProfileInput.File : HarnessProfileInput.None;
+        var codes = new Dictionary<int, string> { [0] = "success" };
+        if (category == HarnessScenarioCategory.Capture) { codes[1] = "profile or setup error"; codes[4] = "camera or weapon setup error"; codes[5] = "expectation not met"; }
+        if (scenario == BuiltInScenario.UnitValidationGround) { codes[2] = "baseline regression or timeout"; codes[3] = "timeout"; }
+        return new HarnessScenarioDescriptor(id, category, id, headlessOnly ? HarnessRunModes.Headless : HarnessRunModes.Headless | HarnessRunModes.Windowed, input, profiles, codes);
+    }
+}

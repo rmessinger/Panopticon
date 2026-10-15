@@ -14,18 +14,21 @@ public sealed class TestHarnessConfig
     /// Built-in scenario profile to run when <see cref="ScenarioPath"/> is null.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
+    [HarnessParameter("Run", "Scenario.")]
     public BuiltInScenario Scenario { get; set; } = BuiltInScenario.AlpineAssaultUSAvGLAFullBuild;
 
     /// <summary>
     /// Path to a scenario JSON profile.
     /// Null uses the selected built-in <see cref="Scenario"/>.
     /// </summary>
+    [HarnessParameter("Run", "ScenarioPath.")]
     public string? ScenarioPath { get; set; } = null;
 
     /// <summary>
     /// The SAGE game installation to run against.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
+    [HarnessParameter("Install", "Game.")]
     public SageGame Game { get; set; } = SageGame.CncGenerals;
 
     /// <summary>
@@ -33,9 +36,11 @@ public sealed class TestHarnessConfig
     /// Accepted values: Direct3D11, Vulkan, OpenGL, Metal, OpenGLES.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
+    [HarnessParameter("Display", "Renderer.")]
     public GraphicsBackend? Renderer { get; set; } = null;
 
     /// <summary>Whether to start in fullscreen mode. Ignored in headless mode.</summary>
+    [HarnessParameter("Display", "Fullscreen.")]
     public bool Fullscreen { get; set; } = false;
 
     /// <summary>
@@ -43,20 +48,24 @@ public sealed class TestHarnessConfig
     /// background). Default false shows only the minimap. Maps to
     /// <see cref="Panopticon.Configuration.FullHud"/>.
     /// </summary>
+    [HarnessParameter("Display", "FullHud.")]
     public bool FullHud { get; set; } = false;
 
     /// <summary>G9 scale validation: multiplier applied to the scenario capture viewport.</summary>
+    [HarnessParameter("Display", "ViewportScale.")]
     public int ViewportScale { get; set; } = 1;
 
     /// <summary>
     /// G10 evidence: pins the render clock so scenario captures are deterministic and can be
     /// diffed against each other (the visual regression harness always pins it).
     /// </summary>
+    [HarnessParameter("Display", "FixedRenderClock.")]
     public bool FixedRenderClock { get; set; } = false;
 
     /// <summary>
     /// Keep the exported .rep file on disk after the run instead of deleting it.
     /// </summary>
+    [HarnessParameter("Run", "KeepReplay.")]
     public bool KeepReplay { get; set; } = false;
 
     /// <summary>
@@ -65,6 +74,7 @@ public sealed class TestHarnessConfig
     /// logged to stdout as <c>[CAPTURE] &lt;path&gt; | &lt;hint&gt;</c> lines for agent inspection.
     /// When false (default) a normal game window is opened.
     /// </summary>
+    [HarnessParameter("Run", "Headless.")]
     public bool Headless { get; set; } = false;
 
     /// <summary>
@@ -72,20 +82,24 @@ public sealed class TestHarnessConfig
     /// as a PNG under <see cref="FrameCaptureService.CaptureDirectory"/> for agent inspection.
     /// Disabled by default to avoid accumulating capture files on routine headless runs.
     /// </summary>
+    [HarnessParameter("Run", "CaptureFrames.")]
     public bool CaptureFrames { get; set; } = false;
 
     /// <summary>
     /// Override the game installation path instead of auto-detecting from the registry
     /// or standard environment variables.
     /// </summary>
+    [HarnessParameter("Install", "GamePath.")]
     public string? GamePath { get; set; } = null;
 
+    [HarnessParameter("Install", "GltfFixtureRoot.")]
     public string? GltfFixtureRoot { get; set; } = null;
 
     /// <summary>
     /// Multiplier applied to the game's default <c>MaxCameraHeight</c> INI value.
     /// 1.0 = game default; 2.0 (default) = double the zoom-out distance.
     /// </summary>
+    [HarnessParameter("Display", "MaxCameraZoomMultiplier.")]
     public float MaxCameraZoomMultiplier { get; set; } = 5.0f;
 
     /// <summary>
@@ -94,6 +108,7 @@ public sealed class TestHarnessConfig
     /// TotalWar = right-drag to rotate, middle-drag to pan, Q/E to rotate.
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
+    [HarnessParameter("Display", "CameraControlScheme.")]
     public CameraControlScheme CameraControlScheme { get; set; } = CameraControlScheme.TotalWar;
 
     /// <summary>
@@ -102,12 +117,14 @@ public sealed class TestHarnessConfig
     /// Classic = left-click issues orders (original Generals convention).
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
+    [HarnessParameter("Display", "MouseClickMode.")]
     public MouseClickMode MouseClickMode { get; set; } = MouseClickMode.Standard;
 
     // ── Unit validation ground (P9) ──────────────────────────────────────────
     // All optional with defaults so an existing TestHarness.json needs no edit.
 
     /// <summary>Map path override for the validation ground. Empty uses a default map.</summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundMapPath.", nameof(BuiltInScenario.UnitValidationGround))]
     public string? ValidationGroundMapPath { get; set; } = null;
 
     /// <summary>
@@ -116,21 +133,27 @@ public sealed class TestHarnessConfig
     /// target definitions all apply -- and ValidationGroundMapPath/SettleFrames/Seed are ignored.
     /// When empty, the run builds the default scenario from those knobs.
     /// </summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundScenarioPath.", nameof(BuiltInScenario.UnitValidationGround))]
     public string? ValidationGroundScenarioPath { get; set; } = null;
 
     /// <summary>Frames to settle after spawn before issuing orders.</summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundSettleFrames.", nameof(BuiltInScenario.UnitValidationGround))]
     public int ValidationGroundSettleFrames { get; set; } = 30;
 
     /// <summary>Seed for deterministic layout (informational; the builder is already deterministic).</summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundSeed.", nameof(BuiltInScenario.UnitValidationGround))]
     public int ValidationGroundSeed { get; set; } = 1;
 
     /// <summary>Path to the checked-in golden baseline JSON. Empty skips baseline comparison.</summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundBaselinePath.", nameof(BuiltInScenario.UnitValidationGround))]
     public string? ValidationGroundBaselinePath { get; set; } = null;
 
     /// <summary>When true, the run refreshes (overwrites) the baseline instead of comparing.</summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundRefreshBaseline.", nameof(BuiltInScenario.UnitValidationGround))]
     public bool ValidationGroundRefreshBaseline { get; set; } = false;
 
     /// <summary>Path to write the validation-ground JSON report to. Empty writes none.</summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundReportPath.", nameof(BuiltInScenario.UnitValidationGround))]
     public string? ValidationGroundReportPath { get; set; } = null;
 
     /// <summary>
@@ -140,6 +163,7 @@ public sealed class TestHarnessConfig
     /// roster in the same session, writing ee2-contract-report.json. Empty keeps the validation
     /// ground unchanged.
     /// </summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundEe2ProfilePath.", nameof(BuiltInScenario.UnitValidationGround))]
     public string? ValidationGroundEe2ProfilePath { get; set; } = null;
 
     /// <summary>
@@ -148,6 +172,7 @@ public sealed class TestHarnessConfig
     /// the settle stage and issues the attack orders. Afterwards Space toggles active pause.
     /// Ignored by headless runs, which always auto-issue for byte-identical reports.
     /// </summary>
+    [HarnessParameter("ValidationGround", "ValidationGroundHoldOrders.", nameof(BuiltInScenario.UnitValidationGround))]
     public bool ValidationGroundHoldOrders { get; set; } = true;
 
     /// <summary>
@@ -157,12 +182,14 @@ public sealed class TestHarnessConfig
     /// written when the window is closed. Only honoured in windowed mode; headless always exits on
     /// completion, since a never-exiting headless run has no window to close and would hang.
     /// </summary>
+    [HarnessParameter("Display", "ExitAfterTargetsDestroyed.", nameof(BuiltInScenario.UnitValidationGround))]
     public bool ExitAfterTargetsDestroyed { get; set; } = true;
 
     /// <summary>
     /// Options for <see cref="BuiltInScenario.EngagementCapture"/>. Null uses the defaults
     /// (a USA Missile Defender firing at a China BattleMaster).
     /// </summary>
+    [HarnessParameter("EngagementCapture", "EngagementCapture.", nameof(BuiltInScenario.EngagementCapture))]
     public EngagementCaptureOptions? EngagementCapture { get; set; } = null;
 
     // ── Mass battle deployment (M0) ─────────────────────────────────────────
@@ -171,15 +198,19 @@ public sealed class TestHarnessConfig
     /// Path to a <see cref="MassBattleDeploymentProfile"/> JSON. Empty uses the embedded
     /// deepdivide profile shipped beside the executable.
     /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleDeploymentProfilePath.", nameof(BuiltInScenario.MassBattleDeployment))]
     public string? MassBattleDeploymentProfilePath { get; set; } = null;
 
     /// <summary>Spawn and display the armies without running the map acceptance probes.</summary>
+    [HarnessParameter("MassBattle", "MassBattleDeploymentPreview.", nameof(BuiltInScenario.MassBattleDeployment))]
     public bool MassBattleDeploymentPreview { get; set; } = false;
 
     /// <summary>Where to write the deployment proof report JSON. Empty writes beside the executable.</summary>
+    [HarnessParameter("MassBattle", "MassBattleDeploymentReportPath.", nameof(BuiltInScenario.MassBattleDeployment))]
     public string? MassBattleDeploymentReportPath { get; set; } = null;
 
     /// <summary>Optional PNG path for one deployment screenshot captured after the armies spawn.</summary>
+    [HarnessParameter("MassBattle", "MassBattleDeploymentScreenshotPath.", nameof(BuiltInScenario.MassBattleDeployment))]
     public string? MassBattleDeploymentScreenshotPath { get; set; } = null;
 
     // ── Mass battle capacity probe (M1) ────────────────────────────────────
@@ -188,44 +219,56 @@ public sealed class TestHarnessConfig
     /// Path to a <see cref="MassBattleDeploymentProfile"/> JSON for the capacity probe. Empty
     /// uses the embedded deepdivide capacity-probe profile shipped beside the executable.
     /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeProfilePath.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public string? MassBattleCapacityProbeProfilePath { get; set; } = null;
 
     /// <summary>Where to write the engagement report JSON. Empty writes beside the executable.</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeReportPath.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public string? MassBattleCapacityProbeReportPath { get; set; } = null;
 
     /// <summary>Optional PNG path for one engagement screenshot captured after the run.</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeScreenshotPath.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public string? MassBattleCapacityProbeScreenshotPath { get; set; } = null;
 
     /// <summary>
     /// Frame budget for the measured engagement. Null uses the runner default (9000 frames);
     /// setup, spawn, and settle frames are not counted against it.
     /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeFrameBudget.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public int? MassBattleCapacityProbeFrameBudget { get; set; } = null;
 
     // ── Rendering-scale probe (B5) ─────────────────────────────────────────
 
     /// <summary>Repeated-model unit count for the render-scale probe. Null uses 10000.</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeUnitCount.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public int? RenderingScaleProbeUnitCount { get; set; } = null;
 
     /// <summary>Unit definition to repeat in the field. Null uses AmericaTankCrusader.</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeDefinition.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public string? RenderingScaleProbeDefinition { get; set; } = null;
 
     /// <summary>Map path for the probe. Null uses deepdivide (the M1 capacity-probe map).</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeMapPath.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public string? RenderingScaleProbeMapPath { get; set; } = null;
 
     /// <summary>Warmup frames before measurement. Null uses 30.</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeWarmupFrames.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public int? RenderingScaleProbeWarmupFrames { get; set; } = null;
 
     /// <summary>Measured frames. Null uses 120.</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeMeasuredFrames.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public int? RenderingScaleProbeMeasuredFrames { get; set; } = null;
 
     /// <summary>Report directory for the probe JSON/CSV. Empty writes beside the executable.</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeReportDirectory.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public string? RenderingScaleProbeReportDirectory { get; set; } = null;
 
     /// <summary>Optional PNG path for one probe screenshot captured after the run.</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeScreenshotPath.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public string? RenderingScaleProbeScreenshotPath { get; set; } = null;
 
     /// <summary>Run with the Original single-cascade shadow tier instead of Enhanced (B5-4).</summary>
+    [HarnessParameter("Display", "RenderingScaleProbeLegacyShadows.", nameof(BuiltInScenario.RenderingScaleProbe))]
     public bool RenderingScaleProbeLegacyShadows { get; set; } = false;
     /// <summary>
     /// Enables the WI-B4-06 async-path scale anchor inside the capacity probe: on this frame
@@ -233,8 +276,10 @@ public sealed class TestHarnessConfig
     /// latency, queue backlog, and deadline misses for the hierarchical-pathfinding gate. Null
     /// disables the anchor.
     /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeAsyncAnchorBurstEveryFrames.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public int? MassBattleCapacityProbeAsyncAnchorBurstEveryFrames { get; set; } = null;
 
     /// <summary>Requests per anchor burst; defaults to 8 when only the cadence is set.</summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeAsyncAnchorRequestsPerBurst.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public int? MassBattleCapacityProbeAsyncAnchorRequestsPerBurst { get; set; } = null;
 }
