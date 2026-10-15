@@ -36,6 +36,8 @@ public sealed class HarnessLauncherViewModel : INotifyPropertyChanged
         LoadCatalogCommand = new AsyncCommand(LoadCatalogAsync);
         RunCommand = new AsyncCommand(RunAsync, CanRun);
         StopCommand = new AsyncCommand(_ => { RunCommand.Cancel(); return Task.CompletedTask; });
+        RunCommand.UnhandledException += (_, error) => _ = _dispatcher.InvokeOnMainThreadAsync(() => StatusMessage = error.Message);
+        LoadCatalogCommand.UnhandledException += (_, error) => _ = _dispatcher.InvokeOnMainThreadAsync(() => StatusMessage = error.Message);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -86,6 +88,7 @@ public sealed class HarnessLauncherViewModel : INotifyPropertyChanged
         if (imported.Request is null) { StatusMessage = "Import requires a Scenario value."; return; }
         var scenario = AllScenarios.FirstOrDefault(item => item.Id == imported.Request.ScenarioId);
         if (scenario is null) { StatusMessage = $"Scenario '{imported.Request.ScenarioId}' is unavailable."; return; }
+        FilterText = string.Empty; CategoryFilter = null; ModeFilter = HarnessRunModes.None;
         SelectedScenario = scenario; Parameters.ApplyOverrides(imported.Request.Overrides);
         StatusMessage = imported.UnknownKeys.Count == 0 ? null : $"Ignored unknown parameters: {string.Join(", ", imported.UnknownKeys)}.";
     }
@@ -100,7 +103,7 @@ public sealed class HarnessLauncherViewModel : INotifyPropertyChanged
     private async Task RunAsync(CancellationToken cancellationToken)
     {
         if (_catalog is null || SelectedScenario is null) return;
-        _output.Clear(); OnChanged(nameof(Output)); LastResult = null;
+        _output.Clear(); OnChanged(nameof(Output)); LastResult = null; StatusMessage = null;
         var progress = new Progress<string>(line => _ = _dispatcher.InvokeOnMainThreadAsync(() => { _output.Add(line); if (_output.Count > 5000) _output.RemoveRange(0, _output.Count - 5000); OnChanged(nameof(Output)); }));
         LastResult = await _runClient.RunAsync(Parameters.BuildRequest(SelectedScenario.Id), _catalog, progress, cancellationToken).ConfigureAwait(true);
     }

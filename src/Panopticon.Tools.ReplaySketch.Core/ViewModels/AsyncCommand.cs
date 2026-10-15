@@ -14,7 +14,7 @@ public sealed class AsyncCommand : ICommand
 {
     private readonly Func<CancellationToken, Task> _execute;
     private readonly Func<bool>? _canExecute;
-    private readonly CancellationTokenSource _cancellation = new();
+    private CancellationTokenSource _cancellation = new();
     private bool _isExecuting;
 
     public event EventHandler? CanExecuteChanged;
@@ -41,6 +41,12 @@ public sealed class AsyncCommand : ICommand
         if (!CanExecute(parameter))
         {
             return;
+        }
+
+        if (_cancellation.IsCancellationRequested)
+        {
+            _cancellation.Dispose();
+            _cancellation = new CancellationTokenSource();
         }
 
         _isExecuting = true;
