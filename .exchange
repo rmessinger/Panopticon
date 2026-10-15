@@ -194,3 +194,4 @@ WI-P0-24..25: added ReplaySketch catalog and run clients with owned-process canc
 
 - WI-P0-26..28: Added the harness launcher view model, typed parameter editor, launch presets, filtering, and focused tests.
 - WI-P0-29: Added the Avalonia Harness tab and screenshot-mode selection.
+- WI-P0-20..29 PR review: corrected catalog validation and scenario metadata, added live line streaming and catalog timeout, fixed nullable defaults, string round trips, headless enforcement, repeat-run cancellation, and preset replacement. Added regression tests and completed Harness controls without rebuilding focused editors. Harness and Map screenshots verified under Xvfb.
