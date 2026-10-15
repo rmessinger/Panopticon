@@ -18,6 +18,7 @@ public sealed record HarnessLaunchRequest(string ScenarioId, IReadOnlyDictionary
             if (!catalog.Parameters.Any(p => p.Name == name)) throw new ArgumentException($"Unknown harness parameter '{name}'.", nameof(Overrides));
             values[name] = value?.DeepClone();
         }
+
         values["Scenario"] = ScenarioId;
         return values.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
     }
