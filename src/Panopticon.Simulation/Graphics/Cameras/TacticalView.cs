@@ -1206,10 +1206,13 @@ public sealed class TacticalView : IPersistableObject
                     (currentHeightAboveGround < _minHeightAboveGround) ||
                     (_gameData.EnforceMaxCameraHeight && currentHeightAboveGround > _maxHeightAboveGround))
                 {
-                    var zoomAdj = (desiredZoom - _zoom) * _gameData.CameraAdjustSpeed;
+                    var remaining = desiredZoom - _zoom;
+                    var zoomAdj = remaining * _gameData.CameraAdjustSpeed;
                     if (MathF.Abs(zoomAdj) >= 0.0001)
                     {
-                        _zoom += (float)(zoomAdj * gameTime.GetLogicFrameRelativeDeltaTime(_msPerLogicFrame));
+                        _zoom += ClampZoomStep(
+                            (float)(zoomAdj * gameTime.GetLogicFrameRelativeDeltaTime(_msPerLogicFrame)),
+                            remaining);
                         recalcCamera = true;
                     }
                 }
@@ -1217,11 +1220,14 @@ public sealed class TacticalView : IPersistableObject
             else
             {
                 // We're not scrolling; settle toward desired height above ground
-                var zoomAdj = (_zoom - desiredZoom) * _gameData.CameraAdjustSpeed;
+                var remaining = _zoom - desiredZoom;
+                var zoomAdj = remaining * _gameData.CameraAdjustSpeed;
                 var zoomAdjAbs = MathF.Abs(zoomAdj);
                 if (zoomAdjAbs >= 0.0001 && !didScriptedMovement)
                 {
-                    _zoom -= (float)(zoomAdj * gameTime.GetLogicFrameRelativeDeltaTime(_msPerLogicFrame));
+                    _zoom -= ClampZoomStep(
+                        (float)(zoomAdj * gameTime.GetLogicFrameRelativeDeltaTime(_msPerLogicFrame)),
+                        remaining);
                     recalcCamera = true;
                 }
             }
@@ -1246,6 +1252,15 @@ public sealed class TacticalView : IPersistableObject
         }
 
         // C++ does culling here, but we don't need to do it in the camera controller
+    }
+
+    // The settle step is distance * CameraAdjustSpeed * frames elapsed. On long frames
+    // (low fps) the gain exceeds 1 and the step overshoots the target; above 2 every step
+    // overshoots by more than the last, so the zoom oscillates with growing amplitude.
+    // Cap the step at the remaining distance so it settles even on long frames.
+    private static float ClampZoomStep(float step, float remaining)
+    {
+        return MathF.Abs(step) > MathF.Abs(remaining) ? remaining : step;
     }
 
     // This was split from W3DView::update

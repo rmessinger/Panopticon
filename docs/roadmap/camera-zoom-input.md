@@ -31,3 +31,7 @@ This targets touchpad inertia bounce specifically. A physical mouse wheel always
 - `_zoom` is the *actual* camera-distance multiplier (clamped to `[_minZoom, _maxZoom]`) applied to `_cameraOffset` when building the camera transform. It only ever changes inside `TacticalView.Update`, easing toward the height-derived target at `CameraAdjustSpeed`.
 
 Keeping these separate, and never writing `_zoom` directly outside of `Update`, is what gives scroll-wheel zoom its smooth, single easing curve instead of a snap followed by a corrective drift.
+
+## Long-frame settle clamp
+
+The settle step toward the target is `distance * CameraAdjustSpeed * frames elapsed`. On long frames (low fps) the gain exceeds 1 and the raw step overshoots the target; above 2 every step overshoots by more than the last, so `_zoom` oscillates with growing amplitude. This is the runaway trackpad zoom seen at low fps: each wheel notch moves the target while the settle is still diverging. Both settle sites in `TacticalView.Update` (scrolling and non-scrolling) clamp the step at the remaining distance, so a long frame lands on the target instead of past it. Normal frames, where the step is shorter than the remaining distance, are unchanged.
