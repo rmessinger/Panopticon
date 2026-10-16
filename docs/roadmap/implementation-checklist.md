@@ -1723,7 +1723,7 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     threshold while enemies remain.
 
 ### M5: 1000 vs 1000 battle
-- [ ] M5-1 Mixed-roster battle scenario on the M0 map with M3 armies and M4 AI.
+- [ ] M5-1 Mixed-roster battle scenario on the M0 map with M3 armies and M4 AI. (`WI-M5-01`)
   - AC: one scenario definition drives batch, replay, and live modes.
 - [ ] M5-2 Seeded batch runs with a mirrored map-bias control.
   - AC: every run reaches a P3 outcome; reports give per-side win rates with confidence intervals
