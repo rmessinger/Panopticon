@@ -1713,15 +1713,21 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     ([plan](implementation/track-m-m3-mixed-roster.md#points-budget-and-manifests-wi-m3-03)).
 
 ### M4: Army-scale AI
-- [ ] M4-1 Army hierarchy sizing for 1000 units over A4-3, including an air commander.
-  (`WI-M4-01`, `WI-M4-03`, `WI-M4-05`)
+- [x] M4-1 Army hierarchy sizing for 1000 units over A4-3, including an air commander.
+  (`WI-M4-01`, `WI-M4-03`, `WI-M4-05`,
+  [plan](implementation/track-m-m4-army-ai.md))
   - AC: every unit is assigned to a squad and commander at start and after every casualty;
     aircraft fly strike, patrol, or escort missions and return to rearm.
-- [ ] M4-2 Squad-level group movement orders served by B4. (`WI-M4-04`)
+    Full-scale army-AI run: 119/120 squads, unassigned 0 (max 0), commanderless 0 (max 0);
+    27/24/24 strike/patrol/escort per side, repeat sortie cycles observed.
+- [x] M4-2 Squad-level group movement orders served by B4. (`WI-M4-04`)
   - AC: path requests per tick scale with squads, not units, in the M1 scenario.
-- [ ] M4-3 Per-tick AI cost budget. (`WI-M4-02`, `WI-M4-06`)
+    Worst decision tick: 912 requests for 248 squads plus 664 blocked followers; bound held.
+- [x] M4-3 Per-tick AI cost budget. (`WI-M4-02`, `WI-M4-06`)
   - AC: B1 shows AI decision cost within the authored budget; no unit idles longer than the stall
     threshold while enemies remain.
+    `system.ai.spanMs` amortized median 0.000 (budget 1.7), decision-tick p99 18.3 (budget
+    100); max idle 475/347 frames against the 600-frame threshold, 0 stalled at end.
 
 ### M5: 1000 vs 1000 battle
 - [ ] M5-1 Mixed-roster battle scenario on the M0 map with M3 armies and M4 AI. (`WI-M5-01`)

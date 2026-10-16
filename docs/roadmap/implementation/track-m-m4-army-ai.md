@@ -54,7 +54,7 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
 | [`WI-M4-03`](../agent/cards/WI-M4-03-army-hierarchy-on-probe.md) | Ground-only eligibility, per-squad selection actuation, probe army-AI mode, assignment invariants, scale + Interactive tests | Done |
 | [`WI-M4-04`](../agent/cards/WI-M4-04-squad-group-orders.md) | One `MoveTo` per squad, multi-unit `MoveTo` routed through `GroupMovement.MoveSquad`, path-request bound tests | Done |
 | [`WI-M4-05`](../agent/cards/WI-M4-05-air-commander.md) | Air squads, strike/patrol/escort missions, re-tasking rearmed parked jets, no scripted jet reissue in army-AI mode | Done |
-| [`WI-M4-06`](../agent/cards/WI-M4-06-ai-budget-and-stall-report.md) | Budget and stall thresholds authored, full-scale army-AI run, verdict, phase closeout | Ready |
+| [`WI-M4-06`](../agent/cards/WI-M4-06-ai-budget-and-stall-report.md) | Budget and stall thresholds authored, full-scale army-AI run, verdict, phase closeout | Done |
 
 ## WI-M4-03: what landed
 
@@ -121,10 +121,12 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
   patrol alternates legs between the first and last friendly ground squad centroids; escort
   shadows the first friendly squad's centroid.
 - `HierarchicalAIDecisionPolicy` calls the air commander after the ground loop. Missions are
-  counted every decision tick (per mission type and per aircraft), but a squad receives its
-  order only when every member is parked and holding no target points; mid-sortie squads keep
-  flying until they land and are re-tasked then. Orders ride the same actuation path as ground
-  orders: one selection per squad plus one attack or move order.
+  counted every decision tick (per mission type and per aircraft), but only members that are
+  parked and holding no target points receive the order; mid-sortie members keep flying until
+  they land and are re-tasked then (per-member readiness, WI-M4-06: an all-or-nothing squad
+  gate let one stuck-airborne wingman ground its whole squad for an entire full-scale run).
+  Orders ride the same actuation path as ground orders: one selection of the ready members
+  plus one attack or move order.
 - Re-task gate: parked state, not clip state. The card anticipated gating on a refilled clip,
   but the engine refills clips only through mid-combat reload (`ReloadingWeaponState`); nothing
   refills a parked jet's clip at an airfield, so a clip gate would ground jets after their
@@ -132,6 +134,13 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
   implemented gate matches the M1 scripted loop, which relaunched jets on parked state alone.
   Parked clip refill is recorded as a candidate engine follow-up; no rearm mechanic was added
   (guardrail).
+- Follow-up (operator note, WI-M4-06): revisit the squad invariant check strategy. The sampler
+  scans both armies after every probe frame (assignment, commander, stall tracking) and that
+  cadence looks too frequent for the benefit it provides. Sampling on decision ticks, or at a
+  coarser cadence, is the likely shape; note that relaxing or removing the check may let
+  transient violations survive, which can be a realistic property of a battle (units briefly
+  unassigned mid-casualty, squads briefly commanderless) rather than a defect, so the invariant
+  may deserve a tolerance window instead of zero.
 - In army-AI mode the probe is now fully AI-owned: the scripted `IssueGeneralAttack` and
   `RefreshOrders` are both skipped, so jets fly, return, and re-sortie under the air commander.
   The plain probe keeps its scripted behavior unchanged. The report gains an air-mission block
@@ -142,3 +151,57 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
   mid-sortie squad is skipped but still counted; a spent clip does not block re-tasking) and
   the scaled Interactive army-AI test asserts all three mission types occur, squad invariants
   hold, and jets with multiple missions exist.
+
+## WI-M4-06: AI budget, stall threshold, and verdict
+
+### Authored budget
+
+The frame anchor is 33.3 ms (30 fps; M1 report). The army AI gets:
+
+| Bound | Value | Reasoning |
+|---|---|---|
+| Amortized `system.ai.spanMs` median | at most 1.7 ms (5 percent of the anchor) | AI is one consumer of the frame alongside the systems B-track work optimizes; 5 percent keeps it from ever being the dominant cost while leaving the hierarchy fully functional. |
+| Decision-tick `system.ai.spanMs` p99 | at most 100 ms (three frames) | A decision tick concentrates the cadence's work; one spike may cost at most three frames of the 30 fps budget. The span is zero outside decision ticks. |
+
+### Authored stall threshold
+
+600 frames (20 sim-seconds): the decision cadence is 60 frames, so a unit that arrives or
+loses its target is re-tasked within a few cadences; ten cadences of idleness with enemies
+remaining means the hierarchy is not reaching it. A unit is idle when it is alive, holds no
+target point, its weapon has no valid target, and it has not moved since the previous frame,
+while enemies remain. Parked jets are excluded: parking between sorties is intentional idle
+time (WI-M4-05).
+
+### Measured (full-scale army-AI run)
+
+Full-scale headless probe, army-AI mode, 4500 frames in 10.4 min wall, all engagement checks
+passed (artifacts: `/tmp/opencode/m4-g6-fullrun2/`; the first run with the pre-fix readiness
+gate is preserved at `/tmp/opencode/m4-g6-fullrun/` as the sortie-failure evidence). B2/B3 have
+cut the context tick since M1: median `tick.wallMs` 121.9 ms (CI [120.0, 123.5]), allocation
+12.6 MB/tick, so the AI share below reads against a 122 ms tick, not M1's 1041 ms.
+
+| Budget | Authored | Measured | Verdict |
+|---|---|---|---|
+| `system.ai.spanMs` amortized median | <= 1.7 ms (5% of the 33.3 ms anchor) | 0.000 ms | Met |
+| `system.ai.spanMs` decision-tick p99 | <= 100 ms | 18.3 ms (n=75, p50 1.1, max 18.3) | Met |
+| Span zero outside decision ticks | yes | median 0.000 across all 4500 ticks | Met |
+
+Invariants and stalls (sampler over both armies, both sides): 119/120 ground squads, 751/726
+members, unassigned eligible ground units 0 (max 0), commanderless non-empty squads 0
+(max 0), max idle 475/347 frames against the 600-frame threshold, 0 stalled units at end.
+Losses 265/276 destroyed. Group-order bound held at the worst decision tick: 912 path requests
+<= 248 squads + 664 blocked followers (75 decision ticks observed).
+
+Air: 27 strike / 24 patrol / 24 escort mission assignments per side; 5 and 3 jets received two
+or more missions, with repeat sortie cycles (for example 3 launches / 2 recoveries / 3
+missions on one sideA jet). The run-#1 failure (every jet launched exactly once because one
+stuck-airborne wingman grounded its whole squad under the all-or-nothing readiness gate) is
+what motivated per-member re-tasking.
+
+### Verdict
+
+The authored AI budgets hold at full scale with the current engine: the hierarchy costs
+nothing amortized and at most 18.3 ms on a decision tick, inside both limits. The squad
+invariant held at zero throughout and no unit stalled past the threshold, so no budget-miss
+fixes are required for M5. The measured 122 ms tick remains the M2/M3-agnostic engine cost;
+closing it to the 33.3 ms anchor stays with B-track work, not M4.

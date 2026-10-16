@@ -3,9 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Panopticon.Logic;
 using Panopticon.Logic.AI;
 using Panopticon.Logic.AI.Hierarchy;
+using Panopticon.Logic.Object;
 using Panopticon.Navigation;
 using NavigationGrid = Panopticon.Navigation.Navigation;
 
@@ -50,6 +52,12 @@ internal sealed class MassBattleSquadInvariantSampler
         public int CurrentCommanderless { get; set; }
 
         public int MaxCommanderless { get; set; }
+
+        public Dictionary<uint, (Vector3 LastPosition, int IdleFrames)> IdleTracking { get; } = new();
+
+        public int MaxIdleFrames { get; set; }
+
+        public int StalledUnitsAtEnd { get; set; }
     }
 
     private readonly List<Side> _sides;
@@ -135,9 +143,69 @@ internal sealed class MassBattleSquadInvariantSampler
             side.CurrentCommanderless = commanderless;
             side.MaxUnassigned = Math.Max(side.MaxUnassigned, unassigned);
             side.MaxCommanderless = Math.Max(side.MaxCommanderless, commanderless);
+
+            SampleStalls(side);
         }
 
         SamplePathRequests();
+    }
+
+    // WI-M4-06: a live combat unit is idle when it holds no target point, its weapon has no
+    // valid target, and it has not moved since the last sample, while enemies remain. Parked
+    // jets are excluded: parking between sorties is intentional idle time (WI-M4-05). Idleness
+    // longer than the authored threshold is a stall.
+    private const int StallThresholdFrames = 600;
+
+    private static void SampleStalls(Side side)
+    {
+        if (!EnemiesRemain(side.Player))
+        {
+            side.IdleTracking.Clear();
+            return;
+        }
+
+        foreach (var unit in side.Player.OwnedObjects)
+        {
+            if (unit.IsEffectivelyDead || unit.IsStructure || !unit.CanAttack)
+            {
+                continue;
+            }
+
+            if (unit.AIUpdate is JetAIUpdate jet && jet.CurrentJetAIState == JetAIUpdate.JetAIState.Parked)
+            {
+                continue;
+            }
+
+            var position = unit.Transform.Translation;
+            var movedOrNew = !side.IdleTracking.TryGetValue(unit.Id.Index, out var tracked)
+                || tracked.LastPosition != position;
+            if (movedOrNew)
+            {
+                side.IdleTracking[unit.Id.Index] = (position, 0);
+                continue;
+            }
+
+            var engaged = unit.AIUpdate?.TargetPoints.Count > 0 || unit.CurrentWeapon?.HasValidTarget == true;
+            var idleFrames = engaged ? 0 : tracked.IdleFrames + 1;
+            side.IdleTracking[unit.Id.Index] = (position, idleFrames);
+            side.MaxIdleFrames = Math.Max(side.MaxIdleFrames, idleFrames);
+        }
+    }
+
+    private static bool EnemiesRemain(Player player)
+    {
+        foreach (var enemy in player.Enemies)
+        {
+            foreach (var unit in enemy.OwnedObjects)
+            {
+                if (!unit.IsEffectivelyDead && !unit.IsStructure && unit.CanAttack)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void SamplePathRequests()
@@ -181,8 +249,14 @@ internal sealed class MassBattleSquadInvariantSampler
         _lastBlockedFollowerCount = blockedFollowerCount;
     }
 
-    public MassBattleSquadInvariantReport Build() =>
-        new()
+    public MassBattleSquadInvariantReport Build()
+    {
+        foreach (var side in _sides)
+        {
+            side.StalledUnitsAtEnd = side.IdleTracking.Values.Count(t => t.IdleFrames > StallThresholdFrames);
+        }
+
+        return new MassBattleSquadInvariantReport
         {
             Sides = _sides.Select(side => new SquadInvariantSideResult
             {
@@ -193,11 +267,15 @@ internal sealed class MassBattleSquadInvariantSampler
                 MaxUnassignedEligibleGround = side.MaxUnassigned,
                 CommanderlessSquads = side.CurrentCommanderless,
                 MaxCommanderlessSquads = side.MaxCommanderless,
+                MaxIdleFrames = side.MaxIdleFrames,
+                StalledUnitsAtEnd = side.StalledUnitsAtEnd,
             }).ToList(),
             DecisionTicksObserved = DecisionTicksObserved,
             MaxPathRequestsPerDecisionTick = MaxPathRequestsPerDecisionTick,
             SquadsAtWorstDecisionTick = SquadsAtWorstDecisionTick,
             MembersAtWorstDecisionTick = MembersAtWorstDecisionTick,
             MaxBlockedFollowersPerDecisionTick = MaxBlockedFollowersPerDecisionTick,
+            StallThresholdFrames = StallThresholdFrames,
         };
+    }
 }

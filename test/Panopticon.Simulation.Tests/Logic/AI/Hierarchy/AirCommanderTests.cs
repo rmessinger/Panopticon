@@ -77,11 +77,12 @@ public class AirCommanderTests : MockedGameTest
     }
 
     [Fact]
-    public void ParkedSquad_ReceivesMissionOrder_MidSortieSquadSkipped()
+    public void ParkedJet_RetaskedIndependently_OfMidSortieWingman()
     {
         var game = new TestGame(SageGame.CncGenerals);
         var player = HierarchyTestPlayers.CreateAiPlayer(game);
         var jet = SpawnJet(game, player, "Jet1");
+        var wingman = SpawnJet(game, player, "Jet2");
         var destination = new Vector3(50f, 0f, 50f);
         var policy = new HierarchicalAIDecisionPolicy(
             new RuleBasedGeneralPolicy(),
@@ -89,16 +90,23 @@ public class AirCommanderTests : MockedGameTest
             new RuleBasedSoldierDecisionPolicy(),
             new FixedMissionAirCommander(AirMission.Patrol, destination));
 
+        // Full-scale finding: a wingman that never lands must not ground the parked jet.
         var jetAi = (JetAIUpdate)jet.AIUpdate!;
+        var wingmanAi = (JetAIUpdate)wingman.AIUpdate!;
         jetAi.CurrentJetAIState = JetAIUpdate.JetAIState.Parked;
+        wingmanAi.CurrentJetAIState = JetAIUpdate.JetAIState.MovingTowardsTarget;
         var orders = policy.DecideNextOrders(new AIDecisionContext(player, ownerPlayerIndex: 2, decisionTickCount: 1))
             .ToList();
 
         Assert.Equal(2, orders.Count);
         Assert.Equal(OrderType.SetSelection, orders[0].OrderType);
+        var selectedIds = orders[0].Arguments.Skip(1).Select(argument => argument.Value.ObjectId).ToHashSet();
+        Assert.Contains(jet.Id, selectedIds);
+        Assert.DoesNotContain(wingman.Id, selectedIds);
         Assert.Equal(OrderType.MoveTo, orders[1].OrderType);
 
-        // Mid-sortie: the assignment still counts, but no order interrupts the jet.
+        // Both airborne: no order interrupts either jet. The commander-side mission counter
+        // still tallies the assignment; the per-unit counters record only received missions.
         jetAi.CurrentJetAIState = JetAIUpdate.JetAIState.MovingTowardsTarget;
         orders = policy.DecideNextOrders(new AIDecisionContext(player, ownerPlayerIndex: 2, decisionTickCount: 2))
             .ToList();
@@ -106,7 +114,8 @@ public class AirCommanderTests : MockedGameTest
         Assert.Equal(2, policy.AirMissionAssignmentCount(AirMission.Patrol));
         Assert.Equal(0, policy.AirMissionAssignmentCount(AirMission.Strike));
         Assert.Equal(0, policy.AirMissionAssignmentCount(AirMission.Escort));
-        Assert.Equal(2, policy.AirMissionAssignmentCountForUnit(jet.Id));
+        Assert.Equal(1, policy.AirMissionAssignmentCountForUnit(jet.Id));
+        Assert.Equal(0, policy.AirMissionAssignmentCountForUnit(wingman.Id));
     }
 
     [Fact]

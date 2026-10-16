@@ -132,6 +132,18 @@ public sealed record MassBattleCapacityProbeReport
                 invariant.SquadsAtWorstDecisionTick,
                 invariant.MembersAtWorstDecisionTick,
                 invariant.MaxBlockedFollowersPerDecisionTick));
+            b.AppendLine(string.Format(
+                culture,
+                "Idle stalls (WI-M4-06): threshold {0} frames; parked jets excluded.",
+                invariant.StallThresholdFrames));
+            foreach (var side in invariant.Sides)
+            {
+                b.AppendLine(string.Format(
+                    culture, "{0,-8} max idle {1,5} frames, stalled units at end {2}",
+                    side.SideId,
+                    side.MaxIdleFrames,
+                    side.StalledUnitsAtEnd));
+            }
         }
 
         if (report.AirMissions is { Count: > 0 })
@@ -245,6 +257,8 @@ public sealed record MassBattleSquadInvariantReport
     public int MembersAtWorstDecisionTick { get; init; }
 
     public long MaxBlockedFollowersPerDecisionTick { get; init; }
+
+    public int StallThresholdFrames { get; init; }
 }
 
 public sealed record SquadInvariantSideResult
@@ -262,4 +276,8 @@ public sealed record SquadInvariantSideResult
     public int CommanderlessSquads { get; init; }
 
     public int MaxCommanderlessSquads { get; init; }
+
+    public int MaxIdleFrames { get; init; }
+
+    public int StalledUnitsAtEnd { get; init; }
 }

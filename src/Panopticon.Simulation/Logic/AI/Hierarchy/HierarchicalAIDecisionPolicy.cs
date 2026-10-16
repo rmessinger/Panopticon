@@ -147,54 +147,51 @@ public sealed class HierarchicalAIDecisionPolicy : IAIDecisionPolicy
                 continue;
             }
 
+            // The commander assigned this mission whatever the squad's readiness; the per-unit
+            // counter below records only missions a member actually received (WI-M4-06).
             _airMissionAssignments[(int)mission.Mission]++;
-            foreach (var member in squad.Members)
+
+            // Per-member readiness (full-scale finding): an all-or-nothing squad gate lets one
+            // wingman that never lands ground every parked jet in its squad for the whole run.
+            // Each ready member is re-tasked individually, matching the M1 scripted semantics.
+            var readyMembers = squad.Members.Where(AirMemberReady).ToList();
+            foreach (var member in readyMembers)
             {
                 _airMissionAssignmentsPerUnit[member.Id.Index]
                     = _airMissionAssignmentsPerUnit.TryGetValue(member.Id.Index, out var count) ? count + 1 : 1;
             }
 
-            if (!AirSquadReady(squad) || mission.Destination is not { } destination)
+            if (readyMembers.Count == 0 || mission.Destination is not { } destination)
             {
                 continue;
             }
 
             orders.Add(Order.CreateSetSelection(
-                context.OwnerPlayerIndex, squad.Members.Select(member => member.Id)));
+                context.OwnerPlayerIndex, readyMembers.Select(member => member.Id)));
             orders.Add(mission.Mission == AirMission.Strike && mission.StrikeTargetId is { } targetId
                 ? Order.CreateAttackObject(context.OwnerPlayerIndex, targetId, force: true)
                 : Order.CreateMoveOrder(context.OwnerPlayerIndex, destination));
         }
     }
 
-    // Ready to receive a mission: every member settled. A jet is settled when parked (the
-    // airfield's park-heal-rearm cycle: health refills while parked; clips refill through the
-    // weapon's own reload cycle once it re-engages, matching the M1 scripted re-issue, which
-    // relaunched parked jets on state alone). Aircraft without jet state (tests, future
-    // imported aircraft) are settled when they hold no target points.
-    private static bool AirSquadReady(Squad squad)
+    // Ready to receive a mission. A jet is ready when parked (the airfield's park-heal-rearm
+    // cycle: health refills while parked; clips refill through the weapon's own reload cycle
+    // once it re-engages, matching the M1 scripted re-issue, which relaunched parked jets on
+    // state alone). Aircraft without jet state (tests, future imported aircraft) are ready
+    // when they hold no target points.
+    private static bool AirMemberReady(GameObject member)
     {
-        foreach (var member in squad.Members)
+        if (member.IsDestroyed)
         {
-            if (member.IsDestroyed)
-            {
-                return false;
-            }
-
-            if (member.AIUpdate is JetAIUpdate jet)
-            {
-                if (jet.CurrentJetAIState != JetAIUpdate.JetAIState.Parked)
-                {
-                    return false;
-                }
-            }
-            else if (member.AIUpdate?.TargetPoints.Count > 0)
-            {
-                return false;
-            }
+            return false;
         }
 
-        return true;
+        if (member.AIUpdate is JetAIUpdate jet)
+        {
+            return jet.CurrentJetAIState == JetAIUpdate.JetAIState.Parked;
+        }
+
+        return member.AIUpdate?.TargetPoints.Count == 0;
     }
 
     /// <summary>Missions of the given type assigned so far (WI-M4-05 report).</summary>

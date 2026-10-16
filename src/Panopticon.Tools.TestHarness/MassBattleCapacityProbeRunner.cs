@@ -858,6 +858,13 @@ public static class MassBattleCapacityProbeRunner
                     reasons.Add(
                         $"{side.SideId}: {side.MaxCommanderlessSquads} non-empty squads left without a live commander (max observed)");
                 }
+
+                if (side.StalledUnitsAtEnd > 0)
+                {
+                    reasons.Add(
+                        $"{side.SideId}: {side.StalledUnitsAtEnd} units idle beyond the " +
+                        $"{squadInvariant.StallThresholdFrames}-frame stall threshold while enemies remained");
+                }
             }
         }
 
