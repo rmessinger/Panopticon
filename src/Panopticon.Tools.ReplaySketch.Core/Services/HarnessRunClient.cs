@@ -7,11 +7,13 @@ using Panopticon.Tools.ReplaySketch.Model.HarnessLauncher;
 
 namespace Panopticon.Tools.ReplaySketch.Services;
 
-public sealed class HarnessRunClient
+public sealed class HarnessRunClient : IHarnessRunClient
 {
     private readonly Func<string?> _locate; private readonly IHarnessProcessFactory _processFactory;
     internal HarnessRunClient(Func<string?>? locate, IHarnessProcessFactory? processFactory) { var locator = new SiblingBuildExecutableLocator(); _locate = locate ?? (() => locator.Locate("Panopticon.Tools.TestHarness")); _processFactory = processFactory ?? new SystemHarnessProcessFactory(); }
+
     public HarnessRunClient() : this(null, null) { }
+
     public async Task<HarnessRunResult> RunAsync(HarnessLaunchRequest request, HarnessCatalog catalog, IProgress<string>? output, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request); ArgumentNullException.ThrowIfNull(catalog);
@@ -41,7 +43,11 @@ public sealed class HarnessRunClient
                 return new(-1, "cancelled", true, request.KeepConfig ? path : null);
             }
         }
-        finally { process?.Dispose(); if (!request.KeepConfig) try { File.Delete(path); } catch (IOException) { } }
+        finally
+        {
+            process?.Dispose(); if (!request.KeepConfig) try { File.Delete(path); }
+                catch (IOException) { }
+        }
     }
     private static string Quote(string value) => value.Contains(' ', StringComparison.Ordinal) ? $"\"{value}\"" : value;
 }

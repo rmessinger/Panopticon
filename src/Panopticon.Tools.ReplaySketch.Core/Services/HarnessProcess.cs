@@ -47,6 +47,12 @@ internal sealed class SystemHarnessProcess(Process process) : IHarnessProcess
     public Task<string> ReadStandardOutputAsync(CancellationToken cancellationToken) => process.StandardOutput.ReadToEndAsync(cancellationToken);
     public Task<string> ReadStandardErrorAsync(CancellationToken cancellationToken) => process.StandardError.ReadToEndAsync(cancellationToken);
     public async Task<int> WaitForExitAsync(CancellationToken cancellationToken) { await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false); return process.ExitCode; }
-    public void KillTree() { try { process.Kill(true); } catch (InvalidOperationException) { } }
+
+    public void KillTree()
+    {
+        try { process.Kill(true); }
+        catch (InvalidOperationException) { }
+    }
+
     public void Dispose() => process.Dispose();
 }
