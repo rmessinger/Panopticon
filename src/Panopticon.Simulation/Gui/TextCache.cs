@@ -177,102 +177,102 @@ internal sealed class TextCache : DisposableBase
             var location = new PointF(0, size.Height / 2.0f);
             var color = key.Color;
 
-            // Clear re-used image buffers
-            if (!isNew)
+            var drawOptions = new DrawingOptions
             {
-                x.Clear(Color.Transparent);
-            }
+                GraphicsOptions = new GraphicsOptions { Antialias = true, },
+            };
 
-            try
+            x.Paint(drawOptions, canvas =>
             {
-                // '&' is used to bold the single character following it
-                var hotkeyIndex = key.Text.IndexOf('&');
-                var hotkeyFont = new Font(actualFont, FontStyle.Bold);
-                var text1 = hotkeyIndex < 0 ? key.Text : key.Text[..hotkeyIndex];
-
-                var drawOptions = new DrawingOptions
+                // Clear re-used image buffers
+                if (!isNew)
                 {
-                    GraphicsOptions = new GraphicsOptions { Antialias = true, },
-                };
-
-                var wrappingLength = size.Width;
-                var horizontalAlignment = key.Alignment == TextAlignment.Center
-                    ? HorizontalAlignment.Center
-                    : HorizontalAlignment.Left;
-                var verticalAlignment = VerticalAlignment.Center;
-
-                if (horizontalAlignment == HorizontalAlignment.Center)
-                {
-                    location.X = size.Width / 2f;
+                    canvas.Clear(Brushes.Solid(Color.Transparent));
                 }
 
-                var regularRenderOptions = new RichTextOptions(actualFont)
+                try
                 {
-                    WrappingLength = wrappingLength,
-                    HorizontalAlignment = horizontalAlignment,
-                    VerticalAlignment = verticalAlignment,
-                    Origin = location,
-                };
+                    // '&' is used to bold the single character following it
+                    var hotkeyIndex = key.Text.IndexOf('&');
+                    var hotkeyFont = new Font(actualFont, FontStyle.Bold);
+                    var text1 = hotkeyIndex < 0 ? key.Text : key.Text[..hotkeyIndex];
 
-                var drawColor = new Bgra32(
-                    (byte)(color.R * 255.0f),
-                    (byte)(color.G * 255.0f),
-                    (byte)(color.B * 255.0f),
-                    (byte)(color.A * 255.0f));
+                    var wrappingLength = size.Width;
+                    var horizontalAlignment = key.Alignment == TextAlignment.Center
+                        ? HorizontalAlignment.Center
+                        : HorizontalAlignment.Left;
+                    var verticalAlignment = VerticalAlignment.Center;
 
-                var ctx = x.DrawText(
-                    drawOptions,
-                    regularRenderOptions,
-                    text1,
-                    new SolidBrush(drawColor),
-                    null);
+                    if (horizontalAlignment == HorizontalAlignment.Center)
+                    {
+                        location.X = size.Width / 2f;
+                    }
 
-                if (hotkeyIndex > -1)
-                {
-                    var ogSize = TextMeasurer.MeasureBounds(text1, regularRenderOptions);
-
-                    var boldRenderOptions = new RichTextOptions(hotkeyFont)
+                    var regularRenderOptions = new RichTextOptions(actualFont)
                     {
                         WrappingLength = wrappingLength,
-                        HorizontalAlignment = HorizontalAlignment.Left,
+                        HorizontalAlignment = horizontalAlignment,
                         VerticalAlignment = verticalAlignment,
-                        Origin = location with { X = ogSize.Right },
+                        Origin = location,
                     };
 
-                    var boldChar = key.Text[hotkeyIndex + 1].ToString();
-                    var boldSize = TextMeasurer.MeasureBounds(boldChar, boldRenderOptions);
+                    var drawColor = Color.FromPixel(new Bgra32(
+                        (byte)(color.R * 255.0f),
+                        (byte)(color.G * 255.0f),
+                        (byte)(color.B * 255.0f),
+                        (byte)(color.A * 255.0f)));
 
-                    var remainingRenderOptions = new RichTextOptions(actualFont)
+                    canvas.DrawText(
+                        regularRenderOptions,
+                        text1,
+                        Brushes.Solid(drawColor),
+                        null);
+
+                    if (hotkeyIndex > -1)
                     {
-                        WrappingLength = wrappingLength,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = verticalAlignment,
-                        Origin = new Vector2(boldSize.Right, regularRenderOptions.Origin.Y),
-                    };
+                        var ogSize = TextMeasurer.MeasureBounds(text1, regularRenderOptions);
 
-                    ctx.DrawText(
-                            drawOptions,
+                        var boldRenderOptions = new RichTextOptions(hotkeyFont)
+                        {
+                            WrappingLength = wrappingLength,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            VerticalAlignment = verticalAlignment,
+                            Origin = location with { X = ogSize.Right },
+                        };
+
+                        var boldChar = key.Text[hotkeyIndex + 1].ToString();
+                        var boldSize = TextMeasurer.MeasureBounds(boldChar, boldRenderOptions);
+
+                        var remainingRenderOptions = new RichTextOptions(actualFont)
+                        {
+                            WrappingLength = wrappingLength,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            VerticalAlignment = verticalAlignment,
+                            Origin = new Vector2(boldSize.Right, regularRenderOptions.Origin.Y),
+                        };
+
+                        canvas.DrawText(
                             boldRenderOptions,
                             boldChar,
-                            new SolidBrush(
-                                new Bgra32(
+                            Brushes.Solid(
+                                Color.FromPixel(new Bgra32(
                                     255, // hotkey text is yellow
                                     255,
                                     0,
-                                    (byte)(color.A * 255.0f))),
-                            null)
-                        .DrawText(
-                            drawOptions,
-                            remainingRenderOptions,
-                            key.Text[(hotkeyIndex + 2)..],
-                            new SolidBrush(drawColor),
+                                    (byte)(color.A * 255.0f)))),
                             null);
+                        canvas.DrawText(
+                            remainingRenderOptions,
+                            key.Text.AsSpan(hotkeyIndex + 2),
+                            Brushes.Solid(drawColor),
+                            null);
+                    }
                 }
-            }
-            catch
-            {
-                // TODO:
-            }
+                catch
+                {
+                    // TODO:
+                }
+            });
         });
 
         Texture texture;

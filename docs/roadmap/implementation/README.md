@@ -25,6 +25,7 @@ Source of truth: [deep-dives/p0-playable-baseline-harness.md](../deep-dives/p0-p
 | [track-p-p0-5-assertion-layer.md](track-p-p0-5-assertion-layer.md) | P0-4 | Validation/assertion layer |
 | [track-p-p0-6-run-and-assert-entry-point.md](track-p-p0-6-run-and-assert-entry-point.md) | P0-5 | Run-and-assert entry point + end-to-end test |
 | [track-p-p0-7-procedural-authoring.md](track-p-p0-7-procedural-authoring.md) | P0-6 | Procedural authoring at scale |
+| [deep dive §2.8](../deep-dives/p0-playable-baseline-harness.md#28-testharness-launcher-ui-p0-8) | P0-8 | TestHarness launcher UI (design in the deep dive; cards `WI-P0-20` to `WI-P0-29`) |
 
 ## Track A · A1 : Headless simulation host
 
@@ -509,3 +510,11 @@ Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [upload li
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-x-x2-capacity-probe-fixes.md](track-x-x2-capacity-probe-fixes.md) | X2-1..X2-2 | Upload lifetime cleanup and measured combat FX/model reuse |
+
+## Track X · X3: Cursor modernization
+
+Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: none yet; loader diagrams gated on `WI-X3-01`.
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-x-x3-cursor-modernization.md](track-x-x3-cursor-modernization.md) | X3-1 | Open-source cursor evaluation, comparison examples, loader assessment |

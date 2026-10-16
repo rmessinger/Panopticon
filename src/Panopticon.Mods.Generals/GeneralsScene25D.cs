@@ -7,6 +7,7 @@ using Panopticon.Gui;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using SixLabors.Fonts;
+using FontWeight = Panopticon.Gui.FontWeight;
 
 namespace Panopticon.Mods.Generals;
 

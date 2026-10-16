@@ -141,6 +141,26 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     window with a distinct `[inactivity-timeout]` log message; a scenario making steady progress to
     its natural end is not cut off early.
   - Note: see `WI-P0-19`.
+- [ ] P0-8 TestHarness catalog: the TestHarness publishes its scenarios and config parameters as a
+      versioned `HarnessCatalog` JSON via `--list-scenarios`, and accepts `--config <path>`.
+  - AC: `--list-scenarios` with no game install exits 0 with valid catalog JSON; coverage tests fail
+    when a `BuiltInScenario` value lacks a descriptor or a public `TestHarnessConfig` property lacks
+    `[HarnessParameter]`; `--config` runs the given file without modifying the executable's
+    `TestHarness.json`.
+  - Note: see `WI-P0-20` to `WI-P0-23`.
+- [ ] P0-8 Launcher clients and view models: ReplaySketch.Core loads the catalog, filters scenarios,
+      edits applicable parameters with validation, runs and stops the TestHarness with streamed
+      output, and stores presets.
+  - AC: headless tests in `Panopticon.Tools.ReplaySketch.Tests` cover catalog load errors
+    (`HRN100` to `HRN103`), text/category/mode filtering, per-kind parameter validation,
+    override-only launch requests, exit-code meaning lookup, cancellation, and preset round trip
+    plus `TestHarness.json` import.
+  - Note: see `WI-P0-24` to `WI-P0-28`.
+- [ ] P0-8 Harness tab: ReplaySketch.Avalonia `Harness` tab bound to the Core launcher view model.
+  - AC: `REPLAYSKETCH_SCREENSHOT_TAB=harness` screenshot shows the live catalog's scenarios and
+    parameter groups; the Map tab is unchanged; launching `PbrMaterialProof` from the tab reports
+    exit code 0 with its meaning.
+  - Note: see `WI-P0-29`.
 
 ### P1: Skirmish setup & player relationships ([deep dive](deep-dives/p1-skirmish-setup.md))
 - [x] Resolve `PlayerManager.OnNewGame()` `// TODO: Setup player relationships` (allies / enemies /
@@ -333,7 +353,15 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     SpecialPower}, `faction` ∈ {USA, GLA, China}) runs 15 cells; each asserts the observable effect
     for that faction's reference unit; see the deep dive matrix section.
 
+P6 corrective follow-ups ([plan](plans/macos-battle-artifacts.md)):
+
+- [ ] [WI-P6-06](agent/cards/WI-P6-06-design-jet-crash-lifecycle.md): ground the jet crash lifecycle.
+  - AC: source-grounded airborne/grounded/impact/removal contract and populated diagrams reconcile the implementation card or record a concrete blocker.
+- [ ] [WI-P6-07](agent/cards/WI-P6-07-implement-jet-crash-lifecycle.md): implement jet crash and final cleanup after WI-P6-06 and WI-G6-03.
+  - AC: lethal damage leads to authored crash/removal, once-only lifecycle cleanup, and checkpoint continuation; physical removal is asserted separately from logical death.
+
 ### P6b: Unit-contract validation ([deep dive](deep-dives/p6b-unit-contract-validation.md))
+
 - [x] Infantry archetype contract (P6b-1).
   - AC: a P0 harness scenario for the reference infantry unit (e.g. USA Ranger) asserts all six
     contract points: produced, moves, garrison via `Enter`, basic attack reduces target health,
@@ -1191,6 +1219,8 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
   - AC: black/white colour mips encode approximately 188 while data mips remain 128; role tests
     keep normals/masks/alpha linear; output has exactly one transfer; ordered dither is deterministic
     and zero-mean; gradient captures meet the G6 banding check; `Legacy` matches its golden.
+- [ ] [WI-G6-03](agent/cards/WI-G6-03-clamp-particle-opacity.md): shared particle-opacity clamp ([corrective plan](plans/macos-battle-artifacts.md)).
+  - AC: GPU opacity-boundary tests and late-life Metal captures under both presets show normal smoke without black/neon corruption; additive RGB, simulation state, and RNG consumption remain unchanged.
 - [x] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
       quality terrain texture-array resample/mip path in `Terrain.cs`)
       ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
@@ -1734,3 +1764,10 @@ Dependency: M1. Independent of X1. [Evidence and cards](implementation/track-x-x
   - AC: repeated uploads have bounded temporary ownership, correct destination contents, safe cleanup, and before/after D3D11 native-memory and frame-time evidence.
 - [ ] X2-2 Reduce measured combat FX/model resource recreation (`WI-X2-02`).
   - AC: post-X2-1 stacks identify one recreation owner; compatible resources are reused with bounded retention, reset/disposal coverage, fewer constructions, and preserved visuals.
+
+### X3: Cursor modernization
+
+Dependency: none. [Plan and cards](implementation/track-x-x3-cursor-modernization.md).
+
+- [ ] X3-1 Evaluate open-source cursor replacements and produce comparison examples (`WI-X3-01`).
+  - AC: full inventory of the 52 originals; pinned sources with license verdicts; contact sheet and animated GIF in the shared directory; `CursorFile` load-check per candidate; loader assessment naming the smallest high-DPI change; follow-up cards `Draft` with the original set as default.

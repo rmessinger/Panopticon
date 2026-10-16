@@ -21,6 +21,8 @@ namespace Panopticon.Graphics.Cameras;
 /// </summary>
 public sealed class TacticalView : IPersistableObject
 {
+    internal static readonly NLog.Logger ZoomLogger = NLog.LogManager.GetLogger("Panopticon.Diagnostics.Zoom");
+
     public readonly LookAtTranslator LookAtTranslator;
 
     private readonly GameData _gameData;
@@ -1194,6 +1196,8 @@ public sealed class TacticalView : IPersistableObject
                 _heightAboveGround = currentHeightAboveGround;
             }
 
+            var zoomBefore = _zoom;
+
             if (LookAtTranslator.IsScrolling)
             {
                 // If scrolling, only adjust if we're too close or too far
@@ -1226,6 +1230,11 @@ public sealed class TacticalView : IPersistableObject
                         remaining);
                     recalcCamera = true;
                 }
+            }
+
+            if (_zoom != zoomBefore)
+            {
+                LogZoomSettle(gameTime, zoomBefore, desiredZoom);
             }
         }
 
@@ -1604,13 +1613,53 @@ public sealed class TacticalView : IPersistableObject
     // C++: View::zoomIn
     public void ZoomIn()
     {
+        var before = _heightAboveGround;
         SetHeightAboveGround((float)(_heightAboveGround - _zoomIncrement));
+        ZoomLogger.Debug("ZoomIn height {0:F1} -> {1:F1} zoom={2:F4}", before, _heightAboveGround, _zoom);
     }
 
     // C++: View::zoomOut
     public void ZoomOut()
     {
+        var before = _heightAboveGround;
         SetHeightAboveGround((float)(_heightAboveGround + _zoomIncrement));
+        ZoomLogger.Debug("ZoomOut height {0:F1} -> {1:F1} zoom={2:F4}", before, _heightAboveGround, _zoom);
+    }
+
+    // The settle step is an explicit Euler update scaled by frame time. A gain
+    // (CameraAdjustSpeed * frames elapsed) above 1 overshoots desiredZoom; above 2 every frame
+    // overshoots by more than the last, so _zoom oscillates with growing amplitude and no input
+    // can stop it. Long frames push the gain over those thresholds.
+    private bool _zoomSettleOvershooting;
+
+    private void LogZoomSettle(in TimeInterval gameTime, float zoomBefore, float desiredZoom)
+    {
+        var frameMs = gameTime.DeltaTime.TotalMilliseconds;
+        var gain = _gameData.CameraAdjustSpeed * gameTime.GetLogicFrameRelativeDeltaTime(_msPerLogicFrame);
+        var overshooting = gain > 1;
+
+        if (overshooting && !_zoomSettleOvershooting)
+        {
+            ZoomLogger.Warn(
+                "Zoom settle gain {0:F2} > 1 ({1}): frameMs={2:F1} adjustSpeed={3} zoom {4:F4} -> {5:F4} desired={6:F4} height={7:F1}",
+                gain, gain > 2 ? "divergent" : "overshoot", frameMs, _gameData.CameraAdjustSpeed,
+                zoomBefore, _zoom, desiredZoom, _heightAboveGround);
+        }
+        else if (!overshooting && _zoomSettleOvershooting)
+        {
+            ZoomLogger.Info("Zoom settle gain back to {0:F2} (frameMs={1:F1}) zoom={2:F4} desired={3:F4}", gain, frameMs, _zoom, desiredZoom);
+        }
+
+        _zoomSettleOvershooting = overshooting;
+
+        if (!ZoomLogger.IsDebugEnabled)
+        {
+            return;
+        }
+
+        ZoomLogger.Debug(
+            "Settle frameMs={0:F1} gain={1:F3} zoom {2:F4} -> {3:F4} desired={4:F4} height={5:F1} scrolling={6}",
+            frameMs, gain, zoomBefore, _zoom, desiredZoom, _heightAboveGround, LookAtTranslator.IsScrolling);
     }
 
     private void ZoomCameraOneFrame(in TimeInterval gameTime)

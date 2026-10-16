@@ -77,8 +77,8 @@ public sealed class HeadlessHierarchicalMatchEvaluator : IHierarchicalPolicyMatc
             game.StartRun();
 
             var genomePlayer = game.Scene3D.Players[2];
-            var genomePlayerName = genomePlayer.DisplayName;
-            var opponentPlayerName = game.Scene3D.Players[3].DisplayName;
+            var genomePlayerName = genomePlayer.DisplayName ?? string.Empty;
+            var opponentPlayerName = game.Scene3D.Players[3].DisplayName ?? string.Empty;
             if (genomePlayerName == opponentPlayerName)
             {
                 throw new System.InvalidOperationException(

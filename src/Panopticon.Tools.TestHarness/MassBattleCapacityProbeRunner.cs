@@ -677,7 +677,7 @@ public static class MassBattleCapacityProbeRunner
                 if (jetsByUnit.TryGetValue(unit, out var jet))
                 {
                     // Only re-issue for a jet settled back into parking: mid-sortie states own it.
-                    if (jet.Airborne || ((JetAIUpdate)unit.AIUpdate).CurrentJetAIState != JetAIUpdate.JetAIState.Parked)
+                    if (jet.Airborne || ((JetAIUpdate)unit.AIUpdate!).CurrentJetAIState != JetAIUpdate.JetAIState.Parked)
                     {
                         continue;
                     }

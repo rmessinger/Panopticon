@@ -56,10 +56,9 @@ public sealed class ModelAnimationBindingTests : IDisposable
         }
 
         Assert.NotNull(draw);
-        draw = draw!;
 
         // Query the real hierarchy so the named targets provably differ from bone order.
-        var (probeInstance, _) = draw!.FindBone("");
+        var (probeInstance, _) = draw.FindBone("");
         var bones = probeInstance.Model.BoneHierarchy.Bones;
         Assert.True(bones.Length >= 4, $"expected a real skeleton, got {bones.Length} bones");
         var lastBoneName = bones[^1].Name;

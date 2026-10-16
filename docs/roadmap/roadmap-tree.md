@@ -45,6 +45,8 @@ mindmap
       X2 Capacity-probe graphics resource fixes
         X2-1 Upload lifetime cleanup
         X2-2 Combat FX and model reuse
+      X3 Cursor modernization
+        X3-1 Cursor theme evaluation and examples
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
         P0-1 Open command model
@@ -57,6 +59,7 @@ mindmap
         P0-5 Run-and-assert entry point
         P0-6 Large/procedural authoring
         P0-7 Agent validation playbook
+        P0-8 TestHarness launcher UI
       P1 Skirmish setup and relationships ⮕
       P2 Skirmish AI opponent ⮕
       P3 Victory and defeat ⮕
@@ -386,6 +389,7 @@ flowchart LR
   subgraph S1["Stage 1 · Core host & cleanup"]
     direction TB
     A1["A1 Headless host"]
+    X3["X3 Cursor modernization"]
     B2["B2 Allocation cleanup"]
     B4["B4 Spatial & pathfinding"]
     B4A["B4a Larger maps"]

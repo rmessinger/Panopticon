@@ -96,11 +96,11 @@ public sealed class ExternalModelView : UserControl
             FontWeight = FontWeight.Bold,
             Foreground = SectionBrush,
         });
-        _yawEntry.Watermark = "Yaw (rad)";
-        _orbitEntry.Watermark = "Camera orbit (rad)";
-        _elevationEntry.Watermark = "Camera elevation (rad)";
-        _distanceEntry.Watermark = "Camera distance";
-        _sampleTimeEntry.Watermark = "Sample time (s)";
+        _yawEntry.PlaceholderText = "Yaw (rad)";
+        _orbitEntry.PlaceholderText = "Camera orbit (rad)";
+        _elevationEntry.PlaceholderText = "Camera elevation (rad)";
+        _distanceEntry.PlaceholderText = "Camera distance";
+        _sampleTimeEntry.PlaceholderText = "Sample time (s)";
         controls.Children.Add(_yawEntry);
         controls.Children.Add(_orbitEntry);
         controls.Children.Add(_elevationEntry);

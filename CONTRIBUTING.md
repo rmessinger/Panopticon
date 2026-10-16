@@ -30,7 +30,7 @@ Pull Requests
 -------------
 
 * **DO** submit all code changes via pull requests (PRs) rather than through a direct commit. PRs will be reviewed and potentially merged by the repo maintainers after a peer review that includes at least one maintainer.
-* **DO** give PRs short-but-descriptive names (e.g. "Improve code coverage for System.Console by 10%", not "Fix #1234")
+* **DO** use descriptive PR titles, not Conventional Commit prefixes such as `feat(scope):` or `fix(scope):`. Roadmap PRs use `<phase> group <number>: <summary> (<card IDs>)` when applicable, following [PR #220](https://github.com/rmessinger/Panopticon/pull/220): `G10 group 3: proportions opt-in and golden frames (WI-G10-03)`. Omit group or card identifiers only when they do not apply; unrelated PRs use a plain descriptive title.
 * **DO** write PR descriptions as atomic bullets, not prose paragraphs: one fact per bullet; one top-level bullet per card or change area; a short Validation list at the end.
 * **DO** split semicolon chains and multi-sentence blobs into separate bullets or nested sub-lists. Total verbosity stays roughly the same as paragraph text.
 * **DO** refer to any relevant issues, and include [keywords](https://help.github.com/articles/closing-issues-via-commit-messages/) that automatically close issues when the PR is merged.

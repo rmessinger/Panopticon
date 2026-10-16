@@ -14,7 +14,7 @@ public sealed class GraphicsSystem : GameSystem
     public RenderStatistics RenderStatistics => RenderPipeline.Statistics;
 
     /// <summary>Render-path span sink (B5): buildRenderList, shadowPass, forwardPass, render.</summary>
-    public event Action<string, TimeSpan>? RenderSpan
+    public event Action<string, TimeSpan> RenderSpan
     {
         add => RenderPipeline.RenderSpan += value;
         remove => RenderPipeline.RenderSpan -= value;

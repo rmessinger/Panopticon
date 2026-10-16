@@ -14,7 +14,7 @@ public class GraphicsSettingsApplicationTests
     {
         var expected = RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Enhanced());
 
-        Assert.Equal(expected.DepthAttachment.Value.Format, RenderPipeline.GameOutputDescription.DepthAttachment.Value.Format);
+        Assert.Equal(expected.DepthAttachment!.Value.Format, RenderPipeline.GameOutputDescription.DepthAttachment!.Value.Format);
         Assert.Equal(expected.ColorAttachments[0].Format, RenderPipeline.GameOutputDescription.ColorAttachments[0].Format);
         Assert.Equal(expected.SampleCount, RenderPipeline.GameOutputDescription.SampleCount);
         Assert.Equal(TextureSampleCount.Count4, RenderPipeline.GameOutputDescription.SampleCount);
@@ -32,7 +32,7 @@ public class GraphicsSettingsApplicationTests
         var description = RenderPipeline.CreateGameOutputDescription(GraphicsSettings.Enhanced());
 
         Assert.Equal(TextureSampleCount.Count4, description.SampleCount);
-        Assert.Equal(RenderPipeline.GameOutputDescription.DepthAttachment.Value.Format, description.DepthAttachment.Value.Format);
+        Assert.Equal(RenderPipeline.GameOutputDescription.DepthAttachment!.Value.Format, description.DepthAttachment!.Value.Format);
         Assert.Equal(RenderPipeline.GameOutputDescription.ColorAttachments[0].Format, description.ColorAttachments[0].Format);
     }
 
@@ -63,7 +63,7 @@ public class GraphicsSettingsApplicationTests
         var description = RenderPipeline.CreateGameOutputDescription(settings);
 
         Assert.Equal(TextureSampleCount.Count4, description.SampleCount);
-        Assert.Equal(RenderPipeline.GameOutputDescription.DepthAttachment.Value.Format, description.DepthAttachment.Value.Format);
+        Assert.Equal(RenderPipeline.GameOutputDescription.DepthAttachment!.Value.Format, description.DepthAttachment!.Value.Format);
         Assert.Equal(PixelFormat.B8_G8_R8_A8_UNorm, description.ColorAttachments[0].Format);
     }
 

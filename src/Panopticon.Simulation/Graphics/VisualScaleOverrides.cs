@@ -26,7 +26,7 @@ internal static class VisualScaleOverrides
             ["AmericaVehicleComanche"] = 14.28f * HullUnits / (44.0651f * HullMeters),
         };
 
-    public static float GetScale(string? objectDefinitionName)
+    public static float GetScale(string objectDefinitionName)
     {
         return objectDefinitionName != null
             && Overrides.TryGetValue(objectDefinitionName, out var scale)

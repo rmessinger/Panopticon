@@ -442,7 +442,7 @@ public static class Ee2ContractPhase
         var heliAI = (JetAIUpdate)helicopter.AIUpdate;
         heliAI.Base = airfield;
         heliAI.CurrentJetAIState = JetAIUpdate.JetAIState.Parked;
-        helicopter.SetTransformMatrix(parking.GetUnitCreateTransform(producedAtHelipad: true, helicopter.Id).Matrix * airfield.TransformMatrix);
+        helicopter.SetTransformMatrix(parking.GetUnitCreateTransform(producedAtHelipad: true, helicopter.Id).Matrix * airfield!.TransformMatrix);
         helicopter.UpdateColliders();
 
         // A helicopter does not use the runway state machine (KeepsParkingSpaceWhenAirborne is

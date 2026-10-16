@@ -41,7 +41,7 @@ public static class UnitContentImportRunner
             ? Ee2SourceFiles.FromDatabase(
                 database,
                 graphics,
-                Directory.EnumerateFiles(Path.Combine(root, "zips"), "db_*.zip").Select(Path.GetFileName).ToArray())
+                Directory.EnumerateFiles(Path.Combine(root, "zips"), "db_*.zip").Select(path => Path.GetFileName(path)!).ToArray())
             : new Ee2SourceFiles(database, graphics, import.DdfPaths, Ee2SourceFiles.DefaultUnitTablePath);
 
         var adapter = new Ee2UnitAdapter(sourceFiles, new Ee2ImportPolicy(
