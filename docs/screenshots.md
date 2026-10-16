@@ -338,6 +338,8 @@ REPLAYSKETCH_SCREENSHOT_PATH=/tmp/shot.png REPLAYSKETCH_SCREENSHOT_TAB=model \
   dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia --no-build
 ```
 
+The Harness tab (`REPLAYSKETCH_SCREENSHOT_TAB=harness`) loads the sibling TestHarness catalog. Build TestHarness before the capture.
+
 The Model tab (`REPLAYSKETCH_SCREENSHOT_TAB=model`) uses a deterministic fake session
 (`ExternalModelScreenshotFixture`) and starts no TestHarness process, so its capture is
 reproducible. Map-tab captures need `CNC_GENERALS_PATH` and a longer settle delay (8 s).

@@ -192,4 +192,6 @@ WI-C4i-01 Done: NifHeader parses version-gated layouts (10.1.0.0 with user versi
 WI-P0-20..23: added the versioned harness catalog contract, TestHarness scenario and parameter publication, and `--list-scenarios` / `--config` CLI support.
 WI-P0-24..25: added ReplaySketch catalog and run clients with owned-process cancellation and temporary launch configs.
 - WI-P0-26..28: Added the harness launcher view model, typed parameter editor, launch presets, filtering, and focused tests.
+- WI-P0-29: Added the Avalonia Harness tab and screenshot-mode selection.
+- WI-P0-20..29 PR review: corrected catalog validation and scenario metadata, added live line streaming and catalog timeout, fixed nullable defaults, string round trips, headless enforcement, repeat-run cancellation, and preset replacement. Added regression tests and completed Harness controls without rebuilding focused editors. Harness and Map screenshots verified under Xvfb.
 2026-10-13 Added phase X3 (cursor modernization) with Ready investigation card WI-X3-01: inventory the 52 original cursors, evaluate Bibata (GPL-3.0) and game-icons.net (CC BY 3.0) candidates, produce a contact sheet and animated GIF for operator inspection, and assess high-DPI loader needs. Read-only; no assets committed; original set stays default. Propagated track doc, plan, checklist, tree, implementation README, progress (0/1).

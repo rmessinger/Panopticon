@@ -32,10 +32,11 @@ public sealed class HarnessLauncherViewModel : INotifyPropertyChanged
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
         _presetStore = presetStore ?? new HarnessPresetStore();
         Parameters = new HarnessParameterEditorViewModel();
-        Parameters.PropertyChanged += (_, _) => { OnChanged(nameof(HasErrors)); RunCommand.RaiseCanExecuteChanged(); };
         LoadCatalogCommand = new AsyncCommand(LoadCatalogAsync);
         RunCommand = new AsyncCommand(RunAsync, CanRun);
-        StopCommand = new AsyncCommand(_ => { RunCommand.Cancel(); return Task.CompletedTask; });
+        Parameters.PropertyChanged += (_, _) => { OnChanged(nameof(HasErrors)); RunCommand.RaiseCanExecuteChanged(); };
+        StopCommand = new AsyncCommand(_ => { RunCommand.Cancel(); return Task.CompletedTask; }, () => RunCommand.IsExecuting);
+        RunCommand.CanExecuteChanged += (_, _) => StopCommand.RaiseCanExecuteChanged();
         RunCommand.UnhandledException += (_, error) => _ = _dispatcher.InvokeOnMainThreadAsync(() => StatusMessage = error.Message);
         LoadCatalogCommand.UnhandledException += (_, error) => _ = _dispatcher.InvokeOnMainThreadAsync(() => StatusMessage = error.Message);
     }

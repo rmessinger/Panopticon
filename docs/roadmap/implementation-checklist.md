@@ -141,14 +141,14 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     window with a distinct `[inactivity-timeout]` log message; a scenario making steady progress to
     its natural end is not cut off early.
   - Note: see `WI-P0-19`.
-- [ ] P0-8 TestHarness catalog: the TestHarness publishes its scenarios and config parameters as a
+- [x] P0-8 TestHarness catalog: the TestHarness publishes its scenarios and config parameters as a
       versioned `HarnessCatalog` JSON via `--list-scenarios`, and accepts `--config <path>`.
   - AC: `--list-scenarios` with no game install exits 0 with valid catalog JSON; coverage tests fail
     when a `BuiltInScenario` value lacks a descriptor or a public `TestHarnessConfig` property lacks
     `[HarnessParameter]`; `--config` runs the given file without modifying the executable's
     `TestHarness.json`.
   - Note: see `WI-P0-20` to `WI-P0-23`.
-- [ ] P0-8 Launcher clients and view models: ReplaySketch.Core loads the catalog, filters scenarios,
+- [x] P0-8 Launcher clients and view models: ReplaySketch.Core loads the catalog, filters scenarios,
       edits applicable parameters with validation, runs and stops the TestHarness with streamed
       output, and stores presets.
   - AC: headless tests in `Panopticon.Tools.ReplaySketch.Tests` cover catalog load errors
@@ -156,7 +156,7 @@ Generals/ZH skirmish playable build → fight → win/lose vs. AI.
     override-only launch requests, exit-code meaning lookup, cancellation, and preset round trip
     plus `TestHarness.json` import.
   - Note: see `WI-P0-24` to `WI-P0-28`.
-- [ ] P0-8 Harness tab: ReplaySketch.Avalonia `Harness` tab bound to the Core launcher view model.
+- [x] P0-8 Harness tab: ReplaySketch.Avalonia `Harness` tab bound to the Core launcher view model.
   - AC: `REPLAYSKETCH_SCREENSHOT_TAB=harness` screenshot shows the live catalog's scenarios and
     parameter groups; the Map tab is unchanged; launching `PbrMaterialProof` from the tab reports
     exit code 0 with its meaning.

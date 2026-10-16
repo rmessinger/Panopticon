@@ -49,5 +49,6 @@ public sealed class HarnessRunClient : IHarnessRunClient
                 catch (IOException) { }
         }
     }
+
     private static string Quote(string value) => value.Contains(' ', StringComparison.Ordinal) ? $"\"{value}\"" : value;
 }
