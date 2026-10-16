@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Panopticon.Graphics.Rendering.Instancing;
 using Panopticon.Tools.ReplaySketch.Model.Capture;
+using Panopticon.Tools.ReplaySketch.Model.HarnessLauncher;
 using Panopticon.Tools.ReplaySketch.Services;
 
 namespace Panopticon.Tools.TestHarness;
@@ -12,7 +13,7 @@ public static class Program
 {
     private const string ConfigFileName = "TestHarness.json";
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    internal static readonly JsonSerializerOptions JsonOptions = new()
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
@@ -41,7 +42,23 @@ public static class Program
             return;
         }
 
-        var config = LoadConfig(reporter);
+        if (Array.Exists(args, a => a.Equals("--list-scenarios", StringComparison.OrdinalIgnoreCase)))
+        {
+            Console.WriteLine(ListScenariosJson());
+            return;
+        }
+
+        TestHarnessConfig config;
+        try
+        {
+            config = LoadConfig(reporter, GetArgValue(args, "--config"));
+        }
+        catch (FileNotFoundException exception)
+        {
+            reporter.Error(exception.Message);
+            Environment.ExitCode = 1;
+            return;
+        }
 
         // --headless and --scenario override the config file (useful for VS Code launch configs and CI).
         if (Array.Exists(args, a => a.Equals("--headless", StringComparison.OrdinalIgnoreCase)))
@@ -254,11 +271,21 @@ public static class Program
         }
     }
 
-    private static TestHarnessConfig LoadConfig(ITestHarnessReporter reporter)
+    internal static string ListScenariosJson()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
+        return HarnessCatalogJson.Serialize(HarnessScenarioCatalog.Build());
+    }
+
+    internal static TestHarnessConfig LoadConfig(ITestHarnessReporter reporter, string? configPath = null)
+    {
+        var path = configPath ?? Path.Combine(AppContext.BaseDirectory, ConfigFileName);
         if (!File.Exists(path))
         {
+            if (configPath is not null)
+            {
+                throw new FileNotFoundException($"Config file not found: {path}", path);
+            }
+
             reporter.Error($"Config file not found: {path}");
             reporter.Error("Creating a default config file.");
             var defaults = new TestHarnessConfig();

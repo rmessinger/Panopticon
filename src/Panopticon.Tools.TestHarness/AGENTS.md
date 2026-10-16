@@ -24,6 +24,8 @@ Set `GamePath` to your game installation if auto-detection fails.
 `BuiltInScenario` in the config selects what runs; `--built-in-scenario <name>` overrides it
 for a single run.
 
+`--list-scenarios` writes the versioned scenario and parameter catalog to stdout without resolving a game installation. `--config <path>` loads an alternate JSON/JSONC configuration file; a missing path exits 1 and never creates a default file.
+
 All windowed scenarios show a performance overlay in the upper-left corner. The `-`/`+`
 button collapses/expands it independently of F1. Values are one-second averages: FPS, frame
 time, CPU update and render-submission time, GPU frame time, process working set, managed
