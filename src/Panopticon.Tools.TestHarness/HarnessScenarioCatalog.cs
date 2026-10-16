@@ -14,8 +14,11 @@ internal static class HarnessScenarioCatalog
 {
     public static HarnessCatalog Build() => new(HarnessCatalogJson.CurrentSchemaVersion, Scenarios(), Parameters());
 
-    public static IReadOnlyList<HarnessScenarioDescriptor> Scenarios() => Enum.GetValues<BuiltInScenario>().Select(Scenario).ToArray();
-
+    // AddedOrder is the BuiltInScenario declaration index: scenarios are appended to the enum as
+    // they are authored, so the highest value is the newest addition. The launcher menu defaults
+    // to newest-first.
+    public static IReadOnlyList<HarnessScenarioDescriptor> Scenarios() =>
+        Enum.GetValues<BuiltInScenario>().Select((scenario, index) => Scenario(scenario, index)).ToArray();
     public static IReadOnlyList<HarnessParameterDescriptor> Parameters()
     {
         var defaults = JsonSerializer.SerializeToNode(new TestHarnessConfig(), Program.JsonOptions)!;
@@ -36,7 +39,7 @@ internal static class HarnessScenarioCatalog
             }).ToArray();
     }
 
-    private static HarnessScenarioDescriptor Scenario(BuiltInScenario scenario)
+    private static HarnessScenarioDescriptor Scenario(BuiltInScenario scenario, int index)
     {
         var id = scenario.ToString();
         var category = id.StartsWith("Alpine", StringComparison.Ordinal) ? HarnessScenarioCategory.Replay
@@ -71,6 +74,6 @@ internal static class HarnessScenarioCatalog
             BuiltInScenario.RenderingScaleProbe => "Measure rendering cost for a repeated-model field.",
             _ => $"Capture and validate {id.Replace("Proof", string.Empty, StringComparison.Ordinal)} rendering features.",
         };
-        return new HarnessScenarioDescriptor(id, category, summary, headlessOnly ? HarnessRunModes.Headless : HarnessRunModes.Headless | HarnessRunModes.Windowed, input, profiles, codes);
+        return new HarnessScenarioDescriptor(id, category, summary, headlessOnly ? HarnessRunModes.Headless : HarnessRunModes.Headless | HarnessRunModes.Windowed, input, profiles, codes, index);
     }
 }
