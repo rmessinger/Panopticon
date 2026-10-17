@@ -5,8 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Panopticon.Gui.ControlBar;
+using Panopticon.Logic.AI.Hierarchy;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders.SpecialPower;
+using Panopticon.Navigation;
+using NavigationClass = Panopticon.Navigation.Navigation;
 
 namespace Panopticon.Logic.Orders;
 
@@ -97,7 +100,6 @@ public sealed class OrderProcessor
                         GameObject? lastUnit = null;
                         foreach (var unit in player.SelectedUnits)
                         {
-                            unit.AIUpdate?.SetTargetPoint(targetPosition);
                             var sound = unit.BodyModule?.DamageState.IsWorseThan(BodyDamageType.Damaged) ?? false
                                 ? unit.Definition.SoundMoveStartDamaged?.Value
                                 : null;
@@ -110,6 +112,8 @@ public sealed class OrderProcessor
 
                             lastUnit = unit;
                         }
+
+                        MoveUnits(_game.Scene3D?.Navigation, player, player.SelectedUnits, targetPosition);
 
                         lastUnit?.OnLocalMove(_game.Audio);
                     }
@@ -347,19 +351,24 @@ public sealed class OrderProcessor
                         var objectId = order.Arguments[0].Value.ObjectId;
                         var targetObject = GameObjects.GetObjectById(objectId);
 
+                        List<GameObject>? attackers = null;
                         foreach (var unit in player.SelectedUnits)
                         {
-                            if (unit.CanAttack)
+                            if (!unit.CanAttack)
                             {
-                                // Move into weapon range of the target, then the weapon will
-                                // stop the unit and fire once AIUpdate reports a valid target.
-                                if (targetObject != null)
-                                {
-                                    unit.AIUpdate?.SetTargetPoint(targetObject.Translation);
-                                }
-
-                                unit.CurrentWeapon?.SetTarget(new WeaponTarget(GameObjects, objectId));
+                                continue;
                             }
+
+                            (attackers ??= []).Add(unit);
+                            unit.CurrentWeapon?.SetTarget(new WeaponTarget(GameObjects, objectId));
+                        }
+
+                        // Move into weapon range of the target, then the weapon will stop the
+                        // unit and fire once AIUpdate reports a valid target. WI-M4-04: squad
+                        // selections share one leader path toward the target.
+                        if (targetObject != null && attackers != null)
+                        {
+                            MoveUnits(_game.Scene3D?.Navigation, player, attackers, targetObject.Translation);
                         }
 
                         var firstUnit = player.SelectedUnits.FirstOrDefault();
@@ -641,6 +650,69 @@ public sealed class OrderProcessor
             {
                 concreteGame.RaiseOrderProcessed(new OrderProcessedEventArgs(order, player));
             }
+        }
+    }
+
+    /// <summary>
+    /// Card WI-M4-04: executes the movement half of a move order for a selection. Members of one
+    /// AI squad share a single leader path through <see cref="GroupMovement.MoveSquad"/> (plus one
+    /// request per blocked follower), so path requests scale with squads; units outside any squad
+    /// keep per-unit <see cref="AIUpdate.SetTargetPoint"/>, which keeps player selections and
+    /// replays on the pre-existing behavior.
+    /// </summary>
+    internal static void MoveUnits(
+        NavigationClass? navigation,
+        Player player,
+        IReadOnlyCollection<GameObject> selectedUnits,
+        Vector3 targetPosition)
+    {
+        List<List<GameObject>>? squads = null;
+        List<GameObject>? unaccompanied = null;
+
+        if (navigation != null && selectedUnits.Count > 1)
+        {
+            var hierarchy = (player.AIPlayer?.DecisionPolicy as HierarchicalAIDecisionPolicy)?.Hierarchy;
+            if (hierarchy != null)
+            {
+                var buckets = new Dictionary<uint, List<GameObject>>();
+                unaccompanied = [];
+                foreach (var unit in selectedUnits)
+                {
+                    var squad = hierarchy.SquadOf(unit);
+                    if (squad is null)
+                    {
+                        unaccompanied.Add(unit);
+                        continue;
+                    }
+
+                    if (buckets.TryGetValue(squad.Id, out var bucket))
+                    {
+                        bucket.Add(unit);
+                    }
+                    else
+                    {
+                        buckets[squad.Id] = [unit];
+                    }
+                }
+
+                if (buckets.Count > 0)
+                {
+                    squads = [.. buckets.Values];
+                }
+            }
+        }
+
+        if (squads != null)
+        {
+            foreach (var squad in squads)
+            {
+                GroupMovement.MoveSquad(navigation, squad, targetPosition);
+            }
+        }
+
+        foreach (var unit in squads == null ? selectedUnits : unaccompanied!)
+        {
+            unit.AIUpdate?.SetTargetPoint(targetPosition);
         }
     }
 

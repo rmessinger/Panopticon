@@ -52,7 +52,7 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
 | [`WI-M4-01`](../agent/cards/WI-M4-01-army-hierarchy-scale-audit.md) | This audit and the decisions above | Done |
 | [`WI-M4-02`](../agent/cards/WI-M4-02-ai-decision-cost-counter.md) | `ai` span: allocation-free accumulation of `OnDecisionTick` across all AI players, emitted by `LogicStepper` after `gameLogic`; install-free tests | Ready |
 | [`WI-M4-03`](../agent/cards/WI-M4-03-army-hierarchy-on-probe.md) | Ground-only eligibility, per-squad selection actuation, probe army-AI mode, assignment invariants, scale + Interactive tests | Done |
-| [`WI-M4-04`](../agent/cards/WI-M4-04-squad-group-orders.md) | One `MoveTo` per squad, multi-unit `MoveTo` routed through `GroupMovement.MoveSquad`, path-request bound tests | Ready |
+| [`WI-M4-04`](../agent/cards/WI-M4-04-squad-group-orders.md) | One `MoveTo` per squad, multi-unit `MoveTo` routed through `GroupMovement.MoveSquad`, path-request bound tests | Done |
 | [`WI-M4-05`](../agent/cards/WI-M4-05-air-commander.md) | Air squads, strike/patrol/escort missions, re-tasking rearmed parked jets, no scripted jet reissue in army-AI mode | Ready |
 | [`WI-M4-06`](../agent/cards/WI-M4-06-ai-budget-and-stall-report.md) | Budget and stall thresholds authored, full-scale army-AI run, verdict, phase closeout | Ready |
 
@@ -84,3 +84,25 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
 - Documented updates to A4-3 neural tests: the uniform collapse changes one squad's order list
   from N orders to a `SetSelection` plus one order, so count assertions moved from 3 to 2
   (`HierarchicalNeuralInferenceTests`); rank call counts are unchanged.
+
+## WI-M4-04: what landed
+
+- Multi-unit `MoveTo` and `AttackMove`, and the movement half of `AttackObject` and
+  `ForceAttackObject`, route through `OrderProcessor.MoveUnits`: selected units in the same
+  squad move via one `GroupMovement.MoveSquad` call (leader path plus offsets); squad-less and
+  single-unit selections keep the exact per-unit `SetTargetPoint` path, so player orders and
+  replays are unchanged. Weapons still target per unit in the attack cases, and move sounds are
+  untouched.
+- `GroupMovement.BlockedFollowerCount` counts blocked followers that fall back to their own
+  `CalculatePath`; the squad path-request bound is squads plus blocked followers.
+- The squad invariant sampler tracks bursts: a decision tick's orders land through the network
+  buffer on the next frame, so each burst window spans the decision frame plus the one after it.
+  The report's `squadInvariant` block gains decision ticks observed, max path requests per
+  decision tick, squads and members at the worst tick, and max blocked followers per decision
+  tick.
+- Tests: install-free `GroupMoveOrderTests` (an 8-unit squadded selection costs one shared
+  leader path and every member receives the target; a squad-less selection keeps per-unit
+  orders) and the scaled Interactive probe test asserts max path requests per decision tick is
+  at most squads plus blocked followers. The first Interactive run failed with 29 requests
+  against 10 squads; the excess was uncounted blocked followers at contact, which motivated the
+  counter and the bound's final form.
