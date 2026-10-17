@@ -105,6 +105,57 @@ public class MassBattleCapacityProbeScenarioTests
         Assert.True(anchor.GetProperty("medianWallMs").GetDouble() > 0);
     }
 
+    [GameFact(SageGame.CncGenerals)]
+    public void ScaledProbe_ArmyAiRunsHierarchyWithoutScriptedGroundOrders()
+    {
+        // WI-M4-03: both armies under the hierarchical policy with the scripted ground attack
+        // disabled (jets keep the M1 sortie loop). The squad invariant must hold for the whole
+        // engagement and the armies must still close and take losses through the AI's own
+        // orders, which the report's allPassed exit checks (contact, losses, sorties).
+        var directory = Path.Combine(Path.GetTempPath(), "mass-battle-capacity-probe-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var profilePath = Path.Combine(directory, "profile.json");
+        var reportPath = Path.Combine(directory, "report.json");
+        File.WriteAllText(profilePath, ScaledProfileJson);
+
+        var config = new TestHarnessConfig
+        {
+            Headless = true,
+            MassBattleCapacityProbeProfilePath = profilePath,
+            MassBattleCapacityProbeReportPath = reportPath,
+            MassBattleCapacityProbeFrameBudget = 5400,
+            MassBattleCapacityProbeArmyAi = true,
+        };
+
+        int exitCode;
+        JsonDocument report;
+        try
+        {
+            exitCode = MassBattleCapacityProbeRunner.Run(
+                InstalledFilesTestData.GetInstallation(SageGame.CncGenerals),
+                config,
+                new OutputReporter(_output));
+            report = JsonDocument.Parse(File.ReadAllText(reportPath));
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+
+        Assert.Equal(0, exitCode);
+
+        var sides = report.RootElement.GetProperty("squadInvariant").GetProperty("sides");
+        Assert.Equal(2, sides.GetArrayLength());
+        foreach (var side in sides.EnumerateArray())
+        {
+            Assert.True(side.GetProperty("groundSquads").GetInt32() > 0, "each side should field ground squads");
+            Assert.Equal(0, side.GetProperty("unassignedEligibleGround").GetInt32());
+            Assert.Equal(0, side.GetProperty("maxUnassignedEligibleGround").GetInt32());
+            Assert.Equal(0, side.GetProperty("commanderlessSquads").GetInt32());
+            Assert.Equal(0, side.GetProperty("maxCommanderlessSquads").GetInt32());
+        }
+    }
+
     /// <summary>Forwards runner messages to the test output so failures show their reasons.</summary>
     private sealed class OutputReporter(ITestOutputHelper output) : ITestHarnessReporter
     {

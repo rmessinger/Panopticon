@@ -282,4 +282,11 @@ public sealed class TestHarnessConfig
     /// <summary>Requests per anchor burst; defaults to 8 when only the cadence is set.</summary>
     [HarnessParameter("MassBattle", "MassBattleCapacityProbeAsyncAnchorRequestsPerBurst.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public int? MassBattleCapacityProbeAsyncAnchorRequestsPerBurst { get; set; } = null;
+
+    /// <summary>
+    /// WI-M4-03: run both probe armies under the hierarchical AI decision policy instead of
+    /// the scripted general attack (jets keep the scripted sortie loop until WI-M4-05).
+    /// Default off, which keeps the M1 scripted behavior comparable.
+    /// </summary>
+    public bool? MassBattleCapacityProbeArmyAi { get; set; } = null;
 }

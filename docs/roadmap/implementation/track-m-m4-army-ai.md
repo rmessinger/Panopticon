@@ -51,7 +51,36 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
 |---|---|---|
 | [`WI-M4-01`](../agent/cards/WI-M4-01-army-hierarchy-scale-audit.md) | This audit and the decisions above | Done |
 | [`WI-M4-02`](../agent/cards/WI-M4-02-ai-decision-cost-counter.md) | `ai` span: allocation-free accumulation of `OnDecisionTick` across all AI players, emitted by `LogicStepper` after `gameLogic`; install-free tests | Ready |
-| [`WI-M4-03`](../agent/cards/WI-M4-03-army-hierarchy-on-probe.md) | Ground-only eligibility, per-squad selection actuation, probe army-AI mode, assignment invariants, scale + Interactive tests | Ready |
+| [`WI-M4-03`](../agent/cards/WI-M4-03-army-hierarchy-on-probe.md) | Ground-only eligibility, per-squad selection actuation, probe army-AI mode, assignment invariants, scale + Interactive tests | Done |
 | [`WI-M4-04`](../agent/cards/WI-M4-04-squad-group-orders.md) | One `MoveTo` per squad, multi-unit `MoveTo` routed through `GroupMovement.MoveSquad`, path-request bound tests | Ready |
 | [`WI-M4-05`](../agent/cards/WI-M4-05-air-commander.md) | Air squads, strike/patrol/escort missions, re-tasking rearmed parked jets, no scripted jet reissue in army-AI mode | Ready |
 | [`WI-M4-06`](../agent/cards/WI-M4-06-ai-budget-and-stall-report.md) | Budget and stall thresholds authored, full-scale army-AI run, verdict, phase closeout | Ready |
+
+## WI-M4-03: what landed
+
+- `SquadHierarchy.EligibleUnits` excludes `ObjectKinds.AIRCRAFT`; ground squads stay
+  ground-only until the air hierarchy (WI-M4-05).
+- Actuation lives in `HierarchicalAIDecisionPolicy.DecideNextOrders`: soldier decisions are
+  collected per squad, structurally equal orders (the reference commander's squad-uniform
+  goals) collapse into one `SetSelection` of the decided members plus the single order, and
+  per-member decisions fall back to one `SetSelection` per member. Every order now reaches
+  exactly the units that decided it, including headless where the selection starts empty.
+- Probe army-AI mode: `MassBattleCapacityProbeArmyAi` (default off). On: both side players get
+  `AIDecisionPolicyType.Hierarchical` and keep their AI enabled while every other player is
+  disabled; the scripted general attack and its refresh issue orders to jets only (jets keep
+  the M1 sortie loop until WI-M4-05).
+- Squad invariant: `MassBattleSquadInvariantSampler` samples both sides after every engagement
+  frame (a superset of the decision-tick requirement; sampling starts after each side's first
+  decision tick since the pre-AI hierarchy is empty by design). The engagement report gains a
+  `squadInvariant` block: per side, ground squads, members, unassigned eligible ground units,
+  commanderless non-empty squads, and the maxima over the run. Non-zero maxima are engagement
+  failures.
+- Tests: install-free `SquadHierarchyScaleTests` (1000-unit assignment, mass-casualty
+  promotion, aircraft exclusion) and the rewritten `SoldierOrderActuationTests` (uniform
+  collapse and per-member fallback); scaled Interactive
+  `ScaledProbe_ArmyAiRunsHierarchyWithoutScriptedGroundOrders` runs the army-AI probe on the
+  38+2 roster and asserts the invariant plus the standard engagement checks (contact, losses,
+  sorties, rearm).
+- Documented updates to A4-3 neural tests: the uniform collapse changes one squad's order list
+  from N orders to a `SetSelection` plus one order, so count assertions moved from 3 to 2
+  (`HierarchicalNeuralInferenceTests`); rank call counts are unchanged.

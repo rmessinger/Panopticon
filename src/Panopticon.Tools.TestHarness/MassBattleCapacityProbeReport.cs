@@ -43,6 +43,9 @@ public sealed record MassBattleCapacityProbeReport
 
     public MassBattleAsyncPathAnchorReport? AsyncPathAnchor { get; init; }
 
+    /// <summary>WI-M4-03: army-AI mode squad invariant; null in the scripted M1 mode.</summary>
+    public MassBattleSquadInvariantReport? SquadInvariant { get; init; }
+
     public static void WriteJson(MassBattleCapacityProbeReport report, string path)
     {
         var options = new JsonSerializerOptions
@@ -96,6 +99,27 @@ public sealed record MassBattleCapacityProbeReport
             b.AppendLine(MassBattleAsyncPathAnchorReport.WriteText(report.AsyncPathAnchor));
         }
 
+        if (report.SquadInvariant is not null)
+        {
+            b.AppendLine();
+            b.AppendLine("Squad invariant (WI-M4-03, army-AI mode):");
+            b.AppendLine(string.Format(
+                culture, "{0,-8} {1,7} {2,8} {3,11} {4,13} {5,12} {6,14}",
+                "Side", "Squads", "Members", "Unassigned", "MaxUnassigned", "Commanderl.", "MaxCommanderl."));
+            foreach (var side in report.SquadInvariant.Sides)
+            {
+                b.AppendLine(string.Format(
+                    culture, "{0,-8} {1,7} {2,8} {3,11} {4,12} {5,13} {6,14}",
+                    side.SideId,
+                    side.GroundSquads,
+                    side.GroundMembers,
+                    side.UnassignedEligibleGround,
+                    side.MaxUnassignedEligibleGround,
+                    side.CommanderlessSquads,
+                    side.MaxCommanderlessSquads));
+            }
+        }
+
         if (report.FailureReasons.Count > 0)
         {
             foreach (var reason in report.FailureReasons)
@@ -146,4 +170,32 @@ public sealed record SortieResult
     public int FinalState { get; init; }
 
     public string FinalStateName { get; init; } = "";
+}
+
+/// <summary>
+/// WI-M4-03: the squad invariant over an army-AI engagement, per side. Current counts are the
+/// final snapshot; Max columns are the worst observed after any decision tick, so zero Max
+/// columns prove no eligible ground unit was ever left unassigned and no non-empty squad was
+/// ever left without a live commander.
+/// </summary>
+public sealed record MassBattleSquadInvariantReport
+{
+    public List<SquadInvariantSideResult> Sides { get; init; } = new();
+}
+
+public sealed record SquadInvariantSideResult
+{
+    public string SideId { get; init; } = "";
+
+    public int GroundSquads { get; init; }
+
+    public int GroundMembers { get; init; }
+
+    public int UnassignedEligibleGround { get; init; }
+
+    public int MaxUnassignedEligibleGround { get; init; }
+
+    public int CommanderlessSquads { get; init; }
+
+    public int MaxCommanderlessSquads { get; init; }
 }

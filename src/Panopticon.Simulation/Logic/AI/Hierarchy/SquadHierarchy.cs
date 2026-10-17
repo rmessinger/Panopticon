@@ -201,11 +201,13 @@ public sealed class SquadHierarchy
     }
 
     // Same eligibility predicate as the rule-based attack force: attack-capable, non-support,
-    // non-structure units. Commanders and soldiers are drawn from the same pool.
+    // non-structure units. Commanders and soldiers are drawn from the same pool. Aircraft are
+    // excluded (WI-M4-03): ground squads march, while the air hierarchy is WI-M4-05.
     internal static IEnumerable<GameObject> EligibleUnits(Player owner) =>
         owner.OwnedObjects.Where(u =>
             !u.IsStructure
             && u.CanAttack
             && !u.Definition.KindOf.Get(ObjectKinds.Harvester)
-            && !u.Definition.KindOf.Get(ObjectKinds.Dozer));
+            && !u.Definition.KindOf.Get(ObjectKinds.Dozer)
+            && !u.Definition.KindOf.Get(ObjectKinds.Aircraft));
 }

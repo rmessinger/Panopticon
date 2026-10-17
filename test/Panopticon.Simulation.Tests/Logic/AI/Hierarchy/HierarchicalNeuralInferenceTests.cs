@@ -156,18 +156,18 @@ public sealed class HierarchicalNeuralInferenceTests : MockedGameTest
 
         var orders = policy.DecideNextOrders(new AIDecisionContext(ai, 2, 1));
 
-        // Every rank ran once; the squad's three members each attack the enemy attacker the
-        // general's genome selected, through the commander's goal forwarding.
+        // Every rank ran once; the squad's three members each decided on the enemy attacker
+        // the general's genome selected, through the commander's goal forwarding. WI-M4-03:
+        // the squad-uniform decisions collapse into one SetSelection of the three members
+        // followed by the single order.
         Assert.Equal(1, generalSpy.Calls);
         Assert.Equal(1, commanderSpy.Calls);
         Assert.Equal(3, soldierSpy.Calls);
         Assert.All(soldierSpy.GoalsSeen, g => Assert.Equal(attacker.Id, g!.TargetId));
-        Assert.Equal(3, orders.Count);
-        Assert.All(orders, o =>
-        {
-            Assert.Equal(OrderType.ForceAttackObject, o.OrderType);
-            Assert.Equal(2, o.PlayerIndex);
-        });
+        Assert.Equal(2, orders.Count);
+        Assert.Equal(OrderType.SetSelection, orders[0].OrderType);
+        Assert.Equal(OrderType.ForceAttackObject, orders[1].OrderType);
+        Assert.Equal(2, orders[1].PlayerIndex);
     }
 
     [Fact]
@@ -180,12 +180,14 @@ public sealed class HierarchicalNeuralInferenceTests : MockedGameTest
         var orders = policy.DecideNextOrders(new AIDecisionContext(ai, 2, 2));
 
         // The general was not due on the second tick, but its directives persisted: the
-        // commanders still forwarded goals and the soldiers still attacked.
+        // commanders still forwarded goals and the soldiers still decided. WI-M4-03: each
+        // tick's orders are the squad selection followed by the uniform attack order.
         Assert.Equal(1, generalSpy.Calls);
         Assert.Equal(2, commanderSpy.Calls);
         Assert.Equal(6, soldierSpy.Calls);
-        Assert.Equal(3, orders.Count);
-        Assert.All(orders, o => Assert.Equal(OrderType.ForceAttackObject, o.OrderType));
+        Assert.Equal(2, orders.Count);
+        Assert.Equal(OrderType.SetSelection, orders[0].OrderType);
+        Assert.Equal(OrderType.ForceAttackObject, orders[1].OrderType);
     }
 
     [Fact]
@@ -202,8 +204,10 @@ public sealed class HierarchicalNeuralInferenceTests : MockedGameTest
 
         var orders = policy.DecideNextOrders(new AIDecisionContext(ai, 2, 1));
 
-        Assert.Equal(3, orders.Count);
-        Assert.All(orders, o => Assert.Equal(OrderType.ForceAttackObject, o.OrderType));
+        // WI-M4-03: one selection plus the squad's uniform order reaches the boundary.
+        Assert.Equal(2, orders.Count);
+        Assert.Equal(OrderType.SetSelection, orders[0].OrderType);
+        Assert.Equal(OrderType.ForceAttackObject, orders[1].OrderType);
     }
 
     [Fact]
@@ -225,7 +229,9 @@ public sealed class HierarchicalNeuralInferenceTests : MockedGameTest
             aiPlayer.Update();
         }
 
-        Assert.Equal(3, game.InjectedOrders.Count);
+        // WI-M4-03: one decision tick leaves through the single dispatch boundary as the squad
+        // selection plus the collapsed uniform order.
+        Assert.Equal(2, game.InjectedOrders.Count);
         Assert.All(game.InjectedOrders, o => Assert.Equal(2, o.PlayerIndex));
 
         byte[] bytes;
