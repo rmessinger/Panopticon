@@ -51,6 +51,33 @@ public sealed class HarnessLauncherViewModelTests
         }
     }
 
+    [Fact]
+    public async Task Scenarios_DefaultToNewestFirst_AndFiltersKeepThatOrder()
+    {
+        var vm = new HarnessLauncherViewModel(new CatalogClient(), new RunClient(), new Dispatcher());
+        await vm.LoadCatalogCommand.ExecuteAsync();
+        var expectedNewestFirst = Enum.GetValues<BuiltInScenario>().Reverse().Select(scenario => scenario.ToString());
+        Assert.Equal(expectedNewestFirst, vm.AllScenarios.Select(s => s.Id));
+        Assert.Equal(expectedNewestFirst, vm.VisibleScenarios.Select(s => s.Id));
+        vm.FilterText = "proof";
+        Assert.Equal(Enum.GetValues<BuiltInScenario>().Reverse().Select(scenario => scenario.ToString()).Where(id => id.Contains("proof", StringComparison.OrdinalIgnoreCase)),
+            vm.VisibleScenarios.Select(s => s.Id));
+    }
+
+    [Fact]
+    public async Task Scenarios_WithoutAddedOrder_KeepCategoryThenIdOrder()
+    {
+        var legacy = new[]
+        {
+            new HarnessScenarioDescriptor("OldProof", HarnessScenarioCategory.Proof, "p", HarnessRunModes.Headless, HarnessProfileInput.None, [], new Dictionary<int, string> { [0] = "success" }),
+            new HarnessScenarioDescriptor("OldReplay", HarnessScenarioCategory.Replay, "r", HarnessRunModes.Headless, HarnessProfileInput.None, [], new Dictionary<int, string> { [0] = "success" }),
+        };
+        var client = new CatalogClient { Result = new(new HarnessCatalog(HarnessCatalogJson.CurrentSchemaVersion, legacy, []), null, null) };
+        var vm = new HarnessLauncherViewModel(client, new RunClient(), new Dispatcher());
+        await vm.LoadCatalogCommand.ExecuteAsync();
+        Assert.Equal(new[] { "OldReplay", "OldProof" }, vm.AllScenarios.Select(s => s.Id));
+    }
+
     private sealed class CatalogClient : IHarnessCatalogClient
     {
         public HarnessCatalogResult Result { get; set; } = new(HarnessScenarioCatalog.Build(), null, null);
