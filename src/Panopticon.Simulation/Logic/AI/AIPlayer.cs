@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using Panopticon.Logic.Object;
@@ -56,7 +57,11 @@ public class AIPlayer : IPersistableObject
         _countdownSomething1--;
         if (_countdownSomething1 == 0)
         {
+            // WI-M4-02: decision time accumulates into the tick-scoped ai span; timestamps
+            // only, so the unmeasured path stays allocation-free.
+            var start = Stopwatch.GetTimestamp();
             OnDecisionTick();
+            _owner.Game.AddAiDecisionSpan(Stopwatch.GetElapsedTime(start));
             _countdownSomething1 = DefaultDecisionCadenceFrames;
         }
     }

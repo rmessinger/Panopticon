@@ -33,7 +33,7 @@ public abstract class MockedGameTest : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private protected class TestGame : IGame
+    internal class TestGame : IGame
     {
         public IGameDefinition Definition { get; }
         public SageGame SageGame { get; }
@@ -84,6 +84,17 @@ public abstract class MockedGameTest : IDisposable
         public NetworkMessageBuffer NetworkMessageBuffer { get; set; }
         public Texture LauncherImage { get; }
         public GameLogic GameLogic { get; }
+
+        private TimeSpan _aiDecisionSpan;
+
+        public void AddAiDecisionSpan(TimeSpan span) => _aiDecisionSpan += span;
+
+        public TimeSpan ConsumeAiDecisionSpan()
+        {
+            var span = _aiDecisionSpan;
+            _aiDecisionSpan = TimeSpan.Zero;
+            return span;
+        }
         public GameClient GameClient { get; }
         public VictorySystem VictorySystem { get; }
         public PlayerManager PlayerManager { get; }

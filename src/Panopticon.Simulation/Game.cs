@@ -496,6 +496,17 @@ public sealed class Game : DisposableBase, IGame
     GameLogic IGame.GameLogic => GameLogic;
     internal GameLogic GameLogic { get; }
 
+    private TimeSpan _aiDecisionSpan;
+
+    void IGame.AddAiDecisionSpan(TimeSpan span) => _aiDecisionSpan += span;
+
+    TimeSpan IGame.ConsumeAiDecisionSpan()
+    {
+        var span = _aiDecisionSpan;
+        _aiDecisionSpan = TimeSpan.Zero;
+        return span;
+    }
+
     GameClient IGame.GameClient => GameClient;
     internal GameClient GameClient { get; }
 

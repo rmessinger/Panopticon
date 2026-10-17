@@ -423,6 +423,15 @@ Source of truth: [mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
 |---|---|---|
 | [track-m-m3-mixed-roster.md](track-m-m3-mixed-roster.md) | M3-1…M3-3 | Model scale, damage classes, points budget and duels (WI-M3-01..03) |
 
+## Track M · M4 : Army AI
+
+Source of truth: [mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
+[Architecture diagrams §9](../deep-dives/mass-battle-1k.md#9-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-m-m4-army-ai.md](track-m-m4-army-ai.md) | M4-1…M4-3 | Hierarchy scale audit, army-AI probe mode, squad group orders, air commander, AI budget (WI-M4-01..06) |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :

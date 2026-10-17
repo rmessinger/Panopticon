@@ -141,6 +141,16 @@ public interface IGame
     PartitionCellManager PartitionCellManager { get; }
     IGameEngine GameEngine { get; }
 
+    /// <summary>
+    /// Accumulates AI decision time across all AI players within the current logic tick
+    /// (WI-M4-02). <see cref="LogicStepper"/> consumes the total once per tick and emits it
+    /// as the nested "ai" span inside the gameLogic span.
+    /// </summary>
+    internal void AddAiDecisionSpan(TimeSpan span);
+
+    /// <summary>Returns the AI decision time accumulated this tick and resets it to zero.</summary>
+    internal TimeSpan ConsumeAiDecisionSpan();
+
     event EventHandler<GameUpdatingEventArgs> Updating;
 
     /// <summary>

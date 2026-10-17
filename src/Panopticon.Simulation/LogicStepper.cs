@@ -124,6 +124,10 @@ public sealed class LogicStepper
             _game.GameLogic.Update();
             spanSink("gameLogic", Stopwatch.GetElapsedTime(start));
 
+            // WI-M4-02: AI decisions run inside gameLogic; their accumulated time is emitted
+            // as a nested span so per-tick totals stay attributable.
+            spanSink("ai", _game.ConsumeAiDecisionSpan());
+
             start = Stopwatch.GetTimestamp();
             _game.NetworkMessageBuffer?.Tick();
             spanSink("network", Stopwatch.GetElapsedTime(start));
@@ -140,6 +144,9 @@ public sealed class LogicStepper
         }
 
         _game.GameLogic.Update();
+
+        // WI-M4-02: keep the ai accumulator from leaking across ticks on the unmeasured path.
+        _ = _game.ConsumeAiDecisionSpan();
 
         _game.NetworkMessageBuffer?.Tick();
 

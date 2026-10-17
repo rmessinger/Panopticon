@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M4-06` |
 | Roadmap phase | [M4](../../track-m-mass-battle.md): army-scale AI |
-| Status | `Draft` |
+| Status | `Ready` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-M4-04`, `WI-M4-05` |
