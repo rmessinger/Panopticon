@@ -16,6 +16,8 @@ public sealed class HarnessCatalogJsonTests
         Assert.Equal(json, HarnessCatalogJson.Serialize(restored));
         Assert.Contains("\"Headless\"", json);
         Assert.Equal(Enum.GetNames<BuiltInScenario>().Order(), restored.Scenarios.Select(s => s.Id).Order());
+        Assert.Equal(Enum.GetValues<BuiltInScenario>().Select((_, index) => index), restored.Scenarios.Select(s => s.AddedOrder));
+        Assert.Contains("\"addedOrder\"", json);
         Assert.All(restored.Scenarios, s => Assert.True(s.ExitCodes.ContainsKey(0)));
         var defaults = JsonSerializer.SerializeToNode(new TestHarnessConfig(), Program.JsonOptions)!;
         Assert.Equal(typeof(TestHarnessConfig).GetProperties().Length, restored.Parameters.Count);
@@ -35,4 +37,13 @@ public sealed class HarnessCatalogJsonTests
 
     [Fact]
     public void MissingArrays_AreRejected() => Assert.Throws<JsonException>(() => HarnessCatalogJson.Deserialize("{\"schemaVersion\":1}"));
+
+    [Fact]
+    public void LegacyCatalog_WithoutAddedOrder_ParsesAsOldest()
+    {
+        var node = JsonNode.Parse(HarnessCatalogJson.Serialize(HarnessScenarioCatalog.Build()))!;
+        foreach (var scenario in node["scenarios"]!.AsArray()) scenario.AsObject().Remove("addedOrder");
+        var restored = HarnessCatalogJson.Deserialize(node.ToJsonString());
+        Assert.All(restored.Scenarios, s => Assert.Equal(0, s.AddedOrder));
+    }
 }

@@ -9,4 +9,5 @@ public sealed record HarnessScenarioDescriptor(
     HarnessRunModes Modes,
     HarnessProfileInput ProfileInput,
     IReadOnlyList<string> EmbeddedProfiles,
-    IReadOnlyDictionary<int, string> ExitCodes);
+    IReadOnlyDictionary<int, string> ExitCodes,
+    int AddedOrder = 0);

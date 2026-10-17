@@ -98,7 +98,7 @@ public sealed class HarnessLauncherViewModel : INotifyPropertyChanged
     {
         var result = await _catalogClient.LoadAsync(cancellationToken).ConfigureAwait(true);
         if (!result.Succeeded) { _catalog = null; AllScenarios = []; VisibleScenarios = []; SelectedScenario = null; StatusMessage = $"{result.ErrorCode}: {result.Message}"; OnChanged(null); return; }
-        _catalog = result.Catalog; AllScenarios = _catalog!.Scenarios.OrderBy(item => item.Category).ThenBy(item => item.Id, StringComparer.Ordinal).ToArray(); StatusMessage = null; RefreshVisible();
+        _catalog = result.Catalog; AllScenarios = OrderScenarios(_catalog!.Scenarios).ToArray(); StatusMessage = null; RefreshVisible();
     }
 
     private async Task RunAsync(CancellationToken cancellationToken)
@@ -110,9 +110,14 @@ public sealed class HarnessLauncherViewModel : INotifyPropertyChanged
     }
 
     private bool CanRun() => _catalog is not null && SelectedScenario is not null && !Parameters.HasErrors && !RunCommand.IsExecuting;
+    // Newest additions first; Category then Id only breaks ties (and orders catalogs from
+    // publishers that predate AddedOrder, where every value is 0).
+    private static IEnumerable<HarnessScenarioDescriptor> OrderScenarios(IEnumerable<HarnessScenarioDescriptor> scenarios) =>
+        scenarios.OrderByDescending(item => item.AddedOrder).ThenBy(item => item.Category).ThenBy(item => item.Id, StringComparer.Ordinal);
+
     private void RefreshVisible()
     {
-        VisibleScenarios = AllScenarios.Where(item => (string.IsNullOrWhiteSpace(FilterText) || item.Id.Contains(FilterText, StringComparison.OrdinalIgnoreCase) || item.Summary.Contains(FilterText, StringComparison.OrdinalIgnoreCase)) && (!CategoryFilter.HasValue || item.Category == CategoryFilter) && (ModeFilter == HarnessRunModes.None || item.Modes.HasFlag(ModeFilter))).OrderBy(item => item.Category).ThenBy(item => item.Id, StringComparer.Ordinal).ToArray();
+        VisibleScenarios = OrderScenarios(AllScenarios.Where(item => (string.IsNullOrWhiteSpace(FilterText) || item.Id.Contains(FilterText, StringComparison.OrdinalIgnoreCase) || item.Summary.Contains(FilterText, StringComparison.OrdinalIgnoreCase)) && (!CategoryFilter.HasValue || item.Category == CategoryFilter) && (ModeFilter == HarnessRunModes.None || item.Modes.HasFlag(ModeFilter)))).ToArray();
         if (SelectedScenario is not null && !VisibleScenarios.Contains(SelectedScenario)) SelectedScenario = null;
         OnChanged(nameof(VisibleScenarios));
     }
