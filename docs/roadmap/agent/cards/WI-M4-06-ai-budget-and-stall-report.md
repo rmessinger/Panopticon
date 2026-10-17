@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M4-06` |
 | Roadmap phase | [M4](../../track-m-mass-battle.md): army-scale AI |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-M4-04`, `WI-M4-05` |
@@ -37,10 +37,17 @@ Author the per-tick AI cost budget and the idle-stall threshold, measure both on
 
 ## Acceptance criteria
 
-- [ ] Budget and stall threshold are authored with their reasoning.
-- [ ] The B1 record shows AI decision cost against the budget, with medians and p99.
-- [ ] No unit idles longer than the stall threshold while enemies remain, or each stall is listed as an explicit failure.
-- [ ] Checklist M4-1..M4-3 ticked or annotated; M4 phase status updated.
+- [x] Budget and stall threshold are authored with their reasoning.
+  - Amortized `system.ai.spanMs` median <= 1.7 ms (5% of the 33.3 ms anchor); decision-tick
+    p99 <= 100 ms; zero outside decision ticks. Stall threshold 600 frames (20 sim-seconds,
+    ten decision cadences with enemies remaining).
+- [x] The B1 record shows AI decision cost against the budget, with medians and p99.
+  - Full-scale run (`/tmp/opencode/m4-g6-fullrun2/`): amortized median 0.000; decision-tick
+    n=75, p50 1.1, p99 18.3, max 18.3. Both budgets met.
+- [x] No unit idles longer than the stall threshold while enemies remain, or each stall is listed as an explicit failure.
+  - Max idle 475/347 frames per side; 0 stalled units at end; the run reports each stall as a
+    failure reason when present.
+- [x] Checklist M4-1..M4-3 ticked or annotated; M4 phase status updated.
 
 ## Validation commands
 
@@ -61,4 +68,13 @@ CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
 - Update the M4 phase Status in the track doc.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
-  - budget-miss fixes, if any.
+  - budget-miss fixes, if any: none required (both budgets met).
+  - Parked clip refill (WI-M4-05 finding): the engine refills clips only through
+    `ReloadingWeaponState`; parked jets at airfields never refill, so re-task gates on parked
+    state alone.
+  - Stuck-airborne jets (run-#1 observation): one jet per side stayed airborne the entire run
+    (`MovingTowardsTarget`, never recovered); engine follow-up candidate.
+  - Squad invariant cadence (operator note, recorded in the plan doc): the sampler scans both
+    armies after every probe frame; decision-tick or coarser sampling is the likely shape, and
+    the invariant may deserve a tolerance window instead of zero since transient violations
+    can be realistic mid-casualty behavior.

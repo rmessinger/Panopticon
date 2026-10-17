@@ -192,6 +192,15 @@ public class MassBattleCapacityProbeScenarioTests
         var multiMissionJets = report.RootElement.GetProperty("airMissions").EnumerateArray()
             .Sum(side => side.GetProperty("jetsWithMultipleMissions").GetInt32());
         Assert.True(multiMissionJets > 0, "at least one jet should accept a second mission after recovery");
+
+        // WI-M4-06: stall detection runs in army-AI mode; a scaled run with contact has no unit
+        // idle beyond the authored threshold while enemies remain.
+        var stallThreshold = squadInvariant.GetProperty("stallThresholdFrames").GetInt32();
+        Assert.True(stallThreshold > 0, "the stall threshold should be authored and reported");
+        foreach (var side in squadInvariant.GetProperty("sides").EnumerateArray())
+        {
+            Assert.Equal(0, side.GetProperty("stalledUnitsAtEnd").GetInt32());
+        }
     }
 
     /// <summary>Forwards runner messages to the test output so failures show their reasons.</summary>
