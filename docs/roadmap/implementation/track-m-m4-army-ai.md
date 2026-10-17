@@ -53,7 +53,7 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
 | [`WI-M4-02`](../agent/cards/WI-M4-02-ai-decision-cost-counter.md) | `ai` span: allocation-free accumulation of `OnDecisionTick` across all AI players, emitted by `LogicStepper` after `gameLogic`; install-free tests | Ready |
 | [`WI-M4-03`](../agent/cards/WI-M4-03-army-hierarchy-on-probe.md) | Ground-only eligibility, per-squad selection actuation, probe army-AI mode, assignment invariants, scale + Interactive tests | Done |
 | [`WI-M4-04`](../agent/cards/WI-M4-04-squad-group-orders.md) | One `MoveTo` per squad, multi-unit `MoveTo` routed through `GroupMovement.MoveSquad`, path-request bound tests | Done |
-| [`WI-M4-05`](../agent/cards/WI-M4-05-air-commander.md) | Air squads, strike/patrol/escort missions, re-tasking rearmed parked jets, no scripted jet reissue in army-AI mode | Ready |
+| [`WI-M4-05`](../agent/cards/WI-M4-05-air-commander.md) | Air squads, strike/patrol/escort missions, re-tasking rearmed parked jets, no scripted jet reissue in army-AI mode | Done |
 | [`WI-M4-06`](../agent/cards/WI-M4-06-ai-budget-and-stall-report.md) | Budget and stall thresholds authored, full-scale army-AI run, verdict, phase closeout | Ready |
 
 ## WI-M4-03: what landed
@@ -106,3 +106,39 @@ Code read at the audit: `AIPlayer.cs`, `Hierarchy/*.cs` (`HierarchicalAIDecision
   at most squads plus blocked followers. The first Interactive run failed with 29 requests
   against 10 squads; the excess was uncounted blocked followers at contact, which motivated the
   counter and the bound's final form.
+
+## WI-M4-05: what landed
+
+- Aircraft form air squads in a second `SquadHierarchy` (`SquadDomain.Air`: attack-capable
+  aircraft only) beside the ground hierarchy; ground eligibility keeps excluding aircraft. The
+  air hierarchy is not persisted; it rebuilds on load from live objects, unlike the persisted
+  ground hierarchy.
+- The air rank is a seam like the others: `IAirCommanderDecisionPolicy` receives the air
+  squads, the friendly ground squads' summaries, and the ground directive, and returns one
+  `AirSquadMission` (strike, patrol, or escort) per squad. The reference commander rotates
+  mission windows deterministically (three decision ticks each, strike, patrol, escort); strike
+  attacks the general's directive target when one exists, else the nearest enemy attack unit;
+  patrol alternates legs between the first and last friendly ground squad centroids; escort
+  shadows the first friendly squad's centroid.
+- `HierarchicalAIDecisionPolicy` calls the air commander after the ground loop. Missions are
+  counted every decision tick (per mission type and per aircraft), but a squad receives its
+  order only when every member is parked and holding no target points; mid-sortie squads keep
+  flying until they land and are re-tasked then. Orders ride the same actuation path as ground
+  orders: one selection per squad plus one attack or move order.
+- Re-task gate: parked state, not clip state. The card anticipated gating on a refilled clip,
+  but the engine refills clips only through mid-combat reload (`ReloadingWeaponState`); nothing
+  refills a parked jet's clip at an airfield, so a clip gate would ground jets after their
+  first sortie forever (observed in the first scaled run: one launch per jet, then parked). The
+  implemented gate matches the M1 scripted loop, which relaunched jets on parked state alone.
+  Parked clip refill is recorded as a candidate engine follow-up; no rearm mechanic was added
+  (guardrail).
+- In army-AI mode the probe is now fully AI-owned: the scripted `IssueGeneralAttack` and
+  `RefreshOrders` are both skipped, so jets fly, return, and re-sortie under the air commander.
+  The plain probe keeps its scripted behavior unchanged. The report gains an air-mission block
+  (assignments per mission type per side, jets with two or more missions) and per-jet
+  `missionsAssigned` beside launches and recoveries.
+- Tests: install-free `AirCommanderTests` (air squads form separately from ground squads; the
+  mission rotation is deterministic across ticks; a parked squad receives its mission while a
+  mid-sortie squad is skipped but still counted; a spent clip does not block re-tasking) and
+  the scaled Interactive army-AI test asserts all three mission types occur, squad invariants
+  hold, and jets with multiple missions exist.

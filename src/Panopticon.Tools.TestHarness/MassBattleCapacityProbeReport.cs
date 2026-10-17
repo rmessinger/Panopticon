@@ -46,6 +46,9 @@ public sealed record MassBattleCapacityProbeReport
     /// <summary>WI-M4-03: army-AI mode squad invariant; null in the scripted M1 mode.</summary>
     public MassBattleSquadInvariantReport? SquadInvariant { get; init; }
 
+    /// <summary>WI-M4-05: army-AI mode air mission totals per side; null in the scripted M1 mode.</summary>
+    public List<AirMissionSideResult>? AirMissions { get; init; }
+
     public static void WriteJson(MassBattleCapacityProbeReport report, string path)
     {
         var options = new JsonSerializerOptions
@@ -131,6 +134,25 @@ public sealed record MassBattleCapacityProbeReport
                 invariant.MaxBlockedFollowersPerDecisionTick));
         }
 
+        if (report.AirMissions is { Count: > 0 })
+        {
+            b.AppendLine();
+            b.AppendLine("Air missions (WI-M4-05, army-AI mode):");
+            b.AppendLine(string.Format(
+                culture, "{0,-8} {1,8} {2,8} {3,8} {4,10}",
+                "Side", "Strike", "Patrol", "Escort", "Jet sorties with >= 2 missions"));
+            foreach (var side in report.AirMissions)
+            {
+                b.AppendLine(string.Format(
+                    culture, "{0,-8} {1,8} {2,8} {3,8} {4,10}",
+                    side.SideId,
+                    side.Strike,
+                    side.Patrol,
+                    side.Escort,
+                    side.JetsWithMultipleMissions));
+            }
+        }
+
         if (report.FailureReasons.Count > 0)
         {
             foreach (var reason in report.FailureReasons)
@@ -181,6 +203,24 @@ public sealed record SortieResult
     public int FinalState { get; init; }
 
     public string FinalStateName { get; init; } = "";
+
+    /// <summary>WI-M4-05: missions the air commander assigned to this jet; null in scripted mode.</summary>
+    public int? MissionsAssigned { get; init; }
+}
+
+/// <summary>WI-M4-05: air mission totals one side's air commander assigned.</summary>
+public sealed record AirMissionSideResult
+{
+    public string SideId { get; init; } = "";
+
+    public int Strike { get; init; }
+
+    public int Patrol { get; init; }
+
+    public int Escort { get; init; }
+
+    /// <summary>Aircraft the commander assigned two or more missions (launched, recovered, re-tasked).</summary>
+    public int JetsWithMultipleMissions { get; init; }
 }
 
 /// <summary>

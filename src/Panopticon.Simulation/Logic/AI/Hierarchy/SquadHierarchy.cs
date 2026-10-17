@@ -7,6 +7,13 @@ using Panopticon.Logic.Object;
 
 namespace Panopticon.Logic.AI.Hierarchy;
 
+/// <summary>Which units a hierarchy squads (WI-M4-05): ground attack units or aircraft.</summary>
+public enum SquadDomain
+{
+    Ground,
+    Air,
+}
+
 /// <summary>
 /// Owns the player's squads (A4-3a, WI-A4-18): assigns spawned units to squads, promotes on
 /// commander death, and removes empty squads. Squads derive from simulation-owned
@@ -20,6 +27,7 @@ public sealed class SquadHierarchy
 
     private readonly Dictionary<uint, Squad> _squads = new();
     private readonly Dictionary<ObjectId, uint> _memberSquad = new();
+    private readonly bool _aircraftOnly;
 
     // Restored-but-unresolved membership (WI-A4-19): squad id -> member ids. Ids resolve
     // against the owner's live objects on the next Synchronize; ids that never resolve
@@ -30,8 +38,15 @@ public sealed class SquadHierarchy
 
     public IReadOnlyList<Squad> Squads { get; }
 
+    /// <summary>Ground hierarchy (the default); air hierarchies are WI-M4-05.</summary>
     public SquadHierarchy()
+        : this(SquadDomain.Ground)
     {
+    }
+
+    internal SquadHierarchy(SquadDomain domain)
+    {
+        _aircraftOnly = domain == SquadDomain.Air;
         Squads = new List<Squad>();
     }
 
@@ -165,7 +180,7 @@ public sealed class SquadHierarchy
 
     private void AssignNewUnits(Player owner)
     {
-        foreach (var unit in EligibleUnits(owner).Where(u => !u.IsDestroyed && !_memberSquad.ContainsKey(u.Id)))
+        foreach (var unit in Eligible(owner).Where(u => !u.IsDestroyed && !_memberSquad.ContainsKey(u.Id)))
         {
             var squad = unit.Team != null ? SquadForTeam(unit, owner) : OpenSquad();
             if (squad is null || squad.Members.Count >= MaxSquadSize)
@@ -210,4 +225,15 @@ public sealed class SquadHierarchy
             && !u.Definition.KindOf.Get(ObjectKinds.Harvester)
             && !u.Definition.KindOf.Get(ObjectKinds.Dozer)
             && !u.Definition.KindOf.Get(ObjectKinds.Aircraft));
+
+    // Air squads (WI-M4-05): attack-capable aircraft only. Structures cannot fly and support
+    // aircraft (harvesters, dozers) do not exist in the current roster space.
+    internal static IEnumerable<GameObject> EligibleAirUnits(Player owner) =>
+        owner.OwnedObjects.Where(u =>
+            !u.IsStructure
+            && u.CanAttack
+            && u.Definition.KindOf.Get(ObjectKinds.Aircraft));
+
+    private IEnumerable<GameObject> Eligible(Player owner) =>
+        _aircraftOnly ? EligibleAirUnits(owner) : EligibleUnits(owner);
 }
