@@ -60,6 +60,15 @@ public static class HarnessRunner
 
         var map = MapMetadataService.Load(installation, scenario.MapPath);
 
+        // WI-A5-10: semantic validation runs before any host construction, so an invalid
+        // scenario can never boot a game.
+        var validation = ScenarioValidator.Validate(scenario, map);
+        if (!validation.IsValid)
+        {
+            var details = string.Join("; ", validation.Diagnostics.Take(10).Select(d => $"{d.FieldPath}: {d.Message}"));
+            throw new InvalidOperationException($"Scenario validation failed: {details}");
+        }
+
         // Build a concrete scenario where handle-dependent actions are replaced with no-ops
         // so that ReplayExporter does not encounter unresolvable arguments at export time.
         var concreteScenario = BuildConcreteScenario(scenario);
