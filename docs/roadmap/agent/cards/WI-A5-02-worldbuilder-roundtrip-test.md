@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-02` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring & visualization, sub-phase A5-6 |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-01`, `WI-A5-27`, and `WI-A5-28` |

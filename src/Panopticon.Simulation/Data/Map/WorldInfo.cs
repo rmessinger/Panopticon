@@ -9,6 +9,12 @@ public sealed class WorldInfo : Asset
 
     public AssetPropertyCollection Properties { get; private set; }
 
+    /// <summary>WI-A5-28: a writable empty collection for new maps.</summary>
+    internal static WorldInfo Create() => new()
+    {
+        Properties = new AssetPropertyCollection(),
+    };
+
     internal static WorldInfo Parse(BinaryReader reader, MapParseContext context)
     {
         return ParseAsset(reader, context, version =>

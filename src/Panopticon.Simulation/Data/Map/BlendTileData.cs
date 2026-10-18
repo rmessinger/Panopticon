@@ -70,12 +70,16 @@ public sealed class BlendTileData : Asset
     /// <summary>
     /// Zero-filled tile data sized to a height map (WI-A5-27, WI-A5-28): tile, blend, and cliff
     /// arrays plus the version-gated passability arrays are allocated so editor edits and
-    /// serialization always have a target. Version stays unset until a factory stamps one.
+    /// serialization always have a target. WI-A5-28 stamps Version 8: version 7 writes the
+    /// impassability bit rows unpadded while the reader clips them to byte-aligned widths, so
+    /// only versions above 7 round-trip exactly; 8 also keeps the Impassability array active
+    /// (written when Version &gt; 6) without pulling in the heavier version-gated chunks.
     /// </summary>
     public static BlendTileData Create(uint width, uint height)
     {
         return new BlendTileData
         {
+            Version = 8,
             NumTiles = width * height,
             Tiles = new ushort[width, height],
             Blends = new uint[width, height],

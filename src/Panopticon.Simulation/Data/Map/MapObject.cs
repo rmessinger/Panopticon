@@ -29,6 +29,10 @@ public sealed class MapObject : Asset
         Angle = angle;
         RoadType = roadType;
         TypeName = typeName;
+
+        // WI-A5-28: WriteTo always serializes Properties; a placed object without properties
+        // must still save. Engine-valid property values are WI-A5-35 scope.
+        Properties = new AssetPropertyCollection();
     }
 
     internal static MapObject Parse(BinaryReader reader, MapParseContext context)

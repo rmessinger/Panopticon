@@ -19,7 +19,7 @@ public sealed class Player
     public Player() { }
 
     public BuildListInfo[] BuildList { get; internal set; } = [];
-    public ScriptList Scripts { get; internal set; } = new ScriptList();
+    public ScriptList Scripts { get; internal set; } = ScriptList.Create();
 
     /// <summary>
     /// internal identifier for player.

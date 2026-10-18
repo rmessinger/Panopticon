@@ -13,6 +13,16 @@ public sealed class ScriptList : Asset, IPersistableObject
     public ScriptGroup[] ScriptGroups { get; private set; } = Array.Empty<ScriptGroup>();
     public Script[] Scripts { get; private set; } = Array.Empty<Script>();
 
+    internal static ScriptList Create()
+    {
+        return new ScriptList
+        {
+            // Parse accepts exactly version 1 (Persist also stamps 1), so freshly built lists
+            // must carry it to round-trip through the map writer. WI-A5-28.
+            Version = 1,
+        };
+    }
+
     public void Execute(ScriptExecutionContext context)
     {
         foreach (var scriptGroup in ScriptGroups)
