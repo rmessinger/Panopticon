@@ -25,6 +25,8 @@ public sealed class ScenarioView : UserControl
 
     private readonly ComboBox _mapPicker = new();
     private readonly TextBox _baseRadiusEntry = new();
+    private readonly Button _previewButton = new() { Content = "Preview (60 frames)" };
+    private readonly TextBlock _previewSummaryText = new();
     private readonly ListBox _slotsList = new();
     private readonly TextBox _playerNameEntry = new();
     private readonly ComboBox _factionPicker = new();
@@ -77,18 +79,30 @@ public sealed class ScenarioView : UserControl
         _slotDetailPanel.Children.Add(FieldRow("Team", NumericEntry(_teamEntry)));
         panel.Children.Add(_slotDetailPanel);
 
+        panel.Children.Add(SectionLabel("Preview"));
+        panel.Children.Add(_previewButton);
+        _previewSummaryText.TextWrapping = TextWrapping.Wrap;
+        panel.Children.Add(_previewSummaryText);
+
         Content = new ScrollViewer { Content = panel };
     }
 
     public void BindViewModel(MainViewModel vm)
     {
         _vm = vm;
+        _previewButton.Command = vm.PreviewCommand;
+        _previewSummaryText.Text = vm.PreviewSummary ?? string.Empty;
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.MapsGeneration))
             {
                 RefreshAvailableMaps();
                 Refresh();
+            }
+
+            if (e.PropertyName == nameof(MainViewModel.PreviewSummary))
+            {
+                _previewSummaryText.Text = vm.PreviewSummary ?? string.Empty;
             }
         };
         RefreshAvailableMaps();

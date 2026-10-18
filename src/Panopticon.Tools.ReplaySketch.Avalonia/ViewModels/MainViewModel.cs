@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -115,13 +117,67 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string? LauncherPath => _launcherLocator.Locate();
 
+    private string? _previewSummary;
+    public string? PreviewSummary
+    {
+        get => _previewSummary;
+        private set { _previewSummary = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>
+    /// WI-A5-13: bounded headless preview of the authored scenario. Runs a strict frame budget
+    /// through the harness and reports projected frame-zero/final state; invalid scenarios never
+    /// construct a host.
+    /// </summary>
+    private async Task RunPreviewAsync()
+    {
+        if (!TryResolveInstallation(out var installation) || installation is null)
+        {
+            PreviewSummary = "Preview: no installation resolved";
+            return;
+        }
+
+        var tempDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"rs-preview-{Guid.NewGuid():N}");
+        System.IO.Directory.CreateDirectory(tempDirectory);
+        try
+        {
+            var result = await System.Threading.Tasks.Task.Run(
+                () => ScenarioPreviewService.Preview(Scenario, installation, tempDirectory));
+            PreviewSummary = FormatPreviewSummary(result);
+        }
+        catch (Exception ex)
+        {
+            PreviewSummary = $"Preview failed: {ex.Message}";
+        }
+        finally
+        {
+            try
+            {
+                System.IO.Directory.Delete(tempDirectory, recursive: true);
+            }
+            catch (System.IO.IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    internal static string FormatPreviewSummary(ScenarioPreviewResult result)
+    {
+        return ScenarioPreviewService.FormatSummary(result);
+    }
+
     // ── Commands ───────────────────────────────────────────────────────────
     private readonly RelayCommand _validateCommand;
     private readonly RelayCommand _exportCommand;
     private readonly RelayCommand _playInGameCommand;
+    private readonly RelayCommand _previewCommand;
     public ICommand ValidateCommand => _validateCommand;
     public ICommand ExportCommand => _exportCommand;
     public ICommand PlayInGameCommand => _playInGameCommand;
+    public ICommand PreviewCommand => _previewCommand;
     public ICommand ReloadMapCommand { get; }
 
     public MainViewModel(
@@ -145,6 +201,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             canExecute: _ => MapLoaded && LauncherPath != null);
 
         ReloadMapCommand = new RelayCommand(execute: _ => LoadMap());
+
+        _previewCommand = new RelayCommand(execute: _ => { _ = RunPreviewAsync(); });
 
         // Restore a previously saved installation path
         var savedPath = _preferences.Get("cnc_generals_path", string.Empty);
