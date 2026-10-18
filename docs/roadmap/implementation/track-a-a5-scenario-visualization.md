@@ -63,12 +63,34 @@ the generic RTS view and the legacy spatial bucket keys in T1.
 
 | Sub-phase | Cards | Status |
 |---|---|---|
-| A5-1 Authoring & setup | WI-A5-03, 30 | Not started |
-| A5-2 Matrix / sweeps | WI-A5-14, 13 | Not started |
-| A5-3 Replayer / visualizer | WI-A5-07, 08, 09, 04, 11, 12 | Not started |
-| A5-4 Divergence localization | WI-A5-05, 17, 18, 20, 24, 25, 26, 31 | Not started |
-| A5-5 Authoring & viz at scale | WI-A5-32, 33 | Not started |
-| A5-6 WorldBuilder baseline | WI-A5-01, 02, 27, 28, 34, 35 | Audit landed (WI-A5-01); repairs pending |
+| A5-1 Authoring & setup | WI-A5-03, 06, 10..14, 23, 30, 32..33 | Done: scenario artifact + loader (03), validation (10), generators (23), capture-from-run (11), preview (13), population/parameter/topology editors (14/32/33), WorldBuilder binding (30) |
+| A5-2 Matrix / sweeps | WI-A5-15, 16 | Done: declarative typed bindings + serializable filters (15), keyed per-cell run-bundle sets (16) |
+| A5-3 Replayer / visualizer | WI-A5-04, 07..09, 11, 12, 18..21, 24, 25, 29, 31 | Done: bundles (07..09), timeline/charts/events (04/12), domain-state rendering + playback + export (18..20/31), regional detail (21/29), streaming/culling + LOD (24/25) |
+| A5-4 Divergence localization | WI-A5-05, 22 | Done: comparator + leaf-most loci (05), T2 detail matching (22); T0-invariant arming designed into the grounding doc (06) |
+| A5-5 Authoring & viz at scale | WI-A5-23, 24..26, 29 | Done: procedural generation (23), bounded loading (29), streaming/LOD (24/25), B1 throughput (26); budgets below |
+| A5-6 WorldBuilder baseline | WI-A5-01, 02, 27, 28, 34, 35 | Done: [audit + baseline](track-a-a5-6-worldbuilder-baseline.md) (01), repairs (27/28/34/35), round-trip + engine play leg (02) |
 
 Status lives in [implementation-checklist.md](../implementation-checklist.md) and the phase
 table in the deep dive; this table only maps cards.
+
+## Scale budgets and B1 benchmarks (WI-A5-26)
+
+The A5 throughput benchmark (`a5.throughput`, `src/Panopticon.Benchmarks.Simulation/A5ThroughputBenchmark.cs`)
+measures the authoring and replay pipeline on code-authored fixtures at full scale. Five operations,
+each a `system.*.spanMs` metric inside one B1 `BenchmarkRunRecord` (`b1.run/1`):
+
+| Benchmark ID | Operation | Full-scale fixture |
+|---|---|---|
+| `a5.expand` | `ScenarioGeneratorService.Expand` | 10,000 entities + 10,000 commands |
+| `a5.serialize` | scenario JSON serialization (UTF-8) | expanded 10k/10k scenario |
+| `a5.bundleOpen` | `RunBundle.Load` + state-artifact index scan | 250-frame recording of 10,000 entities |
+| `a5.randomSeek` | 5 random `ReconstructStateAt` seeks | same recording |
+| `a5.visibleProjection` | whole-frame projection + viewport query + LOD batching | same recording; 33.3 ms visible-frame anchor applies |
+
+Budget policy: no committed thresholds. Regressions follow B1's rule, confidence-interval
+non-overlap against a caller-supplied baseline record (`--baseline <path>`); `tick.wallMs` and
+`tick.allocBytes` carry the per-iteration totals. The full-scale plan constants are asserted by
+`A5BenchmarkTests.FullScalePlan_MeetsDocumentedSizes`. A5 keeps no standalone stopwatch gates;
+the former expansion-time assert in `ProceduralScenarioTests` was removed in favor of these
+metrics. These budgets are the A5-5 linkage promised in the checklist: authoring a large
+procedural scenario and replaying a long/large run are tracked here, not by ad-hoc timers.

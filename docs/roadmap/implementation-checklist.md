@@ -685,16 +685,23 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     `--experiment <definition.json>`.
 
 ### A5: Scenario authoring & visualization ([deep dive](deep-dives/a5-visualization.md))
-- [ ] A5-1 Scenario authoring & setup (declarative + visual + capture-from-run; built on the P0 harness).
+- [x] A5-1 Scenario authoring & setup (declarative + visual + capture-from-run; built on the P0 harness).
+  (`WI-A5-03`, `WI-A5-06`, `WI-A5-10..14`, `WI-A5-23`, `WI-A5-30`, `WI-A5-32..33`)
   - AC: a declarative scenario round-trips and runs; capture-from-run round-trips its documented
     scenario-initializable projection without claiming save-state equivalence; visual editing covers
     initial population, parameters, and domain-appropriate topology; validation and bounded preview
     reject invalid scenarios before a long run.
-- [ ] A5-2 Experiment matrix / parameter sweeps (tooling/visualizer layer).
+    Scenario artifact + loader: WI-A5-03; validation: WI-A5-10; generators: WI-A5-23;
+    capture-from-run: WI-A5-11; preview: WI-A5-13; population/parameter/topology editors:
+    WI-A5-14/32/33; WorldBuilder binding: WI-A5-30.
+- [x] A5-2 Experiment matrix / parameter sweeps (tooling/visualizer layer). (`WI-A5-15..16`)
   - AC: a scenario declares sweep axes that expand to one run per cell; results are keyed for
     comparison; the visualizer can diff two matrix runs. Note: the expansion primitive (cartesian
     product, per-cell execution, keyed JSON output) is provided by P0-5b; A5-2 adds tooling and
     visualization on top.
+    Declarative typed bindings + serializable filters: WI-A5-15; keyed per-cell run-bundle sets
+    with a relocatable aggregate manifest: WI-A5-16; run diffing through the WI-A5-05/22
+    comparator surfaced in the Results view.
 - [x] A5-3 Results replayer / visualizer (extends ReplaySketch). (`WI-A5-04`,
       `WI-A5-08..09`, `WI-A5-11..12`, `WI-A5-18..21`, `WI-A5-24..25`, `WI-A5-29`,
       `WI-A5-31`)
@@ -708,12 +715,16 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     known-divergent pair.
     T2 inspection: `DivergenceDetailInspector` matches the first divergent locus to a captured
     window and derives entity/quantity rows (matched/missing/unarmed/incompatible states).
-- [ ] A5-5 Authoring & visualization at scale: procedural/large command-set & initial-condition
+- [x] A5-5 Authoring & visualization at scale: procedural/large command-set & initial-condition
       generation; streaming/LOD/culling in the replay viewport (reuse B5/B7); bounded-memory run
-      loading; authoring/replay throughput tracked by B1. (Pairs with B4a-7.)
+      loading; authoring/replay throughput tracked by B1. (Pairs with B4a-7.) (`WI-A5-23`,
+      `WI-A5-24..26`, `WI-A5-29`)
   - AC: authoring a large procedural scenario and replaying a long/large run stay within documented
     time/memory budgets using region-indexed state, streaming/LOD/culling, and bounded-memory
     loading; B1 tracks the throughput.
+    Budgets are the `a5.*` benchmark IDs measured by B1 (see the scale-budget section in the
+    [implementation plan](implementation/track-a-a5-scenario-visualization.md)); the regression
+    rule is B1's baseline CI-non-overlap policy, with no standalone stopwatch gates in A5.
 - [x] A5-6 WorldBuilder baseline: audit functional state; ensure basic author → save → load → play
       round-trip works at normal map sizes; document gaps. (Early-start sub-phase, no A1/A4
       dependency; gates B4a.) (`WI-A5-01..02`, `WI-A5-27..28`, `WI-A5-34..35`,

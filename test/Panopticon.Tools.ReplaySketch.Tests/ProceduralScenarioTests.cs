@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -70,15 +69,14 @@ public sealed class ProceduralScenarioTests
             StartFrame: 100,
             IntervalFrames: 1500));
 
-        var stopwatch = Stopwatch.StartNew();
+        // Throughput for expansion at this scale is tracked by the a5.expand B1 metric
+        // (WI-A5-26), not a stopwatch gate here.
         var expanded = ScenarioGeneratorService.Expand(scenario);
-        stopwatch.Stop();
 
         Assert.Equal(10_000, expanded.Placements.Count);
         Assert.Equal(10_000, expanded.Players[0].Actions.Count);
         Assert.Empty(expanded.PopulationGenerators);
         Assert.Empty(expanded.CommandGenerators);
-        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(10), $"Expansion took {stopwatch.Elapsed}");
     }
 
     [Fact]

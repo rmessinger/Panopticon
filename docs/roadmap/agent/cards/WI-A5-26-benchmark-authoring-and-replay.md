@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-26` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-5 authoring and visualization at scale |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-16`, `WI-A5-23`, `WI-A5-25`; B1 harness implemented |
@@ -37,11 +37,22 @@ visible-frame rendering at A5 scale.
 
 ## Acceptance criteria
 
-- [ ] All five A5 operations emit machine-readable B1 results.
-- [ ] Scale fixtures meet the documented entity, command, and run-length sizes.
-- [ ] Statistics, allocations, hardware, and thresholds use B1 infrastructure.
-- [ ] A5 contains no standalone stopwatch gate.
-- [ ] Standard validation passes.
+- [x] All five A5 operations emit machine-readable B1 results.
+  - `A5ThroughputBenchmark.Run` records `a5.expand`, `a5.serialize`, `a5.bundleOpen`,
+    `a5.randomSeek`, and `a5.visibleProjection` spans plus `tick.wallMs`/`tick.allocBytes`
+    through the manual `BenchmarkMetricRecorder`; `A5BenchmarkTests` asserts all seven
+    statistics and a writer round-trip.
+- [x] Scale fixtures meet the documented entity, command, and run-length sizes.
+  - `A5ThroughputPlan.FullScale` pins 10,000 entities / 10,000 commands / 250 recording frames;
+    asserted as constants.
+- [x] Statistics, allocations, hardware, and thresholds use B1 infrastructure.
+  - Seeded-bootstrap CIs via `SimulationBenchmarkRunner.BuildStatistics`, environment via
+    `EnvironmentRecord.Capture`, baseline policy stays B1 CI-non-overlap (`--baseline`); no
+    thresholds live outside B1.
+- [x] A5 contains no standalone stopwatch gate.
+  - The `ProceduralScenarioTests` 10k-expansion wall-clock assertion was removed; counts
+    remain, throughput is owned by the `a5.*` metrics.
+- [x] Standard validation passes.
 
 ## Validation commands
 
