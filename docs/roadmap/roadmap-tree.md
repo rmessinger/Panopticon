@@ -455,6 +455,7 @@ flowchart LR
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
     C10D["C10d Granny decompression (deferred)"]
+    C8C["C8c BFME-family skinning and animation"]
     D4["D4 Reference non-SAGE scenario"]
     F2["F2 Runtime mesh & rendering update"]
     F3["F3 Weapon-driven terrain deformation"]
@@ -493,7 +494,6 @@ flowchart LR
   subgraph S6["Stage 6 · Terrain/destruction tooling & theater experiments"]
     direction TB
     C7C["C7c SC2 skinned M3 animation"]
-    C8C["C8c BFME-family skinning and animation"]
     C9C["C9c TW3K skeletons and animation"]
     C10C["C10c AoE3 DE skinned animation"]
     C11C["C11c Rise of Legends animation"]
@@ -697,10 +697,8 @@ flowchart LR
   C4F --> C7C
   C1 --> C8A
   C8A --> C8B
-  C3 --> C8B
   C8B --> C8C
   C2 --> C8C
-  C4D --> C8C
   C1 --> C9A
   C9A --> C9B
   C3 --> C9B

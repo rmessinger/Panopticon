@@ -30,21 +30,25 @@ C8a supports:
 C8b supports:
 
 - static bind-pose meshes at mesh version `0x40002` (BFME) and `0x50000` (BFME2, RotWK);
-- `0x50000` shader materials (`0x50`, `0x51`, `0x3F`) mapped onto the C3 metallic-roughness
-  payload: diffuse, normal map from tangent chunks (`0x60`, `0x61`), and the team-color mask;
-- the `SHDMESH` family (`0x0B00`-`0x0B4B`) as an optional final step, or an explicit diagnostic.
+- every `0x50000` shader-material family on the native shader-material path (section 6), with
+  case-insensitive family names and a diagnostic fallback for families without a shader set;
+- per-face shader-material ids and the `WsClassicEnv` texture mapping;
+- textures resolved through the per-game texture resolvers;
+- a recorded team-color source for the BFME family;
+- the `SHDMESH` family (`0x0B00`-`0x0B4B`) decoded, or kept as a named diagnostic by decision.
 
 C8c supports:
 
-- dual-bone vertices (`VERTICES_2` / `NORMALS_2`, `0xC00`) as two-influence skins;
-- timecoded compressed animation (`0x280`, flavor 0), adaptive-delta flavor 1, and motion channels
-  (`0x284`);
-- a decision on channel type 15 (`UnknownBfme`), which `W3dAnimationImporter` currently skips.
+- compressed visibility bit channels, which `W3dAnimationImporter` drops today;
+- a decision on channel type 15 (`UnknownBfme`), which `W3dAnimationImporter` skips today;
+- corpus-wide verification of adaptive-delta and motion-channel decoding;
+- animated proofs over the existing two-bone `VERTICES_2` skinning path.
 
 C8 rejects or defers:
 
 - BFME INI gameplay semantics; Panopticon object definitions reference the models as art only;
-- `.fx` shader parity; shader materials render through C3 PBR, not the original effect files;
+- `.fx` shader parity; shader materials render through the engine's shader sets, not the original
+  effect files;
 - EA asset streams (`.manifest`, `.relo`, `.imp`, `.w3x`); none exist in these three games.
 
 ## 2. Install and packaging
@@ -61,10 +65,15 @@ C8 rejects or defers:
 Only `Mods.BuiltIn` references the BFME projects; ReplaySketch, WorldBuilder, and the benchmarks
 reference `Mods.Generals` only. No document records a BFME boot.
 
-Zero Hour already boots (`GeneralsZeroHourDefinition`, H2a records zero import diagnostics). Its
-`Probe` checks lowercase `generals.exe`, while the install ships `Generals.exe`, so the Launcher's
-directory probe fails on Linux. The environment locator skips `Probe` and is unaffected. C8a fixes
-the probe to match case-insensitively.
+Zero Hour already boots (`GeneralsZeroHourDefinition`, H2a records zero import diagnostics). The
+Generals and Zero Hour `Probe` methods check lowercase `generals.exe`, while both installs ship
+`Generals.exe`, so the Launcher's directory probe fails on Linux. The environment locator skips
+`Probe` and is unaffected. The default `IGameDefinition.Probe` used by the BFME family is also
+case-sensitive; the BFME installs happen to match. C8a makes all probes case-insensitive.
+
+Environment variables for the environment locator: `BFME_PATH`, `BFME2_PATH`, `BFME2_ROTWK_PATH`
+(requires `BFME2_PATH` for its base game), and `CNC_GENERALS_ZH_PATH` (requires
+`CNC_GENERALS_PATH`).
 
 An operator-made extraction of Generals and Zero Hour (per-model folders with copied textures,
 plus a ray-grid occlusion report over 7728 models and an older open-geometry report) is an
@@ -108,7 +117,39 @@ Failure causes:
 - `gugandalfcrstl`: unknown `W3dVertexMappingType` 67. `mbtrollpit_sknm`: decode error.
 - RotWK `lwbanhwitchk.w3d` under `readonly-0-rev-*`: an `IFX` file, not W3D.
 
-`W3dChunk` and `W3dFile` throw on any unknown chunk id at any depth today.
+`W3dChunk` and `W3dFile` throw on any unknown chunk id at any depth today. `SHDMESH` is a top-level
+chunk beside ordinary meshes and the `HLod` (`0x0700`), so skipping it leaves the `HLod` pointing at
+a missing render object.
+
+`W3dFileTests.CanRoundtripW3dFiles` already skips 26 names inline: the section 4 failures plus
+roundtrip-only exclusions (`bbbags`, `kbpostgaten_al`, `kbpostgaten_am`, `psupplies04`,
+`wbcave_d2a`, `wbcave_d2c`, `npc14b`, `npc15b`). C8a moves this list into the golden manifest.
+
+### 4.1 Conversion hazards
+
+Measured on 2026-10-18 over files that parse, against the current W3D adapters:
+
+| Hazard | Where it fails today | Count |
+|---|---|---|
+| Shader-material families `Default.fx` (2 meshes), `DefaultW3D.fx` (1), `WaterShader.FX` (66 BFME2 water meshes, 1 RotWK) | `ShaderResourceManager.GetShaderMaterialResources` throws `KeyNotFoundException`; `.FX` also escapes the case-sensitive `.fx` strip | 70 meshes |
+| More than one shader-material id per pass | `W3dMaterialConverter` throws `NotSupportedException` | 4 BFME2, 2 RotWK meshes (`kbpostgaten_al`, `kbpostgaten_am`) |
+| `WsClassicEnv` texture mapping | `MapTextureMappingType` throws `ArgumentOutOfRangeException` | `sfe_menuspells` in each game |
+| Compressed visibility bit channels | silently dropped by `ConvertCompressed` | 673 BFME, 1349 BFME2, 2 RotWK animations |
+| Channel type 15 | skipped in all three channel paths | 1878 BFME, 44,161 BFME2, 1424 RotWK channels |
+
+Shader-material families: `NormalMapped.fx` 6003 BFME2 and 2476 RotWK meshes, `Simple.fx` 31 and 4.
+Both already have shader sets. No `HOUSECOLOR`-prefixed mesh exists in any BFME-family corpus, so
+the Generals team-color convention does not apply.
+
+### 4.2 Already supported
+
+| Feature | Existing support |
+|---|---|
+| `0x50000` mesh chunks, shader materials, tangents, `VERTICES_2`, `NORMALS_2` | Parsed by `W3dMesh`; converted by `W3dMeshConverter` and `W3dMaterialConverter` |
+| Two-bone skins (397 BFME, 1095 BFME2, 633 RotWK weighted meshes, including Mumakil `MUMAKIL_MESH` and wolf rider `BROWNWOLF01`) | `ImportedVertex.SecondaryPosition` feeds `in_Position1`; `Mesh.h` skins position 1 by bone 1 |
+| Adaptive-delta flavor 1 and motion channels (Delta4, Delta8, TimeCoded) | Decoded by `W3dAdaptiveDeltaCodec` and `IW3dMotionChannelData`, converted in `ConvertCompressed` |
+| Multi-LOD `HLod` (38 BFME2 files) | `W3dModelImporter` imports `Lods[0]` |
+| BFME2 sub-directory model paths | `PathResolvers.Bfme2W3d` (`art/w3d/<first two letters>/`) |
 
 ## 5. Proof assets
 
@@ -131,27 +172,214 @@ The BFME2 corsair ship is also the reference hull for [Track E](../track-e-naval
 - Native W3D variant, not a C1 importer. The existing reader parses 99.9% of the corpus and the
   W3D path is already one C1 implementation, so a second W3D importer would duplicate `W3dFile`.
   Animation-semantics changes live in `W3dAnimationImporter`.
-- Fail soft per file. A bad corpus file produces one diagnostic and a null asset, matching the C1
-  missing-asset rule; Generals output stays byte-identical because Generals has no failures.
-- Shader materials map to C3 PBR. `.fx` names select a mapping profile; unmapped profiles fall back
-  to diffuse-only with a diagnostic.
+- Fail soft per file at parse time. Unknown chunks are skipped with a `W3dParseDiagnostic`; top-level
+  unknown chunks are kept as raw `W3dUnknownChunk` values so roundtrip stays byte-exact. A file that
+  still fails to parse produces one logged diagnostic and a null asset, matching the C1
+  missing-asset rule. Conversion failures keep the C1 contextual-exception contract and are
+  classified by the corpus test. Generals output stays byte-identical because Generals has no
+  failures.
+- Shader materials stay on the native shader-material path (decision revised 2026-10-18 from C3
+  PBR). `NormalMapped` and `Simple` already render 99% of BFME2 and RotWK shader-material meshes
+  with diffuse, normal map, and tangents, so a C3 mapping would duplicate them. Families without a
+  shader set fall back to `Simple` with a diagnostic. C8b no longer depends on C3.
+- Two-bone skins need no runtime work. The two-influence path with secondary positions predates
+  C4d, so C8c no longer depends on C4d.
 
 ## 7. Phase split
 
 | Phase | Deliverable | Proof |
 |---|---|---|
-| C8a | Corpus smoke test, fail-soft unknown chunks, golden bad-file list, case-insensitive ZH probe | Every archive parses with exactly the section 4 failures; Generals and ZH output unchanged |
-| C8b | `0x50000` shader-material meshes on C3 PBR, normal maps, team-color mask; optional `SHDMESH` | Static captures of the section 5 models beside a Generals Ranger |
-| C8c | Dual-bone skins, compressed and adaptive-delta animation, motion channels, channel 15 decision | Gondor soldier, Mumakil, and wolf rider cycles bind with no missing targets and capture deterministically |
+| C8a | Case-insensitive launcher probes, skipped unknown chunks with diagnostics, fail-soft importers, golden corpus manifest and installed corpus test | Every archive yields exactly the manifest's parse and conversion failures; Generals and Zero Hour output unchanged |
+| C8b | Shader-material family resolution, per-face shader-material ids, `WsClassicEnv`, per-game texture loading, team-color decision, `SHDMESH` decision | Static captures of the section 5 models beside a Generals Ranger; section 4.1 mesh hazards removed from the manifest |
+| C8c | Compressed visibility bit channels, channel 15 decision, adaptive-delta and motion-channel verification | Gondor soldier, Mumakil, and wolf rider cycles bind with no missing targets and capture deterministically |
+
+Cards: [`WI-C8a-01`](../agent/cards/WI-C8a-01-match-launcher-executables-case-insensitively.md) to
+[`WI-C8c-04`](../agent/cards/WI-C8c-04-capture-animated-bfme-proof.md); the sequence is in
+[`implementation/README.md`](../implementation/README.md#track-c--c8a-c8c--bfme-family-w3d).
 
 ## 8. Risks
 
 - RotWK-over-BFME2 layering and the BFME texture resolvers are untested on a real install.
-- Motion channels may encode root motion; C8c records whether they move the root or only bones.
-- Dual-bone vertices need the four-influence runtime from C4d.
+- Motion channels may encode root motion; C8c records whether pivot 0 channels (446 in BFME2) move
+  the root.
+- `W3dTimeCodedBitDatum` reads the value from bit 31 of the time code with a `TODO: Verify` note;
+  C8c confirms it against the uncompressed visibility channels of the same clips.
+- `W3dChunkHeader.Parse` computes `HasSubChunks` after masking the size, so it is always false.
+  Raw unknown chunks keep the original size word instead of relying on it.
 
 ## 9. Architecture diagrams
 
-`†` Placeholder. Class and sequence diagrams grounded in `W3dFile`, `W3dChunk`,
-`W3dAnimationImporter`, the BFME path resolvers, and the C3 materializer are required before the
-first C8 source-edit card is marked `Ready`.
+Types marked new are added by C8 cards; the rest exist today.
+
+```mermaid
+classDiagram
+  class W3dFile {
+    Chunks
+    RenderableObjects
+    HLod
+    Diagnostics new
+    FromStream(stream, filePath)
+  }
+  class W3dParseContext {
+    PushChunk(chunkType, endPosition)
+    AddDiagnostic(diagnostic) new
+  }
+  class W3dContainerChunk {
+    ParseChunks(reader, endPosition, callback)
+    SkipUnknownChunk(reader, context, chunkType) new
+  }
+  class W3dUnknownChunk {
+    new
+    RawChunkType
+    RawSizeWord
+    Data
+  }
+  class W3dParseDiagnostic {
+    new
+    Code
+    ChunkPath
+    Offset
+    Message
+  }
+  W3dFile --> W3dParseContext
+  W3dFile --> W3dContainerChunk
+  W3dFile --> W3dUnknownChunk
+  W3dParseContext --> W3dParseDiagnostic
+
+  class IModelImporter
+  class IAnimationImporter
+  class W3dModelImporter {
+    ImportModel(name, context)
+    FindAndParseFile(name, context) fail-soft
+  }
+  class W3dAnimationImporter {
+    ImportAnimation(key, context) fail-soft
+    ConvertCompressed(animation) adds bit channels
+  }
+  class W3dMeshConverter
+  class W3dMaterialConverter {
+    ResolveShaderFamily(typeName) new
+    GetShaderMaterialRuns(mesh, pass) new
+  }
+  class ShaderResourceManager {
+    GetShaderMaterialResources(name)
+  }
+  class PathResolvers {
+    W3d
+    Bfme2W3d
+    BfmeTexture
+    Bfme2Texture
+  }
+  IModelImporter <|.. W3dModelImporter
+  IAnimationImporter <|.. W3dAnimationImporter
+  W3dModelImporter --> PathResolvers
+  W3dModelImporter --> W3dFile
+  W3dAnimationImporter --> W3dFile
+  W3dModelImporter --> W3dMeshConverter
+  W3dMeshConverter --> W3dMaterialConverter
+  W3dMaterialConverter ..> ShaderResourceManager : family names match keys
+
+  class SageW3dCorpusManifest {
+    new
+    ParseFailures
+    ConversionFailures
+    RoundtripExclusions
+  }
+  class SageW3dCorpusTests {
+    new
+  }
+  class SageW3dProofScenario {
+    new
+  }
+  class SageTextureInstaller {
+    new
+    Install(game, fileSystem, strategy, names)
+  }
+  class OnDemandAssetLoadStrategy {
+    CreateW3d(w3dResolver, textureResolver)
+    CreateTextureLoader()
+  }
+  SageW3dCorpusTests --> SageW3dCorpusManifest
+  SageW3dCorpusTests --> W3dModelImporter
+  SageW3dCorpusTests --> W3dAnimationImporter
+  SageW3dProofScenario --> SageTextureInstaller
+  SageW3dProofScenario --> W3dModelImporter
+  SageTextureInstaller --> OnDemandAssetLoadStrategy
+```
+
+C8a corpus test, one game per run:
+
+```mermaid
+sequenceDiagram
+  participant T as SageW3dCorpusTests
+  participant GI as GameInstallation
+  participant FS as CompositeFileSystem
+  participant F as W3dFile
+  participant MI as W3dModelImporter
+  participant AI as W3dAnimationImporter
+  participant M as SageW3dCorpusManifest
+  T->>GI: InstalledFilesTestData.GetInstallation(game)
+  GI->>FS: CreateFileSystem() with base game layered below
+  T->>FS: enumerate .w3d owned by this game root
+  loop every file
+    T->>F: FromStream(entry)
+    F-->>T: chunks and Diagnostics, or InvalidDataException
+    alt mesh, box, or HLod file
+      T->>MI: Convert(file, context)
+    else animation file
+      T->>AI: Convert(file)
+    end
+    MI-->>T: ImportedModel or contextual exception
+  end
+  T->>M: compare failure set by name and reason code
+  M-->>T: exact match or diff of unexpected and missing names
+```
+
+C8b and C8c proof, models from a BFME-family install rendered by a Generals `Game`:
+
+```mermaid
+sequenceDiagram
+  participant S as SageW3dProofScenario
+  participant G as Game
+  participant B as BigFileSystem
+  participant MI as W3dModelImporter
+  participant MC as W3dMaterialConverter
+  participant TI as SageTextureInstaller
+  participant MM as ImportedModelMaterializer
+  participant AI as W3dAnimationImporter
+  participant CAP as StandaloneModelCapture
+  S->>G: new Game(Generals installation)
+  S->>B: new BigFileSystem(BFME_PATH, BFME2_PATH, or BFME2_ROTWK_PATH root)
+  S->>MI: ImportModel(name, AssetImportContext(B))
+  MI->>MC: shader family, per-face runs, mappings
+  MC-->>MI: ImportedMaterial with family NormalMapped or Simple
+  MI-->>S: ImportedModel
+  S->>TI: texture names from material properties
+  TI->>B: per-game texture resolver paths
+  TI->>G: AssetStore.Textures.Add
+  S->>MM: MaterializeModel(imported, context)
+  MM-->>S: Model
+  opt C8c animated capture
+    S->>AI: ImportAnimation(skeleton.clip, context)
+    AI-->>S: ImportedAnimation with transform and visibility channels
+  end
+  S->>CAP: Capture beside Generals Ranger
+```
+
+## Appendix: current-code grounding
+
+| Fact | Location |
+|---|---|
+| Top-level unknown chunk throws | `src/Panopticon.FileFormats.W3d/W3dFile.cs:117` |
+| Unknown chunk exception factory, 23 call sites | `src/Panopticon.FileFormats.W3d/W3dChunk.cs:104` |
+| `HasSubChunks` computed after masking | `src/Panopticon.FileFormats.W3d/W3dChunkHeader.cs:15` |
+| Parse with no catch | `src/Panopticon.Simulation/Content/Importing/W3d/W3dModelImporter.cs:248`, `W3dAnimationImporter.cs:58` |
+| Single shader-material id only | `src/Panopticon.Simulation/Content/Importing/W3d/W3dMaterialConverter.cs:41` |
+| Case-sensitive `.fx` strip | `W3dMaterialConverter.cs:61` |
+| `WsClassicEnv` unmapped | `W3dMaterialConverter.cs:536` |
+| Shader-material sets `NormalMapped`, `Simple` only | `src/Panopticon.Simulation/Graphics/Shaders/ShaderResourceManager.cs:79-89` |
+| Compressed bit channels ignored | `W3dAnimationImporter.cs:196-274` (no `TimeCodedBitChannels` read) |
+| Secondary position skinning | `W3dMeshConverter.cs:94`, `src/Panopticon.Simulation/Assets/Shaders/Mesh.h:100` |
+| Case-sensitive launcher probes | `src/Panopticon.Simulation/IGameDefinition.cs:42`, `src/Panopticon.Mods.Generals/GeneralsDefinition.cs:51`, `GeneralsZeroHourDefinition.cs:55` |
+| Inline corpus skip list | `test/Panopticon.Simulation.Tests/Data/W3d/W3dFileTests.cs:19-50` |
+| Proof scenario and texture install pattern | `src/Panopticon.Tools.TestHarness/Ee2NifProofScenario.cs:427`, `Ee2TexcacheTextureInstaller.cs` |

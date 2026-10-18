@@ -205,7 +205,10 @@
 - BFME-family models. Decision (2026-10-18): BFME, BFME2, and RotWK models load through the native
   W3D reader and its C1 adapters, not a separate importer, because the existing reader already
   parses 99.9% of the corpus. Bad corpus files fail soft with one diagnostic each. BFME gameplay
-  INI stays in D3. See the [deep dive](deep-dives/c8-sage-family-w3d.md). Affects
+  INI stays in D3. Revised the same day after grounding: shader materials stay on the existing
+  `NormalMapped` and `Simple` shader sets instead of C3 PBR, and two-bone skins use the existing
+  runtime, so C8b no longer depends on C3 and C8c no longer depends on C4d. See the
+  [deep dive](deep-dives/c8-sage-family-w3d.md) section 6. Affects
   [C8a-C8c](track-c-external-assets.md).
 - Unlicensed format references. Decision (2026-10-18): public tools without a published license
   (AssetEditor for Total War, ptasev Rise-of-Nations for BH3) are factual references only and no

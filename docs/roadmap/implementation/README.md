@@ -280,6 +280,19 @@ Source of truth:
 |---|---|---|
 | [track-c-c5-external-model-tooling.md](track-c-c5-external-model-tooling.md) | C5 | Authoring and validation tooling |
 
+## Track C · C8a-C8c : BFME-family W3D
+
+Source of truth:
+[deep-dives/c8-sage-family-w3d.md](../deep-dives/c8-sage-family-w3d.md) :
+[Architecture diagrams §9](../deep-dives/c8-sage-family-w3d.md#9-architecture-diagrams).
+The deep dive's phase split (section 7) is the plan; no separate plan file.
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [c8-sage-family-w3d.md §7](../deep-dives/c8-sage-family-w3d.md#7-phase-split) | C8a | SAGE-family W3D corpus (`WI-C8a-01`, `WI-C8a-02` in parallel, then `WI-C8a-03`, `WI-C8a-04`) |
+| [c8-sage-family-w3d.md §7](../deep-dives/c8-sage-family-w3d.md#7-phase-split) | C8b | BFME-family static meshes (`WI-C8b-01`, `WI-C8b-02`, `WI-C8b-03`; `WI-C8b-04` after `WI-C8a-02`) |
+| [c8-sage-family-w3d.md §7](../deep-dives/c8-sage-family-w3d.md#7-phase-split) | C8c | BFME-family skinning and animation (`WI-C8c-01..03` in parallel after `WI-C8a-04`, then `WI-C8c-04`) |
+
 ## Track G · G1 : High-DPI drawable & resolution correctness
 
 Source of truth: [deep-dives/g1-high-dpi-resolution.md](../deep-dives/g1-high-dpi-resolution.md) :

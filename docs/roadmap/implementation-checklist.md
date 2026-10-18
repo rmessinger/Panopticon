@@ -1035,23 +1035,26 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     id with name checks) import through C2 for the twelve proof clips; deterministic captures show
     the expected poses, and section 11 failures fire in synthetic tests.
 - [ ] C8a SAGE-family W3D corpus
-      ([deep dive](deep-dives/c8-sage-family-w3d.md)).
-  - AC: an installed headless test parses every `.w3d` in BFME, BFME2, RotWK (over BFME2), and Zero
-    Hour through the per-game resolvers; unknown chunks and bad sizes yield one diagnostic and a
-    null asset per file; the failures match a checked-in list of the 23 known-bad names; the Zero
-    Hour probe accepts `Generals.exe`; Generals and Zero Hour import output is unchanged.
+      ([deep dive](deep-dives/c8-sage-family-w3d.md); cards `WI-C8a-01..04`).
+  - AC: installed tests parse and convert every `.w3d` in Generals, Zero Hour, BFME, BFME2, and
+    RotWK (over BFME2) through the per-game resolvers; unknown chunks yield `W3D001` diagnostics and
+    top-level ones roundtrip byte-exactly; files that fail to parse yield one `W3D100` diagnostic
+    and a null asset; failures equal a checked-in manifest of names and reason codes; launcher
+    probes accept `Generals.exe`; Generals and Zero Hour import output is unchanged.
 - [ ] C8b BFME-family static meshes
-      ([deep dive](deep-dives/c8-sage-family-w3d.md)).
-  - AC: `0x40002` and `0x50000` proof meshes render in bind pose through C3 PBR with diffuse,
-    tangent-based normal maps, and team-color masks; unmapped shader profiles fall back to diffuse
-    with a diagnostic; captures place each proof model beside a Generals Ranger; `SHDMESH` either
-    imports the three wall models or fails with a named diagnostic.
+      ([deep dive](deep-dives/c8-sage-family-w3d.md); cards `WI-C8b-01..04`).
+  - AC: shader-material families resolve case-insensitively to `NormalMapped` or `Simple`, other
+    families fall back to `Simple` with a `W3D200` diagnostic; per-face shader-material ids and
+    `WsClassicEnv` convert; the manifest has no shader-family, multi-id, or `WsClassicEnv` entries;
+    captures place each proof model textured beside a Generals Ranger; team color and `SHDMESH`
+    each have a recorded decision.
 - [ ] C8c BFME-family skinning and animation
-      ([deep dive](deep-dives/c8-sage-family-w3d.md)).
-  - AC: `VERTICES_2` skins import as two-influence vertices; timecoded and adaptive-delta
-    compressed animation and motion channels resample to C1 channels; channel type 15 is decoded
-    or rejected by a recorded decision; Gondor soldier, Mumakil, and wolf rider cycles bind with no
-    missing targets and capture deterministically; Generals animation output is byte-identical.
+      ([deep dive](deep-dives/c8-sage-family-w3d.md); cards `WI-C8c-01..04`).
+  - AC: compressed visibility bit channels import; channel type 15 is decoded or skipped by a
+    recorded decision; installed tests show well-formed channels for every converted clip,
+    including adaptive-delta and motion channels; Gondor soldier, Mumakil, and wolf rider cycles
+    bind with no missing targets and capture byte-identically twice; Generals animation output is
+    unchanged.
 - [ ] C9a Total War: THREE KINGDOMS packs
       ([deep dive](deep-dives/c9-total-war-3k-models.md)).
   - AC: a read-only `PackFileSystem` enumerates every `PFH5` pack with the recorded per-pack
