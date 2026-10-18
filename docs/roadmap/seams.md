@@ -129,6 +129,10 @@ audited in [track-a-a4-experiment-seams.md](implementation/track-a-a4-experiment
 > Derived, not separate: the [visualization](deep-dives/a5-visualization.md) layer's views and
 > divergence-bucketing keys are parameterized by the Simulation Domain Model seam. The domain
 > supplies the view and the stable bucket keys, so this is not an independent seam.
+> WI-A5-12 lands that projection as `IDomainVisualization`
+> (`src/Panopticon.Simulation/Simulation/Visualization/`): visual primitives addressed by the
+> same bucket keys as T1 signatures, metric descriptors, explicit optional overlays, and
+> topology validation.
 
 ---
 

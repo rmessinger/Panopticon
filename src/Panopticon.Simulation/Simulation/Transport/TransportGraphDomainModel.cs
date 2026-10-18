@@ -18,7 +18,7 @@ namespace Panopticon.Simulation.Transport;
 /// with vehicle conservation on the node occupancy family. Design:
 /// docs/roadmap/deep-dives/a4-4-domain-state-projection.md.
 /// </summary>
-public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainStateProjection, IReconstructableDomain
+public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainStateProjection, IReconstructableDomain, IDomainVisualization
 {
     private static readonly DomainStateSchema ProjectionSchema = new(
         "transport-graph",
@@ -312,6 +312,70 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainS
         var separator = interaction.TopologyKey.IndexOf("->", System.StringComparison.Ordinal);
         var from = int.Parse(interaction.TopologyKey["edge:".Length..separator]);
         return _nodeControllers[from].Id.Index;
+    }
+
+    // WI-A5-12: graph projection. Node points, edge polylines, and vehicle points carry the
+    // same node/edge bucket keys as T1 signature recording.
+
+    public IReadOnlyList<DomainVisualPrimitive> CaptureVisualization()
+    {
+        var primitives = new List<DomainVisualPrimitive>();
+        foreach (var node in _topology.Nodes)
+        {
+            primitives.Add(new DomainVisualPoint(node.Key, node.Position, node.OwnerSide, "node"));
+        }
+
+        foreach (var edge in _topology.Edges)
+        {
+            primitives.Add(new DomainVisualPolyline(edge.Key, [edge.From.Position, edge.To.Position], "edge"));
+        }
+
+        var playerManager = _gameEngine.Game.PlayerManager;
+        foreach (var vehicle in _vehicles)
+        {
+            var gameObject = vehicle.ParentGameObject;
+            primitives.Add(new DomainVisualPoint(
+                _entityTopologyKeys[gameObject.Id.Index],
+                gameObject.Translation,
+                playerManager.GetPlayerIndex(gameObject.Owner),
+                gameObject.Definition.Name));
+        }
+
+        return primitives;
+    }
+
+    public IReadOnlyList<DomainMetricDescriptor> DescribeMetrics() =>
+    [
+        new DomainMetricDescriptor("edge-throughput", null, "Edge throughput"),
+        new DomainMetricDescriptor("node-occupancy", null, "Node occupancy"),
+    ];
+
+    // The graph domain offers no categorical overlay; absence is explicit, not null.
+    public IReadOnlyList<DomainOverlayDescriptor> DescribeOverlays() => [];
+
+    public IReadOnlyList<string> ValidateTopology()
+    {
+        var nodeKeys = new HashSet<string>();
+        foreach (var node in _topology.Nodes)
+        {
+            nodeKeys.Add(node.Key);
+        }
+
+        var issues = new List<string>();
+        foreach (var edge in _topology.Edges)
+        {
+            if (!nodeKeys.Contains(edge.From.Key))
+            {
+                issues.Add($"edge {edge.Key} references missing from-node {edge.From.Key}");
+            }
+
+            if (!nodeKeys.Contains(edge.To.Key))
+            {
+                issues.Add($"edge {edge.Key} references missing to-node {edge.To.Key}");
+            }
+        }
+
+        return issues;
     }
 
     public IReadOnlyList<DomainStateRecord> CaptureRollups(uint frame) => [];

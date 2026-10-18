@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-12` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): domain-parameterized authoring and replay |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-10`, `WI-A5-06` |
@@ -38,11 +38,18 @@ categorical overlays through A4-1 without spatial assumptions in ReplaySketch.
 
 ## Acceptance criteria
 
-- [ ] ReplaySketch consumes no RTS concrete type through the interface.
-- [ ] RTS and graph domains produce valid distinct primitive sets.
-- [ ] Bucket keys align with T1 recording.
-- [ ] Optional overlay absence is explicit.
-- [ ] Standard validation passes.
+- [x] ReplaySketch consumes no RTS concrete type through the interface.
+  - `DomainVisualizationConsumptionTests` (ReplaySketch test project) drives the contract with a
+    stub domain only; the Core-facing surface is `IDomainVisualization` + primitive records.
+- [x] RTS and graph domains produce valid distinct primitive sets.
+  - RTS: entity points bucketed `cell:x,y`; graph: node points, edge polylines with two
+    endpoints, vehicle points bucketed by current edge.
+- [x] Bucket keys align with T1 recording.
+  - `RtsPoints_CarryTheSameBucketKeysAsT1Signatures` builds a domain-keyed
+    `SignatureTreeBuilder` tree and asserts the level-1 keys equal the point bucket keys.
+- [x] Optional overlay absence is explicit.
+  - Graph `DescribeOverlays` returns an empty list, never null; RTS offers `owner` and `kind`.
+- [x] Standard validation passes.
 
 ## Validation commands
 
