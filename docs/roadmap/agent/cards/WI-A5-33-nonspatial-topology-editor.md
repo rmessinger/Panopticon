@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-33` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 visual authoring |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-12`, `WI-A5-14` |
@@ -38,11 +38,22 @@ leaving spatial map/terrain topology in WorldBuilder.
 
 ## Acceptance criteria
 
-- [ ] Graph topology operations are headlessly tested.
-- [ ] Stable IDs and connectivity validate before serialization.
-- [ ] Population edits reuse `WI-A5-14`.
-- [ ] No spatial terrain editor is duplicated.
-- [ ] Standard validation passes.
+- [x] Graph topology operations are headlessly tested.
+  - `TopologyEditorTests` 6/6: add/move/delete node, add/delete edge, cascade delete, selection.
+- [x] Stable IDs and connectivity validate before serialization.
+  - `ScenarioGraph.NextNodeId` is monotonic (deleted ids never reused); `GraphTopologyEditor.ValidateGraph`
+    rejects duplicate node ids, id-above-next, missing endpoints, self-edges, and duplicate edges;
+    `ScenarioValidator` surfaces them as `graph.*` field paths before any save.
+- [x] Population edits reuse `WI-A5-14`.
+  - `GraphTopologyEditor.Population` is an `InitialPopulationEditor` over the same scenario;
+    rejections in either controller leave the other's edits intact.
+- [x] No spatial terrain editor is duplicated.
+  - The controller edits only `ScenarioGraph`; map and terrain topology remain in WorldBuilder
+    (WI-A5-30). Engine wiring: `TransportGraphDomainModel.Create(engine, topology)` accepts the
+    authored graph (authored smoke: `TopologyDomainModelTests` 1/1); absent graph keeps the
+    domain default. Graph preview rendering flows through the existing primitive-driven
+    `RunFrameRenderer`; no new tab.
+- [x] Standard validation passes.
 
 ## Validation commands
 
@@ -50,7 +61,7 @@ leaving spatial map/terrain topology in WorldBuilder.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~TopologyEditor"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-topology.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-topology.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 

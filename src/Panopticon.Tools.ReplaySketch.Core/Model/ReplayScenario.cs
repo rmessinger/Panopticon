@@ -41,6 +41,9 @@ public sealed class ReplayScenario
     /// </summary>
     public List<ScenarioPlacement> Placements { get; set; } = new();
 
+    /// <summary>WI-A5-33: authored topology for graph domains; null means the domain default.</summary>
+    public ScenarioGraph? Graph { get; set; }
+
     /// <summary>
     /// Procedural population generators (WI-A5-23), expanded deterministically by
     /// <see cref="Services.ScenarioGeneratorService"/> before execution.

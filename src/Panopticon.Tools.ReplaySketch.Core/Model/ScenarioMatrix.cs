@@ -384,6 +384,7 @@ public sealed class ScenarioMatrix
             StopConditions = BaseScenario.StopConditions.ToList(),
             RecordedMetricSeries = BaseScenario.RecordedMetricSeries.ToList(),
             Recording = BaseScenario.Recording,
+            Graph = BaseScenario.Graph,
             PopulationGenerators = BaseScenario.PopulationGenerators.ToList(),
             CommandGenerators = BaseScenario.CommandGenerators.ToList(),
             Players = BaseScenario.Players.Select(ClonePlayer).ToList(),

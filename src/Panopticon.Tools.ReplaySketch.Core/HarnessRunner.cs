@@ -257,10 +257,29 @@ public static class HarnessRunner
         scenario.DomainId switch
         {
             RtsSimulationDomainModel.DefaultDomainId => new RtsSimulationDomainModel(engine),
-            TransportGraphDomainModel.DomainIdentifier => TransportGraphDomainModel.CreateDefault(engine),
+            TransportGraphDomainModel.DomainIdentifier => CreateTransportGraphDomain(scenario, engine),
             _ => throw new InvalidOperationException(
                 $"Scenario declares unknown domain '{scenario.DomainId}'."),
         };
+
+    /// <summary>WI-A5-33: an authored scenario graph supplies the topology; absent means the
+    /// domain default.</summary>
+    private static ISimulationDomainModel CreateTransportGraphDomain(ReplayScenario scenario, IGameEngine engine)
+    {
+        if (scenario.Graph is not { } graph)
+        {
+            return TransportGraphDomainModel.CreateDefault(engine);
+        }
+
+        var nodes = graph.Nodes
+            .Select(n => new TransportGraphNode(n.Id, n.OwnerSide, new System.Numerics.Vector3(n.X, 0f, n.Y)))
+            .ToList();
+        var byId = nodes.ToDictionary(n => n.Index);
+        var edges = graph.Edges
+            .Select(e => new TransportGraphEdge(byId[e.FromNodeId], byId[e.ToNodeId]))
+            .ToList();
+        return TransportGraphDomainModel.Create(engine, new TransportGraphTopology(nodes, edges));
+    }
 
     private static uint EffectiveFrameCap(ReplayScenario scenario)
     {

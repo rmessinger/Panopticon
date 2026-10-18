@@ -51,6 +51,7 @@ public static class ScenarioValidator
         ValidateRecordedMetricSeries(scenario, diagnostics);
         ValidateRecordingOptions(scenario, diagnostics);
         ValidateGenerators(scenario, diagnostics);
+        ValidateGraph(scenario, diagnostics);
         if (map != null)
         {
             ValidateActionPositions(scenario, map, diagnostics);
@@ -234,6 +235,26 @@ public static class ScenarioValidator
             {
                 diagnostics.Add(new ScenarioValidationDiagnostic($"recordedMetricSeries[{i}]", "Metric series name is empty."));
             }
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>WI-A5-33: stable ids and edge connectivity validate before serialization; shared
+    /// with the graph editor through <see cref="GraphTopologyEditor.ValidateGraph"/>.</summary>
+    private static void ValidateGraph(ReplayScenario scenario, List<ScenarioValidationDiagnostic> diagnostics)
+    {
+        if (scenario.Graph is null)
+        {
+            return;
+        }
+
+        foreach (var finding in GraphTopologyEditor.ValidateGraph(scenario.Graph))
+        {
+            var separator = finding.IndexOf(':');
+            var path = separator > 0 ? finding[..separator] : "graph";
+            var message = separator > 0 ? finding[(separator + 2)..] : finding;
+            diagnostics.Add(new ScenarioValidationDiagnostic(path, message));
         }
     }
 
