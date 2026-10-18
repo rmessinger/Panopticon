@@ -1034,6 +1034,89 @@ See [`track-c-external-assets.md`](track-c-external-assets.md). Gated on Track P
     `IREF` with four-influence vertices; embedded sequences and `.m3a` clips (bound by animation
     id with name checks) import through C2 for the twelve proof clips; deterministic captures show
     the expected poses, and section 11 failures fire in synthetic tests.
+- [ ] C8a SAGE-family W3D corpus
+      ([deep dive](deep-dives/c8-sage-family-w3d.md)).
+  - AC: an installed headless test parses every `.w3d` in BFME, BFME2, RotWK (over BFME2), and Zero
+    Hour through the per-game resolvers; unknown chunks and bad sizes yield one diagnostic and a
+    null asset per file; the failures match a checked-in list of the 23 known-bad names; the Zero
+    Hour probe accepts `Generals.exe`; Generals and Zero Hour import output is unchanged.
+- [ ] C8b BFME-family static meshes
+      ([deep dive](deep-dives/c8-sage-family-w3d.md)).
+  - AC: `0x40002` and `0x50000` proof meshes render in bind pose through C3 PBR with diffuse,
+    tangent-based normal maps, and team-color masks; unmapped shader profiles fall back to diffuse
+    with a diagnostic; captures place each proof model beside a Generals Ranger; `SHDMESH` either
+    imports the three wall models or fails with a named diagnostic.
+- [ ] C8c BFME-family skinning and animation
+      ([deep dive](deep-dives/c8-sage-family-w3d.md)).
+  - AC: `VERTICES_2` skins import as two-influence vertices; timecoded and adaptive-delta
+    compressed animation and motion channels resample to C1 channels; channel type 15 is decoded
+    or rejected by a recorded decision; Gondor soldier, Mumakil, and wolf rider cycles bind with no
+    missing targets and capture deterministically; Generals animation output is byte-identical.
+- [ ] C9a Total War: THREE KINGDOMS packs
+      ([deep dive](deep-dives/c9-total-war-3k-models.md)).
+  - AC: a read-only `PackFileSystem` enumerates every `PFH5` pack with the recorded per-pack
+    counts and case-insensitive paths; compressed or encrypted entries and unknown pack types fail
+    with pack and path; the DB reader resolves the proof units through `main_units`,
+    `unit_variants`, `variants`, `composed_entities`, and `mens`.
+- [ ] C9b TW3K static RMV2 parts
+      ([deep dive](deep-dives/c9-total-war-3k-models.md)).
+  - AC: `RMV2` version 7 and 8 parts with vertex formats 0, 3, and 4 import through C1 with the
+    recorded LOD, vertex, and index counts; `.wsmodel` and `.xml.material` maps land on C3 PBR from
+    BC1, BC3, and BC7 DDS, with the material-map channel layout recorded; proof captures place a
+    helmet part and a horse body beside a Generals Ranger; other versions and formats fail with
+    context.
+- [ ] C9c TW3K skeletons and animation
+      ([deep dive](deep-dives/c9-total-war-3k-models.md)).
+  - AC: `male01` and `horse01_3k` import as bone hierarchies with recomputed inverse binds; version
+    7 clips expand static and animated tracks into C1 TRS channels; animation tables and fragments
+    resolve slots to clips; spearman and horse proof clips bind with no missing targets and capture
+    deterministically; other clip versions fail with context.
+- [ ] C9d TW3K composite soldiers
+      ([deep dive](deep-dives/c9-total-war-3k-models.md)).
+  - AC: `.variantmeshdefinition` slots, references, and weapon attach points compose one model per
+    seed; the same seed yields the same composition; a spearman squad renders with distinct
+    variants; a cavalry rider and horse play `CHARGE` on one clip clock; imposters and
+    merged-variant rendering are left to B5.
+- [ ] C10a AoE3 DE archives and textures
+      ([deep dive](deep-dives/c10-aoe3de-granny-models.md)).
+  - AC: a read-only `BarFileSystem` reads all 42 `.bar` v6 tables exactly to end of file; `alz4`
+    entries decompress to their recorded sizes; XMB decodes to an XML tree; `.ddt` BC1, BC2, BC3,
+    BGRA, and R8 images pass through with mips; encrypted sound entries and unknown flags fail with
+    path.
+- [ ] C10b AoE3 DE static Granny models
+      ([deep dive](deep-dives/c10-aoe3de-granny-models.md)).
+  - AC: a type-tree-driven reader loads uncompressed Granny version 7 files; musketeer and hussar
+    horse meshes, bind poses, and `.material.XMB` maps import through C1 and C3 with the Masks
+    layout recorded; `ArtToolInfo` axes and units normalize to engine space; captures place both
+    beside a Generals Ranger; compressed sections fail with file, section, and compression type.
+- [ ] C10c AoE3 DE skinned animation
+      ([deep dive](deep-dives/c10-aoe3de-granny-models.md)).
+  - AC: bone bindings import as up to four-influence skins; `DaK32fC32f` transform tracks resample
+    to C1 TRS channels and other curve codecs fail with context; animfile XML resolves models,
+    tech variants, clips, and attachments; musketeer march and volley clips and hussar idles bind
+    with no missing targets and capture deterministically.
+- [ ] C10d Granny section decompression (deferred)
+      ([deep dive](deep-dives/c10-aoe3de-granny-models.md#6-references-and-licensing)).
+  - AC: starts only after a recorded provenance and license review of the decompressor source;
+    Oodle1 and BitKnit2 sections decompress to their recorded sizes; the falconet imports and plays
+    `falconet_limber`; uncompressed output is unchanged.
+- [ ] C11a Rise of Legends archives
+      ([deep dive](deep-dives/c11-rise-of-legends-models.md)).
+  - AC: a locator finds an installed game directory by `BIGS/`; a read-only file system enumerates
+    the 83 WAR-BUILDER archives with zlib payloads at their recorded sizes; the nine
+    variant-header config archives fail with path; installer repacks are not read.
+- [ ] C11b Rise of Legends static BH3 models
+      ([deep dive](deep-dives/c11-rise-of-legends-models.md)).
+  - AC: the chunk reader parses every `.bh3` tree; Assassin, Zeke, and Jaguar Knight import with
+    the recorded vertex, triangle, and bone counts and rigid per-bone skins; DDS diffuse, normal,
+    and team-color maps land on C3 PBR; unknown chunk ids are skipped with a diagnostic; captures
+    place the proof units beside a Generals Ranger.
+- [ ] C11c Rise of Legends animation and binding
+      ([deep dive](deep-dives/c11-rise-of-legends-models.md)).
+  - AC: chunk 51 and 50 weights import as blended skins after semantics are verified against rigid
+    output; `.bha` clips resample to C1 TRS channels with the key time unit recorded; stance, LOD,
+    and attachment binding come from the unit XML; Assassin and Jaguar Knight idle and walk stances
+    bind with no missing targets and capture deterministically.
 
 ## Track D: Gameplay Content Expansion
 

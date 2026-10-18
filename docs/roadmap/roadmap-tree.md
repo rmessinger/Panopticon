@@ -234,6 +234,20 @@ mindmap
         C7c-3 M3 sequence conversion
         C7c-4 External m3a clips
         C7c-5 Animated proof captures
+      C8a SAGE-family W3D corpus ⮕
+      C8b BFME-family static meshes ⮕
+      C8c BFME-family skinning and animation ⮕
+      C9a TW3K packs ⮕
+      C9b TW3K static RMV2 parts ⮕
+      C9c TW3K skeletons and animation ⮕
+      C9d TW3K composite soldiers ⮕
+      C10a AoE3 DE archives and textures ⮕
+      C10b AoE3 DE static Granny models ⮕
+      C10c AoE3 DE skinned animation ⮕
+      C10d Granny decompression deferred ⮕
+      C11a Rise of Legends archives ⮕
+      C11b Rise of Legends static BH3 models ⮕
+      C11c Rise of Legends animation ⮕
     D. Gameplay content expansion
       D1 Tech tree prerequisite graph ⮕
       D2 Era and age progression ⮕
@@ -397,6 +411,10 @@ flowchart LR
     C2["C2 Skeleton retargeting"]
     C3["C3 Material mapping"]
     C7A["C7a SC2 CASC storage"]
+    C8A["C8a SAGE-family W3D corpus"]
+    C9A["C9a TW3K packs"]
+    C10A["C10a AoE3 DE archives"]
+    C11A["C11a Rise of Legends archives"]
     D2["D2 Era and age progression"]
     E3["E3 Naval production"]
     G3["G3 Visual regression harness"]
@@ -411,6 +429,10 @@ flowchart LR
     C4["C4 glTF · static + skinned"]
     C4A["C4a EE2 NIF static proof"]
     C7B["C7b SC2 static M3 models"]
+    C8B["C8b BFME-family static meshes"]
+    C9B["C9b TW3K static RMV2 parts"]
+    C10B["C10b AoE3 DE static Granny models"]
+    C11B["C11b Rise of Legends static BH3 models"]
     D3["D3 External content ingestion"]
     F1["F1 Terrain deformation data model"]
     F4["F4 Physics engine integration"]
@@ -432,6 +454,7 @@ flowchart LR
     C4B["C4b EE2 cooked textures"]
     C5["C5 Authoring tooling"]
     C6["C6 Extended features (deferred)"]
+    C10D["C10d Granny decompression (deferred)"]
     D4["D4 Reference non-SAGE scenario"]
     F2["F2 Runtime mesh & rendering update"]
     F3["F3 Weapon-driven terrain deformation"]
@@ -470,6 +493,10 @@ flowchart LR
   subgraph S6["Stage 6 · Terrain/destruction tooling & theater experiments"]
     direction TB
     C7C["C7c SC2 skinned M3 animation"]
+    C8C["C8c BFME-family skinning and animation"]
+    C9C["C9c TW3K skeletons and animation"]
+    C10C["C10c AoE3 DE skinned animation"]
+    C11C["C11c Rise of Legends animation"]
     F8["F8 Authoring & validation tooling"]
     W3A["W3a Sedan 1870"]
     W4["W4 Command & logistics experiment"]
@@ -479,6 +506,7 @@ flowchart LR
 
   subgraph S7["Stage 7 · Somme sector & unit-content consumers"]
     direction TB
+    C9D["C9d TW3K composite soldiers"]
     W3B["W3b Somme sector"]
     M2["M2 EE2 combat units"]
     X1["X1 Imported-unit hit feedback"]
@@ -667,6 +695,32 @@ flowchart LR
   C2 --> C7C
   C4D --> C7C
   C4F --> C7C
+  C1 --> C8A
+  C8A --> C8B
+  C3 --> C8B
+  C8B --> C8C
+  C2 --> C8C
+  C4D --> C8C
+  C1 --> C9A
+  C9A --> C9B
+  C3 --> C9B
+  C9B --> C9C
+  C2 --> C9C
+  C4D --> C9C
+  C1 --> C10A
+  C10A --> C10B
+  C3 --> C10B
+  C10B --> C10C
+  C2 --> C10C
+  C4D --> C10C
+  C1 --> C11A
+  C11A --> C11B
+  C3 --> C11B
+  C11B --> C11C
+  C2 --> C11C
+  C4D --> C11C
+  C9C --> C9D
+  C10B --> C10D
   F2 --> F8
   F6 --> F8
   F7 --> F8
@@ -708,7 +762,7 @@ flowchart LR
 
   class A1,A1OR,A2,A3,A4,A4DS,A5,A5WB trackA;
   class B1,B2,B3,B4,B4A,B4B,B5,B6,B7 trackB;
-  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C trackC;
+  class C1,C2,C3,C4,C4A,C4B,C4C,C4D,C4E,C4F,C4G,C4H,C4I,C5,C6,C7A,C7B,C7C,C8A,C8B,C8C,C9A,C9B,C9C,C9D,C10A,C10B,C10C,C10D,C11A,C11B,C11C trackC;
   class F1,F2,F3,F4,F4A,F5,F6,F7,F8 trackF;
   class G1,G2,G3,G4,G5,G6,G7,G8,G9,G10 trackG;
   class H1,H2,H2A,H2B,H3,H4,H5,H6,H7 trackH;

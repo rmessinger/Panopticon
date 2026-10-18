@@ -202,6 +202,24 @@
   unsupported semantics fail, while optional material extensions may be ignored with a warning
   only when core output remains complete. Affects
   [C6](track-c-external-assets.md).
+- BFME-family models. Decision (2026-10-18): BFME, BFME2, and RotWK models load through the native
+  W3D reader and its C1 adapters, not a separate importer, because the existing reader already
+  parses 99.9% of the corpus. Bad corpus files fail soft with one diagnostic each. BFME gameplay
+  INI stays in D3. See the [deep dive](deep-dives/c8-sage-family-w3d.md). Affects
+  [C8a-C8c](track-c-external-assets.md).
+- Unlicensed format references. Decision (2026-10-18): public tools without a published license
+  (AssetEditor for Total War, ptasev Rise-of-Nations for BH3) are factual references only and no
+  code is copied, matching the C7 clean-room rule. MIT tools (RPFM, Resource Manager, LSLib) may be
+  ported with credit. Affects [C9-C11](track-c-external-assets.md).
+- Granny decompression. Decision (2026-10-18): C10b and C10c support uncompressed Granny files only
+  and reject Oodle1 and BitKnit2 sections explicitly. Decompression is the deferred C10d phase,
+  gated on a provenance and license review of the decompressor source. See the
+  [deep dive](deep-dives/c10-aoe3de-granny-models.md#6-references-and-licensing). Affects
+  [C10b-C10d](track-c-external-assets.md).
+- Rise of Legends source. Decision (2026-10-18): C11 reads an installed game directory only.
+  Installer repack extraction depends on patched third-party tools and installer passwords, so it
+  stays out of the roadmap. See the [deep dive](deep-dives/c11-rise-of-legends-models.md#2-install-and-packaging).
+  Affects [C11a](track-c-external-assets.md).
 - Large-map ceiling & compatibility. Decision: no size cap; no compatibility constraint.
   Maps scale arbitrarily (bounded by disk, not RAM/format), to be grown gradually for scaling
   experiments; Panopticon may extend/replace the `.map` format and need not stay loadable in the
