@@ -25,6 +25,8 @@ public sealed class ResultsViewModel : IDisposable
     private IReadOnlyList<RunEventRecord> _eventsThroughFrame = [];
     private IReadOnlyList<MetricSeriesRecord> _series = [];
     private IReadOnlyList<string> _divergenceLines = [];
+    private RecordedFrameProjection _frameProjection = RecordedFrameProjection.Empty;
+    private uint? _selectedPointId;
 
     public ResultsViewModel(IBundleFileSelector bundleSelector)
     {
@@ -137,6 +139,34 @@ public sealed class ResultsViewModel : IDisposable
         }
     }
 
+    /// <summary>WI-A5-18: card-12 primitives for the frame at the current scrub position.</summary>
+    public RecordedFrameProjection FrameProjection
+    {
+        get => _frameProjection;
+        private set
+        {
+            _frameProjection = value;
+            OnChanged(nameof(FrameProjection));
+        }
+    }
+
+    /// <summary>WI-A5-18: entity id of the hit-tested point, null when nothing is selected.</summary>
+    public uint? SelectedPointId
+    {
+        get => _selectedPointId;
+        set
+        {
+            if (_selectedPointId == value)
+            {
+                return;
+            }
+
+            _selectedPointId = value;
+            OnChanged(nameof(SelectedPointId));
+            OnChanged(nameof(FrameProjection));
+        }
+    }
+
     /// <summary>WI-A5-05: compares the loaded bundle's T1 trees against a second run manifest.</summary>
     public AsyncCommand CompareCommand { get; }
 
@@ -150,6 +180,7 @@ public sealed class ResultsViewModel : IDisposable
         _timeline.SeekTo(frame);
         SelectedFrame = _timeline.CurrentFrame;
         EventsThroughFrame = _timeline.EventsThrough(_timeline.CurrentFrame);
+        UpdateFrameProjection();
         StatusMessage = DescribeCurrentState();
         OnChanged(nameof(Timeline));
     }
@@ -234,6 +265,7 @@ public sealed class ResultsViewModel : IDisposable
             SelectedFrame = timeline.CurrentFrame;
             Series = timeline.Series;
             EventsThroughFrame = timeline.EventsThrough(timeline.CurrentFrame);
+            UpdateFrameProjection();
             StatusMessage = DescribeCurrentState();
             DivergenceLines = [];
             OnChanged(nameof(HasTimeline));
@@ -262,6 +294,14 @@ public sealed class ResultsViewModel : IDisposable
         _timeline?.CurrentState is { } state
             ? $"frame {state.Frame}: {state.Objects.Count} objects, {_timeline.Series.Count} series"
             : "no state loaded";
+
+    /// <summary>WI-A5-18: re-projects the recorded frame at the scrub position for rendering.</summary>
+    private void UpdateFrameProjection()
+    {
+        FrameProjection = RecordedStateProjector.Project(
+            _timeline?.CurrentState,
+            _timeline?.Bundle.Manifest.T1Configuration);
+    }
 
     private void OnChanged(string propertyName) =>
         PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));

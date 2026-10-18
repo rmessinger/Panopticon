@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-18` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-3 results replayer |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-04`, `WI-A5-08`, `WI-A5-12` |
@@ -39,11 +39,19 @@ keep metrics and events synchronized.
 
 ## Acceptance criteria
 
-- [ ] Scrubbing changes rendered state without host execution.
-- [ ] RTS and graph fixtures render through one view contract.
-- [ ] Metrics and events track the selected frame.
-- [ ] Core owns projection and hit-testing logic.
-- [ ] Standard validation passes.
+- [x] Scrubbing changes rendered state without host execution.
+  - `Scrubbing_ChangesProjectionWithTheRecordedState`: visitor (id 10) present at frame 7,
+    absent at frame 17, purely from artifact reads.
+- [x] RTS and graph fixtures render through one view contract.
+  - `RunFrameRenderer.Render` takes card-12 primitives: RTS points and authored graph
+    polylines/polygons/labels render through the same call (`RunFrameRendererTests`).
+- [x] Metrics and events track the selected frame.
+  - `MetricChartRenderer` gains `cursorFrame` (vertical cursor at the scrub position); the event
+    list already filters through the frame (WI-A5-04).
+- [x] Core owns projection and hit-testing logic.
+  - `RecordedStateProjector` (Core) projects summaries; `RunFrameRenderer.HitTest` (Core) picks
+    the nearest marker; the Avalonia view only forwards pointer positions.
+- [x] Standard validation passes.
 
 ## Validation commands
 
