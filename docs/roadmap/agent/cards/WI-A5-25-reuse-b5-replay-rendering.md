@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-25` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-5 visualization at scale |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-24`; B5 reusable batching, culling, and LOD contracts implemented |
@@ -20,7 +20,7 @@ screen-space size.
 - B5 implementation plan and reusable renderer contracts.
 - Streaming/culling output from `WI-A5-24`.
 - Results renderer from `WI-A5-18`.
-- ReplaySketch MAUI renderer and screenshot instructions.
+- ReplaySketch Avalonia renderer and screenshot instructions (card text predates the MAUI-to-Avalonia rename).
 
 ## Steps
 
@@ -33,16 +33,21 @@ screen-space size.
 ## Files likely to change
 
 - ReplaySketch Core visualization adapters
-- Narrow MAUI renderer files
+- Narrow Avalonia renderer files
 - ReplaySketch tests
 
 ## Acceptance criteria
 
-- [ ] Repeated entities batch instead of producing one render submission each.
-- [ ] At least two visual LODs are selected at documented thresholds.
-- [ ] Culling and batch counts are headlessly asserted.
-- [ ] Map-panel behavior remains unchanged.
-- [ ] Standard validation passes.
+- [x] Repeated entities batch instead of producing one render submission each.
+  - `RepeatedEntities_BatchIntoOneSubmission`: 500 same-kind entities form one batch; `RunFrameRenderer` draws one paint per (owner, kind, LOD) batch.
+- [x] At least two visual LODs are selected at documented thresholds.
+  - `ReplayLodOptions` records Full >= 6px, Dot >= 2px, Pixel below; `LodThresholds_SelectAtDocumentedSizes` covers all three.
+- [x] Culling and batch counts are headlessly asserted.
+  - `StreamingCullingOutput_FeedsBatching` batches only the viewport-visible subset; `ReplayBatchStats` carries BatchCount/Full/Dot/Pixel.
+- [x] Map-panel behavior remains unchanged.
+  - Map-tab screenshot byte profile identical to prior groups (81637B).
+- [x] Standard validation passes.
+  - Filter `ReplayLod|ReplayInstance` 5/5; renderer/consumers regression filter 37/37; results-tab screenshot clean.
 
 ## Validation commands
 
@@ -50,8 +55,8 @@ screen-space size.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~ReplayLod|FullyQualifiedName~ReplayInstance"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-lod.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-lod.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 
