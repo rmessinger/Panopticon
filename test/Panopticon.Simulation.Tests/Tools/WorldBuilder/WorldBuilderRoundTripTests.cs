@@ -16,7 +16,11 @@ namespace Panopticon.Tests.Tools.WorldBuilder;
 /// made pushes the single application owner, card 28 made new maps writable, cards 34/35 gave
 /// them companions and playable defaults; these tests hold the resulting contract together.
 /// The skirmish play leg is install-backed and skipped in CI.
+/// The play leg constructs a Game whose UserMapCache rewrites the shared user-data
+/// MapCache.ini, so this class joins the serial collection to avoid racing other
+/// game-booting tests.
 /// </summary>
+[Collection("SerialGameTests")]
 public sealed class WorldBuilderRoundTripTests : MockedGameTest
 {
     private const string PlacedTypeName = "AmericaTankCrusader";

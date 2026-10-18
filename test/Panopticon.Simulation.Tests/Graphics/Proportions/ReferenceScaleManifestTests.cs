@@ -18,6 +18,10 @@ namespace Panopticon.Tests.Graphics.Proportions;
 /// game assets. Any drift (asset change, importer change, exclusion change) fails explicitly
 /// with the measured values; the manifest is never regenerated automatically.
 /// </summary>
+// Game boots rewrite the shared user-data MapCache.ini (UserMapCache.GenerateMapCacheIniFile
+// uses an exclusive File.Create), so game-booting classes must not run in parallel. WI-A5-02
+// group-4 hygiene: this class raced GeneralsUnitParityTests on that file.
+[Collection("SerialGameTests")]
 public class ReferenceScaleManifestTests
 {
     private const decimal ExtentTolerance = 0.01m;
