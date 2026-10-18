@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-19` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-3 fidelity overlay |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-12`, `WI-A5-18` |
@@ -36,11 +36,21 @@ Render an optional domain-supplied fidelity category without depending on B7 imp
 
 ## Acceptance criteria
 
-- [ ] Synthetic fidelity values render distinct documented categories.
-- [ ] Missing values disable the overlay without failure.
-- [ ] A5 does not duplicate B7 policy or simulation types.
-- [ ] Legend and frame state stay synchronized.
-- [ ] Standard validation passes.
+- [x] Synthetic fidelity values render distinct documented categories.
+  - `FidelityOverlayTests.DistinctCategories_RenderDistinctColorsAndCarryMarkers`: Full/Reduced/
+    Aggregated map to distinct palette slots and markers carry the category.
+- [x] Missing values disable the overlay without failure.
+  - `OverlayWithoutCategories_DisablesGracefully`: explicit `fidelity data unavailable in this
+    run` label, owner colors retained, no throw.
+- [x] A5 does not duplicate B7 policy or simulation types.
+  - Overlay consumes the free-form `DomainVisualPoint.FidelityCategory` string; the palette's
+    first three slots are documented as covering B7's planned vocabulary without referencing
+    B7 types.
+- [x] Legend and frame state stay synchronized.
+  - The legend is rebuilt inside every `RunFrameRenderer.Render` call from that frame's
+    primitives; `ViewModel_ModeSwitch_RaisesFrameProjection` covers the repaint path.
+- [x] Standard validation passes.
+  - `FidelityOverlay` filter 5/5; results-tab screenshot captured under `DISPLAY=:99`.
 
 ## Validation commands
 
@@ -48,7 +58,7 @@ Render an optional domain-supplied fidelity category without depending on B7 imp
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~FidelityOverlay"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-fidelity.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-fidelity.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 

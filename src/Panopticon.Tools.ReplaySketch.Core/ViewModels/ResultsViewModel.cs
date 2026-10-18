@@ -27,6 +27,7 @@ public sealed class ResultsViewModel : IDisposable
     private IReadOnlyList<string> _divergenceLines = [];
     private RecordedFrameProjection _frameProjection = RecordedFrameProjection.Empty;
     private uint? _selectedPointId;
+    private FrameColorMode _frameColorMode = FrameColorMode.Owner;
 
     public ResultsViewModel(IBundleFileSelector bundleSelector)
     {
@@ -163,6 +164,23 @@ public sealed class ResultsViewModel : IDisposable
 
             _selectedPointId = value;
             OnChanged(nameof(SelectedPointId));
+            OnChanged(nameof(FrameProjection));
+        }
+    }
+
+    /// <summary>WI-A5-19: how the frame view colors points; switching repaints the projection.</summary>
+    public FrameColorMode FrameColorMode
+    {
+        get => _frameColorMode;
+        set
+        {
+            if (_frameColorMode == value)
+            {
+                return;
+            }
+
+            _frameColorMode = value;
+            OnChanged(nameof(FrameColorMode));
             OnChanged(nameof(FrameProjection));
         }
     }

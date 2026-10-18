@@ -17,7 +17,8 @@ public sealed record DomainVisualPoint(
     Vector3 Position,
     int OwnerIndex,
     string KindName,
-    float Size = 1f) : DomainVisualPrimitive(BucketKey);
+    float Size = 1f,
+    string? FidelityCategory = null) : DomainVisualPrimitive(BucketKey);
 
 /// <summary>An open path: a graph edge, a route, or a movement trail.</summary>
 public sealed record DomainVisualPolyline(
