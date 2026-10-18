@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-23` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-5 authoring at scale |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-03` |
@@ -38,11 +38,19 @@ specifications and a seed.
 
 ## Acceptance criteria
 
-- [ ] Same configuration and seed produce identical artifacts.
-- [ ] 10k entities and 10k commands require no per-item hand entry.
-- [ ] Generated commands use the P0 model.
-- [ ] Invalid generator bounds fail before partial output.
-- [ ] Standard validation passes.
+- [x] Same configuration and seed produce identical artifacts.
+  - `SameSeed_ProducesIdenticalExpandedScenarios` compares serialized JSON of two expansions;
+    different seeds diverge in scattered placements.
+- [x] 10k entities and 10k commands require no per-item hand entry.
+  - `TenThousand_PlacementsAndCommands_ExpandWithoutHandEntry`: grid 100x100 placements plus
+    1000 repetitions of a 10-action template, well under the 10 s bound.
+- [x] Generated commands use the P0 model.
+  - `ExpandedCommands_AreP0CommandSpecEntries`: generated actions carry `CommandSpec` with the
+    template's `OrderType` and re-timed `FixedTiming`.
+- [x] Invalid generator bounds fail before partial output.
+  - `InvalidBounds_ThrowBeforeOutput`: zero rows, non-fixed template timing, and overlapping
+    repetitions all throw from `ValidateGeneratorBounds`/`ExpandCommands` before any artifact.
+- [x] Standard validation passes.
 
 ## Validation commands
 

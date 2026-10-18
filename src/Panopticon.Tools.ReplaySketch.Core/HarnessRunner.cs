@@ -69,6 +69,10 @@ public static class HarnessRunner
             throw new InvalidOperationException($"Scenario validation failed: {details}");
         }
 
+        // WI-A5-23: expand procedural generators into placements and scheduled commands
+        // before the scenario is consumed anywhere.
+        scenario = ScenarioGeneratorService.Expand(scenario);
+
         // Build a concrete scenario where handle-dependent actions are replaced with no-ops
         // so that ReplayExporter does not encounter unresolvable arguments at export time.
         var concreteScenario = BuildConcreteScenario(scenario);
@@ -281,6 +285,8 @@ public static class HarnessRunner
             StopConditions = scenario.StopConditions,
             RecordedMetricSeries = scenario.RecordedMetricSeries,
             Recording = scenario.Recording,
+            PopulationGenerators = scenario.PopulationGenerators,
+            CommandGenerators = scenario.CommandGenerators,
             Assertions = scenario.Assertions,
         };
 
