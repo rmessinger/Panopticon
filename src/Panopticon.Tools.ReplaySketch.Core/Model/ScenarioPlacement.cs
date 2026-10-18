@@ -19,6 +19,15 @@ public sealed class ScenarioPlacement
 
     /// <summary>Spawn count for this placement entry; default 1.</summary>
     public int Quantity { get; set; } = 1;
+
+    /// <summary>
+    /// Recorded health at capture time (WI-A5-11); null for placements authored by hand. The
+    /// projection is lossy: only the recorded scalar is carried, no module state.
+    /// </summary>
+    public float? Health { get; set; }
+
+    /// <summary>Recorded maximum health at capture time (WI-A5-11); null when authored by hand.</summary>
+    public float? MaxHealth { get; set; }
 }
 
 /// <summary>

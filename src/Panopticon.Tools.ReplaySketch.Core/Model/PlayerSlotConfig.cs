@@ -21,6 +21,12 @@ public sealed class PlayerSlotConfig
     /// <summary>1-based team number.</summary>
     public int Team { get; set; }
 
+    /// <summary>
+    /// Starting money for the slot (WI-A5-11 capture-from-run); null when authored by hand.
+    /// Capture projects the recorded player money vector into this field.
+    /// </summary>
+    public uint? StartingMoney { get; set; }
+
     public List<ActionEntry> Actions { get; set; } = new();
 
     /// <summary>

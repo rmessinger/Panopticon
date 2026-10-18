@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using SkiaSharp;
 using Panopticon.Tools.ReplaySketch.Profiles;
+using SkiaSharp;
 using Xunit;
 
 namespace Panopticon.Tests.Tools.ReplaySketch;
