@@ -68,6 +68,37 @@ public sealed class BlendTileData : Asset
     private List<BlendTileTextureIndex> _textureIndices;
 
     /// <summary>
+    /// Zero-filled tile data sized to a height map (WI-A5-27, WI-A5-28): tile, blend, and cliff
+    /// arrays plus the version-gated passability arrays are allocated so editor edits and
+    /// serialization always have a target. Version stays unset until a factory stamps one.
+    /// </summary>
+    public static BlendTileData Create(uint width, uint height)
+    {
+        return new BlendTileData
+        {
+            NumTiles = width * height,
+            Tiles = new ushort[width, height],
+            Blends = new uint[width, height],
+            ThreeWayBlends = new uint[width, height],
+            CliffTextures = new uint[width, height],
+            Impassability = new bool[width, height],
+            ImpassabilityToPlayers = new bool[width, height],
+            PassageWidths = new bool[width, height],
+            Taintability = new bool[width, height],
+            ExtraPassability = new bool[width, height],
+            Flammability = new TileFlammability[width, height],
+            Visibility = new bool[width, height],
+            ImpassabilityToAirUnits = new bool[width, height],
+            Buildability = new bool[width, height],
+            TiberiumGrowability = new bool[width, height],
+            DynamicShrubberyDensity = new byte[width, height],
+            Textures = [],
+            BlendDescriptions = [],
+            CliffTextureMappings = [],
+        };
+    }
+
+    /// <summary>
     /// Derived data.
     /// </summary>
     public IReadOnlyList<BlendTileTextureIndex> TextureIndices
