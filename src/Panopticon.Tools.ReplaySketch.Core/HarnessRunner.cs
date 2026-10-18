@@ -140,7 +140,8 @@ public static class HarnessRunner
                 tolerances: null,
                 snapshotArtifactPath: Path.Combine(bundleDirectory, RunBundle.StateFileName),
                 domainStateArtifactPath: null,
-                options: null);
+                options: null,
+                detailOptions: scenario.Recording?.ToDetailOptions());
             var eventRecorder = recording is null ? null : new RunEventRecorder(game, monitor, () => host.Frame);
             var runOutputRecorder = recording is null && onRunCompleted is not null
                 ? new RunOutputRecorder(

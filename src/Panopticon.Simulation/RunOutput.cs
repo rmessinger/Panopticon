@@ -291,6 +291,12 @@ public sealed class RunOutput
         EndFrame = window.EndFrame,
         DivergedSubtrees = window.DivergedSubtrees?.ToList(),
         Frames = window.Frames.Select(ToDto).ToList(),
+        Reason = window.Reason,
+        RingDepth = window.RingDepth,
+        MaxWindows = window.MaxWindows,
+        CooldownFrames = window.CooldownFrames,
+        RegionKeys = window.RegionKeys?.ToList(),
+        CapturedEntityCount = window.CapturedEntityCount,
     };
 
     private static WorldStateDeltaRecord ToDto(Recording.WorldStateDelta delta) => new()
@@ -362,6 +368,20 @@ public sealed class TriggeredDetailWindowRecord
     public uint EndFrame { get; set; }
     public List<string>? DivergedSubtrees { get; set; }
     public List<WorldStateDeltaRecord> Frames { get; set; } = new();
+
+    /// <summary>WI-A5-21: trigger reason ("divergence" or "marked").</summary>
+    public string Reason { get; set; } = "divergence";
+
+    /// <summary>WI-A5-21: budgets this window was captured under.</summary>
+    public int RingDepth { get; set; }
+    public int MaxWindows { get; set; }
+    public uint CooldownFrames { get; set; }
+
+    /// <summary>WI-A5-21: region keys the frames were filtered to; null when unfiltered.</summary>
+    public List<string>? RegionKeys { get; set; }
+
+    /// <summary>WI-A5-21: distinct entity ids appearing across the captured frames.</summary>
+    public int CapturedEntityCount { get; set; }
 }
 
 public sealed class WorldStateDeltaRecord

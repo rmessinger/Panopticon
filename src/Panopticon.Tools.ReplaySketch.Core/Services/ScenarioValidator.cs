@@ -253,6 +253,32 @@ public static class ScenarioValidator
         {
             diagnostics.Add(new ScenarioValidationDiagnostic("recording.snapshotInterval", "Snapshot interval must be at least 1."));
         }
+
+        if (scenario.Recording.DetailRingDepth is < 0)
+        {
+            diagnostics.Add(new ScenarioValidationDiagnostic("recording.detailRingDepth", "Detail ring depth must not be negative."));
+        }
+
+        if (scenario.Recording.DetailMaxWindows is < 0)
+        {
+            diagnostics.Add(new ScenarioValidationDiagnostic("recording.detailMaxWindows", "Detail max windows must not be negative."));
+        }
+
+        if (scenario.Recording.DetailMarkedStartFrame is { } start && scenario.Recording.DetailMarkedEndFrame is { } end && end < start)
+        {
+            diagnostics.Add(new ScenarioValidationDiagnostic("recording.detailMarkedEndFrame", "Detail marked end frame must not precede its start frame."));
+        }
+
+        if (scenario.Recording.DetailRegionKeys is { } keys)
+        {
+            for (var i = 0; i < keys.Count; i++)
+            {
+                if (string.IsNullOrEmpty(keys[i]))
+                {
+                    diagnostics.Add(new ScenarioValidationDiagnostic($"recording.detailRegionKeys[{i}]", "Detail region keys must not be empty."));
+                }
+            }
+        }
     }
 
     private static void ValidateGenerators(ReplayScenario scenario, List<ScenarioValidationDiagnostic> diagnostics)

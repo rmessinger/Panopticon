@@ -249,6 +249,20 @@ public sealed class TriggeredDetailWindow
     public List<WorldStateDelta> Frames { get; } = new();
     public IReadOnlyList<string>? DivergedSubtrees { get; init; }
 
+    /// <summary>WI-A5-21: why this window exists ("divergence" or "marked").</summary>
+    public string Reason { get; init; } = "divergence";
+
+    /// <summary>WI-A5-21: the budgets this window was captured under, echoed into the manifest.</summary>
+    public int RingDepth { get; init; }
+    public int MaxWindows { get; init; }
+    public uint CooldownFrames { get; init; }
+
+    /// <summary>WI-A5-21: region keys the frames were filtered to, or null when unfiltered.</summary>
+    public IReadOnlyList<string>? RegionKeys { get; init; }
+
+    /// <summary>WI-A5-21: distinct entity ids appearing across the captured frames.</summary>
+    public int CapturedEntityCount { get; init; }
+
     public uint StartFrame => Frames.Count > 0 ? Frames[0].Frame : TriggeredAtFrame;
     public uint EndFrame => Frames.Count > 0 ? Frames[^1].Frame : TriggeredAtFrame;
 }
@@ -271,25 +285,65 @@ public sealed class TriggeredDetailCapture : IDisposable
     private readonly Queue<WorldStateDelta> _ring = new();
     private readonly List<TriggeredDetailWindow> _windows = new();
     private readonly List<WorldStateDelta> _markedFrames = new();
+    private readonly Dictionary<uint, string> _lastRegion = new();
+    private readonly Func<WorldObjectState, string>? _regionClassifier;
+    private readonly HashSet<string>? _regionFilter;
     private bool _hasMarkedWindow;
     private uint _markedStart;
     private uint _markedEnd;
 
     public int RingDepth { get; }
     public int MaxWindows { get; }
+    public uint CooldownFrames { get; }
+    public IReadOnlyList<string>? RegionKeys { get; }
     public IReadOnlyList<TriggeredDetailWindow> Windows => _windows;
 
     private uint _lastTripFrame;
     private bool _full;
 
-    public TriggeredDetailCapture(WorldStateSampler sampler, int ringDepth = DefaultRingDepth, int maxWindows = DefaultMaxWindows)
+    public TriggeredDetailCapture(
+        WorldStateSampler sampler,
+        int ringDepth = DefaultRingDepth,
+        int maxWindows = DefaultMaxWindows,
+        uint? cooldownFrames = null,
+        Func<WorldObjectState, string>? regionClassifier = null,
+        IReadOnlyList<string>? regionKeys = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(ringDepth);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxWindows);
 
         _sampler = sampler;
         RingDepth = ringDepth;
         MaxWindows = maxWindows;
+        CooldownFrames = cooldownFrames ?? (uint)ringDepth;
+        _regionClassifier = regionClassifier;
+        RegionKeys = regionKeys is { Count: > 0 } ? regionKeys : null;
+        _regionFilter = RegionKeys is null ? null : new HashSet<string>(RegionKeys, StringComparer.Ordinal);
         _sampler.FrameSampled += OnFrameSampled;
+    }
+
+    /// <summary>
+    /// WI-A5-21: builds a capture from caller options, wiring the marked window when both its
+    /// bounds are set.
+    /// </summary>
+    public static TriggeredDetailCapture Create(
+        WorldStateSampler sampler,
+        TriggeredDetailCaptureOptions options,
+        Func<WorldObjectState, string>? regionClassifier = null)
+    {
+        var capture = new TriggeredDetailCapture(
+            sampler,
+            options.RingDepth ?? DefaultRingDepth,
+            options.MaxWindows ?? DefaultMaxWindows,
+            options.CooldownFrames,
+            regionClassifier,
+            options.RegionKeys)
+        {
+            _markedStart = options.MarkedStartFrame ?? 0,
+            _markedEnd = options.MarkedEndFrame ?? 0,
+            _hasMarkedWindow = options.MarkedStartFrame is not null && options.MarkedEndFrame is not null,
+        };
+        return capture;
     }
 
     /// <summary>
@@ -321,6 +375,26 @@ public sealed class TriggeredDetailCapture : IDisposable
             _ring.Dequeue();
         }
 
+        // Region bookkeeping for filtering: track where each live entity currently sits. Bounded
+        // by the live entity count and zero-cost when no filter is configured (WI-A5-21).
+        if (_regionFilter is not null && _regionClassifier is not null)
+        {
+            foreach (var added in delta.Added)
+            {
+                _lastRegion[added.ObjectId] = _regionClassifier(added);
+            }
+
+            foreach (var changed in delta.Changed)
+            {
+                _lastRegion[changed.ObjectId] = _regionClassifier(changed);
+            }
+
+            foreach (var removed in delta.Removed)
+            {
+                _lastRegion.Remove(removed);
+            }
+        }
+
         // Marked window collection.
         if (_hasMarkedWindow && delta.Frame >= _markedStart && delta.Frame <= _markedEnd)
         {
@@ -328,24 +402,71 @@ public sealed class TriggeredDetailCapture : IDisposable
         }
     }
 
+    private WorldStateDelta ProjectToRegions(WorldStateDelta delta)
+    {
+        if (_regionFilter is null || _regionClassifier is null)
+        {
+            return delta;
+        }
+
+        var projected = new WorldStateDelta { Frame = delta.Frame };
+        projected.PlayerMoney.AddRange(delta.PlayerMoney);
+        projected.Added.AddRange(delta.Added.Where(o => _regionFilter.Contains(_regionClassifier(o))));
+        projected.Changed.AddRange(delta.Changed.Where(o => _regionFilter.Contains(_regionClassifier(o))));
+
+        // Removals carry only an id: classify through the last known region, keeping unknowns so
+        // a filter never hides a deletion (conservative include, WI-A5-21).
+        projected.Removed.AddRange(delta.Removed.Where(id =>
+            !_lastRegion.TryGetValue(id, out var region) || _regionFilter.Contains(region)));
+
+        return projected;
+    }
+
     /// <summary>
-    /// Captures the current ring buffer as a trigger window. Cooldown of one ring depth between
-    /// trips keeps a persistently-diverging run from filling every window with the same region;
-    /// the first trip is always allowed.
+    /// Captures the current ring buffer as a trigger window. Cooldown between trips keeps a
+    /// persistently-diverging run from filling every window with the same region; the first trip
+    /// is always allowed.
     /// </summary>
     internal void Trip(uint frame, SignatureTreeFrame tree, IReadOnlyList<string>? divergedSubtrees = null)
     {
-        if (_full || (_lastTripFrame != 0 && frame < _lastTripFrame + (uint)RingDepth))
+        if (_full || (_lastTripFrame != 0 && frame < _lastTripFrame + CooldownFrames))
         {
             return;
+        }
+
+        var frames = new List<WorldStateDelta>(_ring.Count);
+        var entityIds = new HashSet<uint>();
+        foreach (var delta in _ring)
+        {
+            var projected = ProjectToRegions(delta);
+            frames.Add(projected);
+            foreach (var added in projected.Added)
+            {
+                entityIds.Add(added.ObjectId);
+            }
+
+            foreach (var changed in projected.Changed)
+            {
+                entityIds.Add(changed.ObjectId);
+            }
+
+            foreach (var removed in projected.Removed)
+            {
+                entityIds.Add(removed);
+            }
         }
 
         var window = new TriggeredDetailWindow
         {
             TriggeredAtFrame = frame,
             DivergedSubtrees = divergedSubtrees,
+            RingDepth = RingDepth,
+            MaxWindows = MaxWindows,
+            CooldownFrames = CooldownFrames,
+            RegionKeys = RegionKeys,
+            CapturedEntityCount = entityIds.Count,
         };
-        window.Frames.AddRange(_ring);
+        window.Frames.AddRange(frames);
         _windows.Add(window);
         _lastTripFrame = frame;
         _full = _windows.Count >= MaxWindows;
@@ -356,12 +477,38 @@ public sealed class TriggeredDetailCapture : IDisposable
     {
         if (_hasMarkedWindow && _markedFrames.Count > 0)
         {
+            var projectedFrames = _markedFrames.Select(ProjectToRegions).ToList();
+            var entityIds = new HashSet<uint>();
+            foreach (var delta in projectedFrames)
+            {
+                foreach (var added in delta.Added)
+                {
+                    entityIds.Add(added.ObjectId);
+                }
+
+                foreach (var changed in delta.Changed)
+                {
+                    entityIds.Add(changed.ObjectId);
+                }
+
+                foreach (var removed in delta.Removed)
+                {
+                    entityIds.Add(removed);
+                }
+            }
+
             var window = new TriggeredDetailWindow
             {
                 Marked = true,
-                TriggeredAtFrame = _markedFrames[0].Frame,
+                TriggeredAtFrame = projectedFrames[0].Frame,
+                Reason = "marked",
+                RingDepth = RingDepth,
+                MaxWindows = MaxWindows,
+                CooldownFrames = CooldownFrames,
+                RegionKeys = RegionKeys,
+                CapturedEntityCount = entityIds.Count,
             };
-            window.Frames.AddRange(_markedFrames);
+            window.Frames.AddRange(projectedFrames);
             _windows.Add(window);
         }
 
@@ -449,7 +596,8 @@ public sealed class RunRecording : IDisposable
         SignatureTolerances? tolerances = null,
         string? snapshotArtifactPath = null,
         string? domainStateArtifactPath = null,
-        RecordingOptions? options = null)
+        RecordingOptions? options = null,
+        TriggeredDetailCaptureOptions? detailOptions = null)
     {
         var reconstructable = host.DomainModel as IReconstructableDomain;
         var effectiveCadence = reconstructable?.Cadence
@@ -460,7 +608,23 @@ public sealed class RunRecording : IDisposable
         var t0 = new RunOutputRecorder(host, game, seed, scenarioId, sampleInterval);
         // T2 subscribes before T1 so the ring buffer has ingested the current frame's delta
         // before the trigger evaluates and trips. Operational mode has no live capture (A1-6 §4).
-        var t2 = options?.Mode == RecordingMode.Operational ? null : new TriggeredDetailCapture(sampler);
+        // WI-A5-21: region-filtered detail routes the domain's TopologyKey as the classifier.
+        Func<WorldObjectState, string>? regionClassifier = null;
+        if (detailOptions?.RegionKeys is { Count: > 0 })
+        {
+            string Classify(WorldObjectState o)
+            {
+                return host.DomainModel.TopologyKey(new DomainEntitySummary(o.ObjectId, o.DefinitionName, o.OwnerIndex, o.Position, o.Health, o.MaxHealth));
+            }
+
+            regionClassifier = Classify;
+        }
+
+        var t2 = options?.Mode == RecordingMode.Operational
+            ? null
+            : detailOptions is null
+                ? new TriggeredDetailCapture(sampler)
+                : TriggeredDetailCapture.Create(sampler, detailOptions, regionClassifier);
         var t1 = new TieredSignatureRecorder(sampler, tolerances, sampleInterval, domain: host.DomainModel);
         var snapshots = new SnapshotDeltaRecorder(sampler, snapshotInterval, snapshotArtifactPath, snapshotArtifactPath is null ? null : game);
         // WI-A5-07: frame-zero baseline lands before the first delta, so bundle consumers can
