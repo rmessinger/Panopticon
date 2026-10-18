@@ -65,7 +65,7 @@ public sealed class ScenarioPopulationTests
 
         // Population edits do not touch the map's terrain or objects.
         Assert.Equal(10, map.MapFile.HeightMapData.Elevations[10, 10]);
-        Assert.Empty(map.MapFile.ObjectsList.Objects.Where(o => o.TypeName == "AmericaTankCrusader"));
+        Assert.DoesNotContain(map.MapFile.ObjectsList.Objects, o => o.TypeName == "AmericaTankCrusader");
 
         // Map edits do not touch the population document.
         map.UndoStack.Push(HeightMapEdit.Capture(map.MapFile.HeightMapData, 10, 10, 1, 1, elevations => elevations[10, 10] = 42, "raise"));

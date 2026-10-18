@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-16` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-2 experiment matrix |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-39`, `WI-A5-09`, `WI-A5-15` |
@@ -39,11 +39,19 @@ bindings.
 
 ## Acceptance criteria
 
-- [ ] A two-axis matrix writes exactly one bundle per cell.
-- [ ] Keys are stable and collision-free for the supported value types.
-- [ ] Failed and successful cells remain inspectable.
-- [ ] Moving the complete run set preserves all references.
-- [ ] Standard validation passes.
+- [x] A two-axis matrix writes exactly one bundle per cell.
+  - `MatrixRunSetSmokeTests.RunToBundles_WritesManifestAndKeyedCellBundles` (install-backed, 2 seed cells);
+    engine-free `RunCells` orchestration covers the same layout.
+- [x] Keys are stable and collision-free for the supported value types.
+  - `BuildCellKey` ordinal-sorts axis=value pairs and sanitizes file-name characters; sanitized
+    collisions (v/1 vs v_1) throw naming both raw bindings.
+- [x] Failed and successful cells remain inspectable.
+  - A throwing cell is recorded as failed with its error; other cells still run and their
+    bundle directories persist (`FailureIsolation_RecordsErrorAndPreservesCompletedCells`).
+- [x] Moving the complete run set preserves all references.
+  - `runset.json` carries relative cell paths only; after `Directory.Move` the manifest is
+    byte-identical and every cell directory resolves under the new root.
+- [x] Standard validation passes.
 
 ## Validation commands
 
