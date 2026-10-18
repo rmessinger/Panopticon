@@ -281,6 +281,7 @@ public sealed class ResultsView : UserControl
                     _speed.SelectedIndex = index;
                 }
             }
+
             if (_viewModel.HasTimeline)
             {
                 _timeline.Minimum = _viewModel.Timeline!.FirstFrame;
