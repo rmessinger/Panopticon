@@ -47,7 +47,8 @@ public sealed class MainWindow : Window
     private readonly HarnessView _harnessView = new(new global::Panopticon.Tools.ReplaySketch.ViewModels.HarnessLauncherViewModel(new HarnessCatalogClient(), new HarnessRunClient(), new AvaloniaMainThreadDispatcher()));
     private readonly ResultsView _resultsView = new(
         new global::Panopticon.Tools.ReplaySketch.ViewModels.ResultsViewModel(
-            new AvaloniaBundleFileSelector(() => StorageProviderSource.Current)));
+            new AvaloniaBundleFileSelector(() => StorageProviderSource.Current),
+            new DispatcherTimerPlaybackClock()));
 
     private static readonly string? ScreenshotPath =
         Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_PATH");

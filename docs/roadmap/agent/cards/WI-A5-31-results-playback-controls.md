@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-31` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-3 results replayer |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-04`, `WI-A5-18` |
@@ -37,11 +37,20 @@ Add play, pause, fast-forward, step, and event-to-frame navigation over recorded
 
 ## Acceptance criteria
 
-- [ ] Every playback command changes state exactly as documented.
-- [ ] Event selection seeks to the matching frame.
-- [ ] Playback never reruns simulation.
-- [ ] Bounds and truncated artifacts stop explicitly.
-- [ ] Standard validation passes.
+- [x] Every playback command changes state exactly as documented.
+  - `ResultsPlaybackTests`: play advances via the clock accumulator and pauses exactly at
+    `LastFrame`; step commands move one frame and pause; fast-forward is bounded by `LastFrame`;
+    play-at-end restarts at `FirstFrame`; speed accepts only the documented set.
+- [x] Event selection seeks to the matching frame.
+  - Existing `_events.SelectionChanged` routes to `ScrubTo(record.Frame)`; scrub and playback
+    share `ApplyTimelinePosition`.
+- [x] Playback never reruns simulation.
+  - The controller only calls `RunBundleTimeline.SeekTo` (artifact reconstruction); no host or
+    engine type is involved.
+- [x] Bounds and truncated artifacts stop explicitly.
+  - At `LastFrame` playback pauses with `AtEnd`; truncated bundles pass through
+    `IsTruncated`/`TruncationDiagnostic` and bounded fast-forward stops at the valid prefix end.
+- [x] Standard validation passes.
 
 ## Validation commands
 
@@ -49,8 +58,8 @@ Add play, pause, fast-forward, step, and event-to-frame navigation over recorded
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~ResultsPlayback"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-playback.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-playback.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 

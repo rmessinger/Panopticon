@@ -17,7 +17,9 @@ namespace Panopticon.Tools.ReplaySketch.ViewModels;
 public sealed class ResultsViewModel : IDisposable
 {
     private readonly IBundleFileSelector _bundleSelector;
+    private readonly IPlaybackClock? _playbackClock;
     private RunBundleTimeline? _timeline;
+    private ResultsPlaybackController? _playback;
     private string? _bundlePath;
     private string? _comparePath;
     private string _statusMessage = string.Empty;
@@ -29,9 +31,10 @@ public sealed class ResultsViewModel : IDisposable
     private uint? _selectedPointId;
     private FrameColorMode _frameColorMode = FrameColorMode.Owner;
 
-    public ResultsViewModel(IBundleFileSelector bundleSelector)
+    public ResultsViewModel(IBundleFileSelector bundleSelector, IPlaybackClock? playbackClock = null)
     {
         _bundleSelector = bundleSelector ?? throw new ArgumentNullException(nameof(bundleSelector));
+        _playbackClock = playbackClock;
         LoadCommand = new AsyncCommand(_ => LoadAsync());
         BrowseCommand = new AsyncCommand(_ => BrowseAsync());
         CompareCommand = new AsyncCommand(_ => CompareAsync());
@@ -115,6 +118,17 @@ public sealed class ResultsViewModel : IDisposable
 
     public bool HasTimeline => _timeline != null;
 
+    /// <summary>WI-A5-31: playback controller for the loaded timeline, null without a clock or bundle.</summary>
+    public ResultsPlaybackController? Playback
+    {
+        get => _playback;
+        private set
+        {
+            _playback = value;
+            OnChanged(nameof(Playback));
+        }
+    }
+
     public string? ComparePath
     {
         get => _comparePath;
@@ -196,15 +210,13 @@ public sealed class ResultsViewModel : IDisposable
         }
 
         _timeline.SeekTo(frame);
-        SelectedFrame = _timeline.CurrentFrame;
-        EventsThroughFrame = _timeline.EventsThrough(_timeline.CurrentFrame);
-        UpdateFrameProjection();
-        StatusMessage = DescribeCurrentState();
-        OnChanged(nameof(Timeline));
+        ApplyTimelinePosition();
     }
 
     public void Dispose()
     {
+        _playback?.Dispose();
+        _playback = null;
         _timeline?.Dispose();
         _timeline = null;
     }
@@ -278,8 +290,19 @@ public sealed class ResultsViewModel : IDisposable
         {
             var bundle = RunBundle.Load(_bundlePath);
             var timeline = new RunBundleTimeline(bundle, Panopticon.SageGame.CncGenerals);
+            _playback?.Dispose();
             _timeline?.Dispose();
             Timeline = timeline;
+            if (_playbackClock != null)
+            {
+                Playback = new ResultsPlaybackController(timeline, _playbackClock);
+                Playback.StateChanged += (_, _) => ApplyTimelinePosition();
+            }
+            else
+            {
+                Playback = null;
+            }
+
             SelectedFrame = timeline.CurrentFrame;
             Series = timeline.Series;
             EventsThroughFrame = timeline.EventsThrough(timeline.CurrentFrame);
@@ -312,6 +335,21 @@ public sealed class ResultsViewModel : IDisposable
         _timeline?.CurrentState is { } state
             ? $"frame {state.Frame}: {state.Objects.Count} objects, {_timeline.Series.Count} series"
             : "no state loaded";
+
+    /// <summary>WI-A5-31: publishes the timeline's current position to all bound views.</summary>
+    private void ApplyTimelinePosition()
+    {
+        if (_timeline == null)
+        {
+            return;
+        }
+
+        SelectedFrame = _timeline.CurrentFrame;
+        EventsThroughFrame = _timeline.EventsThrough(_timeline.CurrentFrame);
+        UpdateFrameProjection();
+        StatusMessage = DescribeCurrentState();
+        OnChanged(nameof(Timeline));
+    }
 
     /// <summary>WI-A5-18: re-projects the recorded frame at the scrub position for rendering.</summary>
     private void UpdateFrameProjection()

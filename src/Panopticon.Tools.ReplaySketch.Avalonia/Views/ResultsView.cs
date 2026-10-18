@@ -33,6 +33,11 @@ public sealed class ResultsView : UserControl
     private readonly TextBox _comparePath = new();
     private readonly TextBlock _divergence = new();
     private readonly SkiaCanvas _frameView = new();
+    private readonly Button _playPause = new();
+    private readonly Button _stepBack = new() { Content = "Step -1" };
+    private readonly Button _stepForward = new() { Content = "Step +1" };
+    private readonly Button _fastForward = new() { Content = "FF +30" };
+    private readonly ComboBox _speed = new() { MinWidth = 70 };
     private IReadOnlyList<FrameViewMarker> _frameMarkers = [];
     private bool _refreshing;
 
@@ -79,6 +84,20 @@ public sealed class ResultsView : UserControl
             if (!_refreshing)
             {
                 _viewModel.FrameColorMode = (FrameColorMode)_colorMode.SelectedIndex;
+            }
+        };
+
+        // WI-A5-31: playback controls bound to the controller (null until a bundle loads).
+        _playPause.Click += (_, _) => _viewModel.Playback?.Toggle();
+        _stepBack.Click += (_, _) => _viewModel.Playback?.StepBackward();
+        _stepForward.Click += (_, _) => _viewModel.Playback?.StepForward();
+        _fastForward.Click += (_, _) => _viewModel.Playback?.FastForward(30);
+        _speed.ItemsSource = new[] { "0.5x", "1x", "2x", "4x" };
+        _speed.SelectionChanged += (_, _) =>
+        {
+            if (!_refreshing && _viewModel.Playback is { } playback && _speed.SelectedIndex >= 0)
+            {
+                playback.Speed = PlaybackSpeeds.All[_speed.SelectedIndex];
             }
         };
 
@@ -154,14 +173,23 @@ public sealed class ResultsView : UserControl
         timelineRow.Children.Add(_colorMode);
         timelineRow.Children.Add(_currentState);
 
-        var right = new Grid { RowDefinitions = new RowDefinitions("Auto,260,*") };
-        Grid.SetRow(timelineRow, 0);
+        var playbackRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        playbackRow.Children.Add(_playPause);
+        playbackRow.Children.Add(_stepBack);
+        playbackRow.Children.Add(_stepForward);
+        playbackRow.Children.Add(_fastForward);
+        playbackRow.Children.Add(_speed);
+
+        var right = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,260,*") };
+        Grid.SetRow(playbackRow, 0);
+        right.Children.Add(playbackRow);
+        Grid.SetRow(timelineRow, 1);
         right.Children.Add(timelineRow);
         _frameView.MinHeight = 200;
-        Grid.SetRow(_frameView, 1);
+        Grid.SetRow(_frameView, 2);
         right.Children.Add(_frameView);
         _events.FontFamily = new FontFamily("monospace");
-        Grid.SetRow(_events, 2);
+        Grid.SetRow(_events, 3);
         right.Children.Add(_events);
 
         var body = new Grid { ColumnDefinitions = new ColumnDefinitions("320,*") };
@@ -238,6 +266,21 @@ public sealed class ResultsView : UserControl
             _events.ItemsSource = _viewModel.EventsThroughFrame;
             _timeline.IsEnabled = _viewModel.HasTimeline;
             _colorMode.SelectedIndex = (int)_viewModel.FrameColorMode;
+            var playback = _viewModel.Playback;
+            _playPause.Content = playback is { IsPlaying: true } ? "Pause" : "Play";
+            _playPause.IsEnabled = playback != null;
+            _stepBack.IsEnabled = playback != null;
+            _stepForward.IsEnabled = playback != null;
+            _fastForward.IsEnabled = playback != null;
+            _speed.IsEnabled = playback != null;
+            if (playback is { } controller)
+            {
+                var index = PlaybackSpeedIndexOf(controller.Speed);
+                if (_speed.SelectedIndex != index)
+                {
+                    _speed.SelectedIndex = index;
+                }
+            }
             if (_viewModel.HasTimeline)
             {
                 _timeline.Minimum = _viewModel.Timeline!.FirstFrame;
@@ -261,5 +304,18 @@ public sealed class ResultsView : UserControl
         {
             _refreshing = false;
         }
+    }
+
+    private static int PlaybackSpeedIndexOf(double speed)
+    {
+        for (var index = 0; index < PlaybackSpeeds.All.Count; index++)
+        {
+            if (PlaybackSpeeds.All[index] == speed)
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 }
