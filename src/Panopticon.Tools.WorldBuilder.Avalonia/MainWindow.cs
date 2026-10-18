@@ -31,6 +31,20 @@ public sealed class MainWindow : Window
 
     private readonly EditorViewModel _viewModel = new();
     private readonly GameViewportRenderer _viewportRenderer;
+    private readonly StackPanel _leftPanelStack = new() { Spacing = 0 };
+    private readonly ListBox _populationList = new() { MinHeight = 90, MaxHeight = 170 };
+    private readonly TextBox _popDefinition = new() { Watermark = "Definition name" };
+    private readonly TextBox _popOwner = new() { Watermark = "Owner", Width = 60 };
+    private readonly TextBox _popWorldX = new() { Watermark = "World X", Width = 80 };
+    private readonly TextBox _popWorldY = new() { Watermark = "World Y", Width = 80 };
+    private readonly TextBlock _populationStatus = new()
+    {
+        Text = "Open a map to edit its scenario population.",
+        TextWrapping = TextWrapping.Wrap,
+        FontSize = 11,
+        Foreground = new SolidColorBrush(WbTheme.Text),
+    };
+    private bool _populationRefreshing;
     private readonly TextBlock _statusLabel = new()
     {
         Text = "Ready",
@@ -169,9 +183,13 @@ public sealed class MainWindow : Window
             BorderThickness = new Thickness(0, 0, 1, 0),
             Child = new ScrollViewer
             {
-                Content = new StackPanel { Spacing = 0 },
+                Content = _leftPanelStack,
             },
         };
+
+        // WI-A5-30: spatial population authoring rides the shared controller beside the map
+        // tools; terrain and map edits stay in EditorMap.
+        _leftPanelStack.Children.Add(BuildPopulationPanel());
 
         var viewportHost = new Border
         {
@@ -194,6 +212,160 @@ public sealed class MainWindow : Window
         Grid.SetRow(workArea, 1);
         container.Children.Add(workArea);
         return container;
+    }
+
+    /// <summary>
+    /// WI-A5-30: left-panel section for scenario population authoring. Every operation routes
+    /// through the shared <see cref="Panopticon.Tools.WorldBuilder.Core.ScenarioPopulationDocument"/>
+    /// (and its InitialPopulationEditor); nothing here touches EditorMap state.
+    /// </summary>
+    private Control BuildPopulationPanel()
+    {
+        _populationList.SelectionChanged += (_, _) =>
+        {
+            if (!_populationRefreshing && _viewModel.ScenarioPopulation is { } document)
+            {
+                document.Select(_populationList.SelectedIndex);
+            }
+        };
+
+        var addButton = new Button { Content = "Add" };
+        addButton.Click += (_, _) => RunPopulationOperation(document =>
+        {
+            return int.TryParse(_popOwner.Text, out var owner)
+                && float.TryParse(_popWorldX.Text, System.Globalization.CultureInfo.InvariantCulture, out var x)
+                && float.TryParse(_popWorldY.Text, System.Globalization.CultureInfo.InvariantCulture, out var y)
+                && document.AddAtWorld(_popDefinition.Text.Trim(), owner, x, y);
+        });
+
+        var moveButton = new Button { Content = "Move Selected" };
+        moveButton.Click += (_, _) => RunPopulationOperation(document =>
+        {
+            return float.TryParse(_popWorldX.Text, System.Globalization.CultureInfo.InvariantCulture, out var x)
+                && float.TryParse(_popWorldY.Text, System.Globalization.CultureInfo.InvariantCulture, out var y)
+                && document.MoveSelectedToWorld(x, y);
+        });
+
+        var ownerButton = new Button { Content = "Change Owner" };
+        ownerButton.Click += (_, _) => RunPopulationOperation(document =>
+        {
+            return int.TryParse(_popOwner.Text, out var owner) && document.ChangeOwnerSelected(owner);
+        });
+
+        var deleteButton = new Button { Content = "Delete Selected" };
+        deleteButton.Click += (_, _) => RunPopulationOperation(document => document.DeleteSelected());
+
+        var saveButton = new Button { Content = "Save" };
+        saveButton.Click += (_, _) =>
+        {
+            _viewModel.SaveScenarioPopulation();
+            RefreshPopulationPanel();
+        };
+
+        return new StackPanel
+        {
+            Spacing = 6,
+            Margin = new Thickness(8),
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = "Scenario population",
+                    FontWeight = FontWeight.Bold,
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(WbTheme.Text),
+                },
+                _populationList,
+                _popDefinition,
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 6,
+                    Children = { _popOwner, _popWorldX, _popWorldY },
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 6,
+                    Children = { addButton, moveButton, ownerButton },
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 6,
+                    Children = { deleteButton, saveButton },
+                },
+                _populationStatus,
+            },
+        };
+    }
+
+    private void RunPopulationOperation(Func<Panopticon.Tools.WorldBuilder.Core.ScenarioPopulationDocument, bool> operation)
+    {
+        _viewModel.EnsureScenarioPopulation();
+        if (_viewModel.ScenarioPopulation is not { } document)
+        {
+            return;
+        }
+
+        var succeeded = operation(document);
+        if (!succeeded && document.LastDiagnostics is { Count: > 0 } diagnostics)
+        {
+            _viewModel.StatusMessage = "Population edit rejected: " + diagnostics[0];
+        }
+
+        RefreshPopulationPanel();
+    }
+
+    private void RefreshPopulationPanel()
+    {
+        _populationRefreshing = true;
+        try
+        {
+            var document = _viewModel.ScenarioPopulation;
+            _populationList.IsEnabled = document is not null;
+            _populationList.ItemsSource = document is null ? null : DescribePlacements(document);
+
+            if (document is null)
+            {
+                _populationStatus.Text = "Open a map to edit its scenario population.";
+                return;
+            }
+
+            _populationList.SelectedIndex = document.Editor.SelectedIndex;
+            _populationStatus.Text = document.LastDiagnostics is { Count: > 0 } diagnostics
+                ? string.Join("; ", diagnostics)
+                : $"{document.Editor.Placements.Count} placement(s){(document.IsDirty ? " (unsaved)" : "")}";
+        }
+        finally
+        {
+            _populationRefreshing = false;
+        }
+    }
+
+    private static IReadOnlyList<string> DescribePlacements(
+        Panopticon.Tools.WorldBuilder.Core.ScenarioPopulationDocument document)
+    {
+        var lines = new List<string>();
+        for (var i = 0; i < document.Editor.Placements.Count; i++)
+        {
+            var placement = document.Editor.Placements[i];
+            var where = placement.Position is Panopticon.Tools.ReplaySketch.Model.NormalizedPosition normalized
+                ? DescribeWorld(document, normalized)
+                : "landmark-relative";
+            lines.Add($"#{i} P{placement.PlayerIndex} {placement.DefinitionName} @ {where}");
+        }
+
+        return lines;
+    }
+
+    private static string DescribeWorld(
+        Panopticon.Tools.WorldBuilder.Core.ScenarioPopulationDocument document,
+        Panopticon.Tools.ReplaySketch.Model.NormalizedPosition position)
+    {
+        var (worldX, worldY) = document.NormalizedToWorld(position);
+        var format = System.Globalization.CultureInfo.InvariantCulture;
+        return $"({worldX.ToString("0", format)}, {worldY.ToString("0", format)})";
     }
 
     private Control BuildStatusBar()
@@ -338,6 +510,12 @@ public sealed class MainWindow : Window
 
             case nameof(EditorViewModel.CurrentMap) when _viewModel.CurrentMap is not null:
                 _viewportRenderer.LoadMap(_viewModel.CurrentMap);
+                _viewModel.EnsureScenarioPopulation();
+                RefreshPopulationPanel();
+                break;
+
+            case nameof(EditorViewModel.ScenarioPopulation):
+                RefreshPopulationPanel();
                 break;
 
             case nameof(EditorViewModel.ActiveTool):
