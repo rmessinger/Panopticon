@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-34` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-6 WorldBuilder baseline |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-28` (companions for new maps only matter once new maps save) |
@@ -35,7 +35,10 @@ and `EditorMap.Open` load them, closing the missing companions step of the audit
 
 ## Acceptance criteria
 
-- [ ] Save writes both companions; open restores both strings; absent files default cleanly.
-- [ ] The `.map` stream content is unchanged by this card.
-- [ ] Core tests cover the round-trip without the UI.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Save writes both companions; open restores both strings; absent files default cleanly.
+- [x] The `.map` stream content is unchanged by this card.
+  - `Save` still writes the `MapFile` stream first; companions are additive writes beside it.
+- [x] Core tests cover the round-trip without the UI.
+  - `MapCompanionTests` 3/3: round-trip, absent-defaults, and `SaveAs` retargeting with the
+    stale first companion left in place.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).

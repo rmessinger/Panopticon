@@ -45,6 +45,8 @@ public sealed class EditorMap
         return new EditorMap(mapFile, filePath)
         {
             IsDirty = false,
+            MapIniContent = ReadCompanionIfExists(filePath + MapIniExtension),
+            MapStrContent = ReadCompanionIfExists(filePath + MapStrExtension),
         };
     }
 
@@ -56,9 +58,30 @@ public sealed class EditorMap
             throw new InvalidOperationException("Cannot save without a file path — use SaveAs.");
         }
 
-        using var stream = File.Create(FilePath);
-        MapFile.WriteTo(stream);
+        using (var stream = File.Create(FilePath))
+        {
+            MapFile.WriteTo(stream);
+        }
+
+        // WI-A5-34: companions are written only when non-empty; the .map stream stays
+        // authoritative for map data. SaveAs re-targets them through FilePath; a stale
+        // companion at the previous path is deliberately left in place.
+        WriteCompanion(FilePath + MapIniExtension, MapIniContent);
+        WriteCompanion(FilePath + MapStrExtension, MapStrContent);
         IsDirty = false;
+    }
+
+    private const string MapIniExtension = ".ini";
+    private const string MapStrExtension = ".str";
+
+    private static string ReadCompanionIfExists(string path) => File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+
+    private static void WriteCompanion(string path, string content)
+    {
+        if (content.Length > 0)
+        {
+            File.WriteAllText(path, content);
+        }
     }
 
     /// <summary>Saves the map to a new path and updates FilePath.</summary>
