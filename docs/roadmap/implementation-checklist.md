@@ -1730,14 +1730,15 @@ depend on the Track A/B/C phases listed in the track doc. Design:
     100); max idle 475/347 frames against the 600-frame threshold, 0 stalled at end.
 
 ### M5: 1000 vs 1000 battle
-- [ ] M5-1 Mixed-roster battle scenario on the M0 map with M3 armies and M4 AI. (`WI-M5-01`)
+- [ ] M5-1 Mixed-roster battle scenario on the M0 map with M3 armies and M4 AI.
+  (`WI-M5-01`..`04`, `WI-M5-08`)
   - AC: one scenario definition drives batch, replay, and live modes.
-- [ ] M5-2 Seeded batch runs with a mirrored map-bias control.
+- [ ] M5-2 Seeded batch runs with a mirrored map-bias control. (`WI-M5-05`..`07`)
   - AC: every run reaches a P3 outcome; reports give per-side win rates with confidence intervals
     and kills and losses per unit type; the mirrored control's interval includes 50%.
-- [ ] M5-3 Replay of batch runs in A5.
+- [ ] M5-3 Replay of batch runs in A5. (`WI-M5-08`)
   - AC: a finished run scrubs from start to outcome with all 2000 units shown.
-- [ ] M5-4 Live windowed spectator view.
+- [ ] M5-4 Live windowed spectator view. (`WI-M5-09`, `WI-M5-10`)
   - AC: B1 records a 30 fps median with the full battle in view on the operator's machine.
 
 ## Track X: Miscellaneous fixes and tweaks

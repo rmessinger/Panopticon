@@ -4,11 +4,11 @@
 |---|---|
 | Card ID | `WI-M5-01` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Draft` |
+| Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
-| Prerequisites | M4 done (`WI-M4-03..06` merged to `main`) |
-| Diagrams | [§9](../../deep-dives/mass-battle-1k.md#9-architecture-diagrams) `†` (M5 placeholder) |
+| Prerequisites | M4 (`WI-M4-03..06`, done) |
+| Diagrams | [M5 battle](../../deep-dives/mass-battle-1k.md#m5-battle) |
 
 ## Goal
 
@@ -17,15 +17,12 @@ Simulation-side setup, so a scenario attaches a hierarchical general to each sid
 The M5-1 battle scenario and later consumers (Track W W2) use this setup instead of copying the
 probe's code. The probe keeps its scripted M1 general attack as the baseline mode.
 
-`Draft` because M4 is not on `main` yet: confirm the types below against the merged code and the
-M5 diagrams before setting `Ready`.
-
 ## Context to read (and only this)
 
 - `src/Panopticon.Tools.TestHarness/MassBattleCapacityProbeRunner.cs`: army-AI mode wiring
   (`MassBattleCapacityProbeArmyAi`): the `AIDecisionPolicyPayload` with
   `AIDecisionPolicyType.Hierarchical` on each `PlayerSetting.AIPolicy`, side players resolved as
-  `Players[2 + i]` (also in `ParkAircraft`), the `DisableAI` loop that skips side players, and
+  `Players[2 + i]` (also in `ParkAircraft` and `MassBattlePlacement`), the `DisableAI` loop that skips side players, and
   `BuildReport` casting `AIPlayer.DecisionPolicy` to `HierarchicalAIDecisionPolicy` for air
   mission counts.
 - `src/Panopticon.Tools.TestHarness/MassBattleSquadInvariantSampler.cs`: resolves the same
@@ -46,7 +43,8 @@ M5 diagrams before setting `Ready`.
      policy).
 2. Resolve side players in one place. Prefer a mapping from the `PlayerSetting` to its `Player`;
    if the engine has none, keep the `2 + i` offset behind a named constant in `ArmyAiSides`.
-   `ParkAircraft` and the sampler use the resolved players instead of their own offset.
+   `ParkAircraft`, `MassBattlePlacement`, and the sampler use the resolved players instead of
+   their own offset.
 3. Add a public read-only stats view on `HierarchicalAIDecisionPolicy` covering what reports
    and the sampler read today: ground squad count and members, commanderless squads, air
    mission assignment counts per mission, and per-unit mission count. Replace the
@@ -63,6 +61,7 @@ M5 diagrams before setting `Ready`.
 - `src/Panopticon.Simulation/Logic/AI/Hierarchy/HierarchicalAIDecisionPolicy.cs`
 - `src/Panopticon.Tools.TestHarness/MassBattleCapacityProbeRunner.cs`
 - `src/Panopticon.Tools.TestHarness/MassBattleSquadInvariantSampler.cs`
+- `src/Panopticon.Tools.TestHarness/MassBattlePlacement.cs`
 - `test/Panopticon.Simulation.Tests/Logic/AI/Hierarchy/ArmyAiSidesTests.cs` (new)
 
 ## Acceptance criteria

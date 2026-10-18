@@ -460,9 +460,9 @@ Progress counts follow the [implementation checklist](implementation-checklist.m
 | M1 - Capacity probe | `██████████` | 3 / 3 |
 | M2 - EE2 combat units | `██████████` | 4 / 4 |
 | M3 - Mixed roster normalization | `██████████` | 3 / 3 |
-| M4 - Army-scale AI | `░░░░░░░░░░` | 0 / 3 |
+| M4 - Army-scale AI | `██████████` | 3 / 3 |
 | M5 - 1000 vs 1000 battle | `░░░░░░░░░░` | 0 / 4 |
-| Track M total | `██████░░░░` | 13 / 20 |
+| Track M total | `████████░░` | 16 / 20 |
 
 ---
 

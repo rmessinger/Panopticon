@@ -432,6 +432,15 @@ Source of truth: [mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
 |---|---|---|
 | [track-m-m4-army-ai.md](track-m-m4-army-ai.md) | M4-1…M4-3 | Hierarchy scale audit, army-AI probe mode, squad group orders, air commander, AI budget (WI-M4-01..06) |
 
+## Track M · M5 : 1000 vs 1000 battle
+
+Source of truth: [mass-battle-1k.md](../deep-dives/mass-battle-1k.md) :
+[Architecture diagrams §9](../deep-dives/mass-battle-1k.md#m5-battle).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-m-m5-mass-battle.md](track-m-m5-mass-battle.md) | M5-1…M5-4 | Army AI side setup, roster profile, army-eliminated outcome, battle scenario, kill accounting, batches and map-bias control, recording and replay, spectator, live frame rate (WI-M5-01..10) |
+
 ## Track W · W0 : Charter fixture
 
 Source of truth: [deep-dives/w0-charter-fixture.md](../deep-dives/w0-charter-fixture.md) :

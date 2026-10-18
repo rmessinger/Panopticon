@@ -167,9 +167,9 @@ normalizes the mixed roster; M5 runs the full battle in all three viewing modes.
 The M1 sequence below is grounded in the implemented code (`src/Panopticon.Tools.TestHarness/MassBattleDeploymentRunner.cs`,
 `MassBattleCapacityProbeRunner.cs`, `MassBattleDeploymentProfile.cs`; `src/Panopticon.Simulation/Navigation/Navigation.cs`;
 `src/Panopticon.Benchmarks.Simulation/BenchmarkMetricRecorder.cs`). The M2 diagrams below use H2a's existing types and import orchestration. The M4 diagrams
-are grounded in the A4-3 hierarchy and mark M4's planned additions. Diagrams for the M5 batch and
-live run flows remain placeholders; they are required before M5's first source-edit card is
-marked `Ready`.
+are grounded in the A4-3 hierarchy and mark M4's planned additions. The M5 diagrams are grounded
+in the M1/M4 probe runner, the P3 victory system, and the A1 host and recorders, and mark M5's
+planned additions.
 
 Sequence: the M1 capacity probe (WI-M1-01..03):
 
@@ -346,7 +346,7 @@ sequenceDiagram
         H->>S: Synchronize (assign, remove dead, promote)
         H->>H: general directives, commander goals, soldier orders
         H->>X: aircraft squads: strike, patrol, escort
-        X-->>H: mission orders; parked aircraft re-tasked after rearm
+        X-->>H: mission orders, parked aircraft re-tasked after rearm
         H-->>A: SetSelection(squad) + one order per squad
         A->>O: DispatchOrders
         O->>G: MoveSquad: one leader path per ground squad
@@ -355,4 +355,102 @@ sequenceDiagram
     R->>R: assignment invariant, idle-stall check, B1 record
 ```
 
-The M5 diagram placeholder remains a closed gate for that phase.
+### M5 battle
+
+Grounding: `MassBattleCapacityProbeRunner.cs` (boot, `Players[2 + i]`, `RunEngagement`, army-AI
+mode), `MassBattleDeploymentProfile.cs`, `MassBattlePlacement.cs`, `RosterBudgetEvaluator.cs`
+(`mass-battle-rosters.json`), `UnitContentImportRunner.cs` (`EMPIRE_EARTH_II_PATH`, `ee2:` names),
+`Logic/VictorySystem.cs` and `VictoryConditionRule.cs` (P3 outcome, `VictoryOptions` frame limit),
+`SimulationHost.cs` and `RunOutput.cs` (`RunOutputRecorder`, as in
+`HeadlessHierarchicalMatchEvaluator`), `StatisticalRunHarness`, `Recording/RunRecording.cs`,
+`HarnessWindowedFrame`, `PlayerManager.OnNewGame` (local player fallback), and
+`BenchmarkMetricRecorder`. Elements marked `planned` are the WI-M5 cards' additions; plan:
+[track-m-m5-mass-battle.md](../implementation/track-m-m5-mass-battle.md).
+
+```mermaid
+classDiagram
+    class MassBattleRunner["MassBattleRunner (planned, WI-M5-04)"]
+    class MassBattleBatchRunner["MassBattleBatchRunner (planned, WI-M5-06)"]
+    class BattleProfile["MassBattleDeploymentProfile + roster sides (planned, WI-M5-02)"]
+    class RosterManifest
+    class UnitContentImportRunner
+    class MassBattlePlacement
+    class ArmyAiSides["ArmyAiSides (planned, WI-M5-01)"]
+    class HierarchicalAIDecisionPolicy
+    class ArmyEliminatedRule["army-eliminated victory rule (planned, WI-M5-03)"]
+    class VictorySystem
+    class SimulationHost
+    class RunOutputRecorder
+    class KillLossTracker["kill/loss per unit type (planned, WI-M5-05)"]
+    class WinRateInterval["Wilson win-rate interval (planned, WI-M5-06)"]
+    class RunRecording
+    class A5Replayer["A5 results replayer (WI-A5-04)"]
+    class Spectator["spectator observer + camera (planned, WI-M5-09)"]
+    class HarnessWindowedFrame
+    class BenchmarkMetricRecorder
+    MassBattleBatchRunner --> MassBattleRunner : one run per seed, mirrored control
+    MassBattleBatchRunner --> WinRateInterval : per-side wins
+    MassBattleRunner --> BattleProfile : map, zones, airfields, roster per side
+    BattleProfile --> RosterManifest : mass-battle-rosters.json
+    MassBattleRunner --> UnitContentImportRunner : ee2 rows before spawn
+    MassBattleRunner --> MassBattlePlacement : spawn armies, park aircraft
+    MassBattleRunner --> ArmyAiSides : one general per side
+    ArmyAiSides --> HierarchicalAIDecisionPolicy
+    MassBattleRunner --> VictorySystem : rule + frame limit
+    VictorySystem --> ArmyEliminatedRule
+    MassBattleRunner --> SimulationHost : batch mode
+    SimulationHost --> RunOutputRecorder : outcome, metrics
+    SimulationHost --> RunRecording : replay mode (WI-M5-08)
+    RunRecording --> A5Replayer : bundle scrub
+    MassBattleRunner --> KillLossTracker : ObjectLifecycleChanged
+    MassBattleRunner --> HarnessWindowedFrame : live mode
+    MassBattleRunner --> Spectator : live mode
+    HarnessWindowedFrame --> BenchmarkMetricRecorder : tick.fps
+```
+
+Batch run (WI-M5-04, WI-M5-06, WI-M5-07):
+
+```mermaid
+sequenceDiagram
+    participant B as MassBattleBatchRunner
+    participant R as MassBattleRunner
+    participant I as UnitContentImportRunner
+    participant G as Game / VictorySystem
+    participant A as ArmyAiSides
+    participant H as SimulationHost
+    participant K as kill/loss tracker
+    participant O as RunOutputRecorder
+    loop each seed (battle batch, then mirrored control)
+        B->>R: run(profile, seed, sides or mirrored roster)
+        R->>I: import ee2 rows (EMPIRE_EARTH_II_PATH)
+        R->>A: hierarchical policy per side PlayerSetting
+        R->>G: StartSkirmishOrMultiPlayerGame(seed), army-eliminated rule, frame limit
+        R->>A: bind side players, DisableAI on the rest
+        R->>G: spawn roster per side, park aircraft, settle
+        R->>H: Run(frameLimit, outcome Decided)
+        H-->>K: unit deaths by definition and killer
+        H-->>O: tick metrics
+        O-->>R: RunOutput (outcome, frames)
+        R-->>B: run report (winner, kills and losses per type)
+    end
+    B->>B: per-side win rates + Wilson 95% interval, control includes 50%
+```
+
+Live run (WI-M5-09, WI-M5-10):
+
+```mermaid
+sequenceDiagram
+    participant R as MassBattleRunner (windowed)
+    participant G as Game / PlayerManager
+    participant S as spectator camera
+    participant W as HarnessWindowedFrame
+    participant M as BenchmarkMetricRecorder
+    R->>G: same profile and seed as batch
+    R->>G: local player = observer (no side, map revealed)
+    R->>S: frame both zones, operator camera input
+    loop every frame until outcome
+        R->>W: Step (events, update, render, swap)
+        W-->>M: tick.wallMs, tick.fps, render spans
+    end
+    R->>R: B1 record: median fps with the battle in view
+```
