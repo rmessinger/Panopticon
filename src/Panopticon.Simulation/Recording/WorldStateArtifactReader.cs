@@ -32,7 +32,7 @@ public enum WorldStateRecordKind
 public sealed class WorldStateArtifactReader : IDisposable
 {
     private readonly FileStream _stream;
-    private readonly IGame _game;
+    private readonly SageGame _sageGame;
     private readonly List<(long Offset, uint Frame)> _snapshots = new();
     private readonly List<(long Offset, uint Frame)> _deltas = new();
 
@@ -45,9 +45,15 @@ public sealed class WorldStateArtifactReader : IDisposable
     /// recently used frame is evicted first.
     /// </param>
     public WorldStateArtifactReader(string path, IGame game, int cacheCapacity = 8)
+        : this(path, game.SageGame, cacheCapacity)
+    {
+    }
+
+    /// <summary>WI-A5-04: reconstructs recorded state without a booted engine game.</summary>
+    public WorldStateArtifactReader(string path, SageGame sageGame, int cacheCapacity = 8)
     {
         _stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        _game = game;
+        _sageGame = sageGame;
         CacheCapacity = Math.Max(1, cacheCapacity);
         Scan();
     }
@@ -170,7 +176,7 @@ public sealed class WorldStateArtifactReader : IDisposable
     // decoded bodies are discarded so memory stays proportional to the record count index.
     private void Scan()
     {
-        using var reader = new StateReader(_stream, _game);
+        using var reader = new StateReader(_stream, _sageGame);
         while (reader.BaseStream.Position < reader.BaseStream.Length)
         {
             var offset = reader.BaseStream.Position;
@@ -216,7 +222,7 @@ public sealed class WorldStateArtifactReader : IDisposable
     private WorldStateSummary ReadSnapshot(long offset)
     {
         _stream.Position = offset;
-        using var reader = new StateReader(_stream, _game);
+        using var reader = new StateReader(_stream, _sageGame);
         var tag = byte.MaxValue;
         reader.PersistByte(ref tag, "RecordType");
         var snapshot = new WorldStateSummary();
@@ -227,7 +233,7 @@ public sealed class WorldStateArtifactReader : IDisposable
     private WorldStateDelta ReadDelta(long offset)
     {
         _stream.Position = offset;
-        using var reader = new StateReader(_stream, _game);
+        using var reader = new StateReader(_stream, _sageGame);
         var tag = byte.MaxValue;
         reader.PersistByte(ref tag, "RecordType");
         var delta = new WorldStateDelta();

@@ -33,6 +33,21 @@ public abstract class StatePersister : DisposableBase
         AssetStore = game.AssetStore;
     }
 
+    /// <summary>
+    /// WI-A5-04: install-free persistence for run-bundle summary artifacts. Primitive
+    /// persistence (numbers, strings, vectors, lists) never dereferences <see cref="Game"/>;
+    /// <see cref="SageGame"/> alone drives the version gates those records can reach, so a
+    /// results viewer can reconstruct recorded state without a booted engine game.
+    /// </summary>
+    protected StatePersister(SageGame sageGame, StatePersistMode mode)
+    {
+        Segments = new Stack<Segment>();
+
+        Mode = mode;
+
+        SageGame = sageGame;
+    }
+
     public byte PersistVersion(byte maximumVersion)
     {
         var actualVersion = maximumVersion;
@@ -320,6 +335,12 @@ public sealed class StateReader : StatePersister
         _binaryReader = AddDisposable(new BinaryReader(stream, Encoding.Unicode, true));
     }
 
+    internal StateReader(Stream stream, SageGame sageGame)
+        : base(sageGame, StatePersistMode.Read)
+    {
+        _binaryReader = AddDisposable(new BinaryReader(stream, Encoding.Unicode, true));
+    }
+
     public override void PersistByteValue(ref byte value) => value = _binaryReader.ReadByte();
 
     public override void PersistInt16Value(ref short value) => value = _binaryReader.ReadInt16();
@@ -452,6 +473,12 @@ public sealed class StateWriter : StatePersister
 
     internal StateWriter(Stream stream, IGame game)
         : base(game, StatePersistMode.Write)
+    {
+        _binaryWriter = AddDisposable(new BinaryWriter(stream, Encoding.Unicode, true));
+    }
+
+    internal StateWriter(Stream stream, SageGame sageGame)
+        : base(sageGame, StatePersistMode.Write)
     {
         _binaryWriter = AddDisposable(new BinaryWriter(stream, Encoding.Unicode, true));
     }

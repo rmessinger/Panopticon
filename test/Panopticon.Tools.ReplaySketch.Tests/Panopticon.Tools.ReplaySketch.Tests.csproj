@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Panopticon.Tools.ReplaySketch.Core\Panopticon.Tools.ReplaySketch.Core.csproj" />
     <ProjectReference Include="..\..\src\Panopticon.Tools.TestHarness\Panopticon.Tools.TestHarness.csproj" />
   </ItemGroup>

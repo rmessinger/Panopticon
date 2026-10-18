@@ -45,6 +45,7 @@
     <!-- ReplaySketch MAUI front-end -->
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.60" />
     <PackageVersion Include="SkiaSharp" Version="3.119.4" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4" />
     <PackageVersion Include="CommunityToolkit.Maui" Version="14.1.1" />
 
     <!-- ReplaySketch Avalonia front-end (true cross-platform; runs on Linux) -->

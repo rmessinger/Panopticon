@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-04` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring & visualization, sub-phase A5-3 |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-08` and `WI-A5-09`; A1 run-output cards are already `Done` |
@@ -21,7 +21,7 @@ Comparison and divergence localization are `WI-A5-05`.
 - `docs/roadmap/deep-dives/a5-visualization.md` §4, §6 (A5-3 row), §8.
 - `src/Panopticon.Tools.ReplaySketch.Core/`: where the loading and timeline logic must live, per the
   ReplaySketch layering rule that logic stays in `.Core` and stays headlessly testable.
-- `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md`: the MAUI-side rules, including the injectable
+- `src/Panopticon.Tools.ReplaySketch.Avalonia/AGENTS.md`: the MAUI-side rules, including the injectable
   seams for statics and the screenshot-mode validation requirement.
 - The portable run bundle and indexed state reader added by `WI-A5-08` and `WI-A5-09`.
 
@@ -36,32 +36,39 @@ Comparison and divergence localization are `WI-A5-05`.
 4. Add headless `.Core` tests covering load, timeline scrubbing to a given frame, and metric series
    extraction.
 5. Validate the UI with ReplaySketch screenshot mode as
-   `src/Panopticon.Tools.ReplaySketch.Maui/AGENTS.md` requires, and confirm the map panel still
+   `src/Panopticon.Tools.ReplaySketch.Avalonia/AGENTS.md` requires, and confirm the map panel still
    renders.
 6. Run `dotnet format src` and confirm `dotnet format src --verify-no-changes`.
 
 ## Files likely to change
 
 - `src/Panopticon.Tools.ReplaySketch.Core/`
-- `src/Panopticon.Tools.ReplaySketch.Maui/`
+- `src/Panopticon.Tools.ReplaySketch.Avalonia/`
 - `test/Panopticon.Tools.ReplaySketch.Tests/`
 
 ## Acceptance criteria
 
-- [ ] A run output loads and its timeline scrubs to an arbitrary frame, asserted headlessly in
+- [x] A run output loads and its timeline scrubs to an arbitrary frame, asserted headlessly in
       `.Core` tests.
-- [ ] Metric series and the event log render in the results view.
-- [ ] No MAUI type is referenced from `ReplaySketch.Core`.
-- [ ] A screenshot-mode run shows the results view and leaves the map panel working.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+  - `RunBundleTimelineTests` (4) reconstruct through real artifacts via the SageGame-only
+    persistence seam; `ResultsViewModelTests` (4) cover load + scrub + failure paths.
+- [x] Metric series and the event log render in the results view.
+  - `ResultsView` binds a `MetricChartRenderer` chart and the event log; 400/400 non-interactive
+    ReplaySketch suite including 11 new engine-free tests.
+- [x] No Avalonia type is referenced from `ReplaySketch.Core`.
+  - Timeline, chart renderer, and view model live in Core with Skia/primitives only; picker is
+    the `IBundleFileSelector` seam.
+- [x] A screenshot-mode run shows the results view and leaves the map panel working.
+  - `REPLAYSKETCH_SCREENSHOT_TAB=results` and `=map` both captured clean under Xvfb `:99`.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 
 ```sh
 dotnet build src
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-results.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-results.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-map.png REPLAYSKETCH_SCREENSHOT_TAB=map dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 
