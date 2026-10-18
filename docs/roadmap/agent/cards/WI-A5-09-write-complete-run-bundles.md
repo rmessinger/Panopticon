@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-09` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-3 replay foundation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-07` |
@@ -39,11 +39,23 @@ tiered recording metadata, and structured events.
 
 ## Acceptance criteria
 
-- [ ] One invocation emits the designed directory and files.
-- [ ] State and events cover the full completed run.
-- [ ] Missing optional T2 data degrades explicitly; missing required data fails.
-- [ ] The bundle loads after directory relocation.
-- [ ] Standard validation passes.
+- [x] One invocation emits the designed directory and files.
+  - `RunBundle_CompleteHarnessRun_WritesManifestStateAndEvents`: run.json + state.bin +
+    events.json from one `RunAndAssert(..., bundleDirectory)` call; manifest written last as
+    the completion marker.
+- [x] State and events cover the full completed run.
+  - Frame-zero snapshot in `SnapshotFrames`; events non-empty, frames monotonic, action events
+    carry player identity.
+- [x] Missing optional T2 data degrades explicitly; missing required data fails.
+  - `RunBundleValidationTests`: empty `TriggeredCaptures` loads with `HasTriggeredDetail`
+    false; missing state.bin / events.json / unknown events schema version throw naming the
+    artifact.
+- [x] The bundle loads after directory relocation.
+  - `RunBundle_LoadsAfterDirectoryMove`: manifest-relative resolution + indexed reader
+    reconstructs from the moved bundle.
+- [x] Standard validation passes.
+  - Bundle emission is Full-mode only (Operational rejected by name, WI-A5-09 limitation);
+    events schema versioned at 1.
 
 ## Validation commands
 

@@ -8,6 +8,7 @@ using Panopticon.IO;
 using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
+using Panopticon.Recording;
 using Panopticon.Simulation;
 using Panopticon.Simulation.Transport;
 using Panopticon.Tools.ReplaySketch.Assertions;
@@ -35,12 +36,27 @@ public static class HarnessRunner
         ReplayScenario scenario,
         GameInstallation installation,
         string tempDirectory,
-        Action<RunOutput>? onRunCompleted = null)
+        Action<RunOutput>? onRunCompleted = null,
+        string? bundleDirectory = null)
     {
         ReplayActionMetrics.Reset();
 
         Directory.CreateDirectory(tempDirectory);
         var replayPath = Path.Combine(tempDirectory, "sketch_run.rep");
+
+        if (bundleDirectory is not null)
+        {
+            // WI-A5-09: one harness run emits a complete, self-contained bundle. Full mode
+            // only: the operational stream has its own bundle shape, landed with the later
+            // operational-reader cards.
+            if (scenario.Recording?.Mode == RecordingMode.Operational)
+            {
+                throw new NotSupportedException(
+                    "Run bundle emission supports Full recording mode only (WI-A5-09).");
+            }
+
+            Directory.CreateDirectory(bundleDirectory);
+        }
 
         var map = MapMetadataService.Load(installation, scenario.MapPath);
 
@@ -97,7 +113,23 @@ public static class HarnessRunner
             // A2 (WI-A2-04): optional T0 run-output capture for statistical aggregation. T0
             // metrics only; the tiered T1/T2 recording stays out of scope here. The sample
             // interval follows the scenario's recording options (WI-A5-03).
-            var runOutputRecorder = onRunCompleted is not null
+            //
+            // WI-A5-09: with a bundle directory the full RunRecording stack replaces the
+            // T0-only recorder (manifest + state artifact + tiered metadata), and a run event
+            // recorder captures the structured event stream beside them.
+            var recording = bundleDirectory is null ? null : RunRecording.Attach(
+                host,
+                game,
+                runSeed,
+                scenario.MapPath,
+                scenario.Recording?.SampleInterval ?? RunOutputRecorder.DefaultSampleInterval,
+                scenario.Recording?.SnapshotInterval ?? 300,
+                tolerances: null,
+                snapshotArtifactPath: Path.Combine(bundleDirectory, RunBundle.StateFileName),
+                domainStateArtifactPath: null,
+                options: null);
+            var eventRecorder = recording is null ? null : new RunEventRecorder(game, monitor, () => host.Frame);
+            var runOutputRecorder = recording is null && onRunCompleted is not null
                 ? new RunOutputRecorder(
                     host, game, runSeed, scenario.MapPath,
                     scenario.Recording?.SampleInterval ?? RunOutputRecorder.DefaultSampleInterval)
@@ -160,6 +192,18 @@ public static class HarnessRunner
             finally
             {
                 resolver.Dispose();
+                if (recording is not null)
+                {
+                    // WI-A5-09: manifest last — its presence marks a complete bundle. Events
+                    // land beside the state artifact before the manifest closes the bundle.
+                    var output = recording.Complete();
+                    RunBundle.WriteEvents(Path.Combine(bundleDirectory!, RunBundle.EventsFileName), eventRecorder!.Events);
+                    output.SaveToFile(Path.Combine(bundleDirectory!, RunBundle.ManifestFileName));
+                    recording.Dispose();
+                    eventRecorder.Dispose();
+                    onRunCompleted?.Invoke(output);
+                }
+
                 if (runOutputRecorder is not null)
                 {
                     onRunCompleted!(runOutputRecorder.Complete());
