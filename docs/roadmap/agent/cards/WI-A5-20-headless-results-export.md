@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-20` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-3 headless export |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-18` |
@@ -39,11 +39,20 @@ window, MAUI runtime, or GPU.
 
 ## Acceptance criteria
 
-- [ ] One command emits PNG and self-contained HTML.
-- [ ] No window, MAUI runtime, or GPU is required.
-- [ ] HTML includes metric series and the event table.
-- [ ] Identical input produces identical output.
-- [ ] Standard validation passes.
+- [x] One command emits PNG and self-contained HTML.
+  - `ResultsExportService.ExportAsync` writes frame.png + chart.png + report.html (images
+    base64-inlined); `dotnet run -- --export-results <run.json> --frame <n> --out <dir>` routes
+    through Program.Main before any window is built (CLI routing smoke verified).
+- [x] No window, MAUI runtime, or GPU is required.
+  - CPU `SKSurface` raster through the same renderers the Results tab uses; entry point runs
+    before `BuildAvaloniaApp`; unit tests are engine- and display-free.
+- [x] HTML includes metric series and the event table.
+  - `Export_WritesFrameChartAndSelfContainedHtml` asserts the series table (`money:USA`) and
+    event rows (`AmericaCommandCenter`) plus runId/seed/scenario metadata.
+- [x] Identical input produces identical output.
+  - `Export_IsByteIdenticalAcrossRuns`: all three files byte-equal across separate exports
+    (fixed image sizes, invariant culture, ordinal sorts, no timestamps).
+- [x] Standard validation passes.
 
 ## Validation commands
 

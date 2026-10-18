@@ -344,6 +344,22 @@ The Model tab (`REPLAYSKETCH_SCREENSHOT_TAB=model`) uses a deterministic fake se
 (`ExternalModelScreenshotFixture`) and starts no TestHarness process, so its capture is
 reproducible. Map-tab captures need `CNC_GENERALS_PATH` and a longer settle delay (8 s).
 
+## Recipe: headless run-bundle results export (WI-A5-20)
+
+Exports one frame of a recorded run bundle (WI-A5-09 layout: `run.json` + `state.bin` +
+`events.json`) as `frame.png`, `chart.png`, and a self-contained `report.html` with both images
+inlined plus metric-series and event tables. No window, no GPU, no install needed:
+
+```sh
+dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia -- \
+  --export-results /path/to/run.json --frame 17 --out /tmp/export
+```
+
+`--frame` clamps to the last recorded frame; the bundle argument also accepts the bundle
+directory. Output is deterministic for identical input (fixed image sizes, invariant culture,
+ordinal sorts).
+
+
 ## Recipe: pixel-diff A/B verification
 
 When a visual change must be verified without a human, capture two runs that differ only in the
