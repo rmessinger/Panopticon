@@ -119,53 +119,53 @@ public static class ScenarioGeneratorService
         switch (generator)
         {
             case GridPopulationGenerator grid:
-            {
-                for (var row = 0; row < grid.Rows; row++)
                 {
-                    for (var column = 0; column < grid.Columns; column++)
+                    for (var row = 0; row < grid.Rows; row++)
                     {
-                        var x = grid.OriginX + (column - (grid.Columns - 1) / 2f) * grid.SpacingX;
-                        var y = grid.OriginY + (row - (grid.Rows - 1) / 2f) * grid.SpacingY;
-                        yield return Placement(generator, x, y);
+                        for (var column = 0; column < grid.Columns; column++)
+                        {
+                            var x = grid.OriginX + (column - (grid.Columns - 1) / 2f) * grid.SpacingX;
+                            var y = grid.OriginY + (row - (grid.Rows - 1) / 2f) * grid.SpacingY;
+                            yield return Placement(generator, x, y);
+                        }
                     }
-                }
 
-                break;
-            }
+                    break;
+                }
 
             case FormationPopulationGenerator formation:
-            {
-                var columns = formation.Shape switch
                 {
-                    FormationShape.Line => formation.Quantity,
-                    FormationShape.Column => 1u,
-                    FormationShape.Box => (uint)Math.Ceiling(Math.Sqrt(formation.Quantity)),
-                    _ => formation.Quantity,
-                };
-                for (var i = 0; i < formation.Quantity; i++)
-                {
-                    var column = i % columns;
-                    var row = i / columns;
-                    var x = formation.OriginX + (column - (columns - 1) / 2f) * formation.Spacing;
-                    var y = formation.OriginY - row * formation.Spacing;
-                    yield return Placement(generator, x, y);
-                }
+                    var columns = formation.Shape switch
+                    {
+                        FormationShape.Line => formation.Quantity,
+                        FormationShape.Column => 1u,
+                        FormationShape.Box => (uint)Math.Ceiling(Math.Sqrt(formation.Quantity)),
+                        _ => formation.Quantity,
+                    };
+                    for (var i = 0; i < formation.Quantity; i++)
+                    {
+                        var column = i % columns;
+                        var row = i / columns;
+                        var x = formation.OriginX + (column - (columns - 1) / 2f) * formation.Spacing;
+                        var y = formation.OriginY - row * formation.Spacing;
+                        yield return Placement(generator, x, y);
+                    }
 
-                break;
-            }
+                    break;
+                }
 
             case ScatteredPopulationGenerator scattered:
-            {
-                for (var i = 0; i < scattered.Quantity; i++)
                 {
-                    // Uniform in the circle: radius scaled by sqrt(sample).
-                    var radius = scattered.Radius * Math.Sqrt(rng.NextDouble());
-                    var angle = 2 * Math.PI * rng.NextDouble();
-                    yield return Placement(generator, scattered.CenterX + (float)(radius * Math.Cos(angle)), scattered.CenterY + (float)(radius * Math.Sin(angle)));
-                }
+                    for (var i = 0; i < scattered.Quantity; i++)
+                    {
+                        // Uniform in the circle: radius scaled by sqrt(sample).
+                        var radius = scattered.Radius * Math.Sqrt(rng.NextDouble());
+                        var angle = 2 * Math.PI * rng.NextDouble();
+                        yield return Placement(generator, scattered.CenterX + (float)(radius * Math.Cos(angle)), scattered.CenterY + (float)(radius * Math.Sin(angle)));
+                    }
 
-                break;
-            }
+                    break;
+                }
 
             default:
                 throw new InvalidOperationException($"Unknown population generator kind '{generator.GetType().Name}'.");
