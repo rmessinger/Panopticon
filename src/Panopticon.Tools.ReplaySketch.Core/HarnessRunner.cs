@@ -9,6 +9,7 @@ using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
 using Panopticon.Simulation;
+using Panopticon.Simulation.Transport;
 using Panopticon.Tools.ReplaySketch.Assertions;
 using Panopticon.Tools.ReplaySketch.Model;
 
@@ -80,21 +81,26 @@ public static class HarnessRunner
             var pendingInjections = BuildDeferredInjector(monitor, deferredActions);
 
             var resolver = new ObjectReferenceResolver(game);
-            // Seed the dispatch RNG from the replay's recorded run seed so harness runs are
-            // reproducible (A2, WI-A2-03); the engine's GameLogic.Random is seeded from the
-            // same value when the replay is loaded.
-            var dispatchRng = new Random(replayFile.Header.Metadata.SD);
+            // Seed the dispatch RNG from the scenario seed when one is declared (WI-A5-03),
+            // else the replay's recorded run seed, so harness runs are reproducible (A2,
+            // WI-A2-03); the engine's GameLogic.Random is seeded from the same value when the
+            // replay is loaded.
+            var runSeed = scenario.Seed ?? (uint)replayFile.Header.Metadata.SD;
+            var dispatchRng = new Random(unchecked((int)runSeed));
 
             // A1-4 SimulationHost stepping (WI-A1-08): fixed-timestep, faster-than-real-time.
             // Frame alignment: TickStarting fires before step k (k = e.Frame), when the world
             // has completed k-1 frames — matching the pre-Update ComputeLogicFrame of the
-            // previous loop.
-            var host = new SimulationHost(game.GameEngine, new RtsSimulationDomainModel(game.GameEngine));
+            // previous loop. The domain adapter follows the scenario's declaration (WI-A5-03).
+            var host = new SimulationHost(game.GameEngine, CreateDomainModel(scenario, game.GameEngine));
 
             // A2 (WI-A2-04): optional T0 run-output capture for statistical aggregation. T0
-            // metrics only; the tiered T1/T2 recording stays out of scope here.
+            // metrics only; the tiered T1/T2 recording stays out of scope here. The sample
+            // interval follows the scenario's recording options (WI-A5-03).
             var runOutputRecorder = onRunCompleted is not null
-                ? new RunOutputRecorder(host, game, (uint)replayFile.Header.Metadata.SD, scenario.MapPath)
+                ? new RunOutputRecorder(
+                    host, game, runSeed, scenario.MapPath,
+                    scenario.Recording?.SampleInterval ?? RunOutputRecorder.DefaultSampleInterval)
                 : null;
             var openCommands = 0;
             var timedOut = false;
@@ -142,8 +148,13 @@ public static class HarnessRunner
 
             try
             {
+                // WI-A5-03: a scenario frame cap tightens the budget below the timeout; victory
+                // and other stop conditions still end the run through the stop predicate.
+                var frameBudget = (int)Math.Min(
+                    DefaultFrameTimeout + 1,
+                    EffectiveFrameCap(scenario) + 1);
                 host.Run(
-                    (int)DefaultFrameTimeout + 1,
+                    frameBudget,
                     h => !game.IsRunning || evaluator.IsAborted || timedOut);
             }
             finally
@@ -168,6 +179,33 @@ public static class HarnessRunner
     // Handle-dependency helpers
     // ──────────────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// The domain adapter a scenario declares (WI-A5-03). The RTS adapter is the default;
+    /// unknown ids fail before the run starts rather than degrading to a wrong domain.
+    /// </summary>
+    private static ISimulationDomainModel CreateDomainModel(ReplayScenario scenario, IGameEngine engine) =>
+        scenario.DomainId switch
+        {
+            RtsSimulationDomainModel.DefaultDomainId => new RtsSimulationDomainModel(engine),
+            TransportGraphDomainModel.DomainIdentifier => TransportGraphDomainModel.CreateDefault(engine),
+            _ => throw new InvalidOperationException(
+                $"Scenario declares unknown domain '{scenario.DomainId}'."),
+        };
+
+    private static uint EffectiveFrameCap(ReplayScenario scenario)
+    {
+        uint cap = DefaultFrameTimeout;
+        foreach (var condition in scenario.StopConditions)
+        {
+            if (condition is FrameCapStopCondition { MaxFrames: var max } && max < cap)
+            {
+                cap = max;
+            }
+        }
+
+        return cap;
+    }
+
     private static bool ContainsUnresolvableArgs(ActionEntry action) =>
         action.Command.Arguments.Any(a => a is HandleCommandArgument or QuerySelectorCommandArgument);
 
@@ -182,6 +220,14 @@ public static class HarnessRunner
         {
             MapPath = scenario.MapPath,
             BaseRadiusWorldUnits = scenario.BaseRadiusWorldUnits,
+            SchemaVersion = scenario.SchemaVersion,
+            DomainId = scenario.DomainId,
+            Seed = scenario.Seed,
+            Placements = scenario.Placements,
+            Parameters = scenario.Parameters,
+            StopConditions = scenario.StopConditions,
+            RecordedMetricSeries = scenario.RecordedMetricSeries,
+            Recording = scenario.Recording,
             Assertions = scenario.Assertions,
         };
 

@@ -17,7 +17,10 @@ public sealed class RtsSimulationDomainModel : ISimulationDomainModel
 {
     private readonly IGameEngine _gameEngine;
 
-    public string DomainId => "rts";
+    /// <summary>Registry id of the RTS domain adapter (WI-A5-03 scenario domain selection).</summary>
+    public const string DefaultDomainId = "rts";
+
+    public string DomainId => DefaultDomainId;
 
     public DomainFidelityPolicy Fidelity => DomainFidelityPolicy.Identity;
 

@@ -67,7 +67,10 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainS
     // controller id (the documented owner rule).
     public IReadOnlyList<(string EdgeKey, uint AuthorityId)> AuthorityResolutions { get; } = new List<(string, uint)>();
 
-    public string DomainId => "transport-graph";
+    /// <summary>Registry id of the transport-graph domain adapter (WI-A5-03).</summary>
+    public const string DomainIdentifier = "transport-graph";
+
+    public string DomainId => DomainIdentifier;
 
     public DomainFidelityPolicy Fidelity => DomainFidelityPolicy.Identity;
 
