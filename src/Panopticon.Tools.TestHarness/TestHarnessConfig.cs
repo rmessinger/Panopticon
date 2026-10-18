@@ -288,5 +288,6 @@ public sealed class TestHarnessConfig
     /// the scripted general attack (jets keep the scripted sortie loop until WI-M4-05).
     /// Default off, which keeps the M1 scripted behavior comparable.
     /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleCapacityProbeArmyAi.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public bool? MassBattleCapacityProbeArmyAi { get; set; } = null;
 }
