@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-29` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-5 bounded-memory replay |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-08`, `WI-A5-12` |
@@ -38,11 +38,21 @@ whole world frame when only a viewport subset is needed.
 
 ## Acceptance criteria
 
-- [ ] A frame-region query decodes only requested regions plus required metadata.
-- [ ] Entities moving between regions reconstruct exactly once.
-- [ ] Whole-frame reconstruction remains correct.
-- [ ] Decoded entity count can remain bounded independently of world size.
-- [ ] Standard validation passes.
+- [x] A frame-region query decodes only requested regions plus required metadata.
+  - `ReconstructRegionStateAt(frame, keys)` skips non-matching snapshot parts and region deltas;
+    `LongRun_RegionQuery_DecodesOnlyRequestedRegions` decodes ~150 entities of ~15,000 written.
+- [x] Entities moving between regions reconstruct exactly once.
+  - The writer splits a cross-region move into Removed(old) + Added(new) so region parts are
+    self-contained; `MovedBetweenRegions_ReconstructsExactlyOnce` asserts whole-frame uniqueness
+    and correct per-region membership before and after the move.
+- [x] Whole-frame reconstruction remains correct.
+  - `WholeFrame_Query_MatchesAuthoredSummaries` compares v2 `ReconstructStateAt` against authored
+    summaries; `WorldStateArtifact.Load` merges v2 tags into whole-frame records for existing
+    consumers (WorldStateArtifactReader/TieredRecording/A5Manifest/RunBundleTests suites green).
+- [x] Decoded entity count can remain bounded independently of world size.
+  - `DecodedEntitiesLastQuery` counts only decoded entities; frame-global money resolves at the
+    query frame without decoding other regions' parts.
+- [x] Standard validation passes.
 
 ## Validation commands
 

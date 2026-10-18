@@ -85,7 +85,7 @@ public sealed class SnapshotDeltaRecorder : IDisposable
     public List<WorldStateSummary> Snapshots { get; } = new();
     public List<WorldStateDelta> Deltas { get; } = new();
 
-    public SnapshotDeltaRecorder(WorldStateSampler sampler, uint snapshotInterval = 300, string? artifactPath = null, IGame? game = null)
+    public SnapshotDeltaRecorder(WorldStateSampler sampler, uint snapshotInterval = 300, string? artifactPath = null, IGame? game = null, Func<WorldObjectState, string>? regionClassifier = null)
     {
         ArgumentOutOfRangeException.ThrowIfZero(snapshotInterval);
 
@@ -97,7 +97,7 @@ public sealed class SnapshotDeltaRecorder : IDisposable
         _sampler = sampler;
         SnapshotInterval = snapshotInterval;
         ArtifactPath = artifactPath;
-        _writer = artifactPath is not null ? new WorldStateArtifactWriter(artifactPath, game!) : null;
+        _writer = artifactPath is not null ? new WorldStateArtifactWriter(artifactPath, game!, regionClassifier) : null;
         _sampler.FrameSampled += OnFrameSampled;
     }
 
@@ -597,7 +597,8 @@ public sealed class RunRecording : IDisposable
         string? snapshotArtifactPath = null,
         string? domainStateArtifactPath = null,
         RecordingOptions? options = null,
-        TriggeredDetailCaptureOptions? detailOptions = null)
+        TriggeredDetailCaptureOptions? detailOptions = null,
+        Func<WorldObjectState, string>? stateRegionClassifier = null)
     {
         var reconstructable = host.DomainModel as IReconstructableDomain;
         var effectiveCadence = reconstructable?.Cadence
@@ -626,7 +627,9 @@ public sealed class RunRecording : IDisposable
                 ? new TriggeredDetailCapture(sampler)
                 : TriggeredDetailCapture.Create(sampler, detailOptions, regionClassifier);
         var t1 = new TieredSignatureRecorder(sampler, tolerances, sampleInterval, domain: host.DomainModel);
-        var snapshots = new SnapshotDeltaRecorder(sampler, snapshotInterval, snapshotArtifactPath, snapshotArtifactPath is null ? null : game);
+        // WI-A5-29: the state artifact becomes region-indexed when a classifier is supplied,
+        // either explicitly or implicitly through detail-region configuration.
+        var snapshots = new SnapshotDeltaRecorder(sampler, snapshotInterval, snapshotArtifactPath, snapshotArtifactPath is null ? null : game, stateRegionClassifier ?? regionClassifier);
         // WI-A5-07: frame-zero baseline lands before the first delta, so bundle consumers can
         // reconstruct the run's initial state unconditionally.
         snapshots.CaptureInitial();

@@ -130,6 +130,17 @@ public static class HarnessRunner
             // WI-A5-09: with a bundle directory the full RunRecording stack replaces the
             // T0-only recorder (manifest + state artifact + tiered metadata), and a run event
             // recorder captures the structured event stream beside them.
+            Func<Panopticon.Recording.WorldObjectState, string>? stateRegionClassifier = null;
+            if (scenario.Recording?.DetailRegionKeys is { Count: > 0 })
+            {
+                string ClassifyByTopology(Panopticon.Recording.WorldObjectState o)
+                {
+                    return host.DomainModel.TopologyKey(new Panopticon.Simulation.DomainEntitySummary(o.ObjectId, o.DefinitionName, o.OwnerIndex, o.Position, o.Health, o.MaxHealth));
+                }
+
+                stateRegionClassifier = ClassifyByTopology;
+            }
+
             var recording = bundleDirectory is null ? null : RunRecording.Attach(
                 host,
                 game,
@@ -141,7 +152,8 @@ public static class HarnessRunner
                 snapshotArtifactPath: Path.Combine(bundleDirectory, RunBundle.StateFileName),
                 domainStateArtifactPath: null,
                 options: null,
-                detailOptions: scenario.Recording?.ToDetailOptions());
+                detailOptions: scenario.Recording?.ToDetailOptions(),
+                stateRegionClassifier);
             var eventRecorder = recording is null ? null : new RunEventRecorder(game, monitor, () => host.Frame);
             var runOutputRecorder = recording is null && onRunCompleted is not null
                 ? new RunOutputRecorder(
