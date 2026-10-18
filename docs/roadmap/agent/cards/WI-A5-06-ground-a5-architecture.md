@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-06` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring and visualization |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none |
@@ -44,10 +44,20 @@ inspection contracts in the landed A1/P0 implementation.
 
 ## Acceptance criteria
 
-- [ ] Diagram and tier terminology matches current code.
-- [ ] All artifact schemas and compatibility failures are explicit.
-- [ ] Capture, matrix, domain projection, and T2 inspection contracts are fixed.
-- [ ] Dependent cards name exact planned symbols and files.
+- [x] Diagram and tier terminology matches current code.
+  - Tier names T0/T1/T2 map to `RunOutputRecorder`/`TieredSignatureRecorder`/`TriggeredDetailCapture`;
+    the `RunRecording` composition and `RunOutput` manifest fields are named in the diagrams.
+- [x] All artifact schemas and compatibility failures are explicit.
+  - Contracts section of the implementation plan: manifest is additively version-tolerant, side
+    artifacts carry their own schema versions, unknown versions fail with an explicit error,
+    bundle paths are relative.
+- [x] Capture, matrix, domain projection, and T2 inspection contracts are fixed.
+  - Capture-from-run lossiness, matrix `{axis}` binding substitution and constraint filters,
+    `IDomainStateProjection`/`DomainId` dispatch, and T2 window inspection (ring, marked windows,
+    operational rebuild approximation) are each stated as contracts.
+- [x] Dependent cards name exact planned symbols and files.
+  - Sub-phase to card mapping in the implementation plan ties WI-A5-02..33 to the landed symbols
+    they build on; the A5-6 repairs (02/27/28/34/35) are mapped in the WorldBuilder baseline.
 
 ## Validation commands
 

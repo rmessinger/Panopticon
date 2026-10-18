@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-27` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-6 WorldBuilder baseline |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-01` must confirm the audit finding |
