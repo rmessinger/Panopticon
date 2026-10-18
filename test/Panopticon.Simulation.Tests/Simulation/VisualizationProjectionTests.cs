@@ -14,6 +14,7 @@ namespace Panopticon.Tests.Simulation;
 // IDomainVisualization with bucket keys aligned to T1 signature recording, explicit overlay
 // absence, and topology validation through the same adapter.
 
+[Collection("SerialGameTests")]
 public class VisualizationProjectionTests : MockedGameTest
 {
     private static void SpawnUnit(TestGame game, string name, Vector3 position)

@@ -15,6 +15,7 @@ namespace Panopticon.Tests.Recording;
 // snapshot baseline, the recorded T1 signature configuration, and cross-run signature
 // compatibility validation.
 
+[Collection("SerialGameTests")]
 public class A5ManifestTests : MockedGameTest
 {
     private static void SpawnUnit(TestGame game, string name, Vector3 position)
