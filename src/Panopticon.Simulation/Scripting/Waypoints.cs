@@ -119,6 +119,19 @@ public sealed class Waypoint
         }
     }
 
+    /// <summary>
+    /// WI-A5-35: constructs the map object the engine's waypoint scanner recognizes: the
+    /// starred <see cref="ObjectTypeName"/> with the required waypointID and waypointName
+    /// properties. WorldBuilder's waypoint tool and new-map start markers share this encoding.
+    /// </summary>
+    public static MapObject CreateWaypointMapObject(Vector3 position, int waypointId, string waypointName)
+    {
+        var mapObject = new MapObject(position, 0f, RoadType.None, ObjectTypeName);
+        mapObject.Properties.AddInteger("waypointID", waypointId);
+        mapObject.Properties.AddAsciiString("waypointName", waypointName);
+        return mapObject;
+    }
+
     public void AddConnectionTo(Waypoint waypoint)
     {
         _connectedWaypoints ??= [];

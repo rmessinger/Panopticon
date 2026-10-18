@@ -1,9 +1,13 @@
 using System.Numerics;
+using Panopticon.Data.Map;
+using Panopticon.Scripting;
 
 namespace Panopticon.Tools.WorldBuilder.Core;
 
 /// <summary>
-/// Waypoint placement tool. Waypoints are stored as MapObjects with the type name "Waypoints/Waypoint".
+/// Waypoint placement tool. Waypoints are stored as map objects with the engine's starred
+/// waypoint type name and the required waypointID/waypointName properties
+/// (<see cref="Waypoint.CreateWaypointMapObject"/>, WI-A5-35).
 /// </summary>
 public sealed class WaypointTool : IEditorTool
 {
@@ -24,16 +28,18 @@ public sealed class WaypointTool : IEditorTool
             return;
         }
 
-        var mapObject = new Panopticon.Data.Map.MapObject(
-            position: e.WorldPosition.Value,
-            angle: 0f,
-            roadType: Panopticon.Data.Map.RoadType.None,
-            typeName: "Waypoints/Waypoint");
+        var mapObject = Waypoint.CreateWaypointMapObject(
+            e.WorldPosition.Value,
+            NextWaypointId(objectsList),
+            WaypointName);
 
         var edit = ObjectPlacementEdit.CreatePlacement(objectsList, mapObject);
         map.UndoStack.Push(edit);
         map.MarkDirty();
     }
+
+    private static int NextWaypointId(ObjectsList objectsList) =>
+        1 + objectsList.Objects.Count(o => o.TypeName == Waypoint.ObjectTypeName);
 
     public void OnPointerMove(ViewportPointerEvent e, EditorMap map) { }
 

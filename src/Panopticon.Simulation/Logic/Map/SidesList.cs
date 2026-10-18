@@ -64,6 +64,25 @@ public sealed class SidesList : Asset, IPersistableObject
         return result;
     }
 
+    /// <summary>
+    /// WI-A5-35: skirmish-playable sides for new maps: the neutral player, a civilian player,
+    /// then one player per faction PlayerTemplate name. The order is load-bearing: the skirmish
+    /// loader takes Players[0] as neutral and dereferences the civilian player second. Faction
+    /// names are PlayerTemplate block names ("FactionAmerica") and must resolve against the
+    /// installed game's PlayerTemplate.ini for the faction to start.
+    /// </summary>
+    internal static SidesList CreateSkirmish(IReadOnlyList<string> factionTemplateNames)
+    {
+        var result = Create();
+        result.AddPlayerByTemplate("FactionCivilian");
+        foreach (var faction in factionTemplateNames)
+        {
+            result.AddPlayerByTemplate(faction);
+        }
+
+        return result;
+    }
+
     internal static SidesList Parse(BinaryReader reader, MapParseContext context, bool mapHasAssetList)
     {
         return ParseAsset(reader, context, version =>

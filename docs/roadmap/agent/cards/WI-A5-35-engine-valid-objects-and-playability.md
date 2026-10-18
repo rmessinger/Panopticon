@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-35` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-6 WorldBuilder baseline |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `source-edit` |
 | Effort | `M` |
 | Prerequisites | `WI-A5-28` (blank chunks exist before playable content can populate them) |
@@ -42,11 +42,22 @@ authored object engine-valid, closing the save (object encoding) and play steps 
 
 ## Acceptance criteria
 
-- [ ] A `NewMapFactory` map saves and re-opens with sides, lighting, and start waypoints.
-- [ ] Placed objects and waypoints survive save with non-null properties.
-- [ ] Authored waypoints parse as engine waypoints (type name and properties).
-- [ ] Core tests cover the defaults and the encoding without the UI.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] A `NewMapFactory` map saves and re-opens with sides, lighting, and start waypoints.
+  - `SidesList.CreateSkirmish` (neutral, civilian, then one player per faction template; order
+    load-bearing for the skirmish loader), `NewMapParameters.FactionTemplateNames` defaults to
+    `FactionAmerica`/`FactionGLA`, and `AddPlayerStartWaypoints` places one
+    `Player_{i}_Start` waypoint per faction slot on the diagonal with height-sampled Y.
+- [x] Placed objects and waypoints survive save with non-null properties.
+  - `MapObject`'s placement ctor has defaulted non-null `Properties` since WI-A5-28 (the audit's
+    null row predates it), so `PlaceObjectTool` needed no change.
+- [x] Authored waypoints parse as engine waypoints (type name and properties).
+  - `Waypoint.CreateWaypointMapObject` writes the starred `*Waypoints/Waypoint` type name plus
+    required `waypointID`/`waypointName`; `WaypointTool` now places that encoding and numbers
+    ids after existing waypoints.
+- [x] Core tests cover the defaults and the encoding without the UI.
+  - `NewMapPlayableDefaultsTests`: default and custom faction templates round-trip (sides
+    factions, waypoint names/ids, `WaypointCollection.TryGetPlayerStart`); suite 10/10.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Out of scope / guardrails
 

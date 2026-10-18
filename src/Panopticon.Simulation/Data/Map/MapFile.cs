@@ -30,7 +30,7 @@ public class MapFile
     [AddedIn(SageGame.Bfme)]
     public MPPositionList MPPositionList { get; private set; }
 
-    public SidesList SidesList { get; private set; }
+    public SidesList SidesList { get; internal set; }
 
     [AddedIn(SageGame.Bfme)]
     public LibraryMapLists LibraryMapLists { get; private set; }
