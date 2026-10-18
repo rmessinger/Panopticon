@@ -27,6 +27,7 @@ public sealed class ResultsViewModel : IDisposable
     private IReadOnlyList<RunEventRecord> _eventsThroughFrame = [];
     private IReadOnlyList<MetricSeriesRecord> _series = [];
     private IReadOnlyList<string> _divergenceLines = [];
+    private DivergenceDetailReport? _divergenceDetail;
     private RecordedFrameProjection _frameProjection = RecordedFrameProjection.Empty;
     private uint? _selectedPointId;
     private FrameColorMode _frameColorMode = FrameColorMode.Owner;
@@ -154,6 +155,22 @@ public sealed class ResultsViewModel : IDisposable
         }
     }
 
+    /// <summary>
+    /// WI-A5-22: T2 capture detail matched to the latest divergence report; null before a
+    /// comparison or when it failed. Rows carry frames so selection can scrub the timeline.
+    /// </summary>
+    public DivergenceDetailReport? DivergenceDetail
+    {
+        get => _divergenceDetail;
+        private set
+        {
+            _divergenceDetail = value;
+            OnChanged(nameof(DivergenceDetail));
+        }
+    }
+
+    public IReadOnlyList<DivergenceDetailRow> DivergenceDetailRows => DivergenceDetail?.Rows ?? [];
+
     /// <summary>WI-A5-18: card-12 primitives for the frame at the current scrub position.</summary>
     public RecordedFrameProjection FrameProjection
     {
@@ -240,10 +257,25 @@ public sealed class ResultsViewModel : IDisposable
             var other = Panopticon.RunOutput.LoadFromFile(_comparePath);
             var report = RunDivergenceComparator.Compare(_timeline.Bundle.Manifest, other!);
             DivergenceLines = FormatReport(report);
+
+            // WI-A5-22: prefer the viewed bundle's captures; fall back to the compared run's.
+            var detail = DivergenceDetailInspector.Inspect(report, _timeline.Bundle.Manifest);
+            if (detail.State is DivergenceDetailState.Missing or DivergenceDetailState.Unarmed
+                && other?.TriggeredCaptures is { Count: > 0 })
+            {
+                var otherDetail = DivergenceDetailInspector.Inspect(report, other);
+                if (otherDetail.State == DivergenceDetailState.Matched)
+                {
+                    detail = otherDetail;
+                }
+            }
+
+            DivergenceDetail = detail;
         }
         catch (Exception exception)
         {
             DivergenceLines = new[] { $"Compare failed: {exception.Message}" };
+            DivergenceDetail = null;
         }
 
         await System.Threading.Tasks.Task.CompletedTask;
@@ -309,6 +341,7 @@ public sealed class ResultsViewModel : IDisposable
             UpdateFrameProjection();
             StatusMessage = DescribeCurrentState();
             DivergenceLines = [];
+            DivergenceDetail = null;
             OnChanged(nameof(HasTimeline));
         }
         catch (Exception exception)

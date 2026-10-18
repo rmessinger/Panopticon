@@ -32,6 +32,7 @@ public sealed class ResultsView : UserControl
     private readonly ListBox _events = new();
     private readonly TextBox _comparePath = new();
     private readonly TextBlock _divergence = new();
+    private readonly ListBox _divergenceDetail = new() { FontFamily = new FontFamily("monospace"), MinHeight = 60, MaxHeight = 140 };
     private readonly SkiaCanvas _frameView = new();
     private readonly Button _playPause = new();
     private readonly Button _stepBack = new() { Content = "Step -1" };
@@ -156,11 +157,30 @@ public sealed class ResultsView : UserControl
         compareRow.Children.Add(compare);
         compareRow.Children.Add(_divergence);
 
-        var header = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto") };
+        // WI-A5-22: matched T2 capture rows; selecting a row scrubs the timeline to its frame.
+        _divergenceDetail.ItemTemplate = new FuncDataTemplate<DivergenceDetailRow>((item, _) => new TextBlock
+        {
+            Text = item is null
+                ? string.Empty
+                : $"f{item.Frame} {item.Subtree} {(item.EntityId is { } id ? $"entity {id} " : "")}{item.Quantity}: {item.Before} -> {item.Current} ({item.Delta})",
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(4),
+        });
+        _divergenceDetail.SelectionChanged += (_, _) =>
+        {
+            if (!_refreshing && _divergenceDetail.SelectedItem is DivergenceDetailRow row)
+            {
+                _viewModel.ScrubTo(row.Frame);
+            }
+        };
+
+        var header = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,Auto") };
         Grid.SetRow(toolbar, 0);
         Grid.SetRow(compareRow, 1);
+        Grid.SetRow(_divergenceDetail, 2);
         header.Children.Add(toolbar);
         header.Children.Add(compareRow);
+        header.Children.Add(_divergenceDetail);
 
         var chartPanel = new Grid { RowDefinitions = new RowDefinitions("260,*") };
         Grid.SetRow(_chart, 1);
@@ -299,7 +319,16 @@ public sealed class ResultsView : UserControl
                 _comparePath.Text = _viewModel.ComparePath ?? string.Empty;
             }
 
-            _divergence.Text = string.Join(Environment.NewLine, _viewModel.DivergenceLines);
+            var divergenceText = string.Join(Environment.NewLine, _viewModel.DivergenceLines);
+            if (_viewModel.DivergenceDetail is { } inspected && inspected.State != DivergenceDetailState.Matched)
+            {
+                divergenceText += $"{Environment.NewLine}T2 detail: {inspected.Diagnostic}";
+            }
+
+            _divergence.Text = divergenceText;
+            _divergenceDetail.ItemsSource = _viewModel.DivergenceDetail is { State: DivergenceDetailState.Matched } detail
+                ? detail.Rows
+                : [];
         }
         finally
         {
