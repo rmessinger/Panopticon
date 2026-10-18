@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-02` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring & visualization, sub-phase A5-6 |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `test-addition` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-01`, `WI-A5-27`, and `WI-A5-28` |
@@ -54,14 +54,25 @@ the saved file loads in the engine. B4a then builds on a tested baseline.
 
 ## Acceptance criteria
 
-- [ ] A normal-sized map with a terrain edit and a placed object round-trips through save and
+- [x] A normal-sized map with a terrain edit and a placed object round-trips through save and
       reopen with both edits intact.
-- [ ] Undo and redo of both edit types are asserted.
-- [ ] The non-interactive half passes with no game install under
+  - `WorldBuilderRoundTripTests.NewMap_EditsUndoRedo_AndSaveReload` (install-free).
+- [x] Undo and redo of both edit types are asserted.
+  - Both edits undone (state reverts) and redone (state restored) through `EditorMap.UndoStack`
+    before save.
+- [x] The non-interactive half passes with no game install under
       `dotnet test src --filter Category!=Interactive`.
-- [ ] The `[GameFact]` half passes locally with `CNC_GENERALS_PATH` set and skips without it.
-- [ ] No temp file survives the test run.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] The `[GameFact]` half passes locally with `CNC_GENERALS_PATH` set and skips without it.
+  - `SavedNewMap_StartsInEngine` stages the map into the user-data maps folder, starts a
+    skirmish with two AI sides, and asserts the scene and players come up.
+  - Two blank-default gaps surfaced by the play leg were completed in-card as WI-A5-35
+    follow-through (blank-map defaults are that card's remit, not WorldBuilder defects):
+    `BlendTileData.Create` now seeds one terrain texture entry (`Terrain.CreateTileDataTexture`
+    indexes an empty list out of range) and `HeightMapData.Create` now seeds one border spanning
+    the full elevation grid (`PartitionCellManager.OnNewGame` reads `Borders[0]` as the terrain
+    boundary).
+- [x] No temp file survives the test run.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

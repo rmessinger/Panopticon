@@ -23,6 +23,23 @@ public sealed class BlendTileTexture
 
     public string Name { get; private set; }
 
+    /// <summary>
+    /// WI-A5-35: authoring factory for new maps. A Generals terrain texture (256x256 tga)
+    /// holds 4x4 = 16 cells, so cellSize 4 / cellCount 16 / cellStart 0 is the standard
+    /// single-texture entry; the parse constraint cellSize^2 == cellCount applies verbatim.
+    /// </summary>
+    internal static BlendTileTexture Create(string name, uint cellStart, uint cellCount, uint cellSize)
+    {
+        return new BlendTileTexture
+        {
+            CellStart = cellStart,
+            CellCount = cellCount,
+            CellSize = cellSize,
+            MagicValue = 0,
+            Name = name
+        };
+    }
+
     internal static BlendTileTexture Parse(BinaryReader reader)
     {
         var cellStart = reader.ReadUInt32();

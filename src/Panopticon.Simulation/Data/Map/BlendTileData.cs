@@ -74,6 +74,9 @@ public sealed class BlendTileData : Asset
     /// impassability bit rows unpadded while the reader clips them to byte-aligned widths, so
     /// only versions above 7 round-trip exactly; 8 also keeps the Impassability array active
     /// (written when Version &gt; 6) without pulling in the heavier version-gated chunks.
+    /// WI-A5-35 follow-through, found by the WI-A5-02 play leg: one terrain texture entry is
+    /// seeded because Terrain.CreateTileDataTexture indexes TextureIndices by the per-tile
+    /// texture id and an empty list makes every tile access out of range.
     /// </summary>
     public static BlendTileData Create(uint width, uint height)
     {
@@ -96,7 +99,8 @@ public sealed class BlendTileData : Asset
             Buildability = new bool[width, height],
             TiberiumGrowability = new bool[width, height],
             DynamicShrubberyDensity = new byte[width, height],
-            Textures = [],
+            TextureCellCount = 16,
+            Textures = [BlendTileTexture.Create("GrassType1", 0, 16, 4)],
             BlendDescriptions = [],
             CliffTextureMappings = [],
         };

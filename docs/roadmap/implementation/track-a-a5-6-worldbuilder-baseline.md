@@ -8,6 +8,14 @@ from code, no behavior fixed, nothing run interactively. The front-end is
 `Panopticon.Tools.WorldBuilder.Avalonia` (no `.Maui` project exists;
 `docs/worldbuilder-requirements.md` still carries MAUI-era prose).
 
+Status after the audit (WI-A5-02/27/28/34/35, all landed): the table below is the point-in-time
+audit evidence and is kept verbatim. Every round-trip defect it lists has since been repaired:
+new maps initialize all writable chunks with engine-valid defaults (including skirmish sides,
+start waypoints, one terrain texture, and the terrain border), edit application has a single
+owner in `UndoRedoStack.Push`, companions persist beside the `.map`, and the author → save →
+load → play round-trip is proven by `WorldBuilderRoundTripTests` (engine play leg included).
+The UI-exposure gaps (unreachable tools, dead windows) remain open for B4a.
+
 ## Summary
 
 WorldBuilder edits loaded maps adequately for terrain and object placement, but it cannot take
