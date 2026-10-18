@@ -27,6 +27,8 @@ public sealed class ResultsView : UserControl
     private readonly TextBox _frame = new() { MinWidth = 60 };
     private readonly TextBlock _currentState = new() { TextWrapping = TextWrapping.Wrap };
     private readonly ListBox _events = new();
+    private readonly TextBox _comparePath = new();
+    private readonly TextBlock _divergence = new();
     private bool _refreshing;
 
     public ResultsView(ResultsViewModel viewModel)
@@ -95,6 +97,30 @@ public sealed class ResultsView : UserControl
         toolbar.Children.Add(load);
         toolbar.Children.Add(_status);
 
+        // WI-A5-05: divergence comparison against a second run manifest.
+        _comparePath.Watermark = "second run's run.json";
+        _comparePath.MinWidth = 220;
+        _comparePath.TextChanged += (_, _) =>
+        {
+            if (!_refreshing)
+            {
+                _viewModel.ComparePath = _comparePath.Text;
+            }
+        };
+        var compare = new Button { Content = "Compare", Command = _viewModel.CompareCommand };
+        _divergence.TextWrapping = TextWrapping.Wrap;
+        _divergence.FontFamily = new FontFamily("monospace");
+        var compareRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        compareRow.Children.Add(_comparePath);
+        compareRow.Children.Add(compare);
+        compareRow.Children.Add(_divergence);
+
+        var header = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto") };
+        Grid.SetRow(toolbar, 0);
+        Grid.SetRow(compareRow, 1);
+        header.Children.Add(toolbar);
+        header.Children.Add(compareRow);
+
         var chartPanel = new Grid { RowDefinitions = new RowDefinitions("260,*") };
         Grid.SetRow(_chart, 1);
         chartPanel.Children.Add(_series);
@@ -118,10 +144,10 @@ public sealed class ResultsView : UserControl
         body.Children.Add(chartPanel);
         body.Children.Add(right);
 
-        var root = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
-        Grid.SetRow(toolbar, 0);
-        Grid.SetRow(body, 1);
-        root.Children.Add(toolbar);
+        var root = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*") };
+        Grid.SetRow(header, 0);
+        Grid.SetRow(body, 2);
+        root.Children.Add(header);
         root.Children.Add(body);
 
         Content = root;
@@ -180,6 +206,13 @@ public sealed class ResultsView : UserControl
             {
                 _frame.Text = _viewModel.SelectedFrame.ToString();
             }
+
+            if (!string.Equals(_comparePath.Text, _viewModel.ComparePath, StringComparison.Ordinal))
+            {
+                _comparePath.Text = _viewModel.ComparePath ?? string.Empty;
+            }
+
+            _divergence.Text = string.Join(Environment.NewLine, _viewModel.DivergenceLines);
         }
         finally
         {

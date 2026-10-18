@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Panopticon.Tools.ReplaySketch.Model;
 using Panopticon.Tools.ReplaySketch.Services;
 
@@ -18,16 +19,19 @@ public sealed class ResultsViewModel : IDisposable
     private readonly IBundleFileSelector _bundleSelector;
     private RunBundleTimeline? _timeline;
     private string? _bundlePath;
+    private string? _comparePath;
     private string _statusMessage = string.Empty;
     private uint _selectedFrame;
     private IReadOnlyList<RunEventRecord> _eventsThroughFrame = [];
     private IReadOnlyList<MetricSeriesRecord> _series = [];
+    private IReadOnlyList<string> _divergenceLines = [];
 
     public ResultsViewModel(IBundleFileSelector bundleSelector)
     {
         _bundleSelector = bundleSelector ?? throw new ArgumentNullException(nameof(bundleSelector));
         LoadCommand = new AsyncCommand(_ => LoadAsync());
         BrowseCommand = new AsyncCommand(_ => BrowseAsync());
+        CompareCommand = new AsyncCommand(_ => CompareAsync());
     }
 
     public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
@@ -108,6 +112,34 @@ public sealed class ResultsViewModel : IDisposable
 
     public bool HasTimeline => _timeline != null;
 
+    public string? ComparePath
+    {
+        get => _comparePath;
+        set
+        {
+            if (_comparePath == value)
+            {
+                return;
+            }
+
+            _comparePath = value;
+            OnChanged(nameof(ComparePath));
+        }
+    }
+
+    public IReadOnlyList<string> DivergenceLines
+    {
+        get => _divergenceLines;
+        private set
+        {
+            _divergenceLines = value;
+            OnChanged(nameof(DivergenceLines));
+        }
+    }
+
+    /// <summary>WI-A5-05: compares the loaded bundle's T1 trees against a second run manifest.</summary>
+    public AsyncCommand CompareCommand { get; }
+
     public void ScrubTo(uint frame)
     {
         if (_timeline == null)
@@ -128,6 +160,63 @@ public sealed class ResultsViewModel : IDisposable
         _timeline = null;
     }
 
+    private async System.Threading.Tasks.Task CompareAsync()
+    {
+        if (_timeline == null)
+        {
+            DivergenceLines = new[] { "Load a bundle before comparing." };
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_comparePath))
+        {
+            DivergenceLines = new[] { "Pick a second run's run.json to compare against." };
+            return;
+        }
+
+        try
+        {
+            var other = Panopticon.RunOutput.LoadFromFile(_comparePath);
+            var report = RunDivergenceComparator.Compare(_timeline.Bundle.Manifest, other!);
+            DivergenceLines = FormatReport(report);
+        }
+        catch (Exception exception)
+        {
+            DivergenceLines = new[] { $"Compare failed: {exception.Message}" };
+        }
+
+        await System.Threading.Tasks.Task.CompletedTask;
+    }
+
+    internal static IReadOnlyList<string> FormatReport(RunDivergenceReport report)
+    {
+        if (!report.Comparable)
+        {
+            return new[] { $"Incompatible: {report.IncompatibilityReason}" };
+        }
+
+        if (report.FirstDivergentFrame is not { } frame)
+        {
+            return new[] { $"No divergence within tolerance ({report.FramesCompared} frames compared)." };
+        }
+
+        var lines = new List<string>
+        {
+            $"First divergence at frame {frame} ({report.Loci.Count} diverged bucket(s)).",
+        };
+        foreach (var locus in report.Loci.Take(8))
+        {
+            lines.Add($"  {locus.Path}: {locus.Reason} (0x{locus.ReferenceHash:X8} vs 0x{locus.CurrentHash:X8})");
+        }
+
+        if (report.Loci.Count > 8)
+        {
+            lines.Add($"  ... and {report.Loci.Count - 8} more.");
+        }
+
+        return lines;
+    }
+
     private async System.Threading.Tasks.Task LoadAsync()
     {
         if (string.IsNullOrWhiteSpace(_bundlePath))
@@ -146,6 +235,7 @@ public sealed class ResultsViewModel : IDisposable
             Series = timeline.Series;
             EventsThroughFrame = timeline.EventsThrough(timeline.CurrentFrame);
             StatusMessage = DescribeCurrentState();
+            DivergenceLines = [];
             OnChanged(nameof(HasTimeline));
         }
         catch (Exception exception)
