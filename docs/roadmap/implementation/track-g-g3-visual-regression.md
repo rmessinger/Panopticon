@@ -116,7 +116,7 @@ Vulkan 1.4.341 instance, device `AMD Radeon RX 7600 (RADV NAVI33)`, driver Mesa 
 
 - Licensing and storage review outcome: renders of operator install content stay out of Git
   (repo precedent: `.gitignore` `ee2-*-proof/`, "operator install content; never committed";
-  `pbr-material-proof/` is committed because it renders repo-own synthetic materials). The
+  `artifacts/proofs/pbr-material-proof/` is committed because it renders repo-own synthetic materials). The
   goldens are therefore NOT committed. The store lives outside the repo at
   `~/.panopticon/visual-regression-goldens/<preset>/<scene>.png`; override with
   `TESTHARNESS_VR_GOLDEN_STORE`. Asset provenance: each golden is a 1024x768 PNG rendered by

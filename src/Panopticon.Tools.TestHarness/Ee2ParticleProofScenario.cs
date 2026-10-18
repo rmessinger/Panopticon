@@ -183,8 +183,8 @@ internal static class Ee2ParticleProofScenario
         var profileName = Environment.GetEnvironmentVariable("EE2_PARTICLE_PROOF_MODEL");
         var modelReference = GetModelReference(profileName);
         var outputDirectory = string.IsNullOrEmpty(profileName)
-            ? "ee2-particle-proof"
-            : Path.Combine("ee2-particle-proof", profileName);
+            ? Path.Combine("artifacts", "proofs", "ee2-particle-proof")
+            : Path.Combine("artifacts", "proofs", "ee2-particle-proof", profileName);
         Directory.CreateDirectory(outputDirectory);
 
         using var game = new Game(

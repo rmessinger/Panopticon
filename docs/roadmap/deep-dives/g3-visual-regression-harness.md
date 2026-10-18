@@ -63,7 +63,7 @@ Corrections to the phase row:
   gate cannot run in CI; pure metric and comparison code must still be unit-tested there.
 - Every scene renders from the real install, since the scene content (terrain, foliage, HUD) is
   the subject of later phases. Goldens may not be redistributable outside the repo's existing
-  practice of committed proof PNGs (`pbr-material-proof/`, `gltf-runtime-proof/`). Golden commits
+  practice of committed proof PNGs (`artifacts/proofs/pbr-material-proof/`, `artifacts/proofs/gltf-runtime-proof/`). Golden commits
   require a licensing/storage review; if unsuitable, keep the reviewed store externally with a
   checked-in manifest.
 - Output must be identical between two runs on the same host and driver. Exact match across GPUs

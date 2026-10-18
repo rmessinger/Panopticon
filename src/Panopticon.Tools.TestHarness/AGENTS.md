@@ -39,7 +39,7 @@ no overlay except explicit validation-ground overlay captures.
 ### `PbrMaterialProof` scenario
 
 Headless capture of the complete C3 PBR feature matrix: synthetic static/skinned quads with
-embedded textures render through `StandaloneModelCapture` into `pbr-material-proof/*.png`, plus a
+embedded textures render through `StandaloneModelCapture` into `artifacts/proofs/pbr-material-proof/*.png`, plus a
 `validation_guide.md` naming the expected check per capture. Asserts the emissive sRGB round trip
 within one 8-bit step and byte-identical repeat captures (a discarded warm-up frame absorbs
 first-execution engine-global uploads). Requires `CNC_GENERALS_PATH` as the rendering host only.
@@ -54,7 +54,7 @@ CNC_GENERALS_PATH="/path/to/Command and Conquer Generals" \
 Headless C4 runtime proof: imports the committed glTF fixtures (`--gltf-fixture-root`, default
 the Game.Tests fixture matrix) through the internal glTF importers, materializes through C1-C3,
 binds animations through C2, and captures the static PBR model, two rigid-node times, and three
-skinned times (including one between STEP keys) into `gltf-runtime-proof/*.png` plus a
+skinned times (including one between STEP keys) into `artifacts/proofs/gltf-runtime-proof/*.png` plus a
 `validation_guide.md`. Captures apply presentation-only framing (uniform magnification 20x and a
 yaw, because glTF front +Z maps to Panopticon +X and unrotated fixtures present vertical walls
 edge-on to the arcball view) and discarded warm-up frames (plain, textured, and animated) absorb

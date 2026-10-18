@@ -73,7 +73,7 @@ internal static class GltfRuntimeProofScenario
             return 1;
         }
 
-        var outputDirectory = "gltf-runtime-proof";
+        var outputDirectory = Path.Combine("artifacts", "proofs", "gltf-runtime-proof");
         Directory.CreateDirectory(outputDirectory);
 
         using var game = new Game(

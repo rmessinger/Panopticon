@@ -459,6 +459,7 @@ internal static class Ee2NifProofScenario
             return 1;
         }
 
+        outputDirectory = Path.Combine("artifacts", "proofs", outputDirectory);
         Directory.CreateDirectory(outputDirectory);
 
         using var game = new Game(

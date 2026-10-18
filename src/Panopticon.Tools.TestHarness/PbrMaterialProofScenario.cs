@@ -24,7 +24,7 @@ internal static class PbrMaterialProofScenario
 
     public static int Run(GameInstallation installation, TestHarnessConfig config, ITestHarnessReporter reporter)
     {
-        var outputDirectory = "pbr-material-proof";
+        var outputDirectory = Path.Combine("artifacts", "proofs", "pbr-material-proof");
         Directory.CreateDirectory(outputDirectory);
         foreach (var existing in Directory.EnumerateFiles(outputDirectory, "*.png"))
         {
