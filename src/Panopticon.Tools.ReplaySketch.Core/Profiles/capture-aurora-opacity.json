@@ -1,0 +1,28 @@
+{
+  "Name": "aurora-opacity",
+  "MapPath": "maps/alpine assault/alpine assault.map",
+  "DurationFrames": 400,
+  "SettleFrames": 5,
+  "CaptureStride": 5,
+  "RenderEveryFrame": true,
+  "HideHud": true,
+  "Players": [
+    { "Id": "usa", "Side": "FactionAmerica", "Name": "USA" },
+    { "Id": "china", "Side": "FactionChina", "Name": "China" }
+  ],
+  "Actors": [
+    { "Id": "attacker", "Definition": "AmericaJetAurora", "Owner": "usa", "X": 650, "Y": 640, "Z": 180 },
+    { "Id": "target", "Definition": "ChinaTankBattleMaster", "Owner": "china", "X": 680, "Y": 640 }
+  ],
+  "Camera": {
+    "Mode": "Explicit",
+    "LookAt": { "X": 680, "Y": 640, "Z": 0 },
+    "Height": 450
+  },
+  "Commands": [
+    { "Type": "Attack", "Frame": 0, "SourceActorId": "attacker", "TargetActorId": "target" }
+  ],
+  "Expectations": [
+    { "Type": "ProjectileObserved" }
+  ]
+}
