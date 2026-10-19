@@ -322,11 +322,12 @@ public class TieredRecordingTests : MockedGameTest
         Assert.Equal(10u, output.TriggeredCaptures[0].EndFrame);
         Assert.Equal(10, output.TriggeredCaptures[0].Frames.Count);
 
-        // Snapshots: artifact present, reloadable, and indexed.
+        // Snapshots: artifact present, reloadable, and indexed. WI-A5-07 adds the frame-zero
+        // baseline ahead of the first cadence snapshot.
         Assert.True(File.Exists(snapshotPath));
-        Assert.Equal(new[] { 10u, 20u, 30u, 40u }, output.SnapshotFrames);
+        Assert.Equal(new[] { 0u, 10u, 20u, 30u, 40u }, output.SnapshotFrames);
         var (snapshots, deltas) = WorldStateArtifact.Load(snapshotPath, game);
-        Assert.Equal(4, snapshots.Count);
+        Assert.Equal(5, snapshots.Count);
         Assert.True(deltas.Count >= (int)output.TotalLogicFrames - 1);
 
         // The whole output JSON round-trips.

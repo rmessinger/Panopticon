@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Panopticon.Logic;
 using Panopticon.Recording;
@@ -62,9 +63,19 @@ public sealed class RunDomainMetricValue
 /// </summary>
 public sealed class RunOutput
 {
+    /// <summary>Manifest schema version this build writes (WI-A5-07).</summary>
+    public const int CurrentManifestSchemaVersion = 1;
+
     public string RunId { get; set; } = Guid.NewGuid().ToString("N");
     public uint Seed { get; set; }
     public string? ScenarioId { get; set; }
+
+    /// <summary>
+    /// Manifest schema version (WI-A5-07). Loaders reject manifests written under a newer
+    /// version. Zero means a pre-versioning manifest; it loads unchanged under the
+    /// compatibility default.
+    /// </summary>
+    public int ManifestSchemaVersion { get; set; } = CurrentManifestSchemaVersion;
 
     // A4-1: the domain adapter that produced this run ("rts", "transport-graph", ...).
     public string? DomainId { get; set; }
@@ -76,6 +87,11 @@ public sealed class RunOutput
     // T1 tier: one signature tree per sampled frame (WI-A1-09).
     public uint T1SampleInterval { get; set; }
     public List<SignatureTreeSample> SignatureTrees { get; set; } = new();
+
+    // T1 recording configuration (WI-A5-07): what the trees were quantized and bucketed with,
+    // so comparison surfaces can reject runs recorded under different settings.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RunSignatureConfigurationRecord? T1Configuration { get; set; }
 
     // T2 tier: bounded triggered detail windows (WI-A1-10).
     public List<TriggeredDetailWindowRecord> TriggeredCaptures { get; set; } = new();
@@ -116,9 +132,30 @@ public sealed class RunOutput
 
     public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
-    public static RunOutput? FromJson(string json) => JsonSerializer.Deserialize<RunOutput>(json, JsonOptions);
+    public static RunOutput? FromJson(string json)
+    {
+        var output = JsonSerializer.Deserialize<RunOutput>(json, JsonOptions);
+        if (output is null)
+        {
+            return null;
+        }
 
-    public static RunOutput? LoadFromFile(string path) => FromJson(File.ReadAllText(path));
+        if (output.ManifestSchemaVersion > CurrentManifestSchemaVersion)
+        {
+            throw new InvalidOperationException(
+                $"Run manifest reports schema version {output.ManifestSchemaVersion}; this build understands up to {CurrentManifestSchemaVersion}.");
+        }
+
+        if (output.ManifestSchemaVersion == 0)
+        {
+            output.ManifestSchemaVersion = CurrentManifestSchemaVersion;
+        }
+
+        return output;
+    }
+
+    public static RunOutput? LoadFromFile(string path) =>
+        ResolveBundlePaths(path, FromJson(File.ReadAllText(path)));
 
     public void SaveToFile(string path)
     {
@@ -128,8 +165,111 @@ public sealed class RunOutput
             Directory.CreateDirectory(directory);
         }
 
-        File.WriteAllText(path, ToJson());
+        // WI-A5-07: the manifest stores artifact references relative to itself when they live
+        // inside the bundle, so bundles relocate; absolute references outside the bundle stay.
+        var node = JsonSerializer.SerializeToNode(this, JsonOptions) as JsonObject ?? throw new InvalidOperationException("Run output serialized to null.");
+        RelativizeNode(node, "snapshotArtifactPath", directory);
+        RelativizeNode(node, "domainStateArtifactPath", directory);
+        RelativizeNode(node, "operationalStreamPath", directory);
+        if (node["checkpoints"] is JsonArray checkpoints)
+        {
+            foreach (var checkpoint in checkpoints.OfType<JsonObject>())
+            {
+                if (checkpoint["path"]?.GetValue<string>() is { } stored)
+                {
+                    checkpoint["path"] = MakePortable(stored, directory);
+                }
+            }
+        }
+
+        File.WriteAllText(path, node.ToJsonString(JsonOptions));
     }
+
+    private static void RelativizeNode(JsonObject node, string propertyName, string? directory)
+    {
+        if (node[propertyName]?.GetValue<string>() is { } stored)
+        {
+            node[propertyName] = MakePortable(stored, directory);
+        }
+    }
+
+    internal static string MakePortable(string stored, string? directory)
+    {
+        if (directory is null || !Path.IsPathRooted(stored))
+        {
+            return stored;
+        }
+
+        var relative = Path.GetRelativePath(directory, stored);
+        return relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative) ? stored : relative;
+    }
+
+    /// <summary>
+    /// WI-A5-07: resolves one stored artifact reference against the manifest's location.
+    /// Bundle-relative references become absolute; absolute references pass through.
+    /// </summary>
+    public static string? ResolveBundlePath(string manifestPath, string? storedPath)
+    {
+        if (string.IsNullOrEmpty(storedPath) || Path.IsPathRooted(storedPath))
+        {
+            return storedPath;
+        }
+
+        var directory = Path.GetDirectoryName(Path.GetFullPath(manifestPath));
+        return Path.GetFullPath(Path.Combine(directory ?? ".", storedPath));
+    }
+
+    private static RunOutput? ResolveBundlePaths(string manifestPath, RunOutput? output)
+    {
+        if (output is null)
+        {
+            return null;
+        }
+
+        output.SnapshotArtifactPath = ResolveBundlePath(manifestPath, output.SnapshotArtifactPath);
+        output.DomainStateArtifactPath = ResolveBundlePath(manifestPath, output.DomainStateArtifactPath);
+        output.OperationalStreamPath = ResolveBundlePath(manifestPath, output.OperationalStreamPath);
+        if (output.Checkpoints is not null)
+        {
+            foreach (var checkpoint in output.Checkpoints)
+            {
+                checkpoint.Path = ResolveBundlePath(manifestPath, checkpoint.Path) ?? checkpoint.Path;
+            }
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// WI-A5-07: signature-tree comparison precondition. Throws when the two runs recorded
+    /// their T1 trees under different quantization or bucketing, which would make divergence
+    /// results meaningless. Runs without a recorded configuration used the documented defaults
+    /// (domain bucket keys, default tolerances and cell size).
+    /// </summary>
+    public void ValidateSignatureConfigurationCompatible(RunOutput other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        var a = EffectiveSignatureConfiguration();
+        var b = other.EffectiveSignatureConfiguration();
+        if (a.PositionEpsilon != b.PositionEpsilon || a.HealthEpsilon != b.HealthEpsilon
+            || a.Strict != b.Strict || a.CellSize != b.CellSize || a.BucketKeys != b.BucketKeys)
+        {
+            throw new InvalidOperationException(
+                $"Runs {RunId} and {other.RunId} recorded T1 trees under different configurations "
+                + $"(tolerances {a.PositionEpsilon}/{a.HealthEpsilon}/{a.Strict}, cell size {a.CellSize}, "
+                + $"bucket keys {a.BucketKeys} vs tolerances {b.PositionEpsilon}/{b.HealthEpsilon}/{b.Strict}, "
+                + $"cell size {b.CellSize}, bucket keys {b.BucketKeys}); their trees are not comparable.");
+        }
+    }
+
+    private RunSignatureConfigurationRecord EffectiveSignatureConfiguration() => T1Configuration ?? new RunSignatureConfigurationRecord
+    {
+        PositionEpsilon = Recording.SignatureTolerances.Default.PositionEpsilon,
+        HealthEpsilon = Recording.SignatureTolerances.Default.HealthEpsilon,
+        Strict = Recording.SignatureTolerances.Default.Strict,
+        CellSize = Recording.SignatureTreeBuilder.DefaultCellSize,
+        BucketKeys = "domain",
+    };
 
     internal static SignatureTreeSample ToDto(Recording.SignatureTreeFrame tree) => new()
     {
@@ -188,6 +328,22 @@ public sealed class RunCheckpointRecord
     public string Path { get; set; } = "";
     public long Bytes { get; set; }
     public string XxHash3 { get; set; } = "";
+}
+
+/// <summary>
+/// T1 recording configuration as written into the run manifest (WI-A5-07): quantization
+/// tolerances and the bucket-key strategy the trees were built with, so comparison surfaces
+/// can reject mismatched runs before reporting meaningless divergence.
+/// </summary>
+public sealed class RunSignatureConfigurationRecord
+{
+    public float PositionEpsilon { get; set; }
+    public float HealthEpsilon { get; set; }
+    public bool Strict { get; set; }
+    public float CellSize { get; set; }
+
+    /// <summary>Bucket-key strategy: <c>domain</c> keys from the topology contract or <c>legacy-spatial</c>.</summary>
+    public string BucketKeys { get; set; } = "domain";
 }
 
 public sealed class SignatureNodeRecord

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-07` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): run artifact foundation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-06` |
@@ -40,11 +40,20 @@ state.
 
 ## Acceptance criteria
 
-- [ ] Moving the complete run directory preserves all references.
-- [ ] Frame zero reconstructs.
-- [ ] Incompatible versions and signature configurations fail clearly.
-- [ ] Older compatible manifests load with documented defaults.
-- [ ] Standard validation passes.
+- [x] Moving the complete run directory preserves all references.
+  - `A5ManifestTests.SaveToFile_MakesBundlePortableAcrossMoves`: bundle moved on disk reloads
+    with the snapshot artifact resolving beside the new manifest location.
+- [x] Frame zero reconstructs.
+  - `RunRecording.Attach` captures the frame-zero baseline before the first delta
+    (`SnapshotDeltaRecorder.CaptureInitial`); tested at cadence 1000 so only frame zero exists.
+- [x] Incompatible versions and signature configurations fail clearly.
+  - `FromJson` rejects `manifestSchemaVersion` above the understood version; validation names
+    both `RunId`s and both configurations; tested for version, configuration drift, and
+    legacy-without-configuration acceptance.
+- [x] Older compatible manifests load with documented defaults.
+  - Absent version normalizes to 1; absent `T1Configuration` defaults to
+    `SignatureTolerances.Default`, `DefaultCellSize`, and `domain` bucket keys.
+- [x] Standard validation passes.
 
 ## Validation commands
 

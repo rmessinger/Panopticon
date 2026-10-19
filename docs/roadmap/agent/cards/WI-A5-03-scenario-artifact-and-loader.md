@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-03` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring & visualization, sub-phase A5-1 |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-06`; `WI-A1-06` is already `Done` |
@@ -47,10 +47,18 @@ consume it, so a scenario round-trips from file to run.
 
 ## Acceptance criteria
 
-- [ ] A scenario file round-trips through serialize, reload, and run.
-- [ ] Unsupported versions and missing required fields fail before host construction.
-- [ ] The P0 command model is reused, not duplicated.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] A scenario file round-trips through serialize, reload, and run.
+  - `ReplayScenarioLoaderTests.Scenario_WithAllNewFields_RoundTrips` (7/7 engine-free);
+    `ScenarioArtifactHeadlessTests.Scenario_WithSeedDomainAndFrameCap_RunsHeadlessUnderTheCap`
+    runs the authored scenario headless against the install (authored seed 7137 in the run
+    output, rts domain attached, 600-frame cap honored).
+- [x] Unsupported versions and missing required fields fail before host construction.
+  - `ReplayScenarioLoader.Validate` rejects schema version, empty map/domain/player list,
+    placement slot/definition/quantity/position, and zero recording intervals; six rejection
+    tests. Semantic validation stays with WI-A5-10.
+- [x] The P0 command model is reused, not duplicated.
+  - Placements reuse `PositionSpec`; player actions remain `ActionEntry`/`CommandSpec`.
+- [x] Standard validation passes (see [guide](../README.md#standard-validation)).
 
 ## Validation commands
 

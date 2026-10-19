@@ -123,6 +123,23 @@ public sealed class SnapshotDeltaRecorder : IDisposable
     public WorldStateSummary ReconstructStateAt(uint frame) =>
         WorldStateArtifact.Reconstruct(Snapshots, Deltas, frame);
 
+    /// <summary>
+    /// WI-A5-07: records the frame-zero baseline snapshot before any delta, so the bundle can
+    /// always reconstruct the run's initial state. Idempotent: a frame-zero snapshot captured
+    /// by the regular cadence does not duplicate it.
+    /// </summary>
+    internal void CaptureInitial()
+    {
+        if (Snapshots.Count > 0 && Snapshots[0].Frame == 0)
+        {
+            return;
+        }
+
+        var initial = _sampler.CaptureCurrent(0);
+        Snapshots.Insert(0, initial);
+        _writer?.WriteSnapshot(initial);
+    }
+
     public void Dispose()
     {
         _sampler.FrameSampled -= OnFrameSampled;
@@ -151,6 +168,9 @@ public sealed class TieredSignatureRecorder : IDisposable
 
     /// <summary>The most recently built per-frame tree (sampled or trigger-built).</summary>
     public SignatureTreeFrame? LastBuilt => _lastBuilt;
+
+    /// <summary>WI-A5-07: whether bucket keys come from the domain topology contract.</summary>
+    internal bool UsesDomainBuckets => _domain is not null;
 
     /// <summary>
     /// Bucket keys come from <paramref name="domain"/>'s topology contract when given,
@@ -443,6 +463,9 @@ public sealed class RunRecording : IDisposable
         var t2 = options?.Mode == RecordingMode.Operational ? null : new TriggeredDetailCapture(sampler);
         var t1 = new TieredSignatureRecorder(sampler, tolerances, sampleInterval, domain: host.DomainModel);
         var snapshots = new SnapshotDeltaRecorder(sampler, snapshotInterval, snapshotArtifactPath, snapshotArtifactPath is null ? null : game);
+        // WI-A5-07: frame-zero baseline lands before the first delta, so bundle consumers can
+        // reconstruct the run's initial state unconditionally.
+        snapshots.CaptureInitial();
         var domainState = host.DomainModel is IDomainStateProjection projection
             ? new DomainStateRecorder(sampler, projection, snapshotInterval, domainStateArtifactPath, domainStateArtifactPath is null ? null : game)
             : null;
@@ -480,6 +503,14 @@ public sealed class RunRecording : IDisposable
     {
         var output = T0.Complete();
         output.T1SampleInterval = T1.SampleInterval;
+        output.T1Configuration = new RunSignatureConfigurationRecord
+        {
+            PositionEpsilon = T1.Tolerances.PositionEpsilon,
+            HealthEpsilon = T1.Tolerances.HealthEpsilon,
+            Strict = T1.Tolerances.Strict,
+            CellSize = T1.CellSize,
+            BucketKeys = T1.UsesDomainBuckets ? "domain" : "legacy-spatial",
+        };
         output.SignatureTrees.AddRange(T1.SampledFrames.Select(RunOutput.ToDto));
         foreach (var window in (T2?.Complete() ?? Array.Empty<TriggeredDetailWindow>()))
         {
