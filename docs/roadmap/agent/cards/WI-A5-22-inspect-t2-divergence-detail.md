@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-22` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-4 divergence localization |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-05`, `WI-A5-18`, `WI-A5-21` |
@@ -33,16 +33,25 @@ quantities with explicit missing-data diagnostics.
 ## Files likely to change
 
 - `src/Panopticon.Tools.ReplaySketch.Core/`
-- Results detail files under `src/Panopticon.Tools.ReplaySketch.Maui/`
+- Results detail files under `src/Panopticon.Tools.ReplaySketch.Avalonia/`
 - ReplaySketch tests
 
 ## Acceptance criteria
 
-- [ ] The seeded fixture identifies exact frame, subtree, entity, and quantity.
-- [ ] Missing/unarmed/incompatible T2 states have distinct diagnostics.
-- [ ] Selecting a detail synchronizes the replay frame.
-- [ ] Core owns matching and delta logic.
-- [ ] Standard validation passes.
+- [x] The seeded fixture identifies exact frame, subtree, entity, and quantity.
+  - `MatchedWindow_SeedsExactFrameSubtreeEntityAndQuantityRows`: frame 12, `cell:0,0`,
+    entity 7, health 90 -> 80 (-10.0) plus position/added/removed/money rows.
+- [x] Missing/unarmed/incompatible T2 states have distinct diagnostics.
+  - `MissingCapture_HasDistinctDiagnostic` ('no T2 detail windows'),
+    `UnarmedWindow_HasDistinctDiagnostic` ('none covers frame N'),
+    `IncompatibleReport_PassesReasonThrough`.
+- [x] Selecting a detail synchronizes the replay frame.
+  - Rows carry `Frame`; the Results detail pane routes `SelectionChanged` through
+    `ResultsViewModel.ScrubTo` (same contract as the event log).
+- [x] Core owns matching and delta logic.
+  - `DivergenceDetailInspector` is a pure function over the divergence report and captured
+    windows; the view binds its output only.
+- [x] Standard validation passes.
 
 ## Validation commands
 
@@ -50,7 +59,7 @@ quantities with explicit missing-data diagnostics.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~DivergenceDetail"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-t2.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-t2.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 

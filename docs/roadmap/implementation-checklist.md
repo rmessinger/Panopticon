@@ -699,10 +699,12 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
   - AC: the visualizer loads a run, plays/pauses/fast-forwards/scrubs the timeline, supports
     event-to-frame navigation, shows domain state plus metrics/events/fidelity, and exports
     headlessly.
-- [x] A5-4 Divergence localization over the tiered recording. (`WI-A5-05`;
-  T2 inspection from the report is `WI-A5-22`.)
+- [x] A5-4 Divergence localization over the tiered recording. (`WI-A5-05`,
+      `WI-A5-22`)
   - AC: given two runs, the tool localizes the first subtree exceeding tolerance; tested on a
     known-divergent pair.
+    T2 inspection: `DivergenceDetailInspector` matches the first divergent locus to a captured
+    window and derives entity/quantity rows (matched/missing/unarmed/incompatible states).
 - [ ] A5-5 Authoring & visualization at scale: procedural/large command-set & initial-condition
       generation; streaming/LOD/culling in the replay viewport (reuse B5/B7); bounded-memory run
       loading; authoring/replay throughput tracked by B1. (Pairs with B4a-7.)

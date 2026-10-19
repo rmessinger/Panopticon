@@ -17,7 +17,9 @@ namespace Panopticon.Tools.ReplaySketch.ViewModels;
 public sealed class ResultsViewModel : IDisposable
 {
     private readonly IBundleFileSelector _bundleSelector;
+    private readonly IPlaybackClock? _playbackClock;
     private RunBundleTimeline? _timeline;
+    private ResultsPlaybackController? _playback;
     private string? _bundlePath;
     private string? _comparePath;
     private string _statusMessage = string.Empty;
@@ -25,13 +27,15 @@ public sealed class ResultsViewModel : IDisposable
     private IReadOnlyList<RunEventRecord> _eventsThroughFrame = [];
     private IReadOnlyList<MetricSeriesRecord> _series = [];
     private IReadOnlyList<string> _divergenceLines = [];
+    private DivergenceDetailReport? _divergenceDetail;
     private RecordedFrameProjection _frameProjection = RecordedFrameProjection.Empty;
     private uint? _selectedPointId;
     private FrameColorMode _frameColorMode = FrameColorMode.Owner;
 
-    public ResultsViewModel(IBundleFileSelector bundleSelector)
+    public ResultsViewModel(IBundleFileSelector bundleSelector, IPlaybackClock? playbackClock = null)
     {
         _bundleSelector = bundleSelector ?? throw new ArgumentNullException(nameof(bundleSelector));
+        _playbackClock = playbackClock;
         LoadCommand = new AsyncCommand(_ => LoadAsync());
         BrowseCommand = new AsyncCommand(_ => BrowseAsync());
         CompareCommand = new AsyncCommand(_ => CompareAsync());
@@ -115,6 +119,17 @@ public sealed class ResultsViewModel : IDisposable
 
     public bool HasTimeline => _timeline != null;
 
+    /// <summary>WI-A5-31: playback controller for the loaded timeline, null without a clock or bundle.</summary>
+    public ResultsPlaybackController? Playback
+    {
+        get => _playback;
+        private set
+        {
+            _playback = value;
+            OnChanged(nameof(Playback));
+        }
+    }
+
     public string? ComparePath
     {
         get => _comparePath;
@@ -139,6 +154,22 @@ public sealed class ResultsViewModel : IDisposable
             OnChanged(nameof(DivergenceLines));
         }
     }
+
+    /// <summary>
+    /// WI-A5-22: T2 capture detail matched to the latest divergence report; null before a
+    /// comparison or when it failed. Rows carry frames so selection can scrub the timeline.
+    /// </summary>
+    public DivergenceDetailReport? DivergenceDetail
+    {
+        get => _divergenceDetail;
+        private set
+        {
+            _divergenceDetail = value;
+            OnChanged(nameof(DivergenceDetail));
+        }
+    }
+
+    public IReadOnlyList<DivergenceDetailRow> DivergenceDetailRows => DivergenceDetail?.Rows ?? [];
 
     /// <summary>WI-A5-18: card-12 primitives for the frame at the current scrub position.</summary>
     public RecordedFrameProjection FrameProjection
@@ -196,15 +227,13 @@ public sealed class ResultsViewModel : IDisposable
         }
 
         _timeline.SeekTo(frame);
-        SelectedFrame = _timeline.CurrentFrame;
-        EventsThroughFrame = _timeline.EventsThrough(_timeline.CurrentFrame);
-        UpdateFrameProjection();
-        StatusMessage = DescribeCurrentState();
-        OnChanged(nameof(Timeline));
+        ApplyTimelinePosition();
     }
 
     public void Dispose()
     {
+        _playback?.Dispose();
+        _playback = null;
         _timeline?.Dispose();
         _timeline = null;
     }
@@ -228,10 +257,25 @@ public sealed class ResultsViewModel : IDisposable
             var other = Panopticon.RunOutput.LoadFromFile(_comparePath);
             var report = RunDivergenceComparator.Compare(_timeline.Bundle.Manifest, other!);
             DivergenceLines = FormatReport(report);
+
+            // WI-A5-22: prefer the viewed bundle's captures; fall back to the compared run's.
+            var detail = DivergenceDetailInspector.Inspect(report, _timeline.Bundle.Manifest);
+            if (detail.State is DivergenceDetailState.Missing or DivergenceDetailState.Unarmed
+                && other?.TriggeredCaptures is { Count: > 0 })
+            {
+                var otherDetail = DivergenceDetailInspector.Inspect(report, other);
+                if (otherDetail.State == DivergenceDetailState.Matched)
+                {
+                    detail = otherDetail;
+                }
+            }
+
+            DivergenceDetail = detail;
         }
         catch (Exception exception)
         {
             DivergenceLines = new[] { $"Compare failed: {exception.Message}" };
+            DivergenceDetail = null;
         }
 
         await System.Threading.Tasks.Task.CompletedTask;
@@ -278,14 +322,26 @@ public sealed class ResultsViewModel : IDisposable
         {
             var bundle = RunBundle.Load(_bundlePath);
             var timeline = new RunBundleTimeline(bundle, Panopticon.SageGame.CncGenerals);
+            _playback?.Dispose();
             _timeline?.Dispose();
             Timeline = timeline;
+            if (_playbackClock != null)
+            {
+                Playback = new ResultsPlaybackController(timeline, _playbackClock);
+                Playback.StateChanged += (_, _) => ApplyTimelinePosition();
+            }
+            else
+            {
+                Playback = null;
+            }
+
             SelectedFrame = timeline.CurrentFrame;
             Series = timeline.Series;
             EventsThroughFrame = timeline.EventsThrough(timeline.CurrentFrame);
             UpdateFrameProjection();
             StatusMessage = DescribeCurrentState();
             DivergenceLines = [];
+            DivergenceDetail = null;
             OnChanged(nameof(HasTimeline));
         }
         catch (Exception exception)
@@ -312,6 +368,21 @@ public sealed class ResultsViewModel : IDisposable
         _timeline?.CurrentState is { } state
             ? $"frame {state.Frame}: {state.Objects.Count} objects, {_timeline.Series.Count} series"
             : "no state loaded";
+
+    /// <summary>WI-A5-31: publishes the timeline's current position to all bound views.</summary>
+    private void ApplyTimelinePosition()
+    {
+        if (_timeline == null)
+        {
+            return;
+        }
+
+        SelectedFrame = _timeline.CurrentFrame;
+        EventsThroughFrame = _timeline.EventsThrough(_timeline.CurrentFrame);
+        UpdateFrameProjection();
+        StatusMessage = DescribeCurrentState();
+        OnChanged(nameof(Timeline));
+    }
 
     /// <summary>WI-A5-18: re-projects the recorded frame at the scrub position for rendering.</summary>
     private void UpdateFrameProjection()
