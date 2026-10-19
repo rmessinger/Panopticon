@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-08` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-3 and A5-5 replay foundation |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-07` |
@@ -37,11 +37,17 @@ Seek and reconstruct frames without loading every snapshot and delta into memory
 
 ## Acceptance criteria
 
-- [ ] Exact snapshot and intermediate frames reconstruct identically in both seek directions.
-- [ ] Resident decoded records are bounded independently of total run length.
-- [ ] Truncation returns an explicit valid prefix and diagnostic.
-- [ ] No simulation rerun is used for reconstruction.
-- [ ] Standard validation passes.
+- [x] Exact snapshot and intermediate frames reconstruct identically in both seek directions.
+  - `Forward_Backward_IntermediateFrames_MatchFullLoad` probes nine frames forward and reversed
+    against `WorldStateArtifact.Reconstruct`.
+- [x] Resident decoded records are bounded independently of total run length.
+  - 601-record artifact with cache capacity 4: `CachedFrameCount <= 4` after every seek.
+- [x] Truncation returns an explicit valid prefix and diagnostic.
+  - `TruncatedTail_ReturnsValidPrefixAndDiagnostic`: torn last record, `LastFrame` 11,
+    reconstruct(11) matches full load.
+- [x] No simulation rerun is used for reconstruction.
+  - Reader applies nearest-prior snapshot + deltas from the artifact alone (`ReconstructStateAt`).
+- [x] Standard validation passes.
 
 ## Validation commands
 
