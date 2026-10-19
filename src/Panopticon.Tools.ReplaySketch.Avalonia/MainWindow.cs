@@ -17,7 +17,7 @@ namespace Panopticon.Tools.ReplaySketch.Avalonia;
 /// with Tree / Map / Validation Ground / Model tabs and the export strip. Screenshot-and-exit
 /// mode mirrors the previous MAUI front-end's environment variables:
 /// REPLAYSKETCH_SCREENSHOT_PATH (activates), REPLAYSKETCH_SCREENSHOT_TAB
-/// (tree|map|validationground|model|harness), REPLAYSKETCH_SCREENSHOT_DELAY (seconds, default 3).
+/// (tree|map|validationground|model|harness|results), REPLAYSKETCH_SCREENSHOT_DELAY (seconds, default 3).
 /// </summary>
 public sealed class MainWindow : Window
 {
@@ -27,11 +27,13 @@ public sealed class MainWindow : Window
     private readonly Button _validationGroundTabBtn = TabButton("Validation Ground");
     private readonly Button _modelTabBtn = TabButton("Model");
     private readonly Button _harnessTabBtn = TabButton("Harness");
+    private readonly Button _resultsTabBtn = TabButton("Results");
     private readonly Border _treeFrame = new();
     private readonly Border _mapFrame = new() { IsVisible = false };
     private readonly Border _validationGroundFrame = new() { IsVisible = false };
     private readonly Border _modelFrame = new() { IsVisible = false };
     private readonly Border _harnessFrame = new() { IsVisible = false };
+    private readonly Border _resultsFrame = new() { IsVisible = false };
 
     private readonly ScenarioView _scenarioView = new();
     private readonly ActionTreeView _actionTreeView = new();
@@ -43,6 +45,9 @@ public sealed class MainWindow : Window
     private bool _productionModelViewModelBound;
     private bool _harnessLoaded;
     private readonly HarnessView _harnessView = new(new global::Panopticon.Tools.ReplaySketch.ViewModels.HarnessLauncherViewModel(new HarnessCatalogClient(), new HarnessRunClient(), new AvaloniaMainThreadDispatcher()));
+    private readonly ResultsView _resultsView = new(
+        new global::Panopticon.Tools.ReplaySketch.ViewModels.ResultsViewModel(
+            new AvaloniaBundleFileSelector(() => StorageProviderSource.Current)));
 
     private static readonly string? ScreenshotPath =
         Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_PATH");
@@ -64,6 +69,7 @@ public sealed class MainWindow : Window
         _validationGroundTabBtn.Click += (_, _) => SwitchToValidationGround();
         _modelTabBtn.Click += (_, _) => SwitchToModel();
         _harnessTabBtn.Click += (_, _) => SwitchToHarness();
+        _resultsTabBtn.Click += (_, _) => SwitchToResults();
 
         _scenarioView.BindViewModel(_vm);
         _actionTreeView.BindViewModel(_vm);
@@ -88,6 +94,7 @@ public sealed class MainWindow : Window
         _validationGroundFrame.Child = _validationGroundEditorView;
         _modelFrame.Child = _externalModelView;
         _harnessFrame.Child = _harnessView;
+        _resultsFrame.Child = _resultsView;
 
         var tabContent = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
         var tabBar = new StackPanel
@@ -100,6 +107,7 @@ public sealed class MainWindow : Window
         tabBar.Children.Add(_validationGroundTabBtn);
         tabBar.Children.Add(_modelTabBtn);
         tabBar.Children.Add(_harnessTabBtn);
+        tabBar.Children.Add(_resultsTabBtn);
 
         var frames = new Grid();
         frames.Children.Add(_treeFrame);
@@ -107,6 +115,7 @@ public sealed class MainWindow : Window
         frames.Children.Add(_validationGroundFrame);
         frames.Children.Add(_modelFrame);
         frames.Children.Add(_harnessFrame);
+        frames.Children.Add(_resultsFrame);
 
         tabContent.Children.Add(tabBar);
         Grid.SetRow(frames, 1);
@@ -171,6 +180,8 @@ public sealed class MainWindow : Window
                 SwitchToModel(useScreenshotFixture: true);
             else if (tab == "harness")
                 SwitchToHarness();
+            else if (tab == "results")
+                SwitchToResults();
             DispatcherTimer.RunOnce(() => _ = TakeScreenshotAsync(), TimeSpan.FromSeconds(ScreenshotDelaySec));
         }
     }
@@ -216,11 +227,13 @@ public sealed class MainWindow : Window
         _validationGroundFrame.IsVisible = false;
         _modelFrame.IsVisible = false;
         _harnessFrame.IsVisible = false;
+        _resultsFrame.IsVisible = false;
         SetTabActive(_harnessTabBtn, false);
         SetTabActive(_treeTabBtn, true);
         SetTabActive(_mapTabBtn, false);
         SetTabActive(_validationGroundTabBtn, false);
         SetTabActive(_modelTabBtn, false);
+        SetTabActive(_resultsTabBtn, false);
     }
 
     private void SwitchToMap()
@@ -230,11 +243,13 @@ public sealed class MainWindow : Window
         _validationGroundFrame.IsVisible = false;
         _modelFrame.IsVisible = false;
         _harnessFrame.IsVisible = false;
+        _resultsFrame.IsVisible = false;
         SetTabActive(_harnessTabBtn, false);
         SetTabActive(_treeTabBtn, false);
         SetTabActive(_mapTabBtn, true);
         SetTabActive(_validationGroundTabBtn, false);
         SetTabActive(_modelTabBtn, false);
+        SetTabActive(_resultsTabBtn, false);
         _mapPreviewView.Invalidate();
     }
 
@@ -245,11 +260,13 @@ public sealed class MainWindow : Window
         _validationGroundFrame.IsVisible = true;
         _modelFrame.IsVisible = false;
         _harnessFrame.IsVisible = false;
+        _resultsFrame.IsVisible = false;
         SetTabActive(_harnessTabBtn, false);
         SetTabActive(_treeTabBtn, false);
         SetTabActive(_mapTabBtn, false);
         SetTabActive(_validationGroundTabBtn, true);
         SetTabActive(_modelTabBtn, false);
+        SetTabActive(_resultsTabBtn, false);
         _validationGroundEditorView.Invalidate();
     }
 
@@ -259,10 +276,14 @@ public sealed class MainWindow : Window
         _mapFrame.IsVisible = false;
         _validationGroundFrame.IsVisible = false;
         _modelFrame.IsVisible = true;
+        _harnessFrame.IsVisible = false;
+        _resultsFrame.IsVisible = false;
         SetTabActive(_treeTabBtn, false);
         SetTabActive(_mapTabBtn, false);
         SetTabActive(_validationGroundTabBtn, false);
         SetTabActive(_modelTabBtn, true);
+        SetTabActive(_harnessTabBtn, false);
+        SetTabActive(_resultsTabBtn, false);
 
         if (useScreenshotFixture)
         {
@@ -291,12 +312,31 @@ public sealed class MainWindow : Window
         _validationGroundFrame.IsVisible = false;
         _modelFrame.IsVisible = false;
         _harnessFrame.IsVisible = true;
+        _resultsFrame.IsVisible = false;
         SetTabActive(_treeTabBtn, false);
         SetTabActive(_mapTabBtn, false);
         SetTabActive(_validationGroundTabBtn, false);
         SetTabActive(_modelTabBtn, false);
         SetTabActive(_harnessTabBtn, true);
+        SetTabActive(_resultsTabBtn, false);
         if (!_harnessLoaded) { _harnessLoaded = true; _ = _harnessView.LoadAsync(); }
+    }
+
+    // WI-A5-04: results replayer tab (run-bundle load, scrub, chart, event log).
+    private void SwitchToResults()
+    {
+        _treeFrame.IsVisible = false;
+        _mapFrame.IsVisible = false;
+        _validationGroundFrame.IsVisible = false;
+        _modelFrame.IsVisible = false;
+        _harnessFrame.IsVisible = false;
+        _resultsFrame.IsVisible = true;
+        SetTabActive(_treeTabBtn, false);
+        SetTabActive(_mapTabBtn, false);
+        SetTabActive(_validationGroundTabBtn, false);
+        SetTabActive(_modelTabBtn, false);
+        SetTabActive(_harnessTabBtn, false);
+        SetTabActive(_resultsTabBtn, true);
     }
 
     private static void SetTabActive(Button btn, bool active)

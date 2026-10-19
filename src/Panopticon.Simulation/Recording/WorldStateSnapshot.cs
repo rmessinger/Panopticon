@@ -350,6 +350,19 @@ public sealed class WorldStateArtifactWriter : DisposableBase
         _writer = AddDisposable(new StateWriter(_stream, game));
     }
 
+    /// <summary>WI-A5-04: writes summary artifacts without a booted engine game.</summary>
+    public WorldStateArtifactWriter(string path, SageGame sageGame)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        _stream = AddDisposable(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read));
+        _writer = AddDisposable(new StateWriter(_stream, sageGame));
+    }
+
     public void WriteSnapshot(WorldStateSummary summary)
     {
         var tag = SnapshotRecord;

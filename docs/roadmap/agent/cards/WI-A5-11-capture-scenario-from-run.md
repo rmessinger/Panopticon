@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-11` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 capture-from-run |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-03`, `WI-A5-08`, `WI-A5-09` |
@@ -39,12 +39,17 @@ artifact. The result is a documented lossy projection, not a continuation-equiva
 
 ## Acceptance criteria
 
-- [ ] Definition, owner, position, health, max health, and player money match frame N.
-- [ ] Timeline commands follow the documented rebase/drop rule.
-- [ ] The captured scenario serializes and validates.
-- [ ] Reloading the captured artifact reproduces the projected initial fields; no behavioral
+- [x] Definition, owner, position, health, max health, and player money match frame N.
+  - `Capture_AtFrame_ProjectsStateFields` (frame 17 of the shared fixture: definitions, owners,
+    normalized positions against the caller extents, health/max health, money 983/2017).
+- [x] Timeline commands follow the documented rebase/drop rule.
+  - Source command timelines are dropped (captured players have empty actions) and counted in
+    `DroppedCommands`; the seed is not carried, so the new run samples independently.
+- [x] The captured scenario serializes and validates.
+  - `Capture_SerializesValidatesAndReloads` reloads through `ReplayScenarioLoader.Load`.
+- [x] Reloading the captured artifact reproduces the projected initial fields; no behavioral
       continuation equivalence is claimed.
-- [ ] Standard validation passes.
+- [x] Standard validation passes.
 
 ## Validation commands
 
