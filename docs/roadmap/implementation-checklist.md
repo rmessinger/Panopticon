@@ -1865,3 +1865,10 @@ Dependency: none. [Plan and cards](implementation/track-x-x3-cursor-modernizatio
 
 - [ ] X3-1 Evaluate open-source cursor replacements and produce comparison examples (`WI-X3-01`).
   - AC: full inventory of the 52 originals; pinned sources with license verdicts; contact sheet and animated GIF in the shared directory; `CursorFile` load-check per candidate; loader assessment naming the smallest high-DPI change; follow-up cards `Draft` with the original set as default.
+
+### X4: ReplaySketch TabControl shell
+
+Dependency: none. [Plan and card](implementation/track-x-x4-replaysketch-tabcontrol.md).
+
+- [ ] X4-1 Switch the ReplaySketch `MainWindow` tab strip to an Avalonia `TabControl` (`WI-X4-01`).
+  - AC: no tab buttons, frame toggles, `SwitchTo*`, or `SetTabActive` remain; selection side effects and `REPLAYSKETCH_SCREENSHOT_TAB` work for all five tabs; Model after Harness shows only Model; Skia-drawn tabs keep content and state across repeated switching; versioned captures of every tab are inspected.

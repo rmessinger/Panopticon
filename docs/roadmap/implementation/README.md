@@ -549,3 +549,11 @@ Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: none yet; 
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-x-x3-cursor-modernization.md](track-x-x3-cursor-modernization.md) | X3-1 | Open-source cursor evaluation, comparison examples, loader assessment |
+
+## Track X · X4: ReplaySketch TabControl shell
+
+Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [diagrams](track-x-x4-replaysketch-tabcontrol.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-x-x4-replaysketch-tabcontrol.md](track-x-x4-replaysketch-tabcontrol.md) | X4-1 | `TabControl` tab strip in `MainWindow` |
