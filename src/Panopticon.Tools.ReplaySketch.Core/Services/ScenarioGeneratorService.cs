@@ -231,6 +231,7 @@ public static class ScenarioGeneratorService
         StopConditions = [.. scenario.StopConditions],
         RecordedMetricSeries = [.. scenario.RecordedMetricSeries],
         Recording = scenario.Recording,
+        Graph = scenario.Graph,
         Players = scenario.Players
             .Select(player => new PlayerSlotConfig
             {

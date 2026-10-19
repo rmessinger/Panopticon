@@ -176,6 +176,7 @@ public static class ScenarioPreviewService
             },
             PopulationGenerators = [],
             CommandGenerators = [],
+            Graph = scenario.Graph,
             Players = scenario.Players
                 .Select(p => new PlayerSlotConfig
                 {

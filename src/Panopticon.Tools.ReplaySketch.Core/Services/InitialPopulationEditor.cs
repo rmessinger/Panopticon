@@ -146,6 +146,7 @@ public sealed class InitialPopulationEditor
             Parameters = new Dictionary<string, string>(_scenario.Parameters),
             StopConditions = [.. _scenario.StopConditions],
             RecordedMetricSeries = [.. _scenario.RecordedMetricSeries],
+            Graph = _scenario.Graph,
             Players = [.. _scenario.Players],
         };
         return clone;

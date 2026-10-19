@@ -98,6 +98,13 @@ public sealed class TransportGraphDomainModel : ISimulationDomainModel, IDomainS
     /// registered in the game's asset store so checkpoints can recreate the objects by name
     /// (WI-A1-24).
     /// </summary>
+    /// <summary>
+    /// WI-A5-33: builds the domain model over an authored topology (from a scenario graph).
+    /// Node controllers and vehicles are the caller's to arrange, as in authoring flows.
+    /// </summary>
+    public static TransportGraphDomainModel Create(IGameEngine gameEngine, TransportGraphTopology topology) =>
+        new(gameEngine, topology);
+
     public static TransportGraphDomainModel CreateDefault(IGameEngine gameEngine)
     {
         var topology = TransportGraphTopology.CreateDefault();
