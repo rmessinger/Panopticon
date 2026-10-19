@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-01` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring & visualization, sub-phase A5-6 |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | none (A5-6 is an early-start sub-phase with no A1 or A4 dependency, per [a5-visualization.md §7](../../deep-dives/a5-visualization.md#7-sequencing-notes)) |
@@ -58,12 +58,21 @@ half of A5-6. Read-only: no code changes.
 
 ## Acceptance criteria
 
-- [ ] Every tool and edit type in `WorldBuilder.Core` appears in the capability table.
-- [ ] Core-without-UI and UI-without-Core gaps are listed explicitly.
-- [ ] Each step of the author to save to load to play round-trip is marked implemented, partial, or
+- [x] Every tool and edit type in `WorldBuilder.Core` appears in the capability table.
+  - Ten tools (three are `HeightBrushTool` mode instances) and three edit types, each with UI
+    exposure, undo participation, and `MapFile.WriteTo` persistence.
+- [x] Core-without-UI and UI-without-Core gaps are listed explicitly.
+  - Three unreachable tools plus every settings surface; Scripts/Map Settings/player-team
+    windows, view toggles, and unpersisted companion editors.
+- [x] Each step of the author to save to load to play round-trip is marked implemented, partial, or
       missing, with the file and symbol backing the verdict.
-- [ ] The gaps are phrased so B4a can consume them directly.
-- [ ] No `.cs` file is modified by this card.
+  - Two steps fully missing (companions, engine play), three partial (create, save, preview),
+    one implemented (open/parse); 3 missing + 3 partial-defective steps total.
+- [x] The gaps are phrased so B4a can consume them directly.
+  - Size-dependence section describes (does not measure) full-map clones, per-tile edits and
+    events, unbounded undo, array copies, double serialization, and full readback per frame.
+- [x] No `.cs` file is modified by this card.
+  - `git status --short -- src/` is empty.
 
 ## Validation commands
 

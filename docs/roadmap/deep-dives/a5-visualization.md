@@ -85,7 +85,11 @@ A scenario is a versioned, declarative artifact containing the inputs needed to 
   this extends WorldBuilder; graph and zone domains render the network or district view. Visual
   edits serialize back to the declarative file.
 - Capture-from-run. Derive a new scenario from any frame of a previous run's recorded state,
-  because a recorded snapshot is a valid initial population.
+  because a recorded snapshot is a valid initial population. This is a deliberately lossy
+  projection, not a branch: the derived scenario records source run id and frame, and keeps only
+  what that frame's recorded state contains (snapshotted state, placements, parameters). Frames
+  rebuilt from `Operational` checkpoints carry that mode's approximation; no intermediate
+  per-entity history is carried into the new scenario.
 
 ### 3.3 Parameter sweeps / experiment matrix
 Optimization experiments are rarely single-run. A5 lets a scenario declare sweep axes such as
@@ -130,6 +134,15 @@ batch runs are inspectable rather than opaque.
   without a window, for CI and remote inspection (extends `FrameCaptureService`'s
   agent-inspection workflow).
 
+Run artifacts and versions: the run manifest is the `RunOutput` JSON (run id, seed, scenario id,
+domain id, outcome, metric samples, and the tier fields below); each side artifact carries its
+own schema version (snapshot/delta world-state artifact, domain-state artifact
+`DomainStateSchemaVersion`, operational stream bundle). Loaders reject a run whose artifact
+schema version they do not understand with an explicit error rather than best-effort parsing.
+Paths recorded inside a run bundle are relative to the bundle root, so bundles can be moved and
+archived. Frame-zero reconstruction needs no special case: `Full` mode reconstructs any recorded
+frame, frame 0 included.
+
 ---
 
 ## 5. Run comparison & divergence localization
@@ -147,6 +160,13 @@ The recording is tiered so always-on cost stays proportional to the scale this r
 | T0: Aggregate | Per-frame metrics + invariants (counts, conservation checks). | Always on, tiny. | Detect that a run drifted / broke an invariant. |
 | T1: Hierarchical signature | A signature tree per frame following the domain topology (world → partition → entity-bucket: spatial cells for grids, graph nodes/edges for networks, districts for city builders), quantized to tolerance. | Always on, small (one hash per node). | Localize drift by drilling down the tree to the first subtree that exceeds tolerance. |
 | T2: Triggered detail | Per-entity, per-system state deltas for a bounded frame+region window, into a ring buffer. | On-demand, large; only around a tripped threshold or a user-marked window. | Pinpoint the exact entity/system and inspect the values that diverged. |
+
+Landed as ([A1-5](a1-headless-host.md), wired by `Recording.RunRecording.Attach`): T0 is
+`RunOutputRecorder` (per-frame metric samples), T1 is `TieredSignatureRecorder` (signature tree
+per sampled frame, per-quantity `SignatureTolerances`, sampled on `SampleInterval`), T2 is
+`TriggeredDetailCapture` (ring depth default 30, at most 8 windows, marked windows supported).
+Frame state feeding the tiers is produced by one `WorldStateSampler` pass per logic frame, and
+`RunRecording.Complete` assembles the tiers into the `RunOutput` manifest.
 
 ### 5.2 Design points
 - Hierarchical, addressable signatures (T1). A single global hash only answers "diverged
@@ -171,6 +191,14 @@ The recording is tiered so always-on cost stays proportional to the scale this r
 This keeps artifacts granular enough to identify divergence without paying full per-entity,
 per-frame recording cost for every run.
 
+Design-point status: the addressable tree, tolerance-aware comparison, and budgeted granularity
+are landed (`SignatureTree` + `SignatureTreeComparer.FindDivergedSubtrees`, per-quantity
+tolerances, configurable T1 sample interval and T2 ring depth); stable bucket keys are landed
+when the domain implements `ISimulationDomainModel` (otherwise a legacy spatial grid keys the
+tree); live triggering is landed for reference-comparison arming (`RunRecording.ArmReferenceTrigger`
+trips T2 on the first diverged subtree); T0-invariant arming and the comparator UI are the
+A5-4 scope.
+
 ---
 
 ## 6. Sub-phases
@@ -182,7 +210,7 @@ per-frame recording cost for every run.
 | A5-3. Results replayer / visualizer | Build the analysis tool of §4 on top of ReplaySketch: load runs, scrub the timeline, domain-parameterized visualizations, metric charts, event log, fidelity overlay, headless export. Scales to large/long runs under A5-5. (Supersedes the former A1-6.) | Not started |
 | A5-4. Divergence localization | Implement the §5 drill-down: compare two runs' T1 signature trees to localize the first subtree exceeding tolerance, arm/inspect T2 detail, with stable cross-run bucketing and per-quantity tolerances. Validation surface for B3/B6. (Supersedes the former A1-7.) | Not started |
 | A5-5. Authoring & visualization at scale | Make ReplaySketch's authoring, replay, and visualization handle the same magnitudes as the sim they configure: programmatic/procedural generation of large command sets and initial conditions (not hand-entry); streaming + LOD + culling in the replay viewport (reuse [B5](../track-b-scale.md) instancing and [B7](b7-variable-fidelity.md) fidelity for visualization); bounded-memory loading of long/large recordings; and authoring/replay throughput tracked by [B1](../track-b-scale.md) benchmarks. Keeps scenario tooling off the critical path as entity/command counts grow. Mirrors WorldBuilder's [B4a-7](b4a-larger-maps.md) large-population authoring. | Not started |
-| A5-6. WorldBuilder baseline | Establish WorldBuilder as a functional baseline scenario-authoring tool, before B4a scales it. Audit the tool's current functional state: what can be authored, saved, loaded, and played at normal map sizes; where the basic author → save → load → play round-trip works and where it fails. Document functional gaps for B4a to address. Unlike A5-1 through A5-5, this sub-phase does not depend on A1 or A4. It is WorldBuilder tooling, not the headless sim pipeline, so it can start in Stage 1 alongside B4a, and [B4a](b4a-larger-maps.md) depends on it completing. | Not started |
+| A5-6. WorldBuilder baseline | Establish WorldBuilder as a functional baseline scenario-authoring tool, before B4a scales it. Audit the tool's current functional state: what can be authored, saved, loaded, and played at normal map sizes; where the basic author → save → load → play round-trip works and where it fails. Document functional gaps for B4a to address. Unlike A5-1 through A5-5, this sub-phase does not depend on A1 or A4. It is WorldBuilder tooling, not the headless sim pipeline, so it can start in Stage 1 alongside B4a, and [B4a](b4a-larger-maps.md) depends on it completing. | Audit landed ([WI-A5-01](../implementation/track-a-a5-6-worldbuilder-baseline.md)); repairs WI-A5-02/27/28/34/35 pending |
 
 ---
 
@@ -206,57 +234,161 @@ per-frame recording cost for every run.
 
 ## 8. Architecture Diagrams
 
-Diagrams for this phase will be elaborated once A5 moves to active implementation. The
-placeholder below captures the key types the scenario authoring and visualization layer introduces.
+Grounded in landed code (recording: `Panopticon.Recording` in `Panopticon.Simulation`; matrix and
+replay scenario: `Panopticon.Tools.ReplaySketch.Core` model; runners: TestHarness /
+ReplaySketch.Core). Types marked `planned` are the A5 additions; everything else exists.
 
 ```mermaid
 classDiagram
-  class ScenarioAuthoringTool {
-    <<pending A5, extends ReplaySketch>>
-    +Author(scenario) ReplayScenario
-    +CaptureFromRun(runId) ReplayScenario
+  class RunRecording {
+    <<landed, WI-A1-05..21>>
+    +Attach(host, game, seed, scenarioId, ...) RunRecording
+    +ArmReferenceTrigger(referenceFrames)
+    +Complete() RunOutput
   }
-
-  class ExperimentMatrix {
-    <<pending A5>>
-    +ScenarioMatrix Matrix
-    +IReadOnlyList~ExperimentRun~ Runs
+  class WorldStateSampler {
+    <<landed>>
+    +FrameSampled(summary, delta)
   }
-
-  class ExperimentRun {
-    <<pending A5>>
-    +string RunId
-    +MatrixCell Cell
-    +RunOutput Output
+  class RunOutputRecorder {
+    <<landed, T0>>
   }
-
+  class TieredSignatureRecorder {
+    <<landed, T1, WI-A1-09>>
+    +SignatureTolerances
+    +SampleInterval
+    +ArmTrigger(frame, tree) diverged
+  }
+  class TriggeredDetailCapture {
+    <<landed, T2, WI-A1-10>>
+    +WithMarkedWindow(start, end)
+    +DefaultRingDepth = 30
+    +DefaultMaxWindows = 8
+  }
+  class SnapshotDeltaRecorder {
+    <<landed, WI-A1-11>>
+    +ReconstructStateAt(frame)
+  }
+  class DomainStateRecorder {
+    <<landed, WI-A4-44, A4-4>>
+    +SchemaVersion
+  }
+  class OperationalRecorder {
+    <<landed, WI-A1-21>>
+    +stream chunks + checkpoints
+  }
   class RunOutput {
-    <<pending A5>>
-    +TieredRecording Recording
-    +AssertionReport Assertions
+    <<landed>>
+    +RunId, Seed, ScenarioId, DomainId
+    +Outcome
+    +MetricSamples
+    +T1/T2/snapshot/domain fields
   }
-
+  class IDomainStateProjection {
+    <<landed, A4-4>>
+    +DomainId
+  }
+  class ScenarioMatrix {
+    <<landed>>
+    +SweepAxis[] Axes
+    +ConstraintFilter Filters
+    +AssertionTemplate Assertions
+  }
+  class ScenarioMatrixRunner {
+    <<landed, ReplaySketch.Core>>
+    +expand + dispatch per cell
+  }
+  class ReplayScenario {
+    <<landed, model>>
+    +MapPath, Players, Assertions
+  }
+  class ScenarioAuthoringTool {
+    <<planned A5-1, extends ReplaySketch>>
+    +Author(scenario) ReplayScenario
+    +CaptureFromRun(runId, frame) ReplayScenario
+  }
   class ResultVisualizer {
-    <<pending A5>>
+    <<planned A5-3>>
     +Replay(runId)
+    +Scrub(frame)
+    +Export()
+  }
+  class DivergenceComparator {
+    <<planned A5-4>>
     +Compare(runA, runB)
-    +LocalizeDivergence(runA, runB) DivergenceReport
+    +LocalizeDivergence(runA, runB)
   }
 
-  class TieredRecording {
-    <<pending A5>>
-    +T0 FrameHashes
-    +T1 StateDelta
-    +T2 FullSnapshot
-  }
-
-  ExperimentMatrix "1" --> "N" ExperimentRun
-  ExperimentRun --> RunOutput
-  RunOutput --> TieredRecording
-  ResultVisualizer ..> ExperimentRun : replays
-  ResultVisualizer ..> TieredRecording : drills into
-  ScenarioAuthoringTool ..> ExperimentMatrix : feeds
+  RunRecording --> WorldStateSampler : one pass per frame
+  WorldStateSampler --> RunOutputRecorder : T0
+  WorldStateSampler --> TieredSignatureRecorder : T1
+  WorldStateSampler --> TriggeredDetailCapture : T2
+  WorldStateSampler --> SnapshotDeltaRecorder : snapshots + deltas
+  WorldStateSampler --> DomainStateRecorder : domain view
+  WorldStateSampler --> OperationalRecorder : operational stream
+  RunRecording --> RunOutput : Complete()
+  DomainStateRecorder ..> IDomainStateProjection : projects
+  ScenarioMatrixRunner --> ScenarioMatrix : expands cells
+  ScenarioMatrixRunner ..> RunRecording : dispatches runs
+  ScenarioAuthoringTool ..> ReplayScenario : authors
+  ScenarioAuthoringTool ..> RunOutput : captures from
+  ResultVisualizer ..> RunOutput : loads
+  DivergenceComparator ..> RunOutput : compares
 ```
+
+Run and record (landed path; A5-1 wraps it with the declarative scenario artifact):
+
+```mermaid
+sequenceDiagram
+  participant H as Host / HarnessRunner
+  participant RR as RunRecording
+  participant S as WorldStateSampler
+  participant R as RunOutput
+  H->>RR: Attach(host, game, seed, scenarioId, options)
+  H->>RR: ArmReferenceTrigger(referenceFrames) (optional)
+  loop each logic frame
+    RR->>S: FrameSampled(summary, delta)
+    S->>S: T0 metrics / T1 tree / T2 ring / snapshots / domain view
+  end
+  H->>RR: Complete()
+  RR->>R: tiers + outcome + artifact paths
+```
+
+Load and seek (Full vs Operational):
+
+```mermaid
+sequenceDiagram
+  participant V as ResultVisualizer (planned A5-3)
+  participant R as RunOutput
+  participant SD as SnapshotDeltaRecorder
+  participant OR as RunReconstructor
+  V->>R: load bundle (schema versions checked)
+  alt Full mode
+    V->>SD: ReconstructStateAt(frame)
+    SD-->>V: exact recorded state
+  else Operational mode
+    V->>OR: rebuild from nearest checkpoint
+    OR-->>V: plausible state (rebuilt-labelled)
+  end
+  V->>V: scrub / charts / event log (ReplayActionMonitor)
+```
+
+Matrix comparison and divergence detail:
+
+```mermaid
+sequenceDiagram
+  participant M as ScenarioMatrixRunner
+  participant C as DivergenceComparator (planned A5-4)
+  participant ST as SignatureTreeComparer
+  participant T2 as TriggeredDetailCapture
+  M->>M: expand cells, run each, key RunOutput by cell
+  M->>C: compare cells side by side
+  C->>ST: FindDivergedSubtrees(treeA, treeB)
+  ST-->>C: first diverged subtree per frame
+  C->>T2: inspect window (or rebuild approx. for Operational)
+  T2-->>C: per-entity, per-system deltas
+```
+
 
 ## 9. Related
 

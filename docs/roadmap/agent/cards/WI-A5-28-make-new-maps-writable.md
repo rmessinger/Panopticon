@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-28` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-6 WorldBuilder baseline |
-| Status | `Blocked` |
+| Status | `Ready` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-01` must identify the required blank-map chunks |

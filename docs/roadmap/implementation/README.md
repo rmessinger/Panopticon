@@ -87,7 +87,25 @@ Source of truth: [seam registry](../seams.md) and
 | [track-a-a4-experiment-seams.md](track-a-a4-experiment-seams.md) | WI-A4-31..36 | Seam extraction audit and registrations |
 | [track-a-a4-experiment-harness.md](track-a-a4-experiment-harness.md) | WI-A4-37..41 | Experiment harness, registry, runs, and comparison |
 
+## Track A · A5 : Scenario authoring & visualization
+
+Source of truth: [deep-dives/a5-visualization.md](../deep-dives/a5-visualization.md) :
+[Architecture diagrams §8](../deep-dives/a5-visualization.md#8-architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a5-scenario-visualization.md](track-a-a5-scenario-visualization.md) | A5-1…A5-5 | Scenario authoring & visualization (WI-A5-02..33) |
+
+## Track A · A5-6 : WorldBuilder baseline
+
+Source of truth: [deep-dives/a5-visualization.md](../deep-dives/a5-visualization.md) §6-§7 (A5-6 row).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-a-a5-6-worldbuilder-baseline.md](track-a-a5-6-worldbuilder-baseline.md) | A5-6 | WorldBuilder functional baseline audit (WI-A5-01, follow-ups 02/27/28/34/35) |
+
 ## Track B · B1 : Benchmarking
+
 
 Source of truth: [deep-dives/b1-benchmarking.md](../deep-dives/b1-benchmarking.md) :
 [Architecture diagrams §](../deep-dives/b1-benchmarking.md#architecture-diagrams).
