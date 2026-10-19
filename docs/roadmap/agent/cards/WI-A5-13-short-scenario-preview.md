@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-13` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 pre-run preview |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-10`, `WI-A5-12` |
@@ -39,11 +39,18 @@ projection used by replay.
 
 ## Acceptance criteria
 
-- [ ] Invalid scenarios start no host.
-- [ ] Valid scenarios return frame-zero and bounded final state.
-- [ ] Preview and replay use the same projection.
-- [ ] Timeout/budget exhaustion is explicit.
-- [ ] Standard validation passes.
+- [x] Invalid scenarios start no host.
+  - `ScenarioValidator.Validate(scenario, null)` runs structurally before any installation or
+    host work; field-path diagnostics returned (`InvalidScenario_ReportsFieldPaths_BeforeAnyInstallationWork`).
+- [x] Valid scenarios return frame-zero and bounded final state.
+  - Install-backed run: 45-frame budget, frame-zero and final projections with entity counts
+    and region keys (`ValidScenario_ReturnsFrameZeroAndFinalState`).
+- [x] Preview and replay use the same projection.
+  - `RecordedStateProjector.Project` over the preview bundle, identical to the Results view path.
+- [x] Timeout/budget exhaustion is explicit.
+  - `HitFrameBudget` / `ExceededTimeBudget` plus diagnostic lines; format covered by
+    `FormatSummary_CoversNotRun_FrameZero_Final_AndBudgetLines`.
+- [x] Standard validation passes.
 
 ## Validation commands
 
@@ -51,7 +58,7 @@ projection used by replay.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~ScenarioPreview"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-preview.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-preview.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 

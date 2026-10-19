@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-32` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 visual authoring |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-03`, `WI-A5-10`, `WI-A5-12` |
@@ -39,11 +39,20 @@ schema-driven controls without hard-coding RTS fields.
 
 ## Acceptance criteria
 
-- [ ] All versioned scenario parameter groups are editable.
-- [ ] Domain switches replace domain-specific fields without stale values.
-- [ ] Invalid edits do not mutate the scenario.
-- [ ] Save/reload preserves edited values.
-- [ ] Standard validation passes.
+- [x] All versioned scenario parameter groups are editable.
+  - Scalars (seed, sample/snapshot intervals, frame cap), enum (recording mode), list
+    (parameters add/remove), and implementation selection (domain combo over
+    `ScenarioParametersViewModel.KnownDomains`).
+- [x] Domain switches replace domain-specific fields without stale values.
+  - The scenario carries no domain-specific fields beyond `DomainId`;
+    `DomainSwitch_ReplacesDomainWithoutStaleValues` proves the switch applies cleanly.
+- [x] Invalid edits do not mutate the scenario.
+  - Edits parse and validate against a candidate clone; only a fully valid edit commits
+    (`InvalidEdits_DoNotMutateScenario`, parse errors + validator field paths reported).
+- [x] Save/reload preserves edited values.
+  - Applied edits serialize and reload through `ReplayScenarioLoader.Load`
+    (`RoundTrip_SaveAndReloadPreservesEdits`, incl. domain switch and recording options).
+- [x] Standard validation passes.
 
 ## Validation commands
 
@@ -51,7 +60,7 @@ schema-driven controls without hard-coding RTS fields.
 dotnet build src
 dotnet test src --filter "FullyQualifiedName~ScenarioParameterEditor"
 dotnet test src --filter Category!=Interactive
-REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-parameters.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Maui
+REPLAYSKETCH_SCREENSHOT_PATH=/tmp/a5-parameters.png dotnet run --project src/Panopticon.Tools.ReplaySketch.Avalonia
 dotnet format src --verify-no-changes
 ```
 
