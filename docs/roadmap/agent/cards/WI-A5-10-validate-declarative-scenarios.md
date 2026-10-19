@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-10` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 scenario authoring |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-03`, `WI-A5-06` |
@@ -38,11 +38,17 @@ artifact field path.
 
 ## Acceptance criteria
 
-- [ ] Every invalid fixture reports a JSON-style field path.
-- [ ] All independent errors are returned in stable order.
-- [ ] Valid scenarios produce no diagnostics.
-- [ ] Execution cannot start after validation failure.
-- [ ] Standard validation passes.
+- [x] Every invalid fixture reports a JSON-style field path.
+  - `ScenarioValidatorTests.FieldGroupFailures_ReportStablePathsInOrder` asserts exact paths for
+    ten diagnostics across header/players/placements/parameters/stop conditions/metric series.
+- [x] All independent errors are returned in stable order.
+  - Same test asserts the full ordered path list.
+- [x] Valid scenarios produce no diagnostics.
+  - `ValidScenario_HasNoDiagnostics`; `ProceduralScenarioTests.ExpandedScenario_PassesStructuralValidation`.
+- [x] Execution cannot start after validation failure.
+  - `HarnessRunner.RunAndAssert` runs `ScenarioValidator.Validate` after map load and before
+    `Platform.Start`/host construction; invalid scenarios throw before any Game is created.
+- [x] Standard validation passes.
 
 ## Validation commands
 

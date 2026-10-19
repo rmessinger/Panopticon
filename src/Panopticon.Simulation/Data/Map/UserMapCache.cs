@@ -241,7 +241,13 @@ internal class UserMapCache
 
     private void GenerateMapCacheIniFile(string path, IReadOnlyDictionary<string, MapCache> mapCacheEntries)
     {
-        using (var writer = new StreamWriter(File.Create(path)))
+        // Concurrent Game boots each rewrite the shared user-data MapCache.ini; an exclusive
+        // File.Create on the final path races between them (seen as IOException in parallel
+        // test runs). Write a unique temp sibling, then atomically replace the target so
+        // parallel writers never contend on the final path. A crash between create and move
+        // leaves only a harmless orphaned temp file; the target is never partially written.
+        var tempPath = path + $".tmp-{Guid.NewGuid():N}";
+        using (var writer = new StreamWriter(File.Create(tempPath)))
         {
             writer.WriteLine($"; FILE: {path} /////////////////////////////////////////////////////////////");
             writer.WriteLine("; This INI file is auto-generated - do not modify");
@@ -336,5 +342,7 @@ internal class UserMapCache
                 Write(key, value ? "yes" : "no");
             }
         }
+
+        File.Move(tempPath, path, overwrite: true);
     }
 }

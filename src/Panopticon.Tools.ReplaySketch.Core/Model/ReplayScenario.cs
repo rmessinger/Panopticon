@@ -42,6 +42,18 @@ public sealed class ReplayScenario
     public List<ScenarioPlacement> Placements { get; set; } = new();
 
     /// <summary>
+    /// Procedural population generators (WI-A5-23), expanded deterministically by
+    /// <see cref="Services.ScenarioGeneratorService"/> before execution.
+    /// </summary>
+    public List<PopulationGenerator> PopulationGenerators { get; set; } = new();
+
+    /// <summary>
+    /// Procedural command timelines (WI-A5-23), expanded deterministically by
+    /// <see cref="Services.ScenarioGeneratorService"/> before execution.
+    /// </summary>
+    public List<CommandTimelineGenerator> CommandGenerators { get; set; } = new();
+
+    /// <summary>
     /// Free-form experiment parameters (WI-A5-03): domain and harness knobs as string
     /// key/value pairs, recorded with the run. The visual editor is WI-A5-32.
     /// </summary>
