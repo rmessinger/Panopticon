@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-30` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 visual authoring |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-02`, `WI-A5-14` |
@@ -20,7 +20,7 @@ to the declarative scenario artifact.
 - Spatial-authoring ownership in the A5 implementation plan.
 - Initial-population controller from `WI-A5-14`.
 - `src/Panopticon.Tools.WorldBuilder.Core/PlaceObjectTool.cs`, `SelectTool.cs`, and `EditorMap.cs`.
-- Relevant WorldBuilder MAUI view models and views.
+- Relevant WorldBuilder Avalonia view models and views.
 
 ## Steps
 
@@ -33,16 +33,26 @@ to the declarative scenario artifact.
 ## Files likely to change
 
 - `src/Panopticon.Tools.WorldBuilder.Core/`
-- Narrow WorldBuilder MAUI files
+- Narrow WorldBuilder Avalonia files
 - WorldBuilder tests
 
 ## Acceptance criteria
 
-- [ ] Spatial population edits use the shared controller.
-- [ ] Terrain/map and scenario-population ownership stay separate.
-- [ ] Save/reload preserves both linked artifacts.
-- [ ] No duplicate ReplaySketch spatial editor is introduced.
-- [ ] Standard validation passes.
+- [x] Spatial population edits use the shared controller.
+  - `ScenarioPopulationDocument` routes add/move/delete/owner through the WI-A5-14
+    `InitialPopulationEditor`; rejected edits surface its diagnostics unchanged.
+- [x] Terrain/map and scenario-population ownership stay separate.
+  - Population ops never touch `HeightMapData`/`ObjectsList`; `HeightMapEdit` pushes never touch
+    the companion document (ownership test).
+- [x] Save/reload preserves both linked artifacts.
+  - Map + elevation edit + population companion all survive save/reopen; companion lives at
+    `<mapPath>.scenario.json` (same companion pattern as the WI-A5-34 .ini/.str files).
+- [x] No duplicate ReplaySketch spatial editor is introduced.
+  - ReplaySketch only hosts the shared controller; spatial authoring UI (a WorldBuilder left-panel
+    section: list, world-coordinate fields, add/move/owner/delete/save) binds to the document.
+- [x] Standard validation passes.
+  - WorldBuilder.Core references ReplaySketch.Core directly (acyclic); UI validated by build plus
+    the `--screenshot` headless capture still rendering after the panel landed.
 
 ## Validation commands
 

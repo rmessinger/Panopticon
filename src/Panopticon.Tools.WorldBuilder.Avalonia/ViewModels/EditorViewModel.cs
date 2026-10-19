@@ -12,6 +12,7 @@ public sealed class EditorViewModel : INotifyPropertyChanged
 {
     private EditorMap? _currentMap;
     private IEditorTool? _activeTool;
+    private ScenarioPopulationDocument? _scenarioPopulation;
     private string _statusMessage = "Ready";
     private bool _canUndo;
     private bool _canRedo;
@@ -64,7 +65,32 @@ public sealed class EditorViewModel : INotifyPropertyChanged
                 newStack.StateChanged += OnUndoStackStateChanged;
             }
 
+            // WI-A5-30: the population companion is per-map; a new map invalidates it.
+            _scenarioPopulation = null;
+            OnPropertyChanged(nameof(ScenarioPopulation));
+
             RefreshUndoState();
+        }
+    }
+
+    /// <summary>WI-A5-30: scenario-population companion for the current map, if opened.</summary>
+    public ScenarioPopulationDocument? ScenarioPopulation => _scenarioPopulation;
+
+    public void EnsureScenarioPopulation()
+    {
+        if (_currentMap is not null && _scenarioPopulation is null)
+        {
+            _scenarioPopulation = ScenarioPopulationDocument.Open(_currentMap);
+            OnPropertyChanged(nameof(ScenarioPopulation));
+        }
+    }
+
+    public void SaveScenarioPopulation()
+    {
+        if (_scenarioPopulation is { } document)
+        {
+            document.Save();
+            StatusMessage = $"Scenario population saved ({document.Editor.Placements.Count} placements).";
         }
     }
 

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-14` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-1 visual authoring |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-03`, `WI-A5-12` |
@@ -37,10 +37,21 @@ to the declarative artifact.
 
 ## Acceptance criteria
 
-- [ ] All five operations are headlessly tested.
-- [ ] Save/reload preserves edits exactly.
-- [ ] Invalid placement reports a diagnostic without mutation.
-- [ ] Standard validation passes.
+- [x] All five operations are headlessly tested.
+  - `InitialPopulationEditorTests.AllFiveOperations_EditPlacementsHeadlessly` covers select, add,
+    move, delete, and owner change.
+- [x] Save/reload preserves edits exactly.
+  - Round-trip through the scenario serializer asserts definition, owner, quantity, health
+    pair, and normalized position survive reload.
+- [x] Invalid placement reports a diagnostic without mutation.
+  - Empty definition, out-of-range owner, and negative owner edits return diagnostics naming the
+    field path and leave the placement list unchanged.
+- [x] Standard validation passes.
+  - Controller lives in `Panopticon.Tools.ReplaySketch.Core` (the shared location selected by
+    WI-A5-06's grounding: the scenario artifact, validator, and serializer all live there, and
+    WorldBuilder.Core can reference it without a cycle). Validation routes through
+    `ScenarioValidator` on a candidate clone; graph-domain scenarios edit through the same
+    controller (domain-agnostic placements; non-spatial topology is WI-A5-33).
 
 ## Validation commands
 
