@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-24` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-5 visualization at scale |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-18`, `WI-A5-29` |
@@ -37,11 +37,16 @@ artifact so memory and draw-primitive counts stay bounded.
 
 ## Acceptance criteria
 
-- [ ] Off-screen entities produce no draw primitives.
-- [ ] Pan/zoom/seek update the visible set correctly.
-- [ ] Buffered frames and decoded entities remain bounded independently of run length.
-- [ ] Spatial and graph fixtures use the same visibility API.
-- [ ] Standard validation passes.
+- [x] Off-screen entities produce no draw primitives.
+  - `ViewportQuery_ProducesNoPrimitivesForOffScreenEntities`: a 6-cell artifact yields only the viewport cell's 4 points.
+- [x] Pan/zoom/seek update the visible set correctly.
+  - `PanAndZoom_UpdateTheVisibleSet` (pan swaps the bucket; zoom-out widens it) and `LongRun_CachedFramesStayBoundedByCapacity` steps frames 0-40.
+- [x] Buffered frames and decoded entities remain bounded independently of run length.
+  - Frame LRU capacity 3 holds across 21 seeks; `Prefetch_DecodesAdjacentRegionsWithoutDrawingThem` shows decode bounded to viewport + prefetch ring (9 decoded, 3 drawn).
+- [x] Spatial and graph fixtures use the same visibility API.
+  - `RegionKeyQuery_ServesGraphTopologiesThroughTheSameApi` drives the same Query through explicit region keys; `VisibleRegionKeys` derives cell keys from a world-space rectangle.
+- [x] Standard validation passes.
+  - Filter `ReplayStreaming|Visibility` 6/6 engine-free; v1 artifacts fall back to whole-frame decode and still cull primitives.
 
 ## Validation commands
 

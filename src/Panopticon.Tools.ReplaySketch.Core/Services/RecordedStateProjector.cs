@@ -30,6 +30,12 @@ public sealed record RecordedFrameProjection(
 /// </summary>
 public static class RecordedStateProjector
 {
+    /// <summary>Cell bucket key for a world position; shared with the streaming service (WI-A5-24).</summary>
+    internal static string BucketKey(float x, float y, float cellSize)
+    {
+        return $"cell:{MathF.Floor(x / cellSize)},{MathF.Floor(y / cellSize)}";
+    }
+
     public static RecordedFrameProjection Project(WorldStateSummary? state, RunSignatureConfigurationRecord? configuration)
     {
         if (state is null || state.Objects.Count == 0)
@@ -43,8 +49,7 @@ public static class RecordedStateProjector
 
         foreach (var obj in state.Objects)
         {
-            var bucket = $"cell:{MathF.Floor(obj.Position.X / cellSize)},{MathF.Floor(obj.Position.Y / cellSize)}";
-            var point = new DomainVisualPoint(bucket, obj.Position, obj.OwnerIndex, obj.DefinitionName);
+            var point = new DomainVisualPoint(BucketKey(obj.Position.X, obj.Position.Y, cellSize), obj.Position, obj.OwnerIndex, obj.DefinitionName);
             primitives.Add(point);
             points.Add(new FramePointMarker(obj.ObjectId, point));
         }

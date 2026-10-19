@@ -59,7 +59,8 @@ public static class RunFrameRenderer
         IReadOnlyList<DomainVisualPrimitive> primitives,
         IReadOnlyList<FramePointMarker>? pointMarkers = null,
         uint? selectedObjectId = null,
-        bool fidelityOverlay = false)
+        bool fidelityOverlay = false,
+        ReplayLodOptions? lodOptions = null)
     {
         if (width < Padding * 2 || height < Padding * 2)
         {
@@ -141,31 +142,50 @@ public static class RunFrameRenderer
         var categories = fidelityOverlay
             ? points.Select(p => p.FidelityCategory).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList()
             : [];
-        for (var i = 0; i < points.Count; i++)
+
+        // WI-A5-25: repeated entities draw through (owner, kind, LOD) batches with one paint per
+        // batch, mirroring B5's instance-batch contract; screen-space LOD from the plot scale.
+        var (batches, _) = ReplayPrimitiveBatcher.BuildIndexedBatches(points, plotWidth / spanX, lodOptions);
+        foreach (var batch in batches)
         {
-            var point = points[i];
-            var sx = ScreenX(point.Position.X);
-            var sy = ScreenY(point.Position.Y);
-            SKColor color;
-            if (fidelityOverlay && !string.IsNullOrEmpty(point.FidelityCategory))
+            var sample = batch.Points[0];
+            SKColor batchColor;
+            if (fidelityOverlay && !string.IsNullOrEmpty(sample.FidelityCategory))
             {
-                color = FidelityPaletteColor(categories.IndexOf(point.FidelityCategory));
+                batchColor = FidelityPaletteColor(categories.IndexOf(sample.FidelityCategory));
             }
             else
             {
-                color = OwnerColor(point.OwnerIndex);
+                batchColor = OwnerColor(sample.OwnerIndex);
             }
 
-            using var fill = new SKPaint { Color = color, IsAntialias = true };
-            canvas.DrawCircle(sx, sy, PointRadius * MathF.Max(point.Size, 0.5f), fill);
-            var objectId = i < pointMarkers?.Count ? pointMarkers[i].ObjectId : 0;
-            if (selectedObjectId is { } selected && selected == objectId)
+            using var fill = new SKPaint { Color = batchColor, IsAntialias = true };
+            for (var i = 0; i < batch.Points.Count; i++)
             {
-                using var ring = new SKPaint { Color = SKColors.White, StrokeWidth = 1.5f, IsStroke = true, IsAntialias = true };
-                canvas.DrawCircle(sx, sy, SelectRadius, ring);
+                var point = batch.Points[i];
+                var sx = ScreenX(point.Position.X);
+                var sy = ScreenY(point.Position.Y);
+                var radius = batch.Lod switch
+                {
+                    ReplayLodLevel.Full => PointRadius * MathF.Max(point.Size, 0.5f),
+                    ReplayLodLevel.Dot => 2.5f,
+                    _ => 1.5f,
+                };
+                canvas.DrawCircle(sx, sy, radius, fill);
+                var objectId = batch.Indices[i] < pointMarkers?.Count ? pointMarkers[batch.Indices[i]].ObjectId : 0;
+                if (selectedObjectId is { } selected && selected == objectId)
+                {
+                    using var ring = new SKPaint { Color = SKColors.White, StrokeWidth = 1.5f, IsStroke = true, IsAntialias = true };
+                    canvas.DrawCircle(sx, sy, SelectRadius, ring);
+                }
             }
+        }
 
-            markers.Add(new FrameViewMarker(objectId, point.OwnerIndex, point.KindName, point.BucketKey, sx, sy, point.FidelityCategory));
+        for (var i = 0; i < points.Count; i++)
+        {
+            var point = points[i];
+            var objectId = i < pointMarkers?.Count ? pointMarkers[i].ObjectId : 0;
+            markers.Add(new FrameViewMarker(objectId, point.OwnerIndex, point.KindName, point.BucketKey, ScreenX(point.Position.X), ScreenY(point.Position.Y), point.FidelityCategory));
         }
 
         if (fidelityOverlay)

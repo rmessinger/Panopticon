@@ -695,10 +695,13 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
     comparison; the visualizer can diff two matrix runs. Note: the expansion primitive (cartesian
     product, per-cell execution, keyed JSON output) is provided by P0-5b; A5-2 adds tooling and
     visualization on top.
-- [ ] A5-3 Results replayer / visualizer (extends ReplaySketch).
+- [x] A5-3 Results replayer / visualizer (extends ReplaySketch). (`WI-A5-04`,
+      `WI-A5-08..09`, `WI-A5-11..12`, `WI-A5-18..21`, `WI-A5-24..25`, `WI-A5-29`,
+      `WI-A5-31`)
   - AC: the visualizer loads a run, plays/pauses/fast-forwards/scrubs the timeline, supports
     event-to-frame navigation, shows domain state plus metrics/events/fidelity, and exports
     headlessly.
+    Streaming/culling + LOD batching landed in WI-A5-24/25; headless export in WI-A5-20.
 - [x] A5-4 Divergence localization over the tiered recording. (`WI-A5-05`,
       `WI-A5-22`)
   - AC: given two runs, the tool localizes the first subtree exceeding tolerance; tested on a
