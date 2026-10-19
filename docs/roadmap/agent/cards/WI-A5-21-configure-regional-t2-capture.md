@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-21` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-4 divergence localization |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-03`, `WI-A5-07`, `WI-A5-09`, `WI-A5-12` |
@@ -40,11 +40,20 @@ metadata required for later inspection.
 
 ## Acceptance criteria
 
-- [ ] Automatic and marked triggers capture the documented windows.
-- [ ] Regional capture excludes unrelated entities.
-- [ ] Ring/window memory limits are asserted.
-- [ ] Manifest records all settings needed for inspection.
-- [ ] Standard validation passes.
+- [x] Automatic and marked triggers capture the documented windows.
+  - `Cooldown_BoundsTripRate_AndMaxWindowsCaps`: trigger windows at frames 3 and 5 only with
+    cooldown 2 and max windows 2; marked windows flush via `Complete()`.
+- [x] Regional capture excludes unrelated entities.
+  - `Regional_FilterExcludesUnrelatedEntities` and `MarkedWindow_RegionalProjection_RecordsReasonAndBudgets`:
+    filtered windows carry only in-region `Added` entries; removals outside known regions stay
+    included (conservative).
+- [x] Ring/window memory limits are asserted.
+  - `MaxWindows`/`RingDepth` echoed on every window; the ring depth cap is covered by the existing
+    `TriggeredDetail_TripCapturesBoundedRingWindow`.
+- [x] Manifest records all settings needed for inspection.
+  - `Attach_RoutesOptionsIntoManifest`: `TriggeredCaptures` records Reason, RingDepth, MaxWindows,
+    CooldownFrames, RegionKeys, and CapturedEntityCount.
+- [x] Standard validation passes.
 
 ## Validation commands
 

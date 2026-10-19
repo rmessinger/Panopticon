@@ -13,47 +13,6 @@ using Panopticon.Recording;
 namespace Panopticon;
 
 /// <summary>
-/// Terminal <see cref="GameOutcome"/> of a headless run, serialized without live object
-/// references.
-/// </summary>
-public sealed class RunOutcomeRecord
-{
-    public OutcomeStatus Status { get; set; }
-    public OutcomeReason Reason { get; set; }
-    public List<string> WinningPlayers { get; set; } = new();
-    public int? DecidedOnFrame { get; set; }
-}
-
-/// <summary>
-/// Per-player metrics captured in one sample. Only counters that already exist on
-/// <c>Player</c> and <c>GameLogic</c>; this tier adds no gameplay counters.
-/// </summary>
-public sealed class RunPlayerMetrics
-{
-    public string? Player { get; set; }
-    public uint Money { get; set; }
-    public int OwnedObjects { get; set; }
-}
-
-public sealed class RunMetricSample
-{
-    public uint Frame { get; set; }
-    public List<RunPlayerMetrics> Players { get; set; } = new();
-
-    // A4-1 domain metric series rows (transport: edge throughput, node occupancy); the RTS
-    // adapter emits none, so existing run outputs are unchanged.
-    public List<RunDomainMetricValue> DomainMetrics { get; set; } = new();
-}
-
-/// <summary>One value in a named, keyed domain metric series at one sample.</summary>
-public sealed class RunDomainMetricValue
-{
-    public string Series { get; set; } = "";
-    public string Key { get; set; } = "";
-    public double Value { get; set; }
-}
-
-/// <summary>
 /// Run output of a headless <see cref="SimulationHost"/> run (A1-5). T0 (aggregate): run
 /// identity, seed, frame count, wall-clock duration, terminal outcome, and a bounded per-player
 /// metric time series. T1: tolerance-quantized hierarchical signature trees per sampled frame.
@@ -291,6 +250,12 @@ public sealed class RunOutput
         EndFrame = window.EndFrame,
         DivergedSubtrees = window.DivergedSubtrees?.ToList(),
         Frames = window.Frames.Select(ToDto).ToList(),
+        Reason = window.Reason,
+        RingDepth = window.RingDepth,
+        MaxWindows = window.MaxWindows,
+        CooldownFrames = window.CooldownFrames,
+        RegionKeys = window.RegionKeys?.ToList(),
+        CapturedEntityCount = window.CapturedEntityCount,
     };
 
     private static WorldStateDeltaRecord ToDto(Recording.WorldStateDelta delta) => new()
@@ -313,186 +278,4 @@ public sealed class RunOutput
         Health = obj.Health,
         MaxHealth = obj.MaxHealth,
     };
-}
-
-public sealed class SignatureTreeSample
-{
-    public uint Frame { get; set; }
-    public List<SignatureNodeRecord> Nodes { get; set; } = new();
-}
-
-/// <summary>One engine checkpoint in an operational bundle manifest (WI-A1-21).</summary>
-public sealed class RunCheckpointRecord
-{
-    public uint Frame { get; set; }
-    public string Path { get; set; } = "";
-    public long Bytes { get; set; }
-    public string XxHash3 { get; set; } = "";
-}
-
-/// <summary>
-/// T1 recording configuration as written into the run manifest (WI-A5-07): quantization
-/// tolerances and the bucket-key strategy the trees were built with, so comparison surfaces
-/// can reject mismatched runs before reporting meaningless divergence.
-/// </summary>
-public sealed class RunSignatureConfigurationRecord
-{
-    public float PositionEpsilon { get; set; }
-    public float HealthEpsilon { get; set; }
-    public bool Strict { get; set; }
-    public float CellSize { get; set; }
-
-    /// <summary>Bucket-key strategy: <c>domain</c> keys from the topology contract or <c>legacy-spatial</c>.</summary>
-    public string BucketKeys { get; set; } = "domain";
-}
-
-public sealed class SignatureNodeRecord
-{
-    public string Key { get; set; } = "";
-    public int Level { get; set; }
-    public ulong Hash { get; set; }
-    public int MemberCount { get; set; }
-}
-
-public sealed class TriggeredDetailWindowRecord
-{
-    public bool Marked { get; set; }
-    public uint TriggeredAtFrame { get; set; }
-    public uint StartFrame { get; set; }
-    public uint EndFrame { get; set; }
-    public List<string>? DivergedSubtrees { get; set; }
-    public List<WorldStateDeltaRecord> Frames { get; set; } = new();
-}
-
-public sealed class WorldStateDeltaRecord
-{
-    public uint Frame { get; set; }
-    public List<WorldObjectStateRecord> Added { get; set; } = new();
-    public List<uint> Removed { get; set; } = new();
-    public List<WorldObjectStateRecord> Changed { get; set; } = new();
-    public List<uint> PlayerMoney { get; set; } = new();
-}
-
-public sealed class WorldObjectStateRecord
-{
-    public uint ObjectId { get; set; }
-    public string DefinitionName { get; set; } = "";
-    public int OwnerIndex { get; set; }
-    public float X { get; set; }
-    public float Y { get; set; }
-    public float Z { get; set; }
-    public float Health { get; set; }
-    public float MaxHealth { get; set; }
-}
-
-/// <summary>
-/// Samples the T0 metric time series from a running <see cref="SimulationHost"/> via its
-/// per-tick hook, at a fixed frame interval, and completes the <see cref="RunOutput"/> when the
-/// run ends. Output size is bounded by the sampling interval, not per-entity state.
-/// </summary>
-public sealed class RunOutputRecorder : IDisposable
-{
-    /// <summary>
-    /// Default sampling interval: one sample per second of Generals logic (30 frames).
-    /// </summary>
-    public const uint DefaultSampleInterval = 30;
-
-    private readonly SimulationHost _host;
-    private readonly IGame _game;
-    private readonly uint _seed;
-    private readonly string? _scenarioId;
-    private readonly uint _sampleInterval;
-    private readonly Stopwatch _stopwatch = new();
-    private readonly List<RunMetricSample> _samples = new();
-
-    public RunOutputRecorder(
-        SimulationHost host,
-        IGame game,
-        uint seed,
-        string? scenarioId = null,
-        uint sampleInterval = DefaultSampleInterval)
-    {
-        ArgumentOutOfRangeException.ThrowIfZero(sampleInterval);
-
-        _host = host;
-        _game = game;
-        _seed = seed;
-        _scenarioId = scenarioId;
-        _sampleInterval = sampleInterval;
-
-        _host.TickComplete += OnTickComplete;
-        _stopwatch.Start();
-    }
-
-    private void OnTickComplete(object? sender, SimulationHostTickEventArgs e)
-    {
-        if (e.Frame % _sampleInterval != 0)
-        {
-            return;
-        }
-
-        var sample = new RunMetricSample
-        {
-            Frame = e.LogicFrame.Value,
-        };
-        var metrics = _host.DomainModel.SampleMetrics();
-        foreach (var player in metrics.Players)
-        {
-            sample.Players.Add(new RunPlayerMetrics
-            {
-                Player = player.Player,
-                Money = player.Money,
-                OwnedObjects = player.OwnedObjects,
-            });
-        }
-
-        foreach (var value in metrics.Series)
-        {
-            sample.DomainMetrics.Add(new RunDomainMetricValue
-            {
-                Series = value.Series,
-                Key = value.Key,
-                Value = value.Value,
-            });
-        }
-
-        _samples.Add(sample);
-    }
-
-    /// <summary>
-    /// Finishes the run output: stops the wall clock and records the terminal
-    /// <see cref="GameOutcome"/>.
-    /// </summary>
-    public RunOutput Complete()
-    {
-        _stopwatch.Stop();
-
-        var outcome = _game.CurrentOutcome;
-        var outcomeRecord = new RunOutcomeRecord
-        {
-            Status = outcome.Status,
-            Reason = outcome.Reason,
-            DecidedOnFrame = outcome.DecidedOnFrame,
-        };
-        foreach (var player in outcome.WinningPlayers)
-        {
-            outcomeRecord.WinningPlayers.Add(player.DisplayName ?? player.Name!);
-        }
-
-        return new RunOutput
-        {
-            Seed = _seed,
-            ScenarioId = _scenarioId,
-            DomainId = _host.DomainModel.DomainId,
-            TotalLogicFrames = _host.LogicFrame.Value,
-            WallClockDurationMilliseconds = _stopwatch.Elapsed.TotalMilliseconds,
-            Outcome = outcomeRecord,
-            MetricSamples = _samples,
-        };
-    }
-
-    public void Dispose()
-    {
-        _host.TickComplete -= OnTickComplete;
-    }
 }

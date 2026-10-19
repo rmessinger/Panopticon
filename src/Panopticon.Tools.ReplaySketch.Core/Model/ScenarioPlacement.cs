@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Panopticon.Tools.ReplaySketch.Model;
 
 /// <summary>
@@ -28,36 +26,4 @@ public sealed class ScenarioPlacement
 
     /// <summary>Recorded maximum health at capture time (WI-A5-11); null when authored by hand.</summary>
     public float? MaxHealth { get; set; }
-}
-
-/// <summary>
-/// One scenario end criterion (WI-A5-03). Frame caps are enforced by the harness; victory ends
-/// when the engine decides an outcome. Steady-state criteria are not yet expressible.
-/// </summary>
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
-[JsonDerivedType(typeof(FrameCapStopCondition), "frameCap")]
-[JsonDerivedType(typeof(VictoryStopCondition), "victory")]
-public abstract record StopCondition;
-
-/// <summary>Stops the run once the given logic-frame count completes.</summary>
-public sealed record FrameCapStopCondition(uint MaxFrames) : StopCondition;
-
-/// <summary>Stops the run when the engine decides an outcome (P3).</summary>
-public sealed record VictoryStopCondition : StopCondition;
-
-/// <summary>
-/// Recording options carried by a scenario (WI-A5-03). The sample interval configures the T0
-/// metric recorder today; mode and snapshot interval are schema-complete and consumed by the
-/// complete-bundle writer (WI-A5-09).
-/// </summary>
-public sealed class ScenarioRecordingOptions
-{
-    /// <summary>Tiered-recording mode; null keeps full mode.</summary>
-    public Panopticon.Recording.RecordingMode? Mode { get; set; }
-
-    /// <summary>T0 metric sample interval in logic frames; null keeps the recorder default.</summary>
-    public uint? SampleInterval { get; set; }
-
-    /// <summary>Snapshot interval in logic frames; null keeps the default of 300.</summary>
-    public uint? SnapshotInterval { get; set; }
 }
