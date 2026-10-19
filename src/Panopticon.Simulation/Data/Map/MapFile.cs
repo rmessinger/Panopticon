@@ -180,6 +180,9 @@ public class MapFile
 
     /// <summary>
     /// Creates a new empty map with flat terrain suitable for the WorldBuilder editor.
+    /// WI-A5-28: initializes every chunk WriteTo requires, so a new map saves and reloads
+    /// without null chunks. Engine-playable defaults (sides, lighting values, waypoints,
+    /// start positions) are WI-A5-35 scope.
     /// </summary>
     public static MapFile CreateEmpty(uint playableWidth, uint playableHeight, uint borderWidth, ushort initialHeight)
     {
@@ -198,6 +201,14 @@ public class MapFile
         return new MapFile
         {
             HeightMapData = HeightMapData.Create(borderWidth, elevations),
+            // Parse sizes the blend grid from the height-map dimensions (the elevation grid,
+            // playable + border*2 + 1 per side), so the factory gets the same dims.
+            BlendTileData = BlendTileData.Create(totalWidth, totalHeight),
+            WorldInfo = WorldInfo.Create(),
+            SidesList = SidesList.Create(),
+            ObjectsList = new ObjectsList(),
+            GlobalLighting = GlobalLighting.Create(),
+            WaypointsList = WaypointsList.Create(),
         };
     }
 

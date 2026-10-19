@@ -44,6 +44,10 @@ public sealed class HeightMapData : Asset
             BorderWidth = borderWidth,
             Area = width * height,
             Elevations = elevations,
+
+            // WI-A5-28: WriteTo always dereferences Borders; new maps carry an empty border
+            // list (the editor does not author border regions yet).
+            Borders = [],
         };
     }
 

@@ -27,7 +27,8 @@ public sealed class BlendTileEdit : IMapEdit
     }
 
     /// <summary>
-    /// Creates a BlendTileEdit at a single tile position.
+    /// Creates a BlendTileEdit at a single tile position; application is owned by the undo
+    /// stack's Push (WI-A5-27).
     /// </summary>
     public static BlendTileEdit CreateSingle(BlendTileData blendTileData,
         int tileX, int tileY, ushort newTile)
@@ -39,9 +40,7 @@ public sealed class BlendTileEdit : IMapEdit
         before[0, 0] = IsInBounds(tiles, tileX, tileY) ? tiles[tileX, tileY] : (ushort)0;
         after[0, 0] = newTile;
 
-        var edit = new BlendTileEdit(blendTileData, tileX, tileY, before, after, "Paint Tile");
-        edit.Apply();
-        return edit;
+        return new BlendTileEdit(blendTileData, tileX, tileY, before, after, "Paint Tile");
     }
 
     public void Apply() => CopyPatch(_after);

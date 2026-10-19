@@ -86,6 +86,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Veldrid", "Veldrid\Veldrid.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Panopticon.Benchmarks.Simulation", "Panopticon.Benchmarks.Simulation\Panopticon.Benchmarks.Simulation.csproj", "{28A2BEB4-4177-4BBB-8B9F-FA58D7162D19}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Panopticon.Tools.WorldBuilder.Core.Tests", "..\test\Panopticon.Tools.WorldBuilder.Core.Tests\Panopticon.Tools.WorldBuilder.Core.Tests.csproj", "{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -504,6 +506,18 @@ Global
 		{28A2BEB4-4177-4BBB-8B9F-FA58D7162D19}.Release|x64.Build.0 = Release|Any CPU
 		{28A2BEB4-4177-4BBB-8B9F-FA58D7162D19}.Release|x86.ActiveCfg = Release|Any CPU
 		{28A2BEB4-4177-4BBB-8B9F-FA58D7162D19}.Release|x86.Build.0 = Release|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Debug|x64.Build.0 = Debug|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Debug|x86.Build.0 = Debug|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Release|x64.ActiveCfg = Release|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Release|x64.Build.0 = Release|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Release|x86.ActiveCfg = Release|Any CPU
+		{F5CBD3E8-0A21-4FE7-9D9E-2906EB6556FE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

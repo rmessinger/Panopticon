@@ -9,7 +9,7 @@ public sealed class ObjectsList : Asset
 {
     public const string AssetName = "ObjectsList";
 
-    public MapObject[] Objects { get; private set; }
+    public MapObject[] Objects { get; private set; } = [];
 
     /// <summary>Adds a new object to the list. Used by the editor for placement operations.</summary>
     public void AddObject(MapObject mapObject)

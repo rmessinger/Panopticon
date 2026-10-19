@@ -16,6 +16,23 @@ public sealed class GlobalLightingConfiguration
     public GlobalLight InfantryAccent1 { get; private set; }
     public GlobalLight InfantryAccent2 { get; private set; }
 
+    /// <summary>
+    /// WI-A5-28: an all-default configuration for new maps. Every light is populated so the
+    /// chunk round-trips at any asset version (each version reads a different subset).
+    /// </summary>
+    internal static GlobalLightingConfiguration Create() => new()
+    {
+        TerrainSun = new GlobalLight(),
+        TerrainAccent1 = new GlobalLight(),
+        TerrainAccent2 = new GlobalLight(),
+        ObjectSun = new GlobalLight(),
+        ObjectAccent1 = new GlobalLight(),
+        ObjectAccent2 = new GlobalLight(),
+        InfantrySun = new GlobalLight(),
+        InfantryAccent1 = new GlobalLight(),
+        InfantryAccent2 = new GlobalLight(),
+    };
+
     internal static GlobalLightingConfiguration Parse(BinaryReader reader, uint version)
     {
         var result = new GlobalLightingConfiguration();

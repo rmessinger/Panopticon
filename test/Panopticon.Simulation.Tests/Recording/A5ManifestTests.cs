@@ -87,7 +87,7 @@ public class A5ManifestTests : MockedGameTest
 
                 // The stored relative path resolved against the manifest's new location.
                 Assert.NotNull(loaded.SnapshotArtifactPath);
-                Assert.True(File.Exists(loaded.SnapshotArtifactPath));
+                Assert.True(File.Exists(loaded.SnapshotArtifactPath!));
                 Assert.Equal(movedDir, Path.GetDirectoryName(loaded.SnapshotArtifactPath));
 
                 var (snapshots, _) = WorldStateArtifact.Load(loaded.SnapshotArtifactPath!, game);
@@ -128,7 +128,7 @@ public class A5ManifestTests : MockedGameTest
                 document.RootElement.GetProperty("snapshotArtifactPath").GetString());
             Assert.Equal(
                 Path.Combine(rootA, "snapshots.bin"),
-                RunOutput.LoadFromFile(manifestPath).SnapshotArtifactPath);
+                RunOutput.LoadFromFile(manifestPath)!.SnapshotArtifactPath);
         }
         finally
         {

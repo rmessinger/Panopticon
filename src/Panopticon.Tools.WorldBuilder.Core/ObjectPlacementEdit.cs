@@ -20,18 +20,22 @@ public sealed class ObjectPlacementEdit : IMapEdit
         _isPlacement = isPlacement;
     }
 
+    /// <summary>
+    /// Creates a placement edit. The edit is not applied here: the map's
+    /// <see cref="UndoRedoStack{T}"/> applies edits on Push, which is the single application
+    /// owner (WI-A5-27).
+    /// </summary>
     public static ObjectPlacementEdit CreatePlacement(ObjectsList objectsList, MapObject mapObject)
     {
-        var edit = new ObjectPlacementEdit(objectsList, mapObject, isPlacement: true);
-        edit.Apply();
-        return edit;
+        return new ObjectPlacementEdit(objectsList, mapObject, isPlacement: true);
     }
 
+    /// <summary>
+    /// Creates a deletion edit; application is owned by the undo stack's Push (WI-A5-27).
+    /// </summary>
     public static ObjectPlacementEdit CreateDeletion(ObjectsList objectsList, MapObject mapObject)
     {
-        var edit = new ObjectPlacementEdit(objectsList, mapObject, isPlacement: false);
-        edit.Apply();
-        return edit;
+        return new ObjectPlacementEdit(objectsList, mapObject, isPlacement: false);
     }
 
     public void Apply()

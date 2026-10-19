@@ -50,6 +50,10 @@ jobs:
       if: ${{ !cancelled() }}
       run: dotnet test test/Panopticon.Tools.ReplaySketch.Tests/Panopticon.Tools.ReplaySketch.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
 
+    - name: Test WorldBuilder
+      if: ${{ !cancelled() }}
+      run: dotnet test test/Panopticon.Tools.WorldBuilder.Core.Tests/Panopticon.Tools.WorldBuilder.Core.Tests.csproj --configuration Release --filter Category!=Interactive --collect:"XPlat Code Coverage"
+
     - name: Upload coverage
       uses: codecov/codecov-action@v5
       with:

@@ -32,6 +32,25 @@ public sealed class GlobalLighting : Asset
 
     public ColorRgbF? NoCloudFactor { get; private set; }
 
+    /// <summary>
+    /// WI-A5-28: a writable default for new maps. Version 6 keeps the chunk minimal: no
+    /// Unknown bytes (7 to 11) and no NoCloudFactor (8+), and each configuration carries
+    /// only terrain and object lights (infantry lights arrive at version 7). Engine-playable
+    /// lighting values are WI-A5-35 scope.
+    /// </summary>
+    internal static GlobalLighting Create() => new()
+    {
+        Version = 6,
+        Time = TimeOfDay.Morning,
+        LightingConfigurations = new Dictionary<TimeOfDay, GlobalLightingConfiguration>
+        {
+            [TimeOfDay.Morning] = GlobalLightingConfiguration.Create(),
+            [TimeOfDay.Afternoon] = GlobalLightingConfiguration.Create(),
+            [TimeOfDay.Evening] = GlobalLightingConfiguration.Create(),
+            [TimeOfDay.Night] = GlobalLightingConfiguration.Create(),
+        },
+    };
+
     internal static GlobalLighting Parse(BinaryReader reader, MapParseContext context)
     {
         return ParseAsset(reader, context, version =>

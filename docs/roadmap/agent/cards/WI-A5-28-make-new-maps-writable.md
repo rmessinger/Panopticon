@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-28` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-6 WorldBuilder baseline |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-01` must identify the required blank-map chunks |
@@ -39,11 +39,27 @@ save, and reload.
 
 ## Acceptance criteria
 
-- [ ] A blank new map saves and reloads without null failures.
-- [ ] Terrain and one object survive reload.
-- [ ] Every required chunk has an explicit valid default.
-- [ ] Existing map fixtures still load.
-- [ ] Standard validation passes.
+- [x] A blank new map saves and reloads without null failures.
+  - `NewMapRoundTripTests.BlankNewMap_SavesAndReloads`: `CreateEmpty(32, 32, 2, 10)` +
+    `WriteTo` + `FromStream`; all seven unconditional chunks non-null, Area and NumTiles both
+    `(32 + 2*2 + 1)^2`, every elevation 10, exactly one neutral side.
+- [x] Terrain and one object survive reload.
+  - `NewMapRoundTripTests.TerrainAndOneObject_SurviveReload`: one placed Dozer reloads with
+    `TypeName`, `Position`, and non-null `Properties` (ctor default).
+- [x] Every required chunk has an explicit valid default.
+  - `HeightMapData.Create` sets `Borders = []`; `BlendTileData.Create(w, h)` stamps Version 8;
+    `GlobalLighting.Create()` (Version 6, all four `TimeOfDay` configs), `WorldInfo.Create()`,
+    `WaypointsList.Create()`, `SidesList.Create()` (Version 3 + neutral player), and
+    `ScriptList.Create()` (Version 1, `Player.Scripts` default) make every `WriteTo` dereference
+    safe; `MapFile.CreateEmpty` wires them all.
+- [x] Existing map fixtures still load.
+  - Full non-interactive suite keeps exactly the 8 known failures; `MapFileTests` unchanged.
+- [x] Standard validation passes.
+
+Round-trip defects fixed en route: `SidesList.WriteTo` writes teams + nested scripts
+unconditionally at Version 0 (parse reads them only at `2 <= v < 5`; stamped 3), `ScriptList`
+parse demands Version 1 (defaulted 0; added `ScriptList.Create()`), and the blend grid shares
+the elevation-grid dimensions (`playable + border*2 + 1`, not tile dims).
 
 ## Validation commands
 

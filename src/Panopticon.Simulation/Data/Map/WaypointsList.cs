@@ -8,6 +8,12 @@ public sealed class WaypointsList : Asset
 
     public WaypointPath[] WaypointPaths { get; private set; }
 
+    /// <summary>WI-A5-28: a writable empty list for new maps.</summary>
+    internal static WaypointsList Create() => new()
+    {
+        WaypointPaths = [],
+    };
+
     internal static WaypointsList Parse(BinaryReader reader, MapParseContext context)
     {
         return ParseAsset(reader, context, version =>

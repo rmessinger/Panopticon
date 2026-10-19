@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-27` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-6 WorldBuilder baseline |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-01` must confirm the audit finding |
@@ -37,11 +37,22 @@ placement.
 
 ## Acceptance criteria
 
-- [ ] One placement creates exactly one object.
-- [ ] Undo removes it and redo restores exactly one.
-- [ ] Height and blend edits preserve their prior behavior.
-- [ ] Repeated undo/redo does not accumulate duplicates.
-- [ ] Standard validation passes.
+- [x] One placement creates exactly one object.
+  - Root cause: `CreatePlacement` applied the edit internally, then `UndoRedoStack.Push`
+    applied it again; `ObjectsList.AddObject` appends, so every placement added the object
+    twice. Factories no longer self-apply; `Push` is the single application owner.
+- [x] Undo removes it and redo restores exactly one.
+  - `UndoRedoEditApplicationTests.PlacementPushAddsExactlyOneObject_AndUndoRedoCycles`
+    (three cycles, `Assert.Single` + `Assert.Same`).
+- [x] Height and blend edits preserve their prior behavior.
+  - `BlendTileEdit.CreateSingle` also no longer self-applies (its double application was
+    idempotent); `HeightMapEdit.Capture` applies via callback and `Push` re-copies `_after`,
+    unchanged. Covered by the blend and height cycle tests.
+- [x] Repeated undo/redo does not accumulate duplicates.
+  - Cycled three times in the placement, deletion, blend, and height tests.
+- [x] Standard validation passes.
+  - New test project `Panopticon.Tools.WorldBuilder.Core.Tests` (4/4), wired into
+    `src/Panopticon.sln` and the CI workflow; build clean, format + brace clean.
 
 ## Validation commands
 

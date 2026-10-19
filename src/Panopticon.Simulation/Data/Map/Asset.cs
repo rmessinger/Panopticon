@@ -54,7 +54,7 @@ public abstract class Asset
     internal long StartPosition { get; private set; }
     internal long EndPosition { get; private set; }
 
-    public ushort Version { get; private set; }
+    public ushort Version { get; internal set; }
 
     protected void WriteAssetTo(BinaryWriter writer, Action writeCallback)
     {

@@ -46,6 +46,24 @@ public sealed class SidesList : Asset, IPersistableObject
 
     #endregion
 
+    /// <summary>
+    /// WI-A5-28: a writable empty list for new maps, seeded with the same neutral player the
+    /// parser's ValidateSides would otherwise insert (a ""-named player), so a reloaded new map
+    /// is byte-stable. Playable skirmish sides are WI-A5-35 scope.
+    /// </summary>
+    internal static SidesList Create()
+    {
+        var result = new SidesList
+        {
+            // Version 3 (the ZH stamp): WriteTo always writes the teams count and the nested
+            // PlayerScriptsList asset, and Parse only reads them when 2 <= version < 5, so a
+            // version below 2 cannot round-trip. WI-A5-28.
+            Version = 3,
+        };
+        result.AddPlayerByTemplate("");
+        return result;
+    }
+
     internal static SidesList Parse(BinaryReader reader, MapParseContext context, bool mapHasAssetList)
     {
         return ParseAsset(reader, context, version =>
