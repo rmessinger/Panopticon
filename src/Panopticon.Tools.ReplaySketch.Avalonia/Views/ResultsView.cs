@@ -27,6 +27,7 @@ public sealed class ResultsView : UserControl
     private readonly SkiaCanvas _chart = new();
     private readonly Slider _timeline = new() { MinWidth = 220 };
     private readonly TextBox _frame = new() { MinWidth = 60 };
+    private readonly ComboBox _colorMode = new() { MinWidth = 100 };
     private readonly TextBlock _currentState = new() { TextWrapping = TextWrapping.Wrap };
     private readonly ListBox _events = new();
     private readonly TextBox _comparePath = new();
@@ -69,6 +70,15 @@ public sealed class ResultsView : UserControl
                 && uint.TryParse(_frame.Text, out var frame))
             {
                 _viewModel.ScrubTo(frame);
+            }
+        };
+
+        _colorMode.ItemsSource = new[] { "Owner", "Fidelity" };
+        _colorMode.SelectionChanged += (_, _) =>
+        {
+            if (!_refreshing)
+            {
+                _viewModel.FrameColorMode = (FrameColorMode)_colorMode.SelectedIndex;
             }
         };
 
@@ -141,6 +151,7 @@ public sealed class ResultsView : UserControl
         var timelineRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         timelineRow.Children.Add(_timeline);
         timelineRow.Children.Add(_frame);
+        timelineRow.Children.Add(_colorMode);
         timelineRow.Children.Add(_currentState);
 
         var right = new Grid { RowDefinitions = new RowDefinitions("Auto,260,*") };
@@ -202,7 +213,8 @@ public sealed class ResultsView : UserControl
             height: (float)_frameView.Bounds.Height,
             _viewModel.FrameProjection.Primitives,
             _viewModel.FrameProjection.Points,
-            _viewModel.SelectedPointId);
+            _viewModel.SelectedPointId,
+            fidelityOverlay: _viewModel.FrameColorMode == FrameColorMode.Fidelity);
     }
 
     private void Refresh()
@@ -225,6 +237,7 @@ public sealed class ResultsView : UserControl
             _series.ItemsSource = _viewModel.Series;
             _events.ItemsSource = _viewModel.EventsThroughFrame;
             _timeline.IsEnabled = _viewModel.HasTimeline;
+            _colorMode.SelectedIndex = (int)_viewModel.FrameColorMode;
             if (_viewModel.HasTimeline)
             {
                 _timeline.Minimum = _viewModel.Timeline!.FirstFrame;
