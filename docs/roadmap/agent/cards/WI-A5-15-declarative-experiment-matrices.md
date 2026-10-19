@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-15` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): A5-2 experiment matrix |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | `WI-A4-38`, `WI-A5-03` |
@@ -39,11 +39,22 @@ then reject unbound paths before execution.
 
 ## Acceptance criteria
 
-- [ ] Matrix JSON round-trips without executable delegates.
-- [ ] Every supported binding target has a focused test.
-- [ ] Invalid paths fail before any cell runs.
-- [ ] Existing cartesian expansion behavior is preserved.
-- [ ] Standard validation passes.
+- [x] Matrix JSON round-trips without executable delegates.
+  - `ConstraintFilter` gained serializable `ConstraintTerm`s (==/!= ANDed); JSON carries terms only,
+    the in-code delegate constructor remains for programmatic matrices and terms take precedence.
+- [x] Every supported binding target has a focused test.
+  - Map (with `{value}` format), Seed (uint-validated), Parameter, Seam (recorded as cell
+    `SeamSelections`), PlacementCount (Quantity on matching placements) all covered in
+    `Bindings_ApplyTypedTargetsToConcreteScenarios`.
+- [x] Invalid paths fail before any cell runs.
+  - `ScenarioMatrix.Validate()` reports unknown axes, missing keys, duplicate bindings, non-uint
+    seed/count values, and malformed filter terms; `ScenarioMatrixDocument.Load` runs it and the
+    scenario structural validation before returning.
+- [x] Existing cartesian expansion behavior is preserved.
+  - `Expand_TwoAxes_ProducesCartesianProduct` and the delegate filter test pass unchanged;
+    `MatrixReport_ToJson_EmitsCorrectShape` stays green.
+- [x] Standard validation passes.
+  - Filter `ScenarioMatrix` 12/12 (4 prior + 4 binding + 4 loader).
 
 ## Validation commands
 
