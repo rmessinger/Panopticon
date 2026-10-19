@@ -39,7 +39,8 @@ public static class MetricChartRenderer
         float offsetY,
         float width,
         float height,
-        IReadOnlyList<(string Name, IReadOnlyList<(uint Frame, double Value)> Points)> series)
+        IReadOnlyList<(string Name, IReadOnlyList<(uint Frame, double Value)> Points)> series,
+        uint? cursorFrame = null)
     {
         if (width <= LeftPadding + RightPadding || height <= TopPadding + BottomPadding)
         {
@@ -103,6 +104,13 @@ public static class MetricChartRenderer
         }
 
         DrawLegend(canvas, offsetX + LeftPadding, offsetY + TopPadding, visible.Select(s => s.Name).ToList());
+
+        if (cursorFrame is { } frame && frame >= minFrame && frame <= maxFrame)
+        {
+            var cursorX = plotLeft + plotWidth * ((float)frame - minFrame) / (maxFrame - minFrame);
+            using var cursorPaint = new SKPaint { Color = new SKColor(0xE6, 0xE6, 0xE6, 0xB0), StrokeWidth = 1f, IsStroke = true };
+            canvas.DrawLine(cursorX, plotTop, cursorX, plotBottom, cursorPaint);
+        }
     }
 
     private static void DrawAxisTicks(

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -6,6 +7,7 @@ using Avalonia.Media;
 using Panopticon.Tools.ReplaySketch.Avalonia.Controls;
 using Panopticon.Tools.ReplaySketch.Model;
 using Panopticon.Tools.ReplaySketch.Profiles;
+using Panopticon.Tools.ReplaySketch.Services;
 using Panopticon.Tools.ReplaySketch.ViewModels;
 using SkiaSharp;
 
@@ -27,6 +29,10 @@ public sealed class ResultsView : UserControl
     private readonly TextBox _frame = new() { MinWidth = 60 };
     private readonly TextBlock _currentState = new() { TextWrapping = TextWrapping.Wrap };
     private readonly ListBox _events = new();
+    private readonly TextBox _comparePath = new();
+    private readonly TextBlock _divergence = new();
+    private readonly SkiaCanvas _frameView = new();
+    private IReadOnlyList<FrameViewMarker> _frameMarkers = [];
     private bool _refreshing;
 
     public ResultsView(ResultsViewModel viewModel)
@@ -83,9 +89,17 @@ public sealed class ResultsView : UserControl
         };
 
         _chart.PaintSurface += OnPaintSurface;
+        _frameView.PaintSurface += OnFramePaintSurface;
+        _frameView.PointerPressed += (_, e) =>
+        {
+            var point = e.GetPosition(_frameView);
+            var marker = Profiles.RunFrameRenderer.HitTest(_frameMarkers, (float)point.X, (float)point.Y);
+            _viewModel.SelectedPointId = marker?.ObjectId;
+        };
 
         _viewModel.PropertyChanged += (_, _) => Refresh();
         _viewModel.PropertyChanged += (_, _) => _chart.InvalidateCanvas();
+        _viewModel.PropertyChanged += (_, _) => _frameView.InvalidateCanvas();
 
         var browse = new Button { Content = "Browse…", Command = _viewModel.BrowseCommand };
         var load = new Button { Content = "Load", Command = _viewModel.LoadCommand };
@@ -94,6 +108,30 @@ public sealed class ResultsView : UserControl
         toolbar.Children.Add(browse);
         toolbar.Children.Add(load);
         toolbar.Children.Add(_status);
+
+        // WI-A5-05: divergence comparison against a second run manifest.
+        _comparePath.Watermark = "second run's run.json";
+        _comparePath.MinWidth = 220;
+        _comparePath.TextChanged += (_, _) =>
+        {
+            if (!_refreshing)
+            {
+                _viewModel.ComparePath = _comparePath.Text;
+            }
+        };
+        var compare = new Button { Content = "Compare", Command = _viewModel.CompareCommand };
+        _divergence.TextWrapping = TextWrapping.Wrap;
+        _divergence.FontFamily = new FontFamily("monospace");
+        var compareRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        compareRow.Children.Add(_comparePath);
+        compareRow.Children.Add(compare);
+        compareRow.Children.Add(_divergence);
+
+        var header = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto") };
+        Grid.SetRow(toolbar, 0);
+        Grid.SetRow(compareRow, 1);
+        header.Children.Add(toolbar);
+        header.Children.Add(compareRow);
 
         var chartPanel = new Grid { RowDefinitions = new RowDefinitions("260,*") };
         Grid.SetRow(_chart, 1);
@@ -105,11 +143,14 @@ public sealed class ResultsView : UserControl
         timelineRow.Children.Add(_frame);
         timelineRow.Children.Add(_currentState);
 
-        var right = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
+        var right = new Grid { RowDefinitions = new RowDefinitions("Auto,260,*") };
         Grid.SetRow(timelineRow, 0);
         right.Children.Add(timelineRow);
+        _frameView.MinHeight = 200;
+        Grid.SetRow(_frameView, 1);
+        right.Children.Add(_frameView);
         _events.FontFamily = new FontFamily("monospace");
-        Grid.SetRow(_events, 1);
+        Grid.SetRow(_events, 2);
         right.Children.Add(_events);
 
         var body = new Grid { ColumnDefinitions = new ColumnDefinitions("320,*") };
@@ -118,10 +159,10 @@ public sealed class ResultsView : UserControl
         body.Children.Add(chartPanel);
         body.Children.Add(right);
 
-        var root = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
-        Grid.SetRow(toolbar, 0);
-        Grid.SetRow(body, 1);
-        root.Children.Add(toolbar);
+        var root = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*") };
+        Grid.SetRow(header, 0);
+        Grid.SetRow(body, 2);
+        root.Children.Add(header);
         root.Children.Add(body);
 
         Content = root;
@@ -146,7 +187,22 @@ public sealed class ResultsView : UserControl
             offsetY: 0,
             width: (float)_chart.Bounds.Width,
             height: (float)_chart.Bounds.Height,
-            series);
+            series,
+            cursorFrame: _viewModel.HasTimeline ? _viewModel.SelectedFrame : null);
+    }
+
+    private void OnFramePaintSurface(object? sender, SKCanvas canvas)
+    {
+        canvas.Clear();
+        _frameMarkers = RunFrameRenderer.Render(
+            canvas,
+            offsetX: 0,
+            offsetY: 0,
+            width: (float)_frameView.Bounds.Width,
+            height: (float)_frameView.Bounds.Height,
+            _viewModel.FrameProjection.Primitives,
+            _viewModel.FrameProjection.Points,
+            _viewModel.SelectedPointId);
     }
 
     private void Refresh()
@@ -180,6 +236,13 @@ public sealed class ResultsView : UserControl
             {
                 _frame.Text = _viewModel.SelectedFrame.ToString();
             }
+
+            if (!string.Equals(_comparePath.Text, _viewModel.ComparePath, StringComparison.Ordinal))
+            {
+                _comparePath.Text = _viewModel.ComparePath ?? string.Empty;
+            }
+
+            _divergence.Text = string.Join(Environment.NewLine, _viewModel.DivergenceLines);
         }
         finally
         {

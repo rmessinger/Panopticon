@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-A5-05` |
 | Roadmap phase | [Track A · A5](../../track-a-foundations.md): Scenario authoring & visualization, sub-phase A5-4 |
-| Status | `Blocked` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | `WI-A5-04` and `WI-A5-07`; T1 recording is already implemented by `WI-A1-09` |
@@ -47,14 +47,22 @@ that makes B3 parallelism and B6 sharding debuggable.
 
 ## Acceptance criteria
 
-- [ ] Given a synthetic known-divergent pair, the comparator reports exactly the seeded frame and
-      locus.
-- [ ] Two within-tolerance runs report no divergence.
-- [ ] Missing or extra buckets under a compatible schema are reported as divergences.
-- [ ] Mismatched domain, bucket schema, cell settings, or recording-time tolerances are reported as
-      incompatible, not as divergences.
-- [ ] Comparison logic lives in `.Core` and is covered by headless tests.
-- [ ] Standard validation passes (see [guide](../README.md#standard-validation)).
+- [x] Given a synthetic known-divergent pair, the comparator reports exactly the seeded frame and
+  locus.
+  - `KnownDivergentPair_ReportsExactFrameAndLeafMostLocus`: seeded at frame 5, `world/cell:0,0`
+    reported; root divergence is implied and dropped when bucket loci exist.
+- [x] Two within-tolerance runs report no divergence.
+  - `WithinTolerance_IdenticalTrees_ReportNoDivergence`: 11 frames compared, zero loci.
+- [x] Missing or extra buckets under a compatible schema are reported as divergences.
+  - `MissingOrExtraBuckets_AreDivergences` + `MissingBucketsOnReferenceSide_IsDivergence`.
+- [x] Mismatched domain, bucket schema, cell settings, or recording-time tolerances are reported as
+  incompatible, not as divergences.
+  - `MismatchedT1Configuration_IsIncompatible_NotDivergent` (cell size via
+    `RunOutput.ValidateSignatureConfigurationCompatible`) +
+    `MismatchedDomain_IsIncompatible_NotDivergent`.
+- [x] Comparison logic lives in `.Core` and is covered by headless tests.
+  - `RunDivergenceComparator` in ReplaySketch.Core; 8 tests (comparator + view-model path).
+- [x] Standard validation passes.
 
 ## Validation commands
 
