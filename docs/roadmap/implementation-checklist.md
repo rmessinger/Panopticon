@@ -708,11 +708,15 @@ See [`track-a-foundations.md`](track-a-foundations.md). Gated on Track P (P7).
   - AC: authoring a large procedural scenario and replaying a long/large run stay within documented
     time/memory budgets using region-indexed state, streaming/LOD/culling, and bounded-memory
     loading; B1 tracks the throughput.
-- [ ] A5-6 WorldBuilder baseline: audit functional state; ensure basic author → save → load → play
+- [x] A5-6 WorldBuilder baseline: audit functional state; ensure basic author → save → load → play
       round-trip works at normal map sizes; document gaps. (Early-start sub-phase, no A1/A4
-      dependency; gates B4a.)
+      dependency; gates B4a.) (`WI-A5-01..02`, `WI-A5-27..28`, `WI-A5-34..35`,
+      [audit + baseline](implementation/track-a-a5-6-worldbuilder-baseline.md))
   - AC: a normal-sized map with terrain and object placement round-trips through WorldBuilder (author
     → save → load → play in the engine) without errors; functional gaps documented.
+  - Done: audit landed (WI-A5-01); edit application, writable new maps, companions, and
+    skirmish-playable new-map defaults repaired (WI-A5-27/28/34/35); round-trip incl. undo/redo
+    and the engine play leg proven by test (WI-A5-02). B4a's prerequisite is satisfied.
 
 ---
 

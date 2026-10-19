@@ -45,9 +45,20 @@ public sealed class HeightMapData : Asset
             Area = width * height,
             Elevations = elevations,
 
-            // WI-A5-28: WriteTo always dereferences Borders; new maps carry an empty border
-            // list (the editor does not author border regions yet).
-            Borders = [],
+            // WI-A5-28: WriteTo always dereferences Borders. WI-A5-35 follow-through (found
+            // by the WI-A5-02 play leg): PartitionCellManager.OnNewGame reads Borders[0] as
+            // the terrain boundary (tiles, world units at HorizontalScale), so new maps seed
+            // one border spanning the full elevation grid.
+            Borders =
+            [
+                new HeightMapBorder
+                {
+                    Corner1X = 0,
+                    Corner1Y = 0,
+                    X = width - 1,
+                    Y = height - 1,
+                },
+            ],
         };
     }
 
