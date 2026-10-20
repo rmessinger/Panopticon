@@ -1893,3 +1893,10 @@ Dependency: none. [Plan and card](implementation/track-x-x4-replaysketch-tabcont
 
 - [ ] X4-1 Switch the ReplaySketch `MainWindow` tab strip to an Avalonia `TabControl` (`WI-X4-01`).
   - AC: no tab buttons, frame toggles, `SwitchTo*`, or `SetTabActive` remain; selection side effects and `REPLAYSKETCH_SCREENSHOT_TAB` work for all five tabs; Model after Harness shows only Model; Skia-drawn tabs keep content and state across repeated switching; versioned captures of every tab are inspected.
+
+### X5: Render culling dispatch
+
+Dependency: M1. [Plan and card](implementation/track-x-x5-render-culling-dispatch.md).
+
+- [ ] X5-1 Measure and right-size parallel culling dispatch in `RenderItemCollection.FilterVisible` (`WI-X5-01`).
+  - AC: CPU-sampling profile of the windowed capacity probe attributes culling cost before the change; serial path below a measured threshold and processor-sized chunks above it; serial and parallel visible lists identical in tests; before/after `shadowPass`/`forwardPass` medians with CIs recorded in the plan.

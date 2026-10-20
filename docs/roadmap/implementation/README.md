@@ -575,3 +575,11 @@ Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [diagrams]
 | Plan | Sub-phase | Checklist item |
 |---|---|---|
 | [track-x-x4-replaysketch-tabcontrol.md](track-x-x4-replaysketch-tabcontrol.md) | X4-1 | `TabControl` tab strip in `MainWindow` |
+
+## Track X · X5: Render culling dispatch
+
+Source of truth: [Track X](../track-x-fixes-tweaks.md). Architecture: [diagrams](track-x-x5-render-culling-dispatch.md#architecture-diagrams).
+
+| Plan | Sub-phase | Checklist item |
+|---|---|---|
+| [track-x-x5-render-culling-dispatch.md](track-x-x5-render-culling-dispatch.md) | X5-1 | Measured serial threshold and chunk sizing for `FilterVisible` |

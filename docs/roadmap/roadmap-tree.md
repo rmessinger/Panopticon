@@ -49,6 +49,8 @@ mindmap
         X3-1 Cursor theme evaluation and examples
       X4 ReplaySketch TabControl shell
         X4-1 TabControl tab strip
+      X5 Render culling dispatch
+        X5-1 Culling dispatch sizing
     P. Playable Baseline
       P0 ReplaySketch command harness ⮕
         P0-1 Open command model
@@ -470,6 +472,7 @@ flowchart LR
   subgraph S4["Stage 4 · Fidelity scaling & physics consumers"]
     direction TB
     X2["X2 Capacity-probe graphics resource fixes"]
+    X5["X5 Render culling dispatch"]
     B6["B6 Distributed simulation"]
     B7["B7 Variable fidelity"]
     C4C["C4c EE2 rigid KF animation"]
@@ -744,6 +747,7 @@ flowchart LR
   M0 --> M1
   B1 --> M1
   M1 --> X2
+  M1 --> X5
   C4D --> M2
   C4D --> H2A
   P9 --> H2A
