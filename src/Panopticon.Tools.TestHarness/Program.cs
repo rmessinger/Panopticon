@@ -367,6 +367,12 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.MassBattleBatch)
+        {
+            Environment.ExitCode = MassBattleBatchRunner.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.RenderingScaleProbe)
         {
             Environment.ExitCode = RenderingScaleProbeRunner.Run(installation, config, reporter);

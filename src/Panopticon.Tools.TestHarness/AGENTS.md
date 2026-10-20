@@ -410,6 +410,27 @@ Reports are timing-free: the same profile and seed reproduce a byte-identical re
 codes: 0 battle decided with no failure reasons; 1 setup error (profile, manifest, import);
 5 battle did not decide within the frame limit or reported spawn shortfalls.
 
+## Mass Battle Batch (M5)
+
+WI-M5-06: the same headless battle over a seed range in one process (one fresh game per seed),
+aggregated into a batch report: per-side wins with Wilson 95 percent intervals (draws and
+failures stay in the denominator), median frames to outcome, frame and wall-clock statistics,
+and kills/losses per definition summed and per-run mean. Per-run reports land in a
+`<batch-report>-runs/` sibling directory.
+
+```bash
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario MassBattleBatch
+```
+
+`MassBattleBatchSeedStart` (default 1) and `MassBattleBatchRuns` (default 10) select the seed
+range, `MassBattleBatchReportPath` redirects the aggregate, and the single-run knobs
+(`MassBattleProfilePath`, `MassBattleFrameLimit`) apply to every run. A failed run is recorded
+as a failure and the batch continues. Exit codes: 0 every run decided; 1 setup error; 5 any
+run failed or did not reach an outcome.
+
 ## Unit Validation Ground (P9)
 
 A non-skirmish sandbox that stands up the whole unit roster side by side on a real map, orders

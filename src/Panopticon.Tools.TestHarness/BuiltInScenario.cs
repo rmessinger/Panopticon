@@ -8,6 +8,7 @@ public enum BuiltInScenario
     MassBattleDeployment,
     MassBattleCapacityProbe,
     MassBattle,
+    MassBattleBatch,
     EngagementCapture,
     ScenarioCapture,
     VisualRegression,
