@@ -59,7 +59,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 |---|---|---|---|
 | [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Done` |
 | [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Ready` |
-| [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Ready` |
+| [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Done` |
 | [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Ready` |
 | [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Ready` |
 | [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Ready` |
@@ -86,3 +86,14 @@ scaled army-AI and scripted probe reports byte-identical on seed 1 before and af
 refactor; full non-interactive suite 2383 passed / 8 known failures. Residual:
 `ScenarioCaptureRunner.ResolvePlayerSlot` keeps its own `Players[2 + slotIndex]` (scenario-actor
 slot seam, not army-side resolution).
+
+### WI-M5-03: what landed
+
+`ArmyEliminatedVictoryConditionRule`: a side is defeated when it owns no living non-structure
+object that can attack; airfields never keep a side alive, parked aircraft do. Selected from
+outside Simulation through `VictoryConditionKind` on `VictoryOptions` (`ApplyOptions` maps it to
+the rule, matching the frame-limit seam); `DefaultVictoryConditionRule` and the check cadence
+are untouched. Validation: new install-free tests 5/5 (elimination winner, mutual elimination
+to `SuddenDeath`, airfield-only defeat, parked aircraft survival, options-path frame limit with
+`UnitCount` `ScoreDecision`); existing victory tests 23/23 and the P7 matrix 2/2 unchanged; full
+non-interactive suite 2388 passed / 8 known failures.
