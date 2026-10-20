@@ -61,7 +61,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 | [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Done` |
 | [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Done` |
 | [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Done` |
-| [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Ready` |
+| [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Done` |
 | [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Ready` |
 | [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Ready` |
 | [`WI-M5-08`](../agent/cards/WI-M5-08-battle-recording-and-replay.md) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
@@ -130,3 +130,17 @@ are untouched. Validation: new install-free tests 5/5 (elimination winner, mutua
 to `SuddenDeath`, airfield-only defeat, parked aircraft survival, options-path frame limit with
 `UnitCount` `ScoreDecision`); existing victory tests 23/23 and the P7 matrix 2/2 unchanged; full
 non-interactive suite 2388 passed / 8 known failures.
+
+### WI-M5-05: what landed
+
+`GameObject.LastDamageSourceId` exposes the body's recorded damage source; the internal
+`KillLossTracker` subscribes to `ObjectLifecycleChanged` and counts each death once. Losses
+cover the tracked army (the spawned roster) of non-structure attackers; kills credit the
+resolved last damager with projectiles hopping to their creator, otherwise `unknown`. The
+battle report gains `kills`/`losses` tables and the runner attaches the tracker after spawning.
+Two overcount sources were diagnosed from tagged death/creation stacks and excluded: inert
+death-spawned objects (debris, hulks, tree stumps, projectiles) by the attacker-class
+predicate, and pilot-ejection crew (US vehicles' `CreateObjectDie`) by army membership.
+Validation: mocked tests 4/4; scaled battles sideA 11/11 and sideB 3/3 with kills == losses ==
+14; the scaled Interactive test asserts both invariants on seeds 1 and 2 plus unchanged
+same-seed report identity; full non-interactive suite 2397 passed / 8 known failures.
