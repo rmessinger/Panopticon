@@ -90,7 +90,7 @@ public static class MassBattleRunner
                 game = new Game(
                     installation,
                     config.Renderer,
-                    new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud },
+                    new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud, Spectator = true },
                     null);
             }
             else
@@ -100,7 +100,7 @@ public static class MassBattleRunner
                 game = new Game(
                     installation,
                     config.Renderer,
-                    new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud },
+                    new Configuration { NoAudio = true, SkipStartingBuildings = true, FullHud = config.FullHud, Spectator = true },
                     window);
                 textureCopier = new TextureCopier(game, window.Swapchain.Framebuffer.OutputDescription);
                 overlay = new HarnessOverlay(game, window);

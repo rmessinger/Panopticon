@@ -406,7 +406,9 @@ it (a relative `RosterManifestPath` resolves against the profile's directory),
 `MassBattleReportPath` redirects the battle JSON (P3 outcome with winning side plus per-side
 per-definition spawn and survival counts; a sibling `.run-output.json` and `.benchmark.json`
 land beside it in headless mode), and `MassBattleScreenshotPath` captures one PNG after spawn.
-Reports are timing-free: the same profile and seed reproduce a byte-identical report. Exit
+Windowed runs spectate (WI-M5-09): the local player is the observer, the camera frames both
+zones, and operator input never reaches an army. Reports are timing-free: the same profile and
+seed reproduce a byte-identical report. Exit
 codes: 0 battle decided with no failure reasons; 1 setup error (profile, manifest, import);
 5 battle did not decide within the frame limit or reported spawn shortfalls.
 
