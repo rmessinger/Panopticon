@@ -290,4 +290,25 @@ public sealed class TestHarnessConfig
     /// </summary>
     [HarnessParameter("MassBattle", "MassBattleCapacityProbeArmyAi.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public bool? MassBattleCapacityProbeArmyAi { get; set; } = null;
+
+    /// <summary>Path to the WI-M5-02 battle profile JSON. Empty uses the embedded profile.</summary>
+    [HarnessParameter("MassBattle", "MassBattleProfilePath.", nameof(BuiltInScenario.MassBattle))]
+    public string? MassBattleProfilePath { get; set; } = null;
+
+    /// <summary>Battle seed (WI-M5-04); every run of the same seed reproduces the same battle.</summary>
+    [HarnessParameter("MassBattle", "MassBattleSeed.", nameof(BuiltInScenario.MassBattle))]
+    public int? MassBattleSeed { get; set; } = null;
+
+    /// <summary>
+    /// Frame limit for the army-eliminated outcome (WI-M5-04): a stalled battle decides by
+    /// unit count at this frame. Default 54000 (30 game minutes).
+    /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleFrameLimit.", nameof(BuiltInScenario.MassBattle))]
+    public int? MassBattleFrameLimit { get; set; } = null;
+
+    [HarnessParameter("MassBattle", "MassBattleReportPath.", nameof(BuiltInScenario.MassBattle))]
+    public string? MassBattleReportPath { get; set; } = null;
+
+    [HarnessParameter("MassBattle", "MassBattleScreenshotPath.", nameof(BuiltInScenario.MassBattle))]
+    public string? MassBattleScreenshotPath { get; set; } = null;
 }
