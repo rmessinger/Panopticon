@@ -83,3 +83,34 @@ internal sealed class NeverDefeatedVictoryConditionRule : VictoryConditionRule
         return false;
     }
 }
+
+/// <summary>
+/// A side is defeated when it owns no living non-structure object that can attack (WI-M5-03):
+/// airfields never keep a side alive, parked aircraft do. For battles without production
+/// structures; stalled battles resolve through the frame limit with unit-count scoring.
+/// </summary>
+internal sealed class ArmyEliminatedVictoryConditionRule : VictoryConditionRule
+{
+    internal override bool IsPlayerDefeated(Player player, VictorySystem victorySystem)
+    {
+        foreach (var ownedObject in player.OwnedObjects)
+        {
+            if (!ownedObject.IsStructure && ownedObject.CanAttack && !ownedObject.IsEffectivelyDead)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+internal static class VictoryConditionRules
+{
+    internal static VictoryConditionRule FromKind(VictoryConditionKind kind) => kind switch
+    {
+        VictoryConditionKind.NeverDefeated => new NeverDefeatedVictoryConditionRule(),
+        VictoryConditionKind.ArmyEliminated => new ArmyEliminatedVictoryConditionRule(),
+        _ => new DefaultVictoryConditionRule(),
+    };
+}

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-03` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `S` |
 | Prerequisites | P3 (done) |
@@ -46,9 +46,9 @@ no living combat unit, and a frame limit decides stalled battles by unit count.
 
 ## Acceptance criteria
 
-- [ ] An army battle reaches `OutcomeStatus.Decided` with `Eliminated` or `ScoreDecision`.
-- [ ] Default skirmish rules and existing P3 tests are unchanged.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] An army battle reaches `OutcomeStatus.Decided` with `Eliminated` or `ScoreDecision`.
+- [x] Default skirmish rules and existing P3 tests are unchanged.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -69,3 +69,12 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - Result: `ArmyEliminatedVictoryConditionRule` (defeated when no living non-structure
+    attacker; airfields never keep a side alive, parked aircraft do) plus the public
+    `VictoryConditionKind` on `VictoryOptions` applied by `VictorySystem.ApplyOptions`
+    (`DefaultVictoryConditionRule` untouched). Tests 5/5 install-free: elimination decides with
+    the survivor as winner, mutual elimination in one check enters `SuddenDeath`, an
+    airfield-only side is defeated, parked aircraft keep the side alive, and the options path
+    applies the rule with the frame limit scoring `UnitCount` as `ScoreDecision`. Existing
+    victory tests 23/23 and P7 matrix 2/2 unchanged; full non-interactive suite 2388 passed /
+    8 known failures.
