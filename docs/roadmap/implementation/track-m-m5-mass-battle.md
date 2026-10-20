@@ -65,7 +65,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 | [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Done` |
 | [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Blocked` (variants landed and validated scaled; full-scale acceptance batches pending, see below) |
 | [`WI-M5-08`](../agent/cards/WI-M5-08-battle-recording-and-replay.md) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
-| [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Ready` |
+| [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Done` |
 | [`WI-M5-10`](../agent/cards/WI-M5-10-live-frame-rate-measurement.md) live frame rate measurement | M5-4 | `WI-M5-09` | `Ready` |
 
 `WI-M5-01..03` are independent. After `WI-M5-04`, the batch chain (`05..07`) and the live chain
@@ -187,3 +187,15 @@ The pass criteria: every run in all three batches decides; the Mirror side A Wil
 includes 50 percent (a miss is a map-bias finding and the card reports it); the batch reports
 land beside the paths above. Record the three batches in this section, then flip the card to
 `Done` and tick M5-2. Full non-interactive suite 2404 passed / 8 known failures.
+
+### WI-M5-09: what landed
+
+`Configuration.Spectator` makes `PlayerManager.OnNewGame` select the `FactionObserver` player as
+local when present (default fallback untouched); `Game.StartGame` skips control-bar creation for
+the observer side. `MassBattleRunner` boots headless and windowed with spectator on, keeping the
+modes code-identical, so the same-seed headless report identity proves the flag never perturbs
+the simulation. Map reveal is a recorded no-op: the render path has no shroud or fog gating, so
+all objects draw regardless of the local player. Mocked `SpectatorStartTests` 4/4; the battlefield
+capture is shared as `m5-spectator-battlefield-v1-scaled.png` (capture pipeline verified;
+contents not visually inspected in-session); the windowed operator proof stays subject to the
+documented Xvfb present limitation. Full non-interactive suite 2408 passed / 8 known failures.

@@ -54,6 +54,13 @@ public sealed class Configuration
     public bool SkipStartingBuildings { get; set; } = false;
 
     /// <summary>
+    /// Makes the replay observer the local player instead of the first skirmish slot
+    /// (WI-M5-09): the run is spectated, so operator input never reaches an army. The default
+    /// fallback (first human or slot 2) is unchanged.
+    /// </summary>
+    public bool Spectator { get; set; } = false;
+
+    /// <summary>
     /// When <c>false</c>, the in-game HUD renders only the minimap: the control-bar background,
     /// command buttons, money/power/experience displays, and special-power shortcut bar are
     /// hidden. Default <c>true</c> restores the full HUD.
