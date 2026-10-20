@@ -311,4 +311,15 @@ public sealed class TestHarnessConfig
 
     [HarnessParameter("MassBattle", "MassBattleScreenshotPath.", nameof(BuiltInScenario.MassBattle))]
     public string? MassBattleScreenshotPath { get; set; } = null;
+
+    /// <summary>First seed of a batch (WI-M5-06); the batch runs consecutive seeds from here.</summary>
+    [HarnessParameter("MassBattle", "MassBattleBatchSeedStart.", nameof(BuiltInScenario.MassBattleBatch))]
+    public int? MassBattleBatchSeedStart { get; set; } = null;
+
+    /// <summary>Number of runs in a batch (WI-M5-06); default 10, WI-M5-07 sizes acceptance.</summary>
+    [HarnessParameter("MassBattle", "MassBattleBatchRuns.", nameof(BuiltInScenario.MassBattleBatch))]
+    public int? MassBattleBatchRuns { get; set; } = null;
+
+    [HarnessParameter("MassBattle", "MassBattleBatchReportPath.", nameof(BuiltInScenario.MassBattleBatch))]
+    public string? MassBattleBatchReportPath { get; set; } = null;
 }

@@ -62,7 +62,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 | [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Done` |
 | [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Done` |
 | [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Done` |
-| [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Ready` |
+| [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Done` |
 | [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Ready` |
 | [`WI-M5-08`](../agent/cards/WI-M5-08-battle-recording-and-replay.md) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
 | [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Ready` |
@@ -144,3 +144,17 @@ predicate, and pilot-ejection crew (US vehicles' `CreateObjectDie`) by army memb
 Validation: mocked tests 4/4; scaled battles sideA 11/11 and sideB 3/3 with kills == losses ==
 14; the scaled Interactive test asserts both invariants on seeds 1 and 2 plus unchanged
 same-seed report identity; full non-interactive suite 2397 passed / 8 known failures.
+
+### WI-M5-06: what landed
+
+`WinRateInterval.Wilson` (z table for 90/95/99 percent, exact endpoints at 0 and n successes)
+with install-free tests against the published 10-trial values. `MassBattleBatchRunner` runs
+consecutive seeds through one `MassBattleRunner` call per seed with a fresh game, keeps per-run
+reports under `<batch>-runs/`, continues past failures, and aggregates per-side wins with Wilson
+95 intervals (draws and failures stay in the denominator), draw and failure counts, frame and
+wall-minute statistics, and kills/losses summed plus per-run means. Knobs
+`MassBattleBatchSeedStart`/`MassBattleBatchRuns` (defaults 1 and 10)/`MassBattleBatchReportPath`,
+plus the `MassBattleBatch` scenario entry, catalog descriptor, and AGENTS.md section. The scaled
+3-seed Interactive test reconciles the aggregate with its per-run reports; same-seed
+reproduction rides on the WI-M5-04 report identity. Full non-interactive suite 2404 passed /
+8 known failures.

@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-06` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M5-05` |
@@ -50,10 +50,10 @@ Wilson 95 percent intervals, draws, and summed kills and losses per unit type.
 
 ## Acceptance criteria
 
-- [ ] Every run reaches a P3 outcome or is reported as a failure with its reason.
-- [ ] Wins plus draws plus failures equal runs; per-side intervals bracket the win rates.
-- [ ] Re-running a seed from the batch reproduces its per-run report apart from timings.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Every run reaches a P3 outcome or is reported as a failure with its reason.
+- [x] Wins plus draws plus failures equal runs; per-side intervals bracket the win rates.
+- [x] Re-running a seed from the batch reproduces its per-run report apart from timings.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -76,3 +76,17 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - Result: `WinRateInterval.Wilson` beside `StatisticalRunHarness` (z table for 90/95/99
+    percent, exact endpoints at 0 and n successes after a sqrt-rounding epsilon was observed at
+    0 wins) with install-free tests against the published 10-trial reference values (7/7).
+    `MassBattleBatchRunner` runs consecutive seeds through one `MassBattleRunner` call per seed
+    (fresh Game each), keeps every per-run report under `<batch>-runs/seed-<n>.json` (plus its
+    benchmark and run-output siblings), continues past failures, and aggregates wins per side,
+    draws (no winner), failures, Wilson 95 intervals with draws and failures in the
+    denominator, median/mean/variance/min/max frames and wall minutes, and kills/losses summed
+    plus per-run means. Knobs `MassBattleBatchSeedStart`/`MassBattleBatchRuns` (default 1/10)/
+    `MassBattleBatchReportPath`; `MassBattleBatch` scenario entry, catalog descriptor, AGENTS.md
+    section. Scaled 3-seed Interactive test reconciles the aggregate with its per-run reports
+    (runs 3, wins+draws+failures == 3, intervals bracket rates, summed tables match, kills total
+    preserved); per-seed reproduction is the WI-M5-04 same-seed identity already covered by
+    `MassBattleScenarioTests`. Full non-interactive suite 2404 passed / 8 known failures.
