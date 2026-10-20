@@ -38,7 +38,7 @@
             "problemMatcher": "$tsc"
         },
         {
-            "label": "build-harness-configurator",
+            "label": "build-testharness-configurator",
             "dependsOn": ["build-testharness-all", "build-replaysketch"],
             "dependsOrder": "sequence",
             "problemMatcher": []

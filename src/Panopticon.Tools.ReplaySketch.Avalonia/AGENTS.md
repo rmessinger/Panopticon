@@ -50,7 +50,7 @@ image, no TestHarness process) and need no game install; `map` captures need
 `CNC_GENERALS_PATH`.
 
 Outside screenshot mode, `REPLAYSKETCH_START_TAB` (same values) selects the tab shown at
-startup. The VS Code `TestHarness Configurator` launch configuration sets it to `harness`.
+startup. The VS Code `TestHarness` launch configuration sets it to `harness`; the `TestHarness (...)` configurations run a preselected scenario directly.
 
 The older `--screenshot <path>` CLI argument still renders the validation-ground editor scene
 headlessly through SkiaSharp with no display at all; it is separate from the window capture.
