@@ -29,6 +29,7 @@ Each artifact owns one view. A plan change usually touches several. Know which o
 | [`deep-dives/h2b-metric-core.md`](../deep-dives/h2b-metric-core.md) | H2b metric conversion contract, design gate, and card sequence after H2a. |
 | [`plans/macos-battle-artifacts.md`](../plans/macos-battle-artifacts.md) | G6/P6 corrective evidence, particle boundary diagrams, jet lifecycle design gate, and follow-up card dependencies. |
 | [`plans/known-test-failures.md`](../plans/known-test-failures.md) | Recurring test-failure inventory, remediation sequence, and closeout gates. |
+| [`plans/m5-closeout.md`](../plans/m5-closeout.md) | Track M closeout order of operations: staging of remaining phases, measurement-driven B2/B3 decision, and M5 acceptance. |
 | [`current-state.md`](current-state.md) | Snapshot of the code the roadmap assumes. |
 | [`agent/`](./) | Task cards + the execution-agent workflow. |
 | [`README.md`](../README.md) | Index: doc map, deep-dive table, at-a-glance, guiding principles. |
