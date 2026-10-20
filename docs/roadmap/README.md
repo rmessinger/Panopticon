@@ -299,7 +299,9 @@ track document.
   long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
 - [Track M - Mixed-Roster Mass Battle](track-m-mass-battle.md): M0 battle map · M1 capacity
   probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
-  battle. Depends on P9 and A1, then B1, H2a, C4d, A4, B4, B5, and A5.
+  battle (in progress: scenario, batch chain, and spectator done; full-scale acceptance batches,
+  replay, and the live-fps measurement pending). Depends on P9 and A1, then B1, H2a, C4d, A4, B4,
+  B5, and A5.
 - [Track N - Multi-Unit Pathfinding Performance](track-n-pathfinding-performance.md): N0 path cost
   baseline · N1 search core efficiency · N2 shared group requests · N3 shared-destination fields
   (gated) · N4 off-thread order paths · N5 scale verification. Depends on B1, B4, and M4.
