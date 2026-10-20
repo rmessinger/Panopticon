@@ -465,7 +465,7 @@ public static class MassBattleDeploymentRunner
         // The deployment proof places the full roster on the ground inside the zone; aircraft
         // parking is the capacity probe's contract (WI-M1-01), not this one's.
         var ground = MassBattlePlacement.SpawnGroundArmy(
-            game, profile, sideIndex, owner, navigation, reporter, profile.Capacity.UnitsPerSide);
+            game, profile, sideIndex, owner, profile.Capacity.Blocks, navigation, reporter, profile.Capacity.UnitsPerSide);
         var (airfields, airfieldReasons) = MassBattlePlacement.PlaceAirfields(
             game, profile, sideIndex, owner, navigation, reporter);
         var reasons = ground.FailureReasons.Concat(airfieldReasons).ToList();

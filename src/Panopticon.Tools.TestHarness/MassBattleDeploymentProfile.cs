@@ -21,6 +21,20 @@ public sealed record MassBattleDeploymentProfile
 
     public MassBattleReachabilityProfile Reachability { get; init; } = new();
 
+    /// <summary>
+    /// Roster manifest path for roster-mode profiles (WI-M5-02): each side carries a
+    /// <see cref="MassBattleSideProfile.Roster"/> manifest side id instead of the profile
+    /// spawning shared capacity blocks. Null is capacity mode (the M0 proof and M1 probe).
+    /// </summary>
+    public string? RosterManifestPath { get; init; }
+
+    /// <summary>
+    /// Unit content imported before roster spawning (WI-M5-02). The import's row keys are
+    /// collected from the manifest's ee2 entries; the block carries the shared policy (region,
+    /// scale, rps mapping, exclusions).
+    /// </summary>
+    public Panopticon.Tools.ReplaySketch.Model.Capture.CaptureContentImport? ContentImport { get; init; }
+
     public static MassBattleDeploymentProfile Load(string path)
     {
         var profile = JsonSerializer.Deserialize<MassBattleDeploymentProfile>(
@@ -67,6 +81,12 @@ public sealed record MassBattleSideProfile
     public string AirfieldDefinition { get; init; } = "AmericaAirfield";
 
     public List<MassBattlePoint> AirfieldAnchors { get; init; } = new();
+
+    /// <summary>
+    /// Manifest side id this army spawns (WI-M5-02 roster mode). Null uses the profile's
+    /// shared capacity blocks instead.
+    /// </summary>
+    public string? Roster { get; init; }
 }
 
 public sealed record MassBattleRect

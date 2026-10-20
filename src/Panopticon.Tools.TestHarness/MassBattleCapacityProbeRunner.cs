@@ -326,7 +326,7 @@ public static class MassBattleCapacityProbeRunner
     {
         var side = profile.Sides[sideIndex];
         var ground = MassBattlePlacement.SpawnGroundArmy(
-            game, profile, sideIndex, owner, navigation, reporter, profile.Capacity.UnitsPerSide - aircraft.Count);
+            game, profile, sideIndex, owner, profile.Capacity.Blocks, navigation, reporter, profile.Capacity.UnitsPerSide - aircraft.Count);
         var (airfields, airfieldReasons) = MassBattlePlacement.PlaceAirfields(
             game, profile, sideIndex, owner, navigation, reporter);
         reasons.AddRange(ground.FailureReasons.Select(reason => $"{side.Id}: {reason}"));
@@ -349,9 +349,9 @@ public static class MassBattleCapacityProbeRunner
     }
 
     /// <summary>
-    /// Spawns the side's aircraft directly into airfield parking slots using the same wiring the
-    /// production exit uses (slot report, taxiing locomotor, base assignment, parked state,
-    /// parking transform), so takeoff runs the real taxi and runway flow.
+    /// Spawns the side's aircraft directly into airfield parking slots through the shared
+    /// parking core (<see cref="MassBattlePlacement.ParkAircraft"/>), so takeoff runs the real
+    /// taxi and runway flow.
     /// </summary>
     private static List<JetSortie> ParkAircraft(
         Game game,
@@ -369,33 +369,16 @@ public static class MassBattleCapacityProbeRunner
             return jets;
         }
 
-        var parking = airfields
-            .Select(airfield => (Airfield: airfield, Parking: airfield.FindBehavior<ParkingPlaceBehaviour>()))
-            .Where(pair => pair.Parking != null)
-            .Select(pair => (pair.Airfield, Parking: pair.Parking!))
-            .ToList();
-
+        var parking = MassBattlePlacement.ParkingPlaces(airfields);
         for (var i = 0; i < aircraft.Count; i++)
         {
-            var slot = parking.FirstOrDefault(pair => pair.Parking.HasFreeSlots());
-            if (slot == default)
+            var jet = MassBattlePlacement.ParkAircraft(game, owner, definition, parking);
+            if (jet == null)
             {
                 reasons.Add($"{sideId}: no free parking slot for aircraft {i + 1} of {aircraft.Count}");
                 break;
             }
 
-            var jet = game.Scene3D.GameObjects.CreateObject(definition, owner);
-
-            // Production marks a slot UnderConstruction when the queue starts; ReportSpawn claims
-            // exactly that slot. Direct spawns compress both steps back to back.
-            slot.Parking.EnqueueObject();
-            slot.Parking.ReportSpawn(jet.Id);
-            jet.AIUpdate.SetLocomotor(LocomotorSetType.Taxiing);
-            var jetAI = (JetAIUpdate)jet.AIUpdate;
-            jetAI.Base = slot.Airfield;
-            jetAI.CurrentJetAIState = JetAIUpdate.JetAIState.Parked;
-            jet.SetTransformMatrix(slot.Parking.GetUnitCreateTransform(producedAtHelipad: false, jet.Id).Matrix * slot.Airfield.TransformMatrix);
-            jet.UpdateColliders();
             jets.Add(new JetSortie(sideId, aircraft.Definition, jet)
             {
                 LastState = JetAIUpdate.JetAIState.Parked,
