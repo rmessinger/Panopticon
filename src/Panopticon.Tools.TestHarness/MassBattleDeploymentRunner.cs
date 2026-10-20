@@ -7,6 +7,7 @@ using Panopticon.Data;
 using Panopticon.Graphics;
 using Panopticon.Input;
 using Panopticon.Logic;
+using Panopticon.Logic.AI.Hierarchy;
 using Panopticon.Logic.Object;
 using Panopticon.Mathematics;
 using Panopticon.Network;
@@ -285,7 +286,7 @@ public static class MassBattleDeploymentRunner
     {
         var zoneA = profile.Sides[0].Zone;
         var zoneB = profile.Sides[1].Zone;
-        var owner = game.Scene3D.Players[2];
+        var owner = ArmyAiSides.SidePlayers(game.Scene3D.Players, profile.Sides.Count)[0];
         var target = MassBattlePlacement.GroundPosition(game, zoneB.CenterX, zoneB.CenterY);
         var classes = EnumerateGroundLocomotorClasses(game).ToList();
         var probes = new List<ReachabilityProbe>();
@@ -459,13 +460,14 @@ public static class MassBattleDeploymentRunner
     {
         var side = profile.Sides[sideIndex];
         var zone = side.Zone;
+        var owner = ArmyAiSides.SidePlayers(game.Scene3D.Players, profile.Sides.Count)[sideIndex];
 
         // The deployment proof places the full roster on the ground inside the zone; aircraft
         // parking is the capacity probe's contract (WI-M1-01), not this one's.
         var ground = MassBattlePlacement.SpawnGroundArmy(
-            game, profile, sideIndex, navigation, reporter, profile.Capacity.UnitsPerSide);
+            game, profile, sideIndex, owner, navigation, reporter, profile.Capacity.UnitsPerSide);
         var (airfields, airfieldReasons) = MassBattlePlacement.PlaceAirfields(
-            game, profile, sideIndex, navigation, reporter);
+            game, profile, sideIndex, owner, navigation, reporter);
         var reasons = ground.FailureReasons.Concat(airfieldReasons).ToList();
 
         return new SideCapacityResult

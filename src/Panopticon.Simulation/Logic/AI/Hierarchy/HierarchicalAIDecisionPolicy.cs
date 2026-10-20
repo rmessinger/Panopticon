@@ -2,10 +2,18 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Panopticon.Logic;
 using Panopticon.Logic.Object;
 using Panopticon.Logic.Orders;
 
 namespace Panopticon.Logic.AI.Hierarchy;
+
+/// <summary>Read-only ground stats of a hierarchical policy (WI-M5-01 reporting view).</summary>
+public readonly record struct HierarchicalAIPolicyStats(
+    int GroundSquadCount,
+    int GroundMemberCount,
+    int CommanderlessSquadCount,
+    int UnassignedEligibleGroundCount);
 
 /// <summary>
 /// The hierarchical family behind the flat <see cref="IAIDecisionPolicy"/> seam (A4-3d):
@@ -194,11 +202,41 @@ public sealed class HierarchicalAIDecisionPolicy : IAIDecisionPolicy
         return member.AIUpdate?.TargetPoints.Count == 0;
     }
 
+    /// <summary>
+    /// Live ground stats for reporting (WI-M5-01): squad and member totals, squads without a
+    /// live commander, and eligible ground units not in any squad.
+    /// </summary>
+    public HierarchicalAIPolicyStats GetStats(Player owner)
+    {
+        var unassigned = 0;
+        foreach (var unit in SquadHierarchy.EligibleUnits(owner))
+        {
+            if (!unit.IsEffectivelyDead && _hierarchy.SquadOf(unit) is null)
+            {
+                unassigned++;
+            }
+        }
+
+        var members = 0;
+        var commanderless = 0;
+        foreach (var squad in _hierarchy.Squads)
+        {
+            members += squad.Members.Count;
+            if (squad.Members.Count > 0
+                && (squad.CommanderId is null || squad.Members.All(member => member.Id != squad.CommanderId)))
+            {
+                commanderless++;
+            }
+        }
+
+        return new HierarchicalAIPolicyStats(_hierarchy.Squads.Count, members, commanderless, unassigned);
+    }
+
     /// <summary>Missions of the given type assigned so far (WI-M4-05 report).</summary>
-    internal int AirMissionAssignmentCount(AirMission mission) => _airMissionAssignments[(int)mission];
+    public int AirMissionAssignmentCount(AirMission mission) => _airMissionAssignments[(int)mission];
 
     /// <summary>Missions assigned to the given aircraft so far (WI-M4-05 report).</summary>
-    internal int AirMissionAssignmentCountForUnit(ObjectId unitId) =>
+    public int AirMissionAssignmentCountForUnit(ObjectId unitId) =>
         _airMissionAssignmentsPerUnit.TryGetValue(unitId.Index, out var count) ? count : 0;
 
     private static bool OrdersEqual(Order left, Order right)

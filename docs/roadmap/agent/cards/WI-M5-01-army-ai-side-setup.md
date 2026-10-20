@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-01` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `mechanical-refactor` |
 | Effort | `S` |
 | Prerequisites | M4 (`WI-M4-03..06`, done) |
@@ -66,14 +66,14 @@ probe's code. The probe keeps its scripted M1 general attack as the baseline mod
 
 ## Acceptance criteria
 
-- [ ] A scenario attaches a hierarchical general to every side with `ArmyAiSides` and no
+- [x] A scenario attaches a hierarchical general to every side with `ArmyAiSides` and no
   per-side policy, player-index, or `DisableAI` code of its own.
-- [ ] No code outside `HierarchicalAIDecisionPolicy` casts to it or reads its internal
+- [x] No code outside `HierarchicalAIDecisionPolicy` casts to it or reads its internal
   hierarchies for reporting.
-- [ ] `Players[2 + i]` appears only inside `ArmyAiSides`, or not at all.
-- [ ] Army-AI probe report fields other than timings match the pre-refactor run on the same
+- [x] `Players[2 + i]` appears only inside `ArmyAiSides`, or not at all.
+- [x] Army-AI probe report fields other than timings match the pre-refactor run on the same
   seed; scripted-mode reports are unchanged.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -100,3 +100,13 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - Result: `ArmyAiSides` (ApplyPolicies before start, Resolve after start, `SidePlayerBaseIndex`
+    2 owns the slot offset), `ArmyAiSide` record (side id, Player, AIPlayer, Policy), public
+    `HierarchicalAIPolicyStats` via `HierarchicalAIDecisionPolicy.GetStats(owner)` plus public
+    air-mission counters; probe, sampler, and deployment runner rewired; install-free
+    `ArmyAiSidesTests` 4/4; scaled army-AI and scripted probe reports byte-identical on seed 1
+    before and after the refactor; full non-interactive suite 2383 passed / 8 known failures.
+  - Residual: `ScenarioCaptureRunner.ResolvePlayerSlot` keeps its own `Players[2 + slotIndex]`
+    (scenario-actor slot seam, not army-side resolution; outside this card's file list). The
+    constant `Players[2]` side-0 reads in the EE2 contract/duel phases and the rendering probe
+    are not the side-offset pattern.
