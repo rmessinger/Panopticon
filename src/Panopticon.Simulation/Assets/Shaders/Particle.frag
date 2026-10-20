@@ -17,9 +17,10 @@ void main()
 {
     vec4 texColor = texture(sampler2D(ParticleTexture, Sampler), in_TexCoords);
 
+    // Authored fades can cross below zero; negative opacity subtracts color when blended.
     texColor = vec4(
         texColor.xyz * in_Color,
-        texColor.w * in_Alpha);
+        clamp(texColor.w * in_Alpha, 0.0, 1.0));
 
     // TODO: Alpha test
 
