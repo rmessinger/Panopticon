@@ -312,6 +312,11 @@ public static class MassBattleRunner
             Environment = environment,
         };
         record.Statistics.AddRange(SimulationBenchmarkRunner.BuildStatistics(record, seed, baseline: null));
+        // WI-M5-10: the live-fps milestone reads the median from the windowed record.
+        record.Statistics.Add(BenchmarkStatistics.FromSamples(
+            "tick.fps",
+            [.. record.TickSamples.Select(t => t.WallMs > 0 ? 1000.0 / t.WallMs : 0.0)],
+            seed));
         return record;
     }
 

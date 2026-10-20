@@ -66,7 +66,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 | [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Blocked` (variants landed and validated scaled; full-scale acceptance batches pending, see below) |
 | [`WI-M5-08`](../agent/cards/WI-M5-08-battle-recording-and-replay.md) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
 | [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Done` |
-| [`WI-M5-10`](../agent/cards/WI-M5-10-live-frame-rate-measurement.md) live frame rate measurement | M5-4 | `WI-M5-09` | `Ready` |
+| [`WI-M5-10`](../agent/cards/WI-M5-10-live-frame-rate-measurement.md) live frame rate measurement | M5-4 | `WI-M5-09` | `Blocked` (measurement plumbing landed; presenting-display operator run pending) |
 
 `WI-M5-01..03` are independent. After `WI-M5-04`, the batch chain (`05..07`) and the live chain
 (`09..10`) run in parallel. M5-1 closes when `WI-M5-08` adds the replay mode to the scenario
@@ -199,3 +199,26 @@ all objects draw regardless of the local player. Mocked `SpectatorStartTests` 4/
 capture is shared as `m5-spectator-battlefield-v1-scaled.png` (capture pipeline verified;
 contents not visually inspected in-session); the windowed operator proof stays subject to the
 documented Xvfb present limitation. Full non-interactive suite 2408 passed / 8 known failures.
+
+### WI-M5-09 and WI-M5-10: spectator and live measurement
+
+WI-M5-09 is done: `Configuration.Spectator` selects the observer as local player (default
+fallback untouched), the observer side gets no control bar, and the mass battle boots
+spectator-on in both modes so the same-seed report identity proves the flag never perturbs the
+simulation. Map reveal is a recorded no-op (no shroud gating exists in the render path). The
+battlefield capture is shared as `m5-spectator-battlefield-v1-scaled.png`; the windowed operator
+proof is subject to the documented Xvfb present limitation.
+
+WI-M5-10 is blocked on the operator's presenting-display run only; the plumbing landed (the
+windowed battle's B1 record carries `tick.fps`, `tick.wallMs`, and the logic, ai, partition, and
+scene3d spans, verified on a headless scaled run). Operator measurement:
+
+```sh
+CNC_GENERALS_PATH="<install>" EMPIRE_EARTH_II_PATH="<ee2 install>" \
+dotnet run -c Release --project src/Panopticon.Tools.TestHarness -- \
+  --built-in-scenario MassBattle --mass-battle-seed 1
+```
+
+Record the median against the 30 fps milestone with the attributed spans in a `Live frame rate`
+section here; on a miss, cut follow-up cards in B2 (allocation), B3 (parallel logic), or B5
+(rendering) with the measured span as baseline.
