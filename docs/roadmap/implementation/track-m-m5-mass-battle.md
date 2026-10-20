@@ -57,7 +57,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 
 | Card | Checklist | Prerequisites | Status |
 |---|---|---|---|
-| [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Ready` |
+| [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Done` |
 | [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Ready` |
 | [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Ready` |
 | [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Ready` |
@@ -71,3 +71,18 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 `WI-M5-01..03` are independent. After `WI-M5-04`, the batch chain (`05..07`) and the live chain
 (`09..10`) run in parallel. M5-1 closes when `WI-M5-08` adds the replay mode to the scenario
 from `WI-M5-04`.
+
+## Group 1 results
+
+### WI-M5-01: what landed
+
+`ArmyAiSides` owns the side wiring: `ApplyPolicies` before game start, `Resolve` (side id,
+`Player`, `AIPlayer`, policy, plus `DisableAI` on every non-side player) after it, and the
+`SidePlayerBaseIndex = 2` slot offset. `HierarchicalAIDecisionPolicy.GetStats(owner)` exposes
+the read-only ground stats (`HierarchicalAIPolicyStats`) and the air-mission counters went
+public; the probe report, squad-invariant sampler, and M0 deployment runner no longer cast the
+policy or resolve player slots themselves. Validation: install-free `ArmyAiSidesTests` 4/4;
+scaled army-AI and scripted probe reports byte-identical on seed 1 before and after the
+refactor; full non-interactive suite 2383 passed / 8 known failures. Residual:
+`ScenarioCaptureRunner.ResolvePlayerSlot` keeps its own `Players[2 + slotIndex]` (scenario-actor
+slot seam, not army-side resolution).

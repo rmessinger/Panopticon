@@ -114,13 +114,13 @@ internal static class MassBattlePlacement
         Game game,
         MassBattleDeploymentProfile profile,
         int sideIndex,
+        Player owner,
         NavigationGrid navigation,
         ITestHarnessReporter reporter,
         int expectedGround)
     {
         var side = profile.Sides[sideIndex];
         var zone = side.Zone;
-        var owner = game.Scene3D.Players[2 + sideIndex];
         var yaw = MathF.PI * side.FacingDegrees / 180f;
         var reasons = new List<string>();
         var units = new List<GameObject>();
@@ -216,13 +216,13 @@ internal static class MassBattlePlacement
         Game game,
         MassBattleDeploymentProfile profile,
         int sideIndex,
+        Player owner,
         NavigationGrid navigation,
         ITestHarnessReporter reporter)
     {
         var side = profile.Sides[sideIndex];
         var zone = side.Zone;
         var opposing = profile.Sides[1 - sideIndex].Zone;
-        var owner = game.Scene3D.Players[2 + sideIndex];
         var yaw = MathF.PI * side.FacingDegrees / 180f;
         var reasons = new List<string>();
         var airfields = new List<GameObject>();
