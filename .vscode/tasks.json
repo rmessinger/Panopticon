@@ -28,6 +28,22 @@
             "problemMatcher": []
         },
         {
+            "label": "build-replaysketch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/Panopticon.Tools.ReplaySketch.Avalonia/Panopticon.Tools.ReplaySketch.Avalonia.csproj"
+            ],
+            "problemMatcher": "$tsc"
+        },
+        {
+            "label": "build-harness-configurator",
+            "dependsOn": ["build-testharness-all", "build-replaysketch"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
             "label": "publish",
             "command": "dotnet",
             "type": "process",

@@ -73,6 +73,18 @@
             "preLaunchTask": "build-testharness-all"
         },
         {
+            // ReplaySketch opened on the Harness tab, which lists and launches TestHarness
+            // scenarios from the sibling TestHarness build output.
+            "name": "TestHarness Configurator",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/Panopticon.Tools.ReplaySketch.Avalonia/bin/Debug/net10.0/Panopticon.Tools.ReplaySketch.Avalonia.dll",
+            "env": {
+                "REPLAYSKETCH_START_TAB": "harness"
+            },
+            "preLaunchTask": "build-harness-configurator"
+        },
+        {
             "name": "ReplaySketch",
             "type": "maui",
             "request": "launch",
