@@ -36,6 +36,12 @@ public sealed record MassBattleReport
 
     public List<MassBattleSideReport> Sides { get; init; } = [];
 
+    /// <summary>Kills credited per killing side and killer definition (WI-M5-05).</summary>
+    public List<MassBattleKillLossRow> Kills { get; init; } = [];
+
+    /// <summary>Losses per victim side and definition (WI-M5-05).</summary>
+    public List<MassBattleKillLossRow> Losses { get; init; } = [];
+
     public string? ScreenshotPath { get; init; }
 
     public string? RunOutputPath { get; init; }
@@ -72,6 +78,9 @@ public sealed record MassBattleEntryReport
 
     public int AliveAtEnd { get; init; }
 }
+
+/// <summary>One kill or loss table row (WI-M5-05): side id, definition, count.</summary>
+public sealed record MassBattleKillLossRow(string SideId, string Definition, int Count);
 
 public static class MassBattleReportIo
 {
@@ -137,6 +146,19 @@ public static class MassBattleReportIo
             {
                 b.AppendLine($"  {reason}");
             }
+        }
+
+        b.AppendLine();
+        b.AppendLine("Kills (killer side, definition, count):");
+        foreach (var row in report.Kills)
+        {
+            b.AppendLine(string.Format(culture, "  {0,-8} {1,-34} {2,6}", row.SideId, row.Definition, row.Count));
+        }
+
+        b.AppendLine("Losses (victim side, definition, count):");
+        foreach (var row in report.Losses)
+        {
+            b.AppendLine(string.Format(culture, "  {0,-8} {1,-34} {2,6}", row.SideId, row.Definition, row.Count));
         }
 
         return b.ToString();

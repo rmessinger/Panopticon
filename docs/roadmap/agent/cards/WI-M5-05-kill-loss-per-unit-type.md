@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-05` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M5-04` |
@@ -50,10 +50,10 @@ definition killed, and add both tables to the battle report.
 
 ## Acceptance criteria
 
-- [ ] Per side, losses summed over definitions equal spawned minus alive in the report.
-- [ ] Kills summed over both sides equal losses summed over both sides, `unknown` included.
-- [ ] Recording the tables does not change the outcome or frame count for a seed.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Per side, losses summed over definitions equal spawned minus alive in the report.
+- [x] Kills summed over both sides equal losses summed over both sides, `unknown` included.
+- [x] Recording the tables does not change the outcome or frame count for a seed.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -76,3 +76,17 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - Result: `GameObject.LastDamageSourceId` from the body's recorded damage info;
+    `KillLossTracker` (internal, Logic/) subscribes `ObjectLifecycleChanged`, counts each
+    death once (`Died` else `Destroyed`), and restricts losses to the tracked army (the
+    spawned roster) of non-structure attackers; kills credit the resolved last damager
+    (projectiles hop to their creator), otherwise `unknown`. Runner attaches the tracker after
+    spawning with both sides' units; report gains `kills`/`losses` tables. Two overcount
+    sources found and fixed by evidence (debug-tagged death and creation stacks): inert
+    death-spawned objects (GenericDebris 60, vehicle hulks, tree stumps, projectiles) excluded
+    by the attacker-class predicate, and pilot-ejection Rangers (US vehicles' `CreateObjectDie`
+    spawns crew that fight and die) excluded by army membership. Mocked tests 4/4 (shooter
+    credit, unknown source, projectile-to-creator, structures excluded + once-only); scaled
+    CLI battle: sideA 11/11, sideB 3/3, kills == losses == 14; scaled Interactive test asserts
+    the same invariants on seeds 1/2 plus the unchanged same-seed report identity; full
+    non-interactive suite 2397 passed / 8 known failures unchanged.

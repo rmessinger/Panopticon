@@ -249,6 +249,13 @@ public sealed class GameObject : Entity, IInspectable, ICollidable, IPersistable
     public BodyModule BodyModule => _body;
     public bool HasActiveBody() => _body is ActiveBody;
 
+    /// <summary>
+    /// Last damage source recorded by the body (WI-M5-05 kill crediting); invalid when the
+    /// object was never damaged or its body records no damage info.
+    /// </summary>
+    public ObjectId LastDamageSourceId =>
+        BodyModule?.LastDamageInfo?.Request.SourceID ?? ObjectId.Invalid;
+
     // TODO(Port): Implement this.
     public bool IsFactionStructure => false;
 

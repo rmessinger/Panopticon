@@ -140,6 +140,11 @@ public static class MassBattleRunner
                     game, profile, i, armyAiSides[i].Player, manifestSide, navigation, reporter));
             }
 
+            // WI-M5-05: kill/loss accounting tracks the spawned army and is a passive lifecycle
+            // subscriber, so it cannot perturb the seeded run.
+            using var killLossTracker = new KillLossTracker(
+                game.GameLogic, spawnResults.SelectMany(result => result.Units));
+
             string? screenshotPath = null;
             if (!string.IsNullOrEmpty(config.MassBattleScreenshotPath))
             {
@@ -165,7 +170,7 @@ public static class MassBattleRunner
                 : config.MassBattleReportPath!;
             var report = BuildReport(
                 profile, profilePath, config.Headless, seed, frameLimit, framesRun, game, armyAiSides, spawnResults,
-                screenshotPath, runOutputPath);
+                screenshotPath, runOutputPath, killLossTracker);
             MassBattleReportIo.WriteJson(report, reportPath);
             reporter.Info(MassBattleReportIo.WriteText(report));
             reporter.Info($"Report JSON saved to: {reportPath}");
@@ -321,7 +326,8 @@ public static class MassBattleRunner
         IReadOnlyList<ArmyAiSide> armyAiSides,
         List<RosterSideSpawnResult> spawnResults,
         string? screenshotPath,
-        string runOutputPath)
+        string runOutputPath,
+        KillLossTracker killLossTracker)
     {
         var outcome = game.CurrentOutcome;
         string? winningSideId = null;
@@ -370,6 +376,32 @@ public static class MassBattleRunner
             reasons.Add($"battle did not decide within {frameLimit} frames (status {outcome.Status})");
         }
 
+        // WI-M5-05: kill/loss tables keyed by side id; kills by a player outside the two armies
+        // or by an unresolved source land under the unknown side id.
+        string SideIdOf(Player? side)
+        {
+            foreach (var armySide in armyAiSides)
+            {
+                if (ReferenceEquals(armySide.Player, side))
+                {
+                    return armySide.SideId;
+                }
+            }
+
+            return KillLossTracker.UnknownKillerDefinition;
+        }
+
+        var kills = killLossTracker.Kills
+            .OrderBy(entry => entry.Key.Side?.Name)
+            .ThenBy(entry => entry.Key.Definition)
+            .Select(entry => new MassBattleKillLossRow(SideIdOf(entry.Key.Side), entry.Key.Definition, entry.Value))
+            .ToList();
+        var losses = killLossTracker.Losses
+            .OrderBy(entry => entry.Key.Side?.Name)
+            .ThenBy(entry => entry.Key.Definition)
+            .Select(entry => new MassBattleKillLossRow(SideIdOf(entry.Key.Side), entry.Key.Definition, entry.Value))
+            .ToList();
+
         var report = new MassBattleReport
         {
             Map = profile.Map.Name,
@@ -386,6 +418,8 @@ public static class MassBattleRunner
             ScreenshotPath = screenshotPath,
             RunOutputPath = runOutputPath,
             FailureReasons = reasons,
+            Kills = kills,
+            Losses = losses,
         };
         return report with { AllPassed = reasons.Count == 0 };
     }

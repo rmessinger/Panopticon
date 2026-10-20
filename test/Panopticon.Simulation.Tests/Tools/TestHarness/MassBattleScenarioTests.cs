@@ -73,6 +73,15 @@ public sealed class MassBattleScenarioTests
                     $"battle should decide, got {report.OutcomeStatus}/{report.OutcomeReason}");
                 Assert.NotEmpty(report.WinningSideId!);
                 Assert.Empty(report.FailureReasons);
+
+                // WI-M5-05: per side, losses sum to spawned minus alive; kills sum to losses.
+                foreach (var side in report.Sides)
+                {
+                    var sideLosses = report.Losses.Where(row => row.SideId == side.SideId).Sum(row => row.Count);
+                    Assert.Equal(side.UnitsSpawned - side.UnitsAliveAtEnd, sideLosses);
+                }
+
+                Assert.Equal(report.Losses.Sum(row => row.Count), report.Kills.Sum(row => row.Count));
             }
 
             var normalized = NormalizePaths(seedOne).ToJsonString();
