@@ -426,12 +426,14 @@ public static class MassBattleCapacityProbeRunner
                     continue;
                 }
 
-                unit.AIUpdate?.SetTargetPoint(army.OpposingCentroid);
                 var enemy = NearestEnemy(unit.Translation, enemies);
                 if (enemy != null)
                 {
                     unit.CurrentWeapon?.SetTarget(new WeaponTarget(game.Scene3D.GameObjects, enemy.Id));
                 }
+
+                unit.AIUpdate?.SetTargetPoint(army.OpposingCentroid);
+                unit.AIUpdate?.ConfigureAttackMove(true);
             }
         }
     }
@@ -722,12 +724,14 @@ public static class MassBattleCapacityProbeRunner
                     continue;
                 }
 
-                unit.AIUpdate?.SetTargetPoint(army.OpposingCentroid);
                 var enemy = NearestEnemy(unit.Translation, enemies);
                 if (enemy != null)
                 {
                     unit.CurrentWeapon?.SetTarget(new WeaponTarget(game.Scene3D.GameObjects, enemy.Id));
                 }
+
+                unit.AIUpdate?.SetTargetPoint(army.OpposingCentroid);
+                unit.AIUpdate?.ConfigureAttackMove(true);
             }
         }
     }
@@ -893,16 +897,11 @@ public static class MassBattleCapacityProbeRunner
     private static void FrameDeployment(Game game, MassBattleDeploymentProfile profile)
     {
         var bounds = MassBattlePlacement.PlacementBounds(profile);
-        var framingHeight = MathF.Max(
-            4000f,
-            1.25f * MathF.Sqrt(bounds.Width * bounds.Width + bounds.Height * bounds.Height));
-
-        // Whole-map views outrun the default far plane (12000); without this bump the far
-        // deployment clips out of view entirely.
-        game.Scene3D.Camera.FarPlaneDistance = MathF.Max(12_000f, 3f * framingHeight);
         var view = game.Scene3D.TacticalView;
         view.SetAngleAndPitchToDefault();
-        view.SnapHeightAboveGround(framingHeight);
+        // Focus on the engagement rather than fitting both rear deployment areas.
+        view.Angle = -MathF.PI / 2f;
+        view.SnapHeightAboveGround(700f);
         view.LookAt(new Vector3(
             bounds.X + bounds.Width / 2f,
             bounds.Y + bounds.Height / 2f,

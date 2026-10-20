@@ -23,6 +23,11 @@ Layout:
 cp /tmp/panopticon_captures/capture_0100.png "/mnt/pit2/Network Storage/temp/shot.png"
 ```
 
+## macOS reference screenshots
+
+Operator screenshots: `~/OneDrive/Screenshots (MacOS)/`. Select the most recently modified
+image when referring to the latest screenshot.
+
 ## Environment facts (Linux dev host)
 
 | Item | Status |

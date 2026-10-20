@@ -364,7 +364,9 @@ Engagement scenario for the M1 capacity probe (`WI-M1-01`): spawns the same two 
 armies as the M0 proof but on hostile teams, parks the profile's aircraft at the pre-placed
 airfields, settles, then issues one general attack (every ground unit moves on the enemy zone
 center with a weapon target on the nearest enemy; jets unpark, taxi, take off, strike, land, and
-re-sortie while enemies remain). One profile drives both modes.
+re-sortie while enemies remain). Ground units use engine attack-move behavior: acquire enemies
+in weapon range, pause the advance while firing, and resume the retained route when targets die
+or leave range. Plain move orders do not pause for combat. One profile drives both modes.
 
 ```bash
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
