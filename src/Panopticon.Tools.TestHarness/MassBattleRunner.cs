@@ -477,7 +477,7 @@ public static class MassBattleRunner
     /// The manifest path is absolute, or relative to the profile's directory (a temp-dir scaled
     /// profile carries its own manifest), or the copy beside the executable.
     /// </summary>
-    private static string ResolveManifestPath(MassBattleDeploymentProfile profile, string profilePath)
+    internal static string ResolveManifestPathFor(MassBattleDeploymentProfile profile, string profilePath)
     {
         var configured = profile.RosterManifestPath;
         if (string.IsNullOrWhiteSpace(configured))
@@ -489,6 +489,9 @@ public static class MassBattleRunner
             ? configured
             : Path.Combine(Path.GetDirectoryName(Path.GetFullPath(profilePath))!, configured);
     }
+
+    private static string ResolveManifestPath(MassBattleDeploymentProfile profile, string profilePath) =>
+        ResolveManifestPathFor(profile, profilePath);
 
     private static string? CaptureScreenshot(Game game, string path, ITestHarnessReporter reporter)
     {

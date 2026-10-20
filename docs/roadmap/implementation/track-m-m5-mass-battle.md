@@ -63,7 +63,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 | [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Done` |
 | [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Done` |
 | [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Done` |
-| [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Ready` |
+| [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Blocked` (variants landed and validated scaled; full-scale acceptance batches pending, see below) |
 | [`WI-M5-08`](../agent/cards/WI-M5-08-battle-recording-and-replay.md) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
 | [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Ready` |
 | [`WI-M5-10`](../agent/cards/WI-M5-10-live-frame-rate-measurement.md) live frame rate measurement | M5-4 | `WI-M5-09` | `Ready` |
@@ -158,3 +158,32 @@ plus the `MassBattleBatch` scenario entry, catalog descriptor, and AGENTS.md sec
 3-seed Interactive test reconciles the aggregate with its per-run reports; same-seed
 reproduction rides on the WI-M5-04 report identity. Full non-interactive suite 2404 passed /
 8 known failures.
+
+### WI-M5-07: variants landed; acceptance batches pending
+
+`MassBattleBatchVariant` (`Battle`/`Mirror`/`Swap`) rewrites side rosters only; the variant
+profile materializes in the run directory with an absolute manifest path. The battle profile now
+gives both zones the same 2-row 38-anchor grid: side A's 25 anchors could not park the ee2-led
+air fleet under a swap, so each zone hosts the larger fleet (side A's second row overhangs its
+zone edge by 32 units of footprint; anchor points stay outside the zone). Scaled validation:
+variant unit test plus 1-seed scaled Mirror and Swap batches deciding with the rewritten rosters.
+
+Acceptance sizing (decision 7): the measured full-size Battle run is 53970 frames in 148.7 min
+(165 ms/frame, the 54000-frame cap). A control interval can only exclude 50 percent from n = 4
+up (5-0 gives low 0.510), so the acceptance size is 5 seeds per variant: about 12.5 h per variant
+and 37 h for all three, run as operator-scheduled overnight batches:
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario MassBattleBatch \
+  --mass-battle-batch-variant Battle --mass-battle-batch-runs 5 \
+  --mass-battle-batch-report-path <dir>/battle.json
+# repeat with --mass-battle-batch-variant Mirror and Swap
+```
+
+The pass criteria: every run in all three batches decides; the Mirror side A Wilson interval
+includes 50 percent (a miss is a map-bias finding and the card reports it); the batch reports
+land beside the paths above. Record the three batches in this section, then flip the card to
+`Done` and tick M5-2. Full non-interactive suite 2404 passed / 8 known failures.

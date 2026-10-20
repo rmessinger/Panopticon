@@ -29,6 +29,12 @@ public static class MassBattleBatchRunner
             return 1;
         }
 
+        var variant = ParseVariant(config.MassBattleBatchVariant, reporter);
+        if (variant is null)
+        {
+            return 1;
+        }
+
         var seedStart = config.MassBattleBatchSeedStart ?? 1;
         var runs = config.MassBattleBatchRuns ?? DefaultRuns;
         var reportPath = string.IsNullOrWhiteSpace(config.MassBattleBatchReportPath)
@@ -39,7 +45,26 @@ public static class MassBattleBatchRunner
             Path.GetFileNameWithoutExtension(reportPath) + "-runs");
         Directory.CreateDirectory(runDirectory);
 
-        var profile = MassBattleDeploymentProfile.Load(profilePath);
+        // Variants rewrite side rosters only (WI-M5-07): zones, airfields, and seeds stay the
+        // authored ones. The rewritten profile lands in the run directory with an absolute
+        // manifest path so it loads standalone.
+        var effectiveProfilePath = profilePath;
+        if (variant != MassBattleBatchVariant.Battle)
+        {
+            var profile = MassBattleDeploymentProfile.Load(profilePath);
+            // The variant file lands in the run directory; the manifest path must resolve from
+            // there, so pin it to the source profile's absolute manifest path.
+            var manifestPath = MassBattleRunner.ResolveManifestPathFor(profile, profilePath);
+            profile = ApplyVariant(profile with { RosterManifestPath = manifestPath }, variant.Value);
+            effectiveProfilePath = Path.Combine(runDirectory, $"variant-{variant.Value.ToString().ToLowerInvariant()}.json");
+            File.WriteAllText(
+                effectiveProfilePath,
+                JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true }));
+            var rosterSummary = profile.Sides.Select(side => side.Roster).Aggregate((a, b) => $"{a} vs {b}");
+            reporter.Info($"Batch variant {variant}: sides field rosters {rosterSummary}.");
+        }
+
+        var profileForAggregate = MassBattleDeploymentProfile.Load(effectiveProfilePath);
         var perRun = new List<MassBattleReport>();
         var failures = new List<MassBattleBatchFailure>();
         var wallMinutes = new List<double>();
@@ -52,7 +77,7 @@ public static class MassBattleBatchRunner
                 Headless = true,
                 Game = config.Game,
                 GamePath = config.GamePath,
-                MassBattleProfilePath = config.MassBattleProfilePath,
+                MassBattleProfilePath = effectiveProfilePath,
                 MassBattleSeed = (int)seed,
                 MassBattleFrameLimit = config.MassBattleFrameLimit,
                 MassBattleReportPath = runReportPath,
@@ -84,12 +109,50 @@ public static class MassBattleBatchRunner
             }
         }
 
-        var batch = Aggregate(profile, profilePath, seedStart, runs, perRun, failures, wallMinutes, reportPath);
+        var batch = Aggregate(profileForAggregate, effectiveProfilePath, seedStart, runs, perRun, failures, wallMinutes, reportPath);
         MassBattleBatchReportIo.WriteJson(batch, reportPath);
         reporter.Info(MassBattleBatchReportIo.WriteText(batch));
         reporter.Info($"Batch report JSON saved to: {reportPath}");
         reporter.Info($"Per-run reports saved under: {runDirectory}");
         return batch.AllRunsReachedOutcome && failures.Count == 0 ? 0 : 5;
+    }
+
+    /// <summary>Rewrites side rosters only: Mirror fields side A's roster on both sides, Swap exchanges them.</summary>
+    internal static MassBattleDeploymentProfile ApplyVariant(MassBattleDeploymentProfile profile, MassBattleBatchVariant variant)
+    {
+        var rosters = profile.Sides.Select(side => side.Roster).ToList();
+        return variant switch
+        {
+            MassBattleBatchVariant.Mirror => profile with
+            {
+                Sides = profile.Sides
+                    .Select(side => side with { Roster = rosters[0] })
+                    .ToList(),
+            },
+            MassBattleBatchVariant.Swap => profile with
+            {
+                Sides = profile.Sides
+                    .Select((side, index) => side with { Roster = rosters[(index + 1) % rosters.Count] })
+                    .ToList(),
+            },
+            _ => profile,
+        };
+    }
+
+    private static MassBattleBatchVariant? ParseVariant(string? value, ITestHarnessReporter reporter)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return MassBattleBatchVariant.Battle;
+        }
+
+        if (Enum.TryParse<MassBattleBatchVariant>(value, ignoreCase: true, out var variant))
+        {
+            return variant;
+        }
+
+        reporter.Error($"Unknown MassBattleBatchVariant '{value}'; expected Battle, Mirror, or Swap.");
+        return null;
     }
 
     internal static MassBattleBatchReport Aggregate(

@@ -322,4 +322,12 @@ public sealed class TestHarnessConfig
 
     [HarnessParameter("MassBattle", "MassBattleBatchReportPath.", nameof(BuiltInScenario.MassBattleBatch))]
     public string? MassBattleBatchReportPath { get; set; } = null;
+
+    /// <summary>
+    /// WI-M5-07 batch variant: Battle (profile as authored), Mirror (side A's roster on both
+    /// sides, the map-bias control), or Swap (rosters exchanged between zones, separating roster
+    /// strength from zone advantage). Rewrites side rosters only.
+    /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleBatchVariant.", nameof(BuiltInScenario.MassBattleBatch))]
+    public string? MassBattleBatchVariant { get; set; } = null;
 }
