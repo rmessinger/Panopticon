@@ -7,6 +7,7 @@ public enum BuiltInScenario
     UnitValidationGround,
     MassBattleDeployment,
     MassBattleCapacityProbe,
+    MassBattle,
     EngagementCapture,
     ScenarioCapture,
     VisualRegression,

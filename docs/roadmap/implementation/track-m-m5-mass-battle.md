@@ -60,7 +60,7 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 | [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Done` |
 | [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Done` |
 | [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Done` |
-| [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Ready` |
+| [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Done` |
 | [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Ready` |
 | [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Ready` |
 | [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Ready` |
@@ -102,6 +102,23 @@ block. Full-scale validation on both installs: side A 900/900 ground and 100/100
 850/850 ground and 150/150 parked, no placement reasons. Tests: install-free profile tests 5/5
 (validation, ee2: resolution, partition, committed-profile anchor arithmetic), Interactive scaled
 spawn 1/1, probe/deployment filters 7/7 unchanged.
+
+### WI-M5-04: what landed
+
+`MassBattleRunner` + `MassBattleReport`: one battle profile, army AI on both sides through
+`ArmyAiSides`, the army-eliminated rule with the 54000-frame unit-count limit through
+`VictoryOptions`, EE2 import and roster spawn through the spawner, and no scripted orders.
+Headless steps `SimulationHost` with a `RunOutputRecorder` sibling artifact plus a B1 record;
+windowed steps the probe's `HarnessWindowedFrame` loop with the same stop condition (windowed
+cannot run on the agent host: Xvfb presenting is documented not-working; the operator run and
+WI-M5-09/10 own it). The report is timing-free, so the same seed reproduces byte-identical JSON.
+Full-scale headless run (seed 1, both installs): Decided/ScoreDecision, sideB (ee2-led) wins at
+the frame limit, sideA ground annihilated with 20 parked Raptors alive, 53970 frames in
+148.7 min wall (165 ms/frame), allPassed. Scaled Interactive test decides on seeds 1 and 2 with
+an identical seed-1 repeat. Engine fixes the battle exposed: off-graph positions (formation
+offsets past the map edge; the nav graph is smaller than the heightmap border band) crashed
+`IsPassable`, `ComputePath`, and `GetNextPassablePosition`; all are now null-safe and treat
+off-graph endpoints as unreachable (navigation tests 17/17, full suite 2393/8-known).
 
 ### WI-M5-03: what landed
 

@@ -69,6 +69,7 @@ internal static class HarnessScenarioCatalog
             BuiltInScenario.UnitValidationGround => "Measure unit actions against validation baselines.",
             BuiltInScenario.MassBattleDeployment => "Deploy armies and verify map acceptance probes.",
             BuiltInScenario.MassBattleCapacityProbe => "Measure a large-army engagement and capacity limits.",
+            BuiltInScenario.MassBattle => "Run the mixed-roster mass battle under army AI to a decided outcome.",
             BuiltInScenario.EngagementCapture => "Capture a configured attacker and target engagement.",
             BuiltInScenario.ScenarioCapture => "Capture a file or embedded scene profile.",
             BuiltInScenario.VisualRegression => "Compare scenario captures with visual baselines.",

@@ -27,6 +27,8 @@ public sealed record RosterSideSpawnResult
 
     public string RosterId { get; init; } = "";
 
+    public int AirfieldsPlaced { get; init; }
+
     public List<RosterEntrySpawnResult> GroundEntries { get; init; } = [];
 
     public List<RosterEntrySpawnResult> AircraftEntries { get; init; } = [];
@@ -197,6 +199,7 @@ public static class MassBattleRosterSpawner
         var (airfields, airfieldReasons) = MassBattlePlacement.PlaceAirfields(
             game, profile, sideIndex, owner, navigation, reporter);
         result.FailureReasons.AddRange(airfieldReasons.Select(reason => $"{side.Id}: {reason}"));
+        result = result with { AirfieldsPlaced = airfields.Count };
         var parking = MassBattlePlacement.ParkingPlaces(airfields);
 
         foreach (var (definitionName, count) in AircraftEntries(manifestSide))

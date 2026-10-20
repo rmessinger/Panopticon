@@ -58,10 +58,14 @@ public class Navigation
         }
 
         var (x, y) = coords.Value;
-        return graph.GetNode(x, y);
+        // The graph can be smaller than the heightmap (border bands), so in-range heightmap
+        // coordinates can still fall outside the graph.
+        return graph.TryGetNode(x, y, out var node) ? node : null;
     }
 
-    public bool IsPassable(Vector3 position) => GetClosestNode(_graph, position).IsPassable;
+    // Off-graph positions (formation offsets can push a destination past the map edge) are
+    // impassable, not a crash: callers treat them as blocked and fall back to their own paths.
+    public bool IsPassable(Vector3 position) => GetClosestNode(_graph, position)?.IsPassable == true;
 
     private Node GetNextPassablePosition(Graph graph, Vector3 start, Vector3 end)
     {
@@ -71,7 +75,9 @@ public class Navigation
 
         var maxSteps = (int)offset.Vector2XY().Length() + 1;
 
-        while (!currentNode.IsPassable && maxSteps > 0)
+        // The walk can step off the graph near borders; a null node stops the search and the
+        // caller treats the position as unreachable.
+        while (currentNode is { IsPassable: false } && maxSteps > 0)
         {
             start += direction;
             currentNode = GetClosestNode(graph, start);
@@ -96,6 +102,14 @@ public class Navigation
         endIsPassable = true;
         var startNode = GetClosestNode(graph, start);
         var endNode = GetClosestNode(graph, end);
+
+        // Off-graph endpoints (border-band tiles, formation offsets past the map edge) have no
+        // path; callers already treat an empty path as no route.
+        if (startNode == null || endNode == null)
+        {
+            Logger.Info("Aborting pathfinding because start and/or end are outside the graph");
+            return result;
+        }
 
         if (!startNode.IsPassable)
         {
