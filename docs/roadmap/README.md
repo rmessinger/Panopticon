@@ -297,7 +297,9 @@ track document.
   long-run campaign experiment. Depends on A4-1/A4-4, then A2, A4-3, B4b, A5, and B6.
 - [Track M - Mixed-Roster Mass Battle](track-m-mass-battle.md): M0 battle map · M1 capacity
   probe · M2 EE2 combat units · M3 mixed roster normalization · M4 army-scale AI · M5 1000 vs 1000
-  battle. Depends on P9 and A1, then B1, H2a, C4d, A4, B4, B5, and A5.
+  battle (in progress: scenario, batch chain, and spectator done; full-scale acceptance batches,
+  replay, and the live-fps measurement pending). Depends on P9 and A1, then B1, H2a, C4d, A4, B4,
+  B5, and A5.
 
 - [Track X - Miscellaneous Fixes and Tweaks](track-x-fixes-tweaks.md) is open-ended. X1 adds imported-unit hit feedback and clearer duel captures after H2a and P9; the published M2 tank is a card-level prerequisite, not a dependency on full M2 completion. X3 evaluates open-source cursor replacements and has no dependencies. X4 moves the ReplaySketch tab strip to an Avalonia `TabControl` and has no dependencies. X5 right-sizes parallel render culling dispatch after M1.
 
