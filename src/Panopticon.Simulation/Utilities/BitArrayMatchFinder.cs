@@ -13,12 +13,11 @@ internal static class BitArrayMatchFinder
         where TFlag : Enum
     {
         // Prefer a state whose flag set contains all current flags (ideally an exact match),
-        // then the state intersecting the most current flags. Among equally-intersecting
-        // partial matches, the state defined later wins: INIs conventionally define generic
-        // states (e.g. MOVING) before specific ones (e.g. USING_WEAPON_A), so ATTACKING plus
-        // USING_WEAPON_A must resolve to the firing state, not the MOVING+ATTACKING alias.
+        // Then prefer the most intersecting flags, breaking partial-match ties by the
+        // fewest extra flags. Equal scores retain the earlier definition.
         T best = default;
         var bestIntersections = 0;
+        var bestExtraBits = int.MaxValue;
         T bestContained = default;
         var leastMissing = int.MaxValue;
         T defaultItem = default;
@@ -51,10 +50,16 @@ internal static class BitArrayMatchFinder
                         leastMissing = missing;
                     }
                 }
-                else if (intersections > 0 && intersections >= bestIntersections)
+                else if (intersections > 0
+                    && (intersections > bestIntersections
+                        // Among equally-intersecting partial matches prefer the state requiring
+                        // the fewest flags we do not have: a pristine jet with JETEXHAUST+MOVING
+                        // must resolve to the JETEXHAUST state, not the later-defined
+                        // RUBBLE+JETEXHAUST+JETAFTERBURNER wreck.
+                        || (intersections == bestIntersections && flagSet.NumBitsSet - intersections < bestExtraBits)))
                 {
-                    // not an exact match, but save this if we can't find an exact match
                     bestIntersections = intersections;
+                    bestExtraBits = flagSet.NumBitsSet - intersections;
                     best = item;
                 }
             }
