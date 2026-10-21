@@ -29,6 +29,11 @@ namespace Panopticon.Terrain;
 
 public sealed class Terrain : DisposableBase
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
+    public int PrefilteredTextureCount { get; private set; }
+    public int MissingPrefilteredTextureCount { get; private set; }
+
     private readonly AssetLoadContext _loadContext;
     private readonly GraphicsDevice _graphicsDevice;
 
@@ -548,39 +553,13 @@ public sealed class Terrain : DisposableBase
         commandList.Begin();
 
         var texturesToDispose = new List<Texture>();
+        var pack = new TerrainTexturePack(TerrainTexturePack.DefaultRoot);
 
         for (var i = 0u; i < numTextures; i++)
         {
-            var tgaFile = TgaFile.FromFileSystemEntry(textureInfo[i].entry);
-            var originalData = TgaFile.ConvertPixelsToRgba8(tgaFile, true);
-
-            using (var tgaImage = Image.LoadPixelData<Rgba32>(
-                originalData,
-                tgaFile.Header.Width,
-                tgaFile.Header.Height))
+            var imageSharpTexture = LoadTerrainTexture(loadContext, textureInfo[i].entry, (int)largestTextureSize, pack);
+            try
             {
-                ImageSharpTexture imageSharpTexture;
-                if (linearColourSpace)
-                {
-                    // Square-resize and mip in linear light; the sRGB array decodes on
-                    // sample so terrain shading stays linear (WI-G6-02).
-                    var colourBase = tgaFile.Header.Width != largestTextureSize
-                        ? LinearMipBuilder.ResizeLinear(tgaImage, (int)largestTextureSize, (int)largestTextureSize)
-                        : tgaImage;
-                    imageSharpTexture = new ImageSharpTexture(
-                        LinearMipBuilder.GenerateLinearMipmaps(colourBase),
-                        srgb: true);
-                }
-                else
-                {
-                    if (tgaFile.Header.Width != largestTextureSize)
-                    {
-                        tgaImage.Mutate(x => x.Resize((int)largestTextureSize, (int)largestTextureSize, LanczosResampler.Lanczos3));
-                    }
-
-                    imageSharpTexture = new ImageSharpTexture(tgaImage);
-                }
-
                 var sourceTexture = CreateTextureViaStaging(
                     imageSharpTexture,
                     graphicsDevice,
@@ -605,6 +584,13 @@ public sealed class Terrain : DisposableBase
                         1);
                 }
             }
+            finally
+            {
+                foreach (var image in imageSharpTexture.Images)
+                {
+                    image.Dispose();
+                }
+            }
         }
 
         commandList.End();
@@ -619,6 +605,58 @@ public sealed class Terrain : DisposableBase
         graphicsDevice.DisposeWhenIdle(commandList);
 
         graphicsDevice.WaitForIdle();
+        if (linearColourSpace && loadContext.StandardGraphicsResources.Settings.PrefilteredTerrainTextures)
+        {
+            Logger.Info($"Terrain mip data: {PrefilteredTextureCount} offline-prefiltered textures, {MissingPrefilteredTextureCount} generated fallbacks.");
+        }
+    }
+
+    private ImageSharpTexture LoadTerrainTexture(AssetLoadContext loadContext, FileSystemEntry entry, int size, TerrainTexturePack pack)
+    {
+        var linear = loadContext.ShaderResources.LinearColourSpace;
+        if (linear && loadContext.StandardGraphicsResources.Settings.PrefilteredTerrainTextures)
+        {
+            if (pack.TryLoad(entry, size, out var texture, out var reason))
+            {
+                PrefilteredTextureCount++;
+                return texture;
+            }
+
+            MissingPrefilteredTextureCount++;
+            if (MissingPrefilteredTextureCount == 1)
+            {
+                Logger.Warn($"Prefiltered terrain data unavailable; using original mip generation. Run TerrainTextureBake. {reason}");
+            }
+        }
+
+        var tga = TgaFile.FromFileSystemEntry(entry);
+        var image = Image.LoadPixelData<Rgba32>(TgaFile.ConvertPixelsToRgba8(tga, true), tga.Header.Width, tga.Header.Height);
+        try
+        {
+            if (linear)
+            {
+                if (image.Width != size)
+                {
+                    var resized = LinearMipBuilder.ResizeLinear(image, size, size);
+                    image.Dispose();
+                    image = resized;
+                }
+
+                return new ImageSharpTexture(LinearMipBuilder.GenerateLinearMipmaps(image), srgb: true);
+            }
+
+            if (image.Width != size)
+            {
+                image.Mutate(x => x.Resize(size, size, LanczosResampler.Lanczos3));
+            }
+
+            return new ImageSharpTexture(image);
+        }
+        catch
+        {
+            image.Dispose();
+            throw;
+        }
     }
 
     private unsafe Texture CreateTextureViaStaging(ImageSharpTexture texture, GraphicsDevice gd, ResourceFactory factory)

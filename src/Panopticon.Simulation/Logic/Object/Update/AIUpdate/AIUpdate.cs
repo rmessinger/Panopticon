@@ -36,6 +36,7 @@ public class AIUpdate : UpdateModule
     private IEnumerator<Vector3> _waypointEnumerator;
 
     private Vector3? _targetDirection;
+    private bool _ignoreWeaponTargetForMovement;
 
     private uint _priorWaypointId;
     private uint _currentWaypointId;
@@ -70,6 +71,7 @@ public class AIUpdate : UpdateModule
     private bool _doFinalPosition;
     private bool _isAttackPath;
     private bool _isFinalGoal;
+
     private bool _isApproachPath;
     private bool _isSafePath;
     private bool _movementComplete;
@@ -264,6 +266,7 @@ public class AIUpdate : UpdateModule
 
     internal virtual void SetTargetPoint(Vector3 targetPoint)
     {
+        ResetMovementIntent();
         if (GameObject.ParentHorde != null)
         {
             return;
@@ -278,8 +281,73 @@ public class AIUpdate : UpdateModule
         AppendPathToTargetPoint(targetPoint);
     }
 
+    internal void ConfigureAttackMove(bool enabled)
+    {
+        // Aircraft retain their specialized taxi, takeoff, and attack movement.
+        _isAttackPath = enabled && this is not JetAIUpdate;
+        _ignoreWeaponTargetForMovement = !enabled;
+    }
+
+    internal void ResetMovementIntent()
+    {
+        _isAttackPath = false;
+        _ignoreWeaponTargetForMovement = false;
+    }
+
+    private void AcquireAttackMoveTarget()
+    {
+        var weapon = GameObject.CurrentWeapon;
+        if (!_isAttackPath || weapon == null)
+        {
+            return;
+        }
+
+        if (weapon.CurrentTarget?.TargetType == WeaponTargetType.Object
+            && weapon.CurrentTarget.GetTargetObject()?.IsEffectivelyDead == true)
+        {
+            weapon.SetTarget(null);
+        }
+
+        if (weapon.HasValidTarget)
+        {
+            return;
+        }
+
+        GameObject nearest = null;
+        var nearestDistance = float.MaxValue;
+        var enemies = GameObject.Owner?.Enemies;
+        if (enemies == null)
+        {
+            return;
+        }
+
+        var antiMask = weapon.Template.AntiMask;
+        var translation = GameObject.Translation;
+        foreach (var candidate in GameEngine.Quadtree.FindNearby(GameObject, GameObject.Transform, weapon.Template.AttackRange))
+        {
+            if (candidate.IsEffectivelyDead || candidate.Owner == null || !enemies.Contains(candidate.Owner)
+                || !antiMask.CanAttackObject(candidate))
+            {
+                continue;
+            }
+
+            var distance = Vector3.DistanceSquared(translation, candidate.Translation);
+            if (distance < nearestDistance && weapon.IsObjectInRange(candidate))
+            {
+                nearest = candidate;
+                nearestDistance = distance;
+            }
+        }
+
+        if (nearest != null)
+        {
+            weapon.SetTarget(new WeaponTarget(GameEngine.Scene3D.GameObjects, nearest.Id));
+        }
+    }
+
     internal void FollowWaypoints(IEnumerable<Vector3> waypoints)
     {
+        ResetMovementIntent();
         TargetPoints.Clear();
         _waypointEnumerator = waypoints.GetEnumerator();
         MoveToNextWaypointOrStop();
@@ -294,6 +362,7 @@ public class AIUpdate : UpdateModule
     /// </summary>
     internal virtual void Stop()
     {
+        ResetMovementIntent();
         StopMovingOnly();
     }
 
@@ -302,6 +371,7 @@ public class AIUpdate : UpdateModule
     /// </summary>
     private void StopMovingOnly()
     {
+        _isAttackPath = false;
         GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
         _waypointEnumerator?.Dispose();
         _waypointEnumerator = null;
@@ -346,6 +416,14 @@ public class AIUpdate : UpdateModule
     public override UpdateSleepTime Update()
     {
         StateMachine.Update();
+        AcquireAttackMoveTarget();
+
+        // Turrets discard targets while moving, so pause before updating their aim.
+        if (_isAttackPath && GameObject.CurrentWeapon?.HasValidTarget == true)
+        {
+            GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, false);
+            GameObject.Speed = 0;
+        }
 
         if (_turretAIUpdate != null)
         {
@@ -373,12 +451,17 @@ public class AIUpdate : UpdateModule
             if (TargetPoints.Count > 0)
             {
                 // If the current weapon target is already in range, stop moving so the unit can fire.
-                if (GameObject.CurrentWeapon?.HasValidTarget == true)
+                if (!_ignoreWeaponTargetForMovement && GameObject.CurrentWeapon?.HasValidTarget == true)
                 {
-                    StopMovingOnly();
+                    // Attack-move pauses above without discarding the remaining route.
+                    if (!_isAttackPath)
+                    {
+                        StopMovingOnly();
+                    }
                 }
                 else
                 {
+                    GameObject.ModelConditionFlags.Set(ModelConditionFlag.Moving, true);
                     Vector3? nextPoint = null;
 
                     if (TargetPoints.Count > 1)

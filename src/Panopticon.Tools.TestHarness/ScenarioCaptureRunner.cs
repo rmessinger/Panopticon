@@ -25,7 +25,7 @@ namespace Panopticon.Tools.TestHarness;
 /// Executes a <see cref="CaptureProfile"/> headlessly: spawns the actors, fixes the camera
 /// (explicit or auto-fit), runs frame-scheduled commands, captures a PNG sequence at the
 /// configured stride, evaluates expectations, and writes an additive manifest the engagement
-/// annotator can still consume. The camera is never moved after capture starts.
+/// annotator can still consume. Follow profiles and the optional pre-render hook can move the camera.
 ///
 /// Camera fitting pauses logic and refreshes through render-time camera updates only, so a fit
 /// consumes zero logic ticks; any required warm-up belongs to the profile's settle period.
@@ -271,6 +271,11 @@ public static class ScenarioCaptureRunner
             stopActor = stopState.Object;
         }
 
+        if (settings.FreezeLogicDuringCapture)
+        {
+            game.IsLogicRunning = false;
+        }
+
         var captureIndex = 0;
         for (var frame = 0; frame < profile.DurationFrames; frame++)
         {
@@ -286,6 +291,8 @@ public static class ScenarioCaptureRunner
             }
 
             Step(game);
+
+            settings.BeforeRender?.Invoke(game, frame);
 
             // Follow mode: pan every logic frame so the subject stays centered; the fitted
             // height never changes. A destroyed subject freezes the camera at its last spot.
@@ -1242,7 +1249,9 @@ public sealed record CaptureRunSettings(
     string? FallbackOutputDirectory,
     GraphicsSettings? GraphicsSettings = null,
     int ViewportScale = 1,
-    bool FixedRenderClock = false);
+    bool FixedRenderClock = false,
+    bool FreezeLogicDuringCapture = false,
+    Action<Game, int>? BeforeRender = null);
 
 public sealed record CaptureRunResult(
     int ExitCode,

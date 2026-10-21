@@ -324,6 +324,18 @@ public static class Program
             return;
         }
 
+        if (config.Scenario == BuiltInScenario.TerrainTextureBake)
+        {
+            Environment.ExitCode = TerrainTextureBakeRunner.Run(installation, config, reporter);
+            return;
+        }
+
+        if (config.Scenario == BuiltInScenario.TerrainZoomProof)
+        {
+            Environment.ExitCode = TerrainZoomProofRunner.Run(installation, config, reporter);
+            return;
+        }
+
         if (config.Scenario == BuiltInScenario.VisualRegression)
         {
             Environment.ExitCode = VisualRegressionRunner.Run(installation, config, reporter);

@@ -664,6 +664,9 @@
   standing requirement, and the alternative of   a full per-feature settings matrix without presets
   was rejected as untestable: G3 golden frames are captured per preset. Affects
   [Track G](track-g-rendering-clarity.md).
+- Terrain grain filtering, Decision: precompute filtered terrain mip chains as source-hashed
+  sidecar data instead of paying for per-pixel runtime supersampling. Original game files remain
+  unchanged. Policy and validation: [G7 offline texture packs](implementation/track-g-g7-texture-filtering.md#offline-terrain-texture-packs).
 - Realistic proportions scope. Decision: presentation-only scale correction in Track G (G10),
   grounded in a measured reference scale; weapon ranges and collision geometry stay untouched.
   Measured against installed assets (INI `Geometry` cross-checked with W3D mesh bounds, FX meshes

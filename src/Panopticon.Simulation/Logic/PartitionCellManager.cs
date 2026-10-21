@@ -35,6 +35,7 @@ public sealed class PartitionCellManager : IPersistableObject
     // counter and generation stamp implement pair-once delivery (see Update).
     private readonly List<(PartitionObject First, PartitionObject Second)> _collisionPairs = new();
     private readonly List<PartitionCell> _cellScratch = new();
+    private readonly List<PartitionCell> _groundFootprintCells = new();
     // WI-B4-02 bookkeeping. Pass and generation counters start at one so freshly constructed
     // objects (whose long fields default to zero) never match a current pass or generation.
     private long _generation = 1;
@@ -228,6 +229,59 @@ public sealed class PartitionCellManager : IPersistableObject
                     yield return cell;
                 }
             }
+        }
+    }
+
+    internal bool GroundFootprintFits(GameObject obj, Vector2 destination)
+    {
+        var start = obj.Translation.Vector2XY();
+        if (Vector2.DistanceSquared(start, destination) < 0.000001f)
+        {
+            return true;
+        }
+
+        var radius = obj.Geometry.BoundingCircleRadius;
+        var midpoint = (start + destination) * 0.5f;
+        CollectCells(midpoint, radius + 2.5f + Vector2.Distance(start, destination) * 0.5f, _groundFootprintCells);
+        foreach (var cell in _groundFootprintCells)
+        {
+            foreach (var candidate in cell.Objects)
+            {
+                if (BlocksGroundAdvance(candidate.GameObject))
+                {
+                    return false;
+                }
+            }
+        }
+
+        // Transforms change before partition membership is rebuilt, including new spawns.
+        foreach (var candidate in _dirtyObjects)
+        {
+            if (BlocksGroundAdvance(candidate.GameObject))
+            {
+                return false;
+            }
+        }
+
+        return true;
+
+        bool BlocksGroundAdvance(GameObject other)
+        {
+            if (other == obj || other.ContainedBy != null || other.IsEffectivelyDead
+                || other.IsKindOf(ObjectKinds.Immobile) || other.IsKindOf(ObjectKinds.NoCollide)
+                || other.Layer != obj.Layer)
+            {
+                return false;
+            }
+
+            var position = other.Translation;
+            if (position.Z - other.GameEngine.Game.TerrainLogic.GetLayerHeight(position.X, position.Y, other.Layer) > 0.1f)
+            {
+                return false;
+            }
+
+            return GroundFootprint.BlocksAdvance(start, destination, other.Translation.Vector2XY(),
+                radius + other.Geometry.BoundingCircleRadius + 2.5f);
         }
     }
 

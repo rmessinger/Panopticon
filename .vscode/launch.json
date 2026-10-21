@@ -33,8 +33,22 @@
               "--map", "maps\\Tournament Island\\Tournament Island.map"
           ]
         },
-        // TestHarness scenario is selected by the "Scenario" field in
-        // src/Panopticon.Tools.TestHarness/TestHarness.json (copied to the output dir on build).
+        {
+            // No scenario specified: opens ReplaySketch on the Harness tab, which lists, configures,
+            // and launches TestHarness scenarios from the sibling TestHarness build output.
+            // The TestHarness (...) configurations below run a preselected scenario directly.
+            "name": "TestHarness",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/Panopticon.Tools.ReplaySketch.Avalonia/bin/Debug/net10.0/Panopticon.Tools.ReplaySketch.Avalonia.dll",
+            "env": {
+                "REPLAYSKETCH_START_TAB": "harness"
+            },
+            "preLaunchTask": "build-testharness-configurator"
+        },
+        // Preselected TestHarness scenarios. The "Scenario" field in
+        // src/Panopticon.Tools.TestHarness/TestHarness.json (copied to the output dir on build)
+        // selects the scenario for TestHarness (TestHarness.json).
         // Valid BuiltInScenario values:
         //   AlpineAssaultUSAvGLA
         //   AlpineAssaultUSAvGLAFullBuild
@@ -46,7 +60,7 @@
         // --built-in-scenario/--scenario (see the ScenarioCapture config below) override both
         // fields for a single run without touching TestHarness.json.
         {
-            "name": "TestHarness",
+            "name": "TestHarness (TestHarness.json)",
             "type": "coreclr",
             "request": "launch",
             "program": "${workspaceFolder}/src/Panopticon.Tools.TestHarness/bin/Debug/net10.0/Panopticon.Tools.TestHarness.dll",

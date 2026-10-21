@@ -39,48 +39,48 @@ public sealed class Weapon : IPersistableObject
 
     internal WeaponTarget CurrentTarget { get; private set; }
 
-    private Vector3? CurrentTargetPosition => CurrentTarget == null || CurrentTarget.IsDestroyed
-        ? null
-        : CurrentTarget.TargetPosition;
+    public bool HasValidTarget => IsTargetInRange(CurrentTarget);
 
-    public bool HasValidTarget
+    internal bool IsTargetInRange(WeaponTarget target)
     {
-        get
+        if (target == null || target.IsDestroyed)
         {
-            var currentTargetPosition = CurrentTargetPosition;
-            if (currentTargetPosition == null)
-            {
-                return false;
-            }
-
-            var distance = Vector3.Distance(
-                currentTargetPosition.Value,
-                ParentGameObject.Translation);
-
-            // Imported weapons whose source authors ranges on the ground plane (WI-M3-01)
-            // measure the horizontal component: altitude must not consume the authored range.
-            if (Template.MeasuresRangeOnGround)
-            {
-                distance = Vector2.Distance(
-                    new Vector2(currentTargetPosition.Value.X, currentTargetPosition.Value.Y),
-                    new Vector2(ParentGameObject.Translation.X, ParentGameObject.Translation.Y));
-            }
-
-            // Attack range is measured from the target's center, but large objects (e.g. buildings)
-            // have their own footprint radius. Without subtracting it, a vehicle can be blocked by
-            // the target's collision at its edge while still being reported "out of range" because
-            // its own position is farther from the target's center than a short-ranged weapon allows.
-            var targetRadius = CurrentTarget.TargetType == WeaponTargetType.Object
-                ? CurrentTarget.GetTargetObject()?.RoughCollider?.WorldBounds.Radius ?? 0f
-                : 0f;
-
-            var effectiveDistance = distance - targetRadius;
-            return effectiveDistance <= Template.AttackRange
-                // Artillery-style launchers cannot depress onto nearby targets: inside the
-                // minimum attack range the weapon holds fire (the fire cycle stalls in Inactive,
-                // matching vanilla's dead zone).
-                && effectiveDistance >= Template.MinimumAttackRange;
+            return false;
         }
+
+        var targetPosition = target.TargetPosition;
+        var targetRadius = target.TargetType == WeaponTargetType.Object
+            ? target.GetTargetObject()?.RoughCollider?.WorldBounds.Radius ?? 0f
+            : 0f;
+        return IsPositionInRange(targetPosition, targetRadius);
+    }
+
+    internal bool IsObjectInRange(GameObject target) => !target.IsEffectivelyDead
+        && IsPositionInRange(target.Translation, target.RoughCollider?.WorldBounds.Radius ?? 0f);
+
+    private bool IsPositionInRange(Vector3 targetPosition, float targetRadius)
+    {
+        var distance = Vector3.Distance(targetPosition, ParentGameObject.Translation);
+
+        // Imported weapons whose source authors ranges on the ground plane (WI-M3-01)
+        // measure the horizontal component: altitude must not consume the authored range.
+        if (Template.MeasuresRangeOnGround)
+        {
+            distance = Vector2.Distance(
+                new Vector2(targetPosition.X, targetPosition.Y),
+                new Vector2(ParentGameObject.Translation.X, ParentGameObject.Translation.Y));
+        }
+
+        // Attack range is measured from the target's center, but large objects (e.g. buildings)
+        // have their own footprint radius. Without subtracting it, a vehicle can be blocked by
+        // the target's collision at its edge while still being reported "out of range" because
+        // its own position is farther from the target's center than a short-ranged weapon allows.
+        var effectiveDistance = distance - targetRadius;
+        return effectiveDistance <= Template.AttackRange
+            // Artillery-style launchers cannot depress onto nearby targets: inside the
+            // minimum attack range the weapon holds fire (the fire cycle stalls in Inactive,
+            // matching vanilla's dead zone).
+            && effectiveDistance >= Template.MinimumAttackRange;
     }
 
     public bool IsInactive => _stateMachine.IsInactive;

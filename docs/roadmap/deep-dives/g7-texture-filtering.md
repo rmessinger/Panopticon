@@ -18,6 +18,8 @@ Lanczos3, so changing from a claimed box filter is not the phase's deliverable.
 - G6 owns colour-space-aware filtering. G7 must compose with it without requiring G6 to land first.
 - Shadow comparison samplers, tile-data point sampling and UI samplers are separate roles.
 - Negative bias cannot substitute for antialiasing; image sharpness alone is not a quality gate.
+- Enhanced prefers offline-prefiltered terrain data, not runtime supersampling. Legacy keeps its
+  original mip path. Pack policy: [offline terrain texture packs](../implementation/track-g-g7-texture-filtering.md#offline-terrain-texture-packs).
 
 ## 3. Design
 
@@ -31,11 +33,11 @@ Sampler keys include address mode, filter, anisotropy and bias. On switching, re
 resource set that captured the old sampler, including the global forward set and radius cursor
 resources; retire the old sampler only after queued commands complete.
 
-Extract a proposed `TerrainMipBuilder` with explicit Legacy/Enhanced policies. Enhanced avoids
-unnecessary repeated resampling, filters each mip at its target footprint, and applies G6's
-linear-colour policy when active. Preserve texture-array layer order, cell size, wrap semantics
-and cliff/blend metadata. The audit selects a tested kernel and records whether array padding
-or edge handling is actually necessary; no speculative asset rewrite.
+`TerrainTextureBake` generates versioned sidecar packs through `PrefilteredTerrainMipBuilder`.
+Enhanced loads matching precomputed levels; Legacy retains the original generator. Preserve
+texture-array layer order, cell size, wrap semantics and cliff/blend metadata. The installation
+is never rewritten. Algorithm, integrity rules and load-time fallback are owned by the
+[implementation policy](../implementation/track-g-g7-texture-filtering.md#offline-terrain-texture-packs).
 
 | Sub-phase | Card | Deliverable |
 |---|---|---|
@@ -47,14 +49,16 @@ or edge handling is actually necessary; no speculative asset rewrite.
 - Pure tests cover anisotropy fallback, finite bias limits and complete sampler cache keys.
 - Legacy generated terrain mips match the existing builder's bytes.
 - G3 grazing-angle captures compare 4x and effective 16x over identical camera positions.
-- A fixed camera-motion sequence compares aligned terrain regions for temporal shimmer; masks
-  exclude water, particles and intentional animation. Enhanced must not worsen the recorded
-  temporal metric while improving legibility in the fixed regions.
+- `TerrainZoomProof` compares matching zoom sequences against supersampled references. The
+  screen-space temporal sampling-error proxy, regression tolerance and mask-review requirements
+  are defined in the [capture recipe](../../screenshots.md#recipe-terrain-zoom-temporal-comparison).
+  It does not establish zero shimmer or replace world-space reprojection. Sharpness scores
+  accompany temporal scores to expose blur tradeoffs.
 - Switching presets updates global and cursor resource sets without stale disposed samplers.
 
 ## 5. Architecture Diagrams
 
-Target design; terrain builder and sampler policy are proposed.
+World sampler bindings and offline terrain data flow:
 
 ```mermaid
 classDiagram
@@ -62,28 +66,34 @@ classDiagram
   class WorldSamplerPolicy
   class StandardGraphicsResources
   class GlobalShaderResourceData
-  class TerrainMipBuilder
+  class PrefilteredTerrainMipBuilder
+  class TerrainTexturePack
+  class TerrainTextureBakeRunner
   class Terrain
   GraphicsSettings --> WorldSamplerPolicy
   StandardGraphicsResources --> WorldSamplerPolicy
   GlobalShaderResourceData --> StandardGraphicsResources : bind effective sampler
-  Terrain --> TerrainMipBuilder
-  TerrainMipBuilder --> GraphicsSettings : mip and colour policy
+  Terrain --> TerrainTexturePack : load prebuilt levels
+  TerrainTextureBakeRunner --> TerrainTexturePack : bake
+  TerrainTexturePack --> PrefilteredTerrainMipBuilder : offline only
 ```
 
 ```mermaid
 sequenceDiagram
-  participant C as G2 settings controller
-  participant S as StandardGraphicsResources
-  participant G as GlobalShaderResourceData
-  participant T as TerrainMipBuilder
+  participant B as TerrainTextureBakeRunner
+  participant P as TerrainTexturePack
+  participant M as PrefilteredTerrainMipBuilder
+  participant T as Terrain
   participant R as RenderPipeline
-  C->>S: Build supported anisotropy and bias sampler
-  C->>G: Invalidate sampler-dependent binding
-  C->>T: Rebuild terrain mips if policy changed
-  G->>S: Bind effective sampler
-  R->>R: Draw grazing terrain
-  Note over R: G3 captures fixed camera-motion sequence
+  B->>P: Bake resolved source and array-size variants
+  P->>M: Generate filtered linear-light levels
+  M-->>P: Prebuilt mip chain
+  P->>P: Save checksummed pack atomically
+  Note over T: New Enhanced session and map load
+  T->>P: Validate source hash and load matching levels
+  P-->>T: Mip chain or explicit cache miss
+  T->>T: Upload levels, or generate original fallback
+  R->>R: Draw with original shader sampling
 ```
 
 ## Appendix: current code (agent context)

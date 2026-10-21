@@ -115,6 +115,11 @@ public sealed class OrderProcessor
 
                         MoveUnits(_game.Scene3D?.Navigation, player, player.SelectedUnits, targetPosition);
 
+                        foreach (var unit in player.SelectedUnits)
+                        {
+                            unit.AIUpdate?.ConfigureAttackMove(order.OrderType == OrderType.AttackMove);
+                        }
+
                         lastUnit?.OnLocalMove(_game.Audio);
                     }
 
@@ -666,6 +671,11 @@ public sealed class OrderProcessor
         IReadOnlyCollection<GameObject> selectedUnits,
         Vector3 targetPosition)
     {
+        foreach (var unit in selectedUnits)
+        {
+            unit.AIUpdate?.ResetMovementIntent();
+        }
+
         List<List<GameObject>>? squads = null;
         List<GameObject>? unaccompanied = null;
 

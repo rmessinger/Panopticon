@@ -385,6 +385,12 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
 
             Body.IntegrateVelocity();
 
+            // Check the actual integrated step, not just the locomotor's intended heading.
+            if (!GroundStepFits(new Vector2(mtx.Translation.X + Body.Velocity.X, mtx.Translation.Y + Body.Velocity.Y)))
+            {
+                ScrubVelocity2D(0);
+            }
+
             var oldPosZ = mtx.Translation.Z;
 
             // Integrate velocity into position.
@@ -607,6 +613,14 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         return CalculateSleepTime();
     }
 
+    private bool GroundStepFits(Vector2 destination)
+    {
+        var obj = GameObject;
+        return obj.PartitionObject == null || obj.IsKindOf(ObjectKinds.Projectile) || obj.IsKindOf(ObjectKinds.Immobile)
+            || obj.IsKindOf(ObjectKinds.NoCollide) || obj.ContainedBy != null || obj.IsAirborne()
+            || GameEngine.Game.PartitionCellManager.GroundFootprintFits(obj, destination);
+    }
+
     /// <summary>
     /// Bepu adapter path: the backend owns integration (gravity, contacts, angular
     /// dynamics); this keeps only SAGE ground semantics (ground clamp, stick-to-ground,
@@ -638,6 +652,16 @@ public class PhysicsBehavior : UpdateModule, ICollideModule
         {
             var pose = Matrix4x4.CreateFromQuaternion(body.Rotation);
             pose.Translation = body.Position - Vector3.Transform(_bepuBodyOffset, body.Rotation);
+            if (!GroundStepFits(new Vector2(pose.Translation.X, pose.Translation.Y)))
+            {
+                var destination = pose.Translation;
+                destination.X = translation.X;
+                destination.Y = translation.Y;
+                body.Position += destination - pose.Translation;
+                pose.Translation = destination;
+                ScrubVelocity2D(0);
+            }
+
             obj.SetTransformMatrix(pose);
         }
 

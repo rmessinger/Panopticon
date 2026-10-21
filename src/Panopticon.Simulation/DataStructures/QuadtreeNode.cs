@@ -43,12 +43,11 @@ public class QuadtreeNode<T> where T : class, ICollidable
                     continue;
                 }
 
+                // Child results already passed the identical CollidesPrecise predicate at their
+                // owning node; re-testing here would repeat the precise test once per level.
                 foreach (var subChild in child.Find(collider, searcher, twoDimensional, hasToCollideWithSearcher))
                 {
-                    if (CollidesPrecise(subChild, collider, searcher, twoDimensional, hasToCollideWithSearcher))
-                    {
-                        yield return subChild;
-                    }
+                    yield return subChild;
                 }
             }
         }

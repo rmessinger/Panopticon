@@ -1,8 +1,14 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text.Json;
 using Panopticon.Data;
+using Panopticon.Logic;
+using Panopticon.Logic.Object;
+using Panopticon.Logic.Orders;
+using Panopticon.Mathematics;
+using Panopticon.Network;
 using Panopticon.Tests.Data;
 using Panopticon.Tools.TestHarness;
 using Xunit;
@@ -26,6 +32,111 @@ public class MassBattleCapacityProbeScenarioTests
     public MassBattleCapacityProbeScenarioTests(ITestOutputHelper output)
     {
         _output = output;
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void AttackMove_HoldsInRangeAndResumesForBothSides_WhileMoveToKeepsAdvancing()
+    {
+        Platform.Start();
+        try
+        {
+            using var game = new Game(
+                InstalledFilesTestData.GetInstallation(SageGame.CncGenerals), null,
+                new Configuration { NoAudio = true, SkipStartingBuildings = true }, null);
+            PlayerSetting[] players =
+            [
+                new(0, "FactionAmerica", new ColorRgb(255, 0, 0), 0, PlayerOwner.EasyAi, "Red"),
+                new(1, "FactionAmerica", new ColorRgb(0, 0, 255), 1, PlayerOwner.EasyAi, "Blue"),
+            ];
+            game.StartSkirmishOrMultiPlayerGame(
+                "maps/alpine assault/alpine assault.map", new EchoConnection(), players, 1, isMultiPlayer: false);
+            game.StartRun();
+            game.EnableFixedLogicTimestep();
+            game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
+            foreach (var player in game.Scene3D.Players)
+            {
+                player.DisableAI();
+            }
+
+            var scene = game.Scene3D;
+            for (var index = 0; index < 4; index++)
+            {
+                var side = index % 2;
+                var definition = game.AssetStore.ObjectDefinitions.GetByName(
+                    index < 2 ? "AmericaInfantryRanger" : "AmericaTankPaladin");
+                var unit = scene.GameObjects.CreateObject(definition, scene.Players[2 + side]);
+                var enemy = scene.GameObjects.CreateObject(definition, scene.Players[3 - side]);
+                var start = new Vector3(600, 600 + 500 * index, 0);
+                unit.UpdateTransform(start, null);
+                enemy.UpdateTransform(start + new Vector3(50, 0, 0), null);
+                unit.UpdateColliders();
+                enemy.UpdateColliders();
+                var player = unit.Owner;
+                player.SelectUnits([unit]);
+                var attackMove = new Order(scene.GetPlayerIndex(player), OrderType.AttackMove);
+                attackMove.AddPositionArgument(start + new Vector3(300, 0, 0));
+                var processor = new OrderProcessor(game);
+                processor.Process([attackMove]);
+                Assert.NotEmpty(unit.AIUpdate!.TargetPoints);
+                Assert.Contains(enemy.Owner, unit.Owner.Enemies);
+                Assert.Contains(enemy, scene.Quadtree.FindNearby(unit, unit.Transform, unit.CurrentWeapon!.Template.AttackRange));
+                Assert.True(unit.CurrentWeapon.IsTargetInRange(new WeaponTarget(scene.GameObjects, enemy.Id)));
+                unit.AIUpdate.Update();
+
+                Assert.True(unit.CurrentWeapon!.HasValidTarget);
+                Assert.Equal(enemy.Id, unit.CurrentWeapon.CurrentTarget.GetTargetObject()!.Id);
+                Assert.NotEmpty(unit.AIUpdate.TargetPoints);
+                Assert.Equal(0f, unit.Speed);
+                Assert.False(unit.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+
+                enemy.BodyModule.SetMaxHealth(10000f, MaxHealthChangeType.FullyHeal);
+                var healthBefore = enemy.BodyModule.Health;
+                var heldPosition = unit.Translation;
+                for (var frame = 0; frame < 60; frame++)
+                {
+                    game.Update([]);
+                }
+
+                Assert.Equal(heldPosition.X, unit.Translation.X);
+                Assert.Equal(heldPosition.Y, unit.Translation.Y);
+                Assert.False(unit.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+                Assert.True(enemy.BodyModule.Health < healthBefore, "Attack-move must fire while holding position.");
+
+                enemy.UpdateTransform(start + new Vector3(1000, 0, 0), null);
+                enemy.UpdateColliders();
+                unit.AIUpdate.Update();
+                Assert.NotEmpty(unit.AIUpdate.TargetPoints);
+                Assert.True(unit.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+
+                enemy.UpdateTransform(start + new Vector3(50, 0, 0), null);
+                enemy.UpdateColliders();
+                unit.AIUpdate.Update();
+                Assert.False(unit.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+
+                var move = new Order(scene.GetPlayerIndex(player), OrderType.MoveTo);
+                move.AddPositionArgument(start + new Vector3(300, 0, 0));
+                processor.Process([move]);
+                unit.AIUpdate.Update();
+                Assert.NotEmpty(unit.AIUpdate.TargetPoints);
+                Assert.True(unit.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+
+                processor.Process([attackMove]);
+                unit.AIUpdate.Update();
+                Assert.False(unit.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+                enemy.Kill();
+                unit.AIUpdate.Update();
+                Assert.NotEmpty(unit.AIUpdate.TargetPoints);
+                Assert.True(unit.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+
+                unit.AIUpdate.Stop();
+                unit.AIUpdate.Update();
+                Assert.Empty(unit.AIUpdate.TargetPoints);
+            }
+        }
+        finally
+        {
+            Platform.Stop();
+        }
     }
 
     [GameFact(SageGame.CncGenerals)]

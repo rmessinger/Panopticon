@@ -172,18 +172,34 @@ public sealed class MainWindow : Window
         if (ScreenshotPath is not null && !_screenshotScheduled)
         {
             _screenshotScheduled = true;
-            var tab = Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_TAB")?.ToLowerInvariant();
-            if (tab == "map")
-                SwitchToMap();
-            else if (tab == "validationground")
-                SwitchToValidationGround();
-            else if (tab == "model")
-                SwitchToModel(useScreenshotFixture: true);
-            else if (tab == "harness")
-                SwitchToHarness();
-            else if (tab == "results")
-                SwitchToResults();
+            SwitchToNamedTab(Environment.GetEnvironmentVariable("REPLAYSKETCH_SCREENSHOT_TAB"), useScreenshotFixture: true);
             DispatcherTimer.RunOnce(() => _ = TakeScreenshotAsync(), TimeSpan.FromSeconds(ScreenshotDelaySec));
+        }
+        else if (ScreenshotPath is null)
+        {
+            SwitchToNamedTab(Environment.GetEnvironmentVariable("REPLAYSKETCH_START_TAB"), useScreenshotFixture: false);
+        }
+    }
+
+    private void SwitchToNamedTab(string? tab, bool useScreenshotFixture)
+    {
+        switch (tab?.ToLowerInvariant())
+        {
+            case "map":
+                SwitchToMap();
+                break;
+            case "validationground":
+                SwitchToValidationGround();
+                break;
+            case "model":
+                SwitchToModel(useScreenshotFixture);
+                break;
+            case "harness":
+                SwitchToHarness();
+                break;
+            case "results":
+                SwitchToResults();
+                break;
         }
     }
 
