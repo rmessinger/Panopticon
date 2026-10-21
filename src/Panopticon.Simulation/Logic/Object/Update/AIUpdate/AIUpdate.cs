@@ -71,6 +71,7 @@ public class AIUpdate : UpdateModule
     private bool _doFinalPosition;
     private bool _isAttackPath;
     private bool _isFinalGoal;
+
     private bool _isApproachPath;
     private bool _isSafePath;
     private bool _movementComplete;
@@ -314,15 +315,23 @@ public class AIUpdate : UpdateModule
 
         GameObject nearest = null;
         var nearestDistance = float.MaxValue;
+        var enemies = GameObject.Owner?.Enemies;
+        if (enemies == null)
+        {
+            return;
+        }
+
+        var antiMask = weapon.Template.AntiMask;
+        var translation = GameObject.Translation;
         foreach (var candidate in GameEngine.Quadtree.FindNearby(GameObject, GameObject.Transform, weapon.Template.AttackRange))
         {
-            if (candidate.IsEffectivelyDead || candidate.Owner == null || GameObject.Owner?.Enemies.Contains(candidate.Owner) != true
-                || !weapon.Template.AntiMask.CanAttackObject(candidate))
+            if (candidate.IsEffectivelyDead || candidate.Owner == null || !enemies.Contains(candidate.Owner)
+                || !antiMask.CanAttackObject(candidate))
             {
                 continue;
             }
 
-            var distance = Vector3.DistanceSquared(GameObject.Translation, candidate.Translation);
+            var distance = Vector3.DistanceSquared(translation, candidate.Translation);
             if (distance < nearestDistance && weapon.IsObjectInRange(candidate))
             {
                 nearest = candidate;

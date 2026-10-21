@@ -197,7 +197,7 @@ public static class MassBattleCapacityProbeRunner
                 : null;
 
             var (framesRun, benchmarkRecord) = RunEngagement(
-                game, armies, step, frameBudget, config.Headless, anchor, invariantSampler, scriptedOrders: !armyAi);
+                game, armies, step, frameBudget, config.Headless, reporter, anchor, invariantSampler, scriptedOrders: !armyAi);
             var stopReason = DescribeStopReason(armies, framesRun, frameBudget);
 
             string? screenshotPath = null;
@@ -473,6 +473,7 @@ public static class MassBattleCapacityProbeRunner
         Action step,
         int frameBudget,
         bool headless,
+        ITestHarnessReporter reporter,
         MassBattleAsyncPathAnchor? anchor = null,
         MassBattleSquadInvariantSampler? invariantSampler = null,
         bool scriptedOrders = true)
@@ -488,6 +489,45 @@ public static class MassBattleCapacityProbeRunner
         var partitionCandidateDeltas = new List<double>(frameBudget);
         var partitionHitDeltas = new List<double>(frameBudget);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        // Periodic progress heartbeat: wall-clock cadence, not frame cadence, so the interval
+        // never goes quiet exactly while frames are getting slower (the signal we care about).
+        const double statusIntervalSeconds = 15.0;
+        var nextStatusSeconds = statusIntervalSeconds;
+        var statusFrame = 0;
+        var statusElapsedMs = 0.0;
+
+        void ReportStatus(int completedFrames, bool final)
+        {
+            var intervalFrames = Math.Max(1, completedFrames - statusFrame);
+            var intervalMsPerFrame = (stopwatch.Elapsed.TotalMilliseconds - statusElapsedMs) / intervalFrames;
+            var alive = string.Join(" ", armies.Select((army, index) => FormattableString.Invariant($"{(char)('A' + index)}={army.AliveUnits}")));
+            var jetHealth = string.Join(" ", armies.Select((army, index) =>
+            {
+                var jets = army.Jets.Where(jet => !jet.Unit.IsEffectivelyDead).ToList();
+                if (jets.Count == 0)
+                {
+                    return FormattableString.Invariant($"J{(char)('A' + index)}=-");
+                }
+
+                var minFraction = jets.Min(jet => jet.Unit.BodyModule.Health / jet.Unit.BodyModule.MaxHealth);
+                var airborne = jets.Count(jet => ((JetAIUpdate)jet.Unit.AIUpdate).CurrentJetAIState != JetAIUpdate.JetAIState.Parked);
+                var afterburner = jets.Count(jet => jet.Unit.ModelConditionFlags.Get(ModelConditionFlag.JetAfterburner));
+                var exhaust = jets.Count(jet => jet.Unit.ModelConditionFlags.Get(ModelConditionFlag.JetExhaust));
+                return FormattableString.Invariant($"J{(char)('A' + index)}:{jets.Count:0}@{minFraction:0.00}^{airborne}ab{afterburner}ex{exhaust}");
+            }));
+            var last = recorder.TickSamples.Count > 0 ? recorder.TickSamples[^1] : null;
+            var head = FormattableString.Invariant(
+                $"{(final ? "[probe] final" : "[probe]")} frame {completedFrames}/{frameBudget} wall {stopwatch.Elapsed.TotalSeconds:0.0}s avg {intervalMsPerFrame:0.0}ms/f");
+            var tail = last != null
+                ? FormattableString.Invariant(
+                    $" last {last.WallMs:0.0}ms alloc {last.AllocBytes / 1048576.0:0.0}MB/f gc0 {last.Gc0} heap {(last.HeapBytes ?? 0) / 1073741824.0:0.00}GB")
+                : string.Empty;
+            reporter.Info(head + tail + FormattableString.Invariant($" alive {alive} jets {jetHealth}"));
+            statusFrame = completedFrames;
+            statusElapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+        }
+
 
         try
         {
@@ -516,6 +556,12 @@ public static class MassBattleCapacityProbeRunner
                 partitionHitDeltas.Add(PartitionCellManager.ExactHits - hitsBefore);
                 anchor?.AfterStep();
 
+                if (stopwatch.Elapsed.TotalSeconds >= nextStatusSeconds)
+                {
+                    ReportStatus(frame + 1, final: false);
+                    nextStatusSeconds += statusIntervalSeconds;
+                }
+
                 TrackJetTransitions(allJets, frame);
                 invariantSampler?.Sample();
 
@@ -535,6 +581,7 @@ public static class MassBattleCapacityProbeRunner
         finally
         {
             stopwatch.Stop();
+            ReportStatus(framesRun, final: true);
             game.LogicStepper.SystemSpan -= recorder.RecordSystemSpan;
         }
 
