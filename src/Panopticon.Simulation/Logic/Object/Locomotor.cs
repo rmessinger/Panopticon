@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using ImGuiNET;
 using Panopticon.Logic.AI;
@@ -283,6 +284,24 @@ public sealed class Locomotor : IPersistableObject
         physics.StickToGround = LocomotorTemplate.StickToGround;
     }
 
+    private bool GroundAheadFitsFootprint(GameObject obj, in Vector3 goalPos, float speed)
+    {
+        var translation = obj.Translation;
+        var directionX = goalPos.X - translation.X;
+        var directionY = goalPos.Y - translation.Y;
+        var distanceToGoal = MathF.Sqrt(directionX * directionX + directionY * directionY);
+        if (distanceToGoal < 0.001f)
+        {
+            return true;
+        }
+
+        var lookahead = MathF.Min(MathF.Max(speed, obj.Physics.VelocityMagnitude), distanceToGoal);
+        var probeX = translation.X + directionX / distanceToGoal * lookahead;
+        var probeY = translation.Y + directionY / distanceToGoal * lookahead;
+
+        return _gameEngine.Game.PartitionCellManager.GroundFootprintFits(obj, new Vector2(probeX, probeY));
+    }
+
     public void LocoUpdateMoveTowardsPosition(GameObject obj, in Vector3 goalPos, float onPathDistToGoal, float desiredSpeed, ref bool blocked)
     {
         SetFlag(LocomotorFlags.MaintainPositionIsValid, false);
@@ -381,14 +400,17 @@ public sealed class Locomotor : IPersistableObject
             }
         }
 
+        var footprintBlocked = !obj.IsKindOf(ObjectKinds.Projectile) && !treatAsAirborne
+            && !GroundAheadFitsFootprint(obj, goalPos, desiredSpeed);
+        blocked |= footprintBlocked;
         if (blocked)
         {
             // Stop if we are about to run into the blocking object.
-            physics.ScrubVelocity2D(desiredSpeed);
+            physics.ScrubVelocity2D(footprintBlocked ? 0 : desiredSpeed);
             var turnRate = GetMaxTurnRate(obj.BodyModule.DamageState);
             if (LocomotorTemplate.WanderWidthFactor == 0.0f)
             {
-                blocked = RotateObjAroundLocoPivot(obj, goalPos, turnRate, out _) != PhysicsTurningType.None;
+                blocked = RotateObjAroundLocoPivot(obj, goalPos, turnRate, out _) != PhysicsTurningType.None || footprintBlocked;
             }
 
             // It is very important to be sure to call this in all situations, even if not moving in 2D space.
