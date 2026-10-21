@@ -73,22 +73,16 @@ public static class LinearMipBuilder
         return EncodeToRgba32(resized);
     }
 
-    private static Image<Rgba32> EncodeToRgba32(Image<RgbaVector> linearImage)
+    internal static Image<Rgba32> EncodeToRgba32(Image<RgbaVector> linearImage)
     {
-        if (!linearImage.DangerousTryGetSinglePixelMemory(out var pixelMemory))
-        {
-            throw new InvalidOperationException("Linear mip source is not contiguous.");
-        }
-
         var encoded = new Image<Rgba32>(linearImage.Width, linearImage.Height);
 
-        encoded.ProcessPixelRows(accessor =>
+        linearImage.ProcessPixelRows(encoded, (source, destination) =>
         {
-            var linearSpan = pixelMemory.Span;
-            for (var y = 0; y < accessor.Height; y++)
+            for (var y = 0; y < source.Height; y++)
             {
-                var targetRow = accessor.GetRowSpan(y);
-                var sourceRow = linearSpan.Slice(y * accessor.Width, accessor.Width);
+                var targetRow = destination.GetRowSpan(y);
+                var sourceRow = source.GetRowSpan(y);
                 for (var x = 0; x < sourceRow.Length; x++)
                 {
                     targetRow[x] = new Rgba32(

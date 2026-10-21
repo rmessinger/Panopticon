@@ -365,6 +365,75 @@ directory. Output is deterministic for identical input (fixed image sizes, invar
 ordinal sorts).
 
 
+## Recipe: offline terrain texture bake
+
+```powershell
+dotnet run --project src/Panopticon.Tools.TestHarness -- --headless --built-in-scenario TerrainTextureBake
+```
+
+CPU-only preprocessing of the installed game's declared terrain images. No graphics device is
+created. Game lookup uses the normal harness configuration. Default output:
+`%LOCALAPPDATA%\Panopticon\DerivedTerrain` on Windows, or the platform's local application-data
+directory elsewhere. `PANOPTICON_TERRAIN_TEXTURE_PACK` selects another pack root for both baking
+and rendering.
+
+`--scenario vr-terrain-grazing.json` limits baking to the capture profile's map and required
+array size. A profile file, another embedded profile, or an installation-relative `.map` path
+can select another map. Omit `--scenario` to prepare all available declared terrain sources and
+their array-size variants.
+
+Outputs: immutable source-hashed mip packs and a uniquely named bake report. Repeated runs reuse
+validated packs. Missing source images are listed in the report; corrupt existing outputs are
+preserved and require a different root or explicit operator repair. Original game files are
+never overwritten. Derived game content is local data, not repository content.
+
+Enhanced loads matching prebuilt levels during map load; Legacy uses the original generation
+path. Missing or stale packs fall back with a warning. A session restart is required after
+baking or changing terrain-data selection. Algorithm and integrity details:
+[G7 offline terrain texture packs](roadmap/implementation/track-g-g7-texture-filtering.md#offline-terrain-texture-packs).
+
+## Recipe: terrain zoom temporal comparison
+
+```powershell
+$env:TESTHARNESS_TERRAIN_ZOOM_OUTPUT_DIR = "$env:LOCALAPPDATA\Temp\opencode\terrain-zoom"
+dotnet run --project src/Panopticon.Tools.TestHarness -- --headless --built-in-scenario TerrainZoomProof
+```
+
+Requires a Generals installation, baked terrain data, and an offscreen-capable graphics backend. The normal harness
+installation and renderer settings apply; `TestHarness.json` is not modified. The output variable
+is optional. Every invocation creates a unique evidence directory beneath it.
+
+Default profile: `vr-terrain-grazing.json`. `--scenario vr-terrain-default.json` checks the normal
+tactical pitch. A file profile can select another map or viewpoint; it must use an explicit camera
+without actors, commands or expectations. The proof overrides duration, stride, height, HUD and
+output directory to retain the same controlled zoom sequence.
+
+Run comparisons sequentially. Concurrent harness processes can collide on `panopticon.log` in
+the shared temporary directory; separate `TEMP`/`TMP` directories isolate that log on Windows.
+
+The proof captures 33 matching grazing-angle views, zooming from height 260 to 520 and back.
+All runs use Enhanced shading, MSAA and the original shader sampling. The 4x control and 16x
+baseline use original texture data. The 16x candidate loads baked terrain levels. A fourth
+sequence uses the original-data 16x baseline at twice the viewport dimensions and is box-downsampled.
+Logic is paused after settling; the fixed render clock keeps presentation timing matched.
+
+Outputs: four raw PNG sequences, `reference-downsampled/`, schema-3 `report.json`, and
+`validation_guide.md`. Inspect matching frames and playback, especially the measured normalized
+rectangle `(0.4, 0.7, 0.25, 0.18)` for the grazing profile, or `(0.4, 0.82, 0.25, 0.14)` for
+`vr-terrain-default`. The latter excludes the railroad at near zoom. Non-terrain content invalidates a
+terrain-only interpretation. Original frames remain available for checking masks and seams.
+
+Metric: RMS of the change in native-minus-reference luminance error between adjacent frames,
+divided by two. Reference subtraction removes expected camera-induced image change. This is a
+screen-space sampling-error proxy, not world-space reprojection or proof of zero shimmer.
+Sharpness accompanies each pair to expose blur tradeoffs. The 2x reference is not perfect ground
+truth.
+
+Exit codes: 0 when baked-data 16x mean temporal error is at most `baseline16x * 1.05 + 0.00001`,
+with complete baked-data coverage; 1 for setup errors, missing baked levels, or device fallbacks;
+2 for a temporal-error increase beyond that
+regression tolerance. No golden store or simulation baseline is changed.
+
 ## Recipe: pixel-diff A/B verification
 
 When a visual change must be verified without a human, capture two runs that differ only in the

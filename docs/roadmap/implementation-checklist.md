@@ -1328,13 +1328,14 @@ G2 preset layer so the `Legacy` preset reproduces the original look.
     and zero-mean; gradient captures meet the G6 banding check; `Legacy` matches its golden.
 - [ ] [WI-G6-03](agent/cards/WI-G6-03-clamp-particle-opacity.md): shared particle-opacity clamp ([corrective plan](plans/macos-battle-artifacts.md)).
   - AC: GPU opacity-boundary tests and late-life Metal captures under both presets show normal smoke without black/neon corruption; additive RGB, simulation state, and RNG consumption remain unchanged.
-- [x] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias, higher
-      quality terrain texture-array resample/mip path in `Terrain.cs`)
+- [x] G7 Texture filtering & mip quality (configurable anisotropy up to 16x, mip LOD bias,
+      Enhanced offline-prefiltered terrain data, preserved original fallback and Legacy generation)
       ([`WI-G7-01`](agent/cards/WI-G7-01-audit-samplers-and-mip-paths.md),
       [`WI-G7-02`](agent/cards/WI-G7-02-configurable-anisotropy-and-mip-bias.md)).
   - AC: requested anisotropy 1/2/4/8/16 and finite bias in [-1,1] validate and report effective
     values; resource sets observe sampler changes; grazing-angle and fixed-motion captures
     meet the G7 sharpness/temporal checks; terrain seams stay absent and `Legacy` matches its golden.
+    Motion evidence: [terrain zoom proof](implementation/track-g-g7-texture-filtering.md#temporal-validation-follow-up).
 - [x] G8 Shadow quality tier (four cascades at 2048² by default under `Enhanced`, a receiver-side
       slope-scaled term added to the constant bias; the existing normal offset is kept)
       ([`WI-G8-01`](agent/cards/WI-G8-01-audit-shadow-settings-flow.md),

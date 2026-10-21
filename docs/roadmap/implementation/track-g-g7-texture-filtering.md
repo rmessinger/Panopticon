@@ -165,3 +165,98 @@ final gate passed 14/14 scenes. Grazing-angle evidence from terrain-grazing: sup
 EdgeAliasing 0.0639 at 4x versus 0.0517 at 16x (19 percent lower aliasing). The harness has
 no temporal metric; the card's shimmer check is covered by the aliasing delta plus fixed-camera
 frame consistency, recorded as a harness limitation.
+
+## Temporal validation follow-up
+
+`TerrainZoomProof` adds a fixed zoom-out/back sequence, single-sample 4x/16x anisotropy controls,
+an Enhanced terrain-filtering candidate, and a matching supersampled reference sequence.
+Per-pair temporal sampling-error and sharpness scores replace fixed-camera consistency as the
+motion evidence. Capture recipe, metric definition, tolerance and interpretation limits:
+[terrain zoom temporal comparison](../../screenshots.md#recipe-terrain-zoom-temporal-comparison).
+
+Fractional world-sampler mip bias remains unsupported by the integer sampler field.
+
+2026-10-20 evidence: Direct3D11, NVIDIA GeForce RTX 5090, 1024x768 native and 2048x1536 reference,
+4x MSAA throughout. All 33 measurement crops were reviewed: grass and cliff terrain only, without
+roads, water or foliage. Mean temporal error was 0.008896 at 4x and 0.008366 at 16x, a 5.96 percent
+reduction; the 0.009350 regression limit passed. Mean sharpness was 0.002271/0.002248 versus
+0.002104 for the reference. Fine texture grain remains visible; the result is a measured relative
+improvement, not a rendering fix or evidence of zero shimmer. Evidence directory:
+`20261020_125402_4de85c2fad844e0aa8c8d6c92d443880` beneath the configured output root.
+
+## Superseded runtime experiments
+
+The runtime four-subpixel filter was removed in favor of the offline data policy below. Its
+captures remain comparison evidence, not the current renderer's behavior.
+
+A rejected +0.5 terrain mip-bias experiment scored 0.009936 versus the 0.008366 baseline and
+softened detail. Its artifacts remain in `20261020_130639_24880d2366494b868d3aa7f259bbfded`.
+Runtime subpixel-filter validation, on the same D3D11 host as the earlier capture:
+
+| View | Baseline temporal error | Filtered temporal error | Reduction | Sharpness: baseline / filtered / reference | Evidence directory |
+|---|---|---|---|---|---|
+| Grazing | 0.008366 | 0.005303 | 36.62 percent | 0.002248 / 0.002040 / 0.002104 | `20261020_131403_2a99e35013894db2911930f76cd4f052` |
+| Default tactical pitch | 0.018427 | 0.005516 | 70.06 percent | 0.004647 / 0.003201 / 0.003327 | `20261020_131735_5effd67558ff46cfad256a9fb64e54a1` |
+
+Both historical gates passed; their measurement crops contain only grass and cliff terrain.
+
+## Offline terrain texture packs
+
+`GraphicsSettings.PrefilteredTerrainTextures` defaults to true for Enhanced and false for Legacy.
+`WithPrefilteredTerrainTextures(false)` selects the original mip path for comparison. The flag is
+session-pinned; changing it requires a restart, reported by capability validation. Proportion
+copies preserve the flag. The terrain shader, material constants and per-frame render path retain
+their original sampling behavior.
+
+`TerrainTextureBake` parses `Data/INI/Terrain.ini` through a data-only asset store and resolves its
+declared images through the installation filesystem, including loose overrides. Missing declared
+images are listed in the bake report. Only square terrain sources participate. Every source is
+baked for each declared array size at least as large as that source, preserving map layer order
+and cell-size metadata at load time. Map-scoped baking prepares only that map's sources and array
+size.
+
+`PrefilteredTerrainMipBuilder` constructs each level directly from linear-light source pixels:
+area integration for reduction, periodic bilinear interpolation for enlargement, then a separable
+`[0.125, 0.75, 0.125]` periodic filter. The final chain mixes 20 percent of this low-pass result
+with 80 percent of the original linear Lanczos chain, in linear light. The conservative mix limits
+grazing-angle detail loss. Alpha is made opaque as in the original terrain path.
+Non-power-of-two square sizes are supported.
+`LinearMipBuilder` encoding accepts segmented ImageSharp buffers, including larger terrain sizes.
+
+`TerrainTexturePack` keys immutable mip packs by builder version, SHA-256 of the resolved source
+bytes, and target array size. PNG levels store sRGB-encoded pixels; a manifest records their
+checksums and dimensions. A new pack is published by directory rename only after all levels are
+written. Valid packs are reused; corrupt existing packs and incomplete staging directories are
+preserved rather than overwritten. Derived licensed content remains outside the repository and
+original installation. Root selection and bake commands:
+[offline terrain texture bake](../../screenshots.md#recipe-offline-terrain-texture-bake).
+
+During map load, Enhanced verifies and uploads matching prebuilt levels without resizing or mip
+generation. Missing, stale or corrupt packs fall back to the original generation path with a
+warning. `Terrain.PrefilteredTextureCount` and `MissingPrefilteredTextureCount` expose coverage;
+`TerrainZoomProof` requires complete coverage before passing. Legacy never reads the pack.
+Ordinary runtime texturing has no additional samples or supersampling render targets.
+
+Offline-pack validation on the same D3D11 host:
+
+| View | Original-data temporal error | Baked-data temporal error | Reduction | Sharpness: original / baked / reference | Evidence directory |
+|---|---|---|---|---|---|
+| Grazing | 0.008366 | 0.008266 | 1.19 percent | 0.002248 / 0.001952 / 0.002104 | `20261020_134952_778eb87182e44be599f20c0131b3fcf8` |
+| Default tactical pitch | 0.018427 | 0.013804 | 25.09 percent | 0.004647 / 0.003976 / 0.003327 | `20261020_134952_f8463775fb414927941b8d3826454891` |
+
+Both gates passed with 14 prebuilt textures and zero generation fallbacks per scene. Every
+measurement crop, frames 0 through 32, was reviewed for terrain-only content. The conservative
+data filter reduces normal-view grain less than the removed runtime filter, but avoids its extra
+per-pixel work and does not regress the grazing-angle gate. The initial fully filtered pack
+was rejected: grazing error 0.016437 versus 0.008366 original, despite normal-view improvement.
+Those artifacts remain in `20261020_134151_ffdbd2c276444b2aa3c4a8bb3e4bf1c2` and
+`20261020_134152_a2a4971c54ba4863b63173c3e9c9c6a9`.
+
+Validation: 78 focused tests passed, covering linear-light filtering, periodic edges, non-power-of-two
+and segmented images, pack reuse, source invalidation, missing/corrupt levels, integrity metadata,
+session pinning, capture profiles and temporal scoring. Enhanced visual goldens were not updated.
+
+The full local bake prepared 225 available source images across 695 array-size variants, totaling
+437 MiB for the active builder version. Seven unavailable INI declarations are listed in
+`bake-report-20261020_135617-564e1360b519422faf25f5c835ac7fdd.json`. Prior experimental pack versions
+remain preserved but are not loaded.

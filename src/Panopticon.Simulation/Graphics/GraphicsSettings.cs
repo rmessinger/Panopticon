@@ -15,7 +15,8 @@ public sealed class GraphicsSettings
         float mipLodBias,
         ShadowTier shadowTier,
         UiMode uiMode,
-        bool realisticProportions)
+        bool realisticProportions,
+        bool prefilteredTerrainTextures = false)
     {
         SampleCount = sampleCount;
         AlphaTestMode = alphaTestMode;
@@ -25,6 +26,7 @@ public sealed class GraphicsSettings
         ShadowTier = shadowTier;
         UiMode = uiMode;
         RealisticProportions = realisticProportions;
+        PrefilteredTerrainTextures = prefilteredTerrainTextures;
     }
 
     /// <summary>
@@ -47,7 +49,8 @@ public sealed class GraphicsSettings
     /// count, the alpha test, the colour space, the anisotropy and the UI mode: 4x MSAA (G4)
     /// plus the four-cascade 2048 shadow tier (G4), coverage-preserving alpha with
     /// alpha-to-coverage (G5), linear shading with a single sRGB output transfer (G6),
-    /// anisotropy raised to the 16x ceiling (G7), and role-aware UI art sampling (G9).
+    /// anisotropy raised to the 16x ceiling with prefiltered terrain data (G7),
+    /// and role-aware UI art sampling (G9).
     /// Other members stay Legacy until their owning phase lands.
     /// </summary>
     public static GraphicsSettings Enhanced() => new(
@@ -58,7 +61,8 @@ public sealed class GraphicsSettings
         0f,
         ShadowTier.High,
         UiMode.DynamicHud,
-        realisticProportions: false);
+        realisticProportions: false,
+        prefilteredTerrainTextures: true);
 
     /// <summary>
     /// Builds a settings value from explicit members. Used by the capability-clamping
@@ -72,7 +76,8 @@ public sealed class GraphicsSettings
         float mipLodBias,
         ShadowTier shadowTier,
         UiMode uiMode,
-        bool realisticProportions) => new(
+        bool realisticProportions,
+        bool prefilteredTerrainTextures = false) => new(
         sampleCount,
         alphaTestMode,
         colourSpaceMode,
@@ -80,7 +85,8 @@ public sealed class GraphicsSettings
         mipLodBias,
         shadowTier,
         uiMode,
-        realisticProportions);
+        realisticProportions,
+        prefilteredTerrainTextures);
 
     /// <summary>Multisample count for 3D render targets; 1 is single-sample.</summary>
     public int SampleCount { get; }
@@ -94,6 +100,14 @@ public sealed class GraphicsSettings
 
     /// <summary>Mip level-of-detail bias applied to game samplers.</summary>
     public float MipLodBias { get; }
+
+    /// <summary>Loads offline-prefiltered terrain mip data when available. Fixed for the session.</summary>
+    public bool PrefilteredTerrainTextures { get; }
+
+    /// <summary>Overrides terrain data selection only; a new session is required.</summary>
+    public GraphicsSettings WithPrefilteredTerrainTextures(bool enabled) => new(
+        SampleCount, AlphaTestMode, ColourSpaceMode, Anisotropy, MipLodBias,
+        ShadowTier, UiMode, RealisticProportions, enabled);
 
     public ShadowTier ShadowTier { get; }
 
@@ -114,7 +128,8 @@ public sealed class GraphicsSettings
         MipLodBias,
         ShadowTier,
         UiMode,
-        realisticProportions);
+        realisticProportions,
+        PrefilteredTerrainTextures);
 }
 
 public enum AlphaTestMode

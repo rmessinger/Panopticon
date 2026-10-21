@@ -50,9 +50,10 @@ internal static class HarnessScenarioCatalog
         var headlessOnly = scenario is BuiltInScenario.EngagementCapture or BuiltInScenario.ScenarioCapture or BuiltInScenario.VisualRegression or BuiltInScenario.PhysicsStack
             or BuiltInScenario.PbrMaterialProof or BuiltInScenario.GltfRuntimeProof or BuiltInScenario.Ee2NifProof
             or BuiltInScenario.Ee2PropertyProof or BuiltInScenario.Ee2ScaleProof or BuiltInScenario.Ee2MorphProof
-            or BuiltInScenario.Ee2ParticleProof or BuiltInScenario.Ee2LegacyKfProof;
-        var profiles = scenario == BuiltInScenario.ScenarioCapture ? CaptureProfileLoader.EmbeddedCaptureProfileNames().ToArray() : [];
-        var input = scenario == BuiltInScenario.ScenarioCapture ? HarnessProfileInput.FileOrEmbedded
+            or BuiltInScenario.Ee2ParticleProof or BuiltInScenario.Ee2LegacyKfProof or BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake;
+        var profiles = scenario == BuiltInScenario.ScenarioCapture ? CaptureProfileLoader.EmbeddedCaptureProfileNames().ToArray()
+            : scenario is BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake ? new[] { "vr-terrain-grazing.json", "vr-terrain-default.json" } : [];
+        var input = scenario is BuiltInScenario.ScenarioCapture or BuiltInScenario.TerrainZoomProof or BuiltInScenario.TerrainTextureBake ? HarnessProfileInput.FileOrEmbedded
             : scenario is BuiltInScenario.AlpineAssaultUSAvGLA or BuiltInScenario.AlpineAssaultUSAvGLAFullBuild ? HarnessProfileInput.File : HarnessProfileInput.None;
         var codes = new Dictionary<int, string> { [0] = "success", [1] = "setup or input error" };
         if (category == HarnessScenarioCategory.Capture) { codes[1] = "profile or setup error"; codes[4] = "camera or weapon setup error"; codes[5] = "expectation not met"; }
@@ -60,6 +61,7 @@ internal static class HarnessScenarioCatalog
         if (scenario == BuiltInScenario.PhysicsStack) codes[5] = "unmet settle or scatter bound";
         if (scenario is BuiltInScenario.MassBattleDeployment or BuiltInScenario.MassBattleCapacityProbe) codes[5] = "unmet acceptance or engagement check";
         if (scenario == BuiltInScenario.VisualRegression) { codes[2] = "visual regression or chrome audit failure"; codes[5] = "silhouette failure"; codes[6] = "host mismatch"; }
+        if (scenario == BuiltInScenario.TerrainZoomProof) codes[2] = "temporal texture error worsened";
         var summary = scenario switch
         {
             BuiltInScenario.AlpineAssaultUSAvGLA => "Replay a USA versus GLA assault on Alpine Assault.",
@@ -70,6 +72,8 @@ internal static class HarnessScenarioCatalog
             BuiltInScenario.EngagementCapture => "Capture a configured attacker and target engagement.",
             BuiltInScenario.ScenarioCapture => "Capture a file or embedded scene profile.",
             BuiltInScenario.VisualRegression => "Compare scenario captures with visual baselines.",
+            BuiltInScenario.TerrainZoomProof => "Measure terrain zoom shimmer against a supersampled sequence.",
+            BuiltInScenario.TerrainTextureBake => "Build offline-prefiltered terrain mip data without a GPU.",
             BuiltInScenario.PhysicsStack => "Verify physics settling and scatter bounds.",
             BuiltInScenario.RenderingScaleProbe => "Measure rendering cost for a repeated-model field.",
             _ => $"Capture and validate {id.Replace("Proof", string.Empty, StringComparison.Ordinal)} rendering features.",

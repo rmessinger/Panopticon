@@ -1075,7 +1075,8 @@ public sealed class Game : DisposableBase, IGame
         // session ceiling so a later preset swap never claims an unsupportable effective count.
         var sessionSampleCount = GraphicsSettingsController.FromTextureSampleCount(
             GraphicsLoadContext.ShaderSetStore.OutputDescription.SampleCount);
-        GraphicsSettingsController.Apply(GraphicsSettings, sessionSampleCount);
+        GraphicsSettingsController.Apply(GraphicsSettings, sessionSampleCount,
+            GraphicsLoadContext.StandardGraphicsResources.Settings.PrefilteredTerrainTextures);
         Scene3D?.Shadows.ApplyTier(GraphicsSettings.ShadowTier);
         Graphics?.RenderPipeline?.ApplySamplerSettings(GraphicsSettingsController.Effective);
     }

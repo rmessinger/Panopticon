@@ -20,4 +20,6 @@ public enum BuiltInScenario
     Ee2ParticleProof,
     Ee2LegacyKfProof,
     RenderingScaleProbe,
+    TerrainZoomProof,
+    TerrainTextureBake,
 }

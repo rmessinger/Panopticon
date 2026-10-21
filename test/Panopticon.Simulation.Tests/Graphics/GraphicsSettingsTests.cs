@@ -15,20 +15,18 @@ public class GraphicsSettingsTests : MockedGameTest
         Assert.Equal(ColourSpaceMode.LegacyGamma, settings.ColourSpaceMode);
         Assert.Equal(4, settings.Anisotropy);
         Assert.Equal(0f, settings.MipLodBias);
+        Assert.False(settings.PrefilteredTerrainTextures);
         Assert.Equal(ShadowTier.Original, settings.ShadowTier);
         Assert.Equal(UiMode.LegacyArt, settings.UiMode);
         Assert.False(settings.RealisticProportions);
     }
 
     [Fact]
-    public void EnhancedPresetDiffersOnSampleCountShadowTierAlphaTestColourSpaceAnisotropyAndUiMode()
+    public void EnhancedPresetUsesClarityDefaults()
     {
         var legacy = GraphicsSettings.Legacy();
         var enhanced = GraphicsSettings.Enhanced();
 
-        // 4x MSAA, alpha-to-coverage, linear shading, 16x anisotropy and role-aware UI
-        // sampling landed with G4/G5/G6/G7/G9; every other knob stays Legacy until its
-        // owning phase.
         Assert.Equal(4, enhanced.SampleCount);
         Assert.Equal(AlphaTestMode.CoveragePreserving, enhanced.AlphaTestMode);
         Assert.Equal(ColourSpaceMode.Linear, enhanced.ColourSpaceMode);
@@ -36,6 +34,7 @@ public class GraphicsSettingsTests : MockedGameTest
         Assert.Equal(16, enhanced.Anisotropy);
         Assert.Equal(4, legacy.Anisotropy);
         Assert.Equal(legacy.MipLodBias, enhanced.MipLodBias);
+        Assert.True(enhanced.PrefilteredTerrainTextures);
         Assert.Equal(ShadowTier.High, enhanced.ShadowTier);
         Assert.Equal(UiMode.DynamicHud, enhanced.UiMode);
         Assert.Equal(UiMode.LegacyArt, legacy.UiMode);
@@ -55,6 +54,7 @@ public class GraphicsSettingsTests : MockedGameTest
         Assert.Equal(enhanced.ColourSpaceMode, enabled.ColourSpaceMode);
         Assert.Equal(enhanced.Anisotropy, enabled.Anisotropy);
         Assert.Equal(enhanced.MipLodBias, enabled.MipLodBias);
+        Assert.Equal(enhanced.PrefilteredTerrainTextures, enabled.PrefilteredTerrainTextures);
         Assert.Equal(enhanced.ShadowTier, enabled.ShadowTier);
         Assert.Equal(enhanced.UiMode, enabled.UiMode);
     }

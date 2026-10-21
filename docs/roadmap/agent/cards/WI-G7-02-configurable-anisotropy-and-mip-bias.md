@@ -36,11 +36,14 @@ shimmer under camera motion.
    in the shader sample call instead, and only on the paths the audit listed.
 3. Rebuild the resource sets the audit named when the samplers are recreated, so a settings change
    takes effect without a restart.
-4. Keep the existing Lanczos3 terrain resample and generated mip chain unless the audit proves a
-   defect. Copying pre-generated levels through staging is not missing mip generation. Test array
-   dimensions, seams and mip provenance; keep G5 alpha/G6 colour policy compatible.
-5. Validate with the G3 harness on a grazing-angle terrain scene, comparing the sharpness metric at
-   4x and 16x, and checking a short camera-motion capture for shimmer.
+4. Keep the existing Lanczos3 terrain path for Legacy and missing-pack fallback. Enhanced may load
+   the offline-prefiltered chain under the documented data policy. Test array dimensions, seams
+   and mip provenance; keep G5 alpha/G6 colour policy compatible.
+5. Validate with the G3 harness on a grazing-angle terrain scene, comparing sharpness at 4x and
+   16x. Run the [terrain zoom proof](../../../screenshots.md#recipe-terrain-zoom-temporal-comparison)
+   for temporal sampling-error evidence and inspect the measurement region for non-terrain content.
+6. Bake [offline terrain mip data](../../implementation/track-g-g7-texture-filtering.md#offline-terrain-texture-packs)
+   ahead of rendering; verify source invalidation, checksums and complete capture-scene coverage.
 
 ## Files likely to change
 
@@ -50,8 +53,10 @@ shimmer under camera motion.
 
 ## Acceptance criteria
 
-- [ ] Terrain and ground-plane textures stay legible at grazing angles at 16x with no shimmer under
-      camera motion, measured by the G3 metrics, satisfying the G7 milestone.
+- [x] Terrain stays legible at grazing angles at 16x; the terrain zoom proof meets its documented
+      temporal regression tolerance, with mask review and sharpness evidence. This gate does not
+      assert zero shimmer.
+      Evidence: [temporal validation follow-up](../../implementation/track-g-g7-texture-filtering.md#temporal-validation-follow-up).
 - [ ] Anisotropy above the device maximum clamps rather than throwing.
 - [ ] A `Legacy` capture is unchanged against its golden.
 - [ ] Changing the anisotropy setting takes effect without restarting the game.

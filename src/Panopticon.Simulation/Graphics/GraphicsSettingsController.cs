@@ -34,7 +34,7 @@ internal sealed class GraphicsSettingsController
     /// <paramref name="sessionSampleCount"/> ceiling reports the count the session's pipelines
     /// were built with: sample-count changes need a new session, later requests clamp back.
     /// </summary>
-    public void Apply(GraphicsSettings requested, int sessionSampleCount = 0)
+    public void Apply(GraphicsSettings requested, int sessionSampleCount = 0, bool? sessionPrefilteredTerrainTextures = null)
     {
         ArgumentNullException.ThrowIfNull(requested);
 
@@ -79,6 +79,13 @@ internal sealed class GraphicsSettingsController
             effectiveMipLodBias = clampedBias;
         }
 
+        var effectivePrefilteredTerrainTextures = requested.PrefilteredTerrainTextures;
+        if (sessionPrefilteredTerrainTextures.HasValue && sessionPrefilteredTerrainTextures.Value != effectivePrefilteredTerrainTextures)
+        {
+            _fallbacks.Add("PrefilteredTerrainTextures is fixed for the session; restart to change terrain data selection.");
+            effectivePrefilteredTerrainTextures = sessionPrefilteredTerrainTextures.Value;
+        }
+
         Effective = GraphicsSettings.Create(
             effectiveSampleCount,
             requested.AlphaTestMode,
@@ -87,7 +94,8 @@ internal sealed class GraphicsSettingsController
             effectiveMipLodBias,
             requested.ShadowTier,
             requested.UiMode,
-            requested.RealisticProportions);
+            requested.RealisticProportions,
+            effectivePrefilteredTerrainTextures);
     }
 
     /// <summary>

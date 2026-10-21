@@ -50,6 +50,7 @@ internal sealed class RenderSettingsView : DiagnosticView
             ImGui.Text($"Sample count: {requestedSettings.SampleCount}{sampleCountSuffix}");
 
             ImGui.Text($"Anisotropy: {requestedSettings.Anisotropy}");
+            ImGui.Text($"Prefiltered terrain data: {effectiveSettings.PrefilteredTerrainTextures}");
         }
 
         ImGui.Separator();
