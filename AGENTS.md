@@ -59,6 +59,11 @@ Builds on the repository-wide documentation style above. Additional rules specif
 * In `Panopticon.Tools.ReplaySketch.Core`, private static fields follow PascalCase (no `s_` or `_` prefixes), enforced by IDE1006 in `dotnet format` CI.
 * One class (or interface/enum/record) per file. Exceptionally small types (one-to-few-line records, enums paired with their consumer, module data with its module) combine into a single theme-appropriate file instead; use a `Types/` subfolder when a group of such supporting types has no obvious owning file.
 
+### Logging
+
+* Every log line starts with an ISO 8601 local timestamp (for example `2026-10-21T21:39:01.234-04:00`), never UTC. NLog layouts live in `src/Panopticon.Core/NLog.config`; shell scripts use `date '+%Y-%m-%dT%H:%M:%S%:z'`.
+* Log files produced by agent tooling and long runs go under `~/log` (not `/tmp`), one subdirectory per effort.
+
 ### Validation
 
 * Code after a closing brace starts on the next line (another closing brace or punctuation may stay adjacent); property patterns (`is { } x`) are exempt. Enforced by `scripts/check_brace_newline.py` in CI alongside `dotnet format` (see `docs/coding-style.md` rule 18).
