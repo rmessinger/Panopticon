@@ -36,7 +36,8 @@ public sealed record RoutingChokeCaptureFrame(
     int AbsoluteLogicFrame,
     string File,
     IReadOnlyList<RoutingChokeManifestActor> Actors,
-    IReadOnlyList<string> Projectiles);
+    IReadOnlyList<string> Projectiles,
+    RoutingChokeNavigationOverlay Navigation);
 
 /// <summary>Minimal actor entry for the GIF tool's content-bounds crop.</summary>
 public sealed record RoutingChokeManifestActor(

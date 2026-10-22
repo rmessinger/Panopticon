@@ -7,6 +7,8 @@ engagement-specific overlays (no IMPACT flashes). Optional
 --labels draws a static legend; --health draws actor labels and measured health bars.
 --projectile-orientation draws sampled
 travel and local +X vectors from the manifest.
+--navigation draws live partition occupancy, collision footprints, and planned paths
+from RoutingChoke captures; --annotated-dir preserves the annotated PNG sequence.
 
 Playback defaults to real time: each captured frame is held for the number of logic
 frames it covers (manifest AbsoluteLogicFrame delta) at the game's 30 logic frames per
@@ -18,6 +20,7 @@ Usage:
 """
 
 import argparse
+import colorsys
 import json
 import math
 import os
@@ -42,7 +45,7 @@ def _grow(lo, hi, minimum, limit):
     return max(0, lo - pad), min(limit, hi + pad)
 
 
-def compute_crop(manifest, padding):
+def compute_crop(manifest, padding, navigation=False):
     xs, ys = [], []
     for frame in manifest["Frames"]:
         for actor in frame["Actors"] + frame["Projectiles"]:
@@ -50,6 +53,10 @@ def compute_crop(manifest, padding):
             xs.append(actor["X"] + actor["RadiusPixels"])
             ys.append(actor["Y"] - actor["RadiusPixels"])
             ys.append(actor["Y"] + actor["RadiusPixels"])
+        if navigation:
+            for cell in frame["Navigation"]["Cells"]:
+                xs.extend(point["X"] for point in cell["Corners"])
+                ys.extend(point["Y"] for point in cell["Corners"])
     if not xs:
         return None, None, None, None
     vw, vh = manifest["ViewportWidth"], manifest["ViewportHeight"]
@@ -123,6 +130,54 @@ def draw_health_panel(image, record):
             draw.rectangle((8, bar_y, 8 + (image.width - 16) * ratio, bar_y + 4), fill=(80, 210, 80))
 
 
+def draw_navigation(image, record, left, top, scale):
+    """Render measured broadphase membership, collision circles, and remaining waypoints."""
+    navigation = record["Navigation"]
+    overlay = Image.new("RGBA", image.size)
+    draw = ImageDraw.Draw(overlay)
+
+    def project(points):
+        return [((point["X"] - left) * scale, (point["Y"] - top) * scale)
+                for point in points]
+
+    for cell in navigation["Cells"]:
+        corners = project(cell["Corners"])
+        count = len(cell["ObjectIds"])
+        color = (255, 85, 70) if cell["Structures"] else (255, 180, 45)
+        if count:
+            draw.polygon(corners, fill=(*color, 45))
+        draw.line(corners + [corners[0]], fill=(*color, 150) if count else (190, 205, 220, 85), width=1)
+        center = tuple(sum(point[axis] for point in corners) / 4 for axis in (0, 1))
+        draw.text(center, str(count), fill=(255, 255, 255, 240), anchor="mm",
+                  stroke_width=1, stroke_fill=(0, 0, 0, 220))
+
+    for unit in navigation["Units"]:
+        color = tuple(round(component * 255) for component in
+                      colorsys.hsv_to_rgb((unit["Id"] * 0.61803398875) % 1, 0.65, 1))
+        path = project(unit["Path"])
+        if len(path) > 1:
+            draw.line(path, fill=(*color, 180), width=2)
+            for x, y in path[1:]:
+                draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill=(*color, 230))
+        footprint = project(unit["Footprint"])
+        draw.line(footprint + [footprint[0]], fill=(65, 255, 255, 255), width=2)
+
+    image = Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB")
+    result = Image.new("RGB", (image.width, image.height + 64), (12, 16, 22))
+    result.paste(image, (0, 64))
+    draw = ImageDraw.Draw(result)
+    font = ImageFont.load_default(12)
+    active = sum(len(unit["Path"]) > 1 for unit in navigation["Units"])
+    lines = [
+        f"Logic frame {record['AbsoluteLogicFrame']} | partition size {navigation['CellSize']:g} | {active} active paths",
+        "Grid numbers: object memberships (not reservations). Orange: occupied; red: structures.",
+        "CYAN: collision footprints | colored lines/dots: remaining paths/waypoints",
+    ]
+    for index, line in enumerate(lines):
+        draw.text((6, 4 + index * 19), line, fill=(225, 240, 250), font=font)
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture_dir")
@@ -138,13 +193,23 @@ def main():
     parser.add_argument("--projectile-orientation", action="store_true",
                         help="draw projectile travel (white) and local +X (cyan) vectors")
     parser.add_argument("--padding", type=int, default=PADDING,
-                        help=f"crop padding in source pixels (default {PADDING})")
+                         help=f"crop padding in source pixels (default {PADDING})")
+    parser.add_argument("--navigation", action="store_true",
+                        help="draw captured partition occupancy, unit footprints, and live planned paths")
+    parser.add_argument("--annotated-dir", help="new directory for annotated PNG frames")
     args = parser.parse_args()
 
     with open(os.path.join(args.capture_dir, "manifest.json")) as fh:
         manifest = json.load(fh)
 
-    crop = compute_crop(manifest, max(0, args.padding))
+    if args.navigation and any("Navigation" not in frame for frame in manifest["Frames"]):
+        parser.error("--navigation requires a new capture with Navigation metadata")
+    if args.navigation and (args.health or args.labels or args.projectile_orientation):
+        parser.error("--navigation cannot be combined with other overlays")
+    if args.annotated_dir:
+        os.makedirs(args.annotated_dir, exist_ok=False)
+
+    crop = compute_crop(manifest, max(0, args.padding), args.navigation)
     if crop[0] is None:
         print("manifest records no actors or projectiles; nothing to crop")
         return 1
@@ -234,6 +299,10 @@ def main():
                 for line in lines:
                     draw.text((panel_left + 4, y), line, fill=TRAVEL_COLOR, font=font)
                     y += line_height
+        if args.navigation:
+            im = draw_navigation(im, record, left, top, scale)
+        if args.annotated_dir:
+            im.save(os.path.join(args.annotated_dir, record["File"]))
         frames.append(im)
 
     base = build_palette(frames)

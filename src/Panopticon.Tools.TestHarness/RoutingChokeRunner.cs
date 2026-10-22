@@ -20,8 +20,8 @@ namespace Panopticon.Tools.TestHarness;
 /// <summary>
 /// The routing-choke scenario: one group move order drives a block of ground units through a
 /// single gap in a structure wall, exercising the multi-unit routing stack end to end
-/// (OrderProcessor.MoveUnits, GroupMovement's shared squad path with formation offsets, and
-/// the swept-footprint gate) in a constrained space. The report records per-unit arrival
+/// (OrderProcessor.MoveUnits and the swept-footprint gate) in a constrained space.
+/// The spawned units have no squads and request individual paths. The report records per-unit arrival
 /// frames so throughput and deadlock regressions are visible as data; the optional PNG
 /// sequence plus manifest feeds scripts/annotate_capture_gif.py for a visual record.
 /// </summary>
@@ -234,7 +234,8 @@ public static class RoutingChokeRunner
                     actors.Add(new RoutingChokeManifestActor("unit", $"unit {i}", screen.X, screen.Y, 16f));
                 }
 
-                captureRecords.Add(new RoutingChokeCaptureFrame(captureIndex, framesRun + 1, file, actors, []));
+                captureRecords.Add(new RoutingChokeCaptureFrame(captureIndex, framesRun + SettleFrames + 1, file, actors, [],
+                    RoutingChokeNavigationOverlay.Capture(game, units)));
                 captureIndex++;
             }
 

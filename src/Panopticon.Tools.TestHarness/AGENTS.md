@@ -438,9 +438,9 @@ run failed or did not reach an outcome.
 Multi-unit routing through a constrained space: 40 Crusaders spawn as a block south of a
 power-plant wall with one gap, then a single selection + move order (the same order path a
 player drag-move or the army AI's advance uses) drives them through it. The run exercises
-`OrderProcessor.MoveUnits`, `GroupMovement`'s shared squad path, and the swept-footprint gate
-end to end; the report records per-unit arrival frames, stuck unit indexes, the blocked-follower
-delta, and the path-request count, so throughput and deadlock regressions are visible as data.
+`OrderProcessor.MoveUnits` and the swept-footprint gate end to end. Spawned units have no
+squads, so shared squad paths do not engage. The report records per-unit arrival frames,
+stuck unit indexes, the blocked-follower delta, and the path-request count.
 
 ```sh
 CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
@@ -454,7 +454,9 @@ alpine assault), `RoutingChokeReportPath` (default `artifacts/routing-choke/rout
 `RoutingChokeCaptureDirectory` + `RoutingChokeCaptureStride` (default 15) for a PNG sequence
 plus a `manifest.json` compatible with `scripts/annotate_capture_gif.py` (the manifest carries
 per-frame unit screen positions; actors and projectile lists are minimal, so `--labels` and
-`--health` are not supported for it). Exit codes: 0 every unit arrived; 1 setup error; 5 some
+`--health` are not supported for it). Navigation overlays: see
+[`docs/screenshots.md`](../../docs/screenshots.md#routing-diagnostics).
+Exit codes: 0 every unit arrived; 1 setup error; 5 some
 units never arrived within the frame limit. Reference behavior at the default gap on current
 main: the crowd funnels and jams at the opening with only a few units through, which is the
 constrained-space failure mode this scenario exists to measure.

@@ -245,6 +245,25 @@ profiles: `capture-projectile-orientation-shell.json`,
 Verify content before sharing: the manifest's target `Health` should fall across the sequence
 and a non-trivial number of frames should list a projectile.
 
+### Routing diagnostics
+
+`RoutingChoke` captures live partition memberships, unit collision circles, and remaining
+`AIUpdate.TargetPoints` alongside each PNG. Existing captures require a rerun for this metadata.
+
+```sh
+python3 scripts/annotate_capture_gif.py <fresh-capture-dir> routing.gif --navigation \
+  --annotated-dir <new-annotated-frame-dir>
+```
+
+Grid numbers count actual broadphase object memberships, including scenery and structures.
+An object can overlap several cells. These are not navigation reservations or terrain
+passability values. Orange cells contain objects; red cells include structures. Cyan outlines
+use `Geometry.BoundingCircleRadius`, the movement collision footprint. Colored lines connect
+each unit's current position to its remaining planned waypoints; dots mark waypoints.
+The grid covers the routing corridor, projected onto the terrain. The header records the
+logic frame and cell size. Per-pair movement clearance also adds 2.5 world units beyond the
+combined radii; that extra clearance is not part of the cyan outlines.
+
 ## Recipe: physics seam test scene (headless)
 
 The `PhysicsStack` built-in scenario validates the object physics seam
