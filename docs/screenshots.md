@@ -249,6 +249,9 @@ and a non-trivial number of frames should list a projectile.
 
 `RoutingChoke` captures live partition memberships, unit collision circles, and remaining
 `AIUpdate.TargetPoints` alongside each PNG. Existing captures require a rerun for this metadata.
+The scenario hides the particle render layer, including building smoke, without changing
+particle updates or simulation RNG consumption. Other scenarios retain particle rendering.
+The capture camera looks straight down with north (`+Y`) at the top of the image.
 
 ```sh
 python3 scripts/annotate_capture_gif.py <fresh-capture-dir> routing.gif --navigation \

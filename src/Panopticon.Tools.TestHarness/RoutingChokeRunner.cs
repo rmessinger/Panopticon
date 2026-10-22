@@ -48,7 +48,7 @@ public static class RoutingChokeRunner
     private const int UnitColumns = 8;
     private const float ArrivalRadius = 90f;
     private const int SettleFrames = 30;
-    private const float CameraHeight = 1100f;
+    private const float CameraHeight = 1600f;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -100,6 +100,8 @@ public static class RoutingChokeRunner
         game.StartSkirmishOrMultiPlayerGame(mapPath, new EchoConnection(), playerSettings, 1, isMultiPlayer: false);
         game.StartRun();
         game.VictorySystem.ConditionRule = new NeverDefeatedVictoryConditionRule();
+        // Hide visual clutter without changing particle updates or simulation RNG consumption.
+        game.Scene3D.RenderScene.GetRenderBucket("Particles").Visible = false;
 
         foreach (var player in game.Scene3D.Players)
         {
@@ -164,17 +166,7 @@ public static class RoutingChokeRunner
 
         var startPositions = units.ToDictionary(unit => unit.Id, unit => unit.Translation);
 
-        // Static camera over the whole corridor, set while logic is paused so the fit does
-        // not consume logic ticks.
-        var wasLogicRunning = game.IsLogicRunning;
-        game.IsLogicRunning = false;
-        var view = game.Scene3D.TacticalView;
-        view.InitHeightForMap();
-        view.SetAngleAndPitchToDefault();
-        view.SnapHeightAboveGround(CameraHeight);
-        view.LookAt(new Vector3(CorridorCenterX, (SpawnCenterY + DestinationY) / 2f, 0));
         RenderFrame(game);
-        game.IsLogicRunning = wasLogicRunning;
 
         var blockedFollowersBefore = GroupMovement.BlockedFollowerCount;
         var pathRequestsBefore = NavigationSystem.PathRequestCount;
@@ -342,6 +334,10 @@ public static class RoutingChokeRunner
     private static void RenderFrame(Game game)
     {
         game.Panel.EnsureFrame(new Mathematics.Rectangle(0, 0, ViewportWidth, ViewportHeight));
+        var center = new Vector2(CorridorCenterX, 925f);
+        var target = new Vector3(center, game.Scene3D.Terrain.GetGroundHeight(center) ?? 0);
+        // Apply after tactical camera updates; a horizontal up vector supports exact overhead.
+        game.Scene3D.Camera.SetLookAt(target + Vector3.UnitZ * CameraHeight, target, Vector3.UnitY);
         game.Render();
     }
 }
