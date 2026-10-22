@@ -457,7 +457,8 @@ per-frame unit screen positions; actors and projectile lists are minimal, so `--
 `--health` are not supported for it). Navigation overlays: see
 [`docs/screenshots.md`](../../docs/screenshots.md#routing-diagnostics).
 Exit codes: 0 every unit arrived; 1 setup error; 5 some
-units never arrived within the frame limit. Reference behavior at the default gap on current
+units remained unarrived at termination. Early-stop and timed-gate settings are documented in
+the linked routing diagnostics recipe. Reference behavior at the default gap on current
 main: the crowd funnels and jams at the opening with only a few units through, which is the
 constrained-space failure mode this scenario exists to measure.
 

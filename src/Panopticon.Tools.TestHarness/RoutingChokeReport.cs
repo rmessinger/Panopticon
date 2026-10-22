@@ -17,7 +17,8 @@ public sealed record RoutingChokeReport(
     IReadOnlyList<int> StuckUnitIndexes,
     long BlockedFollowerDelta,
     long PathRequestDelta,
-    IReadOnlyList<RoutingChokeUnitRecord> Units);
+    IReadOnlyList<RoutingChokeUnitRecord> Units,
+    string TerminationReason);
 
 /// <summary>Per-unit outcome: start and end positions plus the arrival frame, null when stuck.</summary>
 public sealed record RoutingChokeUnitRecord(

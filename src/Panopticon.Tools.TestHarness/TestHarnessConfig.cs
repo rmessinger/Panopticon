@@ -324,6 +324,12 @@ public sealed class TestHarnessConfig
     [HarnessParameter("RoutingChoke", "RoutingChokeFrameLimit.", nameof(BuiltInScenario.RoutingChoke))]
     public int? RoutingChokeFrameLimit { get; set; } = null;
 
+    [HarnessParameter("RoutingChoke", "Frames without movement before stopping (default 90).", nameof(BuiltInScenario.RoutingChoke))]
+    public int RoutingChokeProgressTimeoutFrames { get; set; } = 90;
+
+    [HarnessParameter("RoutingChoke", "A timed gate can reopen; wait until arrival or the frame limit.", nameof(BuiltInScenario.RoutingChoke))]
+    public bool RoutingChokeHasTimedGate { get; set; }
+
     [HarnessParameter("RoutingChoke", "RoutingChokeReportPath.", nameof(BuiltInScenario.RoutingChoke))]
     public string? RoutingChokeReportPath { get; set; } = null;
 

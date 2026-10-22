@@ -77,9 +77,9 @@ public static class RoutingChokeRunner
         var reportPath = config.RoutingChokeReportPath ?? "artifacts/routing-choke/routing-choke.json";
         var captureDirectory = config.RoutingChokeCaptureDirectory;
 
-        if (unitCount < 1 || gapWidth < 40 || frameLimit < 1 || captureStride < 1)
+        if (unitCount < 1 || gapWidth < 40 || frameLimit < 1 || captureStride < 1 || config.RoutingChokeProgressTimeoutFrames < 1)
         {
-            reporter.Error("RoutingChoke knobs must satisfy: unit count >= 1, gap width >= 40, frame limit >= 1, capture stride >= 1.");
+            reporter.Error("RoutingChoke knobs must satisfy: unit count >= 1, gap width >= 40, frame limit >= 1, capture stride >= 1, progress timeout >= 1.");
             return 1;
         }
 
@@ -192,6 +192,9 @@ public static class RoutingChokeRunner
         var captureRecords = new List<RoutingChokeCaptureFrame>();
         var captureIndex = 0;
         var framesRun = 0;
+        var progress = new RoutingChokeProgressMonitor(
+            units.Select(unit => unit.Translation.Vector2XY()).ToArray(), config.RoutingChokeProgressTimeoutFrames);
+        var terminationReason = "FrameLimit";
         for (; framesRun < frameLimit; framesRun++)
         {
             game.Update(Array.Empty<Input.InputMessage>());
@@ -210,7 +213,13 @@ public static class RoutingChokeRunner
                 }
             }
 
-            var captured = preparedCaptureDirectory != null && framesRun % captureStride == 0;
+            var stopReason = arrivalFrame.Count == units.Count
+                ? "AllArrived"
+                : progress.Observe(framesRun + 1,
+                    units.Select(unit => unit.Translation.Vector2XY()).ToArray(),
+                    units.Any(unit => unit.AIUpdate?.TargetPoints is { Count: > 0 }),
+                    config.RoutingChokeHasTimedGate);
+            var captured = preparedCaptureDirectory != null && (framesRun % captureStride == 0 || stopReason != null);
             if (captured)
             {
                 RenderFrame(game);
@@ -231,8 +240,9 @@ public static class RoutingChokeRunner
                 captureIndex++;
             }
 
-            if (arrivalFrame.Count == units.Count)
+            if (stopReason != null)
             {
+                terminationReason = stopReason;
                 framesRun++;
                 break;
             }
@@ -267,7 +277,8 @@ public static class RoutingChokeRunner
             stuck,
             GroupMovement.BlockedFollowerCount - blockedFollowersBefore,
             NavigationSystem.PathRequestCount - pathRequestsBefore,
-            perUnit);
+            perUnit,
+            terminationReason);
 
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(reportPath))!);
         File.WriteAllText(reportPath, JsonSerializer.Serialize(report, JsonOptions));
@@ -282,7 +293,7 @@ public static class RoutingChokeRunner
         reporter.Info(
             $"RoutingChoke: {arrivals.Length}/{unitCount} arrived"
             + (arrivals.Length > 0 ? $", first {arrivals[0]}, median {arrivals[arrivals.Length / 2]}, last {arrivals[^1]}" : string.Empty)
-            + $", blocked followers {report.BlockedFollowerDelta}, path requests {report.PathRequestDelta}.");
+            + $", blocked followers {report.BlockedFollowerDelta}, path requests {report.PathRequestDelta}, stopped: {terminationReason} at frame {framesRun}.");
 
         return arrivals.Length == unitCount ? 0 : 5;
     }

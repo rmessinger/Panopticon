@@ -252,6 +252,12 @@ and a non-trivial number of frames should list a projectile.
 The scenario hides the particle render layer, including building smoke, without changing
 particle updates or simulation RNG consumption. Other scenarios retain particle rendering.
 The capture camera looks straight down with north (`+Y`) at the top of the image.
+Runs stop when all units arrive, paths are exhausted, or no unit moves at least one world
+unit for `RoutingChokeProgressTimeoutFrames` (default 90, three seconds). Retained waypoints
+alone do not prevent deadlock termination. The terminal frame is captured even off stride.
+`RoutingChokeHasTimedGate` suppresses early termination for scenarios with a gate or moving
+barrier that can reopen. The current static wall has no such gate. The report records
+`terminationReason`; the frame limit remains the fallback.
 
 ```sh
 python3 scripts/annotate_capture_gif.py <fresh-capture-dir> routing.gif --navigation \
