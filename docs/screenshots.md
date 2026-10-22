@@ -86,6 +86,9 @@ manifest's gameplay-derived `RadiusPixels`; increase `--padding` to retain compl
 effects. The X1 duel uses `--health --labels --padding 260` and captures every logic frame.
 Health panels are not proof of target-impact rendering.
 
+`ScenarioCapture` currently ignores actor `MaxHealth` overrides. Health proofs must use the
+manifest's observed `Health` and `MaxHealth` values.
+
 The TestHarness renders offscreen with Vulkan and captures PNGs; no display is needed.
 
 `MassBattleDeploymentScreenshotPath` captures the armies after deployment in either mode.

@@ -1,4 +1,6 @@
-using FixedMath.NET;
+using System;
+using System.Linq;
+using System.Numerics;
 using Panopticon.Data.Ini;
 using Panopticon.Mathematics;
 
@@ -48,6 +50,9 @@ public class DamageNugget : WeaponEffectNugget
     /// Radius of damage.
     /// </summary>
     public float Radius { get; internal set; }
+
+    // Generals secondary damage occupies an outer ring, not an additional overlapping blast.
+    internal DamageNugget InnerDamageNugget { get; set; }
 
     /// <summary>
     /// Delay after hit till the damage is applied.
@@ -127,7 +132,99 @@ public class DamageNugget : WeaponEffectNugget
         }
 
         var target = context.Weapon.CurrentTarget;
+        if (target == null)
+        {
+            return;
+        }
 
-        context.Weapon.CurrentTarget.DoDamage(DamageType, (Fix64)Damage, DeathType, context.Weapon.ParentGameObject, DamageFXOverride);
+        var source = context.Weapon.ParentGameObject;
+        var damageDealer = source.IsProjectile
+            ? context.GameEngine.GameLogic.GetObjectById(source.CreatedByObjectID) ?? source
+            : source;
+        var directTarget = target.TargetType == WeaponTargetType.Object ? target.GetTargetObject() : null;
+        var damageInput = new DamageInfoInput(damageDealer)
+        {
+            DamageType = DamageType,
+            DamageFXOverride = DamageFXOverride,
+            DeathType = DeathType,
+            Amount = Damage,
+        };
+        if (Radius <= 0)
+        {
+            if (InnerDamageNugget == null)
+            {
+                directTarget?.AttemptDamage(damageInput);
+            }
+
+            return;
+        }
+
+        if (!source.IsProjectile && target.IsDestroyed)
+        {
+            return;
+        }
+
+        // Object hits center the blast on the victim; ground hits and orphaned missiles use the impact position.
+        var position = directTarget?.Translation ?? (source.IsProjectile ? source.Translation : target.TargetPosition);
+        var victims = context.GameEngine.Game.PartitionCellManager
+            .QueryObjects(null, position, Radius, new PartitionQueries.TrueQuery())
+            .Distinct()
+            .OrderBy(victim => victim.Id.Index)
+            .ToArray();
+        foreach (var victim in victims)
+        {
+            if (victim.IsEffectivelyDead || victim.BodyModule == null || victim.IsProjectile)
+            {
+                continue;
+            }
+
+            var bounds = victim.RoughCollider?.WorldBounds;
+            var distance = MathF.Max(0f, Vector3.Distance(position, bounds?.Center ?? victim.Translation) - (bounds?.Radius ?? 0f));
+            if (distance > Radius || (InnerDamageNugget != null && distance <= InnerDamageNugget.Radius))
+            {
+                continue;
+            }
+
+            if (victim == directTarget || AffectsSplashTarget(victim, source, context.Weapon.Template.RadiusDamageAffects))
+            {
+                victim.AttemptDamage(damageInput);
+            }
+        }
+    }
+
+    private static bool AffectsSplashTarget(GameObject victim, GameObject source, ObjectFilter filter)
+    {
+        var isSelf = victim == source || victim.Id == source.CreatedByObjectID;
+        if (isSelf && filter?.Rules.Get(ObjectFilterRule.Self) != true && filter?.Rules.Get(ObjectFilterRule.Suicide) != true)
+        {
+            return false;
+        }
+
+        if (filter == null)
+        {
+            return true;
+        }
+
+        if (filter.Rules.Get(ObjectFilterRule.None) || filter.Exclude.Intersects(victim.Definition.KindOf)
+            || filter.ExcludeThings?.Contains(victim.Definition.Name, StringComparer.OrdinalIgnoreCase) == true)
+        {
+            return false;
+        }
+
+        var allied = victim.Owner == source.Owner || source.Owner?.Allies.Contains(victim.Owner) == true;
+        if ((filter.Rules.Get(ObjectFilterRule.NotSimilar) && allied && victim.Definition == source.Definition)
+            || (filter.Rules.Get(ObjectFilterRule.NotAirborne) && victim.IsSignificantlyAboveTerrain))
+        {
+            return false;
+        }
+
+        var relationship = allied ? ObjectFilterRule.Allies
+            : source.Owner?.Enemies.Contains(victim.Owner) == true ? ObjectFilterRule.Enemies
+            : ObjectFilterRule.Neutrals;
+        return filter.Rules.Get(ObjectFilterRule.All) || filter.Rules.Get(relationship)
+            || (filter.Rules.Get(ObjectFilterRule.SamePlayer) && victim.Owner == source.Owner)
+            || (isSelf && (filter.Rules.Get(ObjectFilterRule.Self) || filter.Rules.Get(ObjectFilterRule.Suicide)))
+            || filter.Include.Intersects(victim.Definition.KindOf)
+            || filter.IncludeThings?.Contains(victim.Definition.Name, StringComparer.OrdinalIgnoreCase) == true;
     }
 }

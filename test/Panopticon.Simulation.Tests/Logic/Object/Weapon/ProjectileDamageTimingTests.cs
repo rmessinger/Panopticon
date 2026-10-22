@@ -64,6 +64,124 @@ public class ProjectileDamageTimingTests : IDisposable
     }
 
     [GameFact(SageGame.CncGenerals)]
+    public void TomahawkImpact_DamagesNearbyInfantry()
+    {
+        using var game = _game = CreateGame();
+        var scene = game.Scene3D;
+        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600, 600, 0), scene.Players[2]);
+        var radius = launcher.CurrentWeapon!.Template.Nuggets.OfType<DamageNugget>().Max(nugget => nugget.Radius);
+        Assert.True(radius > 0);
+        var target = Spawn("AmericaInfantryRanger", new Vector3(900, 600, 0), scene.Players[3]);
+        var nearby = Spawn("AmericaInfantryRanger", new Vector3(900, 600 + radius / 2f, 0), scene.Players[3]);
+        foreach (var infantry in new[] { target, nearby })
+        {
+            infantry.BodyModule.SetMaxHealth(10000f, MaxHealthChangeType.FullyHeal);
+        }
+
+        for (var frame = 0; frame < 30; frame++)
+        {
+            game.Update([]);
+        }
+
+        launcher.CurrentWeapon.SetTarget(new WeaponTarget(scene.GameObjects, target.Id));
+        var sawProjectile = false;
+        for (var frame = 0; frame < 600 && target.BodyModule.Health == target.BodyModule.MaxHealth; frame++)
+        {
+            game.Update([]);
+            foreach (var projectile in scene.GameObjects.Objects.Where(unit => unit.IsProjectile && unit.CreatedByObjectID == launcher.Id))
+            {
+                sawProjectile = true;
+                Assert.Same(launcher.CurrentWeapon.Template.RadiusDamageAffects, projectile.CurrentWeapon!.Template.RadiusDamageAffects);
+            }
+        }
+
+        _output.WriteLine($"Tomahawk radius {radius}: target HP {target.BodyModule.Health}, nearby HP {nearby.BodyModule.Health}");
+        Assert.True(sawProjectile);
+        Assert.True(target.BodyModule.Health < target.BodyModule.MaxHealth, "Tomahawk never damaged the targeted infantry.");
+        Assert.Equal(150f, target.BodyModule.MaxHealth - target.BodyModule.Health);
+        Assert.True(nearby.BodyModule.Health < nearby.BodyModule.MaxHealth, "Tomahawk splash never damaged nearby infantry.");
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void TomahawkGroundBlast_UsesDamageRingsAndRelationshipFilter()
+    {
+        using var game = _game = CreateGame();
+        var scene = game.Scene3D;
+        var launcher = Spawn("AmericaVehicleTomahawk", new Vector3(600, 600, 0), scene.Players[2]);
+        var center = Spawn("AmericaInfantryRanger", new Vector3(900, 600, 0), scene.Players[3]);
+        var outer = Spawn("AmericaInfantryRanger", new Vector3(924, 600, 0), scene.Players[3]);
+        var outside = Spawn("AmericaInfantryRanger", new Vector3(1000, 600, 0), scene.Players[3]);
+        var ally = Spawn("AmericaInfantryRanger", new Vector3(900, 624, 0), scene.Players[2]);
+        var infantry = new[] { center, outer, outside, ally };
+        launcher.Owner.Allies.Remove(center.Owner);
+        center.Owner.Allies.Remove(launcher.Owner);
+        launcher.Owner.AddEnemy(center.Owner);
+        foreach (var unit in infantry)
+        {
+            unit.BodyModule.SetMaxHealth(10000f, MaxHealthChangeType.FullyHeal);
+        }
+
+        for (var frame = 0; frame < 30; frame++)
+        {
+            game.Update([]);
+        }
+
+        var weapon = launcher.CurrentWeapon!;
+        weapon.SetTarget(new WeaponTarget(center.Translation));
+        var context = new WeaponEffectExecutionContext(weapon, game.GameEngine);
+        var nuggets = weapon.Template.Nuggets.OfType<DamageNugget>().ToArray();
+        foreach (var nugget in nuggets)
+        {
+            nugget.Execute(context);
+        }
+
+        Assert.Equal(150f, center.BodyModule.MaxHealth - center.BodyModule.Health);
+        Assert.Equal(50f, outer.BodyModule.MaxHealth - outer.BodyModule.Health);
+        Assert.Equal(50f, ally.BodyModule.MaxHealth - ally.BodyModule.Health);
+        Assert.Equal(outside.BodyModule.MaxHealth, outside.BodyModule.Health);
+
+        foreach (var unit in infantry)
+        {
+            unit.BodyModule.SetMaxHealth(10000f, MaxHealthChangeType.FullyHeal);
+        }
+
+        weapon.Template.RadiusDamageAffects = new ObjectFilter();
+        weapon.Template.RadiusDamageAffects.Rules.Set(ObjectFilterRule.Enemies, true);
+        foreach (var nugget in nuggets)
+        {
+            nugget.Execute(context);
+        }
+
+        Assert.Equal(150f, center.BodyModule.MaxHealth - center.BodyModule.Health);
+        Assert.Equal(50f, outer.BodyModule.MaxHealth - outer.BodyModule.Health);
+        Assert.Equal(ally.BodyModule.MaxHealth, ally.BodyModule.Health);
+        Assert.Equal(outside.BodyModule.MaxHealth, outside.BodyModule.Health);
+    }
+
+    [GameFact(SageGame.CncGenerals)]
+    public void KilledMovingInfantry_ClearsMovementAndCombatState()
+    {
+        using var game = _game = CreateGame();
+        var scene = game.Scene3D;
+        var infantry = Spawn("AmericaInfantryRanger", new Vector3(600, 600, 0), scene.Players[2]);
+        var enemy = Spawn("AmericaInfantryRanger", new Vector3(1000, 600, 0), scene.Players[3]);
+        infantry.CurrentWeapon!.SetTarget(new WeaponTarget(scene.GameObjects, enemy.Id));
+        infantry.CurrentWeapon.Fire();
+        var firingFlag = ModelConditionFlagUtility.GetFiringFlag(infantry.CurrentWeapon.WeaponIndex);
+        infantry.AIUpdate!.SetTargetPoint(enemy.Translation);
+        Assert.True(infantry.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+        Assert.True(infantry.ModelConditionFlags.Get(firingFlag));
+
+        infantry.Kill(DamageType.Explosion, DeathType.Exploded);
+
+        Assert.True(infantry.IsEffectivelyDead);
+        Assert.False(infantry.ModelConditionFlags.Get(ModelConditionFlag.Moving));
+        Assert.Null(infantry.CurrentWeapon.CurrentTarget);
+        Assert.False(infantry.ModelConditionFlags.Get(ModelConditionFlag.Attacking));
+        Assert.False(infantry.ModelConditionFlags.Get(firingFlag));
+    }
+
+    [GameFact(SageGame.CncGenerals)]
     public void ProjectileWeapons_DeliverWarheads_OnEveryDetonationPath()
     {
         using var game = _game = CreateGame();

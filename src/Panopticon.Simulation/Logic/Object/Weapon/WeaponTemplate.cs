@@ -248,6 +248,11 @@ public sealed class WeaponTemplate : BaseAsset
             damageNuggets.Add(damageNugget);
         }
 
+        if (index == 1)
+        {
+            damageNuggets[1].InnerDamageNugget = damageNuggets[0];
+        }
+
         return damageNuggets[index];
     }
 
@@ -307,7 +312,7 @@ public sealed class WeaponTemplate : BaseAsset
     public LazyAssetReference<BaseAudioEventInfo> FireSound { get; private set; }
     public int FireSoundLoopTime { get; private set; }
     public int SuspendFXDelay { get; private set; }
-    public ObjectFilter RadiusDamageAffects { get; private set; }
+    public ObjectFilter RadiusDamageAffects { get; internal set; }
     public RangeDuration CoolDownDelayBetweenShots { get; internal set; }
     public int ShotsPerBarrel { get; private set; }
     public int ClipSize { get; internal set; }
