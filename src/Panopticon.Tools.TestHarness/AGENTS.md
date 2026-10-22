@@ -383,6 +383,56 @@ after the armies spawn, and `MassBattleCapacityProbeFrameBudget` caps the measur
 battlefield and is the operator-run load proof. Exit codes: 0 all passed; 1 setup error;
 5 unmet engagement check (aircraft never launched, no second sortie, one side took no losses).
 
+## Mass Battle (M5)
+
+The mixed-roster battle (`WI-M5-04`): both sides spawn their M3 roster manifests
+(`mass-battle-rosters.json`, Generals and EE2 units together) on the deepdivide deployment zones,
+EE2 content imports first through the shared H2a layer, and both sides run the hierarchical army
+AI (`ArmyAiSides`) with no scripted orders. A side loses when it owns no living non-structure
+attacker (`ArmyEliminatedVictoryConditionRule`); the frame limit decides stalled battles by unit
+count. Headless runs step through `SimulationHost` with a run-output recorder and B1 record;
+windowed runs step the same battle through the presentation loop with the same stop condition.
+
+```bash
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario MassBattle
+```
+
+The default profile is `mass-battle-deepdivide-battle.json`; `MassBattleProfilePath` overrides
+it (a relative `RosterManifestPath` resolves against the profile's directory),
+`MassBattleSeed` (default 1) and `MassBattleFrameLimit` (default 54000) control the run,
+`MassBattleReportPath` redirects the battle JSON (P3 outcome with winning side plus per-side
+per-definition spawn and survival counts; a sibling `.run-output.json` and `.benchmark.json`
+land beside it in headless mode), and `MassBattleScreenshotPath` captures one PNG after spawn.
+Windowed runs spectate (WI-M5-09): the local player is the observer, the camera frames both
+zones, and operator input never reaches an army. Reports are timing-free: the same profile and
+seed reproduce a byte-identical report. Exit
+codes: 0 battle decided with no failure reasons; 1 setup error (profile, manifest, import);
+5 battle did not decide within the frame limit or reported spawn shortfalls.
+
+## Mass Battle Batch (M5)
+
+WI-M5-06: the same headless battle over a seed range in one process (one fresh game per seed),
+aggregated into a batch report: per-side wins with Wilson 95 percent intervals (draws and
+failures stay in the denominator), median frames to outcome, frame and wall-clock statistics,
+and kills/losses per definition summed and per-run mean. Per-run reports land in a
+`<batch-report>-runs/` sibling directory.
+
+```bash
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario MassBattleBatch
+```
+
+`MassBattleBatchSeedStart` (default 1) and `MassBattleBatchRuns` (default 10) select the seed
+range, `MassBattleBatchReportPath` redirects the aggregate, and the single-run knobs
+(`MassBattleProfilePath`, `MassBattleFrameLimit`) apply to every run. A failed run is recorded
+as a failure and the batch continues. Exit codes: 0 every run decided; 1 setup error; 5 any
+run failed or did not reach an outcome.
+
 ## Unit Validation Ground (P9)
 
 A non-skirmish sandbox that stands up the whole unit roster side by side on a real map, orders

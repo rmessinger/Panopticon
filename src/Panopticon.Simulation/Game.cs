@@ -880,6 +880,9 @@ public sealed class Game : DisposableBase, IGame
             _pendingReplaySave = (outputPath, header);
         }
 
+        // Spectators (WI-M5-09) get no control bar: the observer side has none authored, and a
+        // spectated battle shows no command UI by design.
+        if (Scene3D.LocalPlayer.Side != "FactionObserver")
         {
             Scene2D.ControlBar = Definition.ControlBar.Create(Scene3D.LocalPlayer.Side, this);
             Scene2D.ControlBar.AddToScene(Scene2D);

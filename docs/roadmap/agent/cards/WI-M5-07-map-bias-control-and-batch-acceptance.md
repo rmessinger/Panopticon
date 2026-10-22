@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-07` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Blocked` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M5-06` |
@@ -45,7 +45,7 @@ the M5-2 result.
 - [ ] The `Mirror` side A interval includes 50 percent; if not, the card is `Blocked` with the
   report and the map-bias finding.
 - [ ] The M5 plan records all three batches and the chosen batch size.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -70,3 +70,17 @@ python3 scripts/check_brace_newline.py
 - Tick M5-2 in the implementation checklist and update the README progress row.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - State: `Blocked` on the full-scale acceptance batches, everything else landed. Variant
+    machinery: `MassBattleBatchVariant` knob (`Battle`/`Mirror`/`Swap`) applied by
+    `MassBattleBatchRunner.ApplyVariant` (rosters only; the variant profile lands in the run
+    directory with an absolute manifest path); the battle profile now gives both zones the same
+    2-row 38-anchor grid so a swap can field either roster from either zone (side A previously
+    had 25 anchors and could not park the ee2-led air fleet; side A's second row overhangs its
+    zone edge by 32 units of footprint). Scaled validation: variant unit test + 1-seed scaled
+    Mirror and Swap batches decide with correct rewritten rosters (Interactive 3/3 incl. the
+    aggregate reconciliation). Acceptance sizing (decision 7): the measured full-size Battle run
+    is 53970 frames in 148.7 min (165 ms/frame, the 54000-frame cap), so an acceptance batch is
+    5 seeds per variant (Wilson n=5 excludes 50 percent at 5-0 and 0-5; n<4 cannot exclude it),
+    roughly 12.5 hours per variant and 37 hours for all three sequential: operator-scheduled
+    overnight batches, commands in the M5 plan. Card stays `Blocked` until the three batch
+    reports exist and the Mirror control passes; M5-2 stays unticked in the checklist.

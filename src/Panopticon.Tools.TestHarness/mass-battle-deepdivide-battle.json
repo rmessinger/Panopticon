@@ -3,8 +3,10 @@
   // instead of shared capacity blocks. Ground entries walk the deployment zone in manifest order;
   // aircraft park at the side's airfields. Anchors: AmericaAirfield parks 4 aircraft (NumRows 2 x
   // NumCols 2), footprint BOX 224 x 148 rotated 90 degrees by the side facing; side A needs 25
-  // airfields for 100 Raptors (one row behind the zone), side B needs 38 for 150 aircraft (two
-  // rows below the zone). Zones widen the M0 rectangles in x (2200 -> 3800, symmetric on both
+  // airfields for 100 Raptors; side B needs 38 for 150 aircraft. Both zones carry the same
+  // 2-row 38-anchor grid (WI-M5-07): side swaps field either roster from either zone, so each
+  // zone must host the larger air fleet; side A's second row (y=290) overhangs its zone edge
+  // by 32 units of footprint, anchor points stay outside the zone. Zones widen the M0 rectangles in x (2200 -> 3800, symmetric on both
   // sides): the manifest's vehicle-heavy mix needs more ground than the probe roster the M0 zone
   // was sized for; the full-scale spawn measured 900/900 and 850/850 ground units placed. The
   // contentImport block carries the shared EE2 policy; its row keys are collected from the
@@ -86,108 +88,7 @@
     "facingDegrees": 90,
     "roster": "generals-led",
     "airfieldDefinition": "AmericaAirfield",
-    "airfieldAnchors": [
-      {
-        "x": 360,
-        "y": 150
-      },
-      {
-        "x": 590,
-        "y": 150
-      },
-      {
-        "x": 820,
-        "y": 150
-      },
-      {
-        "x": 1050,
-        "y": 150
-      },
-      {
-        "x": 1280,
-        "y": 150
-      },
-      {
-        "x": 1510,
-        "y": 150
-      },
-      {
-        "x": 1740,
-        "y": 150
-      },
-      {
-        "x": 1970,
-        "y": 150
-      },
-      {
-        "x": 2200,
-        "y": 150
-      },
-      {
-        "x": 2430,
-        "y": 150
-      },
-      {
-        "x": 2660,
-        "y": 150
-      },
-      {
-        "x": 2890,
-        "y": 150
-      },
-      {
-        "x": 3120,
-        "y": 150
-      },
-      {
-        "x": 3350,
-        "y": 150
-      },
-      {
-        "x": 3580,
-        "y": 150
-      },
-      {
-        "x": 3810,
-        "y": 150
-      },
-      {
-        "x": 4040,
-        "y": 150
-      },
-      {
-        "x": 4270,
-        "y": 150
-      },
-      {
-        "x": 4500,
-        "y": 150
-      },
-      {
-        "x": 4730,
-        "y": 150
-      },
-      {
-        "x": 4960,
-        "y": 150
-      },
-      {
-        "x": 5190,
-        "y": 150
-      },
-      {
-        "x": 5420,
-        "y": 150
-      },
-      {
-        "x": 5650,
-        "y": 150
-      },
-      {
-        "x": 5880,
-        "y": 150
-      }
-    ]
+    "airfieldAnchors": [{"x":380,"y":90},{"x":680,"y":90},{"x":980,"y":90},{"x":1280,"y":90},{"x":1580,"y":90},{"x":1880,"y":90},{"x":2180,"y":90},{"x":2480,"y":90},{"x":2780,"y":90},{"x":3080,"y":90},{"x":3380,"y":90},{"x":3680,"y":90},{"x":3980,"y":90},{"x":4280,"y":90},{"x":4580,"y":90},{"x":4880,"y":90},{"x":5180,"y":90},{"x":5480,"y":90},{"x":5780,"y":90},{"x":380,"y":290},{"x":680,"y":290},{"x":980,"y":290},{"x":1280,"y":290},{"x":1580,"y":290},{"x":1880,"y":290},{"x":2180,"y":290},{"x":2480,"y":290},{"x":2780,"y":290},{"x":3080,"y":290},{"x":3380,"y":290},{"x":3680,"y":290},{"x":3980,"y":290},{"x":4280,"y":290},{"x":4580,"y":290},{"x":4880,"y":290},{"x":5180,"y":290},{"x":5480,"y":290},{"x":5780,"y":290}]
   },
     {
     "id": "sideB",

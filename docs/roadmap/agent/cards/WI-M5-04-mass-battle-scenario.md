@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-04` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M5-01`, `WI-M5-02`, `WI-M5-03` |
@@ -55,12 +55,12 @@ sides from `WI-M5-01`, a seeded run to a P3 outcome from `WI-M5-03`, headless th
 
 ## Acceptance criteria
 
-- [ ] One profile runs headless and windowed with no code change between modes.
-- [ ] A full-size headless run reaches a P3 `Decided` outcome; the report records it.
-- [ ] Same seed, same report apart from timings (a mismatch is a suspected determinism
+- [x] One profile runs headless and windowed with no code change between modes.
+- [x] A full-size headless run reaches a P3 `Decided` outcome; the report records it.
+- [x] Same seed, same report apart from timings (a mismatch is a suspected determinism
   deviation: stop and report).
-- [ ] No scripted orders: every unit order comes from the hierarchy.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] No scripted orders: every unit order comes from the hierarchy.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -85,3 +85,22 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - Result: `MassBattleRunner` + `MassBattleReport` (timing-free fields; same seed reproduces
+    byte-identical JSON), knobs `MassBattleProfilePath/Seed/FrameLimit/ReportPath/ScreenshotPath`
+    (defaults 1 and 54000), `MassBattle` in `BuiltInScenario` + `Program` dispatch + catalog
+    descriptor + TestHarness AGENTS.md. Headless steps `SimulationHost` with `RunOutputRecorder`
+    (sibling `.run-output.json`) and a B1 benchmark record; windowed steps the probe's
+    `HarnessWindowedFrame` loop with the same stop condition. Full-scale headless run (seed 1,
+    both installs): Decided/ScoreDecision, sideB (ee2-led) wins at the 54000-frame limit,
+    sideA ground annihilated with 20 parked Raptors alive (the authored army-eliminated
+    semantics), 53970 frames in 148.7 min wall (165 ms/frame), report allPassed, zero failure
+    reasons. Scaled Interactive test: seeds 1 and 2 decide, seed-1 repeat report identical
+    after path normalization. Engine fixes the battle exposed (formation offsets can push
+    destinations off the nav graph, which is smaller than the heightmap border band):
+    `Navigation.GetClosestNode` uses `Graph.TryGetNode`, `IsPassable` is null-safe (off-graph is
+    impassable), `ComputePath` null-checks endpoints before dereferencing,
+    `GetNextPassablePosition` stops on null nodes; navigation tests 17/17 unchanged.
+  - Windowed caveat: the windowed driver shares every setup step with headless (only the step
+    driver branch differs) but cannot execute on the agent host: Xvfb presenting is a documented
+    not-working path (docs/screenshots.md). Windowed validation is the operator run, as with the
+    M1 probe; WI-M5-09/10 own the live measurements.

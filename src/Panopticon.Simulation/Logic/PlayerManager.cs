@@ -64,6 +64,20 @@ public sealed class PlayerManager : IPersistableObject
             LocalPlayer = _players[2];
         }
 
+        // WI-M5-09: a spectated run drives the observer, never an army. No observer in the
+        // player list keeps the fallback above.
+        if (_game.Configuration.Spectator)
+        {
+            foreach (var player in _players)
+            {
+                if (player.Side == "FactionObserver")
+                {
+                    LocalPlayer = player;
+                    break;
+                }
+            }
+        }
+
         if (playerSettings != null)
         {
             var skirmishPlayers = _players.Skip(2).Take(playerSettings.Length).ToArray();

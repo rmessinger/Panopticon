@@ -290,4 +290,44 @@ public sealed class TestHarnessConfig
     /// </summary>
     [HarnessParameter("MassBattle", "MassBattleCapacityProbeArmyAi.", nameof(BuiltInScenario.MassBattleCapacityProbe))]
     public bool? MassBattleCapacityProbeArmyAi { get; set; } = null;
+
+    /// <summary>Path to the WI-M5-02 battle profile JSON. Empty uses the embedded profile.</summary>
+    [HarnessParameter("MassBattle", "MassBattleProfilePath.", nameof(BuiltInScenario.MassBattle))]
+    public string? MassBattleProfilePath { get; set; } = null;
+
+    /// <summary>Battle seed (WI-M5-04); every run of the same seed reproduces the same battle.</summary>
+    [HarnessParameter("MassBattle", "MassBattleSeed.", nameof(BuiltInScenario.MassBattle))]
+    public int? MassBattleSeed { get; set; } = null;
+
+    /// <summary>
+    /// Frame limit for the army-eliminated outcome (WI-M5-04): a stalled battle decides by
+    /// unit count at this frame. Default 54000 (30 game minutes).
+    /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleFrameLimit.", nameof(BuiltInScenario.MassBattle))]
+    public int? MassBattleFrameLimit { get; set; } = null;
+
+    [HarnessParameter("MassBattle", "MassBattleReportPath.", nameof(BuiltInScenario.MassBattle))]
+    public string? MassBattleReportPath { get; set; } = null;
+
+    [HarnessParameter("MassBattle", "MassBattleScreenshotPath.", nameof(BuiltInScenario.MassBattle))]
+    public string? MassBattleScreenshotPath { get; set; } = null;
+
+    /// <summary>First seed of a batch (WI-M5-06); the batch runs consecutive seeds from here.</summary>
+    [HarnessParameter("MassBattle", "MassBattleBatchSeedStart.", nameof(BuiltInScenario.MassBattleBatch))]
+    public int? MassBattleBatchSeedStart { get; set; } = null;
+
+    /// <summary>Number of runs in a batch (WI-M5-06); default 10, WI-M5-07 sizes acceptance.</summary>
+    [HarnessParameter("MassBattle", "MassBattleBatchRuns.", nameof(BuiltInScenario.MassBattleBatch))]
+    public int? MassBattleBatchRuns { get; set; } = null;
+
+    [HarnessParameter("MassBattle", "MassBattleBatchReportPath.", nameof(BuiltInScenario.MassBattleBatch))]
+    public string? MassBattleBatchReportPath { get; set; } = null;
+
+    /// <summary>
+    /// WI-M5-07 batch variant: Battle (profile as authored), Mirror (side A's roster on both
+    /// sides, the map-bias control), or Swap (rosters exchanged between zones, separating roster
+    /// strength from zone advantage). Rewrites side rosters only.
+    /// </summary>
+    [HarnessParameter("MassBattle", "MassBattleBatchVariant.", nameof(BuiltInScenario.MassBattleBatch))]
+    public string? MassBattleBatchVariant { get; set; } = null;
 }

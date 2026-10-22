@@ -60,13 +60,13 @@ Code read for the plan: the M1/M4 probe runner and profile records, `MassBattleP
 | [`WI-M5-01`](../agent/cards/WI-M5-01-army-ai-side-setup.md) army AI side setup | M5-1 | M4 | `Done` |
 | [`WI-M5-02`](../agent/cards/WI-M5-02-roster-deployment-profile.md) roster deployment profile | M5-1 | M3 | `Done` |
 | [`WI-M5-03`](../agent/cards/WI-M5-03-army-eliminated-outcome.md) army-eliminated outcome | M5-1 | P3 | `Done` |
-| [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Ready` |
-| [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Ready` |
-| [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Ready` |
-| [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Ready` |
+| [`WI-M5-04`](../agent/cards/WI-M5-04-mass-battle-scenario.md) mass battle scenario | M5-1 | `WI-M5-01..03` | `Done` |
+| [`WI-M5-05`](../agent/cards/WI-M5-05-kill-loss-per-unit-type.md) kills and losses per unit type | M5-2 | `WI-M5-04` | `Done` |
+| [`WI-M5-06`](../agent/cards/WI-M5-06-seeded-batch-runner.md) seeded batch runner | M5-2 | `WI-M5-05` | `Done` |
+| [`WI-M5-07`](../agent/cards/WI-M5-07-map-bias-control-and-batch-acceptance.md) map-bias control and batch acceptance | M5-2 | `WI-M5-06` | `Blocked` (variants landed and validated scaled; full-scale acceptance batches pending, see below) |
 | [`WI-M5-08`](../agent/cards/WI-M5-08-battle-recording-and-replay.md) battle recording and replay | M5-1, M5-3 | `WI-M5-04`, `WI-A5-04`, `WI-A5-09` | `Blocked` |
-| [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Ready` |
-| [`WI-M5-10`](../agent/cards/WI-M5-10-live-frame-rate-measurement.md) live frame rate measurement | M5-4 | `WI-M5-09` | `Ready` |
+| [`WI-M5-09`](../agent/cards/WI-M5-09-spectator-live-view.md) spectator live view | M5-4 | `WI-M5-04` | `Done` |
+| [`WI-M5-10`](../agent/cards/WI-M5-10-live-frame-rate-measurement.md) live frame rate measurement | M5-4 | `WI-M5-09` | `Blocked` (measurement plumbing landed; presenting-display operator run pending) |
 
 `WI-M5-01..03` are independent. After `WI-M5-04`, the batch chain (`05..07`) and the live chain
 (`09..10`) run in parallel. M5-1 closes when `WI-M5-08` adds the replay mode to the scenario
@@ -103,6 +103,23 @@ block. Full-scale validation on both installs: side A 900/900 ground and 100/100
 (validation, ee2: resolution, partition, committed-profile anchor arithmetic), Interactive scaled
 spawn 1/1, probe/deployment filters 7/7 unchanged.
 
+### WI-M5-04: what landed
+
+`MassBattleRunner` + `MassBattleReport`: one battle profile, army AI on both sides through
+`ArmyAiSides`, the army-eliminated rule with the 54000-frame unit-count limit through
+`VictoryOptions`, EE2 import and roster spawn through the spawner, and no scripted orders.
+Headless steps `SimulationHost` with a `RunOutputRecorder` sibling artifact plus a B1 record;
+windowed steps the probe's `HarnessWindowedFrame` loop with the same stop condition (windowed
+cannot run on the agent host: Xvfb presenting is documented not-working; the operator run and
+WI-M5-09/10 own it). The report is timing-free, so the same seed reproduces byte-identical JSON.
+Full-scale headless run (seed 1, both installs): Decided/ScoreDecision, sideB (ee2-led) wins at
+the frame limit, sideA ground annihilated with 20 parked Raptors alive, 53970 frames in
+148.7 min wall (165 ms/frame), allPassed. Scaled Interactive test decides on seeds 1 and 2 with
+an identical seed-1 repeat. Engine fixes the battle exposed: off-graph positions (formation
+offsets past the map edge; the nav graph is smaller than the heightmap border band) crashed
+`IsPassable`, `ComputePath`, and `GetNextPassablePosition`; all are now null-safe and treat
+off-graph endpoints as unreachable (navigation tests 17/17, full suite 2393/8-known).
+
 ### WI-M5-03: what landed
 
 `ArmyEliminatedVictoryConditionRule`: a side is defeated when it owns no living non-structure
@@ -113,3 +130,95 @@ are untouched. Validation: new install-free tests 5/5 (elimination winner, mutua
 to `SuddenDeath`, airfield-only defeat, parked aircraft survival, options-path frame limit with
 `UnitCount` `ScoreDecision`); existing victory tests 23/23 and the P7 matrix 2/2 unchanged; full
 non-interactive suite 2388 passed / 8 known failures.
+
+### WI-M5-05: what landed
+
+`GameObject.LastDamageSourceId` exposes the body's recorded damage source; the internal
+`KillLossTracker` subscribes to `ObjectLifecycleChanged` and counts each death once. Losses
+cover the tracked army (the spawned roster) of non-structure attackers; kills credit the
+resolved last damager with projectiles hopping to their creator, otherwise `unknown`. The
+battle report gains `kills`/`losses` tables and the runner attaches the tracker after spawning.
+Two overcount sources were diagnosed from tagged death/creation stacks and excluded: inert
+death-spawned objects (debris, hulks, tree stumps, projectiles) by the attacker-class
+predicate, and pilot-ejection crew (US vehicles' `CreateObjectDie`) by army membership.
+Validation: mocked tests 4/4; scaled battles sideA 11/11 and sideB 3/3 with kills == losses ==
+14; the scaled Interactive test asserts both invariants on seeds 1 and 2 plus unchanged
+same-seed report identity; full non-interactive suite 2397 passed / 8 known failures.
+
+### WI-M5-06: what landed
+
+`WinRateInterval.Wilson` (z table for 90/95/99 percent, exact endpoints at 0 and n successes)
+with install-free tests against the published 10-trial values. `MassBattleBatchRunner` runs
+consecutive seeds through one `MassBattleRunner` call per seed with a fresh game, keeps per-run
+reports under `<batch>-runs/`, continues past failures, and aggregates per-side wins with Wilson
+95 intervals (draws and failures stay in the denominator), draw and failure counts, frame and
+wall-minute statistics, and kills/losses summed plus per-run means. Knobs
+`MassBattleBatchSeedStart`/`MassBattleBatchRuns` (defaults 1 and 10)/`MassBattleBatchReportPath`,
+plus the `MassBattleBatch` scenario entry, catalog descriptor, and AGENTS.md section. The scaled
+3-seed Interactive test reconciles the aggregate with its per-run reports; same-seed
+reproduction rides on the WI-M5-04 report identity. Full non-interactive suite 2404 passed /
+8 known failures.
+
+### WI-M5-07: variants landed; acceptance batches pending
+
+`MassBattleBatchVariant` (`Battle`/`Mirror`/`Swap`) rewrites side rosters only; the variant
+profile materializes in the run directory with an absolute manifest path. The battle profile now
+gives both zones the same 2-row 38-anchor grid: side A's 25 anchors could not park the ee2-led
+air fleet under a swap, so each zone hosts the larger fleet (side A's second row overhangs its
+zone edge by 32 units of footprint; anchor points stay outside the zone). Scaled validation:
+variant unit test plus 1-seed scaled Mirror and Swap batches deciding with the rewritten rosters.
+
+Acceptance sizing (decision 7): the measured full-size Battle run is 53970 frames in 148.7 min
+(165 ms/frame, the 54000-frame cap). A control interval can only exclude 50 percent from n = 4
+up (5-0 gives low 0.510), so the acceptance size is 5 seeds per variant: about 12.5 h per variant
+and 37 h for all three, run as operator-scheduled overnight batches:
+
+```sh
+CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" \
+EMPIRE_EARTH_II_PATH="/home/rmessinger/dev/Empire Earth II Gold" \
+dotnet run --project src/Panopticon.Tools.TestHarness --no-build -- \
+  --headless --built-in-scenario MassBattleBatch \
+  --mass-battle-batch-variant Battle --mass-battle-batch-runs 5 \
+  --mass-battle-batch-report-path <dir>/battle.json
+# repeat with --mass-battle-batch-variant Mirror and Swap
+```
+
+The pass criteria: every run in all three batches decides; the Mirror side A Wilson interval
+includes 50 percent (a miss is a map-bias finding and the card reports it); the batch reports
+land beside the paths above. Record the three batches in this section, then flip the card to
+`Done` and tick M5-2. Full non-interactive suite 2404 passed / 8 known failures.
+
+### WI-M5-09: what landed
+
+`Configuration.Spectator` makes `PlayerManager.OnNewGame` select the `FactionObserver` player as
+local when present (default fallback untouched); `Game.StartGame` skips control-bar creation for
+the observer side. `MassBattleRunner` boots headless and windowed with spectator on, keeping the
+modes code-identical, so the same-seed headless report identity proves the flag never perturbs
+the simulation. Map reveal is a recorded no-op: the render path has no shroud or fog gating, so
+all objects draw regardless of the local player. Mocked `SpectatorStartTests` 4/4; the battlefield
+capture is shared as `m5-spectator-battlefield-v1-scaled.png` (capture pipeline verified;
+contents not visually inspected in-session); the windowed operator proof stays subject to the
+documented Xvfb present limitation. Full non-interactive suite 2408 passed / 8 known failures.
+
+### WI-M5-09 and WI-M5-10: spectator and live measurement
+
+WI-M5-09 is done: `Configuration.Spectator` selects the observer as local player (default
+fallback untouched), the observer side gets no control bar, and the mass battle boots
+spectator-on in both modes so the same-seed report identity proves the flag never perturbs the
+simulation. Map reveal is a recorded no-op (no shroud gating exists in the render path). The
+battlefield capture is shared as `m5-spectator-battlefield-v1-scaled.png`; the windowed operator
+proof is subject to the documented Xvfb present limitation.
+
+WI-M5-10 is blocked on the operator's presenting-display run only; the plumbing landed (the
+windowed battle's B1 record carries `tick.fps`, `tick.wallMs`, and the logic, ai, partition, and
+scene3d spans, verified on a headless scaled run). Operator measurement:
+
+```sh
+CNC_GENERALS_PATH="<install>" EMPIRE_EARTH_II_PATH="<ee2 install>" \
+dotnet run -c Release --project src/Panopticon.Tools.TestHarness -- \
+  --built-in-scenario MassBattle --mass-battle-seed 1
+```
+
+Record the median against the 30 fps milestone with the attributed spans in a `Live frame rate`
+section here; on a miss, cut follow-up cards in B2 (allocation), B3 (parallel logic), or B5
+(rendering) with the measured span as baseline.

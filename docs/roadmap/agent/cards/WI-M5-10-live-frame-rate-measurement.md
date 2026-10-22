@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-10` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Blocked` |
 | Type | `investigation` |
 | Effort | `S` |
 | Prerequisites | `WI-M5-09` |
@@ -63,3 +63,14 @@ CNC_GENERALS_PATH="/home/rmessinger/dev/Command and Conquer Generals" EMPIRE_EAR
 - On a met verdict, tick M5-4 in the implementation checklist and update the README progress row.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - State: `Blocked` on the presenting-display run; measurement plumbing landed. The windowed
+    battle's B1 record now carries `tick.fps` (median, with `tick.wallMs` and the logic, `ai`,
+    partition, and scene3d spans already recorded), verified present on a headless scaled run
+    (626 fps headless, informational only). The agent host cannot present a window (Xvfb
+    presenting is documented not-working in docs/screenshots.md) and this card explicitly bars
+    software-rendered numbers, so the milestone measurement is the operator's Release run:
+    `dotnet run -c Release --project src/Panopticon.Tools.TestHarness -- --built-in-scenario
+    MassBattle` on a presenting machine, seed 1, full battle in view, to outcome or 9000
+    measured frames. Record the verdict (30 fps median, attributed spans) in the M5 plan's
+    `Live frame rate` section; on a miss, cut follow-up cards in the owning tracks (B2
+    allocation, B3 parallel logic, B5 rendering) with the measured span as baseline.

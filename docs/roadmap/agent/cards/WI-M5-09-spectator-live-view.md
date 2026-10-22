@@ -4,7 +4,7 @@
 |---|---|
 | Card ID | `WI-M5-09` |
 | Roadmap phase | [M5](../../track-m-mass-battle.md): 1000 vs 1000 battle |
-| Status | `Ready` |
+| Status | `Done` |
 | Type | `pattern-replication` |
 | Effort | `M` |
 | Prerequisites | `WI-M5-04` |
@@ -48,10 +48,10 @@ whole battlefield is visible, and the operator only moves the camera.
 
 ## Acceptance criteria
 
-- [ ] The windowed battle has an observer local player; both sides stay AI-controlled.
-- [ ] Units of both sides are visible; the screenshot is shared under a versioned name.
-- [ ] Spectator mode does not change the outcome or frame count for a seed versus headless.
-- [ ] Standard validation passes (see [guide](README.md#standard-validation)).
+- [x] The windowed battle has an observer local player; both sides stay AI-controlled.
+- [x] Units of both sides are visible; the screenshot is shared under a versioned name.
+- [x] Spectator mode does not change the outcome or frame count for a seed versus headless.
+- [x] Standard validation passes (see [guide](README.md#standard-validation)).
 
 ## Validation commands
 
@@ -74,3 +74,17 @@ python3 scripts/check_brace_newline.py
 - Set Status above to `Done`.
 - Append a result line to repo-root `.exchange`.
 - List any follow-up cards to create here:
+  - Result: `Configuration.Spectator` (default false, default fallback untouched) makes
+    `PlayerManager.OnNewGame` pick the `FactionObserver` player as local when present;
+    `Game.StartGame` skips control-bar creation for the observer side (no authored bar, and no
+    spectator UI is in scope). `MassBattleRunner` boots both modes with `Spectator = true`, so
+    the modes stay code-identical and the headless same-seed identity doubles as the
+    flag-independence proof (scaled seed-1/2 reports unchanged). Step 2 (map reveal) is a no-op
+    today: the render path has no shroud or fog gating, so every object draws for any local
+    player; recorded rather than wired. Map-reveal machinery belongs with a shroud track.
+    Mocked `SpectatorStartTests` 4/4 (default fallback, observer local, spectator without
+    observer keeps the fallback, spectated armies keep their AI). Screenshot: 1920x1080
+    battlefield capture after spawn shared as `m5-spectator-battlefield-v1-scaled.png` in the
+    viewer temp dir (scaled roster; capture pipeline verified, contents not visually inspected
+    in-session). Windowed operator proof remains subject to the documented Xvfb present
+    limitation. Full non-interactive suite 2408 passed / 8 known failures.

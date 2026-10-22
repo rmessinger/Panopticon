@@ -7,6 +7,8 @@ public enum BuiltInScenario
     UnitValidationGround,
     MassBattleDeployment,
     MassBattleCapacityProbe,
+    MassBattle,
+    MassBattleBatch,
     EngagementCapture,
     ScenarioCapture,
     VisualRegression,
@@ -22,4 +24,17 @@ public enum BuiltInScenario
     RenderingScaleProbe,
     TerrainZoomProof,
     TerrainTextureBake,
+}
+
+/// <summary>WI-M5-07 batch variant: which rosters the batch's sides field.</summary>
+public enum MassBattleBatchVariant
+{
+    /// <summary>The profile as authored (generals-led versus ee2-led).</summary>
+    Battle,
+
+    /// <summary>Side A's roster on both sides: the map-bias control.</summary>
+    Mirror,
+
+    /// <summary>Rosters exchanged between zones, separating roster strength from zone advantage.</summary>
+    Swap,
 }
