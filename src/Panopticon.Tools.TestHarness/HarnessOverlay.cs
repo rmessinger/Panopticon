@@ -20,7 +20,7 @@ public sealed record ValidationGroundOverlayState(
     int Gaps);
 
 /// <summary>
-/// Shared windowed performance overlay, with optional validation-ground status and hover details.
+/// Shared windowed performance overlay with hover details and optional validation-ground status.
 /// Validation controls own Space and F1 regardless of status-window visibility.
 /// </summary>
 public sealed class HarnessOverlay : IDisposable
@@ -133,10 +133,7 @@ public sealed class HarnessOverlay : IDisposable
 
         _imgui.Update(deltaSeconds, snapshot);
 
-        if (_validationControls)
-        {
-            InjectSyntheticHover();
-        }
+        InjectSyntheticHover();
 
         DrawPerformanceWindow();
 
@@ -145,10 +142,7 @@ public sealed class HarnessOverlay : IDisposable
             DrawStatusWindow();
         }
 
-        if (_validationControls)
-        {
-            DrawObjectTooltip();
-        }
+        DrawObjectTooltip();
 
         WantCaptureMouse = ImGui.GetIO().WantCaptureMouse;
     }

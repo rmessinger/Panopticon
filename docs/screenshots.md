@@ -144,6 +144,9 @@ GLSL bug, and the real X server rejects agent-shell auth. Use the offscreen reci
 
 ## Recipe: overlay / tooltip screenshots (headless, reliable)
 
+Unit hover tooltips are enabled by default wherever `HarnessOverlay` is used, including the
+windowed mass-battle capacity probe. Tooltips do not require `FullHud` or validation controls.
+
 The validation-ground ImGui overlay can be rendered offscreen into the same framebuffer as the
 scene, so tooltips and the status window are capturable without any display. This is the
 documented way to screenshot overlay visuals.
