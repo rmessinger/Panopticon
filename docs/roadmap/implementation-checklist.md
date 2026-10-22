@@ -1849,6 +1849,56 @@ depend on the Track A/B/C phases listed in the track doc. Design:
 - [ ] M5-4 Live windowed spectator view. (`WI-M5-09`, `WI-M5-10`)
   - AC: B1 records a 30 fps median with the full battle in view on the operator's machine.
 
+## Track N: Multi-Unit Pathfinding Performance
+
+See [`track-n-pathfinding-performance.md`](track-n-pathfinding-performance.md). N0 depends on B1,
+B4, and M4. Design: [deep dive](deep-dives/n-multi-unit-pathfinding.md); cards:
+[plan](implementation/track-n-pathfinding-performance.md).
+
+### N0: Path cost baseline
+- [ ] N0-1 `path` span and request counters by origin. (`WI-N0-01`)
+  - AC: B1 records carry the `path` span, per-origin request counts, nodes expanded, and failed
+    searches; synchronous per-origin counts sum to `PathRequestCount`; waypoints unchanged.
+- [ ] N0-2 `PathfindingLoad` scenario and baseline report. (`WI-N0-02`)
+  - AC: selections of 1 to 1000 units (squad-less and squads), an unreachable case, and the M4
+    army-AI probe are recorded; the report names the dominant origin and a verdict per budget.
+
+### N1: Search core efficiency
+- [ ] N1-1 Allocation-free search scratch. (`WI-N1-01`)
+  - AC: the seeded path corpus returns identical waypoints; zero steady-state allocation per
+    internal search; before/after per-search time recorded.
+- [ ] N1-2 Connected-region labels. (`WI-N1-02`)
+  - AC: corpus identical including diagonal-only gaps; unreachable requests expand 0 nodes;
+    labels update after passability changes; relabel time recorded.
+- [ ] N1-3 Versioned passability snapshot. (`WI-N1-03`)
+  - AC: no `Node` allocation on submit in steady state; async equals synchronous on the corpus;
+    B4 anchor before/after recorded.
+
+### N2: Shared group requests
+- [ ] N2-1 Bounded landing for blocked followers. (`WI-N2-01`)
+  - AC: full searches per squad order at or under squads plus fallback followers in the N0
+    scenario and the M4 probe; M4 invariants hold.
+- [ ] N2-2 Group moves for squad-less selections behind `GroupSelectionMoves`. (`WI-N2-02`)
+  - AC: option off changes nothing; option on bounds searches by clusters plus fallbacks; the
+    1000-unit order-tick span is recorded against 33.3 ms.
+
+### N3: Shared-destination fields
+- [ ] N3-1 Goal field gate. (`WI-N3-01`)
+  - AC: the gate decision records the threshold, measured maximum shared-goal searches, and the
+    budget verdict; a `Ready` implementation card exists only if the gate opened.
+
+### N4: Off-thread order paths
+- [ ] N4-1 Pending path handles on `AIUpdate`. (`WI-N4-01`)
+  - AC: assign, replace, reset, and destroyed-requester cases tested; no caller changes.
+- [ ] N4-2 Async order paths behind `AsyncOrderPaths`. (`WI-N4-02`)
+  - AC: option off changes nothing; option on reduces the order-tick logic-thread `path` span to
+    submission cost with waits inside the frame bound; M4 invariants hold.
+
+### N5: Scale verification
+- [ ] N5-1 Verify every Track N budget at scale. (`WI-N5-01`)
+  - AC: each budget in the deep dive has a Met or Missed verdict with numbers; M4 invariants and
+    engagement checks pass; the default-flip recommendation is recorded.
+
 ## Track X: Miscellaneous fixes and tweaks
 
 Open-ended queue: [phase definitions](track-x-fixes-tweaks.md). Entries below cover authored work, not a terminal track milestone.
